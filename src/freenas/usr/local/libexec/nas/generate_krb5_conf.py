@@ -77,6 +77,36 @@ class KerberosConfigSectionCollection(list):
     pass
 
 class KerberosConfig(object):
+    def tokenize(self, code):
+        token = ""
+        tokens = []
+
+        for c in code:
+            if c == '=':
+                if token:
+                    tokens.append(token)
+                    token = ""
+                tokens.append(c)
+            elif c == '{':
+                tokens.append(c)
+            elif c == '}':
+                if token:
+                    tokens.append(token)
+                    token = ""
+                tokens.append(c)
+            elif c == '\n':
+                if token:
+                    tokens.append(token) 
+                token = ""
+            elif re.match('^\s+', c):
+                if token:
+                    tokens.append(token)
+                    token = ""
+            else:
+                token += c
+
+        return tokens
+
     def parse(self, section, code):
         if not section or not code:
             return
@@ -88,15 +118,15 @@ class KerberosConfig(object):
         bindings = KerberosConfigBindingCollection()
         ptr = bindings
 
-        parts = code.split()
-        for p in parts:
-            if not p:
+        tokens = self.tokenize(code)
+        for tok in tokens:
+            if not tok:
                 continue
 
-            p = p.strip()
-            stack.append(p)
+            tok = tok.strip()
+            stack.append(tok)
 
-            if p == '=':
+            if tok == '=':
                 try:
                     stack.pop()
                     pair.append(stack.pop())
@@ -105,7 +135,7 @@ class KerberosConfig(object):
                     print >> sys.stderr, "ERROR: syntax error near '='"
                     sys.exit(1)
 
-            elif p == '{':
+            elif tok == '{':
                 try:
                     stack.pop()
                     collection = KerberosConfigBindingCollection(
@@ -120,7 +150,7 @@ class KerberosConfig(object):
                 ptr = collection
                 pair = []
 
-            elif p == '}':
+            elif tok == '}':
                 try:
                     stack.pop()
                     ptr = ptr[len(ptr) - 1]
