@@ -1,4 +1,5 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
+{% load humanize_size %}
 
 {% block actions_static_buttons %}
 {{ block.super }}
@@ -36,6 +37,12 @@
         {% if bootme.scrub.date %}<p style="padding-bottom: 0px;">{% trans "Last Scrub Run on" %}: {{ bootme.scrub.date }} &nbsp; &nbsp; </p>{% endif %}
       </div>
     {% endif %}
+      <div class="gridAdd left" style="padding-left: 10px">
+        <strong>{% trans "Size" %}:</strong> {{ zlist.size|humanize_size }}<br />
+        <p style="padding-bottom: 0px;">
+	  <strong>{% trans "Used" %}:</strong> {{ zlist.alloc|humanize_size }} ({{ zlist.capacity }}%)
+	</p>
+      </div>
     <div style="clear: both;"></div>
     <div class="gridAdd" style="padding: 4px;">
         <div data-dojo-type="dijit/form/TextBox" style="width: 30px; margin-right: 2px;" value="{{ advanced.adv_boot_scrub }}">

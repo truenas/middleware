@@ -2,7 +2,6 @@ import logging
 
 from collections import OrderedDict
 
-from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
@@ -162,38 +161,38 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
         columns.append({
             'name': 'cert_name',
-            'label': _('Name') 
-        }) 
+            'label': _('Name')
+        })
 
         columns.append({
             'name': 'cert_internal',
-            'label': _('Internal') 
-        }) 
+            'label': _('Internal')
+        })
 
         columns.append({
             'name': 'cert_issuer',
-            'label': _('Issuer') 
-        }) 
+            'label': _('Issuer')
+        })
 
         columns.append({
             'name': 'cert_ncertificates',
-            'label': _('Certificates') 
-        }) 
+            'label': _('Certificates')
+        })
 
         columns.append({
             'name': 'cert_DN',
-            'label': _('Distinguished Name') 
-        }) 
+            'label': _('Distinguished Name')
+        })
 
         columns.append({
             'name': 'cert_from',
-            'label': _('From') 
-        }) 
+            'label': _('From')
+        })
 
         columns.append({
             'name': 'cert_until',
-            'label': _('Until') 
-        }) 
+            'label': _('Until')
+        })
 
         return columns
 
@@ -240,7 +239,7 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
                     editObject('Delete', data._delete_url, [mybtn,]);
-                }  
+                }
             }""",
         }
 
@@ -261,28 +260,28 @@ class CertificateFAdmin(BaseFreeAdmin):
 
         columns.append({
             'name': 'cert_name',
-            'label': _('Name') 
-        }) 
+            'label': _('Name')
+        })
 
         columns.append({
             'name': 'cert_issuer',
-            'label': _('Issuer') 
-        }) 
+            'label': _('Issuer')
+        })
 
         columns.append({
             'name': 'cert_DN',
-            'label': _('Distinguished Name') 
-        }) 
+            'label': _('Distinguished Name')
+        })
 
         columns.append({
             'name': 'cert_from',
-            'label': _('From') 
-        }) 
+            'label': _('From')
+        })
 
         columns.append({
             'name': 'cert_until',
-            'label': _('Until') 
-        }) 
+            'label': _('Until')
+        })
 
         return columns
 
@@ -324,7 +323,7 @@ class CertificateFAdmin(BaseFreeAdmin):
             }""",
             'on_select_after': hide_me % 'row.data.cert_type_CSR',
         }
-        
+
         actions['edit_csr'] = {
             'button_name': 'Edit',
             'on_click': """function() {
@@ -367,7 +366,7 @@ class CertificateFAdmin(BaseFreeAdmin):
                 for (var i in grid.selection) {
                     var data = grid.row(i).data;
                     editObject('Delete', data._delete_url, [mybtn,]);
-                }  
+                }
             }""",
         }
 
@@ -381,7 +380,7 @@ class CertificateFAdmin(BaseFreeAdmin):
                     editObject('Edit', row.data._CSR_edit_url, [this, ]);
                 } else {
                     editObject('Edit', row.data._edit_url, [this, ]);
-                } 
+                }
             });
         """
 

@@ -76,6 +76,7 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
@@ -140,6 +141,7 @@ def system_info(request):
 def bootenv_datagrid(request):
     bootzvolstats = notifier().zpool_status('freenas-boot')
     bootme = notifier().zpool_parse('freenas-boot')
+    zlist = zpool_list(name='freenas-boot')
     try:
         advanced = models.Advanced.objects.order_by('-id')[0]
     except:
@@ -155,6 +157,7 @@ def bootenv_datagrid(request):
         'bootme': bootme,
         'stats': bootzvolstats,
         'advanced': advanced,
+        'zlist': zlist,
     })
 
 
