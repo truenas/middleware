@@ -1258,7 +1258,7 @@ class ManualUpdateUploadForm(Form):
 
 
 class ConfigUploadForm(Form):
-    config = FileField(label=_("New config to be installed"))
+    config = FileField(label=_("New config to be installed (will cause reboot)"))
 
 
 """
