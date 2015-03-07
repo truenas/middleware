@@ -109,8 +109,8 @@ release-push: release
 		echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com; \
 		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi \
 	fi
-	mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`;
-	rm -f "${IX_STABLE_DIR}/latest"; ln -s "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'` "${IX_STABLE_DIR}/latest";
+	mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`
+	(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest)
 	${MAKE} save-build-env
 
 update-push:	release
