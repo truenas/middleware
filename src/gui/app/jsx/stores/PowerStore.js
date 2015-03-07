@@ -37,10 +37,6 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
-  , isLocalTaskPending: function( id ) {
-      return _.values( _localUpdatePending ).indexOf( id ) > -1;
-    }
-
   , isPowerUpdatePending: function( id ) {
       return _updatedOnServer.indexOf( id ) > -1;
     }
@@ -59,12 +55,10 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         var updateData = args["args"];
 
         if ( updateData["operation"] === "reboot" ) {
-          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           // FIXME: This is a workaround for the current implementation of task
           // subscriptions and submission resolutions.
-          // UsersMiddleware.requestUsersList( _updatedOnServer );
         } else if ( updateData["operation"] === "shutdown" ) {
-
+          // do something else
         } else {
           // TODO: Can this be anything else?
         }
