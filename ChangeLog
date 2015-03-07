@@ -24,3 +24,5 @@
 #8401	Bug	Normal	GUI support login
 #8420	Feature	Normal	Boot Pool Size Monitoring
 #8424	Bug	Low	"Performance Test" crashes when encrypted pool is not mounted
+#8447	Bug	Urgent	CIFS sharing not working after update to FreeNAS-9.3-STABLE-201503070129
+#8089	Bug	Normal	API bug of Services/cifs
