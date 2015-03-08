@@ -1,1 +1,12 @@
-GRUB_TERMINAL_OUTPUT="console serial"
+ser=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialconsole FROM system_advanced")
+if [ ${ser} -eq 1 ]; then
+	GRUB_TERMINAL_OUTPUT="serial console"
+	GRUB_TERMINAL_INPUT="serial console"
+	port=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialport FROM system_advanced")
+	bps=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialspeed FROM system_advanced")
+	unit=$(/usr/sbin/devinfo -u | grep ${port} | awk '{print $2}' | sed -e 's/^(uart//' -e 's/)$//')
+	GRUB_SERIAL_COMMAND="serial --unit=${unit} --port=${port} --speed=${bps}"
+else
+	GRUB_TERMINAL_OUTPUT="console serial"
+	GRUB_TERMINAL_INPUT="console serial"
+fi
