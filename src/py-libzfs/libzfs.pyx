@@ -540,7 +540,7 @@ cdef class ZPoolScrub(object):
     def __getstate__(self):
         return {
             'func': self.stat[0],
-            'state': self.state,
+            'state': self.state.name,
             'start_time': self.start_time,
             'end_time': self.end_time,
             'percentage': self.percentage,
@@ -574,6 +574,7 @@ cdef class ZFSPool(object):
             'status': self.status,
             'root_dataset': self.root_dataset.__getstate__() if self.root_dataset else None,
             'properties': {k: p.__getstate__() for k, p in self.properties.items()} if self.properties else None,
+            'scan': self.scrub.__getstate__(),
             'groups': {
                 'data': [i.__getstate__() for i in self.data_vdevs],
                 'log': [i.__getstate__() for i in self.log_vdevs],
