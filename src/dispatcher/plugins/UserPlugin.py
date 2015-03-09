@@ -38,6 +38,7 @@ class UserProvider(Provider):
     @query('definitions/user')
     def query(self, filter=None, params=None):
         result = []
+        single = params.pop('single', False) if params else False
         for user in self.datastore.query('users', *(filter or []), **(params or {})):
             sessions = self.dispatcher.call_sync('sessions.query', [
                 ('username', '=', user['username']),
@@ -54,6 +55,9 @@ class UserProvider(Provider):
                 'sessions': sessions
             })
 
+            if single:
+                return user
+
             result.append(user)
 
         return result
@@ -67,7 +71,7 @@ class GroupProvider(Provider):
     @description("Lists groups present in the system")
     @query('definitions/group')
     def query(self, filter=None, params=None):
-        return list(self.datastore.query('groups', *(filter or []), **(params or {})))
+        return self.datastore.query('groups', *(filter or []), **(params or {}))
 
 
 @description("Create an user in the system")
