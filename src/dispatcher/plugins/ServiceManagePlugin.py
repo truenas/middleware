@@ -55,10 +55,8 @@ class ServiceInfoProvider(Provider):
     })
     def query(self, filter=None, params=None):
         result = []
-        filter = filter if filter else []
-        params = params if params else {}
-
-        for i in self.datastore.query('service_definitions', *filter, **params):
+        single = params.pop('single', False) if params else False
+        for i in self.datastore.query('service_definitions', *(filter or []), **(params or {})):
 
             if 'pidfile' in i:
                 # Check if process is alive by reading pidfile
@@ -90,6 +88,9 @@ class ServiceInfoProvider(Provider):
 
             if pid is not None:
                 entry['pid'] = pid
+
+            if single:
+                return entry
 
             result.append(entry)
 
@@ -246,7 +247,7 @@ def _init(dispatcher):
     dispatcher.register_event_handler("service.rc.command", on_rc_command)
     dispatcher.register_task_handler("service.manage", ServiceManageTask)
     dispatcher.register_task_handler("service.configure", UpdateServiceConfigTask)
-    dispatcher.register_provider("service", ServiceInfoProvider)
+    dispatcher.register_provider("services", ServiceInfoProvider)
 
     for svc in dispatcher.datastore.query('service_defintions'):
         dispatcher.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])
