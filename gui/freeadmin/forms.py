@@ -38,6 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from dojango.forms import widgets
 from dojango.forms.widgets import DojoWidgetMixin
+from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common.freenasldap import FLAGS_DBINIT
 from freenasUI.common.freenascache import (
     FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
@@ -119,15 +120,21 @@ class UserField(forms.ChoiceField):
             ulist = []
             if not self.required:
                 ulist.append(('-----', 'N/A'))
+            notbuiltin = [
+                o[0]
+                for o in bsdUsers.objects.filter(
+                    bsdusr_builtin=False
+                ).values_list('bsdusr_uid')
+            ]
             ulist.extend(
                 map(
                     lambda x: (x.pw_name, x.pw_name, ),
-                    filter(
+                    sorted(filter(
                         lambda y: (
                             y is not None and y.pw_name not in self._exclude
                         ),
                         users
-                    )
+                    ), key=lambda y: (y.pw_uid not in notbuiltin, y.pw_name))
                 )
             )
 
@@ -177,8 +184,17 @@ class GroupField(forms.ChoiceField):
             glist = []
             if not self.required:
                 glist.append(('-----', 'N/A'))
+            notbuiltin = [
+                o[0]
+                for o in bsdGroups.objects.filter(
+                    bsdgrp_builtin=False
+                ).values_list('bsdgrp_gid')
+            ]
             glist.extend(
-                [(x.gr_name, x.gr_name) for x in groups]
+                [(x.gr_name, x.gr_name) for x in sorted(
+                    groups,
+                    key=lambda y: (y.gr_gid not in notbuiltin, y.gr_name)
+                )]
             )
             self.widget = widgets.FilteringSelect()
             self.choices = glist

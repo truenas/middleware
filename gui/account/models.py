@@ -62,7 +62,7 @@ class bsdGroups(Model):
     class Meta:
         verbose_name = _("Group")
         verbose_name_plural = _("Groups")
-        ordering = ['bsdgrp_builtin']
+        ordering = ['bsdgrp_builtin', 'bsdgrp_group']
 
     def __unicode__(self):
         return self.bsdgrp_group
@@ -185,7 +185,7 @@ class bsdUsers(Model):
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
-        ordering = ['bsdusr_builtin']
+        ordering = ['bsdusr_builtin', 'bsdusr_username']
 
     def __unicode__(self):
         return self.bsdusr_username
