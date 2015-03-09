@@ -136,6 +136,7 @@ class Context(object):
         self.ml = None
         self.logger = logging.getLogger('cli')
         self.plugin_dirs = []
+        self.task_callbacks = {}
         self.plugins = {}
         self.variables = VariableStore()
         self.root_ns = RootNamespace('')
@@ -156,7 +157,7 @@ class Context(object):
         try:
             self.connection.login_user(user, password)
             self.connection.subscribe_events(*EVENT_MASKS)
-            self.connection.on_event(self.print_event)
+            self.connection.on_event(self.handle_event)
             self.connection.on_error(self.connection_error)
 
         except RpcException, e:
@@ -264,6 +265,17 @@ class Context(object):
             self.__try_reconnect()
             return
 
+    def handle_event(self, event, data):
+        if event == 'task.updated':
+            if data['id'] in self.task_callbacks:
+                self.handle_task_callback(data)
+
+        self.print_event(event, data)
+
+    def handle_task_callback(self, data):
+        if data['state'] in ('FINISHED', 'CANCELED', 'ABORTED'):
+            self.task_callbacks[data['id']](data['state'])
+
     def print_event(self, event, data):
         if self.event_divert:
             self.event_queue.put((event, data))
@@ -283,9 +295,14 @@ class Context(object):
         self.ml.restore_readline()
         output_lock.release()
 
-    def submit_task(self, name, *args):
+    def submit_task(self, name, *args, **kwargs):
+        callback = kwargs.pop('callback', None)
+
         if not self.variables.get('tasks-blocking'):
             tid = self.connection.call_sync('task.submit', name, args)
+            if callback:
+                self.task_callbacks[tid] = callback
+
             return tid
         else:
             self.event_divert = True
@@ -466,7 +483,7 @@ class MainLoop(object):
                     break
 
                 if cmdfound:
-                    self.path = oldpath
+                    #self.path = oldpath
                     break
 
     def get_relative_object(self, ns, tokens):

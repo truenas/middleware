@@ -27,15 +27,16 @@
 
 
 import os
-from namespace import Namespace, EntityNamespace, IndexCommand, Command, description
+from namespace import Namespace, EntityNamespace, Command, RpcBasedLoadMixin, description
 from output import ValueType, output_msg, output_table
 
 
 @description("Provides information about installed disks")
-class DisksNamespace(EntityNamespace):
+class DisksNamespace(RpcBasedLoadMixin, EntityNamespace):
     def __init__(self, name, context):
         super(DisksNamespace, self).__init__(name, context)
 
+        self.query_call = 'disks.query'
         self.add_property(
             descr='Disk name',
             name='name',
@@ -59,26 +60,31 @@ class DisksNamespace(EntityNamespace):
             list=True,
             type=ValueType.BOOLEAN)
 
+        self.add_property(
+            descr='Disposition',
+            name='disposition',
+            get=self.get_disposition,
+            set=None,
+            list=True
+        )
+
         self.primary_key = self.get_mapping('name')
         self.allow_create = False
-        self.entity_commands = lambda n: {
-            'format': FormatDiskCommand(self, n),
-            'erase': EraseDiskCommand(self, n)
+        self.entity_commands = lambda this: {
+            'format': FormatDiskCommand(this),
+            'erase': EraseDiskCommand(this)
         }
 
-    def query(self, params):
-        return self.context.connection.call_sync('disk.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync('disk.query', [('path', '=', os.path.join('/dev', name))])[0]
+    def get_disposition(self, entity):
+        return ''
 
 
 @description("Formats given disk")
 class FormatDiskCommand(Command):
-    def __init__(self, parent, name):
-        self.disk = parent.get_one(name)
+    def __init__(self, parent):
+        self.disk = parent.entity
 
-    def run(self, context, args, kwargs):
+    def run(self, context, args, kwargs, opargs):
         fstype = kwargs.pop('fstype', 'freebsd-zfs')
         swapsize = kwargs.pop('swapsize', '2048M')
         context.submit_task('disk.format.gpt', self.disk['path'], fstype)
@@ -86,7 +92,7 @@ class FormatDiskCommand(Command):
 
 @description("Erases all data on disk safely")
 class EraseDiskCommand(Command):
-    def __init__(self, parent, name):
+    def __init__(self, parent):
         pass
 
 

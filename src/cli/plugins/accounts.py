@@ -28,14 +28,24 @@
 
 import os
 import crypt
-from namespace import Namespace, Command, EntityNamespace, IndexCommand, description
+from namespace import Namespace, Command, EntityNamespace, IndexCommand, TaskBasedSaveMixin, RpcBasedLoadMixin, description
 from output import ValueType
 
 @description("foo")
-class UsersNamespace(EntityNamespace):
+class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
 
     def __init__(self, name, context):
         super(UsersNamespace, self).__init__(name, context)
+
+        self.query_call = 'users.query'
+        self.create_task = 'users.create'
+        self.update_task = 'users.update'
+        self.delete_task = 'users.delete'
+
+        self.skeleton_entity = {
+            'username': None,
+            'group': None
+        }
 
         self.add_property(
             descr='User name',
@@ -72,7 +82,6 @@ class UsersNamespace(EntityNamespace):
             descr='Home directory',
             name='home',
             get='/home',
-            set=self.set_home,
             list=True)
 
         self.add_property(
@@ -85,45 +94,31 @@ class UsersNamespace(EntityNamespace):
 
         self.primary_key = self.get_mapping('username')
 
-    def query(self, params):
-        return self.context.connection.call_sync('users.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync('users.query', [('username', '=', name)]).pop()
-
     def set_unixhash(self, obj, value):
         obj['unixhash'] = crypt.crypt(value, '$6${0}$'.format(os.urandom(16).encode('hex')))
 
-    def save(self, entity, diff, new=False):
-        if new:
-            self.context.submit_task('users.create', entity)
-            return
-
-        self.context.submit_task('users.update', entity['id'], diff)
-
-    def delete(self, name):
-        entity = self.get_one(name)
-        self.context.submit_task('users.delete', entity['id'])
-
     def display_group(self, entity):
-        group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])]).pop()
+        group = self.context.connection.call_sync('groups.query', [('id', '=', entity['group'])], {'single': True})
         return group['name'] if group else 'GID:{0}'.format(entity['group'])
 
     def set_group(self, entity, value):
-        group = self.context.connection.call_sync('groups.query', [('name', '=', value)]).pop()
+        group = self.context.connection.call_sync('groups.query', [('name', '=', value)], {'single': True})
         entity['group'] = group['id']
-
-    def set_home(self, entity, value):
-        if not value:
-            value = '/home/{0}'.format(entity['username'])
-
-        entity['home'] = value
 
 
 @description("blah")
-class GroupsNamespace(EntityNamespace):
+class GroupsNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
     def __init__(self, name, context):
         super(GroupsNamespace, self).__init__(name, context)
+
+        self.query_call = 'groups.query'
+        self.create_task = 'groups.create'
+        self.update_task = 'groups.update'
+        self.delete_task = 'groups.delete'
+
+        self.skeleton_entity = {
+            'name': None,
+        }
 
         self.add_property(
             descr='Group name',
@@ -143,22 +138,11 @@ class GroupsNamespace(EntityNamespace):
             name='builtin',
             get='/builtin',
             set=None,
-            list=True)
+            list=True,
+            type=ValueType.BOOLEAN)
 
         self.primary_key = self.get_mapping('name')
 
-    def query(self, params):
-        return self.context.connection.call_sync('groups.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync('groups.query', [('name', '=', name)]).pop()
-
-    def save(self, entity, diff, new=False):
-        if new:
-            self.context.submit_task('groups.create', entity)
-            return
-
-        self.context.submit_task('groups.update', entity['id'], diff)
 
 @description("Service namespace")
 class AccountNamespace(Namespace):
