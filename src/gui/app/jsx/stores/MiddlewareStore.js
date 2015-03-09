@@ -38,14 +38,21 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
+  // AUTHENTICAION
   , getAuthStatus: function() {
       return _authenticated;
+    }
+
+  // SUBSCRIPTIONS
+  , getAllSubscriptions: function() {
+      return _subscribed;
     }
 
   , getNumberOfSubscriptions: function( masks ) {
       return _subscribed[ masks ];
     }
 
+  // RPC
   , getAvailableRPCServices: function() {
       return _rpcServices;
     }
@@ -54,6 +61,7 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
       return _rpcMethods;
     }
 
+  // EVENTS
   , getEventLog: function() {
       return _events;
     }
@@ -80,7 +88,7 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
         _subscribed[ action.mask ] = 1;
       }
 
-      MiddlewareStore.emitChange();
+      MiddlewareStore.emitChange("subsctiptions");
       break;
 
     case ActionTypes.UNSUBSCRIBE_FROM_MASK:
@@ -94,7 +102,7 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
         console.warn( "Tried to unsubscribe from '" + action.mask + "', but Flux store shows no active subsctiptions.");
       }
 
-      MiddlewareStore.emitChange();
+      MiddlewareStore.emitChange("subsctiptions");
       break;
 
 
