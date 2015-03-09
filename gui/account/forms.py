@@ -253,7 +253,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_to_group'].choices = [
             (x.id, x.bsdgrp_group)
-            for x in models.bsdGroups.objects.order_by('bsdgrp_group')
+            for x in models.bsdGroups.objects.all()
         ]
         self.fields['bsdusr_password_disabled'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_bsdusr_password_disabled", '
