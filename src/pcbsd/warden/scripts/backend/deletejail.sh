@@ -41,7 +41,7 @@ if [ -x "${JMETADIR}/jail-pre-delete" ] ; then
 fi
 
 # Check if the jail is running first
-${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
+${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" "mount_check"
 if [ "$?" = "0" ]
 then
   # Make sure the jail is stopped
@@ -49,7 +49,7 @@ then
 fi
 
 # Confirm jail was shutdown and no mounts are left
-${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
+${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" "mount_check"
 if [ "$?" = "0" ] ; then
    warden_error "Jail is still running, or has active mount-points.. Please stop manually."
    exit 5
