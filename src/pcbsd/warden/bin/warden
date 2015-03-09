@@ -1271,13 +1271,13 @@ defaultrouter-ipv6) DEFAULTROUTER="${4}"
           fi
 
           # Check if this jail is running
-          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
+          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" "mount_check"
           if [ "$?" = "0" ] ; then
             ${PROGDIR}/scripts/backend/stopjail.sh "${JAILNAME}"
           fi
 
           # Check if this jail is STILL running
-          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}"
+          ${PROGDIR}/scripts/backend/checkstatus.sh "${JAILNAME}" "mount_check"
           if [ "$?" = "0" ] ; then warden_exit "Jail still is running or has leftovers.."; fi
 
           # Delete it now

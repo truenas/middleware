@@ -219,6 +219,11 @@ if [ -e "${JMETADIR}/jail-portjail" ] ; then
   umountjailxfs "${JAILNAME}"
 fi
 
+# Remove any remnant mounts, with force!
+for mountpoint in $(mount | grep -e "${JAILDIR}/" | cut -d" " -f3); do
+    umount -f "${mountpoint}"
+done
+
 fi # End of FAST check
 
 warden_printf "%s" "."
