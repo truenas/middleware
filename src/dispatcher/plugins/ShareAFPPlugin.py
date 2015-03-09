@@ -30,12 +30,28 @@ import errno
 import psutil
 from task import Task, TaskStatus, Provider, TaskException
 from dispatcher.rpc import RpcException, description, accepts, returns
+from utils import first_or_default
 
 
 @description("Provides info about configured AFP shares")
 class AFPSharesProvider(Provider):
     def get_connected_clients(self, share_name):
-        pass
+        result = []
+        for i in psutil.process_iter():
+            if i.name() != 'afpd':
+                continue
+
+            conns = filter(lambda c: c.pid == i.pid, psutil.net_connections('inet'))
+            conn = first_or_default(lambda c: c.laddr[1] == 548, conns)
+
+            if not conn:
+                continue
+
+            result.append({
+                'host': conn.laddr[0],
+                'share': None,
+                'user': i.username()
+            })
 
 
 @description("Adds new AFP share")
@@ -70,10 +86,10 @@ class CreateAFPShareTask(Task):
     '$ref': 'definitions/afp-share'
 })
 class UpdateAFPShareTask(Task):
-    def describe(self, name):
+    def describe(self, name, updated_fields):
         return "Updating AFP share {0}".format(name)
 
-    def verify(self, name):
+    def verify(self, name, updated_fields):
         return ['service:afp']
 
     def run(self, name, updated_fields):
