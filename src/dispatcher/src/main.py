@@ -317,6 +317,9 @@ class Dispatcher(object):
     def call_sync(self, name, *args):
         return self.rpc.call_sync(name, *args)
 
+    def call_task_sync(self, name, *args):
+        return self.balancer.join_subtasks(self.balancer.run_subtask(None, name, args))
+
     def register_event_handler(self, name, handler):
         if name not in self.event_handlers:
             self.event_handlers[name] = []
