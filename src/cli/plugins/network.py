@@ -28,8 +28,9 @@
 
 import copy
 import gettext
-from namespace import Namespace, EntityNamespace, ConfigNamespace, Command, description
+from namespace import Namespace, EntityNamespace, ConfigNamespace, Command, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import ValueType
+
 
 t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
@@ -60,14 +61,22 @@ class InterfaceManageCommand(Command):
 
 
 @description("Network interfaces configuration")
-class InterfacesNamespace(EntityNamespace):
+class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
     def __init__(self, name, context):
         super(InterfacesNamespace, self).__init__(name, context)
+
+        self.query_call = 'network.interfaces.query'
+        self.create_task = 'network.interface.create'
+        self.update_task = 'network.interface.configure'
 
         self.link_states = {
             'LINK_STATE_UP': _("up"),
             'LINK_STATE_DOWN': _("down"),
             'LINK_STATE_UNKNOWN': _("unknown")
+        }
+
+        self.link_types = {
+            'ETHER': _("Ethernet")
         }
 
         self.add_property(
@@ -157,25 +166,12 @@ class InterfacesNamespace(EntityNamespace):
 
             yield '{0}/{1}'.format(i['address'], i['netmask'])
 
-    def query(self, params):
-        return self.context.connection.call_sync('network.interfaces.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync(
-            'network.interfaces.query',
-            [('id', '=', name)],
-            {'single': True}
-        )
-
-    def save(self, entity, diff, new=False):
+    def save(self, this, new=False):
         if new:
-            self.context.submit_task('network.interface.create', entity['id'], entity['type'])
+            self.context.submit_task('network.interface.create', this.entity['id'], this.entity['type'])
             return
 
-        self.context.submit_task('network.interface.configure', entity['id'], diff)
-
-    def delete(self, name):
-        pass
+        self.context.submit_task('network.interface.configure', this.entity['id'], this.get_diff())
 
 
 @description("Interface addresses")
@@ -236,9 +232,14 @@ class AliasesNamespace(EntityNamespace):
         self.parent.load()
 
 @description("Static host names database")
-class HostsNamespace(EntityNamespace):
+class HostsNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
     def __init__(self, name, context):
         super(HostsNamespace, self).__init__(name, context)
+
+        self.query_call = 'network.hosts.query'
+        self.create_task = 'network.hosts.add'
+        self.update_task = 'network.hosts.update'
+        self.delete_task = 'network.hosts.delete'
 
         self.add_property(
             descr='IP address',
@@ -255,26 +256,6 @@ class HostsNamespace(EntityNamespace):
         )
 
         self.primary_key = self.get_mapping('name')
-
-    def query(self, params):
-        return self.context.connection.call_sync('network.hosts.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync(
-            'network.hosts.query',
-            [('id', '=', name)],
-            {'single': True}
-        )
-
-    def save(self, entity, new=False):
-        if new:
-            self.context.submit_task('network.host.add', entity['id'], entity['address'])
-            return
-
-        self.context.submit_task('network.host.update', entity['id'], entity['address'])
-
-    def delete(self, name):
-        self.context.submit_task('network.host.delete', name)
 
 
 @description("Global network configuration")
@@ -337,10 +318,15 @@ class GlobalConfigNamespace(ConfigNamespace):
 
 
 @description("Routing configuration")
-class RoutesNamespace(EntityNamespace):
+class RoutesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
     def __init__(self, name, context):
         super(RoutesNamespace, self).__init__(name, context)
         self.context = context
+
+        self.query_call = 'network.routes.query'
+        self.create_task = 'network.routes.add'
+        self.update_task = 'network.routes.update'
+        self.delete_task = 'network.routes.delete'
 
         self.add_property(
             descr='Name',
@@ -369,26 +355,6 @@ class RoutesNamespace(EntityNamespace):
             get='/network',
             list=True
         )
-
-    def query(self, params):
-        return self.context.connection.call_sync('network.routes.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync(
-            'network.routes.query',
-            [('id', '=', name)],
-            {'single': True}
-        )
-
-    def save(self, entity, diff, new=False):
-        if new:
-            self.context.submit_task('network.routes.add', entity)
-            return
-
-        self.context.submit_task('network.routes.update', entity['id'], diff)
-
-    def delete(self, name):
-        self.context.submit_task('network.routes.delete', name)
 
 
 @description("Network configuration")

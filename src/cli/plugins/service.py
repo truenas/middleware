@@ -26,12 +26,12 @@
 #####################################################################
 
 
-from namespace import Namespace, EntityNamespace, Command, description
+from namespace import Namespace, EntityNamespace, RpcBasedLoadMixin, Command, description
 
 
 class ServiceManageCommand(Command):
-    def __init__(self, name, action):
-        self.name = name
+    def __init__(self, parent, action):
+        self.parent = parent
         self.action = action
 
     @property
@@ -39,13 +39,14 @@ class ServiceManageCommand(Command):
         return '{0}s service'.format(self.action.title())
 
     def run(self, context, args, kwargs, opargs):
-        context.submit_task('service.manage', self.name, self.action)
+        context.submit_task('service.manage', self.parent.primary_key, self.action)
 
 
 @description("Service namespace")
-class ServicesNamespace(EntityNamespace):
+class ServicesNamespace(RpcBasedLoadMixin, EntityNamespace):
     def __init__(self, name, context):
         super(ServicesNamespace, self).__init__(name, context)
+        self.query_call = 'services.query'
 
         self.add_property(
             descr='Service name',
@@ -66,18 +67,12 @@ class ServicesNamespace(EntityNamespace):
         self.primary_key = self.get_mapping('name')
         self.allow_edit = False
         self.allow_creation = False
-        self.entity_commands = lambda name: {
-            'start': ServiceManageCommand(name, 'start'),
-            'stop': ServiceManageCommand(name, 'stop'),
-            'restart': ServiceManageCommand(name, 'restart'),
-            'reload': ServiceManageCommand(name, 'reload')
+        self.entity_commands = lambda this: {
+            'start': ServiceManageCommand(this, 'start'),
+            'stop': ServiceManageCommand(this, 'stop'),
+            'restart': ServiceManageCommand(this, 'restart'),
+            'reload': ServiceManageCommand(this, 'reload')
         }
-
-    def query(self, params):
-        return self.context.connection.call_sync('service.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync('service.query', [('name', '=', name)]).pop()
 
 
 class ServiceConfigNamespace(Namespace):

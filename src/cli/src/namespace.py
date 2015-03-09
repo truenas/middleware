@@ -243,7 +243,6 @@ class ItemNamespace(Namespace):
 
         def run(self, context, args, kwargs, opargs):
             self.parent.save()
-            self.parent.modified = False
 
     @description("Discards modified item")
     class DiscardEntityCommand(Command):
@@ -343,24 +342,35 @@ class EntityNamespace(Namespace):
         def __init__(self, name, parent):
             super(EntityNamespace.SingleItemNamespace, self).__init__(name)
             self.parent = parent
+            self.saved = name is not None
             self.property_mappings = parent.property_mappings
 
             if parent.entity_commands:
-                self.subcommands = parent.entity_commands(name)
+                self.subcommands = parent.entity_commands(self)
 
             if parent.entity_namespaces:
                 self.nslist = parent.entity_namespaces(self)
 
+        @property
+        def primary_key(self):
+            return self.parent.primary_key.do_get(self.entity)
+
         def get_name(self):
-            return self.parent.primary_key.do_get(self.entity) if self.entity else self.name
+            name = self.primary_key if self.entity else self.name
+            if not name:
+                name = 'unnamed'
+
+            return name if self.saved and not self.modified else '[{0}]'.format(name)
 
         def load(self):
-            self.entity = self.parent.get_one(self.name)
+            if self.saved:
+                self.entity = self.parent.get_one(self.name)
+
             self.orig_entity = copy.deepcopy(self.entity)
 
         def save(self):
-            self.parent.save(self.entity, self.get_diff())
-            self.modified = False
+            self.parent.save(self, not self.saved)
+            self.saved = True
 
     def __init__(self, name, context):
         super(EntityNamespace, self).__init__(name)
@@ -408,6 +418,12 @@ class EntityNamespace(Namespace):
         def run(self, context, args, kwargs, opargs):
             entity = copy.deepcopy(self.parent.skeleton_entity)
 
+            if not args and not kwargs:
+                ns = EntityNamespace.SingleItemNamespace(None, self.parent)
+                ns.entity = copy.deepcopy(self.parent.skeleton_entity)
+                context.ml.cd(ns)
+                return
+
             if len(args) > 0:
                 prop = self.parent.primary_key
                 prop.do_set(entity, args.pop(0))
@@ -421,7 +437,7 @@ class EntityNamespace(Namespace):
                 prop = self.parent.get_mapping(k)
                 prop.do_set(entity, v)
 
-            self.parent.save(entity, entity, new=True)
+            self.parent.save(self, new=True)
 
         def complete(self, context, tokens):
             return [x.name + '=' for x in self.parent.property_mappings]
@@ -480,3 +496,42 @@ class EntityNamespace(Namespace):
         for i in self.query([]):
             name = self.primary_key.do_get(i)
             yield self.SingleItemNamespace(name, self)
+
+
+class RpcBasedLoadMixin(object):
+    def query(self, params):
+        return self.context.connection.call_sync(
+            self.query_call,
+            params)
+
+    def get_one(self, name):
+        return self.context.connection.call_sync(
+            self.query_call,
+            [(self.primary_key.name, '=', name)],
+            {'single': True})
+
+
+class TaskBasedSaveMixin(object):
+    def post_save(self, this, status):
+        if status == 'FINISHED':
+            this.modified = False
+            this.saved = True
+
+    def save(self, this, new=False):
+        if new:
+            self.context.submit_task(
+                self.create_task,
+                this.entity,
+                callback=lambda s: self.post_save(this, s))
+            return
+
+        self.context.submit_task(
+            self.update_task,
+            this.entity['id'],
+            this.get_diff(),
+            callback=lambda s: self.post_save(this, s))
+
+    def delete(self, name):
+        entity = self.get_one(name)
+        self.context.submit_task(self.delete_task, entity['id'])
+

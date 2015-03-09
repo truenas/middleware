@@ -26,21 +26,67 @@
 #####################################################################
 
 
-import time
-from namespace import Namespace, EntityNamespace, IndexCommand, Command, CommandException, description
-from output import Column, output_msg, output_table, output_tree
+from namespace import EntityNamespace, Command, CommandException, RpcBasedLoadMixin, TaskBasedSaveMixin, description
+from output import Column, output_table, output_tree
 from utils import first_or_default
 
 
-class VolumeCreateNamespace(Namespace):
-    pass
+@description("Adds new vdev to volume")
+class AddVdevCommand(Command):
+    def __init__(self, parent):
+        self.parent = parent
+
+    def run(self, context, args, kwargs, opargs):
+        if not self.parent.saved:
+            entity = self.parent.entity
+            typ = kwargs.pop('type')
+
+            if typ == 'stripe':
+                entity['topology']['data'].append({
+                    'type': 'disk',
+                    'path': args[0]
+                })
+
+            if typ == 'mirror':
+                entity['topology']['data'].append({
+                    'type': 'mirror',
+                    'children': [{'type': 'disk', 'path': x} for x in args]
+                })
+
+            if typ == 'cache':
+                if 'cache' not in entity:
+                    entity['topology']['cache'] = []
+
+                entity['topology']['cache'].append({
+                    'type': 'disk',
+                    'path': args[0]
+                })
+
+            if typ == 'log':
+                if 'log' not in entity:
+                    entity['topology']['cache'] = []
+
+                entity['topology']['log'].append({
+                    'type': 'disk',
+                    'path': args[0]
+                })
+
+            if typ.startswith('raidz'):
+                pass
+
+
+@description("Removes vdev from volume")
+class DeleteVdevCommand(Command):
+    def __init__(self, parent):
+        self.parent = parent
+
+    def run(self, context, args, kwargs, opargs):
+        if self.parent.saved:
+            raise CommandException('Cannot delete vdev from existing volume')
 
 
 @description("Creates new volume in simple way")
 class VolumeCreateCommand(Command):
-    def __init__(self, parent):
-        self.parent = parent
-
     def run(self, context, args, kwargs, opargs):
         name = args.pop(0)
         disks = args
@@ -94,9 +140,8 @@ class DetachVolumeCommand(Command):
 
 @description("Shows volume topology")
 class ShowTopologyCommand(Command):
-    def __init__(self, parent, name):
+    def __init__(self, parent):
         self.parent = parent
-        self.name = name
 
     def run(self, context, args, kwargs, opargs):
         def print_vdev(vdev):
@@ -105,19 +150,18 @@ class ShowTopologyCommand(Command):
             else:
                 return vdev['type']
 
-        volume = self.parent.get_one(self.name)
+        volume = self.parent.entity
         tree = filter(lambda x: len(x['children']) > 0, map(lambda (k, v): {'type': k, 'children': v}, volume['topology'].items()))
         output_tree(tree, '/children', print_vdev)
 
 
 @description("Shows volume disks status")
 class ShowDisksCommand(Command):
-    def __init__(self, parent, name):
+    def __init__(self, parent):
         self.parent = parent
-        self.name = name
 
     def run(self, context, args, kwargs, opargs):
-        volume = self.parent.get_one(self.name)
+        volume = self.parent.entity
         result = list(iterate_vdevs(volume['topology']))
         output_table(result, [
             Column('Name', '/path'),
@@ -127,11 +171,11 @@ class ShowDisksCommand(Command):
 
 @description("Scrubs volume")
 class ScrubCommand(Command):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, parent):
+        self.parent = parent
 
     def run(self, context, args, kwargs, opargs):
-        context.submit_task('zfs.pool.scrub', self.name)
+        context.submit_task('zfs.pool.scrub', self.parent.entity['id'])
 
 
 @description("Datasets")
@@ -231,14 +275,25 @@ class PropertiesNamespace(EntityNamespace):
 
 
 @description("Volumes namespace")
-class VolumesNamespace(EntityNamespace):
+class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
     class ShowTopologyCommand(Command):
         def run(self, context, args, kwargs, opargs):
             pass
 
     def __init__(self, name, context):
         super(VolumesNamespace, self).__init__(name, context)
-        self.create_command = VolumeCreateCommand
+        #self.create_command = VolumeCreateCommand
+
+        self.delete_task = 'volume.destroy'
+
+        self.skeleton_entity = {
+            'topology': {
+                'data': []
+            }
+        }
+
+        self.query_call = 'volumes.query'
+
         self.add_property(
             descr='Volume name',
             name='name',
@@ -258,36 +313,40 @@ class VolumesNamespace(EntityNamespace):
             get='/mountpoint',
             list=True)
 
+        self.add_property(
+            descr='Last scrub time',
+            name='last_scrub_time',
+            get='/scan/end_time',
+            set=None
+        )
+
+        self.add_property(
+            descr='Last scrub errors',
+            name='last_scrub_errors',
+            get='/scan/errors',
+            set=None
+        )
+
         self.primary_key = self.get_mapping('name')
         self.extra_commands = {
+            'create-auto': VolumeCreateCommand(),
             'find': FindVolumesCommand(),
             'import': ImportVolumeCommand(),
-            'detach': DetachVolumeCommand()
+            'detach': DetachVolumeCommand(),
         }
 
-        self.entity_commands = lambda vol: {
-            'show-topology': ShowTopologyCommand(self, vol),
-            'show-disks': ShowDisksCommand(self, vol),
-            'scrub': ScrubCommand(vol)
+        self.entity_commands = lambda this: {
+            'show-topology': ShowTopologyCommand(this),
+            'show-disks': ShowDisksCommand(this),
+            'scrub': ScrubCommand(this),
+            'add-vdev': AddVdevCommand(this),
+            'delete-vdev': DeleteVdevCommand(this)
         }
 
         self.entity_namespaces = lambda this: [
             DatasetsNamespace('datasets', self.context, this),
             PropertiesNamespace('properties', self.context, this)
         ]
-
-    def query(self, params):
-        return self.context.connection.call_sync('volumes.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync(
-            'volumes.query',
-            [('name', '=', name)],
-            {'single': True}
-        )
-
-    def delete(self, name):
-        self.context.submit_task('volume.destroy', name)
 
 
 def iterate_vdevs(topology):

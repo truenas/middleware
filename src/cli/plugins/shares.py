@@ -26,7 +26,7 @@
 #####################################################################
 
 import gettext
-from namespace import Namespace, EntityNamespace, Command, IndexCommand, description
+from namespace import Namespace, EntityNamespace, Command, IndexCommand, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import ValueType, output_list
 
 
@@ -62,11 +62,16 @@ class SharesNamespace(Namespace):
         ]
 
 
-class BaseSharesNamespace(EntityNamespace):
+class BaseSharesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
     def __init__(self, name, type_name, context):
         super(BaseSharesNamespace, self).__init__(name, context)
 
         self.type_name = type_name
+        self.query_call = 'shares.query'
+        self.create_task = 'share.create'
+        self.update_task = 'share.update'
+        self.delete_task = 'share.delete'
+
         self.skeleton_entity = {
             'type': type_name,
             'properties': {}
@@ -88,28 +93,13 @@ class BaseSharesNamespace(EntityNamespace):
         )
 
         self.primary_key = self.get_mapping('name')
-        self.entity_commands = lambda name: {
-            'clients': ConnectedUsersCommand(name)
+        self.entity_commands = lambda this: {
+            'clients': ConnectedUsersCommand(this)
         }
 
     def query(self, params):
         params.append(('type', '=', self.type_name))
         return self.context.connection.call_sync('shares.query', params)
-
-    def get_one(self, name):
-        return self.context.connection.call_sync(
-            'shares.query',
-            [('id', '=', name)],
-            {'single': True}
-        )
-
-    def save(self, entity, diff, new=False):
-        if new:
-            self.context.submit_task('share.create', entity)
-            return
-
-    def delete(self, name):
-        self.context.submit_task('share.delete', name)
 
 
 @description("NFS shares")
@@ -156,9 +146,37 @@ class AFPSharesNamespace(BaseSharesNamespace):
         self.add_property(
             descr='Allowed hosts/networks',
             name='hosts',
-            get='/properties/hosts',
-            list=True,
+            get='/properties/hosts-allow',
             type=ValueType.SET
+        )
+
+        self.add_property(
+            descr='Denied hosts/networks',
+            name='hosts',
+            get='/properties/hosts-deny',
+            type=ValueType.SET
+        )
+
+        self.add_property(
+            descr='Allowed users/groups',
+            name='hosts',
+            get='/properties/users-allow',
+            type=ValueType.SET
+        )
+
+        self.add_property(
+            descr='Denied users/groups',
+            name='hosts',
+            get='/properties/users-deny',
+            type=ValueType.SET
+        )
+
+        self.add_property(
+            descr='Read only',
+            name='read-only',
+            get='/properties/read-only',
+            list=True,
+            type=ValueType.BOOLEAN
         )
 
         self.add_property(
