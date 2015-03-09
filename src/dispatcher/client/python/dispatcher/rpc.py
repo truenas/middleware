@@ -134,6 +134,9 @@ class RpcContext(object):
         except Exception:
             raise RpcException(errno.EFAULT, traceback.format_exc())
 
+        if inspect.isgenerator(result):
+            result = list(result)
+
         self.instances[service].sender = None
         return result
 
