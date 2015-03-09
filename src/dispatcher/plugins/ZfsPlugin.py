@@ -481,7 +481,7 @@ class ZfsCloneTask(ZfsBaseTask):
 
 
 def get_disk_names(dispatcher, pool):
-    return ['disk:' + dispatcher.call_sync('disk.partition_to_disk', x) for x in pool.disks]
+    return ['disk:' + dispatcher.call_sync('disks.partition_to_disk', x) for x in pool.disks]
 
 
 def zpool_create_resources(dispatcher, pool):
