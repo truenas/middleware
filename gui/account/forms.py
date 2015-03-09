@@ -686,7 +686,10 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                 'dijitValidationTextBoxDisabled'
             )
         else:
-            self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
+            try:
+                self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
+            except:
+                pass
             self.fields['allow'] = forms.BooleanField(
                 label=_("Allow repeated GIDs"),
                 initial=False,
