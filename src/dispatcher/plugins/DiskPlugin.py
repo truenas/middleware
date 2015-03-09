@@ -45,10 +45,15 @@ class DiskProvider(Provider):
     @query('definitions/disk')
     def query(self, filter=None, params=None):
         result = []
+        single = params.pop('single', False) if params else False
         for disk in self.datastore.query('disks', *(filter or []), **(params or {})):
             disk['online'] = self.is_online(disk['path'])
             disk['label-path'] = ''
             disk['uuid-path'] = ''
+
+            if single:
+                return disk
+
             result.append(disk)
 
         return result
@@ -473,7 +478,7 @@ def _init(dispatcher):
     })
 
     dispatcher.require_collection('disks')
-    dispatcher.register_provider('disk', DiskProvider)
+    dispatcher.register_provider('disks', DiskProvider)
     dispatcher.register_event_handler('system.device.attached', on_device_attached)
     dispatcher.register_event_handler('system.device.detached', on_device_detached)
     dispatcher.register_event_handler('system.device.mediachange', on_device_mediachange)
