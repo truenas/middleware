@@ -80,10 +80,10 @@ class CreateNFSShareTask(Task):
     '$ref': 'definitions/nfs-share'
 })
 class UpdateNFSShareTask(Task):
-    def describe(self, name):
+    def describe(self, name, updated_fields):
         return "Updating NFS share {0}".format(name)
 
-    def verify(self, name):
+    def verify(self, name, updated_fields):
         return ['service:nfs']
 
     def run(self, name, updated_fields):
