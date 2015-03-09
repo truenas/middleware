@@ -10,7 +10,7 @@ COMPANY?="iXsystems"
 BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
+IX_INTERNAL_PATH?="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -92,6 +92,13 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
+
+jenkins: release
+	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
+	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
+	cp ReleaseNotes UPGRADING "objs/${STAGEDIR}/"
+	[ -f ChangeLog ] && cp ChangeLog "objs/${STAGEDIR}/"
+	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 
 release-push: release
 	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
