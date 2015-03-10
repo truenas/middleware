@@ -1377,16 +1377,7 @@ class iSCSITargetPortalIPForm(ModelForm):
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
         ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        for interface in Interfaces.objects.all():
-            if interface.int_ipv4address:
-                ips.append((interface.int_ipv4address, interface.int_ipv4address))
-            elif interface.int_ipv6address:
-                ips.append((interface.int_ipv6address, interface.int_ipv6address))
-            for alias in interface.alias_set.all():
-                if alias.alias_v4address:
-                    ips.append((alias.alias_v4address, alias.alias_v4address))
-                elif alias.alias_v6address:
-                    ips.append((alias.alias_v6address, alias.alias_v6address))
+        ips.extend(list(choices.IPChoices()))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(
