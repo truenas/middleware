@@ -81,8 +81,8 @@ def ListClones():
     for line in stdout.strip('\n').split('\n'):
         fields = line.split('\t')
         name = fields[0]
-        if len(fields) > 4 and fields[4] != "-":
-            name = fields[4]
+        if len(fields) > 5 and fields[5] != "-":
+            name = fields[5]
         rv.append({
             'name': name,
             'active': fields[1],
