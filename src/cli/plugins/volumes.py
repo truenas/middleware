@@ -227,9 +227,9 @@ class DatasetsNamespace(EntityNamespace):
     def delete(self, name):
         self.context.submit_task('volume.dataset.delete', self.parent.entity['name'], name)
 
-    def save(self, entity, diff, new=False):
+    def save(self, this, new=False):
         if new:
-            self.context.submit_task('volume.dataset.create', self.parent.entity['name'], entity['name'])
+            self.context.submit_task('volume.dataset.create', self.parent.entity['name'], this.entity['name'])
             return
 
 
@@ -284,6 +284,7 @@ class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
         super(VolumesNamespace, self).__init__(name, context)
         #self.create_command = VolumeCreateCommand
 
+        self.primary_key_name = 'name'
         self.delete_task = 'volume.destroy'
 
         self.skeleton_entity = {
