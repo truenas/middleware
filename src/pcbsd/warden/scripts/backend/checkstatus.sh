@@ -40,8 +40,15 @@ for mountpoint in $(mount | grep -e "${JAILDIR}/" | cut -d" " -f3); do
   hasmount="1"
 done
 
+# A jail with spaces in the name? quote it
+JAILNAME2="$(echo "${JAILNAME}"|awk '{ print $1 }')"
+if [ "${JAILNAME}" != "${JAILNAME2}" ]
+then
+    JAILNAME="\"${JAILNAME}\""
+fi
+
 # Check if a jail with the same name is running AND if the jail is active
-JAIL="`jls name|awk -v jail="^${JAILNAME}\$" '$1 ~ jail { print $1 }'`" # for running
+JAIL="`jls name|awk -v jail="^${JAILNAME}\$" '$0 ~ jail { print $0 }'`" # for running
 JID="`jls | grep "${JAILDIR}"$ | tr -s " " | cut -d " " -f 2`" # for active with the correct dataset
 if [ -n "${JID}" -a -n "${JAIL}" ]; then
   exit 0
