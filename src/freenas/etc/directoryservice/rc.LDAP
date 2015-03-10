@@ -287,7 +287,10 @@ __SQL__
 
 LDAP_load_values()
 {
-	LDAP_generate_config
+	if ! LDAP_generate_config
+	then
+		return 1
+	fi
 
 	exec 3<&0
 	exec 0<"${LDAP_CONFIG_FILE}"
@@ -300,12 +303,19 @@ LDAP_load_values()
 		LDAP_set "${var}" "${val}"
 	done
 	exec 0<&3
+
+	return 0
 }
 
 LDAP_generate_config()
 {
+	local res=0
+
 	${LDAP_TOOL} get config_file > "${LDAP_CONFIG_FILE}"
+	res=$?
 	/bin/chmod 600 "${LDAP_CONFIG_FILE}"
+
+	return ${res}
 }
 
 LDAP_load_bindpw()
@@ -340,8 +350,13 @@ __SQL__
 
 LDAP_init()
 {
-	LDAP_load_values
+	if ! LDAP_load_values
+	then
+		return 1
+	fi
+
 	LDAP_load_bindpw
+	return 0
 }
 
 ldap_enabled()

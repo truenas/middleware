@@ -28,8 +28,9 @@
 from shlex import split as shlex_split
 from subprocess import Popen, PIPE
 from os import system as __system
-import logging
 import ctypes
+import logging
+import os
 import signal
 
 
@@ -65,6 +66,35 @@ def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
     return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
         close_fds=True, preexec_fn=preexec_fn)
 
+
+def run(command, important=True, logger=log, allowfork=False, quiet=False, timeout=-1):
+    class run_alarm:
+        pass
+    def run_alarm_handler(sig, frame):
+        raise run_alarm
+
+    stdout = stderr = None
+
+    p = pipeopen(command, important, logger, allowfork, quiet)
+    if timeout != -1:
+        signal.signal(signal.SIGALRM, run_alarm_handler)
+        signal.alarm(timeout)
+
+    try:
+        (stdout, stderr) = p.communicate()
+        if timeout != -1:
+            signal.alarm(0)
+
+    except run_alarm:
+        try:
+            os.kill(p.pid, signal.SIGKILL)
+
+        except OSError:
+            pass 
+
+        return (-9, None, None)
+
+    return (p.returncode, stdout, stderr)
 
 
 def system(command, important=True, logger=log):

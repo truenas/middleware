@@ -34,7 +34,12 @@ class ADToolShell(cmd.Cmd):
 
     def __init__(self, **kwargs):
         cmd.Cmd.__init__(self)
-        self.adc = ActiveDirectoryConfig(flags=FLAGS_DBINIT)
+        try:
+            self.adc = ActiveDirectoryConfig(flags=FLAGS_DBINIT)
+        except Exception as e:
+            print >> sys.stderr, "ERROR: %s" % e
+            sys.exit(1)
+
         self.ado = ActiveDirectory.objects.all()[0]
         self.flags = 0
 
