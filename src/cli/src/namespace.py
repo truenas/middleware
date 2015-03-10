@@ -270,8 +270,8 @@ class ItemNamespace(Namespace):
 
     def on_leave(self):
         if self.modified:
-            output_msg('Object was modified.'
-                       ' Type either "save" or "discard" to leave')
+            output_msg('Object was modified. '
+                       'Type either "save" or "discard" to leave')
             return False
 
         return True
@@ -370,7 +370,6 @@ class EntityNamespace(Namespace):
 
         def save(self):
             self.parent.save(self, not self.saved)
-            self.saved = True
 
     def __init__(self, name, context):
         super(EntityNamespace, self).__init__(name)
@@ -394,8 +393,24 @@ class EntityNamespace(Namespace):
         def run(self, context, args, kwargs, opargs):
             cols = []
             params = []
+            options = {}
 
             for k, v in kwargs.items():
+                if k == 'limit':
+                    options['limit'] = int(v)
+                    continue
+
+                if k == 'sort':
+                    options['sort'] = v
+                    continue
+
+                if k == 'dir':
+                    options['dir'] = v
+                    continue
+
+                if not self.parent.has_property(k):
+                    raise CommandException('Unknown field {0}'.format(k))
+
                 prop = self.parent.get_mapping(k)
                 v = read_value(v, prop.type)
                 params.append((k, '=', v))
@@ -408,7 +423,7 @@ class EntityNamespace(Namespace):
             for col in filter(lambda x: x.list, self.parent.property_mappings):
                 cols.append(Column(col.descr, col.get, col.type))
 
-            output_table(self.parent.query(params), cols)
+            output_table(self.parent.query(params, options), cols)
 
     @description("Creates new item")
     class CreateEntityCommand(Command):
@@ -416,17 +431,17 @@ class EntityNamespace(Namespace):
             self.parent = parent
 
         def run(self, context, args, kwargs, opargs):
-            entity = copy.deepcopy(self.parent.skeleton_entity)
+            ns = EntityNamespace.SingleItemNamespace(None, self.parent)
+            ns.orig_entity = copy.deepcopy(self.parent.skeleton_entity)
+            ns.entity = copy.deepcopy(self.parent.skeleton_entity)
 
             if not args and not kwargs:
-                ns = EntityNamespace.SingleItemNamespace(None, self.parent)
-                ns.entity = copy.deepcopy(self.parent.skeleton_entity)
                 context.ml.cd(ns)
                 return
 
             if len(args) > 0:
                 prop = self.parent.primary_key
-                prop.do_set(entity, args.pop(0))
+                prop.do_set(ns.entity, args.pop(0))
 
             for k, v in kwargs.items():
                 if not self.parent.has_property(k):
@@ -435,9 +450,9 @@ class EntityNamespace(Namespace):
 
             for k, v in kwargs.items():
                 prop = self.parent.get_mapping(k)
-                prop.do_set(entity, v)
+                prop.do_set(ns.entity, v)
 
-            self.parent.save(self, new=True)
+            self.parent.save(ns, new=True)
 
         def complete(self, context, tokens):
             return [x.name + '=' for x in self.parent.property_mappings]
@@ -493,21 +508,25 @@ class EntityNamespace(Namespace):
         if self.primary_key is None:
             return
 
-        for i in self.query([]):
+        for i in self.query([], {}):
             name = self.primary_key.do_get(i)
             yield self.SingleItemNamespace(name, self)
 
 
 class RpcBasedLoadMixin(object):
-    def query(self, params):
+    def __init__(self, *args, **kwargs):
+        super(RpcBasedLoadMixin, self).__init__(*args, **kwargs)
+        self.primary_key_name = 'id'
+
+    def query(self, params, options):
         return self.context.connection.call_sync(
             self.query_call,
-            params)
+            params, options)
 
     def get_one(self, name):
         return self.context.connection.call_sync(
             self.query_call,
-            [(self.primary_key.name, '=', name)],
+            [(self.primary_key_name, '=', name)],
             {'single': True})
 
 
@@ -527,7 +546,7 @@ class TaskBasedSaveMixin(object):
 
         self.context.submit_task(
             self.update_task,
-            this.entity['id'],
+            this.orig_entity['id'],
             this.get_diff(),
             callback=lambda s: self.post_save(this, s))
 
