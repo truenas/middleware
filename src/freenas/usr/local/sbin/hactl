@@ -29,6 +29,7 @@ _not = notifier()
 def main(command, quiet):
     if command == "status":
         ret = _not.failover_status()
+        fo_exists = Failover.objects.all().exists():
         if ret == "MASTER":
             print "Node status: Active"
         elif ret == "BACKUP":
@@ -43,13 +44,16 @@ def main(command, quiet):
             if not quiet:
                 print "Node status: Not an HA node"
             sys.exit(0)
-        elif ret == "UNKNOWN" and Failover.objects.all().exists():
+        elif ret == "UNKNOWN" and fo_exists:
             print "Node status: Passive (Master mode unreachable)"
 
-        if Failover.objects.all()[0].disabled is True:
-            print "Failover status: Disabled"
+        if fo_exists:
+            if Failover.objects.all()[0].disabled is True:
+                print "Failover status: Disabled"
+            else:
+                print "Failover status: Enabled"
         else:
-            print "Failover status: Enabled"
+                print "Failover status: Not configured"
 
     elif command == "enable":
         if Failover.objects.all()[0].disabled is True:
