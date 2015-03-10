@@ -1150,8 +1150,8 @@ def smb4_grant_user_rights(user):
     
 def smb4_grant_rights():
     args = [
-        "/usr/local/bin/pdbedit",
-        "-L"
+        "/usr/local/bin/wbinfo",
+        "-u"
     ]
 
     p = pipeopen(string.join(args, ' '))

@@ -34,7 +34,14 @@ class LDAPToolShell(cmd.Cmd):
 
     def __init__(self, **kwargs):
         cmd.Cmd.__init__(self)
-        self.lc = LDAPConfig(flags=FLAGS_DBINIT)
+        try:
+            self.lc = LDAPConfig(flags=FLAGS_DBINIT)
+            self.lc.open() 
+
+        except Exception as e:
+            print >> sys.stderr, "ERROR: %s" % e
+            sys.exit(1)
+
         self.lo = LDAP.objects.all()[0]
         self.flags = 0
 

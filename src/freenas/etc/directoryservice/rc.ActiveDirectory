@@ -1005,7 +1005,10 @@ AD_log()
 
 AD_load_values()
 {
-	AD_generate_config
+	if ! AD_generate_config
+	then
+		return 1
+	fi
 
 	exec 3<&0
 	exec 0<"${AD_CONFIG_FILE}"
@@ -1018,15 +1021,22 @@ AD_load_values()
 		AD_set "${var}" "${val}"
 	done
 	exec 0<&3
+
+	return 0
 }
 
 AD_generate_config()
 {
+	local res=0
+
 	if [ ! -s "${AD_CONFIG_FILE}" ]
 	then
 		${AD_TOOL} get config_file > "${AD_CONFIG_FILE}"
+		res=$?
 		/bin/chmod 600 "${AD_CONFIG_FILE}"
 	fi
+
+	return ${res}
 }
 
 AD_remove_config()
@@ -1066,8 +1076,13 @@ __SQL__
 
 AD_init()
 {
-	AD_load_values
+	if ! AD_load_values
+	then
+		return 1
+	fi
+
 	AD_load_bindpw
+	return 0
 }
 
 activedirectory_enabled()

@@ -615,7 +615,7 @@ class LDAPForm(ModelForm):
             if started is False:
                 started = notifier().start("ldap")
             if started is False:
-                self.instance.ad_enable = False
+                self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
                 raise ServiceFailed("ldap",
                     _("LDAP failed to reload."))
