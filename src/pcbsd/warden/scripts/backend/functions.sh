@@ -2092,7 +2092,7 @@ warden_get_ipv4()
       strip="|cut -f1 -d'/'"
    fi
 
-   ipv4="$(eval cat "${dir}/ipv4" 2>/dev/null ${strip})"
+   ipv4="$(eval cat '"${dir}/ipv4"' 2>/dev/null ${strip})"
 
    echo "${ipv4}"
 }
@@ -2136,7 +2136,7 @@ warden_get_ipv4_defaultrouter()
       strip="|cut -f1 -d'/'"
    fi
 
-   eval cat "${dir}/defaultrouter-ipv4" 2>/dev/null ${strip}
+   eval cat '"${dir}/defaultrouter-ipv4"' 2>/dev/null ${strip}
 }
 
 warden_get_ipv4_bridge()
@@ -2152,7 +2152,7 @@ warden_get_ipv4_bridge()
       strip="|cut -f1 -d'/'"
    fi
 
-   eval cat "${dir}/bridge-ipv4" 2>/dev/null ${strip}
+   eval cat '"${dir}/bridge-ipv4"' 2>/dev/null ${strip}
 }
 
 warden_get_ipv4_bridge_aliases()
@@ -2247,7 +2247,7 @@ warden_get_ipv6()
       strip="|cut -f1 -d'/'"
    fi
 
-   ipv6="$(eval cat "${dir}/ipv6" 2>/dev/null ${strip})"
+   ipv6="$(eval cat '"${dir}/ipv6"' 2>/dev/null ${strip})"
 
    echo "${ipv6}"
 }
@@ -2290,7 +2290,7 @@ warden_get_ipv6_defaultrouter()
       strip="|cut -f1 -d'/'"
    fi
 
-   eval cat "${dir}/defaultrouter-ipv6" 2>/dev/null ${strip}
+   eval cat '"${dir}/defaultrouter-ipv6"' 2>/dev/null ${strip}
 }
 
 warden_get_ipv6_bridge()
@@ -2306,7 +2306,7 @@ warden_get_ipv6_bridge()
       strip="|cut -f1 -d'/'"
    fi
 
-   eval cat "${dir}/bridge-ipv6" 2>/dev/null ${strip}
+   eval cat '"${dir}/bridge-ipv6"' 2>/dev/null ${strip}
 }
 
 warden_get_ipv6_bridge_aliases()
