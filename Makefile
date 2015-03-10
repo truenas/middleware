@@ -5,7 +5,11 @@
 NANO_LABEL?=TrueNAS
 VERSION?=9.3-STABLE
 TRAIN?=${NANO_LABEL}-9.3-STABLE
-FREENAS_KEYFILE=Keys/ix-freenas-key.key
+.ifdef PRODUCTION
+FREENAS_KEYFILE?=Keys/ix-freenas-key.key
+.else
+FREENAS_KEYFILE?=Keys/ix-nightly-key.key
+.endif
 COMPANY?="iXsystems"
 BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
 PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
