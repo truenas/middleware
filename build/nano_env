@@ -158,7 +158,7 @@ add_nano_modules ispfw/ispfw
 add_nano_modules opensolaris
 add_nano_modules pf pflog smbfs
 add_nano_modules udf usb/xhci zfs
-add_nano_modules iscsi
+add_nano_modules iscsi toecore
 add_nano_modules dummynet
 
 if is_truenas ; then
