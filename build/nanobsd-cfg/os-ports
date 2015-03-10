@@ -266,6 +266,7 @@ add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
 add_port net/trafshow
+add_port devel/py-parsing
 
 #
 # These are all for SSSD
