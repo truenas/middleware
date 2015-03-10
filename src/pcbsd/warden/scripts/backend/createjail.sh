@@ -336,6 +336,7 @@ sendmail_submit_enable=\"NO\"
 sendmail_outbound_enable=\"NO\"
 sendmail_msp_queue_enable=\"NO\"
 hostname=\"$(echo ${HOST}|awk '{ print $1 }')\"
+hostname=\"${HOST}\"
 devfs_enable=\"YES\"
 devfs_system_ruleset=\"devfsrules_common\"" > "${JAILDIR}/etc/rc.conf"
 fi
