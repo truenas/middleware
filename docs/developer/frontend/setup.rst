@@ -98,112 +98,112 @@ Screenshots:
 
 .. image:: images/setup/winGUIscreen01.png
    :alt: Cloning of the Freenas repositary.
-   :width: 16.5%
+   :width: 15%
 .. image:: images/setup/winGUIscreen02.png
    :alt: Visual Studio version selection and download.
-   :width: 16.5%
+   :width: 15%
 .. image:: images/setup/winGUIscreen03.png
    :alt: Don't forget to add python.exe to the PATH.
-   :width: 16.5%
+   :width: 15%
 .. image:: images/setup/winGUIscreen04.png
    :alt: Select Use Git from Command Prompt during install.
-   :width: 16.5%
+   :width: 15%
 .. image:: images/setup/winGUIscreen06.png
     :alt: Search for and add OpenSHH and Rsync packages.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen05.gif
     :alt: Add OpenSSH package.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen07.gif
     :alt: Add Rsync package.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen08.png
     :alt: Add path to Cygwin binaries to the PATH.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen09.png
     :alt: Generate ssh key.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen10.png
     :alt: Generate ssh key.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen11.png
     :alt: Generate ssh key.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen12.png
     :alt: Generate ssh key.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen13.png
     :alt: Convert ssh key for use with PuTTY.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen14.png
     :alt: Convert ssh key for use with PuTTY.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen15.png
     :alt: Convert ssh key for use with PuTTY.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen16.png
     :alt: Convert ssh key for use with PuTTY.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen17.png
     :alt: Convert ssh key for use with PuTTY.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen18.png
     :alt: Use ssh key in PuTTY session.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen19.png
     :alt: Navigate to the .ssh directory and edit authorized_keys file.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen20.png
     :alt: Copy your public key to the authorized_keys file and save it.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen21.png
     :alt: Duplicate PuTTY session and check if the private key authentication works.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen22.png
     :alt: Install node.js and make sure that it is added to the PATH.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen23.png
     :alt: Open Command Prompt with Administrator's privileges.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen24.png
     :alt: Make sure your nmp is up to date and install those packages globally.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen25.png
     :alt: Open Command Prompt with common privileges.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen26.png
     :alt: Navigate to the GUI folder of your FreeNAS Repository.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen27.png
     :alt: Run npm install.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen28.png
     :alt: Some errors and warnings can be rendered during this step.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen29.png
     :alt: Run bower install.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen30.png
     :alt: Run grunt.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen31.png
     :alt: Set up a Development target.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen32.png
     :alt: Once you see this your environment is ready.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen33.png
     :alt: Welcome to FreeNAS 10.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen34.png
     :alt: Save your first edit.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen35.png
     :alt: Review your first edit.
-    :width: 16.5%
+    :width: 15%
 .. image:: images/setup/winGUIscreen36.png
     :alt: You are ready for your first commit.
-    :width: 16.5%
+    :width: 15%
 
 Install Additional Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
