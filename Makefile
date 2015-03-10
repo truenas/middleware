@@ -30,7 +30,6 @@ ENV_SETUP+= TRAIN=${TRAIN}
 ENV_SETUP+= UPDATE_USER=sef	# For now, just use sef's account
 ENV_SETUP+= FREENAS_KEYFILE=${FREENAS_KEYFILE}
 ENV_SETUP+= CHANGLOG=ChangeLog
-.endif
 
 .if defined(NANO_ARCH)
  ENV_SETUP+= NANO_ARCH=${NANO_ARCH}
