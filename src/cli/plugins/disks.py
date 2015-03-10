@@ -37,6 +37,7 @@ class DisksNamespace(RpcBasedLoadMixin, EntityNamespace):
         super(DisksNamespace, self).__init__(name, context)
 
         self.query_call = 'disks.query'
+
         self.add_property(
             descr='Disk name',
             name='name',
@@ -74,6 +75,12 @@ class DisksNamespace(RpcBasedLoadMixin, EntityNamespace):
             'format': FormatDiskCommand(this),
             'erase': EraseDiskCommand(this)
         }
+
+    def get_one(self, name):
+        return self.context.connection.call_sync(
+            self.query_call,
+            [('path', '=', os.path.join('/dev', name))],
+            {'single': True})
 
     def get_disposition(self, entity):
         return ''

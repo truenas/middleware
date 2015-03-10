@@ -37,6 +37,7 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
     def __init__(self, name, context):
         super(UsersNamespace, self).__init__(name, context)
 
+        self.primary_key_name = 'username'
         self.query_call = 'users.query'
         self.create_task = 'users.create'
         self.update_task = 'users.update'
@@ -111,6 +112,7 @@ class GroupsNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
     def __init__(self, name, context):
         super(GroupsNamespace, self).__init__(name, context)
 
+        self.primary_key_name = 'name'
         self.query_call = 'groups.query'
         self.create_task = 'groups.create'
         self.update_task = 'groups.update'
