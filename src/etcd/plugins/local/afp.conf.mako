@@ -22,6 +22,6 @@ ${opt("hosts allow", share["properties"].get("users-deny"))}\
 ${opt("hosts deny", share["properties"].get("hosts-allow"))}\
 ${opt("rolist", share["properties"].get("ro-list"))}\
 ${opt("rwlist", share["properties"].get("rw-list"))}\
-${opt("time machine", share["properties"].get("time-machine", "no"))}\
-
+${opt("time machine", "yes" if share["properties"].get("time-machine") else "no")}\
+${opt("read only", "yes" if share["properties"].get("read-only") else "no")}\
 % endfor
