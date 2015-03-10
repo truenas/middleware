@@ -77,7 +77,11 @@ adctl_start()
 	local cifs_started=0	
 	local ad_started=0
 
-	AD_init
+	if ! AD_init
+	then
+		activedirectory_set 0
+		return 1
+	fi
 
 	if cifs_enabled
 	then

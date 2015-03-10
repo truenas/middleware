@@ -43,7 +43,10 @@ import types
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
 
-from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.pipesubr import (
+    pipeopen,
+    run
+)
 
 from freenasUI.common.ssl import (
     get_certificate_path,
@@ -95,6 +98,7 @@ class FreeNAS_ActiveDirectory_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
 class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
+
 
 class FreeNAS_LDAP_Directory(object):
     @staticmethod
@@ -637,10 +641,10 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 self.keytab_principal
             ]
 
-            p = pipeopen(string.join(args, ' '))
-            kinit_out = p.communicate()
-            if p.returncode == 0:
-                kinit = True 
+            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            if returncode == 0:
+                kinit = True
+                res = True
 
         elif self.krb_realm and self.binddn and self.bindpw:
             user = self.get_user_by_DN(self.binddn)
@@ -664,12 +668,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 "%s" % principal
             ]
 
-            p = pipeopen(string.join(args, ' '))
-            kinit_out = p.communicate()
-            os.unlink(tmpfile)
+            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            if returncode == 0:
+                kinit = True
+                res = True
 
-            if p.returncode == 0:
-                kinit = True 
+            os.unlink(tmpfile)
 
         if kinit:
             i = 0
@@ -1359,12 +1363,12 @@ class FreeNAS_ActiveDirectory_Base(object):
                 self.keytab_principal
             ]
 
-            p = pipeopen(string.join(args, ' '))
-            kinit_out = p.communicate()
-            if p.returncode != 0:
-                return False
+            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            if returncode != 0:
+                res = False 
 
-            kinit = True 
+            if res != False:
+                kinit = True 
 
         elif self.krb_realm and self.bindname and self.bindpw:
             krb_principal = self.get_kerberos_principal_from_cache()
@@ -1385,14 +1389,14 @@ class FreeNAS_ActiveDirectory_Base(object):
                 "%s" % principal
             ]
 
-            p = pipeopen(string.join(args, ' '))
-            kinit_out = p.communicate()
+            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            if returncode != 0:
+                res = False 
+
+            if res != False:
+                kinit = True 
+
             os.unlink(tmpfile)
-
-            if p.returncode != 0:
-                return False
-
-            kinit = True 
 
         if kinit:
             i = 0

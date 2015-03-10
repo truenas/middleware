@@ -76,7 +76,11 @@ ldapctl_start()
 	local realm
 	local keytab
 
-	LDAP_init
+	if ! LDAP_init
+	then
+		ldap_set 0
+		return 1
+	fi
 
 	if ldap_enabled
 	then
