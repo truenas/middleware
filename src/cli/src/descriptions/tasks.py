@@ -33,7 +33,8 @@ _ = t.ugettext
 
 
 def get_username(context, uid):
-    return context.connection.call_sync('users.query', [('id', '=', uid)])[0]['username']
+    u = context.connection.call_sync('users.query', [('id', '=', uid)], {'single': True})
+    return u['username'] if u else '<unknown>'
 
 tasks = {
     'zfs.pool.scrub': (_("Scrub volume"), lambda c, a: _("Scrub volume {0}").format(a[0])),
