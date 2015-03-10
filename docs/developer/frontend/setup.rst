@@ -53,16 +53,16 @@ The key tools for Mac OS X are available with graphical installers:
 Windows Development Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Windows is a fully functional yet not a fully supported development environment.
+**Windows is fully functional yet not a fully supported development environment.
 Only Windows 7 and later are even remotely supported.**
 
 The key tools for Windows are available with graphical installers:
   * Microsoft Visual Studio 2010 is the most tested source of a Windows C++ compiler.
     It is available from `MSDN
-    <http://msdn.microsoft.com/en-us/library/dd831853(v=vs.100).aspx>`_ or from `Visual Studio Downloads Website <https://www.visualstudio.com/downloads/download-visual-studio-vs>`_ (registration is required for download from both locations).
-    Version **Visual C++ 2010 Express** is the best free option.
-  * Python 2.7 is needed for interpretation of Python code. Best source of Windowse
-    package would be `The Official Python Website <https://www.python.org/downloads/>`_.
+    <http://msdn.microsoft.com/en-us/library/dd831853(v=vs.100).aspx>`_ or from the `Visual Studio Downloads Website <https://www.visualstudio.com/downloads/download-visual-studio-vs>`_ (registration is required for downloading from both locations).
+    The version **Visual C++ 2010 Express** is the best free option.
+  * Python 2.7 is needed for the interpretation of the Python code. The best source of the Windows
+    package would be the `Official Python Website <https://www.python.org/downloads/>`_.
     Make sure to select *Will be installed on local hard drive* for **add Python.exe to Path** option.
   * Cygwin is required to provide the UNIX-standard tools listed above.
     Cygwin may be downloaded from `Cygwin.com <http://cygwin.com/install.html>`_.
@@ -86,37 +86,39 @@ will be in the Cygwin home folder - you may wish to move them to make
 the path to them easier to enter later.
 
 Recommended Software:
-This software tools are not neccesery for succesfull setup of your Development Enviroment,
+
+These software tools are not necessary for the successful setup of your Development Environment,
 but can render some tasks easier.
   * `SourceTree <http://sourcetreeapp.com/download/>`_ is a powerful Git desktop client for both Mac and Windows.
-  * `Sublime Text <http://www.sublimetext.com/2>`_ is highly customizable text editor well equiped for editing markup & code.
+  * `Sublime Text <http://www.sublimetext.com/2>`_ is a highly customizable text editor, well equipped for editing markup & code.
   * `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is an SSH and telnet client for Windows.
-  * `PuTTYgen <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is a tool for generation and conversion of SSH Keys.
+  * `PuTTYgen <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is a tool for the generation and conversion of SSH Keys.
 
 Screenshots:
+
 .. image:: images/setup/winGUIscreen01.png
-   :alt: Cloning of Freenas repositary.
+   :alt: Cloning of the Freenas repositary.
    :width: 16.5%
 .. image:: images/setup/winGUIscreen02.png
    :alt: Visual Studio version selection and download.
    :width: 16.5%
 .. image:: images/setup/winGUIscreen03.png
-   :alt: Don't forget to add python.exe to tha Path.
+   :alt: Don't forget to add python.exe to the PATH.
    :width: 16.5%
 .. image:: images/setup/winGUIscreen04.png
    :alt: Select Use Git from Command Prompt during install.
    :width: 16.5%
 .. image:: images/setup/winGUIscreen06.png
-    :alt: Search for and add OpenSHH and Rsync package.
+    :alt: Search for and add OpenSHH and Rsync packages.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen05.gif
     :alt: Add OpenSSH package.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen07.gif
-    :alt: Add rsync package.
+    :alt: Add Rsync package.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen08.png
-    :alt: Add path to the Cygwin binaries to the PATH.
+    :alt: Add path to Cygwin binaries to the PATH.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen09.png
     :alt: Generate ssh key.
@@ -155,19 +157,19 @@ Screenshots:
     :alt: Copy your public key to the authorized_keys file and save it.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen21.png
-    :alt: Duplicate PuTTY session and check if private key authentication works.
+    :alt: Duplicate PuTTY session and check if the private key authentication works.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen22.png
     :alt: Install node.js and make sure that it is added to the PATH.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen23.png
-    :alt: Open Command Prompt with Administrator's privilidges.
+    :alt: Open Command Prompt with Administrator's privileges.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen24.png
-    :alt: Make sure your nmp is up to date and install those packages globaly.
+    :alt: Make sure your nmp is up to date and install those packages globally.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen25.png
-    :alt: Open Command Prompt with common privildges.
+    :alt: Open Command Prompt with common privileges.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen26.png
     :alt: Navigate to the GUI folder of your FreeNAS Repository.
@@ -176,7 +178,7 @@ Screenshots:
     :alt: Run npm install.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen28.png
-    :alt: Some errors ans warning can be rendered during this step.
+    :alt: Some errors and warnings can be rendered during this step.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen29.png
     :alt: Run bower install.
@@ -188,7 +190,7 @@ Screenshots:
     :alt: Set up a Development target.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen32.png
-    :alt: Once you see this your enviroment is ready.
+    :alt: Once you see this your environment is ready.
     :width: 16.5%
 .. image:: images/setup/winGUIscreen33.png
     :alt: Welcome to FreeNAS 10.
