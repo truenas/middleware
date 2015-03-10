@@ -53,16 +53,17 @@ The key tools for Mac OS X are available with graphical installers:
 Windows Development Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Windows is not a fully supported development environment.
+**Windows is a fully functional yet not a fully supported development environment.
 Only Windows 7 and later are even remotely supported.**
 
 The key tools for Windows are available with graphical installers:
-  * Microsoft Visual Studio 2010 is the most tested source of a C++ compiler
-    Windows. It is available from `Microsoft Visual Studio 2010
-    <http://msdn.microsoft.com/en-us/library/dd831853(v=vs.100).aspx>`_.
-  * Python 2.7 is needed for interpreting of Python code. Best source of Windowse
+  * Microsoft Visual Studio 2010 is the most tested source of a Windows C++ compiler.
+    It is available from `MSDN
+    <http://msdn.microsoft.com/en-us/library/dd831853(v=vs.100).aspx>`_ or from `Visual Studio Downloads Website <https://www.visualstudio.com/downloads/download-visual-studio-vs>`_ (registration is required for download from both locations).
+    Version **Visual C++ 2010 Express** is the best free option.
+  * Python 2.7 is needed for interpretation of Python code. Best source of Windowse
     package would be `The Official Python Website <https://www.python.org/downloads/>`_.
-    Make sure to select *add Python to PATH* option.
+    Make sure to select *Will be installed on local hard drive* for **add Python.exe to Path** option.
   * Cygwin is required to provide the UNIX-standard tools listed above.
     Cygwin may be downloaded from `Cygwin.com <http://cygwin.com/install.html>`_.
     Install Cygwin with all the recommended packages, plus rsync and openssh.
@@ -73,7 +74,7 @@ The key tools for Windows are available with graphical installers:
   * ``git`` is available at `git-scm.org <http://git-scm.com/downloads>`_.
 
 You will have to add the Cygwin binaries to the Windows path manually. To do
-this on Windows 7, go to the "System" control panel item and click on
+this on Windows 7 or 8, go to the "System" control panel item and click on
 "Advanced System Settings" in the left column. Next, go to the
 "Advanced" panel and click "Environment Variables". From there, find
 "Path" in the "System Variables" list and append a semicolon followed by
@@ -83,6 +84,124 @@ If you don't already have an ssh keypair you wish to use, run the
 command ``ssh-keygen`` from the Cygwin64 Terminal. By default, the keys
 will be in the Cygwin home folder - you may wish to move them to make
 the path to them easier to enter later.
+
+Recommended Software:
+This software tools are not neccesery for succesfull setup of your Development Enviroment,
+but can render some tasks easier.
+  * `SourceTree <http://sourcetreeapp.com/download/>`_ is a powerful Git desktop client for both Mac and Windows.
+  * `Sublime Text <http://www.sublimetext.com/2>`_ is highly customizable text editor well equiped for editing markup & code.
+  * `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is an SSH and telnet client for Windows.
+  * `PuTTYgen <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is a tool for generation and conversion of SSH Keys.
+
+Screenshots:
+.. image:: images/setup/winGUIscreen01.png
+   :alt: Cloning of Freenas repositary.
+   :width: 16.5%
+.. image:: images/setup/winGUIscreen02.png
+   :alt: Visual Studio version selection and download.
+   :width: 16.5%
+.. image:: images/setup/winGUIscreen03.png
+   :alt: Don't forget to add python.exe to tha Path.
+   :width: 16.5%
+.. image:: images/setup/winGUIscreen04.png
+   :alt: Select Use Git from Command Prompt during install.
+   :width: 16.5%
+.. image:: images/setup/winGUIscreen06.png
+    :alt: Search for and add OpenSHH and Rsync package.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen05.gif
+    :alt: Add OpenSSH package.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen07.gif
+    :alt: Add rsync package.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen08.png
+    :alt: Add path to the Cygwin binaries to the PATH.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen09.png
+    :alt: Generate ssh key.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen10.png
+    :alt: Generate ssh key.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen11.png
+    :alt: Generate ssh key.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen12.png
+    :alt: Generate ssh key.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen13.png
+    :alt: Convert ssh key for use with PuTTY.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen14.png
+    :alt: Convert ssh key for use with PuTTY.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen15.png
+    :alt: Convert ssh key for use with PuTTY.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen16.png
+    :alt: Convert ssh key for use with PuTTY.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen17.png
+    :alt: Convert ssh key for use with PuTTY.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen18.png
+    :alt: Use ssh key in PuTTY session.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen19.png
+    :alt: Navigate to the .ssh directory and edit authorized_keys file.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen20.png
+    :alt: Copy your public key to the authorized_keys file and save it.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen21.png
+    :alt: Duplicate PuTTY session and check if private key authentication works.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen22.png
+    :alt: Install node.js and make sure that it is added to the PATH.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen23.png
+    :alt: Open Command Prompt with Administrator's privilidges.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen24.png
+    :alt: Make sure your nmp is up to date and install those packages globaly.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen25.png
+    :alt: Open Command Prompt with common privildges.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen26.png
+    :alt: Navigate to the GUI folder of your FreeNAS Repository.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen27.png
+    :alt: Run npm install.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen28.png
+    :alt: Some errors ans warning can be rendered during this step.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen29.png
+    :alt: Run bower install.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen30.png
+    :alt: Run grunt.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen31.png
+    :alt: Set up a Development target.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen32.png
+    :alt: Once you see this your enviroment is ready.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen33.png
+    :alt: Welcome to FreeNAS 10.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen34.png
+    :alt: Save your first edit.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen35.png
+    :alt: Review your first edit.
+    :width: 16.5%
+.. image:: images/setup/winGUIscreen36.png
+    :alt: You are ready for your first commit.
+    :width: 16.5%
 
 Install Additional Packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
