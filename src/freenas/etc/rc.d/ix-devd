@@ -295,6 +295,7 @@ if [ \${EVENT} = "LINK_DOWN" ]; then
 	echo "\${SUBSYSTEM} is now \${STATUS0}" | logger
 	if [ \${STATUS0} = "MASTER" ]; then
 		echo "Ignoring state on \${SUBSYSTEM} because it changed back to MASTER after 2 seconds." | logger
+		rm -f ${FAILOVER_STATE}\${EVENT}
 		exit 1;
 	fi
     fi
