@@ -207,7 +207,7 @@ cdef class ZFS(object):
         pools = <object>arg
         pools.append(<uintptr_t>handle)
 
-    def __make_vdev_tree(self, topology):
+    def make_vdev_tree(self, topology):
         root = ZFSVdev(self)
         root.type = 'root'
         root.children = topology['data']
@@ -282,7 +282,7 @@ cdef class ZFS(object):
         return ZFSDataset(self, ZFSPool(self, <uintptr_t>pool, False), <uintptr_t>handle)
 
     def create(self, name, topology, opts, fsopts):
-        root = self.__make_vdev_tree(topology)
+        root = self.make_vdev_tree(topology)
         cdef uintptr_t croot = root.nvlist.handle()
         cdef uintptr_t copts = opts.handle()
         cdef uintptr_t cfsopts = fsopts.handle()
@@ -593,15 +593,18 @@ cdef class ZFSPool(object):
 
     property root_dataset:
         def __get__(self):
-            return ZFSDataset(
-                self.root,
-                self,
-                <uintptr_t>libzfs.zfs_open(
-                    <libzfs.libzfs_handle_t*>self.root.handle(),
-                    self.name,
-                    zfs.ZFS_TYPE_FILESYSTEM
-                )
+            cdef libzfs.zfs_handle_t* handle
+
+            handle = libzfs.zfs_open(
+                <libzfs.libzfs_handle_t*>self.root.handle(),
+                self.name,
+                zfs.ZFS_TYPE_FILESYSTEM
             )
+
+            if handle == NULL:
+                raise ZFSException(Error.OPENFAILED, 'Cannot open root dataset')
+
+            return ZFSDataset(self.root, self, <uintptr_t>handle)
 
     property data_vdevs:
         def __get__(self):
@@ -680,8 +683,11 @@ cdef class ZFSPool(object):
     def destroy(self, name):
         pass
 
-    def attach_vdev(self, vdev):
-        pass
+    def attach_vdevs(self, vdevs_tree):
+        cdef nvpair.nvlist_t* nvl
+        nvl = <nvpair.nvlist_t*><uintptr_t>vdevs_tree.nvlist.handle()
+        if libzfs.zpool_add(self._zpool, nvl) != 0:
+            raise ZFSException(self.root.errno, self.root.errstr)
 
     def delete(self):
         if libzfs.zpool_destroy(self._zpool, "destroy") != 0:
