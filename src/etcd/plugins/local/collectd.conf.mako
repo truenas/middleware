@@ -17,7 +17,6 @@ LoadPlugin swap
 LoadPlugin uptime
 LoadPlugin syslog
 LoadPlugin zfs_arc
-LoadPlugin python
 LoadPlugin unixsock
 LoadPlugin write_graphite
 
