@@ -29,7 +29,7 @@ _not = notifier()
 def main(command, quiet):
     if command == "status":
         ret = _not.failover_status()
-        fo_exists = Failover.objects.all().exists():
+        fo_exists = Failover.objects.all().exists()
         if ret == "MASTER":
             print "Node status: Active"
         elif ret == "BACKUP":
