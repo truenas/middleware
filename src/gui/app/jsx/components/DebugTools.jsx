@@ -9,6 +9,9 @@
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
+// Events
+var EventBus = require("./DebugTools/EventBus");
+
 // Tabs
 var RPC           = require("./DebugTools/RPC");
 var Events        = require("./DebugTools/Events");
@@ -19,6 +22,7 @@ var Terminal      = require("./DebugTools/Terminal");
 // Local variables
 var initialPanelHeight;
 var initialY;
+
 
 var DebugTools = React.createClass({
 
@@ -56,21 +60,25 @@ var DebugTools = React.createClass({
 
   , handleKeypress: function( event ) {
       if ( event.which === 192 && event.ctrlKey && event.shiftKey ) {
-
-        if ( this.state.isVisible ) {
-          this.setState({ isVisible: false });
-        } else {
-          this.setState({ isVisible: true });
-        }
-
+        this.toggleVisibility();
       }
     }
 
+  , toggleVisibility: function() {
+      if ( this.state.isVisible ) {
+        this.setState({ isVisible: false });
+      } else {
+        this.setState({ isVisible: true });
+      }
+  }
+
   , componentDidMount: function() {
+      EventBus.addListener( this.toggleVisibility );
       window.addEventListener("keyup", this.handleKeypress );
     }
 
   , componentWillUnmount: function() {
+      EventBus.removeListener( this.toggleVisibility );
       window.removeEventListener("keyup", this.handleKeypress );
     }
 

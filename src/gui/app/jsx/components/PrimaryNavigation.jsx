@@ -1,3 +1,8 @@
+// PRIMARY NAVIGATION
+// ==================
+// Left sidebar with navigation links for the primary sections of the FreeNAS 10
+// user interface.
+
 "use strict";
 
 var React = require("react");
@@ -5,8 +10,10 @@ var React = require("react");
 var Router = require("react-router");
 var Link   = Router.Link;
 
-var TWBS   = require("react-bootstrap");
-var Icon   = require("./Icon");
+var TWBS = require("react-bootstrap");
+var Icon = require("./Icon");
+
+var EventBus = require("./DebugTools/EventBus");
 
 // Path definitions
 // TODO: Convert to Flux or other external file
@@ -63,6 +70,7 @@ var paths = [
     , status  : null
   }
 ];
+
 var menuTiming = 600;
 
 var PrimaryNavigation = React.createClass({
@@ -160,6 +168,8 @@ var PrimaryNavigation = React.createClass({
           </div>
 
           { paths.map( createNavItem ) }
+
+          <button className="btn btn-info primary-nav-debug-button" onClick={ function() { EventBus.emitToggle(); } }>Toggle Debug Tools</button>
 
         </TWBS.Nav>
       );
