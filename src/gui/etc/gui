@@ -8,7 +8,7 @@
 
 . /etc/rc.subr
 
-name="dispatcher"
+name="gui"
 pidfile="/var/run/node.pid"
 command="/usr/sbin/daemon"
 start_precmd="prestart"
