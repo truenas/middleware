@@ -971,7 +971,7 @@ class FileConnection(WebSocketApplication, EventEmitter):
 
 
 def run(d, args):
-    setproctitle.setproctitle('server')
+    setproctitle.setproctitle('dispatcher')
     monkey.patch_all()
 
     # Signal handlers
