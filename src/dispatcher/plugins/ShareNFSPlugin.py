@@ -51,7 +51,7 @@ class NFSSharesProvider(Provider):
 @description("Adds new NFS share")
 @accepts({
     'title': 'share',
-    '$ref': 'definitions/nfs-share'
+    '$ref': 'nfs-share'
 })
 class CreateNFSShareTask(Task):
     def describe(self, share):
@@ -63,8 +63,8 @@ class CreateNFSShareTask(Task):
     def run(self, share):
         self.datastore.insert('shares', share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
-        self.dispatcher.call_sync('service.ensure_started', 'nfs')
-        self.dispatcher.call_sync('service.reload', 'nfs')
+        self.dispatcher.call_sync('services.ensure_started', 'nfs')
+        self.dispatcher.call_sync('services.reload', 'nfs')
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'create',
             'ids': [share['id']]
@@ -77,7 +77,7 @@ class CreateNFSShareTask(Task):
     'type': 'string'
 }, {
     'title': 'share',
-    '$ref': 'definitions/nfs-share'
+    '$ref': 'nfs-share'
 })
 class UpdateNFSShareTask(Task):
     def describe(self, name, updated_fields):
@@ -87,9 +87,11 @@ class UpdateNFSShareTask(Task):
         return ['service:nfs']
 
     def run(self, name, updated_fields):
-        self.datastore.update('shares', name, updated_fields)
+        share = self.datastore.get_by_id('shares', name)
+        share.update(updated_fields)
+        self.datastore.update('shares', name, share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
-        self.dispatcher.call_sync('service.reload', 'nfs')
+        self.dispatcher.call_sync('services.reload', 'nfs')
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'update',
             'ids': [name]
@@ -112,7 +114,7 @@ class DeleteNFSShareTask(Task):
     def run(self, name):
         self.datastore.delete('shares', name)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'nfs')
-        self.dispatcher.call_sync('service.reload', 'nfs')
+        self.dispatcher.call_sync('services.reload', 'nfs')
         self.dispatcher.dispatch_event('shares.nfs.changed', {
             'operation': 'delete',
             'ids': [name]
@@ -151,4 +153,4 @@ def _init(dispatcher):
 
     # Start NFS server if there are any configured shares
     if dispatcher.datastore.exists('shares', ('type', '=', 'nfs')):
-        dispatcher.call_sync('service.ensure_started', 'nfs')
+        dispatcher.call_sync('services.ensure_started', 'nfs')

@@ -49,7 +49,7 @@ class NetworkProvider(Provider):
 
 
 class InterfaceProvider(Provider):
-    @query('definitions/network-interface')
+    @query('network-interface')
     def query(self, filter=None, params=None):
         result = []
         ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
@@ -69,14 +69,14 @@ class InterfaceProvider(Provider):
 
 
 class RouteProvider(Provider):
-    @query('definitions/network-route')
+    @query('network-route')
     def query(self, filter=None, params=None):
         return self.datastore.query('network.routes', *(filter or []), **(params or {}))
 
 
 @description("Provides access to static host entries database")
 class HostsProvider(Provider):
-    @query('definitions/network-host')
+    @query('network-host')
     def query(self, filter=None, params=None):
         return self.datastore.query('network.hosts', *(filter or []), **(params or {}))
 
@@ -370,7 +370,7 @@ def _init(dispatcher):
             'mtu': {'type': ['integer', 'null']},
             'aliases': {
                 'type': 'array',
-                'items': {'type': 'definitions/network-interface-alias'}
+                'items': {'type': 'network-interface-alias'}
             },
             'status': {
                 'type': 'object',

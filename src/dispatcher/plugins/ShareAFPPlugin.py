@@ -57,7 +57,7 @@ class AFPSharesProvider(Provider):
 @description("Adds new AFP share")
 @accepts({
     'title': 'share',
-    '$ref': 'definitions/afp-share'
+    '$ref': 'afp-share'
 })
 class CreateAFPShareTask(Task):
     def describe(self, share):
@@ -69,8 +69,8 @@ class CreateAFPShareTask(Task):
     def run(self, share):
         self.datastore.insert('shares', share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
-        self.dispatcher.call_sync('service.ensure_started', 'afp')
-        self.dispatcher.call_sync('service.reload', 'afp')
+        self.dispatcher.call_sync('services.ensure_started', 'afp')
+        self.dispatcher.call_sync('services.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'create',
             'ids': [share['id']]
@@ -83,7 +83,7 @@ class CreateAFPShareTask(Task):
     'type': 'string'
 }, {
     'title': 'share',
-    '$ref': 'definitions/afp-share'
+    '$ref': 'afp-share'
 })
 class UpdateAFPShareTask(Task):
     def describe(self, name, updated_fields):
@@ -93,9 +93,11 @@ class UpdateAFPShareTask(Task):
         return ['service:afp']
 
     def run(self, name, updated_fields):
-        self.datastore.update('shares', name, updated_fields)
+        share = self.datastore.get_by_id('shares', name)
+        share.update(updated_fields)
+        self.datastore.update('shares', name, share)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
-        self.dispatcher.call_sync('service.reload', 'afp')
+        self.dispatcher.call_sync('services.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'update',
             'ids': [name]
@@ -117,7 +119,7 @@ class DeleteAFPShareTask(Task):
     def run(self, name):
         self.datastore.delete('shares', name)
         self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
-        self.dispatcher.call_sync('service.reload', 'afp')
+        self.dispatcher.call_sync('services.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'delete',
             'ids': [name]
