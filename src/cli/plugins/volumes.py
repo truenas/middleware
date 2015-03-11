@@ -216,7 +216,7 @@ class DatasetsNamespace(EntityNamespace):
             PropertiesNamespace('properties', context, this)
         ]
 
-    def query(self, params):
+    def query(self, params, options):
         self.parent.load()
         return self.parent.entity['datasets']
 
@@ -282,17 +282,19 @@ class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
 
     def __init__(self, name, context):
         super(VolumesNamespace, self).__init__(name, context)
-        #self.create_command = VolumeCreateCommand
 
         self.primary_key_name = 'name'
+        self.create_task = 'volume.create'
         self.delete_task = 'volume.destroy'
 
         self.skeleton_entity = {
+            'type': 'zfs',
             'topology': {
                 'data': []
             }
         }
 
+        self.primary_key_name = 'name'
         self.query_call = 'volumes.query'
 
         self.add_property(
