@@ -32,6 +32,15 @@ var Shell = React.createClass({
       ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
     }
 
+  , componentDidUpdate: function( prevProps, prevState ) {
+      if ( this.props.shellType !== prevProps.shellType ) {
+        this.ws.close();
+        this.term.destroy();
+        this.isAuthenticated = false;
+        ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
+      }
+    }
+
   , createNewShell: function( token ) {
       var url = window.location.protocol === "https:" ? "wss://" : "ws://" + document.domain + ":5000/shell";
 
