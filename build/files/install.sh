@@ -327,6 +327,8 @@ partition_disk() {
 	    _mirror=""
 	fi
 	zpool create -f -o cachefile=/tmp/zpool.cache -o version=28 -O mountpoint=none -O atime=off -O canmount=off freenas-boot ${_mirror} ${_disksparts}
+	zpool set feature@lz4_compress=enabled freenas-boot
+	zfs set compress=lz4 freenas-boot
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
 	zfs create -o mountpoint=legacy freenas-boot/grub
