@@ -40,7 +40,7 @@ class ConnectedUsersCommand(Command):
         self.parent = parent
 
     def run(self, context, args, kwargs, opargs):
-        result = context.connection.call_sync('shares.get_connected_clients', self.parent)
+        result = context.connection.call_sync('shares.get_connected_clients', self.parent.entity['id'])
         output_list(result, _("IP address"))
 
 
@@ -97,7 +97,7 @@ class BaseSharesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
             'clients': ConnectedUsersCommand(this)
         }
 
-    def query(self, params):
+    def query(self, params, options):
         params.append(('type', '=', self.type_name))
         return self.context.connection.call_sync('shares.query', params)
 

@@ -169,9 +169,11 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
     def save(self, this, new=False):
         if new:
             self.context.submit_task('network.interface.create', this.entity['id'], this.entity['type'])
+            this.modified = False
             return
 
         self.context.submit_task('network.interface.configure', this.entity['id'], this.get_diff())
+        this.modified = False
 
 
 @description("Interface addresses")
@@ -215,20 +217,20 @@ class AliasesNamespace(EntityNamespace):
         f = filter(lambda a: a['address'] == name, self.parent.entity['aliases'])
         return f[0] if f else None
 
-    def query(self, params):
+    def query(self, params, options):
         return self.parent.entity.get('aliases', [])
 
-    def save(self, entity, diff, new=False):
+    def save(self, this, new=False):
         if 'aliases' not in self.parent.entity:
             self.parent.entity['aliases'] = []
 
-        self.parent.entity['aliases'].append(entity)
-        self.parent.parent.save(self.parent.entity, self.parent.get_diff())
+        self.parent.entity['aliases'].append(this.entity)
+        self.parent.parent.save(self.parent)
         self.parent.load()
 
     def delete(self, address):
         self.parent.entity['aliases'] = filter(lambda a: a['address'] != address, self.parent.entity['aliases'])
-        self.parent.parent.save(self.parent.entity, self.parent.get_diff())
+        self.parent.parent.save(self.parent)
         self.parent.load()
 
 @description("Static host names database")
