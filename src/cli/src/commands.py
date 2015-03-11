@@ -107,14 +107,16 @@ class PrintenvCommand(Command):
 @description("Shuts the system down")
 class ShutdownCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        print "System going for a shutdown..."
+        # use output_xx instead of print
+        # print "System going for a shutdown..."
         context.submit_task('system.shutdown')
 
 
 @description("Reboots the system")
 class RebootCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        print "System going for a reboot..."
+        # use output_xx instead of print
+        # print "System going for a reboot..."
         context.submit_task('system.reboot')
 
 

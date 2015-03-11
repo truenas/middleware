@@ -103,7 +103,7 @@ class UpdateTask(Task):
 
     def run(self):
         try:
-            self.dispatcher.dispatch_event('updated.changed', {
+            self.dispatcher.dispatch_event('update.changed', {
                 'operation': 'started',
             })
             system('/usr/local/bin/freenas-update', 'update')
