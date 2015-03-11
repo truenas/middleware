@@ -33,7 +33,9 @@ ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOC
 ENV_SETUP+= TRAIN=${TRAIN}
 ENV_SETUP+= UPDATE_USER=sef	# For now, just use sef's account
 ENV_SETUP+= FREENAS_KEYFILE=${FREENAS_KEYFILE}
-ENV_SETUP+= CHANGLOG=ChangeLog
+.if exists(ChangeLog)
+ENV_SETUP+= CHANGELOG=ChangeLog
+.endif
 
 .if defined(NANO_ARCH)
  ENV_SETUP+= NANO_ARCH=${NANO_ARCH}
@@ -100,11 +102,11 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 
 release-push: release
-	[ ! -f ChangeLog ] && echo "Missing ChangeLog!  Aborting." && exit 1
 	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
-	cp ReleaseNotes UPGRADING ChangeLog "objs/${STAGEDIR}/"
+	cp ReleaseNotes UPGRADING "objs/${STAGEDIR}/"
+	[ -f ChangeLog ] && cp ChangeLog "objs/${STAGEDIR}/"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
