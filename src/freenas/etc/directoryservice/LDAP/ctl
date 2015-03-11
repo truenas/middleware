@@ -62,7 +62,7 @@ cifs_restart()
 
 cifs_reset()
 {
-	ldapctl ${service} ix-pre-samba start
+	ldapctl_cmd ${service} ix-pre-samba start
 
 	if cifs_enabled;
 	then
