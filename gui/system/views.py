@@ -557,11 +557,6 @@ def home(request):
         email = models.Email.objects.create()
 
     try:
-        ssl = models.SSL.objects.order_by("-id")[0]
-    except:
-        ssl = models.SSL.objects.create()
-
-    try:
         advanced = models.Advanced.objects.order_by("-id")[0]
     except:
         advanced = models.Advanced.objects.create()
@@ -586,7 +581,6 @@ def home(request):
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'settings': settings,
         'email': email,
-        'ssl': ssl,
         'advanced': advanced,
         'systemdataset': systemdataset,
         'registration': registration,
