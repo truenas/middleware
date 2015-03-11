@@ -9,7 +9,7 @@
 var React 		        = 	require("react");
 
 var Widget   	        = 	require("../components/Widget");
-var DummyWidgetContent 	= 	require("../components/Widgets/DummyWidgetContent");
+var MemoryUtil 	= 	require("../components/Widgets/MemoryUtil");
 var SystemInfo         =   require("../components/Widgets/SystemInfo");
 
 var DriveInfo 	        = 	require("../components/Widgets/DriveInfo");
@@ -28,8 +28,8 @@ var Dashboard = React.createClass({
       <main>
         <h2>Dashboard View</h2>
         <div ref="widgetAreaRef" className="widget-wrapper">
-          <DummyWidgetContent positionX="15" positionY="100" title="Memory Value" size="l-rect" />
-          <DummyWidgetContent positionX="15" positionY="460" graphType="stacked" title="Stacked Memory Value" size="l-rect" />
+          <MemoryUtil positionX="15" positionY="100" title="Memory Value" size="l-rect" />
+          <MemoryUtil positionX="15" positionY="460" graphType="stacked" title="Stacked Memory Value" size="l-rect" />
           <SystemInfo positionX="555" positionY="100" stacked="true" title="System Info" size="m-rect" />
         </div>
       </main>
