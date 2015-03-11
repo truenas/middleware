@@ -11,6 +11,7 @@
     "react-bootstrap": "0.15.x",
     "react-router": "0.11.x",
     "react-tools": "^0.12.2",
+    "term.js": "0.0.4",
     "when": "^3.5.x"
   },
   "devDependencies": {
