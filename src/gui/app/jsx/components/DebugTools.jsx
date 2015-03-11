@@ -14,6 +14,7 @@ var RPC           = require("./DebugTools/RPC");
 var Events        = require("./DebugTools/Events");
 var Subscriptions = require("./DebugTools/Subscriptions");
 var Options       = require("./DebugTools/Options");
+var Terminal      = require("./DebugTools/Terminal");
 
 // Local variables
 var initialPanelHeight;
@@ -116,7 +117,7 @@ var DebugTools = React.createClass({
 
             {/* Web Console */}
             <TWBS.TabPane eventKey={7} tab="Terminal">
-
+              <Terminal />
             </TWBS.TabPane>
 
           </TWBS.TabbedArea>
