@@ -554,7 +554,7 @@ cdef class ZPoolScrub(object):
         def __get__(self):
             if not self.stat:
                 return None
-            
+
             if not self.bytes_to_scan:
                 return 0
 
@@ -562,8 +562,8 @@ cdef class ZPoolScrub(object):
 
     def __getstate__(self):
         return {
-            'func': self.stat[0],
-            'state': self.state.name,
+            'func': self.stat[0] if self.stat else None,
+            'state': self.state.name if self.stat else None,
             'start_time': self.start_time,
             'end_time': self.end_time,
             'percentage': self.percentage,
