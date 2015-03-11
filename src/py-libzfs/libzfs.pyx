@@ -504,34 +504,57 @@ cdef class ZPoolScrub(object):
     def __init__(self, ZFS root, ZFSPool pool):
         self.root = root
         self.pool = pool
-        self.stat = pool.config['vdev_tree']['scan_stats']
+        self.stat = None
+        if 'scan_stats' in pool.config['vdev_tree']:
+            self.stat = pool.config['vdev_tree']['scan_stats']
 
     property state:
         def __get__(self):
+            if not self.stat:
+                return None
+
             return ScanState(self.stat[1])
 
     property start_time:
         def __get__(self):
+            if not self.stat:
+                return None
+
             return datetime.datetime.fromtimestamp(self.stat[2])
 
     property end_time:
         def __get__(self):
+            if not self.stat:
+                return None
+
             return datetime.datetime.fromtimestamp(self.stat[3])
 
     property bytes_to_scan:
         def __get__(self):
+            if not self.stat:
+                return None
+
             return self.stat[4]
 
     property bytes_scanned:
         def __get__(self):
+            if not self.stat:
+                return None
+
             return self.stat[5]
 
     property errors:
         def __get__(self):
+            if not self.stat:
+                return None
+
             return self.stat[8]
 
     property percentage:
         def __get__(self):
+            if not self.stat:
+                return None
+            
             if not self.bytes_to_scan:
                 return 0
 
