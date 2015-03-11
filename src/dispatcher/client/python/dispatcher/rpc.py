@@ -58,7 +58,7 @@ class RpcContext(object):
         del self.services[name]
 
     def register_schema_definition(self, name, definition):
-        self.schema_definitions['definitions/{0}'.format(name)] = definition
+        self.schema_definitions['{0}'.format(name)] = definition
 
     def get_schema_resolver(self, schema):
         return RefResolver('', schema, self.schema_definitions)
@@ -94,7 +94,6 @@ class RpcContext(object):
 
     def dispatch_call(self, method, args, sender=None):
         service, sep, name = method.rpartition(".")
-        self.logger.info('Call: service=%s, method=%s', service, method)
 
         if args is None:
             args = {}
