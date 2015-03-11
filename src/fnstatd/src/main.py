@@ -163,7 +163,8 @@ class DataSource(object):
 
         self.context.client.emit_event('statd.{0}.pulse'.format(self.name), {
             'value': value,
-            'change': self.last_value - value
+            'change': self.last_value - value,
+            'nolog': True
         })
 
         self.last_value = value
