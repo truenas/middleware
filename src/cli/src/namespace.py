@@ -481,7 +481,7 @@ class EntityNamespace(Namespace):
     def update_entity(self, name):
         raise NotImplementedError()
 
-    def query(self, params):
+    def query(self, params, options):
         raise NotImplementedError()
 
     def add_property(self, **kwargs):
@@ -552,5 +552,5 @@ class TaskBasedSaveMixin(object):
 
     def delete(self, name):
         entity = self.get_one(name)
-        self.context.submit_task(self.delete_task, entity['id'])
+        self.context.submit_task(self.delete_task, entity[self.primary_key_name])
 
