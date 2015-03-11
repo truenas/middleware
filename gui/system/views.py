@@ -549,27 +549,27 @@ def home(request):
     try:
         settings = models.Settings.objects.order_by("-id")[0]
     except:
-        settings = None
+        settings = models.Settings.objects.create()
 
     try:
         email = models.Email.objects.order_by("-id")[0]
     except:
-        email = None
+        email = models.Email.objects.create()
 
     try:
         ssl = models.SSL.objects.order_by("-id")[0]
     except:
-        ssl = None
+        ssl = models.SSL.objects.create()
 
     try:
         advanced = models.Advanced.objects.order_by("-id")[0]
     except:
-        advanced = None
+        advanced = models.Advanced.objects.create()
 
     try:
         systemdataset = models.SystemDataset.objects.order_by("-id")[0]
     except:
-        systemdataset = None
+        systemdataset = models.SystemDataset.objects.create()
 
     try:
         registration = models.Registration.objects.order_by("-id")[0]
