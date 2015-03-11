@@ -4,7 +4,7 @@
 "use strict";
 
 var MiddlewareClient = require("../middleware/MiddlewareClient");
-var UpdateActionCreators = require("../actions/SystemActionCreators");
+var UpdateActionCreators = require("../actions/UpdateActionCreators");
 
 module.exports = {
 

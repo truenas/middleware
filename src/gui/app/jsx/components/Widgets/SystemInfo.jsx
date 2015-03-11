@@ -31,14 +31,15 @@ var SystemInfo = React.createClass({
   , componentDidMount: function() {
     this.requestData();
 
-    SystemStore.addChangeListener( this.handleStatdChange );
+    SystemStore.addChangeListener( this.handleChange );
+    UpdateStore.addChangeListener( this.handleChange );
  }
 
   , componentWillUnmount: function() {
      SystemStore.removeChangeListener( this.handleStatdChange );
   }
 
- , handleStatdChange: function() {
+ , handleChange: function() {
       this.setState({   hardware       :   getSystemInfoFromStore( "hardware" )
                       , version        :   getSystemInfoFromStore( "version" )
                       , updates        :   getUpdateFromStore( "check_now_for_updates" )
