@@ -35,7 +35,7 @@ from datastore import DuplicateKeyException, DatastoreException
 @description("Provides access to users database")
 class UserProvider(Provider):
     @description("Lists users present in the system")
-    @query('definitions/user')
+    @query('user')
     def query(self, filter=None, params=None):
         result = []
         single = params.pop('single', False) if params else False
@@ -69,7 +69,7 @@ class UserProvider(Provider):
 @description("Provides access to groups database")
 class GroupProvider(Provider):
     @description("Lists groups present in the system")
-    @query('definitions/group')
+    @query('group')
     def query(self, filter=None, params=None):
         return self.datastore.query('groups', *(filter or []), **(params or {}))
 
@@ -78,7 +78,7 @@ class GroupProvider(Provider):
 @accepts({
     'title': 'user',
     'allOf': [
-        {'$ref': 'definitions/user'},
+        {'$ref': 'user'},
         {'required': ['username', 'group']},
         {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
     ]
@@ -180,7 +180,7 @@ class UserDeleteTask(Task):
 }, {
     'title': 'user',
     'allOf': [
-        {'$ref': 'definitions/user'},
+        {'$ref': 'user'},
         {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
     ]
 })
@@ -215,7 +215,7 @@ class UserUpdateTask(Task):
 @description("Creates a group")
 @accepts({
     'allOf': [
-        {'ref': 'definitions/group'},
+        {'ref': 'group'},
         {'required': ['name']}
     ]
 })
@@ -273,7 +273,7 @@ class GroupCreateTask(Task):
     'title': 'id',
     'type': 'integer'
 }, {
-    '$ref': 'definitions/group'
+    '$ref': 'group'
 })
 class GroupUpdateTask(Task):
     def __init__(self, dispatcher):
@@ -376,7 +376,7 @@ def _init(dispatcher):
             'sessions': {
                 'type': 'array',
                 'readOnly': True,
-                'items': {'$ref': 'definitions/user-session'}
+                'items': {'$ref': 'user-session'}
             }
         }
     })

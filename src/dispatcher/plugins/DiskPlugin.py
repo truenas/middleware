@@ -42,7 +42,7 @@ camcontrol_cache = CacheStore()
 
 
 class DiskProvider(Provider):
-    @query('definitions/disk')
+    @query('disk')
     def query(self, filter=None, params=None):
         result = []
         single = params.pop('single', False) if params else False
@@ -178,7 +178,7 @@ class DiskEraseTask(Task):
 
 @accepts({
     'allOf': [
-        {'$ref': 'definitions/disk'},
+        {'$ref': 'disk'},
         {'not': {'required': ['name', 'serial', 'description', 'mediasize']}}
     ]
 })

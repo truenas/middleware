@@ -30,7 +30,7 @@ from task import Task, TaskException, VerifyException, Provider, RpcException, q
 
 
 class SharesProvider(Provider):
-    @query('definitions/share')
+    @query('share')
     def query(self, filter=None, params=None):
         return self.datastore.query('shares', *(filter or []), **(params or {}))
 
@@ -92,6 +92,15 @@ def _init(dispatcher):
             'type': {'type': 'string'},
             'target': {'type': 'string'},
             'properties': {'type': 'object'}
+        }
+    })
+
+    dispatcher.register_schema_definition('share-client', {
+        'type': 'object',
+        'properties': {
+            'host': {'type': 'string'},
+            'share': {'type': 'string'},
+            'user': {'type': ['string', 'null']}
         }
     })
 
