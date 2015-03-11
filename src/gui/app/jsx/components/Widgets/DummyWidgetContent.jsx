@@ -3,8 +3,6 @@
 var React   =   require("react");
 var moment  =   require("moment");
 
-var Widget  = 	require("../Widget");
-
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
@@ -34,12 +32,10 @@ var DummyWidgetContent = React.createClass({
     this.requestWidgetData();
 
     StatdStore.addChangeListener( this.handleStatdChange );
-    StatdMiddleware.subscribe( "localhost.memory.memory-wired.value" );
-    StatdMiddleware.subscribe( "localhost.memory.memory-cache.value" );
-    StatdMiddleware.subscribe( "localhost.memory.memory-active.value" );
-    StatdMiddleware.subscribe( "localhost.memory.memory-free.value" );
-    StatdMiddleware.subscribe( "localhost.memory.memory-inactive.value" );
 
+    this.props.statdResources.forEach(function(resource) {
+      StatdMiddleware.subscribe(resource.dataSource);
+    });
 
     this.setState({
        element    :   this.refs.svg.getDOMNode()
@@ -48,8 +44,12 @@ var DummyWidgetContent = React.createClass({
  }
 
   , componentWillUnmount: function() {
-     StatdStore.removeChangeListener( this.handleStatdChange );
-     StatdMiddleware.unsubscribe();
+    StatdStore.removeChangeListener( this.handleStatdChange );
+
+    this.props.statdResources.forEach(function(resource) {
+      StatdMiddleware.unsubscribe(resource.dataSource);
+    });
+
   }
 
   , updateData : function (target, updateArray) {
@@ -69,17 +69,27 @@ var DummyWidgetContent = React.createClass({
  , handleStatdChange: function() {
     if ( this.state.initialData === false )
     {
-      this.setState({  wiredData      :   getWidgetDataFromStore( "localhost.memory.memory-wired.value" )
-                      ,cacheData      :   getWidgetDataFromStore( "localhost.memory.memory-cache.value" )
-                      ,activeData     :   getWidgetDataFromStore( "localhost.memory.memory-active.value" )
-                      ,freeData       :   getWidgetDataFromStore( "localhost.memory.memory-free.value" )
-                      ,inactiveData   :   getWidgetDataFromStore( "localhost.memory.memory-inactive.value" )
-                      ,hardware       :   getSystemInfoFromStore( "hardware" )
-                    });
-      if (this.state.wiredData !== undefined && this.state.cacheData !== undefined && this.state.activeData !== undefined && this.state.freeData !== undefined && this.state.inactiveData !== undefined && this.state.hardware !== undefined )
+      var state  = this.state;
+      state.initialData = true;
+      this.props.statdResources.forEach(function(resource) {
+        state[resource.variable] = getWidgetDataFromStore( resource.dataSource );
+        if (state[resource.variable] === undefined)
+        {
+          state.initialData = false;
+        }
+      });
+      this.props.systemResources.forEach(function(resource) {
+        state[resource.variable] = getSystemInfoFromStore( resource.dataSource );
+        if (state[resource.variable] === undefined)
+        {
+          state.initialData = false;
+        }
+      });
+
+      this.state = state;
+
+      if (this.state.initialData === true )
       {
-        this.setState({  initialData  : true
-                      });
         this.drawChart();
       }
       console.log("1!");
@@ -87,42 +97,26 @@ var DummyWidgetContent = React.createClass({
     else {
       console.log("2!");
       var ud = StatdStore.getWidgetDataUpdate();
+      var updateCounter = this.state.updateCounter;
+      var updateFunction = this.updateData;
       if (ud.name)
       {
         var updateArray = [ud.args["timestamp"], ud.args["value"]];
-        switch( ud.name )
-        {
-          case "statd.localhost.memory.memory-wired.value.pulse":
-            this.state.updateCounter++;
-            this.updateData("wiredData", updateArray);
-          break;
-          case "statd.localhost.memory.memory-cache.value.pulse":
-            this.state.updateCounter++;
-            this.updateData("cacheData", updateArray);
-          break;
-          case "statd.localhost.memory.memory-active.value.pulse":
-            this.state.updateCounter++;
-            this.updateData("activeData", updateArray);
-          break;
-          case "statd.localhost.memory.memory-free.value.pulse":
-            this.state.updateCounter++;
-            this.updateData("freeData", updateArray);
-          break;
-          case "statd.localhost.memory.memory-inactive.value.pulse":
-            this.state.updateCounter++;
-            this.updateData("inactiveData", updateArray);
-          break;
+        this.props.statdResources.forEach(function(resource) {
+          if (ud.name === "statd." + resource.dataSource + ".pulse")
+          {
+            updateCounter++;
+            updateFunction(resource.variable, updateArray);
+          }
+        });
 
-          default:
-            // Do nothing
-            console.log("This should not happened!");
-        }
-        if (this.state.updateCounter >= 5)
+        if (updateCounter >= this.props.statdResources.length)
         {
           console.log("update");
           this.drawChart(true);
-          this.state.updateCounter = 0;
+          updateCounter = 0;
         }
+        this.state.updateCounter = updateCounter;
       }
     }
 
@@ -134,13 +128,12 @@ var DummyWidgetContent = React.createClass({
 
     //console.log(start.format());
     //console.log(stop.format());
-    StatdMiddleware.requestWidgetData( "localhost.memory.memory-wired.value", start.format(),  stop.format(), "10S");
-    StatdMiddleware.requestWidgetData( "localhost.memory.memory-cache.value", start.format(),  stop.format(), "10S");
-    StatdMiddleware.requestWidgetData( "localhost.memory.memory-active.value", start.format(),  stop.format(), "10S");
-    StatdMiddleware.requestWidgetData( "localhost.memory.memory-free.value", start.format(),  stop.format(), "10S");
-    StatdMiddleware.requestWidgetData( "localhost.memory.memory-inactive.value", start.format(),  stop.format(), "10S");
-
-    SystemMiddleware.requestSystemInfo( "hardware" );
+    this.props.statdResources.forEach(function(resource) {
+      StatdMiddleware.requestWidgetData(resource.dataSource, start.format(),  stop.format(), "10S");
+    });
+    this.props.systemResources.forEach(function(resource) {
+      SystemMiddleware.requestSystemInfo( resource.dataSource);
+    });
 
   }
 
@@ -152,6 +145,7 @@ var DummyWidgetContent = React.createClass({
 
         update = false;
       }
+
       if (update === true) {
           this.state.chart.update();
       }
@@ -163,7 +157,7 @@ var DummyWidgetContent = React.createClass({
         {
           chart = nv.models.stackedAreaChart()
             .options({
-               margin                     :    {top: 15, right: 50, bottom: 60, left: 80}
+               margin                     :    {top: 15, right: 50, bottom: 60, left: 60}
               ,x                          :    function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
               ,y                          :    function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }   //...in case your data is formatted differently.
               ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
@@ -177,7 +171,7 @@ var DummyWidgetContent = React.createClass({
         {
           chart = nv.models.lineChart()
           .options({
-             margin                       :   {top: 15, right: 50, bottom: 60, left: 50}
+             margin                       :   {top: 15, right: 50, bottom: 60, left: 60}
             ,x                            :   function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
             ,y                            :   function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } }
             ,showXAxis                    :   true
@@ -217,39 +211,20 @@ var DummyWidgetContent = React.createClass({
   }
 
   , chartData: function() {
-    return [
-      {
-        area: false,
-        values: this.state.wiredData,
-        key: "Wired Memory",
-        color: "#f39400"
-      }
-     ,{
-        area: false,
-        values: this.state.cacheData,
-        key: "Cached Memory",
-        color: "#8ac007"
-      }
-     ,{
-        area: false,
-        values: this.state.activeData,
-        key: "Active Memory",
-        color: "#c9d200"
-      }
-     ,{
-        area: false,
-        values: this.state.freeData,
-        key: "Free Memory",
-        color: "#5186ab"
-      }
-     ,{
-        area: false,
-        values: this.state.inactiveData,
-        key: "Inactive Memory",
-        color: "#b6d5e9"
-      }
+    var returnArray = [];
+    var state = this.state;
 
-    ];
+    this.props.statdResources.forEach(function(resource) {
+      var returnArrayMember = {
+                                  area: false
+                                , values: state[resource.variable]
+                                , key: resource.name
+                                , color: resource.color
+                              };
+      returnArray.push(returnArrayMember);
+    });
+
+    return returnArray;
   }
 
   ,togleGraph: function(e) {
@@ -271,21 +246,18 @@ var DummyWidgetContent = React.createClass({
        width                : "36px"
       ,height               : "100%"
       ,"float"              : "right"
-      ,backgroundColor      : "lime"
     };
-    return (
-      <Widget
-        positionX  =  {this.props.positionX}
-        positionY  =  {this.props.positionY}
-        title      =  {this.props.title}
-        size       =  {this.props.size} >
+    var returnGraphOptions = function(resource) {
+                    return <div className={ "ico-graph-type-" + resource.type } onClick={ this.togleGraph }>{ resource.type }</div>;
+                     };
 
+    return (
+      <div className="widget-content">
         <svg ref="svg" style={svgStyle}></svg>
         <div ref="controls" style={divStyle}>
-          <div onClick={this.togleGraph}>line</div>
-          <div onClick={this.togleGraph}>stacked</div>
+          {this.props.chartTypes.map(returnGraphOptions, this)}
         </div>
-      </Widget>
+      </div>
     );
   }
 });
