@@ -31,6 +31,7 @@ import sys
 import argparse
 import json
 import datastore
+from fnutils import exclude
 
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
@@ -51,7 +52,7 @@ def init_datastore(filename):
         print("Cannot read config file: {0}".format(str(err)))
         sys.exit(1)
 
-    if not 'datastore' in conf:
+    if 'datastore' not in conf:
         print("Cannot initialize datastore: configuration not found")
         sys.exit(1)
 
@@ -72,7 +73,7 @@ def dump_collection(ds, name):
 
     return {
         'metadata': metadata,
-        'data': {x.id: x.data for x in ds.query(name, wrap=False)}
+        'data': {x['id']: exclude(x, 'id') for x in ds.query(name)}
     }
 
 
@@ -80,7 +81,7 @@ def main():
     global ds
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
-    parser.add_argument('-t', metavar='TYPE', help='Collection types to dump')
+    parser.add_argument('-t', metavar='TYPE', default='', help='Collection types to dump')
     parser.add_argument('-x', metavar='NOMETA', help='Don\'t include metadata')
     parser.add_argument('-o', metavar='OUTPUT', help='Output file name')
     parser.add_argument('collections', metavar='COLLECTION', nargs='*', default='all', help='Collections to dump or "all"')
