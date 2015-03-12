@@ -173,7 +173,7 @@ def CreateClone(name, snap_grub=True, bename=None, rename=None):
         rv = RunCommand(beadm, args)
         if rv is False:
             # We failed.  Clean up the temp one
-            args = ["delete", "-F", temp_name]
+            args = ["destroy", "-F", temp_name]
             RunCommand(beadm, args)
             return False
         # Root has been renamed, so let's rename the temporary one
@@ -183,7 +183,7 @@ def CreateClone(name, snap_grub=True, bename=None, rename=None):
             # We failed here.  How annoying.
             # So let's delete the newlyp-created BE
             # and rename root
-            args = ["delete", "-F", rename]
+            args = ["destroy", "-F", rename]
             RunCommand(beadm, args)
             args = ["rename", name, rename]
             RunCommand(beadm, args)
