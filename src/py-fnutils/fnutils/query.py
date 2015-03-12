@@ -76,16 +76,6 @@ class QueryList(list):
 
         super(QueryList, self).__setitem__(key, value)
 
-    def __contains__(self, item):
-        if type(item) is str:
-            if item.isdigit():
-                return super(QueryList, self).__contains__(int(item))
-
-            left, sep, right = item.partition('.')
-            return super(QueryList, self).__contains__(left)[right]
-
-        return super(QueryList, self).__contains__(item)
-
     def query(self, *rules, **params):
         single = params.pop('single', False)
         result = []
