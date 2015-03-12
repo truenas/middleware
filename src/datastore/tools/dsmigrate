@@ -80,7 +80,10 @@ def migrate_collection(dump):
 
     for key, row in data.items():
         pkey = int(key) if integer else key
-        if metadata['migration'] == 'merge-preserve' and ds.exists(name, ('id', '=', pkey)):
+        if metadata['migration'] == 'merge-preserve':
+            if not ds.exists(name, ('id', '=', pkey)):
+                ds.insert(name, row, pkey=pkey)
+
             continue
 
         ds.update(name, pkey, row, upsert=upsert)
