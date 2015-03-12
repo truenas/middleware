@@ -52,7 +52,7 @@ class ServicesNamespace(RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='Service name',
             name='name',
-            get='/name',
+            get='name',
             set=None,
             list=True
         )
@@ -60,7 +60,7 @@ class ServicesNamespace(RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='State',
             name='state',
-            get='/state',
+            get='state',
             set=None,
             list=True
         )

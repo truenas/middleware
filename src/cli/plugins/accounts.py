@@ -51,19 +51,19 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='User name',
             name='username',
-            get='/username',
+            get='username',
             list=True)
 
         self.add_property(
             descr='Full name',
             name='fullname',
-            get='/full_name',
+            get='full_name',
             list=True)
 
         self.add_property(
             descr='User ID',
             name='uid',
-            get='/id',
+            get='id',
             set=None,
             list=True,
             type=ValueType.NUMBER)
@@ -77,12 +77,12 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='Login shell',
             name='shell',
-            get='/shell')
+            get='shell')
 
         self.add_property(
             descr='Home directory',
             name='home',
-            get='/home',
+            get='home',
             list=True)
 
         self.add_property(
@@ -125,20 +125,20 @@ class GroupsNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='Group name',
             name='name',
-            get='/name',
+            get='name',
             list=True)
 
         self.add_property(
             descr='Group ID',
             name='gid',
-            get='/id',
+            get='id',
             set=None,
             list=True)
 
         self.add_property(
             descr='Builtin group',
             name='builtin',
-            get='/builtin',
+            get='builtin',
             set=None,
             list=True,
             type=ValueType.BOOLEAN)

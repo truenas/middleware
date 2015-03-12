@@ -28,7 +28,7 @@
 
 from namespace import EntityNamespace, Command, CommandException, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import Column, output_table, output_tree
-from utils import first_or_default
+from fnutils import first_or_default
 
 
 @description("Adds new vdev to volume")
@@ -102,9 +102,9 @@ class FindVolumesCommand(Command):
     def run(self, context, args, kwargs, opargs):
         vols = context.connection.call_sync('volumes.find')
         output_table(vols, [
-            Column('ID', '/id'),
-            Column('Volume name', '/name'),
-            Column('Status', '/status')
+            Column('ID', 'id'),
+            Column('Volume name', 'name'),
+            Column('Status', 'status')
         ])
 
 
@@ -152,7 +152,7 @@ class ShowTopologyCommand(Command):
 
         volume = self.parent.entity
         tree = filter(lambda x: len(x['children']) > 0, map(lambda (k, v): {'type': k, 'children': v}, volume['topology'].items()))
-        output_tree(tree, '/children', print_vdev)
+        output_tree(tree, 'children', print_vdev)
 
 
 @description("Shows volume disks status")
@@ -164,8 +164,8 @@ class ShowDisksCommand(Command):
         volume = self.parent.entity
         result = list(iterate_vdevs(volume['topology']))
         output_table(result, [
-            Column('Name', '/path'),
-            Column('Status', '/status')
+            Column('Name', 'path'),
+            Column('Status', 'status')
         ])
 
 
@@ -187,27 +187,27 @@ class DatasetsNamespace(EntityNamespace):
         self.add_property(
             descr='Name',
             name='name',
-            get='/name',
+            get='name',
             list=True)
 
         self.add_property(
             descr='Used',
             name='used',
-            get='/properties/used/value',
+            get='properties.used.value',
             set=None,
             list=True)
 
         self.add_property(
             descr='Available',
             name='available',
-            get='/properties/avail/value',
+            get='properties.avail.value',
             set=None,
             list=True)
 
         self.add_property(
             descr='Mountpoint',
             name='mountpoint',
-            get='/properties/mountpoint/value',
+            get='properties.mountpoint.value',
             set=None,
             list=True)
 
@@ -242,24 +242,24 @@ class PropertiesNamespace(EntityNamespace):
         self.add_property(
             descr='Property name',
             name='name',
-            get='/name',
+            get='name',
             list=True)
 
         self.add_property(
             descr='Value',
             name='value',
-            get='/value',
+            get='value',
             set=None,
             list=True)
 
         self.add_property(
             descr='Source',
             name='source',
-            get='/source',
+            get='source',
             set=None,
             list=True)
 
-    def query(self, params):
+    def query(self, params, options):
         return self.parent.entity['properties']
 
     def get_one(self, name):
@@ -268,11 +268,21 @@ class PropertiesNamespace(EntityNamespace):
     def delete(self, name):
         self.context.submit_task('volume.dataset.delete', self.parent.entity['name'], name)
 
-    def save(self, entity, diff, new=False):
+    def save(self, this, new=False):
         if new:
-            self.context.submit_task('volume.dataset.create', self.parent.entity['name'], entity['name'])
+            self.context.submit_task('volume.dataset.create', self.parent.entity['name'], this.entity['name'])
             return
 
+
+@description("Filesystem contents")
+class FilesystemNamespace(EntityNamespace):
+    def __init__(self, name, context, parent):
+        super(FilesystemNamespace, self).__init__(name, context)
+        self.parent = parent
+
+        self.add_property(
+            descr=''
+        )
 
 @description("Volumes namespace")
 class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
@@ -300,33 +310,33 @@ class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
         self.add_property(
             descr='Volume name',
             name='name',
-            get='/name',
+            get='name',
             list=True)
 
         self.add_property(
             descr='Status',
             name='status',
-            get='/status',
+            get='status',
             set=None,
             list=True)
 
         self.add_property(
             descr='Mount point',
             name='mountpoint',
-            get='/mountpoint',
+            get='mountpoint',
             list=True)
 
         self.add_property(
             descr='Last scrub time',
             name='last_scrub_time',
-            get='/scan/end_time',
+            get='scan.end_time',
             set=None
         )
 
         self.add_property(
             descr='Last scrub errors',
             name='last_scrub_errors',
-            get='/scan/errors',
+            get='scan.errors',
             set=None
         )
 
