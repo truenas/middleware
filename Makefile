@@ -7,8 +7,10 @@ VERSION?=9.3-STABLE
 TRAIN?=${NANO_LABEL}-9.3-STABLE
 .ifdef PRODUCTION
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
+KEY_PASSWORD!= build/read-password.sh
 .else
 FREENAS_KEYFILE?=Keys/ix-nightly-key.key
+KEY_PASSWORD= ""
 .endif
 COMPANY?="iXsystems"
 BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
@@ -102,7 +104,7 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 
 release-push: release
-	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
+        @echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
 	cp ReleaseNotes UPGRADING "objs/${STAGEDIR}/"
@@ -118,7 +120,7 @@ release-push: release
 	${MAKE} save-build-env
 
 update-push:	release
-	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
+	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 
 archive:	release
 .if !defined(ARCHIVE)
