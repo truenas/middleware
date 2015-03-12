@@ -1,2 +1,10 @@
 {% extends "freeadmin/generic_form.html" %}
+{% block form %}
+<tr>
+  <td colspan="2">
+  {% trans "The system will reboot to perform this operation!" %}
+  </td>
+</tr>
+{{ block.super }}
+{% endblock %}
 {% block oklabel %}{% trans "Update" %}{% endblock %}
