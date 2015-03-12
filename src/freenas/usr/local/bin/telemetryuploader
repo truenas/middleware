@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import argparse
+import requests
+import uuid
+import time
+import sys
+import os
+
+parser = argparse.ArgumentParser(description='send data to ix systems')
+parser.add_argument('files', metavar='files', type=str, nargs='+', help='files to upload')
+parser.add_argument('--jitter', action='store_true',  help='delay running based on hash of UUID.')
+args = parser.parse_args()
+
+hostid = ''
+
+if os.path.isfile("/etc/hostid"):
+    f = open("/etc/hostid")
+    hostid = f.read().strip()
+    f.close()
+    u = uuid.UUID("{" + hostid + "}")
+    m = u.int % 60
+
+if args.jitter:
+    # print "Sleeping for " + str(m) + " minutes \n"
+    time.sleep(60*m)
+
+if 'TELEMETRYSERVER_URL' in os.environ:
+    url = os.environ['TELEMETRYSERVER_URL']
+else:
+    url = 'https://ext-data.ixsystems.com/telemetry/uploader/list/'
+
+
+for file in args.files:
+    files = {'docfile': open(file, 'rb')}
+    data = {}
+    data = {'hostid': hostid}
+    # print data
+
+    r = requests.post(url, data=data, files=files)
