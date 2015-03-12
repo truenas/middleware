@@ -3,7 +3,7 @@
 var React   =   require("react");
 
 var Widget  =   require("../Widget");
-var DummyWidgetContent = require("DummyWidgetContent");
+var DummyWidgetContent = require("./DummyWidgetContent");
 
 var NetworkUsage = React.createClass({
  getInitialState: function() {
@@ -15,6 +15,9 @@ var NetworkUsage = React.createClass({
                           ,{variable:"errorsTx", dataSource:"localhost.interface-em0.if_errors.rx", name:"Errors Receive", color:"#C9653A"}
                           ,{variable:"errorsRx", dataSource:"localhost.interface-em0.if_errors.tx", name:"Errors Transmit", color:"#BE6F6F"}
                         ]
+   , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}   
+                        ]
+
    , chartTypes:        [  {type:"stacked", primary:"false"}
                           ,{type:"line", primary:"true"}
                         ]
@@ -33,7 +36,7 @@ var NetworkUsage = React.createClass({
 
        <DummyWidgetContent
          statdResources    =  {this.state.statdResources}
-         systemResources   =  {this.state.systemResources}
+         systemResources   =  {this.state.systemResources}         
          chartTypes        =  {this.state.chartTypes} >
        </DummyWidgetContent>
 
