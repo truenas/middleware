@@ -17,7 +17,7 @@
     <button id="btn_{% cls_name form %}_UpCfg" data-dojo-type="dijit.form.Button" type="button">
         {% trans "Upload Config" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            editObject('{% trans "Upload Config"|force_escape|force_escape %}', '{% url "system_configupload" %}');
+            editScaryObject('{% trans "Upload Config"|force_escape|force_escape %}', '{% url "system_configupload" %}');
         </script>
     </button>
     <button id="btn_{% cls_name form %}_NTPServers" data-dojo-type="dijit.form.Button" type="button">
