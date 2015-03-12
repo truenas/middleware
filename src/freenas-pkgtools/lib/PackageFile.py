@@ -14,6 +14,7 @@ kPkgRemovedDirsKey = "removed-directories"
 kPkgDeltaKey = "delta-version"
 kPkgFlatSizeKey = "flatsize"
 kPkgDeltaStyleKey = "style"
+kPkgScriptsKey = "scripts"
 
 class PkgFileDiffException(Exception):
     pass
@@ -175,10 +176,13 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None, scripts = None, force_outpu
                                    kPkgDeltaStyleKey : "file"
                                    }
     if scripts:
+        if kPkgScriptsKey not in new_manifest:
+            new_manifest[kPkgScriptsKey] = {}
+        s_dict = new_manifest[kPkgScriptsKey]
         for script_name in scripts.keys():
-            if script_name not in new_manifest:
-                new_manifest[script_name] = ""
-            new_manifest[script_name] = scripts[script_name] + new_manifest[script_name]
+            if script_name not in s_dict:
+                s_dict[script_name] = ""
+            s_dict[script_name] = scripts[script_name] + s_dict[script_name]
             
     diffs = CompareManifests(pkg1_manifest, pkg2_manifest)
 
