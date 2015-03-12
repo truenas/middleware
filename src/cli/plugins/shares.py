@@ -80,14 +80,14 @@ class BaseSharesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         self.add_property(
             descr='Share name',
             name='name',
-            get='/id',
+            get='id',
             list=True
         )
 
         self.add_property(
             descr='Target',
             name='target',
-            get='/target',
+            get='target',
             set=None,
             list=True
         )
@@ -110,7 +110,7 @@ class NFSSharesNamespace(BaseSharesNamespace):
         self.add_property(
             descr='All directories',
             name='alldirs',
-            get='/properties/alldirs',
+            get='properties.alldirs',
             list=True,
             type=ValueType.BOOLEAN
         )
@@ -118,21 +118,21 @@ class NFSSharesNamespace(BaseSharesNamespace):
         self.add_property(
             descr='Root user',
             name='root_user',
-            get='/properties/maproot-user',
+            get='properties.maproot-user',
             list=True
         )
 
         self.add_property(
             descr='Root group',
             name='root_group',
-            get='/properties/maproot-group',
+            get='properties.maproot-group',
             list=True
         )
 
         self.add_property(
             descr='Allowed hosts/networks',
             name='hosts',
-            get='/properties/hosts',
+            get='properties.hosts',
             list=True,
             type=ValueType.SET
         )
@@ -146,21 +146,21 @@ class AFPSharesNamespace(BaseSharesNamespace):
         self.add_property(
             descr='Allowed hosts/networks',
             name='hosts',
-            get='/properties/hosts-allow',
+            get='properties.hosts-allow',
             type=ValueType.SET
         )
 
         self.add_property(
             descr='Denied hosts/networks',
             name='hosts',
-            get='/properties/hosts-deny',
+            get='properties.hosts-deny',
             type=ValueType.SET
         )
 
         self.add_property(
             descr='Allowed users/groups',
             name='hosts',
-            get='/properties/users-allow',
+            get='properties.users-allow',
             type=ValueType.SET
         )
 
@@ -174,7 +174,7 @@ class AFPSharesNamespace(BaseSharesNamespace):
         self.add_property(
             descr='Read only',
             name='read-only',
-            get='/properties/read-only',
+            get='properties.read-only',
             list=True,
             type=ValueType.BOOLEAN
         )
@@ -182,7 +182,7 @@ class AFPSharesNamespace(BaseSharesNamespace):
         self.add_property(
             descr='Time machine',
             name='time-machine',
-            get='/properties/time-machine',
+            get='properties.time-machine',
             list=True,
             type=ValueType.BOOLEAN
         )

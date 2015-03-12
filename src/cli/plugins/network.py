@@ -186,28 +186,28 @@ class AliasesNamespace(EntityNamespace):
         self.add_property(
             descr='Address family',
             name='type',
-            get='/type',
+            get='type',
             list=True
         )
 
         self.add_property(
             descr='IP address',
             name='address',
-            get='/address',
+            get='address',
             list=True
         )
 
         self.add_property(
             descr='Netmask',
             name='netmask',
-            get='/netmask',
+            get='netmask',
             list=True
         )
 
         self.add_property(
             descr='Broadcast address',
             name='broadcast',
-            get='/broadcast',
+            get='broadcast',
             list=True
         )
 
@@ -246,14 +246,14 @@ class HostsNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
         self.add_property(
             descr='IP address',
             name='address',
-            get='/address',
+            get='address',
             list=True
         )
 
         self.add_property(
             descr='Hostname',
             name='name',
-            get='/id',
+            get='id',
             list=True
         )
 
@@ -268,21 +268,21 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.add_property(
             descr='IPv4 gateway',
             name='ipv4_gateway',
-            get='/gateway/ipv4',
+            get='gateway.ipv4',
             list=True
         )
 
         self.add_property(
             descr='IPv6 gateway',
             name='ipv6_gateway',
-            get='/gateway/ipv6',
+            get='gateway.ipv6',
             list=True
         )
 
         self.add_property(
             descr='DNS servers',
             name='dns_servers',
-            get='/dns/addresses',
+            get='dns.addresses',
             list=True,
             type=ValueType.SET
         )
@@ -290,7 +290,7 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.add_property(
             descr='DNS search domains',
             name='dns_search',
-            get='/dns/search',
+            get='dns.search',
             list=True,
             type=ValueType.SET
         )
@@ -298,7 +298,7 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.add_property(
             descr='DHCP will assign default gateway',
             name='dhcp_gateway',
-            get='/dhcp/assign_gateway',
+            get='dhcp.assign_gateway',
             list=True,
             type=ValueType.BOOLEAN
         )
@@ -306,7 +306,7 @@ class GlobalConfigNamespace(ConfigNamespace):
         self.add_property(
             descr='DHCP will assign DNS servers addresses',
             name='dhcp_dns',
-            get='/dhcp/assign_dns',
+            get='dhcp.assign_dns',
             list=True,
             type=ValueType.BOOLEAN
         )
@@ -333,28 +333,28 @@ class RoutesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
         self.add_property(
             descr='Name',
             name='name',
-            get='/id',
+            get='id',
             list=True
         )
 
         self.add_property(
             descr='Address family',
             name='type',
-            get='/type',
+            get='type',
             list=True
         )
 
         self.add_property(
             descr='Destination',
             name='destination',
-            get='/destination',
+            get='destination',
             list=True
         )
 
         self.add_property(
             descr='Network',
             name='network',
-            get='/network',
+            get='network',
             list=True
         )
 

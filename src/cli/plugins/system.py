@@ -42,7 +42,7 @@ class StatusCommand(Command):
 @description("Provides information about running system")
 class InfoCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        pass
+        output_dict(context.connection.call_sync('system.info.hardware'))
 
 
 @description("Prints FreeNAS version information")
@@ -52,6 +52,9 @@ class VersionCommand(Command):
             ('FreeNAS version', 'freenas-version', context.connection.call_sync('system.info.version')),
             ('System version', 'system-version', context.connection.call_sync('system.info.uname_full'))
         )
+
+    def complete(self, context, tokens):
+        print tokens
 
 
 @description("Logs in to the server")
@@ -67,10 +70,10 @@ class SessionsCommand(Command):
     def run(self, context, args, kwargs, opargs):
         items = context.connection.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
-            Column('Session ID', '/id', ValueType.NUMBER),
-            Column('User name', '/user', ValueType.STRING),
-            Column('Started at', '/started-at', ValueType.TIME),
-            Column('Ended at', '/ended-at', ValueType.TIME)
+            Column('Session ID', 'id', ValueType.NUMBER),
+            Column('User name', 'user', ValueType.STRING),
+            Column('Started at', 'started-at', ValueType.TIME),
+            Column('Ended at', 'ended-at', ValueType.TIME)
         ])
 
 
@@ -80,7 +83,7 @@ class EventsCommand(Command):
         items = context.connection.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
             Column('Event name', lambda t: events.translate(context, t['name'], t['args'])),
-            Column('Time', '/timestamp', ValueType.TIME)
+            Column('Time', 'timestamp', ValueType.TIME)
         ])
 
 
@@ -92,14 +95,14 @@ class TimeNamespace(ConfigNamespace):
         self.add_property(
             descr='System time',
             name='system_time',
-            get='/system-time',
+            get='system-time',
             list=True
         )
 
         self.add_property(
             descr='Bootup time',
             name='boot_time',
-            get='/boot-time',
+            get='boot-time',
             set=None,
             list=True
         )
@@ -107,7 +110,7 @@ class TimeNamespace(ConfigNamespace):
         self.add_property(
             descr='Time zone',
             name='timezone',
-            get='/timezone',
+            get='timezone',
             list=True
         )
 

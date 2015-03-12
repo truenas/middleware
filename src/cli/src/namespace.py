@@ -1,4 +1,4 @@
-# +
+#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -29,7 +29,7 @@
 import copy
 import collections
 from texttable import Texttable
-from jsonpointer import resolve_pointer, set_pointer, JsonPointerException
+from fnutils.query import QueryDict, QueryList
 from output import (Column, ValueType, output_dict, output_table,
                     output_msg, output_is_ascii, read_value, format_value)
 
@@ -132,10 +132,7 @@ class PropertyMapping(object):
         if callable(self.get):
             return self.get(obj)
 
-        try:
-            return resolve_pointer(obj, self.get)
-        except JsonPointerException:
-            return None
+        return obj.get(self.get)
 
     def do_set(self, obj, value):
         value = read_value(value, self.type)
@@ -143,7 +140,7 @@ class PropertyMapping(object):
             self.set(obj, value)
             return
 
-        set_pointer(obj, self.set, value)
+        obj[self.set] = value
 
     def do_append(self, obj, value):
         if self.type != ValueType.ARRAY:
@@ -519,15 +516,15 @@ class RpcBasedLoadMixin(object):
         self.primary_key_name = 'id'
 
     def query(self, params, options):
-        return self.context.connection.call_sync(
+        return QueryList(self.context.connection.call_sync(
             self.query_call,
-            params, options)
+            params, options))
 
     def get_one(self, name):
-        return self.context.connection.call_sync(
+        return QueryDict(self.context.connection.call_sync(
             self.query_call,
             [(self.primary_key_name, '=', name)],
-            {'single': True})
+            {'single': True}))
 
 
 class TaskBasedSaveMixin(object):

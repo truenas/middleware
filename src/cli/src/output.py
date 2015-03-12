@@ -38,7 +38,6 @@ import natural.size
 from threading import Lock
 from xml.etree import ElementTree
 from texttable import Texttable
-from jsonpointer import resolve_pointer, JsonPointerException
 
 
 output_lock = Lock()
@@ -230,10 +229,7 @@ def get_terminal_size(fd=1):
 
 def resolve_cell(row, spec):
     if type(spec) == str:
-        try:
-            return resolve_pointer(row, spec)
-        except JsonPointerException:
-            return None
+        return row.get(spec)
 
     if callable(spec):
         return spec(row)

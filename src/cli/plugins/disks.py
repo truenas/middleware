@@ -48,7 +48,7 @@ class DisksNamespace(RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='Size',
             name='mediasize',
-            get='/mediasize',
+            get='mediasize',
             set=None,
             list=True,
             type=ValueType.SIZE)
@@ -56,7 +56,7 @@ class DisksNamespace(RpcBasedLoadMixin, EntityNamespace):
         self.add_property(
             descr='Online',
             name='builtin',
-            get='/online',
+            get='online',
             set=None,
             list=True,
             type=ValueType.BOOLEAN)
