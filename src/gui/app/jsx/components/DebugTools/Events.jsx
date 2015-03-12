@@ -22,7 +22,6 @@ var Events = React.createClass({
   , componentDidMount: function() {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe(["task.*","system.*"]);
-      window.moment = moment;
     }
 
   , componentWillUnmount: function() {
