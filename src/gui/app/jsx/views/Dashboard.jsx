@@ -6,18 +6,19 @@
 "use strict";
 
 
-var React 		        = 	require("react");
+var React 		         = 	require("react");
 
-var Widget   	        = 	require("../components/Widget");
-var MemoryUtil 	= 	require("../components/Widgets/MemoryUtil");
-var SystemInfo         =   require("../components/Widgets/SystemInfo");
+var Widget   	         = 	require("../components/Widget");
+var MemoryUtil         = 	require("../components/Widgets/MemoryUtil");
+var SystemInfo         =  require("../components/Widgets/SystemInfo");
+var NetworkUsage       =  require("../components/Widgets/NetworkUsage");
 
-var DriveInfo 	        = 	require("../components/Widgets/DriveInfo");
-var DriveInfo2 	        = 	require("../components/Widgets/DriveInfo2");
-var ProcessesPie 	    = 	require("../components/Widgets/ProcessesPie");
-var SwapUsage 	        = 	require("../components/Widgets/SwapUsage");
-var NetworkChart 	    = 	require("../components/Widgets/NetworkChart");
-var PoolIOs 		    = 	require("../components/Widgets/PoolIOs");
+var DriveInfo 	       = 	require("../components/Widgets/DriveInfo");
+var DriveInfo2 	       = 	require("../components/Widgets/DriveInfo2");
+var ProcessesPie 	     = 	require("../components/Widgets/ProcessesPie");
+var SwapUsage 	       = 	require("../components/Widgets/SwapUsage");
+var NetworkChart 	     = 	require("../components/Widgets/NetworkChart");
+var PoolIOs 		       = 	require("../components/Widgets/PoolIOs");
 
 var Dashboard = React.createClass({
   componentDidMount: function() {
@@ -31,6 +32,7 @@ var Dashboard = React.createClass({
           <MemoryUtil positionX="15" positionY="100" title="Memory Value" size="l-rect" />
           <MemoryUtil positionX="15" positionY="460" graphType="stacked" title="Stacked Memory Value" size="l-rect" />
           <SystemInfo positionX="555" positionY="100" stacked="true" title="System Info" size="m-rect" />
+          <NetworkUsage positionX="555" positionY="460" title="Network Usage" size="l-rect" />
         </div>
       </main>
     );
@@ -48,3 +50,4 @@ module.exports = Dashboard;
 //          <SwapUsage positionX="375" positionY="280" title="Swap Usage" size="sl-rect" />
 //          <NetworkChart positionX="15" positionY="1000" title="Networ Chart" size="xl-rect" />
 //          <PoolIOs positionX="15" positionY="460" title="Pool IOs" size="xl-rect" />
+
