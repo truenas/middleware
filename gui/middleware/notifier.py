@@ -4719,8 +4719,6 @@ class notifier:
             return False
         # We need to invalidate confxml cache
         self.__confxml = None
-        if p1.wait() != 0:
-            return False
         return True
 
     def multipath_next(self):
