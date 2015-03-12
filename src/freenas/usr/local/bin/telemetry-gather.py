@@ -44,31 +44,31 @@ class Parser(object):
         self.year = self.t.year
         self.tz = str(time.tzname[time.daylight])
 
-        def parse(self, line):
-            parsed = self.__pattern.parseString(line)
-            dstr = "{:04}-{}-{:02} {:02}:{:02}:{:02} {}".format(
-                int(self.year),
-                str(parsed[0]),
-                int(parsed[1]),
-                int(parsed[2]),
-                int(parsed[3]),
-                int(parsed[4]),
-                str(self.tz))
+    def parse(self, line):
+        parsed = self.__pattern.parseString(line)
+        dstr = "{:04}-{}-{:02} {:02}:{:02}:{:02} {}".format(
+            int(self.year),
+            str(parsed[0]),
+            int(parsed[1]),
+            int(parsed[2]),
+            int(parsed[3]),
+            int(parsed[4]),
+            str(self.tz))
 
-            d = time.strptime(dstr, "%Y-%b-%d %H:%M:%S %Z")
-            payload = {}
-            payload["timestamp"] = int(time.mktime(d))
+        d = time.strptime(dstr, "%Y-%b-%d %H:%M:%S %Z")
+        payload = {}
+        payload["timestamp"] = int(time.mktime(d))
 
-            payload["timestamp_raw"] = parsed[0] + " " + parsed[1] + " " + parsed[2] + ":" + parsed[3] + ":" +  parsed[4]
-            payload["hostname"] = parsed[5]
-            payload["program"] = parsed[6]
+        payload["timestamp_raw"] = parsed[0] + " " + parsed[1] + " " + parsed[2] + ":" + parsed[3] + ":" +  parsed[4]
+        payload["hostname"] = parsed[5]
+        payload["program"] = parsed[6]
 
-            try:
-                payload["pid"] = parsed[7]
-                payload["text"] = parsed[8]
-            except IndexError:
-                payload["text"] = parsed[7]
-            return payload
+        try:
+            payload["pid"] = parsed[7]
+            payload["text"] = parsed[8]
+        except IndexError:
+            payload["text"] = parsed[7]
+        return payload
 
 """ --------------------------------- """
 
@@ -178,7 +178,6 @@ def main():
         except:
             log['filecontents'][f] = "ERROR opening or reading file."
             continue
-
 
 
     f = bz2.BZ2File('/var/log/telemetry.json.bz2', 'wb')
