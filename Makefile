@@ -69,7 +69,7 @@ update: git-verify
 	${ENV_SETUP} /bin/sh build/do_checkout.sh
 
 clean:
-	${ENV_SETUP} /bin/sh build/build_cleanup.py
+	${ENV_SETUP} build/build_cleanup.py
 	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
 	rm -rf objs os-base
 
