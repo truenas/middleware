@@ -52,6 +52,80 @@ def MakeString(obj):
     retval = json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '), cls = ManifestEncoder)
     return retval
 
+def DiffManifests(m1, m2):
+    """
+    Compare two manifests.  The return value is a dictionary,
+    with at least the following keys/values as possible:
+    Packages -- an array of tuples (pkg, op, old)
+    Sequence -- a tuple of (old, new)
+    Train -- a tuple of (old, new)
+    Reboot -- a boolean indicating whether a reboot is necessary.
+    (N.B.  This may be speculative; it's going to assume that any
+    updates listed in the packages are available, when they may not
+    be.)
+    If a key is not present, then there are no differences for that
+    value.
+    """
+    return_diffs = {}
+
+    def DiffPackages(old_packages, new_packages):
+        retval = []
+        old_list = {}
+        for P in old_packages:
+            old_list[P.Name()] = P
+
+        for P in new_packages:
+            if P.Name() in old_list:
+                # Either it's the same version, or a new version
+                if old_list[P.Name()].Version() != P.Version():
+                    retval.append((P, "upgrade", old_list[P.Name()]))
+                old_list.pop(P.Name())
+            else:
+                retval.append((P, "install", None))
+
+        for P in old_list:
+            retval.insert(0, (P, "delete", None))
+    
+        return retval
+
+    # First thing, let's compare the packages
+    # This will go into the Packages key, if it's non-empty.
+    package_diffs = DiffPackages(m1.Packages(), m2.Packages())
+    if len(package_diffs) > 0:
+        return_diffs["Packages"] = package_diffs
+        # Now let's see if we need to do a reboot
+        reboot_required = False
+        for pkg, op, old in package_diffs:
+            if op == "delete":
+                # XXX You know, I hadn't thought this one out.
+                # Is there a case where a removal requires a reboot?
+                continue
+            elif op == "install":
+                if pkg.RequiresReboot() == True:
+                    reboot_required = True
+            elif op == "upgrade":
+                # This is a bit trickier.  We want to see
+                # if there is an upgrade for old
+                upd = pkg.Update(old.Version())
+                if upd:
+                    if upd.RequiresReboot() == True:
+                        reboot_required = True
+                else:
+                    if pkg.RequiresReboot() == True:
+                        reboot_required = True
+        return_diffs["Reboot"] = reboot_required
+        
+    # Next, let's look at the train
+    # XXX If NewTrain is set, should we use that?
+    if m1.Train() != m2.Train():
+        return_diffs["Train"] = (m1.Train(), m2.Train())
+
+    # Sequence
+    if m1.Sequence() != m2.Sequence():
+        return_diffs["Sequence"] = (m1.Sequence(), m2.Sequence())
+        
+    return return_diffs
+
 def CompareManifests(m1, m2):
     """
     Compare two manifests.  The return value is an
@@ -63,28 +137,10 @@ def CompareManifests(m1, m2):
     This only compares packages; it does not compare
     sequence, train names, notices, etc.
     """
-    old_packages = m1.Packages()
-    new_packages = m2.Packages()
-    old_list = {}
-
-    retval = []
-
-    for P in old_packages:
-        old_list[P.Name()] = P
-
-    for P in new_packages:
-        if P.Name() in old_list:
-            # Either it's the same version, or a new version
-            if old_list[P.Name()].Version() != P.Version():
-                retval.append((P, "upgrade", old_list[P.Name()]))
-            old_list.pop(P.Name())
-        else:
-            retval.append((P, "install", None))
-
-    for P in old_list:
-        retval.insert(0, (P, "delete", None))
-    
-    return retval
+    diffs = DiffManifests(m1, m2)
+    if "Packages" in diffs:
+        return diffs["Packages"]
+    return []
                     
 class ManifestEncoder(json.JSONEncoder):
     def default(self, obj):

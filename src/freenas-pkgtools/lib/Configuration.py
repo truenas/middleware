@@ -160,6 +160,8 @@ class PackageDB:
     __close = True
 
     def __init__(self, root = "", create = True):
+        if root is None:
+            root = ""
         self.__db_root = root
         self.__db_path = self.__db_root + "/" + PackageDB.DB_NAME
         if os.path.exists(os.path.dirname(self.__db_path)) == False:
@@ -796,7 +798,9 @@ class Configuration(object):
         """
         sys_mani = self.SystemManifest()
         if sys_mani:
-           return sys_mani.Train()
+            if sys_mani.NewTrain():
+                return sys_mani.NewTrain()
+            return sys_mani.Train()
         return None
 
     def AvailableTrains(self):
@@ -1011,16 +1015,18 @@ class Configuration(object):
                 if pkgInfo:
                     curVers = pkgInfo[package.Name()]
                     if curVers and curVers != package.Version():
-                        for upgrade in package.Updates():
-                            if upgrade[Package.VERSION_KEY] == curVers:
-                                tdict = { "Filename" : package.FileName(curVers),
-                                          "Checksum" : None,
-                                      }
-
-                                if Package.CHECKSUM_KEY in upgrade:
-                                    tdict[Package.CHECKSUM_KEY] = upgrade[Package.CHECKSUM_KEY]
-                                package_files.append(tdict)
-                                break
+                        upgrade = package.Update(curVers)
+                        if upgrade:
+                            tdict = { "Filename" : package.FileName(curVers),
+                                      "Checksum" : None,
+                                      "Reboot"   : upgrade.RequiresReboot(),
+                                      "Delta"    : True,
+                            }
+                            if upgrade.Checksum():
+                                tdict[Package.CHECKSUM_KEY] = upgrade.Checksum()
+                            if upgrade.Size():
+                                tdict[Package.SIZE_KEY] = upgrade.Size()    
+                            package_files.append(tdict)
         except:
             # No update packge that matches.
             pass

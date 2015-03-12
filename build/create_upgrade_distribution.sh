@@ -32,6 +32,11 @@ do
     test -f ${note} && cp ${note} "${UPDATE_DIR}"
 done
 
+# Copy any update scripts, if gien
+if [ -n "${DELTA_SCRIPTS}" -a -d "${DELTA_SCRIPTS}" ]; then
+    cp -R "${DELTA_SCRIPTS}"/* "${UPDATE_DIR}"/Packages
+fi
+
 rm -f "${LATEST}"
 ln -sf "${UPDATE_DIR}" "${LATEST}"
 

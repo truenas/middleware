@@ -154,13 +154,17 @@ def LoadTemplate(path):
 	return rv
 
     if cfp.has_section("Package"):
-	# Get the various manifest 
+	# Get the various manifest settings
 	for key in ["name", "www", "arch", "maintainer",
 		"comment", "origin", "prefix", "licenslogic",
 		"licenses", "desc"]:
 	    if cfp.has_option("Package", key):
 		rv[key] = cfp.get("Package", key)
-
+        # Some optional boolean values
+        for key in ["requires-reboot"]:
+            if cfp.has_option("Package", key):
+                rv[key] = cfp.getboolean("Package", key)
+                
     if cfp.has_section("Scripts"):
 	if "scripts" not in rv:
 	    rv["scripts"] = {}
@@ -189,6 +193,7 @@ def main():
         "prefix" : "/",
         "licenselogic" : "single",
         "desc" : "FreeNAS Package",
+        "requires-reboot" : True,
         }
     root = None
     arg_name = None

@@ -193,19 +193,32 @@ mkdir -p ${NANO_OBJ}/_.packages/Packages
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools obj
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools all
 make -C ${AVATAR_ROOT}/src/freenas-pkgtools install DESTDIR=${TOOLDIR} PREFIX=/usr/local
-make -C ${AVATAR_ROOT}/src/freenas-pkgtools package DESTDIR=${TOOLDIR} PREFIX=/usr/local \
-    PACKAGE_DIR=${NANO_OBJ}/_.packages/Packages
 # Now we should have some package tools and even a package.
 if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
     # base-os first
     ${TOOLDIR}/usr/local/bin/create_package -R "${NANO_WORLDDIR}" -T build/Templates/base-os \
 	-N base-os -V ${VERSION}${pkg_version} \
 	${NANO_OBJ}/_.packages/Packages/base-os-${VERSION}${pkg_version}.tgz
+    # The freebsd pkg db.  Needed for SNMP, but shouldn't be in base-os
+    ${TOOLDIR}/usr/local/bin/create_package -R "${NANO_WORLDDIR}" -T build/Templates/freebsd-pkgdb \
+	-N freebsd-pkgdb -V ${VERSION}${pkg_version} \
+	${NANO_OBJ}/_.packages/Packages/freebsd-pkgdb-${VERSION}${pkg_version}.tgz
+    
     # The UI component
     ${TOOLDIR}/usr/local/bin/create_package -R "${NANO_WORLDDIR}" -T build/Templates/freenasUI \
 	-N ${NANO_LABEL}UI -V ${VERSION}${pkg_version} \
 	${NANO_OBJ}/_.packages/Packages/${NANO_LABEL}UI-${VERSION}${pkg_version}.tgz
 
+    # Then the package tools
+    ${TOOLDIR}/usr/local/bin/create_package -R "${TOOLDIR}" -T build/Templates/freenas-pkg-tools \
+	      -N freenas-pkg-tools -V ${VERSION}-${REVISION:-0} \
+	      ${NANO_OBJ}/_.packages/Packages/freenas-pkg-tools-${VERSION}-${REVISION:-0}.tgz
+    
+    # And the documentation package
+    ${TOOLDIR}/usr/local/bin/create_package -R "${NANO_OBJ}/_.docs" -T build/Templates/docs \
+	      -N docs -V ${VERSION}-${REVISION:-0} \
+	      ${NANO_OBJ}/_.packages/Packages/docs-${VERSION}-${REVISION:-0}.tgz
+    
     if [ -n "${SEQUENCE}" ]; then
 	seq_arg="-S ${SEQUENCE}"
     else
@@ -219,8 +232,10 @@ if [ -f ${TOOLDIR}/usr/local/bin/create_package ]; then
 	-R ${NANO_LABEL}-${VERSION} ${seq_arg} -T ${TRAIN:-FreeNAS} \
 	-t $(date +%s) \
 	base-os=${VERSION}${pkg_version} \
+	freebsd-pkgdb=${VERSION}${pkg_version} \
 	${NANO_LABEL}UI=${VERSION}${pkg_version} \
-	freenas-pkg-tools=${VERSION}-${REVISION:-0}
+	freenas-pkg-tools=${VERSION}-${REVISION:-0} \
+	docs=${VERSION}-${REVISION:-0}
 
     ln -sf ${NANO_LABEL}-${SEQUENCE:-0} ${NANO_OBJ}/_.packages/${NANO_LABEL}-MANIFEST
 else
