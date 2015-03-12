@@ -91,8 +91,12 @@ class MongodbDatastore(object):
         item = self.db['collections'].find_one({"_id": name})
         return item['attributes']
 
+    def collection_get_max_id(self, name):
+        item = self.db['collections'].find_one({"_id": name})
+        return item['last-id']
+
     def collection_list(self):
-        return [x['name'] for x in self.db['collections'].find()]
+        return [x['_id'] for x in self.db['collections'].find()]
 
     def collection_delete(self, name):
         self.db['collections'].remove({'_id': name})

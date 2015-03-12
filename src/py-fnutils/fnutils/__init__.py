@@ -32,3 +32,7 @@ def first_or_default(f, iterable, default=None):
         return i[0]
 
     return default
+
+
+def exclude(d, *keys):
+    return {k: v for k, v in d.items() if k not in keys}
