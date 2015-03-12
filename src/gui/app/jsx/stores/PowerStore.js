@@ -69,7 +69,6 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
         if ( args["name"] === "power.changed" && updateData["operation"] === "reboot" ) {
           _rebootscheduled = true;
-          console.log("Suraj reboot event being caught by the Powerstore");
         } else if ( args["name"] === "power.changed" && updateData["operation"] === "shutdown" ) {
           _shutdownscheduled = true;
         } else if ( args["name"] === "update.changed" && updateData["operation"] === "started" ) {

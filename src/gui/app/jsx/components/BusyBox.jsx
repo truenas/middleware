@@ -9,6 +9,9 @@ var React = require("react");
 // Powerstuff
 var PowerStore  = require("../stores/PowerStore");
 
+// PowerMiddleware
+var PowerMiddleware = require("../middleware/PowerMiddleware")
+
 // Throbber
 var Throbber = require("./common/Throbber");
 
@@ -35,27 +38,18 @@ var BusyBox = React.createClass({
       };
     }
 
-  , consolePrint: function () {
-      console.log("Suraj Power thing happened componentDidMount");
-  }
-
-  , consolePrint2: function () {
-      console.log("Suraj Power thing happened componentWillUnMount");
-  }
-
   , componentDidMount: function() {
       PowerStore.addChangeListener( this.handlePowerChange );
-      PowerStore.addChangeListener( this.consolePrint );
+      PowerMiddleware.subscribe();
       this.updateBoxVisibility();
     }
 
   , componentWillUnmount: function () {
       PowerStore.removeChangeListener( this.handlePowerChange );
-      PowerStore.addChangeListener( this.consolePrint2 );
+      PowerMiddleware.unsubscribe();
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      console.log("Suraj componentDidUpdate called in BusyBox")
       if ( prevState.kickin !== this.state.kickin ) {
         this.updateBoxVisibility();
       }
@@ -104,13 +98,16 @@ var BusyBox = React.createClass({
       var busySpinner = null;
 
       if ( this.state.boxIsVisible ) {
-        busySpinner = (
-          <div className="overlay-dark" ref="Busy" style={{ opacity: 0 }}>
-            <div className="overlay-window">
 
+        var throbberprops = {};
+        throbberprops.bsStyle = ( this.props.throbberStyle || "primary" );
+        //throbberprops.bsSize  = ( this.props.throbberSize || "60" );
+        busySpinner = (
+          <div className="overlay-dark" ref="Busy" style={{ opacity: 1 }}>
+            <div className="overlay-window">
               <div>
                 <h3>{ "Please wait while I reboot(or something) (or attempt to anyways)..." || "Done." }</h3>
-                <Throbber bsStyle={ this.props.throbberStyle || "primary" } />
+                <Throbber {...throbberprops} />
               </div>
 
             </div>
