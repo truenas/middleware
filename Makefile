@@ -50,26 +50,26 @@ ENV_SETUP+= CHANGELOG=ChangeLog
 all:	build
 
 .BEGIN:
-	${ENV_SETUP} build/check_build_host.sh
+	${ENV_SETUP} /bin/sh build/check_build_host.sh
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
-	${ENV_SETUP} build/check_sandbox.sh
+	${ENV_SETUP} /bin/sh build/check_sandbox.sh
 .endif
 
 build: git-verify
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
-	${ENV_SETUP} build/do_build.sh
+	${ENV_SETUP} /bin/sh build/do_build.sh
 
 checkout: git-verify
-	${ENV_SETUP} build/do_checkout.sh
+	${ENV_SETUP} /bin/sh build/do_checkout.sh
 
 update: git-verify
 	git pull
-	${ENV_SETUP} build/do_checkout.sh
+	${ENV_SETUP} /bin/sh build/do_checkout.sh
 
 clean:
-	${ENV_SETUP} build/build_cleanup.py
+	${ENV_SETUP} /bin/sh build/build_cleanup.py
 	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
 	rm -rf objs os-base
 
@@ -90,13 +90,13 @@ clean-package:
 .endif
 
 clean-ui-package:
-	${MAKE} clean-package p=freenas-ui
+	${ENV_SETUP} ${MAKE} clean-package p=freenas-ui
 
 distclean: clean
 	rm -fr FreeBSD nas_source
 
 save-build-env:
-	${ENV_SETUP} build/save_build.sh
+	${ENV_SETUP} /bin/sh build/save_build.sh
 
 freenas: release
 release: git-verify
@@ -115,13 +115,13 @@ release-push: release
 	[ -f ChangeLog ] && cp ChangeLog "objs/${STAGEDIR}/"
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
-		${ENV_SETUP} sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
+		${ENV_SETUP} /bin/sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
 		echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com; \
 		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi \
 	fi
 	mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`
 	(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest)
-	${MAKE} save-build-env
+	${ENV_SETUP} ${MAKE} save-build-env
 
 update-push:	release
 	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
@@ -143,10 +143,10 @@ archive:	release
 rebuild:
 	@${ENV_SETUP} ${MAKE} checkout
 	@${ENV_SETUP} ${MAKE} all
-	@${ENV_SETUP) sh build/create_release_distribution.sh
+	@${ENV_SETUP) /bin/sh build/create_release_distribution.sh
 
 cdrom:
-	${ENV_SETUP} sh -x build/create_iso.sh
+	${ENV_SETUP} /bin/sh -x build/create_iso.sh
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
@@ -177,16 +177,16 @@ git-external:
 	@echo "the standard make targets (e.g. build or release) now."
 
 tag:
-	${ENV_SETUP} build/apply_tag.sh
+	${ENV_SETUP} /bin/sh build/apply_tag.sh
 
 ports:
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
-	${ENV_SETUP} build/ports/create-poudriere-conf.sh
-	${ENV_SETUP} build/ports/create-poudriere-make.conf.sh
-	${ENV_SETUP} build/ports/prepare-jail.sh
-	${ENV_SETUP} build/ports/fetch-ports-srcs.sh
-	${ENV_SETUP} build/ports/create-ports-list.sh
-	${ENV_SETUP} build/ports/build-ports.sh
+	${ENV_SETUP} /bin/sh build/ports/create-poudriere-conf.sh
+	${ENV_SETUP} /bin/sh build/ports/create-poudriere-make.conf.sh
+	${ENV_SETUP} /bin/sh build/ports/prepare-jail.sh
+	${ENV_SETUP} /bin/sh build/ports/fetch-ports-srcs.sh
+	${ENV_SETUP} /bin/sh build/ports/create-ports-list.sh
+	${ENV_SETUP} /bin/sh build/ports/build-ports.sh
 
 portsjail:
-	${ENV_SETUP} build/build_jail.sh
+	${ENV_SETUP} /bin/sh build/build_jail.sh
