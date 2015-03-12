@@ -21,13 +21,13 @@ var Events = React.createClass({
 
   , componentDidMount: function() {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.subscribe(["*"]);
+      MiddlewareClient.subscribe(["task.*","system.*"]);
       window.moment = moment;
     }
 
   , componentWillUnmount: function() {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.unsubscribe(["*"]);
+      MiddlewareClient.unsubscribe(["task.*","system.*"]);
     }
 
   , handleMiddlewareChange: function( namespace ) {
