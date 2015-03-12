@@ -82,7 +82,7 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         self.add_property(
             descr='Name',
             name='name',
-            get='/id',
+            get='id',
             set=None,
             list=True
         )
@@ -90,7 +90,7 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         self.add_property(
             descr='Type',
             name='type',
-            get='/type',
+            get='type',
             set=None,
             list=True
         )
@@ -98,7 +98,7 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         self.add_property(
             descr='Enabled',
             name='enabled',
-            get='/enabled',
+            get='enabled',
             type=ValueType.BOOLEAN,
             list=True
         )
@@ -106,7 +106,7 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         self.add_property(
             descr='DHCP',
             name='dhcp',
-            get='/dhcp',
+            get='dhcp',
             type=ValueType.BOOLEAN,
             list=True
         )
@@ -154,10 +154,10 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         ]
 
     def get_link_state(self, entity):
-        return self.link_states[entity['status']['link-state']]
+        return self.link_states[entity['status.link-state']]
 
     def get_iface_state(self, entity):
-        return _("up") if 'UP' in entity['status']['flags'] else _("down")
+        return _("up") if 'UP' in entity['status.flags'] else _("down")
 
     def get_ip_config(self, entity):
         for i in entity['status']['aliases']:
