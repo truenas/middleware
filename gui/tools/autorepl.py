@@ -396,6 +396,7 @@ Hello,
                 #
                 system('/sbin/zfs hold -r freenas:repl %s' % (last_snapshot))
                 MNTLOCK.unlock()
+                replication = Replication.objects.get(id = replication.id)
                 replication.repl_lastsnapshot = last_snapshot
                 if resetonce:
                     replication.repl_resetonce = False
