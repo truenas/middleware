@@ -7,7 +7,7 @@
 .throbber {
   text-align: center; // Always center throbber position in block
 
-  &:after {
+  .throbber-inner {
     content       : '';
     display       : inline-block;
     position      : relative;
@@ -23,62 +23,62 @@
   }
 
   .throbber-slow {
-    &:after {
+    .throbber-inner {
       .animation( throbber-rotate 1.2s linear infinite );
     }
   }
 
   &.throbber-primary {
-    &:after {
+    .throbber-inner {
       border-top    : 1px solid @brand-primary;
       border-left   : 1px solid @brand-primary;
     }
   }
 
   &.throbber-info {
-    &:after {
+    .throbber-inner {
       border-top    : 1px solid @brand-info;
       border-left   : 1px solid @brand-info;
     }
   }
 
   &.throbber-warning {
-    &:after {
+    .throbber-inner {
       border-top    : 1px solid @brand-warning;
       border-left   : 1px solid @brand-warning;
     }
   }
 
   &.throbber-danger {
-    &:after {
+    .throbber-inner {
       border-top    : 1px solid @brand-danger;
       border-left   : 1px solid @brand-danger;
     }
   }
 
   &.throbber-success {
-    &:after {
+    .throbber-inner {
       border-top    : 1px solid @brand-success;
       border-left   : 1px solid @brand-success;
     }
   }
 
   &.throbber-large {
-    &:after {
+    .throbber-inner {
       height : 40px;
       width  : 40px;
     }
   }
 
   &.throbber-medium {
-    &:after {
+    .throbber-inner {
       height : 30px;
       width  : 30px;
     }
   }
 
   &.throbber-small {
-    &:after {
+    .throbber-inner {
       height : 10px;
       width  : 10px;
     }
