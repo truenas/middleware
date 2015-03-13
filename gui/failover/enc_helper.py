@@ -196,7 +196,7 @@ Available commands are:
         passphrase = getpass.getpass()
         if passphrase:
             rv = escrowctl.setkey(passphrase)
-            os.system("/bin/sh /etc/carp-state-change-hook carp0 LINK_UP")
+            os.system("/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py carp0 LINK_UP")
     else:
         peer = str(Failover.objects.all()[0].ipaddress)
         sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=7 %s" % (peer)
