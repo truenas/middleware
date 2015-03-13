@@ -51,6 +51,7 @@ from namespace import Namespace, RootNamespace, Command
 from output import ValueType, ProgressBar, output_lock, output_msg, read_value
 from dispatcher.client import Client, ClientError
 from dispatcher.rpc import RpcException
+from fnutils.query import wrap
 from commands import (ExitCommand, PrintenvCommand, SetenvCommand,
                       ShellCommand, ShutdownCommand, RebootCommand)
 
@@ -294,6 +295,9 @@ class Context(object):
         sys.stdout.flush()
         self.ml.restore_readline()
         output_lock.release()
+
+    def call_sync(self, name, *args, **kwargs):
+        return wrap(self.connection.call_sync(name, *args, **kwargs))
 
     def submit_task(self, name, *args, **kwargs):
         callback = kwargs.pop('callback', None)
