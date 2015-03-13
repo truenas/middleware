@@ -40,15 +40,21 @@ operators_table = {
 }
 
 
+def wrap(obj):
+    if isinstance(obj, dict):
+        return QueryDict(obj)
+
+    if isinstance(obj, list):
+        return QueryList(obj)
+
+    return obj
+
+
 class QueryList(list):
     def __init__(self, *args, **kwargs):
         super(QueryList, self).__init__(*args, **kwargs)
         for idx, v in enumerate(self):
-            if type(v) is dict:
-                self[idx] = QueryDict(v)
-
-            if type(v) is list:
-                self[idx] = QueryList(v)
+                self[idx] = wrap(v)
 
     def __getitem__(self, item):
         if type(item) is str:
@@ -61,11 +67,7 @@ class QueryList(list):
         return super(QueryList, self).__getitem__(item)
 
     def __setitem__(self, key, value):
-        if type(value) is list:
-            value = QueryList(value)
-
-        if type(value) is dict:
-            value = QueryDict(value)
+        value = wrap(value)
 
         if type(key) is str:
             if key.isdigit():
@@ -107,11 +109,7 @@ class QueryDict(dict):
     def __init__(self, *args, **kwargs):
         super(QueryDict, self).__init__(*args, **kwargs)
         for k, v in self.items():
-            if type(v) is dict:
-                self[k] = QueryDict(v)
-
-            if type(v) is list:
-                self[k] = QueryList(v)
+                self[k] = wrap(v)
 
     def __getitem__(self, item):
         if type(item) is not str:
@@ -124,11 +122,7 @@ class QueryDict(dict):
         return super(QueryDict, self).__getitem__(left)[right]
 
     def __setitem__(self, key, value):
-        if type(value) is list:
-            value = QueryList(value)
-
-        if type(value) is dict:
-            value = QueryDict(value)
+        value = wrap(value)
 
         if type(key) is not str:
             return super(QueryDict, self).__setitem__(key, value)
