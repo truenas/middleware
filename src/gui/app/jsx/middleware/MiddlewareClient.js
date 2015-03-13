@@ -165,6 +165,10 @@ function MiddlewareClient() {
       pendingRequests[ requestID ].callback( args );
     }
 
+    if ( outcome === "error" && typeof pendingRequests[ requestID ].callback === "function" ) {
+      pendingRequests[ requestID ].callback( args );
+    }
+
     delete pendingRequests[ requestID ];
   }
 
@@ -375,6 +379,7 @@ function MiddlewareClient() {
         if ( data.name === "response" ) {
           resolvePendingRequest( data.id, data.args, "success" );
         } else {
+          resolvePendingRequest( data.id, data.args, "error" );
           console.warn( "Was sent an rpc message from middleware, but it did not contain a response:" );
           console.log( message );
         }
