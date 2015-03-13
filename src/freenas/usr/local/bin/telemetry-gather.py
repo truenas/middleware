@@ -68,6 +68,7 @@ class Parser(object):
             payload["text"] = parsed[8]
         except IndexError:
             payload["text"] = parsed[7]
+            payload["pid"] = -1
         return payload
 
 """ --------------------------------- """
