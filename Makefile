@@ -112,7 +112,7 @@ release-push: release
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
 	cp ReleaseNotes UPGRADING objs/${STAGEDIR}/
-	[ -f ChangeLog ] && cp ChangeLog objs/${STAGEDIR}/
+	if [ -f ChangeLog ]; then cp ChangeLog objs/${STAGEDIR}/; fi
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
 		${ENV_SETUP} /bin/sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
