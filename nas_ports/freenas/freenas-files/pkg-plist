@@ -21,6 +21,9 @@ usr/local/bin/sockscopy
 usr/local/bin/freenas-snmp/__init__.py
 usr/local/bin/freenas-snmp/snmpresponse.py
 usr/local/bin/freenas-snmp/zfs-snmp
+usr/local/bin/telemetry-cron.sh
+usr/local/bin/telemetry-gather.py
+usr/local/bin/telemetryuploader
 usr/local/etc/avahi/avahi-daemon.conf
 usr/local/etc/default/grub
 usr/local/etc/nginx/fastcgi_params
