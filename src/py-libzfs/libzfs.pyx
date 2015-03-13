@@ -449,11 +449,11 @@ cdef class ZFSVdev(object):
             if value not in ('root', 'disk', 'file', 'raidz1', 'raidz2', 'raidz3', 'mirror'):
                 raise ValueError('Invalid vdev type')
 
+            self.nvlist['type'] = value
+
             if value.startswith('raidz'):
                 self.nvlist['type'] = 'raidz'
-                self.nvlist['nparity'] = value[-1]
-
-            self.nvlist['type'] = value
+                self.nvlist['nparity'] = long(value[-1])
 
     property path:
         def __get__(self):

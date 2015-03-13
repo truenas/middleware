@@ -27,11 +27,12 @@
 cimport nvpair
 import collections
 import numbers
+import enum
 from libc.stdint cimport *
 from libc.stdlib cimport malloc, free
 
 
-class NVType(object):
+class NVType(enum.IntEnum):
     DATA_TYPE_UNKNOWN = nvpair.DATA_TYPE_UNKNOWN
     DATA_TYPE_BOOLEAN = nvpair.DATA_TYPE_BOOLEAN
     DATA_TYPE_BYTE = nvpair.DATA_TYPE_BYTE
@@ -60,7 +61,6 @@ class NVType(object):
     DATA_TYPE_INT8_ARRAY = nvpair.DATA_TYPE_INT8_ARRAY
     DATA_TYPE_UINT8_ARRAY = nvpair.DATA_TYPE_UINT8_ARRAY
     DATA_TYPE_DOUBLE = nvpair.DATA_TYPE_DOUBLE
-    DATA_TYPE_UINT8_ARRAY = nvpair.DATA_TYPE_UINT8_ARRAY
 
 
 cdef class NVList(object):
@@ -200,7 +200,7 @@ cdef class NVList(object):
     def __contains__(self, key):
         return nvpair.nvlist_exists(self._nvlist, key)
 
-    def __del__(self, key):
+    def __delitem__(self, key):
         nvpair.nvlist_remove(self._nvlist, key, self.type(key))
 
     def __iter__(self):
@@ -389,10 +389,10 @@ cdef class NVList(object):
             self.set(key, value, nvpair.DATA_TYPE_BOOLEAN)
 
         if type(value) is int:
-            self.set(key, value, nvpair.DATA_TYPE_INT32)
+            self.set(key, value, nvpair.DATA_TYPE_UINT32)
 
         if type(value) is long:
-            self.set(key, value, nvpair.DATA_TYPE_INT64)
+            self.set(key, value, nvpair.DATA_TYPE_UINT64)
 
         if type(value) is str or type(value) is unicode:
             self.set(key, value, nvpair.DATA_TYPE_STRING)
