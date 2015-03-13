@@ -7,14 +7,8 @@ var Icon   = require("./Icon");
 
 var Widget = React.createClass({
   render: function() {
-    var divStyle = {
-      position: "absolute",
-      left: this.props.positionX + "px",
-      top: this.props.positionY + "px"
-    };
-
     return (
-      <div className={"widget " + this.props.size} style={divStyle}>
+      <div className={"widget " + this.props.size}>
         <div className="widget-content">
           { this.props.children }
         </div>
