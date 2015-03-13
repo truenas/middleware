@@ -33,7 +33,6 @@ post-upgrade = /usr/bin/touch /boot/kernel/linker.hints
 
 [Files]
 exclude = /usr/local/www/freenasUI
-	/usr/share/man
 	/usr/lib/*.a
 	/usr/local/share/doc
 	/usr/local/share/gtk-doc
@@ -41,9 +40,6 @@ exclude = /usr/local/www/freenasUI
 	/usr/local/info
 	/usr/local/man
 	/usr/local/share/examples
-	/usr/share/groff_font
-	/usr/share/tmac
-	/usr/share/me
 	/var/log
 	/conf/base/var/log/usr/log
 	/conf/base/var/db/fontconfig

@@ -266,16 +266,8 @@ freenas_custom()
 	# and info (2MB)
 	rm -rf ${NANO_WORLDDIR}/usr/local/info
 
-	# and man pages (4.4MB)
-	rm -rf ${NANO_WORLDDIR}/usr/local/man
-
 	# and examples (1.7M)
 	rm -rf ${NANO_WORLDDIR}/usr/local/share/examples
-
-	# and groff_fonts junk (3MB)
-	rm -rf ${NANO_WORLDDIR}/usr/share/groff_font
-	rm -rf ${NANO_WORLDDIR}/usr/share/tmac
-	rm -rf ${NANO_WORLDDIR}/usr/share/me
 
 	# for now just remove the following file (later on revisit remove_var_cache_pkg)
 	rm -rf ${NANO_WORLDDIR}/etc/local/periodic/security
