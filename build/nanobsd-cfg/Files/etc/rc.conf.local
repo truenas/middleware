@@ -548,7 +548,7 @@ _gen_conf()
 	fi
 
 	local tun_var tun_value
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tun_var, tun_value FROM system_tunable WHERE tun_type = 'rc' ORDER BY id" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tun_var, tun_value FROM system_tunable WHERE tun_enabled = 1 AND tun_type = 'rc' ORDER BY id" | \
 	while read -r tun_var tun_value; do
 		echo "${tun_var}=\"${tun_value}\""
 	done
