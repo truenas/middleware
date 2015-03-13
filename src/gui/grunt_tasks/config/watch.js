@@ -20,6 +20,12 @@ module.exports = function( grunt ) {
     , tasks: [ "browserify:app" ]
   };
 
+  // Rebuild libs.js when internal library changes
+  this.internalScripts = {
+      files: ["<%= dirTree.internalScripts %>/**"]
+    , tasks: [ "browserify:libs" ]
+  };
+
   // Rebuild CSS when LESS files change
   this.less = {
       files: [ "<%= dirTree.source.styles %>/**" ]
