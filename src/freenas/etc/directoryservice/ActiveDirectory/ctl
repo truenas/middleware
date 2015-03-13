@@ -100,6 +100,7 @@ adctl_start()
 
 	echo ${cifs_started} > "${cifs_file}"
 
+	adctl_cmd ${service} ix-hostname quietstart
 	adctl_cmd ${service} ix-kerberos quietstart
 	adctl_cmd ${service} ix-nsswitch quietstart
 
@@ -210,6 +211,8 @@ adctl_stop()
 	adctl_cmd ${service} ix-kinit forcestop
 	activedirectory_set 0
 	rm -f "${status_file}"
+
+	adctl_cmd ${service} ix-hostname quietstop
 
 	AD_remove_config
 	return 0
