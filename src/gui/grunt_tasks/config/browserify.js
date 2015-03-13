@@ -20,7 +20,7 @@ module.exports = function( grunt ) {
       src: [
         "<%= dirTree.bower.velocity %>/velocity.min.js"
       , "<%= dirTree.bower.velocity %>/velocity.ui.min.js"
-      , "<%= dirTree.bower.d3 %>/d3.min.js"
+      , "<%= dirTree.bower.d3 %>/d3.js"
       , "<%= dirTree.internalScripts %>/nv.d3.js"
     ]
     , dest : "<%= dirTree.build.dist %>/libs.js"

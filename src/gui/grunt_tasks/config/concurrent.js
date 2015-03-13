@@ -12,6 +12,7 @@ module.exports = function( grunt ) {
     , "watch:ssrjs"
     , "watch:less"
     , "watch:images"
+    , "watch:internalScripts"
   ];
 
   this.options = {
