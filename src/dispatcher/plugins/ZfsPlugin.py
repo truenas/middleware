@@ -486,7 +486,7 @@ def convert_topology(zfs, topology):
 
                 vdev.children = ret
 
-                nvroot[group].append(vdev)
+            nvroot[group].append(vdev)
 
     return nvroot
 
