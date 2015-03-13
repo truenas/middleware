@@ -212,7 +212,7 @@ adctl_stop()
 	activedirectory_set 0
 	rm -f "${status_file}"
 
-	adctl_cmd ${service} ix-hostname quietstop
+	adctl_cmd ${service} ix-hostname quietstart
 
 	AD_remove_config
 	return 0
