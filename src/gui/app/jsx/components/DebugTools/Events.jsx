@@ -15,7 +15,8 @@ var Events = React.createClass({
 
     getInitialState: function() {
       return {
-          events: MiddlewareStore.getEventLog()
+          events     : MiddlewareStore.getEventLog()
+        , timeFormat : "absolute"
       };
     }
 
@@ -41,15 +42,30 @@ var Events = React.createClass({
       this.setState( newState );
     }
 
+  , handleHumanDateSelect: function( event ) {
+      this.setState({ timeFormat: "human" });
+    }
+
+  , handleAbsoluteDateSelect: function( event ) {
+      this.setState({ timeFormat: "absolute" });
+    }
+
   , createEventLog: function( event, index ) {
-      var eventObj = event.args;
+      var eventObj  = event.args;
+      var timestamp = null;
+
+      if ( this.state.timeFormat === "human" ) {
+        timestamp = moment.unix( eventObj.args["timestamp"] ).fromNow();
+      } else {
+        timestamp = moment.unix( eventObj.args["timestamp"] ).format("YYYY-MM-DD HH:mm:ss");
+      }
 
       return(
         <div className="debug-callout">
           <label>{ eventObj["name"].split(".")[0] }</label>
           <h5>
             { eventObj["name"] }
-            <small className="pull-right">{ moment.unix( eventObj.args["timestamp"] ).fromNow() }</small>
+            <small className="pull-right">{ timestamp }</small>
           </h5>
           <p>{ eventObj.args.description }</p>
           <pre className="debug-monospace-content">
@@ -84,6 +100,21 @@ var Events = React.createClass({
 
             <h5 className="debug-heading">Log Options</h5>
             <div className="debug-column-content well well-sm">
+              <div>
+                <label style={{ marginRight: "15px" }}>Time Format</label>
+                <TWBS.ButtonGroup>
+                  <TWBS.Button
+                      active  = { this.state.timeFormat === "human" }
+                      onClick = { this.handleHumanDateSelect }>
+                    {"Relative Time"}
+                  </TWBS.Button>
+                  <TWBS.Button
+                      active  = { this.state.timeFormat === "absolute" }
+                      onClick = { this.handleAbsoluteDateSelect }>
+                    {"Absolute Date"}
+                  </TWBS.Button>
+                </TWBS.ButtonGroup>
+              </div>
             </div>
 
           </TWBS.Col>
