@@ -51,6 +51,7 @@ from pyee import EventEmitter
 from gevent.os import tp_read, tp_write
 from gevent import monkey, Greenlet
 from gevent.queue import Queue
+from gevent.lock import RLock
 from gevent.subprocess import Popen
 from gevent.event import AsyncResult, Event
 from gevent.wsgi import WSGIServer
@@ -452,6 +453,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.session_id = None
         self.token = None
         self.event_masks = set()
+        self.rlock = RLock()
 
     def on_open(self):
         self.server.connections.append(self)
@@ -831,7 +833,9 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             self.dispatcher.logger.error(repr(obj))
             return
 
+        self.rlock.acquire()
         self.ws.send(data)
+        self.rlock.release()
 
 
 class ShellConnection(WebSocketApplication, EventEmitter):
