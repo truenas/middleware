@@ -8,14 +8,14 @@ var DummyWidgetContent = require("./DummyWidgetContent");
 var NetworkUsage = React.createClass({
  getInitialState: function() {
    return {
-     statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-em0.if_octets.rx", name:"Octets Receive", color:"#3C696E"}
-                          ,{variable:"octetsTx", dataSource:"localhost.interface-em0.if_octets.tx", name:"Octets Transmit", color:"#368D97"}
-                          ,{variable:"packetsRx", dataSource:"localhost.interface-em0.if_packets.rx", name:"Packets Receive", color:"#A8E077"}
-                          ,{variable:"packetsTx", dataSource:"localhost.interface-em0.if_packets.tx", name:"Packets Transmit", color:"#D9E35D"}
-                          ,{variable:"errorsTx", dataSource:"localhost.interface-em0.if_errors.rx", name:"Errors Receive", color:"#C9653A"}
-                          ,{variable:"errorsRx", dataSource:"localhost.interface-em0.if_errors.tx", name:"Errors Transmit", color:"#BE6F6F"}
+     statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-igbY.if_octets.rx", name:"Octets Receive", color:"#3C696E"}
+                          ,{variable:"octetsTx", dataSource:"localhost.interface-igbY.if_octets.tx", name:"Octets Transmit", color:"#368D97"}
+                          ,{variable:"packetsRx", dataSource:"localhost.interface-igbY.if_packets.rx", name:"Packets Receive", color:"#A8E077"}
+                          ,{variable:"packetsTx", dataSource:"localhost.interface-igbY.if_packets.tx", name:"Packets Transmit", color:"#D9E35D"}
+                          ,{variable:"errorsTx", dataSource:"localhost.interface-igbY.if_errors.rx", name:"Errors Receive", color:"#C9653A"}
+                          ,{variable:"errorsRx", dataSource:"localhost.interface-igbY.if_errors.tx", name:"Errors Transmit", color:"#BE6F6F"}
                         ]
-   , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}   
+   , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}
                         ]
 
    , chartTypes:        [  {type:"stacked", primary:"false"}
@@ -36,7 +36,7 @@ var NetworkUsage = React.createClass({
 
        <DummyWidgetContent
          statdResources    =  {this.state.statdResources}
-         systemResources   =  {this.state.systemResources}         
+         systemResources   =  {this.state.systemResources}
          chartTypes        =  {this.state.chartTypes} >
        </DummyWidgetContent>
 

@@ -18,8 +18,8 @@ var MemoryUtil = React.createClass({
     , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}
                          ]
 
-    , chartTypes:        [  {type:"stacked", primary:"false"}
-                           ,{type:"line", primary:"true"}
+    , chartTypes:        [  {type:"stacked", primary:true}
+                           ,{type:"line", primary:false}
                          ]
 
     };

@@ -25,6 +25,7 @@ var DummyWidgetContent = React.createClass({
       ,chart          :   ""
       ,updateCounter  :   0
       ,graphType      :   "line"
+      ,errorMode      :   false
     };
   }
 
@@ -37,9 +38,17 @@ var DummyWidgetContent = React.createClass({
       StatdMiddleware.subscribe(resource.dataSource);
     });
 
+    var defaultChartType = this.state.graphType;
+    this.props.chartTypes.forEach(function(chrttp) {
+      if (chrttp.primary === true)
+      {
+        defaultChartType = chrttp.type;
+      }
+    });
+
     this.setState({
        element    :   this.refs.svg.getDOMNode()
-      ,graphType  :   this.props.graphType
+      ,graphType  :   defaultChartType
     });
  }
 
@@ -69,24 +78,40 @@ var DummyWidgetContent = React.createClass({
  , handleStatdChange: function() {
     if ( this.state.initialData === false )
     {
-      var state  = this.state;
-      state.initialData = true;
+      var newState = {};
+
+      newState.initialData = true;
       this.props.statdResources.forEach(function(resource) {
-        state[resource.variable] = getWidgetDataFromStore( resource.dataSource );
-        if (state[resource.variable] === undefined)
+        newState[resource.variable] = getWidgetDataFromStore( resource.dataSource );
+        if (newState[resource.variable] === undefined)
         {
-          state.initialData = false;
+          newState.initialData = false;
+        }
+        else
+        {
+          if (newState[resource.variable].error === true)
+          {
+            newState.errorMode = true;
+            newState.initialData = false;
+
+          }
         }
       });
       this.props.systemResources.forEach(function(resource) {
-        state[resource.variable] = getSystemInfoFromStore( resource.dataSource );
-        if (state[resource.variable] === undefined)
+        newState[resource.variable] = getSystemInfoFromStore( resource.dataSource );
+        if (newState[resource.variable] === undefined)
         {
-          state.initialData = false;
+          newState.initialData = false;
         }
       });
 
-      this.state = state;
+      this.setState( newState );
+
+      if (this.state.errorMode === true)
+      {
+        this.render();
+        return;
+      }
 
       if (this.state.initialData === true )
       {
@@ -151,15 +176,16 @@ var DummyWidgetContent = React.createClass({
       }
       else {
         var chart;
-        var memorySize = this.state.hardware["memory-size"];
+        var graphTypeObject;
 
         if (this.state.graphType === "stacked")
         {
+          graphTypeObject = this.selectObjectFromArray(this.props.chartTypes, "stacked");
           chart = nv.models.stackedAreaChart()
             .options({
-               margin                     :    {top: 15, right: 50, bottom: 60, left: 60}
-              ,x                          :    function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
-              ,y                          :    function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }   //...in case your data is formatted differently.
+               margin                     :    {top: 15, right: 40, bottom: 60, left: 60}
+              ,x                          :    graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
+              ,y                          :    graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.
               ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
               ,transitionDuration         :    250
               ,style                      :    "Expanded"
@@ -167,18 +193,24 @@ var DummyWidgetContent = React.createClass({
               ,clipEdge                   :    false
             });
         }
-        else
+        else if (this.state.graphType === "line")
         {
+          graphTypeObject = this.selectObjectFromArray(this.props.chartTypes, "line");
           chart = nv.models.lineChart()
           .options({
-             margin                       :   {top: 15, right: 50, bottom: 60, left: 60}
-            ,x                            :   function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
-            ,y                            :   function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memorySize)*100; } }
+             margin                       :   {top: 15, right: 40, bottom: 60, left: 60}
+            ,x                            :   graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
+            ,y                            :   graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }
             ,showXAxis                    :   true
             ,showYAxis                    :   true
             ,transitionDuration           :   250
-            ,forceY                       :   [0, 100]
+            ,forceY                       :   graphTypeObject.forceY //[0, 100]
           });
+        }
+        else
+        {
+          console.log(this.state.graphType + " is not a supported chart type.");
+          return;
         }
 
       // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
@@ -226,6 +258,24 @@ var DummyWidgetContent = React.createClass({
 
     return returnArray;
   }
+  ,selectObjectFromArray: function(objectArray, valueToTest) {
+    var match = {};
+    var i = 0;
+    length = objectArray.length;
+
+    for (; i < length; i++)
+    {
+      for (var property in objectArray[i])
+      {
+        if (objectArray[i][property] === valueToTest)
+        {
+          match = objectArray[i];
+        }
+      }
+    }
+
+    return match;
+  }
 
   ,togleGraph: function(e) {
     console.log(e.target.textContent);
@@ -235,8 +285,29 @@ var DummyWidgetContent = React.createClass({
   }
 
   , render: function() {
-    //console.log(this.state.widgetData);
-    // <h3 style={elementStyle}>{"It works! "}{this.state.widgetData}</h3>
+    if (this.state.errorMode === true)
+    {
+      var returnErrorMsgs = function(resource, i) {
+        var errorMsg = this.state[resource.variable] || "OK";
+        if (errorMsg !== "OK")
+        {
+          if (errorMsg.msg !== undefined)
+          {
+            errorMsg = resource.variable + ": " + errorMsg.msg;
+          }
+          else
+          {
+            errorMsg = "OK";
+          }
+        }
+        return <div key={i} >{ errorMsg }</div>;
+      };
+      return (<div className="widget-error-panel">
+                <h4>Something went sideways.</h4>
+                {this.props.statdResources.map(returnErrorMsgs, this)}
+              </div>);
+    }
+
     var svgStyle = {
        width    : "calc(100% - 36px)"
       ,height   : "100%"
@@ -247,11 +318,12 @@ var DummyWidgetContent = React.createClass({
       ,height               : "100%"
       ,"float"              : "right"
     };
-    var returnGraphOptions = function(resource) {
-                    return <div className={ "ico-graph-type-" + resource.type } onClick={ this.togleGraph }>{ resource.type }</div>;
+    var returnGraphOptions = function(resource, i) {
+                    return <div key={i} className={ "ico-graph-type-" + resource.type } onClick={ this.togleGraph }>{ resource.type }</div>;
                      };
 
     return (
+
       <div className="widget-content">
         <svg ref="svg" style={svgStyle}></svg>
         <div ref="controls" style={divStyle}>
