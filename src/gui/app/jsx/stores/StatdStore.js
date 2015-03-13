@@ -46,10 +46,18 @@ StatdStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
   switch( action.type ) {
 
     case ActionTypes.RECEIVE_RAW_WIDGET_DATA:
-      _widgetData[action.dataSourceName] = action.rawWidgetData.data;
-      //console.log(_widgetData);
+      if (action.rawWidgetData.data !== undefined)
+      {
+        _widgetData[action.dataSourceName] = action.rawWidgetData.data;
+        //console.log(_widgetData);
+      }
+      else
+      {
+        _widgetData[action.dataSourceName] = {error: true, msg: action.rawWidgetData.message};
+      }
       StatdStore.emitChange();
       break;
+
     case ActionTypes.MIDDLEWARE_EVENT:
       _dataUpdate = action.eventData.args;
       StatdStore.emitChange();
