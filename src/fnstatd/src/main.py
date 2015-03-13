@@ -30,6 +30,7 @@
 import os
 import sys
 import time
+import errno
 import argparse
 import json
 import logging
@@ -43,6 +44,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import gevent
 import gevent.monkey
+import gevent.socket
 from gevent.server import StreamServer
 from dispatcher.client import Client, ClientType, thread_type
 from dispatcher.rpc import RpcService, RpcException
@@ -211,7 +213,7 @@ class InputServer(object):
             ds = self.context.get_data_source(name)
             ds.submit(int(timestamp), float(value))
 
-        socket.shutdown(socket.SHUT_WR)
+        socket.shutdown(gevent.socket.SHUT_RDWR)
         socket.close()
 
 
@@ -235,6 +237,9 @@ class OutputService(RpcService):
         frequency = params.pop('frequency')
 
         if type(data_source) is unicode:
+            if data_source not in self.context.data_sources:
+                raise RpcException(errno.ENOENT, 'Data source {0} not found'.format(data_source))
+
             ds = self.context.data_sources[data_source]
             df = ds.query(start, end, frequency)
             return {
@@ -246,6 +251,9 @@ class OutputService(RpcService):
         if type(data_source) is list:
             final = pd.DataFrame()
             for ds_name in data_source:
+                if ds_name not in self.context.data_sources:
+                    raise RpcException(errno.ENOENT, 'Data source {0} not found'.format(ds_name))
+
                 ds = self.context.data_sources[ds_name]
                 final[ds_name] = ds.query(start, end, frequency)
 
