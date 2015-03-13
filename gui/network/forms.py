@@ -251,6 +251,7 @@ class InterfacesForm(ModelForm):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
         notifier().start("network")
+        notifier().reload("networkgeneral")
 
 
 class IPMIForm(Form):
