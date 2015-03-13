@@ -80,6 +80,9 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/__init__.py ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/__init__.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/snmpresponse.py ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/snmpresponse.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/freenas-snmp/zfs-snmp ${STAGEDIR}/${PREFIX}/usr/local/bin/freenas-snmp/zfs-snmp
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/telemetry-cron.sh ${STAGEDIR}/${PREFIX}/usr/local/bin/telemetry-cron.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/telemetry-gather.py ${STAGEDIR}/${PREFIX}/usr/local/bin/telemetry-gather.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/telemetryuploader ${STAGEDIR}/${PREFIX}/usr/local/bin/telemetryuploader
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc/default
