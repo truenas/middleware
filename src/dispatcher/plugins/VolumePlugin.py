@@ -236,7 +236,7 @@ class VolumeAutoCreateTask(Task):
         if len(disks) % 3 == 0:
             for i in xrange(0, len(disks), 3):
                 vdevs.append({
-                    'type': 'raidz',
+                    'type': 'raidz1',
                     'children': [{'type': 'disk', 'path': os.path.join('/dev', i)} for i in disks[i:i+3]]
                 })
         elif len(disks) % 2 == 0:
@@ -261,12 +261,21 @@ class VolumeDestroyTask(Task):
         if not self.datastore.exists('volumes', ('name', '=', name)):
             raise VerifyException(errno.ENOENT, 'Volume {0} not found'.format(id))
 
-        return ['disk:{0}'.format(d) for d in self.dispatcher.call_sync('volumes.get_volume_disks', name)]
+        try:
+            disks = self.dispatcher.call_sync('volumes.get_volume_disks', name)
+            return ['disk:{0}'.format(d) for d in disks]
+        except RpcException, e:
+            if e.code == errno.ENOENT:
+                return []
 
     def run(self, name):
         vol = self.datastore.get_one('volumes', ('name', '=', name))
-        self.join_subtasks(self.run_subtask('zfs.umount', name))
-        self.join_subtasks(self.run_subtask('zfs.pool.destroy', name))
+        config = self.dispatcher.call_sync('volumes.get_config', name)
+
+        if not config:
+            self.join_subtasks(self.run_subtask('zfs.umount', name))
+            self.join_subtasks(self.run_subtask('zfs.pool.destroy', name))
+
         self.datastore.delete('volumes', vol['id'])
 
         self.dispatcher.dispatch_event('volumes.changed', {
