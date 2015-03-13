@@ -24,6 +24,18 @@ generate_hostname()
 	if dirsrv_enabled nis; then
 		echo nis >> /etc/host.conf
 		echo "${NIS_HOSTSSTR}" >> /etc/hosts
+	elif dirsrv_enabled activedirectory; then
+		local domainname
+		local netbiosname
+
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+		"SELECT ad_domainname, ad_netbiosname from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
+		while read -r domainname netbiosname; do
+			netbiosname="$(echo "${netbiosname}"|cut -f1 -d','|cut -f1 -d ' '|tr A-Z a-z)"
+			domainname="$(echo "${domainname}"|tr A-Z a-z)"
+
+			echo -e "127.0.0.1\t"${netbiosname}" "${netbiosname}.${domainname}"" >> /etc/hosts
+		done
 	else
 		local tmpfile="$(mktemp /tmp/.XXXXXX)"
 		grep -Ev '^nis' /etc/host.conf > "${tmpfile}" 2> /dev/null
