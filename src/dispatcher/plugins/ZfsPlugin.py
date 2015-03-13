@@ -45,7 +45,7 @@ class ZpoolProvider(Provider):
     @returns({
         'type': 'array',
         'items': {
-            'type': {'$ref': 'definitions/pool'}
+            'type': {'$ref': 'pool'}
         }
     })
     def query(self, filter=None, params=None):
@@ -197,7 +197,7 @@ class ZpoolScrubTask(Task):
 
 class ZpoolCreateTask(Task):
     def __partition_to_disk(self, part):
-        result = self.dispatcher.call_sync('disk.get_partition_config', part)
+        result = self.dispatcher.call_sync('disks.get_partition_config', part)
         return os.path.basename(result['disk'])
 
     def __get_disks(self, topology):
@@ -224,7 +224,6 @@ class ZpoolCreateTask(Task):
         params = params or {}
         zfs = libzfs.ZFS()
         mountpoint = params.get('mountpoint', '/volumes/{0}'.format(name))
-        nvroot = {}
 
         opts = nvpair.NVList(otherdict={
             'feature@async_destroy': 'enabled',
@@ -247,26 +246,7 @@ class ZpoolCreateTask(Task):
             'mountpoint': mountpoint
         })
 
-        for group, vdevs in topology.items():
-            nvroot[group] = []
-            for i in vdevs:
-                vdev = libzfs.ZFSVdev(zfs)
-                vdev.type = i['type']
-
-                if i['type'] == 'disk':
-                    vdev.path = i['path']
-
-                if 'children' in i:
-                    ret = []
-                    for c in i['children']:
-                        cvdev = libzfs.ZFSVdev(zfs)
-                        cvdev.type = c['type']
-                        cvdev.path = c['path']
-                        ret.append(cvdev)
-
-                    vdev.children = ret
-
-                nvroot[group].append(vdev)
+        nvroot = convert_topology(zfs, topology)
 
         try:
             pool = zfs.create(name, nvroot, opts, fsopts)
@@ -277,7 +257,8 @@ class ZpoolCreateTask(Task):
 
 
 class ZpoolBaseTask(Task):
-    def verify(self, pool):
+    def verify(self, *args, **kwargs):
+        pool = args[0]
         try:
             zfs = libzfs.ZFS()
             pool = zfs.get(pool)
@@ -313,12 +294,15 @@ class ZpoolDestroyTask(ZpoolBaseTask):
         self.dispatcher.unregister_resource('zpool:{0}'.format(name))
 
 
-class ZpoolExtendTask(Task):
-    def verify(self, pool, new_vdevs, updated_vdevs):
-        pass
-
+class ZpoolExtendTask(ZpoolBaseTask):
     def run(self, pool, new_vdevs, updated_vdevs):
-        pass
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(pool)
+            nvroot = convert_topology(zfs, new_vdevs)
+            pool.attach_vdevs(nvroot)
+        except libzfs.ZFSException, err:
+            raise TaskException(errno.EFAULT, str(err))
 
 
 class ZpoolImportTask(Task):
@@ -354,7 +338,8 @@ class ZpoolExportTask(ZpoolBaseTask):
 
 
 class ZfsBaseTask(Task):
-    def verify(self, path):
+    def verify(self, *args, **kwargs):
+        path = args[0]
         try:
             zfs = libzfs.ZFS()
             dataset = zfs.get_dataset(path)
@@ -480,6 +465,32 @@ class ZfsCloneTask(ZfsBaseTask):
             raise TaskException(errno.EFAULT, str(err))
 
 
+def convert_topology(zfs, topology):
+    nvroot = {}
+    for group, vdevs in topology.items():
+        nvroot[group] = []
+        for i in vdevs:
+            vdev = libzfs.ZFSVdev(zfs)
+            vdev.type = i['type']
+
+            if i['type'] == 'disk':
+                vdev.path = i['path']
+
+            if 'children' in i:
+                ret = []
+                for c in i['children']:
+                    cvdev = libzfs.ZFSVdev(zfs)
+                    cvdev.type = c['type']
+                    cvdev.path = c['path']
+                    ret.append(cvdev)
+
+                vdev.children = ret
+
+                nvroot[group].append(vdev)
+
+    return nvroot
+
+
 def get_disk_names(dispatcher, pool):
     return ['disk:' + dispatcher.call_sync('disks.partition_to_disk', x) for x in pool.disks]
 
@@ -556,7 +567,7 @@ def _init(dispatcher):
             },
             'children': {
                 'type': 'array',
-                'items': {'$ref': '/definitions/volume-vdev'}
+                'items': {'$ref': 'zfs-vdev'}
             }
         }
     })
@@ -566,19 +577,19 @@ def _init(dispatcher):
         'properties': {
             'data': {
                 'type': 'array',
-                'items': {'$ref': 'definitions/zfs-vdev'},
+                'items': {'$ref': 'zfs-vdev'},
             },
             'logs': {
                 'type': 'array',
-                'items': {'$ref': 'definitions/zfs-vdev'},
+                'items': {'$ref': 'zfs-vdev'},
             },
             'cache': {
                 'type': 'array',
-                'items': {'$ref': 'definitions/zfs-vdev'},
+                'items': {'$ref': 'zfs-vdev'},
             },
             'spare': {
                 'type': 'array',
-                'items': {'$ref': 'definitions/zfs-vdev'},
+                'items': {'$ref': 'zfs-vdev'},
             },
         }
     })
