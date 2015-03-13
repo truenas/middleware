@@ -2531,6 +2531,13 @@ class UnlockPassphraseForm(Form):
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key")
+        if hasattr(_n, 'failover_status'):
+            if notifier().failover_status() == 'MASTER':
+                from freenasUI.failover.enc_helper import LocalEscrowCtl
+                escrowctl = LocalEscrowCtl()
+                escrowctl.setkey(passphrase)
+                os.system("/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py carp0 LINK_UP")
+                return
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
             with open(passfile, 'w') as f:
