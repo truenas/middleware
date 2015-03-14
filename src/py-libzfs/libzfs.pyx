@@ -213,11 +213,12 @@ cdef class ZFS(object):
         root.children = topology['data']
 
         if 'cache' in topology:
-            root.nvlist['l2cache'] = topology['cache']
+            for i in topology['cache']:
+                root.nvlist['l2cache'] = [i.nvlist for i in topology['cache']]
 
         if 'log' in topology:
             for i in topology['log']:
-                i.nvlist['is_log'] = 1
+                i.nvlist['is_log'] = 1L
                 root.add_child_vdev(i)
 
         return root
