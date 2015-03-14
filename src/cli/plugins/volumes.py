@@ -26,9 +26,14 @@
 #####################################################################
 
 
+import gettext
 from namespace import EntityNamespace, Command, CommandException, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import Column, output_table, output_tree
 from fnutils import first_or_default
+
+
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
 
 
 @description("Adds new vdev to volume")
@@ -41,13 +46,22 @@ class AddVdevCommand(Command):
             entity = self.parent.entity
             typ = kwargs.pop('type')
 
+            if typ not in ('stripe', 'mirror', 'cache', 'log', 'raidz1', 'raidz2', 'raidz3'):
+                raise CommandException(_("Invalid vdev type"))
+
             if typ == 'stripe':
+                if len(args) != 1:
+                    raise CommandException(_("Stripe vdev consist of single disk"))
+
                 entity['topology']['data'].append({
                     'type': 'disk',
                     'path': args[0]
                 })
 
             if typ == 'mirror':
+                if len(args) < 2:
+                    raise CommandException(_("Mirrored vdev requires at least two disks"))
+
                 entity['topology']['data'].append({
                     'type': 'mirror',
                     'children': [{'type': 'disk', 'path': x} for x in args]
@@ -63,8 +77,11 @@ class AddVdevCommand(Command):
                 })
 
             if typ == 'log':
+                if len(args) != 1:
+                    raise CommandException(_("Log vdevs cannot be mirrored"))
+
                 if 'log' not in entity:
-                    entity['topology']['cache'] = []
+                    entity['topology']['log'] = []
 
                 entity['topology']['log'].append({
                     'type': 'disk',
@@ -72,7 +89,10 @@ class AddVdevCommand(Command):
                 })
 
             if typ.startswith('raidz'):
-                pass
+                entity['topology']['data'].append({
+                    'type': typ,
+                    'path': [{'type': 'disk', 'path': x} for x in args]
+                })
 
 
 @description("Removes vdev from volume")
