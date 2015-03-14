@@ -18,6 +18,7 @@ post-install = /usr/bin/touch /boot/kernel/linker.hints
 
 post-upgrade = /usr/bin/touch /boot/kernel/linker.hints
 	     /usr/bin/touch /boot/modules/linker.hints
+	/bin/sh /etc/ix.rc.d/ix-device_hints start
 	test -f /usr/local/www/freenasUI/manage.py && yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations > "/data/update.failed" 2>&1 && rm -f /data/update.failed
 	if [ -c /dev/null -a -f /boot/grub/grub.cfg ]; then
 	   for disk in $(sysctl -n kern.disks); do
