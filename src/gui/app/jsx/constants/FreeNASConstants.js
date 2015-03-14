@@ -19,8 +19,8 @@ module.exports = {
       , LOG_MIDDLEWARE_TASK_QUEUE : null
 
       // RPC
-      , RECIEVE_RPC_SERVICES        : null
-      , RECIEVE_RPC_SERVICE_METHODS : null
+      , RECEIVE_RPC_SERVICES        : null
+      , RECEIVE_RPC_SERVICE_METHODS : null
 
       // Users
       , RECEIVE_RAW_USERS        : null

@@ -40,16 +40,16 @@ module.exports = {
       });
     }
 
-  , recieveAvailableServices: function ( services ) {
+  , receiveAvailableServices: function ( services ) {
       FreeNASDispatcher.handleMiddlewareAction({
-          type     : ActionTypes.RECIEVE_RPC_SERVICES
+          type     : ActionTypes.RECEIVE_RPC_SERVICES
         , services : services
       });
     }
 
-  , recieveAvailableServiceMethods: function ( service, methods ) {
+  , receiveAvailableServiceMethods: function ( service, methods ) {
       FreeNASDispatcher.handleMiddlewareAction({
-          type    : ActionTypes.RECIEVE_RPC_SERVICE_METHODS
+          type    : ActionTypes.RECEIVE_RPC_SERVICE_METHODS
         , service : service
         , methods : methods
       });

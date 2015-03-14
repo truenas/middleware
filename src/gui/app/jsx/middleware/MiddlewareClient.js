@@ -316,13 +316,13 @@ function MiddlewareClient() {
 
   this.getServices = function() {
     this.request( "discovery.get_services", [], function( services ) {
-      MiddlewareActionCreators.recieveAvailableServices( services );
+      MiddlewareActionCreators.receiveAvailableServices( services );
     });
   };
 
   this.getMethods = function( service ) {
     this.request( "discovery.get_methods", [ service ], function( methods ) {
-      MiddlewareActionCreators.recieveAvailableServiceMethods( service, methods );
+      MiddlewareActionCreators.receiveAvailableServiceMethods( service, methods );
     });
   };
 
