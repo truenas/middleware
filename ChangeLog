@@ -1,4 +1,0 @@
-#8250	Feature	Normal	Installation of man pages in main FreeNAS partition
-#8291	Bug	Normal	Tunables rc.conf.freenas and Enable doesn't work
-#8581	Bug	Normal	Nameserver does not save after network interface is configured
-#8612	Bug	Normal	New grub adds a chainloader entry for every disk in the system
