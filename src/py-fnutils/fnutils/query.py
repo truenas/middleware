@@ -27,6 +27,7 @@
 
 
 import re
+import inspect
 
 
 operators_table = {
@@ -41,6 +42,15 @@ operators_table = {
 
 
 def wrap(obj):
+    if hasattr(obj, '__getstate__'):
+        obj = obj.__getstate__()
+
+    if inspect.isgenerator(obj):
+        obj = list(obj)
+
+    if type(obj) in (QueryDict, QueryList):
+        return obj
+
     if isinstance(obj, dict):
         return QueryDict(obj)
 
@@ -102,6 +112,9 @@ class QueryList(list):
 
                 result.append(i)
 
+        if not result and single:
+            return None
+
         return result
 
 
@@ -141,7 +154,7 @@ class QueryDict(dict):
             return super(QueryDict, self).__contains__(item)
 
         left, sep, right = item.partition('.')
-        return super(QueryDict, self).__contains__(left)[right]
+        return right in self[left]
 
     def get(self, k, d=None):
         return self[k] if k in self else d
