@@ -141,7 +141,7 @@ var DummyWidgetContent = React.createClass({
           this.drawChart(true);
           updateCounter = 0;
         }
-        this.state.updateCounter = updateCounter;
+        this.setState({ "updateCounter" :  updateCounter });
       }
     }
 
@@ -165,9 +165,10 @@ var DummyWidgetContent = React.createClass({
   , drawChart: function(update, reload) {
       if (reload === true)
       {
-        this.state.element.innerHTML = null;
-        this.state.chart = null;
-
+        var elmnt = this.state.element;
+        elmnt.innerHTML = null;
+        this.setState({ element : elmnt
+                        , chart : null});
         update = false;
       }
 
@@ -237,8 +238,8 @@ var DummyWidgetContent = React.createClass({
       //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
 
       chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
-      this.state.chart = chart;
-      this.state.fullUpdate = false;
+      this.setState({ "chart" : chart
+                      ,fullUpdate : false });
     }
   }
 
@@ -279,7 +280,7 @@ var DummyWidgetContent = React.createClass({
 
   ,togleGraph: function(e) {
     console.log(e.target.textContent);
-    this.state.graphType = e.target.textContent;
+    this.setState({graphType : e.target.textContent});
     console.log(this.state.graphType);
     this.drawChart(false, true);
   }
