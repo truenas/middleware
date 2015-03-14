@@ -265,14 +265,13 @@ class VolumeDestroyTask(Task):
             disks = self.dispatcher.call_sync('volumes.get_volume_disks', name)
             return ['disk:{0}'.format(d) for d in disks]
         except RpcException, e:
-            if e.code == errno.ENOENT:
-                return []
+            return []
 
     def run(self, name):
         vol = self.datastore.get_one('volumes', ('name', '=', name))
         config = self.dispatcher.call_sync('volumes.get_config', name)
 
-        if not config:
+        if config:
             self.join_subtasks(self.run_subtask('zfs.umount', name))
             self.join_subtasks(self.run_subtask('zfs.pool.destroy', name))
 
