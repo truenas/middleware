@@ -36,21 +36,21 @@ from utils import parse_query_args
 @description("Provides status information about the server")
 class StatusCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        output_dict(context.connection.call_sync('management.status'))
+        output_dict(context.call_sync('management.status'))
 
 
 @description("Provides information about running system")
 class InfoCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        output_dict(context.connection.call_sync('system.info.hardware'))
+        output_dict(context.call_sync('system.info.hardware'))
 
 
 @description("Prints FreeNAS version information")
 class VersionCommand(Command):
     def run(self, context, args, kwargs, opargs):
         output_object(
-            ('FreeNAS version', 'freenas-version', context.connection.call_sync('system.info.version')),
-            ('System version', 'system-version', context.connection.call_sync('system.info.uname_full'))
+            ('FreeNAS version', 'freenas-version', context.call_sync('system.info.version')),
+            ('System version', 'system-version', context.call_sync('system.info.uname_full'))
         )
 
     def complete(self, context, tokens):
@@ -68,7 +68,7 @@ class LoginCommand(Command):
 @description("Prints session history")
 class SessionsCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        items = context.connection.call_sync('sessions.query', *parse_query_args(args, kwargs))
+        items = context.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
             Column('Session ID', 'id', ValueType.NUMBER),
             Column('User name', 'user', ValueType.STRING),
@@ -80,7 +80,7 @@ class SessionsCommand(Command):
 @description("Prints event history")
 class EventsCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        items = context.connection.call_sync('sessions.query', *parse_query_args(args, kwargs))
+        items = context.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
             Column('Event name', lambda t: events.translate(context, t['name'], t['args'])),
             Column('Time', 'timestamp', ValueType.TIME)
@@ -115,7 +115,7 @@ class TimeNamespace(ConfigNamespace):
         )
 
     def load(self):
-        self.entity = self.context.connection.call_sync('system.info.time')
+        self.entity = self.context.call_sync('system.info.time')
         self.orig_entity = copy.deepcopy(self.entity)
 
     def save(self, entity, diff, new):
