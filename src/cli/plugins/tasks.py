@@ -26,9 +26,14 @@
 #####################################################################
 
 
+import gettext
 from descriptions import tasks
 from namespace import Namespace, IndexCommand, Command, description
 from output import Column, ValueType, output_table
+
+
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
 
 
 @description("Lists system services")
@@ -37,22 +42,22 @@ class ListCommand(Command):
         self.context = context
         tasks = context.connection.call_sync('task.query')
         output_table(tasks, [
-            Column('ID', '/id'),
-            Column('Started at', '/started_at', ValueType.TIME),
-            Column('Finished at', '/finished_at', ValueType.TIME),
+            Column('ID', 'id'),
+            Column('Started at', 'started_at', ValueType.TIME),
+            Column('Finished at', 'finished_at', ValueType.TIME),
             Column('Description', self.describe_task),
             Column('State', self.describe_state)
         ])
 
     def describe_state(self, task):
         if task['state'] == 'EXECUTING':
-            state = self.context.connection.call_sync(
+            state = self.context.call_sync(
                 'task.status', task['id'])
             if 'progress' not in state:
                 return task['state']
 
             return '{0:2.0f}% ({1})'.format(
-                state['progress']['percentage'], state['progress']['message'])
+                state['progress.percentage'], state['progress.message'])
 
         return task['state']
 
