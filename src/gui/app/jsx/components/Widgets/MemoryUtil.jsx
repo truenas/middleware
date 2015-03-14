@@ -18,10 +18,16 @@ var MemoryUtil = React.createClass({
     , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}
                          ]
 
-    , chartTypes:        [  {type:"stacked", primary:true}
-                           ,{type:"line", primary:false}
+    , chartTypes:        [  {   type:"stacked"
+                              , primary:true
+                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }
+                            }
+                           ,{     type:"line"
+                                , primary:false
+                                , y:function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/17143758848)*100; } }
+                                , forceY:[0, 100]
+                            }
                          ]
-
     };
   }
 
