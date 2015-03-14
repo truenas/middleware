@@ -88,7 +88,7 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
         _subscribed[ action.mask ] = 1;
       }
 
-      MiddlewareStore.emitChange("subsctiptions");
+      MiddlewareStore.emitChange("subscriptions");
       break;
 
     case ActionTypes.UNSUBSCRIBE_FROM_MASK:
@@ -99,10 +99,10 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
           _subscribed[ action.mask ]--;
         }
       } else {
-        console.warn( "Tried to unsubscribe from '" + action.mask + "', but Flux store shows no active subsctiptions.");
+        console.warn( "Tried to unsubscribe from '" + action.mask + "', but Flux store shows no active subscriptions.");
       }
 
-      MiddlewareStore.emitChange("subsctiptions");
+      MiddlewareStore.emitChange("subscriptions");
       break;
 
 
