@@ -121,13 +121,13 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
       MiddlewareStore.emitChange();
       break;
 
-    case ActionTypes.RECIEVE_RPC_SERVICES:
+    case ActionTypes.RECEIVE_RPC_SERVICES:
       _rpcServices = action.services;
 
       MiddlewareStore.emitChange("services");
       break;
 
-    case ActionTypes.RECIEVE_RPC_SERVICE_METHODS:
+    case ActionTypes.RECEIVE_RPC_SERVICE_METHODS:
       _rpcMethods[ action.service ] = action.methods;
 
       MiddlewareStore.emitChange("methods");
