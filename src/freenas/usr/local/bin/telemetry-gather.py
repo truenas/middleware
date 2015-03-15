@@ -9,6 +9,7 @@ import json
 import re
 import pprint
 import subprocess
+import os
 
 from time import gmtime, strftime
 from datetime import datetime
@@ -136,9 +137,12 @@ def main():
     parser.add_argument('files', metavar='files', type=str, nargs='+', help='File to read, txt or gz, will auto-dectect')
 
     args = parser.parse_args()
-
+    now = time.time()
 
     for file in args.files:
+        mtime = os.path.getmtime(str(file))
+        if ( (now - mtime) > (48*60*60) ):
+            continue
         if file.endswith('.gz'):
             file = gzip.GzipFile(file)
         elif file.endswith('.bz2'):
@@ -153,6 +157,8 @@ def main():
                 try:
                     pl = parser.parse(line)
                 except:
+                    continue
+                if ( (now - pl['timestamp']) > (24*60*60) ):
                     continue
                 for f in filters:
                     if pl['program'] == f:
