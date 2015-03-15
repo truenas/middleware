@@ -436,7 +436,7 @@ cdef class ZFSVdev(object):
         }
 
     def add_child_vdev(self, vdev):
-        self.nvlist['children'].append(vdev.nvlist)
+        self.nvlist['children'].append(vdev)
 
     property type:
         def __get__(self):
