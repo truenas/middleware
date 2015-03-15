@@ -358,6 +358,9 @@ class ConfigurationService(RpcService):
             self.configure_interface(i['id'])
 
         self.configure_routes()
+        self.client.emit_event('network.changed', {
+            'operation': 'update'
+        })
 
     def configure_routes(self):
         rtable = netif.RoutingTable()

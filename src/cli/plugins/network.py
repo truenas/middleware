@@ -114,7 +114,7 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         self.add_property(
             descr='Link address',
             name='link-address',
-            get='/status/link-address',
+            get='status.link-address',
             list=True
         )
 
@@ -312,7 +312,7 @@ class GlobalConfigNamespace(ConfigNamespace):
         )
 
     def load(self):
-        self.entity = self.context.connection.call_sync('network.config.get_global_config')
+        self.entity = self.context.call_sync('network.config.get_global_config')
         self.orig_entity = copy.deepcopy(self.entity)
 
     def save(self):
