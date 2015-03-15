@@ -245,8 +245,8 @@ LoadModule mod_tls.c
   TLSEngine on
   TLSProtocol ${proftpd_tlsprotocol}
   ${tls_options}
-  TLSRSACertificateFile ${tls_cert_dir}/${certname}.crt
-  TLSRSACertificateKeyFile ${tls_cert_dir}/${certname}.key
+  TLSRSACertificateFile "${tls_cert_dir}/${certname}.crt"
+  TLSRSACertificateKeyFile "${tls_cert_dir}/${certname}.key"
   TLSVerifyClient ${proftpd_tlsverifyclient}
   TLSRequired ${ftp_tls_policy}
 </IfModule>
