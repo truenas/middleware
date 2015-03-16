@@ -430,7 +430,7 @@ cdef class ZFSVdev(object):
         return {
             'type': self.type,
             'path': self.path,
-            'guid': self.guid,
+            'guid': str(self.guid),
             'status': self.status,
             'children': [i.__getstate__() for i in self.children]
         }
@@ -593,7 +593,7 @@ cdef class ZFSPool(object):
     def __getstate__(self):
         return {
             'name': self.name,
-            'guid': self.guid,
+            'guid': str(self.guid),
             'hostname': self.hostname,
             'status': self.status,
             'root_dataset': self.root_dataset.__getstate__() if self.root_dataset else None,
@@ -709,7 +709,10 @@ cdef class ZFSPool(object):
 
     def attach_vdevs(self, vdevs_tree):
         cdef nvpair.nvlist_t* nvl
-        nvl = <nvpair.nvlist_t*><uintptr_t>vdevs_tree.nvlist.handle()
+
+        vd = self.root.make_vdev_tree(vdevs_tree)
+        nvl = <nvpair.nvlist_t*><uintptr_t>vd.nvlist.handle()
+
         if libzfs.zpool_add(self._zpool, nvl) != 0:
             raise ZFSException(self.root.errno, self.root.errstr)
 
