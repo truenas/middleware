@@ -1521,6 +1521,8 @@ class iSCSITargetForm(ModelForm):
         alias = self.cleaned_data['iscsi_target_alias']
         if not alias:
             alias = None
+        if alias.lower() == "target":
+            raise forms.ValidationError(_("target is a reserved word, please choose a different name for this alias."))
         return alias
 
     def save(self):
