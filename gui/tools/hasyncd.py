@@ -52,6 +52,9 @@ class Funcs(object):
         else:
             cursor.execute(query, params)
 
+    def sync_from(self, query, params):
+        self._conn.dump_recv(query)
+
 
 def set_proc_name(newname):
     libc = cdll.LoadLibrary(find_library('c'))

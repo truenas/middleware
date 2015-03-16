@@ -44,6 +44,7 @@ NO_SYNC_MAP = {
 class RunSQLRemote(threading.Thread):
 
     def __init__(self, *args, **kwargs):
+        self._method = kwargs.pop('method', 'run_sql')
         self._sql = kwargs.pop('sql')
         self._params = kwargs.pop('params')
         super(RunSQLRemote, self).__init__(*args, **kwargs)
@@ -53,12 +54,11 @@ class RunSQLRemote(threading.Thread):
         from freenasUI.middleware.notifier import notifier
         s = xmlrpclib.ServerProxy('http://%s:8000' % (
             notifier().failover_peerip()
-        ))
+        ), allow_none=True)
         try:
-            s.run_sql(self._sql, self._params)
+            getattr(s, self._method)(self._sql, self._params)
         except Exception as err:
             log.error('Failed to run SQL remotely %s: %s', self._sql, err)
-
 
 
 class DatabaseFeatures(sqlite3base.DatabaseFeatures):
@@ -73,6 +73,78 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
 
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
+
+    def dump_send(self):
+        cur = self.cursor()
+        cur.execute("select name from sqlite_master where type = 'table'")
+
+        script = []
+        for row in cur.fetchall():
+            table = row[0]
+            if table in NO_SYNC_MAP:
+                tbloptions = NO_SYNC_MAP.get(table)
+                if not tbloptions:
+                    continue
+            cur.execute("PRAGMA table_info('%s');" % table)
+            fieldnames = [i[1] for i in cur.fetchall()]
+            script.append('DELETE FROM %s' % table)
+            cur.execute('SELECT %s FROM %s' % (
+                "'INSERT INTO %s (%s) VALUES (' || %s ||')'" % (
+                    table,
+                    ', '.join(['`%s`' % f for f in fieldnames]),
+                    " || ',' || ".join(
+                        ['quote(`%s`)' % field for field in fieldnames]
+                    ),
+                ),
+                table,
+            ))
+            for row in cur.fetchall():
+                script.append(row[0])
+        rsr = RunSQLRemote(method='sync_from', sql=script, params=None)
+        rsr.run()
+
+        return script
+
+    def dump_recv(self, script):
+        cur = self.cursor()
+        cur.execute("select name from sqlite_master where type = 'table'")
+
+        for row in cur.fetchall():
+            table = row[0]
+            if table not in NO_SYNC_MAP:
+                continue
+            tbloptions = NO_SYNC_MAP.get(table)
+            if not tbloptions:
+                cur.execute("PRAGMA table_info('%s');" % table)
+                fieldnames = [i[1] for i in cur.fetchall()]
+                script.append('DELETE FROM %s' % table)
+                cur.execute('SELECT %s FROM %s' % (
+                    "'INSERT INTO %s (%s) VALUES (' || %s ||')'" % (
+                        table,
+                        ', '.join(['`%s`' % f for f in fieldnames]),
+                        " || ',' || ".join(
+                            ['quote(`%s`)' % field for field in fieldnames]
+                        ),
+                    ),
+                    table,
+                ))
+                for row in cur.fetchall():
+                    script.append(row[0])
+            else:
+                fieldnames = tbloptions['fields']
+                cur.execute('SELECT %s FROM %s' % (
+                    "'UPDATE %s SET ' || %s || ' WHERE id = ' || id" % (
+                        table,
+                        " || ', ' || ".join([
+                            "'`%s` = ' || quote(`%s`)" % (f, f)
+                            for f in fieldnames
+                        ]),
+                    ),
+                    table,
+                ))
+                for row in cur.fetchall():
+                    script.append(row[0])
+        cur.executescript(';'.join(script))
 
 
 class HASQLiteCursorWrapper(Database.Cursor):
