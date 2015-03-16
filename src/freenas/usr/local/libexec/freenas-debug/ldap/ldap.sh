@@ -127,8 +127,8 @@ __EOF__
 	#
 	#	Dump samba configuration
 	#
-	section_header "${SMB_CONF}"
-	sc "${SMB_CONF}"
+	section_header "${SAMBA_CONF}"
+	sc "${SAMBA_CONF}"
 	section_footer
 	#
 	#	List kerberos tickets
