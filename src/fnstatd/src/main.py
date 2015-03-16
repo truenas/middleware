@@ -327,6 +327,7 @@ class Main(object):
     def init_dispatcher(self):
         self.client = Client()
         self.client.connect('127.0.0.1')
+        self.client.on_error(self.dispatcher_error)
         self.client.login_service('statd')
         self.client.enable_server()
 
@@ -334,14 +335,8 @@ class Main(object):
         self.client.disconnect()
         sys.exit(0)
 
-    def try_reconnect(self):
-        while True:
-            try:
-                time.sleep(1)
-                self.init_dispatcher()
-                break
-            except:
-                pass
+    def dispatcher_error(self, error):
+        self.die()
 
     def main(self):
         parser = argparse.ArgumentParser()
