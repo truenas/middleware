@@ -21,7 +21,7 @@ PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
 .endif
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
+IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/nightlies/"
 IX_STABLE_DIR="/freenas/Dev/releng/${NANO_LABEL}/9.3/STABLE/"
 
 .ifdef SCRIPT
