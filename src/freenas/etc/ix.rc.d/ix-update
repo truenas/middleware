@@ -140,7 +140,7 @@ db_update()
 		# Now that the migration is done we just take the earlier saved cert and key
 		# and add it to the current scheme of things (the call to the python code below
 		# does that) after it is done delete the precertman.crt and .key files
-		/usr/local/bin/python /usr/local/www/freenasUI/tools/updatessl.py /root/precertman.crt /root/precertman.key
+		/usr/local/bin/python /usr/local/www/freenasUI/tools/updatessl.py /root/precertman.crt /root/precertman.key >/dev/null 2>&1
 	fi
 	rm -f /root/precertman.*
 	sleep 2
