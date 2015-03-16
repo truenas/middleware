@@ -279,10 +279,8 @@ var DummyWidgetContent = React.createClass({
   }
 
   ,togleGraph: function(e) {
-    console.log(e.target.textContent);
-    this.setState({graphType : e.target.textContent});
-    console.log(this.state.graphType);
-    this.drawChart(false, true);
+    var drwChrt = this.drawChart;
+    this.setState({graphType : e.target.textContent}, function() { drwChrt(false, true); });
   }
 
   , render: function() {
