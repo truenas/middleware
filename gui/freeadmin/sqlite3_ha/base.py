@@ -66,6 +66,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
             if p.tokens[0].normalized not in ('DELETE', 'INSERT', 'UPDATE'):
                 continue
 
+            cparams = list(params)
             if p.tokens[0].normalized == 'UPDATE':
 
                 name = p.token_next(p.tokens[0]).get_name()
@@ -87,10 +88,21 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 elif issubclass(next_.__class__, sqlparse.sql.Comparison):
                     lookup = [next_]
 
+                # Get all placeholders from the query (%s)
+                placeholders = [a for a in p.flatten() if a.value == '%s']
+
                 for l in lookup:
 
                     if l.get_name() not in no_sync['fields']:
                         continue
+
+                    # Remove placeholder from the params
+                    try:
+                        idx = placeholders.index(l.tokens[-1])
+                        if cparams:
+                            del cparams[idx]
+                    except ValueError:
+                        pass
 
                     # If it is a list we must also remove the comma around it
                     prev_ = l.parent.token_prev(l)
@@ -105,10 +117,8 @@ class HASQLiteCursorWrapper(Database.Cursor):
                         del l.parent.tokens[l.parent.token_index(prev_)]
                     del l.parent.tokens[l.parent.token_index(l)]
 
-            cparams = params
             if params is not None:
                 sql = self.convert_query(str(p))
-                cparams = params
             else:
                 sql = str(p)
             rsr = RunSQLRemote(sql=sql, params=cparams)
