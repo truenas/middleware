@@ -22,7 +22,7 @@ log = logging.getLogger('freeadmin.sqlite3_ha')
 
 NO_SYNC_MAP = {
     'network_globalconfiguration': {
-        'fields': ['gc_hosts'],
+        'fields': ['gc_hostname'],
     },
     'system_systemdataset': {
         'fields': ['sys_uuid'],
