@@ -63,31 +63,28 @@ var BusyBox = React.createClass({
       }
     }
 
-  // TODO: Fix Velocity fade-ins and outs
-  // as they access the ref of "Busy" when its 
-  // not yet defined. Speak with corey to figure this out
   , showBusyBox: function () {
       this.setState({ boxIsVisible: true });
-      //Velocity( this.refs.Busy.getDOMNode()
-      //        , "fadeIn"
-      //        , { duration: this.props.animDuration } );
+      Velocity( this.refs.Busy.getDOMNode()
+             , "fadeIn"
+             , { duration: this.props.animDuration } );
     }
 
   , hideBusyBox: function () {
       this.setState({ boxIsVisible: false });
-      //Velocity( this.refs.Busy.getDOMNode()
-      //        , "fadeOut"
-      //        , {
-      //              duration : this.props.animDuration
-      //            , delay    : this.props.animDelay
-      //         }
-      //        );
+      Velocity( this.refs.Busy.getDOMNode()
+             , "fadeOut"
+             , {
+                   duration : this.props.animDuration
+                 , delay    : this.props.animDelay
+              }
+             );
 
-      //this.animTimeout = setTimeout( function() {
-      //    this.setState({ boxIsVisible: false });
-      //  }.bind(this)
-      //  , this.props.animDuration + this.props.animDelay + 250
-      //);
+      this.animTimeout = setTimeout( function() {
+         this.setState({ boxIsVisible: false });
+       }.bind(this)
+       , this.props.animDuration + this.props.animDelay + 250
+      );
     }
 
 , handlePowerChange: function() {
@@ -95,18 +92,18 @@ var BusyBox = React.createClass({
     }
 
 , render: function () {
-      var busySpinner = null;
+      var busySpinner = (<div ref="Busy"  style={{ opacity: 0 }}/>);
 
       if ( this.state.boxIsVisible ) {
 
         var throbberprops = {};
-        throbberprops.bsStyle = ( this.props.throbberStyle || "primary" );
-        //throbberprops.bsSize  = ( this.props.throbberSize || "60" );
+        throbberprops.bsStyle = "primary";
+        throbberprops.size  = 60;
         busySpinner = (
-          <div className="overlay-dark" ref="Busy" style={{ opacity: 1 }}>
+          <div className="overlay-dark" ref="Busy" style={{ opacity: 0 }}>
             <div className="overlay-window">
               <div>
-                <h3>{ "Please wait while I reboot(or something) (or attempt to anyways)..." || "Done." }</h3>
+                <h3>{ "Please wait while I Reboot/Shutdown/Update (or something....rather attempt to anyways)..."  }</h3>
                 <Throbber {...throbberprops} />
               </div>
 
