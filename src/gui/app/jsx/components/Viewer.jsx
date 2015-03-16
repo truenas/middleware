@@ -117,8 +117,9 @@ var Viewer = React.createClass({
       inputDataArray = _.filter( inputDataArray, function ( item ) {
         // TODO: Are keys always strings? May want to rethink this
         var searchableString = item[ this.props.viewData.format.primaryKey ] + item[ this.props.viewData.format.secondaryKey ];
+        searchableString = searchableString.toLowerCase();
 
-        return ( searchableString.indexOf( displayParams.searchString ) !== -1 );
+        return ( searchableString.indexOf( displayParams.searchString.toLowerCase() ) !== -1 );
 
       }.bind(this) );
 
@@ -330,7 +331,7 @@ var Viewer = React.createClass({
                             ItemView     = { this.props.ItemView }
                             EditView     = { this.props.EditView }
                             tableCols    = { this.state.tableCols }
-                            searchString = { this.state.searchString }
+                            searchString = { this.state.searchString.toLowerCase() }
                             filteredData = { this.state.filteredData } />;
     }
 
