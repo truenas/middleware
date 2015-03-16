@@ -39,10 +39,17 @@ var Dashboard = React.createClass({
           <SystemInfo
             stacked = "true"
             title   = "System Info"
-            size    = "m-rect" />
+            size    = "m-rect" />          
           <NetworkUsage
             title = "Network Usage"
-            size  = "l-rect" />
+            size  = "l-rect"
+            graphType = "line" />
+          <NetworkUsage
+            title = "Network Usage"
+            size  = "l-rect" 
+            graphType = "line"
+            iface = "em0" />
+
         </div>
       </main>
     );

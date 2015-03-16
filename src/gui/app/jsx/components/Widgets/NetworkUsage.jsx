@@ -6,33 +6,43 @@ var Widget  =   require("../Widget");
 var DummyWidgetContent = require("./DummyWidgetContent");
 
 var NetworkUsage = React.createClass({
- getInitialState: function() {
+ getInitialState: function() { 
+  var iface = this.props.iface || "igb0";
    return {
-     statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-igbY.if_octets.rx", name:"Octets Receive", color:"#3C696E"}
-                          ,{variable:"octetsTx", dataSource:"localhost.interface-igbY.if_octets.tx", name:"Octets Transmit", color:"#368D97"}
-                          ,{variable:"packetsRx", dataSource:"localhost.interface-igbY.if_packets.rx", name:"Packets Receive", color:"#A8E077"}
-                          ,{variable:"packetsTx", dataSource:"localhost.interface-igbY.if_packets.tx", name:"Packets Transmit", color:"#D9E35D"}
-                          ,{variable:"errorsTx", dataSource:"localhost.interface-igbY.if_errors.rx", name:"Errors Receive", color:"#C9653A"}
-                          ,{variable:"errorsRx", dataSource:"localhost.interface-igbY.if_errors.tx", name:"Errors Transmit", color:"#BE6F6F"}
+     statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-" + iface + ".if_octets.rx", name:"Octets Receive", color:"#3C696E", area: true}
+                          ,{variable:"octetsTx", dataSource:"localhost.interface-" + iface + ".if_octets.tx", name:"Octets Transmit", color:"#368D97", area: true}
+                          ,{variable:"packetsRx", dataSource:"localhost.interface-" + iface + ".if_packets.rx", name:"Packets Receive", color:"#A8E077", area: true}
+                          ,{variable:"packetsTx", dataSource:"localhost.interface-" + iface + ".if_packets.tx", name:"Packets Transmit", color:"#D9E35D", area: true}
+                          ,{variable:"errorsTx", dataSource:"localhost.interface-" + iface + ".if_errors.rx", name:"Errors Receive", color:"#C9653A"}
+                          ,{variable:"errorsRx", dataSource:"localhost.interface-" + iface + ".if_errors.tx", name:"Errors Transmit", color:"#BE6F6F"}
                         ]
    , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}
                         ]
 
-   , chartTypes:        [  {type:"stacked", primary:"false"}
-                          ,{type:"line", primary:"true"}
-                        ]
-
-   };
+    , chartTypes:        [  {   type:"stacked"
+                              , primary:false
+                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1000; } }
+                              
+                            }
+                           ,{     type:"line"
+                                , primary:true
+                                , y:function(d) { if(d[1] === "nan") { return null; } else { return Math.round(d[1] * 100) / 1000; } }
+                                , yUnit : ""
+                                
+                            }
+                         ]
+    };
  }
 
-
 , render: function() {
+ 
    return (
      <Widget
        positionX  =  {this.props.positionX}
        positionY  =  {this.props.positionY}
        title      =  {this.props.title}
        size       =  {this.props.size} >
+
 
        <DummyWidgetContent
          statdResources    =  {this.state.statdResources}
