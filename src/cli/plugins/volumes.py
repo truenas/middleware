@@ -42,57 +42,56 @@ class AddVdevCommand(Command):
         self.parent = parent
 
     def run(self, context, args, kwargs, opargs):
-        if not self.parent.saved:
-            entity = self.parent.entity
-            typ = kwargs.pop('type')
+        entity = self.parent.entity
+        typ = kwargs.pop('type')
 
-            if typ not in ('stripe', 'mirror', 'cache', 'log', 'raidz1', 'raidz2', 'raidz3'):
-                raise CommandException(_("Invalid vdev type"))
+        if typ not in ('stripe', 'mirror', 'cache', 'log', 'raidz1', 'raidz2', 'raidz3'):
+            raise CommandException(_("Invalid vdev type"))
 
-            if typ == 'stripe':
-                if len(args) != 1:
-                    raise CommandException(_("Stripe vdev consist of single disk"))
+        if typ == 'stripe':
+            if len(args) != 1:
+                raise CommandException(_("Stripe vdev consist of single disk"))
 
-                entity['topology']['data'].append({
-                    'type': 'disk',
-                    'path': args[0]
-                })
+            entity['topology']['data'].append({
+                'type': 'disk',
+                'path': args[0]
+            })
 
-            if typ == 'mirror':
-                if len(args) < 2:
-                    raise CommandException(_("Mirrored vdev requires at least two disks"))
+        if typ == 'mirror':
+            if len(args) < 2:
+                raise CommandException(_("Mirrored vdev requires at least two disks"))
 
-                entity['topology']['data'].append({
-                    'type': 'mirror',
-                    'children': [{'type': 'disk', 'path': x} for x in args]
-                })
+            entity['topology']['data'].append({
+                'type': 'mirror',
+                'children': [{'type': 'disk', 'path': x} for x in args]
+            })
 
-            if typ == 'cache':
-                if 'cache' not in entity:
-                    entity['topology']['cache'] = []
+        if typ == 'cache':
+            if 'cache' not in entity:
+                entity['topology']['cache'] = []
 
-                entity['topology']['cache'].append({
-                    'type': 'disk',
-                    'path': args[0]
-                })
+            entity['topology']['cache'].append({
+                'type': 'disk',
+                'path': args[0]
+            })
 
-            if typ == 'log':
-                if len(args) != 1:
-                    raise CommandException(_("Log vdevs cannot be mirrored"))
+        if typ == 'log':
+            if len(args) != 1:
+                raise CommandException(_("Log vdevs cannot be mirrored"))
 
-                if 'log' not in entity:
-                    entity['topology']['log'] = []
+            if 'log' not in entity:
+                entity['topology']['log'] = []
 
-                entity['topology']['log'].append({
-                    'type': 'disk',
-                    'path': args[0]
-                })
+            entity['topology']['log'].append({
+                'type': 'disk',
+                'path': args[0]
+            })
 
-            if typ.startswith('raidz'):
-                entity['topology']['data'].append({
-                    'type': typ,
-                    'path': [{'type': 'disk', 'path': x} for x in args]
-                })
+        if typ.startswith('raidz'):
+            entity['topology']['data'].append({
+                'type': typ,
+                'path': [{'type': 'disk', 'path': x} for x in args]
+            })
 
 
 @description("Removes vdev from volume")
@@ -315,6 +314,7 @@ class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
 
         self.primary_key_name = 'name'
         self.create_task = 'volume.create'
+        self.update_task = 'volume.update'
         self.delete_task = 'volume.destroy'
 
         self.skeleton_entity = {
