@@ -87,6 +87,17 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 if next_.get_name() in NO_SYNC_MAP:
                     continue
 
+            elif p.tokens[0].normalized == 'DELETE':
+
+                from_ = p.token_next_match(0, sqlparse.tokens.Keyword, 'FROM')
+                if not from_:
+                    continue
+
+                next_ = p.token_next(from_)
+
+                if next_.get_name() in NO_SYNC_MAP:
+                    continue
+
             elif p.tokens[0].normalized == 'UPDATE':
 
                 name = p.token_next(p.tokens[0]).get_name()
