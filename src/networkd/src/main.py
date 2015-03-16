@@ -42,6 +42,7 @@ from datastore import get_datastore, DatastoreException
 from datastore.config import ConfigStore
 from dispatcher.client import Client
 from dispatcher.rpc import RpcService, RpcException
+from fnutils.query import wrap
 
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
@@ -328,6 +329,10 @@ class ConfigurationService(RpcService):
             }
 
         return result
+
+    def query_routes(self):
+        rtable = netif.RoutingTable()
+        return wrap(rtable.static_routes)
 
     def configure_network(self):
         if self.config.get('network.autoconfigure'):
