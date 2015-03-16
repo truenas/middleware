@@ -543,7 +543,7 @@ class TaskBasedSaveMixin(object):
 
         self.context.submit_task(
             self.update_task,
-            this.orig_entity['id'],
+            this.orig_entity[self.primary_key_name],
             this.get_diff(),
             callback=lambda s: self.post_save(this, s))
 
