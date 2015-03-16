@@ -262,7 +262,7 @@ class Advanced(Model):
             verbose_name=_("Enable debug kernel"),
             default=False)
     adv_uploadcrash = models.BooleanField(
-        verbose_name=_("Enable automatic upload of kernel crash dumps"),
+        verbose_name=_("Enable automatic upload of kernel crash dumps and daily telemetry"),
         default=True,
     )
     adv_anonstats = models.BooleanField(

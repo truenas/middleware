@@ -331,7 +331,8 @@ Advanced
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
-| crash dumps                             |                                  | development team for diagnosis                                               |
+| crash dumps and daily telemetry         |                                  | development team for diagnosis. The telemetry includes some system stats,    |
+|                                         |                                  | collectd RRDs, and select syslog messages.                                   |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
