@@ -390,10 +390,9 @@ def generate_disk_cache(dispatcher, path):
     }
 
     diskinfo_cache.put(path, disk)
-    ds_disk = dispatcher.datastore.get_one('disks', ('id', '=', identifier))
+    ds_disk = dispatcher.datastore.get_one('disks', ('path', '=', path))
 
     if ds_disk is None:
-
         dispatcher.datastore.insert('disks', {
             'id': identifier,
             'path': path,
@@ -401,6 +400,16 @@ def generate_disk_cache(dispatcher, path):
             'serial': disk['serial'],
             'data-partition-uuid': disk['data-partition-uuid']
         })
+    else:
+        if ds_disk['id'] != identifier or disk['data-partition-uuid'] != ds_disk['data-partition-uuid']:
+            oldid = ds_disk['id']
+            ds_disk.update({
+                'id': identifier,
+                'serial': disk['serial'],
+                'data-partition-uuid': disk['data-partition-uuid']
+            })
+
+            dispatcher.datastore.update('disks', oldid, ds_disk)
 
 
 def purge_disk_cache(path):
