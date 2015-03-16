@@ -76,7 +76,18 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 continue
 
             cparams = list(params)
-            if p.tokens[0].normalized == 'UPDATE':
+            if p.tokens[0].normalized == 'INSERT':
+
+                into = p.token_next_match(0, sqlparse.tokens.Keyword, 'INTO')
+                if not into:
+                    continue
+
+                next_ = p.token_next(into)
+
+                if next_.get_name() in NO_SYNC_MAP:
+                    continue
+
+            elif p.tokens[0].normalized == 'UPDATE':
 
                 name = p.token_next(p.tokens[0]).get_name()
                 no_sync = NO_SYNC_MAP.get(name)
