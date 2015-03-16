@@ -18,6 +18,13 @@ IntegrityError = sqlite3base.IntegrityError
 log = logging.getLogger('freeadmin.sqlite3_ha')
 
 
+NO_SYNC_MAP = {
+    'network_globalconfiguration': {
+        'fields': ['gc_hosts'],
+    },
+}
+
+
 class DatabaseFeatures(sqlite3base.DatabaseFeatures):
     pass
 
@@ -43,9 +50,9 @@ class HASQLiteCursorWrapper(Database.Cursor):
             if p.tokens[0].normalized == 'UPDATE':
 
                 name = p.token_next(p.tokens[0]).get_name()
-                if name not in (
-                    'network_globalconfiguration',
-                ):
+                no_sync = NO_SYNC_MAP.get(name)
+                # Skip if table is in set to not to sync and has no attrs
+                if no_sync is None and name in NO_SYNC_MAP:
                     continue
 
                 set_ = p.token_next_match(0, sqlparse.tokens.Keyword, 'SET')
@@ -63,7 +70,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
                 for l in lookup:
 
-                    if l.get_name() not in ('gc_hosts'):
+                    if l.get_name() not in no_sync['fields']:
                         continue
 
                     # If it is a list we must also remove the comma around it
