@@ -45,9 +45,12 @@ class Funcs(object):
         self._conn = connection
         super(Funcs, self).__init__(*args, **kwargs)
 
-    def run_sql(self, query):
+    def run_sql(self, query, params):
         cursor = self._conn.cursor()
-        cursor.execute(query)
+        if params is None:
+            cursor.execute(query)
+        else:
+            cursor.execute(query, params)
 
 
 def set_proc_name(newname):
