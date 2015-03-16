@@ -49,8 +49,11 @@ class RunSQLRemote(threading.Thread):
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
-        # FIXME: Get failover IP
-        s = xmlrpclib.ServerProxy('http://192.168.3.21:8000')
+        # FIXME: cache value
+        from freenasUI.middleware.notifier import notifier
+        s = xmlrpclib.ServerProxy('http://%s:8000' % (
+            notifier().failover_peerip()
+        ))
         try:
             s.run_sql(self._sql, self._params)
         except Exception as err:
@@ -76,12 +79,15 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
     def execute_passive(self, query, params=None):
 
-        # FIXME: This is extremely time-consuming
-        from freenasUI.middleware.notifier import notifier
-        if not (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_status() == 'MASTER'
-        ):
+        try:
+            # FIXME: This is extremely time-consuming
+            from freenasUI.middleware.notifier import notifier
+            if not (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_status() == 'MASTER'
+            ):
+                return
+        except:
             return
 
         parse = sqlparse.parse(query)
