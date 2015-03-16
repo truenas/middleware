@@ -36,7 +36,8 @@ var SystemInfo = React.createClass({
  }
 
   , componentWillUnmount: function() {
-     SystemStore.removeChangeListener( this.handleStatdChange );
+     SystemStore.removeChangeListener( this.handleChange );
+     UpdateStore.removeChangeListener( this.handleChange );
   }
 
  , handleChange: function() {
