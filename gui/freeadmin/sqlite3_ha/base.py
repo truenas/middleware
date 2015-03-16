@@ -24,6 +24,20 @@ NO_SYNC_MAP = {
     'network_globalconfiguration': {
         'fields': ['gc_hosts'],
     },
+    'system_systemdataset': {
+        'fields': ['sys_uuid'],
+    },
+    'directoryservice_activedirectory': {
+        'fields': ['ad_netbiosname'],
+    },
+    'system_failover': {
+        'fields': ['ipaddress'],
+    },
+    'network_interfaces': {},
+    'network_alias': {},
+    'network_carp': {
+        'fields': ['carp_skew'],
+    },
 }
 
 
