@@ -26,6 +26,10 @@ var MemoryUtil = React.createClass({
                                 , primary:false
                                 , y:function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/17143758848)*100; } }
                                 , forceY:[0, 100]
+                                , yUnit : "%"
+                            }
+                           ,{     type:"pie"
+                                , primary:false
                             }
                          ]
     };
