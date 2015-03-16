@@ -173,7 +173,13 @@ var DummyWidgetContent = React.createClass({
       }
 
       if (update === true) {
-          this.state.chart.update();
+        var chart = this.state.chart;
+        d3.select(this.state.element)
+        .datum(this.chartData(this.state.graphType))
+        .call(chart);
+        chart.update();
+        this.setState({"chart" : chart});
+        //this.state.chart.update();
       }
       else {
         var chart;
@@ -193,6 +199,24 @@ var DummyWidgetContent = React.createClass({
               ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
               ,clipEdge                   :    false
             });
+
+          // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
+          var xLabel = graphTypeObject.xLabel || "Time";
+          chart.xAxis
+            .axisLabel(xLabel)
+            .tickFormat(function(d) {
+              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+              return moment.unix(d).format("HH:mm:ss");
+            });
+
+          chart.yAxis
+            .axisLabel(graphTypeObject.yLabel)
+            .tickFormat(function(d) {
+              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+              return (d + graphTypeObject.yUnit);
+            });
+
+
         }
         else if (this.state.graphType === "line")
         {
@@ -207,6 +231,46 @@ var DummyWidgetContent = React.createClass({
             ,transitionDuration           :   250
             ,forceY                       :   graphTypeObject.forceY //[0, 100]
           });
+
+          // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
+          var xLabel = graphTypeObject.xLabel || "Time";
+          chart.xAxis
+            .axisLabel(xLabel)
+            .tickFormat(function(d) {
+              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+              return moment.unix(d).format("HH:mm:ss");
+            });
+
+          chart.yAxis
+            .axisLabel(graphTypeObject.yLabel)
+            .tickFormat(function(d) {
+              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
+              return (d + graphTypeObject.yUnit);
+            });
+
+
+
+        }
+        else if (this.state.graphType === "pie")
+        {
+          graphTypeObject = this.selectObjectFromArray(this.props.chartTypes, "pie");
+          var colors = [];
+          this.props.statdResources.forEach(function(resource) {
+            colors.push(resource.color);
+          });
+          chart = nv.models.pieChart()
+          .options({
+             margin                       :   {top: 0, right: 0, bottom: 0, left: 0}
+            ,x                            :   graphTypeObject.x || function(d) { return d.label; }
+            ,y                            :   graphTypeObject.y || function(d) { if(d.value === "nan") { return 0; } else { return d.value; } }
+            ,color                        :   colors
+            ,showLabels                   :   true
+            ,labelThreshold               :   1
+            ,labelType                    :   "value" //Configure what type of data to show in the label. Can be "key", "value" or "percent"
+            ,transitionDuration           :   250
+            ,donut                        :   false
+            ,donutRatio                   :   0.35
+          });
         }
         else
         {
@@ -214,49 +278,58 @@ var DummyWidgetContent = React.createClass({
           return;
         }
 
-      // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
-      chart.xAxis
-        .axisLabel("Time")
-        .tickFormat(function(d) {
-              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-              return moment.unix(d).format("HH:mm:ss");
-        });
-
-      chart.yAxis
-        .axisLabel("")
-        .tickFormat(function(d) {
-              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-              return (d + "%");
-        });
-
       d3.select(this.state.element)
-        .datum(this.chartData())
+        .datum(this.chartData(this.state.graphType))
         .call(chart);
 
       //TODO: Figure out a good way to do this automatically
       //nv.utils.windowResize(chart.update);
       //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
 
-      chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
+      //chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
       this.setState({ "chart" : chart
                       ,fullUpdate : false });
     }
   }
 
-  , chartData: function() {
+  , chartData: function(chartType) {
     var returnArray = [];
     var state = this.state;
 
-    this.props.statdResources.forEach(function(resource) {
-      var returnArrayMember = {
-                                  area: false
-                                , values: state[resource.variable]
-                                , key: resource.name
-                                , color: resource.color
-                              };
-      returnArray.push(returnArrayMember);
-    });
-
+    if (chartType === "line")
+    {
+      this.props.statdResources.forEach(function(resource) {
+        var returnArrayMember = {
+                                    area: resource.area || false
+                                  , values: state[resource.variable]
+                                  , key: resource.name
+                                  , color: resource.color
+                                };
+        returnArray.push(returnArrayMember);
+      });
+    }
+    else if (chartType === "stacked")
+    {
+      this.props.statdResources.forEach(function(resource) {
+        var returnArrayMember = {
+                                    values: state[resource.variable]
+                                  , key: resource.name
+                                  , color: resource.color
+                                };
+        returnArray.push(returnArrayMember);
+      });
+    }
+    else if (chartType === "pie")
+    {
+      this.props.statdResources.forEach(function(resource) {
+        console.log(state[resource.variable][state[resource.variable].length - 1][1]);
+        var returnArrayMember = {
+                                    value: state[resource.variable][state[resource.variable].length - 1][1]
+                                  , label: resource.name
+                                };
+        returnArray.push(returnArrayMember);
+      });
+    }
     return returnArray;
   }
   ,selectObjectFromArray: function(objectArray, valueToTest) {
