@@ -7,6 +7,8 @@ standard library.
 from __future__ import unicode_literals
 
 import logging
+import threading
+import xmlrpclib
 
 from django.db.backends.sqlite3 import base as sqlite3base
 import sqlparse
@@ -23,6 +25,23 @@ NO_SYNC_MAP = {
         'fields': ['gc_hosts'],
     },
 }
+
+
+class RunSQLRemote(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        self._sql = kwargs.pop('sql')
+        self._params = kwargs.pop('params')
+        super(RunSQLRemote, self).__init__(*args, **kwargs)
+
+    def run(self):
+        # FIXME: Get failover IP
+        s = xmlrpclib.ServerProxy('http://192.168.3.21:8000')
+        try:
+            s.run_sql(self._sql, self._params)
+        except Exception as err:
+            log.error('Failed to run SQL remotely %s: %s', self._sql, err)
+
 
 
 class DatabaseFeatures(sqlite3base.DatabaseFeatures):
@@ -85,6 +104,15 @@ class HASQLiteCursorWrapper(Database.Cursor):
                     ) and prev_.value == ',':
                         del l.parent.tokens[l.parent.token_index(prev_)]
                     del l.parent.tokens[l.parent.token_index(l)]
+
+            cparams = params
+            if params is not None:
+                sql = self.convert_query(str(p))
+                cparams = params
+            else:
+                sql = str(p)
+            rsr = RunSQLRemote(sql=sql, params=cparams)
+            rsr.start()
 
         if params is None:
             return Database.Cursor.execute(self, query)
