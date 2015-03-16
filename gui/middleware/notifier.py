@@ -561,7 +561,7 @@ class notifier:
         self._system("/usr/sbin/service ix-localtime quietstart")
         self._system("/usr/sbin/service ix-ntpd quietstart")
         self._system("/usr/sbin/service ntpd restart")
-        c = self.__open_db()
+        c = self._open_db()
         c.execute("SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1")
         os.environ['TZ'] = c.fetchone()[0]
         time.tzset()
@@ -1039,7 +1039,7 @@ class notifier:
         self._stop_saver()
         self._start_saver()
 
-    def __open_db(self, ret_conn=False):
+    def _open_db(self, ret_conn=False):
         """Open and return a cursor object for database access."""
         try:
             from freenasUI.settings import DATABASES
@@ -3031,7 +3031,7 @@ class notifier:
         if not plugin:
             raise MiddlewareError("plugin is NULL")
 
-        (c, conn) = self.__open_db(ret_conn=True)
+        (c, conn) = self._open_db(ret_conn=True)
         c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
         row = c.fetchone()
         if not row:
@@ -3263,7 +3263,7 @@ class notifier:
             log.debug("stat %s: %s", rpath, e)
             return False
 
-        (c, conn) = self.__open_db(ret_conn=True)
+        (c, conn) = self._open_db(ret_conn=True)
         c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
         row = c.fetchone()
         if not row:
