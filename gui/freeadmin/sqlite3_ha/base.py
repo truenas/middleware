@@ -60,7 +60,16 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
 
 class HASQLiteCursorWrapper(Database.Cursor):
 
-    def execute(self, query, params=None):
+    def execute_passive(self, query, params=None):
+
+        # FIXME: This is extremely time-consuming
+        from freenasUI.middleware.notifier import notifier
+        if not (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'MASTER'
+        ):
+            return
+
         parse = sqlparse.parse(query)
         for p in parse:
             if p.tokens[0].normalized not in ('DELETE', 'INSERT', 'UPDATE'):
@@ -83,13 +92,16 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 if not next_:
                     continue
 
-                if issubclass(next_.__class__, sqlparse.sql.IdentifierList):
-                    lookup = list(next_.get_sublists())
-                elif issubclass(next_.__class__, sqlparse.sql.Comparison):
-                    lookup = [next_]
+                if no_sync is None:
+                    lookup = []
+                else:
+                    if issubclass(next_.__class__, sqlparse.sql.IdentifierList):
+                        lookup = list(next_.get_sublists())
+                    elif issubclass(next_.__class__, sqlparse.sql.Comparison):
+                        lookup = [next_]
 
-                # Get all placeholders from the query (%s)
-                placeholders = [a for a in p.flatten() if a.value == '%s']
+                    # Get all placeholders from the query (%s)
+                    placeholders = [a for a in p.flatten() if a.value == '%s']
 
                 for l in lookup:
 
@@ -124,6 +136,8 @@ class HASQLiteCursorWrapper(Database.Cursor):
             rsr = RunSQLRemote(sql=sql, params=cparams)
             rsr.start()
 
+    def execute(self, query, params=None):
+        self.execute_passive(query, params=params)
         if params is None:
             return Database.Cursor.execute(self, query)
         query = self.convert_query(query)
