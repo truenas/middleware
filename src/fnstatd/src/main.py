@@ -197,10 +197,14 @@ class InputServer(object):
     def __init__(self, context):
         super(InputServer, self).__init__()
         self.context = context
+        self.thread = None
         self.server = StreamServer(('127.0.0.1', 2003), handle=self.handle)
 
     def start(self):
-        gevent.spawn(self.server.serve_forever())
+        self.thread = gevent.spawn(self.server.serve_forever)
+
+    def stop(self):
+        gevent.kill(self.thread)
 
     def handle(self, socket, address):
         fd = socket.makefile()
@@ -326,12 +330,14 @@ class Main(object):
 
     def init_dispatcher(self):
         self.client = Client()
-        self.client.connect('127.0.0.1')
         self.client.on_error(self.dispatcher_error)
+        self.client.connect('127.0.0.1')
         self.client.login_service('statd')
         self.client.enable_server()
 
     def die(self):
+        self.logger.warning('Exiting')
+        self.server.stop()
         self.client.disconnect()
         sys.exit(0)
 
@@ -358,7 +364,6 @@ class Main(object):
         self.client.enable_server()
         self.client.register_service('statd.output', OutputService(self))
         self.server.start()
-        self.client.call_sync('service.ensure_started', 'collectd')
         self.logger.info('Started')
         self.client.wait_forever()
 
