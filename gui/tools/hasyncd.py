@@ -94,6 +94,9 @@ class Funcs(object):
     def sync_from(self, query, params):
         self._conn.dump_recv(query)
 
+    def sync_to(self):
+        return self._conn.dump_send()
+
 
 def set_proc_name(newname):
     libc = cdll.LoadLibrary(find_library('c'))

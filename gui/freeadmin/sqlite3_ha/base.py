@@ -121,8 +121,11 @@ class RunSQLRemote(threading.Thread):
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
+            return False
         except Exception as err:
             log.error('Failed to run SQL remotely %s: %s', self._sql, err)
+            return False
+        return True
 
 
 class DatabaseFeatures(sqlite3base.DatabaseFeatures):
@@ -165,9 +168,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             for row in cur.fetchall():
                 script.append(row[0])
         rsr = RunSQLRemote(method='sync_from', sql=script, params=None)
-        rsr.run()
-
-        return script
+        return rsr.run()
 
     def dump_recv(self, script):
         cur = self.cursor()
