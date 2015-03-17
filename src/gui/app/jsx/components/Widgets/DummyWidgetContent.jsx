@@ -6,15 +6,8 @@ var moment  =   require("moment");
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
-
 function getWidgetDataFromStore( name ) {
  return StatdStore.getWidgetData( name );
- }
-
- function getSystemInfoFromStore( name ) {
- return SystemStore.getSystemInfo( name );
  }
 
 var DummyWidgetContent = React.createClass({
@@ -33,6 +26,8 @@ var DummyWidgetContent = React.createClass({
     this.requestWidgetData();
 
     StatdStore.addChangeListener( this.handleStatdChange );
+
+    console.log(this.props);
 
     this.props.statdResources.forEach(function(resource) {
       StatdMiddleware.subscribe(resource.dataSource);
@@ -97,13 +92,6 @@ var DummyWidgetContent = React.createClass({
           }
         }
       });
-      this.props.systemResources.forEach(function(resource) {
-        newState[resource.variable] = getSystemInfoFromStore( resource.dataSource );
-        if (newState[resource.variable] === undefined)
-        {
-          newState.initialData = false;
-        }
-      });
 
       this.setState( newState );
 
@@ -156,10 +144,6 @@ var DummyWidgetContent = React.createClass({
     this.props.statdResources.forEach(function(resource) {
       StatdMiddleware.requestWidgetData(resource.dataSource, start.format(),  stop.format(), "10S");
     });
-    this.props.systemResources.forEach(function(resource) {
-      SystemMiddleware.requestSystemInfo( resource.dataSource);
-    });
-
   }
 
   , drawChart: function(update, reload) {
@@ -173,6 +157,7 @@ var DummyWidgetContent = React.createClass({
       }
 
       if (update === true) {
+        console.log(this.state);
         var chart = this.state.chart;
         d3.select(this.state.element)
         .datum(this.chartData(this.state.graphType))
@@ -182,6 +167,7 @@ var DummyWidgetContent = React.createClass({
         //this.state.chart.update();
       }
       else {
+        console.log(this.state);
         var chart;
         var graphTypeObject;
 
