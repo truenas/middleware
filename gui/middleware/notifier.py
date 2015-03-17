@@ -54,7 +54,7 @@ import signal
 import socket
 import sqlite3
 import stat
-from subprocess import Popen, PIPE, call
+from subprocess import Popen, PIPE
 import subprocess
 import sys
 import tempfile
@@ -123,18 +123,7 @@ import sysctl
 
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
-journal = logging.getLogger('journal.middleware.notifier')
 
-def get_caller_info(level):
-    import inspect
-    frame = inspect.stack()[3+level][0]
-    info = inspect.getframeinfo(frame)
-    return info.lineno
-
-def get_journal_extra(status, err=None, level=0):
-    line = get_caller_info(level)
-    return {'status': status, 'error': str(err).strip() if err else '',
-            'line': line }
 
 class StartNotify(threading.Thread):
 
@@ -178,49 +167,55 @@ class notifier:
     from pwd import getpwnam as ___getpwnam
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
-    libc = ctypes.cdll.LoadLibrary("libc.so.7")
 
     def _system(self, command):
-        stdout, stderr, status = self._pipe(command, stdin=None, stdout=None,
-                                            extra_level=1)
-        try:
-            call('logger -p daemon.notice -t %s' % self.IDENTIFIER, stdin=stdout + stderr,
-                 shell=True)
-        except:
-            pass
-        return status
-
-    def _system_nolog(self, command):
-        return self._pipe(command, stdin=None, stdout=None, extra_level=1)[-1]
-
-    def _pipe(self, command, input=None, stdin=None, stdout=PIPE, stderr=PIPE,
-              pid_file=None, good_status=0, extra_level=0):
+        log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
         # This is hacky hack to work around this issue.
+        libc = ctypes.cdll.LoadLibrary("libc.so.7")
         omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
         pmask = ctypes.pointer(mask)
         pomask = ctypes.pointer(omask)
-        notifier.libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
-        proc = None
+        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr, shell=True,
-                         close_fds=False)
-            if pid_file:
-                with open(pid_file, 'w') as ff:
-                    ff.write(str(proc.pid))
-            out, err = proc.communicate(input)
-        except Exception as ee:
-            journal.debug(command, extra=get_journal_extra(proc.returncode if proc else -1,
-                                                          ee, extra_level))
-            raise
+            ret = self.__system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
+                                % (self.IDENTIFIER, ))
         finally:
-            notifier.libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        journal.debug(command,
-                     extra=get_journal_extra(proc.returncode,
-                                             err if proc.returncode != good_status else None,
-                                             extra_level))
-        return out, err, proc.returncode
+            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+        log.debug("Executed: %s -> %s", command, ret)
+        return ret
+
+    def _system_nolog(self, command):
+        log.debug("Executing: %s", command)
+        # TODO: python's signal class should be taught about sigprocmask(2)
+        # This is hacky hack to work around this issue.
+        libc = ctypes.cdll.LoadLibrary("libc.so.7")
+        omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+        mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
+        pmask = ctypes.pointer(mask)
+        pomask = ctypes.pointer(omask)
+        libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+        try:
+            retval = self.__system("(" + command + ") >/dev/null 2>&1")
+        finally:
+            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+        retval >>= 8
+        log.debug("Executed: %s; returned %d", command, retval)
+        return retval
+
+    def _pipeopen(self, command):
+        log.debug("Popen()ing: %s", command)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
+
+    def _pipeerr(self, command, good_status=0):
+        proc = self._pipeopen(command)
+        err = proc.communicate()[1]
+        if proc.returncode != good_status:
+            log.debug("%s -> %s (%s)", command, proc.returncode, err)
+            return err
+        log.debug("%s -> %s", command, proc.returncode)
+        return None
 
     def _do_nada(self):
         pass
@@ -306,9 +301,9 @@ class notifier:
 
             if pidfile:
                 procname = " " + procname if procname else ""
-                retval = self._pipe("/bin/pgrep -F %s%s" % (pidfile, procname))[-1]
+                retval = self._pipeopen("/bin/pgrep -F %s%s" % (pidfile, procname)).wait()
             else:
-                retval = self._pipe("/bin/pgrep %s" % (procname,))[-1]
+                retval = self._pipeopen("/bin/pgrep %s" % (procname,)).wait()
 
             if retval == 0:
                 return True
@@ -474,7 +469,7 @@ class notifier:
                 self._system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
                 self._system("/usr/sbin/service autolink auto_linklocal quietstart")
                 self._system("/usr/sbin/service netif stop")
-        interfaces = self._pipe("ifconfig -l")[0]
+        interfaces = self._pipeopen("ifconfig -l").communicate()[0]
         interface_list = interfaces.split(" ")
         for interface in interface_list:
             if interface.startswith("vlan"):
@@ -523,13 +518,15 @@ class notifier:
             cmd = None
 
         if cmd:
-            if self._pipe(cmd)[-1] != 0:
+            p = self._pipeopen(cmd)
+            if p.wait() != 0:
                 return False
 
         cmd = "/sbin/ifconfig %s" % iface
         if newip:
             cmd += " -alias %s" % oldip
-            if self._pipe(cmd)[-1] != 0:
+            p = self._pipeopen(cmd)
+            if p.wait() != 0:
                 return False
 
         if newnetmask and not newip:
@@ -539,7 +536,8 @@ class notifier:
             cmd = None
 
         if cmd:
-            if self._pipe(cmd)[-1] != 0:
+            p = self._pipeopen(cmd)
+            if p.wait() != 0:
                 return False
 
         return True
@@ -1022,7 +1020,9 @@ class notifier:
         self._system("/usr/sbin/service ix-loader quietstart")
 
     def __saver_loaded(self):
-        out = self._pipe("kldstat|grep daemon_saver")[0].strip('\n')
+        pipe = os.popen("kldstat|grep daemon_saver")
+        out = pipe.read().strip('\n')
+        pipe.close()
         return (len(out) > 0)
 
     def _start_saver(self):
@@ -1063,8 +1063,8 @@ class notifier:
         # To be safe, wipe out the disk, both ends... before we start
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
         try:
-            output = self._pipe("diskinfo %s" % (devname, ))[0]
-            size = int(re.sub(r'\s+', ' ', output).split()[2]) / (1024)
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
             log.error("Unable to determine size of %s", devname)
         else:
@@ -1073,7 +1073,7 @@ class notifier:
                 raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s count=4" % (
+            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 4,
                 ))
@@ -1091,7 +1091,9 @@ class notifier:
         commands.append("gpart bootcode -b /boot/pmbr-datadisk /dev/%s" % (devname))
 
         for command in commands:
-            if self._pipe(command)[-1] != 0:
+            proc = self._pipeopen(command)
+            proc.wait()
+            if proc.returncode != 0:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
 
         # We might need to sync with reality (e.g. devname -> uuid)
@@ -1160,14 +1162,14 @@ class notifier:
         self.__create_keyfile(keyfile)
         _passphrase = "-J %s" % passphrase if passphrase else "-P"
         command = "geli init -s 4096 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
-        _, err, status = self._pipe(command)
-        if status != 0:
+        err = self._pipeerr(command)
+        if err:
             raise MiddlewareError("Unable to set geli metadata on %s: %s" % (dev, err))
 
     def __geli_delkey(self, dev, slot=GELI_KEY_SLOT, force=False):
         command = "geli delkey -n %s %s %s" % (slot, '-f' if force else '', dev)
-        _, err, status = self._pipe(command)
-        if status != 0:
+        err = self._pipeerr(command)
+        if err:
             raise MiddlewareError("Unable to delete key %s on %s: %s" % (slot, dev, err))
 
     def geli_setkey(self, dev, key, slot=GELI_KEY_SLOT, passphrase=None, oldkey=None):
@@ -1177,8 +1179,8 @@ class notifier:
                       key,
                       "-k %s" % oldkey if oldkey else "",
                       dev))
-        _, err, status = self._pipe(command)
-        if status != 0:
+        err = self._pipeerr(command)
+        if err:
             raise MiddlewareError("Unable to set passphrase on %s: %s" % (dev, err))
 
     def geli_passphrase(self, volume, passphrase, rmrecovery=False):
@@ -1297,8 +1299,8 @@ class notifier:
             command = "geli attach %s -k %s %s" % ("-j %s" % passphrase if passphrase else "-p",
                                                    key,
                                                    dev)
-            _, err, status = self._pipe(command)
-            if status != 0 or not os.path.exists("/dev/%s.eli" % dev):
+            err = self._pipeerr(command)
+            if err or not os.path.exists("/dev/%s.eli" % dev):
                 raise MiddlewareError("Unable to geli attach %s: %s" % (dev, err))
         else:
             log.debug("%s already attached", dev)
@@ -1350,8 +1352,8 @@ class notifier:
         Clears the geli metadata on a provider
         """
         command = "geli clear %s" % dev
-        _, err, status = self._pipe(command)
-        if status != 0:
+        err = self._pipeerr(command)
+        if err:
             raise MiddlewareError("Unable to geli clear %s: %s" % (dev, err))
 
     def geli_detach(self, dev):
@@ -1362,8 +1364,8 @@ class notifier:
         """
         if os.path.exists("/dev/%s.eli" % dev):
             command = "geli detach %s" % dev
-            _, err, status = self._pipe(command)
-            if status != 0 or os.path.exists("/dev/%s.eli" % dev):
+            err = self._pipeerr(command)
+            if err or os.path.exists("/dev/%s.eli" % dev):
                 raise MiddlewareError("Failed to geli detach %s: %s" % (dev, err))
         else:
             log.debug("%s already detached", dev)
@@ -1385,7 +1387,8 @@ class notifier:
             if not parts:
                 parts = [disk]
             for part in parts:
-                if self._pipe("geli dump %s" % part)[-1] == 0:
+                proc = self._pipeopen("geli dump %s" % part)
+                if proc.wait() == 0:
                     gptid = doc.xpath("//class[name = 'LABEL']/geom[name = '%s']"
                                       "/provider/name" % part)
                     if gptid:
@@ -1488,15 +1491,14 @@ class notifier:
         if larger_ashift == 0:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
 
-        _, err, status = self._pipe("zpool create -o cachefile=/data/zfs/zpool.cache "
-                                    "-o failmode=continue "
-                                    "-o autoexpand=on "
-                                    "-O compression=lz4 "
-                                    "-O aclmode=passthrough -O aclinherit=passthrough "
-                                    "-f -m %s -o altroot=%s %s %s" %
-                                    (mountpoint, altroot, z_name, z_vdev))
-        if status != 0:
-            error = ", ".join(err.split('\n'))
+        p1 = self._pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
+                      "-o failmode=continue "
+                      "-o autoexpand=on "
+                      "-O compression=lz4 "
+                      "-O aclmode=passthrough -O aclinherit=passthrough "
+                      "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
+        if p1.wait() != 0:
+            error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
 
         # Restore previous larger ashift state.
@@ -1504,9 +1506,9 @@ class notifier:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
         # We've our pool, lets retrieve the GUID
-        output, _, status = self._pipe("zpool get guid %s" % z_name)
-        if status == 0:
-            line = output.split('\n')[1].strip()
+        p1 = self._pipeopen("zpool get guid %s" % z_name)
+        if p1.wait() == 0:
+            line = p1.communicate()[0].split('\n')[1].strip()
             volume.vol_guid = re.sub('\s+', ' ', line).split(' ')[2]
             volume.save()
         else:
@@ -1574,9 +1576,10 @@ class notifier:
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        _, zfs_err, status = self._pipe("/sbin/zfs create %s -V '%s' '%s'"
-                                            % (options, size, name))
-        return status, zfs_err
+        zfsproc = self._pipeopen("/sbin/zfs create %s -V '%s' '%s'" % (options, size, name))
+        zfs_err = zfsproc.communicate()[1]
+        zfs_error = zfsproc.wait()
+        return zfs_error, zfs_err
 
     def create_zfs_dataset(self, path, props=None, _restart_collectd=True):
         """Internal procedure to create ZFS volume"""
@@ -1586,11 +1589,12 @@ class notifier:
             for k in props.keys():
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
-        zfs_output, zfs_err, status = self._pipe("/sbin/zfs create %s '%s'"
-                                                     % (options, path))
-        if status == 0 and _restart_collectd:
+        zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
+        zfs_output, zfs_err = zfsproc.communicate()
+        zfs_error = zfsproc.wait()
+        if zfs_error == 0 and _restart_collectd:
             self.restart("collectd")
-        return status, zfs_err
+        return zfs_error, zfs_err
 
     def list_zfs_vols(self, volname, sort=None):
         """Return a dictionary that contains all ZFS volumes list"""
@@ -1600,10 +1604,8 @@ class notifier:
         else:
             sort = '-s %s' % sort
 
-        zfs_output, zfs_err, _ = self._pipe("/sbin/zfs list -p -H -o "
-                                                "name,volsize,used,avail,refer,"
-                                                "compression,compressratio %s -t "
-                                                "volume -r '%s'" % (sort, str(volname),))
+        zfsproc = self._pipeopen("/sbin/zfs list -p -H -o name,volsize,used,avail,refer,compression,compressratio %s -t volume -r '%s'" % (sort, str(volname),))
+        zfs_output, zfs_err = zfsproc.communicate()
         zfs_output = zfs_output.split('\n')
         retval = {}
         for line in zfs_output:
@@ -1621,12 +1623,13 @@ class notifier:
         return retval
 
     def list_zfs_fsvols(self, system=False):
-        out, err, status = self._pipe("/sbin/zfs list -H -o name -t volume,filesystem")
+        proc = self._pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
+        out, err = proc.communicate()
         out = out.split('\n')
         retval = OrderedDict()
         if system is False:
             systemdataset, volume, basename = self.system_dataset_settings()
-        if status == 0:
+        if proc.returncode == 0:
             for line in out:
                 if not line:
                     continue
@@ -1641,7 +1644,8 @@ class notifier:
         Check if a given snapshot is being hold by the replication system
         DISCLAIMER: mntlock has to be acquired before this call
         """
-        output = self._pipe("zfs get -H freenas:state '%s'" % (name))[0]
+        zfsproc = self._pipeopen("zfs get -H freenas:state '%s'" % (name))
+        output = zfsproc.communicate()[0]
         if output != '':
             fsname, attrname, value, source = output.split('\n')[0].split('\t')
             if value != '-' and value != 'NEW':
@@ -1656,14 +1660,13 @@ class notifier:
             user = repl.repl_remote.ssh_remote_dedicateduser
         else:
             user = 'root'
-        data, _, status = self._pipe('/usr/bin/ssh -i /data/ssh/replication '
-                                         '-o ConnectTimeout=3 -p %s "%s"@"%s" '
-                                         '"zfs list -Ht snapshot -o name"' % (
+        proc = self._pipeopen('/usr/bin/ssh -i /data/ssh/replication -o ConnectTimeout=3 -p %s "%s"@"%s" "zfs list -Ht snapshot -o name"' % (
             repl.repl_remote.ssh_remote_port,
             user,
             repl.repl_remote.ssh_remote_hostname,
         ))
-        if status != 0:
+        data = proc.communicate()[0]
+        if proc.returncode != 0:
             return []
         return data.strip('\n').split('\n')
 
@@ -1679,8 +1682,8 @@ class notifier:
         elif recursive:
             try:
                 with mntlock(blocking=False):
-                    snaps = self._pipe("/sbin/zfs list -Hr -t snapshot -o name "
-                                           "'%s'" % (path))[0]
+                    zfsproc = self._pipeopen("/sbin/zfs list -Hr -t snapshot -o name '%s'" % (path))
+                    snaps = zfsproc.communicate()[0]
                     for snap in filter(None, snaps.splitlines()):
                         if self.__snapshot_hold(snap):
                             retval = '%s: Held by replication system.' % snap
@@ -1693,10 +1696,11 @@ class notifier:
                 self.delete_plugins()
 
             if recursive:
-                _, retval, status = self._pipe("zfs destroy -r '%s'" % (path))
+                zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
             else:
-                _, retval, status = self._pipe("zfs destroy '%s'" % (path))
-            if status == 0:
+                zfsproc = self._pipeopen("zfs destroy '%s'" % (path))
+            retval = zfsproc.communicate()[1]
+            if zfsproc.returncode == 0:
                 from freenasUI.storage.models import Task, Replication
                 Task.objects.filter(task_filesystem=path).delete()
                 Replication.objects.filter(repl_filesystem=path).delete()
@@ -1712,7 +1716,9 @@ class notifier:
         mp = self.__get_mountpath(name, 'ZFS')
         if self.contains_jail_root(mp):
             self.delete_plugins()
-        return self._pipe("zfs destroy '%s'" % (str(name),))[1]
+        zfsproc = self._pipeopen("zfs destroy '%s'" % (str(name),))
+        retval = zfsproc.communicate()[1]
+        return retval
 
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
@@ -1755,7 +1761,7 @@ class notifier:
             for disk in disks:
                 self._system("geom %s clear %s" % (geom_type, disk))
                 self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s count=4 "
+                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
                       "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
 
     def _init_volume(self, volume, *args, **kwargs):
@@ -1836,8 +1842,9 @@ class notifier:
             if ret == 256:
                 ret = self._system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
-            stdout, stderr, ret = self._pipe('/sbin/zpool replace %s %s %s' %
-                                                 (volume.vol_name, from_label, devname))
+            p1 = self._pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
+            stdout, stderr = p1.communicate()
+            ret = p1.returncode
             if ret != 0:
                 if from_swap != '':
                     self._system('/sbin/geli onetime /dev/%s' % (from_swap))
@@ -1875,9 +1882,9 @@ class notifier:
             self._system('/sbin/geli detach /dev/%s' % (swap, ))
 
         # Replace in-place
-        _, stderr, status = self._pipe('/sbin/zpool offline %s %s' %
-                                           (volume.vol_name, label))
-        if status != 0:
+        p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
+        stderr = p1.communicate()[1]
+        if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk offline failed: "%s"' % error)
         if label.endswith(".eli"):
@@ -1932,9 +1939,9 @@ class notifier:
             self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
             self._system('/sbin/geli detach /dev/%s' % (from_swap,))
 
-        _, stderr, status = self._pipe('/sbin/zpool remove %s %s' %
-                                           (volume.vol_name, label))
-        if status != 0:
+        p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
+        stderr = p1.communicate()[1]
+        if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk could not be removed: "%s"' % error)
         # TODO: This operation will cause damage to disk data which should be limited
@@ -1977,12 +1984,14 @@ class notifier:
             the absolute path for the volume on the system.
         """
         if fstype == 'ZFS':
-            stdout, _, status = self._pipe("zfs list -H -o mountpoint '%s'" % (name, ))
-            if not status:
+            p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
+            stdout = p1.communicate()[0]
+            if not p1.returncode:
                 return stdout.strip()
         elif fstype == 'UFS':
-            stdout, _, status = self._pipe('mount -p')
-            if not status:
+            p1 = self._pipeopen('mount -p')
+            stdout = p1.communicate()[0]
+            if not p1.returncode:
                 flines = filter(lambda x: x and x.split()[0] ==
                                                 '/dev/ufs/' + name,
                                 stdout.splitlines())
@@ -2052,8 +2061,9 @@ class notifier:
 
     # Create a user in system then samba
     def __pw_with_password(self, command, password):
-        _, msg, status = self._pipe(command, "%s\n" % password)
-        if status != 0:
+        pw = self._pipeopen(command)
+        msg = pw.communicate("%s\n" % password)[1]
+        if pw.returncode != 0:
             raise MiddlewareError("Operation could not be performed. %s" % msg)
 
         if msg != "":
@@ -2073,7 +2083,9 @@ class notifier:
             return 0
 
         command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
-        return self._pipe(command, "%s\n%s\n" % (password, password))[-1] == 0
+        smbpasswd = self._pipeopen(command)
+        smbpasswd.communicate("%s\n%s\n" % (password, password))
+        return smbpasswd.returncode == 0
 
     def __issue_pwdchange(self, username, command, password):
         self.__pw_with_password(command, password)
@@ -2203,7 +2215,8 @@ class notifier:
             smb_hash = '*'
             if not domaincontroller_enabled():
                 smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-                smb_hash = self._pipe(smb_command)[0].split('\n')[0]
+                smb_cmd = self._pipeopen(smb_command)
+                smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         except:
             if new_homedir:
                 # Be as atomic as possible when creating the user if
@@ -2218,7 +2231,9 @@ class notifier:
         command = '/usr/sbin/pw group add "%s"' % (
             name,
         )
-        if self._pipe(command)[-1] != 0:
+        proc = self._pipeopen(command)
+        proc.communicate()
+        if proc.returncode != 0:
             raise MiddlewareError(_('Failed to create group %s') % name)
         grnam = self.___getgrnam(name)
         return grnam.gr_gid
@@ -2227,10 +2242,12 @@ class notifier:
         command = "/usr/local/bin/net groupmap list"
         groupmap = []
 
-        out, _, status = self._pipe(command)
-        if status != 0:
+        proc = self._pipeopen(command)
+        out = proc.communicate()
+        if proc.returncode != 0:
             return None
 
+        out = out[0]
         lines = out.splitlines()
         for line in lines:
             m = re.match('^(?P<ntgroup>.+) \((?P<SID>S-[0-9\-]+)\) -> (?P<unixgroup>.+)$', line)
@@ -2243,11 +2260,13 @@ class notifier:
         command = "/usr/local/bin/net groupmap add type=%s unixgroup='%s' ntgroup='%s'"
 
         ret = False
-        if self._pipe(command % (
+        proc = self._pipeopen(command % (
             type,
             unixgroup.encode('utf8'),
             ntgroup.encode('utf8')
-        ))[-1] == 0:
+        ))
+        proc.communicate()
+        if proc.returncode == 0:
             ret = True
 
         return ret
@@ -2264,7 +2283,9 @@ class notifier:
         elif sid:
             command = "%s sid='%s'" % (command, sid)
 
-        if self._pipe(command)[-1] == 0:
+        proc = self._pipeopen(command)
+        proc.communicate()
+        if proc.returncode == 0:
             ret = True
 
         return ret
@@ -2298,7 +2319,8 @@ class notifier:
         if CIFS debug level is anything different than 'Minimum'
         """
         smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-        smb_hash = self._pipe(smb_command)[0].split('\n')[0]
+        smb_cmd = self._pipeopen(smb_command)
+        smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         user = self.___getpwnam(username)
         return (user.pw_passwd, smb_hash)
 
@@ -2309,8 +2331,9 @@ class notifier:
         Returns:
             bool
         """
-        _, err, status = self._pipe('/usr/sbin/pw userdel "%s"' % (username, ))
-        if status != 0:
+        pipe = self._pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
+        err = pipe.communicate()[1]
+        if pipe.returncode != 0:
             log.warn("Failed to delete user %s: %s", username, err)
             return False
         return True
@@ -2322,24 +2345,27 @@ class notifier:
         Returns:
             bool
         """
-        _, err, status = self._pipe('/usr/sbin/pw groupdel "%s"' % (groupname, ))
-        if status != 0:
+        pipe = self._pipeopen('/usr/sbin/pw groupdel "%s"' % (groupname, ))
+        err = pipe.communicate()[1]
+        if pipe.returncode != 0:
             log.warn("Failed to delete group %s: %s", groupname, err)
             return False
         return True
 
     def user_getnextuid(self):
         command = "/usr/sbin/pw usernext"
-        uid, _, status = self._pipe(command)
-        if status != 0:
+        pw = self._pipeopen(command)
+        uid = pw.communicate()[0]
+        if pw.returncode != 0:
             raise ValueError("Could not retrieve usernext")
         uid = uid.split(':')[0]
         return uid
 
     def user_getnextgid(self):
         command = "/usr/sbin/pw groupnext"
-        gid, _, status = self._pipe(command)
-        if status != 0:
+        pw = self._pipeopen(command)
+        gid = pw.communicate()[0]
+        if pw.returncode != 0:
             raise ValueError("Could not retrieve groupnext")
         return gid
 
@@ -2568,18 +2594,21 @@ class notifier:
         )
         #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
         if not pref:
-            mddev, err, status = self._pipe("/sbin/mdconfig -a -t swap -s 2800m")
-            if status != 0:
+            proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
+            mddev, err = proc.communicate()
+            if proc.returncode != 0:
                 raise MiddlewareError("Could not create memory device: %s" % err)
 
-            _, err, status = self._pipe("newfs -L %s /dev/%s" % (label, mddev))
-            if status != 0:
+            proc = self._pipeopen("newfs -L %s /dev/%s" % (label, mddev))
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
                 raise MiddlewareError("Could not create temporary filesystem: %s" % err)
 
             self._system("/bin/rm -rf /var/tmp/firmware")
             self._system("/bin/mkdir -p /var/tmp/firmware")
-            _, err, status = self._pipe("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
-            if status != 0:
+            proc = self._pipeopen("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
                 raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
 
         self._system("/usr/sbin/chown www:www /var/tmp/firmware")
@@ -2614,8 +2643,9 @@ class notifier:
         mddev = prov[0].text
 
         self._system("umount /dev/ufs/%s" % (label, ))
-        _, err, status = self._pipe("mdconfig -d -u %s" % (mddev, ))
-        if status != 0:
+        proc = self._pipeopen("mdconfig -d -u %s" % (mddev, ))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
             raise MiddlewareError("Could not destroy memory device: %s" % err)
 
         return True
@@ -3265,9 +3295,9 @@ class notifier:
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            output, _, ret_code = self._pipe('zpool list -H -o health %s' % str(name))
-            if ret_code == 0:
-                status = output.strip('\n')
+            p1 = self._pipeopen('zpool list -H -o health %s' % str(name))
+            if p1.wait() == 0:
+                status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
 
             provider = self.get_label_consumer('ufs', name)
@@ -3282,7 +3312,9 @@ class notifier:
                     status = search[0].text
 
             else:
-                if self._pipe('mount|grep "/dev/ufs/%s"' % (name, ))[-1] == 0:
+                p1 = self._pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
+                p1.communicate()
+                if p1.returncode == 0:
                     status = 'HEALTHY'
                 else:
                     status = 'DEGRADED'
@@ -3295,7 +3327,9 @@ class notifier:
         algorithm2map = {
             'sha256': '/sbin/sha256 -q',
         }
-        return self._pipe('%s %s' % (algorithm2map[algorithm], path))[0].split('\n')[0]
+        hasher = self._pipeopen('%s %s' % (algorithm2map[algorithm], path))
+        sum = hasher.communicate()[0].split('\n')[0]
+        return sum
 
     def get_disks(self):
         """
@@ -3322,7 +3356,7 @@ class notifier:
             disks.append(mp.devname)
 
         for disk in disks:
-            info = self._pipe('/usr/sbin/diskinfo %s' % disk)[0].split('\t')
+            info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
             if len(info) > 3:
                 disksd.update({
                     disk: {
@@ -3353,7 +3387,8 @@ class notifier:
                     listing.remove(part)
 
             for part in listing:
-                info = self._pipe("/usr/sbin/diskinfo %s" % part)[0].split('\t')
+                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
+                info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
                         'devname': info[0].replace("/dev/", ""),
@@ -3365,15 +3400,21 @@ class notifier:
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
-            if self._pipe("/sbin/fsck_ufs -p %s" % dev)[-1] == 0:
+            p1 = self._pipeopen("/sbin/fsck_ufs -p %s" % dev)
+            p1.communicate()
+            if p1.returncode == 0:
                 return True
         elif fstype == 'NTFS':
             return True
         elif fstype == 'MSDOSFS':
-            if self._pipe("/sbin/fsck_msdosfs -p %s" % dev)[-1] == 0:
+            p1 = self._pipeopen("/sbin/fsck_msdosfs -p %s" % dev)
+            p1.communicate()
+            if p1.returncode == 0:
                 return True
         elif fstype == 'EXT2FS':
-            if self._pipe("/sbin/fsck_ext2fs -p %s" % dev)[-1] == 0:
+            p1 = self._pipeopen("/sbin/fsck_ext2fs -p %s" % dev)
+            p1.communicate()
+            if p1.returncode == 0:
                 return True
 
         return False
@@ -3385,19 +3426,19 @@ class notifier:
         """
 
         if fstype == 'UFS':
-            command = "/sbin/tunefs -L %s %s" % (label, dev)
+            p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
         elif fstype == 'NTFS':
-            command = "/usr/local/sbin/ntfslabel %s %s", (dev, label)
+            p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
         elif fstype == 'MSDOSFS':
-            command = "/usr/local/bin/mlabel -i %s ::%s" % (dev, label)
+            p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
         elif fstype == 'EXT2FS':
-            command = "/usr/local/sbin/tune2fs -L %s %s" % (label, dev)
+            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
         elif fstype is None:
-            command = "/sbin/geom label label %s %s" % (label, dev)
+            p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
         else:
             return False, 'Unknown fstype %r' % fstype
-        _, err, status = self._pipe(command)
-        if status == 0:
+        err = p1.communicate()[1]
+        if p1.returncode == 0:
             return True, ''
         return False, err
 
@@ -3412,7 +3453,8 @@ class notifier:
         doc = self._geom_confxml()
 
         pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I | re.M | re.S)
-        res = self._pipe("zpool import")[0]
+        p1 = self._pipeopen("zpool import")
+        res = p1.communicate()[0]
 
         for pool, zid in pool_name.findall(res):
             # get status part of the pool
@@ -3439,10 +3481,11 @@ class notifier:
 
     def zfs_import(self, name, id=None):
         if id is not None:
-            stdout, stderr, status = self._pipe('zpool import -f -R /mnt %s' % id)
+            imp = self._pipeopen('zpool import -f -R /mnt %s' % id)
         else:
-            stdout, stderr, status = self._pipe('zpool import -f -R /mnt %s' % name)
-        if status == 0:
+            imp = self._pipeopen('zpool import -f -R /mnt %s' % name)
+        stdout, stderr = imp.communicate()
+        if imp.returncode == 0:
             # Reset all mountpoints in the zpool
             self.zfs_inherit_option(name, 'mountpoint', True)
             # Remember the pool cache
@@ -3529,11 +3572,13 @@ class notifier:
 
         self.stop("syslogd")
 
-        stdout, stderr, status = self._pipe(cmd)
-        if status == 0:
+        p1 = self._pipeopen(cmd)
+        stdout, stderr = p1.communicate()
+        if p1.returncode == 0:
             succeeded = True
         else:
-            stdout, stderr, status = self._pipe(cmdf)
+            p1 = self._pipeopen(cmdf)
+            stdout, stderr = p1.communicate()
 
         if vol_fstype != 'ZFS':
             geom_type = provider.xpath("../../name")[0].text.lower()
@@ -3543,10 +3588,10 @@ class notifier:
 
         self.start("syslogd")
 
-        if not succeeded and status:
+        if not succeeded and p1.returncode:
             raise MiddlewareError('Failed to detach %s with "%s" (exited '
                                   'with %d): %s' %
-                                  (vol_name, cmd, status, stderr))
+                                  (vol_name, cmd, p1.returncode, stderr))
 
         self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
@@ -3586,10 +3631,11 @@ class notifier:
 
     def zfs_scrub(self, name, stop=False):
         if stop:
-            stdout, stderr, status = self._pipe('zpool scrub -s %s' % str(name))
+            imp = self._pipeopen('zpool scrub -s %s' % str(name))
         else:
-            stdout, stderr, status = self._pipe('zpool scrub %s' % str(name))
-        if status != 0:
+            imp = self._pipeopen('zpool scrub %s' % str(name))
+        stdout, stderr = imp.communicate()
+        if imp.returncode != 0:
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
@@ -3605,8 +3651,8 @@ class notifier:
         if system is False:
             systemdataset, volume, basename = self.system_dataset_settings()
 
-        output = self._pipe("/sbin/zfs list -t volume -o name %s -H" % sort)[0]
-        zvols = filter(lambda y: y != '', output.split('\n'))
+        zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
+        zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
 
         volnames = [
             o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
@@ -3614,10 +3660,10 @@ class notifier:
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
-            command = "/sbin/zfs list -p -r -t snapshot %s -H -S creation '%s'" % (fieldsflag, path)
+            zfsproc = self._pipeopen("/sbin/zfs list -p -r -t snapshot %s -H -S creation '%s'" % (fieldsflag, path))
         else:
-            command = "/sbin/zfs list -p -t snapshot -H -S creation %s" % (fieldsflag)
-        lines = self._pipe(command)[0].split('\n')
+            zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation %s" % (fieldsflag))
+        lines = zfsproc.communicate()[0].split('\n')
         for line in lines:
             if line != '':
                 _list = line.split('\t')
@@ -3674,19 +3720,23 @@ class notifier:
         else:
             vmflag = ''
         if recursive:
-            command = "/sbin/zfs snapshot -r %s '%s'@'%s'" % (vmflag, dataset, name)
+            p1 = self._pipeopen("/sbin/zfs snapshot -r %s '%s'@'%s'" % (vmflag, dataset, name))
         else:
-            command = "/sbin/zfs snapshot %s '%s'@'%s'" % (vmflag, dataset, name)
-        _, err, status = self._pipe(command)
-        if status != 0:
+            p1 = self._pipeopen("/sbin/zfs snapshot %s '%s'@'%s'" % (vmflag, dataset, name))
+        if p1.wait() != 0:
+            err = p1.communicate()[1]
             raise MiddlewareError("Snapshot could not be taken: %s" % err)
         return True
 
     def zfs_clonesnap(self, snapshot, dataset):
-        return self._pipe("zfs clone '%s' '%s'" % (snapshot, dataset))[1]
+        zfsproc = self._pipeopen("zfs clone '%s' '%s'" % (snapshot, dataset))
+        retval = zfsproc.communicate()[1]
+        return retval
 
     def rollback_zfs_snapshot(self, snapshot):
-        return self._pipe("zfs rollback '%s'" % (snapshot))[1]
+        zfsproc = self._pipeopen("zfs rollback '%s'" % (snapshot))
+        retval = zfsproc.communicate()[1]
+        return retval
 
     def config_restore(self):
         os.unlink("/data/freenas-v1.db")
@@ -3744,12 +3794,13 @@ class notifier:
         if zfstype is None:
             zfstype = 'filesystem,volume'
 
-        zfs_output = self._pipe("/sbin/zfs get %s -H -o name,property,value,source -t %s %s %s" % (
+        zfsproc = self._pipeopen("/sbin/zfs get %s -H -o name,property,value,source -t %s %s %s" % (
             '-r' if recursive else '',
             zfstype,
             props,
             "'%s'" % str(name) if name else '',
-        ))[0]
+        ))
+        zfs_output = zfsproc.communicate()[0]
         retval = {}
         for line in zfs_output.split('\n'):
             if not line:
@@ -3783,11 +3834,11 @@ class notifier:
         item = str(item)
         value = str(value)
         if recursive:
-            command = "zfs set -r '%s'='%s' '%s'" % (item, value, name)
+            zfsproc = self._pipeopen("zfs set -r '%s'='%s' '%s'" % (item, value, name))
         else:
-            command = "zfs set '%s'='%s' '%s'" % (item, value, name)
-        _, err, status = self._pipe(command)
-        if status == 0:
+            zfsproc = self._pipeopen("zfs set '%s'='%s' '%s'" % (item, value, name))
+        err = zfsproc.communicate()[1]
+        if zfsproc.returncode == 0:
             return True, None
         return False, err
 
@@ -3806,8 +3857,9 @@ class notifier:
             zfscmd = "zfs inherit -r %s '%s'" % (item, name)
         else:
             zfscmd = "zfs inherit %s '%s'" % (item, name)
-        _, err, status = self._pipe(zfscmd)
-        if status == 0:
+        zfsproc = self._pipeopen(zfscmd)
+        err = zfsproc.communicate()[1]
+        if zfsproc.returncode == 0:
             return True, None
         return False, err
 
@@ -3820,7 +3872,8 @@ class notifier:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
         try:
             with mntlock(blocking=False):
-                output = self._pipe(zfscmd)[0]
+                zfsproc = self._pipeopen(zfscmd)
+                output = zfsproc.communicate()[0]
                 if output != '':
                     snapshots_list = output.splitlines()
                 for snapshot_item in filter(None, snapshots_list):
@@ -3842,7 +3895,8 @@ class notifier:
             zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
         try:
             with mntlock(blocking=False):
-                output = self._pipe(zfscmd)[0]
+                zfsproc = self._pipeopen(zfscmd)
+                output = zfsproc.communicate()[0]
                 if output != '':
                     snapshots_list = output.splitlines()
                 for snapshot_item in filter(None, snapshots_list):
@@ -3867,7 +3921,8 @@ class notifier:
             'no carrier': _('No carrier'),
         }
 
-        data, _, status = self._pipe('/sbin/ifconfig %s' % name)
+        proc = self._pipeopen('/sbin/ifconfig %s' % name)
+        data = proc.communicate()[0]
 
         if name.startswith('lagg'):
             proto = re.search(r'laggproto (\S+)', data)
@@ -3895,7 +3950,7 @@ class notifier:
         else:
             reg = re.search(r'status: (.+)$', data, re.MULTILINE)
 
-        if status != 0 or not reg:
+        if proc.returncode != 0 or not reg:
             return _('Unknown')
         status = reg.group(1)
 
@@ -3905,24 +3960,26 @@ class notifier:
         self._system("ifconfig %s mtu %s" % (iface, mtu))
 
     def get_default_ipv4_interface(self):
-        iface, _, status = self._pipe("route -nv show default|grep "
-                                          "'interface:'|awk '{ print $2 }'")
-        if status != 0:
+        p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
+        iface = p1.communicate()
+        if p1.returncode != 0:
             iface = None
         try:
-            iface = iface.strip()
+            iface = iface[0].strip()
+
         except:
             pass
 
         return iface if iface else None
 
     def get_default_ipv6_interface(self):
-        iface, _, status = self._pipe("route -nv show -inet6 default|"
-                                          "grep 'interface:'|awk '{ print $2 }'")
-        if status != 0:
+        p1 = self._pipeopen("route -nv show -inet6 default|grep 'interface:'|awk '{ print $2 }'")
+        iface = p1.communicate()
+        if p1.returncode != 0:
             iface = None
         try:
-            iface = iface.strip()
+            iface = iface[0].strip()
+
         except:
             pass
 
@@ -3943,12 +4000,13 @@ class notifier:
             return None
 
         iface_info = { 'ether': None, 'ipv4': None, 'ipv6': None, 'status': None }
-        out, _, status = self._pipe("ifconfig '%s'" % iface)
-        if status != 0:
+        p = self._pipeopen("ifconfig '%s'" % iface)
+        out = p.communicate()
+        if p.returncode != 0:
             return iface_info
 
         try:
-            out = out.strip()
+            out = out[0].strip()
         except:
             return iface_info
 
@@ -4152,7 +4210,8 @@ class notifier:
             return self.__twcli[controller]
 
         re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        output = self._pipe("/usr/local/sbin/tw_cli /c%d show" % (controller, ))[0]
+        proc = self._pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
+        output = proc.communicate()[0]
 
         units = {}
         for port, unit in re_port.findall(output):
@@ -4206,7 +4265,8 @@ class notifier:
                     "3ware,%d" % (twcli.get(info["channel"], -1), )
                     ]
 
-        output = self._pipe("/usr/local/sbin/smartctl -i %s" % ' '.join(args))[0]
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
+        output = p1.communicate()[0]
         search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
         if search:
             serial = search.group("serial")
@@ -4384,18 +4444,21 @@ class notifier:
 
     def zpool_parse(self, name):
         doc = self._geom_confxml()
-        res = self._pipe("zpool status %s" % name)[0]
+        p1 = self._pipeopen("zpool status %s" % name)
+        res = p1.communicate()[0]
         parse = zfs.parse_status(name, doc, res)
         return parse
 
     def zpool_scrubbing(self):
-        res = self._pipe("zpool status")[0]
+        p1 = self._pipeopen("zpool status")
+        res = p1.communicate()[0]
         r = re.compile(r'scan: (resilver|scrub) in progress')
         return r.search(res) is not None
 
     def zpool_version(self, name):
-        res, err, status = self._pipe("zpool get -H -o value version %s" % name)
-        if status != 0:
+        p1 = self._pipeopen("zpool get -H -o value version %s" % name)
+        res, err = p1.communicate()
+        if p1.returncode != 0:
             raise ValueError(err)
         res = res.rstrip('\n')
         try:
@@ -4404,8 +4467,9 @@ class notifier:
             return res
 
     def zpool_upgrade(self, name):
-        res, _, status = self._pipe("zpool upgrade %s" % name)
-        if status == 0:
+        p1 = self._pipeopen("zpool upgrade %s" % name)
+        res = p1.communicate()[0]
+        if p1.returncode == 0:
             return True
         return res
 
@@ -4439,7 +4503,8 @@ class notifier:
         re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
         drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
 
-        for line in self._pipe("camcontrol devlist -v")[0].splitlines():
+        proc = self._pipeopen("camcontrol devlist -v")
+        for line in proc.communicate()[0].splitlines():
             if not line.startswith('<'):
                 reg = re_drv_cid.search(line)
                 if not reg:
@@ -4648,8 +4713,8 @@ class notifier:
         cmd = ["/sbin/gmultipath", "label", name] + consumers
         if mode:
             cmd.insert(2, "-%s" % (mode, ))
-        status = self._pipe(cmd)[-1]
-        if status != 0:
+        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        if p1.wait() != 0:
             return False
         # We need to invalidate confxml cache
         self.__confxml = None
@@ -4858,7 +4923,9 @@ class notifier:
             A boolean to denote whether or not the module was found.
         """
 
-        return 0 < self._pipe('/sbin/kldstat -v')[0].find(module + '.ko')
+        pipe = self._pipeopen('/sbin/kldstat -v')
+
+        return 0 < pipe.communicate()[0].find(module + '.ko')
 
     def sysctl(self, name):
         """
@@ -4879,7 +4946,8 @@ class notifier:
         import ipaddr
         netmask = ipaddr.IPNetwork(sr.sr_destination)
         masked = netmask.masked().compressed
-        if self._pipe("/sbin/route delete %s" % masked)[-1] != 0:
+        p1 = self._pipeopen("/sbin/route delete %s" % masked)
+        if p1.wait() != 0:
             raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
 
     def mount_volume(self, volume):
@@ -4898,10 +4966,11 @@ class notifier:
         if prov is None:
             return False
 
-        if self._pipe("mount /dev/%s/%s" % (
+        proc = self._pipeopen("mount /dev/%s/%s" % (
             volume.vol_fstype.lower(),
             volume.vol_name,
-            ))[-1] != 0:
+            ))
+        if proc.wait() != 0:
             return False
         return True
 
@@ -4933,21 +5002,23 @@ class notifier:
         return self.__get_geoms_recursive(provid)
 
     def _do_disk_wipe_quick(self, devname):
-        _, err, status = self._pipe("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
-        if status != 0:
+        pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        err = pipe.communicate()[1]
+        if pipe.returncode != 0:
             raise MiddlewareError(
                 "Failed to wipe %s: %s" % (devname, err)
             )
         try:
-            output = self._pipe("diskinfo %s" % (devname, ))[0]
-            size = int(re.sub(r'\s+', ' ', output).split()[2]) / (1024)
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
             log.error("Unable to determine size of %s", devname)
         else:
-            self._pipe("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s count=4" % (
+            pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 4,
             ))
+            pipe.communicate()
 
     def disk_wipe(self, devname, mode='quick'):
         if mode == 'quick':
@@ -4963,24 +5034,32 @@ class notifier:
             self._do_disk_wipe_quick(devname)
 
         elif mode in ('full', 'fullrandom'):
+            libc = ctypes.cdll.LoadLibrary("libc.so.7")
             omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
             mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
             pmask = ctypes.pointer(mask)
             pomask = ctypes.pointer(omask)
-            notifier.libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
-            try:
-                self.__gpt_unlabeldisk(devname)
-                stderr =  open('/var/tmp/disk_wipe_%s.progress' % devname, 'w+')
-                stderr.flush()
-                command = ("dd if=/dev/%s of=/dev/%s bs=1m" %
-                           ("zero" if mode == 'full' else "random", devname))
-                status = self._pipe(command, stderr=stderr,
-                                    pid_file='/var/tmp/disk_wipe_%s.pid' % devname)[-1]
-                stderr.seek(0)
-                err = stderr.read()
-            finally:
-                notifier.libc.sigprocmask(signal.SIGQUIT, pomask, None)
-            if status != 0 and err.find("end of device") == -1:
+            libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+
+            self.__gpt_unlabeldisk(devname)
+            stderr = open('/var/tmp/disk_wipe_%s.progress' % (devname, ), 'w+')
+            stderr.flush()
+            pipe = subprocess.Popen([
+                "dd",
+                "if=/dev/zero" if mode == 'full' else "if=/dev/random",
+                "of=/dev/%s" % (devname, ),
+                "bs=1m",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=stderr,
+                )
+            with open('/var/tmp/disk_wipe_%s.pid' % (devname, ), 'w') as f:
+                f.write(str(pipe.pid))
+            pipe.communicate()
+            stderr.seek(0)
+            err = stderr.read()
+            libc.sigprocmask(signal.SIGQUIT, pomask, None)
+            if pipe.returncode != 0 and err.find("end of device") == -1:
                 raise MiddlewareError(
                     "Failed to wipe %s: %s" % (devname, err)
                     )
@@ -5018,8 +5097,9 @@ class notifier:
 
         RE_ATTRS = re.compile(r'^(?P<key>^.+?)\s+?:\s+?(?P<val>.+?)\r?$', re.M)
 
-        ipmi, _, status = self._pipe('/usr/local/bin/ipmitool lan print %d' % channel)
-        if status != 0:
+        p1 = self._pipeopen('/usr/local/bin/ipmitool lan print %d' % channel)
+        ipmi = p1.communicate()[0]
+        if p1.returncode != 0:
             raise AssertionError(
                 "Could not retrieve data, ipmi device possibly in use?"
             )
@@ -5143,7 +5223,7 @@ class notifier:
 
         path = "/mnt/%s" % dataset
         for ace in acl:
-            self._pipe("/bin/setfacl -m '%s' '%s'" % (ace, path))
+            self._pipeopen("/bin/setfacl -m '%s' '%s'" % (ace, path)).wait()
 
     def dataset_init_apple_meta_file(self, dataset):
         path = "/mnt/%s" % dataset
@@ -5188,8 +5268,9 @@ class notifier:
             os.unlink(path)
 
     def get_proc_title(self, pid):
-        data, _, status = self._pipe('/bin/ps -a -x -w -w -o pid,command | /usr/bin/grep ^%s' % pid)
-        if status != 0:
+        proc = self._pipeopen('/bin/ps -a -x -w -w -o pid,command | /usr/bin/grep ^%s' % pid)
+        data = proc.communicate()[0]
+        if proc.returncode != 0:
             return None
         data = data.strip('\n')
         title = data.split(' ', 1)
@@ -5283,8 +5364,9 @@ class notifier:
 
         createdds = False
         for dataset in datasets:
-            stdout, stderr, status = self._pipe('/sbin/zfs get -H -o value mountpoint "%s"' % dataset)
-            if status == 0:
+            proc = self._pipeopen('/sbin/zfs get -H -o value mountpoint "%s"' % dataset)
+            stdout, stderr = proc.communicate()
+            if proc.returncode == 0:
                 if stdout.strip() != 'legacy':
                     self._system('/sbin/zfs set mountpoint=legacy "%s"' % dataset)
 
@@ -5329,15 +5411,15 @@ class notifier:
             'syslog': '%s/syslog-%s' % (basename, sysdataset.sys_uuid),
             'rrd': '%s/rrd-%s' % (basename, sysdataset.sys_uuid),
         }
-        output = self._pipe(
+        proc = self._pipeopen(
             'zfs list -H -o name %s' % ' '.join(
                 [
                     "%s" % name
                     for name in legacydatasets.values() + newdatasets.values()
                 ]
             )
-        )[0]
-        output = output.strip('\n').split('\n')
+        )
+        output = proc.communicate()[0].strip('\n').split('\n')
         for ident, name in legacydatasets.items():
             if name in output:
                 newname = newdatasets.get(ident)
@@ -5348,10 +5430,11 @@ class notifier:
                     elif ident == 'rrd':
                         self.stop('collectd')
 
-                    _, errmsg, status = self._pipe(
+                    proc = self._pipeopen(
                         'zfs rename -f "%s" "%s"' % (name, newname)
                     )
-                    if status != 0:
+                    errmsg = proc.communicate()[1]
+                    if proc.returncode != 0:
                         log.error(
                             "Failed renaming system dataset from %s to %s: %s",
                             name,
@@ -5491,11 +5574,12 @@ class notifier:
             self.system_dataset_umount(_from)
             self.system_dataset_umount(_to)
             self.system_dataset_mount(_to, SYSTEMPATH)
-            self._pipe(
+            proc = self._pipeopen(
                 '/sbin/zfs list -H -o name %s/.system|xargs zfs destroy -r' % (
                     _from,
                 )
             )
+            proc.communicate()
 
         os.rmdir('/tmp/system.new')
 
@@ -5512,7 +5596,8 @@ class notifier:
         """
         status = ''
         state = ''
-        zpool_result = self._pipe("/sbin/zpool status -x %s" % pool_name)[0]
+        p1 = self._pipeopen("/sbin/zpool status -x %s" % pool_name)
+        zpool_result = p1.communicate()[0]
         if zpool_result.find("pool '%s' is healthy" % pool_name) != -1:
             state = 'HEALTHY'
         else:
@@ -5632,13 +5717,13 @@ class notifier:
 
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
         try:
-            output = self._pipe("diskinfo %s" % (devname, ))[0]
-            size = int(re.sub(r'\s+', ' ', output).split()[2]) / (1024)
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s count=4" % (
+            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 4,
                 ))
@@ -5650,11 +5735,14 @@ class notifier:
         commands.append("gpart set -a active %s" % devname)
 
         for command in commands:
-            if self._pipe(command)[-1] != 0:
+            proc = self._pipeopen(command)
+            proc.wait()
+            if proc.returncode != 0:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
 
-        _, err, status = self._pipe('/sbin/zpool attach freenas-boot %s %sp2' % (label, devname))
-        if status != 0:
+        proc = self._pipeopen('/sbin/zpool attach freenas-boot %s %sp2' % (label, devname))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
             raise MiddlewareError('Failed to attach disk: %s' % err)
 
         time.sleep(10)
@@ -5667,13 +5755,13 @@ class notifier:
 
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
         try:
-            output = self._pipe("diskinfo %s" % (devname, ))[0]
-            size = int(re.sub(r'\s+', ' ', output).split()[2]) / (1024)
+            p1 = self._pipeopen("diskinfo %s" % (devname, ))
+            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s count=4" % (
+            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 4,
                 ))
@@ -5685,11 +5773,14 @@ class notifier:
         commands.append("gpart set -a active %s" % devname)
 
         for command in commands:
-            if self._pipe(command)[-1] != 0:
+            proc = self._pipeopen(command)
+            proc.wait()
+            if proc.returncode != 0:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
 
-        _, err, status = self._pipe('/sbin/zpool replace freenas-boot %s %sp2' % (label, devname))
-        if status != 0:
+        proc = self._pipeopen('/sbin/zpool replace freenas-boot %s %sp2' % (label, devname))
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
             raise MiddlewareError('Failed to attach disk: %s' % err)
 
         time.sleep(10)
@@ -5699,7 +5790,8 @@ class notifier:
 
     def iscsi_active_connections(self):
         from lxml import etree
-        xml = self._pipe('ctladm islist -x')[0]
+        proc = self._pipeopen('ctladm islist -x')
+        xml = proc.communicate()[0]
         xml = etree.fromstring(xml)
         connections = xml.xpath('//connection')
         return len(connections)
