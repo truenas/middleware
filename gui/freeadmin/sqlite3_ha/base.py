@@ -1,9 +1,3 @@
-"""
-SQLite3 backend for django.
-
-Works with either the pysqlite2 module or the sqlite3 module in the
-standard library.
-"""
 from __future__ import unicode_literals
 
 import logging
