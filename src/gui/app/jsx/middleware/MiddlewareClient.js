@@ -13,6 +13,7 @@ var _ = require("lodash");
 var MiddlewareStore          = require("../stores/MiddlewareStore");
 var MiddlewareActionCreators = require("../actions/MiddlewareActionCreators");
 
+var SessionStore = require("../stores/SessionStore");
 
 function MiddlewareClient() {
 
@@ -94,7 +95,7 @@ function MiddlewareClient() {
   // state, either logs and sends an action, or enqueues it until it can be sent
   function processNewRequest ( packedAction, callback, requestID ) {
 
-    if ( socket.readyState === 1 && MiddlewareStore.getAuthStatus() ) {
+    if ( socket.readyState === 1 && SessionStore.getLoginStatus() ) {
 
       if ( DEBUG("logging") ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
 
@@ -123,7 +124,7 @@ function MiddlewareClient() {
 
     if ( DEBUG("queues") && queuedActions.length ) { console.log( "Attempting to dequeue actions" ); }
 
-    if ( MiddlewareStore.getAuthStatus() ) {
+    if ( SessionStore.getLoginStatus() ) {
       while ( queuedActions.length ) {
         var item = queuedActions.shift();
 
@@ -215,7 +216,7 @@ function MiddlewareClient() {
       , "password" : password
     };
     var callback = function() {
-      MiddlewareActionCreators.receiveAuthenticationChange( true );
+      MiddlewareActionCreators.receiveAuthenticationChange( payload.username, true );
     };
     var packedAction = pack( "rpc", "auth", payload, requestID );
 
@@ -332,7 +333,7 @@ function MiddlewareClient() {
 
   // Triggered by the WebSocket's onopen event.
   var handleOpen = function () {
-    if ( MiddlewareStore.getAuthStatus() === false && queuedLogin ) {
+    if ( SessionStore.getLoginStatus() === false && queuedLogin ) {
       // If the connection opens and we aren't authenticated, but we have a
       // queued login, dispatch the login and reset its variable.
       if ( DEBUG("queues") ) { console.info( "Resolving queued login %c" + queuedLogin.id, debugCSS.idColor ); }
@@ -419,6 +420,11 @@ function MiddlewareClient() {
   // On a successful login, dequeue any actions which may have been requested
   // either before the connection was made, or before the authentication was
   // complete.
+  SessionStore.addChangeListener( dequeueActions );
+
+  // The comment above would have us believe that this listener is just
+  // for login happening, which would indicate that the following is not needed.
+  // This is just a precaution in case there are hidden assumptions there.
   MiddlewareStore.addChangeListener( dequeueActions );
 
 }
