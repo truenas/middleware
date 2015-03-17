@@ -194,11 +194,12 @@ var DummyWidgetContent = React.createClass({
               return moment.unix(d).format("HH:mm:ss");
             });
 
+          var yUnit = graphTypeObject.yUnit || "";
           chart.yAxis
             .axisLabel(graphTypeObject.yLabel)
             .tickFormat(function(d) {
               //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-              return (d + graphTypeObject.yUnit);
+              return (d + yUnit);
             });
 
 
@@ -226,11 +227,12 @@ var DummyWidgetContent = React.createClass({
               return moment.unix(d).format("HH:mm:ss");
             });
 
+          var yUnit = graphTypeObject.yUnit || "";
           chart.yAxis
             .axisLabel(graphTypeObject.yLabel)
             .tickFormat(function(d) {
               //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-              return (d + graphTypeObject.yUnit);
+              return (d + yUnit);
             });
 
 
