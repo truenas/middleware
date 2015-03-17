@@ -1,0 +1,8 @@
+#8305	Bug	Normal	Log flood by zfsd
+#8428	Bug	Normal	PREPARE FOR THE FUTURE (beadm)
+#8445	Bug	Normal	Deleting a jail with storage will delete the user's data in that storage
+#8621	Bug	High	preserve /boot/device.hints when updating
+#8646	Bug	Normal	Failed to start ctld
+#8648	Bug	Normal	proftpd - Certificates with space in the name
+#8680	Bug	Normal	Save the -updates directory as part of save_build
+#8684	Bug	Normal	Samba config should be included with freenas-debug
