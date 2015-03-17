@@ -135,7 +135,8 @@ contains an alternate script which only saves a copy of the configuration when i
 `forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`__
 contains a script for backing up the configuration from another system.
 
-**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
+red as an indication that the system will need to reboot in order to load the restored configuration.
 
 **NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
 operation of time sensitive applications such as Active Directory or other directory services. By default, FreeNAS® is pre-configured to use three public NTP

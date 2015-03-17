@@ -131,7 +131,8 @@ wish to return a test system to the original configuration.
 **Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
 **Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** 
 
-**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
+red as an indication that the system will need to reboot in order to load the restored configuration.
 
 **NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
 operation of time sensitive applications such as Active Directory or other directory services. By default, TrueNAS® is pre-configured to use three public NTP
