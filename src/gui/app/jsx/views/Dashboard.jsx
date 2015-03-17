@@ -11,6 +11,7 @@ var React 		         = 	require("react");
 var Widget   	         = 	require("../components/Widget");
 var MemoryUtil         = 	require("../components/Widgets/MemoryUtil");
 var SystemInfo         =  require("../components/Widgets/SystemInfo");
+var SystemLoad         =  require("../components/Widgets/SystemLoad");
 var NetworkUsage       =  require("../components/Widgets/NetworkUsage");
 
 var DriveInfo 	       = 	require("../components/Widgets/DriveInfo");
@@ -37,8 +38,8 @@ var Dashboard = React.createClass({
             primary = "pie"
             title = "Memory Value"
             size  = "l-rect" />
-          <MemoryUtil
-            title     = "Stacked Memory Value"
+          <SystemLoad
+            title     = "System Load"
             size      = "l-rect" />
           <NetworkUsage
             title = "Network Usage"
