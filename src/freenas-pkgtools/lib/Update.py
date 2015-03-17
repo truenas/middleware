@@ -373,9 +373,26 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler
     if diffs is None or len(diffs) == 0:
         return None
     log.debug("CheckForUpdate:  diffs = %s" % diffs)
+    reboot = False
     if handler and "Packages" in diffs:
         for (pkg, op, old) in diffs["Packages"]:
             handler(op, pkg, old)
+        # We attempt to see if the update requires a reboot.
+        # This is only tentative -- if we can't download a delta package,
+        # and that's what allows the update to avoid a reboot, a reboot
+        # is going to be required.
+        if op == "install":
+            if pkg.RequiresReboot() == True:
+                reboot = True
+        elif op == "upgrade":
+            upd = pkg.Update(old.Version())
+            if upd:
+                if upd.RequiresReboot():
+                    reboot = True
+            elif pkg.RequiresReboot():
+                reboot = True
+                
+    diffs["Reboot"] = reboot
     if diff_handler:
         diff_handler(diffs)
         
@@ -462,6 +479,8 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     diffs = Manifest.DiffManifests(mani, latest_mani)
     if diffs is None or len(diffs) == 0:
         log.debug("DownloadUpdate:  No update available")
+        # Remove the cache directory and empty manifest file
+        RemoveUpdate(directory)
         return False
     log.debug("DownloadUpdate:  diffs = %s" % diffs)
     
