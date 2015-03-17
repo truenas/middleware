@@ -1,5 +1,5 @@
-// Sessions Flux Store
-// ===================
+// Session Flux Store
+// ==================
 // Stores the user's credentials for GUI use. Not the source of truth.
 
 "use strict";

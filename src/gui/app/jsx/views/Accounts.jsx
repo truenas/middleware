@@ -21,6 +21,7 @@ var sections = [{
 }];
 
 var Accounts = React.createClass({
+    
     render: function() {
       return (
         <main>
