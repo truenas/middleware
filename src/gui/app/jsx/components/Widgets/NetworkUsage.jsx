@@ -9,8 +9,8 @@ var NetworkUsage = React.createClass({
  getInitialState: function() {
   var iface = this.props.iface || "igb0";
    return {
-     statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-" + iface + ".if_octets.rx", name:"Octets Receive", color:"#3C696E", area: true}
-                          ,{variable:"octetsTx", dataSource:"localhost.interface-" + iface + ".if_octets.tx", name:"Octets Transmit", color:"#368D97", area: true}
+     statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-" + iface + ".if_octets.rx", name:"Data Receive (kB/s)", color:"#3C696E", area: true}
+                          ,{variable:"octetsTx", dataSource:"localhost.interface-" + iface + ".if_octets.tx", name:"Data Transmit  (kB/s)", color:"#368D97", area: true}
                           ,{variable:"packetsRx", dataSource:"localhost.interface-" + iface + ".if_packets.rx", name:"Packets Receive", color:"#A8E077", area: true}
                           ,{variable:"packetsTx", dataSource:"localhost.interface-" + iface + ".if_packets.tx", name:"Packets Transmit", color:"#D9E35D", area: true}
                           ,{variable:"errorsTx", dataSource:"localhost.interface-" + iface + ".if_errors.rx", name:"Errors Receive", color:"#C9653A"}
@@ -18,12 +18,12 @@ var NetworkUsage = React.createClass({
                         ]
     , chartTypes:       [  {   type:"stacked"
                               , primary:false
-                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1000; } }
+                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1024; } }
 
                             }
                            ,{     type:"line"
                                 , primary:true
-                                , y:function(d) { if(d[1] === "nan") { return null; } else { return Math.round(d[1] * 100) / 1000; } }
+                                , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1024; } }
                                 , yUnit : ""
 
                             }
