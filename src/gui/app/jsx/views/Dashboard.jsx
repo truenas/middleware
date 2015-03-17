@@ -10,6 +10,7 @@ var React 		         = 	require("react");
 
 var Widget   	         = 	require("../components/Widget");
 var MemoryUtil         = 	require("../components/Widgets/MemoryUtil");
+var CpuUtil         =  require("../components/Widgets/CpuUtil");
 var SystemInfo         =  require("../components/Widgets/SystemInfo");
 var SystemLoad         =  require("../components/Widgets/SystemLoad");
 var NetworkUsage       =  require("../components/Widgets/NetworkUsage");
@@ -35,6 +36,9 @@ var Dashboard = React.createClass({
             title   = "System Info"
             size    = "m-rect" />
           <MemoryUtil
+            title = "Memory Value"
+            size  = "l-rect" />
+          <CpuUtil
             primary = "pie"
             title = "Memory Value"
             size  = "l-rect" />
