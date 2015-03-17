@@ -54,7 +54,7 @@ import signal
 import socket
 import sqlite3
 import stat
-from subprocess import Popen, PIPE, call
+from subprocess import Popen, PIPE
 import subprocess
 import sys
 import tempfile
@@ -174,48 +174,32 @@ class notifier:
 
     __metaclass__ = HookMetaclass
 
-    from os import system as __system
     from pwd import getpwnam as ___getpwnam
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
-    libc = ctypes.cdll.LoadLibrary("libc.so.7")
 
     def _system(self, command):
-        stdout, stderr, status = self._pipe(command, stdin=None, stdout=None,
-                                            extra_level=1)
-        try:
-            call('logger -p daemon.notice -t %s' % self.IDENTIFIER, stdin=stdout + stderr,
-                 shell=True)
-        except:
-            pass
-        return status
+        command = "(%s) 2>&1 | logger -p daemon.notice -t %s"  % (command, self.IDENTIFIER)
+        return self._system_nolog(command, extra_level=2)
 
-    def _system_nolog(self, command):
-        return self._pipe(command, stdin=None, stdout=None, extra_level=1)[-1]
+    def _system_nolog(self, command, extra_level=1):
+        return self._pipe(command, stdin=None, stdout=None, stderr=None,
+                          extra_level=extra_level, close_fds=True)[-1]
 
-    def _pipe(self, command, input=None, stdin=None, stdout=PIPE, stderr=PIPE,
-              pid_file=None, good_status=0, extra_level=0):
-        # TODO: python's signal class should be taught about sigprocmask(2)
-        # This is hacky hack to work around this issue.
-        omask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
-        mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
-        pmask = ctypes.pointer(mask)
-        pomask = ctypes.pointer(omask)
-        notifier.libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
+    def _pipe(self, command, input=None, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+              pid_file=None, good_status=0, extra_level=0, close_fds=False):
         proc = None
         try:
             proc = Popen(command, stdin=stdin, stdout=stdout, stderr=stderr, shell=True,
-                         close_fds=False)
+                         close_fds=close_fds)
             if pid_file:
                 with open(pid_file, 'w') as ff:
                     ff.write(str(proc.pid))
             out, err = proc.communicate(input)
         except Exception as ee:
             journal.debug(command, extra=get_journal_extra(proc.returncode if proc else -1,
-                                                          ee, extra_level))
+                                                           ee, extra_level))
             raise
-        finally:
-            notifier.libc.sigprocmask(signal.SIGQUIT, pomask, None)
         journal.debug(command,
                      extra=get_journal_extra(proc.returncode,
                                              err if proc.returncode != good_status else None,
