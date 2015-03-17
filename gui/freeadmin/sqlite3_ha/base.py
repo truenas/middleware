@@ -144,7 +144,11 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 ))
                 for row in cur.fetchall():
                     script.append(row[0])
-        cur.executescript(';'.join(script))
+        cur.executescript(';'.join(
+            ['PRAGMA foreign_keys=OFF', 'BEGIN TRANSACTION'] + script + [
+                'COMMIT;'
+            ]
+        ))
 
 
 class HASQLiteCursorWrapper(Database.Cursor):
