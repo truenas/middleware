@@ -4,6 +4,8 @@ from ctypes import cdll, byref, create_string_buffer
 from ctypes.util import find_library
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import fcntl
+import logging
+import logging.config
 import os
 import socket
 import sys
@@ -114,12 +116,42 @@ if __name__ == '__main__':
         umask=0o002,
         pidfile=pidfile,
         stdout=sys.stdout,
-        stdin=sys.stdin,
         stderr=sys.stderr,
         detach_process=True,
     )
 
     with context:
+
+        logging.config.dictConfig({
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'simple': {
+                    'format': '%(levelname)s %(asctime)s: %(message)s'
+                },
+            },
+            'handlers': {
+                'file': {
+                    'level': 'DEBUG',
+                    'filters': [],
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'maxBytes': 1024 * 1024 * 10,
+                    'backupCount': 5,
+                    'filename': '/var/log/hasyncd.log',
+                    'formatter': 'simple',
+                },
+            },
+            'loggers': {
+                'hasyncd': {
+                    'handlers': ['file'],
+                    'level': 'DEBUG',
+                    'propagate': True,
+                },
+            }
+        })
+
+        log = logging.getLogger('hasyncd')
+
         set_proc_name('hasyncd')
         sys.path.extend([
             '/usr/local/www',
@@ -135,10 +167,16 @@ if __name__ == '__main__':
         from freenasUI.freeadmin.utils import set_language
         set_language()
 
+        log.debug('Starting Journal')
+
         ja = JournalAlive()
         ja.daemon = True
         ja.start()
 
-        server = SimpleXMLRPCServer(('0.0.0.0', 8000), allow_none=True)
+        server = SimpleXMLRPCServer(
+            ('0.0.0.0', 8000),
+            allow_none=True,
+            logRequests=False,
+        )
         server.register_instance(Funcs())
         server.serve_forever()
