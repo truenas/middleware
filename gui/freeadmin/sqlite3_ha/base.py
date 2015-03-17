@@ -97,6 +97,9 @@ class RunSQLRemote(threading.Thread):
         ), allow_none=True)
         try:
             getattr(s, self._method)(self._sql, self._params)
+        except socket.error as err:
+            with Journal() as f:
+                f.queries.append((self._sql, self._params))
         except Exception as err:
             log.error('Failed to run SQL remotely %s: %s', self._sql, err)
 
