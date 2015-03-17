@@ -377,7 +377,7 @@ var DummyWidgetContent = React.createClass({
       ,"float"              : "right"
     };
     var returnGraphOptions = function(resource, i) {
-                    return <div key={i} className={ "ico-graph-type-" + resource.type } onClick={ this.togleGraph }>{ resource.type }</div>;
+                    return <div key={i} className={ "ico-graph-type-" + resource.type } onTouchStart={ this.togleGraph } onClick={ this.togleGraph }>{ resource.type }</div>;
                      };
 
     return (
