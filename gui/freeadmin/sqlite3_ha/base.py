@@ -49,6 +49,15 @@ class Journal(object):
 
     JOURNAL_FILE = '/data/ha-journal'
 
+    @classmethod
+    def is_empty(cls):
+        if not os.path.exists(cls.JOURNAL_FILE):
+            return True
+        try:
+            return os.stat(cls.JOURNAL_FILE).st_size == 0
+        except OSError:
+            return True
+
     def _get_queries(self):
         try:
             with open(self.JOURNAL_FILE, 'rb') as f:

@@ -5,7 +5,11 @@ from ctypes.util import find_library
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import fcntl
 import os
+import socket
 import sys
+import threading
+import time
+import xmlrpclib
 
 import daemon
 
@@ -36,6 +40,35 @@ class PidFile(object):
             self.pidfile.close()
         except IOError:
             pass
+
+
+class JournalAlive(threading.Thread):
+
+    def __init__(self, *args, **kwargs):
+        super(JournalAlive, self).__init__(*args, **kwargs)
+
+    def run(self):
+        from freenasUI.freeadmin.sqlite3_ha.base import Journal
+        from freenasUI.middleware.notifier import notifier
+
+        s = xmlrpclib.ServerProxy('http://%s:8000' % (
+            notifier().failover_peerip()
+        ), allow_none=True)
+
+        while True:
+            time.sleep(5)
+            if Journal.is_empty():
+                continue
+            with Journal() as j:
+                for q in list(j.queries):
+                    query, params = q
+                    try:
+                        s.run_sql(query, params)
+                        j.queries.remove(q)
+                    except xmlrpclib.Fault, e:
+                        break
+                    except socket.error:
+                        break
 
 
 class Funcs(object):
@@ -95,6 +128,9 @@ if __name__ == '__main__':
 
         from freenasUI.freeadmin.utils import set_language
         set_language()
+
+        ja = JournalAlive()
+        ja.start()
 
         server = SimpleXMLRPCServer(('0.0.0.0', 8000), allow_none=True)
         server.register_instance(Funcs())
