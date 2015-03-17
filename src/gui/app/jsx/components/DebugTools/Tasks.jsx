@@ -74,9 +74,9 @@ var TasksSection = React.createClass({
     }
 
   , render: function() {
-      var taskIDs =  _.keys( this.props.tasks );
+      var taskIDs = _.sortBy( _.keys( this.props.tasks ) ).reverse();
       return(
-        <div className="disclosure-open">
+        <div className="disclosure-open debug-column-content">
           <h5 className="debug-heading disclosure-toggle">{ this.props.title + " (" + taskIDs.length + ")" }</h5>
           <div className="disclosure-target">
             { taskIDs.map( this.createTask ) }
