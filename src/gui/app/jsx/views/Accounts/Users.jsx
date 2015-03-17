@@ -15,6 +15,8 @@ var Viewer = require("../../components/Viewer");
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
 var UsersStore      = require("../../stores/UsersStore");
 
+var SessionStore   = require("../../stores/SessionStore");
+
 var viewData = {
     format  : require("../../../data/middleware-keys/accounts-display.json")[0]
   , routing : {
@@ -25,8 +27,7 @@ var viewData = {
       filterCriteria: {
           current: {
               name     : "current user account"
-            // TODO: Fix dummy data
-            , testProp : { "username": "jakub" }
+            , testProp : function(user){ return user.username === SessionStore.getCurrentUser(); }
           }
         , userCreated: {
               name     : "local user accounts"
