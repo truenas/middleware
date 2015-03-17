@@ -14,6 +14,8 @@ var CpuUtil         =  require("../components/Widgets/CpuUtil");
 var SystemInfo         =  require("../components/Widgets/SystemInfo");
 var SystemLoad         =  require("../components/Widgets/SystemLoad");
 var NetworkUsage       =  require("../components/Widgets/NetworkUsage");
+var DiskUsage          =  require("../components/Widgets/DiskUsage");
+
 
 var DriveInfo 	       = 	require("../components/Widgets/DriveInfo");
 var DriveInfo2 	       = 	require("../components/Widgets/DriveInfo2");
@@ -21,6 +23,8 @@ var ProcessesPie 	     = 	require("../components/Widgets/ProcessesPie");
 var SwapUsage 	       = 	require("../components/Widgets/SwapUsage");
 var NetworkChart 	     = 	require("../components/Widgets/NetworkChart");
 var PoolIOs 		       = 	require("../components/Widgets/PoolIOs");
+
+
 
 var Dashboard = React.createClass({
   componentDidMount: function() {
@@ -44,16 +48,18 @@ var Dashboard = React.createClass({
             size  = "l-rect" />
           <SystemLoad
             title     = "System Load"
-            size      = "l-rect" />
-          <NetworkUsage
-            title = "Network Usage"
-            size  = "l-rect"
-            graphType = "line" />
+            size      = "l-rect" />       
           <NetworkUsage
             title = "Network Usage"
             size  = "l-rect"
             graphType = "line"
             iface = "em0" />
+          <DiskUsage
+            title = "Disk Usage"
+            size  = "l-rect"
+            graphType = "line"
+            disk = "da0" /> 
+
 
         </div>
       </main>
