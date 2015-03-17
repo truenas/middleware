@@ -71,10 +71,11 @@ var SystemInfo = React.createClass({
         <div className="wd-section wd-cpu-model">
           <span className="wd-title">CPU Model:</span>
           <span className="wd-value">{this.state.hardware["cpu-model"]}</span>
+          <span className="wd-value">{"with " + this.state.hardware["cpu-cores"] + " cores."}</span>
         </div>
         <div className="wd-section wd-memory-size">
           <span className="wd-title">Memory Size:</span>
-          <span className="wd-value">{memSize}MB</span>
+          <span className="wd-value">{memSize + " MB"}</span>
         </div>
         <div className="wd-section wd-version">
           <span className="wd-title">Version:</span>
