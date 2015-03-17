@@ -109,9 +109,7 @@ class RunSQLRemote(threading.Thread):
     def run(self):
         # FIXME: cache value
         from freenasUI.middleware.notifier import notifier
-        s = xmlrpclib.ServerProxy('http://%s:8000' % (
-            notifier().failover_peerip()
-        ), allow_none=True)
+        s = notifier().failover_rpc()
         try:
             with Journal() as f:
                 if f.queries:
