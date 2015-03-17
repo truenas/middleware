@@ -327,12 +327,6 @@ function MiddlewareClient() {
     });
   };
 
-  this.getTasks = function() {
-    this.request( "task.query", [], function( tasks ) {
-      MiddlewareActionCreators.receiveTaskHistory( tasks );
-    });
-  };
-
 
 // SOCKET DATA HANDLERS
 // Private methods for handling data from the WebSocket connection

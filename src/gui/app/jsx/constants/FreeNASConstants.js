@@ -15,7 +15,7 @@ module.exports = {
       , UNSUBSCRIBE_FROM_MASK : null
 
       // Events
-      , MIDDLEWARE_EVENT          : null
+      , MIDDLEWARE_EVENT : null
 
       // Tasks
       , RECEIVE_TASK_HISTORY : null

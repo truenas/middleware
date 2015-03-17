@@ -10,7 +10,8 @@ var moment = require("moment");
 
 // Middleware
 var MiddlewareClient = require("../../middleware/MiddlewareClient");
-var MiddlewareStore  = require("../../stores/MiddlewareStore");
+var TasksStore       = require("../../stores/TasksStore");
+var TasksMiddleware  = require("../../middleware/TasksMiddleware");
 
 var TasksSection = React.createClass({
 
@@ -90,21 +91,21 @@ var TasksSection = React.createClass({
 var Tasks = React.createClass({
 
     getInitialState: function() {
-      return _.assign( {}, MiddlewareStore.getAllTasks() );
+      return _.assign( {}, TasksStore.getAllTasks() );
     }
 
   , componentDidMount: function() {
-      MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
+      TasksStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe(["task.*"]);
     }
 
   , componentWillUnmount: function() {
-      MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
+      TasksStore.removeChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.unsubscribe(["task.*"]);
     }
 
   , handleMiddlewareChange: function() {
-      this.setState( _.assign( {}, MiddlewareStore.getAllTasks() ) );
+      this.setState( _.assign( {}, TasksStore.getAllTasks() ) );
     }
 
   , render: function() {

@@ -56,11 +56,4 @@ module.exports = {
       });
     }
 
-  , receiveTaskHistory: function ( tasks ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type  : ActionTypes.RECEIVE_TASK_HISTORY
-        , tasks : tasks
-      });
-    }
-
 };
