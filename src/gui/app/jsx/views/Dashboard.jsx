@@ -29,24 +29,24 @@ var Dashboard = React.createClass({
       <main>
         <h2>Dashboard View</h2>
         <div ref="widgetAreaRef" className="widget-wrapper">
-          <MemoryUtil
-            title = "Memory Value"
-            size  = "l-rect" />
-          <MemoryUtil
-            graphType = "stacked"
-            title     = "Stacked Memory Value"
-            size      = "l-rect" />
           <SystemInfo
             stacked = "true"
             title   = "System Info"
-            size    = "m-rect" />          
+            size    = "m-rect" />
+          <MemoryUtil
+            primary = "pie"
+            title = "Memory Value"
+            size  = "l-rect" />
+          <MemoryUtil
+            title     = "Stacked Memory Value"
+            size      = "l-rect" />
           <NetworkUsage
             title = "Network Usage"
             size  = "l-rect"
             graphType = "line" />
           <NetworkUsage
             title = "Network Usage"
-            size  = "l-rect" 
+            size  = "l-rect"
             graphType = "line"
             iface = "em0" />
 

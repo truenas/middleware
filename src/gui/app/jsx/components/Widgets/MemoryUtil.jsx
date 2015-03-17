@@ -21,7 +21,7 @@ var MemoryUtil = React.createClass({
                            ,{variable:"freeData", dataSource:"localhost.memory.memory-free.value", name:"Free Memory", color:"#5186ab"}
                            ,{variable:"inactiveData", dataSource:"localhost.memory.memory-inactive.value", name:"Inactive Memory", color:"#b6d5e9"}
                          ]
-    ,chartTypes:         []
+    , chartTypes:        []
     , ready:             false
     };
   }
@@ -40,6 +40,22 @@ var MemoryUtil = React.createClass({
 
     SystemMiddleware.requestSystemInfo( "hardware" );
   }
+, primaryChart: function(type)
+  {
+    if (this.props.primary === undefined && type === "line")
+    {
+      return true;
+    }
+    else if (type === this.props.primary)
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+
+  }
 , handleChange: function() {
     console.log("handleChange are we mounted? " + this.isMounted());
     this.setState({ hardware  : getSystemInfoFromStore( "hardware" ) });
@@ -48,17 +64,17 @@ var MemoryUtil = React.createClass({
        var memSize = this.state.hardware["memory-size"];
        console.log(memSize);
        this.setState({  chartTypes:        [  {   type:"stacked"
-                                                , primary:true
+                                                , primary: this.primaryChart("stacked")
                                                 , y:function(d) { if(d === undefined) { return 0; } if (d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }
                                               }
-                                             ,{   type:"line"
-                                                  , primary:false
+                                             ,{     type:"line"
+                                                  , primary: this.primaryChart("line")
                                                   , y:function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memSize)*100; } }
                                                   , forceY:[0, 100]
                                                   , yUnit : "%"
                                               }
                                              ,{     type:"pie"
-                                                  , primary:false
+                                                  , primary: this.primaryChart("pie")
                                               }
                                            ]
                       , ready     :  true
