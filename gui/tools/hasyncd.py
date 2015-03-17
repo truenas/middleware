@@ -45,6 +45,7 @@ class PidFile(object):
 class JournalAlive(threading.Thread):
 
     def __init__(self, *args, **kwargs):
+        self.sleep  = threading.Event()
         super(JournalAlive, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -56,7 +57,7 @@ class JournalAlive(threading.Thread):
         ), allow_none=True)
 
         while True:
-            time.sleep(5)
+            self.sleep.wait(5)
             if Journal.is_empty():
                 continue
             with Journal() as j:
@@ -130,6 +131,7 @@ if __name__ == '__main__':
         set_language()
 
         ja = JournalAlive()
+        ja.daemon = True
         ja.start()
 
         server = SimpleXMLRPCServer(('0.0.0.0', 8000), allow_none=True)
