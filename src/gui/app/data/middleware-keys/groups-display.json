@@ -1,0 +1,38 @@
+[{
+    "primaryKey"   : "groupname"
+  , "secondaryKey" : "groupid"
+  , "selectionKey" : "groupname"
+  , "uniqueKey"    : "groupid"
+  , "dataKeys": [
+      {
+          "key"         : "groupname"
+        , "name"        : "Groupname"
+        , "type"        : "string"
+        , "formElement" : "input"
+        , "mutable"     : true
+        , "defaultCol"  : true
+      },
+      {
+      	  "key"         : "builtin"
+      	, "name"        : "Built-in Group"
+        , "type"        : "boolean"
+        , "formElement" : "input"
+        , "mutable"     : false
+        , "defaultCol"  : true
+      },
+      {   "key"         : "groupid"
+        , "name"        : "Group ID"
+        , "type"        : "number"
+        , "formElement" : "input"
+        , "mutable"     : false
+        , "defaultCol"  : true
+      },
+      {   "key"         : "members"
+        , "name"        : "Members"
+        , "type"        : "array"
+        , "formElement" : "input"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+  ]  
+}]

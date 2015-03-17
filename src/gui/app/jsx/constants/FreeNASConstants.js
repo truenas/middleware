@@ -27,6 +27,11 @@ module.exports = {
       , RECEIVE_USER_UPDATE_TASK : null
       , RESOLVE_USER_UPDATE_TASK : null
 
+      // Groups
+      , RECEIVE_GROUPS_LIST       : null
+      , RECEIVE_GROUP_UPDATE_TASK : null
+      , RESOLVE_GROUP_UPDATE_TASK : null
+
       // Services
       , RECEIVE_RAW_SERVICES : null
 
