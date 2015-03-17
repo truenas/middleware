@@ -104,12 +104,13 @@ class RunSQLRemote(threading.Thread):
         self._method = kwargs.pop('method', 'run_sql')
         self._sql = kwargs.pop('sql')
         self._params = kwargs.pop('params')
+        self._ip = kwargs.pop('ip')
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
         # FIXME: cache value
         from freenasUI.middleware.notifier import notifier
-        s = notifier().failover_rpc()
+        s = notifier().failover_rpc(ip=self._ip)
         try:
             with Journal() as f:
                 if f.queries:
@@ -139,7 +140,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
-    def dump_send(self):
+    def dump_send(self, ip=None):
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
 
@@ -165,7 +166,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             ))
             for row in cur.fetchall():
                 script.append(row[0])
-        rsr = RunSQLRemote(method='sync_from', sql=script, params=None)
+        rsr = RunSQLRemote(method='sync_from', sql=script, params=None, ip=ip)
         return rsr.run()
 
     def dump_recv(self, script):
