@@ -101,10 +101,9 @@ class Journal(object):
 class RunSQLRemote(threading.Thread):
 
     def __init__(self, *args, **kwargs):
-        self._method = kwargs.pop('method', 'run_sql')
         self._sql = kwargs.pop('sql')
         self._params = kwargs.pop('params')
-        self._ip = kwargs.pop('ip')
+        self._ip = kwargs.pop('ip', None)
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -116,7 +115,7 @@ class RunSQLRemote(threading.Thread):
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    getattr(s, self._method)(self._sql, self._params)
+                    s.run_sql(self._sql, self._params)
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
@@ -141,6 +140,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
     def dump_send(self, ip=None):
+        from freenasUI.middleware.notifier import notifier
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
 
@@ -166,8 +166,12 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             ))
             for row in cur.fetchall():
                 script.append(row[0])
-        rsr = RunSQLRemote(method='sync_from', sql=script, params=None, ip=ip)
-        return rsr.run()
+
+        s = notifier().failover_rpc(ip=ip)
+        try:
+            return s.sync_from(script)
+        except (xmlrpclib.Fault, socket.error):
+            return False
 
     def dump_recv(self, script):
         cur = self.cursor()
