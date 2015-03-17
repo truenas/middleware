@@ -113,14 +113,14 @@ shown in Figure 4.2a.
 
 **Figure 4.2a: Managing User Accounts**
 
-|user1.png|
+|user1a.png|
 
-.. |user1.png| image:: images/user1.png
+.. |user1a.png| image:: images/user1a.png
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
-with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
-is allowed to use :command:`sudo`. To reorder the list, click the desired column name. An arrow indicates which column the view is sorted by; click the arrow
-to reverse the sort order.
+with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, whether or not the user
+is allowed to use :command:`sudo`, and whether or not the user connects from a Windows 8, 8.1, 10, or higher system. To reorder the list, click the desired
+column name. An arrow indicates which column the view is sorted by; click the arrow to reverse the sort order.
 
 If you click a user account, the following buttons will appear for that account:
 
