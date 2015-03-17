@@ -22,29 +22,54 @@ var TasksSection = React.createClass({
     }
 
   , createTask: function( taskID, index ) {
-      var taskData = this.props.tasks[ taskID ];
-      var taskName = _.has( taskData, "name" ) ? ": " + taskData["name"] : "";
+      var taskData  = this.props.tasks[ taskID ];
+      var taskName  = null;
       var progress  = null;
       var cancelBtn = null;
+      var started   = taskData["started_at"] ? moment.unix( taskData["started_at"] ).format("YYYY-MM-DD HH:mm:ss") : "--";
+      var finished  = taskData["finished_at"] ? moment.unix( taskData["finished_at"] ).format("YYYY-MM-DD HH:mm:ss") : "--";
+
+      if ( _.has( taskData, "name" ) ) {
+        taskName = <h5 className="debug-task-title">{ taskData["name"] }</h5>;
+      }
 
       if ( this.props.paused ) {
-        progress = <TWBS.ProgressBar active now={ 100 } />;
+        progress = <TWBS.ProgressBar
+                     active
+                     now    = { 100 }
+                     label  = "Waiting..." />;
       } else if ( this.props.showProgress ) {
         progress = <TWBS.ProgressBar
-                      now     = { taskData["percentage"] }
-                      bsStyle = { taskData["percentage"] === 100 ? "success" : "info" } />;
+                     now       = { taskData["percentage"] }
+                     bsStyle   = { taskData["percentage"] === 100 ? "success" : "info" }
+                     label     = { taskData["percentage"] === 100 ? "Completed" : "%(percent)s%" } />;
       }
 
       if ( this.props.canCancel ) {
-        //cancel things here
+        cancelBtn = <TWBS.Button
+                      bsSize    = "small"
+                      className = "debug-task-abort"
+                      bsStyle   = "danger">Abort Task</TWBS.Button>;
       }
 
       return (
-        <TWBS.Panel
-          bsStyle = "info"
-          header  = { "Task " + taskID + taskName } key={ index }>
-          { progress }
-        </TWBS.Panel>
+        <div
+          className = "debug-task-item"
+          key       = { index }>
+          <div className="debug-task-id">{ taskID }</div>
+          <div className="debug-task-details">
+            { taskName }
+            <div className="clearfix">
+              <h6 className="debug-task-timestamp">{"Task Started: " + started }</h6>
+              <h6 className="debug-task-timestamp">{"Task Finished: " + finished }</h6>
+            </div>
+            <hr />
+            <div className = "clearfix">
+              { cancelBtn }
+              { progress }
+            </div>
+          </div>
+        </div>
       );
     }
 
