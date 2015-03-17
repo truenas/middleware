@@ -11,18 +11,16 @@ var SystemStore      = require("../../stores/SystemStore");
 var SystemLoad = React.createClass({
   getInitialState: function() {
     return {
-      statdResources:    [   {variable:"system", dataSource:"localhost.aggregation-cpu-sum.cpu-system.value", name:"System", color:"#9ecc3c"}
-                           , {variable:"user", dataSource:"localhost.aggregation-cpu-sum.cpu-user.value", name:"User", color:"#77c5d5"}
-                           , {variable:"nice", dataSource:"localhost.aggregation-cpu-sum.cpu-nice.value", name:"Nice", color:"#ffdb1a"}
-                           , {variable:"idle", dataSource:"localhost.aggregation-cpu-sum.cpu-idle.value", name:"Idle", color:"#ed8b00"}
-                           , {variable:"interrupt", dataSource:"localhost.aggregation-cpu-sum.cpu-interrupt.value", name:"Interrupt", color:"#cc3c3c"}
-      ]
+      statdResources:    [   {variable:"longterm", dataSource:"localhost.load.load.longterm", name:"Longterm Load", color:"#292929"}
+                           , {variable:"midterm", dataSource:"localhost.load.load.midterm", name:"Midterm Load", color:"#a47f1a"}
+                           , {variable:"shortterm", dataSource:"localhost.load.load.shortterm", name:"Shortterm Load", color:"#4a95b3"}
+                         ]
     , chartTypes:        [  {   type:"line"
                               , primary: this.primaryChart("line")
                               , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100); } }
                             }
-                           ,{   type:"pie"
-                              , primary: this.primaryChart("pie")
+                           ,{   type:"stacked"
+                              , primary: this.primaryChart("stacked")
                               , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100); } }
                             }
                          ]
