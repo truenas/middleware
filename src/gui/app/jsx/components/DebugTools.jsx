@@ -16,6 +16,7 @@ var EventBus = require("./DebugTools/EventBus");
 var RPC           = require("./DebugTools/RPC");
 var Events        = require("./DebugTools/Events");
 var Subscriptions = require("./DebugTools/Subscriptions");
+var Tasks         = require("./DebugTools/Tasks");
 var Options       = require("./DebugTools/Options");
 var Terminal      = require("./DebugTools/Terminal");
 
@@ -110,7 +111,7 @@ var DebugTools = React.createClass({
 
             {/* Task Log and Queue */}
             <TWBS.TabPane eventKey={4} tab="Tasks">
-
+              <Tasks />
             </TWBS.TabPane>
 
             {/* Stats Interface */}

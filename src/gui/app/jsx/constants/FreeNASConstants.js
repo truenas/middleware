@@ -16,7 +16,9 @@ module.exports = {
 
       // Events
       , MIDDLEWARE_EVENT          : null
-      , LOG_MIDDLEWARE_TASK_QUEUE : null
+
+      // Tasks
+      , RECEIVE_TASK_HISTORY : null
 
       // RPC
       , RECEIVE_RPC_SERVICES        : null
