@@ -6,7 +6,7 @@ var Widget  =   require("../Widget");
 var DummyWidgetContent = require("./DummyWidgetContent");
 
 var NetworkUsage = React.createClass({
- getInitialState: function() { 
+ getInitialState: function() {
   var iface = this.props.iface || "igb0";
    return {
      statdResources:    [  {variable:"octetsRx", dataSource:"localhost.interface-" + iface + ".if_octets.rx", name:"Octets Receive", color:"#3C696E", area: true}
@@ -16,26 +16,23 @@ var NetworkUsage = React.createClass({
                           ,{variable:"errorsTx", dataSource:"localhost.interface-" + iface + ".if_errors.rx", name:"Errors Receive", color:"#C9653A"}
                           ,{variable:"errorsRx", dataSource:"localhost.interface-" + iface + ".if_errors.tx", name:"Errors Transmit", color:"#BE6F6F"}
                         ]
-   , systemResources:   [  {variable:"hardware", dataSource:"hardware", subArray:"memory-size"}
-                        ]
-
-    , chartTypes:        [  {   type:"stacked"
+    , chartTypes:       [  {   type:"stacked"
                               , primary:false
                               , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1000; } }
-                              
+
                             }
                            ,{     type:"line"
                                 , primary:true
                                 , y:function(d) { if(d[1] === "nan") { return null; } else { return Math.round(d[1] * 100) / 1000; } }
                                 , yUnit : ""
-                                
+
                             }
                          ]
     };
  }
 
 , render: function() {
- 
+
    return (
      <Widget
        positionX  =  {this.props.positionX}
