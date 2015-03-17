@@ -49,6 +49,10 @@ class UserProvider(Provider):
             user.pop('unixhash', None)
             user.pop('smbhash', None)
 
+            # If there's no 'groups' property, put empty array in that place
+            if 'groups' not in user:
+                user['groups'] = []
+
             # Add information about active sessions
             user.update({
                 'logged-in': len(sessions) > 0,
@@ -121,6 +125,7 @@ class UserCreateTask(Task):
             user['full_name'] = user.get('full_name', 'User &')
             user['shell'] = user.get('shell', '/bin/sh')
             user['home'] = user.get('home', os.path.join('/home', user['username']))
+            user.setdefault('groups', [])
             self.datastore.insert('users', user, pkey=uid)
             self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
@@ -373,6 +378,12 @@ def _init(dispatcher):
             'smbhash': {'type': ['string', 'null']},
             'sshpubkey': {'type': ['string', 'null']},
             'logged-in': {'type': 'boolean', 'readOnly': True},
+            'groups': {
+                'type': 'array',
+                'items': {
+                    'type': 'integer'
+                }
+            },
             'sessions': {
                 'type': 'array',
                 'readOnly': True,
@@ -386,13 +397,7 @@ def _init(dispatcher):
         'properties': {
             'id': {'type': 'integer'},
             'builtin': {'type': 'boolean', 'readOnly': True},
-            'name': {'type': 'string'},
-            'members': {
-                'type': 'array',
-                'items': {
-                    'type': 'string'
-                }
-            }
+            'name': {'type': 'string'}
         }
     })
 
