@@ -96,7 +96,11 @@ class RunSQLRemote(threading.Thread):
             notifier().failover_peerip()
         ), allow_none=True)
         try:
-            getattr(s, self._method)(self._sql, self._params)
+            with Journal() as f:
+                if f.queries:
+                    f.queries.append((self._sql, self._params))
+                else:
+                    getattr(s, self._method)(self._sql, self._params)
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
