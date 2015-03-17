@@ -8,7 +8,6 @@ import os
 import socket
 import sys
 import threading
-import time
 import xmlrpclib
 
 import daemon
@@ -45,21 +44,24 @@ class PidFile(object):
 class JournalAlive(threading.Thread):
 
     def __init__(self, *args, **kwargs):
-        self.sleep  = threading.Event()
+        self.sleep = threading.Event()
         super(JournalAlive, self).__init__(*args, **kwargs)
 
     def run(self):
         from freenasUI.freeadmin.sqlite3_ha.base import Journal
         from freenasUI.middleware.notifier import notifier
 
-        s = xmlrpclib.ServerProxy('http://%s:8000' % (
-            notifier().failover_peerip()
-        ), allow_none=True)
-
         while True:
             self.sleep.wait(5)
             if Journal.is_empty():
                 continue
+
+            ip = notifier().failover_peerip()
+            if ip is None:
+                continue
+
+            s = xmlrpclib.ServerProxy('http://%s:8000' % ip, allow_none=True)
+
             with Journal() as j:
                 for q in list(j.queries):
                     query, params = q
