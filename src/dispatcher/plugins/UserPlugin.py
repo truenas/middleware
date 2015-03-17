@@ -323,23 +323,18 @@ class GroupDeleteTask(Task):
         self.dispatcher = dispatcher
         self.datastore = dispatcher.datastore
 
-    def describe(self, name, force=False):
+    def describe(self, name):
         return "Deleting group {0}".format(name)
 
-    def verify(self, id, force=False):
+    def verify(self, id):
         # Check if group exists
         group = self.datastore.get_one('groups', ('id', '=', id))
         if group is None:
             raise VerifyException(errno.ENOENT, 'Group with given ID does not exists')
 
-        # Check if there are users in this group. If there are
-        # and 'force' is not set, deny deleting group.
-        if 'members' in group and len(group['members']) > 0 and not force:
-            raise VerifyException(errno.EBUSY, 'Group has member users')
-
         return ['system']
 
-    def run(self, gid, force=False):
+    def run(self, gid):
         try:
             self.datastore.delete('groups', gid)
             self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
