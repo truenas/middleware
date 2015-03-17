@@ -107,7 +107,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
 
     def dump_recv(self, script):
         cur = self.cursor()
-        cur.execute("select name from sqlite_master where type = 'table'")
+        cur.executelocal("select name from sqlite_master where type = 'table'")
 
         for row in cur.fetchall():
             table = row[0]
@@ -115,10 +115,10 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 continue
             tbloptions = NO_SYNC_MAP.get(table)
             if not tbloptions:
-                cur.execute("PRAGMA table_info('%s');" % table)
+                cur.executelocal("PRAGMA table_info('%s');" % table)
                 fieldnames = [i[1] for i in cur.fetchall()]
                 script.append('DELETE FROM %s' % table)
-                cur.execute('SELECT %s FROM %s' % (
+                cur.executelocal('SELECT %s FROM %s' % (
                     "'INSERT INTO %s (%s) VALUES (' || %s ||')'" % (
                         table,
                         ', '.join(['`%s`' % f for f in fieldnames]),
@@ -132,7 +132,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                     script.append(row[0])
             else:
                 fieldnames = tbloptions['fields']
-                cur.execute('SELECT %s FROM %s' % (
+                cur.executelocal('SELECT %s FROM %s' % (
                     "'UPDATE %s SET ' || %s || ' WHERE id = ' || id" % (
                         table,
                         " || ', ' || ".join([
