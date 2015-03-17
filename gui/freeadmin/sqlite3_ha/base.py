@@ -7,10 +7,14 @@ standard library.
 from __future__ import unicode_literals
 
 import logging
+import os
+import socket
 import threading
 import xmlrpclib
 
 from django.db.backends.sqlite3 import base as sqlite3base
+from lockfile import LockFile, LockTimeout
+import cPickle as pickle
 import sqlparse
 
 Database = sqlite3base.Database
@@ -39,6 +43,42 @@ NO_SYNC_MAP = {
         'fields': ['carp_skew'],
     },
 }
+
+
+class Journal(object):
+
+    JOURNAL_FILE = '/data/ha-journal'
+
+    def _get_queries(self):
+        try:
+            with open(self.JOURNAL_FILE, 'rb') as f:
+                self.queries = pickle.loads(f.read())
+        except (pickle.PickleError, EOFError):
+            self.queries = []
+
+    def __enter__(self):
+        self._lock = LockFile(self.JOURNAL_FILE)
+        while not self._lock.i_am_locking():
+            try:
+                self._lock.acquire(timeout=5)
+            except LockTimeout:
+                self._lock.break_lock()
+
+        if not os.path.exists(self.JOURNAL_FILE):
+            open(self.JOURNAL_FILE, 'a').close()
+
+        self._get_queries()
+        return self
+
+    def __exit__(self, typ, value, traceback):
+
+        with open(self.JOURNAL_FILE, 'w+') as f:
+            if self.queries:
+                f.write(pickle.dumps(self.queries))
+
+        self._lock.release()
+        if typ is not None:
+            raise
 
 
 class RunSQLRemote(threading.Thread):
