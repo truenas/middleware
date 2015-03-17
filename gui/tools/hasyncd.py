@@ -45,6 +45,9 @@ class Funcs(object):
         self._conn = connection
         super(Funcs, self).__init__(*args, **kwargs)
 
+    def ping(self):
+        return 'pong'
+
     def run_sql(self, query, params):
         cursor = self._conn.cursor()
         if params is None:
