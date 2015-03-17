@@ -48,9 +48,9 @@ class Funcs(object):
     def run_sql(self, query, params):
         cursor = self._conn.cursor()
         if params is None:
-            cursor.execute(query)
+            cursor.executelocal(query)
         else:
-            cursor.execute(query, params)
+            cursor.executelocal(query, params)
 
     def sync_from(self, query, params):
         self._conn.dump_recv(query)

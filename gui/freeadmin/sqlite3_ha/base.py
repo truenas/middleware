@@ -76,7 +76,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
 
     def dump_send(self):
         cur = self.cursor()
-        cur.execute("select name from sqlite_master where type = 'table'")
+        cur.executelocal("select name from sqlite_master where type = 'table'")
 
         script = []
         for row in cur.fetchall():
@@ -85,10 +85,10 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 tbloptions = NO_SYNC_MAP.get(table)
                 if not tbloptions:
                     continue
-            cur.execute("PRAGMA table_info('%s');" % table)
+            cur.executelocal("PRAGMA table_info('%s');" % table)
             fieldnames = [i[1] for i in cur.fetchall()]
             script.append('DELETE FROM %s' % table)
-            cur.execute('SELECT %s FROM %s' % (
+            cur.executelocal('SELECT %s FROM %s' % (
                 "'INSERT INTO %s (%s) VALUES (' || %s ||')'" % (
                     table,
                     ', '.join(['`%s`' % f for f in fieldnames]),
@@ -252,6 +252,12 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
     def execute(self, query, params=None):
         self.execute_passive(query, params=params)
+        if params is None:
+            return Database.Cursor.execute(self, query)
+        query = self.convert_query(query)
+        return Database.Cursor.execute(self, query, params)
+
+    def executelocal(self, query, params=None):
         if params is None:
             return Database.Cursor.execute(self, query)
         query = self.convert_query(query)
