@@ -30,13 +30,12 @@ import errno
 import libzfs
 import nvpair
 from gevent.event import Event
-from query import filter_query
-from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException
 from dispatcher.rpc import RpcException, accepts, returns, description
 from balancer import TaskState
 from resources import Resource
-from utils import first_or_default
+from fnutils import first_or_default
+from fnutils.query import wrap
 
 
 @description("Provides information about ZFS pools")
@@ -50,11 +49,7 @@ class ZpoolProvider(Provider):
     })
     def query(self, filter=None, params=None):
         zfs = libzfs.ZFS()
-        return filter_query(
-            zfs.__getstate__(),
-            *(filter or []),
-            **(params or {})
-        )
+        return wrap(zfs).query(*(filter or []), **(params or {}))
 
     def find(self):
         zfs = libzfs.ZFS()
@@ -258,12 +253,12 @@ class ZpoolCreateTask(Task):
 
 class ZpoolBaseTask(Task):
     def verify(self, *args, **kwargs):
-        pool = args[0]
+        name = args[0]
         try:
             zfs = libzfs.ZFS()
-            pool = zfs.get(pool)
+            pool = zfs.get(name)
         except libzfs.ZFSException:
-            raise VerifyException(errno.ENOENT, "Pool {0} not found".format(pool))
+            raise VerifyException(errno.ENOENT, "Pool {0} not found".format(name))
 
         return get_disk_names(self.dispatcher, pool)
 

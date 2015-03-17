@@ -285,17 +285,36 @@ class VolumeDestroyTask(Task):
 
 class VolumeUpdateTask(Task):
     def verify(self, name, updated_params):
-        pass
+        return ['system']
 
     def run(self, name, updated_params):
         if 'topology' in updated_params:
-            for vdev, group in iterate_vdevs(updated_params['topology']):
-                if 'id' not in vdev:
-                    # new vdev
-                    pass
+            new_vdevs = {}
+            updated_vdevs = {}
+            params = {}
+            subtasks = []
+
+            for group, vdevs in updated_params['topology'].items():
+                for vdev in vdevs:
+                    if 'guid' not in vdev:
+                        new_vdevs.setdefault(group, []).append(vdev)
+                        continue
 
                 # look for vdev in existing configuration using guid
                 pass
+
+            for vdev, group in iterate_vdevs(new_vdevs):
+                if vdev['type'] == 'disk':
+                    subtasks.append(self.run_subtask('disk.format.gpt', vdev['path'], 'freebsd-zfs', {
+                        'blocksize': params.get('blocksize', 4096),
+                        'swapsize': params.get('swapsize') if group == 'data' else 0
+                    }))
+
+            self.join_subtasks(*subtasks)
+            
+            new_vdevs = convert_topology_to_gptids(self.dispatcher, new_vdevs)
+            self.join_subtasks(self.run_subtask('zfs.pool.extend', name, new_vdevs, updated_vdevs))
+
 
 class VolumeImportTask(Task):
     def verify(self, id, new_name, params=None):
@@ -392,6 +411,19 @@ def iterate_vdevs(topology):
                     yield child, name
 
 
+def get_disk_gptid(dispatcher, disk):
+    config = dispatcher.call_sync('disks.get_disk_config', disk)
+    return config.get('data-partition-path', disk)
+
+
+def convert_topology_to_gptids(dispatcher, topology):
+    topology = topology.copy()
+    for vdev, _ in iterate_vdevs(topology):
+        vdev['path'] = get_disk_gptid(dispatcher, vdev['path'])
+
+    return topology
+
+
 def _depends():
     return ['DevdPlugin', 'ZfsPlugin']
 
@@ -430,6 +462,7 @@ def _init(dispatcher):
     dispatcher.register_task_handler('volume.destroy', VolumeDestroyTask)
     dispatcher.register_task_handler('volume.import', VolumeImportTask)
     dispatcher.register_task_handler('volume.detach', VolumeDetachTask)
+    dispatcher.register_task_handler('volume.update', VolumeUpdateTask)
     dispatcher.register_task_handler('volume.dataset.create', DatasetCreateTask)
     dispatcher.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
     dispatcher.register_task_handler('volume.dataset.update', DatasetConfigureTask)
