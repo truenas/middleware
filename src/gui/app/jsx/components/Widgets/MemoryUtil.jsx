@@ -28,11 +28,9 @@ var MemoryUtil = React.createClass({
 , componentDidMount: function() {
     this.requestData();
     SystemStore.addChangeListener( this.handleChange );
-    console.log("componentDidMount are we mounted? " + this.isMounted());
   }
 
 , componentWillUnmount: function() {
-    console.log("lets kill it!");
      SystemStore.removeChangeListener( this.handleChange );
   }
 
@@ -57,12 +55,10 @@ var MemoryUtil = React.createClass({
 
   }
 , handleChange: function() {
-    console.log("handleChange are we mounted? " + this.isMounted());
     this.setState({ hardware  : getSystemInfoFromStore( "hardware" ) });
     if (this.state.hardware !== undefined)
      {
        var memSize = this.state.hardware["memory-size"];
-       console.log(memSize);
        this.setState({  chartTypes:        [  {   type:"stacked"
                                                 , primary: this.primaryChart("stacked")
                                                 , y:function(d) { if(d === undefined) { return 0; } if (d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }
@@ -85,8 +81,6 @@ var MemoryUtil = React.createClass({
 , render: function() {
     if (this.state.ready === false)
     {
-      console.log("not ready");
-      console.log(this.state);
       return (
         <Widget
           positionX  =  {this.props.positionX}
@@ -99,8 +93,6 @@ var MemoryUtil = React.createClass({
         </Widget>
       );
     }
-    console.log("ready");
-    console.log(this.state);
     return (
       <Widget
         positionX  =  {this.props.positionX}
