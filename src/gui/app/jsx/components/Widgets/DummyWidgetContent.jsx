@@ -149,10 +149,9 @@ var DummyWidgetContent = React.createClass({
   , drawChart: function(update, reload) {
       if (reload === true)
       {
-        var elmnt = this.state.element;
-        elmnt.innerHTML = null;
-        this.setState({ element : elmnt
-                        , chart : null});
+        var elmnt = d3.select(this.state.element);
+        elmnt.selectAll("*").remove();
+        this.setState({chart : null});
         update = false;
       }
 
