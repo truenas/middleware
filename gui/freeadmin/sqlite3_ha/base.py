@@ -19,22 +19,36 @@ log = logging.getLogger('freeadmin.sqlite3_ha')
 
 
 NO_SYNC_MAP = {
+    'directoryservice_activedirectory': {
+        'fields': ['ad_netbiosname'],
+    },
+    'network_alias': {},
+    'network_carp': {
+        'fields': ['carp_skew'],
+    },
     'network_globalconfiguration': {
         'fields': ['gc_hostname'],
     },
-    'system_systemdataset': {
-        'fields': ['sys_uuid'],
-    },
-    'directoryservice_activedirectory': {
-        'fields': ['ad_netbiosname'],
+    'network_interfaces': {},
+    'services_ssh': {
+        'fields': [
+            'ssh_host_dsa_key',
+            'ssh_host_dsa_key_pub',
+            'ssh_host_ecdsa_key',
+            'ssh_host_ed25519_key_pub',
+            'ssh_host_ed25519_key',
+            'ssh_host_ecdsa_key_pub',
+            'ssh_host_key',
+            'ssh_host_key_pub',
+            'ssh_host_rsa_key',
+            'ssh_host_rsa_key_pub',
+        ],
     },
     'system_failover': {
         'fields': ['ipaddress'],
     },
-    'network_interfaces': {},
-    'network_alias': {},
-    'network_carp': {
-        'fields': ['carp_skew'],
+    'system_systemdataset': {
+        'fields': ['sys_uuid'],
     },
 }
 
