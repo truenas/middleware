@@ -18,8 +18,10 @@ var FreeNASDispatcher = _.assign( new Dispatcher(), {
           source : PayloadSources.MIDDLEWARE_ACTION
         , action : action
       };
-
-      this.dispatch( payload );
+      if (!this.isDispatching())
+      {
+        this.dispatch( payload );
+      }
     }
 
   , handleMiddlewareLifecycle: function( action ) {
