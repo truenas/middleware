@@ -203,9 +203,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|tn_be.png|
+|tn_be1.png|
 
-.. |tn_be.png| image:: images/tn_be.png
+.. |tn_be1.png| image:: images/tn_be1.png
 
 Each boot environment entry contains the following information:
 

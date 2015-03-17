@@ -13,7 +13,7 @@ TrueNAS® supports integration with the following directory services:
 
 * :ref:`NT4` (for Windows networks older than Windows 2000)
 
-It also supports :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs`.
+It also supports :ref:`Kerberos Realms`, :ref:`Kerberos Keytabs`, and the ability to add additional parameters to :ref:`Kerberos Settings`.
 
 This section summarizes each of these services and their available configurations within the TrueNAS® GUI.
 
@@ -623,3 +623,20 @@ Then, to instruct the Active Directory service to use the keytab, select the ins
 matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
 
 To instruct LDAP to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in :menuselection:`Directory Service --> LDAP`.
+
+.. _Kerberos Settings:
+
+Kerberos Settings
+-----------------
+
+To configure additional Kerberos parameters, use :menuselection:`Directory Service --> Kerberos Settings`. As seen in Figure 9.7a, two fields are available:
+
+* **Appdefaults auxiliary parameters:**
+
+* **Libdefaults auxiliary parameters:**
+
+**Figure 9.7a: Additional Kerberos Settings**
+
+|kerberos1.png|
+
+.. |kerberos1.png| image:: images/kerberos1.png

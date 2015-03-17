@@ -333,6 +333,8 @@ that have occurred since 9.3-RELEASE.
 
 * Netatalk was updated to `3.1.7 <http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.7.html>`_.
 
+* SSSD was updated to `1.11.7 <https://fedorahosted.org/sssd/wiki/Releases/Notes-1.11.7>`_.
+
 * An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.
@@ -342,6 +344,8 @@ that have occurred since 9.3-RELEASE.
 * The "Microsoft Account" checkbox has been added to :menuselection:`Account --> Users --> Add User`.
 
 * The ability to set the boot pool scrub interval has been added to :menuselection:`System --> Boot`.
+
+* The size of and the amount of used space in the boot pool is displayed in :menuselection:`System --> Boot`.
 
 * A "Backup" button has been added to :menuselection:`System --> Advanced`.
 
@@ -361,6 +365,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
 
+* The "Kerberos Settings" tab as been added to :ref:`Directory Service`.
+
 * The "Periodic Snapshot Task" drop-down menu has been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
 
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
@@ -372,7 +378,7 @@ that have occurred since 9.3-RELEASE.
 * The "Disable Physical Block Size Reporting" checkbox and "Available Space Threshold" field have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
-* The "Home share name" field has been added to :menuselection:`Services --> AFP`.
+* The "Home share name" field  has been added to :menuselection:`Services --> AFP`.
 
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 

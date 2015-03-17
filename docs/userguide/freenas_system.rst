@@ -206,9 +206,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1c.png|
+|be1d.png|
 
-.. |be1c.png| image:: images/be1c.png
+.. |be1d.png| image:: images/be1d.png
 
 Each boot environment entry contains the following information:
 
@@ -231,7 +231,7 @@ Highlight an entry to view its configuration buttons.  The following configurati
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete the
   *default* entry or an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
-  entry, which will clear the *On reboot* field of the currently activated entry.
+  entry, which will clear the *On reboot* field of the currently activated entry. 
 
 The buttons above the boot entries can be used to:
 
@@ -975,9 +975,9 @@ The FreeNAS® "Support" tab, shown in Figure 5.11a, provides a built-in ticketin
 
 **Figure 5.11a: Support Tab**
 
-|support1.png|
+|support1a.png|
 
-.. |support1.png| image:: images/support1.png
+.. |support1a.png| image:: images/support1a.png
 
 This screen provides a built-in interface to the FreeNAS® bug tracker located at `bugs.freenas.org <https://bugs.freenas.org>`_. If you have not yet used the
 FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a
