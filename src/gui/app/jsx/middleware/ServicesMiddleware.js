@@ -10,7 +10,7 @@ var ServicesActionCreators = require("../actions/ServicesActionCreators");
 module.exports = {
 
   requestServicesList: function() {
-      MiddlewareClient.request( "service.query", [], function ( rawServicesList ) {
+      MiddlewareClient.request( "services.query", [], function ( rawServicesList ) {
         ServicesActionCreators.receiveServicesList( rawServicesList );
       });
   }
