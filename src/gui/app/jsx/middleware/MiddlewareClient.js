@@ -215,8 +215,13 @@ function MiddlewareClient() {
         "username" : username
       , "password" : password
     };
-    var callback = function() {
-      MiddlewareActionCreators.receiveAuthenticationChange( payload.username, true );
+    var callback = function( response ) {
+      // TODO: Account for any other possible response codes.
+      if (response.code === 13){
+        MiddlewareActionCreators.receiveAuthenticationChange( payload.username, false );
+      } else {
+        MiddlewareActionCreators.receiveAuthenticationChange( payload.username, true );
+      }
     };
     var packedAction = pack( "rpc", "auth", payload, requestID );
 

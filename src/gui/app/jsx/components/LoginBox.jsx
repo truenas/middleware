@@ -49,7 +49,6 @@ var LoginBox = React.createClass({
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-
       if ( prevState.loggedIn !== this.state.loggedIn ) {
         this.updateBoxVisibility();
       }
