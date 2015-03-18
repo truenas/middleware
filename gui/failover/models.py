@@ -1,3 +1,7 @@
+import hashlib
+import time
+import uuid
+
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
@@ -91,6 +95,12 @@ class CARP(Model):
             return super(CARP, self).save(*args, **kwargs)
 
 
+def failover_secret():
+    return hashlib.sha256(
+        '%s-%s' % (str(uuid.uuid4()), str(time.time()))
+    ).hexdigest()
+
+
 class Failover(Model):
     volume = models.ForeignKey(
         Volume,
@@ -112,6 +122,11 @@ class Failover(Model):
     )
     timeout = models.IntegerField(
         default=0
+    )
+    secret = models.CharField(
+        max_length=64,
+        editable=False,
+        default=failover_secret,
     )
 
     def __unicode__(self):
