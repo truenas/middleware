@@ -155,19 +155,23 @@ __EOF__
 generate_ups_conf()
 {
 	local mode
+	rm -rf ${UPS_CONFPATH}
 	mkdir -p ${UPS_CONFPATH}
 	mkdir -p ${UPS_VARPATH}
+	chown root:uucp ${UPS_VARPATH}
+	chmod g=rwx,o= ${UPS_VARPATH}
 	mode=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ups_mode FROM services_ups ORDER BY -id LIMIT 1"`
 	if [ "${mode}" = "master" ]; then
 		generate_ups > ${UPS_CONFIG}
 		generate_upsdusers > ${UPS_USERSFILE}
 		generate_upsd > ${UPS_DAEMONFILE}
+		chown root:uucp ${UPS_CONFIG} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
+		chmod 440 ${UPS_CONFIG} ${UPS_USERSFILE} ${UPS_DAEMONFILE}
 	fi
 	generate_upsmon > ${UPS_MONFILE}
 	generate_upssched > ${UPS_SCHEDFILE}
-	chown root:uucp ${UPS_VARPATH} ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE} ${UPS_SCHEDFILE}
-	chmod 440 ${UPS_CONFIG} ${UPS_MONFILE} ${UPS_USERSFILE} ${UPS_DAEMONFILE} ${UPS_SCHEDFILE}
-	chmod g=rwx,o= ${UPS_VARPATH}
+	chown root:uucp ${UPS_MONFILE} ${UPS_SCHEDFILE}
+	chmod 440 ${UPS_MONFILE} ${UPS_SCHEDFILE}
 }
 
 name="ix-ups"
