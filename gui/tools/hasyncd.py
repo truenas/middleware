@@ -2,7 +2,6 @@
 
 from ctypes import cdll, byref, create_string_buffer
 from ctypes.util import find_library
-from SimpleXMLRPCServer import SimpleXMLRPCServer
 import fcntl
 import logging
 import logging.config
@@ -12,6 +11,9 @@ import sys
 import threading
 import xmlrpclib
 
+from twisted.internet import reactor
+from twisted.web.xmlrpc import XMLRPC, withRequest
+from twisted.web.server import Site
 import daemon
 
 LOG_FILE = '/var/log/hasyncd.log'
@@ -84,27 +86,29 @@ class JournalAlive(threading.Thread):
                         break
 
 
-class Funcs(object):
+class HASync(XMLRPC):
 
-    def __init__(self, *args, **kwargs):
-        from django.db import connection
-        self._conn = connection
-        super(Funcs, self).__init__(*args, **kwargs)
+    @withRequest
+    def xmlrpc_pairing_receive(self, request, secret):
+        pass
 
-    def ping(self):
+    def xmlrpc_pairing_send(self, secret):
+        return True
+
+    def xmlrpc_ping(self):
         return 'pong'
 
-    def run_sql(self, query, params):
+    def xmlrpc_run_sql(self, query, params):
         cursor = self._conn.cursor()
         if params is None:
             cursor.executelocal(query)
         else:
             cursor.executelocal(query, params)
 
-    def sync_from(self, query):
+    def xmlrpc_sync_from(self, query):
         return self._conn.dump_recv(query)
 
-    def sync_to(self):
+    def xmlrpc_sync_to(self):
         return self._conn.dump_send()
 
 
@@ -178,22 +182,12 @@ if __name__ == '__main__':
         from freenasUI.freeadmin.utils import set_language
         set_language()
 
-        from freenasUI.middleware.notifier import notifier
-        ip = notifier().failover_peerip()
-        if ip is None:
-            log.debug('No failover peer ip, exiting.')
-            sys.exit(0)
-
         log.debug('Starting Journal')
 
         ja = JournalAlive(logger=log)
         ja.daemon = True
         ja.start()
 
-        server = SimpleXMLRPCServer(
-            ('0.0.0.0', 8000),
-            allow_none=True,
-            logRequests=False,
-        )
-        server.register_instance(Funcs())
-        server.serve_forever()
+        r = HASync()
+        reactor.listenTCP(8000, Site(r))
+        reactor.run()
