@@ -390,6 +390,8 @@ that have occurred since 9.3-RELEASE.
 
 * A "Restart" button is now available when you click the entry for an installed jail.
 
+* The **-D** option has been added to :command:`freenas-debug` for gathering domain controller configuration.
+
 * A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
 
 * The "Help" icon has been replaced by the :ref:`Documentation` icon, providing an offline version of the FreeNAS® User Guide (this documentation).
