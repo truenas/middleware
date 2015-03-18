@@ -56,8 +56,7 @@ var Dashboard = React.createClass({
           <DiskUsage
             title = "Disk Usage"
             size  = "l-rect"
-            graphType = "line"
-            disk = "da0" />
+            graphType = "line" />
 
 
         </div>
