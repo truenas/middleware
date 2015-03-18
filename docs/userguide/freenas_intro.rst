@@ -335,6 +335,8 @@ that have occurred since 9.3-RELEASE.
 
 * SSSD was updated to `1.11.7 <https://fedorahosted.org/sssd/wiki/Releases/Notes-1.11.7>`_.
 
+* Man pages have been added and can be accessed from :ref:`Shell`.
+
 * An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.

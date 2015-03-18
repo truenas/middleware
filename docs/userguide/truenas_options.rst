@@ -58,9 +58,7 @@ completion (type a few letters and press tab to complete a command name or filen
 
 .. note:: not all of Shell's features render correctly in Chrome. Firefox is the recommended browser for using Shell.
 
-Due to the embedded nature of TrueNAS®, some FreeBSD components are missing and noticeable in Shell. For example, man pages are not included; however,
-FreeBSD man pages are available
-`online <http://www.freebsd.org/cgi/man.cgi>`_. Most FreeBSD command line utilities should be available in Shell.
+Most FreeBSD command line utilities should be available in Shell.
 
 .. index:: Log Out
 .. _Log Out:
