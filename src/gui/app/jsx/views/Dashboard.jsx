@@ -48,17 +48,16 @@ var Dashboard = React.createClass({
             size  = "l-rect" />
           <SystemLoad
             title     = "System Load"
-            size      = "l-rect" />       
+            size      = "l-rect" />
           <NetworkUsage
             title = "Network Usage"
             size  = "l-rect"
-            graphType = "line"
-            iface = "em0" />
+            graphType = "line" />
           <DiskUsage
             title = "Disk Usage"
             size  = "l-rect"
             graphType = "line"
-            disk = "da0" /> 
+            disk = "da0" />
 
 
         </div>
