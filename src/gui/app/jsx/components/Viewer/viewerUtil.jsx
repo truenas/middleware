@@ -40,12 +40,38 @@ viewerUtil.getPastelColor = function( seed ) {
   ];
 };
 
-viewerUtil.markSearch = function ( searchArray, searchString ) {
-  return searchArray.map( function( subString, index ) {
-    if ( index === ( searchArray.length - 1 ) ) {
-      return <span>{ subString }</span>;
+viewerUtil.markSearch = function ( fullString, searchString ) {
+  var i = 0;
+  var splitIndex = 0;
+  var searchIndex = 0;
+  var splitString = [''];
+  var strLower = fullString.toLowerCase();
+
+  while ( i < fullString.length ) {
+    searchIndex = i + searchString.length;
+    if ( searchIndex <= fullString.length ) {
+      // if a match is found, push it onto the splitString and continue
+      if ( strLower.substring(i, searchIndex) === searchString.toLowerCase() ) {
+        splitString.push(fullString.substring(i, searchIndex));
+        splitString.push('');
+        i = searchIndex;
+        splitIndex += 2;
+      } else {
+      // otherwise keep going we haven't found a match
+        splitString[splitIndex] += fullString[i];
+        i++;
+      }
     } else {
-      return <span>{ subString }<mark>{ searchString }</mark></span>;
+      splitString[splitIndex] += fullString[i];
+      i++;
+    }
+  }
+
+  return splitString.map( function( subString, index ) {
+    if ( subString.toLowerCase() === searchString.toLowerCase() ) {
+      return <span><mark>{ subString }</mark></span>;
+    } else {
+      return <span>{ subString }</span>;
     }
   });
 };

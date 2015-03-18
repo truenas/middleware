@@ -26,7 +26,6 @@ var UserView = React.createClass({
     }
 
   , render: function() {
-
       var builtInUserAlert = null;
       var editButton       = null;
 

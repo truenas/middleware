@@ -111,3 +111,49 @@
     font-size      : 10px;
   }
 }
+
+.debug-task-item {
+  .flex-display( flex );
+
+  .debug-task-id {
+    .flex( 0 0 auto );
+    .align-self( center );
+    background    : @brand-info;
+    width         : 50px;
+    height        : 50px;
+    color         : white;
+    line-height   : 50px;
+    text-align    : center;
+    font-size     : 1.15em;
+    margin-right  : 5px;
+    border-radius : 50%;
+  }
+
+  .debug-task-details {
+    .flex( 1 );
+  }
+
+  .debug-task-title {
+    text-transform : uppercase;
+    margin         : 5px 10px;
+  }
+  .debug-task-timestamp {
+    float   : left;
+    width   : 50%;
+    margin  : 0;
+    padding : 0 10px;
+  }
+
+  hr {
+    margin-top   : 10px;
+    margin-bottom: 10px;
+  }
+  .progress {
+    margin: 5px 10px;
+  }
+  .debug-task-abort {
+    float    : right;
+    overflow : hidden;
+    margin   : 0 0 0 10px;
+  }
+}

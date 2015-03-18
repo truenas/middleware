@@ -18,4 +18,13 @@ module.exports = {
       });
     }
 
+  , receiveSystemDevice: function( systemDevice, systemDeviceArgument ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type        			: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
+        , systemDevice 			: systemDevice
+        , systemDeviceArgument 	: systemDeviceArgument
+      });
+
+  }
+
 };

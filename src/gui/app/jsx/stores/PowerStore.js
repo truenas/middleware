@@ -14,10 +14,11 @@ var PowerMiddleware = require("../middleware/PowerMiddleware");
 
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
-var UPDATE_MASK  = "power.changed";
+var UPDATE_MASK  = ["power.changed", "update.changed"];
 
-var _updatedOnServer    = [];
-var _localUpdatePending = {};
+var _rebootscheduled    = false;
+var _shutdownscheduled  = false;
+var _updatehappening    = false;
 
 var PowerStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -37,13 +38,21 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
-  , isLocalTaskPending: function( id ) {
-      return _.values( _localUpdatePending ).indexOf( id ) > -1;
+  , isEventPending: function() {
+      return ( _rebootscheduled || _shutdownscheduled || _updatehappening );
     }
 
-  , isPowerUpdatePending: function( id ) {
-      return _updatedOnServer.indexOf( id ) > -1;
+  , isRebootPending: function() {
+      return _rebootscheduled;
     }
+
+  , isShutDownPending: function () {
+      return _shutdownscheduled;
+  }
+
+  , areWeUpdating: function () {
+      return _updatehappening;
+  }
 
 });
 
@@ -55,16 +64,15 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
 
-      if ( args["name"] === UPDATE_MASK ) {
+      if ( UPDATE_MASK.indexOf(args["name"]) !== -1  ) {
         var updateData = args["args"];
 
-        if ( updateData["operation"] === "reboot" ) {
-          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          // FIXME: This is a workaround for the current implementation of task
-          // subscriptions and submission resolutions.
-          // UsersMiddleware.requestUsersList( _updatedOnServer );
-        } else if ( updateData["operation"] === "shutdown" ) {
-
+        if ( args["name"] === "power.changed" && updateData["operation"] === "reboot" ) {
+          _rebootscheduled = true;
+        } else if ( args["name"] === "power.changed" && updateData["operation"] === "shutdown" ) {
+          _shutdownscheduled = true;
+        } else if ( args["name"] === "update.changed" && updateData["operation"] === "started" ) {
+          _updatehappening = true;
         } else {
           // TODO: Can this be anything else?
         }
@@ -73,7 +81,11 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
       } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" ) {
-        delete _localUpdatePending[ args.args["id"] ];
+        // do something (might just remove this!);
+        // even if the above args["name"] was not "update.changed" it does not hurt to do the below
+        // as the only time when _rebootscheduled will go to false back if it was made true is 
+        // AFTER the system came back (with a fresh set of values) kidda same for _shutdownscheduled
+        _updatehappening = false;
       }
 
       break;

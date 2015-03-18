@@ -13,6 +13,7 @@ var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _systemInfoData = {};
+var _systemDeviceData = {};
 
 var SystemStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -32,6 +33,9 @@ var SystemStore = _.assign( {}, EventEmitter.prototype, {
       return _systemInfoData[name];
     }
 
+  , getSystemDevice: function(name) {
+      return _systemDeviceData[name];
+    }
 
 });
 
@@ -42,7 +46,10 @@ SystemStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.RECEIVE_SYSTEM_INFO_DATA:
       _systemInfoData[action.systemInfoName] = action.systemInfo;
-      console.log(_systemInfoData);
+      SystemStore.emitChange();
+      break;
+    case ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA:
+      _systemDeviceData[action.systemDeviceArgument] = action.systemDevice;
       SystemStore.emitChange();
       break;
 

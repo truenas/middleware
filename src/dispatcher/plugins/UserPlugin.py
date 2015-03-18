@@ -37,9 +37,7 @@ class UserProvider(Provider):
     @description("Lists users present in the system")
     @query('user')
     def query(self, filter=None, params=None):
-        result = []
-        single = params.pop('single', False) if params else False
-        for user in self.datastore.query('users', *(filter or []), **(params or {})):
+        def extend(user):
             sessions = self.dispatcher.call_sync('sessions.query', [
                 ('username', '=', user['username']),
                 ('active', '=', True)
@@ -49,18 +47,19 @@ class UserProvider(Provider):
             user.pop('unixhash', None)
             user.pop('smbhash', None)
 
+            # If there's no 'groups' property, put empty array in that place
+            if 'groups' not in user:
+                user['groups'] = []
+
             # Add information about active sessions
             user.update({
                 'logged-in': len(sessions) > 0,
                 'sessions': sessions
             })
 
-            if single:
-                return user
+            return user
 
-            result.append(user)
-
-        return result
+        return self.datastore.query('users', *(filter or []), callback=extend, **(params or {}))
 
     def get_profile_picture(self, uid):
         pass
@@ -121,6 +120,7 @@ class UserCreateTask(Task):
             user['full_name'] = user.get('full_name', 'User &')
             user['shell'] = user.get('shell', '/bin/sh')
             user['home'] = user.get('home', os.path.join('/home', user['username']))
+            user.setdefault('groups', [])
             self.datastore.insert('users', user, pkey=uid)
             self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
         except DuplicateKeyException, e:
@@ -318,23 +318,18 @@ class GroupDeleteTask(Task):
         self.dispatcher = dispatcher
         self.datastore = dispatcher.datastore
 
-    def describe(self, name, force=False):
+    def describe(self, name):
         return "Deleting group {0}".format(name)
 
-    def verify(self, id, force=False):
+    def verify(self, id):
         # Check if group exists
         group = self.datastore.get_one('groups', ('id', '=', id))
         if group is None:
             raise VerifyException(errno.ENOENT, 'Group with given ID does not exists')
 
-        # Check if there are users in this group. If there are
-        # and 'force' is not set, deny deleting group.
-        if 'members' in group and len(group['members']) > 0 and not force:
-            raise VerifyException(errno.EBUSY, 'Group has member users')
-
         return ['system']
 
-    def run(self, gid, force=False):
+    def run(self, gid):
         try:
             self.datastore.delete('groups', gid)
             self.dispatcher.call_sync('etcd.generation.generate_group', 'accounts')
@@ -373,6 +368,12 @@ def _init(dispatcher):
             'smbhash': {'type': ['string', 'null']},
             'sshpubkey': {'type': ['string', 'null']},
             'logged-in': {'type': 'boolean', 'readOnly': True},
+            'groups': {
+                'type': 'array',
+                'items': {
+                    'type': 'integer'
+                }
+            },
             'sessions': {
                 'type': 'array',
                 'readOnly': True,
@@ -386,13 +387,7 @@ def _init(dispatcher):
         'properties': {
             'id': {'type': 'integer'},
             'builtin': {'type': 'boolean', 'readOnly': True},
-            'name': {'type': 'string'},
-            'members': {
-                'type': 'array',
-                'items': {
-                    'type': 'string'
-                }
-            }
+            'name': {'type': 'string'}
         }
     })
 

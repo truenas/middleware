@@ -6,15 +6,8 @@ var moment  =   require("moment");
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
-
 function getWidgetDataFromStore( name ) {
  return StatdStore.getWidgetData( name );
- }
-
- function getSystemInfoFromStore( name ) {
- return SystemStore.getSystemInfo( name );
  }
 
 var DummyWidgetContent = React.createClass({
@@ -33,6 +26,8 @@ var DummyWidgetContent = React.createClass({
     this.requestWidgetData();
 
     StatdStore.addChangeListener( this.handleStatdChange );
+
+    console.log(this.props);
 
     this.props.statdResources.forEach(function(resource) {
       StatdMiddleware.subscribe(resource.dataSource);
@@ -97,13 +92,6 @@ var DummyWidgetContent = React.createClass({
           }
         }
       });
-      this.props.systemResources.forEach(function(resource) {
-        newState[resource.variable] = getSystemInfoFromStore( resource.dataSource );
-        if (newState[resource.variable] === undefined)
-        {
-          newState.initialData = false;
-        }
-      });
 
       this.setState( newState );
 
@@ -156,23 +144,19 @@ var DummyWidgetContent = React.createClass({
     this.props.statdResources.forEach(function(resource) {
       StatdMiddleware.requestWidgetData(resource.dataSource, start.format(),  stop.format(), "10S");
     });
-    this.props.systemResources.forEach(function(resource) {
-      SystemMiddleware.requestSystemInfo( resource.dataSource);
-    });
-
   }
 
   , drawChart: function(update, reload) {
       if (reload === true)
       {
-        var elmnt = this.state.element;
-        elmnt.innerHTML = null;
-        this.setState({ element : elmnt
-                        , chart : null});
+        var elmnt = d3.select(this.state.element);
+        elmnt.selectAll("*").remove();
+        this.setState({chart : null});
         update = false;
       }
 
       if (update === true) {
+        console.log(this.state);
         var chart = this.state.chart;
         d3.select(this.state.element)
         .datum(this.chartData(this.state.graphType))
@@ -182,6 +166,7 @@ var DummyWidgetContent = React.createClass({
         //this.state.chart.update();
       }
       else {
+        console.log(this.state);
         var chart;
         var graphTypeObject;
 
@@ -209,11 +194,12 @@ var DummyWidgetContent = React.createClass({
               return moment.unix(d).format("HH:mm:ss");
             });
 
+          var yUnit = graphTypeObject.yUnit || "";
           chart.yAxis
             .axisLabel(graphTypeObject.yLabel)
             .tickFormat(function(d) {
               //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-              return (d + graphTypeObject.yUnit);
+              return (d + yUnit);
             });
 
 
@@ -241,11 +227,12 @@ var DummyWidgetContent = React.createClass({
               return moment.unix(d).format("HH:mm:ss");
             });
 
+          var yUnit = graphTypeObject.yUnit || "";
           chart.yAxis
             .axisLabel(graphTypeObject.yLabel)
             .tickFormat(function(d) {
               //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
-              return (d + graphTypeObject.yUnit);
+              return (d + yUnit);
             });
 
 
@@ -391,7 +378,7 @@ var DummyWidgetContent = React.createClass({
       ,"float"              : "right"
     };
     var returnGraphOptions = function(resource, i) {
-                    return <div key={i} className={ "ico-graph-type-" + resource.type } onClick={ this.togleGraph }>{ resource.type }</div>;
+                    return <div key={i} className={ "ico-graph-type-" + resource.type } onTouchStart={ this.togleGraph } onClick={ this.togleGraph }>{ resource.type }</div>;
                      };
 
     return (

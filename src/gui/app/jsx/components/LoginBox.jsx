@@ -8,7 +8,9 @@ var React = require("react");
 
 // Middleware
 var MiddlewareClient = require("../middleware/MiddlewareClient");
-var MiddlewareStore  = require("../stores/MiddlewareStore");
+
+// SessionStore stores the logged in user and the fact that login happened.
+var SessionStore = require("../stores/SessionStore");
 
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
@@ -33,27 +35,27 @@ var LoginBox = React.createClass({
           userText      : ""
         , passText      : ""
         , boxIsVisible  : false
-        , authenticated : MiddlewareStore.getAuthStatus()
+        , loggedIn      : SessionStore.getLoginStatus()
       };
     }
 
   , componentDidMount: function() {
-      MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
+      SessionStore.addChangeListener( this.handleMiddlewareChange );
       this.updateBoxVisibility();
     }
 
   , componentWillUnmount: function () {
-      MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
+      SessionStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      if ( prevState.authenticated !== this.state.authenticated ) {
+      if ( prevState.loggedIn !== this.state.loggedIn ) {
         this.updateBoxVisibility();
       }
     }
 
   , updateBoxVisibility: function () {
-      if ( this.state.authenticated ) {
+      if ( this.state.loggedIn) {
         this.hideLoginBox();
       } else {
         this.showLoginBox();
@@ -92,7 +94,7 @@ var LoginBox = React.createClass({
     }
 
   , handleMiddlewareChange: function() {
-      this.setState({ authenticated: MiddlewareStore.getAuthStatus() });
+      this.setState({ loggedIn: SessionStore.getLoginStatus() });
     }
 
   , handleKeydown: function( event ) {

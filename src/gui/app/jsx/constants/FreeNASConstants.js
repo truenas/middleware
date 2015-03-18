@@ -15,8 +15,10 @@ module.exports = {
       , UNSUBSCRIBE_FROM_MASK : null
 
       // Events
-      , MIDDLEWARE_EVENT          : null
-      , LOG_MIDDLEWARE_TASK_QUEUE : null
+      , MIDDLEWARE_EVENT : null
+
+      // Tasks
+      , RECEIVE_TASK_HISTORY : null
 
       // RPC
       , RECEIVE_RPC_SERVICES        : null
@@ -38,8 +40,9 @@ module.exports = {
       //Widget Data
       , RECEIVE_RAW_WIDGET_DATA : null
 
-      //SystemInfo Data
-      , RECEIVE_SYSTEM_INFO_DATA : null
+      //System Data
+      , RECEIVE_SYSTEM_INFO_DATA   : null
+      , RECEIVE_SYSTEM_DEVICE_DATA : null
 
       //Update Data
       , RECEIVE_UPDATE_DATA : null

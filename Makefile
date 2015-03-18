@@ -8,7 +8,7 @@ TRAIN?=${NANO_LABEL}-10-Nightlies
 BUILD_TIMESTAMP!=date '+%Y%m%d'
 COMPANY?="iXsystems"
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
+IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/nightlies/"
 DEBUG=yes
 
 .ifdef SCRIPT

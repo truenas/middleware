@@ -1,8 +1,7 @@
 // Middleware Flux Store
 // =====================
 // Maintain consistent information about the general state of the middleware
-// client, including which channels are connected, pending calls, authentication
-// status, and blocked operations.
+// client, including which channels are connected, pending calls, and blocked operations.
 
 "use strict";
 
@@ -20,8 +19,6 @@ var _rpcServices   = [];
 var _rpcMethods    = {};
 var _events        = [];
 var _stats         = {};
-var _tasks         = {};
-var _authenticated = false;
 
 
 var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
@@ -36,11 +33,6 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
 
   , removeChangeListener: function( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
-    }
-
-  // AUTHENTICAION
-  , getAuthStatus: function() {
-      return _authenticated;
     }
 
   // SUBSCRIPTIONS
@@ -73,13 +65,6 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
 
   switch( action.type ) {
 
-    // Authentication
-    case ActionTypes.UPDATE_AUTH_STATE:
-      _authenticated = action.authState;
-      MiddlewareStore.emitChange();
-      break;
-
-
     // Subscriptions
     case ActionTypes.SUBSCRIBE_TO_MASK:
       if ( typeof _subscribed[ action.mask ] === "number" ) {
@@ -110,8 +95,8 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
 
       // Prepend latest event to the front of the array
       _events.unshift( action.eventData );
-
       MiddlewareStore.emitChange("events");
+
       break;
 
     case ActionTypes.LOG_MIDDLEWARE_TASK_QUEUE:

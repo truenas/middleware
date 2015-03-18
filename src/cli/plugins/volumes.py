@@ -219,7 +219,7 @@ class DatasetsNamespace(EntityNamespace):
         self.add_property(
             descr='Available',
             name='available',
-            get='properties.avail.value',
+            get='properties.available.value',
             set=None,
             list=True)
 

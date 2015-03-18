@@ -12,10 +12,11 @@ var ActionTypes = FreeNASConstants.ActionTypes;
 
 module.exports = {
 
-    receiveAuthenticationChange: function ( authState ) {
+    receiveAuthenticationChange: function ( currentUser, loggedIn ) {
       FreeNASDispatcher.handleMiddlewareAction({
-          type      : ActionTypes.UPDATE_AUTH_STATE
-        , authState : authState
+          type        : ActionTypes.UPDATE_AUTH_STATE
+        , currentUser : currentUser
+        , loggedIn    : loggedIn
       });
     }
 
