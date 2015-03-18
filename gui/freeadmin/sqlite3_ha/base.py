@@ -217,6 +217,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 'COMMIT;'
             ]
         ))
+        return True
 
 
 class HASQLiteCursorWrapper(Database.Cursor):
