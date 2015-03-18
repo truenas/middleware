@@ -2531,7 +2531,7 @@ class UnlockPassphraseForm(Form):
     def done(self, volume):
         passphrase = self.cleaned_data.get("passphrase")
         key = self.cleaned_data.get("key")
-        if hasattr(_n, 'failover_status'):
+        if hasattr(notifier, 'failover_status'):
             if notifier().failover_status() == 'MASTER':
                 from freenasUI.failover.enc_helper import LocalEscrowCtl
                 escrowctl = LocalEscrowCtl()
