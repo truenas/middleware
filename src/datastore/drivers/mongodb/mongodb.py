@@ -112,8 +112,13 @@ class MongodbDatastore(object):
         limit = kwargs.pop('limit', None)
         offset = kwargs.pop('offset', None)
         single = kwargs.pop('single', False)
+        count = kwargs.pop('count', False)
+        postprocess = kwargs.pop('callback', None)
         result = []
+
         cur = self.db[collection].find(self._build_query(args))
+        if count:
+            return cur.count()
 
         if sort:
             dir = 1 if dir == 'asc' else -1
@@ -131,11 +136,11 @@ class MongodbDatastore(object):
                 return i
 
             i['id'] = i.pop('_id')
-            return i
+            return postprocess(i) if postprocess else i
 
         for i in cur:
             i['id'] = i.pop('_id')
-            result.append(i)
+            result.append(postprocess(i) if postprocess else i)
 
         return result
 
