@@ -206,7 +206,7 @@ class TaskService(RpcService):
     def query(self, filter=None, params=None):
         filter = filter if filter else []
         params = params if params else {}
-        return list(self.__datastore.query('tasks', *filter, **params))
+        return self.__datastore.query('tasks', *filter, **params)
 
 
 class ShellService(RpcService):
