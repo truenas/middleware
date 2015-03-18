@@ -16,20 +16,20 @@ module.exports = {
     }
 
   , unsubscribe: function() {
-  	  MiddlewareClient.unsubscribe( ["groups.changed"]);
-  	  MiddlewareClient.unsubscribe( ["task.*"]);
-  	}
-
-  , requestGroupsList: function() {
-  	  MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
-  	  	GroupsActionCreators.receiveGroupsList( groupsList );
-  	  });
+      MiddlewareClient.unsubscribe( ["groups.changed"]);
+      MiddlewareClient.unsubscribe( ["task.*"]);
     }
 
-  , receiveGroupUpdateTask: function (groupID, props) {
-  	  MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function( taskID ) {
-  		GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-  	  });
+  , requestGroupsList: function() {
+      MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
+        GroupsActionCreators.receiveGroupsList( groupsList );
+      });
+    }
+
+  , updateGroup: function (groupID, props) {
+      MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function ( taskID ) {
+        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+      });
     }
 
 };
