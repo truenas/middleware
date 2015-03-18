@@ -331,7 +331,7 @@ var Viewer = React.createClass({
                             ItemView     = { this.props.ItemView }
                             EditView     = { this.props.EditView }
                             tableCols    = { this.state.tableCols }
-                            searchString = { this.state.searchString.toLowerCase() }
+                            searchString = { this.state.searchString }
                             filteredData = { this.state.filteredData } />;
     }
 

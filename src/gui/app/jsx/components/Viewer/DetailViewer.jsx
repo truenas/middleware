@@ -38,12 +38,13 @@ var DetailNavSection = React.createClass({
 
       params[ this.props.viewData.routing["param"] ] = rawItem[ this.props.viewData.format["selectionKey"] ];
 
-      var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ];
-      var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ];
+      // to be fixed: quick added || "" to the end of these so some searches wont bomb out when a key is null
+      var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ] || "";
+      var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ] || "";
 
       if ( searchString.length ) {
-        primaryText   = viewerUtil.markSearch( primaryText.split( searchString ), searchString );
-        secondaryText = viewerUtil.markSearch( secondaryText.split( searchString ), searchString );
+        primaryText   = viewerUtil.markSearch( primaryText, searchString );
+        secondaryText = viewerUtil.markSearch( secondaryText, searchString );
       }
 
       return (
