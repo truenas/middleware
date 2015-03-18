@@ -19,12 +19,12 @@ var NetworkUsage = React.createClass({
      statdResources:    []
     , chartTypes:       [  {   type:"stacked"
                               , primary:false
-                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1024; } }
+                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round((d[1]/1024) * 100) / 100); } }
 
                             }
                            ,{     type:"line"
                                 , primary:true
-                                , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100)/1024; } }
+                                , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round((d[1]/1024) * 100) / 100); } }
                                 , yUnit : ""
 
                             }
