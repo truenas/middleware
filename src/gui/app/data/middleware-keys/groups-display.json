@@ -27,12 +27,5 @@
         , "mutable"     : false
         , "defaultCol"  : true
       },
-      {   "key"         : "members"
-        , "name"        : "Members"
-        , "type"        : "array"
-        , "formElement" : "input"
-        , "mutable"     : true
-        , "defaultCol"  : false
-      }
   ]  
 }]

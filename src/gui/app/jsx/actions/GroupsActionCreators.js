@@ -11,19 +11,19 @@ var ActionTypes = FreeNASConstants.ActionTypes;
 
 module.exports = {
 
-	receiveGroupsList: function( groupsList ) {
-	  FreeNASDispatcher.handleMiddlewareAction({
-			  type         : ActionTypes.RECEIVE_GROUPS_LIST
-		  , groupsList : groupsList
-	  });
-	}
+    receiveGroupsList: function( groupsList ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type         : ActionTypes.RECEIVE_GROUPS_LIST
+        , groupsList : groupsList
+      });
+    }
 
-, updateGroup: function( taskID, groupID) {
-  	FreeNASDispatcher.handleMiddlewareAction({
-  		  type    : ActionTypes.RECEIVE_GROUP_UPDATE_TASK
-      ,	taskID  : taskID
-  	  , groupID : groupID
-  	});
-  }
+  , receiveGroupUpdateTask: function( taskID, groupID) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type    : ActionTypes.RECEIVE_GROUP_UPDATE_TASK
+        , taskID  : taskID
+        , groupID : groupID
+      });
+    }
 
 };

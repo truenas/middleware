@@ -20,7 +20,7 @@ module.exports = {
   	  MiddlewareClient.unsubscribe( ["task.*"]);
   	}
 
-  , requestGroupsList: function( ids ) {
+  , requestGroupsList: function() {
   	  MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
   	  	GroupsActionCreators.receiveGroupsList( groupsList );
   	  });

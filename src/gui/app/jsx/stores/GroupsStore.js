@@ -28,15 +28,15 @@ var GroupsStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , addChangeListener: function( callback ) {
-  	  this.on( CHANGE_EVENT, callback );
+      this.on( CHANGE_EVENT, callback );
     }
 
   , removeChangeListener: function( callback ) {
-  	  this.removeListener( CHANGE_EVENT, callback );
+      this.removeListener( CHANGE_EVENT, callback );
     }
 
   , getUpdateMask: function() {
-  	  return UPDATE_MASK;
+      return UPDATE_MASK;
     }
 
   , getGroup: function( groupid ) {
@@ -44,26 +44,25 @@ var GroupsStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , getAllGroups: function() {
-  	  return _.values( _groups );
+      return _.values( _groups );
     }
 
 });
 
 GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-	var action = payload.action;
+  var action = payload.action;
 
-	switch( action.type ) {
+  switch( action.type ) {
 
-		case ActionTypes.RECEIVE_GROUPS_LIST:
+    case ActionTypes.RECEIVE_GROUPS_LIST:
       var mapGroup = function ( currentGroup ) {
-      	var newGroup = {};
+        var newGroup = {};
 
-      	newGroup[ "groupname" ] = currentGroup[ "name" ];
-      	newGroup[ "groupid" ]   = currentGroup[ "id"];
-      	newGroup[ "builtin" ]   = currentGroup[ "builtin" ];
-      	newGroup[ "members" ]   = currentGroup[ "members" ]; // ask Jakub whether this returns null or empty array if no members
+        newGroup[ "groupname" ] = currentGroup[ "name" ];
+        newGroup[ "groupid" ]   = currentGroup[ "id"];
+        newGroup[ "builtin" ]   = currentGroup[ "builtin" ];
 
-      	return newGroup;
+        return newGroup;
       }
 
       _groups = action.groupsList.map( mapGroup );
@@ -77,8 +76,8 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         var updateData = args["args"];
 
         if ( updateData ["operation"] === "update" ) {
-        	Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-        	GroupsMiddleware.requestGroupsList( _updatedOnServer );
+          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+          GroupsMiddleware.requestGroupsList( _updatedOnServer );
         }
       }
       break;
@@ -99,4 +98,4 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
 });
 
-module.exports = NetworksStore;
+module.exports = GroupsStore;
