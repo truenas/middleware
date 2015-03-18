@@ -194,7 +194,7 @@ class ScrubCommand(Command):
         self.parent = parent
 
     def run(self, context, args, kwargs, opargs):
-        context.submit_task('zfs.pool.scrub', self.parent.entity['id'])
+        context.submit_task('zfs.pool.scrub', self.parent.entity['name'])
 
 
 @description("Datasets")
