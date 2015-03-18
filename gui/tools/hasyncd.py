@@ -14,6 +14,8 @@ import xmlrpclib
 
 import daemon
 
+LOG_FILE = '/var/log/hasyncd.log'
+
 
 class PidFile(object):
 
@@ -47,6 +49,11 @@ class JournalAlive(threading.Thread):
 
     def __init__(self, *args, **kwargs):
         self.sleep = threading.Event()
+        logger = kwargs.pop('logger', None)
+        if not logger:
+            self.logger = logging.getLogger('hasyncd.journal')
+        else:
+            self.logger = log
         super(JournalAlive, self).__init__(*args, **kwargs)
 
     def run(self):
@@ -71,6 +78,7 @@ class JournalAlive(threading.Thread):
                         s.run_sql(query, params)
                         j.queries.remove(q)
                     except xmlrpclib.Fault, e:
+                        self.logger.exception('Failed to run sql')
                         break
                     except socket.error:
                         break
@@ -137,7 +145,7 @@ if __name__ == '__main__':
                     'class': 'logging.handlers.RotatingFileHandler',
                     'maxBytes': 1024 * 1024 * 10,
                     'backupCount': 5,
-                    'filename': '/var/log/hasyncd.log',
+                    'filename': LOG_FILE,
                     'formatter': 'simple',
                 },
             },
@@ -149,6 +157,9 @@ if __name__ == '__main__':
                 },
             }
         })
+
+        if os.path.exists(LOG_FILE):
+            os.chmod(LOG_FILE, 0o660)
 
         log = logging.getLogger('hasyncd')
 
@@ -169,7 +180,7 @@ if __name__ == '__main__':
 
         log.debug('Starting Journal')
 
-        ja = JournalAlive()
+        ja = JournalAlive(logger=log)
         ja.daemon = True
         ja.start()
 
