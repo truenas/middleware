@@ -10,6 +10,7 @@ var RouteHandler = Router.RouteHandler;
 
 // WebApp Components
 var LoginBox          = require("../components/LoginBox");
+var BusyBox           = require("../components/BusyBox");
 var NotificationBar   = require("../components/WebApp/NotificationBar");
 var InformationBar    = require("../components/WebApp/InformationBar");
 var PrimaryNavigation = require("../components/PrimaryNavigation");
@@ -24,6 +25,9 @@ var FreeNASWebApp = React.createClass({render: function() {
 
         {/* Modal window for FreeNAS login - hidden when authenticated */}
         <LoginBox />
+
+        {/* Modal windows for busy spinner -- hidden normally except when invoked*/}
+        <BusyBox />
 
         {/* Header containing system status and information */}
         <NotificationBar />

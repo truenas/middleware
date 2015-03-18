@@ -103,10 +103,14 @@ class UpdateTask(Task):
 
     def run(self):
         try:
+            self.dispatcher.dispatch_event('update.changed', {
+                'operation': 'started',
+            })
             system('/usr/local/bin/freenas-update', 'update')
             self.run_subtask('system.reboot')
         except Exception as e:
-            raise TaskException(errno.EAGAIN, 'Update Process Failed!')
+            raise TaskException(errno.EAGAIN,
+                                'Update Process Failed! Reason: %s' % e)
 
 
 def _init(dispatcher):

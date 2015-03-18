@@ -7,11 +7,20 @@
 var MiddlewareClient = require("../middleware/MiddlewareClient");
 
 module.exports = {
-   reboot: function() {
-      MiddlewareClient.request( "task.submit", ["system.reboot", ""]);
-    },
 
-   shutdown: function() {
+    subscribe: function() {
+      MiddlewareClient.subscribe( ["power.changed", "update.changed"] );
+    }
+
+  , unsubscribe: function() {
+      MiddlewareClient.unsubscribe( ["power.changed", "update.changed"] );
+    }
+
+  , reboot: function() {
+      MiddlewareClient.request( "task.submit", ["system.reboot", ""]);
+    }
+
+  , shutdown: function() {
       MiddlewareClient.request( "task.submit", ["system.shutdown", ""]);
    }
 

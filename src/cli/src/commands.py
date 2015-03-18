@@ -31,7 +31,7 @@ import termios
 import sys
 import select
 from namespace import Command, CommandException, description
-from output import Column, output_value, output_table, format_value
+from output import Column, output_value, output_table, format_value, output_msg
 from dispatcher.shell import ShellClient
 
 
@@ -107,14 +107,14 @@ class PrintenvCommand(Command):
 @description("Shuts the system down")
 class ShutdownCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        print "System going for a shutdown..."
+        output_msg("System going for a shutdown...")
         context.submit_task('system.shutdown')
 
 
 @description("Reboots the system")
 class RebootCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        print "System going for a reboot..."
+        output_msg("System going for a reboot...")
         context.submit_task('system.reboot')
 
 
