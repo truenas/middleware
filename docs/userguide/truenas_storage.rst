@@ -783,7 +783,10 @@ Replacing a Failed Drive
 
 You should replace a failed drive as soon as possible to repair the degraded state of the RAID.
 
-.. note:: a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
+.. note:: striping (RAID0) does not provide redundancy. If you lose a disk in a stripe, the volume will be destroyed and you will need to recreate the volume and restore the data from
+   backup.
+
+.. note:: if your pool is encrypted with GELI, refer to :ref:`Replacing an Encrypted Drive` before proceeding.
 
 Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status` and locate the failed disk. Once
 you have located the failed device in the GUI, perform the following steps:
@@ -796,8 +799,8 @@ you have located the failed device in the GUI, perform the following steps:
        the ZFS volume first using its "Scrub Volume" button in :menuselection:`Storage --> Volumes --> View Volumes`. Once the scrub completes, try to "Offline"
        the disk again before proceeding.
 
-#.  Once the disk is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
-    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
+#.  Once the disk has been replaced and is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
+    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, the menu will also prompt you to input and confirm the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
 In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
@@ -824,8 +827,9 @@ Replacing an Encrypted Drive
 
 If the ZFS pool is encrypted, additional steps are needed when replacing a failed drive.
 
-First, make sure that a passphrase has been set using the instructions in :ref:`Encryption` **before** attempting to replace the failed drive. Then, follow
-the steps described above. You will be prompted to input the passphrase for the pool. Wait until the resilvering is complete.
+First, make sure that a passphrase has been set using the instructions in :ref:`Encryption` **before** attempting to replace the failed drive.T hen, follow
+the steps 1 and 2 as described above. During step 3, you will be prompted to input and confirm the passphrase for the pool. Enter this information then click the "Replace Disk" button.
+Wait until the resilvering is complete.
 
 Next, restore the encryption keys to the pool.
 **If the following additional steps are not performed before the next reboot, you may lose access to the pool permanently.**

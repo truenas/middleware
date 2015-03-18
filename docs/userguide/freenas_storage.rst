@@ -836,7 +836,10 @@ Replacing a Failed Drive
 If you are using any form of redundant RAID, you should replace a failed drive as soon as possible to repair the degraded state of the RAID. Depending upon
 the capability of your hardware, you may or may not need to reboot in order to replace the failed drive. AHCI capable hardware does not require a reboot.
 
-.. note:: a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
+.. note:: striping (RAID0) does not provide redundancy. If you lose a disk in a stripe, the volume will be destroyed and you will need to recreate the volume and restore the data from
+   backup.
+   
+.. note:: if your pool is encrypted with GELI, refer to :ref:`Replacing an Encrypted Drive` before proceeding.
 
 Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes`. Next, select your volume's name. At the bottom of
 the interface you will see several icons, one of which is "Volume Status". Click the "Volume Status" icon and locate the failed disk. Once you have located
@@ -854,8 +857,8 @@ the failed device in the GUI, perform the following steps:
 #.  If the hardware is not AHCI capable, shutdown the system in order to physically replace the disk. When finished, return to the GUI and locate the OFFLINE
     disk.
 
-#.  Once the disk is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
-    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
+#.  Once the disk has been replaced and is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
+    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, the menu will also prompt you to input and confirm the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
 In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
@@ -883,7 +886,8 @@ Replacing an Encrypted Drive
 If the ZFS pool is encrypted, additional steps are needed when replacing a failed drive.
 
 First, make sure that a passphrase has been set using the instructions in :ref:`Encryption` **before** attempting to replace the failed drive. Then, follow
-the steps 1 and 2 as described above. During step 3, you will be prompted to input the passphrase for the pool. Wait until the resilvering is complete.
+the steps 1 and 2 as described above. During step 3, you will be prompted to input and confirm the passphrase for the pool. Enter this information then click the "Replace Disk" button.
+Wait until the resilvering is complete.
 
 Next, restore the encryption keys to the pool.
 **If the following additional steps are not performed before the next reboot, you may lose access to the pool permanently.**
