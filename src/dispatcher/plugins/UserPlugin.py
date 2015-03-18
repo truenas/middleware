@@ -37,9 +37,7 @@ class UserProvider(Provider):
     @description("Lists users present in the system")
     @query('user')
     def query(self, filter=None, params=None):
-        result = []
-        single = params.pop('single', False) if params else False
-        for user in self.datastore.query('users', *(filter or []), **(params or {})):
+        def extend(user):
             sessions = self.dispatcher.call_sync('sessions.query', [
                 ('username', '=', user['username']),
                 ('active', '=', True)
@@ -59,12 +57,9 @@ class UserProvider(Provider):
                 'sessions': sessions
             })
 
-            if single:
-                return user
+            return user
 
-            result.append(user)
-
-        return result
+        return self.datastore.query('users', *(filter or []), callback=extend, **(params or {}))
 
     def get_profile_picture(self, uid):
         pass
