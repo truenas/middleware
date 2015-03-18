@@ -35,8 +35,9 @@ module.exports = {
       //Widget Data
       , RECEIVE_RAW_WIDGET_DATA : null
 
-      //SystemInfo Data
-      , RECEIVE_SYSTEM_INFO_DATA : null
+      //System Data
+      , RECEIVE_SYSTEM_INFO_DATA   : null
+      , RECEIVE_SYSTEM_DEVICE_DATA : null
 
       //Update Data
       , RECEIVE_UPDATE_DATA : null
