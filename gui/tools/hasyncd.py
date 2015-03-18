@@ -178,6 +178,12 @@ if __name__ == '__main__':
         from freenasUI.freeadmin.utils import set_language
         set_language()
 
+        from freenasUI.middleware.notifier import notifier
+        ip = notifier().failover_peerip()
+        if ip is None:
+            log.debug('No failover peer ip, exiting.')
+            sys.exit(0)
+
         log.debug('Starting Journal')
 
         ja = JournalAlive(logger=log)
