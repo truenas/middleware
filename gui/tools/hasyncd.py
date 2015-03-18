@@ -102,7 +102,7 @@ class Funcs(object):
             cursor.executelocal(query, params)
 
     def sync_from(self, query, params):
-        self._conn.dump_recv(query)
+        return self._conn.dump_recv(query)
 
     def sync_to(self):
         return self._conn.dump_send()
