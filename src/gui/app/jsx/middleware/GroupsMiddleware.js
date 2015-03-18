@@ -26,7 +26,7 @@ module.exports = {
   	  });
     }
 
-  , updateGroup: function (groupID, props) {
+  , receiveGroupUpdateTask: function (groupID, props) {
   	  MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function( taskID ) {
   		GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
   	  });
