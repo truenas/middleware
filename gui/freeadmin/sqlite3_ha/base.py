@@ -223,6 +223,9 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
     def execute_passive(self, query, params=None):
 
+        if query.lower().startswith('select'):
+            return
+
         try:
             # FIXME: This is extremely time-consuming
             from freenasUI.middleware.notifier import notifier
