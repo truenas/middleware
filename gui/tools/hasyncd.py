@@ -280,7 +280,7 @@ if __name__ == '__main__':
         ja.daemon = True
         ja.start()
 
-        r = HASync()
+        r = HASync(allowNone=True)
 
         # reactor must imported within the daemon context
         # otherwise it will cause a 100% cpu usage
