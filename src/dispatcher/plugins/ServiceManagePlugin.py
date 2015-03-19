@@ -76,8 +76,19 @@ class ServiceInfoProvider(Provider):
                         state = 'unknown'
                     else:
                         state = 'running'
+            elif 'rcng' in i and 'rc-scripts' in i['rcng']:
+                rc_scripts = i['rcng']['rc-scripts']
+                pid = None
+                state = 'running'
+                try:
+                    if type(rc_scripts) is unicode:
+                        system("/usr/sbin/service", rc_scripts, 'onestatus')
+                    if type(rc_scripts) is list:
+                        for x in rc_scripts:
+                            system("/usr/sbin/service", x, 'onestatus')
+                except SubprocessException:
+                    state = 'stopped'
             else:
-                # Fallback to 'service xxx status'
                 pid = None
                 state = 'unknown'
 
