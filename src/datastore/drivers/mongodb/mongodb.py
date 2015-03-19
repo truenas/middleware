@@ -42,26 +42,48 @@ class MongodbDatastore(object):
             '!=': '$ne',
             'in': '$in',
             'nin': 'nin',
-            '~': '$regex'
+            '~': '$regex',
         }
 
+        self.clauses_table = {
+            'or': lambda v: {'$or': [self._predicate(*t) for t in v]},
+            'nor': lambda v: {'$nor': [self._predicate(*t) for t in v]},
+            'and': lambda v: {'$and': [self._predicate(*t) for t in v]}
+        }
+
+        self.conversions_table = {
+            'timestamp': lambda v: None
+        }
+
+    def _predicate(self, *args):
+        if len(args) == 2:
+            return self._joint_predicate(*args)
+
+        if len(args) in (3, 4):
+            return self._operator_predicate(*args)
+
+    def _operator_predicate(self, name, op, value, conversion=None):
+        if name == 'id':
+            name = '_id'
+
+        if op == '=':
+            return {name: value}
+
+        if op in self.operators_table:
+            return {name: {self.operators_table[op]: value}}
+
+    def _joint_predicate(self, op, value):
+        if op in self.clauses_table:
+            return self.clauses_table[op](value)
+
     def _build_query(self, params):
-        result = {}
-        for name, op, value in params:
-            if name == 'id':
-                name = '_id'
+        result = []
+        for item in params:
+            r = self._predicate(*item)
+            if r:
+                result.append(r)
 
-            if op == '=':
-                result[name] = value
-                continue
-
-            if name not in result.keys():
-                result[name] = {}
-
-            if op in self.operators_table:
-                result[name][self.operators_table[op]] = value
-
-        return result
+        return {'$and': result} if len(result) > 0 else {}
 
     def connect(self, dsn, database='freenas'):
         self.conn = MongoClient(dsn)
