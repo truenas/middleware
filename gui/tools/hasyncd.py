@@ -91,7 +91,10 @@ class HASync(XMLRPC):
     def xmlrpc_pairing_receive(self, request, secret):
         from django.db import connection
         from freenasUI.failover.models import CARP, Failover
-        from freenasUI.failover.utils import get_pending_pairing
+        from freenasUI.failover.utils import (
+            delete_pending_paring,
+            get_pending_pairing,
+        )
         from freenasUI.storage.models import Volume
 
         pairing = get_pending_pairing()
@@ -100,7 +103,7 @@ class HASync(XMLRPC):
         if secret != pairing.get('secret'):
             return False
 
-        # FIXME: delete pairing file
+        delete_pending_paring()
 
         carp = CARP.objects.get(pk=pairing['carp'])
         volume = Volume.objects.get(pk=pairing['volume'])
@@ -148,7 +151,8 @@ class HASync(XMLRPC):
             if secret != pairing['secret'] or pairing['verified'] is False:
                 return False
             update_ip = True
-            # FIXME: Delete pairing
+
+            delete_pending_paring()
         else:
             if not Failover.objects.filter(secret=secret).exists():
                 return False
