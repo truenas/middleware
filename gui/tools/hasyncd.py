@@ -71,13 +71,14 @@ class JournalAlive(threading.Thread):
             if Journal.is_empty():
                 continue
 
-            s = notifier().failover_rpc()
+            ip, secret = notifier().failover_getpeer()
+            s = notifier().failover_rpc(ip=ip)
 
             with Journal() as j:
                 for q in list(j.queries):
                     query, params = q
                     try:
-                        s.run_sql(query, params)
+                        s.run_sql(secret, query, params)
                         j.queries.remove(q)
                     except xmlrpclib.Fault, e:
                         self.logger.exception('Failed to run sql: %s', e)
@@ -322,6 +323,10 @@ if __name__ == '__main__':
         ja.daemon = True
         ja.start()
 
-        server = HASyncServer(('0.0.0.0', 8000), HASyncRequestHandler)
+        server = HASyncServer(
+            ('0.0.0.0', 8000),
+            HASyncRequestHandler,
+            allow_none=True,
+        )
         server.register_instance(Funcs())
         server.serve_forever()
