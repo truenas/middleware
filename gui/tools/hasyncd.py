@@ -11,7 +11,6 @@ import sys
 import threading
 import xmlrpclib
 
-from twisted.internet import reactor
 from twisted.web.xmlrpc import XMLRPC, withRequest
 from twisted.web.server import Site
 import daemon
@@ -90,9 +89,39 @@ class HASync(XMLRPC):
 
     @withRequest
     def xmlrpc_pairing_receive(self, request, secret):
-        pass
+        from django.db import connection
+        from freenasUI.failover.models import CARP, Failover
+        from freenasUI.failover.utils import get_pending_pairing
+        from freenasUI.storage.models import Volume
 
-    def xmlrpc_pairing_send(self, secret):
+        pairing = get_pending_pairing()
+        if pairing is None:
+            return False
+        if secret != pairing.get('secret'):
+            return False
+
+        # FIXME: delete pairing file
+
+        carp = CARP.objects.get(pk=pairing['carp'])
+        volume = Volume.objects.get(pk=pairing['volume'])
+
+        failover = Failover()
+        failover.volume = volume
+        failover.carp = carp
+        failover.ipaddress = pairing['ip']
+        failover.secret = pairing['secret']
+        failover.save()
+
+        return connection.dump_send(failover=failover)
+
+    @withRequest
+    def xmlrpc_pairing_send(self, request, secret):
+        from freenasUI.failover.utils import set_pending_pairing
+        try:
+            set_pending_pairing(secret=secret, ip=request.getClientIP())
+        except Exception as e:
+            log.error('Failed set_pending_pairing: %s', e)
+            return False
         return True
 
     def xmlrpc_ping(self):
@@ -105,11 +134,36 @@ class HASync(XMLRPC):
         else:
             cursor.executelocal(query, params)
 
-    def xmlrpc_sync_from(self, query):
-        return self._conn.dump_recv(query)
+    def xmlrpc_sync_to(self, secret, query):
+        from django.db import connection
+        from freenasUI.failover.models import Failover
+        from freenasUI.failover.utils import get_pending_pairing
 
-    def xmlrpc_sync_to(self):
-        return self._conn.dump_send()
+        update_ip = False
+        if Failover.objects.all().count() == 0:
+            # Pairing
+            pairing = get_pending_pairing()
+            if not pairing:
+                return False
+            if secret != pairing['secret'] or pairing['verified'] is False:
+                return False
+            update_ip = True
+            # FIXME: Delete pairing
+        else:
+            if not Failover.objects.filter(secret=secret).exists():
+                return False
+
+        rv = connection.dump_recv(query)
+        # If this is a pairing action we need to update the IP
+        if update_ip and rv:
+            Failover.objects.filter(secret=secret).update(
+                ipaddress=pairing['ip']
+            )
+        return rv
+
+    def xmlrpc_sync_from(self):
+        from django.db import connection
+        return connection.dump_send()
 
 
 def set_proc_name(newname):
@@ -189,5 +243,9 @@ if __name__ == '__main__':
         ja.start()
 
         r = HASync()
+
+        # reactor must imported within the daemon context
+        # otherwise it will cause a 100% cpu usage
+        from twisted.internet import reactor
         reactor.listenTCP(8000, Site(r))
         reactor.run()
