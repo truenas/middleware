@@ -77,7 +77,10 @@ class Parser(object):
 
 def main():
     log = {
-        'syslog': [],
+        'telemetry' : {
+            'type': 'main',
+            'version': 2,
+        },
         'filecontents': {},
         'cmdout': {},
     }
@@ -92,9 +95,10 @@ def main():
     cmds_to_log = {
         'zpool_list': ['/sbin/zpool', 'list'],
         'zfs_list': ['/sbin/zfs', 'list'],
-        'zfs_get_all': ['/sbin/zfs', 'get', 'all'],
+        'zfs_get_all': ['/sbin/zfs', 'get', '-t', 'filesystem', 'type,creation,used,available,referenced,compressratio,recordsize,checksum,compression,copies,dedup,refcompressratio' ],
         'arc_summary': ['/usr/local/bin/arc_summary.py', ''],
         'dmidecode': ['/usr/local/sbin/dmidecode', ''],
+        'kstat_zfs': [ '/sbin/sysctl', 'kstat.zfs' ],
         'uname': ['/usr/bin/uname', '-a'],
         
     }
@@ -139,35 +143,6 @@ def main():
     args = parser.parse_args()
     now = time.time()
 
-    for file in args.files:
-        mtime = os.path.getmtime(str(file))
-        if ( (now - mtime) > (48*60*60) ):
-            continue
-        if file.endswith('.gz'):
-            file = gzip.GzipFile(file)
-        elif file.endswith('.bz2'):
-            file = bz2.BZ2File(file)
-        else:
-            file = open(file)
-
-        parser = Parser()
-
-        with file as syslogFile:
-            for line in syslogFile:
-                try:
-                    pl = parser.parse(line)
-                except:
-                    continue
-                if ( (now - pl['timestamp']) > (24*60*60) ):
-                    continue
-                for f in filters:
-                    if pl['program'] == f:
-                        if filters[f]['all'] == 1:
-                            log['syslog'].append(pl)
-                        else:
-                            for pat in filters[f]['p']:
-                                if re.search(pat, pl['text']):
-                                    log['syslog'].append(pl)
 
     for cmdname in cmds_to_log:
         try:
@@ -187,10 +162,46 @@ def main():
             continue
 
 
-    f = bz2.BZ2File('/var/log/telemetry.json.bz2', 'wb')
-    json.dump(log, f)
-    f.close()
+    bzf = bz2.BZ2File('/var/log/telemetry.json.bz2', 'wb')
+    json.dump(log, bzf)
+    bzf.write("\n")
 
+    del log
+
+    for file in args.files:
+        mtime = os.path.getmtime(str(file))
+        if ( (now - mtime) > (48*60*60) ):
+            continue
+        if file.endswith('.gz'):
+            file = gzip.GzipFile(file)
+        elif file.endswith('.bz2'):
+            file = bz2.BZ2File(file)
+        else:
+            file = open(file)
+
+        parser = Parser()
+
+        with file as syslogFile:
+            for line in syslogFile:
+                try:
+                    pl = parser.parse(line)
+                except:
+                    continue
+                pl['telemetry'] = { 'type': 'syslog', 'version': 2 }
+                if ( (now - pl['timestamp']) > (24*60*60) ):
+                    continue
+                for f in filters:
+                    if pl['program'] == f:
+                        if filters[f]['all'] == 1:
+                            json.dump(pl, bzf)
+                            bzf.write("\n")
+                        else:
+                            for pat in filters[f]['p']:
+                                if re.search(pat, pl['text']):
+                                    json.dump(pl, bzf)
+                                    bzf.write("\n")
+
+    bzf.close()
 
 if __name__ == "__main__":
   main()
