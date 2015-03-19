@@ -689,6 +689,9 @@ authenticated, the screen shown in Figure 13.3b will appear in the web browser.
 
 Click the "New" button to create virtual machines. You can then install the desired operating systems and software into the created virtual machines.
 
+.. note:: if the FreeNAS® system reboots, the installed virtual machines will not automatically restart. To configure auto-start, refer to this 
+   `forum post <https://forums.freenas.org/index.php?threads/enabling-autostart-of-virtualbox-vms-on-freenas.26503/>`_.
+
 .. _Managing Jail Templates:
 
 Managing Jail Templates
@@ -777,4 +780,3 @@ it will open the configuration screen shown in the Figure 13.4c.
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
-
