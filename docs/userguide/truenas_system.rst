@@ -331,12 +331,12 @@ If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
-
 **Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
 button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
 backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+
+**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
 **Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
 this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
