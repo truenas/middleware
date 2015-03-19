@@ -12,22 +12,73 @@ var RouteHandler = Router.RouteHandler;
 
 var Viewer = require("../../components/Viewer");
 
-var formatData = require("../../../data/middleware-keys/groups-display.json")[0];
-var itemData = {
-    "route" : "users-editor"
-  , "param" : "userID"
+var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
+var GroupsStore = require("../../stores/GroupsStore");
+
+
+var viewData = {
+    format  : require("../../../data/middleware-keys/groups-display.json")[0]
+  , routing : {
+      "route" : "users-editor"
+    , "param" : "userID"
+  }
+  , display : {
+      filterCriteria   : {
+        userCreated : {
+            name     : "local groups"
+          , testProp : { "builtin": false }
+        }
+      , builtIn     : {
+            name     : "built-in system groups"
+          , testProp : { "builtin": true }
+        }
+      }
+    , remainingName    : "other groups"
+    , ungroupedName    : "all other groups"
+    , allowedFilters   : [ ]
+    , defaultFilters   : [ ]
+    , allowedGroups    : [ "userCreated", "builtIn" ]
+    , defaultGroups    : [ "userCreated", "builtIn" ]
+    , defaultCollapsed : [ "builtIn" ]
+  }
 };
 
+function getGroupsFromStore() {
+  return {
+    groupsList : GroupsStore.getAllGroups()
+  };
+}
+
 var Groups = React.createClass({
-    render: function() {
-      return (
-        <Viewer header     = { "Groups" }
-                inputData  = { inputData }
-                formatData = { formatData }
-                itemData   = { itemData }
-                Editor     = { RouteHandler } >
-        </Viewer>
-      );
+
+    getInitialState: function() {
+      return getGroupsFromStore();
+    }
+
+  , componentDidMount: function() {
+      GroupsStore.addChangeListener( this.handleGroupsChange );
+      GroupsMiddleware.requestGroupsList();
+      GroupsMiddleware.subscribe();
+    }
+
+  , componentWillUnmount: function() {
+      GroupsStore.removeChangeListener( this.handleGroupsChange );
+      GroupsMiddleware.unsubscribe();
+    }
+
+  , handleGroupsChange: function() {
+      this.setState( getGroupsFromStore() );
+    }
+
+  , handleUsersChange: function() {
+      this.setState( getUsersFromStore() );
+    }
+
+  , render: function() {
+      return <Viewer header     = { "Groups" }
+                     inputData  = { this.state.groupsList }
+                     viewData   = { viewData }
+                     Editor     = { RouteHandler } />;
     }
 });
 
