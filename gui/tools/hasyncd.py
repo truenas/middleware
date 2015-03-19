@@ -2,6 +2,7 @@
 
 from ctypes import cdll, byref, create_string_buffer
 from ctypes.util import find_library
+import base64
 import fcntl
 import logging
 import logging.config
@@ -146,6 +147,20 @@ class HASync(XMLRPC):
         p1 = notifier()._pipeopen('zpool list %s' % failover.volume.vol_name)
         p1.communicate()
         return p1.returncode
+
+    def xmlrpc_file_recv(self, secret, path):
+        self._authenticated(secret)
+        if not os.path.exists(path):
+            return None
+        with open(path, 'rb') as f:
+            data = base64.b64encode(f.read())
+        return data
+
+    def xmlrpc_file_send(self, secret, path, content):
+        self._authenticated(secret)
+        with open(path, 'wb+') as f:
+            f.write(base64.b64decode(content))
+        return True
 
     def xmlrpc_run_sql(self, secret, query, params):
         self._authenticated(secret)
