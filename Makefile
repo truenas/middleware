@@ -124,7 +124,7 @@ release-push: release
 	if ! echo $TRAIN | grep -q Nightlies; then \
 		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
 		(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest); \
-		${ENV_SETUP} ${MAKE} save-build-env \
+		${ENV_SETUP} ${MAKE} save-build-env ; \
 	fi
 
 update-push:	release
