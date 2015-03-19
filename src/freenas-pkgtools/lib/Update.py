@@ -698,7 +698,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                     s = "Unable to create boot-environment %s" % new_boot_name
                     if s:
                         log.error(s)
-                    raise Exception(s)
+                    raise UpdateBootEnvironmentException(s)
             if mount_point is None:
                 mount_point = MountClone(new_boot_name)
         except:
@@ -708,7 +708,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
             s = "Unable to mount boot-environment %s" % new_boot_name
             log.error(s)
             DeleteClone(new_boot_name)
-            raise Exception(s)
+            raise UpdateBootEnvironmentException(s)
     else:
         # Need to do magic to move the current boot environment aside,
         # and assign the newname to the current boot environment.
@@ -719,20 +719,20 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
         root_dataset = GetRootDataset()
         if root_dataset is None:
             log.error("Unable to determine root environment name")
-            raise Exception("Unable to determine root environment name")
+            raise UpdateBootEnvironmentException("Unable to determine root environment name")
         # We also want the root name
         root_env = None
         clones = ListClones()
         if clones is None:
             log.error("Unable to determine root BE")
-            raise Exception("Unable to determine root BE")
+            raise UpdateBootEnvironmentException("Unable to determine root BE")
         for clone in clones:
             if clone["mountpoint"] == "/":
                 root_env = clone
                 break
         if root_env is None:
             log.error("Unable to find root BE!")
-            raise Exception("Unable to find root BE!")
+            raise UpdateBootEnvironmentException("Unable to find root BE!")
         
         # Now we want to snapshot the current boot environment,
         # so we can rollback as needed.
@@ -742,7 +742,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
         rv = RunCommand(cmd, args)
         if rv is False:
             log.error("Unable to create snapshot %s, bailing for now" % snapshot_name)
-            raise Exception("Unable to create snapshot %s" % snapshot_name)
+            raise UpdateSnapshotException("Unable to create snapshot %s" % snapshot_name)
         # We need to remove the beadm:nickname property.  I hate knowing this much
         # about the implementation
         args = ["inherit", "-r", "beadm:nickname", snapshot_name ]
@@ -762,7 +762,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
             args = ["set", "beadm:nickname=%s" % root_env["name"]]
             RunCommand(cmd, args)
             
-            raise Exception("Unable to create new boot environment %s" % new_boot_nam)
+            raise UpdateBootEnvironmentException("Unable to create new boot environment %s" % new_boot_nam)
         
     # Now we start doing the update!
     # If we have to reboot, then we need to
@@ -782,7 +782,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                     UnmountClone(new_boot_name, mount_point)
                     mount_point = None
                     DeleteClone(new_boot_name)
-                raise Exception(s)
+                raise UpdatePackageException(s)
             conf.PackageDB(mount_point).RemovePackage(pkg.Name())
 
         installer = Installer.Installer(manifest = new_manifest,
@@ -794,21 +794,20 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
         rv = False
         if installer.InstallPackages(handler = install_handler) is False:
             log.error("Unable to install packages")
-            raise Exception("Unable to install packages")
+            raise UpdatePackageException("Unable to install packages")
         else:
             new_manifest.Save(mount_point)
             if mount_point:
                 if UnmountClone(new_boot_name, mount_point) is False:
                     s = "Unable to unmount clone environment %s from mount point %s" % (new_boot_name, mount_point)
                     log.error(s)
-                    raise Exception(s)
+                    raise UpdateBootEnvironmentException(s)
                 mount_point = None
             if reboot:
-                # This is a hack until we can get beadm able to rename the current root
                 if ActivateClone(new_boot_name) is False:
                     s = "Unable to activate clone environment %s" % new_boot_name
                     log.error(s)
-                    raise Exception(s)
+                    raise UpdateBootEnvironmentException(s)
             if not reboot:
                 # Clean up the emergency holographic snapshot
                 cmd = "/sbin/zfs"
