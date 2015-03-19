@@ -132,7 +132,7 @@ class Funcs:
     def _ebRender(self, failure):
         return xmlrpclib.Fault(self.FAILURE, str(failure))
 
-    def _authenticated(self, client_address, secret):
+    def _authenticated(self, secret):
         from freenasUI.failover.models import Failover
         qs = Failover.objects.filter(secret=secret)
         if not qs.exists():
@@ -145,6 +145,7 @@ class Funcs:
             delete_pending_pairing,
             get_pending_pairing,
         )
+        from freenasUI.middleware.notifier import notifier
         from freenasUI.storage.models import Volume
 
         pairing = get_pending_pairing()
@@ -165,7 +166,10 @@ class Funcs:
         failover.secret = pairing['secret']
         failover.save()
 
-        return self._conn.dump_send(failover=failover)
+        try:
+            return notifier().failover_sync_peer(fid=failover.id, fromto='to')
+        except ValueError:
+            return False
 
     def pairing_send(self, client_address, secret):
         from freenasUI.failover.utils import set_pending_pairing
