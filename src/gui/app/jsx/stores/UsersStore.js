@@ -64,6 +64,18 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
       return _.values( _users );
     }
 
+// Returns an array of the complete objects for each user in
+// the requested group.
+  , getUsersByGroup: function(groupID) {
+      var groupUsers = [];
+      _users.map( function ( currentUser, index, _users ) {
+        if (_.includes(currentUser.groups, groupID) || currentUser.group === groupID){
+          groupUsers.push(currentUser);
+        }
+      });
+      return groupUsers;
+  }
+
 });
 
 UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
