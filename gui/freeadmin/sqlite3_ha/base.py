@@ -103,19 +103,19 @@ class RunSQLRemote(threading.Thread):
     def __init__(self, *args, **kwargs):
         self._sql = kwargs.pop('sql')
         self._params = kwargs.pop('params')
-        self._ip = kwargs.pop('ip', None)
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
         # FIXME: cache value
         from freenasUI.middleware.notifier import notifier
-        s = notifier().failover_rpc(ip=self._ip)
+        ip, secret = notifier().failover_getpeer()
+        s = notifier().failover_rpc(ip=ip)
         try:
             with Journal() as f:
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    s.run_sql(self._sql, self._params)
+                    s.run_sql(secret, self._sql, self._params)
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
