@@ -68,6 +68,7 @@ usr/local/libexec/nas/register_mdns.py
 usr/local/libexec/samba/dfree
 usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash
+usr/local/sbin/sas3flash
 usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
 usr/local/share/firmware/t5fw-1.12.25.0.bin
