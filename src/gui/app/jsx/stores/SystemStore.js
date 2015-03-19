@@ -1,4 +1,4 @@
-// Widget Data Flux Store
+// System Flux Store
 // ----------------
 
 "use strict";
