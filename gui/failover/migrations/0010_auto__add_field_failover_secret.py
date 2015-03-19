@@ -8,10 +8,17 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+
+        # Workaround sqlite3 reserved name bug #8184
+        db.delete_unique('system_failover', ['carp_id', 'volume_id'])
+
         # Adding field 'Failover.secret'
         db.add_column('system_failover', 'secret',
                       self.gf('django.db.models.fields.CharField')(default='', max_length=64),
                       keep_default=False)
+
+        # Workaround sqlite3 reserved name bug #8184
+        db.create_unique('system_failover', ['carp_id', 'volume_id'])
 
 
     def backwards(self, orm):
