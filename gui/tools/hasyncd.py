@@ -93,8 +93,10 @@ class HASync(XMLRPC):
 
     def _authenticated(self, secret):
         from freenasUI.failover.models import Failover
-        if not Failover.objects.filter(secret=secret).exists():
+        qs = Failover.objects.filter(secret=secret)
+        if not qs.exists():
             raise xmlrpclib.Fault(5, 'Access Denied')
+        return qs[0]
 
     @withRequest
     def xmlrpc_pairing_receive(self, request, secret):
@@ -137,6 +139,13 @@ class HASync(XMLRPC):
 
     def xmlrpc_ping(self):
         return 'pong'
+
+    def xmlrpc_pool_available(self, secret):
+        from freenasUI.middleware.notifier import notifier
+        failover = self._authenticated(secret)
+        p1 = notifier()._pipeopen('zpool list %s' % failover.volume.vol_name)
+        p1.communicate()
+        return p1.returncode
 
     def xmlrpc_run_sql(self, secret, query, params):
         self._authenticated(secret)
