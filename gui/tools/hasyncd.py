@@ -185,8 +185,8 @@ class HASync(XMLRPC):
         return rv
 
     def xmlrpc_sync_from(self, secret):
-        self._authenticated(secret)
-        return self._conn.dump_send()
+        failover = self._authenticated(secret)
+        return self._conn.dump_send(failover=failover)
 
 
 def set_proc_name(newname):
