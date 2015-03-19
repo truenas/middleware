@@ -139,7 +139,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
-    def dump_send(self, ip=None):
+    def dump_send(self, failover=None):
         from freenasUI.middleware.notifier import notifier
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
@@ -167,10 +167,11 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             for row in cur.fetchall():
                 script.append(row[0])
 
-        s = notifier().failover_rpc(ip=ip)
+        s = notifier().failover_rpc(ip=failover.ipaddress)
         try:
-            return s.sync_from(script)
-        except (xmlrpclib.Fault, socket.error):
+            return s.sync_to(failover.secret, script)
+        except (xmlrpclib.Fault, socket.error) as e:
+            log.error('Failed sync_to %s: %s', failover.ipaddress, e)
             return False
 
     def dump_recv(self, script):
@@ -212,6 +213,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 ))
                 for row in cur.fetchall():
                     script.append(row[0])
+
         cur.executescript(';'.join(
             ['PRAGMA foreign_keys=OFF', 'BEGIN TRANSACTION'] + script + [
                 'COMMIT;'
