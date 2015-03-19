@@ -19,7 +19,7 @@ var PRIMARY_KEY  = "groupid";
 
 var _localUpdatePending = {};
 var _updatedOnServer    = [];
-var _groups = {};
+var _groups = [];
 
 var GroupsStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -40,7 +40,7 @@ var GroupsStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , getGroup: function( groupid ) {
-      return group[ id ];
+      return _groups[ groupid ];
     }
 
   , getAllGroups: function() {
@@ -55,17 +55,11 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
   switch( action.type ) {
 
     case ActionTypes.RECEIVE_GROUPS_LIST:
-      var mapGroup = function ( currentGroup ) {
-        var newGroup = {};
 
-        newGroup[ "groupname" ] = currentGroup[ "name" ];
-        newGroup[ "groupid" ]   = currentGroup[ "id"];
-        newGroup[ "builtin" ]   = currentGroup[ "builtin" ];
-
-        return newGroup;
-      }
-
-      _groups = action.groupsList.map( mapGroup );
+      action.groupsList.map( function ( group ) {
+        _groups[ group [ PRIMARY_KEY ] ] = group;
+      });
+      
       GroupsStore.emitChange();
       break;
 

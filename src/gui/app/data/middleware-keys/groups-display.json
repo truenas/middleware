@@ -5,8 +5,8 @@
   , "uniqueKey"    : "groupid"
   , "dataKeys": [
       {
-          "key"         : "groupname"
-        , "name"        : "Groupname"
+          "key"         : "name"
+        , "name"        : "Group Name"
         , "type"        : "string"
         , "formElement" : "input"
         , "mutable"     : true
@@ -20,7 +20,7 @@
         , "mutable"     : false
         , "defaultCol"  : true
       }
-    , {   "key"         : "groupid"
+    , {   "key"         : "id"
         , "name"        : "Group ID"
         , "type"        : "number"
         , "formElement" : "input"

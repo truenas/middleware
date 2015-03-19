@@ -13,12 +13,12 @@ module.exports = {
 
     receiveGroupsList: function( groupsList ) {
       FreeNASDispatcher.handleMiddlewareAction({
-          type         : ActionTypes.RECEIVE_GROUPS_LIST
+          type       : ActionTypes.RECEIVE_GROUPS_LIST
         , groupsList : groupsList
       });
     }
 
-  , receiveGroupUpdateTask: function( taskID, groupID) {
+  , receiveGroupUpdateTask: function( taskID, groupID ) {
       FreeNASDispatcher.handleMiddlewareAction({
           type    : ActionTypes.RECEIVE_GROUP_UPDATE_TASK
         , taskID  : taskID
