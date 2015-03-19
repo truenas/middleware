@@ -31,54 +31,54 @@ import re
 import snmpresponse
 
 # we do not have kstat in freebsd, so will implement this later
-#def kstat(name):
-    #output = commands.getoutput("kstat -p " + name)
-    #try:
-        #return int(re.split("\s+", output)[1])
-    #except:
-        #return 0
+def kstat(name):
+    output = commands.getoutput("sysctl kstat." + name)
+    try:
+        return int(re.split("\s+", output)[1])
+    except:
+        return 0
 
-#def zfs_arc_size(oid):
-    #return ('gauge', kstat("zfs:0:arcstats:size") / 1024) # KB
+def zfs_arc_size(oid):
+    return ('gauge', kstat("zfs.misc.arcstats.size") / 1024) # KB
 
-#def zfs_arc_data(oid):
-    #return ('gauge', kstat("zfs:0:arcstats:data_size") / 1024) # KB
+def zfs_arc_data(oid):
+    return ('gauge', kstat("zfs.misc.arcstats.data_size") / 1024) # KB
 
-#def zfs_arc_meta(oid):
-    #return ('gauge', kstat("zfs:0:arcstats:meta_used") / 1024) # KB
+def zfs_arc_meta(oid):
+    return ('gauge', kstat("zfs.misc.arcstats.arc_meta_used") / 1024) # KB
 
-#def zfs_arc_hits(oid):
-    #return ('counter', kstat("zfs:0:arcstats:hits") % 2**32) # 32 bit counter
+def zfs_arc_hits(oid):
+    return ('counter', kstat("zfs.misc.arcstats.hits") % 2**32) # 32 bit counter
 
-#def zfs_arc_misses(oid):
-    #return ('counter', kstat("zfs:0:arcstats:misses") % 2**32) # 32 bit counter
+def zfs_arc_misses(oid):
+    return ('counter', kstat("zfs.misc.arcstats.misses") % 2**32) # 32 bit counter
 
-#def zfs_arc_c(oid):
-    #return ('gauge', kstat("zfs:0:arcstats:c") / 1024) # KB
+def zfs_arc_c(oid):
+    return ('gauge', kstat("zfs.misc.arcstats.c") / 1024) # KB
 
-#def zfs_arc_p(oid):
-    #return ('gauge', kstat("zfs:0:arcstats:p") / 1024) # KB  
+def zfs_arc_p(oid):
+    return ('gauge', kstat("zfs.misc.arcstats.p") / 1024) # KB  
 
-#def zfs_read(oid):
-    #return ('counter', kstat("unix:0:vopstats_zfs:read_bytes") / 1024 % 2**32) # 32 bit KB counter
+# def zfs_read(oid):
+    # return ('counter', kstat(".zfs.misc.arcstats.l2_read_bytes") / 1024 % 2**32) # 32 bit KB counter
 
 #def zfs_readdir(oid):
     #return ('counter', kstat("unix:0:vopstats_zfs:readdir_bytes") / 1024 % 2**32) # 32 bit KB counter
 
-#def zfs_write(oid):
-    #return ('counter', kstat("unix:0:vopstats_zfs:write_bytes") / 1024 % 2**32) # 32 bit KB counter
+# def zfs_write(oid):
+    # return ('counter', kstat(".zfs.misc.arcstats.l2_write_bytes") / 1024 % 2**32) # 32 bit KB counter
 
-#def zfs_l2arc_hits(oid):
-    #return ('counter', kstat("zfs:0:arcstats:l2_hits") % 2**32) # 32 bit counter
+def zfs_l2arc_hits(oid):
+    return ('counter', kstat("zfs.misc.arcstats.l2_hits") % 2**32) # 32 bit counter
 
-#def zfs_l2arc_misses(oid):
-    #return ('counter', kstat("zfs:0:arcstats:l2_misses") % 2**32) # 32 bit counter
+def zfs_l2arc_misses(oid):
+    return ('counter', kstat("zfs.misc.arcstats.l2_misses") % 2**32) # 32 bit counter
 
-#def zfs_l2arc_write(oid):
-    #return ('counter', kstat("zfs:0:arcstats:l2_write_bytes") / 1024 % 2**32) # 32 bit KB counter
+def zfs_l2arc_write(oid):
+    return ('counter', kstat("zfs.misc.arcstats.l2_write_bytes") / 1024 % 2**32) # 32 bit KB counter
 
-#def zfs_l2arc_read(oid):
-    #return ('counter', kstat("zfs:0:arcstats:l2_read_bytes") / 1024 % 2**32) # 32 bit KB counter
+def zfs_l2arc_read(oid):
+    return ('counter', kstat("zfs.misc.arcstats.l2_read_bytes") / 1024 % 2**32) # 32 bit KB counter
 
 def zfs_pools():
     statuses = { "ONLINE": 1, "DEGRADED": 2, "FAULTED": 3 }
@@ -112,25 +112,24 @@ def zfs_vols():
 # vols            OBJECT IDENTIFIER ::= {zfs 5}
 
 # To add later as now we ship with what we have
-#result = [
-    #( BASE_OID + '.2.1.0', zfs_arc_size),
-    #( BASE_OID + '.2.2.0', zfs_arc_meta),
-    #( BASE_OID + '.2.3.0', zfs_arc_data),
-    #( BASE_OID + '.2.4.0', zfs_arc_hits),
-    #( BASE_OID + '.2.5.0', zfs_arc_misses),
-    #( BASE_OID + '.2.6.0', zfs_arc_c),
-    #( BASE_OID + '.2.7.0', zfs_arc_p),
+result = [
+    ( BASE_OID + '.2.1.0', zfs_arc_size),
+    ( BASE_OID + '.2.2.0', zfs_arc_meta),
+    ( BASE_OID + '.2.3.0', zfs_arc_data),
+    ( BASE_OID + '.2.4.0', zfs_arc_hits),
+    ( BASE_OID + '.2.5.0', zfs_arc_misses),
+    ( BASE_OID + '.2.6.0', zfs_arc_c),
+    ( BASE_OID + '.2.7.0', zfs_arc_p),
 
-    #( BASE_OID + '.3.1.0', zfs_l2arc_hits),
-    #( BASE_OID + '.3.2.0', zfs_l2arc_misses),
-    #( BASE_OID + '.3.3.0', zfs_l2arc_read),
-    #( BASE_OID + '.3.4.0', zfs_l2arc_write),
+    ( BASE_OID + '.3.1.0', zfs_l2arc_hits),
+    ( BASE_OID + '.3.2.0', zfs_l2arc_misses),
+    ( BASE_OID + '.3.3.0', zfs_l2arc_read),
+    ( BASE_OID + '.3.4.0', zfs_l2arc_write),
 
     #( BASE_OID + '.4.1.0', zfs_read),
     #( BASE_OID + '.4.2.0', zfs_readdir),
     #( BASE_OID + '.4.3.0', zfs_write),
-#]
-result = []
+]
 i = 1
 for pool, health in zfs_pools():
     result.append((BASE_OID + '.1.1.' + str(i), ('string', pool)))
@@ -159,4 +158,5 @@ operation = sys.argv[1]
 req_oid = sys.argv[2]
 
 snmpresponse.respond_to(operation, req_oid, result)
+
 
