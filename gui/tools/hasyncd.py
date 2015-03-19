@@ -79,7 +79,7 @@ class JournalAlive(threading.Thread):
                         s.run_sql(query, params)
                         j.queries.remove(q)
                     except xmlrpclib.Fault, e:
-                        self.logger.exception('Failed to run sql')
+                        self.logger.exception('Failed to run sql: %s', e)
                         break
                     except socket.error:
                         break
@@ -87,12 +87,21 @@ class JournalAlive(threading.Thread):
 
 class HASync(XMLRPC):
 
+    def __init__(self, *args, **kwargs):
+        from django.db import connection
+        self._conn = connection
+        XMLRPC.__init__(self, *args, **kwargs)
+
     def _ebRender(self, failure):
         return xmlrpclib.Fault(self.FAILURE, str(failure))
 
+    def _authenticated(self, secret):
+        from freenasUI.failover.models import Failover
+        if not Failover.objects.filter(secret=secret).exists():
+            raise xmlrpclib.Fault(5, 'Access Denied')
+
     @withRequest
     def xmlrpc_pairing_receive(self, request, secret):
-        from django.db import connection
         from freenasUI.failover.models import CARP, Failover
         from freenasUI.failover.utils import (
             delete_pending_pairing,
@@ -118,7 +127,7 @@ class HASync(XMLRPC):
         failover.secret = pairing['secret']
         failover.save()
 
-        return connection.dump_send(failover=failover)
+        return self._conn.dump_send(failover=failover)
 
     @withRequest
     def xmlrpc_pairing_send(self, request, secret):
@@ -133,7 +142,8 @@ class HASync(XMLRPC):
     def xmlrpc_ping(self):
         return 'pong'
 
-    def xmlrpc_run_sql(self, query, params):
+    def xmlrpc_run_sql(self, secret, query, params):
+        self._authenticated(secret)
         cursor = self._conn.cursor()
         if params is None:
             cursor.executelocal(query)
@@ -141,7 +151,6 @@ class HASync(XMLRPC):
             cursor.executelocal(query, params)
 
     def xmlrpc_sync_to(self, secret, query):
-        from django.db import connection
         from freenasUI.failover.models import Failover
         from freenasUI.failover.utils import (
             delete_pending_pairing,
@@ -160,10 +169,9 @@ class HASync(XMLRPC):
 
             delete_pending_pairing()
         else:
-            if not Failover.objects.filter(secret=secret).exists():
-                return False
+            self._authenticated(secret)
 
-        rv = connection.dump_recv(query)
+        rv = self._conn.dump_recv(query)
         # If this is a pairing action we need to update the IP
         if update_ip and rv:
             Failover.objects.filter(secret=secret).update(
@@ -171,9 +179,9 @@ class HASync(XMLRPC):
             )
         return rv
 
-    def xmlrpc_sync_from(self):
-        from django.db import connection
-        return connection.dump_send()
+    def xmlrpc_sync_from(self, secret):
+        self._authenticated(secret)
+        return self._conn.dump_send()
 
 
 def set_proc_name(newname):
