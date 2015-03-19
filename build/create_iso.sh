@@ -103,6 +103,8 @@ main()
 			${INSTALLUFSDIR}/etc
 		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/sbin/sas2flash \
 			${INSTALLUFSDIR}/usr/local/sbin
+		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/sbin/sas3flash \
+			${INSTALLUFSDIR}/usr/local/sbin
 		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install/ \
 			${INSTALLUFSDIR}/usr/local/install/
 		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/firmware/ \
