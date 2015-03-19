@@ -11,21 +11,21 @@
         , "formElement" : "input"
         , "mutable"     : true
         , "defaultCol"  : true
-      },
-      {
+      }
+    , {
       	  "key"         : "builtin"
       	, "name"        : "Built-in Group"
         , "type"        : "boolean"
         , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : true
-      },
-      {   "key"         : "groupid"
+      }
+    , {   "key"         : "groupid"
         , "name"        : "Group ID"
         , "type"        : "number"
         , "formElement" : "input"
         , "mutable"     : false
         , "defaultCol"  : true
-      },
+      }
   ]  
 }]
