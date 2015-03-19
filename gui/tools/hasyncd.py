@@ -87,12 +87,15 @@ class JournalAlive(threading.Thread):
 
 class HASync(XMLRPC):
 
+    def _ebRender(self, failure):
+        return xmlrpclib.Fault(self.FAILURE, str(failure))
+
     @withRequest
     def xmlrpc_pairing_receive(self, request, secret):
         from django.db import connection
         from freenasUI.failover.models import CARP, Failover
         from freenasUI.failover.utils import (
-            delete_pending_paring,
+            delete_pending_pairing,
             get_pending_pairing,
         )
         from freenasUI.storage.models import Volume
@@ -103,7 +106,7 @@ class HASync(XMLRPC):
         if secret != pairing.get('secret'):
             return False
 
-        delete_pending_paring()
+        delete_pending_pairing()
 
         carp = CARP.objects.get(pk=pairing['carp'])
         volume = Volume.objects.get(pk=pairing['volume'])
@@ -140,7 +143,10 @@ class HASync(XMLRPC):
     def xmlrpc_sync_to(self, secret, query):
         from django.db import connection
         from freenasUI.failover.models import Failover
-        from freenasUI.failover.utils import get_pending_pairing
+        from freenasUI.failover.utils import (
+            delete_pending_pairing,
+            get_pending_pairing,
+        )
 
         update_ip = False
         if Failover.objects.all().count() == 0:
@@ -152,7 +158,7 @@ class HASync(XMLRPC):
                 return False
             update_ip = True
 
-            delete_pending_paring()
+            delete_pending_pairing()
         else:
             if not Failover.objects.filter(secret=secret).exists():
                 return False
