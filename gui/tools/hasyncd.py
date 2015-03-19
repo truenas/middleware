@@ -66,11 +66,7 @@ class JournalAlive(threading.Thread):
             if Journal.is_empty():
                 continue
 
-            ip = notifier().failover_peerip()
-            if ip is None:
-                continue
-
-            s = xmlrpclib.ServerProxy('http://%s:8000' % ip, allow_none=True)
+            s = notifier().failover_rpc()
 
             with Journal() as j:
                 for q in list(j.queries):
