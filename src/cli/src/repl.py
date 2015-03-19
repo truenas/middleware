@@ -539,14 +539,17 @@ class MainLoop(object):
     def blank_readline(self):
         rows, cols = struct.unpack('hh', fcntl.ioctl(
             sys.stdout, termios.TIOCGWINSZ, '1234'))
+
+        if cols == 0:
+            cols = 80
+
         text_len = len(readline.get_line_buffer()) + 2
         sys.stdout.write('\x1b[2K')
         sys.stdout.write('\x1b[1A\x1b[2K' * (text_len / cols))
         sys.stdout.write('\x1b[0G')
 
     def restore_readline(self):
-        sys.stdout.write(self.__get_prompt() +
-                         readline.get_line_buffer().rstrip())
+        sys.stdout.write(self.__get_prompt() + readline.get_line_buffer().rstrip())
         sys.stdout.flush()
 
 
