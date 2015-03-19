@@ -12,7 +12,7 @@ var RouteHandler = Router.RouteHandler;
 
 var Viewer = require("../../components/Viewer");
 
-var formatData = require("../../../data/middleware-keys/accounts-display.json")[0];
+var formatData = require("../../../data/middleware-keys/groups-display.json")[0];
 var itemData = {
     "route" : "users-editor"
   , "param" : "userID"
