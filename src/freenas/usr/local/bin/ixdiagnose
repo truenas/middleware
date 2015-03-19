@@ -219,6 +219,10 @@ sysctl hw > "$dir/sysctl_hw"
 /usr/local/bin/cpuid > "$dir/cpuid"
 set -e
 
+if [ -d /data/crash ]; then
+	cp -R /data/crash "$dir"
+fi
+
 if [ -f /etc/hostid ] ; then
 	cp /etc/hostid "$dir/hostid"
 fi
