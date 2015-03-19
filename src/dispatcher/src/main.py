@@ -200,15 +200,15 @@ class Dispatcher(object):
         except (IOError, ValueError):
             raise
 
-        if data['dispatcher']['logging'] == 'syslog':
-            try:
-                self.__init_syslog()
-            except IOError:
-                # syslog is not yet available
-                self.logger.info('Initialization of syslog logger deferred')
-                self.register_event_handler('service.started', self.__on_service_started)
-            else:
-                self.logger.info('Initialized syslog logger')
+        #if data['dispatcher']['logging'] == 'syslog':
+        #    try:
+        #        self.__init_syslog()
+        #    except IOError:
+        #        # syslog is not yet available
+        #        self.logger.info('Initialization of syslog logger deferred')
+        #        self.register_event_handler('service.started', self.__on_service_started)
+        #    else:
+        #        self.logger.info('Initialized syslog logger')
 
         self.config = data
         self.plugin_dirs = data['dispatcher']['plugin-dirs']
