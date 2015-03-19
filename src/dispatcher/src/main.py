@@ -587,6 +587,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
     def on_rpc_auth_token(self, id, data):
         token = data['token']
         resource = data.get('resource', None)
+        lifetime = self.dispatcher.configstore.get("server.token_lifetime")
         token = self.dispatcher.token_store.lookup_token(token)
         client_addr, client_port = self.ws.handler.client_address
 
@@ -595,13 +596,13 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             return
 
         self.user = token.user
-        self.token = token
+        self.token = self.dispatcher.token_store.issue_token(Token(user=self.user, lifetime=lifetime))
 
         self.send_json({
             'namespace': 'rpc',
             'name': 'response',
             'id': id,
-            'args': [self.token]
+            'args': [self.token, lifetime]
         })
 
         self.open_session()
@@ -615,6 +616,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
     def on_rpc_auth(self, id, data):
         username = data['username']
         password = data['password']
+        lifetime = self.dispatcher.configstore.get("server.token_lifetime")
         self.resource = data.get('resource', None)
         client_addr, client_port = self.ws.handler.client_address
 
@@ -638,14 +640,14 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         self.user = user
         self.token = self.dispatcher.token_store.issue_token(Token(
             user=user,
-            lifetime=self.dispatcher.configstore.get("server.token_lifetime")
+            lifetime=lifetime
         ))
 
         self.send_json({
             "namespace": "rpc",
             "name": "response",
             "id": id,
-            "args": [self.token]
+            "args": [self.token, lifetime]
         })
 
         self.open_session()
