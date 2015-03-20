@@ -15,6 +15,8 @@ var SessionStore = require("../stores/SessionStore");
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
 
+// Cookies!
+var myCookies = require("../middleware/cookies");
 
 var LoginBox = React.createClass({
 
@@ -40,6 +42,9 @@ var LoginBox = React.createClass({
     }
 
   , componentDidMount: function() {
+      if (myCookies.obtain("auth") !== null) {
+        MiddlewareClient.login("token", myCookies.obtain("auth"));
+      }
       SessionStore.addChangeListener( this.handleMiddlewareChange );
       this.updateBoxVisibility();
     }
@@ -107,7 +112,7 @@ var LoginBox = React.createClass({
 
       // TODO: Input validation for user/pass. What are the rules?
 
-      MiddlewareClient.login( this.state.userText, this.state.passText );
+      MiddlewareClient.login( "userpass", [this.state.userText, this.state.passText] );
     }
 
   , render: function () {

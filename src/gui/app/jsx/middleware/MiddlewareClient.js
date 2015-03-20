@@ -15,6 +15,8 @@ var MiddlewareActionCreators = require("../actions/MiddlewareActionCreators");
 
 var SessionStore = require("../stores/SessionStore");
 
+var myCookies = require("./cookies");
+
 function MiddlewareClient() {
 
   var DEBUG = function( flag ) {
@@ -209,21 +211,36 @@ function MiddlewareClient() {
 
   // Authenticate a user to the middleware. Basically a specialized version of
   // the `request` function with a different payload.
-  this.login = function ( username, password ) {
+  this.login = function ( auth_type, credentials ) {
     var requestID = generateUUID();
-    var payload = {
-        "username" : username
-      , "password" : password
-    };
+    var rpcName = "auth";
+    var payload = {};
+    if (auth_type === "userpass") {
+      payload = {
+          "username" : credentials[0]
+        , "password" : credentials[1]
+      };
+    } else if (auth_type === "token") {
+      payload = {
+          "token" : credentials
+      };
+      rpcName = rpcName + "_token";
+    }
+
     var callback = function( response ) {
+      // Making a Cookie for token based login for the next time
+      // and setting its max-age to the TTL (in seconds) specified by the 
+      // middleware response. The token value is stored in the Cookie.
+      myCookies.add("auth", response[0], response[1]);
+
       // TODO: Account for any other possible response codes.
       if (response.code === 13){
-        MiddlewareActionCreators.receiveAuthenticationChange( payload.username, false );
+        MiddlewareActionCreators.receiveAuthenticationChange( "", false );
       } else {
-        MiddlewareActionCreators.receiveAuthenticationChange( payload.username, true );
+        MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
       }
     };
-    var packedAction = pack( "rpc", "auth", payload, requestID );
+    var packedAction = pack( "rpc", rpcName, payload, requestID );
 
     if ( socket.readyState === 1 ) {
 

@@ -10,11 +10,16 @@ var EventEmitter = require("events").EventEmitter;
 var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
 var FreeNASConstants  = require("../constants/FreeNASConstants");
 
+// Middleware
+var MiddlewareClient = require("../middleware/MiddlewareClient");
+
+
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT ="change";
 
 var _currentUser = "";
 var _loggedIn = false;
+
 
 var SessionStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -50,6 +55,10 @@ SessionStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       _loggedIn = action.loggedIn;
       SessionStore.emitChange();
       break;
+
+    default:
+      //No action
+
 
   }
 
