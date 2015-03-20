@@ -90,7 +90,9 @@ var Events = React.createClass({
       }
 
       return(
-        <div className="debug-callout">
+        <div
+          className = "debug-callout"
+          key       = { index } >
           <label>{ eventObj["name"].split(".")[0] }</label>
           <h5>
             { eventObj["name"] }
