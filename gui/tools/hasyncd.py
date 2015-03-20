@@ -167,6 +167,8 @@ class Funcs:
         failover.secret = pairing['secret']
         failover.save()
 
+        notifier().restart('ix-devd')
+
         try:
             return notifier().failover_sync_peer(fid=failover.id, fromto='to')
         except ValueError:
