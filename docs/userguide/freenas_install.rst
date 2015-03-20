@@ -221,9 +221,8 @@ FreeNAS® will issue the warning seen in Figure 2.3d, reminding you to not insta
 
 .. |cdrom3.png| image:: images/cdrom3.png
 
-.. note:: at this time, the installer does not check the size of the install media before attempting an installation. A minimum of a 4 GB device is required,
-   but the install will appear to complete successfully on smaller devices, only to fail at boot. If a 4 GB USB drive fails to boot, try using a 8 GB USB
-   drive instead.
+.. note:: at this time, the installer does not check the size of the install media before attempting an installation. A minimum of a 8 GB device is required,
+   but the install will appear to complete successfully on smaller devices, only to fail at boot.
 
 The installer will recognize if a previous version of FreeNAS® 8.x or 9.x is already installed, and if so, will display the menu shown in Figure 2.3e. If the
 installer recognizes that a previous version of FreeNAS® is installed and you wish to overwrite the existing installation, arrow over to "Fresh Install" and

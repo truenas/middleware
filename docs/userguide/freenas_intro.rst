@@ -337,6 +337,8 @@ that have occurred since 9.3-RELEASE.
 
 * Man pages have been added and can be accessed from :ref:`Shell`.
 
+* LZ4 compression is used on the boot pool in order to increase space for boot environments.
+
 * An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.
