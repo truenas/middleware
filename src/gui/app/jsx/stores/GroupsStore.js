@@ -81,11 +81,6 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       GroupsStore.emitChange();
       break;
 
-    case ActionTypes.RESOLVE_GROUP_UPDATE_TASK:
-      delete _localUpdatePending [ action.taskID ];
-      GroupsStore.emitChange();
-      break;
-
     default:
       // Do Nothing
   }
