@@ -1,0 +1,7 @@
+#7976	Bug	Normal	UPS service; chown on non existing files, when stopping UPS service in slave mode
+#8514	Feature	Normal	lz4 on freenas-boot
+#8611	Bug	Normal	Missing DNS record when joining to a domain
+#8705	Bug	Urgent	FreeNAS-9.3-STABLE-201503170439 error when add iSCSI target
+#8727	Bug	High	In TrueNAS-9.3-STABLE-201503150428: Unlocking encrypted CiFS shares giving Error
+#8750	Bug	Normal	save debug should contain the contents of /data/crash
+#8755	Bug	Normal	Multiple security vulnerabilities in OpenSSL
