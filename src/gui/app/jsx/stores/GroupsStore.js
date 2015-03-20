@@ -15,11 +15,11 @@ var UsersMiddleware = require("../middleware/UsersMiddleware");
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = "groups.changed";
-var PRIMARY_KEY  = "groupid";
+var PRIMARY_KEY  = "id";
 
 var _localUpdatePending = {};
 var _updatedOnServer    = [];
-var _groups = [];
+var _groups = {};
 
 var GroupsStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -59,7 +59,6 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       action.groupsList.map( function ( group ) {
         _groups[ group [ PRIMARY_KEY ] ] = group;
       });
-      
       GroupsStore.emitChange();
       break;
 
