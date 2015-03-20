@@ -57,6 +57,7 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , getUser: function( id ) {
+
       return _users[ id ];
     }
 
@@ -128,12 +129,6 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       _localUpdatePending[ action.taskID ] = action.userID;
       UsersStore.emitChange();
       break;
-
-    case ActionTypes.RESOLVE_USER_UPDATE_TASK:
-      delete _localUpdatePending[ action.taskID ];
-      UsersStore.emitChange();
-      break;
-
 
     default:
       // No action

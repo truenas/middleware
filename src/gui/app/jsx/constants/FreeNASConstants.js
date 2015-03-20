@@ -27,7 +27,6 @@ module.exports = {
       // Users
       , RECEIVE_RAW_USERS        : null
       , RECEIVE_USER_UPDATE_TASK : null
-      , RESOLVE_USER_UPDATE_TASK : null
 
       // Groups
       , RECEIVE_GROUPS_LIST       : null
