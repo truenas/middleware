@@ -28,17 +28,11 @@ import json
 import logging
 import os
 
-from django.db.models import FieldDoesNotExist
-from django.http import HttpResponse  
+from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FLAGS_DBINIT
-)
 from freenasUI.directoryservice import forms, models, utils
-from freenasUI.freeadmin.options import FreeBaseInlineFormSet
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.services.models import services
 
@@ -46,6 +40,12 @@ log = logging.getLogger("directoryservice.views")
 
 
 def directoryservice_home(request):
+
+    view = appPool.hook_app_index('directoryservice', request)
+    view = filter(None, view)
+    if view:
+        return view[0]
+
     try:
         activedirectory = models.ActiveDirectory.objects.order_by("-id")[0]
     except:
@@ -70,7 +70,6 @@ def directoryservice_home(request):
         ks = models.KerberosSettings.objects.order_by("-id")[0]
     except:
         ks = models.KerberosSettings.objects.create()
-    
 
     return render(request, 'directoryservice/index.html', {
         'focus_form': request.GET.get('tab', 'directoryservice'),
@@ -80,6 +79,7 @@ def directoryservice_home(request):
         'nt4': nt4,
         'kerberossettings': ks,
     })
+
 
 def directoryservice_kerberosrealm(request, id):
     kr = models.KerberosRealm.objects.get(pk=id)
