@@ -213,6 +213,19 @@ class Funcs:
         else:
             cursor.executelocal(query, params)
 
+    def service(self, client_address, secret, verbs):
+        from freenasUI.middleware.notifier import notifier
+        self._authenticated(secret)
+        rvs = []
+        _n = notifier()
+        for verb, service in verbs:
+            if verb not in (
+                'start', 'stop', 'restart', 'reload'
+            ):
+                continue
+            rvs.append(getattr(_n, verb)(service))
+        return rvs
+
     def sync_to(self, client_address, secret, query):
         from freenasUI.failover.models import Failover
         from freenasUI.failover.utils import (
