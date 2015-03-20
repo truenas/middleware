@@ -13,10 +13,16 @@ module.exports = {
     // There are no subscribe or unsubscribe functions here, because task
     // subscription can be handled directly through the Middleware Client.
 
-    getTasks: function( ids ) {
-      MiddlewareClient.request( "task.query", [], function( tasks ) {
-        TasksActionCreators.receiveTaskHistory( tasks );
-      });
+    getCompletedTaskHistory: function( callback, offset ) {
+      return MiddlewareClient.request(
+          "task.query"
+        , [[["state","=","FINISHED"]]
+        , {
+            "offset": ( offset || 0 )
+          , "limit": 100
+          , "sort": "id"
+          , "dir": "desc" }] // TODO: Sort dir doesn't work?
+        , callback );
     }
 
 };

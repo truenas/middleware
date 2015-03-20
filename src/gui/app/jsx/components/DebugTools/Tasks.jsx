@@ -75,13 +75,10 @@ var TasksSection = React.createClass({
     }
 
   , render: function() {
-      var taskIDs = _.sortBy( _.keys( this.props.tasks ) ).reverse();
+      var taskIDs = _.sortBy( _.keys( this.props.tasks ), ["id"] ).reverse();
       return(
-        <div className="disclosure-open debug-column-content">
-          <h5 className="debug-heading disclosure-toggle">{ this.props.title + " (" + taskIDs.length + ")" }</h5>
-          <div className="disclosure-target">
-            { taskIDs.map( this.createTask ) }
-          </div>
+        <div className="debug-column-content">
+          { taskIDs.map( this.createTask ) }
         </div>
       );
     }
@@ -94,9 +91,22 @@ var Tasks = React.createClass({
       return _.assign( {}, TasksStore.getAllTasks() );
     }
 
+  , init: function( tasks ) {
+      var historicalTasks = {};
+
+      tasks.forEach( function( task ){
+        historicalTasks[ task["id"] ] = task;
+        historicalTasks[ task["id"] ]["percentage"] = 100;
+      });
+
+      this.setState( _.merge( {}, { "FINISHED": historicalTasks }, TasksStore.getAllTasks() ) );
+    }
+
   , componentDidMount: function() {
       TasksStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe(["task.*"]);
+
+      TasksMiddleware.getCompletedTaskHistory( this.init, this.state["FINISHED"].length || 0 );
     }
 
   , componentWillUnmount: function() {
@@ -105,7 +115,7 @@ var Tasks = React.createClass({
     }
 
   , handleMiddlewareChange: function() {
-      this.setState( _.assign( {}, TasksStore.getAllTasks() ) );
+      this.setState( _.merge( {}, { "FINISHED": this.state["FINISHED"] }, TasksStore.getAllTasks() ) );
     }
 
   , render: function() {
@@ -113,17 +123,21 @@ var Tasks = React.createClass({
         <div className="debug-content-flex-wrapper">
 
           <TWBS.Col xs={6} className="debug-column" >
+            <h5 className="debug-heading">{  "Created Tasks (" + _.keys( this.state["CREATED"] ).length + ")" }</h5>
             <TasksSection
-              title = { "Created Tasks" }
               tasks = { this.state["CREATED"] } canCancel />
+
+            <h5 className="debug-heading">{  "Waiting Tasks (" + _.keys( this.state["WAITING"] ).length + ")" }</h5>
             <TasksSection
-              title = { "Waiting Tasks" }
               tasks = { this.state["WAITING"] } paused canCancel />
+
+            <h5 className="debug-heading">{  "Executing Tasks (" + _.keys( this.state["EXECUTING"] ).length + ")" }</h5>
             <TasksSection
-              title = { "Executing Tasks" }
               tasks = { this.state["EXECUTING"] } showProgress canCancel />
+          </TWBS.Col>
+          <TWBS.Col xs={6} className="debug-column" >
+            <h5 className="debug-heading">{  "Completed Task History" }</h5>
             <TasksSection
-              title = { "Finished Tasks" }
               tasks = { this.state["FINISHED"] } showProgress />
           </TWBS.Col>
 
