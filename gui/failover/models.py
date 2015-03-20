@@ -13,11 +13,6 @@ from freenasUI.storage.models import Volume
 
 
 class CARP(Model):
-    carp_interface = models.ForeignKey(
-        Interfaces,
-        unique=True,
-        verbose_name=_("Interface")
-    )
     carp_number = models.PositiveIntegerField(
         verbose_name=_("Interface Number"),
         unique=True,
@@ -52,9 +47,14 @@ class CARP(Model):
         blank=True,
     )
 
+    @property
+    def carp_name(self):
+        return 'carp%d' % self.carp_number
+
     def __unicode__(self):
         try:
-            return u'%d:%s' % (self.carp_vhid, self.carp_interface.int_ipv4address)
+            iface = Interfaces.objects.get(int_interface=self.carp_name)
+            return u'%d:%s' % (self.carp_vhid, iface.int_ipv4address)
         except:
             return self.carp_vhid
 
@@ -72,26 +72,18 @@ class CARP(Model):
 
     def delete(self):
         super(CARP, self).delete()
-        VLAN.objects.filter(
-            vlan_pint=self.carp_interface.int_interface
-            ).delete()
-        self.carp_interface.delete()
-        notifier().iface_destroy(self.carp_interface.int_interface)
+        VLAN.objects.filter(vlan_pint=self.carp_name).delete()
+        Interfaces.objects.filter(int_interface=self.carp_name).delete()
+        notifier().iface_destroy(self.carp_name)
 
     def save(self, *args, **kwargs):
-        carpname = 'carp%d' % self.carp_number
         with transaction.atomic():
-            if not self.id:
-                iface = Interfaces.objects.create(
-                    int_interface=carpname,
+            qs = Interfaces.objects.filter(int_interface=self.carp_name)
+            if not qs.exists():
+                Interfaces.objects.create(
+                    int_interface=self.carp_name,
                     int_v4netmaskbit='32',
                 )
-                self.carp_interface = iface
-            else:
-                iface = self.carp_interface
-                iface.int_interface = carpname
-                iface.int_v4netmaskbit = '32'
-                iface.save()
             return super(CARP, self).save(*args, **kwargs)
 
 
