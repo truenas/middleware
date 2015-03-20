@@ -148,6 +148,7 @@ class MongodbDatastore(object):
             return cur.count()
 
         if sort:
+            sort = '_id' if sort == 'id' else sort
             dir = 1 if dir == 'asc' else -1
             cur = cur.sort(sort, dir)
 
