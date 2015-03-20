@@ -359,9 +359,9 @@ Advanced
 | Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
-| crash dumps and daily telemetry         |                                  | development team for diagnosis. The telemetry includes some system stats,    |
-|                                         |                                  | collectd RRDs, and select syslog messages.                                   |
+| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps and telemetry (some system stats, collectd    |
+| crash dumps and daily telemetry         |                                  | RRDs, and select syslog messages) are automatically sent to the  development |
+|                                         |                                  | team for diagnosis                                                           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |

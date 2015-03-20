@@ -351,6 +351,8 @@ that have occurred since 9.3-RELEASE.
 
 * The size of and the amount of used space in the boot pool is displayed in :menuselection:`System --> Boot`.
 
+* The "Enable automatic upload of kernel crash dumps and daily telemetry" checkbox has been added to :menuselection:`System --> Advanced`.
+
 * A "Backup" button has been added to :menuselection:`System --> Advanced`.
 
 * The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
