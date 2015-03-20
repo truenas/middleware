@@ -25,8 +25,10 @@
 #
 #####################################################################
 
+
 import copy
 import uuid
+import dateutil.parser
 from pymongo import MongoClient
 
 
@@ -52,7 +54,7 @@ class MongodbDatastore(object):
         }
 
         self.conversions_table = {
-            'timestamp': lambda v: None
+            'timestamp': lambda v: dateutil.parser.parse(v)
         }
 
     def _predicate(self, *args):
@@ -65,6 +67,9 @@ class MongodbDatastore(object):
     def _operator_predicate(self, name, op, value, conversion=None):
         if name == 'id':
             name = '_id'
+
+        if conversion:
+            value = self.conversions_table[conversion](value)
 
         if op == '=':
             return {name: value}
