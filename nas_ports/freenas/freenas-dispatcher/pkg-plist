@@ -33,9 +33,17 @@
 /usr/local/lib/dispatcher/src/frontend/templates/rpc.html
 /usr/local/lib/dispatcher/src/frontend/templates/term.html
 /usr/local/lib/dispatcher/src/frontend/templates/stats.html
+/usr/local/lib/dispatcher/src/frontend/templates/apidoc/nav.html
+/usr/local/lib/dispatcher/src/frontend/templates/apidoc/rpc.html
+/usr/local/lib/dispatcher/src/frontend/templates/apidoc/events.html
+/usr/local/lib/dispatcher/src/frontend/templates/apidoc/tasks.html
+/usr/local/lib/dispatcher/src/frontend/templates/apidoc/schemas.html
 /usr/local/lib/dispatcher/src/frontend/static/middleware.js
 /usr/local/lib/dispatcher/src/frontend/static/emitter.js
 /usr/local/lib/dispatcher/src/frontend/static/term.js
+/usr/local/lib/dispatcher/src/frontend/static/jquery.jsonview.js
+/usr/local/lib/dispatcher/src/frontend/static/jquery.jsonview.css
+/usr/local/lib/dispatcher/src/frontend/static/main.css
 /usr/local/lib/dispatcher/src/frontend/frontend.py
 /usr/local/lib/dispatcher/src/frontend/__init__.py
 /usr/local/lib/dispatcher/plugins/SystemInfoPlugin.py

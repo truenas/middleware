@@ -1,0 +1,42 @@
+{% extends "bootstrap/base.html" %}
+{% import "apidoc/nav.html" as nav %}
+{% block scripts -%}
+    {{ super() }}
+    <script type="text/javascript" src="/static/jquery.jsonview.js"></script>
+    <script>
+        $(document).ready(function (){
+            $(".json").each(function() {
+                $(this).JSONView($(this).text(), { "collapsed": true });
+                $(this).JSONView('expand', 1);
+            });
+        });
+    </script>
+{% endblock %}
+{% block styles -%}
+    {{ super() }}
+    <link href="/static/main.css" rel="stylesheet"/>
+    <link href="/static/jquery.jsonview.css" rel="stylesheet"/>
+{% endblock styles %}
+
+{% block content %}
+
+{{ nav.nav() }}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                {% for name in schemas.keys() | sort %}
+                    <li><a href="#{{ name }}">{{ name }}</a></li>
+                {% endfor %}
+            </ul>
+    </div>
+    <!-- Begin Body -->
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        {% for name, schema in schemas.items() | sort %}
+            <h3><a name="{{ name }}">{{ name }}</a></h3>
+            <div class="json">{{ schema | json }}</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% macro nav() -%}
+<nav class="navbar navbar-inverse navbar-fixed-top" role="banner">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a href="/apidoc" class="navbar-brand">Middleware API docs</a>
+    </div>
+    <nav id="navbar" class="collapse navbar-collapse" role="navigation">
+      <ul class="nav navbar-nav">
+        <li>
+          <a href="/apidoc/rpc">RPC interfaces</a>
+        </li>
+        <li>
+          <a href="/apidoc/events">Events</a>
+        </li>
+        <li>
+          <a href="/apidoc/tasks">Tasks</a>
+        </li>
+        <li>
+          <a href="/apidoc/schemas">JSON schemas</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</nav>
+{%- endmacro %}

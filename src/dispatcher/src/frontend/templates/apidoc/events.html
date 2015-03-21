@@ -1,0 +1,28 @@
+{% extends "bootstrap/base.html" %}
+{% import "apidoc/nav.html" as nav %}
+{% block styles -%}
+    {{ super() }}
+    <link href="/static/main.css" rel="stylesheet"/>
+{% endblock styles %}
+
+{% block content %}
+
+{{ nav.nav() }}
+
+<!-- Begin Body -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                {% for name in events.keys() | sort %}
+                    <li><a href="#{{ name }}">{{ name }}</a></li>
+                {% endfor %}
+            </ul>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        {% for name, evt in events.items() | sort %}
+            <h3><a name="{{ name }}">{{ name }}</a></h3>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

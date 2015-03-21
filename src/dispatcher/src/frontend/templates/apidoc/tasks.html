@@ -1,0 +1,48 @@
+{% extends "bootstrap/base.html" %}
+{% import "apidoc/nav.html" as nav %}
+{% block styles -%}
+    {{ super() }}
+    <link href="/static/main.css" rel="stylesheet"/>
+{% endblock styles %}
+
+{% block content %}
+
+{{ nav.nav() }}
+
+<!-- Begin Body -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                {% for name in tasks | sort %}
+                    <li><a href="#{{ name }}">{{ name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        {% for name, task in tasks.items() | sort %}
+            <h3><a name="{{ name }}">
+                {{ name }}(
+                {% for arg in call_args(task, "run").args if arg != "self" %}
+                    {{ arg }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+                )
+            </a></h3>
+            <p>{{ task.description }}</p>
+            {% if "params-schema" in method %}
+                <h5>Parameters schema:</h5>
+                <div class="json">
+                    {{ method["params-schema"] | json }}
+                </div>
+            {% endif %}
+            {% if "result-schema" in method %}
+                <h5>Result schema:</h5>
+                <div class="json">
+                    {{ method["result-schema"] | json }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

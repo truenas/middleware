@@ -1,0 +1,16 @@
+{% extends "bootstrap/base.html" %}
+{% import "apidoc/nav.html" as nav %}
+{% block styles -%}
+    {{ super() }}
+    <link href="/static/main.css" rel="stylesheet"/>
+{% endblock styles %}
+
+{% block content %}
+
+{{ nav.nav() }}
+
+<!-- Begin Body -->
+<div class="container-fluid">
+    Sup.
+</div>
+{% endblock %}

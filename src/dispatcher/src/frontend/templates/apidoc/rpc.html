@@ -1,0 +1,65 @@
+{% extends "bootstrap/base.html" %}
+{% import "apidoc/nav.html" as nav %}
+{% block scripts -%}
+    {{ super() }}
+    <script type="text/javascript" src="/static/jquery.jsonview.js"></script>
+    <script>
+        $(document).ready(function (){
+            $(".json").each(function() {
+                $(this).JSONView($(this).text(), { "collapsed": true });
+                $(this).JSONView('expand', 1);
+            });
+        });
+    </script>
+{% endblock %}
+{% block styles -%}
+    {{ super() }}
+    <link href="/static/main.css" rel="stylesheet"/>
+    <link href="/static/jquery.jsonview.css" rel="stylesheet"/>
+{% endblock styles %}
+
+{% block content %}
+
+{{ nav.nav() }}
+
+<!-- Begin Body -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+            <ul class="nav nav-sidebar">
+                {% for name in services.keys() | sort %}
+                    <li><a href="#{{ name }}">{{ name }}</a></li>
+                {% endfor %}
+            </ul>
+    </div>
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        {% for name, svc in services.items() | sort %}
+            <h3><a name="{{ name }}">{{ name }}</a></h3>
+            {% for method in svc.enumerate_methods() %}
+                <h4>
+                    {{ method.name }}(
+                        {% for arg in call_args(svc, method.name).args if arg != "self" %}
+                            {{ arg }}{% if not loop.last %},{% endif %}
+                        {% endfor %}
+                    )
+                </h4>
+                <div class="method">
+                    <p>{{ method.description }}</p>
+                    {% if "params-schema" in method %}
+                        <h5>Parameters schema:</h5>
+                        <div class="json">
+                            {{ method["params-schema"] | json }}
+                        </div>
+                    {% endif %}
+                    {% if "result-schema" in method %}
+                        <h5>Result schema:</h5>
+                        <div class="json">
+                            {{ method["result-schema"] | json }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
