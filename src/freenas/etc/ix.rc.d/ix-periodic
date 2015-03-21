@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-periodic
+# KEYWORD: nojail
+
+. /etc/rc.freenas
+. /etc/rc.subr
+
+ix_periodic_start()
+{
+	if [ -f /etc/periodic.conf ]; then
+		rm /etc/periodic.conf
+	fi
+	cp /conf/base/etc/periodic.conf /etc/
+	notifyuser=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT adv_periodic_notifyuser FROM system_advanced")
+
+	echo "daily_output=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "daily_status_security_output=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "weekly_output="root"=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "weekly_status_security_output=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "monthly_output="root"=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "monthly_status_security_output=\"${notifyuser}\"" >> /etc/periodic.conf
+}
+
+name="ix-periodic"
+start_cmd='ix_periodic_start'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
