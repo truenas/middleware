@@ -48,6 +48,7 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
+from freenasUI.freeadmin.models import UserField
 
 log = logging.getLogger('system.models')
 
@@ -284,6 +285,13 @@ class Advanced(Model):
     adv_boot_scrub = models.IntegerField(
         default=35,
         editable=False,
+    )
+    adv_periodic_notifyuser = UserField(
+        default="root",
+        verbose_name=_("Periodic Notification User"),
+        help_text=_("If you wish periodic emails to be sent to a different email address than "
+                    "the alert emails are set to (root) set an email address for a user and "
+                    "select that user in the dropdown.")
     )
 
     class Meta:
