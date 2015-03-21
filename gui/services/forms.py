@@ -1519,6 +1519,13 @@ class iSCSITargetForm(ModelForm):
 
     def clean_iscsi_target_alias(self):
         alias = self.cleaned_data['iscsi_target_alias']
+        qs = models.iSCSITarget.objects.filter(
+            iscsi_target_alias=alias
+        )
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('Alias name must be unique.'))
         if not alias:
             alias = None
         elif alias.lower() == "target":
