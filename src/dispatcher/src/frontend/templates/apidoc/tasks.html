@@ -1,8 +1,21 @@
 {% extends "bootstrap/base.html" %}
 {% import "apidoc/nav.html" as nav %}
+{% block scripts -%}
+    {{ super() }}
+    <script type="text/javascript" src="/static/jquery.jsonview.js"></script>
+    <script>
+        $(document).ready(function (){
+            $(".json").each(function() {
+                $(this).JSONView($(this).text(), { "collapsed": true });
+                $(this).JSONView('expand', 1);
+            });
+        });
+    </script>
+{% endblock %}
 {% block styles -%}
     {{ super() }}
     <link href="/static/main.css" rel="stylesheet"/>
+    <link href="/static/jquery.jsonview.css" rel="stylesheet"/>
 {% endblock styles %}
 
 {% block content %}
@@ -22,6 +35,7 @@
     </div>
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, task in tasks.items() | sort %}
+            {% set metadata = task._get_metadata() %}
             <h3><a name="{{ name }}">
                 {{ name }}(
                 {% for arg in call_args(task, "run").args if arg != "self" %}
@@ -29,19 +43,11 @@
                 {% endfor %}
                 )
             </a></h3>
-            <p>{{ task.description }}</p>
-            {% if "params-schema" in method %}
-                <h5>Parameters schema:</h5>
-                <div class="json">
-                    {{ method["params-schema"] | json }}
-                </div>
-            {% endif %}
-            {% if "result-schema" in method %}
-                <h5>Result schema:</h5>
-                <div class="json">
-                    {{ method["result-schema"] | json }}
-                </div>
-            {% endif %}
+            <p>{{ metadata.description }}</p>
+            <h5>Parameters schema:</h5>
+            <div class="json">
+                {{ metadata.schema | json }}
+            </div>
         {% endfor %}
     </div>
 </div>
