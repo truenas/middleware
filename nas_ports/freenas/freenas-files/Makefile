@@ -164,6 +164,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-ntpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-ntpd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pam ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pam
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-passwd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-passwd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-periodic ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-periodic
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-plugins ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-plugins
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-postinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-postinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-preinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-preinit

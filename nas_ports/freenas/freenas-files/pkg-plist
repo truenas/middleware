@@ -82,6 +82,7 @@ etc/ix.rc.d/ix-nt4
 etc/ix.rc.d/ix-ntpd
 etc/ix.rc.d/ix-pam
 etc/ix.rc.d/ix-passwd
+etc/ix.rc.d/ix-periodic
 etc/ix.rc.d/ix-plugins
 etc/ix.rc.d/ix-postinit
 etc/ix.rc.d/ix-preinit

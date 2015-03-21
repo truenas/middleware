@@ -254,6 +254,13 @@ class Advanced(Model):
         verbose_name=_("MOTD banner"),
         default='Welcome',
     )
+    adv_periodic_notifyuser = UserField(
+        default="root",
+        verbose_name=_("Periodic Notification User"),
+        help_text=_("If you wish periodic emails to be sent to a different email address than "
+                    "the alert emails are set to (root) set an email address for a user and "
+                    "select that user in the dropdown.")
+    )
 
     class Meta:
         verbose_name = _("Advanced")
