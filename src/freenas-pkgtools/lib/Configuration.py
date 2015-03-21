@@ -22,7 +22,7 @@ from stat import (
     S_IMODE
 )
 
-VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache','/usr/local/share/smartmontools/drivedb.h', '/boot/device.hints']
+VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache','/usr/local/share/smartmontools/drivedb.h', '/boot/device.hints', '/usr/local/lib/perl5/5.16/man/whatis', '/usr/share/man/whatis']
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
 CONFIG_SERVER = "update_server"
