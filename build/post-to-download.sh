@@ -29,9 +29,10 @@ if [ ! -d ${STAGE}/$VERSION-$DATE ]; then
 	exit 2
 fi
 
-ssh ${ID}@download.freenas.org rm -rf /tank/downloads/nightlies/$TRAIN/$DATE
-ssh ${ID}@download.freenas.org mkdir -p /tank/downloads/nightlies/$TRAIN/$DATE
-scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:/tank/downloads/nightlies/$TRAIN/$DATE/
-ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; rm -f latest; ln -s ../nightlies/$TRAIN/$DATE latest)"
-ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}/STABLE; ln -fs ../../nightlies/$TRAIN/$DATE .)"
+TARGET=/tank/downloads/9.3/STABLE/$DATE
+
+ssh ${ID}@download.freenas.org rm -rf $TARGET
+ssh ${ID}@download.freenas.org mkdir -p $TARGET
+scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:$TARGET
+ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; rm -f latest; ln -s STABLE/$DATE latest)"
 exit 0
