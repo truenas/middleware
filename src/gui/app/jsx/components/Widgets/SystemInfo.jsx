@@ -59,8 +59,6 @@ var SystemInfo = React.createClass({
   }
 
   , render: function() {
-    //console.log(this.state.widgetData);
-    // <h3 style={elementStyle}>{"It works! "}{this.state.widgetData}</h3>
     var memSize = (this.state.hardware["memory-size"] / 1024) / 1024;
     return (
       <Widget

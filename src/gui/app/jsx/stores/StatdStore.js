@@ -49,7 +49,6 @@ StatdStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       if (action.rawWidgetData.data !== undefined)
       {
         _widgetData[action.dataSourceName] = action.rawWidgetData.data;
-        //console.log(_widgetData);
       }
       else
       {

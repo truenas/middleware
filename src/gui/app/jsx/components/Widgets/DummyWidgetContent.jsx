@@ -27,8 +27,6 @@ var DummyWidgetContent = React.createClass({
 
     StatdStore.addChangeListener( this.handleStatdChange );
 
-    console.log(this.props);
-
     this.props.statdResources.forEach(function(resource) {
       StatdMiddleware.subscribe(resource.dataSource);
     });
@@ -105,10 +103,8 @@ var DummyWidgetContent = React.createClass({
       {
         this.drawChart();
       }
-      console.log("1!");
     }
     else {
-      console.log("2!");
       var ud = StatdStore.getWidgetDataUpdate();
       var updateCounter = this.state.updateCounter;
       var updateFunction = this.updateData;
@@ -125,7 +121,6 @@ var DummyWidgetContent = React.createClass({
 
         if (updateCounter >= this.props.statdResources.length)
         {
-          console.log("update");
           this.drawChart(true);
           updateCounter = 0;
         }
@@ -156,7 +151,6 @@ var DummyWidgetContent = React.createClass({
       }
 
       if (update === true) {
-        console.log(this.state);
         var chart = this.state.chart;
         d3.select(this.state.element)
         .datum(this.chartData(this.state.graphType))
@@ -166,7 +160,6 @@ var DummyWidgetContent = React.createClass({
         //this.state.chart.update();
       }
       else {
-        console.log(this.state);
         var chart;
         var graphTypeObject;
 
@@ -190,7 +183,6 @@ var DummyWidgetContent = React.createClass({
           chart.xAxis
             .axisLabel(xLabel)
             .tickFormat(function(d) {
-              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
               return moment.unix(d).format("HH:mm:ss");
             });
 
@@ -198,7 +190,6 @@ var DummyWidgetContent = React.createClass({
           chart.yAxis
             .axisLabel(graphTypeObject.yLabel)
             .tickFormat(function(d) {
-              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
               return (d + yUnit);
             });
 
@@ -223,7 +214,6 @@ var DummyWidgetContent = React.createClass({
           chart.xAxis
             .axisLabel(xLabel)
             .tickFormat(function(d) {
-              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
               return moment.unix(d).format("HH:mm:ss");
             });
 
@@ -231,7 +221,6 @@ var DummyWidgetContent = React.createClass({
           chart.yAxis
             .axisLabel(graphTypeObject.yLabel)
             .tickFormat(function(d) {
-              //console.log("plain: " + d + "formated: " + moment.unix(d).format("HH:mm:ss"));
               return (d + yUnit);
             });
 
@@ -309,7 +298,6 @@ var DummyWidgetContent = React.createClass({
     else if (chartType === "pie")
     {
       this.props.statdResources.forEach(function(resource) {
-        console.log(state[resource.variable][state[resource.variable].length - 1][1]);
         var returnArrayMember = {
                                     value: state[resource.variable][state[resource.variable].length - 1][1]
                                   , label: resource.name
