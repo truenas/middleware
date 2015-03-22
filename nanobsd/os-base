@@ -199,6 +199,7 @@ if is_truenas ; then
 	add_port_with_repo "${NAS_PORTS}" sysutils/zfsd LOCALBASE=/
 fi
 
+add_port print/indexinfo
 add_port net/mDNSResponder
 add_port textproc/libxml2
 add_port devel/libffi
@@ -292,7 +293,6 @@ add_port devel/gamin
 add_port devel/m4
 if is_truenas ; then
 	add_port devel/bison
-	add_port devel/libffi
 fi
 add_port misc/gnomehier
 add_port www/py-httplib2
@@ -420,6 +420,7 @@ add_port devel/libinotify
 add_port dns/samba-nsupdate
 add_port security/gnutls
 add_port databases/ldb
+add_port databases/ntdb
 add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=ACL_SUPPORT \
        OPTIONS_FILE_SET+=ADS \
