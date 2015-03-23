@@ -18,6 +18,12 @@ IntegrityError = sqlite3base.IntegrityError
 log = logging.getLogger('freeadmin.sqlite3_ha')
 
 
+"""
+Mapping of tables to not to replicate to the remote side
+
+It accepts a fields key which will then exclude these fields and not the
+whole table.
+"""
 NO_SYNC_MAP = {
     'directoryservice_activedirectory': {
         'fields': ['ad_netbiosname'],
@@ -56,6 +62,12 @@ NO_SYNC_MAP = {
 
 
 class Journal(object):
+    """
+    Interface for accessing the journal for the queries that couldn't run in
+    the remote side, either for it being offline or failed to execute.
+
+    This should be used in a context and provides file locking by itself.
+    """
 
     JOURNAL_FILE = '/data/ha-journal'
 
@@ -101,6 +113,12 @@ class Journal(object):
 
 
 class RunSQLRemote(threading.Thread):
+    """
+    This is a thread responsible for running the queries on the remote side.
+
+    The query will be appended to the Journal in case the Journal is not empty
+    or if it fails (e.g. remote side offline)
+    """
 
     def __init__(self, *args, **kwargs):
         self._sql = kwargs.pop('sql')
@@ -142,6 +160,10 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
     def dump_send(self, failover=None):
+        """
+        Method responsible for dumping the database into SQL,
+        excluding the tables that should not be synced between nodes.
+        """
         from freenasUI.middleware.notifier import notifier
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
@@ -170,6 +192,8 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 script.append(row[0])
 
         s = notifier().failover_rpc(ip=failover.ipaddress)
+        # If we are syncing then we need to clear the Journal in case
+        # everything goes as planned.
         with Journal() as j:
             try:
                 sync = s.sync_to(failover.secret, script)
@@ -181,13 +205,23 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 return False
 
     def dump_recv(self, script):
+        """
+        Receives the dump from the other side, executing via script within
+        a transaction.
+        """
+
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
 
         for row in cur.fetchall():
             table = row[0]
+            # Skip in case table is supposed to sync
             if table not in NO_SYNC_MAP:
                 continue
+
+            # If the table has no restrictions, simply preseve the values
+            # for completeness.
+            # This chunck of code may not be really necessary for now.
             tbloptions = NO_SYNC_MAP.get(table)
             if not tbloptions:
                 cur.executelocal("PRAGMA table_info('%s');" % table)
@@ -205,6 +239,9 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 ))
                 for row in cur.fetchall():
                     script.append(row[0])
+
+            # If the table has fields restrictions, update these fields
+            # exclusively.
             else:
                 fieldnames = tbloptions['fields']
                 cur.executelocal('SELECT %s FROM %s' % (
@@ -220,6 +257,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 for row in cur.fetchall():
                     script.append(row[0])
 
+        # Execute the script within a transaction
         cur.executescript(';'.join(
             ['PRAGMA foreign_keys=OFF', 'BEGIN TRANSACTION'] + script + [
                 'COMMIT;'
@@ -231,7 +269,12 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
 class HASQLiteCursorWrapper(Database.Cursor):
 
     def execute_passive(self, query, params=None):
+        """
+        Process the query, modify it if necessary based on NO_SYNC_MAP rules
+        and execute it on the remote side.
+        """
 
+        # Skip SELECT queries
         if query.lower().startswith('select'):
             return
 
@@ -248,6 +291,8 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
         parse = sqlparse.parse(query)
         for p in parse:
+
+            # Only care for DELETE, INSERT and UPDATE queries
             if p.tokens[0].normalized not in ('DELETE', 'INSERT', 'UPDATE'):
                 continue
 
@@ -293,7 +338,9 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 if no_sync is None:
                     lookup = []
                 else:
-                    if issubclass(next_.__class__, sqlparse.sql.IdentifierList):
+                    if issubclass(
+                        next_.__class__, sqlparse.sql.IdentifierList
+                    ):
                         lookup = list(next_.get_sublists())
                     elif issubclass(next_.__class__, sqlparse.sql.Comparison):
                         lookup = [next_]
@@ -331,6 +378,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 sql = self.convert_query(str(p))
             else:
                 sql = str(p)
+            # Actually try to run the query on the remote side within a thread
             rsr = RunSQLRemote(sql=sql, params=cparams)
             rsr.start()
 
