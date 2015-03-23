@@ -30,6 +30,8 @@ NO_SYNC_MAP = {
         'fields': ['gc_hostname'],
     },
     'network_interfaces': {},
+    'network_lagginterface': {},
+    'network_lagginterfacemembers': {},
     'services_ssh': {
         'fields': [
             'ssh_host_dsa_key',
