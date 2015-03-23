@@ -60,5 +60,17 @@ def _init(dispatcher):
             session['active'] = False
             dispatcher.datastore.update('session', session['id'], session)
 
+    dispatcher.register_schema_definition('session', {
+        'type': 'object',
+        'properties': {
+            'username': {'type': 'string'},
+            'resource': {'type': ['string', 'null']},
+            'tty': {'type': ['string', 'null']},
+            'active': {'type': 'boolean'},
+            'started-at': {'type': 'integer'},
+            'ended-at': {'type': 'integer'}
+        }
+    })
+
     dispatcher.register_provider('sessions', SessionProvider)
     dispatcher.register_event_handler('system.pam.event', pam_event)

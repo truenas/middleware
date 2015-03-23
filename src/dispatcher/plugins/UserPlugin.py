@@ -377,7 +377,7 @@ def _init(dispatcher):
             'sessions': {
                 'type': 'array',
                 'readOnly': True,
-                'items': {'$ref': 'user-session'}
+                'items': {'$ref': 'session'}
             }
         }
     })
