@@ -125,8 +125,7 @@ class NetworkConfigureTask(Task):
 
 @accepts(
     {'type': 'string'},
-    {'type': 'string'},
-    {'type': 'object'}
+    {'type': 'string'}
 )
 class CreateInterfaceTask(Task):
     def verify(self, name, type):
@@ -147,15 +146,26 @@ class CreateInterfaceTask(Task):
             raise TaskException(errno.ENXIO, 'Cannot reconfigure network: {0}'.format(str(e)))
 
 
+@description("Deletes interface")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+})
 class DeleteInterfaceTask(Task):
     def verify(self, name):
-        pass
+        raise NotImplementedError()
 
     def run(self, name):
-        pass
+        raise NotImplementedError()
 
 
 @description("Alters network interface configuration")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+}, {
+    '$ref': 'network-interface'
+})
 class ConfigureInterfaceTask(Task):
     def verify(self, name, updated_fields):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
@@ -202,6 +212,11 @@ class ConfigureInterfaceTask(Task):
         })
 
 
+@description("Enables interface")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+})
 class InterfaceUpTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
@@ -221,6 +236,11 @@ class InterfaceUpTask(Task):
         })
 
 
+@description("Disables interface")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+})
 class InterfaceDownTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
@@ -241,6 +261,13 @@ class InterfaceDownTask(Task):
 
 
 @description("Adds host entry to the database")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+}, {
+    'type': 'string',
+    'title': 'address'
+})
 class AddHostTask(Task):
     def verify(self, name, address):
         if self.datastore.exists('network.hosts', ('id', '=', name)):
@@ -263,7 +290,15 @@ class AddHostTask(Task):
             'ids': [name]
         })
 
+
 @description("Updates host entry in the database")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+}, {
+    'type': 'string',
+    'title': 'address'
+})
 class UpdateHostTask(Task):
     def verify(self, name, address):
         if not self.datastore.exists('network.hosts', ('id', '=', name)):
@@ -286,7 +321,12 @@ class UpdateHostTask(Task):
             'ids': [name]
         })
 
+
 @description("Deletes host entry from the database")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+})
 class DeleteHostTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.hosts', ('id', '=', name)):
@@ -308,6 +348,11 @@ class DeleteHostTask(Task):
         })
 
 
+@description("Adds static route to the system")
+@accepts({
+    '$ref': 'network-route',
+    'title': 'route'
+})
 class AddRouteTask(Task):
     def verify(self, route):
         if self.datastore.exists('network.routes', ('id', '=', route['id'])):
@@ -323,6 +368,14 @@ class AddRouteTask(Task):
         })
 
 
+@description("Updates static route in the system")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+}, {
+    '$ref': 'network-route',
+    'title': 'route'
+})
 class UpdateRouteTask(Task):
     def verify(self, name, route):
         if not self.datastore.exists('network.routes', ('id', '=', name)):
@@ -341,6 +394,11 @@ class UpdateRouteTask(Task):
         })
 
 
+@description("Deletes static route from the system")
+@accepts({
+    '$ref': 'string',
+    'title': 'name'
+})
 class DeleteRouteTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.routes', ('id', '=', name)):
@@ -364,7 +422,7 @@ def _init(dispatcher):
         'type': 'object',
         'properties': {
             'type': {'type': 'string'},
-            'name': {'type', 'string'},
+            'name': {'type': 'string'},
             'enabled': {'type': 'boolean'},
             'dhcp': {'type': 'boolean'},
             'mtu': {'type': ['integer', 'null']},
