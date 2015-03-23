@@ -106,6 +106,9 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
+.if defined(JENKINS_STAGEDIR)
+	cp -r "objs/${STAGEDIR}" "${JENKINS_STAGEDIR}"
+.endif
 
 release-push: release
 	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
