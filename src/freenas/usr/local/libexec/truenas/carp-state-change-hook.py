@@ -504,10 +504,10 @@ if __name__ == '__main__':
             },
             'handlers': {
                 'console': {
-                    'class' : 'logging.StreamHandler',
+                    'class': 'logging.StreamHandler',
                     'formatter': 'simple',
-                    'level'   : 'INFO',
-                    'stream'  : 'ext://sys.stdout',
+                    'level': 'INFO',
+                    'stream': 'ext://sys.stdout',
                 },
             },
             'loggers': {
