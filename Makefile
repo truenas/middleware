@@ -49,7 +49,7 @@ ENV_SETUP+= CHANGELOG=ChangeLog
 
 all:	build
 
-.BEGIN:
+builder-verify:
 	${ENV_SETUP} /bin/sh build/check_build_host.sh
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
 	${ENV_SETUP} /bin/sh build/check_sandbox.sh
@@ -155,7 +155,7 @@ build-bug-report:
 	mail -s "build fail for $${SUDO_USER:-$$USER}" ${BUILD_BUG_EMAIL} < \
 		${RELEASE_LOGFILE}
 
-git-verify:
+git-verify: builder-verify
 	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
 		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
 		echo "external developer or \"make git-internal\" to build as an ${COMPANY}"; \
