@@ -32,7 +32,7 @@
                         <a href="#{{ name }}" class="collapsed" data-toggle="collapse" data-target="#collapse-{{ name | selector }}">
                             {{ name }}
                         </a>
-                        <ul id="collapse-{{ name }}" class="nav collapse">
+                        <ul id="collapse-{{ name }}" class="nav collapse" style="padding-left: 20px;">
                         {% for method in svc.enumerate_methods() %}
                             <li><a href="#{{ name }}.{{ method.name }}">{{ method.name }}</a></li>
                         {% endfor %}
@@ -45,7 +45,7 @@
         {% for name, svc in services.items() | sort %}
             <h3><a name="{{ name }}">{{ name }}</a></h3>
             {% for method in svc.enumerate_methods() %}
-                <h4>
+                <h4><a name="{{ name }}.{{ method.name }}">&nbsp;</a>
                     {{ method.name }}(
                         {% for arg in call_args(svc, method.name).args if arg != "self" %}
                             {{ arg }}{% if not loop.last %},{% endif %}

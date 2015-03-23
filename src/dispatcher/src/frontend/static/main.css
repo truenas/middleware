@@ -7,6 +7,11 @@ body {
   padding-top: 50px;
 }
 
+a[name] {
+  padding-top: 60px;
+  margin-top: -60px;
+}
+
 
 /*
  * Global add-ons
