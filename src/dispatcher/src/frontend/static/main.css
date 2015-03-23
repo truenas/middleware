@@ -52,7 +52,7 @@ body {
 /* Sidebar navigation */
 .nav-sidebar {
   margin-right: -21px; /* 20px padding + 1px border */
-  margin-bottom: 20px;
+  margin-bottom: 20px
   margin-left: -20px;
 }
 .nav-sidebar > li > a {
@@ -106,4 +106,13 @@ body {
 
 .method {
   padding-left: 20px;
+}
+
+.disclosure > a:before {
+    font-family: "Glyphicons Halflings";
+    content: "\e252";
+    padding-right: 5px;
+}
+.disclosure > a.collapsed:before {
+    content: "\e250";
 }

@@ -1,7 +1,7 @@
 @charset "UTF-8";
 .jsonview {
-  font-family: monospace;
-  font-size: 1.1em;
+  font-family: "Source Code Pro", "Menlo", monospace;
+  font-size: 1.0em;
   white-space: pre-wrap; }
   .jsonview .prop {
     font-weight: bold; }

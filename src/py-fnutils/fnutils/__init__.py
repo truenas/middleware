@@ -26,6 +26,9 @@
 #####################################################################
 
 
+import copy
+
+
 def first_or_default(f, iterable, default=None):
     i = filter(f, iterable)
     if i:
@@ -36,3 +39,25 @@ def first_or_default(f, iterable, default=None):
 
 def exclude(d, *keys):
     return {k: v for k, v in d.items() if k not in keys}
+
+
+def materialized_paths_to_tree(lst, separator='.'):
+    result = {'children': {}, 'path': []}
+
+    def add(parent, path):
+        if not path:
+            return
+
+        p = path.pop(0)
+        c = parent['children'].get(p)
+        if not c:
+            c = {'children': {}, 'path': parent['path'] + [p], 'label': p}
+            parent['children'][p] = c
+
+        add(c, path)
+
+    for i in lst:
+        path = i.split(separator)
+        add(result, path)
+
+    return result

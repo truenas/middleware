@@ -30,6 +30,7 @@ import json
 import inspect
 from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap
+from fnutils import materialized_paths_to_tree
 
 
 app = Flask(__name__)
@@ -87,7 +88,8 @@ def apidoc_tasks():
 @app.route('/apidoc/events')
 def apidoc_events():
     events = dispatcher.event_types
-    return render_template('apidoc/events.html', events=events)
+    tree = materialized_paths_to_tree(events.keys())
+    return render_template('apidoc/events.html', events=events, tree=tree)
 
 
 @app.route('/apidoc/schemas')
@@ -101,14 +103,54 @@ def json_filter(obj):
     return json.dumps(obj, indent=4)
 
 
+@app.template_filter('selector')
+def jquery_selector_escape(s):
+    return s.replace('.', r'\.')
+
+
 @app.context_processor
 def utils():
     def call_args(obj, method_name):
         method = getattr(obj, method_name)
         return inspect.getargspec(method)
 
+    def prepare_args(args, schema):
+        idx = 0
+        for i in args:
+            if i == 'self':
+                continue
+
+            if not schema or len(schema) <= idx:
+                yield {
+                    'name': i,
+                    'type': None
+                }
+
+                idx += 1
+                continue
+
+            fragment = schema[idx]
+            typ = None
+            reference = False
+
+            if '$ref' in fragment:
+                typ = fragment['$ref']
+                reference = True
+
+            if 'type' in fragment:
+                typ = fragment['type']
+
+            yield {
+                'name': i,
+                'type': typ,
+                'reference': reference
+            }
+
+            idx += 1
+
     return {
         'call_args': call_args,
+        'prepare_args': prepare_args,
         'hasattr': hasattr,
         'getattr': getattr
     }

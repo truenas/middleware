@@ -27,8 +27,17 @@
     <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
             <ul class="nav nav-sidebar">
-                {% for name in services.keys() | sort %}
-                    <li><a href="#{{ name }}">{{ name }}</a></li>
+                {% for name, svc in services.items() | sort %}
+                    <li class="disclosure">
+                        <a href="#{{ name }}" class="collapsed" data-toggle="collapse" data-target="#collapse-{{ name | selector }}">
+                            {{ name }}
+                        </a>
+                        <ul id="collapse-{{ name }}" class="nav collapse">
+                        {% for method in svc.enumerate_methods() %}
+                            <li><a href="#{{ name }}.{{ method.name }}">{{ method.name }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    </li>
                 {% endfor %}
             </ul>
     </div>

@@ -36,13 +36,18 @@
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, task in tasks.items() | sort %}
             {% set metadata = task._get_metadata() %}
-            <h3><a name="{{ name }}">
+            <h3><a name="{{ name }}"></a>
                 {{ name }}(
-                {% for arg in call_args(task, "run").args if arg != "self" %}
-                    {{ arg }}{% if not loop.last %},{% endif %}
+                {% for arg in prepare_args(call_args(task, "run").args, metadata.schema) %}
+                    {% if arg.reference %}
+                        <a href="/apidoc/schemas#{{ arg.type }}">{{ arg.type }}</a>
+                    {% elif arg.type %}
+                        {{ arg.type }}
+                    {% endif %}
+                    <i>{{ arg.name }}</i>{% if not loop.last %},{% endif %}
                 {% endfor %}
                 )
-            </a></h3>
+            </h3>
             <p>{{ metadata.description }}</p>
             <h5>Parameters schema:</h5>
             <div class="json">

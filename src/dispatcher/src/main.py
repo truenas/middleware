@@ -1006,6 +1006,8 @@ def run(d, args):
     if args.s:
         # Debugging frontend server
         from frontend import frontend
+
+        frontend.dispatcher = d
         if d.use_tls:
             http_server = WSGIServer(('', args.s), frontend.app, certfile=d.certfile, keyfile=d.keyfile)
         else:
