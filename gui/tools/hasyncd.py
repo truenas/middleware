@@ -199,12 +199,14 @@ class Funcs:
             return None
         with open(path, 'rb') as f:
             data = base64.b64encode(f.read())
-        return data
+        mode = os.stat(path).st_mode
+        return data, mode
 
-    def file_send(self, client_address, secret, path, content):
+    def file_send(self, client_address, secret, path, content, mode):
         self._authenticated(secret)
         with open(path, 'wb+') as f:
             f.write(base64.b64decode(content))
+        os.chmod(path, mode)
         return True
 
     def run_sql(self, client_address, secret, query, params):
