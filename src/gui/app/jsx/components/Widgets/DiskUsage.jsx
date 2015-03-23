@@ -5,12 +5,13 @@ var React   =   require("react");
 var Widget  =   require("../Widget");
 var DummyWidgetContent = require("./DummyWidgetContent");
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var ZfsMiddleware = require("../../middleware/ZfsMiddleware");
+var ZfsStore      = require("../../stores/ZfsStore");
 
-function getSystemDeviceFromStore( name ) {
-  return SystemStore.getSystemDevice( name );
+function getZfsPoolGetDisksFromStore( name ) {
+  return ZfsStore.getZfsPoolGetDisks( name );
 }
+
 
 var DiskUsage = React.createClass({
   getInitialState: function() {
@@ -28,33 +29,32 @@ var DiskUsage = React.createClass({
   }
 
 , componentDidMount: function() {
-    this.requestData();
-    SystemStore.addChangeListener( this.handleChange );
+    this.requestData();    
+    ZfsStore.addChangeListener( this.handleChange );
   }
 
-, componentWillUnmount: function() {
-     SystemStore.removeChangeListener( this.handleChange );
+, componentWillUnmount: function() {     
+     ZfsStore.removeChangeListener( this.handleChange );
   }
 
 , requestData: function() {
-
-    SystemMiddleware.requestSystemDevice( "disk" );
+    ZfsMiddleware.requestZfsPoolGetDisks( "freenas-boot" );
   }
 
 , handleChange: function() {
-    this.setState({ disk  : getSystemDeviceFromStore( "disk" ) });
-    //console.log("DISK");
-    //console.log(this.state.disk);
-    if (this.state.disk !== undefined)
-     {      
-       var disk = this.state.disk[this.state.disk.length - 1]["name"];
-       this.setState({  statdResources:    [  {variable:"write", dataSource:"localhost.disk-" + disk + ".disk_octets.write", name: disk + " Write", color:"#9ecc3c"}
-                                            , {variable:"read", dataSource:"localhost.disk-" + disk + ".disk_octets.read", name: disk + " Read", color:"#77c5d5"}
+    this.setState({ pool  : getZfsPoolGetDisksFromStore( "freenas-boot") });    
+    if (this.state.pool !== undefined)
+    {
+      var systemPoolPath = this.state.pool[0].split("/")     
+      var systemPoolName = systemPoolPath[systemPoolPath.length - 1].slice(0, systemPoolPath[systemPoolPath.length - 1].indexOf("p"))
+
+      this.setState({  statdResources:    [  {variable:"write", dataSource:"localhost.disk-" + systemPoolName + ".disk_octets.write", name: systemPoolName + " Write", color:"#9ecc3c"}
+                                            , {variable:"read", dataSource:"localhost.disk-" + systemPoolName + ".disk_octets.read", name: systemPoolName + " Read", color:"#77c5d5"}
                                            ]
                       , ready:             true
                     });
-      }
 
+    }
   }
 
 , primaryChart: function(type)
