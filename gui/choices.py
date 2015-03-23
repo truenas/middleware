@@ -614,8 +614,8 @@ SERIAL_SPEED = (
 class UPSDRIVER_CHOICES(object):
     "Populate choices from /usr/local/etc/nut/driver.list"
     def __iter__(self):
-        if os.path.exists("/usr/local/etc/nut/driver.list"):
-            with open('/usr/local/etc/nut/driver.list', 'rb') as f:
+        if os.path.exists("/conf/base/etc/local/nut/driver.list"):
+            with open('/conf/base/etc/local/nut/driver.list', 'rb') as f:
                 d = f.read()
             r = cStringIO.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
