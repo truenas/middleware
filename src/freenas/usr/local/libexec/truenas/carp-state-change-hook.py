@@ -70,11 +70,11 @@ def main(ifname, event):
             if ifname == interface:
                 SENTINEL = True
 
-    if not SENTINEL:
+    if not event == "shutdown" and not SENTINEL:
         log.warn("Ignoring state change on non-critical interface %s.", ifname)
         sys.exit()
 
-    if fobj['disabled']:
+    if not event == "shutdown" and fobj['disabled']:
         if not fobj['master']:
             log.warn("Failover disabled.  Assuming backup.")
             sys.exit()
@@ -375,7 +375,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 def link_down(fobj, state_file, ifname, event, forceseal, user_override):
     log.warn("Entering DOWN on %s", ifname)
 
-    if not forceseal and not user_override:
+    if not event == "shutdown" and not forceseal and not user_override:
         sleeper = fobj['timeout']
         error, output = run("ifconfig lagg0")
         if not error:
@@ -403,16 +403,17 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
                 sys.exit(0)
 
     totoutput = 0
-    for group, carpint in fobj['groups'].items():
-        for i in carpint:
-            error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
-            totoutput += int(output)
+    if not event == "shutdown":
+        for group, carpint in fobj['groups'].items():
+            for i in carpint:
+                error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
+                totoutput += int(output)
 
-            if not error and totoutput > 0:
-                log.warn(
-                    'Ignoring DOWN state on %s because we still have interfaces that '
-                    'are UP.', ifname)
-                sys.exit(1)
+                if not error and totoutput > 0:
+                    log.warn(
+                        'Ignoring DOWN state on %s because we still have interfaces that '
+                        'are UP.', ifname)
+                    sys.exit(1)
 
     run('pkill -f fenced')
 
