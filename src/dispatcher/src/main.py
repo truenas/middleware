@@ -602,7 +602,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             'namespace': 'rpc',
             'name': 'response',
             'id': id,
-            'args': [self.token, lifetime]
+            'args': [self.token, lifetime, self.user.name]
         })
 
         self.open_session()
@@ -647,7 +647,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
             "namespace": "rpc",
             "name": "response",
             "id": id,
-            "args": [self.token, lifetime]
+            "args": [self.token, lifetime, self.user.name]
         })
 
         self.open_session()
