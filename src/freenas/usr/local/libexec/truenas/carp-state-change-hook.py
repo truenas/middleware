@@ -129,14 +129,15 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
                 sys.exit(0)
         else:
-            log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
-            time.sleep(sleeper)
-            error, output = run(
-                "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
-            )
-            if output != 'MASTER':
-                log.warn("%s became %s. Previous event ignored.", ifname, output)
-                sys.exit(0)
+            if sleeper != 0:
+                log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
+                time.sleep(sleeper)
+                error, output = run(
+                    "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
+                )
+                if output != 'MASTER':
+                    log.warn("%s became %s. Previous event ignored.", ifname, output)
+                    sys.exit(0)
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
         error, output = run("ifconfig -l")
