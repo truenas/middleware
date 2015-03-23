@@ -170,11 +170,15 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 script.append(row[0])
 
         s = notifier().failover_rpc(ip=failover.ipaddress)
-        try:
-            return s.sync_to(failover.secret, script)
-        except (xmlrpclib.Fault, socket.error) as e:
-            log.error('Failed sync_to %s: %s', failover.ipaddress, e)
-            return False
+        with Journal() as j:
+            try:
+                sync = s.sync_to(failover.secret, script)
+                if sync:
+                    j.queries = []
+                return sync
+            except (xmlrpclib.Fault, socket.error) as e:
+                log.error('Failed sync_to %s: %s', failover.ipaddress, e)
+                return False
 
     def dump_recv(self, script):
         cur = self.cursor()
