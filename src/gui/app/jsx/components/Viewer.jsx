@@ -116,7 +116,7 @@ var Viewer = React.createClass({
       // searchString in either their primary or secondary keys
       inputDataArray = _.filter( inputDataArray, function ( item ) {
         // TODO: Are keys always strings? May want to rethink this
-        var searchableString = item[ this.props.viewData.format.primaryKey ] + item[ this.props.viewData.format.secondaryKey ];
+        var searchableString = item[ this.props.viewData.format.primaryKey ] + item[ this.props.viewData.format.secondaryKey ] || "";
         searchableString = searchableString.toLowerCase();
 
         return ( searchableString.indexOf( displayParams.searchString.toLowerCase() ) !== -1 );
