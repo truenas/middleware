@@ -763,6 +763,8 @@ def generate_smb4_conf(smb4_conf, role):
         "true" if cifs.cifs_srv_allow_execute_always else "false")
     confset1(smb4_conf, "acl check permissions = true")
     confset1(smb4_conf, "dos filemode = yes")
+    confset2(smb4_conf, "multicast dns register = %s",
+        "yes" if cifs.cifs_srv_zeroconf else "no")
 
     if not smb4_ldap_enabled():
         confset2(smb4_conf, "domain logons = %s",
