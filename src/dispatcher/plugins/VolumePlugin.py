@@ -48,9 +48,7 @@ def flatten_datasets(root):
 class VolumeProvider(Provider):
     @query('volume')
     def query(self, filter=None, params=None):
-        result = []
-        single = params.pop('single', False) if params else False
-        for vol in self.datastore.query('volumes', *(filter or []), **(params or {})):
+        def extend(vol):
             config = self.get_config(vol['name'])
             if not config:
                 vol['status'] = 'UNKNOWN'
@@ -65,13 +63,12 @@ class VolumeProvider(Provider):
                 vol['properties'] = config['properties']
                 vol['datasets'] = list(flatten_datasets(config['root_dataset']))
 
-            if single:
-                return vol
+            return vol
 
-            result.append(vol)
+        return self.datastore.query('volumes', *(filter or []), callback=extend, **(params or {}))
 
-        return result
-
+    @description("Finds volumes available for import")
+    @accepts({})
     def find(self):
         result = []
         for pool in self.dispatcher.call_sync('zfs.pool.find'):
@@ -96,6 +93,11 @@ class VolumeProvider(Provider):
 
         return os.path.join(volume['mountpoint'], rest)
 
+    @description("Extracts volume name, dataset name and relative path from full path")
+    @accepts({
+        'type': 'string',
+        'title': 'path'
+    })
     def decode_path(self, path):
         path = os.path.normpath(path)[1:]
         tokens = path.split(os.sep)
@@ -256,6 +258,11 @@ class VolumeAutoCreateTask(Task):
         }))
 
 
+@description("Destroys active volume")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+})
 class VolumeDestroyTask(Task):
     def verify(self, name):
         if not self.datastore.exists('volumes', ('name', '=', name)):

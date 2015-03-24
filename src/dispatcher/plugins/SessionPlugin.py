@@ -26,12 +26,13 @@
 #####################################################################
 
 import time
-from task import Provider
+from task import Provider, query
 from dispatcher.rpc import description, pass_sender, accepts
 
 
 @description("Provides Information about the current loggedin Session")
 class SessionProvider(Provider):
+    @query('session')
     def query(self, filter=None, params=None):
         return self.datastore.query('sessions', *(filter or []), **(params or {}))
 
@@ -40,6 +41,7 @@ class SessionProvider(Provider):
     @pass_sender
     def whoami(self, sender):
         return sender.user.name
+
 
 def _init(dispatcher):
     def pam_event(args):

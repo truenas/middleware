@@ -44,19 +44,13 @@ camcontrol_cache = CacheStore()
 class DiskProvider(Provider):
     @query('disk')
     def query(self, filter=None, params=None):
-        result = []
-        single = params.pop('single', False) if params else False
-        for disk in self.datastore.query('disks', *(filter or []), **(params or {})):
+        def extend(disk):
             disk['online'] = self.is_online(disk['path'])
             disk['label-path'] = ''
             disk['uuid-path'] = ''
+            return disk
 
-            if single:
-                return disk
-
-            result.append(disk)
-
-        return result
+        return self.datastore.query('disks', *(filter or []), callback=extend, **(params or {}))
 
     def is_online(self, name):
         return os.path.exists(name)

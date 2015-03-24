@@ -29,35 +29,18 @@ import os
 import errno
 from gevent import Timeout
 from watchdog import events
-from task import Task, Provider, TaskException, VerifyException
+from task import Task, Provider, TaskException, VerifyException, query
 from resources import Resource
-from dispatcher.rpc import RpcException, description, accepts, returns, private
+from dispatcher.rpc import RpcException, description, accepts, private
 from lib.system import system, SubprocessException
 
 
 @description("Provides info about available services and their state")
 class ServiceInfoProvider(Provider):
     @description("Lists available services")
-    @returns({
-        'type': 'array',
-        'items': {
-            'type': 'object',
-            'properties': {
-                'id': {'type': 'string'},
-                'name': {'type': 'string'},
-                'pid': {'type': 'integer'},
-                'state': {
-                    'type': 'string',
-                    'enum': ['running', 'stopped', 'unknown']
-                }
-            }
-        }
-    })
+    @query("service")
     def query(self, filter=None, params=None):
-        result = []
-        single = params.pop('single', False) if params else False
-        for i in self.datastore.query('service_definitions', *(filter or []), **(params or {})):
-
+        def extend(i):
             if 'pidfile' in i:
                 # Check if process is alive by reading pidfile
                 try:
@@ -83,6 +66,7 @@ class ServiceInfoProvider(Provider):
                 try:
                     if type(rc_scripts) is unicode:
                         system("/usr/sbin/service", rc_scripts, 'onestatus')
+
                     if type(rc_scripts) is list:
                         for x in rc_scripts:
                             system("/usr/sbin/service", x, 'onestatus')
@@ -100,12 +84,9 @@ class ServiceInfoProvider(Provider):
             if pid is not None:
                 entry['pid'] = pid
 
-            if single:
-                return entry
+            return entry
 
-            result.append(entry)
-
-        return result
+        return self.datastore.query('service_definitions', *(filter or []), callback=extend, **(params or {}))
 
     def get_service_config(self, service):
         svc = self.datastore.get_one('service_definitions', ('name', '=', service))
@@ -254,6 +235,19 @@ def _init(dispatcher):
         dispatcher.dispatch_event('service.{0}ed'.format(cmd), {
             'name': svc['name']
         })
+
+    dispatcher.register_schema_definition('service', {
+        'type': 'object',
+        'properties': {
+            'id': {'type': 'string'},
+            'name': {'type': 'string'},
+            'pid': {'type': 'integer'},
+            'state': {
+                'type': 'string',
+                'enum': ['running', 'stopped', 'unknown']
+            }
+        }
+    })
 
     dispatcher.register_event_handler("service.rc.command", on_rc_command)
     dispatcher.register_task_handler("service.manage", ServiceManageTask)
