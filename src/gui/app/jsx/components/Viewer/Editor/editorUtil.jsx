@@ -28,6 +28,11 @@ editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeH
       formElement = editorUtil.createCheckbox( value, displayKeys, changeHandler, key, wasModified );
       break;
 
+/* TODO implement a select dropdown creator (ie. for shell selection)
+    case "select":
+      formElement = editorUtil.createSelect( value, displayKeys, changeHandler, key, wasModified);
+      break;
+*/
     default:
       if ( displayKeys["formElement"] ) {
         console.warn( displayKeys["formElement"] + " for value '" + value + "' is of unrecognized type" );
@@ -68,6 +73,29 @@ editorUtil.createTextarea = function ( value, displayKeys, changeHandler, key, w
                 wrapperClassName = "col-xs-8"
                 disabled         = {!displayKeys.mutable} />
   );
+};
+
+editorUtil.createCheckbox = function (value, displayKeys, changeHandler, key, wasModified) {
+  var output;
+
+  var checkBoxProps = {   type             : "checkbox"
+                        , label            : displayKeys.name
+                        , onChange         : changeHandler.bind( null, displayKeys["key"] )
+                        , key              : key
+                        , groupClassName   : wasModified ? "editor-was-modified" : ""
+                        , labelClassName   : "col-xs-4"
+                        , wrapperClassName : "col-xs-8"
+                        , disabled         : !displayKeys.mutable
+  };
+
+  if (value) {
+    output = <TWBS.Input {...checkBoxProps}
+                             checked />;
+  } else {
+    output = <TWBS.Input {...checkBoxProps}
+                             unchecked />;
+  }
+  return output;
 };
 
 editorUtil.updateOverlay = React.createClass({
