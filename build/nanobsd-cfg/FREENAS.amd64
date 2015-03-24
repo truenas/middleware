@@ -177,6 +177,7 @@ device		aacp		# SCSI passthrough for aac (requires CAM)
 device		aacraid
 #device		ida		# Compaq Smart RAID
 device		mfi		# LSI MegaRAID SAS
+device		mrsas
 device		mlx		# Mylex DAC960 family
 #XXX pointer/int warnings
 #device		pst		# Promise Supertrak SX6000
