@@ -47,9 +47,7 @@ module.exports = {
       , RECEIVE_NETWORK_UPDATE_TASK : null
       , RESOLVE_NETWORK_UPDATE_TASK : null
 
-      //ZFS
-      , RECEIVE_ZFS_POOL_DATA              :null
-      , RECEIVE_ZFS_BOOT_POOL_DATA         :null
+      //ZFS   
       , RECEIVE_ZFS_POOL_GET_DISKS_DATA    :null
 
     })
