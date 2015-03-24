@@ -28,6 +28,7 @@
 
 import re
 import inspect
+import dateutil.parser
 
 
 operators_table = {
@@ -38,6 +39,10 @@ operators_table = {
     '>=': lambda x, y: x >= y,
     '<=': lambda x, y: x <= y,
     '~': lambda x, y: re.match(x, y)
+}
+
+conversions_table = {
+    'timestamp': lambda v: dateutil.parser.parse(v)
 }
 
 
@@ -88,32 +93,84 @@ class QueryList(list):
 
         super(QueryList, self).__setitem__(key, value)
 
+    def eval_logic_and(self, item, lst):
+        for i in lst:
+            if not self.eval_tuple(item, i):
+                return False
+
+        return True
+
+    def eval_logic_or(self, item, lst):
+        for i in lst:
+            if self.eval_tuple(item, i):
+                return True
+
+        return False
+
+    def eval_logic_nor(self, item, lst):
+        for i in lst:
+            if self.eval_tuple(item, i):
+                return False
+
+        return True
+
+    def eval_logic_operator(self, item, *t):
+        op, lst = t
+        return getattr(self, 'eval_logic_{0}'.format(op))(item, lst)
+
+    def eval_field_operator(self, item, t):
+        left, op, right = t
+
+        if len(t) == 4:
+            right = conversions_table[t[3]](right)
+
+        return operators_table[op](item[left], right)
+
+    def eval_tuple(self, item, t):
+        if len(t) == 2:
+            return self.eval_logic_operator(item, t)
+
+        if len(t) in (3, 4):
+            return self.eval_field_operator(item, t)
+
     def query(self, *rules, **params):
         single = params.pop('single', False)
+        count = params.pop('count', None)
+        offset = params.pop('offset', None)
+        limit = params.pop('limit', None)
+        sort = params.pop('sort', None)
+        dir = params.pop('dir', 'desc')
         result = []
 
         if len(rules) == 0:
-            return list(self)
+            result = list(self)
 
         for i in self:
             fail = False
-            for left, op, right in rules:
-                value = i[left]
-                operator = operators_table[op]
-
-                if operator(value, right):
-                    continue
-
-                fail = True
+            for r in rules:
+                if not self.eval_tuple(i, r):
+                    fail = True
+                    break
 
             if not fail:
-                if single:
-                    return i
-
                 result.append(i)
+
+        result.sort(key=lambda x: x[sort], reverse=True if dir == 'desc' else False)
+
+        if offset:
+            result = result[offset:]
+
+        if limit:
+            result = result[:limit]
 
         if not result and single:
             return None
+
+        if single:
+            return result[0]
+
+        if count:
+            return len(result)
 
         return result
 
