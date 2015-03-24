@@ -546,45 +546,10 @@ def reporting(request):
 
 
 def home(request):
-    try:
-        settings = models.Settings.objects.order_by("-id")[0]
-    except:
-        settings = models.Settings.objects.create()
-
-    try:
-        email = models.Email.objects.order_by("-id")[0]
-    except:
-        email = models.Email.objects.create()
-
-    try:
-        advanced = models.Advanced.objects.order_by("-id")[0]
-    except:
-        advanced = models.Advanced.objects.create()
-
-    try:
-        systemdataset = models.SystemDataset.objects.order_by("-id")[0]
-    except:
-        systemdataset = models.SystemDataset.objects.create()
-
-    try:
-        registration = models.Registration.objects.order_by("-id")[0]
-    except:
-        registration = None
-
-    try:
-        update = models.Update.objects.order_by("-id")[0]
-    except:
-        update = models.Update.objects.create()
 
     tabs = appPool.hook_app_tabs('system', request)
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
-        'settings': settings,
-        'email': email,
-        'advanced': advanced,
-        'systemdataset': systemdataset,
-        'registration': registration,
-        'update': update,
         'hook_tabs': tabs,
     })
 
