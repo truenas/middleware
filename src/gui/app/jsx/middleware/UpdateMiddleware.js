@@ -9,7 +9,6 @@ var UpdateActionCreators = require("../actions/UpdateActionCreators");
 module.exports = {
 
    requestUpdateInfo: function(updateInfoName) {
-   	  console.log(updateInfoName);
       MiddlewareClient.request( "update." + updateInfoName,  [], function ( updateInfo ) {
         UpdateActionCreators.receiveUpdateInfo( updateInfo, updateInfoName );
       });

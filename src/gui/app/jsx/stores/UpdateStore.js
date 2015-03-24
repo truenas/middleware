@@ -42,7 +42,6 @@ UpdateStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.RECEIVE_UPDATE_DATA:
       _updateData[action.updateInfoName] = action.updateInfo;
-      console.log(_updateData);
       UpdateStore.emitChange();
       break;
 
