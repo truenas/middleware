@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 
 from django.core.urlresolvers import reverse
@@ -52,13 +53,19 @@ from freenasUI.common.freenasnis import (
 )
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
 from freenasUI.common.system import get_sw_login_version, get_sw_name
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-import json
 
 log = logging.getLogger('account.views')
 
 
 def home(request):
+
+    view = appPool.hook_app_index('account', request)
+    view = filter(None, view)
+    if view:
+        return view[0]
+
     focus_form = request.GET.get('tab', 'passform')
     return render(request, 'account/index.html', {
         'focus_form': focus_form,
