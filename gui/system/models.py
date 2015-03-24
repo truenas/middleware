@@ -892,7 +892,7 @@ class CertificateAuthority(CertificateBase):
             os.mkdir(self.cert_root_path, 0755)
 
     class Meta:
-        verbose_name = _("Certificate Authority")
+        verbose_name = _("CA")
 
 
 class Certificate(CertificateBase):
