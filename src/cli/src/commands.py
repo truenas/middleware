@@ -1,4 +1,4 @@
-# +
+#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -30,8 +30,9 @@ import tty
 import termios
 import sys
 import select
+import sandbox
 from namespace import Command, CommandException, description
-from output import Column, output_value, output_table, format_value, output_msg
+from output import Column, output_value, output_dict, format_value, output_msg
 from dispatcher.shell import ShellClient
 
 
@@ -50,7 +51,7 @@ class SetenvCommand(Command):
 @description("Evaluates Python code")
 class EvalCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        pass
+        sandbox.evaluate(args[0])
 
 
 @description("Spawns shell, enter \"!shell\" (example: \"!sh\")")
@@ -92,12 +93,7 @@ class ShellCommand(Command):
 class PrintenvCommand(Command):
     def run(self, context, args, kwargs, opargs):
         if len(args) == 0:
-            output_table(context.variables.get_all(), [
-                Column('Name', lambda (name, var): name),
-                Column('Value', lambda (name, var):
-                       format_value(var.value, var.type))
-            ])
-            return
+            output_dict(dict(context.variables.get_all_printable()))
 
         if len(args) == 1:
             output_value(context.variables.get(args[0]))

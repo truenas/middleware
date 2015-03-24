@@ -30,7 +30,7 @@ import copy
 import collections
 from texttable import Texttable
 from fnutils.query import QueryDict, QueryList
-from output import (Column, ValueType, output_dict, output_table,
+from output import (Column, ValueType, output_dict, output_table, output_list,
                     output_msg, output_is_ascii, read_value, format_value)
 
 
@@ -90,28 +90,22 @@ class IndexCommand(Command):
         self.target = target
 
     def run(self, context, args, kwargs, opargs):
-        # btable corresponds to built-in commands
-        btable = Texttable()
-        btable.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-        btable.add_rows([['Builtin Global Commands', 'Description']],
-                        header=True)
-        for name, cmd in context.ml.builtin_commands.items():
-            btable.add_row([name, cmd.description])
-
-        table = Texttable()
-        table.set_deco(Texttable.HEADER | Texttable.VLINES | Texttable.BORDER)
-        table.add_rows([['Command', 'Description']], header=True)
         nss = self.target.namespaces()
         cmds = self.target.commands()
 
-        for ns in sorted(nss):
-            table.add_row([ns.get_name(), ns.description])
+        out = context.ml.builtin_commands.keys()
+        out += cmds.keys()
+        out += [ns.get_name() for ns in sorted(nss)]
 
-        for name in sorted(cmds.keys()):
-            table.add_row([name, cmds[name].description])
+        output_list(out)
 
-        print table.draw()
-        print btable.draw()
+
+class LongIndexCommand(Command):
+    def __init__(self, target):
+        self.target = target
+
+    def run(self, context, args, kwargs, opargs):
+        pass
 
 
 class RootNamespace(Namespace):
@@ -487,7 +481,7 @@ class EntityNamespace(Namespace):
     def commands(self):
         base = {
             '?': IndexCommand(self),
-            'list': self.ListCommand(self)
+            'show': self.ListCommand(self)
         }
 
         if self.extra_commands:

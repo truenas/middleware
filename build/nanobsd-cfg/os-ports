@@ -155,6 +155,7 @@ add_port www/py-flask
 add_port www/py-flask-bootstrap
 add_port devel/py-argh
 add_port devel/py-texttable
+add_port devel/py-columnize
 add_port devel/py-pip
 add_port devel/py-pyee
 add_port devel/py-watchdog

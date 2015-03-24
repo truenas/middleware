@@ -48,12 +48,12 @@ import Queue
 import threading
 from descriptions import events
 from namespace import Namespace, RootNamespace, Command
-from output import ValueType, ProgressBar, output_lock, output_msg, read_value
+from output import ValueType, ProgressBar, output_lock, output_msg, read_value, format_value
 from dispatcher.client import Client, ClientError
 from dispatcher.rpc import RpcException
 from fnutils.query import wrap
 from commands import (ExitCommand, PrintenvCommand, SetenvCommand,
-                      ShellCommand, ShutdownCommand, RebootCommand)
+                      ShellCommand, ShutdownCommand, RebootCommand, EvalCommand)
 
 if platform.system() == 'Darwin':
     import gnureadline as readline
@@ -91,18 +91,18 @@ class VariableStore(object):
         def set(self, value):
             value = read_value(value, self.type)
             if self.choices is not None and value not in self.choices:
-                raise ValueError(_(
-                    "Value not on the list of possible choices"))
+                raise ValueError(_("Value not on the list of possible choices"))
 
             self.value = value
 
+        def __str__(self):
+            return format_value(self.value, self.type)
+
     def __init__(self):
         self.variables = {
-            'output-format': self.Variable('ascii', ValueType.STRING,
-                                           ['ascii', 'json']),
+            'output-format': self.Variable('ascii', ValueType.STRING, ['ascii', 'json', 'table']),
             'datetime-format': self.Variable('natural', ValueType.STRING),
-            'language': self.Variable(os.getenv('LANG', 'C'),
-                                      ValueType.STRING),
+            'language': self.Variable(os.getenv('LANG', 'C'), ValueType.STRING),
             'prompt': self.Variable('{host}:{path}>', ValueType.STRING),
             'timeout': self.Variable(10, ValueType.NUMBER),
             'tasks-blocking': self.Variable(False, ValueType.BOOLEAN),
@@ -127,6 +127,9 @@ class VariableStore(object):
             yield (name, str(var))
 
     def set(self, name, value):
+        if name not in self.variables:
+            self.variables[name] = self.Variable('', ValueType.STRING)
+
         self.variables[name].set(value)
 
 
@@ -335,6 +338,7 @@ class MainLoop(object):
         'setenv': SetenvCommand(),
         'printenv': PrintenvCommand(),
         'shell': ShellCommand(),
+        'eval': EvalCommand(),
         'shutdown': ShutdownCommand(),
         'reboot': RebootCommand()
     }

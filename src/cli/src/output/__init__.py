@@ -26,18 +26,13 @@
 #####################################################################
 
 import os
+import importlib
 import sys
-import json
 import config
-import time
 import gettext
 import enum
 import string
-import natural.date
-import natural.size
 from threading import Lock
-from xml.etree import ElementTree
-from texttable import Texttable
 
 
 output_lock = Lock()
@@ -95,116 +90,7 @@ class ProgressBar(object):
         sys.stdout.write('\n')
 
 
-class JsonOutputFormatter(object):
-    @staticmethod
-    def format_value(value, vt):
-        if vt == ValueType.BOOLEAN:
-            value = bool(value)
 
-        return json.dumps(value)
-
-    @staticmethod
-    def output_list(data, label):
-        print json.dumps(list(data), indent=4)
-
-    @staticmethod
-    def output_dict(data, key_label, value_label):
-        print json.dumps(dict(data), indent=4)
-
-    @staticmethod
-    def output_table(data, columns):
-        print json.dumps(list(data), indent=4)
-
-    @staticmethod
-    def output_tree(data, children, label):
-        print json.dumps(list(data), indent=4)
-
-
-class AsciiOutputFormatter(object):
-    @staticmethod
-    def format_value(value, vt):
-        if vt == ValueType.BOOLEAN:
-            return _("yes") if value else _("no")
-
-        if value is None:
-            return _("none")
-
-        if vt == ValueType.SET:
-            value = list(value)
-            if len(value) == 0:
-                return _("empty")
-
-            return '\n'.join(value)
-
-        if vt == ValueType.STRING:
-            return value
-
-        if vt == ValueType.NUMBER:
-            return str(value)
-
-        if vt == ValueType.HEXNUMBER:
-            return hex(value)
-
-        if vt == ValueType.SIZE:
-            return natural.size.binarysize(value)
-
-        if vt == ValueType.TIME:
-            fmt = config.instance.variables.get('datetime-format')
-            if fmt == 'natural':
-                return natural.date.duration(value)
-
-            return time.strftime(fmt, time.localtime(value))
-
-    @staticmethod
-    def output_list(data, label, vt=ValueType.STRING):
-        table = Texttable(max_width=get_terminal_size()[1])
-        table.set_deco(Texttable.BORDER | Texttable.VLINES | Texttable.HEADER)
-        table.header([label])
-        table.add_rows([[i] for i in data], False)
-        print table.draw()
-
-    @staticmethod
-    def output_dict(data, key_label, value_label, value_vt=ValueType.STRING):
-        table = Texttable(max_width=get_terminal_size()[1])
-        table.set_deco(Texttable.BORDER | Texttable.VLINES | Texttable.HEADER)
-        table.header([key_label, value_label])
-        table.add_rows([[row[0], AsciiOutputFormatter.format_value(row[1], value_vt)] for row in data.items()], False)
-        print table.draw()
-
-    @staticmethod
-    def output_table(data, columns):
-        table = Texttable(max_width=get_terminal_size()[1])
-        table.set_deco(Texttable.BORDER | Texttable.VLINES | Texttable.HEADER)
-        table.header([i.label for i in columns])
-        table.add_rows([[AsciiOutputFormatter.format_value(resolve_cell(row, i.accessor), i.vt) for i in columns] for row in data], False)
-        print table.draw()
-
-    @staticmethod
-    def output_object(items):
-        table = Texttable(max_width=get_terminal_size()[1])
-        table.set_deco(Texttable.BORDER | Texttable.VLINES)
-        for i in items:
-            if len(i) == 3:
-                name, _, value = i
-                table.add_row([name, AsciiOutputFormatter.format_value(value, ValueType.STRING)])
-
-            if len(i) == 4:
-                name, _, value, vt = i
-                table.add_row([name, AsciiOutputFormatter.format_value(value, vt)])
-
-        print table.draw()
-
-    @staticmethod
-    def output_tree(tree, children, label, label_vt=ValueType.STRING):
-        def branch(obj, indent):
-            for idx, i in enumerate(obj):
-                subtree = resolve_cell(i, children)
-                char = '+' if subtree else ('`' if idx == len(obj) - 1 else '|')
-                print '{0} {1}-- {2}'.format('    ' * indent, char, resolve_cell(i, label))
-                if subtree:
-                    branch(subtree, indent + 1)
-
-        branch(tree, 0)
 
 
 def get_terminal_size(fd=1):
@@ -223,6 +109,9 @@ def get_terminal_size(fd=1):
             hw = (os.environ['LINES'], os.environ['COLUMNS'])
         except:
             hw = (25, 80)
+
+    if hw[0] == 0 or hw[1] == 0:
+        hw = (25, 80)
 
     return hw
 
@@ -281,38 +170,43 @@ def read_value(value, tv=ValueType.STRING):
 
 def format_value(value, vt=ValueType.STRING, fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
-    return globals()['{0}OutputFormatter'.format(fmt.title())].format_value(value, vt)
+    return get_formatter(fmt).format_value(value, vt)
 
 
 def output_value(value, fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
-    globals()['{0}OutputFormatter'.format(fmt.title())].output_value(value)
+    return get_formatter(fmt).output_value(value)
 
 
 def output_list(data, label=_("Items"), fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
-    globals()['{0}OutputFormatter'.format(fmt.title())].output_list(data, label)
+    return get_formatter(fmt).output_list(data, label)
 
 
 def output_dict(data, key_label=_("Key"), value_label=_("Value"), fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
-    globals()['{0}OutputFormatter'.format(fmt.title())].output_dict(data, key_label, value_label)
+    return get_formatter(fmt).output_dict(data, key_label, value_label)
 
 
 def output_table(data, columns, fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
-    globals()['{0}OutputFormatter'.format(fmt.title())].output_table(data, columns)
+    return get_formatter(fmt).output_table(data, columns)
 
 
 def output_object(*items, **kwargs):
     fmt = kwargs.pop('fmt', None)
     fmt = fmt or config.instance.variables.get('output-format')
-    globals()['{0}OutputFormatter'.format(fmt.title())].output_object(items)
+    return get_formatter(fmt).output_object(items)
 
 
 def output_tree(tree, children, label, fmt=None):
     fmt = fmt or config.instance.variables.get('output-format')
-    globals()['{0}OutputFormatter'.format(fmt.title())].output_tree(tree, children, label)
+    return get_formatter(fmt).output_tree(tree, children, label)
+
+
+def get_formatter(name):
+    module = importlib.import_module('output.' + name)
+    return module._formatter()
 
 
 def output_msg(message, fmt=None):
