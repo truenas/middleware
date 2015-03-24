@@ -9,6 +9,14 @@ module.exports = function(grunt) {
   grunt.registerTask( "develop", function() {
     var asyncDone = this.async();
 
+    // Run `npm install`
+    grunt.log.ok( "Installing npm packages" );
+    grunt.task.run( "npm-install" );
+
+    // Run `bower install`
+    grunt.log.ok( "Installing bower components" );
+    grunt.task.run( "bower:install" );
+
     // Sanity check development environment before proceeding
     grunt.task.run( "check-dev-env" );
 
