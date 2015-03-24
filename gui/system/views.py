@@ -548,6 +548,7 @@ def reporting(request):
 def home(request):
 
     tabs = appPool.hook_app_tabs('system', request)
+    tabs = sorted(tabs, key=lambda y: y['order'] if 'order' in y else 0)
     return render(request, 'system/index.html', {
         'focus_form': request.GET.get('tab', 'system.SysInfo'),
         'hook_tabs': tabs,

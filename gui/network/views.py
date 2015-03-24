@@ -95,6 +95,7 @@ def ipmi(request):
 def network(request):
 
     tabs = appPool.hook_app_tabs('network', request)
+    tabs = sorted(tabs, key=lambda y: y['order'] if 'order' in y else 0)
     return render(request, 'network/index.html', {
         'focus_form': request.GET.get('tab', 'network'),
         'hook_tabs': tabs,
