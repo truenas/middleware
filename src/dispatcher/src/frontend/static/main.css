@@ -12,8 +12,8 @@ a:hover {
 }
 
 a[name] {
-  padding-top: 60px;
-  margin-top: -60px;
+  padding-top: 80px;
+  margin-top: -80px;
   font-size: 1px;
 }
 

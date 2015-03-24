@@ -28,13 +28,14 @@
         <div class="col-sm-3 col-md-2 sidebar">
             <ul class="nav nav-sidebar">
                 {% for name, svc in services.items() | sort %}
+                    {% set id = name | replace('.', '-') %}
                     <li class="disclosure">
-                        <a href="#{{ name }}" class="collapsed" data-toggle="collapse" data-target="#collapse-{{ name | selector }}">
+                        <a href="#{{ id }}" class="collapsed" data-toggle="collapse" data-target="#collapse-{{ id }}">
                             {{ name }}
                         </a>
-                        <ul id="collapse-{{ name }}" class="nav collapse" style="padding-left: 20px;">
+                        <ul id="collapse-{{ id }}" class="nav collapse" style="padding-left: 20px;">
                         {% for method in svc.enumerate_methods() %}
-                            <li><a href="#{{ name }}.{{ method.name }}">{{ method.name }}</a></li>
+                            <li><a href="#{{ id }}.{{ method.name }}">{{ method.name }}</a></li>
                         {% endfor %}
                         </ul>
                     </li>
@@ -45,10 +46,10 @@
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, svc in services.items() | sort %}
             {% set svcid = name | replace(".", "-") %}
-            <h3><a name="{{ name }}">&nbsp;</a>{{ name }}</h3>
+            <h3><a name="{{ svcid }}">&nbsp;</a>{{ name }}</h3>
             {% for method in svc.enumerate_methods() %}
                 {% set mid = (svcid + '.' + method.name) | replace(".", "-") %}
-                <h4><a name="{{ name }}.{{ method.name }}">&nbsp;</a>
+                <h4><a name="{{ svcid }}.{{ method.name }}">&nbsp;</a>
                     {% set params_schema = method["params-schema"]["items"] if "params-schema" in method %}
                     {{ method.name }}(
                         {% for arg in prepare_args(call_args(svc, method.name).args, params_schema) %}

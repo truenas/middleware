@@ -104,11 +104,6 @@ def json_filter(obj):
     return json.dumps(obj, indent=4)
 
 
-@app.template_filter('selector')
-def jquery_selector_escape(s):
-    return s.replace('.', r'\.')
-
-
 @app.context_processor
 def utils():
     def call_args(obj, method_name):
