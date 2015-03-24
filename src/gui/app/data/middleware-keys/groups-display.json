@@ -1,8 +1,8 @@
 [{
-    "primaryKey"   : "groupname"
-  , "secondaryKey" : "groupid"
-  , "selectionKey" : "groupname"
-  , "uniqueKey"    : "groupid"
+    "primaryKey"   : "name"
+  , "secondaryKey" : "id"
+  , "selectionKey" : "name"
+  , "uniqueKey"    : "id"
   , "dataKeys": [
       {
           "key"         : "name"

@@ -19,7 +19,8 @@ var Root = require("./views/FreeNASWebApp");
     var Users      = require("./views/Accounts/Users");
       var UserItem = require("./views/Accounts/Users/UserItem");
 
-    var Groups     = require("./views/Accounts/Groups");
+    var Groups       = require("./views/Accounts/Groups");
+      var GroupItem = require("./views/Accounts/Groups/GroupItem");
 
   var Tasks        = require("./views/Tasks");
 
@@ -57,7 +58,7 @@ module.exports = (
              handler = { Groups } >
         <Route name    = "groups-editor"
                path    = "/accounts/groups/:groupID"
-               handler = { Editor } />
+               handler = { GroupItem } />
       </Route>
     </Route>
 

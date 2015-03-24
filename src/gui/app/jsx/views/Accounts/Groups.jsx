@@ -19,8 +19,8 @@ var GroupsStore = require("../../stores/GroupsStore");
 var viewData = {
     format  : require("../../../data/middleware-keys/groups-display.json")[0]
   , routing : {
-      "route" : "users-editor"
-    , "param" : "userID"
+      "route" : "groups-editor"
+    , "param" : "groupID"
   }
   , display : {
       filterCriteria   : {
@@ -68,10 +68,6 @@ var Groups = React.createClass({
 
   , handleGroupsChange: function() {
       this.setState( getGroupsFromStore() );
-    }
-
-  , handleUsersChange: function() {
-      this.setState( getUsersFromStore() );
     }
 
   , render: function() {

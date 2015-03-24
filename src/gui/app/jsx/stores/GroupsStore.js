@@ -39,8 +39,14 @@ var GroupsStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
-  , getGroup: function( groupid ) {
-      return _groups[ groupid ];
+  , findGroupByKeyValue: function ( key, value ) {
+      return _.find( _groups, function ( group ) {
+        return group[ key ] === value;
+      });
+    }
+
+  , getGroup: function( id ) {
+      return _groups[ id ];
     }
 
   , getAllGroups: function() {
