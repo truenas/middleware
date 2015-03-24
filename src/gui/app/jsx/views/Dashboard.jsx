@@ -72,34 +72,34 @@ var Dashboard = React.createClass({
       );
     }
     return (
-        <main>
-          <h2>Dashboard View</h2>
-          <div ref="widgetAreaRef" className="widget-wrapper">
-            <SystemInfo
-              stacked = "true"
-              title   = "System Info"
-              size    = "m-rect" />
-            <MemoryUtil
-              title = "Memory Value"
-              size  = "l-rect" />
-            <CpuUtil
-              primary = "pie"
-              title = "Memory Value"
-              size  = "l-rect" />
-            <SystemLoad
-              title     = "System Load"
-              size      = "l-rect" />
-            <NetworkUsage
-              title = "Network Usage"
-              size  = "l-rect"
-              graphType = "line" />
-            <DiskUsage
-              title = "Disk Usage"
-              size  = "l-rect"
-              graphType = "line" />
-          </div>
-        </main>
-      );
+      <main>
+        <h2>Dashboard View</h2>
+        <div ref="widgetAreaRef" className="widget-wrapper">
+          <SystemInfo
+            stacked = "true"
+            title   = "System Info"
+            size    = "m-rect" />
+          <MemoryUtil
+            title = "Memory Value"
+            size  = "m-rect" />
+          <CpuUtil
+            primary = "pie"
+            title = "CPU utilization"
+            size  = "m-rect" />
+          <SystemLoad
+            title     = "System Load"
+            size      = "m-rect" />
+          <NetworkUsage
+            title = "Network Usage"
+            size  = "l-rect"
+            graphType = "line" />
+          <DiskUsage
+            title = "Disk Usage"
+            size  = "l-rect"
+            graphType = "line" />
+        </div>
+      </main>
+    );
   }
 
 });
