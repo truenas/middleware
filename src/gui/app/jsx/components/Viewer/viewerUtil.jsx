@@ -45,6 +45,7 @@ viewerUtil.markSearch = function ( fullString, searchString ) {
   var splitIndex = 0;
   var searchIndex = 0;
   var splitString = [''];
+  fullString = fullString.toString();
   var strLower = fullString.toLowerCase();
 
   while ( i < fullString.length ) {
