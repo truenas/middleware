@@ -179,8 +179,8 @@ def main():
                     # Note: the 'and' in the if statement below is to ensure
                     # that we do not waste time in changin permisions twice
                     # (once while in http block)
-                if (share.webdav_perm and dav_protocol != "httphttps"):
-                    _pipeopen("chown -R webdav:webdav %s" % share.webdav_path)
+                    if (share.webdav_perm and dav_protocol != "httphttps"):
+                        _pipeopen("chown -R webdav:webdav %s" % share.webdav_path)
                 f2.write(dav_config_posttext)
 
 if __name__ == "__main__":
