@@ -80,7 +80,7 @@ def main(ifname, event):
             sys.exit()
         else:
             masterret = False
-            for vol in fobj['volumes']:
+            for vol in fobj['volumes'] + fobj['phrasedvolumes']:
                 ret = os.system("zpool status %s > /dev/null" % vol)
                 if ret:
                     masterret = True
@@ -435,7 +435,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/etc/rc.d/watchdogd quietstop')
     run('watchdog -t 4')
 
-    for volume in fobj['volumes']:
+    for volume in fobj['volumes'] + fobj['phrasedvolumes']:
         error, output = run('zpool list %s' % volume)
         if not error:
             log.warn('Exporting %s', volume)
