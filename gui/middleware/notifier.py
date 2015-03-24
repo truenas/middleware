@@ -975,12 +975,14 @@ class notifier:
         self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcereload")
         self._system("/usr/sbin/service ix-post-samba quietstart")
+        self._system("/usr/sbin/service mdnsd restart")
 
     def _restart_cifs(self):
         self._system("/usr/sbin/service ix-pre-samba quietstart")
         self._system("/usr/sbin/service samba_server forcestop")
         self._system("/usr/sbin/service samba_server quietrestart")
         self._system("/usr/sbin/service ix-post-samba quietstart")
+        self._system("/usr/sbin/service mdnsd restart")
 
     def _start_cifs(self):
         self._system("/usr/sbin/service ix-pre-samba quietstart")
