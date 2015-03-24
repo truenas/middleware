@@ -91,7 +91,7 @@ class SystemHook(AppHook):
             if backup and model._meta.db_table not in NO_SYNC_MAP:
                 continue
             # System Dataset has only one hidden field
-            if model._meta.db_table == 'system_systemdataset':
+            if backup and model._meta.db_table == 'system_systemdataset':
                 continue
             if model._admin.deletable is False:
                 try:
