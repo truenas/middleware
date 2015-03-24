@@ -147,8 +147,12 @@ var UserEdit = React.createClass({
 
   , handleValueChange: function( key, event ) {
       var newValues  = this.state.modifiedValues;
-      var inputValue = event.target.value;
-
+      var inputValue;
+      if (event.target.type === "checkbox") {
+        inputValue = event.target.checked;
+      } else {
+        inputValue = event.target.value;
+      }
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we
       // check to make sure that the input value we've just receieved isn't the
