@@ -40,29 +40,42 @@
                     </li>
                 {% endfor %}
             </ul>
+        </div>
     </div>
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, svc in services.items() | sort %}
-            <h3><a name="{{ name }}">{{ name }}</a></h3>
+            {% set svcid = name | replace(".", "-") %}
+            <h3><a name="{{ name }}">&nbsp;</a>{{ name }}</h3>
             {% for method in svc.enumerate_methods() %}
+                {% set mid = (svcid + '.' + method.name) | replace(".", "-") %}
                 <h4><a name="{{ name }}.{{ method.name }}">&nbsp;</a>
+                    {% set params_schema = method["params-schema"]["items"] if "params-schema" in method %}
                     {{ method.name }}(
-                        {% for arg in call_args(svc, method.name).args if arg != "self" %}
-                            {{ arg }}{% if not loop.last %},{% endif %}
+                        {% for arg in prepare_args(call_args(svc, method.name).args, params_schema) %}
+                            {% if arg.reference %}
+                                <a href="/apidoc/schemas#{{ arg.type }}">{{ arg.type }}</a>
+                            {% elif arg.type %}
+                                {{ arg.type }}
+                            {% endif %}
+                            <i>{{ arg.name }}</i>{% if not loop.last %},{% endif %}
                         {% endfor %}
                     )
                 </h4>
                 <div class="method">
                     <p>{{ method.description }}</p>
                     {% if "params-schema" in method %}
-                        <h5>Parameters schema:</h5>
-                        <div class="json">
+                        <h5 class="disclosure">
+                            <a class="collapsed" data-toggle="collapse" data-target="#{{ mid }}-params-schema">Parameters schema:</a>
+                        </h5>
+                        <div id="{{ mid }}-params-schema" class="json collapse">
                             {{ method["params-schema"] | json }}
                         </div>
                     {% endif %}
                     {% if "result-schema" in method %}
-                        <h5>Result schema:</h5>
-                        <div class="json">
+                        <h5 class="disclosure">
+                            <a class="collapsed" data-toggle="collapse" data-target="#{{ mid }}-result-schema">Result schema:</a>
+                        </h5>
+                        <div id="{{ mid }}-result-schema" class="json collapse">
                             {{ method["result-schema"] | json }}
                         </div>
                     {% endif %}

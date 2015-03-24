@@ -26,15 +26,15 @@
 
 {% macro tree(root, level=0) -%}
     {% if root.children %}
-        <ul id="collapse-{{ root.path | join('.') }}" class="nav {{ 'collapse' if level > 0 }}" style="padding-left: {{ '20px' if level > 0 }};">
+        <ul id="collapse-{{ root.path | join('-') }}" class="nav {{ 'collapse' if level > 0 }}" style="padding-left: {{ '20px' if level > 0 }};">
             {% for n, c in root.children.items() %}
                 {% if c.children %}
                     <li class="disclosure">
-                        <a href="#{{ c.path | join('.') }}" class="collapsed" data-toggle="collapse" data-target="#collapse-{{ c.path | join('.') | selector }}">{{ n }}</a>
+                        <a href="#{{ c.path | join('-') }}" class="collapsed" data-toggle="collapse" data-target="#collapse-{{ c.path | join('-') | replace('.', '-') }}">{{ n }}</a>
                         {{ tree(c, level + 1) }}
                     </li>
                 {% else %}
-                    <li><a href="#{{ c.path | join('.') }}">{{ n }}</a></li>
+                    <li><a href="#{{ c.path | join('-') }}">{{ n }}</a></li>
                 {% endif %}
             {% endfor %}
         </ul>

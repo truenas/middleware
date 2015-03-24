@@ -82,7 +82,8 @@ def apidoc_rpc():
 @app.route('/apidoc/tasks')
 def apidoc_tasks():
     tasks = dispatcher.tasks
-    return render_template('apidoc/tasks.html', tasks=tasks)
+    tree = materialized_paths_to_tree(tasks.keys())
+    return render_template('apidoc/tasks.html', tasks=tasks, tree=tree)
 
 
 @app.route('/apidoc/events')
@@ -116,11 +117,12 @@ def utils():
 
     def prepare_args(args, schema):
         idx = 0
+
         for i in args:
             if i == 'self':
                 continue
 
-            if not schema or len(schema) <= idx:
+            if not schema or type(schema) is not list or len(schema) < idx:
                 yield {
                     'name': i,
                     'type': None

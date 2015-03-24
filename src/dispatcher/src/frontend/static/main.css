@@ -7,9 +7,14 @@ body {
   padding-top: 50px;
 }
 
+a:hover {
+    text-decoration: none;
+}
+
 a[name] {
   padding-top: 60px;
   margin-top: -60px;
+  font-size: 1px;
 }
 
 

@@ -26,15 +26,12 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-sm-3 col-md-2 sidebar">
-            <ul class="nav nav-sidebar">
-                {% for name in tasks | sort %}
-                    <li><a href="#{{ name }}">{{ name }}</a></li>
-                {% endfor %}
-            </ul>
+            {{ nav.tree(tree) }}
         </div>
     </div>
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, task in tasks.items() | sort %}
+            {% set id = name | replace(".", "-") %}
             {% set metadata = task._get_metadata() %}
             <h3><a name="{{ name }}"></a>
                 {{ name }}(
@@ -49,8 +46,10 @@
                 )
             </h3>
             <p>{{ metadata.description }}</p>
-            <h5>Parameters schema:</h5>
-            <div class="json">
+            <h5 class="disclosure">
+                <a class="collapsed" data-toggle="collapse" data-target="#{{ id }}-params-schema">Parameters schema:</a>
+            </h5>
+            <div id="{{ id }}-params-schema" class="json collapse">
                 {{ metadata.schema | json }}
             </div>
         {% endfor %}
