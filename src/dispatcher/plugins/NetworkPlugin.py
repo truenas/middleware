@@ -51,21 +51,12 @@ class NetworkProvider(Provider):
 class InterfaceProvider(Provider):
     @query('network-interface')
     def query(self, filter=None, params=None):
-        result = []
         ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
 
-        if params and params.get('single'):
-            result = self.datastore.query('network.interfaces', *(filter or []), **(params or {}))
-            result['status'] = ifaces[result['name']]
-            return result
+        def extend(i):
+            i['status'] = ifaces[i['name']]
 
-        for i in self.datastore.query('network.interfaces', *(filter or []), **(params or {})):
-            if i['name'] in ifaces:
-                i['status'] = ifaces[i['name']]
-
-            result.append(i)
-
-        return result
+        return self.datastore.query('network.interfaces', *(filter or []), callback=extend, **(params or {}))
 
 
 class RouteProvider(Provider):
