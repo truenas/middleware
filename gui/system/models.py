@@ -140,7 +140,7 @@ class Settings(Model):
     )
 
     class Meta:
-        verbose_name = _("Settings")
+        verbose_name = _("General")
 
 
 class NTPServer(Model):
