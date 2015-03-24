@@ -170,12 +170,12 @@ var DummyWidgetContent = React.createClass({
             .options({
                margin                     :    {top: 15, right: 40, bottom: 60, left: 60}
               ,x                          :    graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
-              ,y                          :    graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.
-              ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
+              ,y                          :    graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.              
               ,transitionDuration         :    250
               ,style                      :    "Expanded"
               ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
-              ,clipEdge                   :    false
+              ,clipEdge                   :    false              
+              ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
             });
 
           // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
@@ -207,6 +207,7 @@ var DummyWidgetContent = React.createClass({
             ,showYAxis                    :   true
             ,transitionDuration           :   250
             ,forceY                       :   graphTypeObject.forceY //[0, 100]
+            ,useInteractiveGuideline      :   true
           });
 
           // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
