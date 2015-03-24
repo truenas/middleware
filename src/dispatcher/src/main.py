@@ -111,9 +111,10 @@ class Plugin(object):
 
 
 class EventType(object):
-    def __init__(self, name, source):
+    def __init__(self, name, source, schema=None):
         self.name = name
         self.source = source
+        self.schema = schema
         self.refcount = 0
         self.logger = logging.getLogger('EventType:{0}'.format(name))
 
