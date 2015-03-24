@@ -88,15 +88,17 @@ class SystemHook(AppHook):
                     obj = model.objects.create()
                 url = obj.get_edit_url() + '?inline=true'
                 verbose_name = model._meta.verbose_name
+                focus = 'system.%s' % model._meta.object_name
             else:
                 url = reverse('freeadmin_%s_%s_datagrid' % (
                     model._meta.app_label,
                     model._meta.model_name,
                 ))
                 verbose_name = model._meta.verbose_name_plural
+                focus = 'system.%s.View' % model._meta.object_name
             tabs.append({
                 'name': model._meta.object_name,
-                'focus': 'system.%s' % model._meta.object_name,
+                'focus': focus,
                 'verbose_name': verbose_name,
                 'url': url,
             })

@@ -37,9 +37,11 @@ class NetworkHook(AppHook):
                     obj = model.objects.order_by('-id')[0]
                 except IndexError:
                     obj = model.objects.create()
+                focus = 'network.%s' % model._meta.object_name
                 url = obj.get_edit_url() + '?inline=true'
                 verbose_name = model._meta.verbose_name
             else:
+                focus = 'network.%s.View' % model._meta.object_name
                 url = reverse('freeadmin_%s_%s_datagrid' % (
                     model._meta.app_label,
                     model._meta.model_name,
@@ -47,7 +49,7 @@ class NetworkHook(AppHook):
                 verbose_name = model._meta.verbose_name_plural
             tabs.append({
                 'name': model._meta.object_name,
-                'focus': 'system.%s' % model._meta.object_name,
+                'focus': focus,
                 'verbose_name': verbose_name,
                 'url': url,
             })

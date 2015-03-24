@@ -46,7 +46,7 @@ class Email(TreeNode):
 
 class General(TreeNode):
 
-    gname = 'General'
+    gname = 'Settings'
     name = _(u'General')
     icon = u"SettingsIcon"
     type = 'opensystem'
@@ -88,7 +88,7 @@ class Update(TreeNode):
 
 class CertificateAuthorityView(TreeNode):
 
-    gname = 'CertificateAuthority'
+    gname = 'CertificateAuthority.View'
     name = _('CAs')
     type = 'opensystem'
     icon = u'CertificateAuthorityIcon'
@@ -97,7 +97,7 @@ class CertificateAuthorityView(TreeNode):
 
 class CertificateView(TreeNode):
 
-    gname = 'Certificate'
+    gname = 'Certificate.View'
     name = _('Certificates')
     type = 'opensystem'
     icon = u'CertificateIcon'
