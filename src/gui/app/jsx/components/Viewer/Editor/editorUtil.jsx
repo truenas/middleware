@@ -43,29 +43,30 @@ editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeH
 };
 
 editorUtil.createInput = function ( value, displayKeys, changeHandler, key, wasModified ) {
-
   return(
-    <TWBS.Input type        = "text"
-           label            = { displayKeys["name"] }
-           value            = { value }
-           onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
-           key              = { key }
-           groupClassName   = { wasModified ? "editor-was-modified" : "" }
-           labelClassName   = "col-xs-4"
-           wrapperClassName = "col-xs-8" />
+    <TWBS.Input type             = "text"
+                label            = { displayKeys["name"] }
+                value            = { value }
+                onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
+                key              = { key }
+                groupClassName   = { wasModified ? "editor-was-modified" : "" }
+                labelClassName   = "col-xs-4"
+                wrapperClassName = "col-xs-8"
+                disabled         = {!displayKeys.mutable} />
   );
 };
 
 editorUtil.createTextarea = function ( value, displayKeys, changeHandler, key, wasModified ) {
   return(
-    <TWBS.Input type        = "textarea"
-           label            = { displayKeys["name"] }
-           value            = { value }
-           onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
-           key              = { key }
-           groupClassName   = { wasModified ? "editor-was-modified" : "" }
-           labelClassName   = "col-xs-4"
-           wrapperClassName = "col-xs-8" />
+    <TWBS.Input type             = "textarea"
+                label            = { displayKeys["name"] }
+                value            = { value }
+                onChange         = { changeHandler.bind( null, displayKeys["key"] ) }
+                key              = { key }
+                groupClassName   = { wasModified ? "editor-was-modified" : "" }
+                labelClassName   = "col-xs-4"
+                wrapperClassName = "col-xs-8"
+                disabled         = {!displayKeys.mutable} />
   );
 };
 
