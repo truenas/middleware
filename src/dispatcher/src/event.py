@@ -41,7 +41,7 @@ class EventSource(object):
         pass
 
     def register_event_type(self, name):
-        pass
+        self.dispatcher.register_event_type(name, None)
 
     def emit_event(self, type, **kwargs):
         self.dispatcher.dispatch_event(type, kwargs)
