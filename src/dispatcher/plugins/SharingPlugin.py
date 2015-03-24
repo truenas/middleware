@@ -25,7 +25,9 @@
 #
 #####################################################################
 
+
 import errno
+from dispatcher.rpc import description, accepts
 from task import Task, TaskException, VerifyException, Provider, RpcException, query
 
 
@@ -34,6 +36,7 @@ class SharesProvider(Provider):
     def query(self, filter=None, params=None):
         return self.datastore.query('shares', *(filter or []), **(params or {}))
 
+    @description("Returns list of supported sharing providers")
     def supported_types(self):
         result = []
         for p in self.dispatcher.plugins.values():
@@ -42,6 +45,7 @@ class SharesProvider(Provider):
 
         return result
 
+    @description("Returns list of clients connected to particular share")
     def get_connected_clients(self, share_name):
         share = self.datastore.get_by_id('shares', share_name)
         if not share:
@@ -50,6 +54,11 @@ class SharesProvider(Provider):
         return self.dispatcher.call_sync('shares.{0}.get_connected_clients'.format(share['type']), share_name)
 
 
+@description("Creates new share")
+@accepts({
+    '$ref': 'share',
+    'title': 'share'
+})
 class CreateShareTask(Task):
     def verify(self, share):
         return ['system']
@@ -58,6 +67,14 @@ class CreateShareTask(Task):
         self.join_subtasks(self.run_subtask('share.{0}.create'.format(share['type']), share))
 
 
+@description("Updates existing share")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+}, {
+    '$ref': 'share',
+    'title': 'updated_fields'
+})
 class UpdateShareTask(Task):
     def verify(self, name, updated_fields):
         share = self.datastore.get_by_id('shares', name)
@@ -71,6 +88,11 @@ class UpdateShareTask(Task):
         self.join_subtasks(self.run_subtask('share.{0}.update'.format(self.share_type), name, updated_fields))
 
 
+@description("Deletes share")
+@accepts({
+    'type': 'string',
+    'title': 'name'
+})
 class DeleteShareTask(Task):
     def verify(self, name):
         share = self.datastore.get_by_id('shares', name)
