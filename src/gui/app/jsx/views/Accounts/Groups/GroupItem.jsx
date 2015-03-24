@@ -34,7 +34,7 @@ var GroupView = React.createClass({
         builtInGroupAlert = (
           <TWBS.Alert bsStyle   = "info"
                       className = "text-center">
-            <b>("This is a built-in FreeNAS group account.")</b>
+            <b>{"This is a built-in FreeNAS group account."}</b>
           </TWBS.Alert>
         );
       }
@@ -122,7 +122,7 @@ var GroupItem = React.createClass({
         GroupsStore.addChangeListener( this.updateGroupInState );
       }
 
-    , componentWillUnMount: function() {
+    , componentWillUnmount: function() {
         GroupsStore.removeChangeListener( this.updateGroupInState );
       }
 

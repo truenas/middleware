@@ -16,7 +16,7 @@
       	  "key"         : "builtin"
       	, "name"        : "Built-in Group"
         , "type"        : "boolean"
-        , "formElement" : "input"
+        , "formElement" : "checkbox"
         , "mutable"     : false
         , "defaultCol"  : true
       }
