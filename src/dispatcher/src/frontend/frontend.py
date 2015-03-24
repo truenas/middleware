@@ -70,7 +70,8 @@ def stats():
 
 @app.route('/apidoc')
 def apidoc():
-    return render_template('apidoc/index.html')
+    version = dispatcher.call_sync('system.info.version')
+    return render_template('apidoc/index.html', version=version)
 
 
 @app.route('/apidoc/rpc')

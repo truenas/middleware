@@ -1,16 +1,19 @@
 {% macro nav() -%}
-<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    <div class="container">
+<nav class="navbar navbar-inverse navbar-fixed-top" role="banner">
+    <div class="container-fluid">
         <div class="navbar-header">
-            <a class="navbar-brand">Tests</a>
+            <a href="/" class="navbar-brand">Tests</a>
         </div>
-        <ul class="nav navbar-nav">
-            <li><a href="/events">Events</a></li>
-            <li><a href="/rpc">RPC</a></li>
-            <li><a href="/tasks">Tasks</a></li>
-            <li><a href="/term">Terminal</a></li>
-            <li><a href="/stats">Stats</a></li>
-        </ul>
+        <nav id="navbar" class="collapse navbar-collapse" role="navigation">
+            <ul class="nav navbar-nav">
+                <li><a href="/events">Events</a></li>
+                <li><a href="/rpc">RPC</a></li>
+                <li><a href="/tasks">Tasks</a></li>
+                <li><a href="/term">Terminal</a></li>
+                <li><a href="/stats">Stats</a></li>
+                <li><a href="/apidoc">API docs browser</a></li>
+            </ul>
+        </nav>
     </div>
 </nav>
 {%- endmacro %}

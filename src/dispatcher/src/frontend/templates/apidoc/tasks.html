@@ -33,7 +33,7 @@
         {% for name, task in tasks.items() | sort %}
             {% set id = name | replace(".", "-") %}
             {% set metadata = task._get_metadata() %}
-            <h3><a name="{{ name }}"></a>
+            <h3><a name="{{ id }}"></a>
                 {{ name }}(
                 {% for arg in prepare_args(call_args(task, "run").args, metadata.schema) %}
                     {% if arg.reference %}
