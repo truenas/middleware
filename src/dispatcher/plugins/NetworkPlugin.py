@@ -55,6 +55,7 @@ class InterfaceProvider(Provider):
 
         def extend(i):
             i['status'] = ifaces[i['name']]
+            return i
 
         return self.datastore.query('network.interfaces', *(filter or []), callback=extend, **(params or {}))
 
