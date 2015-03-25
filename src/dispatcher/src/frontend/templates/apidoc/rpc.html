@@ -45,6 +45,7 @@
     </div>
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, svc in services.items() | sort %}
+            {% set svcprivate = svc.get_metadata().private %}
             {% set svcid = name | replace(".", "-") %}
             <h3><a name="{{ svcid }}">&nbsp;</a>{{ name }}</h3>
             {% for method in svc.enumerate_methods() %}
@@ -61,6 +62,9 @@
                             <i>{{ arg.name }}</i>{% if not loop.last %},{% endif %}
                         {% endfor %}
                     )
+                    {% if method.private or svcprivate %}
+                        <span class="label label-danger">Private</span>
+                    {% endif %}
                 </h4>
                 <div class="method">
                     <p>{{ method.description }}</p>
