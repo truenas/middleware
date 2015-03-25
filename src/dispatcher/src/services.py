@@ -95,6 +95,9 @@ class PluginService(RpcService):
             self.connection = connection
             self.service_name = name
 
+        def get_metadata(self):
+            return self.connection.call_client_sync(self.service_name + '.get_metadata')
+
         def enumerate_methods(self):
             return list(self.connection.call_client_sync(self.service_name + '.enumerate_methods'))
 
