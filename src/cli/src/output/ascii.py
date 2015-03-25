@@ -86,6 +86,7 @@ class AsciiOutputFormatter(object):
     @staticmethod
     def output_table(data, columns):
         table = Texttable(max_width=get_terminal_size()[1])
+        table.set_cols_dtype('t' * len(columns))
         table.set_deco(0)
         table.add_rows([[AsciiOutputFormatter.format_value(resolve_cell(row, i.accessor), i.vt) for i in columns] for row in data], False)
         print table.draw()
