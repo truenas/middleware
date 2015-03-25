@@ -153,7 +153,7 @@ class NavTree(object):
             If not node has been found to be replace then we can
             append the node instead of replace
             """
-            if find is not False:
+            if find is not False or opt.replace_only is True:
                 continue
 
             for nav in root:
