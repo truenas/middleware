@@ -80,7 +80,7 @@ var SystemInfo = React.createClass({
           <span className="wd-value">{this.state.version}</span>
         </div>
         <div className="wd-section wd-train">
-          <span className="wd-title">Cureent Update Train:</span>
+          <span className="wd-title">Current Update Train:</span>
           <span className="wd-value">{this.state.train}</span>
         </div>
         <div className="wd-section wd-update">
