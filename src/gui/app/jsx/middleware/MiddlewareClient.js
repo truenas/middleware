@@ -103,7 +103,7 @@ function MiddlewareClient() {
 
       if ( DEBUG("logging") ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
 
-      logPendingRequest( requestID, callback );
+      logPendingRequest( requestID, callback, packedAction );
       socket.send( packedAction );
 
     } else {
@@ -142,14 +142,15 @@ function MiddlewareClient() {
   // Records a middleware request that was sent to the server, stored in the
   // private `pendingRequests` object. These are eventually resolved and
   // removed, either by a response from the server, or the timeout set here.
-  function logPendingRequest ( requestID, callback ) {
+  function logPendingRequest ( requestID, callback, originalRequest ) {
     var request = {
-        "callback" : callback
-      , "timeout"  : setTimeout(
-                       function() {
-                         handleTimeout( requestID );
-                       }, requestTimeout
-                     )
+        callback        : callback
+      , originalRequest : originalRequest
+      , timeout : setTimeout(
+          function() {
+            handleTimeout( requestID );
+          }, requestTimeout
+        )
     };
 
     pendingRequests[ requestID ] = request;
@@ -170,9 +171,21 @@ function MiddlewareClient() {
         break;
 
       case "error":
+        var originalRequest;
+
+        try {
+          originalRequest = JSON.parse( pendingRequests[ requestID ]["originalRequest"] );
+        } catch ( err ) {
+          // Don't care about this, I think
+        }
 
         if ( args.message && _.startsWith( args.message, "Traceback" ) ) {
           console.groupCollapsed( "%cRequest %c'" + requestID + "'%c caused a Python traceback", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
+          if ( originalRequest ) {
+            console.groupCollapsed( "Original request" );
+            console.log( originalRequest );
+            console.groupEnd();
+          }
           console.groupCollapsed( "Response data" );
           console.log( args );
           console.groupEnd();
@@ -180,10 +193,20 @@ function MiddlewareClient() {
           console.groupEnd();
         } else if ( args.code && args.message ){
           console.groupCollapsed( "%cERROR %s: Request %c'%s'%c returned: %s", debugCSS.errorColor, args.code, debugCSS.idColor, requestID, debugCSS.errorColor, args.message );
+          if ( originalRequest ) {
+            console.groupCollapsed( "Original request" );
+            console.log( originalRequest );
+            console.groupEnd();
+          }
           console.log( args );
           console.groupEnd();
         } else {
           console.groupCollapsed( "%cERROR: Request %c'" + requestID + "'%c returned with an error status", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
+          if ( originalRequest ) {
+            console.groupCollapsed( "Original request" );
+            console.log( originalRequest );
+            console.groupEnd();
+          }
           console.log( args );
           console.groupEnd();
         }
@@ -281,7 +304,7 @@ function MiddlewareClient() {
 
       if ( DEBUG("authentication") ) { console.info( "Socket is ready: Sending login request." ); }
 
-      logPendingRequest( requestID, callback );
+      logPendingRequest( requestID, callback, packedAction );
       socket.send( packedAction );
 
     } else {
