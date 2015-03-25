@@ -154,7 +154,7 @@ var DetailViewer = React.createClass({
         );
       }
 
-      if ( this.props.Editor() === null ) {
+      if ( this.props.Editor === null ) {
         editorContent = (
           <div className="viewer-item-info">
             <h3 className="viewer-item-no-selection">{"No active selection"}</h3>
