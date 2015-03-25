@@ -125,8 +125,8 @@ def query(result_type):
                 'type': 'array',
                 'items': {
                     'type': 'array',
-                    'minItems': 3,
-                    'maxItems': 3
+                    'minItems': 2,
+                    'maxItems': 4
                 }
             },
             {
