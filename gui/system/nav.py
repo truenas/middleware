@@ -1,13 +1,9 @@
-from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
+from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.middleware.notifier import notifier
 
 BLACKLIST = [
-    'Advanced',
-    'Email',
     'NTPServer',
-    'Settings',
-    'SSL',
-    'SystemDataset',
     'Registration',
     'CertificateAuthority',
     'Certificate'
@@ -24,6 +20,8 @@ class Advanced(TreeNode):
     icon = u"SettingsIcon"
     type = 'opensystem'
     order = -90
+    replace_only = True
+    append_to = 'system'
 
 
 class BootEnv(TreeNode):
@@ -42,6 +40,8 @@ class Email(TreeNode):
     icon = 'EmailIcon'
     type = 'opensystem'
     order = -85
+    replace_only = True
+    append_to = 'system'
 
 
 class General(TreeNode):
@@ -51,6 +51,8 @@ class General(TreeNode):
     icon = u"SettingsIcon"
     type = 'opensystem'
     order = -95
+    replace_only = True
+    append_to = 'system'
 
 
 class Info(TreeNode):
@@ -69,6 +71,17 @@ class SystemDataset(TreeNode):
     icon = u"SysDatasetIcon"
     type = 'opensystem'
     order = -80
+    replace_only = True
+    append_to = 'system'
+
+    def pre_build_options(self):
+        # System dataset is a special case for now as it doesnt sync a single
+        # hidden field
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'BACKUP'
+        ):
+            raise ValueError
 
 
 class TunableView(TreeNode):
@@ -93,6 +106,8 @@ class CertificateAuthorityView(TreeNode):
     type = 'opensystem'
     icon = u'CertificateAuthorityIcon'
     order = 10
+    replace_only = True
+    append_to = 'system'
 
 
 class CertificateView(TreeNode):
@@ -102,6 +117,8 @@ class CertificateView(TreeNode):
     type = 'opensystem'
     icon = u'CertificateIcon'
     order = 15
+    replace_only = True
+    append_to = 'system'
 
 
 class Support(TreeNode):
