@@ -33,6 +33,7 @@
 /usr/local/lib/dispatcher/src/frontend/templates/rpc.html
 /usr/local/lib/dispatcher/src/frontend/templates/term.html
 /usr/local/lib/dispatcher/src/frontend/templates/stats.html
+/usr/local/lib/dispatcher/src/frontend/templates/apidoc/index.html
 /usr/local/lib/dispatcher/src/frontend/templates/apidoc/nav.html
 /usr/local/lib/dispatcher/src/frontend/templates/apidoc/rpc.html
 /usr/local/lib/dispatcher/src/frontend/templates/apidoc/events.html
