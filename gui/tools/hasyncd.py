@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from ctypes import cdll, byref, create_string_buffer
-from ctypes.util import find_library
 from SocketServer import ThreadingMixIn
 from SimpleXMLRPCServer import (
     SimpleXMLRPCRequestHandler,
@@ -18,6 +16,7 @@ import sys
 import threading
 import xmlrpclib
 
+from setproctitle import setproctitle
 import daemon
 
 LOG_FILE = '/var/log/hasyncd.log'
@@ -264,13 +263,6 @@ class Funcs:
         return self._conn.dump_send(failover=failover)
 
 
-def set_proc_name(newname):
-    libc = cdll.LoadLibrary(find_library('c'))
-    buff = create_string_buffer(len(newname) + 1)
-    buff.value = newname
-    libc.setproctitle(byref(buff))
-
-
 if __name__ == '__main__':
 
     pidfile = PidFile('/var/run/hasyncd.pid')
@@ -319,7 +311,7 @@ if __name__ == '__main__':
 
         log = logging.getLogger('hasyncd')
 
-        set_proc_name('hasyncd')
+        setproctitle('hasyncd')
         sys.path.extend([
             '/usr/local/www',
             '/usr/local/www/freenasUI'
