@@ -587,7 +587,6 @@ add_autotune()
 customize_cmd add_autotune
 
 customize_cmd_truenas add_licensor
-customize_cmd_truenas add_escrowd
 
 arch_specific_ko()
 {
