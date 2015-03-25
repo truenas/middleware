@@ -61,11 +61,11 @@ var MemoryUtil = React.createClass({
        var memSize = this.state.hardware["memory-size"];
        this.setState({  chartTypes:        [  {   type:"stacked"
                                                 , primary: this.primaryChart("stacked")
-                                                , y:function(d) { if(d === undefined) { return 0; } if (d[1] === "nan") { return null; } else { return (d[1]/1024)/1024; } }
+                                                , y:function(d) { if(d === undefined) { return 0; } if (d[1] === "nan") { return null; } else { return Math.round((((d[1]/1024)/1024)* 100 ) / 100); } }
                                               }
                                              ,{     type:"line"
                                                   , primary: this.primaryChart("line")
-                                                  , y:function(d) { if(d[1] === "nan") { return null; } else { return (d[1]/memSize)*100; } }
+                                                  , y:function(d) { if(d[1] === "nan") { return null; } else { return Math.round((((d[1]/memSize)*100)* 100 ) / 100); } }
                                                   , forceY:[0, 100]
                                                   , yUnit : "%"
                                               }
