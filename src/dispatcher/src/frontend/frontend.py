@@ -118,7 +118,7 @@ def utils():
             if i == 'self':
                 continue
 
-            if not schema or type(schema) is not list or len(schema) < idx:
+            if not schema or not isinstance(schema, (list, tuple)) or len(schema) <= idx:
                 yield {
                     'name': i,
                     'type': None
