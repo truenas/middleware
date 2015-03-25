@@ -29,12 +29,13 @@ import os
 import errno
 from gevent import Timeout
 from task import Task, TaskStatus, Provider, TaskException
-from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import RpcException, description, accepts, returns, private
 from resources import Resource
 
 
 @description("Provides info about configured NFS shares")
 class NFSSharesProvider(Provider):
+    @private
     def get_connected_clients(self, share_name):
         share = self.datastore.get_one('shares', ('type', '=', 'nfs'), ('id', '=', share_name))
         result = []

@@ -41,7 +41,7 @@ import ipaddress
 from datastore import get_datastore, DatastoreException
 from datastore.config import ConfigStore
 from dispatcher.client import Client
-from dispatcher.rpc import RpcService, RpcException
+from dispatcher.rpc import RpcService, RpcException, private
 from fnutils.query import wrap
 
 
@@ -293,6 +293,7 @@ class RoutingSocketEventSource(threading.Thread):
         rtsock.close()
 
 
+@private
 class ConfigurationService(RpcService):
     def __init__(self, context):
         self.context = context

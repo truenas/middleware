@@ -158,18 +158,33 @@ class RpcService(object):
     def _build_result_schema(self, method):
         return method.result_schema
 
+    def get_metadata(self):
+        result = {'private': False}
+
+        if self.__doc__:
+            result['docstring'] = inspect.getdoc(self)
+
+        if hasattr(self, 'description'):
+            result['description'] = self.description
+
+        if hasattr(self, 'private'):
+            result['private'] = self.private
+
+        return result
+
     def enumerate_methods(self):
         methods = []
         for name, method in inspect.getmembers(self, predicate=inspect.ismethod):
             if name.startswith('_'):
                 continue
 
-            if name in (
-                'initialize',
-                'enumerate_methods'):
+            if name in ('initialize', 'get_metadata', 'enumerate_methods'):
                 continue
 
-            result = {'name': name}
+            result = {'name': name, 'private': False}
+
+            if method.__doc__:
+                result['docstring'] = inspect.getdoc(method)
 
             if hasattr(method, 'description'):
                 result['description'] = method.description
@@ -180,6 +195,8 @@ class RpcService(object):
             if hasattr(method, 'result_schema'):
                 result['result-schema'] = self._build_result_schema(method)
 
+            if hasattr(method, 'private'):
+                result['private'] = method.private
 
             methods.append(result)
 
@@ -211,7 +228,7 @@ class DiscoveryService(RpcService):
         return {n: x._get_metadata() for n, x in self.__context.dispatcher.tasks.items()}
 
     def get_methods(self, service):
-        if not service in self.__context.services.keys():
+        if service not in self.__context.services.keys():
             raise RpcException(errno.ENOENT, "Service not found")
 
         return list(self.__context.instances[service].enumerate_methods())

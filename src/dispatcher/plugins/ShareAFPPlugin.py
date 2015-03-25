@@ -29,12 +29,13 @@
 import errno
 import psutil
 from task import Task, TaskStatus, Provider, TaskException
-from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import RpcException, description, accepts, returns, private
 from utils import first_or_default
 
 
 @description("Provides info about configured AFP shares")
 class AFPSharesProvider(Provider):
+    @private
     def get_connected_clients(self, share_name):
         result = []
         for i in psutil.process_iter():

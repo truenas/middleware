@@ -26,14 +26,16 @@
 #####################################################################
 
 from task import Provider, Task, VerifyException, TaskException
-from dispatcher.rpc import description, returns
+from dispatcher.rpc import description, returns, private
 
 
 @description("Provides access to configuration store")
 class ConfigProvider(Provider):
+    @private
     def get(self, key):
         return self.dispatcher.configstore.get(key)
 
+    @private
     def list(self, root):
         return self.dispatcher.configstore.list_children(root)
 
