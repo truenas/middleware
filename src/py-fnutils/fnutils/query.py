@@ -155,7 +155,8 @@ class QueryList(list):
             if not fail:
                 result.append(i)
 
-        result.sort(key=lambda x: x[sort], reverse=True if dir == 'desc' else False)
+        if sort:
+            result.sort(key=lambda x: x[sort], reverse=True if dir == 'desc' else False)
 
         if offset:
             result = result[offset:]
