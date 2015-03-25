@@ -57,12 +57,25 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , getUser: function( id ) {
+
       return _users[ id ];
     }
 
   , getAllUsers: function() {
       return _.values( _users );
     }
+
+// Returns an array of the complete objects for each user in
+// the requested group.
+  , getUsersByGroup: function(groupID) {
+      var groupUsers = [];
+      _users.map( function ( currentUser, index, _users ) {
+        if (_.includes(currentUser.groups, groupID) || currentUser.group === groupID){
+          groupUsers.push(currentUser);
+        }
+      });
+      return groupUsers;
+  }
 
 });
 
@@ -116,12 +129,6 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       _localUpdatePending[ action.taskID ] = action.userID;
       UsersStore.emitChange();
       break;
-
-    case ActionTypes.RESOLVE_USER_UPDATE_TASK:
-      delete _localUpdatePending[ action.taskID ];
-      UsersStore.emitChange();
-      break;
-
 
     default:
       // No action

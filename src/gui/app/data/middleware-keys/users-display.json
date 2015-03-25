@@ -6,6 +6,22 @@
   , "uniqueKey"    : "id"
   , "dataKeys": [
       {
+          "key"         : "id"
+        , "name"        : "User ID"
+        , "type"        : "number"
+        , "formElement" : "input"
+        , "mutable"     : true
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "builtin"
+        , "name"        : "Built-in User"
+        , "type"        : "boolean"
+        , "formElement" : "checkbox"
+        , "mutable"     : false
+        , "defaultCol"  : true
+      }
+    , {
           "key"         : "username"
         , "name"        : "Username"
         , "type"        : "string"
@@ -22,14 +38,6 @@
         , "defaultCol"  : true
       }
     , {
-          "key"         : "builtin"
-        , "name"        : "Built-in User"
-        , "type"        : "boolean"
-        , "formElement" : "input"
-        , "mutable"     : false
-        , "defaultCol"  : true
-      }
-    , {
           "key"         : "email"
         , "name"        : "Email Address"
         , "type"        : "string"
@@ -38,26 +46,18 @@
         , "defaultCol"  : false
       }
     , {
-          "key"         : "group"
-        , "name"        : "Group"
-        , "type"        : "number"
-        , "formElement" : "input"
-        , "mutable"     : false
-        , "defaultCol"  : true
-      }
-    , {
-          "key"         : "home"
-        , "name"        : "Home Directory"
-        , "type"        : "string"
-        , "formElement" : "input"
-        , "mutable"     : false
-        , "defaultCol"  : false
-      }
-    , {
           "key"         : "locked"
         , "name"        : "Locked Account"
         , "type"        : "boolean"
-        , "formElement" : "input"
+        , "formElement" : "checkbox"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "sudo"
+        , "name"        : "sudo Allowed"
+        , "type"        : "boolean"
+        , "formElement" : "checkbox"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -65,9 +65,17 @@
           "key"         : "password_disabled"
         , "name"        : "Password Disabled"
         , "type"        : "boolean"
+        , "formElement" : "checkbox"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "group"
+        , "name"        : "Primary Group"
+        , "type"        : "integer"
         , "formElement" : "input"
         , "mutable"     : true
-        , "defaultCol"  : true
+        , "defaultCol"  : false
       }
     , {
           "key"         : "shell"
@@ -75,6 +83,22 @@
         , "type"        : "string"
         , "formElement" : "input"
         , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "home"
+        , "name"        : "Home Directory"
+        , "type"        : "string"
+        , "formElement" : "input"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "unixhash"
+        , "name"        : "Unix Hash"
+        , "type"        : "string"
+        , "formElement" : "input"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
@@ -94,27 +118,19 @@
         , "defaultCol"  : false
       }
     , {
-          "key"         : "sudo"
-        , "name"        : "sudo Allowed"
+          "key"         : "logged-in"
+        , "name"        : "Logged In"
         , "type"        : "boolean"
-        , "formElement" : "input"
-        , "mutable"     : true
+        , "formElement" : "checkbox"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
-          "key"         : "id"
-        , "name"        : "User ID"
-        , "type"        : "number"
-        , "formElement" : "input"
-        , "mutable"     : false
-        , "defaultCol"  : true
-      }
-    , {
-          "key"         : "unixhash"
-        , "name"        : "Unix Hash"
-        , "type"        : "string"
-        , "formElement" : "input"
-        , "mutable"     : false
+          "key"         : "groups"
+        , "name"        : "Groups"
+        , "type"        : "array"
+        , "formElement" : "textarea"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
   ]

@@ -18,7 +18,7 @@ var UsersStore      = require("../../stores/UsersStore");
 var SessionStore   = require("../../stores/SessionStore");
 
 var viewData = {
-    format  : require("../../../data/middleware-keys/accounts-display.json")[0]
+    format  : require("../../../data/middleware-keys/users-display.json")[0]
   , routing : {
       "route" : "users-editor"
     , "param" : "userID"
