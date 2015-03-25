@@ -575,11 +575,13 @@ class notifier:
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd reload")
+        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
 
     def _start_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd start")
+        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
 
     def _stop_ssh(self):
         self._system("/usr/sbin/service sshd forcestop")
@@ -590,6 +592,7 @@ class notifier:
         self._system("/usr/sbin/service sshd forcestop")
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd restart")
+        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
 
     def _reload_rsync(self):
         self._system("/usr/sbin/service ix-rsyncd quietstart")
