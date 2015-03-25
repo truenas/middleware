@@ -383,7 +383,21 @@ class HASQLiteCursorWrapper(Database.Cursor):
             rsr.start()
 
     def execute(self, query, params=None):
-        self.execute_passive(query, params=params)
+
+        # Allow sync to be bypassed just to be extra safe on things like
+        # database migration.
+        # Alternatively a south driver could be written bu the effort would be
+        # quite significant.
+        skip_passive_sentinel = '/tmp/.sqlite3_ha_skip'
+        skip = False
+        if os.path.exists(skip_passive_sentinel):
+            try:
+                skip = os.stat(skip_passive_sentinel).st_uid == 0
+            except OSError:
+                pass
+        if not skip:
+            self.execute_passive(query, params=params)
+
         if params is None:
             return Database.Cursor.execute(self, query)
         query = self.convert_query(query)
