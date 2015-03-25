@@ -344,4 +344,5 @@ if [ "${DEBUG}" = 1 ]; then
 	add_port misc/py-pexpect
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
 	add_port devel/ctags
+	add_port devel/py-pyflakes
 fi
