@@ -30,6 +30,8 @@ function MiddlewareClient() {
   var debugCSS = {
       idColor      : "color: rgb(33, 114, 218);"
     , argsColor    : "color: rgb(215, 110, 20); font-style: italic;"
+    , errorColor   : "color: rgb(235, 15, 15);"
+    , codeStyle    : "color: rgb(62, 28, 86);"
     , defaultStyle : ""
   };
 
@@ -161,18 +163,51 @@ function MiddlewareClient() {
   function resolvePendingRequest ( requestID, args, outcome ) {
     clearTimeout( pendingRequests[ requestID ].timeout );
 
-    if ( DEBUG("messages") && outcome === "success" ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
-    if ( DEBUG("messages") && outcome === "timeout" ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
+    switch ( outcome ) {
+      case "success":
+        if ( DEBUG("messages") ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
+        executeRequestCallback( requestID, args );
+        break;
 
-    if ( outcome === "success" && typeof pendingRequests[ requestID ].callback === "function" ) {
-      pendingRequests[ requestID ].callback( args );
-    }
+      case "error":
 
-    if ( outcome === "error" && typeof pendingRequests[ requestID ].callback === "function" ) {
-      pendingRequests[ requestID ].callback( args );
+        if ( args.message && _.startsWith( args.message, "Traceback" ) ) {
+          console.groupCollapsed( "%cRequest %c'" + requestID + "'%c caused a Python traceback", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
+          console.groupCollapsed( "Response data" );
+          console.log( args );
+          console.groupEnd();
+          console.log( "%c" + args.message , debugCSS.codeStyle );
+          console.groupEnd();
+        } else if ( args.code && args.message ){
+          console.groupCollapsed( "%cERROR %s: Request %c'%s'%c returned: %s", debugCSS.errorColor, args.code, debugCSS.idColor, requestID, debugCSS.errorColor, args.message );
+          console.log( args );
+          console.groupEnd();
+        } else {
+          console.groupCollapsed( "%cERROR: Request %c'" + requestID + "'%c returned with an error status", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
+          console.log( args );
+          console.groupEnd();
+        }
+        break;
+
+      case "timeout":
+        if ( DEBUG("messages") ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
+        break;
+
+      default:
+        break;
     }
 
     delete pendingRequests[ requestID ];
+  }
+
+  // Executes the specified request callback with the provided arguments. Should
+  // only be used in cases where a response has come from the server, and the
+  // status is successful in one way or another. Calling this function when the
+  // server returns an error could cause strange results.
+  function executeRequestCallback( requestID, args ) {
+    if ( typeof pendingRequests[ requestID ].callback === "function" ) {
+      pendingRequests[ requestID ].callback( args );
+    }
   }
 
 
@@ -229,7 +264,7 @@ function MiddlewareClient() {
 
     var callback = function( response ) {
       // Making a Cookie for token based login for the next time
-      // and setting its max-age to the TTL (in seconds) specified by the 
+      // and setting its max-age to the TTL (in seconds) specified by the
       // middleware response. The token value is stored in the Cookie.
       myCookies.add("auth", response[0], response[1]);
 
@@ -399,12 +434,19 @@ function MiddlewareClient() {
 
       // An RPC call is returning a response
       case "rpc":
-        if ( data.name === "response" ) {
-          resolvePendingRequest( data.id, data.args, "success" );
-        } else {
-          resolvePendingRequest( data.id, data.args, "error" );
-          console.warn( "Was sent an rpc message from middleware, but it did not contain a response:" );
-          console.log( message );
+        switch ( data.name ) {
+          case "response":
+            resolvePendingRequest( data.id, data.args, "success" );
+            break;
+
+          case "error":
+            resolvePendingRequest( data.id, data.args, "error" );
+            break;
+
+          default:
+            console.warn( "Was sent an rpc message from middleware, the client was unable to identify its purpose:" );
+            console.log( message );
+            break;
         }
         break;
 
