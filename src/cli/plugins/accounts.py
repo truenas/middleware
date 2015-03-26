@@ -37,7 +37,6 @@ t = gettext.translation('freenas-cli', fallback=True)
 _ = t.ugettext
 
 
-
 @description(_("System users"))
 class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
 
@@ -56,6 +55,14 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         }
 
         self.add_property(
+            descr='User ID',
+            name='uid',
+            get='id',
+            set=None,
+            list=True,
+            type=ValueType.NUMBER)
+
+        self.add_property(
             descr='User name',
             name='username',
             get='username',
@@ -66,14 +73,6 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
             name='fullname',
             get='full_name',
             list=True)
-
-        self.add_property(
-            descr='User ID',
-            name='uid',
-            get='id',
-            set=None,
-            list=True,
-            type=ValueType.NUMBER)
 
         self.add_property(
             descr='Primary group',
@@ -97,6 +96,36 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
             name='password',
             get=None,
             set=self.set_unixhash,
+            list=False
+        )
+
+        self.add_property(
+            descr='Locked',
+            name='locked',
+            get='locked',
+            list=False,
+            type=ValueType.BOOLEAN
+        )
+
+        self.add_property(
+            descr='Email address',
+            name='email',
+            get='email',
+            list=False
+        )
+
+        self.add_property(
+            descr='Sudo allowed',
+            name='sudo',
+            get='sudo',
+            list=False,
+            type=ValueType.BOOLEAN
+        )
+
+        self.add_property(
+            descr='SSH public key',
+            name='pubkey',
+            get='pubkey',
             list=False
         )
 
