@@ -2,9 +2,6 @@
 
 var React = require("react");
 
-var Icon   = require("./Icon");
-
-
 var Widget = React.createClass({
   render: function() {
     return (
@@ -19,6 +16,7 @@ var Widget = React.createClass({
 
 module.exports = Widget;
 
+      // TODO: Remove this if it's not going back in.
       // Widget header removed for now
       //  <header>
       //    <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
