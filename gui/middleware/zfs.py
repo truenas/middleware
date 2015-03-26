@@ -110,6 +110,11 @@ class Pool(object):
                 unavails.extend(getattr(self, key).find_not_online())
         return unavails
 
+    def get_dev_by_name(self, name):
+        for dev in self.get_devs():
+            if dev.name == name:
+                return dev
+
     def get_devs(self):
         """
         Get disks used within this pool
@@ -396,9 +401,12 @@ class Dev(Tnode):
                 log.warn("It should be a valid device: %s", self.name)
                 self.disk = self.name
             elif self.name.isdigit():
+                pool = self
+                while getattr(pool, 'parent', None):
+                    pool = pool.parent
                 # Lets check whether it is a guid
                 p1 = subprocess.Popen(
-                    ["/usr/sbin/zdb", "-C", self.parent.parent.name],
+                    ["/usr/sbin/zdb", "-C", pool.name],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE)
                 zdb = p1.communicate()[0]
