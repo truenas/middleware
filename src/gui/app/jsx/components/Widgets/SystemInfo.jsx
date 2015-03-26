@@ -1,9 +1,8 @@
 "use strict";
 
-var React   =   require("react");
-var moment  =   require("moment");
+var React = require("react");
 
-var Widget  = 	require("../Widget");
+var Widget = require("../Widget");
 
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
@@ -11,15 +10,8 @@ var SystemStore      = require("../../stores/SystemStore");
 var UpdateMiddleware = require("../../middleware/UpdateMiddleware");
 var UpdateStore      = require("../../stores/UpdateStore");
 
- function getSystemInfoFromStore( name ) {
- return SystemStore.getSystemInfo( name );
- }
-
- function getUpdateFromStore( name ) {
- return UpdateStore.getUpdate( name );
- }
-
 var SystemInfo = React.createClass({
+
   getInitialState: function() {
     return {
         hardware   :   ""
@@ -28,35 +20,35 @@ var SystemInfo = React.createClass({
       , train      :   ""
     };
   }
-  , componentDidMount: function() {
-    this.requestData();
 
-    SystemStore.addChangeListener( this.handleChange );
-    UpdateStore.addChangeListener( this.handleChange );
- }
+  , componentDidMount: function() {
+      SystemStore.addChangeListener( this.handleSystemChange );
+      UpdateStore.addChangeListener( this.handleUpdateChange );
+
+      SystemMiddleware.requestSystemInfo( "hardware" );
+      SystemMiddleware.requestSystemInfo( "version" );
+      UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
+      UpdateMiddleware.requestUpdateInfo( "get_current_train" );
+   }
 
   , componentWillUnmount: function() {
-     SystemStore.removeChangeListener( this.handleChange );
-     UpdateStore.removeChangeListener( this.handleChange );
-  }
-
- , handleChange: function() {
-      this.setState({   hardware       :   getSystemInfoFromStore( "hardware" )
-                      , version        :   getSystemInfoFromStore( "version" )
-                      , updates        :   getUpdateFromStore( "check_now_for_updates" )
-                      , train          :   getUpdateFromStore( "get_current_train" )
-                    });
+      SystemStore.removeChangeListener( this.handleSystemChange );
+      UpdateStore.removeChangeListener( this.handleUpdateChange );
     }
 
+  , handleSystemChange: function() {
+      this.setState({
+          hardware : SystemStore.getSystemInfo( "hardware" )
+        , version  : SystemStore.getSystemInfo( "version" )
+      });
+    }
 
- , requestData: function() {
-
-    SystemMiddleware.requestSystemInfo( "hardware" );
-    SystemMiddleware.requestSystemInfo( "version" );
-    UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
-    UpdateMiddleware.requestUpdateInfo( "get_current_train" );
-
-  }
+  , handleUpdateChange: function() {
+      this.setState({
+          updates  : UpdateStore.getUpdate( "check_now_for_updates" )
+        , train    : UpdateStore.getUpdate( "get_current_train" )
+      });
+    }
 
   , render: function() {
     var memSize = (this.state.hardware["memory-size"] / 1024) / 1024;
@@ -92,6 +84,5 @@ var SystemInfo = React.createClass({
     );
   }
 });
-
 
 module.exports = SystemInfo;
