@@ -219,17 +219,10 @@ viewerUtil.writeString = function( entry, falseValue ) {
 
 // Return a check mark if true, X mark if false.
 viewerUtil.writeBool = function( entry ) {
-  if ( entry ) {
-    return (
-      <Icon className = "text-primary"
-            glyph     = "check" />
-    );
-  } else {
-    return (
-      <Icon className = "text-muted"
-             glyph    = "times" />
-    );
-  }
+  return (
+    <Icon className = "text-primary"
+          glyph     = { entry ? "check" : "times" } />
+  );
 };
 
 // A simple data cell whose title is a string, and whose value is represented
