@@ -7,6 +7,18 @@ var moment = require("moment");
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
+var svgStyle = {
+    width   : "calc(100% - 36px)"
+  , height  : "100%"
+  , "float" : "left"
+};
+
+var divStyle = {
+    width   : "36px"
+  , height  : "100%"
+  , "float" : "right"
+};
+
 var DummyWidgetContent = React.createClass({
 
     // TODO: Are these 100% accurate?
@@ -41,7 +53,7 @@ var DummyWidgetContent = React.createClass({
       this.setState({
           graphType : _.result( _.findWhere( this.props.chartTypes, { "primary": true } ), "type" )
       });
-   }
+    }
 
   , componentWillUnmount: function() {
       StatdStore.removeChangeListener( this.handleStatdChange );
@@ -314,57 +326,56 @@ var DummyWidgetContent = React.createClass({
     return match;
     }
 
+
+  , returnErrorMsgs: function( resource, index ) {
+      var errorMsg;
+
+      if ( this.state[ resource.variable ] && this.state[ resource.variable ].msg ) {
+        errorMsg = resource.variable + ": " + this.state[ resource.variable ].msg;
+      } else {
+        errorMsg = "OK";
+      }
+
+      return (
+        <div key={ index } >{ errorMsg }</div>
+      );
+    }
+
+  , returnGraphOptions: function( resource, index ) {
+      return (
+        <div
+          key          = { index }
+          className    = { "ico-graph-type-" + resource.type }
+          onTouchStart = { this.togleGraph }
+          onClick      = { this.togleGraph }>
+            { resource.type }
+        </div>
+      );
+    }
+
   , togleGraph: function(e) {
     var drwChrt = this.drawChart;
     this.setState({graphType : e.target.textContent}, function() { drwChrt(false, true); });
     }
 
   , render: function() {
-    if (this.state.errorMode === true)
-    {
-      var returnErrorMsgs = function(resource, i) {
-        var errorMsg = this.state[resource.variable] || "OK";
-        if (errorMsg !== "OK")
-        {
-          if (errorMsg.msg !== undefined)
-          {
-            errorMsg = resource.variable + ": " + errorMsg.msg;
-          }
-          else
-          {
-            errorMsg = "OK";
-          }
-        }
-        return <div key={i} >{ errorMsg }</div>;
-      };
-      return (<div className="widget-error-panel">
-                <h4>Something went sideways.</h4>
-                {this.props.statdResources.map(returnErrorMsgs, this)}
-              </div>);
-    }
-
-    var svgStyle = {
-       width    : "calc(100% - 36px)"
-      ,height   : "100%"
-      ,"float"  : "left"
-    };
-    var divStyle = {
-       width                : "36px"
-      ,height               : "100%"
-      ,"float"              : "right"
-    };
-    var returnGraphOptions = function(resource, i) {
-                    return <div key={i} className={ "ico-graph-type-" + resource.type } onTouchStart={ this.togleGraph } onClick={ this.togleGraph }>{ resource.type }</div>;
-                     };
-
-    return (
-      <div className="widget-content">
-        <svg ref="svg" style={svgStyle}></svg>
-        <div ref="controls" style={divStyle}>
-          {this.props.chartTypes.map(returnGraphOptions, this)}
-        </div>
-      </div>
-    );
+      if ( this.state.errorMode ) {
+        return (
+          <div className="widget-error-panel">
+            <h4>Something went sideways.</h4>
+            { this.props.statdResources.map( this.returnErrorMsgs, this ) }
+          </div>
+        );
+      } else {
+        return (
+          <div className="widget-content">
+            <svg ref="svg" style={svgStyle}></svg>
+            <div ref="controls" style={divStyle}>
+              { this.props.chartTypes.map( this.returnGraphOptions ) }
+            </div>
+          </div>
+        );
+      }
     }
 
 });
