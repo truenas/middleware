@@ -1,60 +1,57 @@
 "use strict";
 
-var React   =   require("react");
-var moment  =   require("moment");
+var _      = require("lodash");
+var React  = require("react");
+var moment = require("moment");
 
 var StatdMiddleware = require("../../middleware/StatdMiddleware");
 var StatdStore      = require("../../stores/StatdStore");
 
-function getWidgetDataFromStore( name ) {
- return StatdStore.getWidgetData( name );
- }
-
 var DummyWidgetContent = React.createClass({
-  getInitialState: function() {
-    return {
-       element        :   ""
-      ,initialData    :   false
-      ,chart          :   ""
-      ,updateCounter  :   0
-      ,graphType      :   "line"
-      ,errorMode      :   false
-    };
-  }
 
- , componentDidMount: function() {
-    this.requestWidgetData();
+    // TODO: Are these 100% accurate?
+    propTypes: {
+        statdResources : React.PropTypes.array.isRequired
+    }
 
-    StatdStore.addChangeListener( this.handleStatdChange );
+  , getInitialState: function() {
+      return {
+          initialData   : false
+        , chart         : ""
+        , updateCounter : 0
+        , graphType     : "line"
+        , errorMode     : false
+      };
+    }
 
-    this.props.statdResources.forEach(function(resource) {
-      StatdMiddleware.subscribe(resource.dataSource);
-    });
+  , componentDidMount: function() {
+      var stop  = moment();
+      var start = moment().subtract( 15, "m" );
 
-    var defaultChartType = this.state.graphType;
-    this.props.chartTypes.forEach(function(chrttp) {
-      if (chrttp.primary === true)
-      {
-        defaultChartType = chrttp.type;
-      }
-    });
+      StatdStore.addChangeListener( this.handleStatdChange );
 
-    this.setState({
-       element    :   this.refs.svg.getDOMNode()
-      ,graphType  :   defaultChartType
-    });
- }
+      this.props.statdResources.forEach( function( resource ) {
+        StatdMiddleware.subscribe( resource.dataSource );
+      });
+
+      this.props.statdResources.forEach(function(resource) {
+        StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
+      });
+
+      this.setState({
+          graphType : _.result( _.findWhere( this.props.chartTypes, { "primary": true } ), "type" )
+      });
+   }
 
   , componentWillUnmount: function() {
-    StatdStore.removeChangeListener( this.handleStatdChange );
+      StatdStore.removeChangeListener( this.handleStatdChange );
 
-    this.props.statdResources.forEach(function(resource) {
-      StatdMiddleware.unsubscribe(resource.dataSource);
-    });
+      this.props.statdResources.forEach( function( resource ) {
+        StatdMiddleware.unsubscribe( resource.dataSource );
+      });
+    }
 
-  }
-
-  , updateData : function (target, updateArray) {
+  , updateData : function ( target, updateArray ) {
 
         var updatedData = this.state[target];
         updatedData.push(updateArray);
@@ -66,16 +63,16 @@ var DummyWidgetContent = React.createClass({
         this.setState({
           target: updatedData
           });
-  }
+    }
 
- , handleStatdChange: function() {
+  , handleStatdChange: function() {
     if ( this.state.initialData === false )
     {
       var newState = {};
 
       newState.initialData = true;
       this.props.statdResources.forEach(function(resource) {
-        newState[resource.variable] = getWidgetDataFromStore( resource.dataSource );
+        newState[resource.variable] = StatdStore.getWidgetData( resource.dataSource );
         if (newState[resource.variable] === undefined)
         {
           newState.initialData = false;
@@ -128,23 +125,12 @@ var DummyWidgetContent = React.createClass({
       }
     }
 
- }
-
- , requestWidgetData: function() {
-    var stop = moment();
-    var start = moment().subtract(15, "m");
-
-    //console.log(start.format());
-    //console.log(stop.format());
-    this.props.statdResources.forEach(function(resource) {
-      StatdMiddleware.requestWidgetData(resource.dataSource, start.format(),  stop.format(), "10S");
-    });
   }
 
-  , drawChart: function(update, reload) {
+  , drawChart: function( update, reload ) {
       if (reload === true)
       {
-        var elmnt = d3.select(this.state.element);
+        var elmnt = d3.select( this.refs.svg.getDOMNode() );
         elmnt.selectAll("*").remove();
         this.setState({chart : null});
         update = false;
@@ -152,7 +138,7 @@ var DummyWidgetContent = React.createClass({
 
       if (update === true) {
         var chart = this.state.chart;
-        d3.select(this.state.element)
+        d3.select( this.refs.svg.getDOMNode() )
         .datum(this.chartData(this.state.graphType))
         .call(chart);
         chart.update();
@@ -170,11 +156,11 @@ var DummyWidgetContent = React.createClass({
             .options({
                margin                     :    {top: 15, right: 40, bottom: 60, left: 60}
               ,x                          :    graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
-              ,y                          :    graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.              
+              ,y                          :    graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.
               ,transitionDuration         :    250
               ,style                      :    "Expanded"
               ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
-              ,clipEdge                   :    false              
+              ,clipEdge                   :    false
               ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
             });
 
@@ -255,7 +241,7 @@ var DummyWidgetContent = React.createClass({
           return;
         }
 
-      d3.select(this.state.element)
+      d3.select( this.refs.svg.getDOMNode() )
         .datum(this.chartData(this.state.graphType))
         .call(chart);
 
@@ -267,9 +253,9 @@ var DummyWidgetContent = React.createClass({
       this.setState({ "chart" : chart
                       ,fullUpdate : false });
     }
-  }
+    }
 
-  , chartData: function(chartType) {
+  , chartData: function( chartType ) {
     var returnArray = [];
     var state = this.state;
 
@@ -307,8 +293,9 @@ var DummyWidgetContent = React.createClass({
       });
     }
     return returnArray;
-  }
-  ,selectObjectFromArray: function(objectArray, valueToTest) {
+    }
+
+  , selectObjectFromArray: function( objectArray, valueToTest ) {
     var match = {};
     var i = 0;
     length = objectArray.length;
@@ -325,12 +312,12 @@ var DummyWidgetContent = React.createClass({
     }
 
     return match;
-  }
+    }
 
-  ,togleGraph: function(e) {
+  , togleGraph: function(e) {
     var drwChrt = this.drawChart;
     this.setState({graphType : e.target.textContent}, function() { drwChrt(false, true); });
-  }
+    }
 
   , render: function() {
     if (this.state.errorMode === true)
@@ -371,7 +358,6 @@ var DummyWidgetContent = React.createClass({
                      };
 
     return (
-
       <div className="widget-content">
         <svg ref="svg" style={svgStyle}></svg>
         <div ref="controls" style={divStyle}>
@@ -379,8 +365,8 @@ var DummyWidgetContent = React.createClass({
         </div>
       </div>
     );
-  }
-});
+    }
 
+});
 
 module.exports = DummyWidgetContent;
