@@ -1,116 +1,138 @@
 "use strict";
 
-var React   =   require("react");
+var React = require("react");
 
-var Widget  =   require("../Widget");
+var Widget             = require("../Widget");
 var DummyWidgetContent = require("./DummyWidgetContent");
 
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
 
- function getSystemInfoFromStore( name ) {
- return SystemStore.getSystemInfo( name );
- }
+var statdResources = [
+    {
+        variable    : "wiredData"
+      , dataSource  : "localhost.memory.memory-wired.value"
+      , name        : "Wired Memory"
+      , color       : "#f39400"
+    }
+  , {
+        variable    : "cacheData"
+      , dataSource  : "localhost.memory.memory-cache.value"
+      , name        : "Cached Memory"
+      , color       : "#8ac007"
+    }
+  , {
+        variable    : "activeData"
+      , dataSource  : "localhost.memory.memory-active.value"
+      , name        : "Active Memory"
+      , color       : "#c9d200"
+    }
+  , {
+        variable    : "freeData"
+      , dataSource  : "localhost.memory.memory-free.value"
+      , name        : "Free Memory"
+      , color       : "#5186ab"
+    }
+  , {
+        variable    : "inactiveData"
+      , dataSource  : "localhost.memory.memory-inactive.value"
+      , name        : "Inactive Memory"
+      , color       : "#b6d5e9"
+    }
+];
 
 var MemoryUtil = React.createClass({
-  getInitialState: function() {
-    return {
-      statdResources:    [  {variable:"wiredData", dataSource:"localhost.memory.memory-wired.value", name:"Wired Memory", color:"#f39400"}
-                           ,{variable:"cacheData", dataSource:"localhost.memory.memory-cache.value", name:"Cached Memory", color:"#8ac007"}
-                           ,{variable:"activeData", dataSource:"localhost.memory.memory-active.value", name:"Active Memory", color:"#c9d200"}
-                           ,{variable:"freeData", dataSource:"localhost.memory.memory-free.value", name:"Free Memory", color:"#5186ab"}
-                           ,{variable:"inactiveData", dataSource:"localhost.memory.memory-inactive.value", name:"Inactive Memory", color:"#b6d5e9"}
-                         ]
-    , chartTypes:        []
-    , ready:             false
-    };
-  }
-, componentDidMount: function() {
-    this.requestData();
-    SystemStore.addChangeListener( this.handleChange );
-  }
 
-, componentWillUnmount: function() {
-     SystemStore.removeChangeListener( this.handleChange );
-  }
-
-, requestData: function() {
-
-    SystemMiddleware.requestSystemInfo( "hardware" );
-  }
-, primaryChart: function(type)
-  {
-    if (this.props.primary === undefined && type === "line")
-    {
-      return true;
-    }
-    else if (type === this.props.primary)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
+    getInitialState: function() {
+      return { hardware: SystemStore.getSystemInfo( "hardware" ) };
     }
 
-  }
-, handleChange: function() {
-    this.setState({ hardware  : getSystemInfoFromStore( "hardware" ) });
-    if (this.state.hardware !== undefined)
-     {
-       var memSize = this.state.hardware["memory-size"];
-       this.setState({  chartTypes:        [  {   type:"stacked"
-                                                , primary: this.primaryChart("stacked")
-                                                , y:function(d) { if(d === undefined) { return 0; } if (d[1] === "nan") { return null; } else { return Math.round((((d[1]/1024)/1024)* 100 ) / 100); } }
-                                              }
-                                             ,{     type:"line"
-                                                  , primary: this.primaryChart("line")
-                                                  , y:function(d) { if(d[1] === "nan") { return null; } else { return Math.round((((d[1]/memSize)*100)* 100 ) / 100); } }
-                                                  , forceY:[0, 100]
-                                                  , yUnit : "%"
-                                              }
-                                             ,{     type:"pie"
-                                                  , primary: this.primaryChart("pie")
-                                              }
-                                           ]
-                      , ready     :  true
-                    });
+  , componentDidMount: function() {
+      SystemStore.addChangeListener( this.handleChange );
+
+      SystemMiddleware.requestSystemInfo( "hardware" );
+    }
+
+  , componentWillUnmount: function() {
+      SystemStore.removeChangeListener( this.handleChange );
+    }
+
+  , primaryChart: function( type ) {
+      if ( this.props.primary === undefined && type === "line" ) {
+        return true;
+      } else if ( type === this.props.primary) {
+        return true;
+      } else {
+        return false;
       }
-  }
+    }
 
-, render: function() {
-    if (this.state.ready === false)
-    {
+  , handleChange: function() {
+      this.setState({ hardware: SystemStore.getSystemInfo( "hardware" ) });
+    }
+
+  , render: function() {
+      var chartTypes         = null;
+      var WidgetInnerContent = null;
+
+      if ( this.state.hardware && this.state.hardware["memory-size"] ) {
+        chartTypes = [
+            {
+                type    : "stacked"
+              , primary : this.primaryChart("stacked")
+              , y: function(d) {
+                  if ( d === undefined ) {
+                    return 0;
+                  } else if ( d[1] === "nan" ) {
+                    return null;
+                  } else {
+                    return Math.round( ( ( ( d[1]/1024 )/1024 ) * 100 ) / 100 ); }
+                  }
+            }
+          , {
+                type    : "line"
+              , primary : this.primaryChart("line")
+              , forceY  : [0, 100]
+              , yUnit   : "%"
+              , y: function(d) {
+                  if( d[1] === "nan" ) {
+                    return null;
+                  } else {
+                    return Math.round( ( ( ( d[1] / this.state.hardware["memory-size"] )*100 )*100 )/100 );
+                  }
+                }.bind( this )
+            }
+          , {
+                type   : "pie"
+              , primary: this.primaryChart("pie")
+            }
+        ];
+      }
+
+      if ( chartTypes ) {
+        WidgetInnerContent = (
+          <DummyWidgetContent
+            statdResources = { statdResources }
+            chartTypes     = { chartTypes } >
+          </DummyWidgetContent>
+        );
+      } else {
+        WidgetInnerContent = ( <div>Loading...</div> );
+      }
+
       return (
         <Widget
-          positionX  =  {this.props.positionX}
-          positionY  =  {this.props.positionY}
-          title      =  {this.props.title}
-          size       =  {this.props.size} >
+          positionX = { this.props.positionX }
+          positionY = { this.props.positionY }
+          title     = { this.props.title }
+          size      = { this.props.size } >
 
-          <div>Loading...</div>
+          { WidgetInnerContent }
 
         </Widget>
       );
     }
-    return (
-      <Widget
-        positionX  =  {this.props.positionX}
-        positionY  =  {this.props.positionY}
-        title      =  {this.props.title}
-        size       =  {this.props.size} >
 
-        <DummyWidgetContent
-          statdResources    =  {this.state.statdResources}
-          chartTypes        =  {this.state.chartTypes} >
-        </DummyWidgetContent>
-
-
-      </Widget>
-
-    );
-  }
 });
-
 
 module.exports = MemoryUtil;
