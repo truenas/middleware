@@ -117,9 +117,11 @@ release-push: release
 	cp ReleaseNotes UPGRADING objs/${STAGEDIR}/
 	if [ -f ChangeLog ]; then cp ChangeLog objs/${STAGEDIR}/; fi
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`
-	(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest)
-	${ENV_SETUP} ${MAKE} save-build-env
+	if [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
+		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
+		(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest); \
+		${ENV_SETUP} ${MAKE} save-build-env; \
+	fi
 
 update-push:	release
 	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
