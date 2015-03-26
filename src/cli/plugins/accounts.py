@@ -28,10 +28,17 @@
 
 import os
 import crypt
+import gettext
 from namespace import Namespace, Command, EntityNamespace, IndexCommand, TaskBasedSaveMixin, RpcBasedLoadMixin, description
 from output import ValueType
 
-@description("foo")
+
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
+
+
+
+@description(_("System users"))
 class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
 
     def __init__(self, name, context):
@@ -107,7 +114,7 @@ class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         entity['group'] = group['id']
 
 
-@description("blah")
+@description(_("System groups"))
 class GroupsNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
     def __init__(self, name, context):
         super(GroupsNamespace, self).__init__(name, context)
@@ -146,7 +153,7 @@ class GroupsNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         self.primary_key = self.get_mapping('name')
 
 
-@description("Service namespace")
+@description(_("Accounts namespace"))
 class AccountNamespace(Namespace):
     def __init__(self, name, context):
         super(AccountNamespace, self).__init__(name)
