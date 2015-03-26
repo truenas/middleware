@@ -121,6 +121,7 @@ viewerUtil.ItemIcon = React.createClass({
 
       if ( props.primaryString ) {
         initials = props.primaryString.toString()
+                     .trim()
                      .split(" ")
                      .map( function( word ) { return word[0]; } );
       } else {
