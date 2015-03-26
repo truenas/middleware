@@ -320,6 +320,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     log.warn('Volume imports complete.')
     log.warn('Restarting services.')
 
+    run('/usr/sbin/service ix-ldap quietstart')
     run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
         ' nfsv4link')
     run('/usr/sbin/service /etc/rc.d/statd quietstart')
