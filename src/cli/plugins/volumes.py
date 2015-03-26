@@ -106,6 +106,10 @@ class DeleteVdevCommand(Command):
 
 @description("Creates new volume in simple way")
 class VolumeCreateCommand(Command):
+    """
+    Usage: create-auto <disk> [...]
+           create-auto alldisks
+    """
     def run(self, context, args, kwargs, opargs):
         name = args.pop(0)
         disks = args
@@ -118,6 +122,9 @@ class VolumeCreateCommand(Command):
 
 @description("Finds volumes available to import")
 class FindVolumesCommand(Command):
+    """
+    Usage: find
+    """
     def run(self, context, args, kwargs, opargs):
         vols = context.connection.call_sync('volumes.find')
         output_table(vols, [
@@ -129,6 +136,9 @@ class FindVolumesCommand(Command):
 
 @description("Imports given volume")
 class ImportVolumeCommand(Command):
+    """
+    Usage: import <name|id> [newname=<new-name>]
+    """
     def run(self, context, args, kwargs, opargs):
         if len(args) < 1:
             raise CommandException('Not enough arguments passed')
@@ -150,6 +160,9 @@ class ImportVolumeCommand(Command):
 
 @description("Detaches given volume")
 class DetachVolumeCommand(Command):
+    """
+    Usage: detach <name>
+    """
     def run(self, context, args, kwargs, opargs):
         if len(args) < 1:
             raise CommandException('Not enough arguments passed')
@@ -159,6 +172,9 @@ class DetachVolumeCommand(Command):
 
 @description("Shows volume topology")
 class ShowTopologyCommand(Command):
+    """
+    Usage: show-topology
+    """
     def __init__(self, parent):
         self.parent = parent
 
@@ -176,6 +192,9 @@ class ShowTopologyCommand(Command):
 
 @description("Shows volume disks status")
 class ShowDisksCommand(Command):
+    """
+    Usage: show-disks
+    """
     def __init__(self, parent):
         self.parent = parent
 
@@ -190,6 +209,9 @@ class ShowDisksCommand(Command):
 
 @description("Scrubs volume")
 class ScrubCommand(Command):
+    """
+    Usage: scrub <name>
+    """
     def __init__(self, parent):
         self.parent = parent
 

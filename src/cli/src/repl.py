@@ -52,8 +52,8 @@ from output import ValueType, ProgressBar, output_lock, output_msg, read_value, 
 from dispatcher.client import Client, ClientError
 from dispatcher.rpc import RpcException
 from fnutils.query import wrap
-from commands import (ExitCommand, PrintenvCommand, SetenvCommand,
-                      ShellCommand, ShutdownCommand, RebootCommand, EvalCommand)
+from commands import (ExitCommand, PrintenvCommand, SetenvCommand, ShellCommand, ShutdownCommand, RebootCommand,
+                      EvalCommand, HelpCommand)
 
 if platform.system() == 'Darwin':
     import gnureadline as readline
@@ -340,7 +340,8 @@ class MainLoop(object):
         'shell': ShellCommand(),
         'eval': EvalCommand(),
         'shutdown': ShutdownCommand(),
-        'reboot': RebootCommand()
+        'reboot': RebootCommand(),
+        'help': HelpCommand()
     }
 
     def __init__(self, context):

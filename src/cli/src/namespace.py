@@ -153,6 +153,9 @@ class PropertyMapping(object):
 class ItemNamespace(Namespace):
     @description("Shows single item")
     class ShowEntityCommand(Command):
+        """
+        Usage: show
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -174,6 +177,9 @@ class ItemNamespace(Namespace):
 
     @description("Prints single item value")
     class GetEntityCommand(Command):
+        """
+        Usage: get <field>
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -194,6 +200,9 @@ class ItemNamespace(Namespace):
 
     @description("Sets single item property")
     class SetEntityCommand(Command):
+        """
+        Usage: set <field>=<value> [...]
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -229,6 +238,9 @@ class ItemNamespace(Namespace):
 
     @description("Saves item")
     class SaveEntityCommand(Command):
+        """
+        Usage: save
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -237,6 +249,9 @@ class ItemNamespace(Namespace):
 
     @description("Discards modified item")
     class DiscardEntityCommand(Command):
+        """
+        Usage: discard
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -378,6 +393,17 @@ class EntityNamespace(Namespace):
 
     @description("Lists items")
     class ListCommand(Command):
+        """
+        Usage: show [<field> <operator> <value> ...] [limit=<n>] [sort=<field>] [dir=<asc|desc>]
+
+        Lists items in current namespace, optinally doing filtering and sorting.
+
+        Examples:
+            show
+            show username=root
+            show uid>1000
+            show fullname~="John" sort=fullname dir=asc
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -418,6 +444,9 @@ class EntityNamespace(Namespace):
 
     @description("Creates new item")
     class CreateEntityCommand(Command):
+        """
+        Usage: create [<field>=<value> ...]
+        """
         def __init__(self, parent):
             self.parent = parent
 
@@ -450,6 +479,12 @@ class EntityNamespace(Namespace):
 
     @description("Removes item")
     class DeleteEntityCommand(Command):
+        """
+        Usage: delete <primary-key>
+
+        Examples:
+            delete john
+        """
         def __init__(self, parent):
             self.parent = parent
 

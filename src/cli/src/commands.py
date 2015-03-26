@@ -27,6 +27,7 @@
 
 import os
 import tty
+import inspect
 import termios
 import sys
 import select
@@ -38,6 +39,11 @@ from dispatcher.shell import ShellClient
 
 @description("Sets variable value")
 class SetenvCommand(Command):
+    """
+    Usage: setenv <variable> <value>
+
+    Sets value of environment variable.
+    """
     def run(self, context, args, kwargs, opargs):
         if len(args) < 2:
             raise CommandException('Wrong parameter count')
@@ -50,12 +56,26 @@ class SetenvCommand(Command):
 
 @description("Evaluates Python code")
 class EvalCommand(Command):
+    """
+    Usage: eval <Python code fragment>
+
+    Examples:
+        eval "print 'hello world'"
+    """
     def run(self, context, args, kwargs, opargs):
         sandbox.evaluate(args[0])
 
 
 @description("Spawns shell, enter \"!shell\" (example: \"!sh\")")
 class ShellCommand(Command):
+    """
+    Usage: shell [command]
+
+    Launches interactive shell on FreeNAS host. That means if CLI is
+    used to connect to remote host, also remote shell will be used.
+    By default, launches current (logged in) user's login shell. Optional
+    positional argument may specify alternative command to run.
+    """
     def __init__(self):
         super(ShellCommand, self).__init__()
         self.closed = False
@@ -69,7 +89,7 @@ class ShellCommand(Command):
             self.closed = True
 
         self.closed = False
-        name = args[0] if len(args) > 0 else '/bin/sh'
+        name = args[0] if len(args) > 0 and len(args[0]) > 0 else '/bin/sh'
         token = context.connection.call_sync('shell.spawn', name)
         shell = ShellClient(context.hostname, token)
         shell.open()
@@ -91,6 +111,13 @@ class ShellCommand(Command):
 
 @description("Prints variable value")
 class PrintenvCommand(Command):
+    """
+    Usage: printenv [variable]
+
+    Prints a list of environment variables and their values (if called without
+    arguments) or value of single environment variable (if called with single
+    positional argument - variable name)
+    """
     def run(self, context, args, kwargs, opargs):
         if len(args) == 0:
             output_dict(dict(context.variables.get_all_printable()))
@@ -102,6 +129,9 @@ class PrintenvCommand(Command):
 
 @description("Shuts the system down")
 class ShutdownCommand(Command):
+    """
+    Usage: shutdown
+    """
     def run(self, context, args, kwargs, opargs):
         output_msg("System going for a shutdown...")
         context.submit_task('system.shutdown')
@@ -109,6 +139,9 @@ class ShutdownCommand(Command):
 
 @description("Reboots the system")
 class RebootCommand(Command):
+    """
+    Usage: reboot
+    """
     def run(self, context, args, kwargs, opargs):
         output_msg("System going for a reboot...")
         context.submit_task('system.reboot')
@@ -116,5 +149,29 @@ class RebootCommand(Command):
 
 @description("Exits the CLI, enter \"^D\" (ctrl+D)")
 class ExitCommand(Command):
+    """
+    Usage: exit
+    """
     def run(self, context, args, kwargs, opargs):
         sys.exit(0)
+
+
+@description("Provides help on commands")
+class HelpCommand(Command):
+    """
+    Usage: help [command command ...]
+
+    Provides usage information on particular command. If command can't be reached
+    directly in current namespace, may be specified as chain, eg: "account users show".
+
+    Examples:
+        help
+        help printenv
+        help account users show
+    """
+    def run(self, context, args, kwargs, opargs):
+        obj = context.ml.get_relative_object(context.ml.path[-1], args)
+
+        if obj.__doc__:
+            output_msg(inspect.getdoc(obj))
+

@@ -41,12 +41,18 @@ class StatusCommand(Command):
 
 @description("Provides information about running system")
 class InfoCommand(Command):
+    """
+    Usage: info
+    """
     def run(self, context, args, kwargs, opargs):
         output_dict(context.call_sync('system.info.hardware'))
 
 
 @description("Prints FreeNAS version information")
 class VersionCommand(Command):
+    """
+    Usage: version
+    """
     def run(self, context, args, kwargs, opargs):
         output_object(
             ('FreeNAS version', 'freenas-version', context.call_sync('system.info.version')),
@@ -59,6 +65,9 @@ class VersionCommand(Command):
 
 @description("Logs in to the server")
 class LoginCommand(Command):
+    """
+    Usage: login <username> <password>
+    """
     def run(self, context, args, kwargs, opargs):
         context.connection.login_user(args[0], args[1])
         context.connection.subscribe_events('*')
@@ -67,11 +76,15 @@ class LoginCommand(Command):
 
 @description("Prints session history")
 class SessionsCommand(Command):
+    """
+    Usage: sessions [<field> <operator> <value> ...] [limit=<n>] [sort=<field>] [dir=<asc|desc>]
+    """
     def run(self, context, args, kwargs, opargs):
         items = context.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
             Column('Session ID', 'id', ValueType.NUMBER),
-            Column('User name', 'user', ValueType.STRING),
+            Column('IP address', 'address', ValueType.STRING),
+            Column('User name', 'username', ValueType.STRING),
             Column('Started at', 'started-at', ValueType.TIME),
             Column('Ended at', 'ended-at', ValueType.TIME)
         ])
@@ -79,6 +92,9 @@ class SessionsCommand(Command):
 
 @description("Prints event history")
 class EventsCommand(Command):
+    """
+    Usage: events [<field> <operator> <value> ...] [limit=<n>] [sort=<field>] [dir=<asc|desc>]
+    """
     def run(self, context, args, kwargs, opargs):
         items = context.call_sync('sessions.query', *parse_query_args(args, kwargs))
         output_table(items, [
