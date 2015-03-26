@@ -27,7 +27,8 @@ var SystemInfo = React.createClass({
 
       SystemMiddleware.requestSystemInfo( "hardware" );
       SystemMiddleware.requestSystemInfo( "version" );
-      UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
+      // TODO: This causes a traceback (#8620)
+      // UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
       UpdateMiddleware.requestUpdateInfo( "get_current_train" );
    }
 
@@ -45,8 +46,9 @@ var SystemInfo = React.createClass({
 
   , handleUpdateChange: function() {
       this.setState({
-          updates  : UpdateStore.getUpdate( "check_now_for_updates" )
-        , train    : UpdateStore.getUpdate( "get_current_train" )
+          // TODO: This causes a traceback (#8620)
+          // updates  : UpdateStore.getUpdate( "check_now_for_updates" )
+          train    : UpdateStore.getUpdate( "get_current_train" )
       });
     }
 
