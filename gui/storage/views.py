@@ -775,6 +775,24 @@ def disk_offline(request, vname, label):
     })
 
 
+def disk_online(request, vname, label):
+
+    volume = models.Volume.objects.get(vol_name=vname)
+    disk = notifier().label_to_disk(label)
+
+    if request.method == "POST":
+        notifier().zfs_online_disk(volume, label)
+        return JsonResp(
+            request,
+            message=_("Disk online operation has been issued."))
+
+    return render(request, 'storage/disk_online.html', {
+        'vname': vname,
+        'label': label,
+        'disk': disk,
+    })
+
+
 def zpool_disk_remove(request, vname, label):
 
     volume = models.Volume.objects.get(vol_name=vname)

@@ -1901,6 +1901,17 @@ class notifier:
                 encrypted_provider=label[:-4]
             ).delete()
 
+    def zfs_online_disk(self, volume, label):
+        from freenasUI.storage.models import EncryptedDisk
+
+        assert volume.vol_fstype == 'ZFS' and volume.vol_encrypt == 0
+
+        p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
+        stderr = p1.communicate()[1]
+        if p1.returncode != 0:
+            error = ", ".join(stderr.split('\n'))
+            raise MiddlewareError('Disk online failed: "%s"' % error)
+
     def zfs_detach_disk(self, volume, label):
         """Detach a disk from zpool
            (more technically speaking, a replaced disk.  The replacement actually

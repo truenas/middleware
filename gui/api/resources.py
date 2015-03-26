@@ -27,6 +27,7 @@
 import base64
 import json
 import logging
+import os
 import re
 import subprocess
 import urllib
@@ -620,6 +621,27 @@ class VolumeResourceMixin(NestedMixin):
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
+
+                        elif (
+                            current.status == 'OFFLINE' and
+                            bundle.obj.vol_encrypt == 0
+                        ):
+                            pname = (
+                                current.parent.parent.name
+                                if current.parent.parent else None
+                            )
+                            dev = pool.get_dev_by_name(current.name)
+                            if (
+                                dev and dev.path and os.path.exists(dev.path)
+                            ) and pname not in (
+                                'cache',
+                            ):
+                                data['_online_url'] = reverse(
+                                    'storage_disk_online',
+                                    kwargs={
+                                        'vname': pool.name,
+                                        'label': current.name,
+                                    })
 
                         if current.replacing:
                             data['_detach_url'] = reverse(
