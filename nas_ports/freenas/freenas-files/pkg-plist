@@ -36,6 +36,7 @@ usr/local/etc/sudoers
 usr/local/etc/syslog-ng.conf.freenas
 usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 usr/local/libexec/freenas-debug/cache/cache.sh
+usr/local/libexec/freenas-debug/cifs/cifs.sh
 usr/local/libexec/freenas-debug/domain_controller/domain_controller.sh
 usr/local/libexec/freenas-debug/dtrace/disklatencycmd.d
 usr/local/libexec/freenas-debug/dtrace/dtrace.sh
