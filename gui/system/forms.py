@@ -484,10 +484,18 @@ class InitialWizard(CommonWizard):
                 share_mode = share.get('share_mode')
 
                 if share_purpose != 'iscsitarget':
-                    errno, errmsg = _n.create_zfs_dataset('%s/%s' % (
-                        volume_name,
-                        share_name
-                    ), _restart_collectd=False)
+                    dataset_name = '%s/%s' % (volume_name, share_name)
+                    errno, errmsg = _n.create_zfs_dataset(
+                        dataset_name,
+                        _restart_collectd=False,
+                    )
+
+                    if share_purpose == 'afp':
+                        _n.change_dataset_share_type(dataset_name, 'mac')
+                    elif share_purpose == 'cifs':
+                        _n.change_dataset_share_type(dataset_name, 'windows')
+                    elif share_purpose == 'nfs':
+                        _n.change_dataset_share_type(dataset_name, 'unix')
 
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
@@ -794,7 +802,9 @@ class InitialWizard(CommonWizard):
             if share_purpose == 'iscsitarget':
                 continue
 
-            if share_purpose in ('cifs', 'afp'):
+            if share_purpose  == 'afp':
+                share_acl = 'mac'
+            elif share_purpose  == 'cifs':
                 share_acl = 'windows'
             else:
                 share_acl = 'unix'
