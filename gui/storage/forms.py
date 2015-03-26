@@ -2572,6 +2572,7 @@ class UnlockPassphraseForm(Form):
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
+        _notifier.start("ix-warden")
         _notifier.restart("system_datasets")
         _notifier.reload("disk")
 
