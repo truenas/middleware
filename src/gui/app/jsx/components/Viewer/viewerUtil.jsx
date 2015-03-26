@@ -222,7 +222,10 @@ viewerUtil.writeBool = function( entry ) {
             glyph     = "check" />
     );
   } else {
-    return "--";
+    return (
+      <Icon className = "text-muted"
+             glyph    = "times" />
+    );
   }
 };
 
