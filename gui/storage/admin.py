@@ -506,6 +506,10 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
             'offline', label=_('Offline'),
         )
 
+        actions['Online'] = self._action_builder(
+            'online', label=_('Online'),
+        )
+
         actions['Detach'] = self._action_builder("detach", label=_('Detach'))
 
         actions['Replace'] = self._action_builder(
