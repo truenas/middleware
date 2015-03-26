@@ -57,7 +57,6 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , getUser: function( id ) {
-
       return _users[ id ];
     }
 
@@ -68,10 +67,11 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
 // Returns an array of the complete objects for each user in
 // the requested group.
   , getUsersByGroup: function(groupID) {
-      var groupUsers = [];
-      _users.map( function ( currentUser, index, _users ) {
+      var groupUsers = _.filter( _users, function ( currentUser ) {
         if (_.includes(currentUser.groups, groupID) || currentUser.group === groupID){
-          groupUsers.push(currentUser);
+          return true;
+        } else {
+          return false;
         }
       });
       return groupUsers;
