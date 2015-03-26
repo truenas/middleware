@@ -35,7 +35,7 @@ TARGET=/tank/downloads/$TDIR/$DATE
 ssh ${ID}@download.freenas.org rm -rf $TARGET
 ssh ${ID}@download.freenas.org mkdir -p $TARGET
 scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:$TARGET
-if [ `echo ${TRAIN}|awk -F- '{print $3}'` != "Nightlies" ]; then
+if [ "`echo ${TRAIN}|awk -F- '{print $3}'`" != "Nightlies" ]; then
 	ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; rm -f latest; ln -s STABLE/$DATE latest)"
 fi
 exit 0
