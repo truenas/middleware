@@ -10,7 +10,6 @@ import logging
 import socket
 import subprocess
 import os
-import re
 import sys
 import tempfile
 import time
@@ -25,13 +24,13 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.freeadmin.apppool import appPool
-from freenasUI.failover.models import Failover
+from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 
 log = logging.getLogger('tools.haenc')
 
 BUFSIZE = 256
+
 
 class LocalEscrowCtl:
     def __init__(self):
@@ -49,8 +48,8 @@ class LocalEscrowCtl:
             sock.connect(server)
             connected = True
         except:
-            proc = subprocess.Popen(["/usr/sbin/escrowd"])
-            while retries > 0 and connected == False:
+            subprocess.Popen(["/usr/sbin/escrowd"])
+            while retries > 0 and connected is False:
                 try:
                     retries = retries - 1
                     sock.connect(server)
@@ -164,7 +163,7 @@ Available commands are:
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
                         proc = pipeopen("geli attach -j %s -k %s %s" % (
-                            tmp.name, keyfile, provider) , quiet=True)
+                            tmp.name, keyfile, provider), quiet=True)
                         procs.append(proc)
                 for proc in procs:
                     msg = proc.communicate()[1]
@@ -184,10 +183,12 @@ Available commands are:
                 if rv:
                     os.unlink('/tmp/.failover_needop')
                     passphrase = escrowctl.getkey()
-                    peer = str(Failover.objects.all()[0].ipaddress)
-                    sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=2 %s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (peer)
-                    sshcmd = pipeopen(sshcmd, quiet=True)
-                    sshcmd.communicate()
+                    ip, secret = notifier().failover_getpeer()
+                    s = notifier().failover_rpc(ip=ip)
+                    try:
+                        s.enc_setkey(secret, passphrase)
+                    except:
+                        pass
                 else:
                     file = open('/tmp/.failover_needop', 'w')
             except:
@@ -198,21 +199,21 @@ Available commands are:
             rv = escrowctl.setkey(passphrase)
             os.system("/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py carp0 LINK_UP")
     else:
-        peer = str(Failover.objects.all()[0].ipaddress)
-        sshcmd = "/usr/bin/ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=7 %s" % (peer)
         if cmd == 'synctopeer':
             passphrase = escrowctl.getkey()
             if passphrase:
-                sshcmd = "%s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py setkey %s" % (sshcmd, passphrase)
+                ip, secret = notifier().failover_getpeer()
+                s = notifier().failover_rpc(ip=ip)
+                rv = s.enc_setkey(secret, passphrase)
             else:
                 print "ERROR: passphrase unavailable."
         elif cmd == 'syncfrompeer':
-            sshcmd = "%s /usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py synctopeer" % (sshcmd)
-        sshcmd = pipeopen(sshcmd, quiet=True)
-        msg = sshcmd.communicate()[1]
-        rv = (sshcmd.returncode == 0)
+            ip, secret = notifier().failover_getpeer()
+            s = notifier().failover_rpc(ip=ip)
+            passphrase = s.enc_getkey(secret)
+            rv = escrowctl.setkey(passphrase)
         if not rv:
-            print msg
+            print "Error"
 
     if rv:
         print "Succeeded."
