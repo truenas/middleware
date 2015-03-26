@@ -194,8 +194,10 @@ viewerUtil.ItemIcon = React.createClass({
 viewerUtil.identifyAndWrite = function( entry ) {
   switch ( typeof entry ) {
     case "string":
-    case "number":
       return viewerUtil.writeString( entry );
+
+    case "number":
+      return viewerUtil.writeString( entry, "0" );
 
     case "boolean":
       return viewerUtil.writeBool( entry );
