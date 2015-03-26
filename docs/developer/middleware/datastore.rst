@@ -35,13 +35,27 @@ datastore interface
 .. py:function:: datastore.query(collection, *filter, **params)
 
     Performs a query over collection of specified name. Optional positional
-    arguments should be a 3-tuples consisting of: field name, operator,
-    desired value. For example ``("name", "=", "foo")`` or
-    ``("id", ">", 4)``. All filter arguments are joined using AND logic.
+    arguments should be a 2-, 3- or 4-tuples in one of three supported formats:
+
+    - 2-tuple - carries logic operators. it's composed of operator name
+      and list of sub-criterions to be concatenated using it in following
+      format: ``[<operator name>, [<tuple1>, <tuple2>, ...]]``. Operator name can be
+      one of: ``and``, ``or`` or ``nor``.
+      Example: ``["or", ["username", "=", "root"], ["full_name", "=", "root"]]``
+
+    - 3-tuple - carries single criterion composed of field name, operator and
+      compared value in format ``[<field name>, <operator>, <value>]``.
+      Example: ``["username", "=", "root"]``
+
+    - 4-tuple - same as above, but has also notion of "conversion operator". It's stored as a fourth
+      tuple element. Conversion operator is right now used only to convert ISO8601-compatible time
+      (expressed as string) to UNIX timestamp on server side.
+
     There are following keyword arguments currently supported:
 
     -  ``offset`` - skips first ``n`` found objects
     -  ``limit`` - limits query to ``n`` objects
+    -  ``count`` - returns matched objects count
     -  ``sort`` - name of field used to sort results
     -  ``dir`` - sort order, either ``"asc"`` or ``"desc"``
     -  ``single`` - returns single object instead of array. If multiple
@@ -59,6 +73,11 @@ datastore interface
     -  ``in`` - value in set
     -  ``nin`` - value not in set
     -  ``~`` - regex match
+
+    Following conversion operators are supported:
+
+    - ``timestamp`` - converts ISO8601-compatible timestamp expressed as string to UNIX timestamp
+
 
 .. py:function:: datastore.get_one(collection, *filter, *params)
 
