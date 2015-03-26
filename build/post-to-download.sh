@@ -24,14 +24,23 @@ VERSION=$2
 TRAIN=$3
 DATE=$4
 
+TDIR="`echo ${TRAIN}|awk -F- '{print $2 "/" $3}'`"
+TARGET=/tank/downloads/$TDIR/$DATE
+
 if [ ! -d ${STAGE}/$VERSION-$DATE ]; then
 	echo ${STAGE}/$VERSION-$DATE not found
 	exit 2
 fi
 
-ssh ${ID}@download.freenas.org rm -rf /tank/downloads/nightlies/$TRAIN/$DATE
-ssh ${ID}@download.freenas.org mkdir -p /tank/downloads/nightlies/$TRAIN/$DATE
-scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:/tank/downloads/nightlies/$TRAIN/$DATE/
-ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; rm -f latest; ln -s ../nightlies/$TRAIN/$DATE latest)"
-ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}/STABLE; ln -fs ../../nightlies/$TRAIN/$DATE .)"
+if [ -z "${TDIR}" ]; then
+	echo "Target directory is NULL"
+	exit 3
+fi
+
+ssh ${ID}@download.freenas.org rm -rf $TARGET
+ssh ${ID}@download.freenas.org mkdir -p $TARGET
+scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:$TARGET
+if [ "`echo ${TRAIN}|awk -F- '{print $3}'`" != "Nightlies" ]; then
+	ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; rm -f latest; ln -s STABLE/$DATE latest)"
+fi
 exit 0
