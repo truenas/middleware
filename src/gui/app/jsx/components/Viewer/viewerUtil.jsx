@@ -207,16 +207,17 @@ viewerUtil.identifyAndWrite = function( entry ) {
   }
 };
 
-// Return a string if it's defined and non-zero length
+// Return a string if it's defined and non-zero length.
 viewerUtil.writeString = function( entry, falseValue ) {
   if ( entry ) {
     return entry;
   } else {
+    // Allow a choice of fallback string.
     return falseValue ? falseValue : "--";
   }
 };
 
-// Return a check mark if true
+// Return a check mark if true, X mark if false.
 viewerUtil.writeBool = function( entry ) {
   if ( entry ) {
     return (
