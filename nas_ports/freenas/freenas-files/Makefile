@@ -100,6 +100,7 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache
+	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cifs
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/domain_controller
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/dtrace
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/geom
@@ -119,6 +120,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/active_directory/active_directory.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory/active_directory.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/cache/cache.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache/cache.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/cifs/cifs.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cifs/cifs.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/domain_controller/domain_controller.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/domain_controller/domain_controller.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/dtrace/* ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/dtrace/
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/geom/geom.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/geom/geom.sh
