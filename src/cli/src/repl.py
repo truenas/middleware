@@ -491,7 +491,7 @@ class MainLoop(object):
                     break
 
                 if cmdfound:
-                    #self.path = oldpath
+                    self.path = oldpath
                     break
 
     def get_relative_object(self, ns, tokens):
