@@ -139,6 +139,18 @@ class Funcs:
             raise xmlrpclib.Fault(5, 'Access Denied')
         return qs[0]
 
+    def enc_getkey(self, client_address, secret):
+        from freenasUI.failover.enc_helper import LocalEscrowCtl
+        self._authenticated(secret)
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.getkey()
+
+    def enc_setkey(self, client_address, secret, passphrase):
+        from freenasUI.failover.enc_helper import LocalEscrowCtl
+        self._authenticated(secret)
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.setkey(passphrase)
+
     def pairing_receive(self, client_address, secret):
         from freenasUI.failover.models import CARP, Failover
         from freenasUI.failover.utils import (
