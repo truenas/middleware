@@ -12,5 +12,6 @@
 #8791	Bug	Normal	CIFS; Zeroconf share discovery checkbox is not working - Service is always published
 #8831	Bug	High	Errors with multipathing in FreeNAS 9.3
 #8835	Bug	High	LSI MegaRAID 9361-8i, AOCS3108LH8iR timeout bug
+#8851	Bug	Low	l2arc space accounting mismatch
 #8853	Bug	Normal	MX-ES USB Drives does not work with FreeNAS 9.3
 #8874	Feature	Normal	Rescan Jails when Volume is Unlocked via API
