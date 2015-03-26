@@ -5,6 +5,7 @@
 NANO_LABEL?=FreeNAS
 VERSION?=9.3-STABLE
 TRAIN?=${NANO_LABEL}-9.3-STABLE
+
 .ifdef PRODUCTION
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
 .if !defined(_KEY)
@@ -14,6 +15,7 @@ KEY_PASSWORD!= build/read-password.sh
 FREENAS_KEYFILE?=Keys/ix-nightly-key.key
 KEY_PASSWORD=""
 .endif
+
 COMPANY?="iXsystems"
 .if !defined(BUILD_TIMESTAMP)
 BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'

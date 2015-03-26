@@ -24,13 +24,18 @@ VERSION=$2
 TRAIN=$3
 DATE=$4
 
+TDIR="`echo ${TRAIN}|awk -F- '{print $2 "/" $3}'`"
+TARGET=/tank/downloads/$TDIR/$DATE
+
 if [ ! -d ${STAGE}/$VERSION-$DATE ]; then
 	echo ${STAGE}/$VERSION-$DATE not found
 	exit 2
 fi
 
-TDIR=`echo ${TRAIN}|awk -F- '{print $2 "/" $3}'`
-TARGET=/tank/downloads/$TDIR/$DATE
+if [ -z "${TDIR}" ]; then
+	echo "Target directory is NULL"
+	exit 3
+fi
 
 ssh ${ID}@download.freenas.org rm -rf $TARGET
 ssh ${ID}@download.freenas.org mkdir -p $TARGET
