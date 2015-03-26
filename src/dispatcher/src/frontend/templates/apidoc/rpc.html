@@ -68,6 +68,9 @@
                 </h4>
                 <div class="method">
                     <p>{{ method.description }}</p>
+                    {% if "docstring" in method %}
+                        <p>{{ method.docstring }}</p>
+                    {% endif %}
                     {% if "params-schema" in method %}
                         <h5 class="disclosure">
                             <a class="collapsed" data-toggle="collapse" data-target="#{{ mid }}-params-schema">Parameters schema:</a>
