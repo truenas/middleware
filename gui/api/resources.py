@@ -1688,6 +1688,13 @@ class JailsResourceMixin(NestedMixin):
     def prepend_urls(self):
         return [
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/restart%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('jail_restart'),
+                name="api_jails_jails_restart"
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -1702,6 +1709,24 @@ class JailsResourceMixin(NestedMixin):
                 name="api_jails_jails_stop"
             ),
         ]
+
+    def jail_restart(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        notifier().reload("http")
+        try:
+            Warden().stop(jail=obj.jail_host)
+            Warden().start(jail=obj.jail_host)
+        except Exception, e:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, {
+                    'error': e,
+                })
+            )
+
+        return HttpResponse('Jail restarted.', status=202)
 
     def jail_start(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
