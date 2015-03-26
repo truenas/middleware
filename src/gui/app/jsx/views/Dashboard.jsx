@@ -5,6 +5,7 @@
 
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 
 var ServicesMiddleware = require("../middleware/ServicesMiddleware");
@@ -24,6 +25,7 @@ function getServicesFromStore() {
 }
 
 var Dashboard = React.createClass({
+
     getInitialState: function() {
       return getServicesFromStore();
     }
@@ -42,65 +44,49 @@ var Dashboard = React.createClass({
       this.setState( getServicesFromStore() );
     }
 
-  , isServiceRunning: function(objectArray, serviceNameToTest) {
-    var length = objectArray.length;
-    var i = 0;
-    if (length < 1)
-    {
-      return false;
+  // TODO: Maybe this should be moved into some kind of utility class, and generalized
+  , isServiceRunning: function( service ) {
+      return ( _.findIndex( this.state.servicesList, { name: service, state: "running" } ) > -1 );
     }
-    else
-    {
-      for (; i < length; i++)
-      {
-        if  (objectArray[i].name === serviceNameToTest && objectArray[i].state === "running")
-        {
-          return true;
-        }
+
+  , render: function() {
+      if ( this.isServiceRunning( "collectd" ) ) {
+        return (
+          <main>
+            <div ref="widgetAreaRef" className="widget-wrapper">
+              <SystemInfo
+                stacked = "true"
+                title   = "System Info"
+                size    = "m-rect" />
+              <MemoryUtil
+                title = "Memory Value"
+                size  = "m-rect" />
+              <CpuUtil
+                primary = "pie"
+                title = "CPU utilization"
+                size  = "m-rect" />
+              <SystemLoad
+                title     = "System Load"
+                size      = "m-rect" />
+              <NetworkUsage
+                title = "Network Usage"
+                size  = "l-rect"
+                graphType = "line" />
+              <DiskUsage
+                title = "Disk Usage"
+                size  = "l-rect"
+                graphType = "line" />
+            </div>
+          </main>
+        );
+      } else {
+        return (
+          <main>
+            <h3>Please enable collectd service to display widgets.</h3>
+          </main>
+        );
       }
     }
-    return false;
-  }
-  , render: function() {
-    if (this.isServiceRunning(this.state.servicesList, "collectd") === false)
-    {
-      return (
-        <main>
-          <h2>Dashboard View</h2>
-          <h3>Please enable collectd service to display widgets.</h3>
-        </main>
-      );
-    }
-    return (
-      <main>
-        <h2>Dashboard View</h2>
-        <div ref="widgetAreaRef" className="widget-wrapper">
-          <SystemInfo
-            stacked = "true"
-            title   = "System Info"
-            size    = "m-rect" />
-          <MemoryUtil
-            title = "Memory Value"
-            size  = "m-rect" />
-          <CpuUtil
-            primary = "pie"
-            title = "CPU utilization"
-            size  = "m-rect" />
-          <SystemLoad
-            title     = "System Load"
-            size      = "m-rect" />
-          <NetworkUsage
-            title = "Network Usage"
-            size  = "l-rect"
-            graphType = "line" />
-          <DiskUsage
-            title = "Disk Usage"
-            size  = "l-rect"
-            graphType = "line" />
-        </div>
-      </main>
-    );
-  }
 
 });
 
