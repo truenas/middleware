@@ -155,7 +155,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
 Table 9.1b summarizes the backends which are available in the "Idmap backend" drop-down menu. Each backend has its own
-`man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details.
+`man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details. Since selecting the
+wrong backend will break Active Directory integration, a pop-up menu will appear whenever you attempt to change this setting.
 
 **Table 9.1b: Available ID Mapping Backends**
 

@@ -367,7 +367,10 @@ Advanced
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-
+| Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
+|                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 If you make any changes, click the "Save" button.
 

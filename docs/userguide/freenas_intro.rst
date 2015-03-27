@@ -335,6 +335,12 @@ that have occurred since 9.3-RELEASE.
 
 * SSSD was updated to `1.11.7 <https://fedorahosted.org/sssd/wiki/Releases/Notes-1.11.7>`_.
 
+* The driver for the Intel X710 10GbE adapter was added.
+
+* The mrsas(4) LSI MegaRAID driver was added.
+
+* Support for the MX-ES USB Drive by Mach Xtreme was added.
+
 * Man pages have been added and can be accessed from :ref:`Shell`.
 
 * LZ4 compression is used on the boot pool in order to increase space for boot environments.
@@ -355,6 +361,8 @@ that have occurred since 9.3-RELEASE.
 
 * A "Backup" button has been added to :menuselection:`System --> Advanced`.
 
+* The "Periodic Notification User" drop-down menu has been added to :menuselection:`System --> Advanced`.
+
 * The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
 
 * The "Confirm Passphrase" field has been added to :menuselection:`System --> CAs --> Import CA`
@@ -369,9 +377,14 @@ that have occurred since 9.3-RELEASE.
 
 * The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
 
+* A pop-up warning will appear if you go to change :menuselection:`Directory Service --> Active Directory --> Advanced Mode -> Idmap backend` as selecting the wrong
+  backend will break Active Directory integration.
+
 * The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
 
 * The "Kerberos Settings" tab as been added to :ref:`Directory Service`.
+
+* The ability to "Online" a previously offlined disk has been added to :menuselection:`Storage --> Volumes --> Volume Status`.
 
 * The "Periodic Snapshot Task" drop-down menu has been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
 
@@ -398,7 +411,7 @@ that have occurred since 9.3-RELEASE.
 
 * A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
 
-* The "Help" icon has been replaced by the :ref:`Documentation` icon, providing an offline version of the FreeNAS® User Guide (this documentation).
+* The "Help" icon has been replaced by the :ref:`Guide` icon, providing an offline version of the FreeNAS® User Guide (this documentation).
 
 * A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
   connected initiators.

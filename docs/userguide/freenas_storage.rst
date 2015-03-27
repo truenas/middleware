@@ -719,7 +719,7 @@ current status of a running scrub or the statistics from the last completed scru
 
 **Volume Status:** as seen in the example in Figure 8.1m, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
 write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the device's
-options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
+options (shown in Figure 8.1n), offline or online the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
 **Upgrade:** used to upgrade the pool to the latest ZFS features, as described in :ref:`Upgrading a ZFS Pool`. This button will not appear if the pool is
 running the latest versions of feature flags.
