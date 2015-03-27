@@ -930,51 +930,39 @@ The recommended method for expanding the size of a ZFS pool is to pre-plan the n
 
 However, this is not an option if you do not have open drive ports or the ability to add a SAS/SATA HBA card. In this case, you can replace one disk at a time
 with a larger disk, wait for the resilvering process to incorporate the new disk into the pool completes, then repeat with another disk until all of the disks
-have been replaced. This process is slow and places the system in a degraded state. Since a failure at this point could be disastrous,
-**do not attempt this method unless the system has a reliable backup.**
+have been replaced.
 
-.. note:: this method requires the ZFS property autoexpand. This property became available starting with FreeNAS® version 8.3.0. If you are running an
-   earlier version of FreeNAS®, upgrade before attempting this method.
+The safest way to perform this is to use a spare drive port or an eSATA port and a hard drive dock. In this case, you can perform the following steps:
 
-Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not, the pool will not recognize that the disk
-capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. To verify the property, use Shell. This example checks
-the ZFS volume named :file:`Vol1`::
+#. Shut down the system.
 
+#. Install one new disk.
 
- zpool get all Vol1
+#. Start up the system.
+
+#. Go to :menuselection:`Storage --> Volumes`, select the pool to expand and click the "Volume Status" button. Select a disk and click the "Replace" button. Choose the new
+   disk as the replacement.
+
+#. You can view the status of the resilver process by running :command:`zpool status`. When the new disk has resilvered, the old one will be automatically offlined. You can
+   then shut down the system and physically remove the replaced disk. One advantage of this approach is that there is no loss of redundancy during the resilver.
+
+If you do not have a spare drive port, you will need to replace one drive with a larger drive using the instructions in :ref:`Replacing a Failed Drive`. This process is slow and
+places the system in a degraded state. Since a failure at this point could be disastrous, **do not attempt this method unless the system has a reliable backup.** Replace one drive
+at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are replaced and the resilver completes, you
+should see the added space in the pool.
+
+.. note:: either method requires the ZFS property "autoexpand".  Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not,
+   the pool will not recognize that the disk capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. 
+
+To verify the autoexpand property, run this command from :ref:`Shell`, replacing *Vol1* with the name of the volume to expand::
+
+ zpool get autoexpand Vol1
  NAME	PROPERTY	VALUE			SOURCE
- Vol1	size		4.53T			-
- Vol1	capacity	31%			-
- Vol1	altroot		/mnt			local
- Vol1	health		ONLINE			-
- Vol1	guid		8068631824452460057	default
- Vol1	version		28			default
- Vol1	bootfs		-			default
- Vol1	delegation	on			default
- Vol1	autoreplace	off			default
- Vol1	cachefile	/data/zfs/zpool.cache	local
- Vol1	failmode	wait			default
- Vol1	listsnapshots	off			default
  Vol1 	autoexpand 	on 			local
- Vol1	dedupditto	0			default
- Vol1	dedupratio	1.00x			-
- Vol1	free		3.12T			-
- Vol1	allocated	1.41T			-
- Vol1	readonly	off			-
- Vol1	comment		-			default
 
 If autoexpansion is not enabled, enable it by specifying the name of the ZFS volume::
 
  zpool set autoexpand=on Vol1 
-
-Verify that autoexpand is now enabled by repeating :command:`zpool get all Vol1`.
-
-You are now ready to replace one drive with a larger drive using the instructions in Replacing a Failed Drive.
-
-Replace one drive at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are
-replaced and the resilver completes, you should see the added space in the pool.
-
-You can view the status of the resilver process by running :command:`zpool status Vol1`.
 
 .. _Enabling ZFS Pool Expansion:
 
