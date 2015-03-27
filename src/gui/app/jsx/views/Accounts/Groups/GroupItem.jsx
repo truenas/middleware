@@ -27,6 +27,14 @@ var GroupView = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
+  , getMembers: function( groupid ) {
+    if ( UsersStore.getUsersByGroup( groupid )[0] ) {
+      return UsersStore.getUsersByGroup( groupid )[0].username;
+    } else {
+      return "";
+    }
+  }
+
   , render: function() {
       var builtInGroupAlert = null;
       var editButton = null;
@@ -79,7 +87,7 @@ var GroupView = React.createClass({
                                entry  = { this.props.item["id"] }/>
           <viewerUtil.DataCell title = { "Users" }
                                colNum = { 9 }
-                               entry = { UsersStore.getUsersByGroup(this.props.item["id"])[0].username } />
+                               entry = { this.getMembers( this.props.item["id"] ) } />
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
