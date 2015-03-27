@@ -92,6 +92,7 @@ _interface_config()
 		done
 	fi
 
+	local IFS=\|
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
