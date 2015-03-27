@@ -29,7 +29,6 @@ var UserView = React.createClass({
     }
 
   , getPrimaryGroup: function(groupID) {
-    console.log(GroupsStore.getGroup(groupID));
     return GroupsStore.getGroup(groupID).name;
   }
 
