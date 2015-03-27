@@ -239,7 +239,7 @@ class NavTree(object):
 
         nav = TreeRoot(
             'documentation',
-            name=_('Documentation'),
+            name=_('Guide'),
             icon=get_sw_name() + 'GuideIcon',
             action='opendocumentation',
             view='documentation_home',
