@@ -75,6 +75,11 @@ def run(command, important=True, logger=log, allowfork=False, quiet=False, timeo
 
     stdout = stderr = None
 
+    try:
+        timeout = long(timeout)
+    except:
+        timeout = -1
+
     p = pipeopen(command, important, logger, allowfork, quiet)
     if timeout != -1:
         signal.signal(signal.SIGALRM, run_alarm_handler)

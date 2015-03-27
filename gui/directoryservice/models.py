@@ -765,12 +765,14 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_bindname = models.CharField(
         verbose_name=_("Domain Account Name"),
         max_length=120,
-        help_text=_("Domain account name to bind as")
+        help_text=_("Domain account name to bind as"),
+        blank=True
     )
     ad_bindpw = models.CharField(
         verbose_name=_("Domain Account Password"),
         max_length=120,
-        help_text=_("Domain Account password.")
+        help_text=_("Domain Account password."),
+        blank=True
     )
     ad_netbiosname = models.CharField(
         verbose_name=_("NetBIOS Name"),

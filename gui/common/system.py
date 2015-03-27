@@ -657,9 +657,11 @@ def validate_netbios_name(netbiosname):
     if not regex.match(netbiosname):
         raise Exception("Invalid NetBIOS name")
 
-def validate_netbios_names(netbiosname):
+def validate_netbios_names(netbiosname, validate_func=validate_netbios_name):
     if not netbiosname:
         raise Exception("NULL NetBIOS name")
+    if not validate_func:
+        validate_func = validate_netbios_name
 
     parts = []
     if ',' in netbiosname:
@@ -667,9 +669,45 @@ def validate_netbios_names(netbiosname):
     elif ' ' in netbiosname:
         parts = netbiosname.split()
     else:
-        validate_netbios_name(netbiosname)
+        validate_func(netbiosname)
      
     if parts:
         for p in parts:
             n = p.strip()
-            validate_netbios_name(n)
+            validate_func(n)
+
+def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_netbios_name):
+    if not netbiosname1 or not netbiosname2:
+        return False
+
+    netbiosname1_parts = []
+    if ',' in netbiosname1:
+        netbiosname1_parts = netbiosname1.split(',')
+    elif ' ' in netbiosname1:
+        netbiosname1_parts = netbiosname1.split()
+    else:
+        netbiosname1_parts = [netbiosname1] 
+
+    netbiosname2_parts = []
+    if ',' in netbiosname2:
+        netbiosname2_parts = netbiosname2.split(',')
+    elif ' ' in netbiosname1:
+        netbiosname2_parts = netbiosname2.split()
+    else:
+        netbiosname2_parts = [netbiosname2] 
+
+    if not netbiosname1_parts or not netbiosname2_parts:
+        return False
+
+    for n1 in netbiosname1_parts:
+        if validate_func:
+            validate_func(n1)
+
+        for n2 in netbiosname2_parts:
+            if validate_func:
+                validate_func(n2) 
+
+            if n1.lower() == n2.lower():
+                return True
+
+    return False

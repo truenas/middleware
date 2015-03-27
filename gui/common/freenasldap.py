@@ -1225,6 +1225,17 @@ class FreeNAS_ActiveDirectory_Base(object):
         return ret
 
     @staticmethod
+    def get_workgroup_name(domain, site=None, binddn=None, bindpw=None,
+        ssl='off', certfile=None, keytab_name=None, keytab_principal=None,
+        keytab_file=None, errors=[]):
+
+        f = FreeNAS_ActiveDirectory(domainname=domain, site=site, binddn=binddn,
+            bindpw=bindpw, ssl=ssl, certfile=certfile, keytab_name=keytab_name,
+            keytab_principal=keytab_principal, keytab_file=keytab_file
+        )
+        return f.get_netbios_name()
+
+    @staticmethod
     def adset(val, default=None):
         ret = default
         if val:
@@ -1570,11 +1581,14 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.set_kerberos_server()
         self.set_kpasswd_server()
 
+        flags = self.flags &~ FLAGS_SASL_GSSAPI
+        if self.keytab_name and self.keytab_principal:
+            flags |= FLAGS_SASL_GSSAPI
+
         self.dchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
             host=self.dchost, port=self.dcport,
-            ssl=self.ssl, certfile=self.certfile,
-            flags=(self.flags & ~FLAGS_SASL_GSSAPI))
+            ssl=self.ssl, certfile=self.certfile, flags=flags)
         self.dchandle.open()
 
         self.set_global_catalog_server()
@@ -1582,8 +1596,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.gchandle = FreeNAS_LDAP_Directory(
             binddn=self.binddn, bindpw=self.bindpw,
             host=self.gchost, port=self.gcport,
-            ssl=self.ssl, certfile=self.certfile,
-            flags=(self.flags & ~FLAGS_SASL_GSSAPI))
+            ssl=self.ssl, certfile=self.certfile, flags=flags)
         self.gchandle.open()
 
     def reset_servers(self):
