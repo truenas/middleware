@@ -30,7 +30,7 @@ import copy
 import collections
 from texttable import Texttable
 from fnutils.query import QueryDict, QueryList
-from output import (Column, ValueType, output_dict, output_table, output_list,
+from output import (Column, ValueType, output_object, output_table, output_list,
                     output_msg, output_is_ascii, read_value, format_value)
 
 
@@ -93,10 +93,12 @@ class IndexCommand(Command):
         nss = self.target.namespaces()
         cmds = self.target.commands()
 
-        out = context.ml.builtin_commands.keys()
-        out += cmds.keys()
-        out += [ns.get_name() for ns in sorted(nss)]
+        output_msg('Builtin items:', attrs=['bold'])
+        output_list(context.ml.builtin_commands.keys())
 
+        output_msg('Current namespace items:', attrs=['bold'])
+        out = cmds.keys()
+        out += [ns.get_name() for ns in sorted(nss)]
         output_list(out)
 
 
@@ -113,14 +115,13 @@ class RootNamespace(Namespace):
 
 
 class PropertyMapping(object):
-    def __init__(self, name, descr, get,
-                 set=None, list=False, type=ValueType.STRING):
-        self.name = name
-        self.descr = descr
-        self.get = get
-        self.set = set or get
-        self.list = list
-        self.type = type
+    def __init__(self, **kwargs):
+        self.name = kwargs.pop('name')
+        self.descr = kwargs.pop('descr')
+        self.get = kwargs.pop('get')
+        self.set = kwargs.pop('set', None) if 'set' in kwargs else self.get
+        self.list = kwargs.pop('list', True)
+        self.type = kwargs.pop('type', ValueType.STRING)
 
     def do_get(self, obj):
         if callable(self.get):
@@ -164,16 +165,21 @@ class ItemNamespace(Namespace):
                 output_msg('Wrong arguments count')
                 return
 
-            values = collections.OrderedDict()
+            values = []
             entity = self.parent.entity
 
             for mapping in self.parent.property_mappings:
                 if not mapping.get:
                     continue
 
-                values[mapping.descr if output_is_ascii() else mapping.name] = format_value(mapping.do_get(entity), mapping.type)
+                values.append((
+                    mapping.descr,
+                    mapping.name,
+                    mapping.do_get(entity),
+                    mapping.type
+                ))
 
-            output_dict(values)
+            output_object(*values)
 
     @description("Prints single item value")
     class GetEntityCommand(Command):
@@ -209,13 +215,15 @@ class ItemNamespace(Namespace):
         def run(self, context, args, kwargs, opargs):
             for k, v in kwargs.items():
                 if not self.parent.has_property(k):
-                    output_msg('Property {0} not found'.format(k))
-                    return
+                    raise CommandException('Property {0} not found'.format(k))
 
             entity = self.parent.entity
 
             for k, v in kwargs.items():
                 prop = self.parent.get_mapping(k)
+                if prop.set is None:
+                    raise CommandException('Property {0} is not writable'.format(k))
+
                 prop.do_set(entity, v)
 
             for k, op, v in opargs:
@@ -234,7 +242,7 @@ class ItemNamespace(Namespace):
             self.parent.modified = True
 
         def complete(self, context, tokens):
-            return [x.name + '=' for x in self.parent.property_mappings]
+            return [x.name + '=' for x in self.parent.property_mappings if x.set]
 
     @description("Saves item")
     class SaveEntityCommand(Command):

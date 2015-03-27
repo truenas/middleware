@@ -26,6 +26,7 @@
 #####################################################################
 
 
+import sys
 import time
 import config
 import gettext
@@ -33,6 +34,7 @@ import natural.date
 import natural.size
 from texttable import Texttable
 from columnize import columnize
+from termcolor import cprint
 from output import ValueType, get_terminal_size, resolve_cell
 
 
@@ -77,11 +79,13 @@ class AsciiOutputFormatter(object):
 
     @staticmethod
     def output_list(data, label, vt=ValueType.STRING):
-        print columnize(data)
+        sys.stdout.write(columnize(data))
+        sys.stdout.flush()
 
     @staticmethod
     def output_dict(data, key_label, value_label, value_vt=ValueType.STRING):
-        print columnize(['{0}={1}'.format(row[0], AsciiOutputFormatter.format_value(row[1], value_vt)) for row in data.items()])
+        sys.stdout.write(columnize(['{0}={1}'.format(row[0], AsciiOutputFormatter.format_value(row[1], value_vt)) for row in data.items()]))
+        sys.stdout.flush()
 
     @staticmethod
     def output_table(data, columns):
@@ -97,12 +101,12 @@ class AsciiOutputFormatter(object):
         table.set_deco(0)
         for i in items:
             if len(i) == 3:
-                name, _, value = i
-                table.add_row([name, AsciiOutputFormatter.format_value(value, ValueType.STRING)])
+                descr, name, value = i
+                table.add_row(['{0} ({1})'.format(descr, name), AsciiOutputFormatter.format_value(value, ValueType.STRING)])
 
             if len(i) == 4:
-                name, _, value, vt = i
-                table.add_row([name, AsciiOutputFormatter.format_value(value, vt)])
+                descr, name, value, vt = i
+                table.add_row(['{0} ({1})'.format(descr, name), AsciiOutputFormatter.format_value(value, vt)])
 
         print table.draw()
 
@@ -117,6 +121,10 @@ class AsciiOutputFormatter(object):
                     branch(subtree, indent + 1)
 
         branch(tree, 0)
+
+    @staticmethod
+    def output_msg(message, **kwargs):
+        cprint(message, attrs=kwargs.pop('attrs', None))
 
 
 def _formatter():

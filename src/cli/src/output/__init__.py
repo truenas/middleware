@@ -209,8 +209,9 @@ def get_formatter(name):
     return module._formatter()
 
 
-def output_msg(message, fmt=None):
-    print message
+def output_msg(message, fmt=None, **kwargs):
+    fmt = fmt or config.instance.variables.get('output-format')
+    return get_formatter(fmt).output_msg(message, **kwargs)
 
 
 def output_is_ascii():
