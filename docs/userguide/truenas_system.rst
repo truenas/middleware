@@ -325,7 +325,10 @@ Advanced
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-
+| Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
+|                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 If you make any changes, click the "Save" button.
 
@@ -699,17 +702,7 @@ Before upgrading an existing ZFS pool, be aware of the following caveats first:
   the latest feature flags, you will not be able to import that pool into another operating system that does not yet support those feature flags.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
-"Upgrade" button as seen in Figure 5.8d.
-
-.. note:: if the "Upgrade" button does not appear, the pool is already at the latest feature flags and does not need to be upgraded.
-
-**Figure 5.8d: Upgrading a ZFS Pool**
-
-|tn_pool1.png|
-
-.. |tn_pool1.png| image:: images/tn_pool1.png
-
-The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
+"Upgrade" button. A warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
 The upgrade itself should only take a seconds and is non-disruptive. This means that you do not need to stop any sharing services in order to upgrade the
 pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
