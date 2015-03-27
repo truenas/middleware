@@ -143,6 +143,12 @@ var DummyWidgetContent = React.createClass({
       if (reload === true)
       {
         var elmnt = d3.select( this.refs.svg.getDOMNode() );
+        // Way how to make sure only the desired tooltips are displayed.
+        elmnt
+          .on("mousemove", null)
+          .on("mouseout", null)
+          .on("dblclick", null)
+          .on("click", null);
         elmnt.selectAll("*").remove();
         this.setState({chart : null});
         update = false;
@@ -173,7 +179,7 @@ var DummyWidgetContent = React.createClass({
               ,style                      :    "Expanded"
               ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
               ,clipEdge                   :    false
-              ,useInteractiveGuideline    :    false    //Tooltips which show all data points. Very nice!
+              ,useInteractiveGuideline    :    true    //Tooltips which show all data points. Very nice!
             });
 
           // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
