@@ -61,7 +61,7 @@ var GroupView = React.createClass({
       return (
         <TWBS.Grid fluid>
         {/* "Edit Group" Button - Top */}
-        {/* editButton */}
+        { editButton }
 
         <TWBS.Row>
           <TWBS.Col xs={3}
@@ -91,13 +91,147 @@ var GroupView = React.createClass({
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
-          {/* editButton */}
+          { editButton }
 
         </TWBS.Grid>
       );
   }
 });
 
+// EDITOR PANE
+var GroupEdit = React.createClass({
+
+    propTypes: {
+      item: React.PropTypes.object.isRequired
+    }
+
+  , getInitialState: function() {
+      return {
+          modifiedValues : {}
+        , mixedValues    : this.props.item
+      }
+  }
+
+  , componentWillRecieveProps: function( nextProps ) {
+      var newModified = {};
+      var oldModified = _.cloneDeep( this.state.modifiedValues );
+
+      // Any remote changes will cause the current property to be shown as
+      // having been "modified", signalling to the user that saving it will
+      // have the effect of changing that value
+      _.forEach( nextProps.item, function( value, key ) {
+        if ( this.props.item[ key ] !== value ) {
+          newModified[ key ] = this.props.item[ key ];
+        }
+      }.bind(this) );
+
+      // Any remote changes which are the same as locally modified changes should
+      // cause the local modifications to be ignored.
+      _.forEach( oldModified, function( value, key ) {
+        if ( this.props.item[ key ] === value ) {
+          delete oldModified[ key ];
+        }
+      }.bind(this) );
+
+      this.setState({
+          modifiedValues : _.assign( oldModified, newModified )
+      });
+    }
+
+  , handleValueChange: function( key, event ) {
+      var newValues  = this.state.modifiedValues;
+      var inputValue;
+      if (event.target.type === "checkbox") {
+        inputValue = event.target.checked;
+      } else {
+        inputValue = event.target.value;
+      }
+      // We don't want to submit non-changed data to the middleware, and it's
+      // easy for data to appear "changed", even if it's the same. Here, we
+      // check to make sure that the input value we've just receieved isn't the
+      // same as what the last payload from the middleware shows as the value
+      // for the same key. If it is, we `delete` the key from our temp object
+      // and update state.
+      if ( this.props.item[ key ] === inputValue ) {
+        delete newValues[ key ];
+      } else {
+        newValues[ key ] = inputValue;
+      }
+
+      // mixedValues functions as a clone of the original item passed down in
+      // props, and is modified with the values that have been changed by the
+      // user. This allows the display components to have access to the
+      // "canonically" correct item, merged with the un-changed values.
+      this.setState({
+          modifiedValues : newValues
+        , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newValues )
+      });
+    }
+
+  , submitGroupUpdate: function() {
+      GroupsMiddleware.updateGroup( this.props.item["id"], this.state.modifiedValues );
+    }
+
+  , render: function() {
+      var builtInGroupAlert = null;
+      var editButtons       = null;
+
+      if ( this.props.item["builtin"] ) {
+        builtInGroupAlert = (
+          <TWBS.Alert bsStyle   = "warning"
+                      className = "text-center">
+            <b>{"You should only edit a system group if you know exactly what you are doing."}</b>
+          </TWBS.Alert>
+        );
+      }
+
+      editButtons =
+        <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-right"
+                         onClick   = { this.props.handleViewChange.bind(null, "view") }
+                         bsStyle   = "default" >{"Cancel"}</TWBS.Button>
+            <TWBS.Button className = "pull-right"
+                         disabled  = { _.isEmpty( this.state.modifiedValues ) ? true : false }
+                         onClick   = { this.submitGroupUpdate }
+                         bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
+        </TWBS.ButtonToolbar>;
+
+      return (
+        <TWBS.Grid fluid>
+          {/* Save and Cancel Buttons - Top */}
+          { editButtons }
+
+          {/* Shows a warning if the group is built in */}
+          { builtInGroupAlert }
+
+          <form className="form-horizontal">
+            {
+              this.props["dataKeys"].map( function( displayKeys, index ) {
+                return editorUtil.identifyAndCreateFormElement(
+                          // value
+                          this.state.mixedValues[ displayKeys["key"] ]
+                          // displayKeys
+                        , displayKeys
+                          //changeHandler
+                        , this.handleValueChange
+                          // key
+                        , index
+                          // wasModified
+                        , _.has( this.state.modifiedValues, displayKeys["key"] )
+                      );
+              }.bind( this ) ) 
+            }
+          </form>
+
+          {/* Save and Cancel Buttons - Bottom */}
+          { editButtons }
+        </TWBS.Grid>
+      );
+    }
+});
+
+
+// CONTROLLER-VIEW
 var GroupItem = React.createClass({
 
       propTypes: {
@@ -150,10 +284,21 @@ var GroupItem = React.createClass({
         var DisplayComponent = null;
         var processingText = "";
 
+        // PROCESSING OVERLAY
+        if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
+          processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
+        } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
+          processingText = "Group '" + this.state.targetGroup[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+        }
+
+        // DISPLAY COMPONENT
         switch( this.state.currentMode ) {
           default:
           case "view":
             DisplayComponent = GroupView;
+            break;
+          case "edit":
+            DisplayComponent = GroupEdit;
             break;
         }
 

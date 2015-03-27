@@ -39,6 +39,18 @@ var GroupsStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
+  , getPendingUpdateIDs: function() {
+      return _updatedOnServer;
+    }
+
+  , isLocalTaskPending: function( id ) {
+      return _.values( _localUpdatePending ).indexOf( id ) > -1;
+    }
+
+  , isGroupUpdatePending: function ( id ) {
+      return _updatedOnServer.indexOf( id ) > -1;
+    }
+
   , findGroupByKeyValue: function ( key, value ) {
       return _.find( _groups, function ( group ) {
         return group[ key ] === value;
