@@ -16,7 +16,8 @@ var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
 var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
 
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
-var GroupsStore = require("../../../stores/GroupsStore");
+var GroupsStore      = require("../../../stores/GroupsStore");
+
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
@@ -76,10 +77,9 @@ var GroupView = React.createClass({
           <viewerUtil.DataCell title  = { "Group ID" }
                                colNum = { 3 }
                                entry  = { this.props.item["id"] }/>
-        </TWBS.Row>
-        <TWBS.Row>
-          <TWBS.Col xs={9}>
-          </TWBS.Col>
+          <viewerUtil.DataCell title = { "Users" }
+                               colNum = { 9 }
+                               entry = { UsersStore.getUsersByGroup(this.props.item["id"])[0].username } />
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
