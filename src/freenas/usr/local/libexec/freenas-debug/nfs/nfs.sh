@@ -55,6 +55,10 @@ nfs_func()
 	fi
 	section_footer
 
+	section_header "rpcinfo -p"
+	rpcinfo -p
+	section_footer
+
 	section_header "nfsstat"
 	nfsstat
 	section_footer
