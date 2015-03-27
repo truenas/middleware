@@ -35,6 +35,7 @@ from lib import geom
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, accepts, returns, description
+from dispatcher.rpc import SchemaHelper as h
 
 
 diskinfo_cache = CacheStore()
@@ -52,23 +53,31 @@ class DiskProvider(Provider):
 
         return self.datastore.query('disks', *(filter or []), callback=extend, **(params or {}))
 
+    @accepts(str)
+    @returns(bool)
     def is_online(self, name):
         return os.path.exists(name)
 
+    @accepts(str)
+    @returns(str)
     def partition_to_disk(self, part_name):
         part = self.get_partition_config(part_name)
         return part['disk']
 
+    @accepts(str)
+    @returns(str)
     def disk_to_data_partition(self, disk_name):
         disk = diskinfo_cache.get(disk_name)
         return disk['data-partition-path']
 
+    @accepts(str)
     def get_disk_config(self, name):
         if not diskinfo_cache.exists(name):
             raise RpcException(errno.ENOENT, "Disk {0} not found".format(name))
 
         return diskinfo_cache.get(name)
 
+    @accepts(str)
     def get_partition_config(self, part_name):
         for name, disk in diskinfo_cache.itervalid():
             for part in disk['partitions']:
@@ -80,11 +89,7 @@ class DiskProvider(Provider):
         raise RpcException(errno.ENOENT, "Partition {0} not found".format(part_name))
 
 
-@accepts(
-    {'type': 'string'},
-    {'type': 'string'},
-    {'type': 'object'}
-)
+@accepts(str, str, h.object())
 class DiskGPTFormatTask(Task):
     def describe(self, disk, fstype, params=None):
         return "Formatting disk {0}".format(os.path.basename(disk))
@@ -127,6 +132,7 @@ class DiskGPTFormatTask(Task):
         generate_disk_cache(self.dispatcher, disk)
 
 
+@accepts(str, bool)
 class DiskEraseTask(Task):
     def __init__(self, dispatcher):
         super(DiskEraseTask, self).__init__(dispatcher)
@@ -433,16 +439,18 @@ def _init(dispatcher):
 
     def on_device_detached(args):
         path = args['path']
-        if not re.match(r'^/dev/(da|ad|ada)[0-9]+$', path):
-            return
 
-        purge_disk_cache(path)
-        disk = dispatcher.datastore.get_one('disks', ('path', '=', path))
-        dispatcher.datastore.delete('disks', disk['id'])
-        dispatcher.dispatch_event('disks.changed', {
-            'operation': 'delete',
-            'ids': [disk['id']]
-        })
+        if re.match(r'^/dev/(da|ad|ada)[0-9]+$', path):
+            purge_disk_cache(path)
+            disk = dispatcher.datastore.get_one('disks', ('path', '=', path))
+            dispatcher.datastore.delete('disks', disk['id'])
+            dispatcher.dispatch_event('disks.changed', {
+                'operation': 'delete',
+                'ids': [disk['id']]
+            })
+
+        if re.match(r'^/dev/gptid/[a-f0-9-]+$', path):
+            pass
 
     def on_device_mediachange(args):
         # Regenerate caches

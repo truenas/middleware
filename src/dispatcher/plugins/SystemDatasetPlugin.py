@@ -32,7 +32,8 @@ import uuid
 import logging
 import libzfs
 import nvpair
-from dispatcher.rpc import RpcException
+from dispatcher.rpc import RpcException, accepts, returns, description, private
+from dispatcher.rpc import SchemaHelper as h
 from task import Task, Provider
 
 SYSTEM_DIR = '/var/db/system'
@@ -118,11 +119,17 @@ def move_system_dataset(dispatcher, src_pool, dst_pool):
 
 
 class SystemDatasetProvider(Provider):
+    @private
+    @description("Initializes the .system dataset")
     def init(self):
         pool = self.configstore.get('system.dataset.pool')
         create_system_dataset(self.dispatcher, pool)
         mount_system_dataset(self.dispatcher, pool, SYSTEM_DIR)
 
+    @private
+    @description("Creates directory in .system dataset and returns reference to it")
+    @accepts(str)
+    @returns(str)
     def request_directory(self, name):
         path = os.path.join(SYSTEM_DIR, name)
         if os.path.exists(path):
@@ -134,6 +141,8 @@ class SystemDatasetProvider(Provider):
         os.mkdir(path)
         return path
 
+    @description("Returns current .system dataset parameters")
+    @returns(h.object())
     def status(self):
         return {
             'id': self.configstore.get('system.dataset.id'),
@@ -141,6 +150,8 @@ class SystemDatasetProvider(Provider):
         }
 
 
+@description("Updates .system dataset configuration")
+@accepts(str)
 class SystemDatasetConfigure(Task):
     def verify(self, pool):
         return ['service:syslog', 'service:statd']

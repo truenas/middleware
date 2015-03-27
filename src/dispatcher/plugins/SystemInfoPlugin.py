@@ -31,7 +31,7 @@ import psutil
 import time
 from datetime import datetime
 from dateutil import tz
-from dispatcher.rpc import description, returns
+from dispatcher.rpc import description, returns, accepts
 from task import Provider, Task
 from lib.system import system, system_bg
 from lib.freebsd import get_sysctl
@@ -39,11 +39,12 @@ from lib.freebsd import get_sysctl
 
 @description("Provides informations about the running system")
 class SystemInfoProvider(Provider):
-
+    @returns(str)
     def uname_full(self):
         out, _ = system('uname', '-a')
         return out
 
+    @returns(str)
     def version(self):
         with open('/etc/version') as fd:
             return fd.read().strip()
@@ -78,6 +79,7 @@ class ConfigureTimeTask(Task):
     def run(self, updated_props):
         pass
 
+
 @description("Reboots the System after a delay of 10 seconds")
 class SystemRebootTask(Task):
     def describe(self):
@@ -92,6 +94,7 @@ class SystemRebootTask(Task):
             })
         system_bg("/bin/sleep %s && /sbin/shutdown -r now &" % delay,
                   shell=True)
+
 
 @description("Shuts the system down after a delay of 10 seconds")
 class SystemHaltTask(Task):

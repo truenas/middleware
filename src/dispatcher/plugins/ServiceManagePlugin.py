@@ -32,6 +32,7 @@ from watchdog import events
 from task import Task, Provider, TaskException, VerifyException, query
 from resources import Resource
 from dispatcher.rpc import RpcException, description, accepts, private
+from dispatcher.rpc import SchemaHelper as h
 from lib.system import system, SubprocessException
 
 
@@ -101,6 +102,7 @@ class ServiceInfoProvider(Provider):
         return result
 
     @private
+    @accepts(str)
     def ensure_started(self, service):
         # XXX launchd!
         svc = self.datastore.get_one('service_definitions', ('name', '=', service))
@@ -120,6 +122,7 @@ class ServiceInfoProvider(Provider):
             pass
 
     @private
+    @accepts(str)
     def ensure_stopped(self, service):
         # XXX launchd!
         svc = self.datastore.get_one('service_definitions', ('name', '=', service))
@@ -139,6 +142,7 @@ class ServiceInfoProvider(Provider):
             pass
 
     @private
+    @accepts(str)
     def reload(self, service):
         svc = self.datastore.get_one('service_definitions', ('name', '=', service))
         if not svc:
@@ -159,14 +163,10 @@ class ServiceInfoProvider(Provider):
 
 
 @description("Provides functionality to start, stop, restart or reload service")
-@accepts({
-    'title': 'name',
-    'type': 'string'
-}, {
-    'title': 'action',
-    'type': 'string',
-    'enum': ['start', 'stop', 'restart', 'reload']
-})
+@accepts(
+    str,
+    h.enum(str, ['start', 'stop', 'restart', 'reload'])
+)
 class ServiceManageTask(Task):
     def describe(self, name, action):
         return "{0}ing service {1}".format(action.title(), name)

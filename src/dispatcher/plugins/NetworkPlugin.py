@@ -28,6 +28,7 @@
 import errno
 import ipaddress
 from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import SchemaHelper as h
 from datastore.config import ConfigNode
 from task import Provider, Task, TaskException, VerifyException, query
 
@@ -41,6 +42,7 @@ class NetworkProvider(Provider):
     def get_global_config(self):
         return ConfigNode('network', self.configstore)
 
+    @returns(h.array(str))
     def get_my_ips(self):
         ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
         for i in ifaces:
@@ -139,10 +141,7 @@ class CreateInterfaceTask(Task):
 
 
 @description("Deletes interface")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class DeleteInterfaceTask(Task):
     def verify(self, name):
         raise NotImplementedError()
@@ -152,12 +151,7 @@ class DeleteInterfaceTask(Task):
 
 
 @description("Alters network interface configuration")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-}, {
-    '$ref': 'network-interface'
-})
+@accepts(str, h.ref('network-interface'))
 class ConfigureInterfaceTask(Task):
     def verify(self, name, updated_fields):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
@@ -205,10 +199,7 @@ class ConfigureInterfaceTask(Task):
 
 
 @description("Enables interface")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class InterfaceUpTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
@@ -229,10 +220,7 @@ class InterfaceUpTask(Task):
 
 
 @description("Disables interface")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class InterfaceDownTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.interfaces', ('name', '=', name)):
@@ -253,13 +241,7 @@ class InterfaceDownTask(Task):
 
 
 @description("Adds host entry to the database")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-}, {
-    'type': 'string',
-    'title': 'address'
-})
+@accepts(str, str)
 class AddHostTask(Task):
     def verify(self, name, address):
         if self.datastore.exists('network.hosts', ('id', '=', name)):
@@ -284,13 +266,7 @@ class AddHostTask(Task):
 
 
 @description("Updates host entry in the database")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-}, {
-    'type': 'string',
-    'title': 'address'
-})
+@accepts(str, str)
 class UpdateHostTask(Task):
     def verify(self, name, address):
         if not self.datastore.exists('network.hosts', ('id', '=', name)):
@@ -315,10 +291,7 @@ class UpdateHostTask(Task):
 
 
 @description("Deletes host entry from the database")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class DeleteHostTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.hosts', ('id', '=', name)):
@@ -341,10 +314,7 @@ class DeleteHostTask(Task):
 
 
 @description("Adds static route to the system")
-@accepts({
-    '$ref': 'network-route',
-    'title': 'route'
-})
+@accepts(h.ref('network-route'))
 class AddRouteTask(Task):
     def verify(self, route):
         if self.datastore.exists('network.routes', ('id', '=', route['id'])):
@@ -361,13 +331,7 @@ class AddRouteTask(Task):
 
 
 @description("Updates static route in the system")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-}, {
-    '$ref': 'network-route',
-    'title': 'route'
-})
+@accepts(str, h.ref('network-route'))
 class UpdateRouteTask(Task):
     def verify(self, name, route):
         if not self.datastore.exists('network.routes', ('id', '=', name)):
@@ -387,10 +351,7 @@ class UpdateRouteTask(Task):
 
 
 @description("Deletes static route from the system")
-@accepts({
-    '$ref': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class DeleteRouteTask(Task):
     def verify(self, name):
         if not self.datastore.exists('network.routes', ('id', '=', name)):

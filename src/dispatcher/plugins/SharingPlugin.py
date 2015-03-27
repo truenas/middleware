@@ -27,7 +27,8 @@
 
 
 import errno
-from dispatcher.rpc import description, accepts
+from dispatcher.rpc import description, accepts, returns
+from dispatcher.rpc import SchemaHelper as h
 from task import Task, TaskException, VerifyException, Provider, RpcException, query
 
 
@@ -37,6 +38,7 @@ class SharesProvider(Provider):
         return self.datastore.query('shares', *(filter or []), **(params or {}))
 
     @description("Returns list of supported sharing providers")
+    @returns(h.array(str))
     def supported_types(self):
         result = []
         for p in self.dispatcher.plugins.values():
@@ -55,10 +57,7 @@ class SharesProvider(Provider):
 
 
 @description("Creates new share")
-@accepts({
-    '$ref': 'share',
-    'title': 'share'
-})
+@accepts(h.ref('share'))
 class CreateShareTask(Task):
     def verify(self, share):
         return ['system']
@@ -68,13 +67,7 @@ class CreateShareTask(Task):
 
 
 @description("Updates existing share")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-}, {
-    '$ref': 'share',
-    'title': 'updated_fields'
-})
+@accepts(str, h.ref('share'))
 class UpdateShareTask(Task):
     def verify(self, name, updated_fields):
         share = self.datastore.get_by_id('shares', name)
@@ -89,10 +82,7 @@ class UpdateShareTask(Task):
 
 
 @description("Deletes share")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class DeleteShareTask(Task):
     def verify(self, name):
         share = self.datastore.get_by_id('shares', name)

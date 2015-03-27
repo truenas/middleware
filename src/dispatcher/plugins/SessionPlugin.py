@@ -27,7 +27,7 @@
 
 import time
 from task import Provider, query
-from dispatcher.rpc import description, pass_sender, accepts
+from dispatcher.rpc import description, pass_sender, returns
 
 
 @description("Provides Information about the current loggedin Session")
@@ -37,7 +37,7 @@ class SessionProvider(Provider):
         return self.datastore.query('sessions', *(filter or []), **(params or {}))
 
     @description("Returns the loggedin user for the current session")
-    @accepts({})
+    @returns(str)
     @pass_sender
     def whoami(self, sender):
         return sender.user.name

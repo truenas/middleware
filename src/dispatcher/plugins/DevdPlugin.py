@@ -32,6 +32,7 @@ from resources import Resource
 from event import EventSource
 from task import Provider
 from dispatcher.rpc import accepts, returns, description
+from dispatcher.rpc import SchemaHelper as h
 from gevent import socket
 from lib import geom
 from lib.freebsd import get_sysctl
@@ -48,12 +49,7 @@ class DeviceInfoPlugin(Provider):
             context.dispatcher.register_resource(Resource('net:{0}'.format(net['name'])))
 
     @description("Returns list of available device classes")
-    @returns({
-        'type': 'array',
-        'items': {
-            'type': 'string'
-        }
-    })
+    @returns(h.array(str))
     def get_classes(self):
         return [
             "disk",
@@ -62,17 +58,12 @@ class DeviceInfoPlugin(Provider):
         ]
 
     @description("Returns list of devices from given class")
-    @accepts({
-        'title': 'dev_class',
-        'type': 'string'
-    })
-    @returns({
-        'oneOf': [
-            {'$ref': 'disk_device'},
-            {'$ref': 'network_device'},
-            {'$ref': 'cpu_device'}
-        ]
-    })
+    @accepts(str)
+    @returns(h.any_of(
+        h.ref('disk-device'),
+        h.ref('network-device'),
+        h.ref('cpu-device')
+    ))
     def get_devices(self, dev_class):
         method = "_get_class_{0}".format(dev_class)
         if hasattr(self, method):
@@ -229,7 +220,7 @@ def _init(dispatcher):
             dispatcher.register_event_source('system.device', DevdEventSource)
             dispatcher.unregister_event_handler('service.started', on_service_started)
 
-    dispatcher.register_schema_definition('disk_device', {
+    dispatcher.register_schema_definition('disk-device', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -238,7 +229,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('network_device', {
+    dispatcher.register_schema_definition('network-device', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -246,7 +237,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('cpu_device', {
+    dispatcher.register_schema_definition('cpu-device', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},

@@ -25,16 +25,20 @@
 #
 #####################################################################
 
+
 import errno
 import os
 import stat
-from dispatcher.rpc import RpcException, description, returns
-from task import Provider
+from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import SchemaHelper as h
+from task import Provider, Task
 
 
 @description("Provides informations filesystem structure")
 class FilesystemProvider(Provider):
-
+    @description("Lists contents of given directory")
+    @accepts(str)
+    @returns(h.array(h.ref('directory')))
     def list_dir(self, path):
         result = []
         if not os.path.isdir(path):
@@ -47,13 +51,13 @@ class FilesystemProvider(Provider):
                 continue
 
             if stat.S_ISDIR(st.st_mode):
-                typ = 'directory'
+                typ = 'DIRECTORY'
                 size = None
             elif stat.S_ISLNK(st.st_mode):
-                typ = 'link'
+                typ = 'LINK'
                 size = None
             else:
-                typ = 'file'
+                typ = 'FILE'
                 size = st.st_size
 
             item = {
@@ -68,6 +72,22 @@ class FilesystemProvider(Provider):
             result.append(item)
 
         return result
+
+
+class DownloadFileTask(Task):
+    def verify(self, path):
+        pass
+
+    def run(self, path):
+        pass
+
+
+class UploadFileTask(Task):
+    def verify(self, dest_path):
+        pass
+
+    def run(self, dest_path):
+        pass
 
 
 def _init(dispatcher):

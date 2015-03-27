@@ -30,6 +30,7 @@ import errno
 import psutil
 from task import Task, TaskStatus, Provider, TaskException
 from dispatcher.rpc import RpcException, description, accepts, returns, private
+from dispatcher.rpc import SchemaHelper as h
 from utils import first_or_default
 
 
@@ -56,10 +57,7 @@ class AFPSharesProvider(Provider):
 
 
 @description("Adds new AFP share")
-@accepts({
-    'title': 'share',
-    '$ref': 'afp-share'
-})
+@accepts(h.ref('afp-share'))
 class CreateAFPShareTask(Task):
     def describe(self, share):
         return "Creating AFP share {0}".format(share['id'])
@@ -79,13 +77,7 @@ class CreateAFPShareTask(Task):
 
 
 @description("Updates existing AFP share")
-@accepts({
-    'title': 'name',
-    'type': 'string'
-}, {
-    'title': 'share',
-    '$ref': 'afp-share'
-})
+@accepts(str, h.ref('afp-share'))
 class UpdateAFPShareTask(Task):
     def describe(self, name, updated_fields):
         return "Updating AFP share {0}".format(name)
@@ -106,10 +98,7 @@ class UpdateAFPShareTask(Task):
 
 
 @description("Removes AFP share")
-@accepts({
-    'title': 'name',
-    'type': 'string'
-})
+@accepts(str)
 class DeleteAFPShareTask(Task):
     def describe(self, name):
         return "Deleting AFP share {0}".format(name)

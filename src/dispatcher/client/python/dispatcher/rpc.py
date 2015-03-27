@@ -242,6 +242,78 @@ class DiscoveryService(RpcService):
         }
 
 
+class SchemaHelper(object):
+    @staticmethod
+    def all_of(*args):
+        return {'allOf': map(convert_schema, args)}
+
+    @staticmethod
+    def any_of(*args):
+        return {'anyOf': map(convert_schema, args)}
+
+    @staticmethod
+    def no(sch):
+        return {'not': convert_schema(sch)}
+
+    @staticmethod
+    def ref(target, **kwargs):
+        return {'$ref': target}
+
+    @staticmethod
+    def required(*args):
+        pass
+
+    @staticmethod
+    def forbidden(*args):
+        return SchemaHelper.no(SchemaHelper.required(*args))
+
+    @staticmethod
+    def array(sch, **kwargs):
+        return {
+            'type': 'array',
+            'items': convert_schema(sch)
+        }
+
+    @staticmethod
+    def object(*args, **kwargs):
+        return {
+            'type': 'object'
+        }
+
+    @staticmethod
+    def tuple(*args):
+        return {
+            'type': 'array',
+            'items': map(convert_schema, args)
+        }
+
+    @staticmethod
+    def enum(sch, values):
+        result = convert_schema(sch)
+        result['enum'] = values
+        return result
+
+
+def convert_schema(sch):
+    type_mapping = {
+        str: 'string',
+        unicode: 'string',
+        int: 'integer',
+        long: 'integer',
+        bool: 'boolean',
+        None: 'null'
+    }
+
+    if isinstance(sch, dict):
+        return sch
+
+    if isinstance(sch, type):
+        return {'type': type_mapping[sch]}
+
+    if isinstance(sch, tuple):
+        return {'type': [type_mapping[i] for i in sch]}
+
+
 def description(descr):
     def wrapped(fn):
         fn.description = descr
@@ -252,7 +324,7 @@ def description(descr):
 
 def accepts(*sch):
     def wrapped(fn):
-        fn.params_schema = sch
+        fn.params_schema = map(convert_schema, sch)
         return fn
 
     return wrapped
@@ -260,7 +332,7 @@ def accepts(*sch):
 
 def returns(*sch):
     def wrapped(fn):
-        fn.result_schema = sch
+        fn.result_schema = map(convert_schema, sch)
         return fn
 
     return wrapped

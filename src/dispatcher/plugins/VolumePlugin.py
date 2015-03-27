@@ -29,6 +29,7 @@ import errno
 import os
 from task import Provider, Task, ProgressTask, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import SchemaHelper as h
 from utils import first_or_default
 
 
@@ -68,13 +69,23 @@ class VolumeProvider(Provider):
         return self.datastore.query('volumes', *(filter or []), callback=extend, **(params or {}))
 
     @description("Finds volumes available for import")
-    @accepts({})
+    @returns(h.array(
+        h.object(properties={
+            'id': str,
+            'name': str,
+            'topology': h.ref('volume-topology'),
+            'status': str
+        })
+    ))
     def find(self):
         result = []
         for pool in self.dispatcher.call_sync('zfs.pool.find'):
             topology = pool['groups']
             for vdev, _ in iterate_vdevs(topology):
-                vdev['path'] = self.dispatcher.call_sync('disks.partition_to_disk', vdev['path'])
+                try:
+                    vdev['path'] = self.dispatcher.call_sync('disks.partition_to_disk', vdev['path'])
+                except RpcException:
+                    pass
 
             result.append({
                 'id': str(pool['guid']),
@@ -85,6 +96,8 @@ class VolumeProvider(Provider):
 
         return result
 
+    @accepts(str)
+    @returns(str)
     def resolve_path(self, path):
         volname, _, rest = path.partition(':')
         volume = self.query([('name', '=', volname)], {'single': True})
@@ -94,10 +107,8 @@ class VolumeProvider(Provider):
         return os.path.join(volume['mountpoint'], rest)
 
     @description("Extracts volume name, dataset name and relative path from full path")
-    @accepts({
-        'type': 'string',
-        'title': 'path'
-    })
+    @accepts(str)
+    @returns(h.tuple(str, str, str))
     def decode_path(self, path):
         path = os.path.normpath(path)[1:]
         tokens = path.split(os.sep)
@@ -119,6 +130,8 @@ class VolumeProvider(Provider):
 
         raise RpcException(errno.ENOENT, 'Cannot look up path')
 
+    @accepts(str)
+    @returns(h.array(str))
     def get_volume_disks(self, name):
         result = []
         for dev in self.dispatcher.call_sync('zfs.pool.get_disks', name):
@@ -126,6 +139,7 @@ class VolumeProvider(Provider):
 
         return result
 
+    @returns(h.array(str))
     def get_available_disks(self):
         disks = set([d['path'] for d in self.dispatcher.call_sync('disks.query')])
         for pool in self.dispatcher.call_sync('zfs.pool.query'):
@@ -138,9 +152,11 @@ class VolumeProvider(Provider):
     def get_disk_disposition(self, disk):
         pass
 
+    @accepts(str)
     def get_config(self, volume):
         return self.dispatcher.call_sync('zfs.pool.query', [('name', '=', volume)], {'single': True})
 
+    @accepts(str)
     def get_capabilities(self, type):
         if type == 'zfs':
             return self.dispatcher.call_sync('zfs.pool.get_capabilities')
@@ -149,31 +165,13 @@ class VolumeProvider(Provider):
 
 
 @description("Creates new volume")
-@accepts({
-    'title': 'volume',
-    '$ref': 'volume'
-})
+@accepts(h.ref('volume'))
 class VolumeCreateTask(ProgressTask):
-    def __get_disks(self, topology):
-        for vdev, gname in iterate_vdevs(topology):
-            yield vdev['path'], gname
-
-    def __get_disk_gptid(self, disk):
-        config = self.dispatcher.call_sync('disks.get_disk_config', disk)
-        return config.get('data-partition-path', disk)
-
-    def __convert_topology_to_gptids(self, topology):
-        topology = topology.copy()
-        for vdev, _ in iterate_vdevs(topology):
-            vdev['path'] = self.__get_disk_gptid(vdev['path'])
-
-        return topology
-
     def verify(self, volume):
         if self.datastore.exists('volumes', ('name', '=', volume['name'])):
             raise VerifyException(errno.EEXIST, 'Volume with same name already exists')
 
-        return ['disk:{0}'.format(i) for i, _ in self.__get_disks(volume['topology'])]
+        return ['disk:{0}'.format(i) for i, _ in get_disks(volume['topology'])]
 
     def run(self, volume):
         subtasks = []
@@ -194,7 +192,7 @@ class VolumeCreateTask(ProgressTask):
         self.set_progress(10)
         self.join_subtasks(*subtasks)
         self.set_progress(40)
-        self.join_subtasks(self.run_subtask('zfs.pool.create', name, self.__convert_topology_to_gptids(volume['topology'])))
+        self.join_subtasks(self.run_subtask('zfs.pool.create', name, convert_topology_to_gptids(self.dispatcher, volume['topology'])))
         self.set_progress(60)
         self.join_subtasks(self.run_subtask('zfs.mount', name))
         self.set_progress(80)
@@ -215,17 +213,7 @@ class VolumeCreateTask(ProgressTask):
 
 
 @description("Creates new volume and automatically guesses disks layout")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-}, {
-    'type': 'string',
-    'title': 'type'
-}, {
-    'type': 'array',
-    'title': 'disks',
-    'items': {'type': 'string'}
-})
+@accepts(str, str, h.array(str), h.object())
 class VolumeAutoCreateTask(Task):
     def verify(self, name, type, disks, params=None):
         if self.datastore.exists('volumes', ('name', '=', name)):
@@ -259,10 +247,7 @@ class VolumeAutoCreateTask(Task):
 
 
 @description("Destroys active volume")
-@accepts({
-    'type': 'string',
-    'title': 'name'
-})
+@accepts(str)
 class VolumeDestroyTask(Task):
     def verify(self, name):
         if not self.datastore.exists('volumes', ('name', '=', name)):
@@ -290,9 +275,12 @@ class VolumeDestroyTask(Task):
         })
 
 
+@description("Updates configuration of existing volume")
+@accepts(str, h.ref('volume'))
 class VolumeUpdateTask(Task):
     def verify(self, name, updated_params):
-        return ['system']
+        topology = updated_params.get('topology')
+        return ['disk:{0}'.format(i) for i, _ in get_disks(self.dispatcher, topology)]
 
     def run(self, name, updated_params):
         if 'topology' in updated_params:
@@ -318,11 +306,13 @@ class VolumeUpdateTask(Task):
                     }))
 
             self.join_subtasks(*subtasks)
-            
+
             new_vdevs = convert_topology_to_gptids(self.dispatcher, new_vdevs)
             self.join_subtasks(self.run_subtask('zfs.pool.extend', name, new_vdevs, updated_vdevs))
 
 
+@description("Imports previously exported volume")
+@accepts(str, str, h.object())
 class VolumeImportTask(Task):
     def verify(self, id, new_name, params=None):
         if self.datastore.exists('volumes', ('id', '=', id)):
@@ -352,6 +342,8 @@ class VolumeImportTask(Task):
         })
 
 
+@description("Exports active volume")
+@accepts(str)
 class VolumeDetachTask(Task):
     def verify(self, name):
         if not self.datastore.exists('volumes', ('name', '=', name)):
@@ -416,6 +408,11 @@ def iterate_vdevs(topology):
             if 'children' in vdev:
                 for child in vdev['children']:
                     yield child, name
+
+
+def get_disks(topology):
+    for vdev, gname in iterate_vdevs(topology):
+        yield vdev['path'], gname
 
 
 def get_disk_gptid(dispatcher, disk):

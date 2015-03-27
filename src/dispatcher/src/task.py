@@ -149,6 +149,9 @@ def query(result_type):
                     'items': {'$ref': result_type}
                 },
                 {
+                    'type': 'integer'
+                },
+                {
                     '$ref': result_type
                 }
             ]

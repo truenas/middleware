@@ -30,12 +30,14 @@ import errno
 from gevent import Timeout
 from task import Task, TaskStatus, Provider, TaskException
 from dispatcher.rpc import RpcException, description, accepts, returns, private
+from dispatcher.rpc import SchemaHelper as h
 from resources import Resource
 
 
 @description("Provides info about configured NFS shares")
 class NFSSharesProvider(Provider):
     @private
+    @accepts(str)
     def get_connected_clients(self, share_name):
         share = self.datastore.get_one('shares', ('type', '=', 'nfs'), ('id', '=', share_name))
         result = []
@@ -50,10 +52,7 @@ class NFSSharesProvider(Provider):
 
 
 @description("Adds new NFS share")
-@accepts({
-    'title': 'share',
-    '$ref': 'nfs-share'
-})
+@accepts(h.ref('nfs-share'))
 class CreateNFSShareTask(Task):
     def describe(self, share):
         return "Creating NFS share {0}".format(share['id'])
@@ -73,13 +72,7 @@ class CreateNFSShareTask(Task):
 
 
 @description("Updates existing NFS share")
-@accepts({
-    'title': 'name',
-    'type': 'string'
-}, {
-    'title': 'share',
-    '$ref': 'nfs-share'
-})
+@accepts(str, h.ref('nfs-share'))
 class UpdateNFSShareTask(Task):
     def describe(self, name, updated_fields):
         return "Updating NFS share {0}".format(name)
@@ -101,10 +94,7 @@ class UpdateNFSShareTask(Task):
 
 
 @description("Removes NFS share")
-@accepts({
-    'title': 'name',
-    'type': 'string'
-})
+@accepts(str)
 class DeleteNFSShareTask(Task):
     def describe(self, name):
         return "Deleting NFS share {0}".format(name)

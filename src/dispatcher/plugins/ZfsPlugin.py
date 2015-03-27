@@ -30,8 +30,9 @@ import errno
 import libzfs
 import nvpair
 from gevent.event import Event
-from task import Provider, Task, TaskStatus, TaskException, VerifyException
+from task import Provider, Task, TaskStatus, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, accepts, returns, description
+from dispatcher.rpc import SchemaHelper as h
 from balancer import TaskState
 from resources import Resource
 from fnutils import first_or_default
@@ -41,12 +42,7 @@ from fnutils.query import wrap
 @description("Provides information about ZFS pools")
 class ZpoolProvider(Provider):
     @description("Lists ZFS pools")
-    @returns({
-        'type': 'array',
-        'items': {
-            'type': {'$ref': 'pool'}
-        }
-    })
+    @query('zfs-pool')
     def query(self, filter=None, params=None):
         zfs = libzfs.ZFS()
         return wrap(zfs).query(*(filter or []), **(params or {}))
@@ -55,11 +51,14 @@ class ZpoolProvider(Provider):
         zfs = libzfs.ZFS()
         return list(map(lambda p: p.__getstate__(), zfs.find_import()))
 
+    @returns(h.ref('zfs-pool'))
     def get_boot_pool(self):
         name = self.configstore.get('system.boot_pool_name')
         zfs = libzfs.ZFS()
         return zfs.get(name).__getstate__()
 
+    @accepts(str)
+    @returns(h.array(str))
     def get_disks(self, name):
         try:
             zfs = libzfs.ZFS()
@@ -68,6 +67,7 @@ class ZpoolProvider(Provider):
         except libzfs.ZFSException, err:
             raise RpcException(errno.EFAULT, str(err))
 
+    @returns(h.object())
     def get_capabilities(self):
         return {
             'vdev-types': {
@@ -110,10 +110,7 @@ class ZfsProvider(Provider):
 
 
 @description("Scrubs ZFS pool")
-@accepts({
-    'title': 'pool',
-    'type': 'string'
-})
+@accepts(str)
 class ZpoolScrubTask(Task):
     def __init__(self, dispatcher):
         super(ZpoolScrubTask, self).__init__(dispatcher)
@@ -190,6 +187,8 @@ class ZpoolScrubTask(Task):
         return get_disk_names(self.dispatcher, pool)
 
 
+@description("Creates new ZFS pool")
+@accepts(str, h.ref('zfs-topology'), h.object())
 class ZpoolCreateTask(Task):
     def __partition_to_disk(self, part):
         result = self.dispatcher.call_sync('disks.get_partition_config', part)
@@ -263,6 +262,7 @@ class ZpoolBaseTask(Task):
         return get_disk_names(self.dispatcher, pool)
 
 
+@accepts(str, h.object())
 class ZpoolConfigureTask(ZpoolBaseTask):
     def verify(self, pool, updated_props):
         super(ZpoolConfigureTask, self).verify(pool)
@@ -278,6 +278,7 @@ class ZpoolConfigureTask(ZpoolBaseTask):
             raise TaskException(errno.EFAULT, str(err))
 
 
+@accepts(str)
 class ZpoolDestroyTask(ZpoolBaseTask):
     def run(self, name):
         try:
@@ -289,6 +290,7 @@ class ZpoolDestroyTask(ZpoolBaseTask):
         self.dispatcher.unregister_resource('zpool:{0}'.format(name))
 
 
+@accepts(str, h.ref('zfs-topology'), h.object())
 class ZpoolExtendTask(ZpoolBaseTask):
     def run(self, pool, new_vdevs, updated_vdevs):
         try:
@@ -300,6 +302,7 @@ class ZpoolExtendTask(ZpoolBaseTask):
             raise TaskException(errno.EFAULT, str(err))
 
 
+@accepts(str, str, h.object())
 class ZpoolImportTask(Task):
     def verify(self, guid, name=None, properties=None):
         zfs = libzfs.ZFS()
@@ -319,6 +322,7 @@ class ZpoolImportTask(Task):
             raise TaskException(errno.EFAULT, str(err))
 
 
+@accepts(str)
 class ZpoolExportTask(ZpoolBaseTask):
     def verify(self, name):
         super(ZpoolExportTask, self).verify(name)
@@ -346,6 +350,7 @@ class ZfsBaseTask(Task):
         return ['system']
 
 
+@accepts(str, bool)
 class ZfsDatasetMountTask(ZfsBaseTask):
     def run(self, name, recursive=False):
         try:
@@ -359,6 +364,7 @@ class ZfsDatasetMountTask(ZfsBaseTask):
             raise TaskException(errno.EFAULT, str(err))
 
 
+@accepts(str)
 class ZfsDatasetUmountTask(ZfsBaseTask):
     def run(self, name):
         try:
@@ -369,6 +375,7 @@ class ZfsDatasetUmountTask(ZfsBaseTask):
             raise TaskException(errno.EFAULT, str(err))
 
 
+@accepts(str, str, h.object())
 class ZfsDatasetCreateTask(Task):
     def verify(self, pool_name, path, params=None):
         return ['zpool:{0}'.format(pool_name)]
@@ -384,6 +391,7 @@ class ZfsDatasetCreateTask(Task):
         self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
 
 
+@accepts(str, str, int, h.object())
 class ZfsVolumeCreateTask(Task):
     def verify(self, pool_name, path, size, params=None):
         return ['zpool:{0}'.format(pool_name)]

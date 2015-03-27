@@ -29,6 +29,7 @@ import os
 import errno
 from task import Provider, Task, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import SchemaHelper as h
 from datastore import DuplicateKeyException, DatastoreException
 
 
@@ -74,14 +75,11 @@ class GroupProvider(Provider):
 
 
 @description("Create an user in the system")
-@accepts({
-    'title': 'user',
-    'allOf': [
-        {'$ref': 'user'},
-        {'required': ['username', 'group']},
-        {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
-    ]
-})
+@accepts(h.all_of(
+    h.ref('user'),
+    h.required('username', 'group'),
+    h.forbidden('builtin', 'logged-in', 'sessions')
+))
 class UserCreateTask(Task):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
@@ -136,10 +134,7 @@ class UserCreateTask(Task):
         return uid
 
 @description("Deletes an user from the system")
-@accepts({
-    'title': 'id',
-    'type': 'integer'
-})
+@accepts(int)
 class UserDeleteTask(Task):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
@@ -174,16 +169,13 @@ class UserDeleteTask(Task):
 
 
 @description('Updates an user')
-@accepts({
-    'title': 'id',
-    'type': 'integer'
-}, {
-    'title': 'user',
-    'allOf': [
-        {'$ref': 'user'},
-        {'not': {'required': ['builtin', 'logged-in', 'sessions']}}
-    ]
-})
+@accepts(
+    int,
+    h.all_of(
+        h.ref('user'),
+        h.forbidden('builtin' 'logged-in', 'sessions')
+    )
+)
 class UserUpdateTask(Task):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
@@ -213,12 +205,10 @@ class UserUpdateTask(Task):
 
 
 @description("Creates a group")
-@accepts({
-    'allOf': [
-        {'ref': 'group'},
-        {'required': ['name']}
-    ]
-})
+@accepts(h.all_of(
+    h.ref('group'),
+    h.required('name')
+))
 class GroupCreateTask(Task):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
@@ -269,12 +259,7 @@ class GroupCreateTask(Task):
 
 
 @description("Updates a group")
-@accepts({
-    'title': 'id',
-    'type': 'integer'
-}, {
-    '$ref': 'group'
-})
+@accepts(int, h.ref('group'))
 class GroupUpdateTask(Task):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
@@ -309,10 +294,7 @@ class GroupUpdateTask(Task):
 
 
 @description("Deletes a group")
-@accepts({
-    'title': 'id',
-    'type': 'integer'
-})
+@accepts(int)
 class GroupDeleteTask(Task):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
