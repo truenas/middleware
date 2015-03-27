@@ -25,16 +25,13 @@
 #
 #####################################################################
 import asyncore
-import dns
 import grp
-import hashlib
 import ldap
 import ldap.sasl
 import logging
 import os
 import pwd
 import socket
-import sqlite3
 import string
 import tempfile
 import time
@@ -48,19 +45,24 @@ from freenasUI.common.pipesubr import (
     run
 )
 
-from freenasUI.common.ssl import (
-    get_certificate_path,
-    get_privatekey_path,
-    get_certificateauthority_path,
-    get_certificateauthority_privatekey_path
-)
+from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     get_freenas_var,
     get_freenas_var_by_file,
     ldap_objects,
     activedirectory_objects,
 )
-from freenasUI.common.freenascache import *
+from freenasUI.common.freenascache import (
+    FreeNAS_UserCache,
+    FreeNAS_GroupCache,
+    FreeNAS_LDAP_QueryCache,
+    FreeNAS_Directory_UserCache,
+    FreeNAS_Directory_GroupCache,
+    FLAGS_CACHE_READ_USER,
+    FLAGS_CACHE_READ_GROUP,
+    FLAGS_CACHE_WRITE_USER,
+    FLAGS_CACHE_WRITE_GROUP
+)
 
 log = logging.getLogger('common.freenasldap')
 
