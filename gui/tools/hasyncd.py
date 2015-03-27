@@ -86,11 +86,18 @@ class JournalAlive(threading.Thread):
                         break
 
 
+class Request(object):
+
+    def __init__(self, **kwargs):
+        self.client_address = kwargs.pop('client_address')
+        self.headers = kwargs.pop('headers')
+
+
 class HASyncRequestHandler(SimpleXMLRPCRequestHandler):
 
     def _dispatch(self, method, params):
         """
-        Method based on SimpleXMLRPCDispatcher to pass the client_address
+        Method based on SimpleXMLRPCDispatcher to pass the request object
         as argument.
         """
         func = None
@@ -113,8 +120,12 @@ class HASyncRequestHandler(SimpleXMLRPCRequestHandler):
                     except AttributeError:
                         pass
 
+        request = Request(
+            client_address=self.client_address,
+            headers=self.headers,
+        )
         if func is not None:
-            return func(self.client_address, *params)
+            return func(request, *params)
         else:
             raise Exception('method "%s" is not supported' % method)
 
@@ -139,19 +150,19 @@ class Funcs:
             raise xmlrpclib.Fault(5, 'Access Denied')
         return qs[0]
 
-    def enc_getkey(self, client_address, secret):
+    def enc_getkey(self, request, secret):
         from freenasUI.failover.enc_helper import LocalEscrowCtl
         self._authenticated(secret)
         escrowctl = LocalEscrowCtl()
         return escrowctl.getkey()
 
-    def enc_setkey(self, client_address, secret, passphrase):
+    def enc_setkey(self, request, secret, passphrase):
         from freenasUI.failover.enc_helper import LocalEscrowCtl
         self._authenticated(secret)
         escrowctl = LocalEscrowCtl()
         return escrowctl.setkey(passphrase)
 
-    def pairing_receive(self, client_address, secret):
+    def pairing_receive(self, request, secret):
         from freenasUI.failover.models import CARP, Failover
         from freenasUI.failover.utils import (
             delete_pending_pairing,
@@ -185,26 +196,26 @@ class Funcs:
         except ValueError:
             return False
 
-    def pairing_send(self, client_address, secret):
+    def pairing_send(self, request, secret):
         from freenasUI.failover.utils import set_pending_pairing
         try:
-            set_pending_pairing(secret=secret, ip=client_address[0])
+            set_pending_pairing(secret=secret, ip=request.client_address[0])
         except Exception as e:
             log.error('Failed set_pending_pairing: %s', e)
             return False
         return True
 
-    def ping(self, client_address):
+    def ping(self, request):
         return 'pong'
 
-    def pool_available(self, client_address, secret):
+    def pool_available(self, request, secret):
         from freenasUI.middleware.notifier import notifier
         failover = self._authenticated(secret)
         p1 = notifier()._pipeopen('zpool list %s' % failover.volume.vol_name)
         p1.communicate()
         return p1.returncode
 
-    def file_recv(self, client_address, secret, path):
+    def file_recv(self, request, secret, path):
         self._authenticated(secret)
         if not os.path.exists(path):
             return None
@@ -213,7 +224,7 @@ class Funcs:
         mode = os.stat(path).st_mode
         return data, mode
 
-    def file_send(self, client_address, secret, path, content, mode):
+    def file_send(self, request, secret, path, content, mode):
         self._authenticated(secret)
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
@@ -223,7 +234,7 @@ class Funcs:
         os.chmod(path, mode)
         return True
 
-    def run_sql(self, client_address, secret, query, params):
+    def run_sql(self, request, secret, query, params):
         self._authenticated(secret)
         cursor = self._conn.cursor()
         if params is None:
@@ -231,7 +242,7 @@ class Funcs:
         else:
             cursor.executelocal(query, params)
 
-    def service(self, client_address, secret, verbs):
+    def service(self, request, secret, verbs):
         from freenasUI.middleware.notifier import notifier
         self._authenticated(secret)
         rvs = []
@@ -244,7 +255,7 @@ class Funcs:
             rvs.append(getattr(_n, verb)(service))
         return rvs
 
-    def sync_to(self, client_address, secret, query):
+    def sync_to(self, request, secret, query):
         from freenasUI.failover.models import Failover
         from freenasUI.failover.utils import (
             delete_pending_pairing,
@@ -273,7 +284,7 @@ class Funcs:
             )
         return rv
 
-    def sync_from(self, client_address, secret):
+    def sync_from(self, request, secret):
         failover = self._authenticated(secret)
         return self._conn.dump_send(failover=failover)
 
