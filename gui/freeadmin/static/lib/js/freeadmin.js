@@ -1135,6 +1135,50 @@ require([
         directoryservice_mutex_toggle('ad_enable', ad);
     }
 
+    activedirectory_idmap_check = function() {
+        idmap = registry.byId("id_ad_idmap_backend");
+
+        ad_idmap = idmap.get("value"); 
+        if (ad_idmap != "rid") {
+            var dialog = new Dialog({
+                title: gettext("Active Directory IDMAP change!"),
+                id: "AD_idmap_scary_dialog",
+                content: domConstruct.create(
+                    "p", {
+                        innerHTML: gettext( 
+                            gettext("<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />") +
+                            gettext("The idmap_ad plugin provides a way for Winbind to read id mappings from<br />") +
+                            gettext("an AD server that uses RFC2307/SFU schema extensions. This module<br />") +
+                            gettext("implements only the \"idmap\" API, and is READONLY. Mappings must be<br />") +
+                            gettext("provided in advance by the administrator by adding the uidNumber<br />") +
+                            gettext("attributes for users and gidNumber attributes for groups in the AD.<br />") +
+                            gettext("Winbind will only map users that have a uidNumber and whose primary<br />") +
+                            gettext("group have a gidNumber attribute set. It is however recommended that<br />") +
+                            gettext("all groups in use have gidNumber attributes assigned, otherwise they<br />") +
+                            gettext("are not working.<br /><br />") +
+                            gettext("<font color='red'>STOP</font>: If your Active Directory is not configured for this, it will not work.<br><br>")
+                        )
+                    },
+                    null
+                )
+            })
+
+            dialog.okButton = new Button({label: "Yes"});
+            dialog.cancelButton = new Button({label: "No"});
+            dialog.addChild(dialog.okButton);
+            dialog.addChild(dialog.cancelButton);
+            dialog.okButton.on('click', function(e){
+                dialog.destroy();
+            });
+            dialog.cancelButton.on('click', function(e){
+                idmap.set('value', 'rid', false);
+                dialog.destroy();
+            });   
+            dialog.startup();
+            dialog.show();
+        }
+    }
+
     domaincontroller_mutex_toggle = function() {
         var node = query("#domaincontroller_table");
         xhr.get('/directoryservice/status/', {
