@@ -329,6 +329,10 @@ class ActiveDirectoryForm(ModelForm):
             self.fields['ad_bindpw'].required = False
         self.__original_save()
 
+        self.fields["ad_idmap_backend"].widget.attrs["onChange"] = (
+            "activedirectory_idmap_check();"
+        )
+
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
