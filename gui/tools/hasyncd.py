@@ -215,6 +215,9 @@ class Funcs:
 
     def file_send(self, client_address, secret, path, content, mode):
         self._authenticated(secret)
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
         with open(path, 'wb+') as f:
             f.write(base64.b64decode(content))
         os.chmod(path, mode)
