@@ -32,7 +32,6 @@ function renderApp( path ) {
 
       if ( baseHTML && innerHTML && output ) {
         resolve( output );
-        console.log( innerHTML );
       } else {
         reject( "Handler for " + path + " did not return any HTML when rendered to string" );
       }
