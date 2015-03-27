@@ -39,6 +39,7 @@ from freenasUI.common.log import log_traceback
 from freenasUI.common.warden import (
     WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
 )
+from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
@@ -239,7 +240,7 @@ class NavTree(object):
         nav = TreeRoot(
             'documentation',
             name=_('Documentation'),
-            icon='DocumentationIcon',
+            icon=get_sw_name() + 'GuideIcon',
             action='opendocumentation',
             view='documentation_home',
             order=970,
