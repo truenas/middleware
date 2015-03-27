@@ -16,3 +16,4 @@
 #8853	Bug	Normal	MX-ES USB Drives does not work with FreeNAS 9.3
 #8874	Feature	Normal	Rescan Jails when Volume is Unlocked via API
 #8881	Bug	Normal	When changing AD idmap backend to anything other than RID, issue a big fat hairy warning
+#8887	Feature	Normal	would like a script or simple tool for vhid scanning when setting up an HA
