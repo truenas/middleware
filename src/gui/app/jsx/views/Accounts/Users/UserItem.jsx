@@ -18,6 +18,9 @@ var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
+var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
+var GroupsStore      = require("../../../stores/GroupsStore");
+
 // OVERVIEW PANE
 var UserView = React.createClass({
 
