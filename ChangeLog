@@ -1,0 +1,18 @@
+#7876	Bug	Normal	INTEL X710-DA2 10GbE Server Adapter not regonized
+#8013	Bug	Normal	please help latest 9.3 won't reboot, stuck at "generating host.conf"
+#8643	Bug	Normal	cifs shares unavailable on windows 7 machines after updating
+#8652	Feature	Normal	Ability to restart Jails/Plugins via API
+#8677	Feature	Normal	Provide ability on "Online" device with GUI
+#8751	Bug	Low	No error checking for a unique target alias name - Results in Traceback.
+#8755	Bug	Normal	[Redux] Multiple security vulnerabilities in OpenSSL
+#8759	Bug	Normal	USB driver list empty
+#8770	Bug	Normal	Using wizard to create AFP share for time machine results in wrong share type
+#8773	Bug	Normal	SSH keys regenerated on first reboot after enabling SSH
+#8783	Bug	Normal	Split out notification user for alerts from the routine status reports
+#8791	Bug	Normal	CIFS; Zeroconf share discovery checkbox is not working - Service is always published
+#8831	Bug	High	Errors with multipathing in FreeNAS 9.3
+#8835	Bug	High	LSI MegaRAID 9361-8i, AOCS3108LH8iR timeout bug
+#8851	Bug	Low	l2arc space accounting mismatch
+#8853	Bug	Normal	MX-ES USB Drives does not work with FreeNAS 9.3
+#8874	Feature	Normal	Rescan Jails when Volume is Unlocked via API
+#8881	Bug	Normal	When changing AD idmap backend to anything other than RID, issue a big fat hairy warning
