@@ -13,8 +13,10 @@ var RouteHandler = Router.RouteHandler;
 var Viewer = require("../../components/Viewer");
 
 var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
-var GroupsStore = require("../../stores/GroupsStore");
+var GroupsStore      = require("../../stores/GroupsStore");
 
+var UsersMiddleware = require("../../middleware/UsersMiddleware");
+var UsersStore      = require("../../stores/UsersStore");
 
 var viewData = {
     format  : require("../../../data/middleware-keys/groups-display.json")[0]
@@ -49,6 +51,12 @@ function getGroupsFromStore() {
   };
 }
 
+function getUsersStoreData() {
+  return {
+      usersList  : UsersStore.getAllUsers()
+  };
+}
+
 var Groups = React.createClass({
 
     getInitialState: function() {
@@ -59,15 +67,24 @@ var Groups = React.createClass({
       GroupsStore.addChangeListener( this.handleGroupsChange );
       GroupsMiddleware.requestGroupsList();
       GroupsMiddleware.subscribe();
+      UsersStore.addChangeListener( this.handleUsersChange );
+      UsersMiddleware.requestUsersList();
+      UsersMiddleware.subscribe();
     }
 
   , componentWillUnmount: function() {
       GroupsStore.removeChangeListener( this.handleGroupsChange );
       GroupsMiddleware.unsubscribe();
+      UsersStore.removeChangeListener( this.handleUsersChange );
+      UsersMiddleware.unsubscribe();
     }
 
   , handleGroupsChange: function() {
       this.setState( getGroupsFromStore() );
+    }
+
+  , handleUsersChange: function() {
+      this.setState( getUsersStoreData() );
     }
 
   , render: function() {
