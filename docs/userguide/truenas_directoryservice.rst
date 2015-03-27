@@ -325,7 +325,8 @@ the LDAP server and thus be provided authorized access to the data stored on the
 
 .. note:: LDAP authentication for CIFS shares will be disabled unless the LDAP directory has been configured for and populated with Samba attributes. The most
    popular script for performing this task is `smbldap-tools <http://download.gna.org/smbldap-tools/>`_ and instructions for using it can be found at
-   `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_.
+   `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_. In addition, the LDAP server must support SSL/TLS
+   and the certificate for the LDAP server needs to be imported.
 
 Figure 9.2a shows the LDAP Configuration screen that is seen when you click :menuselection:`Directory Service --> LDAP`.
 
