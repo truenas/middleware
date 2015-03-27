@@ -397,8 +397,13 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.DocumentationIcon{
-    background-image:url('/static/images/ui/tree/documentation.png');
+.TrueNASGuideIcon{
+    background-image:url('/static/images/ui/tree/truenasguide.png');
+    width:16px;
+    height:16px;
+}
+.FreeNASGuideIcon{
+    background-image:url('/static/images/ui/tree/freenasguide.png');
     width:16px;
     height:16px;
 }
