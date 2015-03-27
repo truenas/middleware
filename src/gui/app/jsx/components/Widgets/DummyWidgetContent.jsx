@@ -24,16 +24,32 @@ var DummyWidgetContent = React.createClass({
     // TODO: Are these 100% accurate?
     propTypes: {
         statdResources : React.PropTypes.array.isRequired
+      , chartTypes     : React.PropTypes.array.isRequired
     }
 
   , getInitialState: function() {
-      return {
-          initialData   : false
-        , chart         : ""
-        , updateCounter : 0
-        , graphType     : "line"
-        , errorMode     : false
-      };
+      var initialStatdData = {};
+      var initialErrorMode = { errorMode: false };
+
+      this.props.statdResources.forEach( function( resource ) {
+        initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource );
+
+        if ( initialStatdData[ resource.variable ] && initialStatdData[ resource.variable ].error ) {
+          initialErrorMode.errorMode = true;
+        }
+
+      });
+
+      return _.merge(
+        {
+            chart         : ""
+          , updateCounter : 0
+          , graphType     : "line"
+          , errorMode     : false
+        }
+        , initialStatdData
+        , initialErrorMode
+      );
     }
 
   , componentDidMount: function() {
@@ -55,12 +71,27 @@ var DummyWidgetContent = React.createClass({
       });
     }
 
+  , componentDidUpdate: function( prevProps, prevState ) {
+      if ( this.componentHasData() ) {
+        this.drawChart();
+      }
+    }
+
   , componentWillUnmount: function() {
       StatdStore.removeChangeListener( this.handleStatdChange );
 
       this.props.statdResources.forEach( function( resource ) {
         StatdMiddleware.unsubscribe( resource.dataSource );
       });
+    }
+
+  , componentHasData: function() {
+      if ( this.props.statdResources.length &&
+           this.props.chartTypes.length ) {
+        return true;
+      } else {
+        return false;
+      }
     }
 
   , updateData : function ( target, updateArray ) {
@@ -78,66 +109,26 @@ var DummyWidgetContent = React.createClass({
     }
 
   , handleStatdChange: function() {
-    if ( this.state.initialData === false )
-    {
-      var newState = {};
-
-      newState.initialData = true;
-      this.props.statdResources.forEach(function(resource) {
-        newState[resource.variable] = StatdStore.getWidgetData( resource.dataSource );
-        if (newState[resource.variable] === undefined)
-        {
-          newState.initialData = false;
-        }
-        else
-        {
-          if (newState[resource.variable].error === true)
-          {
-            newState.errorMode = true;
-            newState.initialData = false;
-
-          }
-        }
-      });
-
-      this.setState( newState );
-
-      if (this.state.errorMode === true)
-      {
-        this.render();
-        return;
-      }
-
-      if (this.state.initialData === true )
-      {
-        this.drawChart();
-      }
-    }
-    else {
       var ud = StatdStore.getWidgetDataUpdate();
       var updateCounter = this.state.updateCounter;
       var updateFunction = this.updateData;
-      if (ud.name)
-      {
+      if (ud.name) {
         var updateArray = [ud.args["timestamp"], ud.args["value"]];
-        this.props.statdResources.forEach(function(resource) {
-          if (ud.name === "statd." + resource.dataSource + ".pulse")
-          {
+
+        this.props.statdResources.forEach( function( resource ) {
+          if (ud.name === "statd." + resource.dataSource + ".pulse") {
             updateCounter++;
             updateFunction(resource.variable, updateArray);
           }
         });
 
-        if (updateCounter >= this.props.statdResources.length)
-        {
+        if (updateCounter >= this.props.statdResources.length) {
           this.drawChart(true);
           updateCounter = 0;
         }
         this.setState({ "updateCounter" :  updateCounter });
       }
     }
-
-  }
 
   , drawChart: function( update, reload ) {
       if (reload === true)
