@@ -138,6 +138,8 @@ class Funcs:
 
     def __init__(self, *args, **kwargs):
         from django.db import connection
+        from freenasUI.common.system import get_sw_version
+        self._version = get_sw_version()
         self._conn = connection
 
     def _ebRender(self, failure):
@@ -149,6 +151,13 @@ class Funcs:
         if not qs.exists():
             raise xmlrpclib.Fault(5, 'Access Denied')
         return qs[0]
+
+    def _check_version(self, request):
+        rversion = request.headers.get('Version')
+        if rversion != self._version:
+            raise xmlrpclib.Fault(55, 'Versions mismatch (%s != %s' % (
+                self._version, rversion
+            ))
 
     def enc_getkey(self, request, secret):
         from freenasUI.failover.enc_helper import LocalEscrowCtl
@@ -236,6 +245,7 @@ class Funcs:
 
     def run_sql(self, request, secret, query, params):
         self._authenticated(secret)
+        self._check_version(request)
         cursor = self._conn.cursor()
         if params is None:
             cursor.executelocal(query)
@@ -262,6 +272,8 @@ class Funcs:
             get_pending_pairing,
         )
 
+        self._check_version(request)
+
         update_ip = False
         if Failover.objects.all().count() == 0:
             # Pairing
@@ -286,6 +298,7 @@ class Funcs:
 
     def sync_from(self, request, secret):
         failover = self._authenticated(secret)
+        self._check_version(request)
         return self._conn.dump_send(failover=failover)
 
 
