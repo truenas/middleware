@@ -46,7 +46,8 @@ from freenasUI.common.freenasldap import (
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     validate_netbios_name,
-    validate_netbios_names
+    validate_netbios_names,
+    compare_netbios_names
 )
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
@@ -411,20 +412,35 @@ class ActiveDirectoryForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
+        domain = cdata.get("ad_domainname")
+        bindname = cdata.get("ad_bindname")
+        bindpw = cdata.get("ad_bindpw")
         site = cdata.get("ad_site")
+        netbiosname = cdata.get("ad_netbiosname")
         ssl = cdata.get("ad_ssl")
         certificate = cdata["ad_certificate"]
+        ad_kerberos_keytab = cdata["ad_kerberos_keytab"]
+        workgroup = None
 
         if certificate: 
             certificate = certificate.get_certificate_path()
 
-        if not cdata.get("ad_bindpw"):
-            cdata['ad_bindpw'] = self.instance.ad_bindpw
+        args = {
+            'domain': domain,
+            'site': site,
+            'ssl': ssl,
+            'certfile': certificate
+        }
 
-        if not self.instance.ad_kerberos_keytab:
-            bindname = cdata.get("ad_bindname")
-            bindpw = cdata.get("ad_bindpw")
-            domain = cdata.get("ad_domainname")
+        if not ad_kerberos_keytab:
+            if not cdata.get("ad_bindpw"):
+                cdata['ad_bindpw'] = self.instance.ad_bindpw
+
+            if not bindname:
+                raise forms.ValidationError("No domain account name specified") 
+            if not bindpw:
+                raise forms.ValidationError("No domain account password specified") 
+
             binddn = "%s@%s" % (bindname, domain)
             errors = []
 
@@ -437,6 +453,22 @@ class ActiveDirectoryForm(ModelForm):
                     raise forms.ValidationError("%s." % errors[0])
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
+
+            args['bindname'] = bindname
+            args['bindpw'] = bindpw
+
+        else: 
+            args['keytab_name'] = ad_kerberos_keytab.keytab_name
+            args['keytab_principal'] = ad_kerberos_keytab.keytab_principal
+            args['keytab_file'] = '/etc/krb5.keytab'
+
+        workgroup = FreeNAS_ActiveDirectory.get_workgroup_name(**args)
+        if workgroup:
+            if compare_netbios_names(netbiosname, workgroup, None):
+                raise forms.ValidationError("The NetBIOS name cannot be the same as the workgroup name!")
+
+        else: 
+            log.warn("Unable to determine workgroup name")
 
         if ssl in ("off", None):
             return cdata
