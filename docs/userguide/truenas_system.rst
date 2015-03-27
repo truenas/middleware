@@ -960,8 +960,8 @@ If you click an entry, it will activate the following configuration buttons:
 Support
 -------
 
-The TrueNAS® "Support" tab is used to view or update the system's license information. It also provides a built-in ticketing system for generating support
-requests. Figure 5.11a shows an example of...
+The TrueNAS® "Support" tab, shown in Figure 5.11a, is used to view or update the system's license information. It also provides a built-in ticketing system for generating support
+requests.
 
 **Figure 5.11a: Support Tab**
 
@@ -969,7 +969,11 @@ requests. Figure 5.11a shows an example of...
 
 .. |tn_support1.png| image:: images/tn_support1.png
 
-Describe licensing stuff here....
+In this example, the system has a valid license which indicates the hardware model, system serial number, support contract type, licensed period, customer name,
+licensed features, and additional supported hardware.
+
+If the license expires or additional hardware, features, or contract type are required, contact your iXsystems support engineer. Once you have the new license string,
+click the "Update License" button, paste in the new license, and click "OK". The new details should be displayed.
 
 To generate a support ticket, complete the following fields:
 
