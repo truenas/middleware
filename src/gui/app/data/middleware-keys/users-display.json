@@ -133,5 +133,13 @@
         , "mutable"     : true
         , "defaultCol"  : false
       }
+    , {
+          "key"         : "sessions"
+        , "name"        : "Sessions"
+        , "type"        : "array"
+        , "formElement" : "textarea"
+        , "mutable"     : false
+        , "defaultCol"  : false
+      }
   ]
 }]
