@@ -21,7 +21,6 @@ var divStyle = {
 
 var DummyWidgetContent = React.createClass({
 
-    // TODO: Are these 100% accurate?
     propTypes: {
         statdResources : React.PropTypes.array.isRequired
       , chartTypes     : React.PropTypes.array.isRequired
@@ -32,7 +31,7 @@ var DummyWidgetContent = React.createClass({
       var initialErrorMode = { errorMode: false };
 
       this.props.statdResources.forEach( function( resource ) {
-        initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource );
+        initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
         if ( initialStatdData[ resource.variable ] && initialStatdData[ resource.variable ].error ) {
           initialErrorMode.errorMode = true;
@@ -43,7 +42,7 @@ var DummyWidgetContent = React.createClass({
       return _.merge(
         {
             chart         : ""
-          , updateCounter : 0
+          , stagedUpdate  : {}
           , graphType     : "line"
           , errorMode     : false
         }
@@ -72,8 +71,13 @@ var DummyWidgetContent = React.createClass({
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      if ( this.componentHasData() ) {
-        this.drawChart();
+      // Only update if we have the required props, and if there is no staged
+      // updade currently being assembled
+      if ( this.props.statdResources.length     &&
+           this.props.chartTypes.length         &&
+           _.isEmpty( this.state.stagedUpdate ) ){
+        // FIXME: Temporarily disabled, since it recursively calls setState
+        // this.drawChart();
       }
     }
 
@@ -85,48 +89,60 @@ var DummyWidgetContent = React.createClass({
       });
     }
 
-  , componentHasData: function() {
-      if ( this.props.statdResources.length &&
-           this.props.chartTypes.length ) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-  , updateData : function ( target, updateArray ) {
-
-        var updatedData = this.state[target];
-        updatedData.push(updateArray);
-        if (updatedData.length > 100)
-        {
-          updatedData.shift();
-        }
-
-        this.setState({
-          target: updatedData
-          });
-    }
-
   , handleStatdChange: function() {
-      var ud = StatdStore.getWidgetDataUpdate();
-      var updateCounter = this.state.updateCounter;
-      var updateFunction = this.updateData;
-      if (ud.name) {
-        var updateArray = [ud.args["timestamp"], ud.args["value"]];
+      var newState     = {};
+      var dataUpdate   = StatdStore.getWidgetDataUpdate();
+      var updateTarget = _.find(
+            this.props.statdResources
+          , function( resource ) {
+              return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
+            }
+        )["variable"];
 
-        this.props.statdResources.forEach( function( resource ) {
-          if (ud.name === "statd." + resource.dataSource + ".pulse") {
-            updateCounter++;
-            updateFunction(resource.variable, updateArray);
-          }
-        });
+      // Don't bother doing anything unless we have a valid target, based on
+      // something in our statdResources. This means the widget won't update based
+      // on pulse data intended for other widgets.
+      if ( updateTarget ) {
+        var stagedUpdate = _.cloneDeep( this.state.stagedUpdate );
 
-        if (updateCounter >= this.props.statdResources.length) {
-          this.drawChart(true);
-          updateCounter = 0;
+        // Ideally, each of the n responses will be sent one after another - if
+        // they aren't, they should be queued up in stagedUpdate so that they can
+        // be updated as a single batch - making sure the chart only re-renders when
+        // all n of the specified data is available. This logic could be modified
+        // to set a certain threshhold beyond which the chart would force an update
+        // even if it was still waiting for one of the pulses, or it had receieved
+        // five of one and only one of all the others, etc.
+
+        // TODO: More clear business logic for data display
+
+        if ( stagedUpdate[ updateTarget ] && _.isArray( stagedUpdate[ updateTarget ] ) ) {
+          stagedUpdate[ updateTarget ].push(
+            [ dataUpdate.args["timestamp"]
+            , dataUpdate.args["value"] ]
+          );
+        } else {
+          stagedUpdate[ updateTarget ] = [
+            [ dataUpdate.args["timestamp"]
+            , dataUpdate.args["value"] ]
+          ];
         }
-        this.setState({ "updateCounter" :  updateCounter });
+
+        // if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
+        if ( true ) {
+          _.each( stagedUpdate, function( data, key ) {
+            if ( _.has( key, this.state ) ) {
+              newState[ key ] = _.take( _.cloneDeep( this.state[ key ] )
+                                 .push( stagedUpdate[ key ] ), 100 );
+            }
+          }.bind( this ) );
+
+          stagedUpdate = {};
+        }
+
+        this.setState( _.merge(
+            { "stagedUpdate": stagedUpdate }
+          , newState
+        ));
       }
     }
 
