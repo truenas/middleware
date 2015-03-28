@@ -130,39 +130,85 @@ var UserEdit = React.createClass({
 
   , getInitialState: function() {
       return {
-          modifiedValues : {}
-        , mixedValues    : this.props.item
+          locallyModifiedValues  : {}
+        , remotelyModifiedValues : {}
+        , initialRemoteState     : this.props.item
+        , mixedValues            : this.props.item
+        , lastSentValues         : {}
       };
     }
 
   , componentWillReceiveProps: function( nextProps ) {
-      var newModified = {};
-      var oldModified = _.cloneDeep( this.state.modifiedValues );
+      var newRemoteModified  = {};
+      var newLocallyModified = {};
+      var oldLocallyModified = this.state.locallyModifiedValues;
 
-      // Any remote changes will cause the current property to be shown as
-      // having been "modified", signalling to the user that saving it will
-      // have the effect of changing that value
+      // remotelyModifiedValues represents everything that's changed remotely
+      // since the view was opened. This is the difference between the newly arriving
+      // props and the initial ones. Read-only values are ignored.
+      // TODO: Make this the difference between the initial state OR the last time
+      // the local administrator saved successfully. Currently this will treat
+      // successfully submitted local changes as remote changes.
       _.forEach( nextProps.item, function( value, key ) {
-        if ( this.props.item[ key ] !== value ) {
-          newModified[ key ] = this.props.item[ key ];
+        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
+          return item.key === key;
+        }.bind(this) );
+        if ( !_.isEqual( this.state.initialRemoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
+          newRemoteModified[ key ] = nextProps.item[ key ];
+        }
+      }.bind(this) );
+      // locallyModifiedValues represents the difference between the remote state
+      // of the item and the edits in progress. Read-only values MUST NOT be included.
+      _.forEach( this.props.item, function( value, key ) {
+        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
+          return item.key === key;
+        }.bind(this) );
+        if ( !_.isEqual( nextProps.item[ key ], value ) && itemKey.mutable ) {
+          newLocallyModified[ key ] = value;
         }
       }.bind(this) );
 
-      // Any remote changes which are the same as locally modified changes should
-      // cause the local modifications to be ignored.
-      _.forEach( oldModified, function( value, key ) {
-        if ( this.props.item[ key ] === value ) {
-          delete oldModified[ key ];
+      // When a remote value becomes identical to an edit in progress, that value
+      // should no longer be treated as having been changed locally. To this end,
+      // we compare newly arrived properties to the old locally modified ones, and
+      // remove the matching values from newLocallyModified.
+      // TODO: Make the view give some visual indication which values have been
+      // overriden by remote ones.
+      _.forEach( oldLocallyModified, function( value, key ) {
+        if ( _.isEqual( value, nextProps.key ) ) {
+          delete newLocallyModified[ key ];
         }
       }.bind(this) );
+
+      // initialRemoteState records the item as it was when the view was first
+      // opened. This is used to mark changes that have occurred remotely since
+      // the user began editing.
+      // It is important to know if the incoming change resulted from a call
+      // made by the local administrator. When this happens, we reset the
+      // initialRemoteState to get rid of remote edit markers, as the local version
+      // has thus become authoritative.
+      // We check this by comparing the incoming changes (newRemoteModified) to the
+      // last request sent (this.state.lastSentValues). If this check succeeds,
+      // we reset newLocallyModified and newRemoteModified, as there are no longer
+      // any remote or local changes to record.
+      // TODO: Do this in a deterministic way, instead of relying on comparing
+      // values.
+      if (_.isEqual(this.state.lastSentValues, newRemoteModified)){
+          newRemoteModified  = {};
+          newLocallyModified = {};
+          this.setState ({
+              initialRemoteState : nextProps
+          });
+      }
 
       this.setState({
-          modifiedValues : _.assign( oldModified, newModified )
+          locallyModifiedValues  : newLocallyModified
+        , remotelyModifiedValues : newRemoteModified
       });
     }
 
   , handleValueChange: function( key, event ) {
-      var newValues  = this.state.modifiedValues;
+      var newValues  = this.state.locallyModifiedValues;
       var inputValue;
       if (event.target.type === "checkbox") {
         inputValue = event.target.checked;
@@ -175,7 +221,7 @@ var UserEdit = React.createClass({
       // same as what the last payload from the middleware shows as the value
       // for the same key. If it is, we `delete` the key from our temp object
       // and update state.
-      if ( this.props.item[ key ] === inputValue ) {
+      if ( _.isEqual( this.props.item[ key ], inputValue ) ) {
         delete newValues[ key ];
       } else {
         newValues[ key ] = inputValue;
@@ -186,13 +232,16 @@ var UserEdit = React.createClass({
       // user. This allows the display components to have access to the
       // "canonically" correct item, merged with the un-changed values.
       this.setState({
-          modifiedValues : newValues
+          locallyModifiedValues : newValues
         , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newValues )
       });
     }
 
   , submitUserUpdate: function() {
-      UsersMiddleware.updateUser( this.props.item["id"], this.state.modifiedValues );
+      UsersMiddleware.updateUser( this.props.item["id"], this.state.locallyModifiedValues );
+      this.setState({
+          lastSentValues : this.state.locallyModifiedValues
+      });
     }
 
   , render: function() {
@@ -215,7 +264,7 @@ var UserEdit = React.createClass({
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
-                         disabled  = { _.isEmpty( this.state.modifiedValues ) ? true : false }
+                         disabled  = { _.isEmpty( this.state.locallyModifiedValues ) ? true : false }
                          onClick   = { this.submitUserUpdate }
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
@@ -241,7 +290,7 @@ var UserEdit = React.createClass({
                           // key
                         , index
                           // wasModified
-                        , _.has( this.state.modifiedValues, displayKeys["key"] )
+                        , _.has( this.state.locallyModifiedValues, displayKeys["key"] )
                        );
               }.bind( this ) )
             }
