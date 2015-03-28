@@ -238,9 +238,23 @@ var UserEdit = React.createClass({
     }
 
   , submitUserUpdate: function() {
-      UsersMiddleware.updateUser( this.props.item["id"], this.state.locallyModifiedValues );
+      var valuesToSend = {};
+
+      // Make sure nothing read-only made it in somehow.
+      _.forEach( this.state.locallyModifiedValues, function( value, key ) {
+        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
+          return item.key === key;
+        }.bind(this) );
+        if ( itemKey.mutable ) {
+          valuesToSend[ key ] = value;
+        }
+      }.bind(this) );
+
+      UsersMiddleware.updateUser( this.props.item["id"], valuesToSend );
+
+      // Save a record of the last changes we sent.
       this.setState({
-          lastSentValues : this.state.locallyModifiedValues
+          lastSentValues : valuesToSend
       });
     }
 
