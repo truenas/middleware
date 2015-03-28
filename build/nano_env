@@ -170,7 +170,7 @@ else
 fi
 
 # Feature sets to enable as part of the build.
-SW_FEATURES="REPORTING"
+: ${SW_FEATURES:="REPORTING"}
 
 # DEBUG=1, etc.
 for feature in $SW_FEATURES; do
