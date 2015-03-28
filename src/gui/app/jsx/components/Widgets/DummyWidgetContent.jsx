@@ -28,27 +28,24 @@ var DummyWidgetContent = React.createClass({
 
   , getInitialState: function() {
       var initialStatdData = {};
-      var initialErrorMode = { errorMode: false };
+      var initialErrorMode = false;
 
       this.props.statdResources.forEach( function( resource ) {
         initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
         if ( initialStatdData[ resource.variable ] && initialStatdData[ resource.variable ].error ) {
-          initialErrorMode.errorMode = true;
+          initialErrorMode = true;
         }
 
       });
 
-      return _.merge(
-        {
-            chart         : ""
-          , stagedUpdate  : {}
-          , graphType     : "line"
-          , errorMode     : false
-        }
-        , initialStatdData
-        , initialErrorMode
-      );
+      return {
+          chart        : ""
+        , stagedUpdate : {}
+        , graphType    : "line"
+        , errorMode    : false
+        , statdData    : initialStatdData
+      };
     }
 
   , componentDidMount: function() {
@@ -97,13 +94,15 @@ var DummyWidgetContent = React.createClass({
           , function( resource ) {
               return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
             }
-        )["variable"];
+        );
 
       // Don't bother doing anything unless we have a valid target, based on
       // something in our statdResources. This means the widget won't update based
       // on pulse data intended for other widgets.
-      if ( updateTarget ) {
-        var stagedUpdate = _.cloneDeep( this.state.stagedUpdate );
+      if ( updateTarget && updateTarget["variable"] ) {
+        var updateVariable = updateTarget["variable"];
+        var stagedUpdate   = _.cloneDeep( this.state.stagedUpdate );
+        var newDataPoint   = [ dataUpdate.args["timestamp"], dataUpdate.args["value"] ];
 
         // Ideally, each of the n responses will be sent one after another - if
         // they aren't, they should be queued up in stagedUpdate so that they can
@@ -115,23 +114,16 @@ var DummyWidgetContent = React.createClass({
 
         // TODO: More clear business logic for data display
 
-        if ( stagedUpdate[ updateTarget ] && _.isArray( stagedUpdate[ updateTarget ] ) ) {
-          stagedUpdate[ updateTarget ].push(
-            [ dataUpdate.args["timestamp"]
-            , dataUpdate.args["value"] ]
-          );
+        if ( stagedUpdate[ updateVariable ] && _.isArray( stagedUpdate[ updateVariable ] ) ) {
+          stagedUpdate[ updateVariable ].push( newDataPoint );
         } else {
-          stagedUpdate[ updateTarget ] = [
-            [ dataUpdate.args["timestamp"]
-            , dataUpdate.args["value"] ]
-          ];
+          stagedUpdate[ updateVariable ] = [ newDataPoint ];
         }
 
-        // if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
-        if ( true ) {
+        if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
           _.each( stagedUpdate, function( data, key ) {
-            if ( _.has( key, this.state ) ) {
-              newState[ key ] = _.take( _.cloneDeep( this.state[ key ] )
+            if ( _.has( key, this.state.statdData ) ) {
+              newState.statdData[ key ] = _.take( _.cloneDeep( this.state.statdData[ key ] )
                                  .push( stagedUpdate[ key ] ), 100 );
             }
           }.bind( this ) );
