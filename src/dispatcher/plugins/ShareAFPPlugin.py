@@ -29,6 +29,7 @@
 import errno
 import psutil
 from task import Task, TaskStatus, Provider, TaskException
+from resources import Resource
 from dispatcher.rpc import RpcException, description, accepts, returns, private
 from dispatcher.rpc import SchemaHelper as h
 from utils import first_or_default
@@ -162,4 +163,4 @@ def _init(dispatcher):
     dispatcher.register_task_handler("share.afp.update", UpdateAFPShareTask)
     dispatcher.register_task_handler("share.afp.delete", DeleteAFPShareTask)
     dispatcher.register_provider("shares.afp", AFPSharesProvider)
-    dispatcher.register_resource('service:netatalk', ['system'])
+    dispatcher.register_resource(Resource('service:netatalk'), ['system'])
