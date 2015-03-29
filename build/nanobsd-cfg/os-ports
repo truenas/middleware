@@ -168,6 +168,7 @@ add_port net/py-ipaddress
 add_port math/py-networkx
 add_port math/py-pandas
 add_port devel/py-tables
+add_port devel/py-termcolor
 add_port sysutils/py-psutil
 add_port textproc/py-mako
 add_port www/py-ws4py
