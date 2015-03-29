@@ -59,6 +59,7 @@
 /usr/local/lib/dispatcher/plugins/DiskPlugin.py
 /usr/local/lib/dispatcher/plugins/NetworkPlugin.py
 /usr/local/lib/dispatcher/plugins/EntitySubscriberPlugin.py
+/usr/local/lib/dispatcher/plugins/UITransactionPlugin.py
 /usr/local/lib/dispatcher/plugins/SessionPlugin.py
 /usr/local/lib/dispatcher/plugins/ShareNFSPlugin.py
 /usr/local/lib/dispatcher/plugins/ShareAFPPlugin.py
