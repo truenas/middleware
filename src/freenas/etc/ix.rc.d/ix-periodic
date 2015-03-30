@@ -19,9 +19,9 @@ ix_periodic_start()
 
 	echo "daily_output=\"${notifyuser}\"" >> /etc/periodic.conf
 	echo "daily_status_security_output=\"${notifyuser}\"" >> /etc/periodic.conf
-	echo "weekly_output="root"=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "weekly_output=\"${notifyuser}\"" >> /etc/periodic.conf
 	echo "weekly_status_security_output=\"${notifyuser}\"" >> /etc/periodic.conf
-	echo "monthly_output="root"=\"${notifyuser}\"" >> /etc/periodic.conf
+	echo "monthly_output=\"${notifyuser}\"" >> /etc/periodic.conf
 	echo "monthly_status_security_output=\"${notifyuser}\"" >> /etc/periodic.conf
 }
 
