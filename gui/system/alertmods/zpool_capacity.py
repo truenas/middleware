@@ -15,13 +15,17 @@ class ZpoolCapAlert(BaseAlert):
 
     def run(self):
         alerts = []
-        for vol in Volume.objects.filter(vol_fstype='ZFS'):
+        pools = [
+            vol.vol_name
+            for vol in Volume.objects.filter(vol_fstype='ZFS')
+        ] + [u'freenas-boot']
+        for pool in pools:
             proc = subprocess.Popen([
                 "/sbin/zpool",
                 "list",
                 "-H",
                 "-o", "cap",
-                vol.vol_name.encode('utf8'),
+                pool.encode('utf8'),
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             data = proc.communicate()[0]
             if proc.returncode != 0:
@@ -45,7 +49,7 @@ class ZpoolCapAlert(BaseAlert):
                     Alert(
                         level,
                         msg % {
-                            'volume': vol.vol_name,
+                            'volume': pool,
                             'capacity': cap,
                         },
                     )
