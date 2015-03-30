@@ -179,6 +179,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a VMware login or a :ref:`VMware-Snapshot` task fails
 
+* 30 days before the license expires and when the license expires
+
 * the status of a LSI MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
   is included for managing these devices
