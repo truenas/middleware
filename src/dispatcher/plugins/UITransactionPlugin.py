@@ -38,7 +38,8 @@ transactions = {}
 
 
 class Transaction(object):
-    def __init__(self, identifier):
+    def __init__(self, dispatcher, identifier):
+        self.dispatcher = dispatcher
         self.identifier = identifier
         self.sessions = []
 
@@ -50,6 +51,14 @@ class Transaction(object):
 
     def purge(self, session):
         self.sessions.remove(session)
+        if len(self.sessions) == 0:
+            del transactions[self]
+
+        self.dispatcher.dispatch_event('ui.transaction.released', {
+            'identifier': self.identifier,
+            'sid': session.sid,
+            'user': session.user
+        })
 
 
 class Session(object):
@@ -73,7 +82,7 @@ class UITransactionProvider(Provider):
     @accepts(str, int)
     @returns(bool)
     def acquire(self, identifier, timeout, sender):
-        t = transactions.setdefault(identifier, Transaction(identifier))
+        t = transactions.setdefault(identifier, Transaction(self.dispatcher, identifier))
         s = first_or_default(lambda s: s.sid == sender.session_id, t)
 
         if s:
@@ -82,6 +91,12 @@ class UITransactionProvider(Provider):
         s = Session(timeout, sender.user.name, sender.session_id)
         t.sessions.append(s)
         gevent.spawn(t.purge, s)
+
+        self.dispatcher.dispatch_event('ui.transaction.acquired', {
+            'identifier': identifier,
+            'sid': sender.session_id,
+            'user': sender.user.name
+        })
 
     @pass_sender
     @accepts(str)
