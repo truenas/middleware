@@ -8,22 +8,23 @@ var React = require("react");
 var TWBS  = require("react-bootstrap");
 
 // Middleware
-var MiddlewareStore  = require("../../stores/MiddlewareStore");
+var SubscriptionsStore  = require("../../stores/SubscriptionsStore");
 
 var Subscriptions = React.createClass({
 
     getInitialState: function() {
       return {
-          subscriptions : MiddlewareStore.getAllSubscriptions()
+          // TODO: Make this work with the new subscriptions architecture
+          subscriptions : SubscriptionsStore.getAllSubscriptions()
       };
     }
 
   , componentDidMount: function() {
-      MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
+      SubscriptionsStore.addChangeListener( this.handleMiddlewareChange );
     }
 
   , componentWillUnmount: function() {
-      MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
+      SubscriptionsStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
   , handleMiddlewareChange: function( namespace ) {
@@ -31,7 +32,7 @@ var Subscriptions = React.createClass({
 
       switch ( namespace ) {
         case "subscriptions":
-          var availableServices = MiddlewareStore.getAllSubscriptions();
+          var availableServices = SubscriptionsStore.getAllSubscriptions();
           newState.services = availableServices;
           break;
       }
