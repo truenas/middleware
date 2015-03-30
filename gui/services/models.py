@@ -543,6 +543,18 @@ class iSCSITargetExtent(Model):
             help_text=_("Xen inititors give errors when connecting to LUNs using the FreeNAS default "
                         "naming scheme.  Checking this alters the naming scheme to be more Xen-friendly"),
             )
+    iscsi_target_extent_rpm = models.CharField(
+            blank=False,
+            max_length=20,
+            default=choices.EXTENT_RPM_CHOICES[1][1],
+            choices=choices.EXTENT_RPM_CHOICES,
+            verbose_name=_("LUN RPM"),
+            help_text=_("RPM reported to initiators for this extent/LUN. The default is SSD because "
+                        "windows will attempt to defrag non SSD devices.  This is a pathological "
+                        "worst-case situation for ZFS.  VMWare will give you the option to use SSD "
+                        "LUNs as swap devices, there is some value to picking a non-SSD RPM if your "
+                        "extent is indeed not SSDs and the initiator will be VMWare."),
+            )
 
     class Meta:
         verbose_name = _("Extent")
