@@ -298,8 +298,9 @@ def convert_schema(sch):
     type_mapping = {
         str: 'string',
         unicode: 'string',
-        int: 'integer',
-        long: 'integer',
+        int: 'number',
+        long: 'number',
+        float: 'number',
         bool: 'boolean',
         None: 'null'
     }
