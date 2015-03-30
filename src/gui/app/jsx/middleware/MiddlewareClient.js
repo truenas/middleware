@@ -380,7 +380,7 @@ function MiddlewareClient() {
       return;
     }
 
-    if ( DEBUG("subscriptions") ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? masks.splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    if ( DEBUG("subscriptions") ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
     _.forEach( masks, function( mask ) {
       if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) > 0 ) {
@@ -419,7 +419,7 @@ function MiddlewareClient() {
       return;
     }
 
-    if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? masks.splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
     _.forEach( masks, function( mask ) {
       if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) === 1 ) {
