@@ -26,6 +26,7 @@
 #####################################################################
 
 
+import time
 import copy
 import uuid
 import dateutil.parser
@@ -197,7 +198,7 @@ class MongodbDatastore(object):
     def exists(self, collection, *args, **kwargs):
         return self.get_one(collection, *args, **kwargs) is not None
 
-    def insert(self, collection, obj, pkey=None):
+    def insert(self, collection, obj, pkey=None, timestamp=True):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
         elif type(obj) is not dict:
@@ -217,10 +218,16 @@ class MongodbDatastore(object):
                 pkey = uuid.uuid4()
 
         obj['_id'] = pkey
+
+        if timestamp:
+            t = time.time()
+            obj['updated-at'] = t
+            obj['created-at'] = t
+
         self.db[collection].insert(obj)
         return pkey
 
-    def update(self, collection, pkey, obj, upsert=False):
+    def update(self, collection, pkey, obj, upsert=False, timestamp=True):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
         elif type(obj) is not dict:
@@ -233,8 +240,15 @@ class MongodbDatastore(object):
             full_obj = self.get_by_id(collection, pkey)
             full_obj.update(obj)
             self.delete(collection, pkey)
-            self.insert(collection, full_obj)
+            self.insert(collection, full_obj, timestamp=False)
             return
+
+        if timestamp:
+            t = time.time()
+            obj['updated-at'] = t
+
+            if not self.get_by_id(collection, pkey):
+                obj['created-at'] = t
 
         self.db[collection].update({'_id': pkey}, obj, upsert=upsert)
 
