@@ -462,10 +462,13 @@ prune_usr() (
 build_documentation() {
 		echo "Building documentation"
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then
-		(cd docs/userguide && make html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs)
+		(cd docs/userguide && make html)
 	else
-		(cd docs/userguide && make SPHINXOPTS="-t truenas" html && mv _build/html ../../objs/os-base/amd64/_.w/usr/local/www/data/docs)
+		(cd docs/userguide && make SPHINXOPTS="-t truenas" html)
 	fi
+	rm -rf ${NANO_OBJ}/_.docs
+	mkdir -p ${NANO_OBJ}/_.docs/usr/local/www/data
+	mv docs/userguide/_build/html ${NANO_OBJ}/_.docs/usr/local/www/data/docs
 }
 
 newfs_part ( ) (

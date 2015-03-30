@@ -14,8 +14,9 @@ kPkgRemovedDirsKey = "removed-directories"
 kPkgDeltaKey = "delta-version"
 kPkgFlatSizeKey = "flatsize"
 kPkgDeltaStyleKey = "style"
+kPkgScriptsKey = "scripts"
 
-class DiffException(Exception):
+class PkgFileDiffException(Exception):
     pass
 
 def PackageName(m):
@@ -40,6 +41,30 @@ def FindManifest(tf):
 #            print >> sys.stderr, "MANIFEST"
 #            print >> sys.stderr, json.dumps(retval, sort_keys = True, indent = 4, separators=(',', ': '))
     return (retval, entry)
+
+def GetManifest(path = None, file = None):
+    """
+    Get the +MANIFEST entry from the named file.
+    """
+    if path and file:
+        raise ValueEerror("Cannot have both path and file")
+    if not path and not file:
+        raise ValueError("Neither path nor file are set")
+    if path:
+        try:
+            file = open(path, "rb")
+        except:
+            return None
+    try:
+        tf = tarfile.open(mode = "r", fileobj = file)
+    except:
+        return None
+    m = None
+    try:
+        (m, e) = FindManifest(tf)
+    except:
+        pass
+    return m
 
 #
 # Given two manifests, come up with a set of
@@ -122,7 +147,7 @@ def usage():
     print >> sys.stderr, "\tOutput file defaults to <pkg_name>-<old_version>-<new_version>.tgz"
     sys.exit(1)
 
-def DiffPackageFiles(pkg1, pkg2, output_file = None):
+def DiffPackageFiles(pkg1, pkg2, output_file = None, scripts = None, force_output = False):
     pkg1_tarfile = tarfile.open(pkg1, "r")
     (pkg1_manifest, dc) = FindManifest(pkg1_tarfile)
 
@@ -132,7 +157,7 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None):
     if PackageName(pkg1_manifest) != PackageName(pkg2_manifest):
         print >> sys.stderr, "Cannot diff different packages:  %s is not %s" % (
             PackageName(pkg1_manifest), PackageName(pkg2_manifest))
-        raise DiffException("Cannot diff different packages" % (
+        raise PkgFileDiffException("Cannot diff different packages" % (
             PackageName(pkg1_manifest), PackageName(pkg2_manifest)))
 
     if PackageVersion(pkg1_manifest) == PackageVersion(pkg2_manifest):
@@ -150,7 +175,15 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None):
     new_manifest[kPkgDeltaKey] = { kPkgVersionKey: PackageVersion(pkg1_manifest),
                                    kPkgDeltaStyleKey : "file"
                                    }
-
+    if scripts:
+        if kPkgScriptsKey not in new_manifest:
+            new_manifest[kPkgScriptsKey] = {}
+        s_dict = new_manifest[kPkgScriptsKey]
+        for script_name in scripts.keys():
+            if script_name not in s_dict:
+                s_dict[script_name] = ""
+            s_dict[script_name] = scripts[script_name] + s_dict[script_name]
+            
     diffs = CompareManifests(pkg1_manifest, pkg2_manifest)
 
     if len(diffs[kPkgRemovedFilesKey]) != 0:
@@ -168,7 +201,7 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None):
             empty = False
             break
 
-    if empty is True:
+    if empty is True and force_output is False:
         print >> sys.stderr, "No diffs between package %s version %s and %s; no file created" % (
             PackageName(pkg1_manifest), PackageVersion(pkg1_manifest), PackageVersion(pkg2_manifest))
         return None
