@@ -1,6 +1,6 @@
 // Power Middleware
 // ================
-// Provides abstraction functions that queue systems tasks to the middleware i.e. shutdown,reboot, etc 
+// Provides abstraction functions that queue systems tasks to the middleware i.e. shutdown,reboot, etc
 
 "use strict";
 
@@ -8,12 +8,12 @@ var MiddlewareClient = require("../middleware/MiddlewareClient");
 
 module.exports = {
 
-    subscribe: function() {
-      MiddlewareClient.subscribe( ["power.changed", "update.changed"] );
+    subscribe: function( componentID ) {
+      MiddlewareClient.subscribe( ["power.changed", "update.changed"], componentID );
     }
 
-  , unsubscribe: function() {
-      MiddlewareClient.unsubscribe( ["power.changed", "update.changed"] );
+  , unsubscribe: function( componentID ) {
+      MiddlewareClient.unsubscribe( ["power.changed", "update.changed"], componentID );
     }
 
   , reboot: function() {

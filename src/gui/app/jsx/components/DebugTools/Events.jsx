@@ -3,6 +3,8 @@
 
 "use strict";
 
+var componentLongName = "Debug Tools - Events Tab";
+
 var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
@@ -32,12 +34,12 @@ var Events = React.createClass({
 
   , componentDidMount: function() {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.subscribe(["task.*","system.*"]);
+      MiddlewareClient.subscribe( ["task.*","system.*"], componentLongName );
     }
 
   , componentWillUnmount: function() {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.unsubscribe(["task.*","system.*"]);
+      MiddlewareClient.unsubscribe( ["task.*","system.*"], componentLongName );
     }
 
   , handleMiddlewareChange: function( namespace ) {

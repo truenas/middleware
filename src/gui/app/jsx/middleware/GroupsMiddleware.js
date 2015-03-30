@@ -10,14 +10,14 @@ var GroupsActionCreators = require("../actions/GroupsActionCreators");
 
 module.exports = {
 
-    subscribe: function() {
-      MiddlewareClient.subscribe( ["groups.changed"]);
-      MiddlewareClient.subscribe( ["task.*"]);
+    subscribe: function( componentID ) {
+      MiddlewareClient.subscribe( ["groups.changed"], componentID );
+      MiddlewareClient.subscribe( ["task.*"], componentID );
     }
 
-  , unsubscribe: function() {
-      MiddlewareClient.unsubscribe( ["groups.changed"]);
-      MiddlewareClient.unsubscribe( ["task.*"]);
+  , unsubscribe: function( componentID ) {
+      MiddlewareClient.unsubscribe( ["groups.changed"], componentID );
+      MiddlewareClient.unsubscribe( ["task.*"], componentID );
     }
 
   , requestGroupsList: function() {

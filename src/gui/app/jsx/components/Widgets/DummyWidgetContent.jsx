@@ -1,5 +1,7 @@
 "use strict";
 
+var componentLongName = "DummyWidgetContent";
+
 var _      = require("lodash");
 var React  = require("react");
 var moment = require("moment");
@@ -55,7 +57,7 @@ var DummyWidgetContent = React.createClass({
       StatdStore.addChangeListener( this.handleStatdChange );
 
       this.props.statdResources.forEach( function( resource ) {
-        StatdMiddleware.subscribe( resource.dataSource );
+        StatdMiddleware.subscribe( componentLongName, resource.dataSource );
       });
 
       this.props.statdResources.forEach(function(resource) {
@@ -82,7 +84,7 @@ var DummyWidgetContent = React.createClass({
       StatdStore.removeChangeListener( this.handleStatdChange );
 
       this.props.statdResources.forEach( function( resource ) {
-        StatdMiddleware.unsubscribe( resource.dataSource );
+        StatdMiddleware.unsubscribe( componentLongName, resource.dataSource );
       });
     }
 

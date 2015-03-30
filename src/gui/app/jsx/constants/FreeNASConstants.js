@@ -11,8 +11,8 @@ module.exports = {
         UPDATE_AUTH_STATE : null
 
       // Subscriptions
-      , SUBSCRIBE_TO_MASK     : null
-      , UNSUBSCRIBE_FROM_MASK : null
+      , SUBSCRIBE_COMPONENT_TO_MASKS     : null
+      , UNSUBSCRIBE_COMPONENT_FROM_MASKS : null
 
       // Events
       , MIDDLEWARE_EVENT : null
@@ -50,7 +50,7 @@ module.exports = {
       , RECEIVE_NETWORK_UPDATE_TASK : null
       , RESOLVE_NETWORK_UPDATE_TASK : null
 
-      //ZFS   
+      //ZFS
       , RECEIVE_ZFS_POOL_GET_DISKS_DATA    :null
 
     })

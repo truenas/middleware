@@ -9,12 +9,12 @@ var StatdActionCreators = require("../actions/StatdActionCreators");
 
 module.exports = {
 
-    subscribe: function( dataSourceName ) {
-      MiddlewareClient.subscribe( ["statd." + dataSourceName + ".pulse"] );
+    subscribe: function(  componentID, dataSourceName ) {
+      MiddlewareClient.subscribe( ["statd." + dataSourceName + ".pulse"], componentID );
     }
 
-  , unsubscribe: function( dataSourceName ) {
-      MiddlewareClient.unsubscribe( ["statd." + dataSourceName + ".pulse"] );
+  , unsubscribe: function(  componentID, dataSourceName ) {
+      MiddlewareClient.unsubscribe( ["statd." + dataSourceName + ".pulse"], componentID );
     }
 
   , requestWidgetData: function(dataSourceName, startIsoTimestamp, endIsoTimestamp, frequency) {

@@ -4,6 +4,8 @@
 
 "use strict";
 
+var componentLongName = "BusyBox";
+
 var React = require("react");
 
 // Powerstuff
@@ -40,13 +42,13 @@ var BusyBox = React.createClass({
 
   , componentDidMount: function() {
       PowerStore.addChangeListener( this.handlePowerChange );
-      PowerMiddleware.subscribe();
+      PowerMiddleware.subscribe( componentLongName );
       this.updateBoxVisibility();
     }
 
   , componentWillUnmount: function () {
       PowerStore.removeChangeListener( this.handlePowerChange );
-      PowerMiddleware.unsubscribe();
+      PowerMiddleware.unsubscribe( componentLongName );
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {

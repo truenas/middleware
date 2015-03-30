@@ -10,6 +10,9 @@
 
 var _ = require("lodash");
 
+var SubscriptionsStore          = require("../stores/SubscriptionsStore");
+var SubscriptionsActionCreators = require("../actions/SubscriptionsActionCreators");
+
 var MiddlewareStore          = require("../stores/MiddlewareStore");
 var MiddlewareActionCreators = require("../actions/MiddlewareActionCreators");
 
@@ -352,40 +355,62 @@ function MiddlewareClient() {
   // data, begin or end a subscription, or even garbage collect a Flux store which
   // is no longer being used.
 
-  this.subscribe = function ( masks, handlerCallback ) {
+  this.subscribe = function ( masks, componentID ) {
+
+    if ( !_.isArray( masks ) ) {
+      console.error( "The first argument in MiddlewareClient.subscribe() must be an array of FreeNAS RPC namespaces." );
+      return;
+    }
+
+    if ( !_.isString( componentID ) ) {
+      console.error( "The second argument in MiddlewareClient.subscribe() must be a string (usually the name of the React component calling it)." );
+      return;
+    }
 
     if ( DEBUG("subscriptions") ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? masks.splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
     _.forEach( masks, function( mask ) {
-      if ( typeof MiddlewareStore.getNumberOfSubscriptions( mask ) === "number" ) {
-        if ( DEBUG("subscriptions") ) { console.info( MiddlewareStore.getNumberOfSubscriptions( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+      if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) > 0 ) {
+        if ( DEBUG("subscriptions") ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Increasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
       } else {
         if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
         var requestID = generateUUID();
-        processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), handlerCallback, requestID );
+        processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
       }
-      MiddlewareActionCreators.increaseSubscriptionCount( mask );
     });
+
+    SubscriptionsActionCreators.recordNewSubscriptions( masks, componentID );
   };
 
-  this.unsubscribe = function ( masks ) {
+  this.unsubscribe = function ( masks, componentID ) {
+
+    if ( !_.isArray( masks ) ) {
+      console.warn( "The first argument in MiddlewareClient.unsubscribe() must be an array of FreeNAS RPC namespaces." );
+      return;
+    }
+
+    if ( !_.isString( componentID ) ) {
+      console.warn( "The second argument in MiddlewareClient.unsubscribe() must be a string (usually the name of the React component calling it)." );
+      return;
+    }
 
     if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? masks.splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
     _.forEach( masks, function( mask ) {
-      if ( MiddlewareStore.getNumberOfSubscriptions( mask ) === 1 ) {
+      if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) === 1 ) {
         if ( DEBUG("subscriptions") ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
         var requestID = generateUUID();
         processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, requestID );
       } else {
-        if ( DEBUG("subscriptions") ) { console.info( MiddlewareStore.getNumberOfSubscriptions( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG("subscriptions") ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Decreasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
       }
-      MiddlewareActionCreators.decreaseSubscriptionCount( mask );
     });
+
+    SubscriptionsActionCreators.deleteCurrentSubscriptions( masks, componentID );
   };
 
 

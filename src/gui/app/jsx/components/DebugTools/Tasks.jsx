@@ -3,6 +3,8 @@
 
 "use strict";
 
+var componentLongName = "Debug Tools - Tasks Tab";
+
 var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
@@ -12,6 +14,7 @@ var moment = require("moment");
 var MiddlewareClient = require("../../middleware/MiddlewareClient");
 var TasksStore       = require("../../stores/TasksStore");
 var TasksMiddleware  = require("../../middleware/TasksMiddleware");
+
 
 var TasksSection = React.createClass({
 
@@ -104,14 +107,14 @@ var Tasks = React.createClass({
 
   , componentDidMount: function() {
       TasksStore.addChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.subscribe(["task.*"]);
+      MiddlewareClient.subscribe( ["task.*"], componentLongName );
 
       TasksMiddleware.getCompletedTaskHistory( this.init, this.state["FINISHED"].length || 0 );
     }
 
   , componentWillUnmount: function() {
       TasksStore.removeChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.unsubscribe(["task.*"]);
+      MiddlewareClient.unsubscribe( ["task.*"], componentLongName );
     }
 
   , handleMiddlewareChange: function() {

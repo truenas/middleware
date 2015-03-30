@@ -5,6 +5,8 @@
 
 "use strict";
 
+var componentLongName = "Networks";
+
 var React  = require("react");
 
 var Router       = require("react-router");
@@ -61,12 +63,12 @@ var Networks = React.createClass({
   , componentDidMount: function() {
     NetworksStore.addChangeListener( this.handleNetworksChange );
     NetworksMiddleware.requestNetworksList();
-    NetworksMiddleware.subscribe();
+    NetworksMiddleware.subscribe( componentLongName );
   }
 
   , componentWillUnmount: function() {
     NetworksStore.removeChangeListener( this.handleNetworksChange );
-    NetworksMiddleware.unsubscribe();
+    NetworksMiddleware.unsubscribe( componentLongName );
   }
 
   , handleNetworksChange: function() {

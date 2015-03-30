@@ -9,14 +9,14 @@ var NetworksActionCreators = require("../actions/NetworksActionCreators");
 
 module.exports = {
 
-    subscribe: function() {
-      MiddlewareClient.subscribe( ["networks.changed"] );
-      MiddlewareClient.subscribe( ["task.*"] );
+    subscribe: function( componentID ) {
+      MiddlewareClient.subscribe( ["networks.changed"], componentID );
+      MiddlewareClient.subscribe( ["task.*"], componentID );
     }
 
-  , unsubscribe: function() {
-      MiddlewareClient.unsubscribe( ["networks.changed"] );
-      MiddlewareClient.unsubscribe( ["task.*"] );
+  , unsubscribe: function( componentID ) {
+      MiddlewareClient.unsubscribe( ["networks.changed"], componentID );
+      MiddlewareClient.unsubscribe( ["task.*"], componentID );
     }
 
 

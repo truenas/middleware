@@ -9,12 +9,12 @@ var MiddlewareClient = require("../middleware/MiddlewareClient");
 
 module.exports = {
 
-    subscribe: function() {
-      MiddlewareClient.subscribe( ["server.client_connected"] );
+    subscribe: function( componentID ) {
+      MiddlewareClient.subscribe( ["server.client_connected"], componentID );
     }
 
-  , unsubscribe: function() {
-      MiddlewareClient.unsubscribe( ["server.client_connected"] );
+  , unsubscribe: function( componentID ) {
+      MiddlewareClient.unsubscribe( ["server.client_connected"], componentID );
     }
 
 };

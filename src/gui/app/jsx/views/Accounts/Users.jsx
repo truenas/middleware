@@ -4,6 +4,7 @@
 
 "use strict";
 
+var componentLongName = "Users";
 
 var React = require("react");
 
@@ -72,17 +73,19 @@ var Users = React.createClass({
   , componentDidMount: function() {
       UsersStore.addChangeListener( this.handleUsersChange );
       UsersMiddleware.requestUsersList();
-      UsersMiddleware.subscribe();
+      UsersMiddleware.subscribe( componentLongName );
+
       GroupsStore.addChangeListener( this.handleGroupsChange );
       GroupsMiddleware.requestGroupsList();
-      GroupsMiddleware.subscribe();
+      GroupsMiddleware.subscribe( componentLongName );
     }
 
   , componentWillUnmount: function() {
       UsersStore.removeChangeListener( this.handleUsersChange );
-      UsersMiddleware.unsubscribe();
+      UsersMiddleware.unsubscribe( componentLongName );
+
       GroupsStore.removeChangeListener( this.handleGroupsChange );
-      GroupsMiddleware.unsubscribe();
+      GroupsMiddleware.unsubscribe( componentLongName );
     }
 
   , handleGroupsChange: function() {

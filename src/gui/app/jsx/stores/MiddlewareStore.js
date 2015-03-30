@@ -14,11 +14,9 @@ var FreeNASConstants  = require("../constants/FreeNASConstants");
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
-var _subscribed    = {};
 var _rpcServices   = [];
 var _rpcMethods    = {};
 var _events        = [];
-var _stats         = {};
 
 
 var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
@@ -33,15 +31,6 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
 
   , removeChangeListener: function( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
-    }
-
-  // SUBSCRIPTIONS
-  , getAllSubscriptions: function() {
-      return _subscribed;
-    }
-
-  , getNumberOfSubscriptions: function( masks ) {
-      return _subscribed[ masks ];
     }
 
   // RPC
@@ -64,32 +53,6 @@ MiddlewareStore.dispatchToken = FreeNASDispatcher.register( function( payload ) 
   var action = payload.action;
 
   switch( action.type ) {
-
-    // Subscriptions
-    case ActionTypes.SUBSCRIBE_TO_MASK:
-      if ( typeof _subscribed[ action.mask ] === "number" ) {
-        _subscribed[ action.mask ]++;
-      } else {
-        _subscribed[ action.mask ] = 1;
-      }
-
-      MiddlewareStore.emitChange("subscriptions");
-      break;
-
-    case ActionTypes.UNSUBSCRIBE_FROM_MASK:
-      if ( typeof _subscribed[ action.mask ] === "number" ) {
-        if ( _subscribed[ action.mask ] === 1 ) {
-          delete _subscribed[ action.mask ];
-        } else {
-          _subscribed[ action.mask ]--;
-        }
-      } else {
-        console.warn( "Tried to unsubscribe from '" + action.mask + "', but Flux store shows no active subscriptions.");
-      }
-
-      MiddlewareStore.emitChange("subscriptions");
-      break;
-
 
     case ActionTypes.MIDDLEWARE_EVENT:
 

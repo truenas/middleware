@@ -10,14 +10,14 @@ var UsersActionCreators = require("../actions/UsersActionCreators");
 
 module.exports = {
 
-    subscribe: function() {
-      MiddlewareClient.subscribe( ["users.changed"] );
-      MiddlewareClient.subscribe( ["task.*"] );
+    subscribe: function( componentID ) {
+      MiddlewareClient.subscribe( ["users.changed"], componentID );
+      MiddlewareClient.subscribe( ["task.*"], componentID );
     }
 
-  , unsubscribe: function() {
-      MiddlewareClient.unsubscribe( ["users.changed"] );
-      MiddlewareClient.unsubscribe( ["task.*"] );
+  , unsubscribe: function( componentID ) {
+      MiddlewareClient.unsubscribe( ["users.changed"], componentID );
+      MiddlewareClient.unsubscribe( ["task.*"], componentID );
     }
 
   , requestUsersList: function( ids ) {
