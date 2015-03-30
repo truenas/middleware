@@ -51,14 +51,14 @@ var DummyWidgetContent = React.createClass({
     }
 
   , componentDidMount: function() {
-      var stop  = moment();
-      var start = moment().subtract( 15, "m" );
+      var stop        = moment();
+      var start       = moment().subtract( 15, "m" );
 
       StatdStore.addChangeListener( this.handleStatdChange );
-
-      this.props.statdResources.forEach( function( resource ) {
-        StatdMiddleware.subscribe( componentLongName, resource.dataSource );
-      });
+      StatdMiddleware.subscribeToPulse(
+          componentLongName
+        , this.props.statdResources.map( this.createStatdSources )
+      );
 
       this.props.statdResources.forEach(function(resource) {
         StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
@@ -82,10 +82,14 @@ var DummyWidgetContent = React.createClass({
 
   , componentWillUnmount: function() {
       StatdStore.removeChangeListener( this.handleStatdChange );
+      StatdMiddleware.unsubscribeFromPulse(
+          componentLongName
+        , this.props.statdResources.map( this.createStatdSources )
+      );
+    }
 
-      this.props.statdResources.forEach( function( resource ) {
-        StatdMiddleware.unsubscribe( componentLongName, resource.dataSource );
-      });
+  , createStatdSources: function( dataObject ) {
+      return dataObject.dataSource;
     }
 
   , handleStatdChange: function() {

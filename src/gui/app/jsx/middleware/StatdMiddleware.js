@@ -7,14 +7,18 @@ var MiddlewareClient = require("../middleware/MiddlewareClient");
 
 var StatdActionCreators = require("../actions/StatdActionCreators");
 
+var createPulseSyntax = function( dataSource ) {
+  return "statd." + dataSource + ".pulse";
+};
+
 module.exports = {
 
-    subscribe: function(  componentID, dataSourceName ) {
-      MiddlewareClient.subscribe( ["statd." + dataSourceName + ".pulse"], componentID );
+    subscribeToPulse: function( componentID, dataSourceArray ) {
+      MiddlewareClient.subscribe( dataSourceArray.map( createPulseSyntax ), componentID );
     }
 
-  , unsubscribe: function(  componentID, dataSourceName ) {
-      MiddlewareClient.unsubscribe( ["statd." + dataSourceName + ".pulse"], componentID );
+  , unsubscribeFromPulse: function( componentID, dataSourceArray ) {
+      MiddlewareClient.unsubscribe( dataSourceArray.map( createPulseSyntax ), componentID );
     }
 
   , requestWidgetData: function(dataSourceName, startIsoTimestamp, endIsoTimestamp, frequency) {
