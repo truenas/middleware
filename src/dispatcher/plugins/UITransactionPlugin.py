@@ -112,7 +112,22 @@ class UITransactionProvider(Provider):
 
 def _init(dispatcher):
     dispatcher.register_schema_definition('ui-transaction', {
-
+        'type': 'object',
+        'properties': {
+            'identifier': {'type': 'string'},
+            'sessions': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'started-at': {'type': 'number'},
+                        'timeout': {'type': 'number'},
+                        'sid': {'type': 'number'},
+                        'user': {'type': 'string'}
+                    }
+                }
+            }
+        }
     })
 
     dispatcher.register_provider('ui.transactions', UITransactionProvider)
