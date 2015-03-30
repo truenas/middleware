@@ -232,6 +232,15 @@ TARGET_BLOCKSIZE_CHOICES = (
     (4096, '4096'),
 )
 
+EXTENT_RPM_CHOICES = (
+    ('Unknown', _('Unknown')),
+    ('SSD', _('SSD')),
+    ('5400', _('5400')),
+    ('7200', _('7200')),
+    ('10000', _('10000')),
+    ('15000', _('15000')),
+)
+
 AUTHMETHOD_CHOICES = (
     ('None',  _('None')),
     ('CHAP',  _('CHAP')),

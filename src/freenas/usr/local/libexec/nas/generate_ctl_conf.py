@@ -242,6 +242,12 @@ def main():
                     cf_contents.append('\t\t\toption avail-threshold %s\n' % lunthreshold)
                 if poolname is not None and poolname in poolthreshold:
                     cf_contents.append('\t\t\toption pool-avail-threshold %s\n' % poolthreshold[poolname])
+                if t2e.iscsi_extent.iscsi_target_extent_rpm == "Unknown":
+                    cf_contents.append('\t\t\toption rpm 0\n')
+                elif t2e.iscsi_extent.iscsi_target_extent_rpm == "SSD":
+                    cf_contents.append('\t\t\toption rpm 1\n')
+                else:    
+                    cf_contents.append('\t\t\toption rpm %s\n' % t2e.iscsi_extent.iscsi_target_extent_rpm)
                 cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 
