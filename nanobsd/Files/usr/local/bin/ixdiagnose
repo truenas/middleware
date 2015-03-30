@@ -70,6 +70,7 @@ truncate_files ()
 		! -name '*.bzip' -a \
 		! -name '*.bzip2' -a \
 		! -name '*.bz2' -a \
+		! -name 'dump.txt' -a \
 		! -name '*.compressed' -print) ; do
 		tmpfile="$(env TMPDIR="${tmpdir}" mktemp /tmp/XXXXXX)"
 		tail -n $limit "$file" > "$tmpfile" 2>/dev/null
