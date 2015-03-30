@@ -20,6 +20,11 @@ var SessionStore = require("../stores/SessionStore");
 
 var myCookies = require("./cookies");
 
+// counter for stepped timeout
+var k = 0;
+// modified fibonacci series to use with stepped Timeout
+var modFibonacci = [5000, 8000, 13000, 21000, 34000];
+
 function MiddlewareClient() {
 
   var DEBUG = function( flag ) {
@@ -176,6 +181,12 @@ function MiddlewareClient() {
       case "error":
         var originalRequest;
 
+        // handle the login failure here (as it cannot be handled in the callback)
+        // as the callback function of this.login() is never called in case the action resulted in an error.
+        // TODO: Make LoginBox aware of a failed user/pass error.
+        if (args.code === 13) {
+          MiddlewareActionCreators.receiveAuthenticationChange( "", false );
+        }
         try {
           originalRequest = JSON.parse( pendingRequests[ requestID ]["originalRequest"] );
         } catch ( err ) {
@@ -289,17 +300,12 @@ function MiddlewareClient() {
     }
 
     var callback = function( response ) {
+
       // Making a Cookie for token based login for the next time
       // and setting its max-age to the TTL (in seconds) specified by the
       // middleware response. The token value is stored in the Cookie.
       myCookies.add("auth", response[0], response[1]);
-
-      // TODO: Account for any other possible response codes.
-      if (response.code === 13){
-        MiddlewareActionCreators.receiveAuthenticationChange( "", false );
-      } else {
-        MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
-      }
+      MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
     };
     var packedAction = pack( "rpc", rpcName, payload, requestID );
 
@@ -438,6 +444,13 @@ function MiddlewareClient() {
 
   // Triggered by the WebSocket's onopen event.
   var handleOpen = function () {
+    // set stepped reconnect counter back to 0
+    k = 0;
+    // dispatch message stating that we have just connected
+    MiddlewareActionCreators.updateSocketState("connected");
+    if ( myCookies.obtain("auth") !== null ) {
+        this.login("token", myCookies.obtain("auth"));
+      }
     if ( SessionStore.getLoginStatus() === false && queuedLogin ) {
       // If the connection opens and we aren't authenticated, but we have a
       // queued login, dispatch the login and reset its variable.
@@ -448,7 +461,7 @@ function MiddlewareClient() {
       socket.send( queuedLogin.action );
       queuedLogin = null;
     }
-  };
+  }.bind( this );
 
   // Triggered by the WebSocket's onclose event. Performs any cleanup necessary
   // to allow for a clean session end and prepares for a new session.
@@ -459,9 +472,15 @@ function MiddlewareClient() {
 
     if ( DEBUG("connection") ) { console.warn( "WebSocket connection closed" ); }
 
-    // TODO: restart connection if it unexpectedly closed
-
-  };
+    // dispatch message stating that we have disconnected
+    MiddlewareActionCreators.updateSocketState("disconnected");
+    setTimeout(function(){
+      var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
+      this.connect( protocol + document.domain + ":5000/socket" );
+    }.bind( this ), modFibonacci[k]);
+    // increase k in a cyclic fashion (it goes back to 0 after reachin 4)
+    k = ++k % modFibonacci.length;
+  }.bind( this );
 
   // MESSAGES
   // Triggered by the WebSocket's onmessage event. Parses the JSON from the

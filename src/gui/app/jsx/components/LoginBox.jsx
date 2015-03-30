@@ -15,8 +15,6 @@ var SessionStore = require("../stores/SessionStore");
 // Twitter Bootstrap React components
 var TWBS = require("react-bootstrap");
 
-// Cookies!
-var myCookies = require("../middleware/cookies");
 
 var LoginBox = React.createClass({
 
@@ -42,9 +40,6 @@ var LoginBox = React.createClass({
     }
 
   , componentDidMount: function() {
-      if (myCookies.obtain("auth") !== null) {
-        MiddlewareClient.login("token", myCookies.obtain("auth"));
-      }
       SessionStore.addChangeListener( this.handleMiddlewareChange );
       this.updateBoxVisibility();
     }
@@ -69,6 +64,8 @@ var LoginBox = React.createClass({
 
   , showLoginBox: function () {
       this.setState({ boxIsVisible: true });
+      // clear the cached password!
+      this.setState({ passText: "" });
       Velocity( this.refs.login.getDOMNode()
               , "fadeIn"
               , { duration: this.props.animDuration } );
@@ -100,6 +97,7 @@ var LoginBox = React.createClass({
 
   , handleMiddlewareChange: function() {
       this.setState({ loggedIn: SessionStore.getLoginStatus() });
+      this.updateBoxVisibility();
     }
 
   , handleKeydown: function( event ) {
@@ -116,7 +114,7 @@ var LoginBox = React.createClass({
     }
 
   , render: function () {
-      var loginWindow = null;
+      var loginWindow = (<div ref="login"  style={{ opacity: 0 }}/>);
 
       if ( this.state.boxIsVisible ) {
         loginWindow = (

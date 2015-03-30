@@ -10,15 +10,12 @@ var EventEmitter = require("events").EventEmitter;
 var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
 var FreeNASConstants  = require("../constants/FreeNASConstants");
 
-var PowerMiddleware = require("../middleware/PowerMiddleware");
-
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = ["power.changed", "update.changed"];
 
-var _rebootscheduled    = false;
-var _shutdownscheduled  = false;
-var _updatehappening    = false;
+var ongoingEvents = {};
+var socketConnected = false;
 
 var PowerStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -38,20 +35,35 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
-  , isEventPending: function() {
-      return ( _rebootscheduled || _shutdownscheduled || _updatehappening );
+  , isEventPending: function () {
+    if ( typeof(_.keys(ongoingEvents)[0]) !== "undefined" ) {
+      return [true, ongoingEvents[_.keys(ongoingEvents)[0]]];
     }
-
-  , isRebootPending: function() {
-      return _rebootscheduled;
+    if ( !socketConnected ) {
+      return [true, "Reconnect you to FreeNAS..."];
     }
-
-  , isShutDownPending: function () {
-      return _shutdownscheduled;
+    return [false, ""];
   }
 
-  , areWeUpdating: function () {
-      return _updatehappening;
+  , isRebootPending: function() {
+    if ( _.values(ongoingEvents).indexOf("reboot") !== -1 ) {
+      return true;
+    }
+    return false;
+  }
+
+  , isShutDownPending: function () {
+    if ( _.values(ongoingEvents).indexOf("shutdown") !== -1 ) {
+      return true;
+    }
+    return false;
+  }
+
+  , isUpdatePending: function () {
+    if ( _.values(ongoingEvents).indexOf("update") !== -1 ) {
+      return true;
+    }
+    return false;
   }
 
 });
@@ -61,31 +73,38 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
   switch( action.type ) {
 
+    case ActionTypes.UPDATE_SOCKET_STATE:
+      // clear ongoingEvents
+      ongoingEvents = {};
+      if ( action.sockState === "connected" ) {
+        socketConnected = true;
+      } else if ( action.sockState === "disconnected" ) {
+        socketConnected = false;
+      }
+      PowerStore.emitChange();
+      break;
+
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
+      var taskID   = args.args["id"];
 
       if ( UPDATE_MASK.indexOf(args["name"]) !== -1  ) {
         var updateData = args["args"];
 
-        if ( args["name"] === "power.changed" && updateData["operation"] === "reboot" ) {
-          _rebootscheduled = true;
-        } else if ( args["name"] === "power.changed" && updateData["operation"] === "shutdown" ) {
-          _shutdownscheduled = true;
+        if ( args["name"] === "power.changed") {
+          ongoingEvents[taskID] = updateData["operation"];
         } else if ( args["name"] === "update.changed" && updateData["operation"] === "started" ) {
-          _updatehappening = true;
-        } else {
-          // TODO: Can this be anything else?
+          ongoingEvents[taskID] = "update";
         }
 
         PowerStore.emitChange();
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
-      } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" ) {
-        // do something (might just remove this!);
-        // even if the above args["name"] was not "update.changed" it does not hurt to do the below
-        // as the only time when _rebootscheduled will go to false back if it was made true is 
-        // AFTER the system came back (with a fresh set of values) kidda same for _shutdownscheduled
-        _updatehappening = false;
+      } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" && _.keys(ongoingEvents).indexOf(taskID) !== -1 ) {
+        if ( ongoingEvents[taskID] !== "shutdown" || ongoingEvents[taskID] !== "reboot" ) {
+          delete ongoingEvents.taskID;
+        }
+        PowerStore.emitChange();
       }
 
       break;

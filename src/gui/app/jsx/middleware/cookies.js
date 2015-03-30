@@ -1,6 +1,7 @@
 // Generic set of functions to use for cookie manipulation
 // add, delete and that sort of thing
 
+"use strict";
 
 var myCookies = {
   obtain: function (cookieName) {
@@ -17,7 +18,7 @@ var myCookies = {
     if (!this.obtain(cookieName)) { return false; }
     document.cookie = encodeURIComponent(cookieName) + "=; max-age=0" + (cookieDomain ? "; domain=" + cookieDomain : "") + (cookiePath ? "; path=" + cookiePath : "");
     return true;
-  },
+  }
 };
 
 module.exports = myCookies;

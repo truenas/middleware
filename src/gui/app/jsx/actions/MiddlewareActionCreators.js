@@ -20,6 +20,13 @@ module.exports = {
       });
     }
 
+  , updateSocketState: function ( sockState ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type      : ActionTypes.UPDATE_SOCKET_STATE
+        , sockState : sockState
+      });
+    }
+
   , increaseSubscriptionCount: function ( mask ) {
       FreeNASDispatcher.handleMiddlewareAction({
           type : ActionTypes.SUBSCRIBE_TO_MASK

@@ -8,7 +8,9 @@ var keyMirror = require("keymirror");
 module.exports = {
 
     ActionTypes: keyMirror({
-        UPDATE_AUTH_STATE : null
+      // Authentication, Socket State and other SID stuff
+        UPDATE_AUTH_STATE   : null
+      , UPDATE_SOCKET_STATE : null
 
       // Subscriptions
       , SUBSCRIBE_COMPONENT_TO_MASKS     : null

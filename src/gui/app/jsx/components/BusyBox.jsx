@@ -11,8 +11,8 @@ var React = require("react");
 // Powerstuff
 var PowerStore  = require("../stores/PowerStore");
 
-// PowerMiddleware
-var PowerMiddleware = require("../middleware/PowerMiddleware")
+// Middleware
+var PowerMiddleware   = require("../middleware/PowerMiddleware");
 
 // Throbber
 var Throbber = require("./common/Throbber");
@@ -37,6 +37,7 @@ var BusyBox = React.createClass({
           boxIsVisible  : false
         , busyText      : "Busy"
         , kickin        : false
+        , operation     : ""
       };
     }
 
@@ -90,22 +91,29 @@ var BusyBox = React.createClass({
     }
 
 , handlePowerChange: function() {
-      this.setState({ kickin: PowerStore.isEventPending() });
-    }
+    var retcode = PowerStore.isEventPending();
+    this.setState({
+        kickin    : retcode[0]
+      , operation : retcode[1]
+    });
+
+  }
 
 , render: function () {
       var busySpinner = (<div ref="Busy"  style={{ opacity: 0 }}/>);
 
       if ( this.state.boxIsVisible ) {
 
-        var throbberprops = {};
+        var throbberprops     = {};
         throbberprops.bsStyle = "primary";
-        throbberprops.size  = 60;
+        throbberprops.size    = 60;
+        var dispMsg           = "Please wait while I " + this.state.operation;  
+
         busySpinner = (
           <div className="overlay-dark" ref="Busy" style={{ opacity: 0 }}>
             <div className="overlay-window">
               <div>
-                <h3>{ "Please wait while I Reboot/Shutdown/Update (or something....rather attempt to anyways)..."  }</h3>
+                <h2> {dispMsg} </h2>
                 <Throbber {...throbberprops} />
               </div>
 
