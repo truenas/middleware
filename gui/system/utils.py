@@ -94,6 +94,12 @@ class CheckUpdateHandler(object):
                     c['new'].Name(),
                     c['new'].Version(),
                 )
+            elif c['operation'] == 'install':
+                output += '%s: %s-%s\n' % (
+                    _('Install'),
+                    c['new'].Name(),
+                    c['new'].Version(),
+                )
         return output
 
 
