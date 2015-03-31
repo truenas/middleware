@@ -97,7 +97,6 @@ var LoginBox = React.createClass({
 
   , handleMiddlewareChange: function() {
       this.setState({ loggedIn: SessionStore.getLoginStatus() });
-      this.updateBoxVisibility();
     }
 
   , handleKeydown: function( event ) {

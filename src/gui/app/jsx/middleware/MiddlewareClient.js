@@ -20,10 +20,6 @@ var SessionStore = require("../stores/SessionStore");
 
 var myCookies = require("./cookies");
 
-// counter for stepped timeout
-var k = 0;
-// modified fibonacci series to use with stepped Timeout
-var modFibonacci = [5000, 8000, 13000, 21000, 34000];
 
 function MiddlewareClient() {
 
@@ -48,6 +44,11 @@ function MiddlewareClient() {
   var queuedLogin     = null;
   var queuedActions   = [];
   var pendingRequests = {};
+
+  // counter for stepped timeout
+  this.k = 0;
+  // modified fibonacci series to use with stepped Timeout
+  this.modFibonacci = [5000, 8000, 13000, 21000, 34000];
 
 // UTILITY FUNCTIONS
 
@@ -170,7 +171,13 @@ function MiddlewareClient() {
   // calling its callback. Callbacks should not be called if the function timed
   // out before a response was received.
   function resolvePendingRequest ( requestID, args, outcome ) {
-    clearTimeout( pendingRequests[ requestID ].timeout );
+
+    // Add this if for cases in which the requestID is None or undefined
+    // as an example the server side dispatcher will send a None in the
+    // requestID when returing the following error (code 22): 'Request is not valid JSON'
+    if ( typeof requestID !== undefined && requestID !== "None" ) {
+      clearTimeout( pendingRequests[ requestID ].timeout );
+    }
 
     switch ( outcome ) {
       case "success":
@@ -390,6 +397,16 @@ function MiddlewareClient() {
     SubscriptionsActionCreators.recordNewSubscriptions( masks, componentID );
   };
 
+  this.renewSubscriptions = function () {
+    var masks = _.keys(SubscriptionsStore.getAllSubscriptions());
+    _.forEach( masks, function( mask ) {
+      if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+      if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
+      var requestID = generateUUID();
+      processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
+    });
+  };
+
   this.unsubscribe = function ( masks, componentID ) {
 
     if ( !_.isArray( masks ) ) {
@@ -445,12 +462,13 @@ function MiddlewareClient() {
   // Triggered by the WebSocket's onopen event.
   var handleOpen = function () {
     // set stepped reconnect counter back to 0
-    k = 0;
+    this.k = 0;
     // dispatch message stating that we have just connected
     MiddlewareActionCreators.updateSocketState("connected");
     if ( myCookies.obtain("auth") !== null ) {
         this.login("token", myCookies.obtain("auth"));
       }
+    this.renewSubscriptions();
     if ( SessionStore.getLoginStatus() === false && queuedLogin ) {
       // If the connection opens and we aren't authenticated, but we have a
       // queued login, dispatch the login and reset its variable.
@@ -460,6 +478,8 @@ function MiddlewareClient() {
       logPendingRequest( queuedLogin.id, queuedLogin.callback );
       socket.send( queuedLogin.action );
       queuedLogin = null;
+    } else {
+        MiddlewareActionCreators.receiveAuthenticationChange( "", false );
     }
   }.bind( this );
 
@@ -467,19 +487,21 @@ function MiddlewareClient() {
   // to allow for a clean session end and prepares for a new session.
   var handleClose = function () {
     socket          = null;
-    queuedLogin     = {};
+    queuedLogin     = null;
     queuedActions   = [];
 
     if ( DEBUG("connection") ) { console.warn( "WebSocket connection closed" ); }
 
+    // Log out
+    MiddlewareActionCreators.receiveAuthenticationChange( "", false );
     // dispatch message stating that we have disconnected
     MiddlewareActionCreators.updateSocketState("disconnected");
     setTimeout(function(){
       var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
       this.connect( protocol + document.domain + ":5000/socket" );
-    }.bind( this ), modFibonacci[k]);
+    }.bind( this ), this.modFibonacci[this.k]);
     // increase k in a cyclic fashion (it goes back to 0 after reachin 4)
-    k = ++k % modFibonacci.length;
+    this.k = ++this.k % this.modFibonacci.length;
   }.bind( this );
 
   // MESSAGES

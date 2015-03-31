@@ -36,8 +36,8 @@ var BusyBox = React.createClass({
       return {
           boxIsVisible  : false
         , busyText      : "Busy"
-        , kickin        : false
-        , operation     : ""
+        , kickin        : true
+        , operation     : "Connect you to FreeNAS"
       };
     }
 
