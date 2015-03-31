@@ -153,7 +153,13 @@ var UserEdit = React.createClass({
         var itemKey = _.find(this.props["dataKeys"], function ( item ) {
           return item.key === key;
         }.bind(this) );
-        if ( !_.isEqual( this.state.initialRemoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
+        if (!itemKey) {
+          // Do not accept unknown properties from the Middleware.
+          // TODO: If we want to accept arbitrary properies, we will need more
+          // sophisticated handling here.
+          console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
+          console.error(nextProps.item);
+        } else if ( !_.isEqual( this.state.initialRemoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
           newRemoteModified[ key ] = nextProps.item[ key ];
         }
       }.bind(this) );
