@@ -32,7 +32,7 @@ var DummyWidgetContent = React.createClass({
       var initialStatdData = {};
       var initialErrorMode = false;
 
-      this.props.statdResources.forEach( function( resource ) {
+      _.forEach( this.props.statdResources,  function( resource ) {
         initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
         if ( initialStatdData[ resource.variable ] && initialStatdData[ resource.variable ].error ) {
@@ -51,8 +51,8 @@ var DummyWidgetContent = React.createClass({
     }
 
   , componentDidMount: function() {
-      var stop        = moment();
-      var start       = moment().subtract( 15, "m" );
+      var stop  = moment();
+      var start = moment().subtract( 15, "m" );
 
       StatdStore.addChangeListener( this.handleStatdChange );
       StatdMiddleware.subscribeToPulse(
@@ -60,7 +60,7 @@ var DummyWidgetContent = React.createClass({
         , this.props.statdResources.map( this.createStatdSources )
       );
 
-      this.props.statdResources.forEach(function(resource) {
+      _.forEach( this.props.statdResources, function( resource ) {
         StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
       });
 
@@ -70,13 +70,18 @@ var DummyWidgetContent = React.createClass({
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      // Only update if we have the required props, and if there is no staged
-      // updade currently being assembled
-      if ( this.props.statdResources.length     &&
+
+      // Only update if we have the required props, there is no staged update
+      // currently being assembled, and we have access to both D3 and NVD3
+      // (on the basis that the component is mounted)
+      if ( this.isMounted()                     &&
            this.props.chartTypes.length         &&
-           _.isEmpty( this.state.stagedUpdate ) ){
-        // FIXME: Temporarily disabled, since it recursively calls setState
-        // this.drawChart();
+           _.isEmpty( this.state.stagedUpdate ) &&
+           !_.isEmpty( prevState.stagedUpdate ) ){
+
+        var chartShouldReload = ( prevState.graphType !== this.state.graphType );
+        this.drawChart( chartShouldReload );
+
       }
     }
 
@@ -96,11 +101,11 @@ var DummyWidgetContent = React.createClass({
       var newState     = {};
       var dataUpdate   = StatdStore.getWidgetDataUpdate();
       var updateTarget = _.find(
-            this.props.statdResources
-          , function( resource ) {
-              return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
-            }
-        );
+          this.props.statdResources
+        , function( resource ) {
+            return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
+          }
+      );
 
       // Don't bother doing anything unless we have a valid target, based on
       // something in our statdResources. This means the widget won't update based
@@ -121,19 +126,18 @@ var DummyWidgetContent = React.createClass({
         // TODO: More clear business logic for data display
 
         if ( stagedUpdate[ updateVariable ] && _.isArray( stagedUpdate[ updateVariable ] ) ) {
-          stagedUpdate[ updateVariable ].push( newDataPoint );
+          stagedUpdate[ updateVariable ] = stagedUpdate[ updateVariable ].concat( newDataPoint );
         } else {
           stagedUpdate[ updateVariable ] = [ newDataPoint ];
         }
 
         if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
-          _.each( stagedUpdate, function( data, key ) {
-            if ( _.has( key, this.state.statdData ) ) {
-              newState.statdData[ key ] = _.take( _.cloneDeep( this.state.statdData[ key ] )
-                                 .push( stagedUpdate[ key ] ), 100 );
-            }
-          }.bind( this ) );
+          newState.statdData = {};
 
+          _.forEach( stagedUpdate, function( data, key ) {
+            var newData = this.state.statdData[ key ].concat( data );
+            newState.statdData[ key ] = _.take( newData, 100 );
+          }.bind( this ) );
           stagedUpdate = {};
         }
 
@@ -144,205 +148,190 @@ var DummyWidgetContent = React.createClass({
       }
     }
 
-  , drawChart: function( update, reload ) {
-      if (reload === true)
-      {
-        var elmnt = d3.select( this.refs.svg.getDOMNode() );
+  , drawChart: function( chartShouldReload ) {
+      var newState     = {};
+      var chartSVGNode = this.refs.svg.getDOMNode();
+      var xLabel;
+      var yUnit;
+
+      newState["chart"] = this.state.chart ? this.state.chart : null;
+
+      if ( chartShouldReload ) {
         // Way how to make sure only the desired tooltips are displayed.
-        elmnt
-          .on("mousemove", null)
-          .on("mouseout", null)
-          .on("dblclick", null)
-          .on("click", null);
-        elmnt.selectAll("*").remove();
-        this.setState({chart : null});
-        update = false;
+        d3.select( chartSVGNode )
+          .on( "mousemove", null )
+          .on( "mouseout", null )
+          .on( "dblclick", null )
+          .on( "click", null )
+          .selectAll("*").remove();
+
+        newState["chart"] = null;
       }
 
-      if (update === true) {
-        var chart = this.state.chart;
-        d3.select( this.refs.svg.getDOMNode() )
-        .datum(this.chartData(this.state.graphType))
-        .call(chart);
-        chart.update();
-        this.setState({"chart" : chart});
-        //this.state.chart.update();
-      }
-      else {
-        var chart;
-        var graphTypeObject;
+      if ( newState["chart"] ) {
+        // There is an existing representation of the chart, which has been
+        // carried over from the previous state, and it should just be updated.
+        d3.select( chartSVGNode )
+          .datum( this.chartData( this.state.graphType ) )
+          .call( newState["chart"] );
 
-        if (this.state.graphType === "stacked")
-        {
-          graphTypeObject = this.selectObjectFromArray(this.props.chartTypes, "stacked");
-          chart = nv.models.stackedAreaChart()
+        newState["chart"].update();
+      } else {
+        // Either this is the first run, the chart type has changed, or something
+        // else has happened to require a complete reload of the chart.
+        var graphTypeObject = _.findWhere( this.props.chartTypes, { "type": this.state.graphType } );
+        var newChart;
+
+        switch( this.state.graphType ) {
+
+          case "stacked":
+            newChart = nv.models.stackedAreaChart()
+              .options({
+                  margin                  : { top: 15, right: 40, bottom: 60, left: 60 }
+                , x                       : graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
+                , y                       : graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.
+                , transitionDuration      : 250
+                , style                   : "Expanded"
+                , showControls            : false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
+                , clipEdge                : false
+                , useInteractiveGuideline : true    //Tooltips which show all data points. Very nice!
+              });
+
+            // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly,
+            // return themselves, not the parent chart, so need to chain separately
+            xLabel = graphTypeObject.xLabel || "Time";
+            newChart.xAxis
+              .axisLabel( xLabel )
+              .tickFormat( function(d) {
+                return moment.unix(d).format("HH:mm:ss");
+              });
+
+            yUnit = graphTypeObject.yUnit || "";
+            newChart.yAxis
+              .axisLabel( graphTypeObject.yLabel )
+              .tickFormat( function(d) {
+                return ( d + yUnit );
+              });
+            break;
+
+          case "line":
+            newChart = nv.models.lineChart()
             .options({
-               margin                     :    {top: 15, right: 40, bottom: 60, left: 60}
-              ,x                          :    graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
-              ,y                          :    graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.
-              ,transitionDuration         :    250
-              ,style                      :    "Expanded"
-              ,showControls               :    false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
-              ,clipEdge                   :    false
-              ,useInteractiveGuideline    :    true    //Tooltips which show all data points. Very nice!
+                margin                  : { top: 15, right: 40, bottom: 60, left: 60 }
+              , x                       : graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
+              , y                       : graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }
+              , showXAxis               : true
+              , showYAxis               : true
+              , transitionDuration      : 250
+              , forceY                  : graphTypeObject.forceY //[0, 100]
+              , useInteractiveGuideline : true
             });
 
-          // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
-          var xLabel = graphTypeObject.xLabel || "Time";
-          chart.xAxis
-            .axisLabel(xLabel)
-            .tickFormat(function(d) {
-              return moment.unix(d).format("HH:mm:ss");
+            // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
+            xLabel = graphTypeObject.xLabel || "Time";
+            newChart.xAxis
+              .axisLabel( xLabel )
+              .tickFormat( function(d) {
+                return moment.unix(d).format("HH:mm:ss");
+              });
+
+            yUnit = graphTypeObject.yUnit || "";
+            newChart.yAxis
+              .axisLabel( graphTypeObject.yLabel )
+              .tickFormat( function(d) {
+                return ( d + yUnit );
+              });
+            break;
+
+          case "pie":
+            var colors = [];
+            _.forEach( this.props.statdResources,  function( resource ) {
+              colors.push(resource.color);
             });
-
-          var yUnit = graphTypeObject.yUnit || "";
-          chart.yAxis
-            .axisLabel(graphTypeObject.yLabel)
-            .tickFormat(function(d) {
-              return (d + yUnit);
+            newChart = nv.models.pieChart()
+            .options({
+                margin             : { top: 0, right: 0, bottom: 0, left: 0 }
+              , x                  : graphTypeObject.x || function(d) { return d.label; }
+              , y                  : graphTypeObject.y || function(d) { if(d.value === "nan") { return 0; } else { return d.value; } }
+              , color              : colors
+              , showLabels         : true
+              , labelThreshold     : 1
+              , labelType          : "value" //Configure what type of data to show in the label. Can be "key", "value" or "percent"
+              , transitionDuration : 250
+              , donut              : false
+              , donutRatio         : 0.35
             });
+            break;
 
-
-        }
-        else if (this.state.graphType === "line")
-        {
-          graphTypeObject = this.selectObjectFromArray(this.props.chartTypes, "line");
-          chart = nv.models.lineChart()
-          .options({
-             margin                       :   {top: 15, right: 40, bottom: 60, left: 60}
-            ,x                            :   graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
-            ,y                            :   graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }
-            ,showXAxis                    :   true
-            ,showYAxis                    :   true
-            ,transitionDuration           :   250
-            ,forceY                       :   graphTypeObject.forceY //[0, 100]
-            ,useInteractiveGuideline      :   true
-          });
-
-          // chart sub-models (ie. xAxis, yAxis, etc) when accessed directly, return themselves, not the parent chart, so need to chain separately
-          var xLabel = graphTypeObject.xLabel || "Time";
-          chart.xAxis
-            .axisLabel(xLabel)
-            .tickFormat(function(d) {
-              return moment.unix(d).format("HH:mm:ss");
-            });
-
-          var yUnit = graphTypeObject.yUnit || "";
-          chart.yAxis
-            .axisLabel(graphTypeObject.yLabel)
-            .tickFormat(function(d) {
-              return (d + yUnit);
-            });
-
-
-
-        }
-        else if (this.state.graphType === "pie")
-        {
-          graphTypeObject = this.selectObjectFromArray(this.props.chartTypes, "pie");
-          var colors = [];
-          this.props.statdResources.forEach(function(resource) {
-            colors.push(resource.color);
-          });
-          chart = nv.models.pieChart()
-          .options({
-             margin                       :   {top: 0, right: 0, bottom: 0, left: 0}
-            ,x                            :   graphTypeObject.x || function(d) { return d.label; }
-            ,y                            :   graphTypeObject.y || function(d) { if(d.value === "nan") { return 0; } else { return d.value; } }
-            ,color                        :   colors
-            ,showLabels                   :   true
-            ,labelThreshold               :   1
-            ,labelType                    :   "value" //Configure what type of data to show in the label. Can be "key", "value" or "percent"
-            ,transitionDuration           :   250
-            ,donut                        :   false
-            ,donutRatio                   :   0.35
-          });
-        }
-        else
-        {
-          console.log(this.state.graphType + " is not a supported chart type.");
-          return;
+          default:
+            console.log( this.state.graphType + " is not a supported chart type." );
+            return;
         }
 
-      d3.select( this.refs.svg.getDOMNode() )
-        .datum(this.chartData(this.state.graphType))
-        .call(chart);
+        newState["chart"] = newChart;
 
-      //TODO: Figure out a good way to do this automatically
-      //nv.utils.windowResize(chart.update);
-      //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
+        d3.select( chartSVGNode )
+          .datum( this.chartData( this.state.graphType ) )
+          .call( newState["chart"] );
 
-      //chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
-      this.setState({ "chart" : chart
-                      ,fullUpdate : false });
-    }
+        //TODO: Figure out a good way to do this automatically
+        //nv.utils.windowResize(chart.update);
+        //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
+
+        //chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
+      }
+
+      this.setState( newState );
     }
 
   , chartData: function( chartType ) {
-    var returnArray = [];
-    var state = this.state;
+      var returnArray = [];
+      var statdData   = this.state.statdData;
 
-    if (chartType === "line")
-    {
-      this.props.statdResources.forEach(function(resource) {
-        var returnArrayMember = {
-                                    area: resource.area || false
-                                  , values: state[resource.variable]
-                                  , key: resource.name
-                                  , color: resource.color
-                                };
-        returnArray.push(returnArrayMember);
-      });
-    }
-    else if (chartType === "stacked")
-    {
-      this.props.statdResources.forEach(function(resource) {
-        var returnArrayMember = {
-                                    values: state[resource.variable]
-                                  , key: resource.name
-                                  , color: resource.color
-                                };
-        returnArray.push(returnArrayMember);
-      });
-    }
-    else if (chartType === "pie")
-    {
-      this.props.statdResources.forEach(function(resource) {
-        var returnArrayMember = {
-                                    value: state[resource.variable][state[resource.variable].length - 1][1]
-                                  , label: resource.name
-                                };
-        returnArray.push(returnArrayMember);
-      });
-    }
-    return returnArray;
-    }
+      switch ( chartType ) {
+        case "line":
+          _.forEach( this.props.statdResources, function( resource ) {
+            var returnArrayMember = {
+                area   : resource.area || false
+              , values : statdData[ resource.variable ]
+              , key    : resource.name
+              , color  : resource.color
+            };
+            returnArray.push( returnArrayMember );
+          }.bind( this ));
+          break;
 
-  , selectObjectFromArray: function( objectArray, valueToTest ) {
-    var match = {};
-    var i = 0;
-    length = objectArray.length;
+        case "stacked":
+          _.forEach( this.props.statdResources, function( resource ) {
+            var returnArrayMember = {
+                values : statdData[ resource.variable ]
+              , key    : resource.name
+              , color  : resource.color
+            };
+            returnArray.push( returnArrayMember );
+          }.bind( this ));
+          break;
 
-    for (; i < length; i++)
-    {
-      for (var property in objectArray[i])
-      {
-        if (objectArray[i][property] === valueToTest)
-        {
-          match = objectArray[i];
-        }
+        case "pie":
+          _.forEach( this.props.statdResources, function( resource ) {
+            var returnArrayMember = {
+                value : statdData[ resource.variable ][ (statdData[ resource.variable ].length - 1) ][1]
+              , label : resource.name
+            };
+            returnArray.push( returnArrayMember );
+          }.bind( this ));
+          break;
+
       }
+      return returnArray;
     }
-
-    return match;
-    }
-
 
   , returnErrorMsgs: function( resource, index ) {
       var errorMsg;
+      var statdData = this.state.statdData;
 
-      if ( this.state[ resource.variable ] && this.state[ resource.variable ].msg ) {
-        errorMsg = resource.variable + ": " + this.state[ resource.variable ].msg;
+      if ( statdData[ resource.variable ] && statdData[ resource.variable ].msg ) {
+        errorMsg = resource.variable + ": " + statdData[ resource.variable ].msg;
       } else {
         errorMsg = "OK";
       }
@@ -364,9 +353,8 @@ var DummyWidgetContent = React.createClass({
       );
     }
 
-  , togleGraph: function(e) {
-    var drwChrt = this.drawChart;
-    this.setState({graphType : e.target.textContent}, function() { drwChrt(false, true); });
+  , togleGraph: function( event ) {
+      this.setState({ graphType: event.target.textContent });
     }
 
   , render: function() {
