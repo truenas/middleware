@@ -130,6 +130,7 @@ class UpdateHandler(object):
             self.step = 1
             self.finished = False
             self.error = False
+            self.reboot = False
         self._pkgname = ''
         self._baseprogress = 0
 
@@ -212,6 +213,7 @@ class UpdateHandler(object):
                     'percent': self.progress,
                     'step': self.step,
                     'uuid': self.uuid,
+                    'reboot': self.reboot,
                 }
                 if self.details:
                     data['details'] = self.details
@@ -232,6 +234,7 @@ class UpdateHandler(object):
         self.pid = data['pid']
         self.step = data['step']
         self.uuid = data['uuid']
+        self.reboot = data['reboot']
         return data
 
     def exit(self):
