@@ -306,7 +306,7 @@ a new dataset for the share, start the services required by NFS, and add an entr
 Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
 the permissions of the mounted share.
 
-**Figure 10.2a: NFS Share Settings**
+**Figure 10.2a: NFS Share Wizard**
 
 |nfs6.png|
 
@@ -1347,9 +1347,9 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent2.png|
+|extent2a.png|
 
-.. |extent2.png| image:: images/extent2.png
+.. |extent2a.png| image:: images/extent2a.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1400,6 +1400,10 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Xen initiator      | checkbox       | check this box when using Xen as the iSCSI initiator                                                                 |
 | compat mode        |                |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| LUN RPM            | drop-down menu | do **NOT** change this setting when using Windows as the initiator; only needs to be changed in large environments   |
+|                    |                | where the number of systems using a specific RPM is needed for accurate reporting statistics                         |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 

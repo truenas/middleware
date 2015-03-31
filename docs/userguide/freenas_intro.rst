@@ -394,7 +394,7 @@ that have occurred since 9.3-RELEASE.
 * The "Logical Block Size" field has been moved from :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`
 
-* The "Disable Physical Block Size Reporting" checkbox and "Available Space Threshold" field have been added to
+* The "Disable Physical Block Size Reporting" checkbox, "Available Space Threshold" field, and "LUN RPM" drop-down menu have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
 * The "Home share name" field  has been added to :menuselection:`Services --> AFP`.
