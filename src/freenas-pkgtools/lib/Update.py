@@ -374,9 +374,10 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler
         return None
     log.debug("CheckForUpdate:  diffs = %s" % diffs)
     reboot = False
-    if handler and "Packages" in diffs:
-        for (pkg, op, old) in diffs["Packages"]:
-            handler(op, pkg, old)
+    if "Packages" in diffs:
+        if handler:
+            for (pkg, op, old) in diffs["Packages"]:
+                handler(op, pkg, old)
         # We attempt to see if the update requires a reboot.
         # This is only tentative -- if we can't download a delta package,
         # and that's what allows the update to avoid a reboot, a reboot
