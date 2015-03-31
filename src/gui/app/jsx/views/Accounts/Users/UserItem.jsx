@@ -286,6 +286,11 @@ var UserEdit = React.createClass({
 
     }
 
+    // TODO: Currently this section just arbitrarily handles every property the
+    // middleware sends in the order the browser sends it. This should be updated
+    // to have a deliberate design.
+    // TODO: Add alerts when a remote administrator has changed items that the
+    // local administrator is also working on.
   , render: function() {
       var builtInUserAlert  = null;
       var editButtons       = null;
