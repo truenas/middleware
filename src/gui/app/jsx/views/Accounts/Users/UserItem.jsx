@@ -129,20 +129,20 @@ var UserEdit = React.createClass({
     }
 
   , getInitialState: function() {
-      var initialRemoteState = this.setInitialRemoteState( this.props );
+      var remoteState = this.setRemoteState( this.props );
 
       return {
           locallyModifiedValues  : {}
         , remotelyModifiedValues : {}
-        , initialRemoteState     : initialRemoteState
+        , remoteState            : remoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
       };
     }
 
-    // Initial remote state is set at load time and reset upon successful changes.
-  , setInitialRemoteState: function ( incomingProps ) {
-      var nextInitialRemoteState = {};
+    // Remote state is set at load time and reset upon successful changes.
+  , setRemoteState: function ( incomingProps ) {
+      var nextRemoteState = {};
 
       _.forEach( incomingProps["item"], function( value, key ) {
         var itemKey = _.find(incomingProps["dataKeys"], function ( item ) {
@@ -155,16 +155,16 @@ var UserEdit = React.createClass({
           console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
           console.error(this.props.item);
         } else {
-          nextInitialRemoteState[ key ] = this.props.item[ key ];
+          nextRemoteState[ key ] = this.props.item[ key ];
         }
       }.bind(this) );
 
-      if (!nextInitialRemoteState) {
-        console.error("Inital Remote State could not be created! Check the incoming props:");
+      if (!nextRemoteState) {
+        console.error("Remote State could not be created! Check the incoming props:");
         console.error(incomingProps);
       }
 
-      return nextInitialRemoteState;
+      return nextRemoteState;
   }
 
   , componentWillReceiveProps: function( nextProps ) {
@@ -188,7 +188,7 @@ var UserEdit = React.createClass({
           // sophisticated handling here.
           console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
           console.error(nextProps.item);
-        } else if ( !_.isEqual( this.state.initialRemoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
+        } else if ( !_.isEqual( this.state.remoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
           newRemoteModified[ key ] = nextProps.item[ key ];
         }
       }.bind(this) );
@@ -215,12 +215,12 @@ var UserEdit = React.createClass({
         }
       }.bind(this) );
 
-      // initialRemoteState records the item as it was when the view was first
+      // remoteState records the item as it was when the view was first
       // opened. This is used to mark changes that have occurred remotely since
       // the user began editing.
       // It is important to know if the incoming change resulted from a call
       // made by the local administrator. When this happens, we reset the
-      // initialRemoteState to get rid of remote edit markers, as the local version
+      // remoteState to get rid of remote edit markers, as the local version
       // has thus become authoritative.
       // We check this by comparing the incoming changes (newRemoteModified) to the
       // last request sent (this.state.lastSentValues). If this check succeeds,
@@ -232,9 +232,12 @@ var UserEdit = React.createClass({
           newRemoteModified  = {};
           newLocallyModified = {};
           this.setState ({
-              initialRemoteState : this.setInitialRemoteState(nextProps)
+              remoteState : this.setRemoteState(nextProps)
           });
       }
+
+      // It is also necessary to set remoteState after accepting new changes
+      // from a remote change.
 
       this.setState({
           locallyModifiedValues  : newLocallyModified
