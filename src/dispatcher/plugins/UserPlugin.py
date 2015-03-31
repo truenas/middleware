@@ -173,7 +173,7 @@ class UserDeleteTask(Task):
     int,
     h.all_of(
         h.ref('user'),
-        h.forbidden('builtin' 'logged-in', 'sessions')
+        h.forbidden('builtin', 'logged-in', 'sessions')
     )
 )
 class UserUpdateTask(Task):

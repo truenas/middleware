@@ -261,7 +261,7 @@ class SchemaHelper(object):
 
     @staticmethod
     def required(*args):
-        pass
+        return {'required': args}
 
     @staticmethod
     def forbidden(*args):
