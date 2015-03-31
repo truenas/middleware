@@ -2814,10 +2814,10 @@ class UpdateResourceMixin(NestedMixin):
         self.method_check(request, allowed=['get'])
 
         path = notifier().get_update_location()
-        changes = Update.PendingUpdates(path)
+        changes = Update.PendingUpdatesChanges(path)
         data = []
         if changes:
-            for new, op, old in changes:
+            for new, op, old in changes['Packages']:
                 if op == 'upgrade':
                     name = '%s-%s -> %s-%s' % (
                         old.Name(),
