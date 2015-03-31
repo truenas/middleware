@@ -23,18 +23,18 @@ var SystemInfo = React.createClass({
 
   , componentDidMount: function() {
       SystemStore.addChangeListener( this.handleSystemChange );
-      UpdateStore.addChangeListener( this.handleUpdateChange );
+      //*Temp. Removed* UpdateStore.addChangeListener( this.handleUpdateChange );
 
       SystemMiddleware.requestSystemInfo( "hardware" );
       SystemMiddleware.requestSystemInfo( "version" );
       // TODO: This causes a traceback (#8620)
-      // UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
-      UpdateMiddleware.requestUpdateInfo( "get_current_train" );
+      //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
+      //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "get_current_train" );
    }
 
   , componentWillUnmount: function() {
       SystemStore.removeChangeListener( this.handleSystemChange );
-      UpdateStore.removeChangeListener( this.handleUpdateChange );
+      //*Temp. Removed* UpdateStore.removeChangeListener( this.handleUpdateChange );
     }
 
   , handleSystemChange: function() {
@@ -48,7 +48,7 @@ var SystemInfo = React.createClass({
       this.setState({
           // TODO: This causes a traceback (#8620)
           // updates  : UpdateStore.getUpdate( "check_now_for_updates" )
-          train    : UpdateStore.getUpdate( "get_current_train" )
+          // train    : UpdateStore.getUpdate( "get_current_train" )
       });
     }
 
@@ -73,6 +73,16 @@ var SystemInfo = React.createClass({
           <span className="wd-title">Version:</span>
           <span className="wd-value">{this.state.version}</span>
         </div>
+
+
+      </Widget>
+    );
+  }
+});
+
+module.exports = SystemInfo;
+
+/* Temp. Removed
         <div className="wd-section wd-train">
           <span className="wd-title">Current Update Train:</span>
           <span className="wd-value">{this.state.train}</span>
@@ -81,10 +91,5 @@ var SystemInfo = React.createClass({
           <span className="wd-title">Available updates:</span>
           <span className="wd-value">{this.state.updates}</span>
         </div>
+*/
 
-      </Widget>
-    );
-  }
-});
-
-module.exports = SystemInfo;
