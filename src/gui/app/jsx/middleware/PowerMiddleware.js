@@ -6,6 +6,9 @@
 
 var MiddlewareClient = require("../middleware/MiddlewareClient");
 
+// Cookies!
+var myCookies = require("./cookies");
+
 module.exports = {
 
     subscribe: function( componentID ) {
@@ -18,10 +21,12 @@ module.exports = {
 
   , reboot: function() {
       MiddlewareClient.request( "task.submit", ["system.reboot", ""]);
+      myCookies.delete("auth");
     }
 
   , shutdown: function() {
       MiddlewareClient.request( "task.submit", ["system.shutdown", ""]);
+      myCookies.delete("auth");
    }
 
 };
