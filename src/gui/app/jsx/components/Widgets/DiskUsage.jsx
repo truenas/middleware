@@ -22,18 +22,18 @@ var DiskUsage = React.createClass({
                               , primary: this.primaryChart("line")
                               , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round((d[1]/1024) * 100) / 100); } }
                             }
-                           
+
                          ]
     , ready:            false
     };
   }
 
 , componentDidMount: function() {
-    this.requestData();    
+    this.requestData();
     ZfsStore.addChangeListener( this.handleChange );
   }
 
-, componentWillUnmount: function() {     
+, componentWillUnmount: function() {
      ZfsStore.removeChangeListener( this.handleChange );
   }
 
@@ -42,10 +42,10 @@ var DiskUsage = React.createClass({
   }
 
 , handleChange: function() {
-    this.setState({ pool  : getZfsPoolGetDisksFromStore( "freenas-boot") });    
+    this.setState({ pool  : getZfsPoolGetDisksFromStore( "freenas-boot") });
     if (this.state.pool !== undefined)
     {
-      var systemPoolPath = this.state.pool[0].split("/")     
+      var systemPoolPath = this.state.pool[0].split("/")
       var systemPoolName = systemPoolPath[systemPoolPath.length - 1].slice(0, systemPoolPath[systemPoolPath.length - 1].indexOf("p"))
 
       this.setState({  statdResources:    [  {variable:"write", dataSource:"localhost.disk-" + systemPoolName + ".disk_octets.write", name: systemPoolName + " Write", color:"#9ecc3c"}
@@ -74,20 +74,6 @@ var DiskUsage = React.createClass({
 
   }
 , render: function() {
-  if (this.state.ready === false)
-    {
-      return (
-        <Widget
-          positionX  =  {this.props.positionX}
-          positionY  =  {this.props.positionY}
-          title      =  {this.props.title}
-          size       =  {this.props.size} >
-
-          <div>Loading...</div>
-
-        </Widget>
-      );
-    }
     return (
       <Widget
         positionX  =  {this.props.positionX}
