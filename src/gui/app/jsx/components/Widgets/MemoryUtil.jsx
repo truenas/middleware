@@ -72,11 +72,8 @@ var MemoryUtil = React.createClass({
     }
 
   , render: function() {
-      var chartTypes         = null;
-      var WidgetInnerContent = null;
 
-      if ( this.state.hardware && this.state.hardware["memory-size"] ) {
-        chartTypes = [
+      var chartTypes = [
             {
                 type    : "stacked"
               , primary : this.primaryChart("stacked")
@@ -107,18 +104,6 @@ var MemoryUtil = React.createClass({
               , primary: this.primaryChart("pie")
             }
         ];
-      }
-
-      if ( chartTypes ) {
-        WidgetInnerContent = (
-          <DummyWidgetContent
-            statdResources = { statdResources }
-            chartTypes     = { chartTypes } >
-          </DummyWidgetContent>
-        );
-      } else {
-        WidgetInnerContent = ( <div>Loading...</div> );
-      }
 
       return (
         <Widget
@@ -127,7 +112,10 @@ var MemoryUtil = React.createClass({
           title     = { this.props.title }
           size      = { this.props.size } >
 
-          { WidgetInnerContent }
+          <DummyWidgetContent
+            statdResources = { statdResources }
+            chartTypes     = { chartTypes } >
+          </DummyWidgetContent>
 
         </Widget>
       );
