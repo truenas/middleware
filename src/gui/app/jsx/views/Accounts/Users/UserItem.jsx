@@ -129,14 +129,43 @@ var UserEdit = React.createClass({
     }
 
   , getInitialState: function() {
+      var initialRemoteState = this.setInitialRemoteState( this.props );
+
       return {
           locallyModifiedValues  : {}
         , remotelyModifiedValues : {}
-        , initialRemoteState     : this.props.item
+        , initialRemoteState     : initialRemoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
       };
     }
+
+    // Initial remote state is set at load time and reset upon successful changes.
+  , setInitialRemoteState: function ( incomingProps ) {
+      var nextInitialRemoteState = {};
+
+      _.forEach( incomingProps["item"], function( value, key ) {
+        var itemKey = _.find(incomingProps["dataKeys"], function ( item ) {
+          return item.key === key;
+        }.bind(this) );
+        if (!itemKey) {
+          // Do not accept unknown properties from the Middleware.
+          // TODO: If we want to accept arbitrary properies, we will need more
+          // sophisticated handling here.
+          console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
+          console.error(this.props.item);
+        } else {
+          nextInitialRemoteState[ key ] = this.props.item[ key ];
+        }
+      }.bind(this) );
+
+      if (!nextInitialRemoteState) {
+        console.error("Inital Remote State could not be created! Check the incoming props:");
+        console.error(incomingProps);
+      }
+
+      return nextInitialRemoteState;
+  }
 
   , componentWillReceiveProps: function( nextProps ) {
       var newRemoteModified  = {};
@@ -145,7 +174,7 @@ var UserEdit = React.createClass({
 
       // remotelyModifiedValues represents everything that's changed remotely
       // since the view was opened. This is the difference between the newly arriving
-      // props and the initial ones. Read-only values are ignored.
+      // props and the initial ones. Read-only and unknown values are ignored.
       // TODO: Make this the difference between the initial state OR the last time
       // the local administrator saved successfully. Currently this will treat
       // successfully submitted local changes as remote changes.
@@ -203,7 +232,7 @@ var UserEdit = React.createClass({
           newRemoteModified  = {};
           newLocallyModified = {};
           this.setState ({
-              initialRemoteState : nextProps
+              initialRemoteState : this.setInitialRemoteState(nextProps)
           });
       }
 
