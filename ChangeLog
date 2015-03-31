@@ -1,0 +1,14 @@
+8228	Bug	Low	TrueNAS uses the FreeNAS favicon
+8229	Bug	Low	Documentation icon in TrueNAS has a little freenas logo on it.
+8335	Bug	Low	Replication stream compression resets to off
+8675	Feature	Low	When boot volume is getting full can we trigger the alert light
+8707	Bug	Normal	6535 zpool history floods debug
+8824	Bug	Normal	cert migration script tracebacks when not using https
+8887	Feature	Normal	would like a script or simple tool for vhid scanning when setting up an HA
+8901	Bug	Normal	Kingston 8GB DT 100 G2 USB stick doesn't work with FreeNAS 9.3
+8919	Feature	Normal	"Medium Rotation Rate" option of iSCSI extent
+8923	Bug	Normal	CRIME vulnerable and RC4 Ciphers enabled
+8931	Bug	Normal	Update mrsas driver
+8951	Bug	Urgent	System; typos in /etc/periodic.conf; weekly and monthly scripts fail
+8959	Bug	High	when upgrading from 9.2.1.x to 9.3 if you have mirrored boot devices you end up with no swap
+8961	Bug	Normal	HA replication broken by ZFS boot pool
