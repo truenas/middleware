@@ -322,11 +322,13 @@ class FilesystemNamespace(EntityNamespace):
         self.parent = parent
 
         self.add_property(
-            descr=''
+            descr='Name',
+            name='name',
+            get='name'
         )
 
 @description("Volumes namespace")
-class VolumesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace):
+class VolumesNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
     class ShowTopologyCommand(Command):
         def run(self, context, args, kwargs, opargs):
             pass

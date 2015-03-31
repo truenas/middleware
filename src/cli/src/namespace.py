@@ -565,6 +565,10 @@ class RpcBasedLoadMixin(object):
 
 
 class TaskBasedSaveMixin(object):
+    def __init__(self, *args, **kwargs):
+        super(TaskBasedSaveMixin, self).__init__(*args, **kwargs)
+        self.save_key_name = getattr(self, 'primary_key_name', 'id')
+
     def post_save(self, this, status):
         if status == 'FINISHED':
             this.modified = False
@@ -580,11 +584,11 @@ class TaskBasedSaveMixin(object):
 
         self.context.submit_task(
             self.update_task,
-            this.orig_entity[self.primary_key_name],
+            this.orig_entity[self.save_key_name],
             this.get_diff(),
             callback=lambda s: self.post_save(this, s))
 
     def delete(self, name):
         entity = self.get_one(name)
-        self.context.submit_task(self.delete_task, entity[self.primary_key_name])
+        self.context.submit_task(self.delete_task, entity[self.save_key_name])
 
