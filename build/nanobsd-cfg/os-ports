@@ -69,10 +69,10 @@ add_port devel/m4
 add_port sysutils/screen
 add_port sysutils/pciutils
 
-#if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-#       add_port lang/gcc47 OPTIONS_FILE_UNSET+=BOOTSTRAP OPTIONS_FILE_UNSET+=JAVA 
-#fi
-#
+if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+       add_port lang/gcc47 OPTIONS_FILE_UNSET+=BOOTSTRAP OPTIONS_FILE_UNSET+=JAVA 
+fi
+
 #add_port www/aria2 OPTIONS_FILE_UNSET+=SQLITE
 
 add_port devel/libpthread-stubs
