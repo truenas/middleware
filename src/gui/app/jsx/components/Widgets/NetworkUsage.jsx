@@ -65,20 +65,6 @@ var NetworkUsage = React.createClass({
   }
 
 , render: function() {
-    if (this.state.ready === false)
-    {
-      return (
-        <Widget
-          positionX  =  {this.props.positionX}
-          positionY  =  {this.props.positionY}
-          title      =  {this.props.title}
-          size       =  {this.props.size} >
-
-          <div>Loading...</div>
-
-        </Widget>
-      );
-    }
    return (
      <Widget
        positionX  =  {this.props.positionX}
@@ -86,15 +72,12 @@ var NetworkUsage = React.createClass({
        title      =  {this.props.title}
        size       =  {this.props.size} >
 
-
        <DummyWidgetContent
          statdResources    =  {this.state.statdResources}
          chartTypes        =  {this.state.chartTypes} >
        </DummyWidgetContent>
 
-
      </Widget>
-
    );
  }
 });
