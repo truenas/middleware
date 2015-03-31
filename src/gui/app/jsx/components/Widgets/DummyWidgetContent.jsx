@@ -74,14 +74,18 @@ var DummyWidgetContent = React.createClass({
       // Only update if we have the required props, there is no staged update
       // currently being assembled, and we have access to both D3 and NVD3
       // (on the basis that the component is mounted)
-      if ( this.isMounted()                     &&
-           this.props.chartTypes.length         &&
-           _.isEmpty( this.state.stagedUpdate ) &&
-           !_.isEmpty( prevState.stagedUpdate ) ){
-
+      if ( this.isMounted() && this.props.chartTypes.length ){
         var chartShouldReload = ( prevState.graphType !== this.state.graphType );
-        this.drawChart( chartShouldReload );
+        var statdDataExists = _.all( this.state.statdData, function( dataArray ) {
+          return _.isArray( dataArray ) && dataArray.length > 0;
+        });
 
+        if ( chartShouldReload && statdDataExists ) {
+          this.drawChart( chartShouldReload );
+        } else if ( _.isEmpty( this.state.stagedUpdate ) &&
+                    !_.isEmpty( prevState.stagedUpdate ) ){
+          this.drawChart();
+        }
       }
     }
 
@@ -346,14 +350,14 @@ var DummyWidgetContent = React.createClass({
         <div
           key          = { index }
           className    = { "ico-graph-type-" + resource.type }
-          onTouchStart = { this.togleGraph }
-          onClick      = { this.togleGraph }>
+          onTouchStart = { this.toggleGraph }
+          onClick      = { this.toggleGraph }>
             { resource.type }
         </div>
       );
     }
 
-  , togleGraph: function( event ) {
+  , toggleGraph: function( event ) {
       this.setState({ graphType: event.target.textContent });
     }
 
