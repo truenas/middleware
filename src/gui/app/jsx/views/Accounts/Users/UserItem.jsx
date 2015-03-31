@@ -246,7 +246,7 @@ var UserEdit = React.createClass({
     }
 
   , handleValueChange: function( key, event ) {
-      var newValues  = this.state.locallyModifiedValues;
+      var newLocallyModified = this.state.locallyModifiedValues;
       var inputValue;
 
       // Use different logic to interpret input from different kinds of fields.
@@ -269,9 +269,9 @@ var UserEdit = React.createClass({
       // for the same key. If it is, we `delete` the key from our temp object
       // and update state.
       if ( _.isEqual( this.props.item[ key ], inputValue ) ) {
-        delete newValues[ key ];
+        delete newLocallyModified[ key ];
       } else {
-        newValues[ key ] = inputValue;
+        newLocallyModified[ key ] = inputValue;
       }
 
       // mixedValues functions as a clone of the original item passed down in
@@ -279,8 +279,8 @@ var UserEdit = React.createClass({
       // user. This allows the display components to have access to the
       // "canonically" correct item, merged with the un-changed values.
       this.setState({
-          locallyModifiedValues : newValues
-        , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newValues )
+          locallyModifiedValues : newLocallyModified
+        , mixedValues           : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
       });
     }
 
