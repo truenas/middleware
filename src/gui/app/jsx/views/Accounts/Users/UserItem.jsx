@@ -170,14 +170,12 @@ var UserEdit = React.createClass({
   , componentWillReceiveProps: function( nextProps ) {
       var newRemoteModified  = {};
       var newLocallyModified = {};
-      var oldLocallyModified = this.state.locallyModifiedValues;
 
       // remotelyModifiedValues represents everything that's changed remotely
       // since the view was opened. This is the difference between the newly arriving
       // props and the initial ones. Read-only and unknown values are ignored.
-      // TODO: Make this the difference between the initial state OR the last time
-      // the local administrator saved successfully. Currently this will treat
-      // successfully submitted local changes as remote changes.
+      // TODO: Use this to show alerts for remote changes on sections the local
+      // administrator is working on.
       _.forEach( nextProps.item, function( value, key ) {
         var itemKey = _.find(this.props["dataKeys"], function ( item ) {
           return item.key === key;
@@ -190,28 +188,6 @@ var UserEdit = React.createClass({
           console.error(nextProps.item);
         } else if ( !_.isEqual( this.state.remoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
           newRemoteModified[ key ] = nextProps.item[ key ];
-        }
-      }.bind(this) );
-      // locallyModifiedValues represents the difference between the remote state
-      // of the item and the edits in progress. Read-only values MUST NOT be included.
-      _.forEach( this.props.item, function( value, key ) {
-        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if ( !_.isEqual( nextProps.item[ key ], value ) && itemKey.mutable ) {
-          newLocallyModified[ key ] = value;
-        }
-      }.bind(this) );
-
-      // When a remote value becomes identical to an edit in progress, that value
-      // should no longer be treated as having been changed locally. To this end,
-      // we compare newly arrived properties to the old locally modified ones, and
-      // remove the matching values from newLocallyModified.
-      // TODO: Make the view give some visual indication which values have been
-      // overriden by remote ones.
-      _.forEach( oldLocallyModified, function( value, key ) {
-        if ( _.isEqual( value, nextProps.key ) ) {
-          delete newLocallyModified[ key ];
         }
       }.bind(this) );
 
@@ -232,16 +208,13 @@ var UserEdit = React.createClass({
           newRemoteModified  = {};
           newLocallyModified = {};
           this.setState ({
-              remoteState : this.setRemoteState(nextProps)
+              remoteState           : this.setRemoteState(nextProps)
+            , locallyModifiedValues : newLocallyModified
           });
       }
 
-      // It is also necessary to set remoteState after accepting new changes
-      // from a remote change.
-
       this.setState({
-          locallyModifiedValues  : newLocallyModified
-        , remotelyModifiedValues : newRemoteModified
+          remotelyModifiedValues : newRemoteModified
       });
     }
 
