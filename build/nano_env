@@ -412,14 +412,14 @@ WITHOUT_GDB=true
 	fi
 fi
 
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-	if ! is_truenas ; then
-		PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
-WITHOUT_TOOLCHAIN=true
-WITHOUT_BINUTILS=true
-"
-	fi
-fi
+#if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
+#	if ! is_truenas ; then
+#		PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
+#WITHOUT_TOOLCHAIN=true
+#WITHOUT_BINUTILS=true
+#"
+#	fi
+#fi
 
 export CONF_BUILD
 export CONF_INSTALL
