@@ -624,9 +624,11 @@ Kerberos Settings
 
 To configure additional Kerberos parameters, use :menuselection:`Directory Service --> Kerberos Settings`. As seen in Figure 9.7a, two fields are available:
 
-* **Appdefaults auxiliary parameters:**
+* **Appdefaults auxiliary parameters:** contains settings used by some Kerberos applications. The available settings and their syntax are listed in the 
+  `[appdefaults] section of krb.conf(5) <http://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#appdefaults>`_.
 
-* **Libdefaults auxiliary parameters:**
+* **Libdefaults auxiliary parameters:** contains settings used by the Kerberos library. The available settings and their syntax are listed in the 
+  `[libdefaults] section of krb.conf(5) <http://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#libdefaults>`_.
 
 **Figure 9.7a: Additional Kerberos Settings**
 
