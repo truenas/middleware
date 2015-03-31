@@ -31,7 +31,11 @@ var DummyWidgetContent = React.createClass({
   , getInitialState: function() {
       var initialStatdData = {};
       var initialErrorMode = false;
+      var initialStatdDataLoaded = false;
 
+
+      //We don't have any of this data yet. Using two same widgets maybe? How can we trust this data?
+      //I think this should be removed from getInitialState completly.
       _.forEach( this.props.statdResources,  function( resource ) {
         initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
@@ -41,12 +45,18 @@ var DummyWidgetContent = React.createClass({
 
       });
 
+      initialStatdDataLoaded = _.all( initialStatdData, function( dataArray ) {
+                                       return _.isArray( dataArray ) && dataArray.length > 0;
+                                    });
+
+
       return {
-          chart        : ""
-        , stagedUpdate : {}
-        , graphType    : "line"
-        , errorMode    : false
-        , statdData    : initialStatdData
+          chart           : ""
+        , stagedUpdate    : {}
+        , graphType       : "line"
+        , errorMode       : false
+        , statdData       : initialStatdData
+        , statdDataLoaded : initialStatdDataLoaded
       };
     }
 
@@ -76,11 +86,11 @@ var DummyWidgetContent = React.createClass({
       // (on the basis that the component is mounted)
       if ( this.isMounted() && this.props.chartTypes.length ){
         var chartShouldReload = ( prevState.graphType !== this.state.graphType );
-        var statdDataExists = _.all( this.state.statdData, function( dataArray ) {
-          return _.isArray( dataArray ) && dataArray.length > 0;
-        });
+        //var statdDataExists = _.all( this.state.statdData, function( dataArray ) {
+        //  return _.isArray( dataArray ) && dataArray.length > 0;
+        //});
 
-        if ( chartShouldReload && statdDataExists ) {
+        if ( chartShouldReload && this.state.statdDataLoaded ) {
           this.drawChart( chartShouldReload );
         } else if ( _.isEmpty( this.state.stagedUpdate ) &&
                     !_.isEmpty( prevState.stagedUpdate ) ){
@@ -103,52 +113,72 @@ var DummyWidgetContent = React.createClass({
 
   , handleStatdChange: function() {
       var newState     = {};
-      var dataUpdate   = StatdStore.getWidgetDataUpdate();
-      var updateTarget = _.find(
-          this.props.statdResources
-        , function( resource ) {
-            return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
+
+      //Do we have initial stack of data?
+      if (this.state.statdDataLoaded === true) {
+        var dataUpdate   = StatdStore.getWidgetDataUpdate();
+        var updateTarget = _.find(
+            this.props.statdResources
+          , function( resource ) {
+              return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
+            }
+        );
+
+        // Don't bother doing anything unless we have a valid target, based on
+        // something in our statdResources. This means the widget won't update based
+        // on pulse data intended for other widgets.
+        if ( updateTarget && updateTarget["variable"] ) {
+          var updateVariable = updateTarget["variable"];
+          var stagedUpdate   = _.cloneDeep( this.state.stagedUpdate );
+          var newDataPoint   = [ dataUpdate.args["timestamp"], dataUpdate.args["value"] ];
+
+          // Ideally, each of the n responses will be sent one after another - if
+          // they aren't, they should be queued up in stagedUpdate so that they can
+          // be updated as a single batch - making sure the chart only re-renders when
+          // all n of the specified data is available. This logic could be modified
+          // to set a certain threshhold beyond which the chart would force an update
+          // even if it was still waiting for one of the pulses, or it had receieved
+          // five of one and only one of all the others, etc.
+
+          // TODO: More clear business logic for data display
+
+          if ( stagedUpdate[ updateVariable ] && _.isArray( stagedUpdate[ updateVariable ] ) ) {
+            stagedUpdate[ updateVariable ] = stagedUpdate[ updateVariable ].concat( newDataPoint );
+          } else {
+            stagedUpdate[ updateVariable ] = [ newDataPoint ];
           }
-      );
 
-      // Don't bother doing anything unless we have a valid target, based on
-      // something in our statdResources. This means the widget won't update based
-      // on pulse data intended for other widgets.
-      if ( updateTarget && updateTarget["variable"] ) {
-        var updateVariable = updateTarget["variable"];
-        var stagedUpdate   = _.cloneDeep( this.state.stagedUpdate );
-        var newDataPoint   = [ dataUpdate.args["timestamp"], dataUpdate.args["value"] ];
+          if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
+            newState.statdData = {};
 
-        // Ideally, each of the n responses will be sent one after another - if
-        // they aren't, they should be queued up in stagedUpdate so that they can
-        // be updated as a single batch - making sure the chart only re-renders when
-        // all n of the specified data is available. This logic could be modified
-        // to set a certain threshhold beyond which the chart would force an update
-        // even if it was still waiting for one of the pulses, or it had receieved
-        // five of one and only one of all the others, etc.
+            _.forEach( stagedUpdate, function( data, key ) {
+              var newData = this.state.statdData[ key ].concat( data );
+              newState.statdData[ key ] = _.take( newData, 100 );
+            }.bind( this ) );
+            stagedUpdate = {};
+          }
 
-        // TODO: More clear business logic for data display
-
-        if ( stagedUpdate[ updateVariable ] && _.isArray( stagedUpdate[ updateVariable ] ) ) {
-          stagedUpdate[ updateVariable ] = stagedUpdate[ updateVariable ].concat( newDataPoint );
-        } else {
-          stagedUpdate[ updateVariable ] = [ newDataPoint ];
+          this.setState( _.merge(
+              { "stagedUpdate": stagedUpdate }
+            , newState
+          ));
         }
+      }
+      else {
+        newState.statdData = {};
+        _.forEach( this.props.statdResources,  function( resource ) {
+          newState.statdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
-        if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
-          newState.statdData = {};
+          if ( newState.statdData[ resource.variable ] && newState.statdData[ resource.variable ].error ) {
+            newState.errorMode = true;
+          }
+        });
 
-          _.forEach( stagedUpdate, function( data, key ) {
-            var newData = this.state.statdData[ key ].concat( data );
-            newState.statdData[ key ] = _.take( newData, 100 );
-          }.bind( this ) );
-          stagedUpdate = {};
-        }
-
-        this.setState( _.merge(
-            { "stagedUpdate": stagedUpdate }
-          , newState
-        ));
+        newState.statdDataLoaded = _.all( newState.statdData, function( dataArray ) {
+                                        return _.isArray( dataArray ) && dataArray.length > 0;
+                                      });
+        this.setState( newState );
+        console.log(this.state);
       }
     }
 
