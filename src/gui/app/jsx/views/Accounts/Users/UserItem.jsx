@@ -259,16 +259,20 @@ var UserEdit = React.createClass({
         }
       }.bind(this) );
 
-      UsersMiddleware.updateUser( this.props.item["id"], valuesToSend );
+      if (valuesToSend){
+        // Only bother to submit an update if there is anything to update.
+        UsersMiddleware.updateUser( this.props.item["id"], valuesToSend );
+        // Save a record of the last changes we sent.
+        this.setState({
+            lastSentValues : valuesToSend
+        });
+      } else {
+          console.warn("Attempted to send a User update with no valid fields.");
+      }
 
-      // Save a record of the last changes we sent.
-      this.setState({
-          lastSentValues : valuesToSend
-      });
     }
 
   , render: function() {
-
       var builtInUserAlert  = null;
       var editButtons       = null;
 
