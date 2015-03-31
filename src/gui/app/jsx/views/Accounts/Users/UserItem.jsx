@@ -253,6 +253,9 @@ var UserEdit = React.createClass({
         }.bind(this) );
         if ( itemKey.mutable ) {
           valuesToSend[ key ] = value;
+        } else {
+          console.error("USERS: Attempted to submit a change to a read-only property.");
+          console.error(this.state.locallyModifiedValues[value]);
         }
       }.bind(this) );
 
