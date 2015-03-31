@@ -45,6 +45,7 @@ define([
     mode: "advanced",
     poolUrl: "",
     steps: "",
+    retries: 0,
     postCreate : function() {
 
       var me = this;
@@ -101,6 +102,34 @@ define([
       });
     },
     update: function(uuid) {
+
+      var updateProgress = function(data) {
+        if(data.step) {
+          me._curStep = data.step;
+        }
+        if(data.details) {
+          me.dapDetails.innerHTML = data.details;
+        }
+        if(data.percent) {
+          if(data.percent == 100) {
+            me._subProgress.update({'indeterminate': true});
+            me._masterProgress(data.percent);
+            if(me._curStep == me._numSteps)
+              return;
+          } else {
+            me._subProgress.update({
+              maximum: 100,
+              progress: data.percent,
+              indeterminate: false
+            });
+            me._masterProgress(data.percent);
+          }
+        } else {
+          me._masterProgress(0);
+          me._subProgress.update({'indeterminate': true});
+        }
+      }
+
       var me = this;
       if(uuid) this.uuid = uuid;
       if(!this.dapMainLabel) return;
@@ -186,33 +215,17 @@ define([
           headers: {"X-Progress-ID": me.uuid},
           handleAs: "json"
         }).then(function(data) {
-          if(data.step) {
-            me._curStep = data.step;
-          }
-          if(data.details) {
-            me.dapDetails.innerHTML = data.details;
-          }
-          if(data.percent) {
-            if(data.percent == 100) {
-              me._subProgress.update({'indeterminate': true});
-              me._masterProgress(data.percent);
-              if(me._curStep == me._numSteps)
-                return;
-            } else {
-              me._subProgress.update({
-                maximum: 100,
-                progress: data.percent,
-                indeterminate: false
-              });
-              me._masterProgress(data.percent);
-            }
-          } else {
-            me._masterProgress(0);
-            me._subProgress.update({'indeterminate': true});
-          }
+          updateProgress(data);
           setTimeout(function() {
             me.update();
           }, 1000);
+        }, function(evt) {
+          if(me.retries < 50) {
+            setTimeout(function() {
+              me.update();
+            }, 1000);
+            me.retries++;
+          }
         });
       }
     },
