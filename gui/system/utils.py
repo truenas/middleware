@@ -72,8 +72,6 @@ class BootEnv(object):
 
 class CheckUpdateHandler(object):
 
-    reboot = False
-
     def __init__(self):
         self.changes = []
 
@@ -83,9 +81,6 @@ class CheckUpdateHandler(object):
             'old': oldpkg,
             'new': newpkg,
         })
-
-    def diff_call(self, diffs):
-        self.reboot = diffs.get('Reboot', False)
 
     @property
     def output(self):

@@ -1478,7 +1478,6 @@ def update_check(request):
         handler = CheckUpdateHandler()
         try:
             update = CheckForUpdates(
-                diff_handler=handler.diff_call,
                 handler=handler.call,
                 train=updateobj.get_train(),
             )
