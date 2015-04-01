@@ -1,5 +1,6 @@
 "use strict";
 
+// TODO: Pass this in props, so that we know which wrapper is calling which subscription
 var componentLongName = "DummyWidgetContent";
 
 var _      = require("lodash");
@@ -33,10 +34,9 @@ var DummyWidgetContent = React.createClass({
       var initialErrorMode = false;
       var initialStatdDataLoaded = false;
 
-
       //We don't have any of this data yet. Using two same widgets maybe? How can we trust this data?
       //I think this should be removed from getInitialState completly.
-      _.forEach( this.props.statdResources,  function( resource ) {
+      _.forEach( this.props.statdResources, function( resource ) {
         initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
         if ( initialStatdData[ resource.variable ] && initialStatdData[ resource.variable ].error ) {

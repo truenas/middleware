@@ -10,6 +10,8 @@
 
 var _ = require("lodash");
 
+var freeNASUtil = require("../common/freeNASUtil");
+
 var SubscriptionsStore          = require("../stores/SubscriptionsStore");
 var SubscriptionsActionCreators = require("../actions/SubscriptionsActionCreators");
 
@@ -51,19 +53,6 @@ function MiddlewareClient() {
   this.modFibonacci = [5000, 8000, 13000, 21000, 34000];
 
 // UTILITY FUNCTIONS
-
-  // Generates a unique UUID which a client includes with each call (generally
-  // within the `pack` function). This ID may then be used to verify either the
-  // original client or for the client to verify the middleware's response.
-  function generateUUID () {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace( /[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0;
-        var v = ( c === "x" ) ? r : ( r & 0x3 | 0x8 );
-
-        return v.toString(16);
-      }
-    );
-  }
 
   // Creates a JSON-formatted object to send to the middleware. Contains the
   // following key-values:
@@ -291,7 +280,7 @@ function MiddlewareClient() {
   // Authenticate a user to the middleware. Basically a specialized version of
   // the `request` function with a different payload.
   this.login = function ( auth_type, credentials ) {
-    var requestID = generateUUID();
+    var requestID = freeNASUtil.generateUUID();
     var rpcName = "auth";
     var payload = {};
     if (auth_type === "userpass") {
@@ -350,7 +339,7 @@ function MiddlewareClient() {
   // `logPendingRequest` as a lookup key for resolving or timing out the
   // request.
   this.request = function ( method, args, callback ) {
-    var requestID = generateUUID();
+    var requestID = freeNASUtil.generateUUID();
     var payload = {
         "method" : method
       , "args"   : args
@@ -389,7 +378,7 @@ function MiddlewareClient() {
       } else {
         if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        var requestID = generateUUID();
+        var requestID = freeNASUtil.generateUUID();
         processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
       }
     });
@@ -402,7 +391,7 @@ function MiddlewareClient() {
     _.forEach( masks, function( mask ) {
       if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
       if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
-      var requestID = generateUUID();
+      var requestID = freeNASUtil.generateUUID();
       processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
     });
   };
@@ -425,7 +414,7 @@ function MiddlewareClient() {
       if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) === 1 ) {
         if ( DEBUG("subscriptions") ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
-        var requestID = generateUUID();
+        var requestID = freeNASUtil.generateUUID();
         processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, requestID );
       } else {
         if ( DEBUG("subscriptions") ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
