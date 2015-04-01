@@ -107,9 +107,9 @@ __EOF__
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ssh_remote_hostkey FROM storage_replremote" > /etc/ssh/ssh_known_hosts
 
     # extract the saved host keys from the database.
-    for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub" "ssh_host_ed25519_key" "ssh_host_ed25519_key.pub" 
+    for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_dsa_key-cert.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_ecdsa_key-cert.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub" "ssh_host_rsa_key-cert.pub" "ssh_host_ed25519_key" "ssh_host_ed25519_key.pub" "ssh_host_ed25519_key-cert.pub"
     do
-        column=`echo ${i} | tr "." "_"`
+        column=`echo ${i} | tr ".-" "_"`
         _tmp=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${column} from services_ssh"`
         _tmpx=`echo ${_tmp} | tr '\n' '1'`
         if ! [ "${_tmpx}" = "1" ] ; then
