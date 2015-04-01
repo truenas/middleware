@@ -241,7 +241,7 @@ var UserEdit = React.createClass({
       // same as what the last payload from the middleware shows as the value
       // for the same key. If it is, we `delete` the key from our temp object
       // and update state.
-      if ( _.isEqual( this.props.item[ key ], inputValue ) ) {
+      if ( _.isEqual( this.state.remoteState[ key ], inputValue ) ) {
         delete newLocallyModified[ key ];
       } else {
         newLocallyModified[ key ] = inputValue;
