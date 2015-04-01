@@ -316,6 +316,11 @@ Hello,
             if proc.returncode != 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
 
+        if Task.objects.filter(task_filesystem=fs, task_excludesystemdataset=True, task_recursive=True):
+            if "/" not in fs:
+                os.system("/sbin/zfs list -t snapshot -o name -H -r %s/.system | "
+                          "/usr/bin/xargs -n 1 /sbin/zfs destroy" % fs)
+
         for vm in snapvms:
             if vm not in snapvmfails:
                 vm.delete_named_snapshot(vmsnapname)

@@ -1021,6 +1021,12 @@ class Task(Model):
         default=False,
         verbose_name=_("Recursive"),
     )
+    task_excludesystemdataset = models.BooleanField(
+        default=False,
+        verbose_name=_("Exclude System Dataset"),
+        help_text=_("Do not snapshot the system dataset. This is useful when replicating "
+                    "the root of a pool to the root of a pool of another FreeNAS system."),
+    )
     task_ret_count = models.PositiveIntegerField(
         default=2,
         verbose_name=_("Snapshot lifetime value"),
