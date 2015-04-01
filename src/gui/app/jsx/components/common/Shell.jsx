@@ -39,6 +39,10 @@ var Shell = React.createClass({
         this.isAuthenticated = false;
         ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
       }
+      console.log("suraj in com. did update printing height: " + this.refs.termTarget.getDOMNode().clientHeight);
+      if ( this.refs.termTarget.getDOMNode().clientHeight !== 0 ) {
+        this.term.resize(80, this.refs.termTarget.getDOMNode().clientHeight * 0.05 );
+      }
     }
 
   , createNewShell: function( token ) {
@@ -47,7 +51,7 @@ var Shell = React.createClass({
       this.ws   = new WebSocket( url );
       this.term = new Terminal({
           cols       : 80
-        , rows       : 24
+        , rows       : 14
         , screenKeys : true
       });
 
@@ -76,7 +80,7 @@ var Shell = React.createClass({
 
   , render: function() {
       return (
-        <div ref="termTarget" />
+        <div style={{ flex: 1}} ref="termTarget" />
       );
     }
 
