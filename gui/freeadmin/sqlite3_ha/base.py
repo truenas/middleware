@@ -338,6 +338,10 @@ class HASQLiteCursorWrapper(Database.Cursor):
                 if no_sync is None:
                     lookup = []
                 else:
+
+                    if 'fields' not in no_sync:
+                        continue
+
                     if issubclass(
                         next_.__class__, sqlparse.sql.IdentifierList
                     ):
