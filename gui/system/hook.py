@@ -1,3 +1,5 @@
+import subprocess
+
 from django.core.urlresolvers import reverse
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
@@ -45,3 +47,13 @@ class SystemHook(AppHook):
                 'weight': 90,
             },
         ]
+
+    def system_info(self, request):
+        arr = []
+        serial = subprocess.Popen(
+            ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE
+        ).communicate()[0].split('\n')[0].upper()
+        if serial.startswith('A1-'):
+            arr.append({'name': _('Serial'), 'value': serial})
+        return arr
