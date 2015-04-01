@@ -1,0 +1,122 @@
+1. Open the middleware plugin for the tasks with which you plan to work.
+    * src/dispatcher/plugins/UserPlugin.py
+2. Identify the RPC calls you want to use. You may find them by examining the code in the middleware plugin or by searching through the list of RPC calls in the debug panel of a running FreeNAS 10 instance. Note that these need not be everything you plan to use, because other middleware utility classes may already be providing functions for the calls. In this case, UsersMiddleware.js already provides functions to call users.query and other users-related RPC calls.
+    * groups.query
+    * groups.update
+3. Identify the schema definition of the data you plan to work with
+    * dispatcher.register_schema_definition("group")
+4. Create the display key for the data you plan to expose to the GUI
+    i. src/gui/data/middleware-keys/groups-display.json
+      + NOTE: It may be helpful to keep the schema definition you plan to work with open in another visible tab or window.
+    ii. The special keys at the top are used for specific funtions in the item view. Each one is one of the dataKeys. The special keys that are absolutely necessary for a view are:
+      + primaryKey - used for various UI display functions
+      + secondaryKey
+      + selectionKey
+      + uniqueKey
+    iii. Optional keys are:
+      + imageKey
+      + iconKey
+    iv. The place where most of the work happens is dataKeys. Each of these will be one field in each object displayed by the view. The parts of a dataKey entry are:
+      + "key"         : the name of the field.
+      + "name"        : the display name of the field
+      + "type"        : the data type of the field
+      + "formElement" : what type of text field will be used to edit this field in the view.
+      + mutable       : whether or not this field is user-editable
+      + defaultCol    : whether or not the field is displayed by default in the table view of the item
+    v. Populate dataKeys from the fields defined in the middleware plugin schema definition.
+      + groupname
+      + builtin
+      + id
+5. Create a middleware utility class for the RPC calls you want to make.
+    * src/gui/jsx/middleware/GroupsMiddleware.js
+    i. create the necessary boilerplate. You will always to require the MiddlewareClient and almost always need an ActionCreator, which will be created next.
+      + src/gui/jsx/actions/GroupsActionCreators.js
+    ii. Identify the events to which you need to subscribe. Generally it will be all tasks and any change events that will impact your view.
+      + groups.changed
+      + tasks.*
+    iii. Write subscribe() and unsubscribe() calling MiddlewareClient.subscribe() and .unsubscribe on all of the events you need.
+      + MiddlewareClient.subscribe (["groups.changed"])
+      + MiddlewareClient.subscribe (["tasks.*"])
+    iv. Write functions for each distinct RPC call you need to be able to send. Each function must include a callback in the form of an ActionCreator function that will send the resulting middleware response onward. These will be implemented next.
+      + requestGroupsList
+      + updateGroup
+6. Create ActionCreators for the middleware responses you expect to receive.
+    * src/gui/jsx/actions/GroupsActionCreators.js
+    i. Go to src/gui/constants/FreeNASConstants.js and make all the ActionTypes you will want your flux store to be able to recognize.
+        ++ RECEIVE_GROUPS_LIST
+        ++ RECEIVE_GROUPS_UPDATE_TASK
+        ++ RESOLVE_GROUPS_UPDATE_TASK
+    i. Create the necessary boilerplate. This will require the dispatcher and the ActionTypes (via the FreeNAS Constants).
+    ii. Create functions to be used as callbacks when recieving middleware events. You should already have an idea of what these are from creating the middleware utility class.
+      + receiveGroupsList
+      + receiveGroupsUpdateTask
+7. Create a new flux store in src/gui/jsx/stores/
+  * GroupsStore.js
+  i. Fill out the boilerplate requires and functions.
+    + Use the right middleware utility classes for all the RPC calls you will need to make. This may include preexisting classes you did not implement.
+      ++ src/gui/jsx/middleware/UsersMiddleware.js
+      ++ src/gui/jsx/middleware/GroupsMiddleware.js
+    + You will need a variable to hold the store's actual data.
+    + You will always need emitChange(), addChangeListener(), and removeChangeListener(), and getUpdateMask ().
+    + You will want a function to return data from the store.
+      ++ getGroup
+      ++ getAllGroups
+8. Create the dispatchToken.
+    * GroupsStore.dispatchToken
+    i. Create a switch with a case for each ActionType you want to handle in this store. These will likely be all of the ActionTypes you used in your ActionCreators.
+      + RECEIVE_GROUPS_LIST
+      + RECEIVE_GROUPS_UPDATE_TASK
+      + RESOLVE_GROUPS_UPDATE_TASK
+    ii. You will likely need to cover actiontypes for receiving data, receiving update alerts, and receiving update completions.
+      + case ActionTypes.RECEIVE_GROUPS_LIST:
+        ++ TODO COMMENT THAT THIS IS WHERE YOU MAP THE DATA FROM THE MIDDLEWARE (plugin) TO YOUR DISPLAY KEYS.
+      + case ActionTypes.RECEIVE_GROUPS_UPDATE_TASK:
+      + case ActionTypes.RESOLVE_GROUPS_UPDATE_TASK:
+9. Create the main view
+    * src/gui/app/jsx/views/accounts/Groups.jsx
+  i. Create the necessary boilerplate:
+    + make sure you require:
+      ++ the middleware classes for calls you plan to make
+      ++ any Flux stores that contain data you will want to use
+  ii. Create the necessary viewData. This will be used when rendering your view.
+    + formatData should be the display key you created
+    + routing will not be useful until you create the Item view next but give it the props "route" and "param"
+      ** "route": "groups-editor"
+      ** "param": "groupID"
+    + display will contain the information for the filters you plan to use in the left column of your view.
+      ++ filtercriteria gives the actual filters you want to have available
+        *** userCreated
+        *** builtIn
+      ++ remainingName is the name that will be displayed for all items that are not otherwise categorized
+      ++ ungroupedName is the name that will be used when every item is being displayed without filters
+      ++ allowedFilters
+      ++ defaultFilters
+      ++ allowdGroups will list the groups of items that may be displayed
+      ++ defaultGroups will list the groups of items that will be displayed upon first loading the view.
+      ++ defaultCollapsed will list the groups of items which will be listed by name but not expanded upon first loading the view.
+  iii. you will probably want a function to get all the data available in your store, as well as other, more specific functions for later use.
+    * getGroupsFromStore
+  iv. Now implement the class that will represent your view.
+    + The mandatory functions are:
+      ++ getIntialState: sets internal parameters when the view is first loaded
+      ++ componentDidMount: runs when the view first loads. This should include any ChangeListeners and subscriptions you need, as well as any initial internal function calls you need to make (such as getting data from the store).
+      ++ componentDidUnmount: runs when the view closes. This should remove all the ChangeListeners and subscriptions made in componentDidMount, and may also run any neessary cleanup.
+      ++ render: will be covered later
+    + implement any specific functions you'll need. some common ones are:
+      ++ handling a change (no matter where it originates)
+    + implement the render function
+        ++ render should return jsx that will be converted into actual displayed markup. Luckily the Viewer does most of the work for you.
+          +++ header is a string that will be displayed as the header for the View.
+          +++ InputData will be used as the source of the data you display. It's probably the data from your store you're getting during componentDidMount.
+          +++ Use the viewData you created earlier.
+          +++ Editor WHYYYYYYYYYY
+10. Create the template for an individual item.
+    * src/gui/app/jsx/views/Acounts/Groups/GroupsItem
+  i. Create the necessary boilerplate.
+    + make sure you require:
+      ++ the middleware classes for calls you plan to make
+      ++ any Flux stores that contain data you will want to use
+  ii. list the proptypes you may use and/or will require
+    + item is always required
+  iii. implement the render function. this will return JSX which will be converted into markup. THIS WILL REQUIRE FAMILIARITY WITH TWITTER BOOTSTRAP AND REACT BOOTSTRAP.
+
