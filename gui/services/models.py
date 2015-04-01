@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import base64
 import hashlib
 import hmac
 import logging
@@ -1453,12 +1454,32 @@ class SSH(Model):
             blank=True,
             null=True
             )
+    ssh_host_dsa_key_cert_pub = models.TextField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='ssh_host_dsa_key-cert.pub',
+    )
     ssh_host_ecdsa_key = models.TextField(
             max_length=1024,
             editable=False,
             blank=True,
             null=True
             )
+    ssh_host_ecdsa_key_pub = models.TextField(
+            max_length=1024,
+            editable=False,
+            blank=True,
+            null=True
+            )
+    ssh_host_ecdsa_key_cert_pub = models.TextField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='ssh_host_ecdsa_key-cert.pub',
+    )
     ssh_host_ed25519_key_pub = models.TextField(
             max_length=1024,
             editable=False,
@@ -1471,12 +1492,13 @@ class SSH(Model):
             blank=True,
             null=True
             )
-    ssh_host_ecdsa_key_pub = models.TextField(
-            max_length=1024,
-            editable=False,
-            blank=True,
-            null=True
-            )
+    ssh_host_ed25519_key_cert_pub = models.TextField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='ssh_host_ed25519_key-cert.pub',
+    )
     ssh_host_key = models.TextField(
             max_length=1024,
             editable=False,
@@ -1501,6 +1523,13 @@ class SSH(Model):
             blank=True,
             null=True
             )
+    ssh_host_rsa_key_cert_pub = models.TextField(
+        max_length=1024,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name='ssh_host_rsa_key-cert.pub',
+    )
 
     class Meta:
         verbose_name = _("SSH")
@@ -1515,6 +1544,31 @@ class SSH(Model):
             'ssh_privatekey',
             'ssh_options',
         )
+
+    def __init__(self, *args, **kwargs):
+        super(SSH, self).__init__(*args, **kwargs)
+        self.__decoded = {}
+        # TODO: In case we ever decide to show the keys in the UI
+        #self._base64_decode('ssh_host_dsa_key_cert_pub')
+
+    def _base64_decode(self, field):
+        if self.__decoded.get(field) is not True:
+            data = getattr(self, field)
+            if data:
+                setattr(self, field, base64.b64decode(data))
+            self.__decoded[field] = True
+
+    def _base64_encode(self, field):
+        if self.__decoded.get(field) is True:
+            data = getattr(self, field)
+            if data:
+                setattr(self, field, base64.b64encode(data))
+            self.__decoded.pop(field, None)
+
+    def save(self, *args, **kwargs):
+        # TODO: In case we ever decide to show the keys in the UI
+        #self._base64_encode('ssh_host_dsa_key_cert_pub')
+        return super(SSH, self).save(*args, **kwargs)
 
 
 class LLDP(Model):
