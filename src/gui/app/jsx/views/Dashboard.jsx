@@ -65,6 +65,7 @@ var Dashboard = React.createClass({
               title = "CPU utilization"
               size  = "m-rect" />
             <SystemLoad
+              primary   = "stacked"
               title     = "System Load"
               size      = "m-rect" />
             <NetworkUsage
