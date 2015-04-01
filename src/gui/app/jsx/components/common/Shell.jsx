@@ -39,7 +39,6 @@ var Shell = React.createClass({
         this.isAuthenticated = false;
         ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
       }
-      console.log("suraj in com. did update printing height: " + this.refs.termTarget.getDOMNode().clientHeight);
       if ( this.refs.termTarget.getDOMNode().clientHeight !== 0 ) {
         this.term.resize(80, this.refs.termTarget.getDOMNode().clientHeight * 0.05 );
       }
