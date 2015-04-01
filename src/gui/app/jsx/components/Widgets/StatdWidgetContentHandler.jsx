@@ -1,8 +1,5 @@
 "use strict";
 
-// TODO: Pass this in props, so that we know which wrapper is calling which subscription
-var componentLongName = "DummyWidgetContent";
-
 var _      = require("lodash");
 var React  = require("react");
 var moment = require("moment");
@@ -22,11 +19,12 @@ var divStyle = {
   , "float" : "right"
 };
 
-var DummyWidgetContent = React.createClass({
+var StatdWidgetContentHandler = React.createClass({
 
     propTypes: {
-        statdResources : React.PropTypes.array.isRequired
-      , chartTypes     : React.PropTypes.array.isRequired
+        statdResources    : React.PropTypes.array.isRequired
+      , chartTypes        : React.PropTypes.array.isRequired
+      , widgetIdentifier  : React.PropTypes.string.isRequired
     }
 
   , getInitialState: function() {
@@ -66,7 +64,7 @@ var DummyWidgetContent = React.createClass({
 
       StatdStore.addChangeListener( this.handleStatdChange );
       StatdMiddleware.subscribeToPulse(
-          componentLongName
+          this.props.widgetIdentifier
         , this.props.statdResources.map( this.createStatdSources )
       );
 
@@ -102,7 +100,7 @@ var DummyWidgetContent = React.createClass({
   , componentWillUnmount: function() {
       StatdStore.removeChangeListener( this.handleStatdChange );
       StatdMiddleware.unsubscribeFromPulse(
-          componentLongName
+          this.props.widgetIdentifier
         , this.props.statdResources.map( this.createStatdSources )
       );
     }
@@ -412,4 +410,4 @@ var DummyWidgetContent = React.createClass({
 
 });
 
-module.exports = DummyWidgetContent;
+module.exports = StatdWidgetContentHandler;

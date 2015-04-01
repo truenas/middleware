@@ -3,10 +3,23 @@
 var React   =   require("react");
 
 var Widget  =   require("../Widget");
-var DummyWidgetContent = require("./DummyWidgetContent");
+var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
 
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
+
+
+var chartTypes = [
+    {   type:"stacked"
+      , primary:false
+      , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round((d[1]/1024) * 100) / 100); } }
+    }
+   ,{   type:"line"
+      , primary:true
+      , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round((d[1]/1024) * 100) / 100); } }
+      , yUnit : ""
+    }
+  ];
 
  function getSystemDeviceFromStore( name ) {
  return SystemStore.getSystemDevice( name );
@@ -65,6 +78,7 @@ var NetworkUsage = React.createClass({
   }
 
 , render: function() {
+   var widgetIdentifier = "NetworkUsage";
    return (
      <Widget
        positionX  =  {this.props.positionX}
@@ -72,10 +86,11 @@ var NetworkUsage = React.createClass({
        title      =  {this.props.title}
        size       =  {this.props.size} >
 
-       <DummyWidgetContent
+       <StatdWidgetContentHandler
+         widgetIdentifier  =  {widgetIdentifier}
          statdResources    =  {this.state.statdResources}
          chartTypes        =  {this.state.chartTypes} >
-       </DummyWidgetContent>
+       </StatdWidgetContentHandler>
 
      </Widget>
    );

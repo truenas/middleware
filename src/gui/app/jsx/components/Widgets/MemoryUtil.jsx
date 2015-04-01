@@ -3,7 +3,7 @@
 var React = require("react");
 
 var Widget             = require("../Widget");
-var DummyWidgetContent = require("./DummyWidgetContent");
+var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
 
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
@@ -73,6 +73,7 @@ var MemoryUtil = React.createClass({
 
   , render: function() {
 
+      var widgetIdentifier = "MemoryUtil";
       var chartTypes = [
             {
                 type    : "stacked"
@@ -112,10 +113,11 @@ var MemoryUtil = React.createClass({
           title     = { this.props.title }
           size      = { this.props.size } >
 
-          <DummyWidgetContent
-            statdResources = { statdResources }
-            chartTypes     = { chartTypes } >
-          </DummyWidgetContent>
+          <StatdWidgetContentHandler
+            widgetIdentifier  = { widgetIdentifier }
+            statdResources    = { statdResources }
+            chartTypes        = { chartTypes } >
+          </StatdWidgetContentHandler>
 
         </Widget>
       );

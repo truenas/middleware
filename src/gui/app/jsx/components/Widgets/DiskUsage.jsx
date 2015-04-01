@@ -3,7 +3,7 @@
 var React   =   require("react");
 
 var Widget  =   require("../Widget");
-var DummyWidgetContent = require("./DummyWidgetContent");
+var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
 
 var ZfsMiddleware = require("../../middleware/ZfsMiddleware");
 var ZfsStore      = require("../../stores/ZfsStore");
@@ -74,6 +74,7 @@ var DiskUsage = React.createClass({
 
   }
 , render: function() {
+    var widgetIdentifier = "DiskUsage";
     return (
       <Widget
         positionX  =  {this.props.positionX}
@@ -81,10 +82,11 @@ var DiskUsage = React.createClass({
         title      =  {this.props.title}
         size       =  {this.props.size} >
 
-        <DummyWidgetContent
+        <StatdWidgetContentHandler
+          widgetIdentifier  =  {widgetIdentifier}
           statdResources    =  {this.state.statdResources}
           chartTypes        =  {this.state.chartTypes} >
-        </DummyWidgetContent>
+        </StatdWidgetContentHandler>
 
       </Widget>
     );

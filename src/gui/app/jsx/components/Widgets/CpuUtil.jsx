@@ -3,7 +3,7 @@
 var React   =   require("react");
 
 var Widget  =   require("../Widget");
-var DummyWidgetContent = require("./DummyWidgetContent");
+var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
 
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
@@ -45,17 +45,19 @@ var CpuUtil = React.createClass({
 
   }
 , render: function() {
+    var widgetIdentifier = "CpuUtil";
     return (
       <Widget
-        positionX  =  {this.props.positionX}
-        positionY  =  {this.props.positionY}
-        title      =  {this.props.title}
-        size       =  {this.props.size} >
+        positionX  =  { this.props.positionX }
+        positionY  =  { this.props.positionY }
+        title      =  { this.props.title }
+        size       =  { this.props.size } >
 
-        <DummyWidgetContent
-          statdResources    =  {this.state.statdResources}
-          chartTypes        =  {this.state.chartTypes} >
-        </DummyWidgetContent>
+        <StatdWidgetContentHandler
+          widgetIdentifier    =  { widgetIdentifier }
+          statdResources      =  { this.state.statdResources }
+          chartTypes          =  { this.state.chartTypes } >
+        </StatdWidgetContentHandler>
 
       </Widget>
     );
