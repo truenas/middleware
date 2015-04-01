@@ -178,7 +178,6 @@ var DummyWidgetContent = React.createClass({
                                         return _.isArray( dataArray ) && dataArray.length > 0;
                                       });
         this.setState( newState );
-        console.log(this.state);
       }
     }
 
