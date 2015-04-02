@@ -96,15 +96,20 @@ cifs_func()
 	section_footer
 
 	section_header "net getlocalsid"
+	net getlocalsid
 	section_footer
 	section_header "net getdomainsid"
+	net getdomainsid
 	section_footer
 	section_header "net usersidlist"
+	net usersidlist
 	section_footer
 
 	section_header "net status sessions"
+	net status sessions
 	section_footer
 	section_header "net status shares"
+	net status shares
 	section_footer
 
 
