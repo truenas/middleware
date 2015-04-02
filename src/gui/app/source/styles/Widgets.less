@@ -136,10 +136,19 @@
 .ico-graph-type-stacked,
 .ico-graph-type-line,
 .ico-graph-type-pie {
-  width       : 24px;
-  height      : 24px;
-  text-indent : -99999px;
-  margin-top  : 10px;
-  margin-left : 6px;
-  background-repeat: no-repeat;
+  width             : 24px;
+  height            : 24px;
+  text-indent       : -99999px;
+  margin-top        : 10px;
+  margin-left       : 6px;
+  background-repeat : no-repeat;
+  cursor            : pointer;
+
+  &:hover {
+    background-color: lime;
+  }
+
+    &.selected {
+    background-color: fuchsia;
+  }
 }

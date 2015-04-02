@@ -373,10 +373,15 @@ var StatdWidgetContentHandler = React.createClass({
     }
 
   , returnGraphOptions: function( resource, index ) {
+      var selectedGraphType ="";
+      if (resource.type === this.state.graphType)
+      {
+        selectedGraphType = " selected";
+      }
       return (
         <div
           key          = { index }
-          className    = { "ico-graph-type-" + resource.type }
+          className    = { "ico-graph-type-" + resource.type + selectedGraphType }
           onTouchStart = { this.toggleGraph }
           onClick      = { this.toggleGraph }>
             { resource.type }
