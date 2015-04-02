@@ -293,7 +293,10 @@ freenas_custom()
 		# .so's are the only thing that need to be stripped. The rest
 		# should remain untouched.
 		for f in $(find ${NANO_WORLDDIR}/usr/local/lib -name '*.so' -or -name '*.so.*' -maxdepth 3); do
+			if ! dontstrip "$f"
+			then
 				strip 2>/dev/null $f || :
+			fi
 		done
 	fi
 
