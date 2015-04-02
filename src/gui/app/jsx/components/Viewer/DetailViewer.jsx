@@ -12,6 +12,7 @@ var DetailNavSection = React.createClass({
 
     propTypes: {
         viewData            : React.PropTypes.object.isRequired
+      , addEntity           : React.PropTypes.string
       , searchString        : React.PropTypes.string
       , activeKey           : React.PropTypes.string
       , sectionName         : React.PropTypes.string.isRequired
@@ -105,6 +106,7 @@ var DetailViewer = React.createClass({
       , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , addEntity    : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , searchString : React.PropTypes.string
       , filteredData : React.PropTypes.object.isRequired
     }
@@ -113,9 +115,20 @@ var DetailViewer = React.createClass({
 
   , render: function () {
       var fd = this.props.filteredData;
+      var addEntityButton   = null;
       var groupedNavItems   = null;
       var remainingNavItems = null;
       var editorContent     = null;
+
+      // Create Add Entity button.
+      if ( this.props.addEntity ) {
+        addEntityButton = (
+              <TWBS.Button bsStyle   = "default"
+                           className = "viewer-detail-add-entity">
+                { this.props.addEntity }
+              </TWBS.Button>
+        );
+      }
 
       if ( fd["grouped"] ) {
         groupedNavItems = fd.groups.map( function ( group, index ) {
@@ -172,13 +185,14 @@ var DetailViewer = React.createClass({
 
       return (
         <div className = "viewer-detail">
-          <div className = "viewer-detail-nav well">
-            { groupedNavItems }
-            { remainingNavItems }
+          <div className = "viewer-detail-sidebar">
+            { addEntityButton }
+            <div className = "viewer-detail-nav well">
+              { groupedNavItems }
+              { remainingNavItems }
+            </div>
           </div>
-
           { editorContent }
-
         </div>
       );
     }

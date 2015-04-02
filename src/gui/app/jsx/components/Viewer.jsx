@@ -17,6 +17,7 @@ var Viewer = React.createClass({
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
       , inputData    : React.PropTypes.array.isRequired
+      , addEntity    : React.PropTypes.string
       , viewData     : React.PropTypes.object.isRequired
       , displayData  : React.PropTypes.object
     }
@@ -330,13 +331,14 @@ var Viewer = React.createClass({
                             Editor       = { this.props.Editor }
                             ItemView     = { this.props.ItemView }
                             EditView     = { this.props.EditView }
+                            addEntity    = { this.props.addEntity}
                             tableCols    = { this.state.tableCols }
                             searchString = { this.state.searchString }
                             filteredData = { this.state.filteredData } />;
     }
 
   , render: function() {
-      var viewerModeNav  = null;
+      var viewerModeNav = null;
 
       // Create navigation mode icons
       if ( this.props.allowedModes.length > 1 ) {

@@ -99,6 +99,7 @@ var Users = React.createClass({
   , render: function() {
       return <Viewer header    = { "Users" }
                      inputData = { this.state.usersList }
+                     addEntity = { "Add User" }
                      viewData  = { viewData }
                      Editor    = { RouteHandler } />;
     }
