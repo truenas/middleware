@@ -114,11 +114,6 @@ var DebugTools = React.createClass({
               <Tasks />
             </TWBS.TabPane>
 
-            {/* Stats Interface */}
-            <TWBS.TabPane eventKey={5} tab="Stats">
-
-            </TWBS.TabPane>
-
             {/* Debugging Options */}
             <TWBS.TabPane eventKey={6} tab="Options">
               <Options />
