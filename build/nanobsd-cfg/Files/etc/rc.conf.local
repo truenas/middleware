@@ -92,6 +92,7 @@ _interface_config()
 		done
 	fi
 
+	local IFS=\|
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
@@ -154,7 +155,7 @@ _interface_config()
 
 	if ! is_freenas; then
 	# CARP
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT carp_number, carp_vhid, carp_pass, int_ipv4address, carp_skew FROM network_carp a LEFT JOIN network_interfaces b ON a.carp_interface_id = b.id ORDER BY a.carp_number" | \
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT carp_number, carp_vhid, carp_pass, int_ipv4address, carp_skew FROM network_carp a JOIN network_interfaces b ON 'carp' || a.carp_number = b.int_interface ORDER BY a.carp_number" | \
 	while read -r carp_number carp_vhid carp_pass carp_v4address carp_skew; do
 			if [ -n "${carp_pass}" ]; then
 				carp_passopt=" pass ${carp_pass}"

@@ -31,6 +31,7 @@ from dojango.forms import ModelForm as MF
 from dojango.forms import Form as F
 
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
 
 log = logging.getLogger('common.forms')
 
@@ -71,6 +72,24 @@ class ModelForm(AdvMixin, MF):
         self._fserrors = {}
         self._api = kwargs.pop('api_validation', False)
         super(ModelForm, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            """
+            Only show fields that are node specific in passive node
+            e.g. hostname
+            """
+            table = self.instance._meta.db_table
+            nosync = NO_SYNC_MAP.get(table)
+            if nosync and 'fields' in nosync:
+                from freenasUI.middleware.notifier import notifier
+                if (
+                    hasattr(notifier, 'failover_status') and
+                    notifier().failover_status() == 'BACKUP'
+                ):
+                    for fname in self.fields.keys():
+                        if fname not in nosync['fields']:
+                            del self.fields[fname]
+
         fname = str(type(self).__name__)
         appPool.hook_form_init(fname, self, *args, **kwargs)
         for name, field in self.fields.items():

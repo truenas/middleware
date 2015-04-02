@@ -27,11 +27,18 @@
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
+from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.tasks import models
 
 
 def home(request):
+
+    view = appPool.hook_app_index('tasks', request)
+    view = filter(None, view)
+    if view:
+        return view[0]
+
     return render(request, 'tasks/index.html', {
         'tab': request.GET.get('tab', 'tasks.CronJob'),
     })

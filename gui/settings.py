@@ -50,9 +50,13 @@ MANAGERS = ADMINS
 
 DATABASE_PATH = '/data/freenas-v1.db'
 
+SOUTH_DATABASE_ADAPTERS = {
+    'default': 'south.db.sqlite3',
+}
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
     }

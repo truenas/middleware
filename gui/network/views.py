@@ -94,17 +94,11 @@ def ipmi(request):
 
 def network(request):
 
-    try:
-        globalconf = models.GlobalConfiguration.objects.order_by("-id")[0].id
-    except IndexError:
-        globalconf = models.GlobalConfiguration.objects.create().id
-
     tabs = appPool.hook_app_tabs('network', request)
+    tabs = sorted(tabs, key=lambda y: y['order'] if 'order' in y else 0)
     return render(request, 'network/index.html', {
         'focus_form': request.GET.get('tab', 'network'),
-        'globalconf': globalconf,
         'hook_tabs': tabs,
-        'ipmi': notifier().ipmi_loaded(),
     })
 
 

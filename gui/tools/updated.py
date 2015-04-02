@@ -1,5 +1,5 @@
 #!/usr/local/bin/python2
-#+
+#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -26,7 +26,6 @@
 #
 #####################################################################
 
-from ctypes import cdll, byref, create_string_buffer
 import argparse
 import fcntl
 import logging
@@ -34,6 +33,7 @@ import logging.config
 import os
 import sys
 
+from setproctitle import setproctitle
 import daemon
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -53,13 +53,6 @@ logging.config.dictConfig(LOGGING)
 from freenasOS import Update
 from freenasUI.common.log import log_traceback
 from freenasUI.system.utils import UpdateHandler
-
-
-def set_proc_name(newname):
-    libc = cdll.LoadLibrary('libc.so.7')
-    buff = create_string_buffer(len(newname) + 1)
-    buff.value = newname
-    libc.setproctitle(byref(buff))
 
 
 class PidFile(object):
@@ -101,7 +94,7 @@ class PidFile(object):
 
 def main(handler, args):
 
-    set_proc_name('updated')
+    setproctitle('updated')
 
     handler.pid = os.getpid()
     handler.dump()

@@ -41,13 +41,16 @@ db_update_real()
 {
 	echo "Applying database schema changes"
 
+	touch /tmp/.sqlite3_ha_skip
 	yes | /usr/local/bin/python \
 	    /usr/local/www/freenasUI/manage.py migrate --merge --delete-ghost-migrations > \
 		$UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
+		rm -f /tmp/.sqlite3_ha_skip
 		echo "manage.py migrate failed"
 		return 1
 	fi
+	rm -f /tmp/.sqlite3_ha_skip
 	rm -f $UPDATE_FAILED_LOG
 	return 0
 }
