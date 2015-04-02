@@ -454,7 +454,7 @@ class ActiveDirectoryForm(ModelForm):
             except FreeNAS_ActiveDirectory_Exception, e:
                 raise forms.ValidationError('%s.' % e)
 
-            args['bindname'] = bindname
+            args['binddn'] = binddn
             args['bindpw'] = bindpw
 
         else: 
