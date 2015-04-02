@@ -8,6 +8,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('account', '0023_auto__add_field_bsdusers_bsdusr_microsoft_account'),
+    )
+
     def forwards(self, orm):
 
         # Workaround sqlite3 reserved name bug #8184
@@ -22,8 +26,9 @@ class Migration(SchemaMigration):
         db.create_unique('system_failover', ['carp_id', 'volume_id'])
 
         if not db.dry_run:
+            failovers = orm['failover.Failover'].objects.all()
             user = orm['account.bsdUsers'].objects.filter(bsdusr_uid=0)
-            if user.exists():
+            if failovers.exists() and user.exists():
                 user = user[0]
                 orm['failover.Failover'].objects.all().update(
                     secret=hashlib.sha256(str(user.bsdusr_unixhash)).hexdigest(),
