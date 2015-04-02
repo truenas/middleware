@@ -110,6 +110,18 @@ class InterfacesForm(ModelForm):
                         },
                     )
                 )
+        else:
+            # In case there is a CARP instance but no Interfaces instance
+            if hasattr(notifier, 'failover_status'):
+                from freenasUI.failover.models import CARP
+                int_interfaces = [
+                    o.int_interface for o in models.Interfaces.objects.all()
+                ]
+                for o in CARP.objects.all():
+                    if o.carp_name not in int_interfaces:
+                        self.fields['int_interface'].choices += [
+                            (o.carp_name, o.carp_name),
+                        ]
 
     def clean_int_interface(self):
         if self.instance.id:
