@@ -43,7 +43,7 @@ class GlobalConf(TreeNode):
 
 class Linkss(TreeNode):
 
-    gname = 'LAGGInterfaceMembers'
+    gname = 'LAGGInterface'
     model = 'LAGGInterface'
     app_name = 'network'
     name = _(u'Link Aggregations')
