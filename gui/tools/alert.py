@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+#
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -24,14 +24,13 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
-from ctypes import cdll, byref, create_string_buffer
 import fcntl
 import os
 import signal
 import sys
 import time
 
+from setproctitle import setproctitle
 import daemon
 
 
@@ -63,13 +62,6 @@ class PidFile(object):
             pass
 
 
-def set_proc_name(newname):
-    libc = cdll.LoadLibrary('libc.so.7')
-    buff = create_string_buffer(len(newname) + 1)
-    buff.value = newname
-    libc.setproctitle(byref(buff))
-
-
 if __name__ == '__main__':
 
     pidfile = PidFile('/var/run/alertd.pid')
@@ -85,7 +77,7 @@ if __name__ == '__main__':
     )
 
     with context:
-        set_proc_name('alertd')
+        setproctitle('alertd')
         sys.path.extend([
             '/usr/local/www',
             '/usr/local/www/freenasUI'

@@ -269,6 +269,8 @@ add_port www/py-requests
 add_port sysutils/smp_utils
 add_port net/trafshow
 add_port devel/py-parsing
+add_port databases/py-sqlparse
+add_port devel/py-setproctitle
 
 #
 # These are all for SSSD

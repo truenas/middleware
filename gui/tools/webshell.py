@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#+
+#
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -26,7 +26,6 @@
 #
 #####################################################################
 
-from ctypes import cdll, byref, create_string_buffer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 import array
 import fcntl
@@ -43,6 +42,7 @@ import termios
 import threading
 import time
 
+from setproctitle import setproctitle
 import daemon
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -57,13 +57,6 @@ from freenasUI.settings import LOGGING
 
 log = logging.getLogger('tools.webshell')
 logging.config.dictConfig(LOGGING)
-
-
-def set_proc_name(newname):
-    libc = cdll.LoadLibrary('libc.so.7')
-    buff = create_string_buffer(len(newname) + 1)
-    buff.value = newname
-    libc.setproctitle(byref(buff))
 
 
 class XMLRPCHandler(SocketServer.BaseRequestHandler):
@@ -86,7 +79,7 @@ class XMLRPCHandler(SocketServer.BaseRequestHandler):
 
 
 def main_loop():
-    set_proc_name('webshelld')
+    setproctitle('webshelld')
 
     dispatcher = SimpleXMLRPCDispatcher()
     SOCKFILE = '/var/run/webshell.sock'
@@ -1366,10 +1359,7 @@ class Multiplex:
                     'SHELL': shell,
                 }
 
-                libc = cdll.LoadLibrary('libc.so.7')
-                buff = create_string_buffer(len(self.cmd) + 1)
-                buff.value = self.cmd
-                libc.setproctitle(byref(buff))
+                setproctitle(self.cmd)
                 if self.session[sid]['jid']:
                     os.execve(
                         "/usr/sbin/jexec",

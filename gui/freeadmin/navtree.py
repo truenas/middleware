@@ -44,6 +44,7 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import (
     tree_roots, TreeRoot, TreeNode, unserialize_tree
 )
+from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
 from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
@@ -152,7 +153,7 @@ class NavTree(object):
             If not node has been found to be replace then we can
             append the node instead of replace
             """
-            if find is not False:
+            if find is not False or opt.replace_only is True:
                 continue
 
             for nav in root:
@@ -222,6 +223,12 @@ class NavTree(object):
         self._navs.clear()
         tree_roots.clear()
         childs_of = []
+
+        if hasattr(notifier, 'failover_status'):
+            fstatus = notifier().failover_status()
+        else:
+            fstatus = 'SINGLE'
+
         for app in settings.INSTALLED_APPS:
 
             # If the app is listed at settings.BLACKLIST_NAV, skip it!
@@ -229,7 +236,7 @@ class NavTree(object):
                 continue
 
             try:
-                self._generate_app(app, request, tree_roots, childs_of)
+                self._generate_app(app, request, tree_roots, childs_of, fstatus)
             except Exception, e:
                 log.error(
                     "Failed to generate navtree for app %s: %s",
@@ -263,10 +270,7 @@ class NavTree(object):
         )
         tree_roots.register(nav)
 
-        if not (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_status() == 'BACKUP'
-        ):
+        if fstatus in ('MASTER', 'SINGLE'):
             nav = TreeRoot(
                 'initialwizard',
                 name=_('Wizard'),
@@ -337,7 +341,7 @@ class NavTree(object):
                 jails.append(j)
         self._get_plugins_nodes(request, jails)
 
-    def _generate_app(self, app, request, tree_roots, childs_of):
+    def _generate_app(self, app, request, tree_roots, childs_of, fstatus):
 
         # Thats the root node for the app tree menu
         nav = TreeRoot(app.split(".")[-1])
@@ -428,6 +432,12 @@ class NavTree(object):
                     model in self._modelforms
                 ):
                     log.debug("Model %s does not have a ModelForm", model)
+                    continue
+
+                if (
+                    fstatus == 'BACKUP' and
+                    model._meta.db_table not in NO_SYNC_MAP
+                ):
                     continue
 
                 if model._admin.deletable is False:

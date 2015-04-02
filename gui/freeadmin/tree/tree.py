@@ -49,6 +49,7 @@ class TreeType(object):
     skip = False
     perm = None
     permission = lambda self, u: True
+    replace_only = False
     append_app = True
     append_url = None
     option_list = []
