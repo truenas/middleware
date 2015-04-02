@@ -107,6 +107,7 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/hardware
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ipmi
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/iscsi
+	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/jails
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ldap
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/loader
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/network
@@ -128,6 +129,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/include.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/include.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/ipmi/ipmi.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ipmi/ipmi.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/iscsi/iscsi.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/iscsi/iscsi.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/jails/jails.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/jails/jails.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/ldap/ldap.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ldap/ldap.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/loader/loader.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/loader/loader.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/network/network.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/network/network.sh

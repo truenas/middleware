@@ -45,6 +45,7 @@ usr/local/libexec/freenas-debug/hardware/hardware.sh
 usr/local/libexec/freenas-debug/include.sh
 usr/local/libexec/freenas-debug/ipmi/ipmi.sh
 usr/local/libexec/freenas-debug/iscsi/iscsi.sh
+usr/local/libexec/freenas-debug/jails/jails.sh
 usr/local/libexec/freenas-debug/ldap/ldap.sh
 usr/local/libexec/freenas-debug/loader/loader.sh
 usr/local/libexec/freenas-debug/network/network.sh
