@@ -171,6 +171,21 @@ class Funcs:
         escrowctl = LocalEscrowCtl()
         return escrowctl.setkey(passphrase)
 
+    def listdir(self, request, secret, path):
+        self._authenticated(secret)
+        if not os.path.exists(path):
+            return []
+        if not os.path.isdir(path):
+            return []
+
+        files = []
+        for f in os.listdir(path):
+            fullpath = os.path.join(path, f)
+            if not os.path.isfile(fullpath):
+                continue
+            files.append(fullpath)
+        return files
+
     def pairing_receive(self, request, secret):
         from freenasUI.failover.models import CARP, Failover
         from freenasUI.failover.utils import (
