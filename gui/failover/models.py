@@ -56,7 +56,7 @@ class CARP(Model):
             iface = Interfaces.objects.get(int_interface=self.carp_name)
             return u'%d:%s' % (self.carp_vhid, iface.int_ipv4address)
         except:
-            return self.carp_vhid
+            return unicode(self.carp_vhid)
 
     class Meta:
         verbose_name = _("CARP")
