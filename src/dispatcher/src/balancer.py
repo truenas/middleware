@@ -148,9 +148,19 @@ class Task(object):
         while True:
             if self.ended.wait(1):
                 return
-            progress = self.instance.get_status()
-            self.progress = progress
-            self.__emit_progress()
+            elif (hasattr(self.instance, 'suggested_timeout') and
+                  time.time() - self.started_at > self.instance.suggested_timeout):
+                self.ended.set()
+                self.set_state(TaskState.FAILED, TaskStatus(0, "FAILED"))
+                self.error = {
+                   'type': "ETIMEDOUT",
+                   'message': "The task was killed due to a timeout",
+                }
+                self.__emit_progress()
+            else:
+                progress = self.instance.get_status()
+                self.progress = progress
+                self.__emit_progress()
 
 
 class Balancer(object):
@@ -240,14 +250,17 @@ class Balancer(object):
             return
 
         success = False
-        try:
-            success = task.instance.abort()
-        except:
-            pass
-
+        if task.started_at is None:
+            success = True
+        else:
+            try:
+                success = task.instance.abort()
+            except:
+                pass
         if success:
             task.ended.set()
             task.set_state(TaskState.ABORTED, TaskStatus(0, "Aborted"))
+            self.logger.debug("Task ID: %d, Name: %s aborted by user", task.id, task.name)
 
     def task_exited(self, task):
         self.resource_graph.release(*task.resources)
