@@ -19,6 +19,8 @@ log = logging.getLogger('freenasOS.Update')
 
 debug = False
 
+REQUIRE_REBOOT = True
+
 # Used by the clone functions below
 beadm = "/usr/local/sbin/beadm"
 grub_dir = "/boot/grub"
@@ -374,6 +376,9 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler
         return None
     log.debug("CheckForUpdate:  diffs = %s" % diffs)
     reboot = False
+    if REQUIRE_REBOOT:
+        reboot = True
+        
     if "Packages" in diffs:
         for (pkg, op, old) in diffs["Packages"]:
             if handler:
@@ -643,7 +648,9 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
     if force_reboot:
         # Just in case
         reboot = True
-        
+    if REQUIRE_REBOOT:
+        # In case we have globally disabled rebootless updates
+        reboot = True
     changes.pop("Reboot")
     if len(changes) == 0:
         # This shouldn't happen
