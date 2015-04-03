@@ -338,15 +338,11 @@ partition_disk() {
 
 make_swap()
 {
-       local _swapparts
+    local _swapparts
 
-       if [ $# -eq 1 ]; then
-          echo "/dev/${0}p3.eli	    	none			swap		sw		0	0" > /tmp/data/data/fstab.swap
-       else
-          _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-          gmirror label -b prefer swap ${_swapparts}
-          echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
-       fi
+    _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+    gmirror label -b prefer swap ${_swapparts}
+    echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
 }
 
 disk_is_freenas()
