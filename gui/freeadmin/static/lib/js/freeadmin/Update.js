@@ -153,8 +153,8 @@ define([
         me._selectTrain.set('value', data.selected_train.name);
         me._selectTrain.set('disabled', false);
 
-        me._updatesGrid.set('store', me._store);
         me._updatesGrid.set('query', "?train=" + data.selected_train.name);
+        me._updatesGrid.set('store', me._store);
       });
 
       on(me._selectTrain, "change", function(val) {
