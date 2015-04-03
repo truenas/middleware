@@ -38,7 +38,9 @@ ENV_SETUP+= CHANGLOG=ChangeLog
 all:	build
 
 .BEGIN:
+.if !make(git-internal)
 	${ENV_SETUP} /bin/sh build/check_build_host.sh
+.endif
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
 	${ENV_SETUP} /bin/sh build/check_sandbox.sh
 .endif
@@ -160,6 +162,7 @@ git-verify:
 
 git-internal:
 	@echo "INTERNAL" > ${GIT_REPO_SETTING}
+	git config --global commit.template .gitcommit.txt
 	@echo "You are set up for internal (${COMPANY}) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
 
