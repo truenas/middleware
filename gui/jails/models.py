@@ -549,6 +549,10 @@ class JailTemplate(Model):
         verbose_name=_("URL")
     )
 
+    jt_mtree = models.CharField(
+        max_length=255
+    )
+
     jt_system = models.BooleanField(
         default=False
     )

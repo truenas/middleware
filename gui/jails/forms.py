@@ -930,7 +930,7 @@ class JailTemplateCreateForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['jt_system']
+        exclude = ['jt_system', 'jt_mtree']
         model = JailTemplate
 
 
