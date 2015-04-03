@@ -90,6 +90,8 @@ create_template()
        find "${tdir}"|xargs chflags noschg 
        rm -rf "${tdir}" >/dev/null 2>&1
        rm -rf "${EXTRACT_TARBALL_STATUSFILE}"
+       rm -f /tmp/.fetchmtree
+       rm -f /tmp/.checkmtree
        warden_exit "Failed to create ZFS base dataset"
     }
 
@@ -121,7 +123,10 @@ create_template()
 
         if [ ! -s "${mtree_file}" ]; then
           warden_print "Getting mtree file ${MTREE}"
+    
+          touch /tmp/.fetchmtree
           warden_run fetch -o "${mtree_file}" "${MTREE}"
+          rm -f /tmp/.fetchmtree
         fi
       fi 
 
@@ -132,8 +137,11 @@ create_template()
       fi
 
       if [ -n "${MTREE}" ]; then
+        touch /tmp/.checkmtree
+
         mtree -f "${mtree_file}" -p "${TDIR}" > /tmp/.mtree.out
         mtree_status=$?
+
         if [ "${mtree_status}" != "0" ]; then
           errmsg="mtree failed for ${mtree_file}"
         fi
@@ -143,6 +151,8 @@ create_template()
           errmsg="missing files"
           mtree_status=1
         fi
+
+        rm -f /tmp/.checkmtree
       fi
 
       if [ "${extract_status}" != "0" -o "${mtree_status}" != "0" ] ; then
