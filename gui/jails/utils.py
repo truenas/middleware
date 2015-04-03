@@ -632,6 +632,10 @@ def new_default_plugin_jail(basename):
     template_create_args['flags'] = warden.WARDEN_TEMPLATE_FLAGS_CREATE | \
         warden.WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
         warden.WARDEN_TEMPLATE_CREATE_FLAGS_TAR
+    if template.jt_mtree:
+        template_create_args['mtree'] = template.jt_mtree
+        template_create_args['flags'] = template_create_args['flags'] | \
+            warden.WARDEN_TEMPLATE_CREATE_FLAGS_MTREE
 
     template = None
     template_list_flags = {}

@@ -54,6 +54,7 @@ from freenasUI.common.warden import (
     WARDEN_TEMPLATE_CREATE_FLAGS_TAR,
     WARDEN_TEMPLATE_CREATE_FLAGS_NICK,
     # WARDEN_TEMPLATE_CREATE_FLAGS_LINUX,
+    WARDEN_TEMPLATE_CREATE_FLAGS_MTREE,
     WARDEN_CREATE_FLAGS_TEMPLATE,
     WARDEN_CREATE_FLAGS_32BIT,
     WARDEN_CREATE_FLAGS_VANILLA,
@@ -267,6 +268,10 @@ class JailCreateForm(ModelForm):
         template_create_args['flags'] = WARDEN_TEMPLATE_FLAGS_CREATE | \
             WARDEN_TEMPLATE_CREATE_FLAGS_NICK | \
             WARDEN_TEMPLATE_CREATE_FLAGS_TAR
+        if template.jt_mtree:
+            template_create_args['mtree'] = template.jt_mtree
+            template_create_args['flags'] = template_create_args['flags'] | \
+                WARDEN_TEMPLATE_CREATE_FLAGS_MTREE
 
         saved_template = template
         template = None
