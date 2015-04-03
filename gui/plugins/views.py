@@ -70,11 +70,29 @@ import freenasUI.plugins.api_calls
 
 log = logging.getLogger('plugins.views')
 
+def safe_unlink(path):
+    if os.path.exists(path):
+        os.unlink(path)
+
+def reset_plugin_progress():
+    jc = JailsConfiguration.objects.order_by("-id")[0]
+    logfile = '%s/warden.log' % jc.jc_path
+
+    safe_unlink(logfile)
+    safe_unlink(WARDEN_EXTRACT_STATUS_FILE)
+    safe_unlink("/tmp/.plugin_upload_install")
+    safe_unlink("/tmp/.jailcreate")
+    safe_unlink(PROGRESS_FILE)
+    safe_unlink("/tmp/.fetchmtree")
+    safe_unlink("/tmp/.checkmtree")
+
 
 def home(request):
     default_iface = notifier().get_default_interface()
-
     conf = models.Configuration.objects.latest('id')
+
+    reset_plugin_progress()
+
     return render(request, "plugins/index.html", {
         'conf': conf,
         'default_iface': default_iface
@@ -170,18 +188,7 @@ def plugin_info(request, plugin_id):
 def plugin_update(request, oid):
     host = get_base_url(request)
 
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
-    if os.path.exists(logfile):
-        os.unlink(logfile)
-    if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
-        os.unlink(WARDEN_EXTRACT_STATUS_FILE)
-    if os.path.exists("/tmp/.plugin_upload_install"):
-        os.unlink("/tmp/.plugin_upload_install")
-    if os.path.exists("/tmp/.jailcreate"):
-        os.unlink("/tmp/.jailcreate")
-    if os.path.exists(PROGRESS_FILE):
-        os.unlink(PROGRESS_FILE)
+    reset_plugin_progress()
 
     iplugin = models.Plugins.objects.filter(id=oid)
     if not iplugin:
@@ -306,6 +313,9 @@ def install_available(request, oid):
     })
 
 
+#
+# XXX This needs a better implementation.. but will do for now ;-)
+#
 def install_progress(request):
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
@@ -318,9 +328,14 @@ def install_progress(request):
             except:
                 pass
         data['percent'] = current
+        if current == 100:
+            safe_unlink(PROGRESS_FILE)
+
+    if os.path.exists("/tmp/.fetchmtree"):
+        data = {'step': 2}
 
     if os.path.exists(WARDEN_EXTRACT_STATUS_FILE):
-        data = {'step': 2}
+        data = {'step': 3}
         percent = 0
         with open(WARDEN_EXTRACT_STATUS_FILE, 'r') as f:
             try:
@@ -335,8 +350,12 @@ def install_progress(request):
                 pass
         data['percent'] = percent
 
+    if os.path.exists("/tmp/.checkmtree"):
+        safe_unlink(WARDEN_EXTRACT_STATUS_FILE)
+        data = {'step': 4}
+
     if os.path.exists(logfile):
-        data = {'step': 3}
+        data = {'step': 5}
         percent = 0
         with open(logfile, 'r') as f:
             for line in f.xreadlines():
@@ -353,7 +372,7 @@ def install_progress(request):
         data['percent'] = percent
 
     if os.path.exists("/tmp/.plugin_upload_install"):
-        data = {'step': 4}
+        data = {'step': 6}
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
