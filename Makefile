@@ -116,7 +116,8 @@ release: git-verify
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
 .if defined(JENKINS_STAGEDIR)
-	cp -r "objs/${STAGEDIR}" "${JENKINS_STAGEDIR}"
+	@echo "Jenkins Detected: Copying objs/${STAGEDIR} to ${JENKINS_STAGEDIR}"
+	@cp -r "objs/${STAGEDIR}" "${JENKINS_STAGEDIR}"
 .endif
 
 release-push: release
