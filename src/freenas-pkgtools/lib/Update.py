@@ -608,7 +608,9 @@ def PendingUpdatesChanges(directory):
         if len(diffs) == 0:
             return None
         diffs["Reboot"] = reboot
-    return diffs
+        return diffs
+    else:
+        return None
 
 def ApplyUpdate(directory, install_handler = None, force_reboot = False):
     """
