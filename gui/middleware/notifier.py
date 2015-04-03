@@ -4409,6 +4409,10 @@ class notifier:
             result.append(self.part_type_from_device('swap', disk))
         return "\n".join(result)
 
+    def get_boot_pool_disks(self):
+        status = self.zpool_parse('freenas-boot')
+	return "\n".join(status.get_disks())
+
     def swap_from_diskid(self, diskid):
         from freenasUI.storage.models import Disk
         disk = Disk.objects.get(id=diskid)
