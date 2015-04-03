@@ -5,6 +5,7 @@
 
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
@@ -12,7 +13,7 @@ var Throbber = require("../../common/Throbber");
 
 var editorUtil = exports;
 
-editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeHandler, key, wasModified ) {
+editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeHandler, key, wasModified, options ) {
   var formElement;
 
   switch ( displayKeys["formElement"] ) {
@@ -28,11 +29,15 @@ editorUtil.identifyAndCreateFormElement = function ( value, displayKeys, changeH
       formElement = editorUtil.createCheckbox( value, displayKeys, changeHandler, key, wasModified );
       break;
 
-/* TODO implement a select dropdown creator (ie. for shell selection)
+    // TODO additional input type for two multiselects that move values back and
+    // forth to show clearly which things are selected and which are not. This
+    // will improve UX by not requiring a single successful multiselect to submit
+    // (for example) all the groups they wish to add.
+    case "selectmultiple":
     case "select":
-      formElement = editorUtil.createSelect( value, displayKeys, changeHandler, key, wasModified);
+      formElement = editorUtil.createSelect( value, displayKeys, changeHandler, key, wasModified, options);
       break;
-*/
+
     default:
       if ( displayKeys["formElement"] ) {
         console.warn( displayKeys["formElement"] + " for value '" + value + "' is of unrecognized type" );
@@ -95,6 +100,56 @@ editorUtil.createCheckbox = function (value, displayKeys, changeHandler, key, wa
     output = <TWBS.Input {...checkBoxProps}
                              unchecked />;
   }
+  return output;
+};
+
+editorUtil.createSelect = function (value, displayKeys, changeHandler, key, wasModified, options) {
+  var optionList = [];
+  var selectFieldProps;
+
+  var output;
+
+  if (displayKeys["formElement"] === "selectmultiple" ) {
+    selectFieldProps = {   type             : "select"
+                         , label            : displayKeys.name
+                         , onChange         : changeHandler.bind( null, displayKeys["key"] )
+                         , groupClassName   : wasModified ? "editor-was-modified" : ""
+                         , labelClassName   : "col-xs-4"
+                         , wrapperClassName : "col-xs-8"
+                         , disabled         : !displayKeys.mutable
+                         , multiple         : true
+    };
+  } else {
+    selectFieldProps = {   type             : "select"
+                         , label            : displayKeys.name
+                         , onChange         : changeHandler.bind( null, displayKeys["key"] )
+                         , groupClassName   : wasModified ? "editor-was-modified" : ""
+                         , labelClassName   : "col-xs-4"
+                         , wrapperClassName : "col-xs-8"
+                         , disabled         : !displayKeys.mutable
+    };
+  }
+  optionList = _.map(options, function( opt ) {
+    var optionProps;
+
+    if (opt.selected) {
+      optionProps = {   value    : opt.key
+                      , input    : opt.name
+                      , selected : true
+      };
+    } else {
+      optionProps = {   value : opt.key
+                      , input : opt.name
+      };
+    }
+
+    return ( <option {...optionProps} /> );
+    }, this);
+
+  output = <TWBS.Input { ...selectFieldProps } >
+                       { optionList }
+           </TWBS.Input>;
+
   return output;
 };
 
