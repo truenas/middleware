@@ -87,6 +87,7 @@ create_template()
     {
        cd /
        zfs destroy -fr "${tank}${zfsp}"
+       find "${tdir}"|xargs chflags noschg 
        rm -rf "${tdir}" >/dev/null 2>&1
        rm -rf "${EXTRACT_TARBALL_STATUSFILE}"
        warden_exit "Failed to create ZFS base dataset"
@@ -100,6 +101,7 @@ create_template()
        warden_run zfs create -o mountpoint="'/${tank}${zfsp}'" -p "'${tank}${zfsp}'"
        if [ $? -ne 0 ] ; then
          zfs destroy -fr "${tank}${zfsp}" >/dev/null 2>&1
+         find "${tdir}"|xargs chflags noschg 
          rm -rf "${tdir}" >/dev/null 2>&1
          warden_exit "Failed creating ZFS base dataset"
        fi
@@ -107,14 +109,52 @@ create_template()
 
     # Using a supplied tar file?
     if [ -n "$FBSDTAR" ] ; then
+      local mtree_file
+      local mtree_status=0
+      local extract_status 
+      local errmsg
+
+      if [ -n "${MTREE}" ]; then
+        mkdir -p "${JDIR}/.warden-files-cache/mtree"
+        mtree_file="$(echo "${MTREE}"|sed -E 's|^.+/([^/]+$)|\1|')"
+        mtree_file="${JDIR}/.warden-files-cache/mtree/${mtree_file}"
+
+        if [ ! -s "${mtree_file}" ]; then
+          warden_print "Getting mtree file ${MTREE}"
+          warden_run fetch -o "${mtree_file}" "${MTREE}"
+        fi
+      fi 
+
       "${EXTRACT_TARBALL}" -u "${FBSDTAR}" -d "${TDIR}" -s "${EXTRACT_TARBALL_STATUSFILE}"
-      if [ $? -ne 0 ] ; then
+      extract_status=$?
+      if [ "${extract_status}" != "0" ]; then
+        errmsg="Failed extracting: $FBSDTAR"
+      fi
+
+      if [ -n "${MTREE}" ]; then
+        mtree -f "${mtree_file}" -p "${TDIR}" > /tmp/.mtree.out
+        mtree_status=$?
+        if [ "${mtree_status}" != "0" ]; then
+          errmsg="mtree failed for ${mtree_file}"
+        fi
+
+        grep -iq missing /tmp/.mtree.out
+        if [ "$?" = "0" ]; then
+          errmsg="missing files"
+          mtree_status=1
+        fi
+      fi
+
+      if [ "${extract_status}" != "0" -o "${mtree_status}" != "0" ] ; then
         zfs destroy -fr "${tank}${zfsp}"
+        find "${tdir}"|xargs chflags noschg 
         rm -rf "${tdir}" >/dev/null 2>&1
         rm -rf /var/tmp/.extract
-        warden_exit "Failed extracting: $FBSDTAR"
+        warden_exit "${errmsg}"
       fi 
+
       rm -rf /var/tmp/.extract
+      rm -f "${mtree_file}"
 
     elif [ "$oldFBSD" = "YES" ] ; then
       cd "${JDIR}/.download/"
@@ -127,6 +167,7 @@ create_template()
       sh "${LINUX_JAIL_SCRIPT}" error
       if [ $? -ne 0 ] ; then
          zfs destroy -fr "${tank}${zfsp}"
+         find "${tdir}"|xargs chflags noschg 
          rm -rf "${tdir}" >/dev/null 2>&1
          warden_exit "Failed running ${LINUX_JAIL_SCRIPT}"
       fi
@@ -138,6 +179,7 @@ create_template()
         tar xvpf "${DISTFILESDIR}/$f" -C "${TDIR}" 2>/dev/null
         if [ $? -ne 0 ] ; then
           zfs destroy -fr "${tank}${zfsp}"
+          find "${tdir}"|xargs chflags noschg 
           rm -rf "${tdir}" >/dev/null 2>&1
           warden_exit "Failed extracting ZFS template environment"
         fi
@@ -153,6 +195,7 @@ create_template()
       bootstrap_pkgng "${TDIR}" "pluginjail"
       if [ $? -ne 0 ] ; then
         zfs destroy -fr "${tank}${zfsp}"
+        find "${tdir}"|xargs chflags noschg 
         rm -rf "${tdir}" >/dev/null 2>&1
         warden_exit "Failed extracting ZFS template environment"
       fi
@@ -203,6 +246,7 @@ create_template()
 
       warden_print "Creating template archive..."
       tar cvjf "${TDIR}" -C "${TDIR}" 2>/dev/null
+      find "${TDIR}"|xargs chflags noschg 
       rm -rf "${TDIR}"
 
     elif [ "${TLINUXJAIL}" = "YES" -a -n "${LINUX_JAIL_SCRIPT}" ] ; then
@@ -285,6 +329,9 @@ while [ $# -gt 0 ]; do
 	   ;;
   -linuxjail) shift
            TLINUXJAIL="YES"
+	   ;;
+  -mtree) shift
+           MTREE="${1}"
 	   ;;
 	*) warden_exit "Invalid option: $1" ;;
    esac
