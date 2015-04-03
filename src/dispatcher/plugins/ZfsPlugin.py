@@ -151,7 +151,7 @@ class ZpoolScrubTask(Task):
         try:
             zfs = libzfs.ZFS()
             pool = zfs.get(self.pool)
-            pool.start_scrub()
+            pool.stop_scrub()
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
