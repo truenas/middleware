@@ -37,7 +37,7 @@ from dispatcher.rpc import RpcException
 from gevent.queue import Queue
 from gevent.event import Event
 from resources import ResourceGraph, Resource
-from task import TaskException, TaskStatus, TaskState
+from task import TaskException, TaskAbortException, TaskStatus, TaskState
 
 
 class WorkerState(object):
@@ -94,6 +94,18 @@ class Task(object):
         self.set_state(TaskState.EXECUTING)
         try:
             result = self.instance.run(*(copy.deepcopy(self.args)))
+        except TaskAbortException, e:
+            self.error = {
+               'type': type(e).__name__,
+               'message': str(e)
+            }
+
+            self.ended.set()
+            self.progress = self.instance.get_status()
+            self.set_state(TaskState.ABORTED, TaskStatus(self.progress.percentage, "Aborted"))
+            self.dispatcher.balancer.task_exited(self)
+            self.dispatcher.balancer.logger.debug("Task ID: %d, Name: %s aborted by user", self.id, self.name)
+            return
         except BaseException, e:
             self.error = {
                 'type': type(e).__name__,
@@ -156,7 +168,11 @@ class Task(object):
                    'type': "ETIMEDOUT",
                    'message': "The task was killed due to a timeout",
                 }
-                self.__emit_progress()
+                self.ended.set()
+                self.progress = self.instance.get_status()
+                self.set_state(TaskState.FAILED, TaskStatus(self.progress.percentage, "TIMEDOUT"))
+                self.dispatcher.balancer.task_exited(self)
+                self.dispatcher.balancer.logger.debug("Task ID: %d, Name: %s was TIMEDOUT", self.id, self.name)
             else:
                 progress = self.instance.get_status()
                 self.progress = progress
@@ -254,7 +270,7 @@ class Balancer(object):
             success = True
         else:
             try:
-                success = task.instance.abort()
+                task.instance.abort()
             except:
                 pass
         if success:

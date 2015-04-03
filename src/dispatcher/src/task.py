@@ -93,6 +93,10 @@ class TaskException(RpcException):
     pass
 
 
+class TaskAbortException(TaskException):
+    pass
+
+
 class VerifyException(TaskException):
     pass
 
