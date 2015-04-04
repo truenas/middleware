@@ -2403,18 +2403,24 @@ warden_jail_isrunning()
 
 warden_get_jailid()
 {
-   local jail="${1}"
+   local jail1="${1}"
+   local jail2="$(echo "${jail1}"|awk '{ print $1 }')"
+   local jail="${jail1}"
 
    if ! warden_jail_isrunning "${jail}" ; then
       return 1
    fi
 
-   jail="$(jls name|awk -v jail="^${jail}\$" '$1 ~ jail { print $1 }')"
+   if [ "${jail}" != "${jail2}" ] ; then
+      jail="\"${jail}\""
+   fi
+
+   jail="$(jls name|awk -v jail="^${jail}\$" '$0 ~ jail { print $0 }')"
    if [ -z "${jail}" ] ; then
        return 1
    fi
 
-   jls jid name|awk -v jail="^${jail}\$" '$2 ~ jail { print $1 }'
+   jls -j ${jail1} jid
    return $?
 }
 
