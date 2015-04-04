@@ -867,9 +867,13 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         return secret2
 
     def clean_iscsi_target_auth_secret2(self):
+        if len(self._clean_secret_common("iscsi_target_auth_secret")) < 12 or len(self._clean_secret_common("iscsi_target_auth_secret")) > 16:
+            raise forms.ValidationError(_("Secret must be between 12 and 16 characters."))
         return self._clean_secret_common("iscsi_target_auth_secret")
 
     def clean_iscsi_target_auth_peersecret2(self):
+        if len(self._clean_secret_common("iscsi_target_auth_peersecret")) < 12 or len(self._clean_secret_common("iscsi_target_auth_peersecret")) > 16:
+            raise forms.ValidationError(_("Peer secret must be between 12 and 16 characters."))
         return self._clean_secret_common("iscsi_target_auth_peersecret")
 
     def clean(self):
