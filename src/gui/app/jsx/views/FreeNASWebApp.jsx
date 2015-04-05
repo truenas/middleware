@@ -17,7 +17,9 @@ var PrimaryNavigation = require("../components/PrimaryNavigation");
 var DebugTools        = require("../components/DebugTools");
 
 
-var FreeNASWebApp = React.createClass({render: function() {
+var FreeNASWebApp = React.createClass({
+
+  render: function() {
 
     return (
       <div className="app-wrapper">
@@ -50,6 +52,7 @@ var FreeNASWebApp = React.createClass({render: function() {
       </div>
     );
   }
+
 });
 
 module.exports = FreeNASWebApp;

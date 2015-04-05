@@ -25,7 +25,7 @@ function renderApp( path ) {
   var dataRegex = /¡DATA!/;
 
   return new when.Promise( function ( resolve, reject ) {
-    Router.run( routes, path, function ( Handler, state ) {
+    Router.run( routes, path, function ( Handler ) {
       var innerHTML = React.renderToString( React.createElement( Handler ) );
       var output    = baseHTML.replace( bodyRegex, innerHTML )
                               .replace( dataRegex, null );
@@ -46,6 +46,7 @@ function renderApp( path ) {
 app.use( mach.favicon );
 app.use( mach.file, { root: path.join( __dirname, "build" ) } );
 app.run( function ( req, res ) {
+
   switch ( req.path ) {
     case "/js/app.js":
       return jsBundle;
@@ -53,6 +54,7 @@ app.run( function ( req, res ) {
     default:
       return renderApp( req.path );
   }
+
 });
 
 
