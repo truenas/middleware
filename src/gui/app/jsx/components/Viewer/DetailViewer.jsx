@@ -104,31 +104,38 @@ var DetailViewer = React.createClass({
     propTypes: {
         viewData     : React.PropTypes.object.isRequired
       , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
+      , routeHandler : React.PropTypes.any // What should this actually be?
       , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , addEntity    : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , searchString : React.PropTypes.string
       , filteredData : React.PropTypes.object.isRequired
+    }
+
+  , createAddEntityButton: function() {
+      var addEntityButton;
+
+      if ( this.props.viewData.addEntity && this.props.viewData.routing.addentity ) {
+        addEntityButton = (
+          <Link to        = { this.props.viewData.routing.addentity }
+                className = "viewer-detail-add-entity">
+            <TWBS.Button bsStyle   = "default"
+                         className = "viewer-detail-add-entity">
+              { this.props.viewData.addEntity }
+            </TWBS.Button>
+          </Link>
+        );
+
+      return (addEntityButton);
+      }
     }
 
   // Sidebar navigation for collection
 
   , render: function () {
       var fd = this.props.filteredData;
-      var addEntityButton   = null;
       var groupedNavItems   = null;
       var remainingNavItems = null;
       var editorContent     = null;
-
-      // Create Add Entity button.
-      if ( this.props.addEntity ) {
-        addEntityButton = (
-              <TWBS.Button bsStyle   = "default"
-                           className = "viewer-detail-add-entity">
-                { this.props.addEntity }
-              </TWBS.Button>
-        );
-      }
 
       if ( fd["grouped"] ) {
         groupedNavItems = fd.groups.map( function ( group, index ) {
@@ -167,7 +174,8 @@ var DetailViewer = React.createClass({
         );
       }
 
-      if ( this.props.Editor === null ) {
+      if ( this.props.routeHandler === null ) {
+        console.log("No Handler");
         editorContent = (
           <div className="viewer-item-info">
             <h3 className="viewer-item-no-selection">{"No active selection"}</h3>
@@ -186,7 +194,7 @@ var DetailViewer = React.createClass({
       return (
         <div className = "viewer-detail">
           <div className = "viewer-detail-sidebar">
-            { addEntityButton }
+            { this.createAddEntityButton() }
             <div className = "viewer-detail-nav well">
               { groupedNavItems }
               { remainingNavItems }

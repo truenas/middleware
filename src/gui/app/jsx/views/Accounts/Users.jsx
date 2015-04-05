@@ -22,12 +22,14 @@ var GroupsStore      = require("../../stores/GroupsStore");
 var SessionStore   = require("../../stores/SessionStore");
 
 var viewData = {
-    format  : require("../../../data/middleware-keys/users-display.json")[0]
-  , routing : {
-      "route" : "users-editor"
-    , "param" : "userID"
+    format    : require("../../../data/middleware-keys/users-display.json")[0]
+  , addEntity : "Add User"
+  , routing   : {
+      "route"      : "users-editor"
+    , "param"      : "userID"
+    , "addentity"  : "add-user"
   }
-  , display : {
+  , display   : {
       filterCriteria: {
           current: {
               name     : "current user account"
@@ -66,6 +68,7 @@ function getGroupsFromStore() {
 
 var Users = React.createClass({
 
+
     getInitialState: function() {
       return getUsersStoreData();
     }
@@ -96,12 +99,18 @@ var Users = React.createClass({
       this.setState( getUsersStoreData() );
     }
 
+  , getRouteHandler: function() {
+
+    }
+
   , render: function() {
-      return <Viewer header    = { "Users" }
-                     inputData = { this.state.usersList }
-                     addEntity = { "Add User" }
-                     viewData  = { viewData }
-                     Editor    = { RouteHandler } />;
+      var routeHandler = {};
+      return <Viewer header       = { "Users" }
+                     inputData    = { this.state.usersList }
+                     addEntity    = { "Add User" }
+                     viewData     = { viewData }
+                     routeHandler = { routeHandler }
+                     Editor       = { RouteHandler } />;
     }
 
 });
