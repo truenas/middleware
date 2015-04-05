@@ -1,7 +1,7 @@
 // Group Item Template
 // ==================
 // Handles the viewing and editing of individual group items. Shows a non-editable
-// overview of the group, and mode-switches to a more standard editor panel. 
+// overview of the group, and mode-switches to a more standard editor panel.
 // Group is set by providing a route parameter.
 
 "use strict";
@@ -13,7 +13,7 @@ var Router = require("react-router");
 
 var viewerUtil = require("../../../components/Viewer/viewerUtil");
 var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
+var activeRoute = require("../../../components/mixins/activeRoute");
 
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
@@ -68,7 +68,7 @@ var GroupView = React.createClass({
                     className="text-center">
             <viewerUtil.ItemIcon primaryString  = { this.props.item["name"] }
                                  fallbackString = { this.props.item["id"] }
-                                 seedNumber     = { this.props.item["id"] } /> 
+                                 seedNumber     = { this.props.item["id"] } />
           </TWBS.Col>
           <TWBS.Col xs={9}>
             <h3>{ this.props.item["name"] }</h3>
@@ -219,7 +219,7 @@ var GroupEdit = React.createClass({
                           // wasModified
                         , _.has( this.state.modifiedValues, displayKeys["key"] )
                       );
-              }.bind( this ) ) 
+              }.bind( this ) )
             }
           </form>
 

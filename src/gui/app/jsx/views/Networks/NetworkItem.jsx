@@ -10,7 +10,7 @@ var Router = require("react-router");
 
 var viewerUtil = require("../../components/Viewer/viewerUtil");
 // var editorUtil = require("../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../components/Viewer/mixins/activeRoute");
+var activeRoute = require("../../components/mixins/activeRoute");
 
 // var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
 var NetworksStore      = require("../../stores/NetworksStore");

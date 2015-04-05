@@ -11,9 +11,11 @@ var React  = require("react");
 var TWBS   = require("react-bootstrap");
 var Router = require("react-router");
 
+var activeRoute  = require("../../../components/mixins/activeRoute");
+var clientStatus = require("../../../components/mixins/clientStatus");
+
 var viewerUtil  = require("../../../components/Viewer/viewerUtil");
 var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
 
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
@@ -358,7 +360,7 @@ var UserItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ Router.State, activeRoute ]
+  , mixins: [ Router.State, activeRoute, clientStatus ]
 
   , getInitialState: function() {
       return {
@@ -404,23 +406,34 @@ var UserItem = React.createClass({
       var DisplayComponent = null;
       var processingText   = "";
 
-      // PROCESSING OVERLAY
-      if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
-        processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "'";
-      } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
-        processingText = "User '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
-      }
+      if ( this.state.SESSION_AUTHENTICATED && this.state.targetUser ) {
 
-      // DISPLAY COMPONENT
-      switch ( this.state.currentMode ) {
-        default:
-        case "view":
-          DisplayComponent = UserView;
-          break;
+        // PROCESSING OVERLAY
+        if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
+          processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "'";
+        } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
+          processingText = "User '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+        }
 
-        case "edit":
-          DisplayComponent = UserEdit;
-          break;
+        // DISPLAY COMPONENT
+        switch ( this.state.currentMode ) {
+          default:
+          case "view":
+            DisplayComponent =
+              <UserView
+                handleViewChange = { this.handleViewChange }
+                item             = { this.state.targetUser }
+                dataKeys         = { this.props.viewData.format["dataKeys"] } />;
+            break;
+
+          case "edit":
+            DisplayComponent =
+              <UserEdit
+                handleViewChange = { this.handleViewChange }
+                item             = { this.state.targetUser }
+                dataKeys         = { this.props.viewData.format["dataKeys"] } />;
+            break;
+        }
       }
 
       return (
@@ -429,9 +442,7 @@ var UserItem = React.createClass({
           {/* Overlay to block interaction while tasks or updates are processing */}
           <editorUtil.updateOverlay updateString={ processingText } />
 
-          <DisplayComponent handleViewChange = { this.handleViewChange }
-                            item             = { this.state.targetUser }
-                            dataKeys         = { this.props.viewData.format["dataKeys"] } />
+          { DisplayComponent }
 
         </div>
       );
