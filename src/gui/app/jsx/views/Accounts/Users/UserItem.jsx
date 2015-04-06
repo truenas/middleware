@@ -416,22 +416,20 @@ var UserItem = React.createClass({
         }
 
         // DISPLAY COMPONENT
+        var childProps = {
+            handleViewChange : this.handleViewChange
+          , item             : this.state.targetUser
+          , dataKeys         : this.props.viewData.format["dataKeys"]
+        };
+
         switch ( this.state.currentMode ) {
           default:
           case "view":
-            DisplayComponent =
-              <UserView
-                handleViewChange = { this.handleViewChange }
-                item             = { this.state.targetUser }
-                dataKeys         = { this.props.viewData.format["dataKeys"] } />;
+            DisplayComponent = <UserView { ...childProps } />;
             break;
 
           case "edit":
-            DisplayComponent =
-              <UserEdit
-                handleViewChange = { this.handleViewChange }
-                item             = { this.state.targetUser }
-                dataKeys         = { this.props.viewData.format["dataKeys"] } />;
+            DisplayComponent = <UserEdit { ...childProps } />;
             break;
         }
       }

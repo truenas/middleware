@@ -11,9 +11,11 @@ var React  = require("react");
 var TWBS   = require("react-bootstrap");
 var Router = require("react-router");
 
+var activeRoute  = require("../../../components/mixins/activeRoute");
+var clientStatus = require("../../../components/mixins/clientStatus");
+
 var viewerUtil = require("../../../components/Viewer/viewerUtil");
 var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../../components/mixins/activeRoute");
 
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
@@ -238,7 +240,7 @@ var GroupItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
       }
 
-    , mixins: [ Router.State, activeRoute ]
+    , mixins: [ Router.State, activeRoute, clientStatus ]
 
     , getInitialState: function() {
         return {
@@ -284,22 +286,32 @@ var GroupItem = React.createClass({
         var DisplayComponent = null;
         var processingText = "";
 
-        // PROCESSING OVERLAY
-        if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
-          processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
-        } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
-          processingText = "Group '" + this.state.targetGroup[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
-        }
+        if ( this.state.SESSION_AUTHENTICATED && this.state.targetGroup ) {
 
-        // DISPLAY COMPONENT
-        switch( this.state.currentMode ) {
-          default:
-          case "view":
-            DisplayComponent = GroupView;
-            break;
-          case "edit":
-            DisplayComponent = GroupEdit;
-            break;
+          // PROCESSING OVERLAY
+          if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
+            processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
+          } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
+            processingText = "Group '" + this.state.targetGroup[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+          }
+
+          // DISPLAY COMPONENT
+          var childProps = {
+              handleViewChange : this.handleViewChange
+            , item             : this.state.targetGroup
+            , dataKeys         : this.props.viewData.format["dataKeys"]
+          };
+
+          switch( this.state.currentMode ) {
+            default:
+            case "view":
+              DisplayComponent = <GroupView { ...childProps } />;
+              break;
+            case "edit":
+              DisplayComponent = <GroupEdit { ...childProps } />;
+              break;
+          }
+
         }
 
         return (
@@ -307,9 +319,8 @@ var GroupItem = React.createClass({
 
             {/* Overlay to block interaction while tasks or updates are processing */}
             <editorUtil.updateOverlay updateString={ processingText } />
-            <DisplayComponent handleViewChange = { this.handleViewChange }
-                              item             = { this.state.targetGroup }
-                              dataKeys         = { this.props.viewData.format["dataKeys"] } />
+
+            { DisplayComponent }
 
           </div>
         );

@@ -8,9 +8,11 @@
 var React  = require("react");
 var Router = require("react-router");
 
+var activeRoute  = require("../../components/mixins/activeRoute");
+var clientStatus = require("../../components/mixins/clientStatus");
+
 var viewerUtil = require("../../components/Viewer/viewerUtil");
 // var editorUtil = require("../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../components/mixins/activeRoute");
 
 // var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
 var NetworksStore      = require("../../stores/NetworksStore");
@@ -86,7 +88,7 @@ var NetworkItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ Router.State, activeRoute ]
+  , mixins: [ Router.State, activeRoute, clientStatus ]
 
   , getInitialState: function() {
       return {
@@ -130,21 +132,27 @@ var NetworkItem = React.createClass({
 
   , render: function() {
 
-      var DisplayComponent = null;
+      var DisplayComponent      = null;
+
+      if ( this.state.SESSION_AUTHENTICATED && this.state.targetNetwork ) {
+        var childProps = {
+                handleViewChange : this.handleViewChange
+              , item             : this.state.targetNetwork
+              , dataKeys         : this.props.viewData.format["dataKeys"]
+            };
 
         switch ( this.state.currentMode ) {
-        default:
-        case "view":
-          DisplayComponent = NetworksView;
-          break;
+          default:
+          case "view":
+            DisplayComponent = <NetworksView {...childProps} />;
+            break;
+        }
       }
 
       return (
         <div className="viewer-item-info">
 
-        <DisplayComponent handleViewChange = { this.handleViewChange }
-                          item             = { this.state.targetNetwork }
-                          dataKeys         = { this.props.viewData.format["dataKeys"] } />
+        { DisplayComponent }
 
       </div>
       );
