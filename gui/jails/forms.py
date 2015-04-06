@@ -214,10 +214,9 @@ class JailCreateForm(ModelForm):
 
     def clean_jail_host(self):
         jail_host = self.cleaned_data.get('jail_host')
-        parts = jail_host.split('.')
-        if len(parts) > 1:
+        if re.search(r'[\. ]', jail_host) is not None:
             raise forms.ValidationError(
-                _("Jail name cannot have '.'")
+                _("Jail name cannot have '.' or ' '")
             )
         return jail_host
 
