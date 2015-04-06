@@ -38,10 +38,10 @@ ENV_SETUP+= CHANGLOG=ChangeLog
 all:	build
 
 .BEGIN:
-.if !make(git-internal)
+.if !make(git-internal) && !make(dev-checkout)
 	${ENV_SETUP} /bin/sh build/check_build_host.sh
 .endif
-.if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
+.if !make(checkout) && !make(dev-checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
 	${ENV_SETUP} /bin/sh build/check_sandbox.sh
 .endif
 
@@ -53,6 +53,8 @@ build: git-verify
 
 checkout: git-verify
 	${ENV_SETUP} /bin/sh build/do_checkout.sh
+
+dev-checkout: checkout
 
 update: git-verify
 	git pull
