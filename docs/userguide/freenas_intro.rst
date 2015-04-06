@@ -403,11 +403,13 @@ that have occurred since 9.3-RELEASE.
 
 * The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
+* The MediaBrowser Plugin has been renamed to Emby.
+
 * The :menuselection:`Jails --> Add Jails` button has been renamed to "Add Jail".
 
 * A "Restart" button is now available when you click the entry for an installed jail.
 
-* The **-D** option has been added to :command:`freenas-debug` for gathering domain controller configuration.
+* The **-C**, **-D** and **-j** options have been added to :ref:`freenas-debug`.
 
 * A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
 

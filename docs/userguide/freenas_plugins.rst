@@ -171,6 +171,8 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `cruciblewds <http://cruciblewds.org/>`_
 
+* `Emby <http://emby.media/>`_
+
 * `firefly <https://en.wikipedia.org/wiki/Firefly_Media_Server>`_
 
 * `Headphones <https://github.com/rembo10/headphones>`_
@@ -180,8 +182,6 @@ The following plugins are available for FreeNAS® 9.3:
 * `LazyLibrarian <https://github.com/itsmegb/LazyLibrarian>`_
 
 * `Maraschino <http://www.maraschinoproject.com/>`_
-
-* `MediaBrowser <http://mediabrowser.tv/>`_
 
 * `MineOS <http://minecraft.codeemo.com/>`_
 

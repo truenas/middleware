@@ -1237,14 +1237,13 @@ Table 10.5d summarizes the settings that can be configured when adding an author
 |             |           | initiator name as the user                                                                                                       |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
+| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be between 12 and 16 characters                     |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 | Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
-|             |           | "Peer User" is set                                                                                                               |
+| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the "Peer User" is set                     |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 

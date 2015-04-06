@@ -951,12 +951,14 @@ Using Shell, you can run this command manually to gather the specific debugging 
      -e		A list of comma delimited list of email addresses to email the debug log to.
      -a		Dump Active Directory Configuration
      -c		Dump (AD|LDAP) Cache
+     -C		Dump CIFS Configuration
      -D		Dump Domain Controller Configuration
      -d		Dump dtrace scripts
      -g		Dump GEOM configuration
      -h		Dump Hardware Configuration
      -I		Dump IPMI Configuration
      -i		Dump iSCSI Configuration
+     -j		Dump jails Information
      -l		Dump LDAP Configuration
      -T		Loader Configuration Information
      -n		Dump Network Configuration
