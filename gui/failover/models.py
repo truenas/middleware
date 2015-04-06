@@ -82,6 +82,7 @@ class CARP(Model):
             if not qs.exists():
                 Interfaces.objects.create(
                     int_interface=self.carp_name,
+                    int_name,self.carp_name
                     int_v4netmaskbit='32',
                 )
             return super(CARP, self).save(*args, **kwargs)
