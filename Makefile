@@ -2,14 +2,22 @@
 .include "build/hooks/Makefile"
 .endif
 
-NANO_LABEL?=FreeNAS
-VERSION?=10.1-M1
-TRAIN?=${NANO_LABEL}-10-Nightlies
-BUILD_TIMESTAMP!=date '+%Y%m%d'
-COMPANY?="iXsystems"
-STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/nightlies/"
-DEBUG=yes
+LABEL ?= FreeNAS
+VERSION ?= 10.1-M1
+TRAIN ?= ${NANO_LABEL}-10-Nightlies
+BUILD_TIMESTAMP != date '+%Y%m%d'
+BUILD_STARTED != date '+%s'
+COMPANY ?= "iXsystems"
+STAGEDIR = "${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
+IX_INTERNAL_PATH = "/freenas/Dev/releng/${NANO_LABEL}/nightlies/"
+BUILD_DEBUG=yes
+
+BUILD_ROOT != pwd
+BUILD_CONFIG := ${BUILD_ROOT}/build/config
+BUILD_TOOLS := ${BUILD_TOOLS}/build/tools
+PYTHONPATH := ${BUILD_ROOT}/build/lib
+
+MAKEOBJDIRPREFIX := ${BUILD_ROOT}/objs/os-base/amd64
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -28,6 +36,11 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .export TRAIN
 .export UPDATE_USER = sef	# For now, just use sef's account
 .export DEBUG
+.export BUILD_ROOT
+.export BUILD_CONFIG
+.export BUILD_TOOLS
+.export PYTHONPATH
+.export MAKEOBJDIRPREFIX
 
 .if defined(NANO_ARCH)
 .export NANO_ARCH
@@ -41,9 +54,9 @@ all:	check-root build
 
 .BEGIN:
 .if !make(remote) && !make(sync)
-	build/check_build_host.sh
+	@build/tools/check-host.py
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
-	build/check_sandbox.sh
+	@build/tools/check-sandbox.py
 .endif
 .endif
 
@@ -51,10 +64,10 @@ check-root:
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 
 build: git-verify portsjail ports
-	build/do_build.sh
+	@build/tools/build.py
 
 checkout: git-verify
-	build/do_checkout.sh
+	@build/tools/checkout.py
 
 update: git-verify
 	git pull
@@ -178,4 +191,5 @@ ports: check-root build-gui
 	build/ports/build-ports.sh
 
 portsjail:
-	build/build_jail.sh
+	@build/tools/build-os.py
+	@build/tools/install-jail.py

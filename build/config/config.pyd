@@ -1,0 +1,96 @@
+#+
+# Copyright (c) 2010-2015 iXsystems, Inc., All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL iXsystems, Inc. OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+# Kernel configuration
+kernel_config("kernel/FREENAS.amd64")
+if DEBUG:
+    kernel_config("kernel/DEBUG")
+
+
+# Kernel modules configuration
+kernel_module("cc/cc_chd", "cc/cc_cubic", "cc/cc_hd", "cc/cc_htcp", "cc/cc_vegas")
+kernel_module("cxgb", "cxgbe", "cyclic")
+kernel_module("dtrace", "ext2fs", "fdescfs", "geom", "ipmi", "khelp/h_ertt", "krpc")
+kernel_module("libiconv", "libmchain", "lindev", "linprocfs", "linsysfs", "linux")
+kernel_module("nfs_common", "nfsclient", "nfslock")
+kernel_module("ispfw/ispfw")
+kernel_module("opensolaris")
+kernel_module("pf", "pflog", "smbfs", "tmpfs")
+kernel_module("udf", "usb/xhci", "zfs")
+kernel_module("iscsi")
+
+if PRODUCT == "TrueNAS":
+	kernel_module("hwpmc", "ipdivert", "ipfw", "ispfw", "linprocfs", "syscons/blank")
+else:
+	kernel_module("ctl", "cxgbe/t4_firmware", "cxgbe/t5_firmware")
+	kernel_module("syscons")
+	kernel_module("netgraph/ether", "netgraph/socket")
+fi
+
+
+# World configuration
+make_conf_build(
+    WITHOUT_BIND_DNSSEC="yes",
+    WITHOUT_BIND_ETC="yes",
+    WITHOUT_BIND_LIBS_LWRES="yes",
+    WITHOUT_BIND_NAMED="yes",
+    WITHOUT_BLUETOOTH="yes",
+    WITHOUT_BSNMP="yes",
+    WITHOUT_CALENDAR="yes",
+    WITHOUT_CTM="yes",
+    WITHOUT_CVS="yes",
+    WITHOUT_DICT="yes",
+    WITHOUT_EXAMPLES="yes",
+    WITHOUT_FORTRAN="yes",
+    WITHOUT_FREEBSD_UPDATE="yes",
+    WITHOUT_GAMES="yes",
+    WITHOUT_GCOV="yes",
+    WITHOUT_GPIB="yes",
+    WITHOUT_HTML="yes",
+    WITHOUT_I4B="yes",
+    WITHOUT_IPFILTER="yes",
+    WITHOUT_IPX="yes",
+    WITHOUT_LIB32="yes",
+    WITHOUT_LIBKSE="yes",
+    WITHOUT_LPR="yes",
+    WITHOUT_MAN="yes",
+    WITHOUT_NDIS="yes",
+    WITHOUT_NLS="yes",
+    WITHOUT_NS_CACHING="yes",
+    WITHOUT_OBJC="yes",
+    WITH_OPENSSH_NONE_CIPHER="yes",
+    WITHOUT_PORTSNAP="yes",
+    WITHOUT_PPP="yes",
+    WITHOUT_PROFILE="yes",
+    WITHOUT_RCMDS="yes",
+    WITHOUT_SENDMAIL="yes",
+    WITHOUT_SYSINSTALL="yes",
+    WITHOUT_WIRELESS="yes",
+    WITHOUT_WPA_SUPPLICANT_EAPOL="yes",
+#    DEFAULT_VERSIONS=DEFAULT_VERSIONS,
+    NOPORTDOCS="yes"
+#    LOCAL_DIRS=LOCAL_DIRS
+)
+
