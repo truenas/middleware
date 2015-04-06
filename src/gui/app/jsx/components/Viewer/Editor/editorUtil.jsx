@@ -103,48 +103,29 @@ editorUtil.createCheckbox = function (value, displayKeys, changeHandler, key, wa
   return output;
 };
 
+// options must be an array of objects containing the string to be the name of
+// the option and a boolean for whether or not the option is selected.
+// FIXME: Is this too magical?
 editorUtil.createSelect = function (value, displayKeys, changeHandler, key, wasModified, options) {
   var optionList = [];
   var selectFieldProps;
 
   var output;
 
-  if (displayKeys["formElement"] === "selectmultiple" ) {
-    selectFieldProps = {   type             : "select"
-                         , label            : displayKeys.name
-                         , onChange         : changeHandler.bind( null, displayKeys["key"] )
-                         , groupClassName   : wasModified ? "editor-was-modified" : ""
-                         , labelClassName   : "col-xs-4"
-                         , wrapperClassName : "col-xs-8"
-                         , disabled         : !displayKeys.mutable
-                         , multiple         : true
-    };
-  } else {
-    selectFieldProps = {   type             : "select"
-                         , label            : displayKeys.name
-                         , onChange         : changeHandler.bind( null, displayKeys["key"] )
-                         , groupClassName   : wasModified ? "editor-was-modified" : ""
-                         , labelClassName   : "col-xs-4"
-                         , wrapperClassName : "col-xs-8"
-                         , disabled         : !displayKeys.mutable
-    };
-  }
+  selectFieldProps = {   type             : "select"
+                       , label            : displayKeys.name
+                       , onChange         : changeHandler.bind( null, displayKeys["key"] )
+                       , groupClassName   : wasModified ? "editor-was-modified" : ""
+                       , labelClassName   : "col-xs-4"
+                       , wrapperClassName : "col-xs-8"
+                       , disabled         : !displayKeys.mutable
+                       , multiple         : displayKeys["formElement"] === "multiselect"
+                     };
+
   optionList = _.map(options, function( opt ) {
-    var optionProps;
+    return ( <option selected = { opt.selected } >{opt.name}</option> );
+  }, this);
 
-    if (opt.selected) {
-      optionProps = {   value    : opt.key
-                      , input    : opt.name
-                      , selected : true
-      };
-    } else {
-      optionProps = {   value : opt.key
-                      , input : opt.name
-      };
-    }
-
-    return ( <option {...optionProps} /> );
-    }, this);
 
   output = <TWBS.Input { ...selectFieldProps } >
                        { optionList }

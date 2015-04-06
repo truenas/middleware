@@ -295,6 +295,7 @@ var UserEdit = React.createClass({
   , render: function() {
       var builtInUserAlert  = null;
       var editButtons       = null;
+      var inputForm         = null;
 
       if ( this.props.item["builtin"] ) {
         builtInUserAlert = (
@@ -316,6 +317,146 @@ var UserEdit = React.createClass({
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
 
+      inputForm =
+        <form className="form-horizontal">
+          <TWBS.Grid fluid>
+            <TWBS.Row>
+              <TWBS.Col xs = {8}>
+                {/* User id */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "id" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "id" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "id"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "id" )
+                            )
+                }
+                {/* username */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "username" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "username" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "username"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "username" )
+                            )
+                }
+                {/* full_name*/}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "full_name" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "full_name" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "full_name"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "full_name" )
+                            )
+                }
+                {/* email */}
+                  {editorUtil.identifyAndCreateFormElement(
+                        // value
+                        this.state.mixedValues[ "email" ]
+                        // displayKeys
+                      , _.find(this.props.dataKeys, function ( displayKey ){
+                          return (displayKey["key"] === "email" );
+                        }.bind(this) )
+                        // changeHandler
+                      , this.handleValueChange
+                        // key
+                      , "email"
+                        // wasModified
+                      , _.has( this.state.locallyModifiedValues, "email" )
+                    )
+                }
+              </TWBS.Col>
+              <TWBS.Col xs = {4}>
+                {/* locked */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "locked" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "locked" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "locked"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "locked" )
+                            )
+                }
+                {/* sudo */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "sudo" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "sudo" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "sudo"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "sudo" )
+                            )
+                }
+                {/* password_disabled */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "password_disabled" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "password_disabled" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "password_disabled"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "password_disabled" )
+                            )
+                }
+                {/* logged-in */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "logged-in" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "logged-in" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "logged-in"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "logged-in" )
+                            )
+                }
+              </TWBS.Col>
+            </TWBS.Row>
+          </TWBS.Grid>
+        </form>;
+
       return (
         <TWBS.Grid fluid>
           {/* Save and Cancel Buttons - Top */}
@@ -324,24 +465,7 @@ var UserEdit = React.createClass({
           {/* Shows a warning if the user account is built in */}
           { builtInUserAlert }
 
-          <form className="form-horizontal">
-            {
-              this.props["dataKeys"].map( function( displayKeys, index ) {
-                return editorUtil.identifyAndCreateFormElement(
-                          // value
-                          this.state.mixedValues[ displayKeys["key"] ]
-                          // displayKeys
-                        , displayKeys
-                          // changeHandler
-                        , this.handleValueChange
-                          // key
-                        , index
-                          // wasModified
-                        , _.has( this.state.locallyModifiedValues, displayKeys["key"] )
-                       );
-              }.bind( this ) )
-            }
-          </form>
+          {inputForm}
 
           {/* Save and Cancel Buttons - Bottom */}
           { editButtons }
