@@ -935,7 +935,7 @@ class JailTemplateCreateForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = ['jt_system', 'jt_mtree']
+        exclude = ['jt_system']
         model = JailTemplate
 
 
@@ -980,6 +980,7 @@ class JailTemplateEditForm(ModelForm):
                 self.__ro('jt_arch')
                 self.__ro('jt_os')
                 self.__ro('jt_url')
+                self.__ro('jt_mtree')
 
 
 class JailMountPointForm(ModelForm):

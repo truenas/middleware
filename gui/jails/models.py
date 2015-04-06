@@ -550,7 +550,10 @@ class JailTemplate(Model):
     )
 
     jt_mtree = models.CharField(
-        max_length=255
+        max_length=255,
+        verbose_name=_("mtree"),
+        help_text=_("The mtree file for the template"),
+        blank=True
     )
 
     jt_system = models.BooleanField(
@@ -558,7 +561,10 @@ class JailTemplate(Model):
     )
 
     jt_readonly = models.BooleanField(
-        default=False
+        default=False,
+        verbose_name=_("System"),
+        help_text=_("If this is a system template, it will not be visible in the UI " \
+            "and will only be used internally.")
     )
 
     @property
