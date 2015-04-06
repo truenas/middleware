@@ -5,8 +5,15 @@
 
 "use strict";
 
+var React = require("react");
+
 module.exports = {
-    getActiveRoute: function() {
-      return this.getParams()[ this.props.viewData.routing["param"] ];
+
+    contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , getActiveRoute: function() {
+      return this.context.router.getCurrentParams()[ this.props.viewData.routing["param"] ];
     }
 };

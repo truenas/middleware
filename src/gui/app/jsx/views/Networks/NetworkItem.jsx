@@ -4,9 +4,7 @@
 
 "use strict";
 
-// var _     = require("lodash");
-var React  = require("react");
-var Router = require("react-router");
+var React = require("react");
 
 var activeRoute  = require("../../components/mixins/activeRoute");
 var clientStatus = require("../../components/mixins/clientStatus");
@@ -88,7 +86,7 @@ var NetworkItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ Router.State, activeRoute, clientStatus ]
+  , mixins: [ activeRoute, clientStatus ]
 
   , getInitialState: function() {
       return {

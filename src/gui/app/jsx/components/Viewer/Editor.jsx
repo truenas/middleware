@@ -2,19 +2,18 @@
 
 var _           = require("lodash");
 var React       = require("react");
-var Router      = require("react-router");
 var activeRoute = require("../mixins/activeRoute");
 
 var Editor = React.createClass({
 
     propTypes: {
-        viewData  : React.PropTypes.object.isRequired
-      , inputData : React.PropTypes.any.isRequired
-      , ItemView  : React.PropTypes.any.isRequired // FIXME: React 0.12 has better propTypes
-      , EditView  : React.PropTypes.any            // FIXME: React 0.12 has better propTypes
-    }
+          viewData  : React.PropTypes.object.isRequired
+        , inputData : React.PropTypes.any.isRequired
+        , ItemView  : React.PropTypes.any.isRequired // FIXME: React 0.12 has better propTypes
+        , EditView  : React.PropTypes.any            // FIXME: React 0.12 has better propTypes
+      }
 
-  , mixins: [ Router.State, activeRoute ]
+  , mixins: [ activeRoute ]
 
   , getInitialState: function() {
       return {

@@ -9,7 +9,6 @@
 var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
-var Router = require("react-router");
 
 var activeRoute  = require("../../../components/mixins/activeRoute");
 var clientStatus = require("../../../components/mixins/clientStatus");
@@ -240,7 +239,7 @@ var GroupItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
       }
 
-    , mixins: [ Router.State, activeRoute, clientStatus ]
+    , mixins: [ activeRoute, clientStatus ]
 
     , getInitialState: function() {
         return {
