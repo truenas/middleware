@@ -7,9 +7,9 @@
     "lodash": "^3.5.x",
     "mach": "^0.12.0",
     "moment": "^2.9.0",
-    "react": "0.12.x",
-    "react-bootstrap": "0.15.x",
-    "react-router": "^0.11.6",
+    "react": "0.13.x",
+    "react-bootstrap": "0.20.x",
+    "react-router": "0.13.x",
     "react-tools": "^0.12.2",
     "term.js": "0.0.4",
     "when": "^3.5.x"
