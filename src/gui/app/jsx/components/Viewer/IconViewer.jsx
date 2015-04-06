@@ -68,7 +68,7 @@ var IconViewer = React.createClass({
       var groupedIconItems   = null;
       var remainingIconItems = null;
 
-      if ( this.props.Editor() !== null ) {
+      if ( this.props.Editor ) {
         editorContent = (
           <div className = "overlay-light editor-edit-overlay"
                onClick   = { this.handleClickOut } >
