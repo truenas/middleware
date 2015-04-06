@@ -3,7 +3,7 @@
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{{ tab.verbose_name|escapejs }}'
   {% if focus_form == tab.focus %}, selected: true{% endif %},
   href: '{{ tab.url }}',
-  refreshOnShow: true" class="objrefresh data_network_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
+  doLayout: false, refreshOnShow: true" class="objrefresh data_network_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
   </div>
 {% endfor %}
 </div>
