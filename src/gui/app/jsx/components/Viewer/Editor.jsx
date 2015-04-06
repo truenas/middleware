@@ -3,7 +3,7 @@
 var _           = require("lodash");
 var React       = require("react");
 var Router      = require("react-router");
-var activeRoute = require("./mixins/activeRoute");
+var activeRoute = require("../mixins/activeRoute");
 
 var Editor = React.createClass({
 
