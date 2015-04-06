@@ -22,6 +22,8 @@ var UsersStore      = require("../../../stores/UsersStore");
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
 
+var ShellMiddleware = require("../../../middleware/ShellMiddleware");
+
 // OVERVIEW PANE
 var UserView = React.createClass({
 
@@ -139,6 +141,19 @@ var UserEdit = React.createClass({
         , mixedValues            : this.props.item
         , lastSentValues         : {}
       };
+    }
+
+  , componentDidMount: function() {
+      // TODO: How are we gonna deal with nologin?
+      ShellMiddleware.requestAvailableShells( function( shells ) {
+        var systemShells = _.map(shells, function( shell ){
+          return ({   name     : shell
+                    , selected : shell === this.props.item["shell"]
+                  }
+          );
+        }, this);
+        this.setState({ shells: systemShells });
+      }.bind( this ) );
     }
 
     // Remote state is set at load time and reset upon successful changes.
@@ -385,6 +400,24 @@ var UserEdit = React.createClass({
                         // wasModified
                       , _.has( this.state.locallyModifiedValues, "email" )
                     )
+                }
+                {/* shell */}
+                {editorUtil.identifyAndCreateFormElement(
+                                // value
+                                this.state.mixedValues[ "shell" ]
+                                // displayKeys
+                              , _.find(this.props.dataKeys, function ( displayKey ){
+                                  return (displayKey["key"] === "shell" );
+                                }.bind(this) )
+                                // changeHandler
+                              , this.handleValueChange
+                                // key
+                              , "shell"
+                                // wasModified
+                              , _.has( this.state.locallyModifiedValues, "shell" )
+                                // shell options
+                              , this.state.shells
+                            )
                 }
               </TWBS.Col>
               <TWBS.Col xs = {4}>
