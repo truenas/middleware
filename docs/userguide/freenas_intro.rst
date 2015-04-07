@@ -345,6 +345,9 @@ that have occurred since 9.3-RELEASE.
 
 * LZ4 compression is used on the boot pool in order to increase space for boot environments.
 
+* Support for hot spare drive replacement has been added. If you have spare drives in your pool, and a drive fails, FreeNAS® should automatically remove the failed
+  drive from the pool and replace it with the spare.
+
 * An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
   make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
   to a pristine, non-configured version of the installation.
@@ -507,8 +510,7 @@ The
 of the FreeBSD Hardware List lists the supported disk controllers. In addition, support for 3ware 6gbps RAID controllers has been added along with the CLI
 utility :command:`tw_cli` for managing 3ware RAID controllers.
 
-FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS. Note that hot plugging is **not the same** as a hot
-spare, which is not supported at this time.
+FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS.
 
 If you need reliable disk alerting and immediate reporting of a failed drive, use a fully manageable hardware RAID controller such as a LSI
 MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
