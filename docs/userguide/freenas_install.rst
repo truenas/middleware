@@ -308,19 +308,20 @@ Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the 
 #. The updater automatically creates a boot environment, meaning that updates are a low-risk operation. Boot environments provide the option to return to the
    previous version of the operating system by rebooting the system and selecting the previous boot environment from the boot menu.
 
-This section describes how to perform an upgrade to the next major release as well as how to update a 9.3 system with newer features between major releases.
+This section describes how to perform an upgrade from an earlier version of FreeNAS® to 9.3. Once 9.3 is installed, use the instructions in :ref:`Update` to keep
+the system updated.
 
 .. _Caveats:
 
 Caveats:
 ~~~~~~~~
 
-Be aware of the following caveats **before** attempting an upgrade:
+Be aware of the following caveats **before** attempting an upgrade to 9.3:
 
 * **Upgrades from FreeNAS® 0.7x are not supported.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
   will have to manually recreate your configuration, and if supported, import the FreeNAS® 0.7x volumes or disks.
 
-* **Upgrades on 32-bit hardware to FreeNAS® 9.3 or higher are not supported.** However, if the system is currently running a 32-bit version of FreeNAS®
+* **Upgrades on 32-bit hardware are not supported.** However, if the system is currently running a 32-bit version of FreeNAS®
   **and** the hardware supports 64-bit, the system can be upgraded but any archived reporting graphs will be lost during the upgrade.
 
 * **UFS is no longer supported.** If your data currently resides on
@@ -350,7 +351,7 @@ Be aware of the following caveats **before** attempting an upgrade:
 Initial Preparation
 ~~~~~~~~~~~~~~~~~~~
 
-Before upgrading the operating system or applying a system update, perform the following steps:
+Before upgrading the operating system, perform the following steps:
 
 #.  **Backup the FreeNAS® configuration** in :menuselection:`System --> General --> Save Config`.
 
@@ -366,7 +367,7 @@ Before upgrading the operating system or applying a system update, perform the f
 Upgrading Using the ISO
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://www.freenas.org/download-releases.html>`_ the :file:`.iso` for the new release to the computer that
+To perform an upgrade using this method, `download <http://download.freenas.org/9.3/latest/x64/>`_ the :file:`.iso` to the computer that
 will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
 :ref:`Preparing the Media`.
 
@@ -406,15 +407,15 @@ the "Upload Config" button to upload the configuration that you saved before you
 Upgrading From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://www.freenas.org/download-releases.html>`_ the :file:`.txz` file for the new release and its
-associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to :menuselection:`System --> Update`. Click the "Manual Update"
-button to open the screen shown in Figure 2.5c.
+To perform an upgrade using this method, `download <http://download.freenas.org/9.3/latest/x64/>`_ the :file:`.txz` file and its
+associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to :menuselection:`System --> Settings --> Advanced --> Firmware Update` as
+shown in Figure 2.5c.
 
 **Figure 2.5c: Upgrading FreeNAS® From the GUI**
 
-|upgrade3.png|
+|upgrade3a.png|
 
-.. |upgrade3.png| image:: images/upgrade3.png
+.. |upgrade3a.png| image:: images/upgrade3a.png
 
 Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to allow
 the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "OK" button to see the screen shown in Figure
@@ -422,9 +423,9 @@ the system to create a temporary RAM disk to be used during the upgrade. After m
 
 **Figure 2.5d: Step 2 of 2**
 
-|upgrade4.png|
+|upgrade4a.png|
 
-.. |upgrade4.png| image:: images/upgrade4.png
+.. |upgrade4a.png| image:: images/upgrade4a.png
 
 This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
 
@@ -442,41 +443,6 @@ When finished, click the "Apply Update" button to begin the upgrade progress. Be
 
 * Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access
   the system.
-
-.. index:: Update
-.. _Updating Between Releases:
-
-Updating Between Releases
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To update the system between releases, use :menuselection:`System --> Update`.
-
-.. warning:: each update creates a boot environment and if the boot device does not have sufficient space to hold another boot environment, the upgrade will
-   fail. If you need to create more space on the boot device, use :menuselection:`System --> Boot` to review your current boot environments and to delete the
-   ones you no longer plan to boot into.
-
-In the screen shown in Figure 2.5e, use the drop-down menu to select which "Train" you would like to track updates to.
-
-**Figure 2.5e: Checking for Updates**
-
-|update1.png|
-
-.. |update1.png| image:: images/update1.png
-
-In this example, this system has the option to track *FreeNAS-9.3-Nightlies*, (the latest nightly build of 9.3 which may contain untested fixes),
-*FreeNAS-9.3-STABLE* (all new and tested features, drivers, and bug fixes since 9.3 was released), and
-*FreeNAS-10-Nightlies* (the latest, pre-alpha build of the upcoming 10 version). The administrator has selected to track the recommended
-*FreeNAS-9.3-STABLE* train. Click the hyperlink for "Train Descriptions" to read a brief description of each train.
-
-To see if any updates are available, click the "Check Now" button. If any updates are available, they will be listed in a pop-up screen. Either click the "OK"
-button to apply the listed updates or the "Cancel" button to exit the screen containing the listing. 
-
-.. note:: some updates require a system reboot. You should ensure that no clients are currently connected to the FreeNAS® system and that no scrubs are
-   currently in progress before applying an update.
-
-If you choose to apply the updates, a progress bar will indicate the progress of downloading and installing the updates. Before the update process begins,
-FreeNAS® will automatically take a snapshot of the current operating system and add it to the boot menu. If the update requires a system reboot, the system
-will automatically be rebooted immediately after the update is applied.
 
 .. _If Something Goes Wrong:
 

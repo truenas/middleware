@@ -723,14 +723,19 @@ of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
 
+.. warning:: each update creates a boot environment and if the boot device does not have sufficient space to hold another boot environment, the upgrade will
+   fail. If you need to create more space on the boot device, use :menuselection:`System --> Boot` to review your current boot environments and to delete the
+   ones you no longer plan to boot into.
+
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
 in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
-is included for backwards compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the
-necessary updates to upgrade the operating system.
+.. note:: the "Manual Update" button can be used to manually upgrade using a previously downloaded upgrade file, as described in :ref:`Upgrading From the GUI`. 
+   While this can be useful to upgrade to a specific point in time, this button is primarily included for backwards compatibility as this method is no longer
+   the recommended way to upgrade. Instead, select a train and apply any outstanding updates to ensure that the operating system has the most recent updates for
+   the specified train.
 
 .. index:: CA, Certificate Authority
 .. _CAs:
