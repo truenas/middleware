@@ -1,3 +1,9 @@
+
+// MARKED FOR DELETION
+
+// THIS FILE SHOULD NO LONGER EXIST OR BE USED
+
+
 "use strict";
 
 var _           = require("lodash");
@@ -8,9 +14,9 @@ var Editor = React.createClass({
 
     propTypes: {
           viewData  : React.PropTypes.object.isRequired
-        , inputData : React.PropTypes.any.isRequired
-        , ItemView  : React.PropTypes.any.isRequired // FIXME: React 0.12 has better propTypes
-        , EditView  : React.PropTypes.any            // FIXME: React 0.12 has better propTypes
+        , inputData : React.PropTypes.array.isRequired
+        , ItemView  : React.PropTypes.element.isRequired
+        , EditView  : React.PropTypes.element
       }
 
   , mixins: [ activeRoute ]
