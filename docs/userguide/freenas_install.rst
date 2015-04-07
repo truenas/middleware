@@ -717,41 +717,41 @@ Virtual Machine`. The New Virtual Machine Wizard will launch as seen in Figure 2
 
 **Figure 2.6l: New Virtual Machine Wizard**
 
-|esxi1.png|
+|esxi1a.png|
 
-.. |esxi1.png| image:: images/esxi1.png
+.. |esxi1a.png| image:: images/esxi1a.png
 
 Click "Next" and input a name for the virtual machine. Click "Next" and highlight a datastore. An example is shown in Figure 2.6m. Click "Next". In the screen
 shown in Figure 2.6n, click "Other" then select a FreeBSD architecture that matches the FreeNAS® architecture.
 
 **Figure 2.6m: Select a Datastore**
 
-|esxi2.png|
+|esxi2a.png|
 
-.. |esxi2.png| image:: images/esxi2.png
+.. |esxi2a.png| image:: images/esxi2a.png
 
 **Figure 2.6n: Select the Operating System**
 
-|esxi3.png|
+|esxi3a.png|
 
-.. |esxi3.png| image:: images/esxi3.png
+.. |esxi3a.png| image:: images/esxi3a.png
 
 Click "Next" and create a virtual disk file of **8 GB** to hold the FreeNAS® operating system, as shown in Figure 2.6o.
 
 **Figure 2.6o: Create a Disk for the Operating System**
 
-|esxi4.png|
+|esxi4a.png|
 
-.. |esxi4.png| image:: images/esxi4.png
+.. |esxi4a.png| image:: images/esxi4a.png
 
 Click "Next" then "Finish". Your virtual machine will be listed in the left frame. Right-click the virtual machine and select "Edit Settings" to access the
 screen shown in Figure 2.6p.
 
 **Figure 2.6p: Virtual Machine's Settings**
 
-|esxi5.png|
+|esxi5a.png|
 
-.. |esxi5.png| image:: images/esxi5.png
+.. |esxi5a.png| image:: images/esxi5a.png
 
 Increase the "Memory Configuration" to **at least 8192 MB**.
 
@@ -764,9 +764,9 @@ the amount of storage disks needed to meet your requirements.
 
 **Figure 2.6q: Creating a Storage Disk**
 
-|esxi6.png|
+|esxi6a.png|
 
-.. |esxi6.png| image:: images/esxi6.png
+.. |esxi6a.png| image:: images/esxi6a.png
 
 If you are running ESX 5.0, Workstation 8.0, or Fusion 4.0 or higher, additional configuration is needed so that the virtual HPET setting does not prevent the
 virtual machine from booting.
