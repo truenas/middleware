@@ -451,12 +451,9 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 | Password             | string         | password used to logon to the provider and update the record                                                       |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Update period        | integer        | in seconds; be careful with this setting as the provider may block you for abuse if this setting occurs more often |
-|                      |                | than the IP address changes                                                                                        |
-|                      |                |                                                                                                                    |
+| Update period        | integer        | how often the IP is checked in seconds                                                                             |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Forced update period | integer        | in seconds so be careful with this setting as the provider may block you for abuse; issues a DDNS update request   |
-|                      |                | even when the address has not changed so that the service provider knows that the account is still active          |
+| Forced update period | integer        | how often the IP should be updated, even it has not changed, in seconds                                            |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Auxiliary parameters | string         | additional parameters passed to the provider during record update; an example of specifying a custom provider is   |
