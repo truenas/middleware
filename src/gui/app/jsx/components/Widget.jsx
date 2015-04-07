@@ -2,14 +2,20 @@
 
 var React = require("react");
 
+var Icon   = require("./Icon");
+
 var Widget = React.createClass({
   render: function() {
     return (
       <div className={"widget " + this.props.size}>
+        <header>
+          <span className="widgetTitle">{this.props.title} <Icon glyph="gear" icoSize="lg" /></span>
+        </header>
         <div className="widget-content">
           { this.props.children }
         </div>
       </div>
+
     );
   }
 });
