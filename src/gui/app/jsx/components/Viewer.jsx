@@ -4,6 +4,8 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
+var viewerCommon = require("./mixins/viewerCommon");
+
 var Icon         = require("./Icon");
 var DetailViewer = require("./Viewer/DetailViewer");
 var IconViewer   = require("./Viewer/IconViewer");
@@ -13,7 +15,13 @@ var TableViewer  = require("./Viewer/TableViewer");
 // Main Viewer Wrapper Component
 var Viewer = React.createClass({
 
-    propTypes: {
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , propTypes: {
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
       , inputData    : React.PropTypes.array.isRequired
@@ -214,6 +222,10 @@ var Viewer = React.createClass({
       } else {
         newMode = targetMode;
       }
+
+      // When changing viewer modes, close any previously open items.
+      // TODO: This may need to change with single-click select functionality.
+      this.returnToViewerRoot();
 
       return newMode;
     }
