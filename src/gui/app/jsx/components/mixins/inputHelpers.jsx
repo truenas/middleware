@@ -34,8 +34,11 @@ module.exports = {
       var outgoingItem = {};
       // Used to put all the old fields into the new object, unless they're immutable
       outgoingItem = _.pick( item, function (value, key) {
-        if (keys[key]) {
-          return keys[key]["mutable"];
+        var keyContent = _.find(keys, function(checkKey){
+          return (checkKey.key === key);
+        }, this);
+        if (keyContent) {
+          return keyContent["mutable"];
         } else {
           // Do not accept unknown properties from the Middleware.
           // TODO: If we want to accept arbitrary properies, we will need more
