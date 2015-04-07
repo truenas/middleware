@@ -109,7 +109,6 @@ module.exports = {
       // (on the basis that the component is mounted)
       if ( this.isMounted() && this.state.chartTypes.length > 0 && this.state.statdDataLoaded){
         if ( !this.state.chart ) {
-        	console.log("prvni draw")
         	this.drawChart();
         }
         var chartShouldReload = ( prevState.graphType !== this.state.graphType );
@@ -217,7 +216,6 @@ module.exports = {
     }
 
   , drawChart: function( chartShouldReload ) {
-      console.log(this.state.graphType);
       var newState     = {};
       var chartSVGNode = this.refs.svg.getDOMNode();
       var xLabel;
@@ -432,10 +430,7 @@ module.exports = {
     }
 
   , render: function() {
-  	console.log(i);
-  	i++;
-    if ( this.state.errorMode ) {
-        console.log("error");
+  	if ( this.state.errorMode ) {
         return (
         <Widget
           positionX = { this.props.positionX }
@@ -451,8 +446,7 @@ module.exports = {
 	    </Widget>
         );
     } else if (this.state.statdDataLoaded && this.state.chartTypes.length > 0) {
-    	console.log("svg");
-        return (
+    	return (
         <Widget
           positionX = { this.props.positionX }
           positionY = { this.props.positionY }
@@ -469,8 +463,7 @@ module.exports = {
 	    </Widget>
         );
     } else {
-    	console.log("load");
-      	return (
+    	return (
       	<Widget
           positionX = { this.props.positionX }
           positionY = { this.props.positionY }

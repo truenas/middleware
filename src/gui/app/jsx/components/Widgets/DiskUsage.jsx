@@ -37,8 +37,6 @@ var DiskUsage = React.createClass({
     var newState = {};
     newState.pool = ZfsStore.getZfsPoolGetDisks( "freenas-boot");
 
-      console.log("pool");
-      console.log(newState.pool);
     if (newState.pool)    {
       var systemPoolPath = newState.pool[0].split("/") ;
       var systemPoolName = systemPoolPath[systemPoolPath.length - 1].slice(0, systemPoolPath[systemPoolPath.length - 1].indexOf("p"));

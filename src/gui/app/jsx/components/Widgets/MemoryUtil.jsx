@@ -77,9 +77,6 @@ var MemoryUtil = React.createClass({
       var newState = {};
       newState.hardware = SystemStore.getSystemInfo( "hardware" );
 
-
-      console.log("hw");
-      console.log(newState.hardware);
       if (newState.hardware)
       {
 

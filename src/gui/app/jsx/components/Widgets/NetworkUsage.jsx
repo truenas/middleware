@@ -42,9 +42,6 @@ var NetworkUsage = React.createClass({
     var newState = {};
     newState.network  = SystemStore.getSystemDevice( "network" );
 
-      console.log("network");
-      console.log(newState.network);
-      console.log("statdDataLoaded " + this.state.statdDataLoaded);
     if (newState.network)
      {
        var iface = newState.network[0]["name"];
