@@ -2,14 +2,13 @@
 
 var React   =   require("react");
 
-var Widget  =   require("../Widget");
-var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
-
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var chartHandler     = require("./mixins/chartHandler");
 
 var CpuUtil = React.createClass({
-  getInitialState: function() {
+
+  mixins: [ chartHandler ]
+
+, getInitialState: function() {
     return {
       statdResources:    [   {variable:"system", dataSource:"localhost.aggregation-cpu-sum.cpu-system.value", name:"System", color:"#9ecc3c"}
                            , {variable:"user", dataSource:"localhost.aggregation-cpu-sum.cpu-user.value", name:"User", color:"#77c5d5"}
@@ -25,6 +24,7 @@ var CpuUtil = React.createClass({
                               , primary: this.primaryChart("pie")
                             }
                          ]
+    , widgetIdentifier : "CpuUtil"
     };
   }
 
@@ -43,24 +43,6 @@ var CpuUtil = React.createClass({
       return false;
     }
 
-  }
-, render: function() {
-    var widgetIdentifier = "CpuUtil";
-    return (
-      <Widget
-        positionX  =  { this.props.positionX }
-        positionY  =  { this.props.positionY }
-        title      =  { this.props.title }
-        size       =  { this.props.size } >
-
-        <StatdWidgetContentHandler
-          widgetIdentifier    =  { widgetIdentifier }
-          statdResources      =  { this.state.statdResources }
-          chartTypes          =  { this.state.chartTypes } >
-        </StatdWidgetContentHandler>
-
-      </Widget>
-    );
   }
 });
 

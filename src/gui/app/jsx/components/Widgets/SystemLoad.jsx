@@ -1,15 +1,14 @@
 "use strict";
 
-var React   =   require("react");
+var React            =   require("react");
 
-var Widget  =   require("../Widget");
-var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
-
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var chartHandler     = require("./mixins/chartHandler");
 
 var SystemLoad = React.createClass({
-  getInitialState: function() {
+
+  mixins: [ chartHandler ]
+
+, getInitialState: function() {
     return {
       statdResources:    [   {variable:"longterm", dataSource:"localhost.load.load.longterm", name:"Longterm Load", color:"#292929"}
                            , {variable:"midterm", dataSource:"localhost.load.load.midterm", name:"Midterm Load", color:"#a47f1a"}
@@ -24,6 +23,7 @@ var SystemLoad = React.createClass({
                               , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100); } }
                             }
                          ]
+    , widgetIdentifier : "SystemLoad"
     };
   }
 
@@ -42,24 +42,6 @@ var SystemLoad = React.createClass({
       return false;
     }
 
-  }
-, render: function() {
-    var widgetIdentifier = "SystemLoad";
-    return (
-      <Widget
-        positionX  =  { this.props.positionX }
-        positionY  =  { this.props.positionY }
-        title      =  { this.props.title }
-        size       =  { this.props.size } >
-
-        <StatdWidgetContentHandler
-          widgetIdentifier  =  { widgetIdentifier }
-          statdResources    =  { this.state.statdResources }
-          chartTypes        =  { this.state.chartTypes } >
-        </StatdWidgetContentHandler>
-
-      </Widget>
-    );
   }
 });
 

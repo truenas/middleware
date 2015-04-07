@@ -62,7 +62,18 @@ var Dashboard = React.createClass({
               <MemoryUtil
                 title = "Memory Value"
                 size  = "m-rect" />
-
+              <CpuUtil
+                primary = "pie"
+                title = "CPU utilization"
+                size  = "m-rect" />
+              <SystemLoad
+                primary   = "stacked"
+                title     = "System Load"
+                size      = "m-rect" />
+              <NetworkUsage
+                title = "Network Usage"
+                size  = "l-rect"
+                graphType = "line" />
               <DiskUsage
                 title = "Disk Usage"
                 size  = "l-rect"
