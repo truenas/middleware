@@ -235,57 +235,6 @@ var Viewer = React.createClass({
 
 
   // VIEWER DISPLAY
-
-  , createDropdownSection: function ( targetArray, sectionName, dynamicContent ) {
-      if ( targetArray.length > 0 ) {
-        targetArray.push( <li key       = { targetArray.length - 1 }
-                              role      = "presentation"
-                              className = "divider" /> );
-      }
-
-      if ( sectionName ) {
-        targetArray.push( <li key       = { targetArray.length - 1 }
-                              role      = "presentation"
-                              className = "dropdown-header">{ sectionName }</li> );
-      }
-
-      targetArray.push( dynamicContent );
-    }
-
-  , createGroupMenuOption: function ( group, index ) {
-      var toggleText;
-
-      if ( this.state.enabledGroups.indexOf( group ) !== -1 ) {
-        toggleText = "Don't group ";
-      } else {
-        toggleText = "Group ";
-      }
-
-      return (
-        <TWBS.MenuItem key        = { index }
-                       onClick    = { this.handleEnabledGroupsToggle.bind( null, group ) }>
-          { toggleText + this.props.viewData.display.filterCriteria[ group ].name }
-        </TWBS.MenuItem>
-      );
-    }
-
-  , createFilterMenuOption: function ( filter, index ) {
-      var toggleText;
-
-      if ( this.state.enabledFilters.indexOf( filter ) !== -1 ) {
-        toggleText = "Show ";
-      } else {
-        toggleText = "Hide ";
-      }
-
-      return (
-        <TWBS.MenuItem key        = { index }
-                       onClick    = { this.handleEnabledFiltersToggle.bind( null, filter ) }>
-          { toggleText + this.props.viewData.display.filterCriteria[ filter ].name }
-        </TWBS.MenuItem>
-      );
-    }
-
   , createModeNav: function ( mode, index ) {
       var modeIcons = {
           "detail" : "th-list"
