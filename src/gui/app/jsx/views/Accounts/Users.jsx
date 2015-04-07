@@ -8,9 +8,6 @@ var componentLongName = "Users";
 
 var React = require("react");
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
-
 var Viewer = require("../../components/Viewer");
 
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
@@ -19,7 +16,7 @@ var UsersStore      = require("../../stores/UsersStore");
 var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../stores/GroupsStore");
 
-var SessionStore   = require("../../stores/SessionStore");
+var SessionStore = require("../../stores/SessionStore");
 
 var viewData = {
     format    : require("../../../data/middleware-keys/users-display.json")[0]
@@ -68,7 +65,6 @@ function getGroupsFromStore() {
 
 var Users = React.createClass({
 
-
     getInitialState: function() {
       return getUsersStoreData();
     }
@@ -99,18 +95,12 @@ var Users = React.createClass({
       this.setState( getUsersStoreData() );
     }
 
-  , getRouteHandler: function() {
-
-    }
-
   , render: function() {
-      var routeHandler = {};
-      return <Viewer header       = { "Users" }
-                     inputData    = { this.state.usersList }
-                     addEntity    = { "Add User" }
-                     viewData     = { viewData }
-                     routeHandler = { routeHandler }
-                     Editor       = { RouteHandler } />;
+      return <Viewer
+                header    = { "Users" }
+                inputData = { this.state.usersList }
+                addEntity = { "Add User" }
+                viewData  = { viewData } />;
     }
 
 });

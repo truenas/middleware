@@ -3,9 +3,13 @@
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
-var Router = require("react-router");
-var Link   = Router.Link;
+var Router       = require("react-router");
+var Link         = Router.Link;
+var RouteHandler = Router.RouteHandler;
 
+var Editor = require("./Editor");
+
+var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
 var DetailNavSection = React.createClass({
@@ -101,10 +105,14 @@ var DetailNavSection = React.createClass({
 // Detail Viewer
 var DetailViewer = React.createClass({
 
-    propTypes: {
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , propTypes: {
         viewData     : React.PropTypes.object.isRequired
-      , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , routeHandler : React.PropTypes.any // What should this actually be?
       , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , searchString : React.PropTypes.string
@@ -152,7 +160,6 @@ var DetailViewer = React.createClass({
               <DetailNavSection key               = { index }
                                 viewData          = { this.props.viewData }
                                 searchString      = { this.props.searchString }
-                                activeKey         = { this.props.selectedKey }
                                 sectionName       = { group.name }
                                 initialDisclosure = { disclosureState }
                                 entries           = { group.entries } />
@@ -167,30 +174,27 @@ var DetailViewer = React.createClass({
         remainingNavItems = (
           <DetailNavSection viewData          = { this.props.viewData }
                             searchString      = { this.props.searchString }
-                            activeKey         = { this.props.selectedKey }
                             sectionName       = { fd["remaining"].name }
                             initialDisclosure = "closed"
                             entries           = { fd["remaining"].entries } />
         );
       }
 
-      if ( this.props.routeHandler === null ) {
-        console.log("No Handler");
+        if ( this.dynamicPathIsActive() ) {
+        editorContent = (
+          <RouteHandler
+            viewData  = { this.props.viewData }
+            inputData = { this.props.inputData }
+            ItemView  = { this.props.ItemView }
+            EditView  = { this.props.EditView } />
+        );
+      } else {
         editorContent = (
           <div className="viewer-item-info">
             <h3 className="viewer-item-no-selection">{"No active selection"}</h3>
           </div>
         );
-      } else {
-        editorContent = (
-          <this.props.Editor viewData  = { this.props.viewData }
-                             inputData = { this.props.inputData }
-                             activeKey = { this.props.selectedKey }
-                             ItemView  = { this.props.ItemView }
-                             EditView  = { this.props.EditView } />
-        );
       }
-
       return (
         <div className = "viewer-detail">
           <div className = "viewer-detail-sidebar">
