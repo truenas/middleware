@@ -168,8 +168,8 @@ var UserEdit = React.createClass({
           // Do not accept unknown properties from the Middleware.
           // TODO: If we want to accept arbitrary properies, we will need more
           // sophisticated handling here.
-          console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
-          console.error(this.props.item);
+          console.warn("Received an unknown property \"" + key + "\" from the Middleware Server.");
+          console.warn(this.props.item);
         } else {
           nextRemoteState[ key ] = this.props.item[ key ];
         }
