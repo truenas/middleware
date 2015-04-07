@@ -1,11 +1,20 @@
+// CHART HANDLER
+// =============
+// Mixin used to take the trouble of chart handling from individual widgets
+// Remains of StatdWidgetContentHandler
+
 "use strict";
 
 var _      = require("lodash");
 var React  = require("react");
 var moment = require("moment");
 
-var StatdMiddleware = require("../../middleware/StatdMiddleware");
-var StatdStore      = require("../../stores/StatdStore");
+var StatdMiddleware = require("../../../middleware/StatdMiddleware");
+var StatdStore      = require("../../../stores/StatdStore");
+
+var Widget          = require("../../Widget");
+
+var i = 0;
 
 var svgStyle = {
     width   : "calc(100% - 36px)"
@@ -19,18 +28,22 @@ var divStyle = {
   , "float" : "right"
 };
 
-var StatdWidgetContentHandler = React.createClass({
+module.exports = {
 
-    propTypes: {
-        statdResources    : React.PropTypes.array.isRequired
-      , chartTypes        : React.PropTypes.array.isRequired
-      , widgetIdentifier  : React.PropTypes.string.isRequired
-    }
+	divStyle: {
+  					  width   : "36px"
+  					, height  : "100%"
+  					, "float" : "right"
+				}
 
-  , getInitialState: function() {
+	, svgStyle: {
+  					  width   : "calc(100% - 36px)"
+  					, height  : "100%"
+  					, "float" : "left"
+				}
+
+    , getInitialState: function() {
       var initialStatdData = {};
-      var initialErrorMode = false;
-      var initialStatdDataLoaded = false;
 
       return {
           chart           : ""
@@ -38,29 +51,31 @@ var StatdWidgetContentHandler = React.createClass({
         , graphType       : "line"
         , errorMode       : false
         , statdData       : initialStatdData
-        , statdDataLoaded : initialStatdDataLoaded
+        , statdDataLoaded : false
       };
     }
 
   , componentDidMount: function() {
       StatdStore.addChangeListener( this.handleStatdChange );
-
-      if (this.props.statdResources.length > 0)
-      {
+      var newState = {};
+      if ( this.state.statdResources.length > 0 ) {
         this.requestData();
         this.subscribeToUpdates();
       }
 
-      this.setState({
-          graphType : _.result( _.findWhere( this.props.chartTypes, { "primary": true } ), "type" )
-      });
+      if ( this.state.chartTypes.length > 0 ) {
+      	newState.graphType = _.result( _.findWhere( this.state.chartTypes, { "primary": true } ), "type" );
+      }
+
+      this.setState( newState );
+
     }
 
   , subscribeToUpdates: function () {
 
       StatdMiddleware.subscribeToPulse(
-          this.props.widgetIdentifier
-        , this.props.statdResources.map( this.createStatdSources )
+          this.state.widgetIdentifier
+        , this.state.statdResources.map( this.createStatdSources )
       );
   }
 
@@ -68,31 +83,41 @@ var StatdWidgetContentHandler = React.createClass({
     var stop  = moment();
     var start = moment().subtract( 15, "m" );
 
-    _.forEach( this.props.statdResources, function( resource ) {
+    _.forEach( this.state.statdResources, function( resource ) {
         StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
+
     });
 
   }
   , componentDidUpdate: function( prevProps, prevState ) {
-
-      if (this.props.statdResources.length !== prevProps.statdResources.length)
+      var newState = {};
+      if (this.state.statdResources.length !== prevState.statdResources.length )
       {
-        //console.log(this.props.statdResources);
-        //console.log(prevProps.statdResources);
-        //this.requestData();
-        //this.subscribeToUpdates();
+        this.requestData();
+        this.subscribeToUpdates();
       }
+
+      if (this.state.chartTypes.length !== prevState.chartTypes.length )
+      {
+        newState.graphType = _.result( _.findWhere( this.state.chartTypes, { "primary": true } ), "type" );
+      }
+
+      this.setState( newState );
 
       // Only update if we have the required props, there is no staged update
       // currently being assembled, and we have access to both D3 and NVD3
       // (on the basis that the component is mounted)
-      if ( this.isMounted() && this.props.chartTypes.length ){
+      if ( this.isMounted() && this.state.chartTypes.length > 0 && this.state.statdDataLoaded){
+        if ( !this.state.chart ) {
+        	console.log("prvni draw")
+        	this.drawChart();
+        }
         var chartShouldReload = ( prevState.graphType !== this.state.graphType );
         //var statdDataExists = _.all( this.state.statdData, function( dataArray ) {
         //  return _.isArray( dataArray ) && dataArray.length > 0;
         //});
 
-        if ( chartShouldReload && this.state.statdDataLoaded ) {
+        if ( chartShouldReload ) {
           this.drawChart( chartShouldReload );
         } else if ( _.isEmpty( this.state.stagedUpdate ) &&
                     !_.isEmpty( prevState.stagedUpdate ) ){
@@ -101,11 +126,19 @@ var StatdWidgetContentHandler = React.createClass({
       }
     }
 
+  , shouldComponentUpdate: function(nextProps, nextState) {
+    	return nextState.statdResources !== this.state.statdResources ||
+    		   nextState.chartTypes !== this.state.chartTypes ||
+    		   nextState.statdDataLoaded !== this.state.statdDataLoaded ||
+			   nextState.stagedUpdate !== this.state.stagedUpdate ||
+    		   nextState.graphType !== this.state.graphType;
+	}
+
   , componentWillUnmount: function() {
       StatdStore.removeChangeListener( this.handleStatdChange );
       StatdMiddleware.unsubscribeFromPulse(
-          this.props.widgetIdentifier
-        , this.props.statdResources.map( this.createStatdSources )
+          this.state.widgetIdentifier
+        , this.state.statdResources.map( this.createStatdSources )
       );
     }
 
@@ -120,7 +153,7 @@ var StatdWidgetContentHandler = React.createClass({
       if (this.state.statdDataLoaded === true) {
         var dataUpdate   = StatdStore.getWidgetDataUpdate();
         var updateTarget = _.find(
-            this.props.statdResources
+            this.state.statdResources
           , function( resource ) {
               return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
             }
@@ -150,7 +183,7 @@ var StatdWidgetContentHandler = React.createClass({
             stagedUpdate[ updateVariable ] = [ newDataPoint ];
           }
 
-          if ( _.keys( stagedUpdate ).length >= this.props.statdResources.length ) {
+          if ( _.keys( stagedUpdate ).length >= this.state.statdResources.length ) {
             newState.statdData = {};
 
             _.forEach( stagedUpdate, function( data, key ) {
@@ -168,7 +201,7 @@ var StatdWidgetContentHandler = React.createClass({
       }
       else {
         newState.statdData = {};
-        _.forEach( this.props.statdResources,  function( resource ) {
+        _.forEach( this.state.statdResources,  function( resource ) {
           newState.statdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
 
           if ( newState.statdData[ resource.variable ] && newState.statdData[ resource.variable ].error ) {
@@ -184,6 +217,7 @@ var StatdWidgetContentHandler = React.createClass({
     }
 
   , drawChart: function( chartShouldReload ) {
+      console.log(this.state.graphType);
       var newState     = {};
       var chartSVGNode = this.refs.svg.getDOMNode();
       var xLabel;
@@ -214,7 +248,7 @@ var StatdWidgetContentHandler = React.createClass({
       } else {
         // Either this is the first run, the chart type has changed, or something
         // else has happened to require a complete reload of the chart.
-        var graphTypeObject = _.findWhere( this.props.chartTypes, { "type": this.state.graphType } );
+        var graphTypeObject = _.findWhere( this.state.chartTypes, { "type": this.state.graphType } );
         var newChart;
 
         switch( this.state.graphType ) {
@@ -280,7 +314,7 @@ var StatdWidgetContentHandler = React.createClass({
 
           case "pie":
             var colors = [];
-            _.forEach( this.props.statdResources,  function( resource ) {
+            _.forEach( this.state.statdResources,  function( resource ) {
               colors.push(resource.color);
             });
             newChart = nv.models.pieChart()
@@ -325,7 +359,7 @@ var StatdWidgetContentHandler = React.createClass({
 
       switch ( chartType ) {
         case "line":
-          _.forEach( this.props.statdResources, function( resource ) {
+          _.forEach( this.state.statdResources, function( resource ) {
             var returnArrayMember = {
                 area   : resource.area || false
               , values : statdData[ resource.variable ]
@@ -337,7 +371,7 @@ var StatdWidgetContentHandler = React.createClass({
           break;
 
         case "stacked":
-          _.forEach( this.props.statdResources, function( resource ) {
+          _.forEach( this.state.statdResources, function( resource ) {
             var returnArrayMember = {
                 values : statdData[ resource.variable ]
               , key    : resource.name
@@ -348,7 +382,7 @@ var StatdWidgetContentHandler = React.createClass({
           break;
 
         case "pie":
-          _.forEach( this.props.statdResources, function( resource ) {
+          _.forEach( this.state.statdResources, function( resource ) {
             var returnArrayMember = {
                 value : statdData[ resource.variable ][ (statdData[ resource.variable ].length - 1) ][1]
               , label : resource.name
@@ -398,25 +432,58 @@ var StatdWidgetContentHandler = React.createClass({
     }
 
   , render: function() {
-      if ( this.state.errorMode ) {
+  	console.log(i);
+  	i++;
+    if ( this.state.errorMode ) {
+        console.log("error");
         return (
-          <div className="widget-error-panel">
-            <h4>Something went sideways.</h4>
-            { this.props.statdResources.map( this.returnErrorMsgs, this ) }
-          </div>
+        <Widget
+          positionX = { this.props.positionX }
+          positionY = { this.props.positionY }
+          title     = { this.props.title }
+          size      = { this.props.size } >
+
+	        <div className="widget-error-panel">
+	          	<h4>Something went sideways.</h4>
+	        	{ this.state.statdResources.map( this.returnErrorMsgs, this ) }
+	        </div>
+
+	    </Widget>
         );
-      } else {
+    } else if (this.state.statdDataLoaded && this.state.chartTypes.length > 0) {
+    	console.log("svg");
         return (
-          <div className="widget-content">
-            <svg ref="svg" style={svgStyle}></svg>
-            <div ref="controls" style={divStyle}>
-              { this.props.chartTypes.map( this.returnGraphOptions ) }
-            </div>
-          </div>
+        <Widget
+          positionX = { this.props.positionX }
+          positionY = { this.props.positionY }
+          title     = { this.props.title }
+          size      = { this.props.size } >
+
+	        <div className="widget-content">
+	        	<svg ref="svg" style={svgStyle}></svg>
+	            <div ref="controls" style={divStyle}>
+	              { this.state.chartTypes.map( this.returnGraphOptions ) }
+	            </div>
+	        </div>
+
+	    </Widget>
+        );
+    } else {
+    	console.log("load");
+      	return (
+      	<Widget
+          positionX = { this.props.positionX }
+          positionY = { this.props.positionY }
+          title     = { this.props.title }
+          size      = { this.props.size } >
+
+	        <div className="widget-error-panel">
+	          	<h4>Loading...</h4>
+	        </div>
+
+	    </Widget>
         );
       }
     }
+};
 
-});
-
-module.exports = StatdWidgetContentHandler;

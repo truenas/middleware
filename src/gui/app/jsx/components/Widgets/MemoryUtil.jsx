@@ -1,12 +1,11 @@
 "use strict";
 
-var React = require("react");
-
-var Widget             = require("../Widget");
-var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
+var React  = require("react");
 
 var SystemMiddleware = require("../../middleware/SystemMiddleware");
 var SystemStore      = require("../../stores/SystemStore");
+
+var chartHandler     = require("./mixins/chartHandler");
 
 var statdResources = [
     {
@@ -43,8 +42,15 @@ var statdResources = [
 
 var MemoryUtil = React.createClass({
 
-    getInitialState: function() {
-      return { hardware: SystemStore.getSystemInfo( "hardware" ) };
+  mixins: [ chartHandler ]
+
+  , getInitialState: function() {
+      return {    hardware: SystemStore.getSystemInfo( "hardware" )
+                , statdResources : statdResources
+                , chartTypes : []
+                , widgetIdentifier : "MemoryUtil"
+
+             };
     }
 
   , componentDidMount: function() {
@@ -68,60 +74,52 @@ var MemoryUtil = React.createClass({
     }
 
   , handleChange: function() {
-      this.setState({ hardware: SystemStore.getSystemInfo( "hardware" ) });
+      var newState = {};
+      newState.hardware = SystemStore.getSystemInfo( "hardware" );
+
+
+      console.log("hw");
+      console.log(newState.hardware);
+      if (newState.hardware)
+      {
+
+        newState.chartTypes = [
+                                {
+                                    type    : "stacked"
+                                  , primary : this.primaryChart("stacked")
+                                  , y: function(d) {
+                                      if ( d === undefined ) {
+                                        return 0;
+                                      } else if ( d[1] === "nan" ) {
+                                        return null;
+                                      } else {
+                                        return Math.round( ( ( ( d[1]/1024 )/1024 ) * 100 ) / 100 ); }
+                                      }
+                                }
+                              , {
+                                    type    : "line"
+                                  , primary : this.primaryChart("line")
+                                  , forceY  : [0, 100]
+                                  , yUnit   : "%"
+                                  , y: function(d) {
+                                      if( d[1] === "nan" ) {
+                                        return null;
+                                      } else {
+                                        return Math.round( ( ( ( d[1] / newState.hardware["memory-size"] )*100 )*100 )/100 );
+                                      }
+                                    }.bind( this )
+                                }
+                              , {
+                                    type   : "pie"
+                                  , primary: this.primaryChart("pie")
+                                }
+                            ];
+
+          this.setState( newState );
+      }
     }
 
-  , render: function() {
 
-      var widgetIdentifier = "MemoryUtil";
-      var chartTypes = [
-            {
-                type    : "stacked"
-              , primary : this.primaryChart("stacked")
-              , y: function(d) {
-                  if ( d === undefined ) {
-                    return 0;
-                  } else if ( d[1] === "nan" ) {
-                    return null;
-                  } else {
-                    return Math.round( ( ( ( d[1]/1024 )/1024 ) * 100 ) / 100 ); }
-                  }
-            }
-          , {
-                type    : "line"
-              , primary : this.primaryChart("line")
-              , forceY  : [0, 100]
-              , yUnit   : "%"
-              , y: function(d) {
-                  if( d[1] === "nan" ) {
-                    return null;
-                  } else {
-                    return Math.round( ( ( ( d[1] / this.state.hardware["memory-size"] )*100 )*100 )/100 );
-                  }
-                }.bind( this )
-            }
-          , {
-                type   : "pie"
-              , primary: this.primaryChart("pie")
-            }
-        ];
-
-      return (
-        <Widget
-          positionX = { this.props.positionX }
-          positionY = { this.props.positionY }
-          title     = { this.props.title }
-          size      = { this.props.size } >
-
-          <StatdWidgetContentHandler
-            widgetIdentifier  = { widgetIdentifier }
-            statdResources    = { statdResources }
-            chartTypes        = { chartTypes } >
-          </StatdWidgetContentHandler>
-
-        </Widget>
-      );
-    }
 
 });
 
