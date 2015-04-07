@@ -24,6 +24,8 @@ var GroupsStore      = require("../../../stores/GroupsStore");
 
 var ShellMiddleware = require("../../../middleware/ShellMiddleware");
 
+var inputHelpers = require("../../../components/mixins/inputHelpers");
+
 // OVERVIEW PANE
 var UserView = React.createClass({
 
@@ -127,7 +129,9 @@ var UserView = React.createClass({
 // EDITOR PANE
 var UserEdit = React.createClass({
 
-    propTypes: {
+      mixins: [inputHelpers]
+
+    , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
@@ -234,6 +238,7 @@ var UserEdit = React.createClass({
       });
     }
 
+    // TODO: Turn this into a mixin so it can be used by any edit view.
   , handleValueChange: function( key, event ) {
       var newLocallyModified = this.state.locallyModifiedValues;
       var inputValue;
@@ -338,153 +343,99 @@ var UserEdit = React.createClass({
             <TWBS.Row>
               <TWBS.Col xs = {8}>
                 {/* User id */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "id" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "id" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "id"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "id" )
-                            )
-                }
+                <TWBS.Input type             = "text"
+                            label            = { "User ID" }
+                            value            = { this.state.mixedValues["id"] ? this.state.mixedValues["id"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "id" ) }
+                            key              = { "id" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "id", this.props.dataKeys) } />
                 {/* username */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "username" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "username" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "username"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "username" )
-                            )
-                }
+                <TWBS.Input type             = "text"
+                            label            = { "User Name" }
+                            value            = { this.state.mixedValues["username"] ? this.state.mixedValues["username"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "username" ) }
+                            key              = { "username" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["username"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "username", this.props.dataKeys) } />
                 {/* full_name*/}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "full_name" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "full_name" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "full_name"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "full_name" )
-                            )
-                }
+                <TWBS.Input type             = "text"
+                            label            = { "Full Name" }
+                            value            = { this.state.mixedValues["full_name"] ? this.state.mixedValues["full_name"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "full_name" ) }
+                            key              = { "full_name" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["full_name"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "full_name", this.props.dataKeys) } />
                 {/* email */}
-                  {editorUtil.identifyAndCreateFormElement(
-                        // value
-                        this.state.mixedValues[ "email" ]
-                        // displayKeys
-                      , _.find(this.props.dataKeys, function ( displayKey ){
-                          return (displayKey["key"] === "email" );
-                        }.bind(this) )
-                        // changeHandler
-                      , this.handleValueChange
-                        // key
-                      , "email"
-                        // wasModified
-                      , _.has( this.state.locallyModifiedValues, "email" )
-                    )
-                }
+                  <TWBS.Input type             = "text"
+                            label            = { "email" }
+                            value            = { this.state.mixedValues["email"] ? this.state.mixedValues["email"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "email" ) }
+                            key              = { "email" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["email"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "email", this.props.dataKeys) } />
                 {/* shell */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "shell" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "shell" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "shell"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "shell" )
-                                // shell options
-                              , this.state.shells
-                            )
-                }
+                <TWBS.Input type             = "select"
+                            label            = { "Shell" }
+                            value            = { this.state.mixedValues["shell"] ? this.state.mixedValues["shell"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "shell" ) }
+                            key              = { "shell" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["shell"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "shell", this.props.dataKeys) }>
+                            { this.generateOptionsList( this.state.shells ) }
+                </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
                 {/* locked */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "locked" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "locked" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "locked"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "locked" )
-                            )
-                }
+                <TWBS.Input type             = "checkbox"
+                            label            = { "Locked" }
+                            value            = { this.state.mixedValues["locked"] ? this.state.mixedValues["locked"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "locked" ) }
+                            key              = { "locked" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["locked"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "locked", this.props.dataKeys) } />
                 {/* sudo */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "sudo" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "sudo" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "sudo"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "sudo" )
-                            )
-                }
+                <TWBS.Input type             = "checkbox"
+                            label            = { "sudo" }
+                            value            = { this.state.mixedValues["sudo"] ? this.state.mixedValues["sudo"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "sudo" ) }
+                            key              = { "sudo" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["sudo"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "sudo", this.props.dataKeys) } />
                 {/* password_disabled */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "password_disabled" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "password_disabled" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "password_disabled"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "password_disabled" )
-                            )
-                }
+                <TWBS.Input type             = "checkbox"
+                            label            = { "password_disabled" }
+                            value            = { this.state.mixedValues["password_disabled"] ? this.state.mixedValues["password_disabled"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "password_disabled" ) }
+                            key              = { "password_disabled" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["password_disabled"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "password_disabled", this.props.dataKeys) } />
                 {/* logged-in */}
-                {editorUtil.identifyAndCreateFormElement(
-                                // value
-                                this.state.mixedValues[ "logged-in" ]
-                                // displayKeys
-                              , _.find(this.props.dataKeys, function ( displayKey ){
-                                  return (displayKey["key"] === "logged-in" );
-                                }.bind(this) )
-                                // changeHandler
-                              , this.handleValueChange
-                                // key
-                              , "logged-in"
-                                // wasModified
-                              , _.has( this.state.locallyModifiedValues, "logged-in" )
-                            )
-                }
+                <TWBS.Input type             = "checkbox"
+                            label            = { "logged-in" }
+                            value            = { this.state.mixedValues["logged-in"] ? this.state.mixedValues["logged-in"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "logged-in" ) }
+                            key              = { "logged-in" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["logged-in"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "logged-in", this.props.dataKeys ) } />
               </TWBS.Col>
             </TWBS.Row>
           </TWBS.Grid>
