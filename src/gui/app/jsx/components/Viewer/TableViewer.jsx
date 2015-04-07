@@ -4,16 +4,21 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
-var Router     = require("react-router");
-var Link       = Router.Link;
-var Navigation = Router.Navigation;
+var Router       = require("react-router");
+var Link         = Router.Link;
+var RouteHandler = Router.RouteHandler;
 
+var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
 // Table Viewer
 var TableViewer = React.createClass({
 
-    mixins: [Navigation]
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
 
   , propTypes: {
         viewData     : React.PropTypes.object.isRequired
@@ -41,7 +46,7 @@ var TableViewer = React.createClass({
 
   , handleClickOut: function( event, componentID ) {
       if ( event.dispatchMarker === componentID ) {
-        this.goBack();
+        this.returnToViewerRoot();
       }
     }
 
@@ -50,7 +55,7 @@ var TableViewer = React.createClass({
 
       params[ this.props.viewData.routing["param"] ] = selectionKey;
 
-      this.transitionTo( this.props.viewData.routing["route"], params );
+      this.context.router.transitionTo( this.props.viewData.routing["route"], params );
     }
 
   , changeSortState: function( key, event ) {
@@ -144,15 +149,16 @@ var TableViewer = React.createClass({
     var tableData     = null;
     var editorContent = null;
 
-    if ( this.props.Editor() !== null ) {
+    if ( this.dynamicPathIsActive() ) {
       editorContent = (
         <div className = "overlay-light editor-edit-overlay"
              onClick   = { this.handleClickOut } >
-          <this.props.Editor viewData  = { this.props.viewData }
-                             inputData = { this.props.inputData }
-                             activeKey = { this.props.selectedKey }
-                             ItemView  = { this.props.ItemView }
-                             EditView  = { this.props.EditView } />
+          <RouteHandler
+            viewData  = { this.props.viewData }
+            inputData = { this.props.inputData }
+            activeKey = { this.props.selectedKey }
+            ItemView  = { this.props.ItemView }
+            EditView  = { this.props.EditView } />
         </div>
       );
     }

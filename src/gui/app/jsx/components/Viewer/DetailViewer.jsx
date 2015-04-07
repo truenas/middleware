@@ -195,6 +195,7 @@ var DetailViewer = React.createClass({
           </div>
         );
       }
+
       return (
         <div className = "viewer-detail">
           <div className = "viewer-detail-sidebar">

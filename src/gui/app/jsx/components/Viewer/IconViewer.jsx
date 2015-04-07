@@ -2,16 +2,21 @@
 
 var React = require("react");
 
-var Router     = require("react-router");
-var Link       = Router.Link;
-var Navigation = Router.Navigation;
+var Router       = require("react-router");
+var Link         = Router.Link;
+var RouteHandler = Router.RouteHandler;
 
+var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
 // Icon Viewer
 var IconViewer = React.createClass({
 
-    mixins: [Navigation]
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
 
   , propTypes: {
         viewData     : React.PropTypes.object.isRequired
@@ -25,7 +30,7 @@ var IconViewer = React.createClass({
 
   , handleClickOut: function( event, componentID ) {
       if ( event.dispatchMarker === componentID ) {
-        this.goBack();
+        this.returnToViewerRoot();
       }
     }
 
@@ -68,15 +73,16 @@ var IconViewer = React.createClass({
       var groupedIconItems   = null;
       var remainingIconItems = null;
 
-      if ( this.props.Editor ) {
+      if ( this.dynamicPathIsActive() ) {
         editorContent = (
           <div className = "overlay-light editor-edit-overlay"
                onClick   = { this.handleClickOut } >
-            <this.props.Editor viewData  = { this.props.viewData }
-                               inputData = { this.props.inputData }
-                               activeKey = { this.props.selectedKey }
-                               ItemView  = { this.props.ItemView }
-                               EditView  = { this.props.EditView } />
+            <RouteHandler
+              viewData  = { this.props.viewData }
+              inputData = { this.props.inputData }
+              activeKey = { this.props.selectedKey }
+              ItemView  = { this.props.ItemView }
+              EditView  = { this.props.EditView } />
           </div>
         );
       }
