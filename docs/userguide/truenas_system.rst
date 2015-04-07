@@ -1026,13 +1026,13 @@ This section provides an overview of the failover screen that is available in th
 assist you in the configuration and testing of a failover that is suited to your specific environment.
 **Do not attempt to configure failover on your own as it will fail and may render existing shares or volumes inaccessible.**
 
-The options available in :menuselection:`System --> Failovers --> View Failovers --> Add Failover` are shown in Figure 5.11a and described in Table 5.11a.
+The options available in :menuselection:`System --> Failovers --> Create Failover` are shown in Figure 5.11a and described in Table 5.11a.
 
 **Figure 5.11a: Creating a Failover**
 
-|failover1.png|
+|failover1a.png|
 
-.. |failover1.png| image:: images/failover1.png
+.. |failover1a.png| image:: images/failover1a.png
 
 **Table 5.11a: Options When Creating a Failover**
 
@@ -1046,16 +1046,7 @@ The options available in :menuselection:`System --> Failovers --> View Failovers
 | CARP        | drop-down menu | select the CARP that was previously created in Network -> CARPs -> Add CARP |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
-| IP Address  | string         | input the IP address associated with the existing CARP                      |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Disabled    | checkbox       | check to disable the failover without deleting the configuration            |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Master      | checkbox       | when checked, indicates that this is the master node                        |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Timeout     | integer        | seconds to wait before a network event will cause a failover                |
+| Remote IP   | string         | input the IP address associated with the existing CARP                      |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
 
