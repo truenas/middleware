@@ -180,7 +180,12 @@ var DetailViewer = React.createClass({
         );
       }
 
-        if ( this.dynamicPathIsActive() ) {
+      if ( this.addingEntity() ) {
+        editorContent = (
+          <RouteHandler
+            viewData  = { this.props.viewData } />
+        );
+      } else if ( this.dynamicPathIsActive() ) {
         editorContent = (
           <RouteHandler
             viewData  = { this.props.viewData }

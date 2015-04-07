@@ -9,7 +9,16 @@ var _ = require("lodash");
 
 module.exports = {
 
-    dynamicPathIsActive: function() {
+    addingEntity: function() {
+      if ( _.endsWith( this.context.router.getCurrentPathname(), this.props.viewData.routing.addentity ) ) {
+        return true;
+      } else {
+        return false;
+      }
+
+    }
+
+  , dynamicPathIsActive: function() {
       if ( this.context.router.getCurrentParams()[ this.props.viewData.routing.param ] ) {
         return true;
       } else {
