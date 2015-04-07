@@ -14,6 +14,10 @@
 #
 import_zpools()
 {
+	kldload dtraceall
+	dtrace -qn 'zfs-dbgmsg{printf("\r                                                                     \r%s", stringof(arg0))}' &
+	echo "Beginning ZFS volume imports"
+	echo
 	local IFS="|"
 	local f="vol_name vol_guid"
 	local sf=$(var_to_sf $f)
@@ -36,10 +40,14 @@ import_zpools()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM storage_volume WHERE vol_fstype = 'ZFS' AND vol_encrypt < 2" | \
 	while eval read -r $f; do
 		if [ -n "${vol_guid}" ]; then
+			echo "	Importing ${vol_guid}"
+			echo
 			[ -e /data/zfs/zpool.cache.saved ] && /sbin/zpool import -c /data/zfs/zpool.cache.saved -o cachefile=none -R /mnt -f ${vol_guid} || /sbin/zpool import -o cachefile=none -R /mnt -f ${vol_guid}
 			rc=$?
 		fi
 		if [ ${rc} -ne 0 ]; then
+			echo "	Importing ${vol_name}"
+			echo
 			/sbin/zpool import -o cachefile=none -R /mnt -f ${vol_name}
 		fi
 		/sbin/zpool set cachefile=/data/zfs/zpool.cache ${vol_name}
@@ -61,6 +69,9 @@ import_zpools()
 			fi
 		fi
 	done
+	pkill -9 dtrace
+	echo
+	echo "ZFS volume imports complete"
 }
 
 name="ix-zfs"
