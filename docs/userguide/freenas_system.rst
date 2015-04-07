@@ -385,6 +385,8 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
              was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
              option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
 
+.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
+
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
 **Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
