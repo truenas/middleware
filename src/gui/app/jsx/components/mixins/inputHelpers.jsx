@@ -27,4 +27,24 @@ module.exports = {
         return (dataKey.key === attribute);
       }, this).mutable);
     }
+
+    // Returns an object containin the mutable fields from the item in nextProps.
+    // A malformed nextProps will result in an empty array.
+  , removeReadOnlyFields: function(item, keys) {
+      var outgoingItem = {};
+      // Used to put all the old fields into the new object, unless they're immutable
+      outgoingItem = _.pick( item, function (value, key) {
+        if (keys[key]) {
+          return keys[key]["mutable"];
+        } else {
+          // Do not accept unknown properties from the Middleware.
+          // TODO: If we want to accept arbitrary properies, we will need more
+          // sophisticated handling here.
+          console.warn("Received an unknown property \"" + key + "\" from the Middleware Server.");
+          console.warn(this.props.item);
+          return false;
+        }
+      }, this  );
+      return outgoingItem;
+    }
 };
