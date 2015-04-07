@@ -25,6 +25,7 @@ var GroupsStore      = require("../../../stores/GroupsStore");
 var ShellMiddleware = require("../../../middleware/ShellMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
+var userMixins   = require("../../../components/mixins/userMixins");
 
 // OVERVIEW PANE
 var UserView = React.createClass({
@@ -129,7 +130,8 @@ var UserView = React.createClass({
 // EDITOR PANE
 var UserEdit = React.createClass({
 
-      mixins: [inputHelpers]
+      mixins: [  inputHelpers
+               , userMixins ]
 
     , propTypes: {
       item: React.PropTypes.object.isRequired
@@ -147,45 +149,19 @@ var UserEdit = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
-      // TODO: How are we gonna deal with nologin?
-      ShellMiddleware.requestAvailableShells( function( shells ) {
-        var systemShells = _.map(shells, function( shell ){
-          return ({   name     : shell
-                    , selected : shell === this.props.item["shell"]
-                  }
-          );
-        }, this);
-        this.setState({ shells: systemShells });
-      }.bind( this ) );
-    }
-
-    // Remote state is set at load time and reset upon successful changes.
+    // Remote state is set at load time and reset upon successful changes
   , setRemoteState: function ( incomingProps ) {
-      var nextRemoteState = {};
+      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, incomingProps.dataKeys);
 
-      _.forEach( incomingProps["item"], function( value, key ) {
-        var itemKey = _.find(incomingProps["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if (!itemKey) {
-          // Do not accept unknown properties from the Middleware.
-          // TODO: If we want to accept arbitrary properies, we will need more
-          // sophisticated handling here.
-          console.warn("Received an unknown property \"" + key + "\" from the Middleware Server.");
-          console.warn(this.props.item);
-        } else {
-          nextRemoteState[ key ] = this.props.item[ key ];
-        }
-      }.bind(this) );
-
-      if (!nextRemoteState) {
-        console.error("Remote State could not be created! Check the incoming props:");
-        console.error(incomingProps);
+      if (_.isEmpty(nextRemoteState)) {
+        console.warn("Remote State could not be created! Check the incoming props:");
+        console.warn(incomingProps);
       }
 
+      // TODO: What exactly should be returned if setting the remote state is
+      // going to fail?
       return nextRemoteState;
-  }
+    }
 
   , componentWillReceiveProps: function( nextProps ) {
       var newRemoteModified  = {};
@@ -196,20 +172,12 @@ var UserEdit = React.createClass({
       // props and the initial ones. Read-only and unknown values are ignored.
       // TODO: Use this to show alerts for remote changes on sections the local
       // administrator is working on.
-      _.forEach( nextProps.item, function( value, key ) {
-        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if (!itemKey) {
-          // Do not accept unknown properties from the Middleware.
-          // TODO: If we want to accept arbitrary properies, we will need more
-          // sophisticated handling here.
-          console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
-          console.error(nextProps.item);
-        } else if ( !_.isEqual( this.state.remoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
-          newRemoteModified[ key ] = nextProps.item[ key ];
-        }
-      }.bind(this) );
+      console.log(nextProps["item"]);
+      var mismatchedRemoteFields = _.pick(nextProps.item, function( value, key ) {
+        return _.isEqual( this.state.remoteState[ key ], value );
+      }, this);
+
+      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.dataKeys);
 
       // remoteState records the item as it was when the view was first
       // opened. This is used to mark changes that have occurred remotely since
@@ -278,6 +246,8 @@ var UserEdit = React.createClass({
       });
     }
 
+    // TODO: Validate that input values are legitimate for their field. For example,
+    // id should be a number.
   , submitUserUpdate: function() {
       var valuesToSend = {};
 
@@ -338,7 +308,7 @@ var UserEdit = React.createClass({
         </TWBS.ButtonToolbar>;
 
       inputForm =
-        <form className="form-horizontal">
+        <form className = "form-horizontal">
           <TWBS.Grid fluid>
             <TWBS.Row>
               <TWBS.Col xs = {8}>
