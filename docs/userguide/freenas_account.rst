@@ -62,7 +62,8 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 | Group Name          | string    | mandatory                                                                                                                |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo         | checkbox  | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                    |
+| Permit Sudo         | checkbox  | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_; when using sudo, a user will be   |
+|                     |           | prompted for their own password                                                                                          |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | Allow repeated GIDs | checkbox  | allows multiple groups to share the same group id (GID); this is useful when a GID is already associated with the UNIX   |
@@ -207,7 +208,8 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | box will grey out "Disable password login" which is mutually exclusive                                                                                |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                                                 |
+| Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_; when using sudo, a user will be prompted for their own         |
+|                            |                 | password                                                                                                                                              |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Microsoft Account          | checkbox        | check this box if the user will be connecting from a Windows 8, 8.1, 10, or higher system                                                             |
