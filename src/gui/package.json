@@ -12,6 +12,7 @@
     "react-bootstrap": "0.20.x",
     "react-router": "0.13.x",
     "react-tools": "^0.12.2",
+    "round": "^1.0.1",
     "term.js": "0.0.4",
     "when": "3.7.x"
   },

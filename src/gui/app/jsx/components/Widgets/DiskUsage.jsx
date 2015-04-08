@@ -5,7 +5,9 @@ var React   =   require("react");
 var ZfsMiddleware = require("../../middleware/ZfsMiddleware");
 var ZfsStore      = require("../../stores/ZfsStore");
 
-var chartHandler     = require("./mixins/chartHandler");
+var chartHandler  = require("./mixins/chartHandler");
+
+var round         = require("round");
 
 var DiskUsage = React.createClass({
 
@@ -17,7 +19,7 @@ var DiskUsage = React.createClass({
       , statdResources:    []
       , chartTypes:        [  {   type:"line"
                                 , primary: this.primaryChart("line")
-                                , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round((d[1]/1024) * 100) / 100); } }
+                                , y:function(d) { if(d[1] === "nan") { return null; } else { return ( round( d[1]/1024, 0.01 ) ); } }
                               }
                            ]
       , widgetIdentifier : "DiskUsage"

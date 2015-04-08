@@ -10,6 +10,8 @@ var SystemStore      = require("../../stores/SystemStore");
 var UpdateMiddleware = require("../../middleware/UpdateMiddleware");
 var UpdateStore      = require("../../stores/UpdateStore");
 
+var round            = require("round");
+
 var SystemInfo = React.createClass({
 
   getInitialState: function() {
@@ -53,7 +55,7 @@ var SystemInfo = React.createClass({
     }
 
   , render: function() {
-    var memSize = (this.state.hardware["memory-size"] / 1024) / 1024;
+    var memSize = round((this.state.hardware["memory-size"] / 1024) / 1024, 1);
     return (
       <Widget
         positionX  =  {this.props.positionX}

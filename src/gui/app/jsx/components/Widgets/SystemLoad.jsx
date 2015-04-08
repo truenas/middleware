@@ -2,7 +2,9 @@
 
 var React            =   require("react");
 
-var chartHandler     = require("./mixins/chartHandler");
+var chartHandler     =   require("./mixins/chartHandler");
+
+var round            =   require("round");
 
 var SystemLoad = React.createClass({
 
@@ -16,11 +18,11 @@ var SystemLoad = React.createClass({
                          ]
     , chartTypes:        [  {   type:"line"
                               , primary: this.primaryChart("line")
-                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100); } }
+                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (round(d[1], 0.01)); } }
                             }
                            ,{   type:"stacked"
                               , primary: this.primaryChart("stacked")
-                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100); } }
+                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (round(d[1], 0.01)); } }
                             }
                          ]
     , widgetIdentifier : "SystemLoad"

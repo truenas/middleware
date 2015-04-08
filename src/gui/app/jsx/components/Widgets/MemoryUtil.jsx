@@ -7,6 +7,8 @@ var SystemStore      = require("../../stores/SystemStore");
 
 var chartHandler     = require("./mixins/chartHandler");
 
+var round            = require("round");
+
 var statdResources = [
     {
         variable    : "wiredData"
@@ -90,7 +92,7 @@ var MemoryUtil = React.createClass({
                                       } else if ( d[1] === "nan" ) {
                                         return null;
                                       } else {
-                                        return Math.round( ( ( ( d[1]/1024 )/1024 ) * 100 ) / 100 ); }
+                                        return round( ( d[1]/1024 )/1024, 0.01 ); }
                                       }
                                 }
                               , {
@@ -102,7 +104,7 @@ var MemoryUtil = React.createClass({
                                       if( d[1] === "nan" ) {
                                         return null;
                                       } else {
-                                        return Math.round( ( ( ( d[1] / newState.hardware["memory-size"] )*100 )*100 )/100 );
+                                        return round(( ( d[1] / newState.hardware["memory-size"] )*100 ), 0.01 );
                                       }
                                     }.bind( this )
                                 }

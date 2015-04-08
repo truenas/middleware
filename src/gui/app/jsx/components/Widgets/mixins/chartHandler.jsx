@@ -319,7 +319,7 @@ module.exports = {
             .options({
                 margin             : { top: 0, right: 0, bottom: 0, left: 0 }
               , x                  : graphTypeObject.x || function(d) { return d.label; }
-              , y                  : graphTypeObject.y || function(d) { if(d.value === "nan") { return 0; } else { return d.value; } }
+              , y                  : graphTypeObject.y || function(d) { if(d.value === undefined || (d.value).toString().toLowerCase() === "nan") { return null; } else { return d.value; } }
               , color              : colors
               , showLabels         : true
               , labelThreshold     : 1
