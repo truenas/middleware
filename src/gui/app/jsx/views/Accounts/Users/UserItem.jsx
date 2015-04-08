@@ -205,20 +205,7 @@ var UserEdit = React.createClass({
     // TODO: Turn this into a mixin so it can be used by any edit view.
   , handleValueChange: function( key, event ) {
       var newLocallyModified = this.state.locallyModifiedValues;
-      var inputValue;
-
-      // Use different logic to interpret input from different kinds of fields.
-      // TODO: Cover every field in use with different cases as needed.
-      switch (event.target.type) {
-
-        case "checkbox" :
-          inputValue = event.target.checked;
-          break;
-
-        default:
-          inputValue = event.target.value;
-          break;
-      }
+      var inputValue = this.processFormInput( event );
 
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we
