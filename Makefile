@@ -41,6 +41,7 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .export BUILD_TOOLS
 .export PYTHONPATH
 .export MAKEOBJDIRPREFIX
+.export BUILD_STARTED
 
 .if defined(NANO_ARCH)
 .export NANO_ARCH
@@ -64,7 +65,8 @@ check-root:
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 
 build: git-verify portsjail ports
-	@build/tools/build.py
+	@build/tools/install-world.py
+	@build/tools/install-ports.py
 
 checkout: git-verify
 	@build/tools/checkout.py
@@ -180,15 +182,10 @@ tag:
 	build/apply_tag.sh
 
 build-gui: 
-	build/ports/build-gui.sh
+	@build/tools/build-gui.py
 
 ports: check-root build-gui
-	build/ports/create-poudriere-conf.sh
-	build/ports/create-poudriere-make.conf.sh
-	build/ports/prepare-jail.sh
-	build/ports/fetch-ports-srcs.sh
-	build/ports/create-ports-list.sh
-	build/ports/build-ports.sh
+	@build/tools/build-ports.py
 
 portsjail:
 	@build/tools/build-os.py

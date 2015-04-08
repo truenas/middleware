@@ -26,19 +26,114 @@
 #
 #####################################################################
 
+import os
+import sys
+from dsl import load_file
+from utils import sh, sh_str, env, e, objdir, pathjoin, setfile, setup_env, template, debug, on_abort, info
+
+
+setup_env()
+makejobs = 1
+dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
+reposconf = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
+jailconf = load_file('${BUILD_CONFIG}/jail.pyd', os.environ)
+
+portslist = e('${POUDRIERE_ROOT}/etc/ports.conf')
+portoptions = e('${POUDRIERE_ROOT}/etc/poudriere.d/options')
+
+
+def calculate_make_jobs():
+    global makejobs
+
+    jobs = sh_str('sysctl -n kern.smp.cpus')
+    if not jobs:
+        makejobs = 2
+
+    makejobs = int(jobs) + 1
+    debug('Using {0} make jobs', makejobs)
+
 
 def create_poudriere_config():
-    pass
+    conf = pathjoin('${POUDRIERE_ROOT}', 'etc/poudriere.conf')
+    setfile(conf, template('${BUILD_CONFIG}/templates/poudriere.conf', {
+        'ports_repo': reposconf['repository']['ports']['path'],
+        'ports_branch': reposconf['repository']['ports']['branch'],
+        'ports_distfiles_cache': e('${MAKEOBJDIRPREFIX}/ports/distfiles')
+    }))
+
+    tree = e('${POUDRIERE_ROOT}/etc/poudriere.d/ports/p')
+    sh('mkdir -p', tree)
+    setfile(pathjoin(tree, 'mnt'), env('PORTS_ROOT'))
+    setfile(pathjoin(tree, 'method'), 'git')
 
 
 def create_make_conf():
-    pass
+    makeconf = e('${POUDRIERE_ROOT}/etc/poudriere.d/make.conf')
+    setfile(makeconf, template('${BUILD_CONFIG}/templates/poudriere-make.conf', {
+
+    }))
+
+
+def create_ports_list():
+    f = open(portslist, 'w')
+    for port in dsl['port'].values():
+        port_und = port['name'].replace('/', '_')
+        options_path = pathjoin(portoptions, port_und)
+        f.write('{0}\n'.format(port['name']))
+        sh('rm -rf', options_path)
+        sh('mkdir -p', options_path)
+
+        if 'options' in port:
+            opt = open(pathjoin(options_path, 'options'), 'w')
+            for o in port['options']:
+                opt.write('{0}\n'.format(o))
+
+            opt.close()
+
+    f.close()
+
+
+def prepare_jail():
+    jailname = 'ja'
+    basepath = e('${POUDRIERE_ROOT}/etc/poudriere.d/jails/${jailname}')
+
+    setfile(e('${basepath}/method'), 'git')
+    setfile(e('${basepath}/mnt'), e('${JAIL_DESTDIR}'))
+    setfile(e('${basepath}/version'), e('${FREEBSD_RELEASE_VERSION}'))
+    setfile(e('${basepath}/arch'), e('${BUILD_ARCH}'))
+
+    sh(e("jail -U root -c name=${jailname} path=${JAIL_DESTDIR} command=/sbin/ldconfig -m /lib /usr/lib /usr/lib/compat"))
+
+
+def prepare_env():
+    for cmd in jailconf.get('copy', []).values():
+        sh('cp -a', cmd['source'], os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:]))
+
+    for cmd in jailconf.get('link', []).values():
+        flags = '-o {0}'.format(cmd['flags']) if 'flags' in cmd else ''
+        sh('mount -t nullfs', flags, cmd['source'], os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:]))
+
+
+def cleanup_env():
+    for cmd in jailconf.get('link', []).values():
+        sh('umount', cmd['source'])
 
 
 def run():
-    pass
+    sh('poudriere -e ${POUDRIERE_ROOT}/etc bulk -w -J', str(makejobs), '-f', portslist, '-j ja -p p')
 
 
-if __name__ == '__name__':
+if __name__ == '__main__':
+    if env('SKIP_PORTS'):
+        info('Skipping ports build as instructed by setting SKIP_PORTS')
+        sys.exit(0)
+
+    on_abort(cleanup_env)
+    calculate_make_jobs()
     create_poudriere_config()
     create_make_conf()
+    create_ports_list()
+    prepare_jail()
+    prepare_env()
+    run()
+    cleanup_env()

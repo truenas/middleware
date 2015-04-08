@@ -25,3 +25,41 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+
+
+import os
+import glob
+from dsl import load_file
+from utils import sh, setup_env, objdir, info, debug, error, setfile, e, on_abort
+
+
+setup_env()
+dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
+
+
+def mount_packages():
+    sh('mkdir -p ${WORLD_DESTDIR}/usr/ports/packages')
+    sh('mount -t nullfs ${MAKEOBJDIRPREFIX}/ports/packages/ja-p ${WORLD_DESTDIR}/usr/ports/packages')
+
+
+def umount_packages():
+    sh('umount ${WORLD_DESTDIR}/usr/ports/packages')
+
+
+def create_pkgng_configuration():
+    sh('mkdir -p ${WORLD_DESTDIR}/usr/local/etc/pkg/repos')
+    for i in glob.glob(e('${BUILD_CONFIG/templates/pkg-repos/*')):
+        sh('cp ${BUILD_CONFIG}/templates/pkg-repos/${i} ${WORLD_DESTDIR}/usr/local/etc/pkg/repos/${i}')
+
+
+def install_ports():
+    pkgs = ' '.join(dsl['port'].keys())
+    sh(e('chroot ${WORLD_DESTDIR} /bin/sh -c "env ASSUME_ALWAYS_YES=yes pkg install -r local -f ${pkgs}"'))
+
+
+if __name__ == '__main__':
+    on_abort(umount_packages)
+    mount_packages()
+    create_pkgng_configuration()
+    install_ports()
+    umount_packages()

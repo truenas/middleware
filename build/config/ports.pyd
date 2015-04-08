@@ -23,5 +23,5 @@
 # SUCH DAMAGE.
 #
 
-include("ports-freenas.pyd")
-include("ports-system.pyd")
+include("${BUILD_CONFIG}/ports-freenas.pyd")
+include("${BUILD_CONFIG}/ports-system.pyd")

@@ -27,6 +27,7 @@
 #####################################################################
 
 import os
+import sys
 from dsl import load_file
 from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
 
@@ -57,7 +58,7 @@ def calculate_make_jobs():
 def create_make_conf_build():
     conf = open(makeconfbuild, 'w')
     for k, v in dsl['make_conf_build'][0].items():
-        conf.write('{0}={1}'.format(k, v))
+        conf.write('{0}={1}\n'.format(k, v))
 
     conf.close()
 
@@ -73,7 +74,7 @@ def create_kernel_config():
 
 
 def buildkernel():
-    modules = ','.join(dsl['kernel_module'])
+    modules = ' '.join(dsl['kernel_module'])
     info('Building kernel from ${{TRUEOS_ROOT}}')
     info('Log file: {0}', kernlog)
     debug('Kernel configuration file: {0}', kernconf)
@@ -85,9 +86,9 @@ def buildkernel():
         "-C ${TRUEOS_ROOT}",
         "NO_KERNELCLEAN=YES",
         "__MAKE_CONF={0}".format(makeconfbuild),
-        "KERNCONFDIR=".format(os.path.dirname(kernconf)),
+        "KERNCONFDIR={0}".format(os.path.dirname(kernconf)),
         "KERNCONF={0}".format(os.path.basename(kernconf)),
-        "MODULES_OVERRIDE={0}".format(modules),
+        "MODULES_OVERRIDE='{0}'".format(modules),
         "buildkernel",
         log=kernlog
     ) != 0:
@@ -112,6 +113,10 @@ def buildworld():
 
 
 if __name__ == '__main__':
+    if env('SKIP_OS'):
+        info('Skipping buildworld & buildkernel as instructed by setting SKIP_OS')
+        sys.exit(0)
+
     calculate_make_jobs()
     create_make_conf_build()
     create_kernel_config()

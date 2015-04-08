@@ -44,7 +44,7 @@ kernel_module("iscsi")
 if PRODUCT == "TrueNAS":
 	kernel_module("hwpmc", "ipdivert", "ipfw", "ispfw", "linprocfs", "syscons/blank")
 else:
-	kernel_module("ctl", "cxgbe/t4_firmware", "cxgbe/t5_firmware")
+	#kernel_module("ctl", "cxgbe/t4_firmware", "cxgbe/t5_firmware")
 	kernel_module("syscons")
 	kernel_module("netgraph/ether", "netgraph/socket")
 fi
@@ -93,4 +93,3 @@ make_conf_build(
     NOPORTDOCS="yes"
 #    LOCAL_DIRS=LOCAL_DIRS
 )
-

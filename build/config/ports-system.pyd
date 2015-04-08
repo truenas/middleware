@@ -48,18 +48,26 @@ port(name="ftp/proftpd")
 port(name="misc/cpuid")
 port(name="net-mgmt/clog")
 port(name="net-mgmt/sipcalc")
-if ! is_truenas ; then
-	port(name="net/vblade")
-	port(name="emulators/virtualbox-ose-kmod") OPTIONS_FILE_SET+=VIMAGE
-fi
+
+if LABEL != "TrueNAS":
+    port(name="net/vblade")
+    port(name="emulators/virtualbox-ose-kmod", options=["OPTIONS_FILE_SET+=VIMAGE"])
+
 port(name="security/libgpg-error")
 port(name="security/libgcrypt")
 port(name="databases/db48")
 port(name="security/cyrus-sasl2-gssapi")
 port(name="net/openldap24-sasl-client")
 port(name="net/smbldap-tools")
-port(name="net/rsync") OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UNSET+=FLAGS
-port(name="lang/python27") OPTIONS_FILE_UNSET+=NLS OPTIONS_FILE_SET+=DEBUG
+port(name="net/rsync", options=[
+    "OPTIONS_FILE_SET+=ACL",
+    "OPTIONS_FILE_SET+=ICONV",
+    "OPTIONS_FILE_UNSET+=FLAGS"
+])
+port(name="lang/python27", options=[
+    "OPTIONS_FILE_UNSET+=NLS",
+    "OPTIONS_FILE_SET+=DEBUG"
+])
 port(name="lang/python2")
 port(name="lang/python")
 port(name="lang/cython")
@@ -68,28 +76,46 @@ port(name="lang/cython")
 port(name="dns/py-bonjour")
 port(name="dns/py-dnspython")
 port(name="devel/tevent")
-port(name="devel/talloc") MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
+port(name="devel/talloc", options=["MAKE_JOBS_UNSAFE=y", "MAKE_JOBS_NUMBER=1"])
 port(name="devel/libexecinfo")
 port(name="devel/popt")
-port(name="databases/tdb") MAKE_JOBS_UNSAFE=y MAKE_JOBS_NUMBER=1
+port(name="databases/tdb", options=["MAKE_JOBS_UNSAFE=y", "MAKE_JOBS_NUMBER=1"])
 port(name="sysutils/libsunacl")
 port(name="security/pam_ldap")
 port(name="security/pam_mkhomedir")
-port(name="shells/bash") OPTIONS_FILE_UNSET+=NLS
+port(name="shells/bash", options=["OPTIONS_FILE_UNSET+=NLS"])
 port(name="shells/ksh93")
 port(name="shells/mksh")
 port(name="shells/zsh")
-port(name="shells/scponly") OPTIONS_FILE_SET+=GFTP OPTIONS_FILE_SET+=RSYNC OPTIONS_FILE_SET+=SCP OPTIONS_FILE_SET+=WINSCP
+port(name="shells/scponly", options=[
+    "OPTIONS_FILE_SET+=GFTP",
+    "OPTIONS_FILE_SET+=RSYNC",
+    "OPTIONS_FILE_SET+=SCP",
+    "OPTIONS_FILE_SET+=WINSCP"
+])
 port(name="sysutils/e2fsprogs")
 port(name="sysutils/fusefs-libs")
 port(name="devel/libublio")
 port(name="sysutils/fusefs-ntfs")
 port(name="sysutils/smartmontools")
 port(name="net/libdnet")
-port(name="emulators/open-vm-tools-nox11") WITHOUT_ICU=y
-if is_truenas ; then
-	port(name="emulators/qemu") WITHOUT_ADD_AUDIO=y WITHOUT_ALL_TARGETS=y WITHOUT_CDROM_DMA=y WITHOUT_CURL=y WITHOUT_GNS3=y WITHOUT_GNUTLS=y WITHOUT_KQEMU=y WITHOUT_BPF=y WITHOUT_RTL8139_TIMER=y WITHOUT_SAMBA=y WITHOUT_SDL=y
-fi
+port(name="emulators/open-vm-tools-nox11", options=["WITHOUT_ICU=y"])
+
+if LABEL == "TrueNAS":
+	port(name="emulators/qemu", options=[
+	    "WITHOUT_ADD_AUDIO=y",
+	    "WITHOUT_ALL_TARGETS=y",
+	    "WITHOUT_CDROM_DMA=y",
+	    "WITHOUT_CURL=y",
+	    "WITHOUT_GNS3=y",
+	    "WITHOUT_GNUTLS=y",
+	    "WITHOUT_KQEMU=y",
+	    "WITHOUT_BPF=y",
+	    "WITHOUT_RTL8139_TIMER=y",
+	    "WITHOUT_SAMBA=y",
+	    "WITHOUT_SDL=y"
+	])
+
 port(name="databases/sqlite3")
 port(name="databases/py-sqlite3")
 port(name="databases/py-bsddb3")
@@ -125,62 +151,66 @@ port(name="devel/py-asn1-modules")
 port(name="security/openssl")
 port(name="security/py-openssl")
 port(name="security/py-htpasswd")
-port(name="www/apache24") WITH_OPENSSL_PORT=yes
+port(name="www/apache24", options=["WITH_OPENSSL_PORT=yes"])
 port(name="www/mod_mpm_itk")
 port(name="sysutils/syslog-ng")
 port(name="www/nginx", options=[
-    WITH_OPENSSL_PORT=yes \
-    OPTIONS_FILE_SET+=HTTP_SSL \
-    OPTIONS_FILE_SET+=HTTP_UPLOAD \
-    OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS \
-    OPTIONS_FILE_SET+=SPDY \
-    OPTIONS_FILE_SET+=STATUS
-port(name="net-mgmt/net-snmp") OPTIONS_FILE_UNSET+=PERL \
-		OPTIONS_FILE_UNSET+=PERL_EMBEDDED \
-		NET_SNMP_WITHOUT_MIB_MODULE_LIST=sctp-mib
-port(name="sysutils/nut") OPTIONS_FILE_UNSET+="NEON"
+    "WITH_OPENSSL_PORT=yes",
+    "OPTIONS_FILE_SET+=HTTP_SSL",
+    "OPTIONS_FILE_SET+=HTTP_UPLOAD",
+    "OPTIONS_FILE_SET+=HTTP_UPLOAD_PROGRESS",
+    "OPTIONS_FILE_SET+=SPDY",
+    "OPTIONS_FILE_SET+=STATUS"
+])
+port(name="net-mgmt/net-snmp", options=[
+    "OPTIONS_FILE_UNSET+=PERL",
+	"OPTIONS_FILE_UNSET+=PERL_EMBEDDED",
+	"NET_SNMP_WITHOUT_MIB_MODULE_LIST=sctp-mib"
+])
+port(name="sysutils/nut", options=["OPTIONS_FILE_UNSET+=NEON"])
 port(name="textproc/py-libxml2")
 port(name="textproc/expat2")
 port(name="devel/gamin")
 #port(name="devel/gio-fam-backend")
-if is_truenas ; then
+
+if LABEL == "TrueNAS":
 	port(name="devel/bison")
 	port(name="devel/libffi")
-fi
+
 port(name="misc/gnomehier")
 port(name="www/py-httplib2")
 port(name="net/py-oauth2")
 port(name="sysutils/jailme")
 
 
-if [ "${REPORTING}" = 1 ]; then
+if REPORTING:
 	port(name="devel/libstatgrab")
 	port(name="devel/libltdl")
-	port(name="databases/rrdtool") OPTIONS_FILE_UNSET+=PERL_MODULE \
-				OPTIONS_FILE_SET+=PYTHON_MODULE \
-				OPTIONS_FILE_SET+=JSON
 	port(name="net/liboping")
-	port(name="net-mgmt/collectd5") OPTIONS_FILE_UNSET+=BIND OPTIONS_FILE_UNSET+=SNMP \
-				   OPTIONS_FILE_SET+=DISK \
-				   OPTIONS_FILE_SET+=STATGRAB
-fi
+	port(name="net-mgmt/collectd5", options=[
+	    "OPTIONS_FILE_UNSET+=BIND",
+	    "OPTIONS_FILE_UNSET+=SNMP",
+		"OPTIONS_FILE_SET+=DISK",
+		"OPTIONS_FILE_SET+=STATGRAB"
+	])
 
 #FIXME: gobject now requires cairo as build dependency
 port(name="devel/gobject-introspection")
 port(name="devel/py-ipaddr")
 port(name="converters/base64")
-port(name="emulators/mtools") OPTIONS_FILE_UNSET+=X11
+port(name="emulators/mtools", options=["OPTIONS_FILE_UNSET+=X11"])
 port(name="sysutils/arcconf")
 port(name="sysutils/tw_cli")
 port(name="sysutils/megacli")
-if ! is_truenas ; then
+
+if LABEL != "TrueNAS":
 	port(name="sysutils/areca-cli")
 	port(name="sysutils/hptcli")
-fi
-port(name="net/py-ldap2") OPTIONS_FILE_SET+=SASL
+
+port(name="net/py-ldap2", options=["OPTIONS_FILE_SET+=SASL"])
 port(name="sysutils/ataidle")
 port(name="sysutils/gnome_subr")
-port(name="devel/dbus") OPTIONS_FILE_UNSET+=X11
+port(name="devel/dbus", options=["OPTIONS_FILE_UNSET+=X11"])
 port(name="devel/dbus-glib")
 port(name="devel/libdaemon")
 port(name="databases/gdbm")
@@ -188,24 +218,27 @@ port(name="devel/py-lxml")
 port(name="textproc/py-xml")
 port(name="sysutils/dmidecode")
 port(name="sysutils/graid5")
-port(name="sysutils/tmux") OPTIONS_FILE_SET+=LIBEVENT2
+port(name="sysutils/tmux", options=["OPTIONS_FILE_SET+=LIBEVENT2"])
 port(name="devel/py-dbus")
-port(name="net/netatalk3") OPTIONS_FILE_SET+=PAM \
-	OPTIONS_FILE_SET+=ACL \
-	OPTIONS_FILE_SET+=SENDFILE \
-	OPTIONS_FILE_SET+=MDNSRESPONDER \
-	OPTIONS_FILE_UNSET+=AVAHI \
-	OPTIONS_FILE_SET+=LDAP
+port(name="net/netatalk3", options=[
+    "OPTIONS_FILE_SET+=PAM",
+	"OPTIONS_FILE_SET+=ACL",
+	"OPTIONS_FILE_SET+=SENDFILE",
+	"OPTIONS_FILE_SET+=MDNSRESPONDER",
+	"OPTIONS_FILE_UNSET+=AVAHI",
+	"OPTIONS_FILE_SET+=LDAP"
+])
 
 port(name="net/ladvd")
-
 port(name="dns/libidn")
 port(name="ftp/wget")
 port(name="benchmarks/iozone")
 port(name="benchmarks/iperf")
 port(name="benchmarks/netperf")
-port(name="security/sudo") OPTIONS_FILE_SET+=LDAP \
-	OPTIONS_FILE_SET+=SSSD
+port(name="security/sudo", options=[
+    "OPTIONS_FILE_SET+=LDAP",
+	"OPTIONS_FILE_SET+=SSSD"
+])
 port(name="sysutils/ipmitool")
 port(name="devel/py-mimeparse")
 port(name="devel/py-six")
@@ -238,15 +271,16 @@ port(name="devel/nspr")
 port(name="security/nss")
 port(name="security/krb5")
 port(name="security/sssd")
-
-port(name="security/ca_root_nss") OPTIONS_FILE_SET+=ETCSYMLINK
+port(name="security/ca_root_nss", options=["OPTIONS_FILE_SET+=ETCSYMLINK"])
 port(name="ftp/curl")
-port(name="devel/git") OPTIONS_FILE_UNSET+=SVN \
-       OPTIONS_FILE_UNSET+=CVS \
-       OPTIONS_FILE_UNSET+=P4 \
-       OPTIONS_FILE_UNSET+=PERL \
-       OPTIONS_FILE_UNSET+=CONTRIB \
-       OPTIONS_FILE_UNSET+=NLS
+port(name="devel/git", options=[
+    "OPTIONS_FILE_UNSET+=SVN",
+    "OPTIONS_FILE_UNSET+=CVS",
+    "OPTIONS_FILE_UNSET+=P4",
+    "OPTIONS_FILE_UNSET+=PERL",
+    "OPTIONS_FILE_UNSET+=CONTRIB",
+    "OPTIONS_FILE_UNSET+=NLS"
+])
 
 port(name="math/gmp")
 port(name="security/libtasn1")
@@ -255,39 +289,40 @@ port(name="security/nettle")
 port(name="devel/libinotify")
 port(name="dns/samba-nsupdate")
 port(name="security/gnutls")
-add_port_debug net/samba41 \
-       OPTIONS_FILE_SET+=ACL_SUPPORT \
-       OPTIONS_FILE_SET+=ADS \
-       OPTIONS_FILE_SET+=AIO_SUPPORT \
-       OPTIONS_FILE_UNSET+=AVAHI \
-       OPTIONS_FILE_UNSET+=CUPS \
-       OPTIONS_FILE_SET+=DEBUG \
-       OPTIONS_FILE_UNSET+=DEVELOPER \
-       OPTIONS_FILE_SET+=DNSUPDATE \
-       OPTIONS_FILE_SET+=EXP_MODULES \
-       OPTIONS_FILE_SET+=FAM_SUPPORT \
-       OPTIONS_FILE_SET+=LDAP \
-       OPTIONS_FILE_SET+=MANPAGES \
-       OPTIONS_FILE_SET+=MDNSRESPONDER \
-       OPTIONS_FILE_SET+=PAM_SMBPASS \
-       OPTIONS_FILE_SET+=PTHREADPOOL \
-       OPTIONS_FILE_SET+=QUOTAS \
-       OPTIONS_FILE_UNSET+=SWAT \
-       OPTIONS_FILE_SET+=SYSLOG \
-       OPTIONS_FILE_SET+=UTMP \
-       OPTIONS_FILE_SET+=WINBIND \
-       OPTIONS_FILE_SET+=NSUPDATE \
-       OPTIONS_FILE_UNSET+=BIND98 \
-       OPTIONS_FILE_UNSET+=BIND99 \
-       WITH_DEBUG=yes
+port(name="net/samba41", options=[
+   "OPTIONS_FILE_SET+=ACL_SUPPORT",
+   "OPTIONS_FILE_SET+=ADS",
+   "OPTIONS_FILE_SET+=AIO_SUPPORT",
+   "OPTIONS_FILE_UNSET+=AVAHI",
+   "OPTIONS_FILE_UNSET+=CUPS",
+   "OPTIONS_FILE_SET+=DEBUG",
+   "OPTIONS_FILE_UNSET+=DEVELOPER",
+   "OPTIONS_FILE_SET+=DNSUPDATE",
+   "OPTIONS_FILE_SET+=EXP_MODULES",
+   "OPTIONS_FILE_SET+=FAM_SUPPORT",
+   "OPTIONS_FILE_SET+=LDAP",
+   "OPTIONS_FILE_SET+=MANPAGES",
+   "OPTIONS_FILE_SET+=MDNSRESPONDER",
+   "OPTIONS_FILE_SET+=PAM_SMBPASS",
+   "OPTIONS_FILE_SET+=PTHREADPOOL",
+   "OPTIONS_FILE_SET+=QUOTAS",
+   "OPTIONS_FILE_UNSET+=SWAT",
+   "OPTIONS_FILE_SET+=SYSLOG",
+   "OPTIONS_FILE_SET+=UTMP",
+   "OPTIONS_FILE_SET+=WINBIND",
+   "OPTIONS_FILE_SET+=NSUPDATE",
+   "OPTIONS_FILE_UNSET+=BIND98",
+   "OPTIONS_FILE_UNSET+=BIND99",
+   "WITH_DEBUG=yes"
+])
+
 
 port(name="sysutils/grub2-pcbsd")
 port(name="sysutils/beadm-devel")
 port(name="net/py-pysphere")
 
-if [ "${DEBUG}" = 1 ]; then
+if DEBUG:
 	port(name="editors/vim-lite")
 	port(name="misc/py-pexpect")
-	port(name="devel/ipython") OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
+	port(name="devel/ipython", options=["OPTIONS_FILE_UNSET+=X11", "OPTIONS_FILE_UNSET+=ZMQ"])
 	port(name="devel/ctags")
-fi

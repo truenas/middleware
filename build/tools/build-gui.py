@@ -27,15 +27,23 @@
 #####################################################################
 
 import os
+import sys
 import glob
+from utils import mkdirp, env, setup_env, sh, info, debug, error, pathjoin
+
+
+setup_env()
 
 
 def cleandirs():
-    pass
+    sh('mkdir -p ${GUI_STAGEDIR}')
+    sh('mkdir -p ${GUI_DESTDIR}')
+    sh('rm -rf ${GUI_STAGEDIR}/*')
+    sh('rm -rf ${GUI_DESTDIR}/*')
 
 
 def copy():
-    pass
+    sh('cp -a ${SRC_ROOT}/gui/ ${GUI_STAGEDIR}/')
 
 
 def gplusplus_version():
@@ -58,14 +66,27 @@ def remove_npm_quirks(quirks):
 
 
 def install():
-    pass
+    node_modules = pathjoin('${GUI_STAGEDIR}', 'node_modules')
+    bower = pathjoin(node_modules, 'bower/bin/bower')
+    grunt = pathjoin(node_modules, 'grunt-cli/bin/grunt')
+
+    os.chdir(env('GUI_STAGEDIR'))
+    sh('npm install grunt grunt-cli bower')
+    sh('npm install')
+    sh(bower, '--allow-root install')
+    sh(grunt, 'deploy --force --dir=${GUI_DESTDIR}')
 
 
 def create_plist():
-    pass
+    os.chdir(env('GUI_DESTDIR'))
 
 
 if __name__ == '__main__':
+    if env('SKIP_GUI'):
+        info('Skipping GUI build as instructed by setting SKIP_GUI')
+        sys.exit(0)
+
+    info('Building GUI')
     cleandirs()
     copy()
     q = apply_npm_quirks()

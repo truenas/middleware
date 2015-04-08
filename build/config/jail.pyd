@@ -23,46 +23,22 @@
 # SUCH DAMAGE.
 #
 
-if GIT_LOCATION == "INTERNAL":
-    repository(
-        name="trueos",
-        path="FreeBSD/src",
-        url="git@gitserver.ixsystems.com:/git/repos/freenas-build/trueos.git",
-        branch="freebsd10"
-    )
 
-    repository(
-        name="ports",
-        path="FreeBSD/ports",
-        url="git@gitserver.ixsystems.com:/git/repos/freenas-build/ports.git",
-        branch="masters/2014q4"
-    )
+link(
+    source=TRUEOS_ROOT,
+    dest="/usr/src",
+    flags="ro",
+)
 
-if GIT_LOCATION == "EXTERNAL":
-    repository(
-        name="trueos",
-        path="FreeBSD/src",
-        url="https://github.com/trueos/trueos",
-        branch="freebsd10"
-    )
+copy(
+    source=SRC_ROOT,
+    dest="/usr/freenas_src"
+)
 
-    repository(
-        name="ports",
-        path="FreeBSD/ports",
-        url="https://github.com/freenas/ports.git",
-        branch="masters/2014q4"
-    )
-
-repository(
-    name="pcbsd",
-    path="FreeBSD/pcbsd",
-    url="https://github.com/pcbsd/pcbsd.git",
-    branch="master"
+copy(
+    source=GUI_DESTDIR,
+    dest="/usr/freenas_gui"
 )
 
 if LABEL == "TrueNAS":
-    repository(
-        name="truenas-components",
-        path="src/truenas",
-        branch="master"
-    )
+    pass

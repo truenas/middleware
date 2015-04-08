@@ -48,7 +48,7 @@ def checkout_repo(repo):
 
 
 if __name__ == '__main__':
-    for i in dsl['repository']:
+    for i in dsl['repository'].values():
         info('Checkout: {0} -> {1}', i['name'], i['path'])
         debug('Repository URL: {0}', i['url'])
         debug('Local branch: {0}', i['branch'])

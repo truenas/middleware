@@ -27,54 +27,54 @@
 #####################################################################
 
 import sys
-from utils import sh, sh_str, env, setup_env, objdir, info, debug, error, mkdirp
+from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
 
 
 setup_env()
-installworldlog = objdir('logs/jail-installworld')
-distributionlog = objdir('logs/jail-distribution')
-installkernellog = objdir('logs/jail-installkernel')
+installworldlog = objdir('logs/dest-installworld')
+distributionlog = objdir('logs/dest-distribution')
+installkernellog = objdir('logs/dest-installkernel')
 
 
 def installworld():
-    info('Installing world for jail in ${{JAIL_DESTDIR}}')
+    info('Installing world ${{WORLD_DESTDIR}}')
     info('Log file: {0}', installworldlog)
     sh(
         "make",
         "-C ${TRUEOS_ROOT}",
         "installworld",
-        "DESTDIR=${JAIL_DESTDIR}",
+        "DESTDIR=${WORLD_DESTDIR}",
         log=installworldlog
     )
 
-    info('Creating distribution for jail in ${{JAIL_DESTDIR}}')
+    info('Creating distribution in ${{WORLD_DESTDIR}}')
     info('Log file: {0}', distributionlog)
     sh(
         "make",
         "-C ${TRUEOS_ROOT}",
         "distribution",
-        "DESTDIR=${JAIL_DESTDIR}",
+        "DESTDIR=${WORLD_DESTDIR}",
         log=distributionlog
     )
 
 
 def installkernel():
-    info('Installing kernel for jail in ${{JAIL_DESTDIR}}')
+    info('Installing kernel in ${{WORLD_DESTDIR}}')
     info('Log file: {0}', installkernellog)
     sh(
         "make",
         "-C ${TRUEOS_ROOT}",
         "installkernel",
-        "DESTDIR=${JAIL_DESTDIR}",
+        "DESTDIR=${WORLD_DESTDIR}",
         log=installkernellog
     )
 
 
 if __name__ == '__main__':
-    if env('SKIP_INSTALL_JAIL'):
-        info('Skipping jail installation, as instructed by setting SKIP_INSTALL_JAIL')
+    if env('SKIP_INSTALL_WORLD'):
+        info('Skipping world installation, as instructed by setting SKIP_INSTALL_WORLD')
         sys.exit(0)
 
-    mkdirp(env('JAIL_DESTDIR'))
+    sh('mkdir -p ${WORLD_DESTDIR}')
     installworld()
     installkernel()

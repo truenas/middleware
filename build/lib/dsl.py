@@ -26,6 +26,7 @@
 #####################################################################
 
 import os
+import uuid
 
 
 class GlobalsWrapper(dict):
@@ -38,11 +39,9 @@ class GlobalsWrapper(dict):
         if item.isupper():
             return self.env.get(item, None)
 
-        if item == 'env':
-            return os.path.expandvars
-
-        if item == 'pathjoin':
-            return self.pathjoin
+        if item == 'e':
+            from utils import e
+            return e
 
         if item == 'include':
             return self.include
@@ -54,22 +53,21 @@ class GlobalsWrapper(dict):
 
     def wrap(self, name):
         def fn(*args, **kwargs):
-            if name not in self.dict:
-                self.dict[name] = []
-
             if args:
+                if name not in self.dict:
+                    self.dict[name] = []
                 self.dict[name].extend(args)
 
             if kwargs:
-                self.dict[name].append(kwargs)
+                if name not in self.dict:
+                    self.dict[name] = {}
+                ident = kwargs.get('name', str(uuid.uuid4()))
+                self.dict[name][ident] = kwargs
 
         return fn
 
     def include(self, filename):
-        pass
-
-    def pathjoin(self, *args):
-        return os.path.join(*[os.path.expandvars(i) for i in args])
+        self.dict.update(load_file(filename, self.env))
 
 
 def load_file(filename, env):

@@ -31,6 +31,9 @@ import time
 import datetime
 import subprocess
 import signal
+import string
+import signal
+import inspect
 from dsl import load_file
 
 
@@ -45,6 +48,7 @@ def sh(*args, **kwargs):
         mkdirp(os.path.dirname(logfile))
         f = open(logfile, 'w')
 
+    debug('sh: {0}', cmd)
     return subprocess.call(cmd, stdout=f if logfile else None, stderr=subprocess.STDOUT, shell=True)
 
 
@@ -69,20 +73,61 @@ def setup_env():
 
 
 def mkdirp(path):
-    if not os.path.isdir(path):
-        os.makedirs(path)
+    sh('mkdir -p', path)
 
 
 def env(name, default=None):
     return os.getenv(name, default)
 
 
-def e(s):
-    return os.path.expandvars(s)
+def setfile(filename, contents):
+    debug('setfile: {0} -> {1}', contents, filename)
+    f = open(filename, 'w')
+    f.write(contents)
+    f.write('\n')
+    f.close()
+
+
+def on_abort(func):
+    def abort():
+        info('Build aborted, cleaning up')
+        func()
+
+    signal.signal(signal.SIGINT, abort)
+    signal.signal(signal.SIGTERM, abort)
+
+
+def e(s, **kwargs):
+    s = os.path.expandvars(s)
+    if not kwargs:
+        frame = inspect.currentframe()
+        try:
+            kwargs = frame.f_back.f_locals
+        finally:
+            del frame
+
+        if not kwargs:
+            kwargs = globals()
+
+    t = string.Template(s)
+    return t.safe_substitute(kwargs)
+
+
+def pathjoin(*args):
+    return os.path.join(*[os.path.expandvars(i) for i in args])
 
 
 def objdir(path):
     return os.path.join(env('MAKEOBJDIRPREFIX'), path)
+
+
+def template(filename, variables):
+    f = open(e(filename), 'r')
+    t = string.Template(f.read())
+    variables.update(os.environ)
+    result = t.safe_substitute(**variables)
+    f.close()
+    return result
 
 
 def elapsed():
@@ -97,7 +142,11 @@ def info(fmt, *args):
 
 def debug(fmt, *args):
     if env('BUILD_LOGLEVEL') == 'DEBUG':
-        print '[{0}] ==> '.format(elapsed()) + e(fmt.format(*args))
+        log(fmt, *args)
+
+
+def log(fmt, *args):
+    print e(fmt.format(*args))
 
 
 def error(fmt, *args):

@@ -38,7 +38,7 @@ def check_sandbox():
     if not os.path.exists('FreeBSD/.pulled'):
         error('Sandbox is not fully checked out')
 
-    for i in dsl['repository']:
+    for i in dsl['repository'].values():
         if not os.path.isdir(os.path.join(i['path'], '.git')):
             error('Sandbox is not fully checked out, {0} is missing', i['name'])
 
