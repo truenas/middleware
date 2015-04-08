@@ -235,20 +235,10 @@ var UserEdit = React.createClass({
       var valuesToSend = {};
 
       // Make sure nothing read-only made it in somehow.
-      _.forEach( this.state.locallyModifiedValues, function( value, key ) {
-        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if ( itemKey.mutable ) {
-          valuesToSend[ key ] = value;
-        } else {
-          console.error("USERS: Attempted to submit a change to a read-only property.");
-          console.error(this.state.locallyModifiedValues[value]);
-        }
-      }.bind(this) );
+      valuesToSend = this.removeReadOnlyFields(this.state.locallyModifiedValues, this.props.dataKeys);
 
-      if (valuesToSend){
-        // Only bother to submit an update if there is anything to update.
+      // Only bother to submit an update if there is anything to update.
+      if (!_.isEmpty( valuesToSend ) ){
         UsersMiddleware.updateUser( this.props.item["id"], valuesToSend );
         // Save a record of the last changes we sent.
         this.setState({
