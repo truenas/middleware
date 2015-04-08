@@ -8,28 +8,42 @@
 var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
-var Router = require("react-router");
 
     // Will be used to submit changes. Remove comment when done.
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
-    // Will be user to get a list of groups to which the user may be added.
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
+
+var inputHelpers = require("../../../components/mixins/inputHelpers");
+var userMixins   = require("../../../components/mixins/userMixins");
+
 
 var AddUser = React.createClass({
 
-    propTypes: {
-      userPrototype: React.PropTypes.object.isRequired
+    mixins: [   inputHelpers
+              , userMixins ]
+
+  , propTypes: {
+        viewData: React.PropTypes.object.isRequired
     }
 
   , getInitialState: function() {
-    return {
-        groups       : this.getGroups()
-      , editedFields : {}
-    };
-  }
+      var defaultValues = {
+                              id                : this.getNextID()
+                            , shell             : "/bin/csh"
+                            , locked            : false
+                            , sudo              : false
+                            , password_disabled : false
+                          };
+
+      return {
+          groups        : this.getGroups()
+        , editedFields  : {}
+        , defaultValues : defaultValues
+        , dataKeys      : this.props.viewData.format.dataKeys
+      };
+    }
 
   , componentDidMount: function() {
       UsersStore.addChangeListener( this.receiveUsersUpdate );
@@ -37,7 +51,7 @@ var AddUser = React.createClass({
 
   , componentWillUnmount: function() {
       UsersStore.removeChangeListener( this.receiveUsersUpdate);
-  }
+    }
 
   , getGroups: function() {
       return GroupsStore.getAllGroups();
