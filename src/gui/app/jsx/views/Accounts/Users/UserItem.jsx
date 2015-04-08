@@ -19,10 +19,7 @@ var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
-
-var ShellMiddleware = require("../../../middleware/ShellMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
 var userMixins   = require("../../../components/mixins/userMixins");
@@ -134,7 +131,7 @@ var UserEdit = React.createClass({
                , userMixins ]
 
     , propTypes: {
-      item: React.PropTypes.object.isRequired
+      item : React.PropTypes.object.isRequired
     }
 
   , getInitialState: function() {
