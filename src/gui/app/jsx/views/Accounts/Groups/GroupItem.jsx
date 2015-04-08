@@ -102,7 +102,7 @@ var GroupView = React.createClass({
 // EDITOR PANE
 var GroupEdit = React.createClass({
 
-  , propTypes: {
+    propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
