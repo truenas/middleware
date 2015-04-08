@@ -557,14 +557,15 @@ class JailTemplate(Model):
     )
 
     jt_system = models.BooleanField(
-        default=False
-    )
-
-    jt_readonly = models.BooleanField(
         default=False,
         verbose_name=_("System"),
         help_text=_("If this is a system template, it will not be visible in the UI " \
             "and will only be used internally.")
+    )
+
+    jt_readonly = models.BooleanField(
+        default=False,
+        verbose_name=_("Read-only")
     )
 
     @property
