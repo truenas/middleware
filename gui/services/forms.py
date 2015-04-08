@@ -1197,7 +1197,7 @@ class iSCSITargetExtentForm(ModelForm):
     def clean_iscsi_target_extent_disk(self):
         _type = self.cleaned_data.get('iscsi_target_extent_type')
         disk = self.cleaned_data.get('iscsi_target_extent_disk')
-        if _type == 'disk' and not disk:
+        if _type == 'Disk' and not disk:
             raise forms.ValidationError(
                 _("This field is required")
             )
