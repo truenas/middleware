@@ -43,7 +43,6 @@ from email.Utils import formatdate
 from datetime import datetime, timedelta
 
 from django.utils.translation import ugettext_lazy as _
-from freenasOS import Configuration
 
 RE_MOUNT = re.compile(
     r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) \((?P<fs_vfstype>\w+)', re.S
@@ -55,6 +54,7 @@ log = logging.getLogger("common.system")
 
 def get_sw_version(strip_build_num=False):
     """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64."""
+    from freenasOS import Configuration
 
     global _VERSION
 
