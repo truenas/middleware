@@ -102,37 +102,71 @@ var GroupView = React.createClass({
 // EDITOR PANE
 var GroupEdit = React.createClass({
 
-    propTypes: {
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
   , getInitialState: function() {
+      var remoteState = this.setRemoteState( this.props );
       return {
-          modifiedValues : {}
-        , mixedValues    : this.props.item
+          locallyModifiedValues  : {}
+        , remotelyModifiedValues : {}
+        , remoteState            : remoteState
+        , mixedValues            : this.props.item
+        , lastSentValues         : {}
       }
-  }
+    }
+
+    // Remote state is set at load time and reset upon successful changes
+  , setRemoteState: function ( incomingProps ) {
+      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, incomingProps.dataKeys);
+
+      if (_.isEmpty(nextRemoteState)) {
+        console.warn("Remote State could not be created! Check the incoming props:");
+        console.warn(incomingProps);
+      }
+
+      // TODO: What exactly should be returned if setting the remote state is
+      // going to fail?
+      return nextRemoteState;
+    }
 
   , componentWillRecieveProps: function( nextProps ) {
-      var newModified = {};
-      var oldModified = _.cloneDeep( this.state.modifiedValues );
+      var newRemoteModified = {};
+      var newLocallyModified = {};
 
-      // Any remote changes will cause the current property to be shown as
-      // having been "modified", signalling to the user that saving it will
-      // have the effect of changing that value
-      _.forEach( nextProps.item, function( value, key ) {
-        if ( this.props.item[ key ] !== value ) {
-          newModified[ key ] = this.props.item[ key ];
-        }
-      }.bind(this) );
+      // remotelyModifiedValues represents everything that's changed remotely
+      // since the view was opened. This is the difference between the newly arriving
+      // props and the initial ones. Read-only and unknown values are ignored.
+      // TODO: Use this to show alerts for remote changes on sections the local
+      // administrator is working on.
+      var mismatchedRemoteFields = _.pick(nextProps.item, function( value, key ) {
+        return _.isEqual( this.state.remoteState[ key ], value );
+      }, this);
 
-      // Any remote changes which are the same as locally modified changes should
-      // cause the local modifications to be ignored.
-      _.forEach( oldModified, function( value, key ) {
-        if ( this.props.item[ key ] === value ) {
-          delete oldModified[ key ];
-        }
-      }.bind(this) );
+      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.dataKeys);
+
+      // remoteState records the item as it was when the view was first
+      // opened. This is used to mark changes that have occurred remotely since
+      // the user began editing.
+      // It is important to know if the incoming change resulted from a call
+      // made by the local administrator. When this happens, we reset the
+      // remoteState to get rid of remote edit markers, as the local version
+      // has thus become authoritative.
+      // We check this by comparing the incoming changes (newRemoteModified) to the
+      // last request sent (this.state.lastSentValues). If this check succeeds,
+      // we reset newLocallyModified and newRemoteModified, as there are no longer
+      // any remote or local changes to record.
+      // TODO: Do this in a deterministic way, instead of relying on comparing
+      // values.
+      if (_.isEqual(this.state.lastSentValues, newRemoteModified)){
+          newRemoteModified  = {};
+          newLocallyModified = {};
+          this.setState ({
+              remoteState           : this.setRemoteState(nextProps)
+            , locallyModifiedValues : newLocallyModified
+          });
+      }
 
       this.setState({
           modifiedValues : _.assign( oldModified, newModified )
@@ -140,23 +174,32 @@ var GroupEdit = React.createClass({
     }
 
   , handleValueChange: function( key, event ) {
-      var newValues  = this.state.modifiedValues;
+      var newLocallyModified = this.state.locallyModifiedValues;
       var inputValue;
-      if (event.target.type === "checkbox") {
-        inputValue = event.target.checked;
-      } else {
-        inputValue = event.target.value;
+
+      // Use different logic to interpret input from different kinds of fields.
+      // TODO: Cover every field in use with different cases as needed.
+      switch (event.target.type) {
+
+        case "checkbox" :
+          inputValue = event.target.checked;
+          break;
+
+        default:
+          inputValue = event.target.value;
+          break;
       }
+
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we
       // check to make sure that the input value we've just receieved isn't the
       // same as what the last payload from the middleware shows as the value
       // for the same key. If it is, we `delete` the key from our temp object
       // and update state.
-      if ( this.props.item[ key ] === inputValue ) {
-        delete newValues[ key ];
+      if ( _.isEqual( this.state.remoteState[ key ], inputValue ) ) {
+        delete newLocallyModified[ key ];
       } else {
-        newValues[ key ] = inputValue;
+        newLocallyModified[ key ] = inputValue;
       }
 
       // mixedValues functions as a clone of the original item passed down in
@@ -164,13 +207,37 @@ var GroupEdit = React.createClass({
       // user. This allows the display components to have access to the
       // "canonically" correct item, merged with the un-changed values.
       this.setState({
-          modifiedValues : newValues
-        , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newValues )
+          modifiedValues : newLocallyModified
+        , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
       });
     }
 
   , submitGroupUpdate: function() {
-      GroupsMiddleware.updateGroup( this.props.item["id"], this.state.modifiedValues );
+      var valuesToSend = {};
+
+      // Make sure nothing read-only made it in somehow.
+      _.forEach( this.state.locallyModifiedValues, function( value, key ) {
+        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
+          return item.key === key;
+        }.bind(this) );
+        if ( itemKey.mutable ) {
+          valuesToSend[ key ] = value;
+        } else {
+          console.error("GROUPS: Attempted to submit a change to a read-only property.");
+          console.error(this.state.locallyModifiedValues[value]);
+        }
+      }.bind(this) );
+
+      if (valuesToSend){
+        // Only bother to submit an update if there is anything to update.
+        GroupsMiddleware.updateGroup( this.props.item["id"], valuesToSend );
+        // Save a record of the last changes we sent.
+        this.setState({
+            lastSentValues : valuesToSend
+        });
+      } else {
+          console.warn("Attempted to send a Group update with no valid fields.");
+      }
     }
 
   , render: function() {
