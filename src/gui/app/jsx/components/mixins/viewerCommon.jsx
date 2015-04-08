@@ -27,7 +27,7 @@ module.exports = {
     }
 
   , returnToViewerRoot: function() {
-      if ( this.dynamicPathIsActive() ) {
+      if ( this.isMounted() && this.dynamicPathIsActive() ) {
         var currentRoutes = this.context.router.getCurrentRoutes();
         var currentIndex = _.findIndex( currentRoutes, function( routeData ) {
           return _.contains( routeData["paramNames"], this.props.viewData.routing.param );
