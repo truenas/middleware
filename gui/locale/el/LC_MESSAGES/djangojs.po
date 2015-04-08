@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-09-23 12:56+0000\n"
+"PO-Revision-Date: 2015-03-12 12:07+0000\n"
 "Last-Translator: Ιωάννης <izamboukas@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: el\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411476975.0\n"
+"X-POOTLE-MTIME: 1426162032.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Αναφορές"
@@ -354,7 +354,6 @@ msgid "Are you sure you want to do this?"
 msgstr "Είστε βέβαιοι ότι θέλετε να το κάνετε αυτό;"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
-#, fuzzy
 msgid "Manual Setup"
 msgstr "Χειροκίνητη ρύθμιση"
 
@@ -364,53 +363,51 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Εφαρμογή ενημερώσεων σε εκκρεμότητα"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Το όνομα υπολογιστή δεν μπορεί να είναι κενό."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Το όνομα χρήστη δεν μπορεί να είναι κενό."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "Ο κωδικός πρόσβασης δεν μπορεί να είναι κενός"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
-#, fuzzy
 msgid "Manual Update"
-msgstr "Χειροκίνητη ρύθμιση"
+msgstr "Χειροκίνητη ενημέρωση"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Έλεγχος τώρα"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Ναί"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Όχι"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Φόρτωση..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Δεν έχουν βρεθεί εκκρεμείς ενημερώσεις."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Επιβεβαίωση εγκατάστασης"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
-#, fuzzy
 msgid "Passwords do not match."
 msgstr "Οι κωδικοί πρόσβασης δεν ταιριάζουν."
