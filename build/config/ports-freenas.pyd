@@ -26,108 +26,108 @@
 port(
     name="freenas/freenas-files",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-datastore",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-dispatcher",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-etcd",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-networkd",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-fnstatd",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-10gui",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/freenas-cli",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/py-libzfs",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/py-netif",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/py-sysctl",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
 port(
     name="freenas/py-fnutils",
     options=[
-        env("PRODUCT_VERSION=${VERSION}"),
-        env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        env("REVISION=${SVNREVISION}")
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${SVNREVISION}")
     ]
 )
 
@@ -135,8 +135,8 @@ if PRODUCT != "TrueNAS":
     port(
         name="freenas/py-fnutils",
         options=[
-            env("PRODUCT_VERSION=${VERSION}"),
-            env("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-            env("REVISION=${SVNREVISION}")
+            e("PRODUCT_VERSION=${VERSION}"),
+            e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+            e("REVISION=${SVNREVISION}")
         ]
     )

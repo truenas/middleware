@@ -48,8 +48,9 @@ def umount_packages():
 
 def create_pkgng_configuration():
     sh('mkdir -p ${WORLD_DESTDIR}/usr/local/etc/pkg/repos')
-    for i in glob.glob(e('${BUILD_CONFIG/templates/pkg-repos/*')):
-        sh('cp ${BUILD_CONFIG}/templates/pkg-repos/${i} ${WORLD_DESTDIR}/usr/local/etc/pkg/repos/${i}')
+    for i in glob.glob(e('${BUILD_CONFIG}/templates/pkg-repos/*')):
+        fname = os.path.basename(i)
+        sh(e('cp ${i} ${WORLD_DESTDIR}/usr/local/etc/pkg/repos/${fname}'))
 
 
 def install_ports():

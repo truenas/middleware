@@ -37,6 +37,7 @@ makejobs = 1
 dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
 reposconf = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
 jailconf = load_file('${BUILD_CONFIG}/jail.pyd', os.environ)
+conf = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
 
 portslist = e('${POUDRIERE_ROOT}/etc/ports.conf')
 portoptions = e('${POUDRIERE_ROOT}/etc/poudriere.d/options')
@@ -105,13 +106,20 @@ def prepare_jail():
     sh(e("jail -U root -c name=${jailname} path=${JAIL_DESTDIR} command=/sbin/ldconfig -m /lib /usr/lib /usr/lib/compat"))
 
 
+def merge_freenas_ports():
+    sh('mkdir -p ${PORTS_ROOT}/freenas')
+    sh('cp -a ${BUILD_ROOT}/nas_ports/freenas ${PORTS_ROOT}/')
+
+
 def prepare_env():
     for cmd in jailconf.get('copy', []).values():
         sh('cp -a', cmd['source'], os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:]))
 
     for cmd in jailconf.get('link', []).values():
         flags = '-o {0}'.format(cmd['flags']) if 'flags' in cmd else ''
-        sh('mount -t nullfs', flags, cmd['source'], os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:]))
+        dest = os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:])
+        sh('mkdir -p', os.path.dirname(dest))
+        sh('mount -t nullfs', flags, cmd['source'], dest)
 
 
 def cleanup_env():
@@ -134,6 +142,7 @@ if __name__ == '__main__':
     create_make_conf()
     create_ports_list()
     prepare_jail()
+    merge_freenas_ports()
     prepare_env()
     run()
     cleanup_env()

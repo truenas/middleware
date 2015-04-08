@@ -67,7 +67,16 @@ class GlobalsWrapper(dict):
         return fn
 
     def include(self, filename):
-        self.dict.update(load_file(filename, self.env))
+        d = load_file(filename, self.env)
+        for k, v in d.items():
+            if k in self.dict:
+                if isinstance(self.dict[k], dict):
+                    self.dict[k].update(v)
+                elif isinstance(self.dict[k], list):
+                    self.dict[k] += v
+            else:
+                self.dict[k] = v
+
 
 
 def load_file(filename, env):
