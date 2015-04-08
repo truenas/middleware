@@ -26,6 +26,12 @@ module.exports = {
       });
     }
 
+  , createUser: function( newUserProps ) {
+      MiddlewareClient.request( "task.submit", ["users.create" , [ newUserProps ] ], function ( taskID ) {
+        UsersActionCreators.receiveUserUpdateTask( taskID );
+      });
+  }
+
   , updateUser: function( userID, changedProps ) {
       MiddlewareClient.request( "task.submit", ["users.update", [ userID, changedProps ] ], function ( taskID ) {
         UsersActionCreators.receiveUserUpdateTask( taskID, userID );
