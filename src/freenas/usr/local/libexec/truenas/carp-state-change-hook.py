@@ -172,7 +172,7 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
 pass in quick proto tcp from any to %(ip)s  port {22, 80, 443}
 block drop in quick proto tcp from any to %(ip)s
 block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
-    run('pfctl -f /etc/pf.conf.block')
+    run('pfctl -ef /etc/pf.conf.block')
 
     try:
         os.unlink(FAILED_FILE)
@@ -347,10 +347,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     # downstream effect of that, instead we take a chill pill for 2 seconds.
     time.sleep(1)
 
-    with open('/etc/pf.conf', 'w+') as f:
-        for ip in fobj['ips']:
-            f.write('pass quick from any to %s keep state\n' % ip)
-    run('pfctl -f /etc/pf.conf')
+    run('pfctl -d')
 
     log.warn('Allowing network traffic.')
     run('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
@@ -430,7 +427,7 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
 pass in quick proto tcp from any to %(ip)s port {22, 80, 443}
 block drop in quick proto tcp from any to %(ip)s
 block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
-    run('pfctl -f /etc/pf.conf.block')
+    run('pfctl -ef /etc/pf.conf.block')
 
     run('/etc/rc.d/statd stop')
     run('/etc/rc.d/watchdogd quietstop')
