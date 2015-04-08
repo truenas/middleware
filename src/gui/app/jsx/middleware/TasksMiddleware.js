@@ -16,13 +16,17 @@ module.exports = {
     getCompletedTaskHistory: function( callback, offset ) {
       return MiddlewareClient.request(
           "task.query"
-        , [[["state","=","FINISHED"]]
+        , [[["state","~","FINISHED|ABORTED|FAILED"]]
         , {
             "offset": ( offset || 0 )
           , "limit": 100
           , "sort": "id"
           , "dir": "desc" }] // TODO: Sort dir doesn't work?
         , callback );
+    }
+
+  , abortTask: function ( taskID ) {
+      MiddlewareClient.request( "task.abort", [parseInt(taskID, 10)]);
     }
 
 };

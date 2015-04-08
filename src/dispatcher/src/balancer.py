@@ -84,10 +84,13 @@ class Task(object):
     def __emit_progress(self):
         self.dispatcher.dispatch_event("task.progress", {
             "id": self.id,
+            "name": self.name,
+            "state": self.state,
             "nolog": True,
             "percentage": self.progress.percentage,
             "message": self.progress.message,
-            "extra": self.progress.extra
+            "extra": self.progress.extra,
+            "abortable": True if (hasattr(self.instance, 'abort') and callable(self.instance.abort)) else False
         })
 
     def run(self):
@@ -137,7 +140,7 @@ class Task(object):
         return self.thread
 
     def set_state(self, state, progress=None):
-        event = {'id': self.id, 'state': state}
+        event = {'id': self.id, 'name': self.name, 'state': state}
 
         if state == TaskState.EXECUTING:
             self.started_at = time.time()
