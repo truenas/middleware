@@ -206,6 +206,9 @@ class Funcs:
         carp = CARP.objects.get(pk=pairing['carp'])
         volume = Volume.objects.get(pk=pairing['volume'])
 
+        if Failover.objects.all().exists():
+            raise ValueError("Failover already exists")
+
         failover = Failover()
         failover.volume = volume
         failover.carp = carp
@@ -221,7 +224,10 @@ class Funcs:
             return False
 
     def pairing_send(self, request, secret):
+        from freenasUI.failover.models import Failover
         from freenasUI.failover.utils import set_pending_pairing
+        if Failover.objects.all().exists():
+            return "Failover already exists on this node"
         try:
             set_pending_pairing(secret=secret, ip=request.client_address[0])
         except Exception as e:
