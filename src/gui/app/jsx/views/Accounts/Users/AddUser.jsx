@@ -178,6 +178,14 @@ var AddUser = React.createClass({
                             wrapperClassName = "col-xs-8">
                             {this.generateOptionsList( this.state.shells ) }
                 </TWBS.Input>
+                {/* sshpubkey */}
+                <TWBS.Input type             = "textarea"
+                            label            = "Public Key"
+                            value            = { this.state.editedFields["sshpubkey"]? this.state.editedFields["sshpubkey"]: this.props.defaultValues }
+                            onChange         = { this.handleValueChange.bind( null, "sshpubkey" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "sshpubkey") && !_.isEmpty(this.state.editedFields["sshpubkey"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"/>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
                 {/* locked */}
