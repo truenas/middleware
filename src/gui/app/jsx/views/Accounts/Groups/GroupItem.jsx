@@ -114,7 +114,7 @@ var GroupEdit = React.createClass({
         , remoteState            : remoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
-      }
+      };
     }
 
     // Remote state is set at load time and reset upon successful changes
@@ -169,6 +169,7 @@ var GroupEdit = React.createClass({
       }
 
       this.setState({
+          // FIXME: These are undefined - what are they supposed to be?
           modifiedValues : _.assign( oldModified, newModified )
       });
     }
