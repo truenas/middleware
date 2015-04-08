@@ -43,7 +43,7 @@ module.exports = {
           // Do not accept unknown properties from the Middleware.
           // TODO: If we want to accept arbitrary properies, we will need more
           // sophisticated handling here.
-          console.warn("Received an unknown property \"" + key + "\" from the Middleware Server.");
+          console.warn("Received an unknown property \"" + key + "\".");
           console.warn(this.props.item);
           return false;
         }
