@@ -57,18 +57,148 @@ var AddUser = React.createClass({
       return GroupsStore.getAllGroups();
     }
 
+  , handleValueChange: function( key, event ) {
+      var newEditedFields = this.state.editedFields;
+      var inputValue = this.processFormInput( event );
+
+      newEditedFields[ key ] = inputValue;
+
+      this.setState( { editedFields: newEditedFields } );
+    }
+
+    // returns the next available UID after 1000 to use as a default.
+  , getNextID: function() {
+
+    }
+
   , receiveUsersUpdate: function() {
 
+    }
+
+  , submitNewUser: function() {
+      var newUserValues = {};
+      console.log(this.state.dataKeys);
+      // Stage edited values for submission. Don't include any read-only stuff that got in somehow.
+      newUserValues = this.removeReadOnlyFields(this.state.editedFields, this.state.dataKeys);
+      console.log(this.state.editedFields);
+      console.log(newUserValues);
+      // TODO: Only submit a user if all the required fields are there.
+      UsersMiddleware.createUser( newUserValues );
+  }
+  , cancel: function () {
+
+    }
+  , test: function () {
+    console.log("test");
   }
 
   , render: function() {
 
+      var addButtons =
+        <TWBS.ButtonToolbar>
+          <TWBS.Button className = "pull-right"
+                       onclick   = { this.cancel }
+                       bsStyle   = "default">{"Cancel"}</TWBS.Button>
+          <TWBS.Button className = "pull-right"
+                       disabled  = { _.isEmpty( this.state.editedFields ) }
+                       onClick   = { this.submitNewUser}
+                       bsStyle   = "info">{"Save New User"}</TWBS.Button>
+        </TWBS.ButtonToolbar>;
+
+      var inputFields =
+        <form className = "form-horizontal">
+          <TWBS.Grid fluid>
+            {/*TODO: Style unedited default values differently from edited ones*/}
+            <TWBS.Row>
+              <TWBS.Col xs = {8}>
+                {/* User id */}
+                <TWBS.Input type             = "text"
+                            label            = "User ID"
+                            value            = { this.state.editedFields["id"]? this.state.editedFields["id"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "id" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "id") && !_.isEmpty(this.state.editedFields["id"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* username */}
+                <TWBS.Input type             = "text"
+                            label            = "User Name"
+                            value            = { this.state.editedFields["username"]? this.state.editedFields["username"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "username" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "username") && !_.isEmpty(this.state.editedFields["username"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            required />
+                {/* primary group */}
+                <TWBS.Input type             = "text"
+                            label            = "Primary Group"
+                            value            = { this.state.editedFields["group"]? this.state.editedFields["group"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "group" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "group") && !_.isEmpty(this.state.editedFields["group"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            required />
+                {/* Full Name */}
+                <TWBS.Input type             = "text"
+                            label            = "Full Name"
+                            value            = { this.state.editedFields["full_name"]? this.state.editedFields["full_name"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "full_name" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "full_name") && !_.isEmpty(this.state.editedFields["full_name"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* email */}
+                <TWBS.Input type             = "text"
+                            label            = "email"
+                            value            = { this.state.editedFields["email"]? this.state.editedFields["email"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "email" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "email") && !_.isEmpty(this.state.editedFields["emaill"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* shell */}
+                <TWBS.Input type             = "select"
+                            label            = "Shell"
+                            value            = { this.state.editedFields["shell"]? this.state.editedFields["shell"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "shell" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "shell") && !_.isEmpty(this.state.editedFields["shell"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8">
+                            {this.generateOptionsList( this.state.shells ) }
+                </TWBS.Input>
+              </TWBS.Col>
+              <TWBS.Col xs = {4}>
+                {/* locked */}
+                <TWBS.Input type             = "checkbox"
+                            label            = "Locked"
+                            value            = { this.state.editedFields["locked"]? this.state.editedFields["locked"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "locked" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "locked") && !_.isEmpty(this.state.editedFields["locked"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* sudo */}
+                <TWBS.Input type             = "checkbox"
+                            label            = "Sudo"
+                            value            = { this.state.editedFields["sudo"]? this.state.editedFields["sudo"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "sudo" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "sudo") && !_.isEmpty(this.state.editedFields["sudo"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* password_disabled */}
+                <TWBS.Input type             = "checkbox"
+                            label            = "Password Disabled"
+                            value            = { this.state.editedFields["password_disabled"]? this.state.editedFields["password_disabled"]: this.props.defaultValues }
+                            onChange         = {this.handleValueChange.bind( null, "password_disabled" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "password_disabled") && !_.isEmpty(this.state.editedFields["password_disabled"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+              </TWBS.Col>
+            </TWBS.Row>
+          </TWBS.Grid>
+        </form>;
+
+
       return (
         <TWBS.Grid fluid>
-          <TWBS.Row>
-            <TWBS.Col>
-            </TWBS.Col>
-          </TWBS.Row>
+          { addButtons }
+          { inputFields }
         </TWBS.Grid>
       );
     }
