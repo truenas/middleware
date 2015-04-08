@@ -42,7 +42,7 @@ var viewData = {
     , defaultFilters   : [ ]
     , allowedGroups    : [ "userCreated", "builtIn" ]
     , defaultGroups    : [ "userCreated", "builtIn" ]
-    , defaultCollapsed : [ "builtIn" ]
+    , defaultCollapsed : [ ] // TODO: Revert this to "builtin" once we have more "userCreated"
   }
 };
 
