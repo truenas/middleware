@@ -54,17 +54,21 @@ log = logging.getLogger("common.system")
 
 def get_sw_version(strip_build_num=False):
     """Return the full version string, e.g. FreeNAS-8.1-r7794-amd64."""
-    from freenasOS import Configuration
+    try:
+        from freenasOS import Configuration
+    except ImportError:
+        Configuration = None
 
     global _VERSION
 
     if _VERSION is None:
         # See #9113
-        conf = Configuration.Configuration()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            _VERSION = sys_mani.Sequence()
-        else:
+        if Configuration:
+            conf = Configuration.Configuration()
+            sys_mani = conf.SystemManifest()
+            if sys_mani:
+                _VERSION = sys_mani.Sequence()
+        if _VERSION is None:
             with open(VERSION_FILE) as fd:
                 _VERSION = fd.read().strip()
     if strip_build_num:
