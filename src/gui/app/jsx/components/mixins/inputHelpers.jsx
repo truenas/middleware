@@ -50,4 +50,26 @@ module.exports = {
       }, this  );
       return outgoingItem;
     }
+
+      // Deals with input from different kinds of input fields.
+      // TODO: Extend with other input fields and refine existing ones as necessary.
+    , processFormInput: function( event ) {
+        var inputValue;
+
+        switch (event.target.type) {
+
+          case "checkbox" :
+            inputValue = event.target.checked;
+            break;
+
+          case "select":
+          case "text":
+          case "textarea":
+          default:
+            inputValue = event.target.value;
+            break;
+        }
+
+        return inputValue;
+    }
 };
