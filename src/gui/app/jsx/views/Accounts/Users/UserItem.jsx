@@ -337,6 +337,17 @@ var UserEdit = React.createClass({
                             disabled         = { !this.isMutable( "shell", this.props.dataKeys) }>
                             { this.generateOptionsList( this.state.shells ) }
                 </TWBS.Input>
+                {/* sshpubkey */}
+                <TWBS.Input type             = "textarea"
+                            label            = { "Public Key" }
+                            value            = { this.state.mixedValues["sshpubkey"] ? this.state.mixedValues["sshpubkey"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "sshpubkey" ) }
+                            key              = { "sshpubkey" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["sshpubkey"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "sshpubkey", this.props.dataKeys) }>
+                </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
                 {/* locked */}
