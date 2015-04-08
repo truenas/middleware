@@ -341,6 +341,7 @@ var UserEdit = React.createClass({
               <TWBS.Col xs = {4}>
                 {/* locked */}
                 <TWBS.Input type             = "checkbox"
+                            checked          = { this.state.mixedValues["locked"] }
                             label            = { "Locked" }
                             value            = { this.state.mixedValues["locked"] ? this.state.mixedValues["locked"] : "" }
                             onChange         = { this.handleValueChange.bind( null, "locked" ) }
@@ -351,6 +352,7 @@ var UserEdit = React.createClass({
                             disabled         = { !this.isMutable( "locked", this.props.dataKeys) } />
                 {/* sudo */}
                 <TWBS.Input type             = "checkbox"
+                            checked          = { this.state.mixedValues["sudo"] }
                             label            = { "sudo" }
                             value            = { this.state.mixedValues["sudo"] ? this.state.mixedValues["sudo"] : "" }
                             onChange         = { this.handleValueChange.bind( null, "sudo" ) }
@@ -362,6 +364,7 @@ var UserEdit = React.createClass({
                 {/* password_disabled */}
                 <TWBS.Input type             = "checkbox"
                             label            = { "password_disabled" }
+                            checked          = { this.state.mixedValues["password_disabled"] }
                             value            = { this.state.mixedValues["password_disabled"] ? this.state.mixedValues["password_disabled"] : "" }
                             onChange         = { this.handleValueChange.bind( null, "password_disabled" ) }
                             key              = { "password_disabled" }
@@ -371,6 +374,7 @@ var UserEdit = React.createClass({
                             disabled         = { !this.isMutable( "password_disabled", this.props.dataKeys) } />
                 {/* logged-in */}
                 <TWBS.Input type             = "checkbox"
+                            checked          = { this.state.mixedValues["logged-in"] }
                             label            = { "logged-in" }
                             value            = { this.state.mixedValues["logged-in"] ? this.state.mixedValues["logged-in"] : "" }
                             onChange         = { this.handleValueChange.bind( null, "logged-in" ) }
