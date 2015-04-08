@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2014-03-02 07:46+0000\n"
-"Last-Translator: ReiKirishima <rei@kirishima.it>\n"
+"PO-Revision-Date: 2015-03-24 13:32+0000\n"
+"Last-Translator: polamjag <s@polamjag.info>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1393746397.0\n"
+"X-POOTLE-MTIME: 1427203970.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -114,11 +114,11 @@ msgstr "無効"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "レベル 1 - スタンバイ（スピンダウン）を使った最小の電力消費"
+msgstr "レベル 1 - スタンバイ（スピンダウン）を使った最小限の電力消費"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "レベル 64 - スタンバイを使った中間的な電力消費レベル"
+msgstr "レベル 64 - スタンバイを使った中間的な電力消費"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
@@ -7028,7 +7028,7 @@ msgstr "書き込み"
 
 #: choices.py:52
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:165
 msgid "Unencrypted"
@@ -10834,14 +10834,13 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "認証"
+msgstr "ベーシック認証"
 
 #: choices.py:44
 #, fuzzy
 msgid "Digest Authentication"
-msgstr "認証"
+msgstr "ダイジェスト認証"
 
 #: choices.py:799
 msgid "adex"

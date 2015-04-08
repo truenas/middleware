@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-01-19 05:53+0000\n"
-"Last-Translator: huihoo <11775717@qq.com>\n"
+"PO-Revision-Date: 2015-03-15 14:40+0000\n"
+"Last-Translator: Herald <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1421646801.0\n"
+"X-POOTLE-MTIME: 1426430441.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -533,7 +533,7 @@ msgstr "锁定用户"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr "为该用户创建一个新的主用户组"
+msgstr "创建同名用户组"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -7394,7 +7394,7 @@ msgstr "反序列化错误 %(url)s (%(error)s)，取得的数据："
 #: jails/models.py:521
 #: templates/plugins/plugins.html:21
 msgid "Jail"
-msgstr "Jail 名称"
+msgstr "Jail"
 
 # Portal 为 SCSI专有名词
 #: jails/admin.py:186

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-12-21 03:58+0000\n"
+"PO-Revision-Date: 2015-04-06 09:43+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1419134320.0\n"
+"X-POOTLE-MTIME: 1428313415.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -474,7 +474,7 @@ msgstr "Pull"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr "Uw naam kan niet met \"-\" beginnen"
+msgstr "Uw naam kan niet met '-' beginnen"
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -867,7 +867,7 @@ msgstr "Loopback is geen geldige naamserver"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "Ongespecificeerde adressen zijn niet geldig als naamservers"
+msgstr "Niet-opgegeven adressen zijn niet geldig als naamservers"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
@@ -1314,11 +1314,11 @@ msgstr "Dit is geen geldig masker"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "Dit veld is vereist voor \"Basismapverkenning inschakelen\"."
+msgstr "Dit veld is vereist voor 'Basismapverkenning inschakelen'."
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr "Dit veld is vereist voor \"Basismappen\"."
+msgstr "Dit veld is vereist voor 'Basismappen'."
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
@@ -1417,7 +1417,7 @@ msgstr "Poort"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr "Gebruik alfanumerieke tekens, \".\", \"-\" en \"_\"."
+msgstr "Gebruik alfanumerieke tekens, '.', '-' en '_'."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format
@@ -1541,7 +1541,7 @@ msgstr "U dient een bestandspad op te geven, geen map."
 
 #: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "U dient een bestand binnen uw volume/gegevensset te specificeren."
+msgstr "U dient een bestand binnen uw volume/gegevensset op te geven."
 
 #: services/forms.py:781
 msgid ""
@@ -1579,7 +1579,7 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Het veld bevat geen geldig IP-adres of netwerk. Het trefwoord \"ALL\" kan "
+"Het veld bevat geen geldig IP-adres of netwerk. Het trefwoord 'ALL' kan "
 "worden gebruikt om alles toe te staan."
 
 #: services/forms.py:1032
@@ -1588,7 +1588,7 @@ msgstr "Authenticatiegroepsnummer"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr "Gebruik alfanumerieke tekens, \".\", \"-\" en \":\"."
+msgstr "Gebruik alfanumerieke tekens, '.', '-' en ':'."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
@@ -1870,7 +1870,7 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
-"Specificeert het aantal aan te maken servers. Dit moet genoeg zijn om het "
+"Geeft het aantal aan te maken servers aan. Dit moet genoeg zijn om het "
 "maximale niveau van gelijktijdige verbindingen van clients te kunnen "
 "afhandelen, meestal 4 tot 6."
 
@@ -2235,8 +2235,8 @@ msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
-"0=uitgeschakeld, 1-255=ingeschakelde opdrachtwachtrij met gespecificeerde "
-"diepte. De aanbevolen wachtrijdiepte is 32."
+"0=uitgeschakeld, 1-255=ingeschakelde opdrachtwachtrij met opgegeven diepte. "
+"De aanbevolen wachtrijdiepte is 32."
 
 #: services/models.py:698
 msgid "Logical Block Size"
@@ -2671,7 +2671,7 @@ msgstr ""
 
 #: services/models.py:1127
 msgid "Specifies the username which the service will run as."
-msgstr "Specificeert de gebruikersnaam waaronder de service wordt uitgevoerd."
+msgstr "Geeft de gebruikersnaam aan waaronder de service wordt uitgevoerd."
 
 #: services/models.py:1131
 msgid "umask"
@@ -2779,7 +2779,7 @@ msgstr "Werkgroepnaam"
 
 #: services/models.py:1255
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr "Werkgroep- of domeinnaam in oud formaat, bv. WORKGROUP"
+msgstr "Werkgroep- of domeinnaam in oude notatie, bv. WORKGROUP"
 
 #: services/models.py:1259
 msgid "Allow Trusted Domains"
@@ -2862,7 +2862,7 @@ msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
-"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor "
+"Deze parameter geeft het achtervoegsel aan dat wordt gebruikt voor "
 "gebruikers wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. "
 "ou=Users"
 
@@ -2875,8 +2875,8 @@ msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
-"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor "
-"groepen wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. ou=Groups"
+"Deze parameter geeft het achtervoegsel aan dat wordt gebruikt voor groepen "
+"wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. ou=Groups"
 
 #: services/models.py:1328
 msgid "Password Suffix"
@@ -2887,7 +2887,7 @@ msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
-"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor "
+"Deze parameter geeft het achtervoegsel aan dat wordt gebruikt voor "
 "wachtwoorden wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. "
 "ou=Passwords"
 
@@ -2900,9 +2900,8 @@ msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
-"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor "
-"machines wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. "
-"ou=Computers"
+"Deze parameter geeft het achtervoegsel aan dat wordt gebruikt voor machines "
+"wanneer deze aan de LDAP-adreslijst worden toegevoegd, bv. ou=Computers"
 
 #: services/models.py:1341
 msgid "Encryption Mode"
@@ -2910,8 +2909,7 @@ msgstr "Versleutelingsmodus"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr ""
-"Deze parameter specificeert het gebruik van SSL/TLS, bv. aan/uit/start_tls"
+msgstr "Deze parameter geeft het gebruik van SSL/TLS aan, bv. aan/uit/start_tls"
 
 #: services/models.py:1345
 msgid "Self signed certificate"
@@ -2979,18 +2977,18 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"Deze optie specificeert de gebruikersnaam waarmee bestandsoverdrachten van "
-"en naar deze module dienen plaats te vinden. In combinatie met de optie "
-"'Groep' bepaalt dit welke bestandsmachtigingen beschikbaar zijn. Laat dit "
-"veld leeg om de standaardinstellingen te gebruiken."
+"Deze optie geeft de gebruikersnaam aan waarmee bestandsoverdrachten van en "
+"naar deze module dienen plaats te vinden. In combinatie met de optie 'Groep' "
+"bepaalt dit welke bestandsmachtigingen beschikbaar zijn. Laat dit veld leeg "
+"om de standaardinstellingen te gebruiken."
 
 #: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
-"Deze optie specificeert de groepsnaam waarmee bestandsoverdrachten van en "
-"naar die module dienen plaats te vinden. Laat dit veld leeg om de "
+"Deze optie geeft de groepsnaam aan waarmee bestandsoverdrachten van en naar "
+"die module dienen plaats te vinden. Laat dit veld leeg om de "
 "standaardinstellingen te gebruiken."
 
 #: services/models.py:1428
@@ -3351,8 +3349,8 @@ msgid ""
 "The deny option specifies users and groups who are not allowed access to the "
 "share. It follows the same format as the allow option."
 msgstr ""
-"De weigeroptie specificeert gebruikers en groepen die de share niet mogen "
-"benaderen. Dit volgt het formaat van de optie Toestaan."
+"De weigeroptie geeft gebruikers en groepen aan die de share niet mogen "
+"benaderen. Dit volgt de indeling van de optie Toestaan."
 
 #: sharing/models.py:149
 msgid "Read-only Access"
@@ -3522,7 +3520,7 @@ msgstr "Standaard bestandsmachtiging"
 
 #: sharing/models.py:227
 msgid "Default directory permission"
-msgstr "Standaard directorymachtiging"
+msgstr "Standaard mapmachtiging"
 
 #: sharing/models.py:238
 msgid "Apple (AFP) Share"
@@ -3653,7 +3651,7 @@ msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"De volumenaam moet met letters beginnen en mag cijfers, \"-\", \"_\" en \".\" "
+"De volumenaam moet met letters beginnen en mag cijfers, '-', '_' en '.' "
 "bevatten."
 
 #: storage/forms.py:236
@@ -3729,7 +3727,7 @@ msgstr "U moet een volume selecteren."
 msgid ""
 "The volume \"%s\" failed to import, for futher details check pool status"
 msgstr ""
-"Het importen van volume \"%s\" is mislukt, controleer de poolstatus voor meer "
+"Het importen van volume '%s' is mislukt, controleer de poolstatus voor meer "
 "details"
 
 #: storage/forms.py:673
@@ -3781,7 +3779,7 @@ msgid ""
 "\"-\", \"_\", \":\" and \".\"."
 msgstr ""
 "Namen van gegevenssets moeten met een alfanumeriek teken beginnen en mogen "
-"alleen \"-\", \"_\", \":\" en \".\" bevatten."
+"alleen '-', '_', ':' en '.' bevatten."
 
 #: storage/forms.py:729 storage/forms.py:870
 msgid "You already have a dataset with the same name"
@@ -4375,7 +4373,7 @@ msgstr "Max poll moet hoger zijn dan Min poll"
 #: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
 msgstr ""
-"Server kon niet worden bereikt. Vink \"Forceren\" aan om toch door te gaan."
+"Server kon niet worden bereikt. Vink 'Forceren' aan om toch door te gaan."
 
 #: system/forms.py:496
 #, python-format
@@ -5691,7 +5689,7 @@ msgstr "Momentopname klonen"
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Weet u zeker dat u \"%(name)s\" wilt vernietigen?"
+msgstr "Weet u zeker dat u '%(name)s' wilt vernietigen?"
 
 #: templates/storage/dataset_confirm_delete.html:8
 msgid ""
@@ -6983,7 +6981,7 @@ msgstr "Het netwerk %s wordt al door een andere NIC gebruikt."
 
 #: network/forms.py:284
 msgid "The IP \"%s\" is not valid"
-msgstr "Het IP-adres \"%s\" is niet geldig"
+msgstr "Het IP-adres '%s' is niet geldig"
 
 #: network/forms.py:343
 msgid "You need a domain, e.g. hostname.domain"
@@ -7318,7 +7316,7 @@ msgid ""
 "fixed-size records.  ZFS automatically tunes block sizes according to "
 "internal algorithms optimized for typical access patterns."
 msgstr ""
-"Specificeert een voorgestelde blokgrootte voor bestanden in het "
+"Geeft een voorgestelde blokgrootte aan voor bestanden in het "
 "bestandssysteem. Deze eigenschap is uitsluitend ontworpen voor het gebruik "
 "met database-taken die bestanden in records met vaste grootte benaderen. ZFS "
 "past blokgroottes automatisch aan volgens internationale algoritmes die voor "
@@ -7907,7 +7905,7 @@ msgstr ""
 "Wanneer ingeschakeld, vertraagt dit het starten van netwerkafhankelijke "
 "services totdat de interface actief is en ICMP-pakketten naar een bestemming "
 "die in een netwait-ip-lijst zijn gedefinieerd worden getransporteerd. Eerst "
-"wordt de verbindingsstatus onderzocht, gevolgd door \"pingen\" van een IP-"
+"wordt de verbindingsstatus onderzocht, gevolgd door 'pingen' van een IP-"
 "adres om de bruikbaarheid van het netwerk te verifiëren. Als geen bestemming "
 "kan worden bereikt of time-outs worden overschreden, worden netwerkservices "
 "toch gestart, zonder garantie dat het netwerk bruikbaar is."
@@ -8158,8 +8156,8 @@ msgid ""
 "Networks that are authorized to access the NFS share. Specify network "
 "numbers of the form 1.2.3.4/xx where xx is the number of bits of netmask."
 msgstr ""
-"Netwerken die voor toegang tot de NFS-share zijn geautoriseerd. Specificeer "
-"netwerknummers in de vorm 1.2.3.4/xx, waar xx het aantal bits van het "
+"Netwerken die voor toegang tot de NFS-share zijn geautoriseerd. Geef "
+"netwerknummers op in de vorm 1.2.3.4/xx, waar xx het aantal bits van het "
 "subnetmasker is."
 
 #: sharing/models.py:208
@@ -8246,8 +8244,8 @@ msgid ""
 "less then the volume size. Consequently, writes to a sparse volume can fail "
 "with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
 msgstr ""
-"Maakt een sparse-volume aan zonder reservering, ook bekend als \"thin "
-"provisioning\". Een \"sparse-volume\" is een volume waarbij de reservering "
+"Maakt een sparse-volume aan zonder reservering, ook bekend als 'thin "
+"provisioning'. Een 'sparse-volume' is een volume waarbij de reservering "
 "minder is dan de volumegrootte. Als gevolg daarvan kunnen schrijfbewerkingen "
 "naar een sparse-volume mislukken met ENOSPC wanneer de pool weinig ruimte "
 "heeft. (NIET AANBEVOLEN)"
@@ -8459,11 +8457,11 @@ msgstr "Starten: "
 
 #: templates/plugins/available_install.html:3
 msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
-msgstr "Weet u zeker dat u de plug-in \"%(plugin)s\" wilt installeren?"
+msgstr "Weet u zeker dat u de plug-in '%(plugin)s' wilt installeren?"
 
 #: templates/plugins/plugin_update.html:3
 msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
-msgstr "Weet u zeker dat u de plug-in \"%(plugin)s\" wilt bijwerken?"
+msgstr "Weet u zeker dat u de plug-in '%(plugin)s' wilt bijwerken?"
 
 #: templates/plugins/plugins_datagrid.html:4
 #: templates/plugins/plugins_datagrid.html:6
@@ -8637,7 +8635,7 @@ msgid ""
 "ip addresses instead. An example place where hostname lookups are currently "
 "used is when checking the hosts deny and hosts allow."
 msgstr ""
-"Specificeert of samba (dure) hostnaam-zoekopdrachten moet gebruiken of in "
+"Geeft aan of samba (dure) hostnaam-zoekopdrachten moet gebruiken of in "
 "plaats daarvan de IP-adressen. Een voorbeeldplaats waar hostnaam-"
 "zoekopdrachten momenteel worden gebruikt is bij het controleren van de "
 "geweigerde en toegestane hosts."
@@ -8694,7 +8692,7 @@ msgid ""
 "Specifies the facility code that is used when logging messages from sftp-"
 "server."
 msgstr ""
-"Specificeert de faciliteitcode die bij logboekregistratie van sftp-"
+"Geeft de faciliteitcode aan die bij logboekregistratie van sftp-"
 "serverberichten wordt gebruikt."
 
 #: services/models.py:1472
@@ -9111,15 +9109,14 @@ msgid ""
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
 "Deze boolean parameter bepaalt het gedrag van smbd(8) tijdens de ontvangst "
-"van een protocolaanvraag van \"open for execution\" vanaf een Windows-"
-"client. Bij Samba 3.6 en lager werd de uitvoermachtiging in de ACL niet "
+"van een protocolaanvraag van 'open for execution' vanaf een Windows-client. "
+"Bij Samba 3.6 en lager werd de uitvoermachtiging in de ACL niet "
 "gecontroleerd, zodat een client een bestand ook kon uitvoeren als het geen "
 "uitvoerrechten op het bestand had. In Samba 4.0 is dit verholpen, zodat "
-"wanneer bv. deze parameter is ingesteld \"False\", \"open for execution\" nu "
+"wanneer bv. deze parameter is ingesteld 'False', 'open for execution' nu "
 "standaard wordt geweigerd wanneer de uitvoermachtiging ontbreekt. Als deze "
-"parameter is ingesteld op \"True\", controleert Samba geen uitvoermachtiging "
-"bij \"open for execution\", en wordt dus het gedrag van Samba 3.6 "
-"aangehouden "
+"parameter is ingesteld op 'True', controleert Samba geen uitvoermachtiging "
+"bij 'open for execution', en wordt dus het gedrag van Samba 3.6 aangehouden "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -9185,12 +9182,12 @@ msgstr "Landcode"
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
-"Specificeer een twee-letterige ISO 3166-landcode (vereist voor LLDPlocation-"
+"Geef een twee-letterige ISO 3166-landcode op (vereist voor LLDPlocation-"
 "ondersteuning)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr "Specificeer de fysieke locatie van de host"
+msgstr "Geef de fysieke locatie van de host op"
 
 #: services/models.py:1871
 #: services/models.py:1872
@@ -9208,7 +9205,7 @@ msgstr "Realm-naam, bv. VOORBEELD.ORG"
 
 #: services/models.py:2064
 msgid "Domain Name in old format, eg EXAMPLE"
-msgstr "Domeinnaam in oud formaat, bv. VOORBEELD"
+msgstr "Domeinnaam in oude notatie, bv. VOORBEELD"
 
 #: services/models.py:2068
 #: services/models.py:2069
@@ -9325,7 +9322,7 @@ msgstr "Upgrade uitvoeren"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
-msgstr "Specificeer de grootte met IEC-achtervoegsels of 0, bv. 10 GiB"
+msgstr "Geef de grootte op met IEC-achtervoegsels of 0, bv. 10 GiB"
 
 #: storage/forms.py:558
 msgid ""
@@ -9382,7 +9379,7 @@ msgid ""
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
 "Namen van gegevenssets moeten met een alfanumeriek teken beginnen en mogen "
-"alleen \"-\", \"_\", \":\", \" \" en \".\" bevatten."
+"alleen '-', '_', ':', ' ' en '.' bevatten."
 
 #: storage/forms.py:1606
 msgid "Example: 1 GiB"
@@ -9395,15 +9392,15 @@ msgid ""
 "less than the volume size. Consequently, writes to a sparse volume can fail "
 "with ENOSPC when the pool is low on space. (NOT RECOMMENDED)"
 msgstr ""
-"Maakt een sparse-volume aan zonder reservering, ook bekend als \"thin "
-"provisioning\". Een \"sparse-volume\" is een volume waarbij de reservering "
+"Maakt een sparse-volume aan zonder reservering, ook bekend als 'thin "
+"provisioning'. Een 'sparse-volume' is een volume waarbij de reservering "
 "minder is dan de volumegrootte. Als gevolg daarvan kunnen schrijfbewerkingen "
 "naar een sparse-volume mislukken met ENOSPC wanneer de pool weinig ruimte "
 "heeft. (NIET AANBEVOLEN)"
 
 #: storage/forms.py:1655
 msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
-msgstr "Specificeer de grootte met IEC-achtervoegsels, bv. 10 GiB"
+msgstr "Geef de grootte op met IEC-achtervoegsels, bv. 10 GiB"
 
 #: storage/forms.py:1684
 msgid "Permission Type"
@@ -9875,10 +9872,9 @@ msgstr ""
 "Definieert het schema dat idmap_ad moet gebruiken bij het raadplegen van "
 "Active Directory betreffende gebruikers- en groepsinformatie. Dit kan zowel "
 "de bijgeleverde RFC2307-schemaondersteuning in Windows 2003 R2 zijn als het "
-"Service for Unix (SFU)-schema. Kies \"sfu\" voor SFU 3.0 of 3.5, kies "
-"\"sfu20\" voor SFU 2.0. Houd er rekening mee dat lidmaatschap van een "
-"primaire groep momenteel altijd wordt berekend via het LDAP-kenmerk "
-"\"primaryGroupID\"."
+"Service for Unix (SFU)-schema. Kies 'sfu' voor SFU 3.0 of 3.5, kies 'sfu20' "
+"voor SFU 2.0. Houd er rekening mee dat lidmaatschap van een primaire groep "
+"momenteel altijd wordt berekend via het LDAP-kenmerk 'primaryGroupID'."
 
 #: directoryservice/models.py:156
 msgid "sfu"
@@ -9945,9 +9941,9 @@ msgid ""
 "API. Entries in the file are of the form \"unix name = qualified domain "
 "name\". Mapping of both user and group names is supported."
 msgstr ""
-"Specificeert het absolute pad naar het naamtoewijzingsbestand dat door de "
-"nss_info-API wordt gebruikt. Vermeldingen in het bestand hebben de vorm \""
-"unix name = qualified domain name\". Toewijzing van zowel gebruikers- als "
+"Geeft het absolute pad naar het naamtoewijzingsbestand aan dat door de "
+"nss_info-API wordt gebruikt. Vermeldingen in het bestand hebben de vorm "
+"'unix name = qualified domain name'. Toewijzing van zowel gebruikers- als "
 "groepsnamen wordt ondersteund."
 
 #: directoryservice/models.py:239
@@ -9963,7 +9959,7 @@ msgid ""
 msgstr ""
 "Definieert het te gebruiken bestandsmapachtervoegsel voor SID-/uid-/gid-"
 "toewijzingsvermeldingen. Wanneer niet gedefinieerd, zal idmap_ldap standaard "
-"de optie \"ldap idmap suffix\" van smb.conf gebruiken."
+"de optie 'ldap idmap suffix' van smb.conf gebruiken."
 
 #: directoryservice/models.py:268
 msgid "User DN"
@@ -9986,7 +9982,7 @@ msgstr ""
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
 msgstr ""
-"Specificeert de te gebruiken LDAP-server voor SID-/uid-/gid-"
+"Geeft de te gebruiken LDAP-server aan voor SID-/uid-/gid-"
 "toewijzingsvermeldingen."
 
 #: directoryservice/models.py:288
@@ -10024,7 +10020,7 @@ msgstr "Bindpad van gebruiker"
 msgid ""
 "Specifies the bind path where user objects can be found in the LDAP server."
 msgstr ""
-"Specificeert het bindpad waar gebruikersobjecten zijn te vinden in de LDAP-"
+"Geeft het bindpad aan waar gebruikersobjecten zijn te vinden in de LDAP-"
 "server."
 
 #: directoryservice/models.py:348
@@ -10035,8 +10031,7 @@ msgstr "Bindpad van groep"
 msgid ""
 "Specifies the bind path where group objects can be found in the LDAP server."
 msgstr ""
-"Specificeert het bindpad waar groepsobjecten zijn te vinden in de LDAP-"
-"server."
+"Geeft het bindpad aan waar groepsobjecten zijn te vinden in de LDAP-server."
 
 #: directoryservice/models.py:355
 msgid "User CN"
@@ -10085,8 +10080,8 @@ msgid ""
 "When using a stand-alone LDAP server, this parameter specifies the ldap URL "
 "for accessing the LDAP server."
 msgstr ""
-"Bij gebruik van een zelfstandige LDAP-server specificeert deze parameter de "
-"ldap-URL voor het benaderen van de LDAP-server."
+"Bij gebruik van een zelfstandige LDAP-server geeft deze parameter de ldap-"
+"URL aan voor het benaderen van de LDAP-server."
 
 #: directoryservice/models.py:391
 msgid "LDAP User DN"
@@ -10337,8 +10332,8 @@ msgid ""
 "Specifies the admin server for this realm, where all the modifications to "
 "the database are performed."
 msgstr ""
-"Specificeert de beheerdersserver voor deze realm, waar alle modificaties aan "
-"de database worden uitgevoerd."
+"Geeft de beheerdersserver aan voor deze realm, waar alle modificaties aan de "
+"database worden uitgevoerd."
 
 #: directoryservice/models.py:565
 msgid "Password Server"
@@ -10550,8 +10545,8 @@ msgid ""
 "This parameter specifies the suffix that is used for the SUDO configuration "
 "in the LDAP directory, e.g. ou=SUDOers"
 msgstr ""
-"Deze parameter specificeert het achtervoegsel dat wordt gebruikt voor de "
-"SUDO-configuratie in de LDAP-adreslijst, bv. ou=SUDOers"
+"Deze parameter geeft het achtervoegsel aan dat wordt gebruikt voor de SUDO-"
+"configuratie in de LDAP-adreslijst, bv. ou=SUDOers"
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
@@ -11259,9 +11254,9 @@ msgstr ""
 "ondertekend en versleuteld (verzegeld) zal zijn. Deze optie is nodig in het "
 "geval van domeincontrollers die het gebruik van ondertekende LDAP-"
 "verbindingen afdwingen (zoals Windows 2000 SP3 of hoger). LDAP-ondertekenen "
-"en -verzegelen kan worden beheerd met de registersleutel \"HKLM\\System\\Curr"
-"entControlSet\\Services\\NTDS\\Parameters\\LDAPServerIntegrity\" aan de "
-"Windows-serverzijde."
+"en -verzegelen kan worden beheerd met de registersleutel "
+"'HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\"
+"LDAPServerIntegrity' aan de Windows-serverzijde."
 
 #: services/models.py:291
 msgid ""
@@ -11717,16 +11712,15 @@ msgid ""
 "ZFS Pool\" section of the User Guide for instructions."
 msgstr ""
 "Er zijn nieuwe functievlaggen beschikbaar voor volume %s. Raadpleeg de "
-"sectie \"Een ZFS-pool upgraden\" van de Gebruikershandleiding voor "
-"instructies."
+"sectie 'Een ZFS-pool upgraden' van de Gebruikershandleiding voor instructies."
 
 #: tasks/models.py:256
 msgid ""
 "IP Address or hostname. Specify user@hostname or user@ip-address if your "
 "remote machine user and above rsync task user are different."
 msgstr ""
-"IP-adres of hostnaam. Specificeer gebruiker@hostnaam of gebruiker@ip-adres "
-"als de gebruiker van uw externe machine en die van bovenstaande rsync-taak "
+"IP-adres of hostnaam. Geef gebruiker@hostnaam of gebruiker@ip-adres op als "
+"de gebruiker van uw externe machine en die van bovenstaande rsync-taak "
 "verschillend zijn."
 
 #: templates/storage/import_stats.html:16
