@@ -8,9 +8,6 @@ var componentLongName = "Groups";
 
 var React = require("react");
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
-
 var Viewer = require("../../components/Viewer");
 
 var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
@@ -93,8 +90,7 @@ var Groups = React.createClass({
   , render: function() {
       return <Viewer header     = { "Groups" }
                      inputData  = { this.state.groupsList }
-                     viewData   = { viewData }
-                     Editor     = { RouteHandler } />;
+                     viewData   = { viewData } />;
     }
 });
 

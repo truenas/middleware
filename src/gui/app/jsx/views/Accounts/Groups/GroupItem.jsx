@@ -22,6 +22,8 @@ var GroupsStore      = require("../../../stores/GroupsStore");
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
+var inputHelpers = require("../../../components/mixins/inputHelpers");
+
 var GroupView = React.createClass({
 
     propTypes: {
@@ -44,7 +46,7 @@ var GroupView = React.createClass({
         builtInGroupAlert = (
           <TWBS.Alert bsStyle   = "info"
                       className = "text-center">
-            <b>{"This is a built-in FreeNAS group account."}</b>
+            <b>{"This is a built-in FreeNAS group."}</b>
           </TWBS.Alert>
         );
       }
@@ -102,12 +104,15 @@ var GroupView = React.createClass({
 // EDITOR PANE
 var GroupEdit = React.createClass({
 
-    propTypes: {
+    mixins: [  inputHelpers ]
+
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
   , getInitialState: function() {
       var remoteState = this.setRemoteState( this.props );
+
       return {
           locallyModifiedValues  : {}
         , remotelyModifiedValues : {}
@@ -169,27 +174,13 @@ var GroupEdit = React.createClass({
       }
 
       this.setState({
-          // FIXME: These are undefined - what are they supposed to be?
-          modifiedValues : _.assign( oldModified, newModified )
+          remotelyModifiedValues : newRemoteModified
       });
     }
 
   , handleValueChange: function( key, event ) {
       var newLocallyModified = this.state.locallyModifiedValues;
-      var inputValue;
-
-      // Use different logic to interpret input from different kinds of fields.
-      // TODO: Cover every field in use with different cases as needed.
-      switch (event.target.type) {
-
-        case "checkbox" :
-          inputValue = event.target.checked;
-          break;
-
-        default:
-          inputValue = event.target.value;
-          break;
-      }
+      var inputValue = this.processFormInput( event );
 
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we
@@ -208,7 +199,7 @@ var GroupEdit = React.createClass({
       // user. This allows the display components to have access to the
       // "canonically" correct item, merged with the un-changed values.
       this.setState({
-          modifiedValues : newLocallyModified
+          locallyModifiedValues : newLocallyModified
         , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
       });
     }
@@ -244,6 +235,7 @@ var GroupEdit = React.createClass({
   , render: function() {
       var builtInGroupAlert = null;
       var editButtons       = null;
+      var inputForm         = null;
 
       if ( this.props.item["builtin"] ) {
         builtInGroupAlert = (
@@ -260,10 +252,40 @@ var GroupEdit = React.createClass({
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
-                         disabled  = { _.isEmpty( this.state.modifiedValues ) ? true : false }
+                         disabled  = { _.isEmpty( this.state.locallyModifiedValues ) ? true : false }
                          onClick   = { this.submitGroupUpdate }
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
+
+      inputForm =
+        <form className="form-horizontal">
+          <TWBS.Grid fluid>
+            <TWBS.Row>
+              <TWBS.Col xs = {12}>
+                {/*Group id*/}
+                <TWBS.Input type             = "text"
+                            label            = { "Group ID" }
+                            value            = { this.state.mixedValues["id"] ? this.state.mixedValues["id"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "id" ) }
+                            key              = { "id" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "id", this.props.dataKeys) } />
+                {/* name */}
+                <TWBS.Input type             = "text"
+                            label            = { "Group Name" }
+                            value            = { this.state.mixedValues["name"] ? this.state.mixedValues["name"] : "" }
+                            onChange         = { this.handleValueChange.bind( null, "name" ) }
+                            key              = { "name" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "name", this.props.dataKeys) } />
+              </TWBS.Col>
+            </TWBS.Row>
+          </TWBS.Grid>
+        </form>;
 
       return (
         <TWBS.Grid fluid>
@@ -273,24 +295,7 @@ var GroupEdit = React.createClass({
           {/* Shows a warning if the group is built in */}
           { builtInGroupAlert }
 
-          <form className="form-horizontal">
-            {
-              this.props["dataKeys"].map( function( displayKeys, index ) {
-                return editorUtil.identifyAndCreateFormElement(
-                          // value
-                          this.state.mixedValues[ displayKeys["key"] ]
-                          // displayKeys
-                        , displayKeys
-                          //changeHandler
-                        , this.handleValueChange
-                          // key
-                        , index
-                          // wasModified
-                        , _.has( this.state.modifiedValues, displayKeys["key"] )
-                      );
-              }.bind( this ) )
-            }
-          </form>
+          {inputForm}
 
           {/* Save and Cancel Buttons - Bottom */}
           { editButtons }
@@ -378,7 +383,6 @@ var GroupItem = React.createClass({
               DisplayComponent = <GroupEdit { ...childProps } />;
               break;
           }
-
         }
 
         return (
