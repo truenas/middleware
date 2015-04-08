@@ -579,9 +579,8 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 | Anonymous user download bandwidth                            | integer        | only available in "Advanced Mode"; in KB/s, default of *0*  means unlimited         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections; if not            |
-|                                                              |                | provided, a certificate will automatically be generated and will appear in the      |
-|                                                              |                | "Certificate and private key" box once you click "OK"                               |
+| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections and requires a     |
+|                                                              |                | certificate to be created or imported using :ref:`Certificates`                     |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS policy                                                   | drop-down menu | only available in "Advanced Mode"; the selected policy defines whether the          |
