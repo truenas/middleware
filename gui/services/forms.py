@@ -1204,7 +1204,9 @@ class iSCSITargetExtentForm(ModelForm):
         return disk
 
     def clean_iscsi_target_extent_path(self):
-        _type = self.cleaned_data['iscsi_target_extent_type']
+        _type = self.cleaned_data.get('iscsi_target_extent_type')
+        if _type is None:
+            return _type
         if _type == 'Disk':
             return ''
         path = self.cleaned_data["iscsi_target_extent_path"]
