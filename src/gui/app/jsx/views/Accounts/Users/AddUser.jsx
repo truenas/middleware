@@ -103,9 +103,6 @@ var AddUser = React.createClass({
   , cancel: function () {
 
     }
-  , test: function () {
-    console.log("test");
-  }
 
   , render: function() {
 
