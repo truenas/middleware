@@ -43,6 +43,7 @@ from email.Utils import formatdate
 from datetime import datetime, timedelta
 
 from django.utils.translation import ugettext_lazy as _
+from freenasOS import Configuration
 
 RE_MOUNT = re.compile(
     r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) \((?P<fs_vfstype>\w+)', re.S
@@ -58,8 +59,14 @@ def get_sw_version(strip_build_num=False):
     global _VERSION
 
     if _VERSION is None:
-        with open(VERSION_FILE) as fd:
-            _VERSION = fd.read().strip()
+        # See #9113
+        conf = Configuration.Configuration()
+        sys_mani = conf.SystemManifest()
+        if sys_mani:
+            _VERSION = sys_mani.Sequence()
+        else:
+            with open(VERSION_FILE) as fd:
+                _VERSION = fd.read().strip()
     if strip_build_num:
         return _VERSION.split(' ')[0]
     return _VERSION
