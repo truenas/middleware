@@ -60,8 +60,26 @@ var AddUser = React.createClass({
   , handleValueChange: function( key, event ) {
       var newEditedFields = this.state.editedFields;
       var inputValue = this.processFormInput( event );
+      var dataKey = _.find(this.state.dataKeys, function (dataKey) {
+        return (dataKey.key === key);
+      }, this);
 
-      newEditedFields[ key ] = inputValue;
+      // TODO: mixin? could this go in processFormInput?
+      switch (dataKey.type) {
+        case "string":
+          newEditedFields[ key ] = inputValue;
+          break;
+
+        case "integer":
+        case "number":
+          newEditedFields[ key ] = _.parseInt(inputValue);
+          break;
+
+        default:
+          newEditedFields[ key ] = inputValue;
+          break;
+      }
+
 
       this.setState( { editedFields: newEditedFields } );
     }
@@ -77,11 +95,8 @@ var AddUser = React.createClass({
 
   , submitNewUser: function() {
       var newUserValues = {};
-      console.log(this.state.dataKeys);
       // Stage edited values for submission. Don't include any read-only stuff that got in somehow.
       newUserValues = this.removeReadOnlyFields(this.state.editedFields, this.state.dataKeys);
-      console.log(this.state.editedFields);
-      console.log(newUserValues);
       // TODO: Only submit a user if all the required fields are there.
       UsersMiddleware.createUser( newUserValues );
   }
