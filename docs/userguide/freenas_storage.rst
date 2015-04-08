@@ -1580,7 +1580,7 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |                |                             |                                                                                                             |
 |                |                             |                                                                                                             |
 +================+=============================+=============================================================================================================+
-| Hostname       | string                      | IP address or hostname of VMware host                                                                       |
+| Hostname       | string                      | IP address or hostname of VMware host; when clustering, this is the vCenter server for the cluster          |
 |                |                             |                                                                                                             |
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | Username       | string                      | user on VMware host with enough permission to snapshot virtual machines                                     |
