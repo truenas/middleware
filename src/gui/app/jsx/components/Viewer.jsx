@@ -176,35 +176,6 @@ var Viewer = React.createClass({
       this.processDisplayData({ searchString: event.target.value });
     }
 
-  , handleEnabledGroupsToggle: function ( targetGroup ) {
-      var tempEnabledArray = _.clone( this.state.enabledGroups );
-      var tempDisplayArray = this.props.viewData.display.allowedGroups;
-      var enabledIndex     = tempEnabledArray.indexOf( targetGroup );
-
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetGroup );
-        // _.intersection will return array to the original defined order
-        tempEnabledArray = _.intersection( tempDisplayArray, tempEnabledArray );
-      }
-
-      this.processDisplayData({ enabledGroups: tempEnabledArray });
-    }
-
-  , handleEnabledFiltersToggle: function ( targetFilter ) {
-      var tempEnabledArray = _.clone( this.state.enabledFilters );
-      var enabledIndex     = tempEnabledArray.indexOf( targetFilter );
-
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetFilter );
-      }
-
-      this.processDisplayData({ enabledFilters: tempEnabledArray });
-    }
-
   , changeViewerMode: function ( targetMode ) {
       var newMode;
 
