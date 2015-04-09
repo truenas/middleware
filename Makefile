@@ -67,6 +67,8 @@ check-root:
 build: git-verify portsjail ports
 	@build/tools/install-world.py
 	@build/tools/install-ports.py
+	@build/tools/customize.py
+	@build/tools/build-packages.py
 
 checkout: git-verify
 	@build/tools/checkout.py
