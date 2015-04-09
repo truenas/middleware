@@ -720,22 +720,26 @@ The listing contains the following columns:
 To create a custom template, first install the desired operating system and configure it the way you want. The installation can be either to an existing jail
 or on another system.
 
+Next, create an mtree specification using this command::
+
+ mtree -c -p </path/to/jail> -k sha256digest > file.mtree
+
 Once your configuration is complete, create a tarball of the entire operating system that you wish to use as a template. This tarball needs to be compressed
 with :command:`gzip` and end in a :file:`.tgz` extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In other
 words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
 Alternately, you can create a temporary directory within the operating system and use the *--exclude* switch to :command:`tar` to exclude this directory from
 the tarball. The exact :command:`tar` command to use will vary, depending upon the operating system being used to create the tarball.
 
-Once you have the :file:`.tgz` file for the operating system, save it to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
+Once you have generated the :file:`.mtree` and :file:`.tgz` files, save them to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
 in order to add the template to the list of available templates.
 
 To add the template, click :menuselection:`Jails --> Templates --> Add Jail Templates` which will open the screen seen in Figure 13.4b.
 
 **Figure 13.4b: Adding A Custom Jail Template**
 
-|jails11.png|
+|jails11a.png|
 
-.. |jails11.png| image:: images/jails11.png
+.. |jails11a.png| image:: images/jails11a.png
 
 Table 13.4a summarizes the fields in this screen.
 
@@ -753,17 +757,18 @@ Table 13.4a summarizes the fields in this screen.
 |              |                |                                                                                               |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
-| Architecture | drop-down menu | choices are *x86* or                                                                          |
-|              |                | *x64*;                                                                                        |
-|              |                | *x86* is required if                                                                          |
-|              |                | *Linux* is selected                                                                           |
+| Architecture | drop-down menu | choices are *x86* (32-bit) or                                                                 |
+|              |                | *x64* (64-bit)                                                                                |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
 | URL          | string         | input the full URL to the :file:`.tgz` file, including the protocol (*ftp://* or              |
 |              |                | or *http://*)                                                                                 |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
-| Jt readonly  | checkbox       | if this box is checked, the "Name" and "URL" of the template cannot be changed after creation |
+| Mtree        | string         | paste the mtree specification for the template                                                |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| Read-only    | checkbox       | if this box is checked, the "Name" and "URL" of the template cannot be changed after creation |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
 
@@ -774,9 +779,9 @@ it will open the configuration screen shown in the Figure 13.4c.
 
 **Figure 13.4c: Editing a Template's Options**
 
-|jails10.png|
+|jails10a.png|
 
-.. |jails10.png| image:: images/jails10.png
+.. |jails10a.png| image:: images/jails10a.png
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.

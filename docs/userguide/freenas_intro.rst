@@ -414,6 +414,10 @@ that have occurred since 9.3-RELEASE.
 
 * A "Restart" button is now available when you click the entry for an installed jail.
 
+* The "Mtree" field and "Read-only" checkbox have been added to :menuselection:`Jails --> Templates --> Add Jail Templates`.
+
+* The "Mtree" field has been added to the "Edit" options for existing jail templates.
+
 * The **-C**, **-D** and **-j** options have been added to :ref:`freenas-debug`.
 
 * A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
