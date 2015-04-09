@@ -29,7 +29,7 @@
 import os
 import sys
 import glob
-from utils import mkdirp, env, setup_env, sh, info, debug, error, pathjoin
+from utils import env, setup_env, sh, info, debug, error, pathjoin
 
 
 setup_env()

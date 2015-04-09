@@ -27,7 +27,7 @@
 #####################################################################
 
 import sys
-from utils import sh, sh_str, env, setup_env, objdir, info, debug, error, mkdirp
+from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
 
 
 setup_env()
@@ -75,6 +75,6 @@ if __name__ == '__main__':
         info('Skipping jail installation, as instructed by setting SKIP_INSTALL_JAIL')
         sys.exit(0)
 
-    mkdirp(env('JAIL_DESTDIR'))
+    sh('mkdir -p ${JAIL_DESTDIR}')
     installworld()
     installkernel()
