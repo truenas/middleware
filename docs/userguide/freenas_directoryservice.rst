@@ -91,7 +91,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | *TLS*                                                                                                                                      |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Certificate              | browse button | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if  SSL connections                        |
+| Certificate              | drop-down menu| only available in "Advanced Mode"; select the certificate of the LDAP server if  SSL connections                                           |
 |                          |               | are used; if you do not have a certificate, first create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                |                                                                                                                                    
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -397,7 +397,7 @@ If you are new to LDAP terminology, skim through the
 |                         |                | *TLS* and a "Certificate" must be selected in order for authentication to work                                 |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if             |
+| Certificate             | drop-down menu | only available in "Advanced Mode"; select the certificate of the LDAP server if                                |
 |                         |                | SSL or TLS connections are used (required if authentication is used); if you do not have a certificate, first  |
 |                         |                | create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                                      |
 |                         |                |                                                                                                                |
