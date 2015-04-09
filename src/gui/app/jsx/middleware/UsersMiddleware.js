@@ -10,7 +10,7 @@ var UsersActionCreators = require("../actions/UsersActionCreators");
 
 module.exports = {
 
-    subscribe: function( componentID ) {
+   subscribe: function( componentID ) {
       MiddlewareClient.subscribe( ["users.changed"], componentID );
       MiddlewareClient.subscribe( ["task.*"], componentID );
     }
@@ -27,10 +27,10 @@ module.exports = {
     }
 
   , createUser: function( newUserProps ) {
-      MiddlewareClient.request( "task.submit", ["users.create" , [ newUserProps ] ], function ( taskID ) {
-        UsersActionCreators.receiveUserUpdateTask( taskID );
+      MiddlewareClient.request( "task.submit", ["users.create" , [ newUserProps ] ], function ( taskID, userID ) {
+        UsersActionCreators.receiveUserUpdateTask( taskID, userID );
       });
-  }
+    }
 
   , updateUser: function( userID, changedProps ) {
       MiddlewareClient.request( "task.submit", ["users.update", [ userID, changedProps ] ], function ( taskID ) {
