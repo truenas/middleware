@@ -28,7 +28,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -37,7 +37,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -46,7 +46,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -55,7 +55,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -64,7 +64,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -73,7 +73,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -82,7 +82,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -91,7 +91,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -100,7 +100,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -109,7 +109,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -118,7 +118,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -127,7 +127,7 @@ port(
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
         e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-        e("REVISION=${SVNREVISION}")
+        e("REVISION=${GIT_REVISION}")
     ]
 )
 
@@ -137,6 +137,6 @@ if PRODUCT != "TrueNAS":
         options=[
             e("PRODUCT_VERSION=${VERSION}"),
             e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-            e("REVISION=${SVNREVISION}")
+            e("REVISION=${GIT_REVISION}")
         ]
     )

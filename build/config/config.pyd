@@ -89,7 +89,14 @@ make_conf_build(
     WITHOUT_SYSINSTALL="yes",
     WITHOUT_WIRELESS="yes",
     WITHOUT_WPA_SUPPLICANT_EAPOL="yes",
-#    DEFAULT_VERSIONS=DEFAULT_VERSIONS,
-    NOPORTDOCS="yes"
-#    LOCAL_DIRS=LOCAL_DIRS
+    DEFAULT_VERSIONS="python=2.7",
+    NOPORTDOCS="yes",
+    LOCAL_DIRS=""
 )
+
+
+customize_task("remove-bits")
+#customize_task("remove-gcc")
+customize_task("remove-var-cache-pkg")
+customize_task("strip-binaries")
+customize_task("write-version")

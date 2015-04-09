@@ -40,5 +40,5 @@ copy(
     dest="/usr/freenas_gui"
 )
 
-if LABEL == "TrueNAS":
+if PRODUCT == "TrueNAS":
     pass

@@ -101,7 +101,7 @@ port(name="sysutils/smartmontools")
 port(name="net/libdnet")
 port(name="emulators/open-vm-tools-nox11", options=["WITHOUT_ICU=y"])
 
-if LABEL == "TrueNAS":
+if PRODUCT == "TrueNAS":
 	port(name="emulators/qemu", options=[
 	    "WITHOUT_ADD_AUDIO=y",
 	    "WITHOUT_ALL_TARGETS=y",
@@ -173,7 +173,7 @@ port(name="textproc/expat2")
 port(name="devel/gamin")
 #port(name="devel/gio-fam-backend")
 
-if LABEL == "TrueNAS":
+if PRODUCT == "TrueNAS":
 	port(name="devel/bison")
 	port(name="devel/libffi")
 
@@ -203,7 +203,7 @@ port(name="sysutils/arcconf")
 port(name="sysutils/tw_cli")
 port(name="sysutils/megacli")
 
-if LABEL != "TrueNAS":
+if PRODUCT != "TrueNAS":
 	port(name="sysutils/areca-cli")
 	port(name="sysutils/hptcli")
 
