@@ -38,8 +38,8 @@ Information
 
 :menuselection:`System --> Information` displays general information about the TrueNAS® system. An example is seen in Figure 5.1a.
 
-The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the
-current load average.
+The information includes the hostname, build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, the
+current load average, and the system's serial number.
 
 To change the system's hostname, click its "Edit" button, type in the new hostname, and click "OK". The hostname must include the domain name. If the network
 does not use a domain name add *.local* to the end of the hostname.
