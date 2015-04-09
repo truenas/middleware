@@ -28,13 +28,15 @@
 
 
 import os
+import sys
 import glob
 from dsl import load_file
-from utils import sh, setup_env, objdir, info, debug, error, setfile, e, on_abort
+from utils import sh, setup_env, objdir, info, debug, error, setfile, e, on_abort, chroot
 
 
 setup_env()
 dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
+logfile = objdir('logs/pkg-install')
 
 
 def mount_packages():
@@ -55,10 +57,16 @@ def create_pkgng_configuration():
 
 def install_ports():
     pkgs = ' '.join(dsl['port'].keys())
-    sh(e('chroot ${WORLD_DESTDIR} /bin/sh -c "env ASSUME_ALWAYS_YES=yes pkg install -r local -f ${pkgs}"'))
+    chroot('${WORLD_DESTDIR}', 'env ASSUME_ALWAYS_YES=yes pkg install -r local -f ${pkgs}', log=logfile)
 
 
 if __name__ == '__main__':
+    if e('${SKIP_PORTS_INSTALL}'):
+        info('Skipping ports install as instructed by setting SKIP_PORTS_INSTALL')
+        sys.exit(0)
+
+    info('Installing ports')
+    info('Log file: {0}', logfile)
     on_abort(umount_packages)
     mount_packages()
     create_pkgng_configuration()
