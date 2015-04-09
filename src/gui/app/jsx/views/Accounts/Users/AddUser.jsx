@@ -9,7 +9,6 @@ var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
 
-    // Will be used to submit changes. Remove comment when done.
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
@@ -23,6 +22,10 @@ var AddUser = React.createClass({
 
     mixins: [   inputHelpers
               , userMixins ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+  }
 
   , propTypes: {
         viewData: React.PropTypes.object.isRequired
@@ -80,7 +83,6 @@ var AddUser = React.createClass({
           break;
       }
 
-
       this.setState( { editedFields: newEditedFields } );
     }
 
@@ -95,10 +97,18 @@ var AddUser = React.createClass({
 
   , submitNewUser: function() {
       var newUserValues = {};
+      var params = {};
+
       // Stage edited values for submission. Don't include any read-only stuff that got in somehow.
       newUserValues = this.removeReadOnlyFields(this.state.editedFields, this.state.dataKeys);
+
+      // Get ready to send the view to the new user.
+      params[this.props.viewData.routing["param"]] = newUserValues["username"];
+
+      // Submits the user and moves the view to the new user.
       // TODO: Only submit a user if all the required fields are there.
-      UsersMiddleware.createUser( newUserValues );
+      // TODO: Make sure the new user was actually created before transitioning the route.
+      UsersMiddleware.createUser( newUserValues, this.context.router.transitionTo( "users-editor", params) );
   }
   , cancel: function () {
 
