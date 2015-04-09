@@ -103,24 +103,18 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
+      var updateData = args[ "args" ];
 
-      if ( args["name"] === UPDATE_MASK ) {
-        var updateData = args["args"];
-
-        if ( updateData["operation"] === "update" ) {
-          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          // FIXME: This is a workaround for the current implementation of task
-          // subscriptions and submission resolutions.
-          UsersMiddleware.requestUsersList( _updatedOnServer );
-        } else {
-          // TODO: Can this be anything else?
-        }
-
-        UsersStore.emitChange();
+      // FIXME: This is a workaround for the current implementation of task
+      // subscriptions and submission resolutions.
+      if ( args[ "name" ] === UPDATE_MASK ) {
+        Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+        UsersMiddleware.requestUsersList( _updatedOnServer );
+      UsersStore.emitChange();
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
-      } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" ) {
-        delete _localUpdatePending[ args.args["id"] ];
+      } else if ( args[ "name" ] === "task.updated" && args.args["state"] === "FINISHED" ) {
+          delete _localUpdatePending[ args.args["id"] ];
       }
 
       break;
