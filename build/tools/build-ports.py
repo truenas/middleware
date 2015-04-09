@@ -76,12 +76,15 @@ def create_make_conf():
 
 
 def create_ports_list():
+    info('Creating ports list')
+    sh('rm -rf', portoptions)
+
     f = open(portslist, 'w')
     for port in dsl['port'].values():
         port_und = port['name'].replace('/', '_')
         options_path = pathjoin(portoptions, port_und)
         f.write('{0}\n'.format(port['name']))
-        sh('rm -rf', options_path)
+
         sh('mkdir -p', options_path)
 
         if 'options' in port:

@@ -75,6 +75,8 @@ if __name__ == '__main__':
         info('Skipping world installation, as instructed by setting SKIP_INSTALL_WORLD')
         sys.exit(0)
 
+    sh('chflags -R 0 ${WORLD_DESTDIR}')
+    sh('rm -rf ${WORLD_DESTDIR}')
     sh('mkdir -p ${WORLD_DESTDIR}')
     installworld()
     installkernel()
