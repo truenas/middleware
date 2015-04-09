@@ -43,6 +43,10 @@ class GlobalsWrapper(dict):
             from utils import e
             return e
 
+        if item == 'sh':
+            from utils import sh_str
+            return sh_str
+
         if item == 'include':
             return self.include
 

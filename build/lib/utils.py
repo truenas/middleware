@@ -34,6 +34,7 @@ import signal
 import string
 import signal
 import inspect
+from collections import defaultdict
 from dsl import load_file
 
 
@@ -43,9 +44,9 @@ def interrupt(signal, frame):
 
 def sh(*args, **kwargs):
     logfile = kwargs.pop('log', None)
-    cmd = os.path.expandvars(' '.join(args))
+    cmd = e(' '.join(args), **get_caller_vars())
     if logfile:
-        mkdirp(os.path.dirname(logfile))
+        sh('mkdir -p', os.path.dirname(logfile))
         f = open(logfile, 'w')
 
     debug('sh: {0}', cmd)
@@ -54,14 +55,20 @@ def sh(*args, **kwargs):
 
 def sh_str(*args, **kwargs):
     logfile = kwargs.pop('log', None)
-    cmd = os.path.expandvars(' '.join(args))
+    cmd = e(' '.join(args), **get_caller_vars())
     if logfile:
         f = open(logfile, 'w')
 
     try:
-        return subprocess.check_output(cmd, shell=True)
+        return subprocess.check_output(cmd, shell=True).strip()
     except subprocess.CalledProcessError:
-        return None
+        return ''
+
+
+def chroot(root, *args, **kwargs):
+    root = e(root, **get_caller_vars())
+    cmd = e(' '.join(args), **get_caller_vars())
+    return sh("chroot ${root} /bin/sh -c '${cmd}'", **kwargs)
 
 
 def setup_env():
@@ -72,17 +79,13 @@ def setup_env():
             os.environ[k] = v
 
 
-def mkdirp(path):
-    sh('mkdir -p', path)
-
-
 def env(name, default=None):
     return os.getenv(name, default)
 
 
 def setfile(filename, contents):
     debug('setfile: {0} -> {1}', contents, filename)
-    f = open(filename, 'w')
+    f = open(e(filename, **get_caller_vars()), 'w')
     f.write(contents)
     f.write('\n')
     f.close()
@@ -97,20 +100,27 @@ def on_abort(func):
     signal.signal(signal.SIGTERM, abort)
 
 
+def get_caller_vars():
+    frame = inspect.currentframe()
+    try:
+        parent = frame.f_back.f_back
+        kwargs = parent.f_locals
+        kwargs.update(parent.f_globals)
+    finally:
+        del frame
+
+    return kwargs
+
+
 def e(s, **kwargs):
     s = os.path.expandvars(s)
     if not kwargs:
-        frame = inspect.currentframe()
-        try:
-            kwargs = frame.f_back.f_locals
-        finally:
-            del frame
-
-        if not kwargs:
-            kwargs = globals()
+        kwargs = get_caller_vars()
 
     t = string.Template(s)
-    return t.safe_substitute(kwargs)
+    d = defaultdict(lambda: '')
+    d.update(kwargs)
+    return t.safe_substitute(d)
 
 
 def pathjoin(*args):
@@ -128,6 +138,11 @@ def template(filename, variables):
     result = t.safe_substitute(**variables)
     f.close()
     return result
+
+
+def glob(path):
+    import glob as g
+    return g.glob(e(path))
 
 
 def elapsed():
