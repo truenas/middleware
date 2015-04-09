@@ -1079,9 +1079,9 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
-|periodic1a.png|
+|periodic1b.png|
 
-.. |periodic1a.png| image:: images/periodic1a.png
+.. |periodic1b.png| image:: images/periodic1b.png
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1094,6 +1094,10 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
 |                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
+|                |                            |                                                                                                              |
++----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
+| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another FreeNAS system              |
+| Dataset        |                            |                                                                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the      |

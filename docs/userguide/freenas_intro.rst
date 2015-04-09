@@ -378,6 +378,8 @@ that have occurred since 9.3-RELEASE.
 
 * A reboot is no longer required when creating :ref:`Link Aggregations`.
 
+* The "Exclude System Dataset" checkbox has been added to :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`.
+
 * The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
 
 * A pop-up warning will appear if you go to change :menuselection:`Directory Service --> Active Directory --> Advanced Mode -> Idmap backend` as selecting the wrong
