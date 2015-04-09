@@ -339,7 +339,7 @@ that have occurred since 9.3-RELEASE.
 
 * The mrsas(4) LSI MegaRAID driver was added.
 
-* Support for the MX-ES USB Drive by Mach Xtreme was added.
+* Support for the Mach Xtreme MX-ES and the Kingston DT100G2 USB drives has been added.
 
 * Man pages have been added and can be accessed from :ref:`Shell`.
 
