@@ -49,6 +49,8 @@ module.exports = {
           chart           : ""
         , stagedUpdate    : {}
         , graphType       : "line"
+        , legendStateObj  : {}
+        , legendStateArr  : []
         , errorMode       : false
         , statdData       : initialStatdData
         , statdDataLoaded : false
@@ -242,7 +244,19 @@ module.exports = {
           .datum( this.chartData( this.state.graphType ) )
           .call( newState["chart"] );
 
-        newState["chart"].update();
+        if ( !_.isEmpty( this.state.legendStateObj ) )
+        {
+        	if (this.state.graphType === "pie")	{
+	        	newState["chart"].dispatch.changeState( { disabled	: this.state.legendStateObj } );
+	    	}
+	    	else {
+	        	newState["chart"].dispatch.changeState( { disabled	: this.state.legendStateArr } );
+	    	}
+
+        } else  {
+        	newState["chart"].update();
+        }
+
       } else {
         // Either this is the first run, the chart type has changed, or something
         // else has happened to require a complete reload of the chart.
@@ -334,7 +348,8 @@ module.exports = {
             console.log( this.state.graphType + " is not a supported chart type." );
             return;
         }
-
+        var hndlChrtStChng = this.handleChartStateChange;
+        newChart.dispatch.on("stateChange", function (e) { hndlChrtStChng(e); });
         newState["chart"] = newChart;
 
         d3.select( chartSVGNode )
@@ -350,6 +365,25 @@ module.exports = {
 
       this.setState( newState );
     }
+
+  , handleChartStateChange: function(newChartState) {
+  	var legendStateObject = {};
+  	var legendStateArray = newChartState["disabled"];
+
+  	console.log(newChartState["disabled"]);
+
+  	for (var i = 0; i < newChartState["disabled"].length; i++)
+  	{
+  		console.log(i);
+  		console.log(newChartState["disabled"][i]);
+
+    	legendStateObject[i] = newChartState["disabled"][i];
+	}
+
+  	this.setState( {   legendStateObj: legendStateObject
+  					 , legendStateArr: legendStateArray } );
+  	console.log(legendStateObject);
+  }
 
   , chartData: function( chartType ) {
       var returnArray = [];
