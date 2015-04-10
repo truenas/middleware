@@ -118,7 +118,7 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         } else {
           // TODO: Are there any other cases?
         }
-      UsersStore.emitChange();
+        UsersStore.emitChange();
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
       } else if ( args[ "name" ] === "task.updated" && args.args["state"] === "FINISHED" ) {

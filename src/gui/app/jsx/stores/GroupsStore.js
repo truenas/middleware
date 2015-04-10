@@ -82,14 +82,18 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
+      var updateData = args["args"];
 
       if ( args["name"] === UPDATE_MASK ) {
-        var updateData = args["args"];
-
-        if ( updateData ["operation"] === "update" ) {
+        if ( updateData[ "operation" ] === "delete" ) {
+            _groups = _.omit(_groups, updateData["ids"] );
+        } else if ( updateData ["operation"] === "create" || updateData ["operation"] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           GroupsMiddleware.requestGroupsList( _updatedOnServer );
         }
+        GroupsStore.emitChange();
+      } else if ( args[ "name" ] === "task.updated" && updateData["state"] === "FINISHED" ) {
+          delete _localUpdatePending[ updateData["id"] ];
       }
       break;
 
