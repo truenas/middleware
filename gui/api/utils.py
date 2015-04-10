@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -44,7 +44,7 @@ from freenasUI.services.exceptions import ServiceFailed
 from tastypie.authentication import (
     Authentication, BasicAuthentication, MultiAuthentication
 )
-from tastypie import fields
+from tastypie import fields, http
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse, UnsupportedFormat
 from tastypie.http import HttpUnauthorized
@@ -276,7 +276,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 if f.startswith('-'):
                     reverse = True
                     f = f[1:]
-                obj_list = sorted(obj_list, key=lambda x: getattr(x, f), reverse=reverse) 
+                obj_list = sorted(obj_list, key=lambda x: getattr(x, f), reverse=reverse)
 
         return obj_list
 
@@ -353,9 +353,11 @@ class DojoModelResource(ResourceMixin, ModelResource):
             api_validation=True,
         )
         if not self.is_form_valid(bundle, form):
-            raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, bundle.errors)
-            )
+            raise ImmediateHttpResponse(response=self.error_response(
+                bundle.request,
+                bundle.errors,
+                response_class=http.HttpConflict,
+            ))
 
         """
         FIXME
