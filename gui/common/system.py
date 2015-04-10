@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -31,10 +31,8 @@ import base64
 import re
 import shutil
 import smtplib
-import socket
 import sqlite3
 import subprocess
-import sys
 import syslog
 import traceback
 from email.mime.multipart import MIMEMultipart
@@ -226,6 +224,7 @@ def send_mail(subject=None,
         errmsg = "Unexpected error."
         error = True
     return error, errmsg
+
 
 def get_fstype(path):
     assert path
@@ -428,6 +427,7 @@ def activedirectory_has_unix_extensions():
 
     return ad_unix_extensions
 
+
 def activedirectory_has_keytab():
     from freenasUI.directoryservice.models import ActiveDirectory
 
@@ -442,6 +442,7 @@ def activedirectory_has_keytab():
         ad_has_keytab = False
 
     return ad_has_keytab
+
 
 def activedirectory_objects():
     from freenasUI.directoryservice.models import ActiveDirectory
@@ -599,43 +600,37 @@ def exclude_path(path, exclude):
 
 def backup_database():
     from freenasUI.middleware.notifier import notifier
-    systempath = notifier().system_dataset_path()
-    if systempath:
-        files = glob.glob('%s/*.db' % systempath)
-        reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-        files = filter(lambda y: reg.match(y), files)
-        today = datetime.now().strftime("%Y-%m-%d")
-        number = 1
-        if files:
-            # Sort found files by date and revision
-            files = sorted(
-                files,
-                cmp=lambda x, y: cmp(
-                    (x.groups()[0], int(x.groups()[1])),
-                    (y.groups()[0], int(y.groups()[1])),
-                ),
-                key=lambda x: reg.search(x),
-                reverse=True,
-            )
-            last = files[0]
-            search = reg.search(last)
-            date = search.groups()[0]
-            if date == today:
-                number = int(search.groups()[1]) + 1
 
-            # Remove too old database files
-            for f in files[29:]:
-                try:
-                    os.unlink(f)
-                except:
-                    pass
-        newfile = '%s/%s-%s-%d.db' % (
-            systempath,
-            socket.gethostname(),
-            today,
-            number,
-        )
-        shutil.copy('/data/freenas-v1.db', newfile)
+    systemdataset, volume, basename = notifier().system_dataset_settings()
+    systempath = notifier().system_dataset_path()
+    if not systempath or not systemdataset:
+        return
+
+    # Legacy format
+    files = glob.glob('%s/*.db' % systempath)
+    reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
+    files = filter(lambda y: reg.match(y), files)
+    for f in files:
+        try:
+            os.unlink(f)
+        except OSError:
+            pass
+
+    today = datetime.now().strftime("%Y%m%d")
+
+    newfile = os.path.join(
+        systempath,
+        'configs-%s' % systemdataset.sys_uuid,
+        get_sw_version(),
+        '%s.db' % today,
+    )
+
+    dirname = os.path.dirname(newfile)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+    shutil.copy('/data/freenas-v1.db', newfile)
+
 
 def get_dc_hostname():
     from freenasUI.network.models import GlobalConfiguration
@@ -661,6 +656,7 @@ def get_dc_hostname():
             hostname = out[0].strip()
 
     return hostname
+
 
 def validate_netbios_name(netbiosname):
     regex = re.compile(r"^[a-zA-Z]([a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,14})?$")

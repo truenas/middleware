@@ -5410,7 +5410,8 @@ class notifier:
         datasets = [basename]
         for sub in (
             'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid
+            'rrd-%s' % systemdataset.sys_uuid,
+            'configs-%s' % systemdataset.sys_uuid,
         ):
             datasets.append('%s/%s' % (basename, sub))
 
@@ -5522,7 +5523,8 @@ class notifier:
         systemdataset, volume, basename = self.system_dataset_settings()
         sub = [
             'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid
+            'rrd-%s' % systemdataset.sys_uuid,
+            'configs-%s' % systemdataset.sys_uuid,
         ]
 
         # Check if .system datasets are already mounted
@@ -5541,7 +5543,8 @@ class notifier:
         systemdataset, volume, basename = self.system_dataset_settings()
         sub = [
             'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid
+            'rrd-%s' % systemdataset.sys_uuid,
+            'configs-%s' % systemdataset.sys_uuid,
         ]
 
         for i in sub:
@@ -5895,6 +5898,10 @@ class notifier:
         f.close()
         sock.close()
         return response
+
+    def backup_db(self):
+        from freenasUI.common.system import backup_database
+        backup_database()
 
 
 def usage():
