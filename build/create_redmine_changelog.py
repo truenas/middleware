@@ -26,8 +26,6 @@ def main(argv):
         sys.exit(2)
    
     rm = Redmine('https://bugs.freenas.org', key=key) 
-    rm_freenas = rm.project.get('freenas')
-    rm_truenas = rm.project.get('truenas')
 
     statuses = rm.issue_status.all()
     for status in statuses:
@@ -63,8 +61,10 @@ def main(argv):
             if not skip:
                 entrytext = re.sub('[f|F][r|R][e|E][e|E][n|N][a|A][s|S]\s*[o|O][n|N]|[l|L][y|Y]:?', '', entrytext).strip()
                 if project.lower() == 'freenas': 
+                    entrytext = re.sub('\n','\n\t\t\t', entrytext)
                     print "#" + str(issue.id) + "\t" + str(issue.tracker) + "\t" + str(issue.priority) + "\t" + entrytext
                 else:
+                    entrytext = re.sub('\n','\n\t', entrytext)
                     print "#" + str(issue.id) + "\t" + entrytext
         
 if __name__ == "__main__":
