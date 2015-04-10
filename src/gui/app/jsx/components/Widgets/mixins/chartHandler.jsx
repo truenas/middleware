@@ -370,19 +370,13 @@ module.exports = {
   	var legendStateObject = {};
   	var legendStateArray = newChartState["disabled"];
 
-  	console.log(newChartState["disabled"]);
-
   	for (var i = 0; i < newChartState["disabled"].length; i++)
   	{
-  		console.log(i);
-  		console.log(newChartState["disabled"][i]);
-
     	legendStateObject[i] = newChartState["disabled"][i];
 	}
 
   	this.setState( {   legendStateObj: legendStateObject
   					 , legendStateArr: legendStateArray } );
-  	console.log(legendStateObject);
   }
 
   , chartData: function( chartType ) {

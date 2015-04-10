@@ -1,4 +1,4 @@
-/* nvd3 version 1.7.1(https://github.com/novus/nvd3) 2015-03-04 */
+/* nvd3 version 1.7.1(https://github.com/novus/nvd3) 2015-04-10 */
 (function(){
 
 // set up main nv object on window
@@ -4954,8 +4954,8 @@ nv.models.lineChart = function() {
             legend.dispatch.on('stateChange', function(newState) {
                 for (var key in newState)
                     state[key] = newState[key];
-                dispatch.stateChange(state);
                 chart.update();
+                dispatch.stateChange(state);
             });
 
             interactiveLayer.dispatch.on('elementMousemove', function(e) {
@@ -9163,8 +9163,8 @@ nv.models.pieChart = function() {
                 for (var key in newState) {
                     state[key] = newState[key];
                 }
-                dispatch.stateChange(state);
                 chart.update();
+                dispatch.stateChange(state);
             });
 
             pie.dispatch.on('elementMouseout.tooltip', function(e) {
@@ -11159,9 +11159,8 @@ nv.models.stackedAreaChart = function() {
 
 
                 state.style = stacked.style();
-                dispatch.stateChange(state);
-
                 chart.update();
+                dispatch.stateChange(state);
             });
 
             interactiveLayer.dispatch.on('elementMousemove', function(e) {
