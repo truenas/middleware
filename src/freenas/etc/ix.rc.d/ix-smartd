@@ -135,7 +135,10 @@ EOF
 			echo -n " -W ${smart_difference},${smart_informational},${smart_critical}"
 			if [ -n "${smart_email}" ]; then
 				echo -n " -m ${smart_email}"
+			else
+				echo -n " -m root"
 			fi
+			echo -n " -M exec /usr/local/www/freenasUI/tools/smart_alert.py"
 			if [ -n "${smarttest_type}" ]; then
 
 			nhour=$(echo "${smarttest_hour}"|awk -F ',' '{ if($0 ~ /^\*\/[0-9]+$/) {
