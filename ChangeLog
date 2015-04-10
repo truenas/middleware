@@ -1,0 +1,44 @@
+#4009	HA Peer sync 2.0
+#4013	Lock out passive node for non host specific configuration
+#4165	Add firmware and updates for the following 12 Gbps HBAs
+#7076	We need to be able to rename to current boot environment
+#7277	Space thresholds for file-backed iSCSI LUNs
+#7388	Please remove warning from /usr/bin/su: (pam_group) neither luser nor ruser specified, assuming ruser
+#7497	LSI 9211-8i  Firmware: 19.00.00.00 Incompatible with Driver: 16.00.00.00-fbsd
+#8194	Documentation improvement for Freenas Install
+#8224	TrueNAS Docs use the Freenas Logo.
+#8236	Something Funky with Alert?
+#8279	In TrueNAS-9.3-STABLE-201502271916 buld: Getting infinite  loop in fenceD after HA.
+#8293	Fix a bug in the snapshotter that was causing it to fail at taking snapshots of datasets  with spaces in the name.
+#8328	Unlock from GUI should set passphrase for escrow daemon
+#8335	Fix a bug that was changing replication stream compression to off.
+#8430	ProSys:  carp0 going down does not cause devd to run the interface down script
+#8459	Add the ability to recursive replicate the root pool to another FreeNAS system's root pool.
+#8481	hactl should not fail when Failover object is not found
+#8493	In TrueNAS-9.3-STABLE-201503100715:  When email object is not present,  the email entry options are not present.
+#8535	In TrueNAS-9.3-STABLE-201502281915 buld: After  HA, giving syntax error  in " Failover.objects.all().exists()"
+#8667	Provide support for SSH Certificates
+#8675	Trigger an alert when the boot volume is getting full
+#8707	Fix a bug that was causing files requested by FreeNAS debug to be truncated.
+#8775	SSH setting not being applied (login as root with password) in HA
+#8801	carp-state-change-hook.py needs a shutdown verb
+#8901	Kingston 8GB DT 100 G2 USB stick doesn't work with FreeNAS 9.3
+#8919	Add the ability to specify the medium rotation rate of an iSCSI LUN.
+#8921	Creating a Virtual Box Jail with Spaces in the name causes odd behavior
+#8923	Disable vulnerable and/or obsolete SSL ciphers from the WebGUI.
+#8927	Fixed ctld termination when connection to iSCSI port is closed before being accepted.
+#8951	Fix a bug that prevented periodic.conf from being generated correct.
+#8995	Improve NFS performance
+#9005	Add security/stunnel to FreeNAS build
+#9028	TrueNAS upgrades leave swap misconfigured
+#9031	CARP tracebacks when VHID is not unique
+#9032	Automatical sync key for encrypted HA
+#9033	Fixes an error in a port causing each new build to have a different master.passwd entry for the user "cyrus".
+#9038	Fix a bug that occasional prevented the display of pending updates.
+#9051	Enforce length limitations of the iSCSI auth user passwords in the GUI
+#9073	Fix API validation and docs for iSCSI Extent
+#9081	Show ZFS pool import progress on the console.
+#9092	Improve patch for SA-15:04.igmp to solve a potential buffer overflow. Fix multiple vulnerabilities of ntp. [SA-15:07] Fix Denial of Service with IPv6 Router Advertisements. [SA-15:09]
+#9093	Fix several vulnerabilities in FreeBSD 2015-04-07 patch batch
+#9111	In TrueNAS-9.3-STABLE-201504021408: Creating HA Pairing Failed.
+#9125	Proper document LDAP certificate handling
