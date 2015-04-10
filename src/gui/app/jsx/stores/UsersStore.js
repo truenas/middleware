@@ -108,8 +108,16 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       // FIXME: This is a workaround for the current implementation of task
       // subscriptions and submission resolutions.
       if ( args[ "name" ] === UPDATE_MASK ) {
-        Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-        UsersMiddleware.requestUsersList( _updatedOnServer );
+        if ( updateData[ "operation" ] === "delete" ) {
+            // FIXME: Will this cause an issue if the delete is unsuccessful?
+            // This will no doubt be overriden in the new patch-based world anyway.
+            _users = _.omit(_users, updateData["ids"] );
+        } else if ( updateData[ "operation" ] === "update" || updateData[ "operation" ] === "create" ) {
+            Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+            UsersMiddleware.requestUsersList( _updatedOnServer );
+        } else {
+          // TODO: Are there any other cases?
+        }
       UsersStore.emitChange();
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
