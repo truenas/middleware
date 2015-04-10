@@ -16,7 +16,6 @@ var DetailNavSection = React.createClass({
 
     propTypes: {
         viewData            : React.PropTypes.object.isRequired
-      , addEntity           : React.PropTypes.string
       , searchString        : React.PropTypes.string
       , activeKey           : React.PropTypes.string
       , sectionName         : React.PropTypes.string.isRequired
