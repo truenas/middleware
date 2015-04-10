@@ -38,4 +38,10 @@ module.exports = {
       });
     }
 
+  , deleteUser: function( userID ) {
+      MiddlewareClient.request( "task.submit", ["users.delete", [ userID ] ], function ( taskID, userID ) {
+        UsersActionCreators.receiveUserUpdateTask( taskID, userID );
+      });
+    }
+
 };
