@@ -10,7 +10,6 @@ var React  = require("react");
 var TWBS   = require("react-bootstrap");
 
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
-var UsersStore      = require("../../../stores/UsersStore");
 
 var GroupsStore      = require("../../../stores/GroupsStore");
 
@@ -33,7 +32,7 @@ var AddUser = React.createClass({
 
   , getInitialState: function() {
       var defaultValues = {
-                              id                : this.getNextID()
+                              id                : this.getNextUID()
                             , shell             : "/bin/csh"
                             , locked            : false
                             , sudo              : false
@@ -46,14 +45,6 @@ var AddUser = React.createClass({
         , defaultValues : defaultValues
         , dataKeys      : this.props.viewData.format.dataKeys
       };
-    }
-
-  , componentDidMount: function() {
-      UsersStore.addChangeListener( this.receiveUsersUpdate );
-    }
-
-  , componentWillUnmount: function() {
-      UsersStore.removeChangeListener( this.receiveUsersUpdate);
     }
 
   , getGroups: function() {
@@ -72,30 +63,27 @@ var AddUser = React.createClass({
       this.setState( { editedFields: newEditedFields } );
     }
 
-    // returns the next available UID after 1000 to use as a default.
-  , getNextID: function() {
-
-    }
-
-  , receiveUsersUpdate: function() {
+    // Will return the next recommended UID (to be used as a default).
+  , getNextUID: function() {
 
     }
 
   , submitNewUser: function() {
       var newUserValues = {};
-      var params = {};
+      var params        = {};
 
       // Stage edited values for submission. Don't include any read-only stuff that got in somehow.
-      newUserValues = this.removeReadOnlyFields(this.state.editedFields, this.state.dataKeys);
+      newUserValues = this.removeReadOnlyFields( this.state.editedFields, this.state.dataKeys );
 
       // Get ready to send the view to the new user.
-      params[this.props.viewData.routing["param"]] = newUserValues["username"];
+      params[this.props.viewData.routing[ "param" ] ] = newUserValues[ "username" ];
 
       // Submits the user and moves the view to the new user.
       // TODO: Only submit a user if all the required fields are there.
       // TODO: Make sure the new user was actually created before transitioning the route.
       UsersMiddleware.createUser( newUserValues, this.context.router.transitionTo( "users-editor", params) );
   }
+
   , cancel: function () {
 
     }
