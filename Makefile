@@ -107,6 +107,20 @@ distclean: clean
 save-build-env:
 	${ENV_SETUP} /bin/sh build/save_build.sh
 
+changelog:
+	@if [ -f ChangeLog ]; then \
+		echo ChangeLog already exists.; exit 1; \
+	fi
+	@if [ -f /root/redmine-api-key ]; then \
+		if [ "${TRAIN}" == "FreeNAS-9.3-STABLE" ]; then \
+			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "freenas" > ChangeLog; \
+		elif [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
+			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "truenas" > ChangeLog; \
+		else \
+			echo "I don't create ChangeLogs for ${TRAIN}"; \
+		fi \
+	fi
+
 freenas: release
 release: git-verify
 	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
