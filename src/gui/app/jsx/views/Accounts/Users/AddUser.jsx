@@ -111,7 +111,7 @@ var AddUser = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = "User ID"
                             value            = { this.state.editedFields["id"]? this.state.editedFields["id"]: this.state.defaultValues["id"] }
-                            onChange         = {this.handleValueChange.bind( null, "id" ) }
+                            onChange         = { this.handleValueChange.bind( null, "id" ) }
                             groupClassName   = { _.has(this.state.editedFields, "id") && !_.isEmpty(this.state.editedFields["id"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
@@ -119,7 +119,7 @@ var AddUser = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = "User Name"
                             value            = { this.state.editedFields["username"]? this.state.editedFields["username"]: null }
-                            onChange         = {this.handleValueChange.bind( null, "username" ) }
+                            onChange         = { this.handleValueChange.bind( null, "username" ) }
                             groupClassName   = { _.has(this.state.editedFields, "username") && !_.isEmpty(this.state.editedFields["username"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
@@ -174,7 +174,7 @@ var AddUser = React.createClass({
                 <TWBS.Input type             = "checkbox"
                             label            = "Locked"
                             value            = { this.state.editedFields["locked"]? this.state.editedFields["locked"]: this.state.defaultValues["locked"] }
-                            onChange         = {this.handleValueChange.bind( null, "locked" ) }
+                            onChange         = { this.handleValueChange.bind( null, "locked" ) }
                             groupClassName   = { _.has(this.state.editedFields, "locked") && !_.isEmpty(this.state.editedFields["locked"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
@@ -201,10 +201,12 @@ var AddUser = React.createClass({
 
 
       return (
-        <TWBS.Grid fluid>
-          { addButtons }
-          { inputFields }
-        </TWBS.Grid>
+        <div className="viewer-item-info">
+          <TWBS.Grid fluid>
+            { addButtons }
+            { inputFields }
+          </TWBS.Grid>
+        </div>
       );
     }
 });
