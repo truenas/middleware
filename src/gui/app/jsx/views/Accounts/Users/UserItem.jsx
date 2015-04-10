@@ -279,6 +279,10 @@ var UserEdit = React.createClass({
         }
     }
 
+    , deleteUser: function(){
+        UsersMiddleware.deleteUser(this.props.item["id"], this.returnToViewerRoot() );
+    }
+
     // TODO: Currently this section just arbitrarily handles every property the
     // middleware sends in the order the browser sends it. This should be updated
     // to have a deliberate design.
@@ -300,6 +304,10 @@ var UserEdit = React.createClass({
 
       editButtons =
         <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-left"
+                         disabled  = { this.props.item["builtin"] }
+                         onClick   = { this.deleteUser }
+                         bsStyle   = "danger" >{"Delete User"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
