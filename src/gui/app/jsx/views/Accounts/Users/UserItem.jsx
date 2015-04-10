@@ -32,9 +32,16 @@ var UserView = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
-  , getPrimaryGroup: function(groupID) {
-    return GroupsStore.getGroup(groupID).name;
-  }
+  , getGroupName: function(groupID) {
+      var group = GroupsStore.getGroup(groupID);
+
+      if ( group ) {
+        return group.name;
+      } else {
+        console.warn("Group " + groupID + " not found.");
+        return null;
+      }
+    }
 
   , render: function() {
       var builtInUserAlert = null;
@@ -91,7 +98,7 @@ var UserView = React.createClass({
                                  entry  = { this.props.item["id"] } />
             <viewerUtil.DataCell title  = { "Primary Group" }
                                  colNum = { 3 }
-                                 entry  = { this.getPrimaryGroup(this.props.item["group"]) } />
+                                 entry  = { this.getGroupName(this.props.item["group"]) } />
             <viewerUtil.DataCell title  = { "Shell" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["shell"] } />
