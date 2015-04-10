@@ -92,27 +92,3 @@ class Model(models.Model):
             self._meta.app_label,
             self._meta.model_name,
             ), )
-
-    def save(self, *args, **kwargs):
-        rv = super(Model, self).save(*args, **kwargs)
-        from freenasUI.common.system import backup_database
-        try:
-            # TODO: maybe we should do this in a thread
-            # to do not wait operation to finish
-            backup_database()
-        except Exception, e:
-            log.debug("Failed to backup database on model delete")
-            log_traceback(log=log)
-        return rv
-
-    def delete(self, *args, **kwargs):
-        rv = super(Model, self).delete(*args, **kwargs)
-        from freenasUI.common.system import backup_database
-        try:
-            # TODO: maybe we should do this in a thread
-            # to do not wait operation to finish
-            backup_database()
-        except Exception, e:
-            log.debug("Failed to backup database on model delete")
-            log_traceback(log=log)
-        return rv
