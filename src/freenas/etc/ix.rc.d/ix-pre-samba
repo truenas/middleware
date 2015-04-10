@@ -10,7 +10,7 @@
 
 . /etc/rc.freenas
 
-set_sambaSID()
+get_sambaSID()
 {
 	local sambaSID
 
@@ -25,12 +25,35 @@ set_sambaSID()
 		1
 	" | while read sambaSID
 	do
-		if [ -n "${sambaSID}" ]
-		then
-			export LOGNAME=anonymous
-			/usr/local/bin/net setlocalsid "${sambaSID}"
-		fi
+		echo ${sambaSID}
 	done
+}
+
+set_sambaSID()
+{
+	local sambaSID="$(get_sambaSID)"
+
+	if [ -n "${sambaSID}" ]
+	then
+		export LOGNAME=anonymous
+		/usr/local/bin/net setlocalsid "${sambaSID}"
+	fi
+}
+
+save_sambaSID()
+{
+	local sambaSID
+
+	export LOGNAME=anonymous
+	sambaSID="$(/usr/local/bin/net getlocalsid | \
+		cut -f2 -d: | awk '{ print $1 }')"
+
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	UPDATE
+		services_cifs
+	SET
+		cifs_SID = '${sambaSID}'
+	"
 }
 
 generate_smb_config()
@@ -40,8 +63,15 @@ generate_smb_config()
 
 samba_pre_init()
 {
-	generate_smb_config
+	local sambaSID="$(get_sambaSID)"
+
+	if [ -z "${sambaSID}" ]
+	then
+		save_sambaSID
+	fi
+
 	set_sambaSID
+	generate_smb_config
 }
 
 name="ix-pre-samba"
