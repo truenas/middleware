@@ -23,6 +23,7 @@ var GroupsStore      = require("../../../stores/GroupsStore");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
 var userMixins   = require("../../../components/mixins/userMixins");
+var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 // OVERVIEW PANE
 var UserView = React.createClass({
@@ -127,12 +128,18 @@ var UserView = React.createClass({
 // EDITOR PANE
 var UserEdit = React.createClass({
 
-      mixins: [  inputHelpers
-               , userMixins ]
+    mixins: [  inputHelpers
+             , userMixins
+             , viewerCommon ]
 
-    , propTypes: {
-      item : React.PropTypes.object.isRequired
+  , contextTypes: {
+        router: React.PropTypes.func
     }
+
+  , propTypes: {
+        item     : React.PropTypes.object.isRequired
+      , viewData : React.PropTypes.object.isRequired
+      }
 
   , getInitialState: function() {
       var remoteState = this.setRemoteState( this.props );
@@ -143,12 +150,14 @@ var UserEdit = React.createClass({
         , remoteState            : remoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
+        , dataKeys               : this.props.viewData["format"]["dataKeys"]
       };
     }
 
     // Remote state is set at load time and reset upon successful changes
   , setRemoteState: function ( incomingProps ) {
-      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, incomingProps.dataKeys);
+      var dataKeys = incomingProps.viewData["format"]["dataKeys"];
+      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, dataKeys);
 
       if (_.isEmpty(nextRemoteState)) {
         console.warn("Remote State could not be created! Check the incoming props:");
@@ -163,6 +172,7 @@ var UserEdit = React.createClass({
   , componentWillReceiveProps: function( nextProps ) {
       var newRemoteModified  = {};
       var newLocallyModified = {};
+      var dataKeys = nextProps.viewData["format"]["dataKeys"];
 
       // remotelyModifiedValues represents everything that's changed remotely
       // since the view was opened. This is the difference between the newly arriving
@@ -173,7 +183,7 @@ var UserEdit = React.createClass({
         return _.isEqual( this.state.remoteState[ key ], value );
       }, this);
 
-      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.dataKeys);
+      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, dataKeys);
 
       // remoteState records the item as it was when the view was first
       // opened. This is used to mark changes that have occurred remotely since
@@ -233,13 +243,19 @@ var UserEdit = React.createClass({
     // id should be a number.
   , submitUserUpdate: function() {
       var valuesToSend = {};
+      var params = {};
 
       // Make sure nothing read-only made it in somehow.
-      valuesToSend = this.removeReadOnlyFields(this.state.locallyModifiedValues, this.props.dataKeys);
+      valuesToSend = this.removeReadOnlyFields(this.state.locallyModifiedValues, this.state.dataKeys);
+
+      // Prepare to send the view back to the overview. If the username changed,
+      // send them to the new one.
+      var nextUser = valuesToSend[ "username" ] ? valuesToSend[ "username" ] : this.props.item["username"];
+      params[this.props.viewData.routing["param"]] = nextUser;
 
       // Only bother to submit an update if there is anything to update.
       if (!_.isEmpty( valuesToSend ) ){
-        UsersMiddleware.updateUser( this.props.item["id"], valuesToSend );
+        UsersMiddleware.updateUser( this.props.item["id"], valuesToSend, this.submissionRedirect(valuesToSend) );
         // Save a record of the last changes we sent.
         this.setState({
             lastSentValues : valuesToSend
@@ -248,6 +264,19 @@ var UserEdit = React.createClass({
           console.warn("Attempted to send a User update with no valid fields.");
       }
 
+    }
+
+    , submissionRedirect: function( valuesToSend ) {
+        var params = {};
+        var nextUser;
+
+        if (valuesToSend[ "username" ]) {
+          nextUser = valuesToSend[ "username" ];
+          params[this.props.viewData.routing[ "param" ] ] = nextUser;
+          this.context.router.transitionTo( "users-editor", params );
+        } else {
+          this.props.handleViewChange("view");
+        }
     }
 
     // TODO: Currently this section just arbitrarily handles every property the
@@ -294,7 +323,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "id", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "id", this.state.dataKeys) } />
                 {/* username */}
                 <TWBS.Input type             = "text"
                             label            = { "User Name" }
@@ -304,7 +333,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["username"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "username", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "username", this.state.dataKeys) } />
                 {/* full_name*/}
                 <TWBS.Input type             = "text"
                             label            = { "Full Name" }
@@ -314,7 +343,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["full_name"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "full_name", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "full_name", this.state.dataKeys) } />
                 {/* email */}
                   <TWBS.Input type             = "text"
                             label            = { "email" }
@@ -324,7 +353,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["email"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "email", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "email", this.state.dataKeys) } />
                 {/* shell */}
                 <TWBS.Input type             = "select"
                             label            = { "Shell" }
@@ -334,7 +363,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["shell"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "shell", this.props.dataKeys) }>
+                            disabled         = { !this.isMutable( "shell", this.state.dataKeys) }>
                             { this.generateOptionsList( this.state.shells ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
@@ -346,7 +375,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sshpubkey"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "sshpubkey", this.props.dataKeys) }>
+                            disabled         = { !this.isMutable( "sshpubkey", this.state.dataKeys) }>
                 </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
@@ -360,7 +389,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["locked"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "locked", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "locked", this.state.dataKeys) } />
                 {/* sudo */}
                 <TWBS.Input type             = "checkbox"
                             checked          = { this.state.mixedValues["sudo"] }
@@ -371,7 +400,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sudo"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "sudo", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "sudo", this.state.dataKeys) } />
                 {/* password_disabled */}
                 <TWBS.Input type             = "checkbox"
                             label            = { "password_disabled" }
@@ -382,7 +411,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["password_disabled"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "password_disabled", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "password_disabled", this.state.dataKeys) } />
                 {/* logged-in */}
                 <TWBS.Input type             = "checkbox"
                             checked          = { this.state.mixedValues["logged-in"] }
@@ -393,7 +422,7 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["logged-in"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "logged-in", this.props.dataKeys ) } />
+                            disabled         = { !this.isMutable( "logged-in", this.state.dataKeys ) } />
               </TWBS.Col>
             </TWBS.Row>
           </TWBS.Grid>
@@ -484,7 +513,7 @@ var UserItem = React.createClass({
         var childProps = {
             handleViewChange : this.handleViewChange
           , item             : this.state.targetUser
-          , dataKeys         : this.props.viewData.format["dataKeys"]
+          , viewData         : this.props.viewData
         };
 
         switch ( this.state.currentMode ) {
