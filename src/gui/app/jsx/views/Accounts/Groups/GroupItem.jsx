@@ -119,12 +119,13 @@ var GroupEdit = React.createClass({
         , remoteState            : remoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
+        , dataKeys               : this.props.viewData["format"]["dataKeys"]
       };
     }
 
     // Remote state is set at load time and reset upon successful changes
   , setRemoteState: function ( incomingProps ) {
-      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, incomingProps.dataKeys);
+      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, incomingProps.viewData["format"]["dataKeys"]);
 
       if (_.isEmpty(nextRemoteState)) {
         console.warn("Remote State could not be created! Check the incoming props:");
@@ -149,7 +150,7 @@ var GroupEdit = React.createClass({
         return _.isEqual( this.state.remoteState[ key ], value );
       }, this);
 
-      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.dataKeys);
+      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.viewData["format"]["dataKeys"]);
 
       // remoteState records the item as it was when the view was first
       // opened. This is used to mark changes that have occurred remotely since
@@ -180,7 +181,12 @@ var GroupEdit = React.createClass({
 
   , handleValueChange: function( key, event ) {
       var newLocallyModified = this.state.locallyModifiedValues;
-      var inputValue = this.processFormInput( event );
+
+      var dataKey = _.find(this.state.dataKeys, function (dataKey) {
+        return (dataKey.key === key);
+      }, this);
+
+      var inputValue = this.processFormInput( event, dataKey );
 
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we
@@ -209,7 +215,7 @@ var GroupEdit = React.createClass({
 
       // Make sure nothing read-only made it in somehow.
       _.forEach( this.state.locallyModifiedValues, function( value, key ) {
-        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
+        var itemKey = _.find(this.state["dataKeys"], function ( item ) {
           return item.key === key;
         }.bind(this) );
         if ( itemKey.mutable ) {
@@ -271,7 +277,7 @@ var GroupEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "id", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "id", this.state.dataKeys) } />
                 {/* name */}
                 <TWBS.Input type             = "text"
                             label            = { "Group Name" }
@@ -281,7 +287,7 @@ var GroupEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "name", this.props.dataKeys) } />
+                            disabled         = { !this.isMutable( "name", this.state.dataKeys) } />
               </TWBS.Col>
             </TWBS.Row>
           </TWBS.Grid>
@@ -371,7 +377,7 @@ var GroupItem = React.createClass({
           var childProps = {
               handleViewChange : this.handleViewChange
             , item             : this.state.targetGroup
-            , dataKeys         : this.props.viewData.format["dataKeys"]
+            , viewData         : this.props.viewData
           };
 
           switch( this.state.currentMode ) {
