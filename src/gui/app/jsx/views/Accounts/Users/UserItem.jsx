@@ -215,7 +215,12 @@ var UserEdit = React.createClass({
     // TODO: Turn this into a mixin so it can be used by any edit view.
   , handleValueChange: function( key, event ) {
       var newLocallyModified = this.state.locallyModifiedValues;
-      var inputValue = this.processFormInput( event );
+
+      var dataKey = _.find(this.state.dataKeys, function (dataKey) {
+        return (dataKey.key === key);
+      }, this);
+
+      var inputValue = this.processFormInput( event, dataKey );
 
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we

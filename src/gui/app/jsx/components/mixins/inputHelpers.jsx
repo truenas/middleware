@@ -51,9 +51,9 @@ module.exports = {
       return outgoingItem;
     }
 
-      // Deals with input from different kinds of input fields.
-      // TODO: Extend with other input fields and refine existing ones as necessary.
-    , processFormInput: function( event ) {
+    // Deals with input from different kinds of input fields.
+    // TODO: Extend with other input fields and refine existing ones as necessary.
+  , processFormInput: function( event, dataKey ) {
         var inputValue;
 
         switch (event.target.type) {
@@ -66,10 +66,32 @@ module.exports = {
           case "text":
           case "textarea":
           default:
-            inputValue = event.target.value;
+            inputValue = this.parseInputType(event.target.value, dataKey);
             break;
         }
 
         return inputValue;
+    }
+
+    // Only differentiates numbers and strings for now.
+  , parseInputType: function(input, dataKey) {
+      var output;
+
+      switch (dataKey.type) {
+        case "string":
+          output = input;
+          break;
+
+        case "integer":
+        case "number":
+          output = _.parseInt(input);
+          break;
+
+        default:
+          output = input;
+          break;
+      }
+
+      return output;
     }
 };

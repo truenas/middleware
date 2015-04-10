@@ -62,26 +62,12 @@ var AddUser = React.createClass({
 
   , handleValueChange: function( key, event ) {
       var newEditedFields = this.state.editedFields;
-      var inputValue = this.processFormInput( event );
+
       var dataKey = _.find(this.state.dataKeys, function (dataKey) {
         return (dataKey.key === key);
       }, this);
 
-      // TODO: mixin? could this go in processFormInput?
-      switch (dataKey.type) {
-        case "string":
-          newEditedFields[ key ] = inputValue;
-          break;
-
-        case "integer":
-        case "number":
-          newEditedFields[ key ] = _.parseInt(inputValue);
-          break;
-
-        default:
-          newEditedFields[ key ] = inputValue;
-          break;
-      }
+      newEditedFields[ key ] = this.processFormInput( event, dataKey );
 
       this.setState( { editedFields: newEditedFields } );
     }
