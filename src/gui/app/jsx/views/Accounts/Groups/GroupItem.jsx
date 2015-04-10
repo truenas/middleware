@@ -23,6 +23,7 @@ var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
+var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 var GroupView = React.createClass({
 
@@ -104,7 +105,12 @@ var GroupView = React.createClass({
 // EDITOR PANE
 var GroupEdit = React.createClass({
 
-    mixins: [  inputHelpers ]
+    mixins: [  inputHelpers
+             , viewerCommon ]
+
+  , contextTypes: {
+        router: React.PropTypes.func
+    }
 
   , propTypes: {
       item: React.PropTypes.object.isRequired
@@ -238,6 +244,23 @@ var GroupEdit = React.createClass({
       }
     }
 
+    , submissionRedirect: function( valuesToSend ) {
+        var params = {};
+        var newGroup;
+
+        if (valuesToSend[ "name" ]) {
+          newGroup = valuesToSend[ "name" ];
+          params[this.props.viewData.routing[ "param" ] ] = newGroup;
+          this.context.router.transitionTo( "groups-editor", params );
+        } else {
+          this.props.handleViewChange("view");
+        }
+    }
+
+    , deleteGroup: function(){
+        GroupsMiddleware.deleteGroup(this.props.item["id"], this.returnToViewerRoot() );
+    }
+
   , render: function() {
       var builtInGroupAlert = null;
       var editButtons       = null;
@@ -254,6 +277,10 @@ var GroupEdit = React.createClass({
 
       editButtons =
         <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-left"
+                         disabled  = { this.props.item["builtin"] }
+                         onClick   = { this.deleteGroup }
+                         bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>

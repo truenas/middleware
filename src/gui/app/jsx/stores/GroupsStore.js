@@ -74,6 +74,14 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.RECEIVE_GROUPS_LIST:
 
+      var updatedGroupIDs = _.pluck( action.groupsList, PRIMARY_KEY );
+
+      // When receiving new data, we can comfortably resolve anything that may
+      // have had an outstanding update indicated by the Middleware.
+      if ( _updatedOnServer.length > 0 ) {
+        _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
+      }
+
       action.groupsList.map( function ( group ) {
         _groups[ group [ PRIMARY_KEY ] ] = group;
       });
