@@ -248,15 +248,9 @@ var UserEdit = React.createClass({
     // id should be a number.
   , submitUserUpdate: function() {
       var valuesToSend = {};
-      var params = {};
 
       // Make sure nothing read-only made it in somehow.
       valuesToSend = this.removeReadOnlyFields(this.state.locallyModifiedValues, this.state.dataKeys);
-
-      // Prepare to send the view back to the overview. If the username changed,
-      // send them to the new one.
-      var nextUser = valuesToSend[ "username" ] ? valuesToSend[ "username" ] : this.props.item["username"];
-      params[this.props.viewData.routing["param"]] = nextUser;
 
       // Only bother to submit an update if there is anything to update.
       if (!_.isEmpty( valuesToSend ) ){
@@ -271,6 +265,8 @@ var UserEdit = React.createClass({
 
     }
 
+      // TODO: Put it in an mixin? It requires a lot of view-specific info,
+      // but if more such things become mixins themselves, it would probably work.
     , submissionRedirect: function( valuesToSend ) {
         var params = {};
         var nextUser;
