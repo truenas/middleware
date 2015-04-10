@@ -17,12 +17,14 @@ var UsersMiddleware = require("../../middleware/UsersMiddleware");
 var UsersStore      = require("../../stores/UsersStore");
 
 var viewData = {
-    format  : require("../../../data/middleware-keys/groups-display.json")[0]
-  , routing : {
-      "route" : "groups-editor"
-    , "param" : "groupID"
+    format    : require("../../../data/middleware-keys/groups-display.json")[0]
+  , addEntity : "Add Group"
+  , routing   : {
+      "route"     : "groups-editor"
+    , "param"     : "groupID"
+    , "addentity" : "add-group"
   }
-  , display : {
+  , display   : {
       filterCriteria   : {
         userCreated : {
             name     : "local groups"
