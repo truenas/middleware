@@ -83,7 +83,7 @@ def DiffManifests(m1, m2):
             else:
                 retval.append((P, "install", None))
 
-        for P in old_list:
+        for P in old_list.itervalues():
             retval.insert(0, (P, "delete", None))
     
         return retval
