@@ -34,9 +34,6 @@ var AddUser = React.createClass({
       var defaultValues = {
                               id                : this.getNextUID()
                             , shell             : "/bin/csh"
-                            , locked            : false
-                            , sudo              : false
-                            , password_disabled : false
                           };
 
       return {
@@ -147,7 +144,7 @@ var AddUser = React.createClass({
                             label            = "email"
                             value            = { this.state.editedFields["email"]? this.state.editedFields["email"]: null }
                             onChange         = { this.handleValueChange.bind( null, "email" ) }
-                            groupClassName   = { _.has(this.state.editedFields, "email") && !_.isEmpty(this.state.editedFields["emaill"]) ? "editor-was-modified" : ""  }
+                            groupClassName   = { _.has(this.state.editedFields, "email") && !_.isEmpty(this.state.editedFields["email"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
                 {/* shell */}
@@ -173,7 +170,7 @@ var AddUser = React.createClass({
                 {/* locked */}
                 <TWBS.Input type             = "checkbox"
                             label            = "Locked"
-                            value            = { this.state.editedFields["locked"]? this.state.editedFields["locked"]: this.state.defaultValues["locked"] }
+                            value            = { this.state.editedFields["locked"] }
                             onChange         = { this.handleValueChange.bind( null, "locked" ) }
                             groupClassName   = { _.has(this.state.editedFields, "locked") && !_.isEmpty(this.state.editedFields["locked"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
@@ -181,7 +178,7 @@ var AddUser = React.createClass({
                 {/* sudo */}
                 <TWBS.Input type             = "checkbox"
                             label            = "Sudo"
-                            value            = { this.state.editedFields["sudo"]? this.state.editedFields["sudo"]: this.state.defaultValues["sudo"] }
+                            value            = { this.state.editedFields["sudo"] }
                             onChange         = { this.handleValueChange.bind( null, "sudo" ) }
                             groupClassName   = { _.has(this.state.editedFields, "sudo") && !_.isEmpty(this.state.editedFields["sudo"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
@@ -189,7 +186,7 @@ var AddUser = React.createClass({
                 {/* password_disabled */}
                 <TWBS.Input type             = "checkbox"
                             label            = "Password Disabled"
-                            value            = { this.state.editedFields["password_disabled"]? this.state.editedFields["password_disabled"]: this.state.defaultValues["password_disabled"] }
+                            value            = { this.state.editedFields["password_disabled"] }
                             onChange         = { this.handleValueChange.bind( null, "password_disabled" ) }
                             groupClassName   = { _.has(this.state.editedFields, "password_disabled") && !_.isEmpty(this.state.editedFields["password_disabled"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
