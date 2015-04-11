@@ -158,7 +158,7 @@ var AddUser = React.createClass({
                             groupClassName   = { _.has(this.state.editedFields, "shell") && !_.isEmpty(this.state.editedFields["shell"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8">
-                            {this.generateOptionsList( this.state.shells ) }
+                            { this.generateOptionsList( this.state.shells, "name" ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
                 <TWBS.Input type             = "textarea"

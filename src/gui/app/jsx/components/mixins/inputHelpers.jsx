@@ -11,10 +11,14 @@ module.exports = {
 
     // Takes an array and turns it into an array of options suitable for use
     // in a select box or multi-select box.
-    generateOptionsList: function (optionArray) {
-      var optionList = _.map(optionArray, function( opt ) {
-        return ( <option>{opt.name}</option> );
-      }, this);
+    generateOptionsList: function (options, selectionKey, displayKey) {
+      var optionList = [];
+
+      _.forEach(options, function( opt ) {
+        var element = ( <option value = { opt[ selectionKey ] }
+                                label = { opt[ displayKey ? displayKey: selectionKey ] } />);
+        optionList.push(element);
+      }, this );
 
       return optionList;
     }

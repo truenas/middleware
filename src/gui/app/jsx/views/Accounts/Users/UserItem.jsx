@@ -380,7 +380,7 @@ var UserEdit = React.createClass({
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
                             disabled         = { !this.isMutable( "shell", this.state.dataKeys) }>
-                            { this.generateOptionsList( this.state.shells ) }
+                            { this.generateOptionsList( this.state.shells, "name" ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
                 <TWBS.Input type             = "textarea"
