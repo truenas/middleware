@@ -339,6 +339,7 @@ add_port sysutils/throttle
 add_port misc/xtail
 add_port security/pam_google_authenticator
 add_port benchmarks/fio
+add_port sysutils/htop
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
