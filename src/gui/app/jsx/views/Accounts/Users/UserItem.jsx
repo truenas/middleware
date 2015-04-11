@@ -382,6 +382,18 @@ var UserEdit = React.createClass({
                             disabled         = { !this.isMutable( "shell", this.state.dataKeys) }>
                             { this.generateOptionsList( this.state.shells, "name" ) }
                 </TWBS.Input>
+                {/* primary group */}
+                <TWBS.Input type             = "select"
+                            label            = { "Primary Group" }
+                            value            = { this.state.mixedValues["group"] ? this.state.mixedValues["group"] : null }
+                            onChange         = { this.handleValueChange.bind( null, "group" ) }
+                            key              = { "group" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["group"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "group", this.state.dataKeys) }>
+                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
+                </TWBS.Input>
                 {/* sshpubkey */}
                 <TWBS.Input type             = "textarea"
                             label            = { "Public Key" }

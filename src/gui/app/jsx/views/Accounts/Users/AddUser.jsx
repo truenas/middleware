@@ -37,15 +37,10 @@ var AddUser = React.createClass({
                           };
 
       return {
-          groups        : this.getGroups()
-        , editedFields  : {}
+          editedFields  : {}
         , defaultValues : defaultValues
         , dataKeys      : this.props.viewData.format.dataKeys
       };
-    }
-
-  , getGroups: function() {
-      return GroupsStore.getAllGroups();
     }
 
   , handleValueChange: function( key, event ) {
@@ -121,16 +116,6 @@ var AddUser = React.createClass({
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
                             required />
-                {/* primary group */}
-                {/* TODO: Recommend the default group based on the username. Requires creating a group at user-creation time.*/ }
-                <TWBS.Input type             = "text"
-                            label            = "Primary Group"
-                            value            = { this.state.editedFields["group"]? this.state.editedFields["group"]: null }
-                            onChange         = { this.handleValueChange.bind( null, "group" ) }
-                            groupClassName   = { _.has(this.state.editedFields, "group") && !_.isEmpty(this.state.editedFields["group"]) ? "editor-was-modified" : ""  }
-                            labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            required />
                 {/* Full Name */}
                 <TWBS.Input type             = "text"
                             label            = "Full Name"
@@ -156,6 +141,18 @@ var AddUser = React.createClass({
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8">
                             { this.generateOptionsList( this.state.shells, "name" ) }
+                </TWBS.Input>
+                {/* primary group */}
+                {/* TODO: Recommend the default group based on the username. Requires creating a group at user-creation time.*/ }
+                <TWBS.Input type             = "select"
+                            label            = "Primary Group"
+                            value            = { this.state.editedFields["group"]? this.state.editedFields["group"]: null }
+                            onChange         = { this.handleValueChange.bind( null, "group" ) }
+                            groupClassName   = { _.has(this.state.editedFields, "group") && !_.isEmpty(this.state.editedFields["group"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            required >
+                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
                 <TWBS.Input type             = "textarea"
