@@ -67,6 +67,13 @@ var RPC = React.createClass({
       });
     }
 
+  , handleMethodDbClick: function( rpcString ) {
+      this.setState({
+        methodValue : rpcString
+      });
+      this.handleRPCSubmit();
+  }
+
   , handleMethodInputChange: function( event ) {
       this.setState({
           methodValue : event.target.value
@@ -91,9 +98,10 @@ var RPC = React.createClass({
             function( method, index ) {
               var rpcString = service + "." + method["name"];
               return (
-                <a key       = { index }
-                   className = "debug-list-item"
-                   onClick   = { this.handleMethodClick.bind( null, rpcString ) } >
+                <a key           = { index }
+                   className     = "debug-list-item"
+                   onClick       = { this.handleMethodClick.bind( null, rpcString ) }
+                   onDoubleClick = { this.handleMethodDbClick.bind( null, rpcString ) } >
                   { method["name"] }
                 </a>
               );
