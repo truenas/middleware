@@ -150,7 +150,7 @@ rebuild: checkout all
 	@sh build/create_release_distribution.sh
 
 cdrom:
-	sh -x build/create_iso.sh
+	@build/tools/create-iso.py
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
