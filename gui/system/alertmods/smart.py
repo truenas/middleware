@@ -16,6 +16,9 @@ class SMARTAlert(BaseAlert):
     def run(self):
         alerts = []
 
+        if not os.path.exists(SMART_FILE):
+            return alerts
+
         lock = LockFile(SMART_FILE)
 
         while not lock.i_am_locking():
