@@ -10,7 +10,7 @@ var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
 
-var activeRoute  = require("../../../components/mixins/activeRoute");
+var routerShim   = require("../../../components/mixins/routerShim");
 var clientStatus = require("../../../components/mixins/clientStatus");
 
 var viewerUtil  = require("../../../components/Viewer/viewerUtil");
@@ -438,18 +438,18 @@ var UserItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ activeRoute, clientStatus ]
+  , mixins: [ routerShim, clientStatus ]
 
   , getInitialState: function() {
       return {
           targetUser  : this.getUserFromStore()
         , currentMode : "view"
-        , activeRoute : this.getActiveRoute()
+        , activeRoute : this.getDynamicRoute()
       };
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      var activeRoute = this.getActiveRoute();
+      var activeRoute = this.getDynamicRoute();
 
       if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
@@ -469,7 +469,7 @@ var UserItem = React.createClass({
     }
 
   , getUserFromStore: function() {
-      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
+      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
   , updateUserInState: function() {

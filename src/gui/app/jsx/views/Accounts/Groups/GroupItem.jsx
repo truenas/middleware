@@ -10,7 +10,7 @@ var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
 
-var activeRoute  = require("../../../components/mixins/activeRoute");
+var routerShim   = require("../../../components/mixins/routerShim");
 var clientStatus = require("../../../components/mixins/clientStatus");
 
 var viewerUtil = require("../../../components/Viewer/viewerUtil");
@@ -301,18 +301,18 @@ var GroupItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
       }
 
-    , mixins: [ activeRoute, clientStatus ]
+    , mixins: [ routerShim, clientStatus ]
 
     , getInitialState: function() {
         return {
             targetGroup : this.getGroupFromStore()
           , currentMode : "view"
-          , activeRoute : this.getActiveRoute()
+          , activeRoute : this.getDynamicRoute()
         };
       }
 
     , componentDidUpdate: function( prevProps, prevState ) {
-        var activeRoute = this.getActiveRoute();
+        var activeRoute = this.getDynamicRoute();
 
         if ( activeRoute !== prevState.activeRoute ) {
           this.setState({
@@ -332,7 +332,7 @@ var GroupItem = React.createClass({
       }
 
     , getGroupFromStore: function() {
-        return GroupsStore.findGroupByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
+        return GroupsStore.findGroupByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
       }
 
     , updateGroupInState: function() {

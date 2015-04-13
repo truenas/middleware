@@ -8,7 +8,7 @@
 
 var _           = require("lodash");
 var React       = require("react");
-var activeRoute = require("../mixins/activeRoute");
+var routerShim  = require("../mixins/routerShim");
 
 var Editor = React.createClass({
 
@@ -19,7 +19,7 @@ var Editor = React.createClass({
         , EditView  : React.PropTypes.element
       }
 
-  , mixins: [ activeRoute ]
+  , mixins: [ routerShim ]
 
   , getInitialState: function() {
       return {
@@ -45,7 +45,7 @@ var Editor = React.createClass({
           // with bsdusr_usrname as the selectionKey would match the first object
           // in inputData whose username === "root"
 
-          return this.getActiveRoute() === item[ this.props.viewData.format["selectionKey"] ];
+          return this.getDynamicRoute() === item[ this.props.viewData.format["selectionKey"] ];
 
         }.bind(this)
       );

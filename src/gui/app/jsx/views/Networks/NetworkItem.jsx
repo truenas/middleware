@@ -6,7 +6,7 @@
 
 var React = require("react");
 
-var activeRoute  = require("../../components/mixins/activeRoute");
+var routerShim   = require("../../components/mixins/routerShim");
 var clientStatus = require("../../components/mixins/clientStatus");
 
 var viewerUtil = require("../../components/Viewer/viewerUtil");
@@ -86,18 +86,18 @@ var NetworkItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ activeRoute, clientStatus ]
+  , mixins: [ routerShim, clientStatus ]
 
   , getInitialState: function() {
       return {
           targetNetwork : this.getNetworkFromStore()
         , currentMode   : "view"
-        , activeRoute   : this.getActiveRoute()
+        , activeRoute   : this.getDynamicRoute()
       };
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      var activeRoute = this.getActiveRoute();
+      var activeRoute = this.getDynamicRoute();
 
       if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
@@ -117,7 +117,7 @@ var NetworkItem = React.createClass({
     }
 
   , getNetworkFromStore: function() {
-      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
+      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
   , updateNetworkInState: function() {
