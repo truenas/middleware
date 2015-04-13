@@ -338,8 +338,7 @@ var UserEdit = React.createClass({
                             key              = { "id" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "id", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* username */}
                 <TWBS.Input type             = "text"
                             label            = { "User Name" }
@@ -348,8 +347,7 @@ var UserEdit = React.createClass({
                             key              = { "username" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["username"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "username", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* full_name*/}
                 <TWBS.Input type             = "text"
                             label            = { "Full Name" }
@@ -358,8 +356,7 @@ var UserEdit = React.createClass({
                             key              = { "full_name" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["full_name"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "full_name", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* email */}
                   <TWBS.Input type             = "text"
                             label            = { "email" }
@@ -368,8 +365,7 @@ var UserEdit = React.createClass({
                             key              = { "email" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["email"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "email", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* shell */}
                 <TWBS.Input type             = "select"
                             label            = { "Shell" }
@@ -378,8 +374,7 @@ var UserEdit = React.createClass({
                             key              = { "shell" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["shell"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "shell", this.state.dataKeys) }>
+                            wrapperClassName = "col-xs-8" >
                             { this.generateOptionsList( this.state.shells, "name" ) }
                 </TWBS.Input>
                 {/* primary group */}
@@ -390,8 +385,7 @@ var UserEdit = React.createClass({
                             key              = { "group" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["group"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "group", this.state.dataKeys) }>
+                            wrapperClassName = "col-xs-8" >
                             { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
@@ -403,7 +397,6 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sshpubkey"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "sshpubkey", this.state.dataKeys) }
                             rows             = "10" >
                 </TWBS.Input>
               </TWBS.Col>
@@ -417,8 +410,7 @@ var UserEdit = React.createClass({
                             key              = { "locked" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["locked"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "locked", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* sudo */}
                 <TWBS.Input type             = "checkbox"
                             checked          = { this.state.mixedValues["sudo"] }
@@ -428,8 +420,7 @@ var UserEdit = React.createClass({
                             key              = { "sudo" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sudo"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "sudo", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* password_disabled */}
                 <TWBS.Input type             = "checkbox"
                             label            = { "password_disabled" }
@@ -439,8 +430,7 @@ var UserEdit = React.createClass({
                             key              = { "password_disabled" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["password_disabled"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "password_disabled", this.state.dataKeys) } />
+                            wrapperClassName = "col-xs-8" />
                 {/* logged-in */}
                 <TWBS.Input type             = "checkbox"
                             checked          = { this.state.mixedValues["logged-in"] }
@@ -450,8 +440,7 @@ var UserEdit = React.createClass({
                             key              = { "logged-in" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["logged-in"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "logged-in", this.state.dataKeys ) } />
+                            wrapperClassName = "col-xs-8" />
               </TWBS.Col>
             </TWBS.Row>
           </TWBS.Grid>
