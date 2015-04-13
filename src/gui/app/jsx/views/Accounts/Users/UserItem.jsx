@@ -403,7 +403,8 @@ var UserEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sshpubkey"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "sshpubkey", this.state.dataKeys) }>
+                            disabled         = { !this.isMutable( "sshpubkey", this.state.dataKeys) }
+                            rows             = "10" >
                 </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
