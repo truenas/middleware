@@ -147,11 +147,13 @@ var Tasks = React.createClass({
       TasksStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe( ["task.*"], componentLongName );
 
-      this.totalLength = 0;
-      _.forEach (_.keys(this.state), function ( key ) {
-        this.totalLength += _.size(this.state[key]);
-      }, this);
-      TasksMiddleware.getCompletedTaskHistory( this.init, this.totalLength );
+      var totalLength = 0;
+
+      _.forEach( this.state, function ( category, index ) {
+        totalLength += _.keys( this.state[ category ] ).length;
+      }, this );
+
+      TasksMiddleware.getCompletedTaskHistory( this.init, totalLength );
     }
 
   , componentWillUnmount: function() {
