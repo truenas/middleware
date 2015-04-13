@@ -165,11 +165,11 @@ class DataSource(object):
                 self.persist(timestamp, self.bucket_buffers[b.index], b)
 
         if math.isnan(value):
-            value = 0
+            value = None
 
         self.context.client.emit_event('statd.{0}.pulse'.format(self.name), {
             'value': value,
-            'change': self.last_value - value,
+            'change': (self.last_value - value) if value is not None else None,
             'nolog': True
         })
 
