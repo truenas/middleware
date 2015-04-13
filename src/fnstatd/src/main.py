@@ -30,6 +30,7 @@
 import os
 import sys
 import time
+import math
 import errno
 import argparse
 import json
@@ -162,6 +163,9 @@ class DataSource(object):
         for b in self.config.buckets:
             if timestamp % b.interval.total_seconds() == 0:
                 self.persist(timestamp, self.bucket_buffers[b.index], b)
+
+        if math.isnan(value):
+            value = 0
 
         self.context.client.emit_event('statd.{0}.pulse'.format(self.name), {
             'value': value,
