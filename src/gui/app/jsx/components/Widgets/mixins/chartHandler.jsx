@@ -377,6 +377,7 @@ module.exports = {
 
   	this.setState( {   legendStateObj: legendStateObject
   					 , legendStateArr: legendStateArray } );
+  	//console.log(legendStateObject);
   }
 
   , chartData: function( chartType ) {

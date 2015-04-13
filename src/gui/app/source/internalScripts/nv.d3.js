@@ -1,4 +1,4 @@
-/* nvd3 version 1.7.1(https://github.com/novus/nvd3) 2015-04-10 */
+/* nvd3 version 1.7.1(https://github.com/novus/nvd3) 2015-04-13 */
 (function(){
 
 // set up main nv object on window
@@ -4416,6 +4416,8 @@ nv.models.ohlcBarChart = function() {
 
                 //position legend as far right as possible within the total width
                 if (rightAlign) {
+                    //console.log("width: " + width);
+                    //console.log("legendWidth: " + legendWidth);
 
                     g.attr('transform', 'translate(' + (width/2 - legendWidth/2) + ',' + margin.top + ')');
                 }
@@ -4807,11 +4809,16 @@ nv.models.lineChart = function() {
                     - margin.top - margin.bottom;
 
 
-            chart.update = function() {
+            chart.update = function(callback) {
                 if (duration === 0)
                     container.call(chart);
                 else
-                    container.transition().duration(duration).call(chart)
+                    container.transition().duration(duration).call(chart);
+
+                if (callback)
+                    {
+                        callback();
+                    }
             };
             chart.container = this;
 
@@ -4954,8 +4961,11 @@ nv.models.lineChart = function() {
             legend.dispatch.on('stateChange', function(newState) {
                 for (var key in newState)
                     state[key] = newState[key];
-                chart.update();
-                dispatch.stateChange(state);
+
+                chart.update(function() {
+                    //console.log(state.disabled);
+                    dispatch.stateChange(state); });
+                //dispatch.stateChange(state);
             });
 
             interactiveLayer.dispatch.on('elementMousemove', function(e) {
@@ -9086,7 +9096,13 @@ nv.models.pieChart = function() {
                     - margin.top - margin.bottom
                 ;
 
-            chart.update = function() { container.transition().call(chart); };
+            chart.update = function(callback) {
+                    container.transition().call(chart);
+                    if (callback)
+                    {
+                        callback();
+                    }
+                };
             chart.container = this;
 
             state.setter(stateSetter(data), chart.update)
@@ -9163,8 +9179,10 @@ nv.models.pieChart = function() {
                 for (var key in newState) {
                     state[key] = newState[key];
                 }
-                chart.update();
-                dispatch.stateChange(state);
+                chart.update(function() {
+                    //console.log(state.disabled);
+                    dispatch.stateChange(state); });
+                //dispatch.stateChange(state);
             });
 
             pie.dispatch.on('elementMouseout.tooltip', function(e) {
@@ -10934,7 +10952,15 @@ nv.models.stackedAreaChart = function() {
                 availableHeight = (height || parseInt(container.style('height')) || 400)
                     - margin.top - margin.bottom;
 
-            chart.update = function() { container.transition().duration(duration).call(chart); };
+            chart.update = function(callback) {
+                container.transition().duration(duration).call(chart);
+
+                if (callback)
+                {
+                    callback();
+                }
+
+            };
             chart.container = this;
 
             state
@@ -11142,8 +11168,9 @@ nv.models.stackedAreaChart = function() {
             legend.dispatch.on('stateChange', function(newState) {
                 for (var key in newState)
                     state[key] = newState[key];
-                dispatch.stateChange(state);
-                chart.update();
+                chart.update(function() {
+                    //console.log(state.disabled);
+                    dispatch.stateChange(state); });
             });
 
             controls.dispatch.on('legendClick', function(d,i) {
