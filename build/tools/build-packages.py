@@ -29,25 +29,35 @@
 import os
 import sys
 from dsl import load_file
-from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
+from utils import sh, sh_str, e, setup_env, objdir, info, debug, error
 
 
 setup_env()
 dsl = load_file('${BUILD_CONFIG}/packages.pyd', os.environ)
 tooldir = objdir('pkgtools')
 pkgdir = objdir('packages')
+pkgversion = ''
+
+
+def read_repo_manifest():
+    global version
+    versions = []
+    f = open(e("${BUILD_ROOT}/FreeBSD/repo-manifest"))
+    for i in f:
+        versions.append(i.split()[1])
+
+    version = '-'.join(versions)
 
 
 def build_pkgtools():
     info('Building freenas-pkgtools')
     sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all")
     sh("make -C ${SRC_ROOT}/freenas-pkgtools install DESTDIR=${tooldir} PREFIX=/usr/local")
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools package DESTDIR=${tooldir} PREFIX=/usr/local")
 
 
 def build_packages():
     info('Building packages')
-    sh('mkdir -p ${pkgdir}')
+    sh('mkdir -p ${pkgdir}/Packages')
     for i in dsl['package'].values():
         template = i['template']
         name = i['name']
@@ -57,14 +67,28 @@ def build_packages():
             "-T ${template}",
             "-N ${name}",
             "-V ${VERSION}",
-            '${pkgdir}/${name}-${VERSION}.tgz')
+            '${pkgdir}/Packages/${name}-${VERSION}.tgz')
 
 
 def create_manifest():
     info('Creating package manifests')
+    pkgs = []
+    for i in dsl['package'].values():
+        pkgs.append(e("${i}=${VERSION}${pkgversion}"))
 
+    sh(
+        "env PYTHONPATH=${tooldir}/usr/local/lib",
+        "${tooldir}/usr/local/bin/create_manifest",
+        "-P ${pkgdir}/Packages",
+        "-o ${pkgdir}/${PRODUCT}-${sequence}",
+        "-R ${PRODUCT}-${VERSION}",
+        "-T ${train}",
+        "-t ${date}",
+        *pkgs
+    )
 
 if __name__ == '__main__':
+    read_repo_manifest()
     build_pkgtools()
     build_packages()
     create_manifest()

@@ -29,6 +29,16 @@ package(
 )
 
 package(
+    name="freebsd-pkgdb",
+    template=e("${BUILD_CONFIG}/templates/packages/freebsd-pkgdb")
+)
+
+package(
+    name="freenas-pkg-tools",
+    template=e("${BUILD_CONFIG}/templates/packages/freenas-pkg-tools")
+)
+
+package(
     name="freenasUI",
     template=e("${BUILD_CONFIG}/templates/packages/freenasUI")
 )
