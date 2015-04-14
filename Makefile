@@ -64,10 +64,14 @@ all:	check-root build
 check-root:
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 
-build: git-verify portsjail ports
+build: git-verify portsjail ports world packages
+
+world:
 	@build/tools/install-world.py
 	@build/tools/install-ports.py
 	@build/tools/customize.py
+
+packages:
 	@build/tools/build-packages.py
 
 checkout: git-verify
