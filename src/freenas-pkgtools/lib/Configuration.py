@@ -462,7 +462,6 @@ class Configuration(object):
 
     def TryGetNetworkFile(self, url, handler=None, pathname = None, reason = None):
         from . import DEFAULT_CA_FILE
-        from freenasUI.support.utils import LICENSE_FILE
 
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
@@ -478,6 +477,7 @@ class Configuration(object):
 
         license_data = None
         try:
+            from freenasUI.support.utils import LICENSE_FILE
             if os.path.exists(LICENSE_FILE):
                 license_data = open(LICENSE_FILE, "r").read().rstrip()
         except:
