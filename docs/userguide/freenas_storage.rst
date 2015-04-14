@@ -179,8 +179,7 @@ FreeNAS® system:
    sensitive data is stored on the system.
 
 To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. A pop-up message will remind you that
-**it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Refer to
-:ref:`Managing Encrypted Volumes` for instructions on how to perform those tasks.
+**it is extremely important** to make a backup of the key as without it the data on the disks is inaccessible. Refer to :ref:`Managing Encrypted Volumes` for instructions.
 
 .. _Manual Setup:
 
