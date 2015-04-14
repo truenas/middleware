@@ -37,6 +37,9 @@ class GlobalsWrapper(dict):
 
     def __getitem__(self, item):
         if item.isupper():
+            if item in self.dict:
+                return self.dict[item]
+
             return self.env.get(item, None)
 
         if item == 'e':
@@ -53,7 +56,10 @@ class GlobalsWrapper(dict):
         return self.wrap(item)
 
     def __setitem__(self, key, value):
-        self.dict[key] = value
+        if key.isupper():
+            self.env[key] = value
+        else:
+            self.dict[key] = value
 
     def wrap(self, name):
         def fn(*args, **kwargs):
