@@ -223,13 +223,17 @@ class Funcs:
         except ValueError:
             return False
 
-    def pairing_send(self, request, secret):
+    def pairing_send(self, request, secret, data):
         from freenasUI.failover.models import Failover
         from freenasUI.failover.utils import set_pending_pairing
         if Failover.objects.all().exists():
             return "Failover already exists on this node"
         try:
-            set_pending_pairing(secret=secret, ip=request.client_address[0])
+            set_pending_pairing(
+                secret=secret,
+                ip=request.client_address[0],
+                data=data,
+            )
         except Exception as e:
             log.error('Failed set_pending_pairing: %s', e)
             return False
@@ -287,11 +291,12 @@ class Funcs:
         return rvs
 
     def sync_to(self, request, secret, query):
-        from freenasUI.failover.models import Failover
+        from freenasUI.failover.models import CARP, Failover
         from freenasUI.failover.utils import (
             delete_pending_pairing,
             get_pending_pairing,
         )
+        from freenasUI.network.models import Interfaces
 
         self._check_version(request)
 
@@ -304,6 +309,24 @@ class Funcs:
             if secret != pairing['secret'] or pairing['verified'] is False:
                 return False
             update_ip = True
+
+            CARP.objects.all().delete()
+            Interfaces.objects.filter(
+                int_interface__startswith='carp'
+            ).delete()
+
+            # Order is important, Interfaces first
+            for kind, model in (
+                ('Interfaces', Interfaces),
+                ('CARP', CARP),
+            ):
+                for entry in pairing['data'][kind]:
+                    instance = model()
+                    for name, value in entry.iteritems():
+                        if name == 'id':
+                            continue
+                        setattr(instance, name, value)
+                    instance.save()
 
             delete_pending_pairing()
         else:
