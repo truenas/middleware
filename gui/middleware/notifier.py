@@ -4236,10 +4236,7 @@ class notifier:
         self.__twcli[controller] = units
         return self.__twcli[controller]
 
-    def serial_from_device(self, devname):
-        if devname in self.__diskserial:
-            return self.__diskserial.get(devname)
-
+    def get_smartctl_args(self, devname):
         args = ["/dev/%s" % devname]
         camcontrol = self._camcontrol_list()
         info = camcontrol.get(devname)
@@ -4280,6 +4277,21 @@ class notifier:
                     "-d",
                     "3ware,%d" % (twcli.get(info["channel"], -1), )
                     ]
+        return args
+
+    def toggle_smart_off(self, devname):    
+        args = self.get_smartctl_args(devname)
+        Popen(["/usr/local/sbin/smartctl", "--smart=off"] + args, stdout=PIPE)
+
+    def toggle_smart_on(self, devname):
+        args = self.get_smartctl_args(devname)
+        Popen(["/usr/local/sbin/smartctl", "--smart=on"] + args, stdout=PIPE)
+
+    def serial_from_device(self, devname):
+        if devname in self.__diskserial:
+            return self.__diskserial.get(devname)
+
+        args = self.get_smartctl_args(devname) 
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
