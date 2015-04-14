@@ -24,6 +24,11 @@
 #
 
 port(name="lang/python27")
+port(name="lang/python2")
+port(name="lang/python")
+port(name="databases/sqlite3")
+port(name="databases/py-sqlite3")
+port(name="databases/py-bsddb3")
 
 port(
     name="freenas/pc-sysinstall",
