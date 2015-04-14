@@ -186,30 +186,17 @@ var GroupEdit = React.createClass({
     }
 
   , submitGroupUpdate: function() {
-      var valuesToSend = {};
+      var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
-      // Make sure nothing read-only made it in somehow.
-      _.forEach( this.state.locallyModifiedValues, function( value, key ) {
-        var itemKey = _.find(this.state["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if ( itemKey.mutable ) {
-          valuesToSend[ key ] = value;
-        } else {
-          console.error("GROUPS: Attempted to submit a change to a read-only property.");
-          console.error(this.state.locallyModifiedValues[value]);
-        }
-      }.bind(this) );
-
-      if (valuesToSend){
-        // Only bother to submit an update if there is anything to update.
-        GroupsMiddleware.updateGroup( this.props.item["id"], valuesToSend );
+      // Only bother to submit an update if there is anything to update.
+      if ( !_.isEmpty( valuesToSend ) ){
+        GroupsMiddleware.updateGroup( this.props.item["id"], valuesToSend, this.submissionRedirect( valuesToSend ) );
         // Save a record of the last changes we sent.
         this.setState({
             lastSentValues : valuesToSend
         });
       } else {
-          console.warn("Attempted to send a Group update with no valid fields.");
+          console.warn( "Attempted to send a Group update with no valid fields." );
       }
     }
 

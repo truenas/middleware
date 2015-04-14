@@ -222,20 +222,18 @@ var UserEdit = React.createClass({
     // TODO: Validate that input values are legitimate for their field. For example,
     // id should be a number.
   , submitUserUpdate: function() {
-      var valuesToSend = {};
-
       // Make sure nothing read-only made it in somehow.
-      valuesToSend = this.removeReadOnlyFields(this.state.locallyModifiedValues, this.state.dataKeys);
+      var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
       // Only bother to submit an update if there is anything to update.
       if (!_.isEmpty( valuesToSend ) ){
-        UsersMiddleware.updateUser( this.props.item["id"], valuesToSend, this.submissionRedirect(valuesToSend) );
+        UsersMiddleware.updateUser( this.props.item[ "id" ], valuesToSend, this.submissionRedirect( valuesToSend ) );
         // Save a record of the last changes we sent.
         this.setState({
             lastSentValues : valuesToSend
         });
       } else {
-          console.warn("Attempted to send a User update with no valid fields.");
+          console.warn( "Attempted to send a User update with no valid fields." );
       }
 
     }
