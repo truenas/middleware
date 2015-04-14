@@ -637,6 +637,7 @@ def ApplyUpdate(directory, install_handler = None):
             deleted_packages.append(pkg)
         elif op == "install":
             log.debug("Install package %s" % pkg.Name())
+            updated_packages.append(pkg)
         else:
             log.debug("Upgrade package %s-%s to %s-%s" % (old.Name(), old.Version(), pkg.Name(), pkg.Version()))
             updated_packages.append(pkg)
