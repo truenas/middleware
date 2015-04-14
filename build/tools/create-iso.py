@@ -28,12 +28,18 @@
 
 
 import os
-from utils import sh, info, objdir, e, chroot, setup_env
+from dsl import load_file
+from utils import sh, info, objdir, e, chroot, setup_env, setfile, template
 
 
 setup_env()
+dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
+ports = load_file('${BUILD_CONFIG}/ports-installer.pyd', os.environ)
 installworldlog = objdir('logs/iso-installworld')
+installkernellog = objdir('logs/iso-installkernel')
+sysinstalllog = objdir('logs/iso-sysinstall')
 imgfile = objdir('base.ufs')
+output = objdir('image.iso')
 
 
 symlinks = {
@@ -148,6 +154,7 @@ symlinks = {
     'rtsol': '/sbin/rtsol',
     'savecore': '/sbin/savecore',
     'setfacl': '/bin/setfacl',
+    'sh': '/bin/sh',
     'spppcontrol': '/sbin/spppcontrol',
     'stty': '/bin/stty',
     'swapon': '/sbin/swapon',
@@ -170,7 +177,7 @@ symlinks = {
     'zcat': '/usr/bin/zcat',
     'zfs': '/sbin/zfs',
     'zpool': '/sbin/zpool',
-    '/bin/pgrep': 'usr/bin/pgrep',
+    '/bin/pgrep': '/usr/bin/pgrep',
     '/bin/pkill': '/usr/bin/pkill',
     '/.mount/boot': '/boot'
 }
@@ -201,12 +208,14 @@ def create_ufs_dirs():
     sh('mkdir -p ${INSTUFS_DESTDIR}/conf/default/tmp')
     sh('mkdir -p ${INSTUFS_DESTDIR}/conf/default/var')
     sh('mkdir -p ${INSTUFS_DESTDIR}/tank')
+    sh('rm -rf ${INSTUFS_DESTDIR}/boot')
+    sh('ln -s /.mount/boot ${INSTUFS_DESTDIR}/boot')
 
 
 def setup_diskless():
     sh('touch ${INSTUFS_DESTDIR}/etc/diskless')
-    sh('cp -a ${INSTUFS_DESTDIR}/etc ${INSTUFS_DESTDIR}/conf/default/etc')
-    sh('cp -a ${INSTUFS_DESTDIR}/var ${INSTUFS_DESTDIR}/conf/default/var')
+    sh('cp -a ${INSTUFS_DESTDIR}/etc/ ${INSTUFS_DESTDIR}/conf/default/etc')
+    sh('cp -a ${INSTUFS_DESTDIR}/var/ ${INSTUFS_DESTDIR}/conf/default/var')
 
 
 def cleandirs():
@@ -218,7 +227,7 @@ def cleandirs():
 
 def installworld():
     info('Installing world')
-    info('Log file: ${{installworldlog}}')
+    info('Log file: {0}', installworldlog)
     sh('mkdir -p ${INSTUFS_DESTDIR}')
     sh(
         "make",
@@ -230,11 +239,34 @@ def installworld():
     )
 
 
-def install_python():
+def installkernel():
+    modules = ' '.join(dsl['kernel_module'])
+    info('Installing kernel')
+    info('Log file: {0}', installkernellog)
+    sh('mkdir -p ${ISO_DESTDIR}')
+    sh(
+        "make",
+        "-C ${TRUEOS_ROOT}",
+        "installkernel",
+        "DESTDIR=${ISO_DESTDIR}",
+        "MODULES_OVERRIDE='{0}'".format(modules),
+        "__MAKE_CONF=${MAKEOBJDIRPREFIX}/make-build.conf",
+        log=installkernellog
+    )
+
+
+def install_ports():
+    pkgs = ' '.join(ports['port'].keys())
     info('Installing packages')
     sh('mkdir -p ${INSTUFS_DESTDIR}/usr/local/etc/pkg/repos')
     sh('cp ${BUILD_CONFIG}/templates/pkg-repos/local.conf ${INSTUFS_DESTDIR}/usr/local/etc/pkg/repos/')
-    chroot('${INSTUFS_DESTDIR}', 'env ASSUME_ALWAYS_YES=yes pkg install -r local -f python27')
+    chroot('${INSTUFS_DESTDIR}', 'env ASSUME_ALWAYS_YES=yes pkg install -r local -f ${pkgs}')
+
+
+def install_pkgtools():
+    info('Installing freenas-pkgtools')
+    sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all")
+    sh("make -C ${SRC_ROOT}/freenas-pkgtools install DESTDIR=${INSTUFS_DESTDIR} PREFIX=/usr/local")
 
 
 def mount_packages():
@@ -248,6 +280,7 @@ def umount_packages():
 
 def install_files():
     info('Copying installer files')
+    setfile('${INSTUFS_DESTDIR}/etc/avatar.conf', template('${BUILD_CONFIG}/templates/avatar.conf'))
     sh('cp -p ${BUILD_ROOT}/build/files/install.sh ${INSTUFS_DESTDIR}/etc')
     sh('cp -p ${BUILD_ROOT}/build/files/rc ${INSTUFS_DESTDIR}/etc')
 
@@ -256,21 +289,23 @@ def populate_ufsroot():
     info('Populating UFS root')
     for k, v in symlinks.items():
         p = os.path.join('/rescue', k)
-        sh('chflags 0 ${INSTUFS_DESTDIR}${v}')
+        sh('chflags -f 0 ${INSTUFS_DESTDIR}${v}')
         sh('rm -f ${INSTUFS_DESTDIR}${v}')
-        sh('ln -s /rescue/${p}', '${INSTUFS_DESTDIR}${v}')
-
-    sh(
-        "make",
-        "-C ${BUILD_ROOT}/build/pc-sysinstall",
-        "install",
-        "DESTDIR=${INSTUFS_DESTDIR}",
-        "NO_MAN=t"
-    )
+        sh('ln -s ${p} ${INSTUFS_DESTDIR}${v}')
 
 
 def copy_packages():
-    pass
+    sh('mkdir -p ${ISO_DESTDIR}/${PRODUCT}')
+    sh('cp -R ${MAKEOBJDIRPREFIX}/packages/Packages ${ISO_DESTDIR}/${PRODUCT}')
+    sh('cp ${MAKEOBJDIRPREFIX}/packages/${PRODUCT}-MANIFEST ${ISO_DESTDIR}/')
+
+
+def clean_ufs_image():
+    sh('${BUILD_ROOT}/build/customize/remove-bits.py ${INSTUFS_DESTDIR}')
+
+
+def clean_iso_image():
+    sh("find ${ISO_DESTDIR}/boot -name '*.symbols' -delete")
 
 
 def make_ufs_image():
@@ -280,20 +315,28 @@ def make_ufs_image():
 
 
 def make_iso_image():
-    pass
+    setfile('${ISO_DESTDIR}/boot/loader.conf', template('${BUILD_CONFIG}/templates/cdrom/loader.conf'))
+    setfile('${ISO_DESTDIR}/boot/grub/grub.cfg', template('${BUILD_CONFIG}/templates/cdrom/grub.cfg'))
+    setfile('${ISO_DESTDIR}/.mount.conf', template('${BUILD_CONFIG}/templates/cdrom/mount.conf'))
+    sh('grub-mkrescue -o ${output} ${ISO_DESTDIR} -- -volid ${CDROM_LABEL}')
 
 
 if __name__ == '__main__':
     info("Creating ISO image")
     cleandirs()
     installworld()
+    installkernel()
     create_ufs_dirs()
-    populate_ufsroot()
     mount_packages()
-    install_python()
+    install_ports()
+    install_pkgtools()
     umount_packages()
-    setup_diskless()
+    populate_ufsroot()
     install_files()
     copy_packages()
+    clean_ufs_image()
+    setup_diskless()
+    clean_iso_image()
+    create_iso_dirs()
     make_ufs_image()
     make_iso_image()
