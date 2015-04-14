@@ -23,11 +23,13 @@ var TableViewer = React.createClass({
     }
 
   , propTypes: {
-        viewData     : React.PropTypes.object.isRequired
-      , inputData    : React.PropTypes.array.isRequired
-      , searchString : React.PropTypes.string
-      , filteredData : React.PropTypes.object.isRequired
-      , tableCols    : React.PropTypes.array.isRequired
+        viewData         : React.PropTypes.object.isRequired
+      , inputData        : React.PropTypes.array.isRequired
+      , handleItemSelect : React.PropTypes.func.isRequired
+      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
+      , searchString     : React.PropTypes.string
+      , filteredData     : React.PropTypes.object.isRequired
+      , tableCols        : React.PropTypes.array.isRequired
     }
 
   , getInitialState: function() {
@@ -62,12 +64,16 @@ var TableViewer = React.createClass({
       }
     }
 
-  , handleRowClick: function( selectionKey, event, componentID ) {
-      var params = {};
+  , handleRowClick: function( params, selectionValue, event, componentID ) {
+      switch ( event.type ) {
+        case "click":
+          this.props.handleItemSelect( selectionValue );
+          break;
 
-      params[ this.props.viewData.routing["param"] ] = selectionKey;
-
-      this.context.router.transitionTo( this.props.viewData.routing["route"], params );
+        case "dblclick":
+          this.context.router.transitionTo( this.props.viewData.routing.route, params );
+          break;
+      }
     }
 
   , changeSortState: function( key, event ) {
@@ -146,8 +152,17 @@ var TableViewer = React.createClass({
     }
 
   , createRows: function( item, index ) {
+      var selectionValue = item[ this.props.viewData.format["selectionKey"] ];
+      var params         = {};
+
+      params[ this.props.viewData.routing["param"] ] = selectionValue;
+
       return(
-        <tr key={ index } onClick= { this.handleRowClick.bind( null, item[ this.props.viewData.format["selectionKey"] ] ) }>
+        <tr
+          key           = { index }
+          className     = { this.props.selectedItem === selectionValue ? "active" : "" }
+          onClick       = { this.handleRowClick.bind( null, null, selectionValue ) }
+          onDoubleClick = { this.handleRowClick.bind( null, params, selectionValue ) } >
           { this.props.tableCols.map( function( key, index ) {
               return ( <td key={ index }>{ viewerUtil.identifyAndWrite( item[ key ] ) }</td> );
             })

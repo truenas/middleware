@@ -1,3 +1,11 @@
+.viewer-active-item {
+  background-color : @brand-info;
+  color            : white;
+}
+.viewer-active-item-hover {
+  background-color: darken( @brand-info, 5%);
+}
+
 // Main Viewer Rules
 .viewer {
   .flex-display(flex);
@@ -223,9 +231,9 @@
       color         : @gray-dark;
       border-radius : 0;
       &.active {
-        background-color : @brand-info;
+        .viewer-active-item();
         &:hover {
-          background-color : lighten(@brand-info, 5%)
+          .viewer-active-item-hover();
         }
       }
     }
@@ -276,7 +284,10 @@
 
 
     &.active {
-      background-color: @brand-info;
+      .viewer-active-item();
+      &:hover {
+        .viewer-active-item-hover();
+      }
 
         .viewer-icon-item-primary
       , .viewer-icon-item-secondary {
@@ -305,6 +316,12 @@
   position   : relative;
   width      : 100%;
   overflow-y : auto;
+  .table-hover > tbody > tr.active > td {
+    .viewer-active-item();
+  }
+  .table-hover > tbody > tr.active:hover > td {
+    .viewer-active-item-hover();
+  }
 }
 
 .icon {

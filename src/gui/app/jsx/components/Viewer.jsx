@@ -57,12 +57,17 @@ var Viewer = React.createClass({
       // middleware and creating cells. Also useful for getting human-friendly
       // names out of the translation key.
       var defaultTableCols = [];
+      var selectedItem = this.context.router.getCurrentParams()[ this.props.viewData.routing["param"] ];
 
       _.filter( this.props.viewData.format.dataKeys, function( item, key, collection ) {
         if ( item["defaultCol"] ) {
           defaultTableCols.push( item["key"] );
         }
       });
+
+      if ( !_.isNumber( selectedItem ) || !_.isString( selectedItem ) ) {
+        selectedItem = null;
+      }
 
       return {
           currentMode    : this.changeViewerMode( initialMode )
@@ -77,6 +82,7 @@ var Viewer = React.createClass({
               }
           }
         , searchString   : ""
+        , selectedItem   : selectedItem
       };
     }
 
@@ -172,6 +178,16 @@ var Viewer = React.createClass({
       });
     }
 
+  , handleItemSelect: function ( selectionValue, event ) {
+      var newSelection = null;
+
+      if ( !_.isNumber( selectionValue ) || !_.isString( selectionValue ) ) {
+        newSelection = selectionValue;
+      }
+
+      this.setState({ selectedItem: newSelection });
+    }
+
   , handleSearchChange: function ( event ) {
       this.processDisplayData({ searchString: event.target.value });
     }
@@ -181,10 +197,8 @@ var Viewer = React.createClass({
 
       // See if a disallowed mode has been requested
       if ( this.props.allowedModes.indexOf( targetMode ) === -1 ) {
-        console.log( "Error: Attempted to set mode " + targetMode + " in a Viewer which forbids it");
         if ( this.props.defaultMode ) {
           // Use the default mode, if provided
-          console.log( "Note: Substituted provided default, " + this.props.defaultMode + " instead of " + targetMode );
           newMode = this.props.defaultMode;
         } else {
           // If no default, use the first allowed mode in the list
@@ -258,12 +272,15 @@ var Viewer = React.createClass({
           break;
       }
 
-      return <ViewerContent viewData     = { this.props.viewData }
-                            inputData    = { this.props.inputData }
-                            addEntity    = { this.props.addEntity}
-                            tableCols    = { this.state.tableCols }
-                            searchString = { this.state.searchString }
-                            filteredData = { this.state.filteredData } />;
+      return <ViewerContent
+                viewData         = { this.props.viewData }
+                inputData        = { this.props.inputData }
+                addEntity        = { this.props.addEntity}
+                tableCols        = { this.state.tableCols }
+                handleItemSelect = { this.handleItemSelect }
+                selectedItem     = { this.state.selectedItem }
+                searchString     = { this.state.searchString }
+                filteredData     = { this.state.filteredData } />;
     }
 
   , render: function() {

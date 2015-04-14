@@ -1,5 +1,6 @@
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
@@ -8,12 +9,20 @@ var Link         = Router.Link;
 var RouteHandler = Router.RouteHandler;
 
 var viewerCommon = require("../mixins/viewerCommon");
-var viewerUtil = require("./viewerUtil");
+var viewerUtil   = require("./viewerUtil");
 
 var DetailNavSection = React.createClass({
 
-    propTypes: {
+    contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , propTypes: {
         viewData            : React.PropTypes.object.isRequired
+      , selectedItem        : React.PropTypes.oneOfType([
+                                    React.PropTypes.number
+                                  , React.PropTypes.string
+                                ])
       , searchString        : React.PropTypes.string
       , activeKey           : React.PropTypes.string
       , sectionName         : React.PropTypes.string.isRequired
@@ -35,12 +44,13 @@ var DetailNavSection = React.createClass({
     }
 
   , createItem: function ( rawItem, index ) {
-      var searchString = this.props.searchString;
+      var searchString   = this.props.searchString;
+      var selectionValue = rawItem[ this.props.viewData.format["selectionKey"] ];
       var params = {};
 
-      params[ this.props.viewData.routing["param"] ] = rawItem[ this.props.viewData.format["selectionKey"] ];
+      params[ this.props.viewData.routing["param"] ] = selectionValue;
 
-      // to be fixed: quick added || "" to the end of these so some searches wont bomb out when a key is null
+      // FIXME: quick added || "" to the end of these so some searches wont bomb out when a key is null
       var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ] || "";
       var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ] || "";
 
@@ -53,8 +63,9 @@ var DetailNavSection = React.createClass({
         <li role      = "presentation"
             key       = { index }
             className = "disclosure-target" >
-          <Link to     = { this.props.viewData.routing.route }
-                params = { params } >
+          <Link to      = { this.props.viewData.routing.route }
+                params  = { params }
+                onClick = { this.props.handleItemSelect.bind( null, selectionValue ) } >
             <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
                                  fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
                                  iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
@@ -109,9 +120,20 @@ var DetailViewer = React.createClass({
     }
 
   , propTypes: {
-        viewData     : React.PropTypes.object.isRequired
-      , searchString : React.PropTypes.string
-      , filteredData : React.PropTypes.object.isRequired
+        viewData         : React.PropTypes.object.isRequired
+      , handleItemSelect : React.PropTypes.func.isRequired
+      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
+      , searchString     : React.PropTypes.string
+      , filteredData     : React.PropTypes.object.isRequired
+    }
+
+  , componentDidMount: function() {
+      // TODO: This will be an array once we implement multi-select
+      var params = {};
+      if ( _.isNumber( this.props.selectedItem ) || _.isString( this.props.selectedItem ) ) {
+        params[ this.props.viewData.routing["param"] ] = this.props.selectedItem;
+        this.context.router.replaceWith( this.props.viewData.routing.route, params );
+      }
     }
 
   , createAddEntityButton: function() {
@@ -152,12 +174,14 @@ var DetailViewer = React.createClass({
 
           if ( group.entries.length ) {
             return (
-              <DetailNavSection key               = { index }
-                                viewData          = { this.props.viewData }
-                                searchString      = { this.props.searchString }
-                                sectionName       = { group.name }
-                                initialDisclosure = { disclosureState }
-                                entries           = { group.entries } />
+              <DetailNavSection
+                key               = { index }
+                viewData          = { this.props.viewData }
+                handleItemSelect  = { this.props.handleItemSelect }
+                searchString      = { this.props.searchString }
+                sectionName       = { group.name }
+                initialDisclosure = { disclosureState }
+                entries           = { group.entries } />
             );
           } else {
             return null;
@@ -167,11 +191,13 @@ var DetailViewer = React.createClass({
 
       if ( fd["remaining"].entries.length ) {
         remainingNavItems = (
-          <DetailNavSection viewData          = { this.props.viewData }
-                            searchString      = { this.props.searchString }
-                            sectionName       = { fd["remaining"].name }
-                            initialDisclosure = "closed"
-                            entries           = { fd["remaining"].entries } />
+          <DetailNavSection
+            viewData          = { this.props.viewData }
+            handleItemSelect  = { this.props.handleItemSelect }
+            searchString      = { this.props.searchString }
+            sectionName       = { fd["remaining"].name }
+            initialDisclosure = "closed"
+            entries           = { fd["remaining"].entries } />
         );
       }
 
