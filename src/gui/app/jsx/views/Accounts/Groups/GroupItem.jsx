@@ -186,19 +186,6 @@ var GroupEdit = React.createClass({
       }
     }
 
-    , submissionRedirect: function( valuesToSend ) {
-        var params = {};
-        var newGroup;
-
-        if (valuesToSend[ "name" ]) {
-          newGroup = valuesToSend[ "name" ];
-          params[this.props.viewData.routing[ "param" ] ] = newGroup;
-          this.context.router.transitionTo( "groups-editor", params );
-        } else {
-          this.props.handleViewChange("view");
-        }
-    }
-
     , deleteGroup: function(){
         GroupsMiddleware.deleteGroup(this.props.item["id"], this.returnToViewerRoot() );
     }

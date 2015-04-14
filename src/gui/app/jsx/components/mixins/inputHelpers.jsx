@@ -151,4 +151,18 @@ module.exports = {
         , mixedValues           : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
       });
     }
+
+  , submissionRedirect: function( valuesToSend ) {
+      var routing = this.props.viewData.routing;
+      var params = {};
+      var newGroup;
+
+      if ( valuesToSend[ "name" ] ) {
+        newGroup = valuesToSend[ "name" ];
+        params[ routing[ "param" ] ] = newGroup;
+        this.context.router.transitionTo( routing[ "route" ], params );
+      } else {
+        this.props.handleViewChange( "view" );
+      }
+    }
 };

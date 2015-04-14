@@ -223,25 +223,6 @@ var UserEdit = React.createClass({
 
     }
 
-      // TODO: Put it in an mixin? It requires a lot of view-specific info,
-      // but if more such things become mixins themselves, it would probably work.
-    , submissionRedirect: function( valuesToSend ) {
-        var params = {};
-        var nextUser;
-
-        if (valuesToSend[ "username" ]) {
-          nextUser = valuesToSend[ "username" ];
-          params[this.props.viewData.routing[ "param" ] ] = nextUser;
-          this.context.router.transitionTo( "users-editor", params );
-        } else {
-          this.props.handleViewChange("view");
-        }
-    }
-
-    , deleteUser: function(){
-        UsersMiddleware.deleteUser(this.props.item["id"], this.returnToViewerRoot() );
-    }
-
     // TODO: Currently this section just arbitrarily handles every property the
     // middleware sends in the order the browser sends it. This should be updated
     // to have a deliberate design.
