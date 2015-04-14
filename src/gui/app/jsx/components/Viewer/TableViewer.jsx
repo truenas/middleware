@@ -41,6 +41,19 @@ var TableViewer = React.createClass({
 
   , componentDidMount: function() {
       this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
+      window.addEventListener( "keyup", this.handleEscClose );
+    }
+
+  , componentWillUnmount: function() {
+      window.removeEventListener( "keyup", this.handleEscClose );
+    }
+
+  , handleEscClose: function( event ) {
+      if ( event.which === 27 && this.dynamicPathIsActive() ) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.returnToViewerRoot();
+      }
     }
 
   , handleClickOut: function( event, componentID ) {

@@ -28,6 +28,22 @@ var IconViewer = React.createClass({
       , filteredData : React.PropTypes.object.isRequired
     }
 
+  , componentDidMount: function() {
+      window.addEventListener( "keyup", this.handleEscClose );
+    }
+
+  , componentWillUnmount: function() {
+      window.removeEventListener( "keyup", this.handleEscClose );
+    }
+
+  , handleEscClose: function( event ) {
+      if ( event.which === 27 && this.dynamicPathIsActive() ) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.returnToViewerRoot();
+      }
+    }
+
   , handleClickOut: function( event, componentID ) {
       if ( event.dispatchMarker === componentID ) {
         this.returnToViewerRoot();
