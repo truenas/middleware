@@ -179,7 +179,7 @@ module.exports = {
           // TODO: More clear business logic for data display
 
           if ( stagedUpdate[ updateVariable ] && _.isArray( stagedUpdate[ updateVariable ] ) ) {
-            stagedUpdate[ updateVariable ] = stagedUpdate[ updateVariable ].concat( newDataPoint );
+            stagedUpdate[ updateVariable ].push( newDataPoint );
           } else {
             stagedUpdate[ updateVariable ] = [ newDataPoint ];
           }
