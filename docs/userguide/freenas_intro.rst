@@ -173,7 +173,8 @@ issued since FreeBSD 9.3 RELEASE.
   server.
 
 * The cruciblewds, MediaBrowser, s3cmd, SickRage, Sonarr, and Syncthing plugins have been added. The Minidlna plugin has been removed as it is not supported
-  by the current implementation of FastCGI.
+  by the current implementation of FastCGI. Instructions for manually installing Minidlna into a jail can be found in
+  `this forum post <https://forums.freenas.org/index.php?threads/how-to-install-minidlna-on-freenas-9-3-prior-to-plugin.25395/>`_.
 
 * Support for the Atheros AR813x/AR815x Gigabit Ethernet driver, `alc(4) <https://www.freebsd.org/cgi/man.cgi?query=alc>`_, has been added.
 
