@@ -29,16 +29,14 @@
 import os
 import sys
 from dsl import load_file
-from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
+from utils import sh, sh_str, env, e, setup_env, objdir, info, debug, error
 
 
 setup_env()
-
-
 dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
 arch = env('TARGET_ARCH', 'amd64')
 makeconfbuild = objdir('make-build.conf')
-kernconf = objdir('FreeNAS.{0}'.format(arch))
+kernconf = objdir(e('${KERNCONF}'))
 kernlog = objdir('logs/buildkernel')
 worldlog = objdir('logs/buildworld')
 makejobs = None
