@@ -65,7 +65,7 @@ var Viewer = React.createClass({
         }
       });
 
-      if ( !_.isNumber( selectedItem ) || !_.isString( selectedItem ) ) {
+      if ( !_.isNumber( selectedItem ) && !_.isString( selectedItem ) ) {
         selectedItem = null;
       }
 
