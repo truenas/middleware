@@ -242,6 +242,8 @@ A series of instructional videos are available for FreeNAS® 9.3. They include:
 
 * `TrueNAS 9.3 Snapshots Setup <https://www.youtube.com/watch?v=R92wb_xN9k4>`_
 
+* `Install Murmur (Mumble server) on FreeNAS/FreeBSD  <https://www.youtube.com/watch?v=aAeZRNfarJc>`_
+
 .. index:: Professional Support
 .. _Professional Support:
 
