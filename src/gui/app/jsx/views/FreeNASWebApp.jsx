@@ -8,6 +8,8 @@ var React = require("react");
 var Router       = require("react-router");
 var RouteHandler = Router.RouteHandler;
 
+var routerShim = require("../components/mixins/routerShim");
+
 // WebApp Components
 var LoginBox          = require("../components/LoginBox");
 var BusyBox           = require("../components/BusyBox");
@@ -19,39 +21,49 @@ var DebugTools        = require("../components/DebugTools");
 
 var FreeNASWebApp = React.createClass({
 
-  render: function() {
+    mixins: [ routerShim ]
 
-    return (
-      <div className="app-wrapper">
-        {/* TODO: Add Modal mount div */}
+  , componentDidMount: function() {
+      this.calculateDefaultRoute( "/", "dashboard", "is" );
+    }
 
-        {/* Modal window for FreeNAS login - hidden when authenticated */}
-        <LoginBox />
+  , componentDidUpdate: function( prevProps, prevState ) {
+      this.calculateDefaultRoute( "/", "dashboard", "is" );
+    }
 
-        {/* Modal windows for busy spinner -- hidden normally except when invoked*/}
-        <BusyBox />
+  , render: function() {
 
-        {/* Header containing system status and information */}
-        <NotificationBar />
+      return (
+        <div className="app-wrapper">
+          {/* TODO: Add Modal mount div */}
 
-        <div className="app-content">
-          {/* Primary navigation menu */}
-          <PrimaryNavigation />
+          {/* Modal window for FreeNAS login - hidden when authenticated */}
+          <LoginBox />
 
-          {/* Primary view */}
-          <RouteHandler />
+          {/* Modal windows for busy spinner -- hidden normally except when invoked*/}
+          <BusyBox />
 
-          {/* User-customizable component showing system events */}
-          <InformationBar />
+          {/* Header containing system status and information */}
+          <NotificationBar />
+
+          <div className="app-content">
+            {/* Primary navigation menu */}
+            <PrimaryNavigation />
+
+            {/* Primary view */}
+            <RouteHandler />
+
+            {/* User-customizable component showing system events */}
+            <InformationBar />
+          </div>
+
+          <footer className="app-footer">
+          </footer>
+
+          <DebugTools />
         </div>
-
-        <footer className="app-footer">
-        </footer>
-
-        <DebugTools />
-      </div>
-    );
-  }
+      );
+    }
 
 });
 

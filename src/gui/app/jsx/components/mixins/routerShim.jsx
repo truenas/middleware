@@ -6,6 +6,7 @@
 
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 
 module.exports = {
@@ -14,8 +15,48 @@ module.exports = {
       router: React.PropTypes.func
     }
 
+  , routeEndsWith: function( route ) {
+      var rc = this.context.router;
+
+      return _.endsWith( rc.getCurrentPathname(), route );
+    }
+
+  , routeIs: function( route ) {
+      var rc = this.context.router;
+
+      return rc.getCurrentPathname() === route;
+    }
+
+  , calculateDefaultRoute: function( testRoute, target, testType ) {
+      var rc         = this.context.router;
+      var testString = testType.toLowerCase();
+      var shouldRedirect;
+
+      switch( testString ) {
+        case "routeis":
+        case "is":
+          shouldRedirect = this.routeIs( testRoute );
+          break;
+
+        case "routeendswith":
+        case "endswith":
+          shouldRedirect = this.routeEndsWith( testRoute );
+          break;
+
+        default:
+          shouldRedirect = this.routeEndsWith( testRoute );
+          break;
+      }
+
+      if ( shouldRedirect ) {
+        rc.replaceWith( target );
+      }
+    }
+
   , getDynamicRoute: function() {
-      return this.context.router.getCurrentParams()[ this.props.viewData.routing["param"] ];
+      var rc = this.context.router;
+
+      return rc.getCurrentParams()[ this.props.viewData.routing["param"] ];
     }
 
 };
