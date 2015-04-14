@@ -27,46 +27,47 @@
 #####################################################################
 
 
+import sys
 from utils import setup_env, sh
 
 
 setup_env()
 
 
-def main():
+def main(destdir):
     # Kill .pyo files
-    sh("find ${WORLD_DESTDIR}/usr/local -name '*.pyo' -delete")
+    sh("find ${destdir}/usr/local -name '*.pyo' -delete")
 
     # Kill includes
-    sh("find ${WORLD_DESTDIR}/usr/local/include \! -name 'pyconfig.h' -delete")
+    sh("find ${destdir}/usr/local/include \! -name 'pyconfig.h' -delete")
 
     # Kill docs
-    sh('rm -rf ${WORLD_DESTDIR}/usr/local/share/doc')
-    sh('rm -rf ${WORLD_DESTDIR}/usr/local/share/gtk-doc')
+    sh('rm -rf ${destdir}/usr/local/share/doc')
+    sh('rm -rf ${destdir}/usr/local/share/gtk-doc')
 
     # Kill gobject introspection xml
-    sh('rm -rf ${WORLD_DESTDIR}/usr/local/share/git-1.0')
+    sh('rm -rf ${destdir}/usr/local/share/git-1.0')
 
     # Kill info
-    sh('rm -rf ${WORLD_DESTDIR}/usr/local/info')
+    sh('rm -rf ${destdir}/usr/local/info')
 
     # Kill man pages
-    sh('rm -rf ${WORLD_DESTDIR}/usr/local/man')
+    sh('rm -rf ${destdir}/usr/local/man')
 
     # Kill examples
-    sh('rm -rf ${WORLD_DESTDIR}/usr/local/share/examples')
+    sh('rm -rf ${destdir}/usr/local/share/examples')
 
     # Kill groff_fonts junk
-    sh('rm -rf ${WORLD_DESTDIR}/usr/share/groff_font')
-    sh('rm -rf ${WORLD_DESTDIR}/usr/share/tmac')
-    sh('rm -rf ${WORLD_DESTDIR}/usr/share/me')
+    sh('rm -rf ${destdir}/usr/share/groff_font')
+    sh('rm -rf ${destdir}/usr/share/tmac')
+    sh('rm -rf ${destdir}/usr/share/me')
 
     # Kill static libraries
-    sh("find ${WORLD_DESTDIR}/usr/local -name '*.a' -or -name '*.la' -delete")
+    sh("find ${destdir}/usr/local -name '*.a' -or -name '*.la' -delete")
 
     # magic.mgc is just a speed optimization
-    sh('rm -f ${WORLD_DESTDIR}/usr/share/misc/magic.mgc')
+    sh('rm -f ${destdir}/usr/share/misc/magic.mgc')
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])
