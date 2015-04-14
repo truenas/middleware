@@ -45,11 +45,13 @@ do-build:
 	${MAKE} -C ${WRKSRC}/freenas-pkgtools all
 
 do-install:
+	mkdir -p ${STAGEDIR}${PREFIX}/boot
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/libexec
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/sbin
+	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/libexec/samba
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/freenas-pkgtools BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin LIBDIR=${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS install
@@ -78,42 +80,7 @@ do-install:
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/sudoers ${STAGEDIR}/${PREFIX}/usr/local/etc/sudoers
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/appcafe.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/appcafe.conf
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/warden.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/warden.conf
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/dtrace
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/geom
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/hardware
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ipmi
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/iscsi
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ldap
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/loader
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/network
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/nfs
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/smart
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ssl
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/zfs
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/active_directory/active_directory.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/active_directory/active_directory.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/cache/cache.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/cache/cache.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/dtrace/* ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/dtrace/
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/geom/geom.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/geom/geom.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/hardware/hardware.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/hardware/hardware.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/include.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/include.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/ipmi/ipmi.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ipmi/ipmi.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/iscsi/iscsi.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/iscsi/iscsi.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/ldap/ldap.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ldap/ldap.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/loader/loader.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/loader/loader.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/network/network.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/network/network.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/nfs/nfs.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/nfs/nfs.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/smart/smart.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/smart/smart.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/ssl/ssl.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/ssl/ssl.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/sysctl/sysctl.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/sysctl/sysctl.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/system/system.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/system/system.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/freenas-debug/zfs/zfs.sh ${STAGEDIR}/${PREFIX}/usr/local/libexec/freenas-debug/zfs/zfs.sh
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/save_rrds.sh ${STAGEDIR}/${PREFIX}/usr/local/sbin/save_rrds.sh
@@ -126,6 +93,27 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-bootstrap ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-bootstrap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-etc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-network ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-network
+
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/boot/loader.conf ${STAGEDIR}${PREFIX}/boot/loader.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/csh.cshrc ${STAGEDIR}${PREFIX}/etc/csh.cshrc
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/devfs.rules ${STAGEDIR}${PREFIX}/etc/devfs.rules
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/exports ${STAGEDIR}${PREFIX}/etc/exports
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/freenas.conf ${STAGEDIR}${PREFIX}/etc/freenas.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/gettytab ${STAGEDIR}${PREFIX}/etc/gettytab
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ipfw.conf.block ${STAGEDIR}${PREFIX}/etc/ipfw.conf.block
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli ${STAGEDIR}${PREFIX}/etc/netcli
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli.sh ${STAGEDIR}${PREFIX}/etc/netcli.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/newsyslog.conf ${STAGEDIR}${PREFIX}/etc/newsyslog.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/pf.conf.block ${STAGEDIR}${PREFIX}/etc/pf.conf.block
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/pw.conf ${STAGEDIR}${PREFIX}/etc/pw.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.conf ${STAGEDIR}${PREFIX}/etc/rc.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/sysctl.conf ${STAGEDIR}${PREFIX}/etc/sysctl.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/syslog.conf ${STAGEDIR}${PREFIX}/etc/syslog.conf
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ttys ${STAGEDIR}${PREFIX}/etc/ttys
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.bashrc ${STAGEDIR}${PREFIX}/.bashrc
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.cshrc ${STAGEDIR}${PREFIX}/.cshrc
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.profile ${STAGEDIR}${PREFIX}/.profile
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.shrc ${STAGEDIR}${PREFIX}/.shrc
 
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice
 	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController
