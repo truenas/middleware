@@ -269,8 +269,8 @@ module.exports = {
             newChart = nv.models.stackedAreaChart()
               .options({
                   margin                  : { top: 15, right: 40, bottom: 60, left: 60 }
-                , x                       : graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }   //We can modify the data accessor functions...
-                , y                       : graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }   //...in case your data is formatted differently.
+                , x                       : graphTypeObject.x || function(d) { return d[0]; }   //We can modify the data accessor functions...
+                , y                       : graphTypeObject.y || function(d) { return d[1]; }   //...in case your data is formatted differently.
                 , transitionDuration      : 250
                 , style                   : "Expanded"
                 , showControls            : false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
@@ -299,8 +299,8 @@ module.exports = {
             newChart = nv.models.lineChart()
             .options({
                 margin                  : { top: 15, right: 40, bottom: 60, left: 60 }
-              , x                       : graphTypeObject.x || function(d) { if(d[0] === "nan") { return null; } else { return d[0]; } }
-              , y                       : graphTypeObject.y || function(d) { if(d[1] === "nan") { return null; } else { return d[1]; } }
+              , x                       : graphTypeObject.x || function(d) { return d[0]; }
+              , y                       : graphTypeObject.y || function(d) { return d[1]; }
               , showXAxis               : true
               , showYAxis               : true
               , transitionDuration      : 250
@@ -333,7 +333,7 @@ module.exports = {
             .options({
                 margin             : { top: 0, right: 0, bottom: 0, left: 0 }
               , x                  : graphTypeObject.x || function(d) { return d.label; }
-              , y                  : graphTypeObject.y || function(d) { if(d.value === undefined || (d.value).toString().toLowerCase() === "nan") { return null; } else { return d.value; } }
+              , y                  : graphTypeObject.y || function(d) { return d.value; }
               , color              : colors
               , showLabels         : true
               , labelThreshold     : 1
