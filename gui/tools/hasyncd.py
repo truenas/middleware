@@ -296,6 +296,7 @@ class Funcs:
             delete_pending_pairing,
             get_pending_pairing,
         )
+        from freenasUI.middleware.notifier import notifier
         from freenasUI.network.models import Interfaces
 
         self._check_version(request)
@@ -327,6 +328,8 @@ class Funcs:
                             continue
                         setattr(instance, name, value)
                     instance.save()
+
+            notifier().start('network')
 
             delete_pending_pairing()
         else:
