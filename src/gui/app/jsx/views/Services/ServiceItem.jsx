@@ -1,4 +1,4 @@
-// Service View Template
+// Service Item Template
 // =====================
 
 
@@ -10,14 +10,13 @@ var TWBS       = require("react-bootstrap");
 var viewerUtil = require("../../components/Viewer/viewerUtil");
 var editorUtil = require("../../components/Viewer/Editor/editorUtil");
 
-var ServiceView = React.createClass({
+var ServiceItem = React.createClass({
 
     propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
   , render: function() {
-    console.log( this.props.item );
 
     var pid = null;
 
@@ -51,4 +50,4 @@ var ServiceView = React.createClass({
 
 });
 
-module.exports = ServiceView;
+module.exports = ServiceItem;

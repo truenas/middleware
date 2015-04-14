@@ -7,8 +7,6 @@ var Router       = require("react-router");
 var Link         = Router.Link;
 var RouteHandler = Router.RouteHandler;
 
-var Editor = require("./Editor");
-
 var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
@@ -33,8 +31,8 @@ var DetailNavSection = React.createClass({
     }
 
   , isUnderThreshold: function() {
-    return this.props.entries.length <= this.props.disclosureThreshold;
-  }
+      return this.props.entries.length <= this.props.disclosureThreshold;
+    }
 
   , createItem: function ( rawItem, index ) {
       var searchString = this.props.searchString;
@@ -112,8 +110,6 @@ var DetailViewer = React.createClass({
 
   , propTypes: {
         viewData     : React.PropTypes.object.isRequired
-      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , searchString : React.PropTypes.string
       , filteredData : React.PropTypes.object.isRequired
     }
@@ -188,9 +184,7 @@ var DetailViewer = React.createClass({
         editorContent = (
           <RouteHandler
             viewData  = { this.props.viewData }
-            inputData = { this.props.inputData }
-            ItemView  = { this.props.ItemView }
-            EditView  = { this.props.EditView } />
+            inputData = { this.props.inputData } />
         );
       } else {
         editorContent = (

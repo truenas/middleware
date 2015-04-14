@@ -32,14 +32,15 @@ var Root = require("./views/FreeNASWebApp");
 
   var Storage      = require("./views/Storage");
   var Sharing      = require("./views/Sharing");
+
   var Services     = require("./views/Services");
+    var ServiceItem = require("./views/Services/ServiceItem");
+
   var SystemTools  = require("./views/SystemTools");
   var ControlPanel = require("./views/ControlPanel");
   var Power        = require("./views/Power");
 
 var PageNotFound = require("./views/PageNotFound");
-
-var Editor = require("./components/Viewer/Editor");
 
 module.exports = (
   <Route path="/" handler={ Root }>
@@ -124,7 +125,7 @@ module.exports = (
         handler = { Services }>
       <Route name    = "services-editor"
              path    = ":serviceID"
-             handler = { Editor } />
+             handler = { ServiceItem } />
     </Route>
 
 

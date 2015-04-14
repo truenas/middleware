@@ -22,8 +22,6 @@ var IconViewer = React.createClass({
         viewData     : React.PropTypes.object.isRequired
       , inputData    : React.PropTypes.array.isRequired
       , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
       , searchString : React.PropTypes.string
       , filteredData : React.PropTypes.object.isRequired
     }
@@ -80,9 +78,7 @@ var IconViewer = React.createClass({
             <RouteHandler
               viewData  = { this.props.viewData }
               inputData = { this.props.inputData }
-              activeKey = { this.props.selectedKey }
-              ItemView  = { this.props.ItemView }
-              EditView  = { this.props.EditView } />
+              activeKey = { this.props.selectedKey } />
           </div>
         );
       }

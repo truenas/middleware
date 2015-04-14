@@ -260,9 +260,6 @@ var Viewer = React.createClass({
 
       return <ViewerContent viewData     = { this.props.viewData }
                             inputData    = { this.props.inputData }
-                            Editor       = { this.props.Editor }
-                            ItemView     = { this.props.ItemView }
-                            EditView     = { this.props.EditView }
                             addEntity    = { this.props.addEntity}
                             tableCols    = { this.state.tableCols }
                             searchString = { this.state.searchString }
