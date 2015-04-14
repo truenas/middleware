@@ -1,6 +1,7 @@
 // INPUT HELPER MIXIN
 // ==================
-// Provides utility functions for generating common parts of input fields.
+// Provides utility functions for generating common parts of input fields and
+// maintaining proper local and remote state.
 
 "use strict";
 
@@ -53,6 +54,22 @@ module.exports = {
         }
       }, this  );
       return outgoingItem;
+    }
+
+    // Remote state is set at load time and reset upon successful changes. This
+    // is used to highlight and submit only genuinely changed values.
+  , setRemoteState: function ( incomingProps ) {
+      var dataKeys = incomingProps.viewData["format"]["dataKeys"];
+      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, dataKeys);
+
+      if (_.isEmpty(nextRemoteState)) {
+        console.warn("Remote State could not be created! Check the incoming props:");
+        console.warn(incomingProps);
+      }
+
+      // TODO: What exactly should be returned if setting the remote state is
+      // going to fail?
+      return nextRemoteState;
     }
 
     // Deals with input from different kinds of input fields.

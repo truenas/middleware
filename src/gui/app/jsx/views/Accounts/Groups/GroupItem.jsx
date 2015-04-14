@@ -129,20 +129,6 @@ var GroupEdit = React.createClass({
       };
     }
 
-    // Remote state is set at load time and reset upon successful changes
-  , setRemoteState: function ( incomingProps ) {
-      var nextRemoteState = this.removeReadOnlyFields(incomingProps.item, incomingProps.viewData["format"]["dataKeys"]);
-
-      if (_.isEmpty(nextRemoteState)) {
-        console.warn("Remote State could not be created! Check the incoming props:");
-        console.warn(incomingProps);
-      }
-
-      // TODO: What exactly should be returned if setting the remote state is
-      // going to fail?
-      return nextRemoteState;
-    }
-
   , componentWillRecieveProps: function( nextProps ) {
       var newRemoteModified = {};
       var newLocallyModified = {};
