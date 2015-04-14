@@ -131,9 +131,10 @@ def objdir(path):
     return os.path.join(env('MAKEOBJDIRPREFIX'), path)
 
 
-def template(filename, variables):
+def template(filename, variables=None):
     f = open(e(filename), 'r')
     t = string.Template(f.read())
+    variables = variables or {}
     variables.update(os.environ)
     result = t.safe_substitute(**variables)
     f.close()
