@@ -33,6 +33,15 @@ port(
 )
 
 port(
+    name="freenas/freenas-debug",
+    options=[
+        e("PRODUCT_VERSION=${VERSION}"),
+        e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
+        e("REVISION=${GIT_REVISION}")
+    ]
+)
+
+port(
     name="freenas/freenas-datastore",
     options=[
         e("PRODUCT_VERSION=${VERSION}"),
