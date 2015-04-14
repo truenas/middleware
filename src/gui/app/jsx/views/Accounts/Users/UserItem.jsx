@@ -104,22 +104,22 @@ var UserView = React.createClass({
                                  entry  = { this.props.item["shell"] } />
             <viewerUtil.DataCell title  = { "Locked Account" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["locked"] } />
+                                 entry  = { this.props.item["locked"] ? this.props.item["locked"] : false } />
             <viewerUtil.DataCell title  = { "Sudo Access" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["sudo"] } />
+                                 entry  = { this.props.item["sudo"] ? this.props.item["sudo"]: false } />
             <viewerUtil.DataCell title  = { "Password Disabled" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["password_disabled"] } />
+                                 entry  = { this.props.item["password_disabled"] ? this.props.item["password_disabled"]: false } />
             <viewerUtil.DataCell title  = { "Logged In" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["logged-in"] } />
+                                 entry  = { this.props.item["logged-in"] ? this.props.item["logged-in"]: false } />
             <viewerUtil.DataCell title  = { "Home Directory" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["home"] } />
             <viewerUtil.DataCell title  = { "email" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["email"] } />
+                                 entry  = { this.props.item["email"] ? this.props.item["email"]: "" } />
           </TWBS.Row>
 
           {/* "Edit User" Button - Bottom */}
