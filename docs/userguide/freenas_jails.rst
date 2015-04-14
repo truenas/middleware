@@ -382,7 +382,9 @@ Browse to the "Source" and "Destination", where:
   **must**  reside outside of the volume or dataset being used by the jail. This is why it is recommended to create a separate dataset to store jails, so that
   the dataset holding the jails will always be separate from any datasets used for storage on the FreeNAS® system.
 
-* **Destination:** select the directory within the jail which will be linked to the "Source" storage area.
+* **Destination:** select an
+  **existing, empty** directory within the jail to link to the "Source" storage area. If that directory does not exist yet, type in the desired directory name and check the
+  "Create directory" box.
 
 When you are adding storage, it is typically because the user and group account associated with an application installed inside of a jail needs to access data
 stored on the FreeNAS® system. Before selecting the "Source", it is important to first ensure that the permissions of the selected directory or dataset grant
