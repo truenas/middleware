@@ -98,4 +98,40 @@ module.exports = {
 
       return output;
     }
+
+    // Requires that locallyModifiedValues be used to store changes made by the user
+    // and mixedValues be used to store the data for display. remoteState must be the
+    // last item receieved from the middleware, as it will be used for comparison.
+    // See UserItem for typical usage.
+    // This is specifically for edit views, not add entity views.
+  , editHandleValueChange: function( key, event ) {
+      var newLocallyModified = this.state.locallyModifiedValues;
+
+      var dataKey = _.find( this.state.dataKeys, function ( dataKey ) {
+        return ( dataKey.key === key );
+      }, this );
+
+      var inputValue = this.processFormInput( event, dataKey );
+
+      // We don't want to submit non-changed data to the middleware, and it's
+      // easy for data to appear "changed", even if it's the same. Here, we
+      // check to make sure that the input value we've just receieved isn't the
+      // same as what the last payload from the middleware shows as the value
+      // for the same key. If it is, we `delete` the key from our temp object
+      // and update state.
+      if ( _.isEqual( this.state.remoteState[ key ], inputValue ) ) {
+        delete newLocallyModified[ key ];
+      } else {
+        newLocallyModified[ key ] = inputValue;
+      }
+
+      // mixedValues functions as a clone of the original item passed down in
+      // props, and is modified with the values that have been changed by the
+      // user. This allows the display components to have access to the
+      // "canonically" correct item, merged with the un-changed values.
+      this.setState({
+          locallyModifiedValues : newLocallyModified
+        , mixedValues           : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
+      });
+    }
 };

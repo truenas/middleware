@@ -219,38 +219,6 @@ var UserEdit = React.createClass({
       });
     }
 
-    // TODO: Turn this into a mixin so it can be used by any edit view.
-  , handleValueChange: function( key, event ) {
-      var newLocallyModified = this.state.locallyModifiedValues;
-
-      var dataKey = _.find(this.state.dataKeys, function (dataKey) {
-        return (dataKey.key === key);
-      }, this);
-
-      var inputValue = this.processFormInput( event, dataKey );
-
-      // We don't want to submit non-changed data to the middleware, and it's
-      // easy for data to appear "changed", even if it's the same. Here, we
-      // check to make sure that the input value we've just receieved isn't the
-      // same as what the last payload from the middleware shows as the value
-      // for the same key. If it is, we `delete` the key from our temp object
-      // and update state.
-      if ( _.isEqual( this.state.remoteState[ key ], inputValue ) ) {
-        delete newLocallyModified[ key ];
-      } else {
-        newLocallyModified[ key ] = inputValue;
-      }
-
-      // mixedValues functions as a clone of the original item passed down in
-      // props, and is modified with the values that have been changed by the
-      // user. This allows the display components to have access to the
-      // "canonically" correct item, merged with the un-changed values.
-      this.setState({
-          locallyModifiedValues : newLocallyModified
-        , mixedValues           : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
-      });
-    }
-
     // TODO: Validate that input values are legitimate for their field. For example,
     // id should be a number.
   , submitUserUpdate: function() {
@@ -334,7 +302,7 @@ var UserEdit = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = { "User ID" }
                             value            = { this.state.mixedValues["id"] ? this.state.mixedValues["id"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "id" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "id" ) }
                             key              = { "id" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -343,7 +311,7 @@ var UserEdit = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = { "User Name" }
                             value            = { this.state.mixedValues["username"] ? this.state.mixedValues["username"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "username" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "username" ) }
                             key              = { "username" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["username"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -352,7 +320,7 @@ var UserEdit = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = { "Full Name" }
                             value            = { this.state.mixedValues["full_name"] ? this.state.mixedValues["full_name"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "full_name" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "full_name" ) }
                             key              = { "full_name" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["full_name"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -361,7 +329,7 @@ var UserEdit = React.createClass({
                   <TWBS.Input type             = "text"
                             label            = { "email" }
                             value            = { this.state.mixedValues["email"] ? this.state.mixedValues["email"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "email" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "email" ) }
                             key              = { "email" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["email"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -370,7 +338,7 @@ var UserEdit = React.createClass({
                 <TWBS.Input type             = "select"
                             label            = { "Shell" }
                             value            = { this.state.mixedValues["shell"] ? this.state.mixedValues["shell"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "shell" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "shell" ) }
                             key              = { "shell" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["shell"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -381,7 +349,7 @@ var UserEdit = React.createClass({
                 <TWBS.Input type             = "select"
                             label            = { "Primary Group" }
                             value            = { this.state.mixedValues["group"] ? this.state.mixedValues["group"] : null }
-                            onChange         = { this.handleValueChange.bind( null, "group" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "group" ) }
                             key              = { "group" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["group"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -392,7 +360,7 @@ var UserEdit = React.createClass({
                 <TWBS.Input type             = "textarea"
                             label            = { "Public Key" }
                             value            = { this.state.mixedValues["sshpubkey"] ? this.state.mixedValues["sshpubkey"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "sshpubkey" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "sshpubkey" ) }
                             key              = { "sshpubkey" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sshpubkey"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -406,7 +374,7 @@ var UserEdit = React.createClass({
                             checked          = { this.state.mixedValues["locked"] }
                             label            = { "Locked" }
                             value            = { this.state.mixedValues["locked"] ? this.state.mixedValues["locked"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "locked" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "locked" ) }
                             key              = { "locked" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["locked"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -416,7 +384,7 @@ var UserEdit = React.createClass({
                             checked          = { this.state.mixedValues["sudo"] }
                             label            = { "sudo" }
                             value            = { this.state.mixedValues["sudo"] ? this.state.mixedValues["sudo"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "sudo" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "sudo" ) }
                             key              = { "sudo" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sudo"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -426,7 +394,7 @@ var UserEdit = React.createClass({
                             label            = { "password_disabled" }
                             checked          = { this.state.mixedValues["password_disabled"] }
                             value            = { this.state.mixedValues["password_disabled"] ? this.state.mixedValues["password_disabled"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "password_disabled" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "password_disabled" ) }
                             key              = { "password_disabled" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["password_disabled"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -436,7 +404,7 @@ var UserEdit = React.createClass({
                             checked          = { this.state.mixedValues["logged-in"] }
                             label            = { "logged-in" }
                             value            = { this.state.mixedValues["logged-in"] ? this.state.mixedValues["logged-in"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "logged-in" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "logged-in" ) }
                             key              = { "logged-in" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["logged-in"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"

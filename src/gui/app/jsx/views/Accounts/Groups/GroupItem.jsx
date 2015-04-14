@@ -185,37 +185,6 @@ var GroupEdit = React.createClass({
       });
     }
 
-  , handleValueChange: function( key, event ) {
-      var newLocallyModified = this.state.locallyModifiedValues;
-
-      var dataKey = _.find(this.state.dataKeys, function (dataKey) {
-        return (dataKey.key === key);
-      }, this);
-
-      var inputValue = this.processFormInput( event, dataKey );
-
-      // We don't want to submit non-changed data to the middleware, and it's
-      // easy for data to appear "changed", even if it's the same. Here, we
-      // check to make sure that the input value we've just receieved isn't the
-      // same as what the last payload from the middleware shows as the value
-      // for the same key. If it is, we `delete` the key from our temp object
-      // and update state.
-      if ( _.isEqual( this.state.remoteState[ key ], inputValue ) ) {
-        delete newLocallyModified[ key ];
-      } else {
-        newLocallyModified[ key ] = inputValue;
-      }
-
-      // mixedValues functions as a clone of the original item passed down in
-      // props, and is modified with the values that have been changed by the
-      // user. This allows the display components to have access to the
-      // "canonically" correct item, merged with the un-changed values.
-      this.setState({
-          locallyModifiedValues : newLocallyModified
-        , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
-      });
-    }
-
   , submitGroupUpdate: function() {
       var valuesToSend = {};
 
@@ -299,7 +268,7 @@ var GroupEdit = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = { "Group ID" }
                             value            = { this.state.mixedValues["id"] ? this.state.mixedValues["id"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "id" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "id" ) }
                             key              = { "id" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
@@ -309,7 +278,7 @@ var GroupEdit = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = { "Group Name" }
                             value            = { this.state.mixedValues["name"] ? this.state.mixedValues["name"] : "" }
-                            onChange         = { this.handleValueChange.bind( null, "name" ) }
+                            onChange         = { this.editHandleValueChange.bind( null, "name" ) }
                             key              = { "name" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
