@@ -20,11 +20,11 @@ var NetworkUsage = React.createClass({
             , chartTypes     : [
                                   {   type:"stacked"
                                     , primary:false
-                                    , y:function(d) { if(d[1] === "nan") { return null; } else { return ( round( d[1]/1024, 0.01 ) ); } }
+                                    , y:function(d) { return ( round( d[1]/1024, 0.01 ) ); }
                                   }
                                  ,{   type:"line"
                                     , primary:true
-                                    , y:function(d) { if(d[1] === "nan") { return null; } else { return ( round( d[1]/1024, 0.01 ) ); } }
+                                    , y:function(d) { return ( round( d[1]/1024, 0.01 ) ); }
                                     , yUnit : ""
                                   }
                                 ]

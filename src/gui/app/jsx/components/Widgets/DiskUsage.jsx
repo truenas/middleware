@@ -19,7 +19,7 @@ var DiskUsage = React.createClass({
       , statdResources:    []
       , chartTypes:        [  {   type:"line"
                                 , primary: this.primaryChart("line")
-                                , y:function(d) { if(d[1] === "nan") { return null; } else { return ( round( d[1]/1024, 0.01 ) ); } }
+                                , y:function(d) { return ( round( d[1]/1024, 0.01 ) ); }
                               }
                            ]
       , widgetIdentifier : "DiskUsage"

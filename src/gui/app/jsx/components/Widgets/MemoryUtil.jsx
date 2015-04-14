@@ -86,27 +86,14 @@ var MemoryUtil = React.createClass({
                                 {
                                     type    : "stacked"
                                   , primary : this.primaryChart("stacked")
-                                  , y: function(d) {
-                                      if ( d === undefined ) {
-                                        return 0;
-                                      } else if ( d[1] === "nan" ) {
-                                        return null;
-                                      } else {
-                                        return round( ( d[1]/1024 )/1024, 0.01 ); }
-                                      }
+                                  , y: function(d) { return round( ( d[1]/1024 )/1024, 0.01 ); }
                                 }
                               , {
                                     type    : "line"
                                   , primary : this.primaryChart("line")
                                   , forceY  : [0, 100]
                                   , yUnit   : "%"
-                                  , y: function(d) {
-                                      if( d[1] === "nan" ) {
-                                        return null;
-                                      } else {
-                                        return round(( ( d[1] / newState.hardware["memory-size"] )*100 ), 0.01 );
-                                      }
-                                    }.bind( this )
+                                  , y: function(d) { return round(( ( d[1] / newState.hardware["memory-size"] )*100 ), 0.01 ); }.bind( this )
                                 }
                               , {
                                     type   : "pie"
