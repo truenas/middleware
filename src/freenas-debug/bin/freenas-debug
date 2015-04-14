@@ -1,0 +1,317 @@
+#!/bin/sh
+#+
+# Copyright 2011 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 	 
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# $FreeBSD$
+#####################################################################
+
+# This isn't needed when executed standalone on the CLI; this is needed when
+# executed from webserver/restricted context.
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+: ${FREENAS_DEBUG_MODULEDIR="$(realpath $(dirname "$0"))/../libexec/freenas-debug"}
+
+. "$FREENAS_DEBUG_MODULEDIR/include.sh"
+
+readonly email_opt="e"
+
+usage()
+{
+	local opts="${1}"
+
+	if [ -z "${opts}" ]
+	then
+		echo "Usage: $0 <options>"
+		return 0
+	fi
+
+	cat<<-__EOF__
+	usage: $0 <options>
+	Where options is:
+	    -$email_opt		A list of comma delimited list of email addresses to email the debug log to.
+__EOF__
+
+	local i=1
+	local len=${#opts}
+	while [ "${i}" -le "${len}" ]
+	do
+		local opt=$(echo "${opts}" | cut -b ${i})
+		local var=\$$(echo "module_help_${opt}")
+		local help=$(eval "echo ${var}")
+
+		echo -e "    -${opt}\t\t$(eval ${help})"
+		i=$((${i} + 1))
+	done
+
+	echo
+	echo "Output will be saved to ${FREENAS_DEBUG_DIRECTORY}"
+	echo
+
+	return 0
+}
+
+send_email()
+{
+	local email="${1}"
+	local body="${2}"
+	local dn
+	local bn
+
+	dn="$(dirname "${FREENAS_DEBUG_DIRECTORY}")"
+	bn="$(basename "${FREENAS_DEBUG_DIRECTORY}")"
+
+	#
+	# Tar up all the things
+	#
+	cd "${dn}"
+	tar -czvf "${FREENAS_DEBUG_FILE}" "${bn}"
+
+	if [ -n "${email}" -a -n "${body}" -a -f "${FREENAS_DEBUG_FILE}" ]
+	then
+		mfile=/var/tmp/.mail.txt
+		afile=$(basename ${FREENAS_DEBUG_FILE})
+		boundary="@@@_beer_@@@"
+
+		#
+		# This is a tarball we are working with, so let's base64
+		# encode it, and attach it with the proper mime type
+		#
+		encoded="$(base64 -e "${afile}")"
+			
+		cat<<-EOF>"${mfile}"
+		Content-Transfer-Encoding: 7bit
+		Content-Type: multipart/mixed; boundary="${boundary}"
+		MIME-Version: 1.0
+		To: ${email}
+		Date: $(date)
+		Subject: FreeNAS Debug
+
+		--${boundary}
+		Content-Type: text/plain
+		Content-Disposition: inline
+
+		${body}
+
+		--${boundary}
+		Content-Type: application/x-gtar-compressed
+		Content-Disposition: attachment; filename="${afile}";
+		Content-Transfer-Encoding: base64
+
+		${encoded}
+
+		--${boundary}--
+EOF
+		sendmail -t < "${mfile}"
+		#rm "${mfile}"
+	fi
+}
+
+load_modules()
+{
+	for f in $(ls "${FREENAS_DEBUG_MODULEDIR}")
+	do
+		if ! is_loaded "${f}"
+		then
+			load_module "${f}"
+		fi
+	done
+}
+
+get_module_options()
+{
+	local l="abcdefghijklmnopqrstuvwxyz"
+	local u="ABCDEFGHIJKLMNOPQRZTUVWXYZ"
+	local n="0123456789"
+	local all="${l}${u}${n}"
+	local opts=""
+
+	unset VAL
+	for m in ${FREENAS_DEBUG_MODULES}
+	do
+		local opt=$(eval "${m}_opt" 2>/dev/null)
+
+		if echo "${opts}"|grep -q "${opt}"
+		then
+			local i=1
+			local len=${#all}
+
+			opt=""
+			while [ "${i}" -le "${len}" ]
+			do
+				nopt=$(echo "${all}"|cut -b "${i}")
+				if ! echo "${opts}"|grep -q "${nopt}"
+				then
+					opt="${nopt}"
+					break
+				fi
+
+				i=$((${i} + 1))
+			done
+		fi
+
+		#
+		# Export each module into our environment with its option
+		# so that we can map it to the options specified on the 
+		# command line
+		#
+		export "$(echo module_func_${opt})=${m}_func"
+		export "$(echo module_help_${opt})=${m}_help"
+		export "$(echo module_directory_${opt})=${m}_directory"
+		opts="${opts}${opt}"
+		opts_spaced="$opts_spaced ${opt}"
+	done
+
+	VAL="${opts}"
+	export VAL
+	VAL_SPACED="${opts_spaced}"
+	export VAL_SPACED
+}
+
+#
+# Freenas-debug uses "modules" that are located in /usr/local/libexec/freenas-debug.
+# Every module must have 4 functions implemented in them.
+#
+# module_opt()
+#
+#   This function supplies the command line option to run this module. If the option
+#   already exists, then one will be supplied to it.
+#
+# module_help()
+#
+#   This function is what gets displayed when the command line options are shown when
+#   usage() is called. 
+#
+# module_directory()
+#
+#   This function supplies the name of the directory to be created under /var/tmp/fndebug.
+#
+# module_func()
+#
+#   This function is what gets run when the command line option is specified. 
+#
+main()
+{
+	local has_debug_command=false
+	local email=""
+	local cmd="$0 $*"
+	local func
+	local var
+	local all_debug=false
+
+	load_modules
+	get_module_options
+	opts="${VAL}"
+	opts_spaced="${VAL_SPACED}"
+
+	aopts="${opts}${email_opt}:"
+	while getopts "A${aopts}" opt
+	do
+		case "${opt}" in
+		$email_opt)
+			email="${OPTARG}"
+			;;
+        A)
+            all_debug=true
+            ;;
+		[${opts}])
+			has_debug_command=true
+			;;
+		\?)
+			usage "${opts}"
+			return 2
+			;;
+		esac
+	done
+
+	if ! $has_debug_command && ! $all_debug; then
+		usage "${opts}"
+		return 2
+	fi
+
+	OPTIND=1
+	if [ -d "${FREENAS_DEBUG_DIRECTORY}" ]
+	then
+		rm -rf "${FREENAS_DEBUG_DIRECTORY}"
+	fi
+	mkdir -p "${FREENAS_DEBUG_DIRECTORY}"
+
+	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_DIRECTORY}/osinfo.txt"
+
+	if $all_debug; then
+		for opt in ${opts_spaced} ; do
+
+			var=\$$(echo "module_func_${opt}")
+			func=$(eval "echo ${var}")
+
+			var=\$$(echo "module_directory_${opt}")
+			dirfunc=$(eval "echo ${var}")
+
+			#
+			# Create individual directories for each module and write
+			# its output to a file called "dump.txt" in the directory.
+			#
+			directory=$(eval "${dirfunc}")
+			if [ -n "${directory}" ]
+			then
+				fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
+				mkdir -p "${fp}"
+
+				eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+			fi
+		done
+	else
+		while getopts "${aopts}" opt
+		do
+			if [ "${opt}" != "${email_opt}" ]; then
+				var=\$$(echo "module_func_${opt}")
+				func=$(eval "echo ${var}")
+
+				var=\$$(echo "module_directory_${opt}")
+				dirfunc=$(eval "echo ${var}")
+
+				#
+				# Create individual directories for each module and write
+				# its output to a file called "dump.txt" in the directory.
+				#
+				directory=$(eval "${dirfunc}")
+				if [ -n "${directory}" ]
+				then
+					fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
+					mkdir -p "${fp}"
+	
+					eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+				fi
+			fi
+		done
+	fi
+
+	if [ -n "$email" ]; then
+		send_email "${email}" \
+		    "The following output was generated with: '${cmd}'"
+	fi
+	return 0
+}
+
+main $*
