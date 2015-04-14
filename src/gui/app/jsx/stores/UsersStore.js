@@ -51,9 +51,10 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , findUserByKeyValue: function ( key, value ) {
-      return _.find( _users, function ( user ) {
-        return user[ key ] === value;
-      });
+      var predicate = {};
+          predicate[key] = value;
+
+      return _.find( _users, predicate );
     }
 
   , getUser: function( id ) {
