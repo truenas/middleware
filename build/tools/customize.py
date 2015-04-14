@@ -37,7 +37,7 @@ dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
 
 def main():
     for i in dsl['customize_task']:
-        sh('${BUILD_ROOT}/build/customize/${i}.py')
+        sh('${BUILD_ROOT}/build/customize/${i}.py ${WORLD_DESTDIR}')
 
 
 if __name__ == '__main__':

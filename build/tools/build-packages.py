@@ -28,6 +28,7 @@
 
 import os
 import sys
+import time
 from dsl import load_file
 from utils import sh, sh_str, e, setup_env, objdir, info, debug, error
 
@@ -36,23 +37,28 @@ setup_env()
 dsl = load_file('${BUILD_CONFIG}/packages.pyd', os.environ)
 tooldir = objdir('pkgtools')
 pkgdir = objdir('packages')
+pkgtoolslog = objdir('logs/build-pkgtools')
 pkgversion = ''
+sequence = ''
 
 
 def read_repo_manifest():
-    global version
+    global pkgversion
+    global sequence
+
     versions = []
     f = open(e("${BUILD_ROOT}/FreeBSD/repo-manifest"))
     for i in f:
         versions.append(i.split()[1])
 
-    version = '-'.join(versions)
+    pkgversion = '-'.join(versions)
+    sequence = sh_str('git show -s --format=%ct')
 
 
 def build_pkgtools():
     info('Building freenas-pkgtools')
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all")
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools install DESTDIR=${tooldir} PREFIX=/usr/local")
+    info('Log file: {0}', pkgtoolslog)
+    sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all install DESTDIR=${tooldir} PREFIX=/usr/local", log=pkgtoolslog)
 
 
 def build_packages():
@@ -67,19 +73,23 @@ def build_packages():
             "-T ${template}",
             "-N ${name}",
             "-V ${VERSION}",
-            '${pkgdir}/Packages/${name}-${VERSION}.tgz')
+            '${pkgdir}/Packages/${name}-${VERSION}-${pkgversion}.tgz')
 
 
 def create_manifest():
     info('Creating package manifests')
     pkgs = []
     for i in dsl['package'].values():
-        pkgs.append(e("${i}=${VERSION}${pkgversion}"))
+        name = i['name']
+        pkgs.append(e("${name}=${VERSION}-${pkgversion}"))
 
+    date = int(time.time())
+    train = e('${TRAIN}') or 'FreeNAS'
     sh(
         "env PYTHONPATH=${tooldir}/usr/local/lib",
         "${tooldir}/usr/local/bin/create_manifest",
         "-P ${pkgdir}/Packages",
+        "-S ${sequence}",
         "-o ${pkgdir}/${PRODUCT}-${sequence}",
         "-R ${PRODUCT}-${VERSION}",
         "-T ${train}",
@@ -87,7 +97,11 @@ def create_manifest():
         *pkgs
     )
 
+    sh('ln -sf ${PRODUCT}-${sequence} ${pkgdir}/${PRODUCT}-MANIFEST')
+
 if __name__ == '__main__':
+    if e('${SKIP_PACKAGES}'):
+        info('Skipping build of following packages: ${SKIP_PACKAGES}')
     read_repo_manifest()
     build_pkgtools()
     build_packages()

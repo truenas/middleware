@@ -35,6 +35,7 @@ from utils import sh, sh_str, env, e, objdir, pathjoin, setfile, setup_env, temp
 setup_env()
 makejobs = 1
 dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
+installer_dsl = load_file('${BUILD_CONFIG}/ports-installer.pyd', os.environ)
 reposconf = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
 jailconf = load_file('${BUILD_CONFIG}/jail.pyd', os.environ)
 conf = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
@@ -80,7 +81,7 @@ def create_ports_list():
     sh('rm -rf', portoptions)
 
     f = open(portslist, 'w')
-    for port in dsl['port'].values():
+    for port in installer_dsl['port'].values() + dsl['port'].values():
         port_und = port['name'].replace('/', '_')
         options_path = pathjoin(portoptions, port_und)
         f.write('{0}\n'.format(port['name']))
@@ -106,7 +107,7 @@ def prepare_jail():
     setfile(e('${basepath}/version'), e('${FREEBSD_RELEASE_VERSION}'))
     setfile(e('${basepath}/arch'), e('${BUILD_ARCH}'))
 
-    sh(e("jail -U root -c name=${jailname} path=${JAIL_DESTDIR} command=/sbin/ldconfig -m /lib /usr/lib /usr/lib/compat"))
+    sh("jail -U root -c name=${jailname} path=${JAIL_DESTDIR} command=/sbin/ldconfig -m /lib /usr/lib /usr/lib/compat")
 
 
 def merge_freenas_ports():
@@ -116,7 +117,9 @@ def merge_freenas_ports():
 
 def prepare_env():
     for cmd in jailconf.get('copy', []).values():
-        sh('cp -a', cmd['source'], os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:]))
+        dest = os.path.join(e('${JAIL_DESTDIR}'), cmd['dest'][1:])
+        sh('rm -rf ${dest}')
+        sh('cp -a', cmd['source'], dest)
 
     for cmd in jailconf.get('link', []).values():
         flags = '-o {0}'.format(cmd['flags']) if 'flags' in cmd else ''
