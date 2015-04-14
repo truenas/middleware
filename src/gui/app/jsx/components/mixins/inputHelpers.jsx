@@ -77,7 +77,7 @@ module.exports = {
   , processFormInput: function( event, dataKey ) {
         var inputValue;
 
-        switch (event.target.type) {
+        switch ( event.target.type ) {
 
           case "checkbox" :
             inputValue = event.target.checked;
@@ -87,7 +87,7 @@ module.exports = {
           case "text":
           case "textarea":
           default:
-            inputValue = this.parseInputType(event.target.value, dataKey);
+            inputValue = this.parseInputType( event.target.value, dataKey );
             break;
         }
 
@@ -95,17 +95,17 @@ module.exports = {
     }
 
     // Only differentiates numbers and strings for now.
-  , parseInputType: function(input, dataKey) {
+  , parseInputType: function( input, dataKey ) {
       var output;
 
-      switch (dataKey.type) {
+      switch ( dataKey.type ) {
         case "string":
           output = input;
           break;
 
         case "integer":
         case "number":
-          output = _.parseInt(input);
+          output = _.parseInt( input );
           break;
 
         default:
