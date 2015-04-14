@@ -372,7 +372,7 @@
   .justify-content(center);
   padding: 25px 0;
 
-  .viewer-item-info {
+  .editor-edit-wrapper {
     .flex(0 1 800px);
     .overlay-modal();
     background : white;
@@ -380,6 +380,22 @@
 
     & > .container-fluid {
       padding: 25px;
+    }
+  }
+
+  .editor-close {
+    margin      : 8px;
+    font-size   : 1.15em;
+    color       : #C7C7C7;
+    float       : right;
+    height      : 1.25em;
+    width       : 1.25em;
+    line-height : 1.25em;
+    text-align  : center;
+    &:hover {
+      color         : white;
+      background    : @brand-danger;
+      border-radius : 50%;
     }
   }
 }

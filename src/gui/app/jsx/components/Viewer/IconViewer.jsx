@@ -6,6 +6,8 @@ var Router       = require("react-router");
 var Link         = Router.Link;
 var RouteHandler = Router.RouteHandler;
 
+var Icon = require("../Icon");
+
 var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
@@ -75,10 +77,18 @@ var IconViewer = React.createClass({
         editorContent = (
           <div className = "overlay-light editor-edit-overlay"
                onClick   = { this.handleClickOut } >
-            <RouteHandler
-              viewData  = { this.props.viewData }
-              inputData = { this.props.inputData }
-              activeKey = { this.props.selectedKey } />
+            <div className="editor-edit-wrapper">
+              <span className="clearfix">
+                <Icon
+                  glyph    = "close"
+                  icoClass = "editor-close"
+                  onClick  = { this.handleClickOut } />
+              </span>
+              <RouteHandler
+                viewData  = { this.props.viewData }
+                inputData = { this.props.inputData }
+                activeKey = { this.props.selectedKey } />
+            </div>
           </div>
         );
       }
