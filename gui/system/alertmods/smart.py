@@ -1,5 +1,6 @@
 import cPickle as pickle
 import logging
+import os
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from lockfile import LockFile, LockTimeout
