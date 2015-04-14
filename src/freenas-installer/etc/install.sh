@@ -811,8 +811,6 @@ menu_install()
     
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
-    else
-	cp -R /data/* /tmp/data/data
     fi
 
     local OS=FreeNAS
