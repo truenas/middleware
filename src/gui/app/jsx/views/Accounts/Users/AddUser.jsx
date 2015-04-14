@@ -61,6 +61,7 @@ var AddUser = React.createClass({
     }
 
   , submitNewUser: function() {
+      var routing = this.props.viewData.routing;
       var newUserValues = {};
       var params        = {};
 
@@ -68,12 +69,12 @@ var AddUser = React.createClass({
       newUserValues = this.removeReadOnlyFields( this.state.editedFields, this.state.dataKeys );
 
       // Get ready to send the view to the new user.
-      params[this.props.viewData.routing[ "param" ] ] = newUserValues[ "username" ];
+      params[ routing[ "param" ] ] = newUserValues[ "username" ];
 
       // Submits the user and moves the view to the new user.
       // TODO: Only submit a user if all the required fields are there.
       // TODO: Make sure the new user was actually created before transitioning the route.
-      UsersMiddleware.createUser( newUserValues, this.context.router.transitionTo( "users-editor", params) );
+      UsersMiddleware.createUser( newUserValues, this.context.router.transitionTo( routing[ "route" ], params) );
   }
 
   , cancel: function () {
@@ -139,11 +140,11 @@ var AddUser = React.createClass({
                             onChange         = { this.handleValueChange.bind( null, "shell" ) }
                             groupClassName   = { _.has(this.state.editedFields, "shell") && !_.isEmpty(this.state.editedFields["shell"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8">
+                            wrapperClassName = "col-xs-8" >
                             { this.generateOptionsList( this.state.shells, "name" ) }
                 </TWBS.Input>
                 {/* primary group */}
-                {/* TODO: Recommend the default group based on the username. Requires creating a group at user-creation time.*/ }
+                {/* TODO: Recommend the default group based on the username. Requires creating a group at user-creation time.*/}
                 <TWBS.Input type             = "select"
                             label            = "Primary Group"
                             value            = { this.state.editedFields["group"]? this.state.editedFields["group"]: null }
@@ -162,7 +163,7 @@ var AddUser = React.createClass({
                             groupClassName   = { _.has(this.state.editedFields, "sshpubkey") && !_.isEmpty(this.state.editedFields["sshpubkey"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            rows             = "10"/>
+                            rows             = "10" />
               </TWBS.Col>
               <TWBS.Col xs = {4}>
                 {/* locked */}

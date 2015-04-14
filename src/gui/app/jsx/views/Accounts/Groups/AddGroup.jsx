@@ -50,6 +50,7 @@ var AddGroup = React.createClass({
     }
 
   , submitNewGroup: function() {
+      var routing = this.props.viewData.routing;
       var newGroupValues = {};
       var params         = {};
 
@@ -57,12 +58,12 @@ var AddGroup = React.createClass({
       newGroupValues = this.removeReadOnlyFields( this.state.editedFields, this.state.dataKeys );
 
       // Set up to forward the view to the created group.
-      params[this.props.viewData.routing[ "param" ] ] = newGroupValues[ "name" ];
+      params[ routing[ "param" ] ] = newGroupValues[ "name" ];
 
       // Submit the new group and redirect the view to it.
       // TODO: Does this need additional input validation?
       // TODO: Only redirect if the group was actually created.
-      GroupsMiddleware.createGroup( newGroupValues, this.context.router.transitionTo( "groups-editor", params) );
+      GroupsMiddleware.createGroup( newGroupValues, this.context.router.transitionTo( routing[ "route" ], params) );
 
     }
 
