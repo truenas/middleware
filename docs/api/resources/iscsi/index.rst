@@ -121,6 +121,7 @@ List resource
                 "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
                 "iscsi_target_extent_path": "/mnt/tank/iscsi"
+                "iscsi_target_extent_xen": false,
         }
       ]
 
@@ -168,6 +169,7 @@ Create resource
                 "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
                 "iscsi_target_extent_path": "/mnt/tank/iscsi"
+                "iscsi_target_extent_xen": false,
         }
 
    :json string iscsi_target_extent_name: identifier of the extent
@@ -175,6 +177,7 @@ Create resource
    :json string iscsi_target_extent_path: path to the extent
    :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
    :json boolean iscsi_target_extent_insecure_tpc: allow initiators to xcopy without authenticating to foreign targets
+   :json boolean iscsi_target_extent_xen: Xen initiator compat mode
    :json string iscsi_target_extent_comment: user description
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
@@ -216,6 +219,7 @@ Update resource
                 "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
                 "iscsi_target_extent_path": "/mnt/tank/iscsi"
+                "iscsi_target_extent_xen": false,
         }
 
    :json string iscsi_target_extent_name: identifier of the extent
@@ -223,6 +227,7 @@ Update resource
    :json string iscsi_target_extent_path: path to the extent
    :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
    :json boolean iscsi_target_extent_insecure_tpc: allow initiators to xcopy without authenticating to foreign targets
+   :json boolean iscsi_target_extent_xen: Xen initiator compat mode
    :json string iscsi_target_extent_comment: user description
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
