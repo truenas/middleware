@@ -119,6 +119,36 @@
   }
 }
 
+.debug-disclosure-hide {
+  & > h6 {
+    cursor: pointer;
+
+  & > i {
+      padding: 2px;
+      font-size: 1em;
+    }
+  }
+
+  & > ul {
+    display: none;
+  }
+}
+
+.debug-disclosure-show {
+  & > h6 {
+    cursor: pointer;
+
+   & > i {
+      padding: 2px;
+      font-size: 1em;
+    }
+  }
+
+  & > ul {
+    display: block;
+  }
+}
+
 .debug-task-item {
   .flex-display( flex );
 

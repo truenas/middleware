@@ -28,4 +28,10 @@ module.exports = {
       });
     }
 
+  , deleteAllSubscriptions: function () {
+      FreeNASDispatcher.handleMiddlewareAction({
+        type          : ActionTypes.UNSUBSCRIBE_ALL
+      });
+    }
+
 };
