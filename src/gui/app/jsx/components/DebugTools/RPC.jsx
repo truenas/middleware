@@ -14,11 +14,12 @@ var RPC = React.createClass({
 
     getInitialState: function() {
       return {
-          services    : MiddlewareStore.getAvailableRPCServices()
-        , methods     : MiddlewareStore.getAvailableRPCMethods()
-        , results     : []
-        , methodValue : ""
-        , argsValue   : "[]"
+          services          : MiddlewareStore.getAvailableRPCServices()
+        , methods           : MiddlewareStore.getAvailableRPCMethods()
+        , submissionPending : false
+        , results           : []
+        , methodValue       : ""
+        , argsValue         : "[]"
       };
     }
 
@@ -29,6 +30,25 @@ var RPC = React.createClass({
 
   , componentWillUnmount: function() {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
+    }
+
+  , componentDidUpdate: function( prevProps, prevState ) {
+      if ( ( this.state.submissionPending !== prevState.submissionPending ) && window ) {
+        var progressNode = this.refs.pendingProgressBar.getDOMNode();
+
+        if ( this.state.submissionPending ) {
+          this.progressDisplayTimeout = setTimeout( function() {
+            Velocity( progressNode
+                    , "fadeIn"
+                    , { duration: 500 } );
+          }, 500 );
+        } else {
+          clearTimeout( this.progressDisplayTimeout );
+          Velocity( progressNode
+                  , "fadeOut"
+                  , { duration: 250 } );
+        }
+      }
     }
 
   , handleMiddlewareChange: function( namespace ) {
@@ -54,11 +74,15 @@ var RPC = React.createClass({
     }
 
   , handleRPCSubmit: function() {
+      this.setState({ submissionPending: true });
+
       MiddlewareClient.request( this.state.methodValue, JSON.parse( this.state.argsValue ), function( results ) {
         this.setState({
-            results : results
+            submissionPending : false
+          , results           : results
         });
       }.bind(this) );
+
     }
 
   , handleMethodClick: function( rpcString ) {
@@ -127,25 +151,40 @@ var RPC = React.createClass({
             <h5 className="debug-heading">RPC Interface</h5>
             <TWBS.Row>
               <TWBS.Col xs={5}>
-                <TWBS.Input type        = "text"
-                            placeholder = "Method name"
-                            onChange    = { this.handleMethodInputChange }
-                            value       = { this.state.methodValue } />
+                <TWBS.Input
+                  type        = "text"
+                  disabled    = { this.state.submissionPending }
+                  placeholder = "Method name"
+                  onChange    = { this.handleMethodInputChange }
+                  value       = { this.state.methodValue } />
               </TWBS.Col>
               <TWBS.Col xs={5}>
-                <TWBS.Input type        = "textarea"
-                            style       = {{ resize: "vertical", height: "34px" }}
-                            placeholder = "Arguments (JSON Array)"
-                            onChange    = { this.handleArgsInputChange }
-                            value       = { this.state.argsValue } />
+              <TWBS.Input
+                  type        = "textarea"
+                  disabled    = { this.state.submissionPending }
+                  style       = {{ resize: "vertical", height: "34px" }}
+                  placeholder = "Arguments (JSON Array)"
+                  onChange    = { this.handleArgsInputChange }
+                  value       = { this.state.argsValue } />
               </TWBS.Col>
               <TWBS.Col xs={2}>
-                <TWBS.Button bsStyle = "primary"
-                             onClick = { this.handleRPCSubmit }
-                             block>
+              <TWBS.Button
+                    bsStyle  = "primary"
+                    disabled = { this.state.submissionPending }
+                    onClick  = { this.handleRPCSubmit }
+                    block >
                   {"Submit"}
                 </TWBS.Button>
               </TWBS.Col>
+
+              <TWBS.Col xs={12}>
+                <TWBS.ProgressBar
+                  active
+                  ref   = "pendingProgressBar"
+                  style = {{ display: "none", opacity: 0, height: "10px", margin: "0 0 6px 0" }}
+                  now   = { 100 } />
+              </TWBS.Col>
+
             </TWBS.Row>
 
             <h5 className="debug-heading">RPC Results</h5>
