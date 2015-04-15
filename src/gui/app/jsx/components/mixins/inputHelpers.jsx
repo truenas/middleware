@@ -153,11 +153,11 @@ module.exports = {
   , submissionRedirect: function( valuesToSend ) {
       var routing = this.props.viewData.routing;
       var params = {};
-      var newGroup;
+      var newEntityPath;
 
-      if ( valuesToSend[ "name" ] ) {
-        newGroup = valuesToSend[ "name" ];
-        params[ routing[ "param" ] ] = newGroup;
+      if ( valuesToSend[ this.props.viewData.format[ "primaryKey" ] ] ) {
+        newEntityPath = valuesToSend[ this.props.viewData.format[ "primaryKey" ] ];
+        params[ routing[ "param" ] ] = newEntityPath;
         this.context.router.transitionTo( routing[ "route" ], params );
       } else {
         this.props.handleViewChange( "view" );
