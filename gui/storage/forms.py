@@ -1712,12 +1712,17 @@ class MountPointAccessForm(Form):
                 self.fields['mp_acl'].initial = 'mac'
             else:
                 self.fields['mp_acl'].initial = 'unix'
-            user, group = notifier().mp_get_owner(path)
-            self.fields['mp_mode'].initial = "%.3o" % (
-                notifier().mp_get_permission(path),
-            )
-            self.fields['mp_user'].initial = user
-            self.fields['mp_group'].initial = group
+            # 8917: This needs to be handled by an upper layer but for now
+            # just prevent a backtrace.
+            try:
+                self.fields['mp_mode'].initial = "%.3o" % (
+                    notifier().mp_get_permission(path),
+                )
+                user, group = notifier().mp_get_owner(path)
+                self.fields['mp_user'].initial = user
+                self.fields['mp_group'].initial = group
+            except:
+                pass
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
     def clean(self):
