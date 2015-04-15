@@ -146,6 +146,16 @@ def glob(path):
     return g.glob(e(path))
 
 
+def walk(path):
+    path = e(path, **get_caller_vars())
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            yield os.path.relpath(os.path.join(root, name), path)
+
+        for name in dirs:
+            yield os.path.relpath(os.path.join(root, name), path)
+
+
 def elapsed():
     timestamp = env('BUILD_STARTED', str(int(time.time())))
     td = int(timestamp)

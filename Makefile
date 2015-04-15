@@ -218,6 +218,7 @@ build-gui:
 	@build/tools/build-gui.py
 
 ports: check-root build-gui
+	@build/tools/merge-pcbsd-ports.py
 	@build/tools/build-ports.py
 
 portsjail:

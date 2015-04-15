@@ -29,7 +29,7 @@
 import os
 import sys
 import glob
-from utils import env, setup_env, sh, info, debug, error, pathjoin
+from utils import env, e, setup_env, sh, sh_str, info, debug, error, walk
 
 
 setup_env()
@@ -51,13 +51,16 @@ def gplusplus_version():
 
 
 def apply_npm_quirks():
+    q = []
     if not os.path.islink('/usr/local/bin/g++'):
         os.symlink(gplusplus_version(), '/usr/local/bin/g++')
-        yield 'g++'
+        q.append('g++')
 
     if not os.path.islink('/usr/local/bin/c++'):
         os.symlink(gplusplus_version(), '/usr/local/bin/c++')
-        yield 'c++'
+        q.append('c++')
+
+    return q
 
 
 def remove_npm_quirks(quirks):
@@ -66,11 +69,11 @@ def remove_npm_quirks(quirks):
 
 
 def install():
-    node_modules = pathjoin('${GUI_STAGEDIR}', 'node_modules')
-    bower = pathjoin(node_modules, 'bower/bin/bower')
-    grunt = pathjoin(node_modules, 'grunt-cli/bin/grunt')
+    node_modules = e('${GUI_STAGEDIR}/node_modules')
+    bower = e('${node_modules}/bower/bin/bower')
+    grunt = e('${node_modules}/grunt-cli/bin/grunt')
 
-    os.chdir(env('GUI_STAGEDIR'))
+    os.chdir(e('${GUI_STAGEDIR}'))
     sh('npm install grunt grunt-cli bower')
     sh('npm install')
     sh(bower, '--allow-root install')
@@ -78,7 +81,13 @@ def install():
 
 
 def create_plist():
-    os.chdir(env('GUI_DESTDIR'))
+    with open(e('${GUI_DESTDIR}/gui-plist'), 'w') as f:
+        for i in walk('${GUI_DESTDIR}'):
+            if not os.path.isdir(e('${GUI_DESTDIR}/${i}')):
+                f.write(e('/usr/local/www/gui/${i}\n'))
+
+        with open(e('${GUI_STAGEDIR}/custom-plist')) as c:
+            f.write(c.read())
 
 
 if __name__ == '__main__':
