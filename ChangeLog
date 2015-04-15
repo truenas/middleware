@@ -1,13 +1,15 @@
 #4009	HA Peer sync 2.0
 #4013	Lock out passive node for non host specific configuration
 #4165	Add firmware and updates for the following 12 Gbps HBAs
+#6323	Group Ownership does not resolve from "account unknown"
+#6723	Fix Samba SID generation with group mappings
 #7076	We need to be able to rename to current boot environment
 #7277	Space thresholds for file-backed iSCSI LUNs
 #7388	Please remove warning from /usr/bin/su: (pam_group) neither luser nor ruser specified, assuming ruser
 #7497	LSI 9211-8i  Firmware: 19.00.00.00 Incompatible with Driver: 16.00.00.00-fbsd
 #8194	Documentation improvement for Freenas Install
 #8224	TrueNAS Docs use the Freenas Logo.
-#8236	Something Funky with Alert?
+#8236	Fix volume status alert for TrueNAS
 #8279	In TrueNAS-9.3-STABLE-201502271916 buld: Getting infinite  loop in fenceD after HA.
 #8293	Fix a bug in the snapshotter that was causing it to fail at taking snapshots of datasets  with spaces in the name.
 #8328	Unlock from GUI should set passphrase for escrow daemon
@@ -27,7 +29,9 @@
 #8921	Creating a Virtual Box Jail with Spaces in the name causes odd behavior
 #8923	Disable vulnerable and/or obsolete SSL ciphers from the WebGUI.
 #8927	Fixed ctld termination when connection to iSCSI port is closed before being accepted.
+#8828	Service WebDAV/apache24 unable to start due to syntax error
 #8951	Fix a bug that prevented periodic.conf from being generated correct.
+#8953	SMART errors now generate Alerts
 #8995	Improve NFS performance
 #9005	Add security/stunnel to FreeNAS build
 #9028	TrueNAS upgrades leave swap misconfigured
@@ -42,3 +46,7 @@
 #9093	Fix several vulnerabilities in FreeBSD 2015-04-07 patch batch
 #9111	In TrueNAS-9.3-STABLE-201504021408: Creating HA Pairing Failed.
 #9125	Proper document LDAP certificate handling
+#9149	API request for invalid values should return HTTP 409
+#9150	Document iscsi_target_extent_xen field in API docs
+#9180	Sync carp interfaces and carp with modified skew
+#9182	High Point driver update which provides better 4Kn drive support and exposes more disk details
