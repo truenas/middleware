@@ -223,6 +223,10 @@ var UserEdit = React.createClass({
 
     }
 
+  , deleteUser: function(){
+        UsersMiddleware.deleteUser(this.props.item["id"], this.returnToViewerRoot() );
+    }
+
     // TODO: Currently this section just arbitrarily handles every property the
     // middleware sends in the order the browser sends it. This should be updated
     // to have a deliberate design.
