@@ -158,6 +158,7 @@ class DataSource(object):
 
     def submit(self, timestamp, value):
         timestamp = round_timestamp(timestamp, self.config.primary_interval.total_seconds())
+        change = None
         self.primary_buffer.push(timestamp, value)
 
         for b in self.config.buckets:
@@ -167,9 +168,12 @@ class DataSource(object):
         if math.isnan(value):
             value = None
 
+        if value is not None and self.last_value is not None:
+            change = self.last_value
+
         self.context.client.emit_event('statd.{0}.pulse'.format(self.name), {
             'value': value,
-            'change': (self.last_value - value) if value is not None else None,
+            'change': change,
             'nolog': True
         })
 
