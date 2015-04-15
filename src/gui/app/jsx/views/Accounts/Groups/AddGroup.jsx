@@ -21,7 +21,7 @@ var AddGroup = React.createClass({
     }
 
   , propTypes: {
-      viewData: React.PropTypes.object.isRequred
+      viewData: React.PropTypes.object.isRequired
     }
 
   , getInitialState: function() {
