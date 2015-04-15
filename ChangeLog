@@ -25,6 +25,7 @@
 #8775	SSH setting not being applied (login as root with password) in HA
 #8801	carp-state-change-hook.py needs a shutdown verb
 #8901	Kingston 8GB DT 100 G2 USB stick doesn't work with FreeNAS 9.3
+#8917	Fix traceback when viewing permissions on newly created dataset
 #8919	Add the ability to specify the medium rotation rate of an iSCSI LUN.
 #8921	Creating a Virtual Box Jail with Spaces in the name causes odd behavior
 #8923	Disable vulnerable and/or obsolete SSL ciphers from the WebGUI.
@@ -50,3 +51,4 @@
 #9150	Document iscsi_target_extent_xen field in API docs
 #9180	Sync carp interfaces and carp with modified skew
 #9182	High Point driver update which provides better 4Kn drive support and exposes more disk details
+#9232	Fixed incorrect requirement for peer iSCSI secret to be set
