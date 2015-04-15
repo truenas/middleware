@@ -1,0 +1,7 @@
+#6323	Bug	Normal	Group Ownership does not resolve from "account unknown"
+#6723	Bug	Normal	Fix Samba SID generation with group mappings
+#8828	Bug	Normal	Service WebDAV/apache24 unable to start due to syntax error
+#8953	Bug	Normal	SMART errors now generate Alerts
+#9149	Bug	Normal	API request for invalid values should return HTTP 409
+#9150	Bug	Normal	Document iscsi_target_extent_xen field in API docs
+#9182	Bug	Normal	High Point driver update which provides better 4Kn drive support and exposes more disk details
