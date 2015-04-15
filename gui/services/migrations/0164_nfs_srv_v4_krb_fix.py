@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
-
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
-        # Adding field 'NFS.nfs_srv_v4_krb'
-        db.add_column(u'services_nfs', 'nfs_srv_v4_krb',
-                      self.gf('django.db.models.fields.BooleanField')(default=0),
-                      keep_default=False)
-
+        "Write your forwards methods here."
+        # Note: Don't use "from appname.models import ModelName". 
+        # Use orm.ModelName to refer to models in this application,
+        # and orm['appname.ModelName'] for models in other applications.
+        for o in orm['services.NFS'].objects.all():
+            if o.nfs_srv_v4_krb:
+                o.nfs_srv_v4_krb = True
+            else:
+                o.nfs_srv_v4_krb = False
+            o.save()
 
     def backwards(self, orm):
-        # Deleting field 'NFS.nfs_srv_v4_krb'
-        db.delete_column(u'services_nfs', 'nfs_srv_v4_krb')
-
+        "Write your backwards methods here."
 
     models = {
         u'directoryservice.kerberosrealm': {
@@ -48,7 +50,7 @@ class Migration(SchemaMigration):
             'cifs_srv_aio_rs': ('django.db.models.fields.IntegerField', [], {'default': '4096', 'max_length': '120'}),
             'cifs_srv_aio_ws': ('django.db.models.fields.IntegerField', [], {'default': '4096', 'max_length': '120'}),
             'cifs_srv_allow_execute_always': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'cifs_srv_bindip': ('django.db.models.fields.CharField', [], {'max_length': '250', 'null': 'True', 'blank': 'True'}),
+            'cifs_srv_bindip': ('freenasUI.freeadmin.models.fields.MultiSelectField', [], {'max_length': '250', 'null': 'True', 'blank': 'True'}),
             'cifs_srv_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_srv_dirmask': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'cifs_srv_domain_logons': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -181,6 +183,7 @@ class Migration(SchemaMigration):
             'iscsi_target_extent_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'}),
             'iscsi_target_extent_path': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_extent_pblocksize': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'iscsi_target_extent_rpm': ('django.db.models.fields.CharField', [], {'default': "u'SSD'", 'max_length': '20'}),
             'iscsi_target_extent_type': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'iscsi_target_extent_xen': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
@@ -289,14 +292,18 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'ssh_compression': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'ssh_host_dsa_key': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
+            'ssh_host_dsa_key_cert_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_dsa_key_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_ecdsa_key': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
+            'ssh_host_ecdsa_key_cert_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_ecdsa_key_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_ed25519_key': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
+            'ssh_host_ed25519_key_cert_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_ed25519_key_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_key': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_key_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_rsa_key': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
+            'ssh_host_rsa_key_cert_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_host_rsa_key_pub': ('django.db.models.fields.TextField', [], {'max_length': '1024', 'null': 'True', 'blank': 'True'}),
             'ssh_options': ('django.db.models.fields.TextField', [], {'max_length': '120', 'blank': 'True'}),
             'ssh_passwordauth': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -391,3 +398,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['services']
+    symmetrical = True
