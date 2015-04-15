@@ -138,7 +138,7 @@ do
     FHOST="`echo $line | cut -d ' ' -f 2-10`"
   fi
 
-done < "$HEADER "
+done < "$HEADER"
 
 cd ..
 
