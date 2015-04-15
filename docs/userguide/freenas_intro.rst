@@ -449,7 +449,9 @@ You can also skim through the
 `FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_ for performance tips from other FreeNAS® users or to post questions
 regarding the hardware best suited to meet your requirements. This
 `forum post <http://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`__
-provides some specific recommendations if you are planning on purchasing hardware.
+provides some specific recommendations if you are planning on purchasing hardware. Refer to
+`Building, Burn-In, and Testing your FreeNAS system <https://forums.freenas.org/index.php?threads/building-burn-in-and-testing-your-freenas-system.17750/>`_ for
+detailed instructions on how to test new hardware.
 
 .. _RAM:
 
@@ -461,16 +463,23 @@ better the performance, and the
 `FreeNAS® Forums <http://forums.freenas.org/>`_
 provide anecdotal evidence from users on how much performance is gained by adding more RAM.
 
+Depending upon your use case, your system may require more RAM. Here are some general rules of thumb:
+
+* If you plan to use ZFS deduplication, ensure you have at least 5 GB RAM per TB of storage to be deduplicated.
+
+* If you plan to use Active Directory with a lot of users, add an additional 2 GB of RAM for winbind's internal cache.
+
+* If you plan on :ref:`Using the phpVirtualBox Template`, increase the minimum RAM size by the amount of virtual memory you configure for the virtual machines. For example, if you
+  plan to install two virtual machines, each with 4GB of virtual memory, the system will need at least 16GB of RAM.
+
+* If you plan to use iSCSI, install at least 16GB of RAM, if performance is not critical, or at least 32GB of RAM if performance is a requirement.
+
+* If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
+
 If your system supports it and your budget allows for it, install ECC RAM. While more expensive, ECC RAM is highly recommended as it prevents in-flight
 corruption of data before the error-correcting properties of ZFS come into play, thus providing consistency for the checksumming and parity calculations
 performed by ZFS. If you consider your data to be important, use ECC RAM. This 
 `Case Study <http://research.cs.wisc.edu/adsl/Publications/zfs-corruption-fast10.pdf>`_ describes the risks associated with memory corruption.
-
-If you plan to use ZFS deduplication, a general rule of thumb is 5 GB RAM per TB of storage to be deduplicated.
-
-If you plan to use Active Directory with a lot of users, add an additional 2 GB of RAM for winbind's internal cache.
-
-If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
 
 If you don't have at least 8GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
 FreeNAS® to function with less than these requirements, just at reduced performance.  The bottom line is that these minimums are based on the feedback of
@@ -519,7 +528,7 @@ utility :command:`tw_cli` for managing 3ware RAID controllers.
 
 FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS.
 
-If you need reliable disk alerting and immediate reporting of a failed drive, use a fully manageable hardware RAID controller such as a LSI
+If you need reliable disk alerting and immediate reporting of a failed drive, use an HBA such as a LSI
 MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
 `forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`__.
 
@@ -573,7 +582,8 @@ you require higher network throughput, you can bond multiple GigE cards together
 need to support LACP which means you will need a more expensive managed switch.
 
 If network performance is a requirement and you have some money to spend, use 10 GigE interfaces and a managed switch. If you are purchasing a managed switch,
-consider one that supports LACP and jumbo frames as both can be used to increase network throughput.
+consider one that supports LACP and jumbo frames as both can be used to increase network throughput. Refer to the
+`10 Gig Networking Primer <http://forums.freenas.org/index.php?threads/10-gig-networking-primer.25749/>`_ for more information.
 
 .. note:: at this time the following are not supported: InfiniBand, FibreChannel over Ethernet, or wireless interfaces.
 
