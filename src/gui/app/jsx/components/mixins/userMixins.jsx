@@ -21,4 +21,14 @@ module.exports = {
         this.setState({ shells: systemShells });
       }.bind( this ) );
     }
+
+  , parseGroupsArray: function( groupsArray ) {
+      var integerArray = [];
+
+      integerArray = _.map( groupsArray, function( group ){
+        return _.parseInt( group );
+      }, this );
+
+      return integerArray;
+    }
 };
