@@ -345,6 +345,7 @@ var UserEdit = React.createClass({
                             onChange         = { this.editHandleValueChange.bind( null, "locked" ) }
                             key              = { "locked" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["locked"]) ? "editor-was-modified" : "" }
+                            ref              = "locked"
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
                 {/* sudo */}
@@ -355,6 +356,7 @@ var UserEdit = React.createClass({
                             onChange         = { this.editHandleValueChange.bind( null, "sudo" ) }
                             key              = { "sudo" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["sudo"]) ? "editor-was-modified" : "" }
+                            ref              = "sudo"
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
                 {/* password_disabled */}
@@ -365,6 +367,7 @@ var UserEdit = React.createClass({
                             onChange         = { this.editHandleValueChange.bind( null, "password_disabled" ) }
                             key              = { "password_disabled" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["password_disabled"]) ? "editor-was-modified" : "" }
+                            ref              = "password_disabled"
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
                 {/* logged-in */}
@@ -375,6 +378,7 @@ var UserEdit = React.createClass({
                             onChange         = { this.editHandleValueChange.bind( null, "logged-in" ) }
                             key              = { "logged-in" }
                             groupClassName   = { _.has(this.state.locallyModifiedValues["logged-in"]) ? "editor-was-modified" : "" }
+                            ref              = "logged-in"
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
               </TWBS.Col>

@@ -102,6 +102,7 @@ var AddUser = React.createClass({
               <TWBS.Col xs = {8}>
                 {/* User id */}
                 <TWBS.Input type             = "text"
+                            ref              = "id"
                             label            = "User ID"
                             onChange         = { this.handleValueChange.bind( null, "id" ) }
                             groupClassName   = { _.has(this.state.editedFields, "id") && !_.isEmpty(this.state.editedFields["id"]) ? "editor-was-modified" : ""  }
@@ -109,6 +110,7 @@ var AddUser = React.createClass({
                             wrapperClassName = "col-xs-8" />
                 {/* username */}
                 <TWBS.Input type             = "text"
+                            ref              = "username"
                             label            = "User Name"
                             onChange         = { this.handleValueChange.bind( null, "username" ) }
                             groupClassName   = { _.has(this.state.editedFields, "username") && !_.isEmpty(this.state.editedFields["username"]) ? "editor-was-modified" : ""  }
@@ -117,6 +119,7 @@ var AddUser = React.createClass({
                             required />
                 {/* Full Name */}
                 <TWBS.Input type             = "text"
+                            ref              = "full_name"
                             label            = "Full Name"
                             onChange         = { this.handleValueChange.bind( null, "full_name" ) }
                             groupClassName   = { _.has(this.state.editedFields, "full_name") && !_.isEmpty(this.state.editedFields["full_name"]) ? "editor-was-modified" : ""  }
@@ -124,6 +127,7 @@ var AddUser = React.createClass({
                             wrapperClassName = "col-xs-8" />
                 {/* email */}
                 <TWBS.Input type             = "text"
+                            ref              = "email"
                             label            = "email"
                             onChange         = { this.handleValueChange.bind( null, "email" ) }
                             groupClassName   = { _.has(this.state.editedFields, "email") && !_.isEmpty(this.state.editedFields["email"]) ? "editor-was-modified" : ""  }
@@ -132,6 +136,7 @@ var AddUser = React.createClass({
                 {/* shell */}
                 <TWBS.Input type             = "select"
                             label            = "Shell"
+                            ref              = "shell"
                             onChange         = { this.handleValueChange.bind( null, "shell" ) }
                             groupClassName   = { _.has(this.state.editedFields, "shell") && !_.isEmpty(this.state.editedFields["shell"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
@@ -142,6 +147,7 @@ var AddUser = React.createClass({
                 {/* TODO: Recommend the default group based on the username. Requires creating a group at user-creation time.*/}
                 <TWBS.Input type             = "select"
                             label            = "Primary Group"
+                            ref              = "group"
                             value            = { this.state.editedFields["group"]? this.state.editedFields["group"]: null }
                             onChange         = { this.handleValueChange.bind( null, "group" ) }
                             groupClassName   = { _.has(this.state.editedFields, "group") && !_.isEmpty(this.state.editedFields["group"]) ? "editor-was-modified" : ""  }
@@ -152,6 +158,7 @@ var AddUser = React.createClass({
                 </TWBS.Input>
                 {/* sshpubkey */}
                 <TWBS.Input type             = "textarea"
+                            ref              = "sshpubkey"
                             label            = "Public Key"
                             onChange         = { this.handleValueChange.bind( null, "sshpubkey" ) }
                             groupClassName   = { _.has(this.state.editedFields, "sshpubkey") && !_.isEmpty(this.state.editedFields["sshpubkey"]) ? "editor-was-modified" : ""  }
@@ -163,6 +170,7 @@ var AddUser = React.createClass({
                 {/* locked */}
                 <TWBS.Input type             = "checkbox"
                             label            = "Locked"
+                            ref              = "locked"
                             defaultChecked   = { false }
                             onChange         = { this.handleValueChange.bind( null, "locked" ) }
                             groupClassName   = { _.has(this.state.editedFields, "locked") && !_.isEmpty(this.state.editedFields["locked"]) ? "editor-was-modified" : ""  }
@@ -171,6 +179,7 @@ var AddUser = React.createClass({
                 {/* sudo */}
                 <TWBS.Input type             = "checkbox"
                             label            = "Sudo"
+                            ref              = "sudo"
                             defaultChecked   = { false }
                             onChange         = { this.handleValueChange.bind( null, "sudo" ) }
                             groupClassName   = { _.has(this.state.editedFields, "sudo") && !_.isEmpty(this.state.editedFields["sudo"]) ? "editor-was-modified" : ""  }
@@ -179,6 +188,7 @@ var AddUser = React.createClass({
                 {/* password_disabled */}
                 <TWBS.Input type             = "checkbox"
                             label            = "Password Disabled"
+                            ref              = "password_disabled"
                             defaultChecked   = { false }
                             onChange         = { this.handleValueChange.bind( null, "password_disabled" ) }
                             groupClassName   = { _.has(this.state.editedFields, "password_disabled") && !_.isEmpty(this.state.editedFields["password_disabled"]) ? "editor-was-modified" : ""  }
