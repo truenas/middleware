@@ -50,6 +50,12 @@ class GlobalsWrapper(dict):
             from utils import sh_str
             return sh_str
 
+        if item == 'int':
+            return int
+
+        if item == 'str':
+            return str
+
         if item == 'include':
             return self.include
 
