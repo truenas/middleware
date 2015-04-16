@@ -28,18 +28,19 @@
 
 import os
 from dsl import load_file
-from utils import sh, sh_str, info, debug, error, env
+from utils import sh, sh_str, info, debug, error, setup_env, e
 
 
+setup_env()
 dsl = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
 
 
 def check_sandbox():
-    if not os.path.exists('FreeBSD/.pulled'):
+    if not os.path.exists(e('${BUILD_ROOT}/FreeBSD/.pulled')):
         error('Sandbox is not fully checked out')
 
     for i in dsl['repository'].values():
-        if not os.path.isdir(os.path.join(i['path'], '.git')):
+        if not os.path.isdir(os.path.join(e('${BUILD_ROOT}'), i['path'], '.git')):
             error('Sandbox is not fully checked out, {0} is missing', i['name'])
 
     info('Sandbox is fully checked out')

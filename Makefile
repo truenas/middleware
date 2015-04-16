@@ -29,9 +29,8 @@
 .include "build/hooks/Makefile"
 .endif
 
-LABEL ?= FreeNAS
+PRODUCT ?= FreeNAS
 VERSION ?= 10.1-M1
-TRAIN ?= ${NANO_LABEL}-10-Nightlies
 BUILD_TIMESTAMP != date '+%Y%m%d'
 BUILD_STARTED != date '+%s'
 COMPANY ?= "iXsystems"
@@ -39,10 +38,11 @@ STAGEDIR = "${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 IX_INTERNAL_PATH = "/freenas/Dev/releng/${NANO_LABEL}/nightlies/"
 BUILD_DEBUG=yes
 
-BUILD_ROOT != pwd
+BUILD_ROOT ?= ${.CURDIR}
 BUILD_CONFIG := ${BUILD_ROOT}/build/config
-BUILD_TOOLS := ${BUILD_TOOLS}/build/tools
+BUILD_TOOLS := ${BUILD_ROOT}/build/tools
 PYTHONPATH := ${BUILD_ROOT}/build/lib
+MK := ${MAKE} SKIP_CHECKS=yes
 
 MAKEOBJDIRPREFIX := ${BUILD_ROOT}/objs/os-base/amd64
 
@@ -52,7 +52,7 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-GIT_REPO_SETTING=.git-repo-setting
+GIT_REPO_SETTING=${BUILD_ROOT}/.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
@@ -81,35 +81,37 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 all:	check-root build
 
 .BEGIN:
+.ifndef SKIP_CHECKS
 .if !make(remote) && !make(sync)
-	@build/tools/check-host.py
+	@${BUILD_TOOLS}/check-host.py
 .if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
-	@build/tools/check-sandbox.py
+	@${BUILD_TOOLS}/check-sandbox.py
+.endif
 .endif
 .endif
 
 check-root:
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 
-build: git-verify portsjail ports world packages
+build: git-verify portsjail ports world packages images
 
 world:
-	@build/tools/install-world.py
-	@build/tools/install-ports.py
-	@build/tools/customize.py
+	@${BUILD_TOOLS}/install-world.py
+	@${BUILD_TOOLS}/install-ports.py
+	@${BUILD_TOOLS}/customize.py
 
 packages:
-	@build/tools/build-packages.py
+	@${BUILD_TOOLS}/build-packages.py
 
 checkout: git-verify
-	@build/tools/checkout.py
+	@${BUILD_TOOLS}/checkout.py
 
 update: git-verify
 	git pull
 	build/do_checkout.sh
 
 dumpenv:
-	@build/tools/dumpenv.py
+	@${BUILD_TOOLS}/dumpenv.py
 
 clean:
 	build/build_cleanup.py
@@ -117,11 +119,11 @@ clean:
 	rm -rf objs os-base
 
 clean-packages:
-	find objs/os-base/*/ports -type f -delete
+	find ${MAKEOBJDIRPREFIX}/ports -type f -delete
 
 clean-package:
 .if defined(p)
-	find objs/os-base/*/ports -name "${p}*" | xargs rm -fr
+	find ${MAKEOBJDIRPREFIX}/ports -name "${p}*" | xargs rm -fr
 .else
 	@echo "Clean a single package from object tree"
 	@echo "" 
@@ -133,7 +135,7 @@ clean-package:
 .endif
 
 clean-ui-package:
-	${MAKE} clean-package p=freenas-10gui
+	${MK} clean-package p=freenas-10gui
 	rm -rf objs/os-base/*/gui-dest
 
 distclean: clean
@@ -163,9 +165,9 @@ release: git-verify
 	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
-	script -a ${RELEASE_LOGFILE} ${MAKE} build
-	script -a ${RELEASE_LOGFILE} build/create_release_distribution.sh
-	script -a ${RELEASE_LOGFILE} build/create_upgrade_distribution.sh
+	script -a ${RELEASE_LOGFILE} ${MK} build
+	script -a ${RELEASE_LOGFILE} ${BUILD_TOOLS}/create-release-distribution.py
+	script -a ${RELEASE_LOGFILE} ${BUILD_TOOLS}/create-upgrade-distribution.py
 
 release-push: release
 	/bin/sh build/post-to-upgrade.sh objs/LATEST/
@@ -184,7 +186,12 @@ rebuild: checkout all
 	@sh build/create_release_distribution.sh
 
 cdrom:
-	@build/tools/create-iso.py
+	@${BUILD_TOOLS}/create-iso.py
+
+gui-upgrade:
+	@${BUILD_TOOLS}/create-gui-upgrade.py
+
+images: cdrom gui-upgrade
 
 # intentionally split up to prevent abuse/spam
 BUILD_BUG_DOMAIN?=ixsystems.com
@@ -218,12 +225,12 @@ tag:
 	build/apply_tag.sh
 
 build-gui: 
-	@build/tools/build-gui.py
+	@${BUILD_TOOLS}/build-gui.py
 
 ports: check-root build-gui
-	@build/tools/merge-pcbsd-ports.py
-	@build/tools/build-ports.py
+	@${BUILD_TOOLS}/merge-pcbsd-ports.py
+	@${BUILD_TOOLS}/build-ports.py
 
 portsjail:
-	@build/tools/build-os.py
-	@build/tools/install-jail.py
+	@${BUILD_TOOLS}/build-os.py
+	@${BUILD_TOOLS}/install-jail.py

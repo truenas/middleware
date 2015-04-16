@@ -32,7 +32,7 @@ from utils import e, info, debug, error, sh
 
 
 def check_build_sanity():
-    if len(os.getcwd()) > 38:
+    if len(e('${BUILD_ROOT}')) > 38:
         error("Current path too long ({0} characters) for nullfs mounts during build", len(os.getcwd()))
 
 
