@@ -108,6 +108,9 @@ update: git-verify
 	git pull
 	build/do_checkout.sh
 
+dumpenv:
+	@build/tools/dumpenv.py
+
 clean:
 	build/build_cleanup.py
 	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
