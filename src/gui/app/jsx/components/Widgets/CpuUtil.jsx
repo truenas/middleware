@@ -20,7 +20,7 @@ var CpuUtil = React.createClass({
       ]
     , chartTypes:        [  {   type:"line"
                               , primary: this.primaryChart("line")
-                              , y:function(d) { return (round(d[1], 0.01)); }
+                              , y:function(d) { return ( round( d[1], 0.01 ) ); }
                             }
                            ,{   type:"pie"
                               , primary: this.primaryChart("pie")
