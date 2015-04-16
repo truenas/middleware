@@ -46,8 +46,14 @@ var UserView = React.createClass({
   , createGroupDisplayList: function(){
       var listGroupItemArray = [] ;
 
-      listGroupItemArray = _.map( this.props.item[ "groups" ], function( group ){
-        var displayItem = <TWBS.ListGroupItem>{ GroupsStore.getGroup( group ) }</TWBS.ListGroupItem>;
+      listGroupItemArray = _.map( this.props.item[ "groups" ], function( groupID ){
+        var displayItem = null;
+        var group = GroupsStore.getGroup( groupID );
+
+        if ( group ){
+          displayItem = <TWBS.ListGroupItem>{ group.name }</TWBS.ListGroupItem>;
+        }
+
         return displayItem;
       }, this );
 
