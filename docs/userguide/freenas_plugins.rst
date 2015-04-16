@@ -179,8 +179,6 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `HTPC-Manager <http://htpc.io/>`_
 
-* `LazyLibrarian <https://github.com/itsmegb/LazyLibrarian>`_
-
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
 * `MineOS <http://minecraft.codeemo.com/>`_
