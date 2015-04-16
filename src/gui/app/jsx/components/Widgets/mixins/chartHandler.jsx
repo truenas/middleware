@@ -222,6 +222,8 @@ module.exports = {
       var chartSVGNode = this.refs.svg.getDOMNode();
       var xLabel;
       var yUnit;
+      newState.legendStateArr =  this.state.legendStateArr;
+      newState.legendStateObj =  this.state.legendStateObj;
 
       newState["chart"] = this.state.chart ? this.state.chart : null;
 
@@ -235,6 +237,8 @@ module.exports = {
           .selectAll("*").remove();
 
         newState["chart"] = null;
+        newState.legendStateArr = [];
+        newState.legendStateObj = {};
       }
 
       if ( newState["chart"] ) {
@@ -244,13 +248,13 @@ module.exports = {
           .datum( this.chartData( this.state.graphType ) )
           .call( newState["chart"] );
 
-        if ( !_.isEmpty( this.state.legendStateObj ) )
+        if ( !_.isEmpty( newState.legendStateObj ) )
         {
         	if (this.state.graphType === "pie")	{
-	        	newState["chart"].dispatch.changeState( { disabled	: this.state.legendStateObj } );
+	        	newState["chart"].dispatch.changeState( { disabled	: newState.legendStateObj } );
 	    	}
 	    	else {
-	        	newState["chart"].dispatch.changeState( { disabled	: this.state.legendStateArr } );
+	        	newState["chart"].dispatch.changeState( { disabled	: newState.legendStateArr } );
 	    	}
 
         } else  {
