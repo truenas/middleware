@@ -28,7 +28,7 @@
 
 import os
 import sys
-from utils import info, debug, error, sh
+from utils import e, info, debug, error, sh
 
 
 def check_build_sanity():
@@ -38,6 +38,11 @@ def check_build_sanity():
 
 def check_port(name, port):
     debug('Checking for "{0}" command', name)
+    for i in e('${PATH}').split(':'):
+        if os.path.exists(e('${i}/${name}')):
+            return
+
+    error('Command {0} not found. Please run "pkg install {1}" or install from ports', name, port)
 
 
 def check_build_tools():
