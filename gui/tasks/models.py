@@ -206,6 +206,7 @@ class CronJob(Model):
                         ),
                     },
                 )
+                proc.communicate()
             except Exception, e:
                 log.debug("Failed to run cron")
                 log_traceback(log=log)
@@ -563,13 +564,36 @@ class Rsync(Model):
         return line
 
     def run(self):
-        subprocess.Popen(
-            'su -m "%s" -c \'%s\' 2>&1 | logger -t rsync' % (
-                self.rsync_user,
-                self.commandline(),
-            ),
-            shell=True,
-        )
+        if os.fork() == 0:
+            for i in xrange(1, 1024):
+                try:
+                    os.close(i)
+                except OSError:
+                    pass
+            try:
+                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
+                os.umask(0)
+                os.setgid(passwd.pw_gid)
+                os.setuid(passwd.pw_uid)
+                try:
+                    os.chdir(passwd.pw_dir)
+                except:
+                    pass
+                proc = subprocess.Popen(
+                    '%s 2>&1 | logger -t rsync' % self.commandline(),
+                    shell=True,
+                    env={
+                        'PATH': (
+                            '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
+                            '/usr/local/sbin:/root/bin'
+                        ),
+                    },
+                )
+                proc.communicate()
+            except Exception:
+                log.debug("Failed to run rsync")
+                log_traceback(log=log)
+            os._exit(0)
 
     def delete(self):
         super(Rsync, self).delete()
