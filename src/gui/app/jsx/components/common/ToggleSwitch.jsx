@@ -8,23 +8,18 @@
 var React = require("react");
 
 var ToggleSwitch = React.createClass({
+
     propTypes: {
-        isToggled : React.PropTypes.bool
-      , onChange  : React.PropTypes.func
+        toggled  : React.PropTypes.bool
+      , onChange : React.PropTypes.func
     }
 
   , getDefaultProps: function() {
       return {
-          isToggled : false
-        , onChange  : function( toggleState, reactID ) {
-                        console.warn("No onChange handler was provided for ToggleSwitch", reactID );
-                      }
-      };
-    }
-
-  , getInitialState: function() {
-      return {
-          toggled: this.props.isToggled
+          toggled : false
+        , onChange: function( toggleState, reactID ) {
+                      console.warn("No onChange handler was provided for ToggleSwitch", reactID );
+                    }
       };
     }
 
@@ -32,17 +27,13 @@ var ToggleSwitch = React.createClass({
       event.stopPropagation();
       event.preventDefault();
 
-      var newToggleState = !this.state.toggled;
-
-      this.setState({ toggled: newToggleState });
-
-      this.props.onChange( newToggleState, reactID );
+      this.props.onChange( !this.props.toggled, reactID );
     }
 
   , render: function() {
       var toggleClasses = ["toggle-switch"];
 
-      if ( this.state.toggled ) {
+      if ( this.props.toggled ) {
         toggleClasses.push("on");
       }
 
