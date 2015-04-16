@@ -293,7 +293,7 @@ ticket::
  echo $?
  klist
 
-Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode"::
+Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode" and a keytab has been uploaded using :ref:`Kerberos Keytabs`::
 
  service ix-sssd start
  service sssd start
