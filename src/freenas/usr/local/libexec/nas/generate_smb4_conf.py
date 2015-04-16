@@ -1061,6 +1061,8 @@ def smb4_setup():
     smb4_mkdir("/var/db/samba4/private")
     os.chmod("/var/db/samba4/private", 0700)
 
+    os.chmod(statedir, 0755)
+
 
 def get_old_samba4_datasets():
     old_samba4_datasets = []
