@@ -70,6 +70,11 @@ var AddUser = React.createClass({
       // Stage edited values for submission. Don't include any read-only stuff that got in somehow.
       newUserValues = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
+      // Convert the array of strings provided by the form to an array of integers.
+      if( !_.isEmpty( newUserValues[ "groups" ] ) ){
+        newUserValues[ "groups" ] = this.parseGroupsArray( newUserValues[ "groups" ] );
+      }
+
       // Get ready to send the view to the new user.
       params[ routing[ "param" ] ] = newUserValues[ "username" ];
 
@@ -168,6 +173,18 @@ var AddUser = React.createClass({
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
                             rows             = "10" />
+                {/* Additional Groups */}
+                <TWBS.Input type             = "select"
+                            ref              = "groups"
+                            label            = "Additional Groups"
+                            onChange         = { this.handleValueChange.bind( null, "groups" ) }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues, "groups") && !_.isEmpty(this.state.locallyModifiedValues["groups"]) ? "editor-was-modified" : ""  }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            required
+                            multiple >
+                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
+                </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
                 {/* locked */}

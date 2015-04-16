@@ -228,9 +228,15 @@ var UserEdit = React.createClass({
       // Make sure nothing read-only made it in somehow.
       var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
+      // Convert the array of strings provided by the form to an array of integers.
+      if( !_.isEmpty( valuesToSend[ "groups" ] ) ){
+        valuesToSend[ "groups" ] = this.parseGroupsArray( valuesToSend[ "groups" ] );
+      }
+
       // Only bother to submit an update if there is anything to update.
       if (!_.isEmpty( valuesToSend ) ){
         UsersMiddleware.updateUser( this.props.item[ "id" ], valuesToSend, this.submissionRedirect( valuesToSend ) );
+
         // Save a record of the last changes we sent.
         this.setState({
             lastSentValues : valuesToSend
@@ -352,6 +358,18 @@ var UserEdit = React.createClass({
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
                             rows             = "10" >
+                </TWBS.Input>
+                {/* Other Groups */}
+                <TWBS.Input type             = "select"
+                            label            = "Other Groups"
+                            onChange         = { this.editHandleValueChange.bind( null, "groups" ) }
+                            key              = "groups"
+                            ref              = "groups"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues[ "groups" ]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            multiple >
+                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
                 </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>
