@@ -3,9 +3,10 @@
 
 "use strict";
 
-var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
+
+var ToggleSwitch = require("../common/ToggleSwitch");
 
 var Options = React.createClass({
 
@@ -47,20 +48,26 @@ var Options = React.createClass({
 
   , createMiddlewareFlag: function( flag, label, description ) {
       return (
-        <div>
-          <TWBS.Input type="checkbox"
-                 label    = { label }
-                 checked  = { this.state.MIDDLEWARE_CLIENT_DEBUG[ flag ] }
-                 onChange = { this.handleFlagToggle.bind( null, flag ) } />
-          <p>{ description }</p>
-        </div>
+        <TWBS.Row>
+          <TWBS.Col xs={3} className="text-center">
+            <h6>{ label }</h6>
+            <ToggleSwitch
+              sm
+              toggled   = { this.state.MIDDLEWARE_CLIENT_DEBUG[ flag ] }
+              onChange  = { this.handleFlagToggle.bind( null, flag ) } />
+          </TWBS.Col>
+
+          <TWBS.Col xs={9} className="debug-options-label">
+            <p>{ description }</p>
+          </TWBS.Col>
+        </TWBS.Row>
       );
     }
 
   , render: function() {
 
       return (
-        <div className="debug-content-flex-wrapper">
+        <div className="debug-content-flex-wrapper debug-options">
 
           <TWBS.Col xs={6} className="debug-column" >
 
