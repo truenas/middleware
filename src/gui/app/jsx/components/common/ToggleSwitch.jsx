@@ -37,6 +37,10 @@ var ToggleSwitch = React.createClass({
         toggleClasses.push("on");
       }
 
+      if ( this.props.sm || this.props.small ) {
+        toggleClasses.push("toggle-switch-sm");
+      }
+
       return (
         <div
           className = { toggleClasses.join(" ") }
