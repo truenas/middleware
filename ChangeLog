@@ -18,6 +18,7 @@
 #8459	Add the ability to recursive replicate the root pool to another FreeNAS system's root pool.
 #8481	hactl should not fail when Failover object is not found
 #8493	In TrueNAS-9.3-STABLE-201503100715:  When email object is not present,  the email entry options are not present.
+#8532	Set log rollover for auth.log and messages to be year
 #8535	In TrueNAS-9.3-STABLE-201502281915 buld: After  HA, giving syntax error  in " Failover.objects.all().exists()"
 #8667	Provide support for SSH Certificates
 #8675	Trigger an alert when the boot volume is getting full
@@ -35,6 +36,7 @@
 #8953	SMART errors now generate Alerts
 #8995	Improve NFS performance
 #9005	Add security/stunnel to FreeNAS build
+#9013	Support hardware with 512GB of RAM
 #9028	TrueNAS upgrades leave swap misconfigured
 #9031	CARP tracebacks when VHID is not unique
 #9032	Automatical sync key for encrypted HA
@@ -53,3 +55,4 @@
 #9180	Sync carp interfaces and carp with modified skew
 #9182	High Point driver update which provides better 4Kn drive support and exposes more disk details
 #9232	Fixed incorrect requirement for peer iSCSI secret to be set
+#9253	Traceback for SMART alert when the state file doesn't exist
