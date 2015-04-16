@@ -156,6 +156,16 @@ def walk(path):
             yield os.path.relpath(os.path.join(root, name), path)
 
 
+def sha256(filename, output=None):
+    filename = e(filename, **get_caller_vars())
+    if not output:
+        output = filename
+    else:
+        output = e(output, **get_caller_vars())
+
+    setfile(output, sh_str("sha256 ${filename}"))
+
+
 def elapsed():
     timestamp = env('BUILD_STARTED', str(int(time.time())))
     td = int(timestamp)
