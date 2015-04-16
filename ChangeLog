@@ -41,6 +41,7 @@
 #9033	Fixes an error in a port causing each new build to have a different master.passwd entry for the user "cyrus".
 #9038	Fix a bug that occasional prevented the display of pending updates.
 #9051	Enforce length limitations of the iSCSI auth user passwords in the GUI
+#9057	Fix a bad interaction with Rsync Now and su(1)
 #9073	Fix API validation and docs for iSCSI Extent
 #9081	Show ZFS pool import progress on the console.
 #9092	Improve patch for SA-15:04.igmp to solve a potential buffer overflow. Fix multiple vulnerabilities of ntp. [SA-15:07] Fix Denial of Service with IPv6 Router Advertisements. [SA-15:09]
