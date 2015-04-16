@@ -43,6 +43,17 @@ var UserView = React.createClass({
       }
     }
 
+  , createGroupDisplayList: function(){
+      var listGroupItemArray = [] ;
+
+      listGroupItemArray = _.map( this.props.item[ "groups" ], function( group ){
+        var displayItem = <TWBS.ListGroupItem>{ GroupsStore.getGroup( group ) }</TWBS.ListGroupItem>;
+        return displayItem;
+      }, this );
+
+      return listGroupItemArray;
+  }
+
   , render: function() {
       var builtInUserAlert = null;
       var editButton       = null;
@@ -120,6 +131,13 @@ var UserView = React.createClass({
             <viewerUtil.DataCell title  = { "email" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["email"] ? this.props.item["email"]: "" } />
+            <TWBS.Col xs        = {12}
+                      className ="text-muted" >
+                        <h4 className = "text-muted" >{ "Other Groups" }</h4>
+                        <TWBS.ListGroup>
+                          { this.createGroupDisplayList() }
+                        </TWBS.ListGroup>
+            </TWBS.Col>
           </TWBS.Row>
 
           {/* "Edit User" Button - Bottom */}
