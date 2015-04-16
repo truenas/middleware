@@ -7,7 +7,7 @@
 # REQUIRE: dispatcher networkd
 # BEFORE: FILESYSTEMS
 
-. /etc/rc.freenas
+. /etc/rc.subr
 
 network_start()
 {
