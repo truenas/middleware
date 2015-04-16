@@ -42,11 +42,13 @@ def main():
         except LockTimeout:
             lock.break_lock()
 
-    with open(SMART_FILE, 'rb') as f:
-        try:
-            data = pickle.loads(f.read())
-        except:
-            data = {}
+    data = {}
+    if os.path.exists(SMART_FILE):
+        with open(SMART_FILE, 'rb') as f:
+            try:
+                data = pickle.loads(f.read())
+            except:
+                pass
 
     device = os.environ.get('SMARTD_DEVICE')
     if device not in data:
