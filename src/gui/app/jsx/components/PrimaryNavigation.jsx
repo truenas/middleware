@@ -153,7 +153,6 @@ var PrimaryNavigation = React.createClass({
 
   , render: function() {
       var createNavItem = function ( rawItem, index ) {
-        console.log( rawItem.disabled );
         if ( rawItem["disabled"] ) {
           return (
             <li
