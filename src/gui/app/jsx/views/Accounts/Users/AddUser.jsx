@@ -15,12 +15,13 @@ var GroupsStore      = require("../../../stores/GroupsStore");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
 var userMixins   = require("../../../components/mixins/userMixins");
-
+var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 var AddUser = React.createClass({
 
     mixins: [   inputHelpers
-              , userMixins ]
+              , userMixins
+              , viewerCommon ]
 
   , contextTypes: {
       router: React.PropTypes.func
@@ -93,7 +94,7 @@ var AddUser = React.createClass({
       var addButtons =
         <TWBS.ButtonToolbar>
           <TWBS.Button className = "pull-right"
-                       onclick   = { this.cancel }
+                       onClick   = { this.context.router.transitionTo("users") }
                        bsStyle   = "default">{"Cancel"}</TWBS.Button>
           <TWBS.Button className = "pull-right"
                        disabled  = { _.isEmpty( this.state.locallyModifiedValues ) }
