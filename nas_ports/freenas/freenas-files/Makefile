@@ -80,7 +80,6 @@ do-install:
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/sudoers ${STAGEDIR}/${PREFIX}/usr/local/etc/sudoers
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/appcafe.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/appcafe.conf
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/warden.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/warden.conf
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/nginx/fastcgi_params ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx/fastcgi_params
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/save_rrds.sh ${STAGEDIR}/${PREFIX}/usr/local/sbin/save_rrds.sh
@@ -94,6 +93,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-etc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-network ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-network
 
+	ln -s /usr/local/etc ${STAGEDIR}${PREFIX}/etc/local
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/boot/loader.conf ${STAGEDIR}${PREFIX}/boot/loader.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/csh.cshrc ${STAGEDIR}${PREFIX}/etc/csh.cshrc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/devfs.rules ${STAGEDIR}${PREFIX}/etc/devfs.rules
@@ -115,55 +115,5 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.profile ${STAGEDIR}${PREFIX}/.profile
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.shrc ${STAGEDIR}${PREFIX}/.shrc
 
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/LDAP
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/NIS
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/NT4
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/directoryservice/ActiveDirectory
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/ActiveDirectory/ctl ${STAGEDIR}/${PREFIX}/etc/directoryservice/ActiveDirectory/ctl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/DomainController/ctl ${STAGEDIR}/${PREFIX}/etc/directoryservice/DomainController/ctl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/LDAP/ctl ${STAGEDIR}/${PREFIX}/etc/directoryservice/LDAP/ctl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/NIS/ctl ${STAGEDIR}/${PREFIX}/etc/directoryservice/NIS/ctl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/NT4/ctl ${STAGEDIR}/${PREFIX}/etc/directoryservice/NT4/ctl
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/rc.ActiveDirectory ${STAGEDIR}/${PREFIX}/etc/directoryservice/rc.ActiveDirectory
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/rc.DomainController ${STAGEDIR}/${PREFIX}/etc/directoryservice/rc.DomainController
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/rc.LDAP ${STAGEDIR}/${PREFIX}/etc/directoryservice/rc.LDAP
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/rc.NIS ${STAGEDIR}/${PREFIX}/etc/directoryservice/rc.NIS
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/directoryservice/rc.NT4 ${STAGEDIR}/${PREFIX}/etc/directoryservice/rc.NT4
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates/kerberos
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d
-	mkdir -p ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/kerberos/krb5.conf ${STAGEDIR}/${PREFIX}/etc/ix/templates/kerberos/krb5.conf
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/README ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/README
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/atrun ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/atrun
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/cron ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/cron
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/ftp ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/ftp
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/ftpd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/ftpd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/imap ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/imap
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/kde ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/kde
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/login ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/login
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/netatalk ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/netatalk
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/other ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/other
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/passwd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/passwd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/pop3 ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/pop3
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/rsh ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/rsh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/samba ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/samba
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/sshd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/sshd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/su ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/su
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/sudo ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/sudo
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/system ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/system
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/telnetd ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/telnetd
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/pam.d/xdm ${STAGEDIR}/${PREFIX}/etc/ix/templates/pam.d/xdm
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-post-delete ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-post-delete
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-post-start ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-post-start
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-post-stop ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-post-stop
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-delete ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-delete
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-start ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-start
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix/templates/warden/jail-pre-stop ${STAGEDIR}/${PREFIX}/etc/ix/templates/warden/jail-pre-stop
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/iso_3166_2_countries.csv ${STAGEDIR}/${PREFIX}/etc/iso_3166_2_countries.csv
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/find_alias_for_smtplib.py ${STAGEDIR}/${PREFIX}/etc/find_alias_for_smtplib.py
 
 .include <bsd.port.mk>
