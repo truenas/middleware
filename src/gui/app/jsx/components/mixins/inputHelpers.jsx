@@ -37,20 +37,25 @@ module.exports = {
     // A malformed nextProps will result in an empty array.
   , removeReadOnlyFields: function(item, keys) {
       var outgoingItem = {};
-      // Used to put all the old fields into the new object, unless they're immutable
-      outgoingItem = _.pick( item, function (value, key) {
-        var keyContent = _.find(keys, function(checkKey){
-          return (checkKey.key === key);
-        }, this);
-        if (keyContent) {
-          return keyContent["mutable"];
-        } else {
-          // Do not accept unknown properties from the Middleware.
-          // TODO: If we want to accept arbitrary properies, we will need more
-          // sophisticated handling here.
-          return false;
+
+      _.forEach( item, function ( value, key ) {
+        var keyContent = _.find( keys, function( checkKey ){
+          return ( checkKey.key === key );
+        }, this );
+
+        // TODO: If we want to accept arbitrary properies, we will need more
+        // sophisticated handling here.
+
+        // Do not include unknown properties.
+        if( keyContent ) {
+          // Do not include read-only fields
+          if( keyContent[ "mutable" ] ){
+            outgoingItem[ key ] = value;
+          }
+        //console.log(outgoingItem);
         }
-      }, this  );
+      }, this );
+
       return outgoingItem;
     }
 
@@ -72,7 +77,7 @@ module.exports = {
 
     // Deals with input from different kinds of input fields.
     // TODO: Extend with other input fields and refine existing ones as necessary.
-  , processFormInput: function( event, dataKey ) {
+  , processFormInput: function( event, value, dataKey ) {
         var inputValue;
 
         switch ( event.target.type ) {
@@ -84,16 +89,17 @@ module.exports = {
           case "select":
           case "text":
           case "textarea":
+          case "array":
           default:
-            inputValue = this.parseInputType( event.target.value, dataKey );
+            inputValue = this.parseInputType( event.target.value, value, dataKey );
             break;
         }
 
         return inputValue;
     }
 
-    // Only differentiates numbers and strings for now.
-  , parseInputType: function( input, dataKey ) {
+    // Different handling for different types of data types
+  , parseInputType: function( input, value, dataKey ) {
       var output;
 
       switch ( dataKey.type ) {
@@ -101,8 +107,15 @@ module.exports = {
           output = input;
           break;
 
+        case "array":
+          output = value;
+          break;
+
         case "integer":
         case "number":
+          // at this time all the numbers we actually edit are integers.
+          // FIXME: Correct handling if we ever need to parse non-integer numbers
+          // FIXME: Make sure numbers that must be integers are labeled as such in the schema
           output = _.parseInt( input );
           break;
 
@@ -120,13 +133,14 @@ module.exports = {
     // See UserItem for typical usage.
     // This is specifically for edit views, not add entity views.
   , editHandleValueChange: function( key, event ) {
+      var value = this.refs[key].getValue();
       var newLocallyModified = this.state.locallyModifiedValues;
 
       var dataKey = _.find( this.state.dataKeys, function ( dataKey ) {
         return ( dataKey.key === key );
       }, this );
 
-      var inputValue = this.processFormInput( event, dataKey );
+      var inputValue = this.processFormInput( event, value, dataKey );
 
       // We don't want to submit non-changed data to the middleware, and it's
       // easy for data to appear "changed", even if it's the same. Here, we

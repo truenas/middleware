@@ -22,6 +22,8 @@ module.exports = {
       }.bind( this ) );
     }
 
+    // Converts an array of strings into an array of integers. Intended solely
+    // for use when submitting groups lists to the middleware.
   , parseGroupsArray: function( groupsArray ) {
       var integerArray = [];
 
