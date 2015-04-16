@@ -86,7 +86,7 @@ var AddUser = React.createClass({
   }
 
   , cancel: function () {
-
+      this.context.router.transitionTo( "users" );
     }
 
   , render: function() {
@@ -94,7 +94,7 @@ var AddUser = React.createClass({
       var addButtons =
         <TWBS.ButtonToolbar>
           <TWBS.Button className = "pull-right"
-                       onClick   = { this.context.router.transitionTo("users") }
+                       onClick   = { this.cancel }
                        bsStyle   = "default">{"Cancel"}</TWBS.Button>
           <TWBS.Button className = "pull-right"
                        disabled  = { _.isEmpty( this.state.locallyModifiedValues ) }
