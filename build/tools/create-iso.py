@@ -29,7 +29,7 @@
 
 import os
 from dsl import load_file
-from utils import sh, info, objdir, e, chroot, setup_env, setfile, template
+from utils import sh, info, objdir, e, chroot, setup_env, setfile, template, sha256
 
 
 setup_env()
@@ -39,7 +39,7 @@ installworldlog = objdir('logs/iso-installworld')
 installkernellog = objdir('logs/iso-installkernel')
 sysinstalllog = objdir('logs/iso-sysinstall')
 imgfile = objdir('base.ufs')
-output = objdir('image.iso')
+output = objdir('${NAME}.iso')
 
 
 symlinks = {
@@ -319,6 +319,7 @@ def make_iso_image():
     setfile('${ISO_DESTDIR}/boot/grub/grub.cfg', template('${BUILD_CONFIG}/templates/cdrom/grub.cfg'))
     setfile('${ISO_DESTDIR}/.mount.conf', template('${BUILD_CONFIG}/templates/cdrom/mount.conf'))
     sh('grub-mkrescue -o ${output} ${ISO_DESTDIR} -- -volid ${CDROM_LABEL}')
+    sha256(output)
 
 
 if __name__ == '__main__':
