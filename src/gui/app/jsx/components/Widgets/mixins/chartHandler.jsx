@@ -189,7 +189,7 @@ module.exports = {
 
             _.forEach( stagedUpdate, function( data, key ) {
               var newData = this.state.statdData[ key ].concat( data );
-              newState.statdData[ key ] = _.take( newData, 100 );
+              newState.statdData[ key ] = _.takeRight( newData, 100 );
             }.bind( this ) );
             stagedUpdate = {};
           }
