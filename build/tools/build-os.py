@@ -55,8 +55,9 @@ def calculate_make_jobs():
 
 def create_make_conf_build():
     conf = open(makeconfbuild, 'w')
-    for k, v in dsl['make_conf_build'][0].items():
-        conf.write('{0}={1}\n'.format(k, v))
+    for m in dsl['make_conf_build'].values():
+        for k, v in m.items():
+            conf.write('{0}={1}\n'.format(k, v))
 
     conf.close()
 
