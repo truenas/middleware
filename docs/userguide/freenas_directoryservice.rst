@@ -263,7 +263,7 @@ connect to the correct realm, check the SRV records on the DNS server.
 describes how to configure KDC discovery over DNS and provides some examples of records with differing priorities.
 
 If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using
-:menuselection:`System --> Advanced --> Rebuild LDAP/AD Cache`.
+:menuselection:`Directory Service --> Active Directory --> Rebuild Directory Service Cache`.
 
 An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
 on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
