@@ -401,8 +401,8 @@ disk_is_freenas()
 	    case "${DF}" in
 		0)	# No default, use "default"
 		    DS=default ;;
-		*FreeNAS*)	# Default dataset
-		    DS=$(expr "${DF}" : "FreeNAS (\(.*\)) .*") ;;
+                *${AVATAR_PROJECT}*)    # Default dataset
+                    DS=$(expr "${DF}" : "${AVATAR_PROJECT} (\(.*\)) .*") ;;
 		*) DS="" ;;
 	    esac
 	    umount /tmp/data_old
