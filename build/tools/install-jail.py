@@ -31,6 +31,7 @@ from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
 
 
 setup_env()
+makeconfbuild = objdir('make-build.conf')
 installworldlog = objdir('logs/jail-installworld')
 distributionlog = objdir('logs/jail-distribution')
 installkernellog = objdir('logs/jail-installkernel')
@@ -44,6 +45,7 @@ def installworld():
         "-C ${TRUEOS_ROOT}",
         "installworld",
         "DESTDIR=${JAIL_DESTDIR}",
+        "__MAKE_CONF=${makeconfbuild}",
         log=installworldlog
     )
 
@@ -54,6 +56,7 @@ def installworld():
         "-C ${TRUEOS_ROOT}",
         "distribution",
         "DESTDIR=${JAIL_DESTDIR}",
+        "__MAKE_CONF=${makeconfbuild}",
         log=distributionlog
     )
 
@@ -66,6 +69,7 @@ def installkernel():
         "-C ${TRUEOS_ROOT}",
         "installkernel",
         "DESTDIR=${JAIL_DESTDIR}",
+        "__MAKE_CONF=${makeconfbuild}",
         log=installkernellog
     )
 
