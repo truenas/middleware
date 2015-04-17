@@ -64,6 +64,16 @@ var AddUser = React.createClass({
 
     // Will return the first available UID above 1000 (to be used as a default).
   , getNextUID: function() {
+      var users = UsersStore.getAllUsers();
+
+      var nextUID = 1000;
+
+      // loop until it finds a UID that's not in use
+      while( _.has( users, nextUID ) ){
+        nextUID++;
+      }
+
+      return nextUID;
 
     }
 
