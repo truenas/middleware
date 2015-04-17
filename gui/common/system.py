@@ -137,7 +137,7 @@ def send_mail(subject=None,
     error = False
     errmsg = ''
     em = Email.objects.all().order_by('-id')[0]
-    if not to:
+    if not to or not to[0]:
         to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
     if attachments:
         msg = MIMEMultipart()
