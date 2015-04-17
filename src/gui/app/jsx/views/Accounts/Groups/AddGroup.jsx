@@ -67,15 +67,16 @@ var AddGroup = React.createClass({
 
     }
 
+    // TODO: There is probably room to genericize this into a mixin.
   , cancel: function () {
-
+      this.context.router.transitionTo( "groups" );
     }
 
   , render: function() {
       var addButtons =
         <TWBS.ButtonToolbar>
           <TWBS.Button className = "pull-right"
-                       onclick   = { this.cancel }
+                       onClick   = { this.cancel }
                        bsStyle   = "default">{"Cancel"}</TWBS.Button>
           <TWBS.Button className = "pull-right"
                        disabled  = { _.isEmpty( this.state.editedFields ) }
