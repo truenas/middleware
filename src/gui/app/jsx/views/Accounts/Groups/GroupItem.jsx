@@ -22,12 +22,16 @@ var GroupsStore      = require("../../../stores/GroupsStore");
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
+var groupMixins   = require("../../../components/mixins/groupMixins");
 var inputHelpers = require("../../../components/mixins/inputHelpers");
 var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 var GroupView = React.createClass({
 
-    propTypes: {
+    mixins: [   groupMixins
+              , viewerCommon ]
+
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
@@ -184,10 +188,6 @@ var GroupEdit = React.createClass({
       } else {
           console.warn( "Attempted to send a Group update with no valid fields." );
       }
-    }
-
-    , deleteGroup: function(){
-        GroupsMiddleware.deleteGroup(this.props.item["id"], this.returnToViewerRoot() );
     }
 
   , render: function() {

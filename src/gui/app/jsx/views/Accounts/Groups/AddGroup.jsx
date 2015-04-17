@@ -11,10 +11,12 @@ var TWBS   = require("react-bootstrap");
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
+var groupMixins  = require("../../../components/mixins/groupMixins")
 
 var AddGroup = React.createClass({
 
-    mixins: [ inputHelpers ]
+    mixins: [   inputHelpers
+              , groupMixins ]
 
   , contextTypes: {
       router: React.PropTypes.func
