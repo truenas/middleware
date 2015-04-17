@@ -83,6 +83,12 @@ def env(name, default=None):
     return os.getenv(name, default)
 
 
+def readfile(filename):
+    filename = e(filename, **get_caller_vars())
+    with open(filename, 'r') as f:
+        return f.read().strip()
+
+
 def setfile(filename, contents):
     debug('setfile: {0} -> {1}', contents, filename)
     f = open(e(filename, **get_caller_vars()), 'w')

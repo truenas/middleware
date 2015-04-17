@@ -202,6 +202,7 @@ build-bug-report:
 	mail -s "build fail for $${SUDO_USER:-$$USER}" ${BUILD_BUG_EMAIL} < \
 		${RELEASE_LOGFILE}
 
+.ifdef SKIP_CHECKS
 git-verify:
 	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
 		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
@@ -210,6 +211,11 @@ git-verify:
 		exit 1; \
 	fi
 	@echo "NOTICE: You are building from the ${GIT_LOCATION} git repo."
+.else:
+git-verify:
+	@
+.endif
+
 
 git-internal:
 	@echo "INTERNAL" > ${GIT_REPO_SETTING}
