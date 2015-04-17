@@ -17,12 +17,14 @@ var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
 var userMixins   = require("../../../components/mixins/userMixins");
+var groupMixins   = require("../../../components/mixins/groupMixins");
 var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 var AddUser = React.createClass({
 
     mixins: [   inputHelpers
               , userMixins
+              , groupMixins
               , viewerCommon ]
 
   , contextTypes: {
@@ -75,20 +77,6 @@ var AddUser = React.createClass({
 
       return nextUID;
 
-    }
-
-    // Will return the first available GID above 1000 (to be used as a default).
-  , getNextGID: function() {
-      var groups = GroupsStore.getAllGroups();
-
-      var nextGID = 1000;
-
-      // loop until it finds a GID that's not in use
-      while( _.has( groups, nextGID ) ){
-        nextGID++;
-      }
-
-      return nextGID;
     }
 
   , submitNewUser: function() {

@@ -47,11 +47,6 @@ var AddGroup = React.createClass({
       this.setState( { locallyModifiedValues: newLocallyModified } );
     }
 
-    // Will return the next recommended GID (to be used as a default).
-  , getNextGID: function() {
-
-    }
-
   , submitNewGroup: function() {
       var routing = this.props.viewData.routing;
       var newGroupValues = {};
