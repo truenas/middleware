@@ -9,9 +9,11 @@ var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
 
+var UsersStore      = require("../../../stores/UsersStore");
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 
 var GroupsStore      = require("../../../stores/GroupsStore");
+var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
 var userMixins   = require("../../../components/mixins/userMixins");
@@ -38,10 +40,12 @@ var AddUser = React.createClass({
                           };
 
       return {
-        // FIXME: locallyModifiedValues is magical
-          locallyModifiedValues : {}
-        , defaultValues         : defaultValues
-        , dataKeys              : this.props.viewData.format.dataKeys
+        // FIXME: locallyModifiedValues is magical. See handleValueChange and what
+        // it calls from inputHelpers.
+          locallyModifiedValues    : {}
+        , defaultValues            : defaultValues
+        , dataKeys                 : this.props.viewData.format.dataKeys
+        , pleaseCreatePrimaryGroup : true
       };
     }
 
@@ -58,9 +62,23 @@ var AddUser = React.createClass({
       this.setState( { locallyModifiedValues: newLocallyModifiedValues } );
     }
 
-    // Will return the next recommended UID (to be used as a default).
+    // Will return the first available UID above 1000 (to be used as a default).
   , getNextUID: function() {
 
+    }
+
+    // Will return the first available GID above 1000 (to be used as a default).
+  , getNextGID: function() {
+      var groups = GroupsStore.getAllGroups();
+
+      var nextGID = 1000;
+
+      // loop until it finds a GID that's not in use
+      while( _.has( groups, nextGID ) ){
+        nextGID++;
+      }
+
+      return nextGID;
     }
 
   , submitNewUser: function() {
@@ -76,6 +94,14 @@ var AddUser = React.createClass({
         newUserValues[ "groups" ] = this.parseGroupsArray( newUserValues[ "groups" ] );
       }
 
+      // If the user requests a new group, make one with the next available GID and the username.
+      if (this.state.pleaseCreatePrimaryGroup) {
+        var newGID = this.getNextGID();
+        GroupsMiddleware.createGroup( {   id   : newGID
+                                        , name : newUserValues[ "username" ] } );
+        newUserValues[ "group" ] = newGID;
+      }
+
       // Get ready to send the view to the new user.
       params[ routing[ "param" ] ] = newUserValues[ "username" ];
 
@@ -87,6 +113,12 @@ var AddUser = React.createClass({
 
   , cancel: function () {
       this.context.router.transitionTo( "users" );
+    }
+
+  , primaryGroupToggle: function( event ) {
+      this.setState({
+        pleaseCreatePrimaryGroup : event.target.checked
+      });
     }
 
   , render: function() {
@@ -112,6 +144,7 @@ var AddUser = React.createClass({
                 <TWBS.Input type             = "text"
                             ref              = "id"
                             label            = "User ID"
+                            defaultValue     = { this.state.defaultValues[ "id" ] }
                             onChange         = { this.handleValueChange.bind( null, "id" ) }
                             groupClassName   = { _.has(this.state.locallyModifiedValues, "id") && !_.isEmpty(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
@@ -154,15 +187,22 @@ var AddUser = React.createClass({
                 </TWBS.Input>
                 {/* primary group */}
                 {/* TODO: Recommend the default group based on the username. Requires creating a group at user-creation time.*/}
+                <TWBS.Input type             = "checkbox"
+                            label            = "Automatically Create Primary Group"
+                            ref              = "createPrimaryGroup"
+                            onChange         = { this.primaryGroupToggle }
+                            checked          = { this.state.pleaseCreatePrimaryGroup }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
                 <TWBS.Input type             = "select"
-                            label            = "Primary Group"
+                            label            = "Select Primary Group"
                             ref              = "group"
                             value            = { this.state.locallyModifiedValues["group"]? this.state.locallyModifiedValues["group"]: null }
                             onChange         = { this.handleValueChange.bind( null, "group" ) }
                             groupClassName   = { _.has(this.state.locallyModifiedValues, "group") && !_.isEmpty(this.state.locallyModifiedValues["group"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            required >
+                            disabled         = { this.state.pleaseCreatePrimaryGroup } >
                             { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
