@@ -75,6 +75,10 @@ def safe_unlink(path):
         os.unlink(path)
 
 def reset_plugin_progress():
+
+    if not jail_path_configured():
+        jail_auto_configure()
+
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = '%s/warden.log' % jc.jc_path
 
