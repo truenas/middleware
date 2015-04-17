@@ -44,13 +44,18 @@ def interrupt(signal, frame):
 
 def sh(*args, **kwargs):
     logfile = kwargs.pop('log', None)
+    nofail = kwargs.pop('nofail', False)
     cmd = e(' '.join(args), **get_caller_vars())
     if logfile:
         sh('mkdir -p', os.path.dirname(logfile))
         f = open(logfile, 'w')
 
     debug('sh: {0}', cmd)
-    return subprocess.call(cmd, stdout=f if logfile else None, stderr=subprocess.STDOUT, shell=True)
+    ret = subprocess.call(cmd, stdout=f if logfile else None, stderr=subprocess.STDOUT, shell=True)
+    if ret != 0 and not nofail:
+        info('Failed command: {0}', cmd)
+        info('Returned value: {0}', ret)
+        error('Build failed')
 
 
 def sh_str(*args, **kwargs):

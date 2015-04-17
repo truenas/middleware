@@ -79,7 +79,7 @@ def buildkernel():
     debug('Kernel configuration file: {0}', kernconf)
     debug('Selected modules: {0}', modules)
 
-    if sh(
+    sh(
         "make",
         "-j {0}".format(makejobs),
         "-C ${TRUEOS_ROOT}",
@@ -90,8 +90,7 @@ def buildkernel():
         "MODULES_OVERRIDE='{0}'".format(modules),
         "buildkernel",
         log=kernlog
-    ) != 0:
-        error('Build kernel failed. See logs at {0}', kernlog)
+    )
 
 
 def buildworld():
@@ -99,7 +98,7 @@ def buildworld():
     info('Log file: {0}', worldlog)
     debug('World make.conf: {0}', makeconfbuild)
 
-    if sh(
+    sh(
         "make",
         "-j {0}".format(makejobs),
         "-C ${TRUEOS_ROOT}",
@@ -107,8 +106,7 @@ def buildworld():
         "NOCLEAN=YES",
         "buildworld",
         log=worldlog
-    ) != 0:
-        error('Build world failed. See logs at {0}', worldlog)
+    )
 
 
 if __name__ == '__main__':
