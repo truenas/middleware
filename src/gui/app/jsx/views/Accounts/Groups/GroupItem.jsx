@@ -45,7 +45,7 @@ var GroupView = React.createClass({
 
   , render: function() {
       var builtInGroupAlert = null;
-      var editButton = null;
+      var editButtons = null;
 
       if ( this.props.item["builtin"] ) {
         builtInGroupAlert = (
@@ -56,20 +56,22 @@ var GroupView = React.createClass({
         );
       }
 
-      editButton = (
-        <TWBS.Row>
-          <TWBS.Col xs={12}>
-            <TWBS.Button className = "pull-right"
-                         onClick   = { this.props.handleViewChange.bind(null, "edit") }
-                         bsStyle   = "info" >{"Edit Group"}</TWBS.Button>
-          </TWBS.Col>
-        </TWBS.Row>
+      editButtons = (
+        <TWBS.ButtonToolbar>
+          <TWBS.Button className = "pull-left"
+                       disabled  = { this.props.item["builtin"] }
+                       onClick   = { this.deleteGroup }
+                       bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
+          <TWBS.Button className = "pull-right"
+                       onClick   = { this.props.handleViewChange.bind(null, "edit") }
+                       bsStyle   = "info" >{"Edit Group"}</TWBS.Button>
+        </TWBS.ButtonToolbar>
       );
 
       return (
         <TWBS.Grid fluid>
         {/* "Edit Group" Button - Top */}
-        { editButton }
+        { editButtons }
 
         <TWBS.Row>
           <TWBS.Col xs={3}
@@ -99,7 +101,7 @@ var GroupView = React.createClass({
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
-          { editButton }
+          { editButtons }
 
         </TWBS.Grid>
       );
