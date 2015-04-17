@@ -27,56 +27,24 @@
 #####################################################################
 
 import sys
-from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
+from utils import sh, sh_str, e, setup_env, objdir, info, debug, error, import_function
 
 
 setup_env()
 installworldlog = objdir('logs/dest-installworld')
 distributionlog = objdir('logs/dest-distribution')
 installkernellog = objdir('logs/dest-installkernel')
-
-
-def installworld():
-    info('Installing world ${{WORLD_DESTDIR}}')
-    info('Log file: {0}', installworldlog)
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "installworld",
-        "DESTDIR=${WORLD_DESTDIR}",
-        log=installworldlog
-    )
-
-    info('Creating distribution in ${{WORLD_DESTDIR}}')
-    info('Log file: {0}', distributionlog)
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "distribution",
-        "DESTDIR=${WORLD_DESTDIR}",
-        log=distributionlog
-    )
-
-
-def installkernel():
-    info('Installing kernel in ${{WORLD_DESTDIR}}')
-    info('Log file: {0}', installkernellog)
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "installkernel",
-        "DESTDIR=${WORLD_DESTDIR}",
-        log=installkernellog
-    )
+installworld = import_function('build-os', 'installworld')
+installkernel = import_function('build-os', 'installkernel')
 
 
 if __name__ == '__main__':
-    if env('SKIP_INSTALL_WORLD'):
+    if e('${SKIP_INSTALL_WORLD}'):
         info('Skipping world installation, as instructed by setting SKIP_INSTALL_WORLD')
         sys.exit(0)
 
     sh('chflags -R 0 ${WORLD_DESTDIR}')
     sh('rm -rf ${WORLD_DESTDIR}')
     sh('mkdir -p ${WORLD_DESTDIR}')
-    installworld()
-    installkernel()
+    installworld(e('${WORLD_DESTDIR}'), installworldlog, distributionlog)
+    installkernel(e('${WORLD_DESTDIR}'), installkernellog)
