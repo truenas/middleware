@@ -14,9 +14,6 @@ var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
 
 module.exports = {
 
-    contextTypes: {
-        router: React.PropTypes.func
-    }
 
     // Will return the first available GID above 1000 (to be used as a default).
   , getNextGID: function() {

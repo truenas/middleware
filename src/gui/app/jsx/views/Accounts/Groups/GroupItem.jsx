@@ -31,6 +31,10 @@ var GroupView = React.createClass({
     mixins: [   groupMixins
               , viewerCommon ]
 
+  , contextTypes: {
+      router: React.PropTypes.func
+  }
+
   , propTypes: {
       item: React.PropTypes.object.isRequired
     }

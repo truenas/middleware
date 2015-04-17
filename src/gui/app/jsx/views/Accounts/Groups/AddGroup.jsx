@@ -11,7 +11,7 @@ var TWBS   = require("react-bootstrap");
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
-var groupMixins  = require("../../../components/mixins/groupMixins")
+var groupMixins  = require("../../../components/mixins/groupMixins");
 
 var AddGroup = React.createClass({
 
