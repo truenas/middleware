@@ -35,14 +35,16 @@ from utils import e, sh, sh_str, readfile, setfile, template, setup_env
 
 setup_env()
 dsl = load_file('${BUILD_CONFIG}/release.pyd', os.environ)
+url = dsl['url']
 
 
 def stage_release():
-    sh('mkdir -p ${RELEASE_STAGEDIR}')
+    sh('mkdir -p ${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}')
     for ext in dsl['format']:
         path = e('${MAKEOBJDIRPREFIX}/${NAME}.${ext}')
         if os.path.exists(path):
-            sh('mv ${path} ${RELEASE_STAGEDIR}/')
+            sh('mv ${path} ${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}/')
+            sh('mv ${path}.sha256 ${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}/')
 
 
 def get_aux_files_desc():
@@ -55,7 +57,7 @@ def get_aux_files_desc():
 
 def get_image_files_desc():
     for ext in dsl['format']:
-        path = e('${RELEASE_STAGEDIR}/${NAME}.${ext}')
+        path = e('${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}/${NAME}.${ext}')
         filename = os.path.basename(path)
         if os.path.exists(path):
             yield {
@@ -77,10 +79,12 @@ def create_aux_files(dsl):
 
 
 def create_json():
+    version = e('${VERSION}').split('-')[0]
+    build_type = e('${VERSION}').split('-')[1]
     json_file = {
         'name': e('${PRODUCT}'),
-        'version': e('${VERSOIN}'),
-        'type': e('${buildtype}'),
+        'version': e('${version}'),
+        'type': e('${build_type}'),
         'date': e('${BUILD_TIMESTAMP}'),
         'aux_files': list(get_aux_files_desc()),
         'arch': {
@@ -88,7 +92,7 @@ def create_json():
         }
     }
 
-    f = open(e("${RELEASE_STAGEDIR}/../CHECKSUMS.json"), 'a')
+    f = open(e("${RELEASE_STAGEDIR}/CHECKSUMS.json"), 'a')
     json.dump(json_file, f, indent=4)
     f.close()
 
