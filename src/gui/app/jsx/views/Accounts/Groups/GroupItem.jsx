@@ -112,7 +112,8 @@ var GroupView = React.createClass({
 var GroupEdit = React.createClass({
 
     mixins: [  inputHelpers
-             , viewerCommon ]
+              , groupMixins
+              , viewerCommon ]
 
   , contextTypes: {
         router: React.PropTypes.func
