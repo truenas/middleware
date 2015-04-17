@@ -109,6 +109,46 @@ def buildworld():
     )
 
 
+def installworld(destdir, worldlog, distriblog):
+    info('Installing world in {0}', destdir)
+    info('Log file: {0}', worldlog)
+    sh(
+        "make",
+        "-C ${TRUEOS_ROOT}",
+        "installworld",
+        "DESTDIR=${destdir}",
+        "__MAKE_CONF=${makeconfbuild}",
+        log=worldlog
+    )
+
+    info('Creating distribution in {0}', destdir)
+    info('Log file: {0}', distriblog)
+    sh(
+        "make",
+        "-C ${TRUEOS_ROOT}",
+        "distribution",
+        "DESTDIR=${destdir}",
+        "__MAKE_CONF=${makeconfbuild}",
+        log=distriblog
+    )
+
+
+def installkernel(destdir, log):
+    info('Installing kernel in {0}', log)
+    info('Log file: {0}', log)
+
+    modules = ' '.join(dsl['kernel_module'])
+    sh(
+        "make",
+        "-C ${TRUEOS_ROOT}",
+        "installkernel",
+        "DESTDIR=${destdir}",
+        "__MAKE_CONF=${makeconfbuild}",
+        "MODULES_OVERRIDE='{0}'".format(modules),
+        log=log
+    )
+
+
 if __name__ == '__main__':
     if env('SKIP_OS'):
         info('Skipping buildworld & buildkernel as instructed by setting SKIP_OS')

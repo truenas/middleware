@@ -27,58 +27,22 @@
 #####################################################################
 
 import sys
-from utils import sh, sh_str, env, setup_env, objdir, info, debug, error
+from utils import sh, e, setup_env, objdir, info, import_function
 
 
 setup_env()
-makeconfbuild = objdir('make-build.conf')
 installworldlog = objdir('logs/jail-installworld')
 distributionlog = objdir('logs/jail-distribution')
 installkernellog = objdir('logs/jail-installkernel')
-
-
-def installworld():
-    info('Installing world for jail in ${{JAIL_DESTDIR}}')
-    info('Log file: {0}', installworldlog)
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "installworld",
-        "DESTDIR=${JAIL_DESTDIR}",
-        "__MAKE_CONF=${makeconfbuild}",
-        log=installworldlog
-    )
-
-    info('Creating distribution for jail in ${{JAIL_DESTDIR}}')
-    info('Log file: {0}', distributionlog)
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "distribution",
-        "DESTDIR=${JAIL_DESTDIR}",
-        "__MAKE_CONF=${makeconfbuild}",
-        log=distributionlog
-    )
-
-
-def installkernel():
-    info('Installing kernel for jail in ${{JAIL_DESTDIR}}')
-    info('Log file: {0}', installkernellog)
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "installkernel",
-        "DESTDIR=${JAIL_DESTDIR}",
-        "__MAKE_CONF=${makeconfbuild}",
-        log=installkernellog
-    )
+installworld = import_function('build-os', 'installworld')
+installkernel = import_function('build-os', 'installkernel')
 
 
 if __name__ == '__main__':
-    if env('SKIP_INSTALL_JAIL'):
+    if e('${SKIP_INSTALL_JAIL}'):
         info('Skipping jail installation, as instructed by setting SKIP_INSTALL_JAIL')
         sys.exit(0)
 
     sh('mkdir -p ${JAIL_DESTDIR}')
-    installworld()
-    installkernel()
+    installworld(e('${JAIL_DESTDIR'), installworldlog, distributionlog)
+    installkernel(e('${JAIL_DESTDIR}'), installkernellog)
