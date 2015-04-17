@@ -93,7 +93,7 @@ all:	check-root build
 check-root:
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 
-build: git-verify portsjail ports world packages images
+build: git-verify directories portsjail ports world packages images
 
 world:
 	@${BUILD_TOOLS}/install-world.py
@@ -114,9 +114,9 @@ dumpenv:
 	@${BUILD_TOOLS}/dumpenv.py
 
 clean:
-	build/build_cleanup.py
-	rm -rf ${NANO_LABEL}-${VERSION}-* release.build.log
-	rm -rf objs os-base
+	chflags -R 0 ${BUILD_ROOT}/objs
+	rm -rf ${BUILD_ROOT}/objs
+	rm -rf release.build.log
 
 clean-packages:
 	find ${MAKEOBJDIRPREFIX}/ports -type f -delete
@@ -140,6 +140,9 @@ clean-ui-package:
 
 distclean: clean
 	rm -fr FreeBSD nas_source
+
+directories:
+	mkdir -p ${MAKEOBJDIRPREFIX}
 
 save-build-env:
 	build/save_build.sh

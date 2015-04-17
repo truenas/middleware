@@ -91,7 +91,12 @@ def readfile(filename):
 
 def setfile(filename, contents):
     debug('setfile: {0} -> {1}', contents, filename)
-    f = open(e(filename, **get_caller_vars()), 'w')
+    filename = e(filename, **get_caller_vars())
+
+    if not os.path.isdir(os.path.dirname(filename)):
+        sh('mkdir -p', os.path.dirname(filename))
+
+    f = open(filename, 'w')
     f.write(contents)
     f.write('\n')
     f.close()
