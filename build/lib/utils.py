@@ -165,11 +165,16 @@ def walk(path):
 def sha256(filename, output=None):
     filename = e(filename, **get_caller_vars())
     if not output:
-        output = filename
+        output = filename + '.sha256'
     else:
         output = e(output, **get_caller_vars())
 
     setfile(output, sh_str("sha256 ${filename}"))
+
+
+def import_function(filename, fname):
+    module = __import__(filename)
+    return getattr(module, fname)
 
 
 def elapsed():

@@ -281,8 +281,6 @@ def umount_packages():
 def install_files():
     info('Copying installer files')
     setfile('${INSTUFS_DESTDIR}/etc/avatar.conf', template('${BUILD_CONFIG}/templates/avatar.conf'))
-    sh('cp -p ${BUILD_ROOT}/build/files/install.sh ${INSTUFS_DESTDIR}/etc')
-    sh('cp -p ${BUILD_ROOT}/build/files/rc ${INSTUFS_DESTDIR}/etc')
 
 
 def populate_ufsroot():
