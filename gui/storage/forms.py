@@ -1375,6 +1375,7 @@ class ZFSDataset(Form):
         if self._create is False:
             del self.fields['dataset_name']
             del self.fields['dataset_recordsize']
+            del self.fields['dataset_case_sensitivity']
             data = _n.zfs_get_options(self._fs)
 
             if data['compression'][2] == 'inherit':
