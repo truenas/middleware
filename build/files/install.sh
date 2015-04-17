@@ -298,7 +298,7 @@ partition_disk() {
 
 	_disksparts=$(for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} > /dev/null 2>&1 || true
-	    zpool labelclear -f ${_disk}
+	    zpool labelclear -f ${_disk} > /dev/null 2>&1 || true
 	    # Get rid of any MBR.  Shouldn't be necessary,
 	    # but caching seems to have caused problems.
 	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1 >&2
