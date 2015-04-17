@@ -7,6 +7,7 @@
 var _ = require("lodash");
 
 var ShellMiddleware = require("../../middleware/ShellMiddleware");
+var UsersMiddleware = require("../../middleware/UsersMiddleware");
 
 module.exports = {
 
@@ -32,5 +33,9 @@ module.exports = {
       }, this );
 
       return integerArray;
+    }
+
+  , deleteUser: function(){
+        UsersMiddleware.deleteUser(this.props.item["id"], this.returnToViewerRoot() );
     }
 };

@@ -28,7 +28,14 @@ var viewerCommon = require("../../../components/mixins/viewerCommon");
 // OVERVIEW PANE
 var UserView = React.createClass({
 
-    propTypes: {
+    mixins: [  userMixins
+             , viewerCommon ]
+
+  , contextTypes: {
+        router: React.PropTypes.func
+    }
+
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
@@ -62,7 +69,7 @@ var UserView = React.createClass({
 
   , render: function() {
       var builtInUserAlert = null;
-      var editButton       = null;
+      var editButtons      = null;
 
       if ( this.props.item["builtin"] ) {
         builtInUserAlert = (
@@ -73,20 +80,22 @@ var UserView = React.createClass({
         );
       }
 
-      editButton = (
-        <TWBS.Row>
-          <TWBS.Col xs={12}>
+      editButtons = (
+        <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-left"
+                         disabled  = { this.props.item["builtin"] }
+                         onClick   = { this.deleteUser }
+                         bsStyle   = "danger" >{"Delete User"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "edit") }
                          bsStyle   = "info" >{"Edit User"}</TWBS.Button>
-          </TWBS.Col>
-        </TWBS.Row>
+        </TWBS.ButtonToolbar>
       );
 
       return (
         <TWBS.Grid fluid>
           {/* "Edit User" Button - Top */}
-          { editButton }
+          { editButtons }
 
           {/* User icon and general information */}
           <TWBS.Row>
@@ -147,7 +156,7 @@ var UserView = React.createClass({
           </TWBS.Row>
 
           {/* "Edit User" Button - Bottom */}
-          { editButton }
+          { editButtons }
 
         </TWBS.Grid>
       );
@@ -251,10 +260,6 @@ var UserEdit = React.createClass({
           console.warn( "Attempted to send a User update with no valid fields." );
       }
 
-    }
-
-  , deleteUser: function(){
-        UsersMiddleware.deleteUser(this.props.item["id"], this.returnToViewerRoot() );
     }
 
     // TODO: Currently this section just arbitrarily handles every property the
