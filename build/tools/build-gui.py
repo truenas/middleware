@@ -29,10 +29,11 @@
 import os
 import sys
 import glob
-from utils import env, e, setup_env, sh, sh_str, info, debug, error, walk
+from utils import env, e, setup_env, sh, sh_str, info, debug, error, walk, objdir
 
 
 setup_env()
+logfile = objdir('logs/build-gui')
 
 
 def cleandirs():
@@ -76,8 +77,8 @@ def install():
     os.chdir(e('${GUI_STAGEDIR}'))
     sh('npm install grunt grunt-cli bower')
     sh('npm install')
-    sh(bower, '--allow-root install')
-    sh(grunt, 'deploy --force --dir=${GUI_DESTDIR}')
+    sh(bower, '--allow-root install', log=logfile)
+    sh(grunt, 'deploy --force --dir=${GUI_DESTDIR}', log=logfile)
 
 
 def create_plist():

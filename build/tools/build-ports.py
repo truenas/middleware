@@ -101,6 +101,7 @@ def create_ports_list():
 def prepare_jail():
     jailname = 'ja'
     basepath = e('${POUDRIERE_ROOT}/etc/poudriere.d/jails/${jailname}')
+    sh('mkdir -p ${basepath}')
 
     setfile(e('${basepath}/method'), 'git')
     setfile(e('${basepath}/mnt'), e('${JAIL_DESTDIR}'))
