@@ -196,7 +196,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
     bsdusr_sshpubkey = forms.CharField(
         label=_("SSH Public Key"),
         widget=forms.Textarea,
-        max_length=8192,
         required=False)
     bsdusr_mode = UnixPermissionField(
         label=_('Home Directory Mode'),
