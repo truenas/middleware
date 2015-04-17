@@ -28,22 +28,23 @@ var AddGroup = React.createClass({
 
   , getInitialState: function() {
       return {
-          editedFields : {}
+          locallyModifiedValues : {}
         , dataKeys     : this.props.viewData.format.dataKeys
         , nextGID      : this.getNextGID()
       };
     }
 
   , handleValueChange: function( key, event ) {
-      var newEditedFields = this.state.editedFields;
+      var value = this.refs[key].getValue();
+      var newLocallyModified = this.state.locallyModifiedValues;
 
       var dataKey = _.find(this.state.dataKeys, function( dataKey ) {
         return (dataKey.key === key);
       });
 
-      newEditedFields[ key ] = this.processFormInput( event, dataKey );
+      newLocallyModified[ key ] = this.processFormInput( event, value, dataKey );
 
-      this.setState( { editedFields: newEditedFields } );
+      this.setState( { locallyModifiedValues: newLocallyModified } );
     }
 
     // Will return the next recommended GID (to be used as a default).
@@ -57,7 +58,7 @@ var AddGroup = React.createClass({
       var params         = {};
 
       // Stage values for submission. Read-only values are not allowed.
-      newGroupValues = this.removeReadOnlyFields( this.state.editedFields, this.state.dataKeys );
+      newGroupValues = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
       // Set up to forward the view to the created group.
       params[ routing[ "param" ] ] = newGroupValues[ "name" ];
@@ -81,7 +82,7 @@ var AddGroup = React.createClass({
                        onClick   = { this.cancel }
                        bsStyle   = "default">{"Cancel"}</TWBS.Button>
           <TWBS.Button className = "pull-right"
-                       disabled  = { _.isEmpty( this.state.editedFields ) }
+                       disabled  = { _.isEmpty( this.state.locallyModifiedValues ) }
                        onClick   = { this.submitNewGroup}
                        bsStyle   = "info">{"Save New Group"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
@@ -94,9 +95,10 @@ var AddGroup = React.createClass({
                 {/* Group id */}
                 <TWBS.Input type             = "text"
                             label            = "Group ID"
-                            value            = { this.state.editedFields["id"]? this.state.editedFields["id"]: this.state.nextGID }
+                            ref              = "id"
+                            value            = { this.state.locallyModifiedValues["id"]? this.state.locallyModifiedValues["id"]: this.state.nextGID }
                             onChange         = { this.handleValueChange.bind( null, "id" ) }
-                            groupClassName   = { _.has(this.state.editedFields, "id") && !_.isEmpty(this.state.editedFields["id"]) ? "editor-was-modified" : ""  }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues, "id") && !_.isEmpty(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8" />
               </TWBS.Col>
@@ -104,9 +106,10 @@ var AddGroup = React.createClass({
                 {/* username */}
                 <TWBS.Input type             = "text"
                             label            = "Group Name"
-                            value            = { this.state.editedFields["name"]? this.state.editedFields["name"]: null }
+                            ref              = "name"
+                            value            = { this.state.locallyModifiedValues["name"]? this.state.locallyModifiedValues["name"]: null }
                             onChange         = { this.handleValueChange.bind( null, "name" ) }
-                            groupClassName   = { _.has(this.state.editedFields, "name") && !_.isEmpty(this.state.editedFields["name"]) ? "editor-was-modified" : ""  }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues, "name") && !_.isEmpty(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
                             required />
