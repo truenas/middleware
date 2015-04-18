@@ -36,11 +36,22 @@ var GroupView = React.createClass({
     }
 
   , getMembers: function( groupid ) {
-    if ( UsersStore.getUsersByGroup( groupid )[0] ) {
-      return UsersStore.getUsersByGroup( groupid )[0].username;
+    if ( UsersStore.getUsersByGroup( groupid ) ) {
+      return UsersStore.getUsersByGroup( groupid );
     } else {
-      return "";
+      return [];
     }
+  }
+  
+  , createUserDisplayList: function( groupid ) {
+      var listUserItemArray = [];
+      var users = this.getMembers( groupid );
+
+      for (var i = 0; i < users.length; i++) {
+         listUserItemArray.push(<TWBS.ListGroupItem>{ users[i].username }</TWBS.ListGroupItem>);
+      }
+
+      return listUserItemArray;
   }
 
   , render: function() {
@@ -92,12 +103,22 @@ var GroupView = React.createClass({
           {/* Primary group data overview */}
 
         <TWBS.Row>
-          <viewerUtil.DataCell title  = { "Group ID" }
-                               colNum = { 3 }
-                               entry  = { this.props.item["id"] }/>
-          <viewerUtil.DataCell title = { "Users" }
-                               colNum = { 9 }
-                               entry = { this.getMembers( this.props.item["id"] ) } />
+	  <TWBS.Col xs      = {2}
+	            className = "text-muted" >
+	            <h4 className = "text-muted" >{ "Group ID" }</h4>
+	  </TWBS.Col>
+          <TWBS.Col xs = {10}>
+		    <h3>{this.props.item["id"]}</h3>
+	  </TWBS.Col>
+        </TWBS.Row>
+	<TWBS.Row>
+	  <TWBS.Col xs      = {12}
+	            className = "text-muted" >
+	            <h4 className = "text-muted" >{ "Users" }</h4>
+                       <TWBS.ListGroup>
+                          { this.createUserDisplayList( this.props.item["id"] ) }
+		       </TWBS.ListGroup>
+          </TWBS.Col>		       
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
