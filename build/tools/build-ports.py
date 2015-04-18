@@ -56,8 +56,7 @@ def calculate_make_jobs():
 
 
 def create_poudriere_config():
-    conf = pathjoin('${POUDRIERE_ROOT}', 'etc/poudriere.conf')
-    setfile(conf, template('${BUILD_CONFIG}/templates/poudriere.conf', {
+    setfile('${POUDRIERE_ROOT}/etc/poudriere.conf', template('${BUILD_CONFIG}/templates/poudriere.conf', {
         'ports_repo': reposconf['repository']['ports']['path'],
         'ports_branch': reposconf['repository']['ports']['branch'],
         'ports_distfiles_cache': e('${MAKEOBJDIRPREFIX}/ports/distfiles')

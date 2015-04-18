@@ -139,13 +139,3 @@ port(
         e("REVISION=${GIT_REVISION}")
     ]
 )
-
-if PRODUCT != "TrueNAS":
-    port(
-        name="freenas/py-fnutils",
-        options=[
-            e("PRODUCT_VERSION=${VERSION}"),
-            e("BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"),
-            e("REVISION=${GIT_REVISION}")
-        ]
-    )
