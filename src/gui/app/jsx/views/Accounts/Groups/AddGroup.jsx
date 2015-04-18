@@ -8,6 +8,7 @@ var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
 
+var GroupsStore      = require("../../../stores/GroupsStore");
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 
 var inputHelpers = require("../../../components/mixins/inputHelpers");
@@ -27,10 +28,13 @@ var AddGroup = React.createClass({
     }
 
   , getInitialState: function() {
+
+      var groupsList = GroupsStore.getAllGroups();
+
       return {
           locallyModifiedValues : {}
-        , dataKeys     : this.props.viewData.format.dataKeys
-        , nextGID      : this.getNextGID()
+        , dataKeys   : this.props.viewData.format.dataKeys
+        , groupsList : groupsList
       };
     }
 
@@ -91,7 +95,7 @@ var AddGroup = React.createClass({
                 <TWBS.Input type             = "text"
                             label            = "Group ID"
                             ref              = "id"
-                            value            = { this.state.locallyModifiedValues["id"]? this.state.locallyModifiedValues["id"]: this.state.nextGID }
+                            value            = { this.state.locallyModifiedValues["id"]? this.state.locallyModifiedValues["id"]: this.getNextGID() }
                             onChange         = { this.handleValueChange.bind( null, "id" ) }
                             groupClassName   = { _.has(this.state.locallyModifiedValues, "id") && !_.isEmpty(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"

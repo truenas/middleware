@@ -36,10 +36,9 @@ var AddUser = React.createClass({
     }
 
   , getInitialState: function() {
-      var defaultValues = {
-                              id    : this.getNextUID()
-                            , shell : "/bin/csh"
-                          };
+      var defaultValues = { shell : "/bin/csh" };
+
+      var usersList = UsersStore.getAllUsers();
 
       return {
         // FIXME: locallyModifiedValues is magical. See handleValueChange and what
@@ -48,6 +47,7 @@ var AddUser = React.createClass({
         , defaultValues            : defaultValues
         , dataKeys                 : this.props.viewData.format.dataKeys
         , pleaseCreatePrimaryGroup : true
+        , usersList                : usersList
       };
     }
 
@@ -66,12 +66,17 @@ var AddUser = React.createClass({
 
     // Will return the first available UID above 1000 (to be used as a default).
   , getNextUID: function() {
-      var users = UsersStore.getAllUsers();
+      var users = {};
+
+      // Turn the array of users into an object for easier UID checking.
+      _.forEach( this.state.usersList, function ( user ) {
+        users[ user [ "id" ] ] = user;
+      });
 
       var nextUID = 1000;
 
       // loop until it finds a UID that's not in use
-      while( _.has( users, nextUID ) ){
+      while( _.has( users, nextUID.toString() ) ){
         nextUID++;
       }
 
@@ -142,7 +147,7 @@ var AddUser = React.createClass({
                 <TWBS.Input type             = "text"
                             ref              = "id"
                             label            = "User ID"
-                            defaultValue     = { this.state.defaultValues[ "id" ] }
+                            defaultValue     = { this.getNextUID() }
                             onChange         = { this.handleValueChange.bind( null, "id" ) }
                             groupClassName   = { _.has(this.state.locallyModifiedValues, "id") && !_.isEmpty(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : ""  }
                             labelClassName   = "col-xs-4"

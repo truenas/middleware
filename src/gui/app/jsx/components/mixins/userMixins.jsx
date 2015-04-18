@@ -7,6 +7,8 @@
 var _ = require("lodash");
 
 var ShellMiddleware = require("../../middleware/ShellMiddleware");
+
+var UsersStore      = require("../../stores/UsersStore");
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
 
 module.exports = {
@@ -21,6 +23,17 @@ module.exports = {
         systemShells.push( { name: "/usr/sbin/nologin" } );
         this.setState({ shells: systemShells });
       }.bind( this ) );
+
+      UsersStore.addChangeListener(this.updateUsersInState);
+    }
+
+  , componentWillUnmount: function() {
+      UsersStore.removeChangeListener(this.updateUsersInState);
+    }
+
+  , updateUsersInState: function() {
+      var usersList = UsersStore.getAllUsers();
+      this.setState( { usersList : usersList } );
     }
 
     // Converts an array of strings into an array of integers. Intended solely
