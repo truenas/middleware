@@ -44,7 +44,6 @@ output = objdir('${NAME}.iso')
 
 symlinks = {
     '[': '/bin/[',
-    'atacontrol': '/sbin/atacontrol',
     'badsect': '/sbin/badsect',
     'bsdlabel': '/sbin/bsdlabel',
     'bunzip2': '/usr/bin/bunzip2',
