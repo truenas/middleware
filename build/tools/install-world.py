@@ -27,6 +27,7 @@
 #####################################################################
 
 import sys
+import os
 from utils import sh, sh_str, e, setup_env, objdir, info, debug, error, import_function
 
 
@@ -43,8 +44,10 @@ if __name__ == '__main__':
         info('Skipping world installation, as instructed by setting SKIP_INSTALL_WORLD')
         sys.exit(0)
 
-    sh('chflags -R 0 ${WORLD_DESTDIR}')
-    sh('rm -rf ${WORLD_DESTDIR}')
+    if os.path.isdir(e('${WORLD_DESTDIR}')):
+        sh('chflags -fR 0 ${WORLD_DESTDIR}')
+        sh('rm -rf ${WORLD_DESTDIR}')
+
     sh('mkdir -p ${WORLD_DESTDIR}')
     installworld(e('${WORLD_DESTDIR}'), installworldlog, distributionlog)
     installkernel(e('${WORLD_DESTDIR}'), installkernellog)

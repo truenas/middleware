@@ -219,8 +219,10 @@ def setup_diskless():
 
 def cleandirs():
     info('Cleaning previous build products')
-    sh('chflags -R 0 ${INSTUFS_DESTDIR}')
-    sh('rm -rf ${INSTUFS_DESTDIR}')
+    if os.path.isdir(e('${INSTUFS_DESTDIR}')):
+        sh('chflags -R 0 ${INSTUFS_DESTDIR}')
+        sh('rm -rf ${INSTUFS_DESTDIR}')
+
     sh('rm -rf ${ISO_DESTDIR}')
 
 

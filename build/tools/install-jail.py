@@ -26,6 +26,7 @@
 #
 #####################################################################
 
+import os
 import sys
 from utils import sh, e, setup_env, objdir, info, import_function
 
@@ -42,6 +43,10 @@ if __name__ == '__main__':
     if e('${SKIP_INSTALL_JAIL}'):
         info('Skipping jail installation, as instructed by setting SKIP_INSTALL_JAIL')
         sys.exit(0)
+
+    if os.path.isdir(e('${WORLD_DESTDIR}')):
+        sh('chflags -fR 0 ${JAIL_DESTDIR}')
+        sh('rm -rf ${JAIL_DESTDIR}')
 
     sh('mkdir -p ${JAIL_DESTDIR}')
     installworld(e('${JAIL_DESTDIR}'), installworldlog, distributionlog)
