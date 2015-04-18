@@ -20,7 +20,7 @@ USE_XZ=		yes
 USE_PYTHON=	yes
 EXTRACT_ONLY=
 
-WRKSRC=		/usr/nas_source2/py-fnutils
+WRKSRC=		/usr/freenas_src/py-fnutils
 
 USES=		python:2
 USE_PYTHON=	autoplist distutils

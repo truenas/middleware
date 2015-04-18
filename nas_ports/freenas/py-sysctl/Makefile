@@ -21,7 +21,7 @@ USE_PYTHON=	yes
 EXTRACT_ONLY=
 BUILD_DEPENDS=  ${LOCALBASE}/bin/cython:${PORTSDIR}/lang/cython
 
-WRKSRC=		/usr/nas_source2/py-sysctl
+WRKSRC=		/usr/freenas_src/py-sysctl
 
 USES=		python:2
 USE_PYTHON=	autoplist distutils
