@@ -27,7 +27,6 @@
 
 import os
 import paramiko
-from time import sleep
 import socket
 import sys
 
@@ -43,20 +42,40 @@ cache.get_apps()
 from freenasUI.storage.models import Replication
 
 
-def check_ssh(ip, port, user, key_file, initial_wait=0, interval=0, retries=1):
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
+def fixkey(ip):
+    print "My idea of what the remote hostkey should be is wrong."
+    while True:
+        ret = raw_input("Would you like me to fix this? (y/n): ")
+        if ret.lower() == "y" or ret.lower() == "yes":
+            rep = os.popen("ssh-keyscan %s 2> /dev/null" % ip).read()
+            return rep
+        elif ret.lower() == "n" or ret.lower() == "no":
+            break
+        else:
+            print "Please choose either y or n."
+            continue
 
-    sleep(initial_wait)
+
+def check_ssh(ip, port, user, key_file, retries=1):
+    ssh = paramiko.SSHClient()
+    if os.path.isfile("/etc/ssh/ssh_known_hosts"):
+        try:
+            ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
+        except paramiko.hostkeys.InvalidHostKey:
+            os.unlink("/etc/ssh/ssh_known_hosts")
 
     for x in range(retries):
         try:
             ssh.connect(ip, port, username=user, key_filename=key_file)
             return True
-        except (paramiko.BadHostKeyException, paramiko.AuthenticationException,
+        except (paramiko.BadHostKeyException, paramiko.SSHException) as e:
+            if hasattr(e, "message") and ("not found in known_hosts"
+                                          in e.message or "does not match!"
+                                          in e.message):
+                return fixkey(ip)
+        except (paramiko.AuthenticationException,
                 paramiko.SSHException, socket.error) as e:
             print e
-            sleep(interval)
     return False
 
 replication_tasks = Replication.objects.all()
@@ -70,9 +89,16 @@ for replication in replication_tasks:
         user = replication.repl_remote.ssh_remote_dedicateduser
     else:
         user = "root"
-    if check_ssh(remote, remote_port, user, "/data/ssh/replication"):
+    ret = check_ssh(remote, remote_port, user, "/data/ssh/replication")
+    if ret is True:
         print "Status: OK"
         print
-    else:
+    elif ret is False:
         print "Status: Failed"
+        print
+    else:
+        replication.repl_remote.ssh_remote_hostkey = ret
+        replication.repl_remote.save()
+        os.system("service ix-sshd start")
+        print "Status: Hostkeys fixed"
         print
