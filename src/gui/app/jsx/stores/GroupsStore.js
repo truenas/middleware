@@ -10,7 +10,6 @@ var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
 var FreeNASConstants  = require("../constants/FreeNASConstants");
 
 var GroupsMiddleware = require("../middleware/GroupsMiddleware");
-var UsersMiddleware = require("../middleware/UsersMiddleware");
 
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
@@ -90,16 +89,17 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
-      var updateData = args["args"];
+      var updateData = args[ "args" ];
 
-      if ( args["name"] === UPDATE_MASK ) {
+      if ( args[ "name" ] === UPDATE_MASK ) {
         if ( updateData[ "operation" ] === "delete" ) {
             _groups = _.omit(_groups, updateData["ids"] );
-        } else if ( updateData ["operation"] === "create" || updateData ["operation"] === "update" ) {
+        } else if ( updateData[ "operation" ] === "create" || updateData[ "operation" ] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           GroupsMiddleware.requestGroupsList( _updatedOnServer );
         }
         GroupsStore.emitChange();
+
       } else if ( args[ "name" ] === "task.updated" && updateData["state"] === "FINISHED" ) {
           delete _localUpdatePending[ updateData["id"] ];
       }

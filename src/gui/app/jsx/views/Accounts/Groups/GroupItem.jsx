@@ -19,7 +19,6 @@ var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
 
-var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
 var groupMixins   = require("../../../components/mixins/groupMixins");

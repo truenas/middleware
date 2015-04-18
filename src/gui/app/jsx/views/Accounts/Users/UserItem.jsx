@@ -168,12 +168,12 @@ var UserView = React.createClass({
 // EDITOR PANE
 var UserEdit = React.createClass({
 
-    mixins: [  inputHelpers
-             , userMixins
-             , viewerCommon ]
+    mixins: [   inputHelpers
+              , userMixins
+              , viewerCommon ]
 
   , contextTypes: {
-        router: React.PropTypes.func
+      router: React.PropTypes.func
     }
 
   , propTypes: {

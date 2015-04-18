@@ -7,7 +7,6 @@
 "use strict";
 
 var _     = require("lodash");
-var React = require("react");
 
 var GroupsStore      = require("../../stores/GroupsStore");
 var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
