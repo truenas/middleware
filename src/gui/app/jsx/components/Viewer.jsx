@@ -25,7 +25,6 @@ var Viewer = React.createClass({
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
       , inputData    : React.PropTypes.array.isRequired
-      , addEntity    : React.PropTypes.string
       , viewData     : React.PropTypes.object.isRequired
       , displayData  : React.PropTypes.object
     }
@@ -275,7 +274,6 @@ var Viewer = React.createClass({
       return <ViewerContent
                 viewData         = { this.props.viewData }
                 inputData        = { this.props.inputData }
-                addEntity        = { this.props.addEntity}
                 tableCols        = { this.state.tableCols }
                 handleItemSelect = { this.handleItemSelect }
                 selectedItem     = { this.state.selectedItem }
