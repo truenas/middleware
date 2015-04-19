@@ -37,10 +37,6 @@ exclude = /usr/local/www/gui
 	/usr/share/groff_font
 	/usr/share/tmac
 	/usr/share/me
-	/var/log
-	/conf/base/var/log/usr/log
-	/conf/base/var/db/fontconfig
 	/var/db/pkg
-	/conf/var/db/pkg
 	/etc/rc.d/netif
 	/etc/rc.d/routing

@@ -15,4 +15,3 @@ requires-reboot = False
 [Files]
 include =
 	/var/db/pkg
-	/conf/base/var/db/pkg
