@@ -21,3 +21,6 @@ class UpdateBusyCacheException(Exception):
 
 class UpdateManifestNotFound(Exception):
     pass
+
+class UpdatePackageException(UpdateException):
+    pass
