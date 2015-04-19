@@ -33,3 +33,6 @@ class UpdateBootEnvironmentException(UpdateException):
 
 class UpdateSnapshotException(UpdateException):
     pass
+
+class UpdatePackageException(UpdateException):
+    pass
