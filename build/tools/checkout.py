@@ -43,8 +43,11 @@ def checkout_repo(repo):
         if branch != repo['branch']:
             sh('git remote set-url origin', repo['url'])
             sh('git fetch origin')
+            sh('git checkout', repo['branch'])
 
-    sh('git clone', '-b', repo['branch'], repo['url'], repo['path'])
+        sh('git pull --rebase')
+    else:
+        sh('git clone', '-b', repo['branch'], repo['url'], repo['path'])
 
 
 if __name__ == '__main__':
