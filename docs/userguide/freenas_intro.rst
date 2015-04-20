@@ -430,6 +430,8 @@ that have occurred since 9.3-RELEASE.
 
 * An alert will be generated when a new update becomes available.
 
+* An alert will be generated when a S.M.A.R.T. error occurs.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 

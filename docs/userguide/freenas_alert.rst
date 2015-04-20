@@ -32,6 +32,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * ZFS pool status changes from "HEALTHY"
 
+* a S.M.A.R.T. error occurs
+
 * the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
 
 * the system can not find an IP address configured on an iSCSI portal
