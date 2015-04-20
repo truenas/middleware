@@ -295,8 +295,8 @@ def make_iso_image():
 if __name__ == '__main__':
     info("Creating ISO image")
     cleandirs()
-    installworld()
-    installkernel()
+    installworld(e('${INSTUFS_DESTDIR'), installworldlog)
+    installkernel(e('${INSTUFS_DESTDIR}'), installkernellog)
     create_ufs_dirs()
     mount_packages()
     install_ports()
