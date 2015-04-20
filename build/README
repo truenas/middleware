@@ -1,18 +1,7 @@
 This is an x64 distribution for FreeNAS VERSION built on
 BUILD_TIMESTAMP (yyyymmddhhmm format, GMT timezone, 24-hour time).
 
-If you are seeing this README file, this is a daily build created for
-testing purposes.  You should, of course, run any daily build at your
-own risk, and on non-mission-critical data, since it obviously has not
-been deemed fully release-ready and may suffer from any number of issues!
-
-Please feel free to report bugs for this build (http://bugs.freenas.org)
-but please be also sure to note the build version and timestamp as above,
-since otherwise we will have no idea which build contains the bug being
-reported.  These bug reports are VERY valuable to us and will be looked
-at, since fixing them early is what keeps our builds of consistently
-high quality.
-
-Thanks!
-
-The FreeNAS development team
+If you are seeing this README file, this is a 9.3-STABLE build which
+directly corresponds to an update on the 9.3-STABLE train.  You can
+get the benefit of installing the latest and greatest (without having to
+apply any updates immediately afterward) by simply installing this release.

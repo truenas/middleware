@@ -2,13 +2,14 @@ Release Notes for FreeNAS 9.3-RELEASE
 
 There are so many new features and enhancements in FreeNAS 9.3 that these
 release notes will break them into categories.  In no particular order,
-FreeNAS 9.3-RELEASE offers the following improvements:
+FreeNAS 9.3-RELEASE (including this Software Update) offers the following
+improvements:
 
 
 [ Installation / Booting ]
 
 * FreeNAS now uses ZFS for the boot device(s), also supporting selection
-and mirroring of one or more boot devices for greater reliability.
+and mirroring of one or more boot devices for greater reliabilty.
 The features of ZFS are also utilized to provide cloned "boot environments"
 which allow the system to be rolled back (or even forked) to different OS
 versions.
@@ -65,9 +66,9 @@ tampering or inadvertent corruption of the system.
 
 * WebDAV file sharing is now supported.
 
-* Samba upgraded to 4.1.13.
+* Samba upgraded to 4.1.17.  Home sharing substantially improved.
 
-* NFSv4 support added, including Kerberized NFS.
+* NFSv4 support added, including kerberized NFS.
 
 * Kernel iSCSI (CTL) has completely replaced the old iSCSI code, adding
 support for VMWare VAAI (all 7 primitives), MS ODX and Windows 2012 Clustering
@@ -75,10 +76,10 @@ as well as much higher performance and space efficiency (zero'd blocks can now
 be reclaimed).  Support for STUN and pool storage thresholds also makes VMWare
 behavior far more robust when ZFS pools fill up.
 
-* Kernel iSCSI sequential read performance has been sped up considerably by
+* Kernel iSCSI sequently read performance has been sped up considerably by
 improving the way such read requests interact with ZFS
 
-* iSCSI now supports associating to an iSNS server.
+* iSCSI nows supports associating to an iSNS server.
 
 * AFP now allows allowhosts and denyhosts per share.
 
@@ -86,7 +87,7 @@ improving the way such read requests interact with ZFS
 
 * AD / LDAP configurations are validated immediately after input.
 
-* Kerberos Realms and Keytabs have joined the Directory Services UI.
+* Kerberos Realms and Keytabs have joined the Direcory Services UI.
 
 * Directory Services now based on SSSD (System Security Services Daemon) and
 connections to LDAP servers done with SSL/TLS.
@@ -118,6 +119,7 @@ hashes unnecessary for anything but manual updates.
 * All passwords for services which have been associated with a FreeNAS/TrueNAS
 storage device (e.g. AD, LDAP, VMWare, etc) are encrypted in the database.
 
+* Current with all FreeBSD and OpenSSL security advisories as of 2015-02-26
 
 [ Miscellaneous ]
 
@@ -138,3 +140,6 @@ not to impact performance, but still exist in the ZFS snapshot and can be
 used as "stable resurrection points" in that snapshot.
 These "coordinated snapshots" can be found (and are specifically marked
 as such) in the snapshot UI.
+
+* FreeNAS now supports automatic drive replacement on failure, if spare
+drives are available.

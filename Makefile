@@ -3,16 +3,28 @@
 .endif
 
 NANO_LABEL?=FreeNAS
-VERSION?=9.3-CURRENT
-TRAIN?=${NANO_LABEL}-9.3-Nightlies
+VERSION?=9.3-STABLE
+TRAIN?=${NANO_LABEL}-${VERSION}
+
+.ifdef PRODUCTION
+FREENAS_KEYFILE?=Keys/ix-freenas-key.key
+.if !defined(_KEY)
+KEY_PASSWORD!= build/read-password.sh
+.endif
+.else
 FREENAS_KEYFILE?=Keys/ix-nightly-key.key
+KEY_PASSWORD=""
+.endif
+
 COMPANY?="iXsystems"
 .if !defined(BUILD_TIMESTAMP)
 BUILD_TIMESTAMP!=date -u '+%Y%m%d%H%M'
+PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
 .endif
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH?="/freenas/Dev/releng/${NANO_LABEL}/jkh-nightlies/"
+IX_INTERNAL_PATH="/freenas/Dev/releng/${NANO_LABEL}/nightlies/"
+IX_STABLE_DIR="/freenas/Dev/releng/${NANO_LABEL}/9.3/STABLE/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -25,11 +37,20 @@ GIT_REPO_SETTING=.git-repo-setting
 .if exists(${GIT_REPO_SETTING})
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
-ENV_SETUP=env NANO_LABEL=${NANO_LABEL} VERSION=${VERSION} GIT_LOCATION=${GIT_LOCATION} BUILD_TIMESTAMP=${BUILD_TIMESTAMP} SEQUENCE=${TRAIN}-${BUILD_TIMESTAMP}
+
+ENV_SETUP=env _KEY=set
+
+ENV_SETUP+= NANO_LABEL=${NANO_LABEL}
+ENV_SETUP+= VERSION=${VERSION}
+ENV_SETUP+= GIT_LOCATION=${GIT_LOCATION}
+ENV_SETUP+= BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
+ENV_SETUP+= SEQUENCE=${TRAIN}-${BUILD_TIMESTAMP}
 ENV_SETUP+= TRAIN=${TRAIN}
 ENV_SETUP+= UPDATE_USER=sef	# For now, just use sef's account
 ENV_SETUP+= FREENAS_KEYFILE=${FREENAS_KEYFILE}
-ENV_SETUP+= CHANGLOG=ChangeLog
+.if exists(ChangeLog)
+ENV_SETUP+= CHANGELOG=ChangeLog
+.endif
 
 .if defined(NANO_ARCH)
  ENV_SETUP+= NANO_ARCH=${NANO_ARCH}
@@ -37,11 +58,9 @@ ENV_SETUP+= CHANGLOG=ChangeLog
 
 all:	build
 
-.BEGIN:
-.if !make(git-internal) && !make(dev-checkout)
+builder-verify:
 	${ENV_SETUP} /bin/sh build/check_build_host.sh
-.endif
-.if !make(checkout) && !make(dev-checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
+.if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
 	${ENV_SETUP} /bin/sh build/check_sandbox.sh
 .endif
 
@@ -53,8 +72,6 @@ build: git-verify
 
 checkout: git-verify
 	${ENV_SETUP} /bin/sh build/do_checkout.sh
-
-dev-checkout: checkout
 
 update: git-verify
 	git pull
@@ -90,6 +107,20 @@ distclean: clean
 save-build-env:
 	${ENV_SETUP} /bin/sh build/save_build.sh
 
+changelog:
+	@if [ -f ChangeLog ]; then \
+		echo ChangeLog already exists.; exit 1; \
+	fi
+	@if [ -f /root/redmine-api-key ]; then \
+		if [ "${TRAIN}" == "FreeNAS-9.3-STABLE" ]; then \
+			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "freenas" > ChangeLog; \
+		elif [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
+			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "truenas" > ChangeLog; \
+		else \
+			echo "I don't create ChangeLogs for ${TRAIN}"; \
+		fi \
+	fi
+
 freenas: release
 release: git-verify
 	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
@@ -105,22 +136,26 @@ release: git-verify
 .endif
 
 release-push: release
-	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
+	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 	rm -rf "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	rm -rf "objs/${STAGEDIR}/FreeNAS-MANIFEST objs/${STAGEDIR}/Packages"
-	cp ReleaseNotes UPGRADING "objs/${STAGEDIR}/"
+	cp ReleaseNotes UPGRADING objs/${STAGEDIR}/
+	if [ -f ChangeLog ]; then cp ChangeLog objs/${STAGEDIR}/; fi
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	if [ "${NANO_LABEL}" == "FreeNAS" ]; then \
-		${ENV_SETUP} /bin/sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"; \
+	${ENV_SETUP} /bin/sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${TRAIN}" "${BUILD_TIMESTAMP}"
+	if [ "${TRAIN}" == "FreeNAS-9.3-STABLE" ]; then \
 		echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com; \
-		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi \
+		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi; \
+		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
+		(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest); \
+		${ENV_SETUP} ${MAKE} save-build-env ; \
 	fi
-	mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`;
-	(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest)
-	${ENV_SETUP} ${MAKE} save-build-env
 
 update-push:	release
-	${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
+	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
+
+update-undo:
+	${ENV_SETUP} ssh ${UPDATE_USER}@update.freenas.org freenas-release --archive /tank/www/${NANO_LABEL} --project ${NANO_LABEL} -D ~${UPDATE_USER}/FreeNAS-updates.db rollback ${TRAIN}
 
 archive:	release
 .if !defined(ARCHIVE)
@@ -153,7 +188,7 @@ build-bug-report:
 	mail -s "build fail for $${SUDO_USER:-$$USER}" ${BUILD_BUG_EMAIL} < \
 		${RELEASE_LOGFILE}
 
-git-verify:
+git-verify: builder-verify
 	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
 		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
 		echo "external developer or \"make git-internal\" to build as an ${COMPANY}"; \
@@ -164,7 +199,6 @@ git-verify:
 
 git-internal:
 	@echo "INTERNAL" > ${GIT_REPO_SETTING}
-	git config --global commit.template .gitcommit.txt
 	@echo "You are set up for internal (${COMPANY}) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
 
