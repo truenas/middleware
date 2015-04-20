@@ -10,6 +10,9 @@ var TWBS  = require("react-bootstrap");
 var MiddlewareClient = require("../../middleware/MiddlewareClient");
 var MiddlewareStore  = require("../../stores/MiddlewareStore");
 
+// Disclosure Triangles
+var DiscTri = require("../common/DiscTri");
+
 var RPC = React.createClass({
 
     getInitialState: function() {
@@ -133,10 +136,13 @@ var RPC = React.createClass({
           );
 
           return (
-            <TWBS.Panel bsStyle="info" header={ service } key={ index }>
-              { methods }
-            </TWBS.Panel>
+            <DiscTri headerShow={ service } headerHide={ service } key={ index } defaultExpanded={false}>
+              <TWBS.Panel bsStyle="info" key={ index }>
+                { methods }
+              </TWBS.Panel>
+            </DiscTri>
           );
+
       } else {
         return null;
       }

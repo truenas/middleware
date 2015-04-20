@@ -4,6 +4,9 @@
 // (Yes/No/Close etc.) before the actual thing happening
 // TODO: Give it a .less file for giving it custom themes
 
+
+"use strict";
+
 var React = require("react");
 
 // Twitter Bootstrap React Components
@@ -19,7 +22,7 @@ var ConfDialog = React.createClass({
       , footerRightBtn   : React.PropTypes.string
       , modalAnimation   : React.PropTypes.bool
       , className        : React.PropTypes.string
-      , callFunc      : React.PropTypes.func.isRequired
+      , callFunc         : React.PropTypes.func.isRequired
       , dataText         : React.PropTypes.node.isRequired
     }
 
@@ -34,7 +37,7 @@ var ConfDialog = React.createClass({
       , bodyText : "Are you sure you want to perform this Action?"
       , footerLeftBtn : "Cancel"
       , footerRightBtn : "Yes"
-      }
+      };
   }
 
   , getInitialState: function() {

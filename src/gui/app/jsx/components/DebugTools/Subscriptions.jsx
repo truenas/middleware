@@ -9,23 +9,19 @@ var TWBS  = require("react-bootstrap");
 
 var componentLongName = "Debug Tools - Subscriptions Tab";
 
+// Disclosure Triangles
+var DiscTri = require("../common/DiscTri");
+
 // Middleware
 var SubscriptionsStore  = require("../../stores/SubscriptionsStore");
 var MiddlewareClient    = require("../../middleware/MiddlewareClient");
 
-var Icon                = require("../Icon");
 
 var Subscriptions = React.createClass({
 
     getInitialState: function() {
-      var subs = SubscriptionsStore.getAllSubscriptions();
-      var listClass = {};
-      _.forEach(subs,  function (value, key) {
-         listClass[key] = false;
-      });
       return {
-          subscriptions : subs
-        , listClass     : listClass
+          subscriptions : SubscriptionsStore.getAllSubscriptions()
         , subsMasks     : ""
       };
     }
@@ -39,16 +35,8 @@ var Subscriptions = React.createClass({
     }
 
   , handleMiddlewareChange: function() {
-      var subs = SubscriptionsStore.getAllSubscriptions();
-      var listClass = this.state.listClass;
-      _.forEach(subs,  function (value, key) {
-         if ( !_.has(listClass, key) ) {
-           listClass[key] = false;
-         }
-      });
       this.setState({
-          subscriptions : subs
-        , listClass     : listClass
+          subscriptions : SubscriptionsStore.getAllSubscriptions()
       });
     }
 
@@ -62,14 +50,6 @@ var Subscriptions = React.createClass({
       MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), componentLongName);
     }
 
-  , discloseToggle: function( namespace ) {
-      var listClass = this.state.listClass;
-      listClass[namespace] = !listClass[namespace];
-      this.setState({
-        listClass : listClass
-      });
-  }
-
   , createList: function( item, index ) {
       return (
         <li key={ index }>{ item }</li>
@@ -78,33 +58,17 @@ var Subscriptions = React.createClass({
 
   , createRow: function( namespace, index ) {
       var listItems = [];
-      var glyphClass = "toggle-right";
-      var tbClass    = "debug-disclosure-hide";
-      var listHead   = "show";
       _.forEach( this.state.subscriptions[ namespace ], function ( value, key ) {
             listItems.push(String(key).concat(" : ", value));
           });
-
-      if ( this.state.listClass[namespace] ) {
-        glyphClass = "toggle-down";
-        tbClass    = "debug-disclosure-show";
-        listHead   = "hide";
-      }
-
       return (
         <tr key={ index }>
           <td>{ namespace }</td>
           <td>{ _.sum(this.state.subscriptions[ namespace ]) }</td>
           <td>
-            <span className={ tbClass }>
-              <h6>
-                <Icon glyph = { glyphClass }
-                      icoSize = "1em"
-                      onClick = { this.discloseToggle.bind(this, namespace) } />
-                { listHead }
-              </h6>
+            <DiscTri key={ index } defaultExpanded={false}>
               <ul>{ listItems.map( this.createList ) }</ul>
-            </span>
+            </DiscTri>
           </td>
         </tr>
       );
