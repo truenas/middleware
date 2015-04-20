@@ -1060,3 +1060,55 @@ The options available in :menuselection:`System --> Failovers --> Create Failove
 Once a failover configuration is working, a new icon will be added between the Log Out and Alert icons to each device in the failover configuration. The
 active device will have a green Active icon and the passive device will have a red Passive icon. An entry will also be added to
 `System -> Failovers` on each device. 
+
+.. index:: Failovers
+
+.. _Failover Management:
+
+Failover Management
+~~~~~~~~~~~~~~~~~~~
+
+The :command:`hactl` command line utility is included for managing existing failovers. Once a failover has been configured, it is recommended
+to use :command:`hactl` instead of the GUI as any changes made using :menuselection:`System --> Failovers` will restart networking.
+
+If you type this command without any options, it will indicate the status of the failover. This example was run on an active node::
+
+ hactl
+ Node status: Active
+ Failover status: Enabled
+
+And this example was run on a system that has not been configured for failover::
+
+ hactl
+ Node status: Not an HA node
+
+Table 5.11b summarizes the available options for this command.
+
+**Table 5.11b: hactl Options**
+
++--------------------+---------------------------------------------------------------------------------------------+
+| **Option**         | **Description**                                                                             |
+|                    |                                                                                             |
++====================+=============================================================================================+
+| **enable**         | activates the failover; must be run on a HA node                                            |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **disable**        | disables the failover; must be run on a HA node                                             |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **status**         | indicates whether the node is active, passive, or non-HA                                    |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **takeover**       | can only be run from the passive node; will give a warning message that the current active  |
+|                    | node will reboot                                                                            |
++--------------------+---------------------------------------------------------------------------------------------+
+| **giveback**       | cannot be run from the active node; will give a warning message that this node will reboot  |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **-h** or **help** | shows the help message (options) for this command                                           |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **-q**             | will not display the current status if this is a non-HA node                                |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+
