@@ -83,14 +83,22 @@ options.
 | Advertisements Skew | integer   | change this value on the backup that should be promoted to master should the original master become unavailable |
 |                     |           |                                                                                                                 |
 +---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Critical for        | checkbox  |                                                                                                                 |
-| Failover            |           |                                                                                                                 |
+| Critical for        | checkbox  | check this box to indicate that if any interface in this CARP goes down that a failover should be initiated,    |
+| Failover            |           | even if other interfaces in the CARP are still up                                                               |
 |                     |           |                                                                                                                 |
 +---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Group               | drop-down |                                                                                                                 |
-|                     | menu      |                                                                                                                 |
+| Group               | drop-down | requires "Critical for Failover" to be checked; failover will only occur if all of the interfaces in this group |
+|                     | menu      | fail--see note below table                                                                                      |
 |                     |           |                                                                                                                 |
 +---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+
+.. note:: when selecting a group number, keep in mind that "0" and "1" are reserved. The group number itself does not matter as it merely provides a way to group
+   interfaces. For example, you could put laggs in one group and management interfaces in another group.  Interface groups allow for a configuration where there are MPIO iSCSI
+   interfaces, which support round-robin so failover needs not be triggered until all interfaces fail, an NFS interface, which does not support round-robin so a failover
+   should occur when that interface fails, as well as configurations where the management network is a convenience, but the data network is mission critical.
+   Any interface that is not put into a group will never failover, which can be useful when the network itself is highly redundant since if the network itself fails,
+   failover won't help.
+
 
 .. index:: Global Configuration
 
