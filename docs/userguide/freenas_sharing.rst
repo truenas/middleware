@@ -31,7 +31,7 @@ The following types of shares and services are available:
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
-  containing only Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade
+  containing any Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade
   the CPU or consider another type of share.
 
 * :ref:`Block (iSCSI)` shares: this type of share appears as an unformatted disk to clients running iSCSI initiator software or a virtualization solution such
@@ -613,6 +613,9 @@ where:
 
 Inputting the URL into a web browser will bring up an authentication pop-up message. Input a username of *webdav* and the password configured in
 :menuselection:`Services --> WebDAV`.
+
+.. warning:: at this time, only the *webdav* user is supported. For this reason, it is important to set a good password for this account and to only give the password to
+   users which should have access to the WebDAV share.
 
 To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
 
