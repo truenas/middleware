@@ -84,8 +84,8 @@ viewerUtil.ItemIcon = React.createClass({
       , fontIcon        : React.PropTypes.string
       , size            : React.PropTypes.number
       , fontSize        : React.PropTypes.number
-      , primaryString   : React.PropTypes.string
-      , fallbackString  : React.PropTypes.string.isRequired
+      , primaryString   : React.PropTypes.any
+      , fallbackString  : React.PropTypes.any.isRequired
       , seedNumber      : React.PropTypes.number
     }
 
