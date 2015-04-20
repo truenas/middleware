@@ -574,6 +574,9 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
+Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® 9.3 uses TCP. To support UDP connections, go to
+:menuselection:`Services --> NFS` and check the box "Serve UDP NFS clients".
+
 .. index:: WebDAV
 .. _WebDAV Shares:
 
