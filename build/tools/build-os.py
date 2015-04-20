@@ -79,7 +79,7 @@ def buildkernel():
     debug('Selected modules: {0}', modules)
 
     sh(
-        "env MAKEOBJDIRPREFIX=${OBJDIR}"
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
         "make",
         "-j {0}".format(makejobs),
         "-C ${TRUEOS_ROOT}",
@@ -99,7 +99,7 @@ def buildworld():
     debug('World make.conf: {0}', makeconfbuild)
 
     sh(
-        "env MAKEOBJDIRPREFIX=${OBJDIR}"
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
         "make",
         "-j {0}".format(makejobs),
         "-C ${TRUEOS_ROOT}",
@@ -114,7 +114,7 @@ def installworld(destdir, worldlog, distriblog):
     info('Installing world in {0}', destdir)
     info('Log file: {0}', worldlog)
     sh(
-        "env MAKEOBJDIRPREFIX=${OBJDIR}"
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
         "make",
         "-C ${TRUEOS_ROOT}",
         "installworld",
@@ -126,7 +126,7 @@ def installworld(destdir, worldlog, distriblog):
     info('Creating distribution in {0}', destdir)
     info('Log file: {0}', distriblog)
     sh(
-        "env MAKEOBJDIRPREFIX=${OBJDIR}"
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
         "make",
         "-C ${TRUEOS_ROOT}",
         "distribution",
@@ -142,7 +142,7 @@ def installkernel(destdir, log):
 
     modules = ' '.join(dsl['kernel_module'])
     sh(
-        "env MAKEOBJDIRPREFIX=${OBJDIR}"
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
         "make",
         "-C ${TRUEOS_ROOT}",
         "installkernel",
