@@ -33,7 +33,6 @@ from dsl import load_file
 from utils import e, sh, sh_str, readfile, setfile, template, setup_env
 
 
-setup_env()
 dsl = load_file('${BUILD_CONFIG}/release.pyd', os.environ)
 url = dsl['url']
 
@@ -41,7 +40,7 @@ url = dsl['url']
 def stage_release():
     sh('mkdir -p ${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}')
     for ext in dsl['format']:
-        path = e('${MAKEOBJDIRPREFIX}/${NAME}.${ext}')
+        path = e('${OBJDIR}/${NAME}.${ext}')
         if os.path.exists(path):
             sh('mv ${path} ${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}/')
             sh('mv ${path}.sha256 ${RELEASE_STAGEDIR}/${BUILD_ARCH_SHORT}/')
@@ -68,14 +67,14 @@ def get_image_files_desc():
             }
 
 
-def create_aux_files(dsl):
+def create_aux_files(dsl, dest):
     for name, aux in dsl['aux_file'].items():
         if aux.get('template'):
             f = template(aux['source'])
         else:
             f = readfile(aux['source'])
 
-        setfile('${RELEASE_STAGEDIR}/${name}', f)
+        setfile('${dest}/${name}', f)
 
 
 def create_json():

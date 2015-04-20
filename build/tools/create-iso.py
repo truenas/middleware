@@ -29,12 +29,13 @@
 
 import os
 from dsl import load_file
-from utils import sh, info, objdir, e, chroot, setup_env, setfile, template, sha256
+from utils import sh, info, objdir, e, chroot, setup_env, setfile, template, sha256, import_function
 
 
-setup_env()
 dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
 ports = load_file('${BUILD_CONFIG}/ports-installer.pyd', os.environ)
+installworld = import_function('build-os', 'installworld')
+installkernel = import_function('build-os', 'installkernel')
 installworldlog = objdir('logs/iso-installworld')
 installkernellog = objdir('logs/iso-installkernel')
 sysinstalllog = objdir('logs/iso-sysinstall')
@@ -226,36 +227,6 @@ def cleandirs():
     sh('rm -rf ${ISO_DESTDIR}')
 
 
-def installworld():
-    info('Installing world')
-    info('Log file: {0}', installworldlog)
-    sh('mkdir -p ${INSTUFS_DESTDIR}')
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "installworld distribution",
-        "DESTDIR=${INSTUFS_DESTDIR}",
-        "__MAKE_CONF=${MAKEOBJDIRPREFIX}/make-build.conf",
-        log=installworldlog
-    )
-
-
-def installkernel():
-    modules = ' '.join(dsl['kernel_module'])
-    info('Installing kernel')
-    info('Log file: {0}', installkernellog)
-    sh('mkdir -p ${ISO_DESTDIR}')
-    sh(
-        "make",
-        "-C ${TRUEOS_ROOT}",
-        "installkernel",
-        "DESTDIR=${ISO_DESTDIR}",
-        "MODULES_OVERRIDE='{0}'".format(modules),
-        "__MAKE_CONF=${MAKEOBJDIRPREFIX}/make-build.conf",
-        log=installkernellog
-    )
-
-
 def install_ports():
     pkgs = ' '.join(ports['port'].keys())
     info('Installing packages')
@@ -272,7 +243,7 @@ def install_pkgtools():
 
 def mount_packages():
     sh('mkdir -p ${INSTUFS_DESTDIR}/usr/ports/packages')
-    sh('mount -t nullfs ${MAKEOBJDIRPREFIX}/ports/packages/ja-p ${INSTUFS_DESTDIR}/usr/ports/packages')
+    sh('mount -t nullfs ${OBJDIR}/ports/packages/ja-p ${INSTUFS_DESTDIR}/usr/ports/packages')
 
 
 def umount_packages():
@@ -295,8 +266,8 @@ def populate_ufsroot():
 
 def copy_packages():
     sh('mkdir -p ${ISO_DESTDIR}/${PRODUCT}')
-    sh('cp -R ${MAKEOBJDIRPREFIX}/packages/Packages ${ISO_DESTDIR}/${PRODUCT}')
-    sh('cp ${MAKEOBJDIRPREFIX}/packages/${PRODUCT}-MANIFEST ${ISO_DESTDIR}/')
+    sh('cp -R ${OBJDIR}/packages/Packages ${ISO_DESTDIR}/${PRODUCT}')
+    sh('cp ${OBJDIR}/packages/${PRODUCT}-MANIFEST ${ISO_DESTDIR}/')
 
 
 def clean_ufs_image():

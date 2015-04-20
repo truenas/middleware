@@ -32,7 +32,6 @@ import glob
 from utils import env, e, setup_env, sh, sh_str, info, debug, error, walk, objdir
 
 
-setup_env()
 logfile = objdir('logs/build-gui')
 
 
@@ -75,10 +74,10 @@ def install():
     grunt = e('${node_modules}/grunt-cli/bin/grunt')
 
     os.chdir(e('${GUI_STAGEDIR}'))
-    sh('npm install grunt grunt-cli bower')
-    sh('npm install')
-    sh(bower, '--allow-root install', log=logfile)
-    sh(grunt, 'deploy --force --dir=${GUI_DESTDIR}', log=logfile)
+    sh('npm install grunt grunt-cli bower', log=logfile)
+    sh('npm install', log=logfile, mode='a')
+    sh(bower, '--allow-root install', log=logfile, mode='a')
+    sh(grunt, 'deploy --force --dir=${GUI_DESTDIR}', log=logfile, mode='a')
 
 
 def create_plist():
@@ -97,6 +96,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     info('Building GUI')
+    info('Log file: {0}', logfile)
     cleandirs()
     copy()
     q = apply_npm_quirks()

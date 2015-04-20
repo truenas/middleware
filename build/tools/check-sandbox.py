@@ -31,7 +31,6 @@ from dsl import load_file
 from utils import sh, sh_str, info, debug, error, setup_env, e
 
 
-setup_env()
 dsl = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
 
 

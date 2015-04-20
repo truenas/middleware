@@ -32,7 +32,6 @@ from dsl import load_file
 from utils import sh, sh_str, env, e, objdir, pathjoin, setfile, setup_env, template, debug, on_abort, info
 
 
-setup_env()
 makejobs = 1
 dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
 installer_dsl = load_file('${BUILD_CONFIG}/ports-installer.pyd', os.environ)
@@ -59,7 +58,7 @@ def create_poudriere_config():
     setfile('${POUDRIERE_ROOT}/etc/poudriere.conf', template('${BUILD_CONFIG}/templates/poudriere.conf', {
         'ports_repo': reposconf['repository']['ports']['path'],
         'ports_branch': reposconf['repository']['ports']['branch'],
-        'ports_distfiles_cache': e('${MAKEOBJDIRPREFIX}/ports/distfiles')
+        'ports_distfiles_cache': e('${OBJDIR}/ports/distfiles')
     }))
 
     tree = e('${POUDRIERE_ROOT}/etc/poudriere.d/ports/p')

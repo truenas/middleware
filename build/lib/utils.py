@@ -44,11 +44,12 @@ def interrupt(signal, frame):
 
 def sh(*args, **kwargs):
     logfile = kwargs.pop('log', None)
+    mode = kwargs.pop('mode', 'w')
     nofail = kwargs.pop('nofail', False)
     cmd = e(' '.join(args), **get_caller_vars())
     if logfile:
         sh('mkdir -p', os.path.dirname(logfile))
-        f = open(logfile, 'w')
+        f = open(logfile, mode)
 
     debug('sh: {0}', cmd)
     ret = subprocess.call(cmd, stdout=f if logfile else None, stderr=subprocess.STDOUT, shell=True)
@@ -60,9 +61,10 @@ def sh(*args, **kwargs):
 
 def sh_str(*args, **kwargs):
     logfile = kwargs.pop('log', None)
+    mode = kwargs.pop('mode', 'w')
     cmd = e(' '.join(args), **get_caller_vars())
     if logfile:
-        f = open(logfile, 'w')
+        f = open(logfile, mode)
 
     try:
         return subprocess.check_output(cmd, shell=True).strip()
@@ -144,7 +146,7 @@ def pathjoin(*args):
 
 
 def objdir(path):
-    return os.path.join(env('MAKEOBJDIRPREFIX'), path)
+    return os.path.join(e('${OBJDIR}'), path)
 
 
 def template(filename, variables=None):

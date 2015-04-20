@@ -28,16 +28,16 @@
 
 import os
 from dsl import load_file
-from utils import sh, glob, info, setup_env
+from utils import sh, glob, objdir, info, setup_env
 
 
-setup_env()
 dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
 
 
 def main():
     for i in dsl['customize_task']:
-        sh('${BUILD_ROOT}/build/customize/${i}.py ${WORLD_DESTDIR}')
+        logfile = objdir('logs/custom-${i}')
+        sh('${BUILD_ROOT}/build/customize/${i}.py ${WORLD_DESTDIR}', log=logfile)
 
 
 if __name__ == '__main__':

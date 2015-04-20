@@ -30,9 +30,6 @@ import os
 from utils import e, info, setup_env
 
 
-setup_env()
-
-
 def main():
     info('Build environment:')
     for key, value in os.environ.items():

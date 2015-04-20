@@ -32,7 +32,7 @@ from dsl import load_file
 from utils import sh, sh_str, env, e, setup_env, objdir, info, debug, error
 
 
-setup_env()
+os.environ['MAKEOBJDIRPREFIX'] = e('${OBJDIR}')
 dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
 arch = env('TARGET_ARCH', 'amd64')
 makeconfbuild = objdir('make-build.conf')

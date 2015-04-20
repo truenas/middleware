@@ -32,16 +32,15 @@ from dsl import load_file
 from utils import e, sh, setup_env, import_function
 
 
-setup_env()
-dsl = load_file('${BUILD_CONFIG}/release.pyd', os.environ)
+dsl = load_file('${BUILD_CONFIG}/upgrade.pyd')
 create_aux_files = import_function('create-release-distribution', 'create_aux_files')
 
 
 def stage_upgrade():
     sh('mkdir -p ${UPGRADE_STAGEDIR}')
-    sh('cp -R ${MAKEOBJDIRPREFIX}/packages/Packages ${UPGRADE_STAGEDIR}/')
+    sh('cp -R ${OBJDIR}/packages/Packages ${UPGRADE_STAGEDIR}/')
 
 
 if __name__ == '__main__':
     stage_upgrade()
-    create_aux_files(dsl)
+    create_aux_files(dsl, e('${UPGRADE_STAGEDIR}'))

@@ -31,7 +31,6 @@ import sys
 from utils import sh, e, setup_env, objdir, info, import_function
 
 
-setup_env()
 installworldlog = objdir('logs/jail-installworld')
 distributionlog = objdir('logs/jail-distribution')
 installkernellog = objdir('logs/jail-installkernel')

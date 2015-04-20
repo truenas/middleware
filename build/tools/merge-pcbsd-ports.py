@@ -31,9 +31,6 @@ from dsl import load_file
 from utils import e, sh, info, setup_env
 
 
-setup_env()
-
-
 def main():
     os.chdir(e('${PCBSD_ROOT}'))
     sh('./mkports.sh ${PORTS_ROOT} ${DISTFILES_CACHE}')

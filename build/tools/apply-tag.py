@@ -1,5 +1,6 @@
-#-
-# Copyright 2010-2015 iXsystems, Inc.
+#!/usr/bin/env python2.7
+#+
+# Copyright 2015 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,45 +26,25 @@
 #
 #####################################################################
 
-BUILD_TIMESTAMP != date '+%Y%m%d'
-BUILD_STARTED != date '+%s'
-BUILD_ROOT ?= ${.CURDIR}
-BUILD_CONFIG := ${BUILD_ROOT}/build/config
-BUILD_TOOLS := ${BUILD_ROOT}/build/tools
-PYTHONPATH := ${BUILD_ROOT}/build/lib
-OBJDIR := ${BUILD_ROOT}/objs/os-base/amd64
-MK := ${MAKE} -f ${BUILD_ROOT}/Makefile.inc1
 
-.export MK
-.export GIT_LOCATION
-.export BUILD_TIMESTAMP
-.export BUILD_ROOT
-.export BUILD_CONFIG
-.export BUILD_TOOLS
-.export PYTHONPATH
-.export OBJDIR
-.export BUILD_STARTED
+import os
+import sys
+from dsl import load_file
+from utils import sh, sh_str, info, error, env
 
-git-verify:
-	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
-		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
-		echo "external developer or \"make git-internal\" to build as an ${COMPANY}"; \
-		echo "internal developer.  You only need to do this once."; \
-		exit 1; \
-	fi
-	@echo "NOTICE: You are building from the ${GIT_LOCATION} git repo."
 
-.BEGIN:
-.if !make(remote) && !make(sync)
-	@${BUILD_TOOLS}/buildenv.py ${BUILD_TOOLS}/check-host.py
-.if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
-	@${BUILD_TOOLS}/buildenv.py ${BUILD_TOOLS}/check-sandbox.py
-.endif
-.endif
+dsl = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
 
-buildenv:
-	@${BUILD_TOOLS}/buildenv.py sh
 
-.DEFAULT: git-verify
-	@mkdir -p ${OBJDIR}
-	@${BUILD_TOOLS}/buildenv.py ${MK} ${.TARGETS}
+def tag_repo(repo, tag):
+    sh("git --git-dir=${repo}/.git tag ${tag}")
+
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        error('Usage: apply-tag.py <tag>')
+
+    tag = sys.argv[1]
+    for i in dsl['repository'].values():
+        info('Tagging repository: {0}', i['name'])
+        tag_repo(i)

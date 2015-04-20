@@ -31,7 +31,6 @@ import os
 from utils import sh, sh_str, e, setup_env, objdir, info, debug, error, import_function
 
 
-setup_env()
 installworldlog = objdir('logs/dest-installworld')
 distributionlog = objdir('logs/dest-distribution')
 installkernellog = objdir('logs/dest-installkernel')

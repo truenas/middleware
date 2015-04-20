@@ -34,14 +34,13 @@ from dsl import load_file
 from utils import sh, setup_env, objdir, info, debug, error, setfile, e, on_abort, chroot
 
 
-setup_env()
 dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
 logfile = objdir('logs/pkg-install')
 
 
 def mount_packages():
     sh('mkdir -p ${WORLD_DESTDIR}/usr/ports/packages')
-    sh('mount -t nullfs ${MAKEOBJDIRPREFIX}/ports/packages/ja-p ${WORLD_DESTDIR}/usr/ports/packages')
+    sh('mount -t nullfs ${OBJDIR}/ports/packages/ja-p ${WORLD_DESTDIR}/usr/ports/packages')
 
 
 def umount_packages():

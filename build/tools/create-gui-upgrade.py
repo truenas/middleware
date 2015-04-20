@@ -32,25 +32,24 @@ from dsl import load_file
 from utils import sh, info, objdir, e, chroot, setup_env, setfile, sha256, template
 
 
-setup_env()
 dsl = load_file("${BUILD_CONFIG}/config.pyd", os.environ)
 output = objdir("${NAME}.GUI_Upgrade")
 
 
 def main():
-    sh("tar -c -p -f ${MAKEOBJDIRPREFIX}/gui-boot.tar -C ${MAKEOBJDIRPREFIX}/iso ./boot")
-    sh("tar -c -p -f ${MAKEOBJDIRPREFIX}/gui-install-environment.tar -C ${MAKEOBJDIRPREFIX}/instufs .")
+    sh("tar -c -p -f ${OBJDIR}/gui-boot.tar -C ${OBJDIR}/iso ./boot")
+    sh("tar -c -p -f ${OBJDIR}/gui-install-environment.tar -C ${OBJDIR}/instufs .")
     sh(
-        "tar -c -p -f ${MAKEOBJDIRPREFIX}/gui-packages.tar",
+        "tar -c -p -f ${OBJDIR}/gui-packages.tar",
         "-s '@^Packages@FreeNAS/Packages@'",
-        "-C ${MAKEOBJDIRPREFIX}/packages ."
+        "-C ${OBJDIR}/packages ."
     )
     sh(
         "tar -c -p -f ${output}.tar",
         "-C ${INSTUFS_DESTDIR}/etc/avatar.conf",
         "-C ${SRC_ROOT}/freenas-installer .",
         "-C ${SRC_ROOT}/freenas-gui-upgrade .",
-        "-C ${MAKEOBJDIRPREFIX} gui-boot.tar gui-install-environment.tar gui-packages.tar"
+        "-C ${OBJDIR} gui-boot.tar gui-install-environment.tar gui-packages.tar"
     )
 
     sh("${XZ} ${PXZ_ACCEL} -9 -z -v ${output}.tar")

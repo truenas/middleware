@@ -33,7 +33,6 @@ from dsl import load_file
 from utils import sh, sh_str, e, setup_env, objdir, info, debug, error
 
 
-setup_env()
 dsl = load_file('${BUILD_CONFIG}/packages.pyd', os.environ)
 tooldir = objdir('pkgtools')
 pkgdir = objdir('packages')
