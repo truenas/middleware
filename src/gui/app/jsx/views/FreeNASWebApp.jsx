@@ -11,7 +11,6 @@ var RouteHandler = Router.RouteHandler;
 var routerShim = require("../components/mixins/routerShim");
 
 // WebApp Components
-var LoginBox          = require("../components/LoginBox");
 var BusyBox           = require("../components/BusyBox");
 var NotificationBar   = require("../components/WebApp/NotificationBar");
 var InformationBar    = require("../components/WebApp/InformationBar");
@@ -37,10 +36,8 @@ var FreeNASWebApp = React.createClass({
         <div className="app-wrapper">
           {/* TODO: Add Modal mount div */}
 
-          {/* Modal window for FreeNAS login - hidden when authenticated */}
-          <LoginBox />
-
-          {/* Modal windows for busy spinner -- hidden normally except when invoked*/}
+          {/* Modal windows for busy spinner and/or FreeNAS login
+                -- hidden normally except when invoked*/}
           <BusyBox />
 
           {/* Header containing system status and information */}
