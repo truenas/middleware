@@ -35,11 +35,6 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-GIT_REPO_SETTING=${BUILD_ROOT}/.git-repo-setting
-.if exists(${GIT_REPO_SETTING})
-GIT_LOCATION!=cat ${GIT_REPO_SETTING}
-.endif
-
 .if defined(CHANGELOG)
 .export CHANGELOG
 .endif

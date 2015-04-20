@@ -34,6 +34,11 @@ PYTHONPATH := ${BUILD_ROOT}/build/lib
 OBJDIR := ${BUILD_ROOT}/objs/os-base/amd64
 MK := ${MAKE} -f ${BUILD_ROOT}/Makefile.inc1
 
+GIT_REPO_SETTING=${BUILD_ROOT}/.git-repo-setting
+.if exists(${GIT_REPO_SETTING})
+GIT_LOCATION!=cat ${GIT_REPO_SETTING}
+.endif
+
 .export MK
 .export GIT_LOCATION
 .export BUILD_TIMESTAMP
