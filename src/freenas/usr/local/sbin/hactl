@@ -56,6 +56,9 @@ def main(command, quiet):
                 print "Failover status: Not configured"
 
     elif command == "enable":
+        if not fo_exists:
+            print "Not configured for failover.  There's nothing to enable here."
+            sys.exit(7)
         if Failover.objects.all()[0].disabled is True:
             ip = Failover.objects.all()[0].ipaddress
             ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker enable" % ip)
@@ -74,6 +77,9 @@ def main(command, quiet):
             print "Failover not disabled.  Cannot enable!"
             sys.exit(3)
     elif command == "disable":
+        if not fo_exists:
+            print "Not configured for failover.  There's nothing to disable here."
+            sys.exit(8)
         if Failover.objects.all()[0].disabled is False:
             ip = Failover.objects.all()[0].ipaddress
             if _not.failover_status() == "MASTER" or _not.failover_status() == "IMPORTING":
