@@ -32,7 +32,7 @@ from dsl import load_file
 from utils import e, sh, setup_env, import_function
 
 
-dsl = load_file('${BUILD_CONFIG}/upgrade.pyd')
+dsl = load_file('${BUILD_CONFIG}/upgrade.pyd', os.environ)
 create_aux_files = import_function('create-release-distribution', 'create_aux_files')
 
 

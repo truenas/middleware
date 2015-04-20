@@ -69,6 +69,9 @@ def get_image_files_desc():
 
 def create_aux_files(dsl, dest):
     for name, aux in dsl['aux_file'].items():
+        if not os.path.exists(aux['source']):
+            continue
+
         if aux.get('template'):
             f = template(aux['source'])
         else:
@@ -98,5 +101,5 @@ def create_json():
 
 if __name__ == '__main__':
     stage_release()
-    create_aux_files(dsl)
+    create_aux_files(dsl, e('${RELEASE_STAGEDIR}'))
     create_json()

@@ -38,6 +38,7 @@ installworld = import_function('build-os', 'installworld')
 installkernel = import_function('build-os', 'installkernel')
 installworldlog = objdir('logs/iso-installworld')
 installkernellog = objdir('logs/iso-installkernel')
+distributionlog = objdir('logs/iso-distribution')
 sysinstalllog = objdir('logs/iso-sysinstall')
 imgfile = objdir('base.ufs')
 output = objdir('${NAME}.iso')
@@ -237,8 +238,10 @@ def install_ports():
 
 def install_pkgtools():
     info('Installing freenas-pkgtools')
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all")
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools install DESTDIR=${INSTUFS_DESTDIR} PREFIX=/usr/local")
+    sh(
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
+        "make -C ${SRC_ROOT}/freenas-pkgtools obj all install DESTDIR=${INSTUFS_DESTDIR} PREFIX=/usr/local",
+    )
 
 
 def mount_packages():
@@ -295,8 +298,8 @@ def make_iso_image():
 if __name__ == '__main__':
     info("Creating ISO image")
     cleandirs()
-    installworld(e('${INSTUFS_DESTDIR}'), installworldlog)
-    installkernel(e('${INSTUFS_DESTDIR}'), installkernellog)
+    installworld(e('${INSTUFS_DESTDIR}'), installworldlog, distributionlog)
+    installkernel(e('${ISO_DESTDIR}'), installkernellog)
     create_ufs_dirs()
     mount_packages()
     install_ports()

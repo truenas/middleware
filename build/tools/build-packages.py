@@ -57,8 +57,18 @@ def read_repo_manifest():
 def build_pkgtools():
     info('Building freenas-pkgtools')
     info('Log file: {0}', pkgtoolslog)
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all install DESTDIR=${tooldir} PREFIX=/usr/local", log=pkgtoolslog)
-    sh("make -C ${SRC_ROOT}/freenas-pkgtools obj all install DESTDIR=${WORLD_DESTDIR} PREFIX=/usr/local", log=pkgtoolslog)
+
+    sh(
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
+        "make -C ${SRC_ROOT}/freenas-pkgtools obj all install DESTDIR=${tooldir} PREFIX=/usr/local",
+        log=pkgtoolslog
+    )
+
+    sh(
+        "env MAKEOBJDIRPREFIX=${OBJDIR}",
+        "make -C ${SRC_ROOT}/freenas-pkgtools obj all install DESTDIR=${WORLD_DESTDIR} PREFIX=/usr/local",
+        log=pkgtoolslog
+    )
 
 
 def build_packages():
