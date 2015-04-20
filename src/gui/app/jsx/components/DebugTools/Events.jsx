@@ -69,9 +69,9 @@ var Events = React.createClass({
       });
     }
 
-  , applyPredicate: function( event ) {
-      this.setState({ appliedPredicate: this.state.predicate });
-    }
+  , toggleFilter: function( event ) {
+      this.setState({ appliedPredicate : this.state.appliedPredicate ? null : this.state.predicate });
+  }
 
   , switchPredicateType: function( predicateType ) {
       this.setState({
@@ -222,10 +222,10 @@ var Events = React.createClass({
                   buttonAfter = {
                     <TWBS.Button
                       bsStyle  = { this.state.appliedPredicate ? "success" : "primary" }
-                      onClick  = { this.applyPredicate }
-                      disabled = { !this.state.predicate.length || !!this.state.appliedPredicate }
+                      onClick  = { this.toggleFilter }
+                      active   = { !!this.state.appliedPredicate }
                       >
-                      { this.state.appliedPredicate ? "Filter Applied" : "Apply Filter" }
+                      { this.state.appliedPredicate ? "Remove Filter" : "Apply Filter" }
                     </TWBS.Button>
                   } />
 
