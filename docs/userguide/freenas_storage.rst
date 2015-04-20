@@ -367,7 +367,7 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`. Most attributes, except for the "Dataset Name" and  "Record Size", can be changed after dataset creation by highlighting
+:menuselection:`System --> Advanced`. Most attributes, except for the "Dataset Name", "Case Sensitivity", and  "Record Size", can be changed after dataset creation by highlighting
 the dataset name and clicking its "Edit Options" button in :menuselection:`Storage --> Volumes --> View Volumes`.
 
 **Table 8.1d: ZFS Dataset Options**
