@@ -28,11 +28,13 @@
 
 import os
 import sys
+import string
 from dsl import load_file
-from utils import sh, sh_str, env, e, objdir, pathjoin, setfile, setup_env, template, debug, on_abort, info
+from utils import sh, sh_str, env, e, objdir, pathjoin, setfile, setup_env, template, debug, error, on_abort, info
 
 
 makejobs = 1
+jailname = None
 dsl = load_file('${BUILD_CONFIG}/ports.pyd', os.environ)
 installer_dsl = load_file('${BUILD_CONFIG}/ports-installer.pyd', os.environ)
 reposconf = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
@@ -69,9 +71,7 @@ def create_poudriere_config():
 
 def create_make_conf():
     makeconf = e('${POUDRIERE_ROOT}/etc/poudriere.d/make.conf')
-    setfile(makeconf, template('${BUILD_CONFIG}/templates/poudriere-make.conf', {
-
-    }))
+    setfile(makeconf, template('${BUILD_CONFIG}/templates/poudriere-make.conf'))
 
 
 def create_ports_list():
@@ -96,8 +96,16 @@ def create_ports_list():
     f.close()
 
 
+def obtain_jail_name():
+    global jailname
+    for i in string.ascii_lowercase:
+        if sh('jls -q -n -j j${i}-p', log="/dev/null", nofail=True) != 0:
+            jailname = e('j${i}')
+            return
+
+    error('No jail names available')
+
 def prepare_jail():
-    jailname = 'ja'
     basepath = e('${POUDRIERE_ROOT}/etc/poudriere.d/jails/${jailname}')
     sh('mkdir -p ${basepath}')
 
@@ -128,12 +136,13 @@ def prepare_env():
 
 
 def cleanup_env():
+    sh('rm -rf ${PORTS_ROOT}/freenas')
     for cmd in jailconf.get('link', []).values():
         sh('umount', cmd['source'])
 
 
 def run():
-    sh('poudriere -e ${POUDRIERE_ROOT}/etc bulk -w -J', str(makejobs), '-f', portslist, '-j ja -p p')
+    sh('poudriere -e ${POUDRIERE_ROOT}/etc bulk -w -J', str(makejobs), '-f', portslist, '-j ${jailname} -p p')
 
 
 if __name__ == '__main__':
@@ -141,6 +150,7 @@ if __name__ == '__main__':
         info('Skipping ports build as instructed by setting SKIP_PORTS')
         sys.exit(0)
 
+    obtain_jail_name()
     on_abort(cleanup_env)
     calculate_make_jobs()
     create_poudriere_config()

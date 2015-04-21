@@ -58,6 +58,8 @@ def sh(*args, **kwargs):
         info('Returned value: {0}', ret)
         error('Build failed')
 
+    return ret
+
 
 def sh_str(*args, **kwargs):
     logfile = kwargs.pop('log', None)
