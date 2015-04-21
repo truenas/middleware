@@ -5,6 +5,7 @@
 
 var React = require("react");
 var TWBS  = require("react-bootstrap");
+var _     = require("lodash");
 
 // Middleware
 var MiddlewareClient = require("../../middleware/MiddlewareClient");
@@ -12,6 +13,10 @@ var MiddlewareStore  = require("../../stores/MiddlewareStore");
 
 // Disclosure Triangles
 var DiscTri = require("../common/DiscTri");
+
+// Fuzzy TypeAhead
+var FuzzyTypeAhead = require("../common/FuzzyTypeAhead");
+
 
 var RPC = React.createClass({
 
@@ -101,9 +106,9 @@ var RPC = React.createClass({
       this.handleRPCSubmit();
   }
 
-  , handleMethodInputChange: function( event ) {
+  , optionSelected: function() {
       this.setState({
-          methodValue : event.target.value
+        methodValue : arguments[0]
       });
     }
 
@@ -149,6 +154,14 @@ var RPC = React.createClass({
     }
 
   , render: function() {
+      var agmeth = [];
+      _.forEach( this.state.methods, function ( value, key ) {
+        var svc = key;
+        value.map(function ( method, index ){
+          agmeth.push(svc + "." + method["name"]);
+        }
+        );
+      });
       return (
         <div className="debug-content-flex-wrapper">
 
@@ -157,12 +170,20 @@ var RPC = React.createClass({
             <h5 className="debug-heading">RPC Interface</h5>
             <TWBS.Row>
               <TWBS.Col xs={5}>
-                <TWBS.Input
-                  type        = "text"
-                  disabled    = { this.state.submissionPending }
-                  placeholder = "Method name"
-                  onChange    = { this.handleMethodInputChange }
-                  value       = { this.state.methodValue } />
+                <FuzzyTypeAhead
+                  name="RPC Fuzzy Search"
+                  placeholder="Method Name"
+                  defaultValue={ this.state.methodValue }
+                  options={agmeth}
+                  className="typeahead-list"
+                  maxVisible={7}
+                  onOptionSelected={this.optionSelected}
+                  customClasses={{
+                    input     : "typeahead-text-input",
+                    results   : "typeahead-list__container",
+                    listItem  : "typeahead-list__item",
+                    hover     : "typeahead-active"
+                  }} />
               </TWBS.Col>
               <TWBS.Col xs={5}>
               <TWBS.Input

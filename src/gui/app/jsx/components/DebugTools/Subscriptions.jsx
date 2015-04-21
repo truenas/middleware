@@ -59,8 +59,8 @@ var Subscriptions = React.createClass({
   , createRow: function( namespace, index ) {
       var listItems = [];
       _.forEach( this.state.subscriptions[ namespace ], function ( value, key ) {
-            listItems.push(String(key).concat(" : ", value));
-          });
+        listItems.push(String(key).concat(" : ", value));
+      });
       return (
         <tr key={ index }>
           <td>{ namespace }</td>
