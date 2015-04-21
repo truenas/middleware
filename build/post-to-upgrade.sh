@@ -10,7 +10,7 @@
 
 : ${NANO_LABEL:=FreeNAS}
 : ${UPDATE_HOST:=beta-update.freenas.org}
-: ${UPDATE_USER:=sef}
+: ${UPDATE_USER:=jkh}
 : ${UPDATE_DB:="sqlite:${NANO_LABEL}-updates.db"}
 : ${UPDATE_DEST:=/tank/www/${NANO_LABEL}}
 : ${FREENAS_KEYFILE:=/dev/null}
@@ -40,9 +40,9 @@ do
 done
 
 set -e
-TEMP_DEST=$(ssh ${SSH} mktemp -d /tmp/update-${NANO_LABEL}-XXXXXXXXX)
+TEMP_DEST=$(ssh ${SSH} mktemp -d /tmp/update-${NANO_LABEL}-XXXXXXXXX < /dev/null)
 if [ -n "${CHANGELOG}" ]; then
-    TEMP_CHANGE=$(ssh ${SSH} mktemp /tmp/changelog-XXXXXX)
+    TEMP_CHANGE=$(ssh ${SSH} mktemp /tmp/changelog-XXXXXX < /dev/null)
 else
     TEMP_CHANGE=""
 fi
@@ -51,7 +51,7 @@ if [ $? -ne 0 -o -z "${TEMP_DEST}" ]; then
     echo Cannot create temporary directory 1>&2
     exit 1
 fi
-if scp -r "${SOURCE}/." ${SSH}:${TEMP_DEST}; then
+if scp -r "${SOURCE}/." ${SSH}:${TEMP_DEST} < /dev/null; then
     if [ -n "${CHANGELOG}" ]; then
 	if [ "${CHANGELOG}" = "-" ]; then
 	    echo "Enter changelog, control-d to end"
@@ -61,9 +61,9 @@ if scp -r "${SOURCE}/." ${SSH}:${TEMP_DEST}; then
     fi
     ssh ${SSH} "${MKREL} add ${TEMP_DEST}"
 fi
-ssh ${SSH} "rm -rf ${TEMP_DEST}"
+ssh ${SSH} "rm -rf ${TEMP_DEST}" < /dev/null
 if [ -n "${TEMP_CHANGE}" ]; then
-    ssh ${SSH} "rm -f ${TEMP_CHANGE}"
+    ssh ${SSH} "rm -f ${TEMP_CHANGE}" < /dev/null
 fi
 set +e
 

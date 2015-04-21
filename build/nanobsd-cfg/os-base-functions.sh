@@ -124,7 +124,7 @@ remove_gcc47()
 	echo "Backing up gcc47 libraries"
 	for f in $files_to_save
 	do
-		CR "mv $f $f.bak || true"
+		CR "mv $f $f.bak"
 	done
 	echo "Removing gcc47" 
 	if [ -n "$WITH_PKGNG" ]; then
@@ -136,7 +136,7 @@ remove_gcc47()
 	echo "Restoring gcc47 libraries"
 	for f in $files_to_save
 	do
-		CR "mv $f.bak $f || true"
+		CR "mv $f.bak $f"
 	done
 }
 
@@ -173,7 +173,7 @@ remove_gcc()
 	echo "Backing up gcc47 libraries"
 	for f in $files_to_save
 	do
-		CR "mv $f $f.bak || true"
+		CR "mv $f $f.bak"
 	done
 	echo "Removing gcc" 
 	if [ -n "$WITH_PKGNG" ]; then
@@ -185,7 +185,7 @@ remove_gcc()
 	echo "Restoring gcc47 libraries"
 	for f in $files_to_save
 	do
-		CR "mv $f.bak $f || true"
+		CR "mv $f.bak $f"
 	done
 }
 
