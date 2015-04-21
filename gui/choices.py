@@ -957,10 +957,11 @@ class CIFS_VFS_OBJECTS(object):
             'zfsacl',
         ]
 
-        for f in os.listdir(self.__vfs_module_path):
-            f = f.replace('.so', '')
-            if f not in self.__vfs_exclude:
-                self.__vfs_modules.append(f) 
+        if os.path.exists(self.__vfs_module_path):
+            for f in os.listdir(self.__vfs_module_path):
+                f = f.replace('.so', '')
+                if f not in self.__vfs_exclude:
+                     self.__vfs_modules.append(f) 
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
