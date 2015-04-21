@@ -326,6 +326,7 @@ def make_iso_image():
     setfile('${ISO_DESTDIR}/boot/loader.conf', template('${BUILD_CONFIG}/templates/cdrom/loader.conf'))
     setfile('${ISO_DESTDIR}/boot/grub/grub.cfg', template('${BUILD_CONFIG}/templates/cdrom/grub.cfg'))
     setfile('${ISO_DESTDIR}/.mount.conf', template('${BUILD_CONFIG}/templates/cdrom/mount.conf'))
+    sh('cp ${WORLD_DESTDIR}/boot/device.hints ${ISO_DESTDIR}/boot/device.hints')
     sh('grub-mkrescue -o ${output} ${ISO_DESTDIR} -- -volid ${CDROM_LABEL}')
     sha256(output)
 
