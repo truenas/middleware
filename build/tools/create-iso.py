@@ -290,7 +290,7 @@ def populate_ufsroot():
     info('Populating UFS root')
 
     for i in purge_dirs:
-        for name in glob('${INSTUFS_DESTDIR}{i}/*'):
+        for name in glob('${INSTUFS_DESTDIR}${i}/*'):
             if e('${i}/${name}') in files_to_preserve:
                 continue
 
