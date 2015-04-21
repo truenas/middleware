@@ -15,6 +15,7 @@ module.exports = {
       // Subscriptions
       , SUBSCRIBE_COMPONENT_TO_MASKS     : null
       , UNSUBSCRIBE_COMPONENT_FROM_MASKS : null
+      , UNSUBSCRIBE_ALL                  : null
 
       // Events
       , MIDDLEWARE_EVENT : null

@@ -1,15 +1,16 @@
 "use strict";
 
-var React   =   require("react");
+var React            =   require("react");
 
-var Widget  =   require("../Widget");
-var StatdWidgetContentHandler = require("./StatdWidgetContentHandler");
+var chartHandler     =   require("./mixins/chartHandler");
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var round            =   require("round");
 
 var CpuUtil = React.createClass({
-  getInitialState: function() {
+
+  mixins: [ chartHandler ]
+
+, getInitialState: function() {
     return {
       statdResources:    [   {variable:"system", dataSource:"localhost.aggregation-cpu-sum.cpu-system.value", name:"System", color:"#9ecc3c"}
                            , {variable:"user", dataSource:"localhost.aggregation-cpu-sum.cpu-user.value", name:"User", color:"#77c5d5"}
@@ -19,12 +20,13 @@ var CpuUtil = React.createClass({
       ]
     , chartTypes:        [  {   type:"line"
                               , primary: this.primaryChart("line")
-                              , y:function(d) { if(d[1] === "nan") { return null; } else { return (Math.round(d[1] * 100) / 100); } }
+                              , y:function(d) { return ( round( d[1], 0.01 ) ); }
                             }
                            ,{   type:"pie"
                               , primary: this.primaryChart("pie")
                             }
                          ]
+    , widgetIdentifier : "CpuUtil"
     };
   }
 
@@ -43,24 +45,6 @@ var CpuUtil = React.createClass({
       return false;
     }
 
-  }
-, render: function() {
-    var widgetIdentifier = "CpuUtil";
-    return (
-      <Widget
-        positionX  =  { this.props.positionX }
-        positionY  =  { this.props.positionY }
-        title      =  { this.props.title }
-        size       =  { this.props.size } >
-
-        <StatdWidgetContentHandler
-          widgetIdentifier    =  { widgetIdentifier }
-          statdResources      =  { this.state.statdResources }
-          chartTypes          =  { this.state.chartTypes } >
-        </StatdWidgetContentHandler>
-
-      </Widget>
-    );
   }
 });
 

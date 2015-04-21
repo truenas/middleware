@@ -2,38 +2,73 @@
 
 var React = require("react");
 
-var Router     = require("react-router");
-var Link       = Router.Link;
-var Navigation = Router.Navigation;
+var Router       = require("react-router");
+var Link         = Router.Link;
+var RouteHandler = Router.RouteHandler;
 
+var Icon = require("../Icon");
+
+var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
 // Icon Viewer
 var IconViewer = React.createClass({
 
-    mixins: [Navigation]
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
 
   , propTypes: {
-        viewData     : React.PropTypes.object.isRequired
-      , inputData    : React.PropTypes.array.isRequired
-      , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , searchString : React.PropTypes.string
-      , filteredData : React.PropTypes.object.isRequired
+        viewData         : React.PropTypes.object.isRequired
+      , inputData        : React.PropTypes.array.isRequired
+      , handleItemSelect : React.PropTypes.func.isRequired
+      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
+      , searchString     : React.PropTypes.string
+      , filteredData     : React.PropTypes.object.isRequired
+    }
+
+  , componentDidMount: function() {
+      window.addEventListener( "keyup", this.handleEscClose );
+    }
+
+  , componentWillUnmount: function() {
+      window.removeEventListener( "keyup", this.handleEscClose );
+    }
+
+  , handleEscClose: function( event ) {
+      if ( event.which === 27 && this.dynamicPathIsActive() ) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.returnToViewerRoot();
+      }
     }
 
   , handleClickOut: function( event, componentID ) {
       if ( event.dispatchMarker === componentID ) {
-        this.goBack();
+        this.returnToViewerRoot();
+      }
+    }
+
+  , handleItemClick: function( params, selectionValue, event ) {
+      switch ( event.type ) {
+        case "click":
+          this.props.handleItemSelect( selectionValue );
+          break;
+
+        case "dblclick":
+          this.context.router.transitionTo( this.props.viewData.routing.route, params );
+          break;
       }
     }
 
   , createItem: function( rawItem ) {
-      var searchString = this.props.searchString;
+      var searchString   = this.props.searchString;
+      var selectionValue = rawItem[ this.props.viewData.format["selectionKey"] ];
       var params = {};
 
-      params[ this.props.viewData.routing["param"] ] = rawItem[ this.props.viewData.format["selectionKey"] ];
+      params[ this.props.viewData.routing["param"] ] = selectionValue;
 
       var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ];
       var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ];
@@ -44,10 +79,10 @@ var IconViewer = React.createClass({
       }
 
       return (
-        <Link to        = { this.props.viewData.routing.route }
-              params    = { params }
-              key       = { rawItem.id }
-              className = "viewer-icon-item" >
+        <div
+          className     = { "viewer-icon-item" + ( selectionValue === this.props.selectedItem ? " active" : "" ) }
+          onClick       = { this.handleItemClick.bind( null, null, selectionValue ) }
+          onDoubleClick = { this.handleItemClick.bind( null, params, selectionValue ) } >
           <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
                                fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
                                iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
@@ -58,7 +93,7 @@ var IconViewer = React.createClass({
             <h6 className="viewer-icon-item-primary">{ primaryText }</h6>
             <small className="viewer-icon-item-secondary">{ secondaryText }</small>
           </div>
-        </Link>
+        </div>
       );
     }
 
@@ -68,15 +103,22 @@ var IconViewer = React.createClass({
       var groupedIconItems   = null;
       var remainingIconItems = null;
 
-      if ( this.props.Editor() !== null ) {
+      if ( this.dynamicPathIsActive() ) {
         editorContent = (
           <div className = "overlay-light editor-edit-overlay"
                onClick   = { this.handleClickOut } >
-            <this.props.Editor viewData  = { this.props.viewData }
-                               inputData = { this.props.inputData }
-                               activeKey = { this.props.selectedKey }
-                               ItemView  = { this.props.ItemView }
-                               EditView  = { this.props.EditView } />
+            <div className="editor-edit-wrapper">
+              <span className="clearfix">
+                <Icon
+                  glyph    = "close"
+                  icoClass = "editor-close"
+                  onClick  = { this.handleClickOut } />
+              </span>
+              <RouteHandler
+                viewData  = { this.props.viewData }
+                inputData = { this.props.inputData }
+                activeKey = { this.props.selectedKey } />
+            </div>
           </div>
         );
       }

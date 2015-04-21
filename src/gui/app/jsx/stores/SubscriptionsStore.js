@@ -74,12 +74,13 @@ var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, {
 
 SubscriptionsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
   var action = payload.action;
+  var newSubscriptions = {};
 
   switch( action.type ) {
 
     // Subscriptions
     case ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS:
-      var newSubscriptions = _.cloneDeep( _subscribed );
+      newSubscriptions = _.cloneDeep( _subscribed );
 
       _.forEach( action.masks, function( mask ) {
         if ( _.isObject( newSubscriptions[ mask ] ) ) {
@@ -100,7 +101,7 @@ SubscriptionsStore.dispatchToken = FreeNASDispatcher.register( function( payload
       break;
 
     case ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS:
-      var newSubscriptions = _.cloneDeep( _subscribed );
+      newSubscriptions = _.cloneDeep( _subscribed );
 
       _.forEach( action.masks, function( mask ) {
         if ( _.isObject( newSubscriptions[ mask ] ) ) {
@@ -120,6 +121,12 @@ SubscriptionsStore.dispatchToken = FreeNASDispatcher.register( function( payload
 
       _subscribed = newSubscriptions;
 
+      SubscriptionsStore.emitChange();
+      break;
+
+    case ActionTypes.UNSUBSCRIBE_ALL:
+      // TODO: Should this be the default?
+      _subscribed = newSubscriptions;
       SubscriptionsStore.emitChange();
       break;
 

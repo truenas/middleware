@@ -7,15 +7,22 @@ var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
+var componentLongName = "Debug Tools - Subscriptions Tab";
+
+// Disclosure Triangles
+var DiscTri = require("../common/DiscTri");
+
 // Middleware
 var SubscriptionsStore  = require("../../stores/SubscriptionsStore");
+var MiddlewareClient    = require("../../middleware/MiddlewareClient");
+
 
 var Subscriptions = React.createClass({
 
     getInitialState: function() {
       return {
-          // TODO: Make this work with the new subscriptions architecture
           subscriptions : SubscriptionsStore.getAllSubscriptions()
+        , subsMasks     : ""
       };
     }
 
@@ -27,30 +34,49 @@ var Subscriptions = React.createClass({
       SubscriptionsStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
-  , handleMiddlewareChange: function( namespace ) {
-      var newState = {};
+  , handleMiddlewareChange: function() {
+      this.setState({
+          subscriptions : SubscriptionsStore.getAllSubscriptions()
+      });
+    }
 
-      switch ( namespace ) {
-        case "subscriptions":
-          var availableServices = SubscriptionsStore.getAllSubscriptions();
-          newState.services = availableServices;
-          break;
-      }
+  , handleMaskInputChange: function( event ) {
+      this.setState({
+          subsMasks : event.target.value
+      });
+    }
 
-      this.setState( newState );
+  , handleSubsSubmit: function() {
+      MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), componentLongName);
+    }
+
+  , createList: function( item, index ) {
+      return (
+        <li key={ index }>{ item }</li>
+      );
     }
 
   , createRow: function( namespace, index ) {
+      var listItems = [];
+      _.forEach( this.state.subscriptions[ namespace ], function ( value, key ) {
+        listItems.push(String(key).concat(" : ", value));
+      });
       return (
         <tr key={ index }>
           <td>{ namespace }</td>
-          <td>{ this.state.subscriptions[ namespace ] }</td>
+          <td>{ _.sum(this.state.subscriptions[ namespace ]) }</td>
+          <td>
+            <DiscTri key={ index } defaultExpanded={false}>
+              <ul>{ listItems.map( this.createList ) }</ul>
+            </DiscTri>
+          </td>
         </tr>
       );
     }
 
   , render: function() {
       var subscriptionsContent = null;
+      var removeALL = MiddlewareClient.unsubscribeALL;
 
       if ( _.isEmpty( this.state.subscriptions ) ) {
         subscriptionsContent = <h3 className="text-center">No log content</h3>;
@@ -66,7 +92,8 @@ var Subscriptions = React.createClass({
             <thead>
               <tr>
                 <th>Namespace</th>
-                <th>{"Number of subscribed components"}</th>
+                <th>{"Total Number of subscribed components"}</th>
+                <th>{"Individual ComponentID counts"}</th>
               </tr>
             </thead>
             <tbody>
@@ -90,7 +117,33 @@ var Subscriptions = React.createClass({
 
           <TWBS.Col xs={6} className="debug-column" >
 
-            {/* TODO: Should something go here? */}
+            <h5 className="debug-heading">Add Subsriptions</h5>
+            <TWBS.Row>
+              <TWBS.Col xs={5}>
+                <TWBS.Input type        = "textarea"
+                            style       = {{ resize: "vertical", height: "34px" }}
+                            placeholder = "Subscription Mask(s)"
+                            onChange    = { this.handleMaskInputChange }
+                            value       = { this.state.subsMasks } />
+              </TWBS.Col>
+            </TWBS.Row>
+            <TWBS.Row>
+              <TWBS.Col xs={2}>
+                <TWBS.Button bsStyle = "primary"
+                             onClick = { this.handleSubsSubmit }
+                             block>
+                  {"Submit"}
+                </TWBS.Button>
+              </TWBS.Col>
+            </TWBS.Row>
+
+            <h5 className="debug-heading">Remove Subscriptions</h5>
+              <div className="debug-column-content">
+                <TWBS.Button block bsStyle = "danger"
+                             onClick = { removeALL }>
+                  {"Remove All Subscriptions"}
+                </TWBS.Button>
+              </div>
 
           </TWBS.Col>
         </div>

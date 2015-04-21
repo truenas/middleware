@@ -50,35 +50,45 @@ var Dashboard = React.createClass({
     }
 
   , render: function() {
-      return (
-        <main>
-          <div ref="widgetAreaRef" className="widget-wrapper">
-            <SystemInfo
-              stacked = "true"
-              title   = "System Info"
-              size    = "m-rect" />
-            <MemoryUtil
-              title = "Memory Value"
-              size  = "m-rect" />
-            <CpuUtil
-              primary = "pie"
-              title = "CPU utilization"
-              size  = "m-rect" />
-            <SystemLoad
-              primary   = "stacked"
-              title     = "System Load"
-              size      = "m-rect" />
-            <NetworkUsage
-              title = "Network Usage"
-              size  = "l-rect"
-              graphType = "line" />
-            <DiskUsage
-              title = "Disk Usage"
-              size  = "l-rect"
-              graphType = "line" />
-          </div>
-        </main>
-      );
+      if (this.isServiceRunning("collectd") === true)
+      {
+        return (
+          <main>
+            <div ref="widgetAreaRef" className="widget-wrapper">
+              <SystemInfo
+                stacked = "true"
+                title   = "System Info"
+                size    = "m-rect" />
+              <MemoryUtil
+                title = "Memory Value"
+                size  = "m-rect" />
+              <CpuUtil
+                primary = "pie"
+                title = "CPU utilization"
+                size  = "m-rect" />
+              <SystemLoad
+                primary   = "stacked"
+                title     = "System Load"
+                size      = "m-rect" />
+              <NetworkUsage
+                title = "Network Usage"
+                size  = "l-rect"
+                graphType = "line" />
+              <DiskUsage
+                title = "Disk Usage"
+                size  = "l-rect"
+                graphType = "line" />
+            </div>
+          </main>
+        );
+      } else {
+          return (
+            <main>
+              <h2>Dashboard View</h2>
+              <h3>Please enable collectd service to display widgets.</h3>
+            </main>
+          );
+      }
     }
 
 });

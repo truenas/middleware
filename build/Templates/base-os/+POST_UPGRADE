@@ -1,2 +1,0 @@
-rm /tmp/lock
-dsmigrate -f /usr/local/share/factory.json

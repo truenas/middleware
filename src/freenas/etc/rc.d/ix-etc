@@ -7,7 +7,7 @@
 # REQUIRE: dispatcher etcd
 # BEFORE: FILESYSTEMS
 
-. /etc/rc.freenas
+. /etc/rc.subr
 
 etc_start()
 {

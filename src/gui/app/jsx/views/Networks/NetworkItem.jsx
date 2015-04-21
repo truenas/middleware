@@ -4,13 +4,13 @@
 
 "use strict";
 
-// var _     = require("lodash");
-var React  = require("react");
-var Router = require("react-router");
+var React = require("react");
+
+var routerShim   = require("../../components/mixins/routerShim");
+var clientStatus = require("../../components/mixins/clientStatus");
 
 var viewerUtil = require("../../components/Viewer/viewerUtil");
 // var editorUtil = require("../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../components/Viewer/mixins/activeRoute");
 
 // var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
 var NetworksStore      = require("../../stores/NetworksStore");
@@ -86,18 +86,18 @@ var NetworkItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ Router.State, activeRoute ]
+  , mixins: [ routerShim, clientStatus ]
 
   , getInitialState: function() {
       return {
           targetNetwork : this.getNetworkFromStore()
         , currentMode   : "view"
-        , activeRoute   : this.getActiveRoute()
+        , activeRoute   : this.getDynamicRoute()
       };
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      var activeRoute = this.getActiveRoute();
+      var activeRoute = this.getDynamicRoute();
 
       if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
@@ -117,7 +117,7 @@ var NetworkItem = React.createClass({
     }
 
   , getNetworkFromStore: function() {
-      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
+      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
   , updateNetworkInState: function() {
@@ -130,21 +130,27 @@ var NetworkItem = React.createClass({
 
   , render: function() {
 
-      var DisplayComponent = null;
+      var DisplayComponent      = null;
+
+      if ( this.state.SESSION_AUTHENTICATED && this.state.targetNetwork ) {
+        var childProps = {
+                handleViewChange : this.handleViewChange
+              , item             : this.state.targetNetwork
+              , dataKeys         : this.props.viewData.format["dataKeys"]
+            };
 
         switch ( this.state.currentMode ) {
-        default:
-        case "view":
-          DisplayComponent = NetworksView;
-          break;
+          default:
+          case "view":
+            DisplayComponent = <NetworksView {...childProps} />;
+            break;
+        }
       }
 
       return (
         <div className="viewer-item-info">
 
-        <DisplayComponent handleViewChange = { this.handleViewChange }
-                          item             = { this.state.targetNetwork }
-                          dataKeys         = { this.props.viewData.format["dataKeys"] } />
+        { DisplayComponent }
 
       </div>
       );

@@ -30,6 +30,7 @@
 import os
 import sys
 import time
+import math
 import errno
 import argparse
 import json
@@ -157,15 +158,22 @@ class DataSource(object):
 
     def submit(self, timestamp, value):
         timestamp = round_timestamp(timestamp, self.config.primary_interval.total_seconds())
+        change = None
         self.primary_buffer.push(timestamp, value)
 
         for b in self.config.buckets:
             if timestamp % b.interval.total_seconds() == 0:
                 self.persist(timestamp, self.bucket_buffers[b.index], b)
 
+        if math.isnan(value):
+            value = None
+
+        if value is not None and self.last_value is not None:
+            change = self.last_value
+
         self.context.client.emit_event('statd.{0}.pulse'.format(self.name), {
             'value': value,
-            'change': self.last_value - value,
+            'change': change,
             'nolog': True
         })
 

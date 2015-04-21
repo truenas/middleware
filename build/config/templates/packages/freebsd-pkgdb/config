@@ -1,0 +1,17 @@
+[Package]
+
+name = freebsd-pkgdb
+comment = "FreeBSD pkg db files"
+desc = "FreeNAS OS (derived from FreeBSD)"
+www = http://www.freenas.org/
+origin = freenas/os
+maintainer = dev@ixsystems.com
+prefix = /
+arch = freebsd:10:x86:64
+licenselogic = or
+licenses = [BSD, MIT, GPL]
+
+requires-reboot = False
+[Files]
+include =
+	/var/db/pkg

@@ -4,6 +4,8 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
+var viewerCommon = require("./mixins/viewerCommon");
+
 var Icon         = require("./Icon");
 var DetailViewer = require("./Viewer/DetailViewer");
 var IconViewer   = require("./Viewer/IconViewer");
@@ -13,7 +15,13 @@ var TableViewer  = require("./Viewer/TableViewer");
 // Main Viewer Wrapper Component
 var Viewer = React.createClass({
 
-    propTypes: {
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , propTypes: {
         defaultMode  : React.PropTypes.string
       , allowedModes : React.PropTypes.array
       , inputData    : React.PropTypes.array.isRequired
@@ -48,12 +56,17 @@ var Viewer = React.createClass({
       // middleware and creating cells. Also useful for getting human-friendly
       // names out of the translation key.
       var defaultTableCols = [];
+      var selectedItem = this.context.router.getCurrentParams()[ this.props.viewData.routing["param"] ];
 
       _.filter( this.props.viewData.format.dataKeys, function( item, key, collection ) {
         if ( item["defaultCol"] ) {
           defaultTableCols.push( item["key"] );
         }
       });
+
+      if ( !_.isNumber( selectedItem ) && !_.isString( selectedItem ) ) {
+        selectedItem = null;
+      }
 
       return {
           currentMode    : this.changeViewerMode( initialMode )
@@ -68,6 +81,7 @@ var Viewer = React.createClass({
               }
           }
         , searchString   : ""
+        , selectedItem   : selectedItem
       };
     }
 
@@ -163,37 +177,18 @@ var Viewer = React.createClass({
       });
     }
 
+  , handleItemSelect: function ( selectionValue, event ) {
+      var newSelection = null;
+
+      if ( !_.isNumber( selectionValue ) || !_.isString( selectionValue ) ) {
+        newSelection = selectionValue;
+      }
+
+      this.setState({ selectedItem: newSelection });
+    }
+
   , handleSearchChange: function ( event ) {
       this.processDisplayData({ searchString: event.target.value });
-    }
-
-  , handleEnabledGroupsToggle: function ( targetGroup ) {
-      var tempEnabledArray = _.clone( this.state.enabledGroups );
-      var tempDisplayArray = this.props.viewData.display.allowedGroups;
-      var enabledIndex     = tempEnabledArray.indexOf( targetGroup );
-
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetGroup );
-        // _.intersection will return array to the original defined order
-        tempEnabledArray = _.intersection( tempDisplayArray, tempEnabledArray );
-      }
-
-      this.processDisplayData({ enabledGroups: tempEnabledArray });
-    }
-
-  , handleEnabledFiltersToggle: function ( targetFilter ) {
-      var tempEnabledArray = _.clone( this.state.enabledFilters );
-      var enabledIndex     = tempEnabledArray.indexOf( targetFilter );
-
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetFilter );
-      }
-
-      this.processDisplayData({ enabledFilters: tempEnabledArray });
     }
 
   , changeViewerMode: function ( targetMode ) {
@@ -201,10 +196,8 @@ var Viewer = React.createClass({
 
       // See if a disallowed mode has been requested
       if ( this.props.allowedModes.indexOf( targetMode ) === -1 ) {
-        console.log( "Error: Attempted to set mode " + targetMode + " in a Viewer which forbids it");
         if ( this.props.defaultMode ) {
           // Use the default mode, if provided
-          console.log( "Note: Substituted provided default, " + this.props.defaultMode + " instead of " + targetMode );
           newMode = this.props.defaultMode;
         } else {
           // If no default, use the first allowed mode in the list
@@ -213,6 +206,10 @@ var Viewer = React.createClass({
       } else {
         newMode = targetMode;
       }
+
+      // When changing viewer modes, close any previously open items.
+      // TODO: This may need to change with single-click select functionality.
+      this.returnToViewerRoot();
 
       return newMode;
     }
@@ -234,57 +231,6 @@ var Viewer = React.createClass({
 
 
   // VIEWER DISPLAY
-
-  , createDropdownSection: function ( targetArray, sectionName, dynamicContent ) {
-      if ( targetArray.length > 0 ) {
-        targetArray.push( <li key       = { targetArray.length - 1 }
-                              role      = "presentation"
-                              className = "divider" /> );
-      }
-
-      if ( sectionName ) {
-        targetArray.push( <li key       = { targetArray.length - 1 }
-                              role      = "presentation"
-                              className = "dropdown-header">{ sectionName }</li> );
-      }
-
-      targetArray.push( dynamicContent );
-    }
-
-  , createGroupMenuOption: function ( group, index ) {
-      var toggleText;
-
-      if ( this.state.enabledGroups.indexOf( group ) !== -1 ) {
-        toggleText = "Don't group ";
-      } else {
-        toggleText = "Group ";
-      }
-
-      return (
-        <TWBS.MenuItem key        = { index }
-                       onClick    = { this.handleEnabledGroupsToggle.bind( null, group ) }>
-          { toggleText + this.props.viewData.display.filterCriteria[ group ].name }
-        </TWBS.MenuItem>
-      );
-    }
-
-  , createFilterMenuOption: function ( filter, index ) {
-      var toggleText;
-
-      if ( this.state.enabledFilters.indexOf( filter ) !== -1 ) {
-        toggleText = "Show ";
-      } else {
-        toggleText = "Hide ";
-      }
-
-      return (
-        <TWBS.MenuItem key        = { index }
-                       onClick    = { this.handleEnabledFiltersToggle.bind( null, filter ) }>
-          { toggleText + this.props.viewData.display.filterCriteria[ filter ].name }
-        </TWBS.MenuItem>
-      );
-    }
-
   , createModeNav: function ( mode, index ) {
       var modeIcons = {
           "detail" : "th-list"
@@ -325,18 +271,18 @@ var Viewer = React.createClass({
           break;
       }
 
-      return <ViewerContent viewData     = { this.props.viewData }
-                            inputData    = { this.props.inputData }
-                            Editor       = { this.props.Editor }
-                            ItemView     = { this.props.ItemView }
-                            EditView     = { this.props.EditView }
-                            tableCols    = { this.state.tableCols }
-                            searchString = { this.state.searchString }
-                            filteredData = { this.state.filteredData } />;
+      return <ViewerContent
+                viewData         = { this.props.viewData }
+                inputData        = { this.props.inputData }
+                tableCols        = { this.state.tableCols }
+                handleItemSelect = { this.handleItemSelect }
+                selectedItem     = { this.state.selectedItem }
+                searchString     = { this.state.searchString }
+                filteredData     = { this.state.filteredData } />;
     }
 
   , render: function() {
-      var viewerModeNav  = null;
+      var viewerModeNav = null;
 
       // Create navigation mode icons
       if ( this.props.allowedModes.length > 1 ) {

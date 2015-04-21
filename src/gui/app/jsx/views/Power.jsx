@@ -23,32 +23,28 @@ var Power = React.createClass({
   },
 
   render: function() {
-    var rebootText = (<div style = { {margin: "5px"
+    var rebootprops        = {};
+    rebootprops.dataText   = (<div style = { {margin: "5px"
+                                     , cursor: "pointer"} }>
+                                <Icon glyph = "refresh"
+                                     icoSize = "4em" />
+                                <br />
+                                Reboot
+                              </div>);
+    rebootprops.title      = "Confirm Reboot";
+    rebootprops.bodyText   = "Are you sure you wish to reboot?";
+    rebootprops.callFunc   = this.handlerebootbutton;
+    var shutdownprops      = {};
+    shutdownprops.dataText = (<div style = { {margin: "5px"
                                     , cursor: "pointer"} }>
-                        <Icon glyph = "refresh"
-                              icoSize = "4em"
-                        />
-                        <br />
-                        Reboot
-                      </div>);
-    var rebootprops = {};
-    rebootprops.dataText = rebootText;
-    rebootprops.title = "Confirm Reboot";
-    rebootprops.bodyText = "Are you sure you wish to reboot?"
-    rebootprops.callFunc  = this.handlerebootbutton;
-    var shutdownText = (<div style = { {margin: "5px"
-                                    , cursor: "pointer"} }>
-                        <Icon glyph = "power-off"
-                              icoSize = "4em"
-                        />
-                        <br />
-                        Shutdown
-                      </div>);
-    var shutdownprops = {};
-    shutdownprops.dataText = shutdownText;
-    shutdownprops.title = "Confirm Shutdown";
-    shutdownprops.bodyText = "Are you sure you wish to Shutdown?"
-    shutdownprops.callFunc  = this.handleshutdownbutton;
+                                <Icon glyph = "power-off"
+                                      icoSize = "4em" />
+                                <br />
+                                Shutdown
+                              </div>);
+    shutdownprops.title    = "Confirm Shutdown";
+    shutdownprops.bodyText = "Are you sure you wish to Shutdown?";
+    shutdownprops.callFunc = this.handleshutdownbutton;
     return (
       <main>
         <h2>Power View</h2>

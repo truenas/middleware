@@ -6,7 +6,7 @@
 # PROVIDE: ix-bootstrap
 # BEFORE: datastore dispatcher
 
-. /etc/rc.freenas
+. /etc/rc.subr
 
 bootstrap_start()
 {

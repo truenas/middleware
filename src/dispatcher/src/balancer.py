@@ -37,7 +37,7 @@ from dispatcher.rpc import RpcException
 from gevent.queue import Queue
 from gevent.event import Event
 from resources import ResourceGraph, Resource
-from task import TaskException, TaskStatus, TaskState
+from task import TaskException, TaskAbortException, TaskStatus, TaskState
 
 
 class WorkerState(object):
@@ -84,16 +84,31 @@ class Task(object):
     def __emit_progress(self):
         self.dispatcher.dispatch_event("task.progress", {
             "id": self.id,
+            "name": self.name,
+            "state": self.state,
             "nolog": True,
             "percentage": self.progress.percentage,
             "message": self.progress.message,
-            "extra": self.progress.extra
+            "extra": self.progress.extra,
+            "abortable": True if (hasattr(self.instance, 'abort') and callable(self.instance.abort)) else False
         })
 
     def run(self):
         self.set_state(TaskState.EXECUTING)
         try:
             result = self.instance.run(*(copy.deepcopy(self.args)))
+        except TaskAbortException, e:
+            self.error = {
+               'type': type(e).__name__,
+               'message': str(e)
+            }
+
+            self.ended.set()
+            self.progress = self.instance.get_status()
+            self.set_state(TaskState.ABORTED, TaskStatus(self.progress.percentage, "Aborted"))
+            self.dispatcher.balancer.task_exited(self)
+            self.dispatcher.balancer.logger.debug("Task ID: %d, Name: %s aborted by user", self.id, self.name)
+            return
         except BaseException, e:
             self.error = {
                 'type': type(e).__name__,
@@ -125,7 +140,7 @@ class Task(object):
         return self.thread
 
     def set_state(self, state, progress=None):
-        event = {'id': self.id, 'state': state}
+        event = {'id': self.id, 'name': self.name, 'state': state}
 
         if state == TaskState.EXECUTING:
             self.started_at = time.time()
@@ -148,9 +163,23 @@ class Task(object):
         while True:
             if self.ended.wait(1):
                 return
-            progress = self.instance.get_status()
-            self.progress = progress
-            self.__emit_progress()
+            elif (hasattr(self.instance, 'suggested_timeout') and
+                  time.time() - self.started_at > self.instance.suggested_timeout):
+                self.ended.set()
+                self.set_state(TaskState.FAILED, TaskStatus(0, "FAILED"))
+                self.error = {
+                   'type': "ETIMEDOUT",
+                   'message': "The task was killed due to a timeout",
+                }
+                self.ended.set()
+                self.progress = self.instance.get_status()
+                self.set_state(TaskState.FAILED, TaskStatus(self.progress.percentage, "TIMEDOUT"))
+                self.dispatcher.balancer.task_exited(self)
+                self.dispatcher.balancer.logger.debug("Task ID: %d, Name: %s was TIMEDOUT", self.id, self.name)
+            else:
+                progress = self.instance.get_status()
+                self.progress = progress
+                self.__emit_progress()
 
 
 class Balancer(object):
@@ -240,14 +269,17 @@ class Balancer(object):
             return
 
         success = False
-        try:
-            success = task.instance.abort()
-        except:
-            pass
-
+        if task.started_at is None:
+            success = True
+        else:
+            try:
+                task.instance.abort()
+            except:
+                pass
         if success:
             task.ended.set()
             task.set_state(TaskState.ABORTED, TaskStatus(0, "Aborted"))
+            self.logger.debug("Task ID: %d, Name: %s aborted by user", task.id, task.name)
 
     def task_exited(self, task):
         self.resource_graph.release(*task.resources)

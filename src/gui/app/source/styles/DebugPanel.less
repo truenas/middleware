@@ -6,8 +6,10 @@
 .debug-panel {
   .flex-flow( column nowrap );
   .flex-display( flex );
-  height    : 350px;
-  font-size : 9.5pt;
+  height     : 350px;
+  font-size  : 9.5pt;
+  z-index    : 2000;
+  background : white;
 
   // TODO: #7908
   & > div {
@@ -62,6 +64,10 @@
 .debug-column {
   .flex-flow( column nowrap );
   .flex-display( flex );
+}
+
+.termFlex {
+  .flex ( 1 );
 }
 
 .debug-column-content {
@@ -157,4 +163,18 @@
     overflow : hidden;
     margin   : 0 0 0 10px;
   }
+}
+
+.debug-options {
+  hr {
+    margin-top    : 5px;
+    margin-bottom : 5px;
+  }
+}
+
+.debug-options-label {
+  .flex-display(flex);
+  .align-items( center );
+  font-size : 0.8em;
+  color     : @gray-dark;
 }

@@ -48,5 +48,8 @@ http {
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
         }
+
+    ## Rule to remove trailing slash from the URL.
+    rewrite ^/(.*)/$ /$1 permanent;
     }
 }

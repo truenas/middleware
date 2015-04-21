@@ -8,9 +8,6 @@ var componentLongName = "Groups";
 
 var React = require("react");
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
-
 var Viewer = require("../../components/Viewer");
 
 var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
@@ -20,12 +17,14 @@ var UsersMiddleware = require("../../middleware/UsersMiddleware");
 var UsersStore      = require("../../stores/UsersStore");
 
 var viewData = {
-    format  : require("../../../data/middleware-keys/groups-display.json")[0]
-  , routing : {
-      "route" : "groups-editor"
-    , "param" : "groupID"
+    format    : require("../../../data/middleware-keys/groups-display.json")[0]
+  , addEntity : "Add Group"
+  , routing   : {
+      "route"     : "groups-editor"
+    , "param"     : "groupID"
+    , "addentity" : "add-group"
   }
-  , display : {
+  , display   : {
       filterCriteria   : {
         userCreated : {
             name     : "local groups"
@@ -42,7 +41,7 @@ var viewData = {
     , defaultFilters   : [ ]
     , allowedGroups    : [ "userCreated", "builtIn" ]
     , defaultGroups    : [ "userCreated", "builtIn" ]
-    , defaultCollapsed : [ "builtIn" ]
+    , defaultCollapsed : [ ] // TODO: Revert this to "builtin" once we have more "userCreated"
   }
 };
 
@@ -93,8 +92,7 @@ var Groups = React.createClass({
   , render: function() {
       return <Viewer header     = { "Groups" }
                      inputData  = { this.state.groupsList }
-                     viewData   = { viewData }
-                     Editor     = { RouteHandler } />;
+                     viewData   = { viewData } />;
     }
 });
 

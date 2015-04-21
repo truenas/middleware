@@ -26,8 +26,20 @@ module.exports = {
       });
     }
 
+  , createGroup: function( newGroupProps ) {
+      MiddlewareClient.request( "task.submit", ["groups.create" , [ newGroupProps ] ], function ( taskID, groupID ) {
+        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+      });
+    }
+
   , updateGroup: function (groupID, props) {
       MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function ( taskID ) {
+        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+      });
+    }
+
+  , deleteGroup: function( groupID ) {
+      MiddlewareClient.request( "task.submit", ["groups.delete", [ groupID ] ], function ( taskID, groupID ) {
         GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
       });
     }

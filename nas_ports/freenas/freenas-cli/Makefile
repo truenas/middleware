@@ -20,7 +20,7 @@ EXTRACT_ONLY=
 NO_BUILD= 	yes
 MAKE_JOBS_UNSAFE= yes
 ALL_TARGET=	obj all
-WRKSRC=		/usr/nas_source2/cli
+WRKSRC=		/usr/freenas_src/cli
 
 USES=		python
 

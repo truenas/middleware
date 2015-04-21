@@ -1,0 +1,42 @@
+[Package]
+name = base-os
+comment = "FreeNAS OS"
+desc = "FreeNAS OS (derived from FreeBSD)"
+www = http://www.freenas.org/
+origin = freenas/os
+maintainer = dev@ixsystems.com
+prefix = /
+arch = freebsd:10:x86:64
+licenselogic = or
+licenses = [BSD, MIT, GPL]
+
+[Scripts]
+post-install = /usr/bin/touch /boot/kernel/linker.hints
+	/usr/bin/touch /boot/modules/linker.hints
+	/usr/sbin/service datastore init
+	/usr/sbin/service datastore start
+	/usr/local/sbin/dsrestore -f /usr/local/share/datastore/factory.json
+	/usr/sbin/service datastore stop
+
+post-upgrade = /usr/bin/touch /boot/kernel/linker.hints
+	/usr/bin/touch /boot/modules/linker.hints
+	/usr/bin/touch /data/cd-upgrade
+	/usr/bin/touch /data/need-update
+	/usr/local/sbin/dsmigrate -f /usr/local/share/datastore/factory.json
+
+[Files]
+exclude = /usr/local/www/gui
+	/usr/share/man
+	/usr/lib/*.a
+	/usr/local/share/doc
+	/usr/local/share/gtk-doc
+	/usr/local/share/gir-1.0
+	/usr/local/info
+	/usr/local/man
+	/usr/local/share/examples
+	/usr/share/groff_font
+	/usr/share/tmac
+	/usr/share/me
+	/var/db/pkg
+	/etc/rc.d/netif
+	/etc/rc.d/routing

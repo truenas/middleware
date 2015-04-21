@@ -4,26 +4,32 @@ var React = require("react");
 var _     = require("lodash");
 var TWBS  = require("react-bootstrap");
 
-var Router     = require("react-router");
-var Link       = Router.Link;
-var Navigation = Router.Navigation;
+var Router       = require("react-router");
+var Link         = Router.Link;
+var RouteHandler = Router.RouteHandler;
 
+var Icon = require("../Icon");
+
+var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil = require("./viewerUtil");
 
 // Table Viewer
 var TableViewer = React.createClass({
 
-    mixins: [Navigation]
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
 
   , propTypes: {
-        viewData     : React.PropTypes.object.isRequired
-      , inputData    : React.PropTypes.array.isRequired
-      , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , searchString : React.PropTypes.string
-      , filteredData : React.PropTypes.object.isRequired
-      , tableCols    : React.PropTypes.array.isRequired
+        viewData         : React.PropTypes.object.isRequired
+      , inputData        : React.PropTypes.array.isRequired
+      , handleItemSelect : React.PropTypes.func.isRequired
+      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
+      , searchString     : React.PropTypes.string
+      , filteredData     : React.PropTypes.object.isRequired
+      , tableCols        : React.PropTypes.array.isRequired
     }
 
   , getInitialState: function() {
@@ -37,20 +43,37 @@ var TableViewer = React.createClass({
 
   , componentDidMount: function() {
       this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
+      window.addEventListener( "keyup", this.handleEscClose );
+    }
+
+  , componentWillUnmount: function() {
+      window.removeEventListener( "keyup", this.handleEscClose );
+    }
+
+  , handleEscClose: function( event ) {
+      if ( event.which === 27 && this.dynamicPathIsActive() ) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.returnToViewerRoot();
+      }
     }
 
   , handleClickOut: function( event, componentID ) {
       if ( event.dispatchMarker === componentID ) {
-        this.goBack();
+        this.returnToViewerRoot();
       }
     }
 
-  , handleRowClick: function( selectionKey, event, componentID ) {
-      var params = {};
+  , handleRowClick: function( params, selectionValue, event, componentID ) {
+      switch ( event.type ) {
+        case "click":
+          this.props.handleItemSelect( selectionValue );
+          break;
 
-      params[ this.props.viewData.routing["param"] ] = selectionKey;
-
-      this.transitionTo( this.props.viewData.routing["route"], params );
+        case "dblclick":
+          this.context.router.transitionTo( this.props.viewData.routing.route, params );
+          break;
+      }
     }
 
   , changeSortState: function( key, event ) {
@@ -129,8 +152,17 @@ var TableViewer = React.createClass({
     }
 
   , createRows: function( item, index ) {
+      var selectionValue = item[ this.props.viewData.format["selectionKey"] ];
+      var params         = {};
+
+      params[ this.props.viewData.routing["param"] ] = selectionValue;
+
       return(
-        <tr key={ index } onClick= { this.handleRowClick.bind( null, item[ this.props.viewData.format["selectionKey"] ] ) }>
+        <tr
+          key           = { index }
+          className     = { this.props.selectedItem === selectionValue ? "active" : "" }
+          onClick       = { this.handleRowClick.bind( null, null, selectionValue ) }
+          onDoubleClick = { this.handleRowClick.bind( null, params, selectionValue ) } >
           { this.props.tableCols.map( function( key, index ) {
               return ( <td key={ index }>{ viewerUtil.identifyAndWrite( item[ key ] ) }</td> );
             })
@@ -144,15 +176,22 @@ var TableViewer = React.createClass({
     var tableData     = null;
     var editorContent = null;
 
-    if ( this.props.Editor() !== null ) {
+    if ( this.dynamicPathIsActive() ) {
       editorContent = (
         <div className = "overlay-light editor-edit-overlay"
              onClick   = { this.handleClickOut } >
-          <this.props.Editor viewData  = { this.props.viewData }
-                             inputData = { this.props.inputData }
-                             activeKey = { this.props.selectedKey }
-                             ItemView  = { this.props.ItemView }
-                             EditView  = { this.props.EditView } />
+          <div className="editor-edit-wrapper">
+            <span className="clearfix">
+              <Icon
+                glyph    = "close"
+                icoClass = "editor-close"
+                onClick  = { this.handleClickOut } />
+            </span>
+            <RouteHandler
+              viewData  = { this.props.viewData }
+              inputData = { this.props.inputData }
+              activeKey = { this.props.selectedKey } />
+          </div>
         </div>
       );
     }

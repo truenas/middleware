@@ -386,16 +386,6 @@ function MiddlewareClient() {
     SubscriptionsActionCreators.recordNewSubscriptions( masks, componentID );
   };
 
-  this.renewSubscriptions = function () {
-    var masks = _.keys(SubscriptionsStore.getAllSubscriptions());
-    _.forEach( masks, function( mask ) {
-      if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
-      if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
-      var requestID = freeNASUtil.generateUUID();
-      processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
-    });
-  };
-
   this.unsubscribe = function ( masks, componentID ) {
 
     if ( !_.isArray( masks ) ) {
@@ -425,6 +415,25 @@ function MiddlewareClient() {
     SubscriptionsActionCreators.deleteCurrentSubscriptions( masks, componentID );
   };
 
+  this.renewSubscriptions = function () {
+    var masks = _.keys(SubscriptionsStore.getAllSubscriptions());
+    _.forEach( masks, function( mask ) {
+      if ( DEBUG("subscriptions") ) { console.log( "Renewing subscription request for %c'" + mask + "' ", debugCSS.argsColor, debugCSS.defaultStyle ); }
+      var requestID = freeNASUtil.generateUUID();
+      processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
+    });
+  };
+
+  this.unsubscribeALL =  function () {
+    var masks = _.keys(SubscriptionsStore.getAllSubscriptions());
+    _.forEach( masks, function( mask ) {
+      if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+      var requestID = freeNASUtil.generateUUID();
+      processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, requestID );
+    });
+
+    SubscriptionsActionCreators.deleteAllSubscriptions();
+  };
 
 // MIDDLEWARE DISCOVERY METHODS
 // These are public methods used to gather more information about the Middleware's

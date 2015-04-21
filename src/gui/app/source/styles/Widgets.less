@@ -25,18 +25,20 @@
     background-repeat : repeat-x;
     box-shadow        : 0 1px 2px #888;
     cursor            : pointer;
-    padding           : 5px;
-    position          : absolute;
+    padding           : 2px 5px 2px 5px;
     width             : 100%;
-    opacity           : 0;
-    transition        : opacity 0.5s ease-in-out;
-
-    &:hover { opacity: 1; }
+    font-size         : 60%;
 
     .fa {
       float      : right;
-      margin-top : 3px;
+      margin-top : 0px;
+      font-size  : 145%;
     }
+  }
+
+  h4 {
+    margin: 0;
+    padding: 10px 5px;
   }
 
  &.xs-square .widget-content {
@@ -136,10 +138,19 @@
 .ico-graph-type-stacked,
 .ico-graph-type-line,
 .ico-graph-type-pie {
-  width       : 24px;
-  height      : 24px;
-  text-indent : -99999px;
-  margin-top  : 10px;
-  margin-left : 6px;
-  background-repeat: no-repeat;
+  width             : 24px;
+  height            : 24px;
+  text-indent       : -99999px;
+  margin-top        : 10px;
+  margin-left       : 6px;
+  background-repeat : no-repeat;
+  cursor            : pointer;
+
+  &:hover {
+    background-color: lime;
+  }
+
+    &.selected {
+    background-color: fuchsia;
+  }
 }

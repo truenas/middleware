@@ -7,11 +7,7 @@
 
 var React = require("react");
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
-
-var Viewer      = require("../components/Viewer");
-var ServiceView = require("./Services/ServiceView");
+var Viewer = require("../components/Viewer");
 
 var ServicesMiddleware = require("../middleware/ServicesMiddleware");
 var ServicesStore      = require("../stores/ServicesStore");
@@ -74,9 +70,7 @@ var Services = React.createClass({
         <h2>Services</h2>
         <Viewer header      = { "Services" }
                 inputData   = { this.state.servicesList }
-                viewData    = { viewData }
-                Editor      = { RouteHandler }
-                ItemView    = { ServiceView } />
+                viewData    = { viewData } />
       </main>
     );
   }

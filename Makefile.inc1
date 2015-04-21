@@ -1,0 +1,179 @@
+#-
+# Copyright 2010-2015 iXsystems, Inc.
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#####################################################################
+
+.if exists(build/hooks/Makefile)
+.include "build/hooks/Makefile"
+.endif
+
+.ifdef SCRIPT
+RELEASE_LOGFILE?=${SCRIPT}
+.else
+RELEASE_LOGFILE?=release.build.log
+.endif
+
+.if defined(CHANGELOG)
+.export CHANGELOG
+.endif
+
+all: check-root build
+
+.PHONY: world build packages checkout update dumpenv clean
+
+check-root:
+	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
+
+build: portsjail ports world packages images
+
+world:
+	@${BUILD_TOOLS}/install-world.py
+	@${BUILD_TOOLS}/install-ports.py
+	@${BUILD_TOOLS}/customize.py
+
+packages:
+	@${BUILD_TOOLS}/build-packages.py
+
+checkout:
+	@${BUILD_TOOLS}/checkout.py
+
+update:
+	@git pull
+	@${BUILD_TOOLS}/checkout.py
+
+buildenv:
+	@sh
+
+dumpenv:
+	@${BUILD_TOOLS}/dumpenv.py
+
+clean:
+	chflags -R 0 ${BUILD_ROOT}/objs
+	rm -rf ${BUILD_ROOT}/objs
+	rm -rf release.build.log
+
+clean-packages:
+	find ${MAKEOBJDIRPREFIX}/ports -type f -delete
+
+clean-package:
+.if defined(p)
+	find ${MAKEOBJDIRPREFIX}/ports -name "${p}*" | xargs rm -fr
+.else
+	@echo "Clean a single package from object tree"
+	@echo "" 
+	@echo "Usage:  ${MAKE} ${.TARGET} p=[package name]"
+	@echo ""
+	@echo "Examples:"
+	@echo "        ${MAKE} ${.TARGET} p=freenas-ui"
+	@echo "        ${MAKE} ${.TARGET} p=netatalk"
+.endif
+
+clean-ui-package:
+	${MK} clean-package p=freenas-10gui
+	rm -rf objs/os-base/*/gui-dest
+
+distclean: clean
+	rm -fr FreeBSD nas_source
+
+save-build-env:
+	@${BUILD_TOOLS}/save-build-env.py
+
+sync:
+	rsync -al \
+		--rsync-path="sudo rsync" \
+		--delete \
+		--exclude '.git-repo-setting' \
+		--exclude 'objs' \
+		--exclude 'FreeBSD' \
+		--exclude '.git' \
+		--exclude '.idea' . ${host}:${dir}/
+
+remote: sync
+	ssh -o StrictHostKeyChecking=no -t ${host} sudo make -C ${dir} ${target}
+
+reinstall-package:
+	@${BUILD_TOOLS}/reinstall-package.py ${host} ${p}
+
+freenas: release
+release:
+	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
+	@echo "Doing executing target $@ on host: `hostname`"
+	@echo "Build directory: `pwd`"
+	script -a ${RELEASE_LOGFILE} ${MK} build
+	script -a ${RELEASE_LOGFILE} ${BUILD_TOOLS}/create-release-distribution.py
+	script -a ${RELEASE_LOGFILE} ${BUILD_TOOLS}/create-upgrade-distribution.py
+
+release-push: update-push
+	@${BUILD_TOOLS}/post-to-storage.py
+	@if [ "${PRODUCT}" == "FreeNAS" ]; then \
+		${BUILD_TOOLS}/post-to-download.py; \
+	fi
+
+update-push:
+	@${BUILD_TOOLS}/post-to-upgrade.py
+
+rebuild: checkout all
+	@${BUILD_TOOLS}/create-release-distribution.py
+
+cdrom:
+	@${BUILD_TOOLS}/create-iso.py
+
+gui-upgrade:
+	@${BUILD_TOOLS}/create-gui-upgrade.py
+
+images: cdrom gui-upgrade
+
+# intentionally split up to prevent abuse/spam
+BUILD_BUG_DOMAIN?=ixsystems.com
+BUILD_BUG_USER?=build-bugs
+BUILD_BUG_EMAIL?=${BUILD_BUG_USER}@${BUILD_BUG_DOMAIN}
+
+build-bug-report:
+	mail -s "build fail for $${SUDO_USER:-$$USER}" ${BUILD_BUG_EMAIL} < \
+		${RELEASE_LOGFILE}
+
+git-internal:
+	@echo "INTERNAL" > ${GIT_REPO_SETTING}
+	@echo "You are set up for internal (${COMPANY}) development.  You can use"
+	@echo "the standard make targets (e.g. build or release) now."
+
+git-external:
+	@echo "EXTERNAL" > ${GIT_REPO_SETTING}
+	@echo "You are set up for external (github) development.  You can use"
+	@echo "the standard make targets (e.g. build or release) now."
+
+tag:
+	@${BUILD_TOOLS}/apply-tag.py ${tag}
+
+build-gui: 
+	@${BUILD_TOOLS}/build-gui.py
+
+ports: check-root build-gui
+	@${BUILD_TOOLS}/merge-pcbsd-ports.py
+	@${BUILD_TOOLS}/build-ports.py
+
+portsjail:
+	@${BUILD_TOOLS}/build-os.py
+	@${BUILD_TOOLS}/install-jail.py

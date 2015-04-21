@@ -1,7 +1,7 @@
 // Group Item Template
 // ==================
 // Handles the viewing and editing of individual group items. Shows a non-editable
-// overview of the group, and mode-switches to a more standard editor panel. 
+// overview of the group, and mode-switches to a more standard editor panel.
 // Group is set by providing a route parameter.
 
 "use strict";
@@ -9,66 +9,90 @@
 var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
-var Router = require("react-router");
+
+var routerShim   = require("../../../components/mixins/routerShim");
+var clientStatus = require("../../../components/mixins/clientStatus");
 
 var viewerUtil = require("../../../components/Viewer/viewerUtil");
 var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
 
 var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
 
-var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
+
+var groupMixins   = require("../../../components/mixins/groupMixins");
+var inputHelpers = require("../../../components/mixins/inputHelpers");
+var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 var GroupView = React.createClass({
 
-    propTypes: {
+    mixins: [   groupMixins
+              , viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+  }
+
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
   , getMembers: function( groupid ) {
-    if ( UsersStore.getUsersByGroup( groupid )[0] ) {
-      return UsersStore.getUsersByGroup( groupid )[0].username;
+    if ( UsersStore.getUsersByGroup( groupid ) ) {
+      return UsersStore.getUsersByGroup( groupid );
     } else {
-      return "";
+      return [];
     }
+  }
+  
+  , createUserDisplayList: function( groupid ) {
+      var listUserItemArray = [];
+      var users = this.getMembers( groupid );
+
+      for (var i = 0; i < users.length; i++) {
+         listUserItemArray.push(<TWBS.ListGroupItem>{ users[i].username }</TWBS.ListGroupItem>);
+      }
+
+      return listUserItemArray;
   }
 
   , render: function() {
       var builtInGroupAlert = null;
-      var editButton = null;
+      var editButtons = null;
 
       if ( this.props.item["builtin"] ) {
         builtInGroupAlert = (
           <TWBS.Alert bsStyle   = "info"
                       className = "text-center">
-            <b>{"This is a built-in FreeNAS group account."}</b>
+            <b>{"This is a built-in FreeNAS group."}</b>
           </TWBS.Alert>
         );
       }
 
-      editButton = (
-        <TWBS.Row>
-          <TWBS.Col xs={12}>
-            <TWBS.Button className = "pull-right"
-                         onClick   = { this.props.handleViewChange.bind(null, "edit") }
-                         bsStyle   = "info" >{"Edit Group"}</TWBS.Button>
-          </TWBS.Col>
-        </TWBS.Row>
+      editButtons = (
+        <TWBS.ButtonToolbar>
+          <TWBS.Button className = "pull-left"
+                       disabled  = { this.props.item["builtin"] }
+                       onClick   = { this.deleteGroup }
+                       bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
+          <TWBS.Button className = "pull-right"
+                       onClick   = { this.props.handleViewChange.bind(null, "edit") }
+                       bsStyle   = "info" >{"Edit Group"}</TWBS.Button>
+        </TWBS.ButtonToolbar>
       );
 
       return (
         <TWBS.Grid fluid>
         {/* "Edit Group" Button - Top */}
-        { editButton }
+        { editButtons }
 
         <TWBS.Row>
           <TWBS.Col xs={3}
                     className="text-center">
             <viewerUtil.ItemIcon primaryString  = { this.props.item["name"] }
                                  fallbackString = { this.props.item["id"] }
-                                 seedNumber     = { this.props.item["id"] } /> 
+                                 seedNumber     = { this.props.item["id"] } />
           </TWBS.Col>
           <TWBS.Col xs={9}>
             <h3>{ this.props.item["name"] }</h3>
@@ -82,16 +106,26 @@ var GroupView = React.createClass({
           {/* Primary group data overview */}
 
         <TWBS.Row>
-          <viewerUtil.DataCell title  = { "Group ID" }
-                               colNum = { 3 }
-                               entry  = { this.props.item["id"] }/>
-          <viewerUtil.DataCell title = { "Users" }
-                               colNum = { 9 }
-                               entry = { this.getMembers( this.props.item["id"] ) } />
+	  <TWBS.Col xs      = {2}
+	            className = "text-muted" >
+	            <h4 className = "text-muted" >{ "Group ID" }</h4>
+	  </TWBS.Col>
+          <TWBS.Col xs = {10}>
+		    <h3>{this.props.item["id"]}</h3>
+	  </TWBS.Col>
+        </TWBS.Row>
+	<TWBS.Row>
+	  <TWBS.Col xs      = {12}
+	            className = "text-muted" >
+	            <h4 className = "text-muted" >{ "Users" }</h4>
+                       <TWBS.ListGroup>
+                          { this.createUserDisplayList( this.props.item["id"] ) }
+		       </TWBS.ListGroup>
+          </TWBS.Col>		       
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
-          { editButton }
+          { editButtons }
 
         </TWBS.Grid>
       );
@@ -101,80 +135,92 @@ var GroupView = React.createClass({
 // EDITOR PANE
 var GroupEdit = React.createClass({
 
-    propTypes: {
+    mixins: [  inputHelpers
+              , groupMixins
+              , viewerCommon ]
+
+  , contextTypes: {
+        router: React.PropTypes.func
+    }
+
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
   , getInitialState: function() {
+      var remoteState = this.setRemoteState( this.props );
+
       return {
-          modifiedValues : {}
-        , mixedValues    : this.props.item
-      }
-  }
-
-  , componentWillRecieveProps: function( nextProps ) {
-      var newModified = {};
-      var oldModified = _.cloneDeep( this.state.modifiedValues );
-
-      // Any remote changes will cause the current property to be shown as
-      // having been "modified", signalling to the user that saving it will
-      // have the effect of changing that value
-      _.forEach( nextProps.item, function( value, key ) {
-        if ( this.props.item[ key ] !== value ) {
-          newModified[ key ] = this.props.item[ key ];
-        }
-      }.bind(this) );
-
-      // Any remote changes which are the same as locally modified changes should
-      // cause the local modifications to be ignored.
-      _.forEach( oldModified, function( value, key ) {
-        if ( this.props.item[ key ] === value ) {
-          delete oldModified[ key ];
-        }
-      }.bind(this) );
-
-      this.setState({
-          modifiedValues : _.assign( oldModified, newModified )
-      });
+          locallyModifiedValues  : {}
+        , remotelyModifiedValues : {}
+        , remoteState            : remoteState
+        , mixedValues            : this.props.item
+        , lastSentValues         : {}
+        , dataKeys               : this.props.viewData["format"]["dataKeys"]
+      };
     }
 
-  , handleValueChange: function( key, event ) {
-      var newValues  = this.state.modifiedValues;
-      var inputValue;
-      if (event.target.type === "checkbox") {
-        inputValue = event.target.checked;
-      } else {
-        inputValue = event.target.value;
-      }
-      // We don't want to submit non-changed data to the middleware, and it's
-      // easy for data to appear "changed", even if it's the same. Here, we
-      // check to make sure that the input value we've just receieved isn't the
-      // same as what the last payload from the middleware shows as the value
-      // for the same key. If it is, we `delete` the key from our temp object
-      // and update state.
-      if ( this.props.item[ key ] === inputValue ) {
-        delete newValues[ key ];
-      } else {
-        newValues[ key ] = inputValue;
+  , componentWillRecieveProps: function( nextProps ) {
+      var newRemoteModified = {};
+      var newLocallyModified = {};
+
+      // remotelyModifiedValues represents everything that's changed remotely
+      // since the view was opened. This is the difference between the newly arriving
+      // props and the initial ones. Read-only and unknown values are ignored.
+      // TODO: Use this to show alerts for remote changes on sections the local
+      // administrator is working on.
+      var mismatchedRemoteFields = _.pick(nextProps.item, function( value, key ) {
+        return _.isEqual( this.state.remoteState[ key ], value );
+      }, this);
+
+      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.viewData["format"]["dataKeys"]);
+
+      // remoteState records the item as it was when the view was first
+      // opened. This is used to mark changes that have occurred remotely since
+      // the user began editing.
+      // It is important to know if the incoming change resulted from a call
+      // made by the local administrator. When this happens, we reset the
+      // remoteState to get rid of remote edit markers, as the local version
+      // has thus become authoritative.
+      // We check this by comparing the incoming changes (newRemoteModified) to the
+      // last request sent (this.state.lastSentValues). If this check succeeds,
+      // we reset newLocallyModified and newRemoteModified, as there are no longer
+      // any remote or local changes to record.
+      // TODO: Do this in a deterministic way, instead of relying on comparing
+      // values.
+      if (_.isEqual(this.state.lastSentValues, newRemoteModified)){
+          newRemoteModified  = {};
+          newLocallyModified = {};
+          this.setState ({
+              remoteState           : this.setRemoteState(nextProps)
+            , locallyModifiedValues : newLocallyModified
+          });
       }
 
-      // mixedValues functions as a clone of the original item passed down in
-      // props, and is modified with the values that have been changed by the
-      // user. This allows the display components to have access to the
-      // "canonically" correct item, merged with the un-changed values.
       this.setState({
-          modifiedValues : newValues
-        , mixedValues    : _.assign( _.cloneDeep( this.props.item ), newValues )
+          remotelyModifiedValues : newRemoteModified
       });
     }
 
   , submitGroupUpdate: function() {
-      GroupsMiddleware.updateGroup( this.props.item["id"], this.state.modifiedValues );
+      var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
+
+      // Only bother to submit an update if there is anything to update.
+      if ( !_.isEmpty( valuesToSend ) ){
+        GroupsMiddleware.updateGroup( this.props.item["id"], valuesToSend, this.submissionRedirect( valuesToSend ) );
+        // Save a record of the last changes we sent.
+        this.setState({
+            lastSentValues : valuesToSend
+        });
+      } else {
+          console.warn( "Attempted to send a Group update with no valid fields." );
+      }
     }
 
   , render: function() {
       var builtInGroupAlert = null;
       var editButtons       = null;
+      var inputForm         = null;
 
       if ( this.props.item["builtin"] ) {
         builtInGroupAlert = (
@@ -187,14 +233,50 @@ var GroupEdit = React.createClass({
 
       editButtons =
         <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-left"
+                         disabled  = { this.props.item["builtin"] }
+                         onClick   = { this.deleteGroup }
+                         bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
-                         disabled  = { _.isEmpty( this.state.modifiedValues ) ? true : false }
+                         disabled  = { _.isEmpty( this.state.locallyModifiedValues ) ? true : false }
                          onClick   = { this.submitGroupUpdate }
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
+
+      inputForm =
+        <form className="form-horizontal">
+          <TWBS.Grid fluid>
+            <TWBS.Row>
+              <TWBS.Col xs = {12}>
+                {/*Group id*/}
+                <TWBS.Input type             = "text"
+                            label            = { "Group ID" }
+                            value            = { this.state.mixedValues["id"] ? this.state.mixedValues["id"] : "" }
+                            onChange         = { this.editHandleValueChange.bind( null, "id" ) }
+                            ref              = { "id" }
+                            key              = { "id" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "id", this.state.dataKeys) } />
+                {/* name */}
+                <TWBS.Input type             = "text"
+                            label            = { "Group Name" }
+                            value            = { this.state.mixedValues["name"] ? this.state.mixedValues["name"] : "" }
+                            onChange         = { this.editHandleValueChange.bind( null, "name" ) }
+                            ref              = { "name" }
+                            key              = { "name" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            disabled         = { !this.isMutable( "name", this.state.dataKeys) } />
+              </TWBS.Col>
+            </TWBS.Row>
+          </TWBS.Grid>
+        </form>;
 
       return (
         <TWBS.Grid fluid>
@@ -204,24 +286,7 @@ var GroupEdit = React.createClass({
           {/* Shows a warning if the group is built in */}
           { builtInGroupAlert }
 
-          <form className="form-horizontal">
-            {
-              this.props["dataKeys"].map( function( displayKeys, index ) {
-                return editorUtil.identifyAndCreateFormElement(
-                          // value
-                          this.state.mixedValues[ displayKeys["key"] ]
-                          // displayKeys
-                        , displayKeys
-                          //changeHandler
-                        , this.handleValueChange
-                          // key
-                        , index
-                          // wasModified
-                        , _.has( this.state.modifiedValues, displayKeys["key"] )
-                      );
-              }.bind( this ) ) 
-            }
-          </form>
+          {inputForm}
 
           {/* Save and Cancel Buttons - Bottom */}
           { editButtons }
@@ -238,18 +303,18 @@ var GroupItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
       }
 
-    , mixins: [ Router.State, activeRoute ]
+    , mixins: [ routerShim, clientStatus ]
 
     , getInitialState: function() {
         return {
             targetGroup : this.getGroupFromStore()
           , currentMode : "view"
-          , activeRoute : this.getActiveRoute()
+          , activeRoute : this.getDynamicRoute()
         };
       }
 
     , componentDidUpdate: function( prevProps, prevState ) {
-        var activeRoute = this.getActiveRoute();
+        var activeRoute = this.getDynamicRoute();
 
         if ( activeRoute !== prevState.activeRoute ) {
           this.setState({
@@ -269,7 +334,7 @@ var GroupItem = React.createClass({
       }
 
     , getGroupFromStore: function() {
-        return GroupsStore.findGroupByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
+        return GroupsStore.findGroupByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
       }
 
     , updateGroupInState: function() {
@@ -284,22 +349,31 @@ var GroupItem = React.createClass({
         var DisplayComponent = null;
         var processingText = "";
 
-        // PROCESSING OVERLAY
-        if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
-          processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
-        } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
-          processingText = "Group '" + this.state.targetGroup[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
-        }
+        if ( this.state.SESSION_AUTHENTICATED && this.state.targetGroup ) {
 
-        // DISPLAY COMPONENT
-        switch( this.state.currentMode ) {
-          default:
-          case "view":
-            DisplayComponent = GroupView;
-            break;
-          case "edit":
-            DisplayComponent = GroupEdit;
-            break;
+          // PROCESSING OVERLAY
+          if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
+            processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
+          } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
+            processingText = "Group '" + this.state.targetGroup[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+          }
+
+          // DISPLAY COMPONENT
+          var childProps = {
+              handleViewChange : this.handleViewChange
+            , item             : this.state.targetGroup
+            , viewData         : this.props.viewData
+          };
+
+          switch( this.state.currentMode ) {
+            default:
+            case "view":
+              DisplayComponent = <GroupView { ...childProps } />;
+              break;
+            case "edit":
+              DisplayComponent = <GroupEdit { ...childProps } />;
+              break;
+          }
         }
 
         return (
@@ -307,9 +381,8 @@ var GroupItem = React.createClass({
 
             {/* Overlay to block interaction while tasks or updates are processing */}
             <editorUtil.updateOverlay updateString={ processingText } />
-            <DisplayComponent handleViewChange = { this.handleViewChange }
-                              item             = { this.state.targetGroup }
-                              dataKeys         = { this.props.viewData.format["dataKeys"] } />
+
+            { DisplayComponent }
 
           </div>
         );

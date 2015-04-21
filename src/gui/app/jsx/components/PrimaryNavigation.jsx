@@ -19,55 +19,65 @@ var EventBus = require("./DebugTools/EventBus");
 // TODO: Convert to Flux or other external file
 var paths = [
   {
-      path    : "dashboard"
-    , icon    : "dashboard"
-    , label   : "Dashboard"
-    , status  : "danger"
+      path     : "dashboard"
+    , icon     : "dashboard"
+    , label    : "Dashboard"
+    , status   : "danger"
+    , disabled : false
   },{
-      path    : "accounts"
-    , icon    : "paper-plane"
-    , label   : "Accounts"
-    , status  : null
+      path     : "accounts"
+    , icon     : "paper-plane"
+    , label    : "Accounts"
+    , status   : null
+    , disabled : false
   },{
-      path    : "tasks"
-    , icon    : "paw"
-    , label   : "Tasks"
-    , status  : null
+      path     : "tasks"
+    , icon     : "paw"
+    , label    : "Tasks"
+    , status   : null
+    , disabled : true
   },{
-      path    : "networks"
-    , icon    : "moon-o"
-    , label   : "Networks"
-    , status  : null
+      path     : "networks"
+    , icon     : "moon-o"
+    , label    : "Networks"
+    , status   : null
+    , disabled : false
   },{
-      path    : "storage"
-    , icon    : "magic"
-    , label   : "Storage"
-    , status  : null
+      path     : "storage"
+    , icon     : "magic"
+    , label    : "Storage"
+    , status   : null
+    , disabled : true
   },{
-      path    : "sharing"
-    , icon    : "cut"
-    , label   : "Sharing"
-    , status  : null
+      path     : "sharing"
+    , icon     : "cut"
+    , label    : "Sharing"
+    , status   : null
+    , disabled : true
   },{
-      path    : "services"
-    , icon    : "bitcoin"
-    , label   : "Services"
-    , status  : null
+      path     : "services"
+    , icon     : "bitcoin"
+    , label    : "Services"
+    , status   : null
+    , disabled : false
   },{
-      path    : "system-tools"
-    , icon    : "ambulance"
-    , label   : "System Tools"
-    , status  : "warning"
+      path     : "system-tools"
+    , icon     : "ambulance"
+    , label    : "System Tools"
+    , status   : "warning"
+    , disabled : false
   },{
-      path    : "control-panel"
-    , icon    : "paragraph"
-    , label   : "Control Panel"
-    , status  : null
+      path     : "control-panel"
+    , icon     : "paragraph"
+    , label    : "Control Panel"
+    , status   : null
+    , disabled : true
   },{
-      path    : "power"
-    , icon    : "plug"
-    , label   : "Power"
-    , status  : null
+      path     : "power"
+    , icon     : "plug"
+    , label    : "Power"
+    , status   : null
+    , disabled : false
   }
 ];
 
@@ -143,18 +153,35 @@ var PrimaryNavigation = React.createClass({
 
   , render: function() {
       var createNavItem = function ( rawItem, index ) {
-        return (
-          <li role      = "presentation"
+        if ( rawItem["disabled"] ) {
+          return (
+            <li
+              role      = "presentation"
+              className = "nav-item disabled"
+              key       = { index } >
+              <a href="#">
+                <Icon glyph        = { rawItem["icon"] }
+                      badgeContent = { rawItem["status"] ? "!" : "" /* TODO: Better content, from Flux store */ }
+                      badgeStyle   = { rawItem["status"] } />
+                <span className = "nav-item-label" >{ rawItem["label"] }</span>
+              </a>
+            </li>
+          );
+        } else {
+          return (
+            <li
+              role      = "presentation"
               className = "nav-item"
               key       = { index } >
-            <Link to = { rawItem.path }>
-              <Icon glyph        = { rawItem.icon }
-                    badgeContent = { rawItem.status ? "!" : "" /* TODO: Better content, from Flux store */ }
-                    badgeStyle   = { rawItem.status } />
-              <span className = "nav-item-label" >{ rawItem.label }</span>
-            </Link>
-          </li>
-        );
+              <Link to = { rawItem["path"] } >
+                <Icon glyph        = { rawItem["icon"] }
+                      badgeContent = { rawItem["status"] ? "!" : "" /* TODO: Better content, from Flux store */ }
+                      badgeStyle   = { rawItem["status"] } />
+                <span className = "nav-item-label" >{ rawItem["label"] }</span>
+              </Link>
+            </li>
+          );
+        }
       };
 
       // TODO: Revert changes made for #7908 once externally resolved.

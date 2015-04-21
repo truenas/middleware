@@ -1,17 +1,28 @@
 "use strict";
 
+var _     = require("lodash");
 var React = require("react");
 var TWBS  = require("react-bootstrap");
 
-var Router = require("react-router");
-var Link   = Router.Link;
+var Router       = require("react-router");
+var Link         = Router.Link;
+var RouteHandler = Router.RouteHandler;
 
-var viewerUtil = require("./viewerUtil");
+var viewerCommon = require("../mixins/viewerCommon");
+var viewerUtil   = require("./viewerUtil");
 
 var DetailNavSection = React.createClass({
 
-    propTypes: {
+    contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , propTypes: {
         viewData            : React.PropTypes.object.isRequired
+      , selectedItem        : React.PropTypes.oneOfType([
+                                    React.PropTypes.number
+                                  , React.PropTypes.string
+                                ])
       , searchString        : React.PropTypes.string
       , activeKey           : React.PropTypes.string
       , sectionName         : React.PropTypes.string.isRequired
@@ -29,16 +40,17 @@ var DetailNavSection = React.createClass({
     }
 
   , isUnderThreshold: function() {
-    return this.props.entries.length <= this.props.disclosureThreshold;
-  }
+      return this.props.entries.length <= this.props.disclosureThreshold;
+    }
 
   , createItem: function ( rawItem, index ) {
-      var searchString = this.props.searchString;
+      var searchString   = this.props.searchString;
+      var selectionValue = rawItem[ this.props.viewData.format["selectionKey"] ];
       var params = {};
 
-      params[ this.props.viewData.routing["param"] ] = rawItem[ this.props.viewData.format["selectionKey"] ];
+      params[ this.props.viewData.routing["param"] ] = selectionValue;
 
-      // to be fixed: quick added || "" to the end of these so some searches wont bomb out when a key is null
+      // FIXME: quick added || "" to the end of these so some searches wont bomb out when a key is null
       var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ] || "";
       var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ] || "";
 
@@ -51,8 +63,9 @@ var DetailNavSection = React.createClass({
         <li role      = "presentation"
             key       = { index }
             className = "disclosure-target" >
-          <Link to     = { this.props.viewData.routing.route }
-                params = { params } >
+          <Link to      = { this.props.viewData.routing.route }
+                params  = { params }
+                onClick = { this.props.handleItemSelect.bind( null, selectionValue ) } >
             <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
                                  fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
                                  iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
@@ -100,13 +113,45 @@ var DetailNavSection = React.createClass({
 // Detail Viewer
 var DetailViewer = React.createClass({
 
-    propTypes: {
-        viewData     : React.PropTypes.object.isRequired
-      , Editor       : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , ItemView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , EditView     : React.PropTypes.any // FIXME: Once these are locked in, they should be the right thing
-      , searchString : React.PropTypes.string
-      , filteredData : React.PropTypes.object.isRequired
+    mixins: [ viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
+    }
+
+  , propTypes: {
+        viewData         : React.PropTypes.object.isRequired
+      , handleItemSelect : React.PropTypes.func.isRequired
+      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
+      , searchString     : React.PropTypes.string
+      , filteredData     : React.PropTypes.object.isRequired
+    }
+
+  , componentDidMount: function() {
+      // TODO: This will be an array once we implement multi-select
+      var params = {};
+      if ( _.isNumber( this.props.selectedItem ) || _.isString( this.props.selectedItem ) ) {
+        params[ this.props.viewData.routing["param"] ] = this.props.selectedItem;
+        this.context.router.replaceWith( this.props.viewData.routing.route, params );
+      }
+    }
+
+  , createAddEntityButton: function() {
+      var addEntityButton;
+
+      if ( this.props.viewData.addEntity && this.props.viewData.routing.addentity ) {
+        addEntityButton = (
+          <Link to        = { this.props.viewData.routing.addentity }
+                className = "viewer-detail-add-entity">
+            <TWBS.Button bsStyle   = "default"
+                         className = "viewer-detail-add-entity">
+              { this.props.viewData.addEntity }
+            </TWBS.Button>
+          </Link>
+        );
+
+      return (addEntityButton);
+      }
     }
 
   // Sidebar navigation for collection
@@ -129,13 +174,14 @@ var DetailViewer = React.createClass({
 
           if ( group.entries.length ) {
             return (
-              <DetailNavSection key               = { index }
-                                viewData          = { this.props.viewData }
-                                searchString      = { this.props.searchString }
-                                activeKey         = { this.props.selectedKey }
-                                sectionName       = { group.name }
-                                initialDisclosure = { disclosureState }
-                                entries           = { group.entries } />
+              <DetailNavSection
+                key               = { index }
+                viewData          = { this.props.viewData }
+                handleItemSelect  = { this.props.handleItemSelect }
+                searchString      = { this.props.searchString }
+                sectionName       = { group.name }
+                initialDisclosure = { disclosureState }
+                entries           = { group.entries } />
             );
           } else {
             return null;
@@ -145,40 +191,45 @@ var DetailViewer = React.createClass({
 
       if ( fd["remaining"].entries.length ) {
         remainingNavItems = (
-          <DetailNavSection viewData          = { this.props.viewData }
-                            searchString      = { this.props.searchString }
-                            activeKey         = { this.props.selectedKey }
-                            sectionName       = { fd["remaining"].name }
-                            initialDisclosure = "closed"
-                            entries           = { fd["remaining"].entries } />
+          <DetailNavSection
+            viewData          = { this.props.viewData }
+            handleItemSelect  = { this.props.handleItemSelect }
+            searchString      = { this.props.searchString }
+            sectionName       = { fd["remaining"].name }
+            initialDisclosure = "closed"
+            entries           = { fd["remaining"].entries } />
         );
       }
 
-      if ( this.props.Editor === null ) {
+      if ( this.addingEntity() ) {
+        editorContent = (
+          <RouteHandler
+            viewData  = { this.props.viewData } />
+        );
+      } else if ( this.dynamicPathIsActive() ) {
+        editorContent = (
+          <RouteHandler
+            viewData  = { this.props.viewData }
+            inputData = { this.props.inputData } />
+        );
+      } else {
         editorContent = (
           <div className="viewer-item-info">
             <h3 className="viewer-item-no-selection">{"No active selection"}</h3>
           </div>
         );
-      } else {
-        editorContent = (
-          <this.props.Editor viewData  = { this.props.viewData }
-                             inputData = { this.props.inputData }
-                             activeKey = { this.props.selectedKey }
-                             ItemView  = { this.props.ItemView }
-                             EditView  = { this.props.EditView } />
-        );
       }
 
       return (
         <div className = "viewer-detail">
-          <div className = "viewer-detail-nav well">
-            { groupedNavItems }
-            { remainingNavItems }
+          <div className = "viewer-detail-sidebar">
+            { this.createAddEntityButton() }
+            <div className = "viewer-detail-nav well">
+              { groupedNavItems }
+              { remainingNavItems }
+            </div>
           </div>
-
           { editorContent }
-
         </div>
       );
     }

@@ -17,6 +17,8 @@ var _created   = {};
 var _waiting   = {};
 var _executing = {};
 var _finished  = {};
+var _failed    = {};
+var _aborted   = {};
 
 var TasksStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -38,6 +40,8 @@ var TasksStore = _.assign( {}, EventEmitter.prototype, {
         , WAITING   : _waiting
         , EXECUTING : _executing
         , FINISHED  : _finished
+        , FAILED    : _failed
+        , ABORTED   : _aborted
       };
     }
 
@@ -57,6 +61,13 @@ var TasksStore = _.assign( {}, EventEmitter.prototype, {
       return _finished;
     }
 
+  , getFailedTasks: function() {
+      return _failed;
+    }
+
+  , getAbortedTasks: function() {
+      return _aborted;
+    }
 });
 
 TasksStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
@@ -112,16 +123,45 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
                 delete _waiting[ taskArgs["id"] ];
                 delete _executing[ taskArgs["id"] ];
                 break;
+
+              case "ABORTED":
+                _aborted[ taskArgs["id"] ] =
+                  _.merge( CREATED
+                         , WAITING
+                         , EXECUTING
+                         , taskArgs
+                         , { "percentage" : taskArgs["percentage"] } );
+                  delete _created[ taskArgs["id"] ];
+                  delete _waiting[ taskArgs["id"] ];
+                  delete _executing[ taskArgs["id"] ];
+                  break;
+
+              case "FAILED":
+                _failed[ taskArgs["id"] ] =
+                  _.merge( CREATED
+                         , WAITING
+                         , EXECUTING
+                         , taskArgs
+                         , { "percentage" : taskArgs["percentage"] } );
+                  delete _created[ taskArgs["id"] ];
+                  delete _waiting[ taskArgs["id"] ];
+                  delete _executing[ taskArgs["id"] ];
+                  break;
             }
 
             break;
 
           case "task.progress":
-            if ( _waiting[ taskArgs["id"] ] ) {
-              _waiting[ taskArgs["id"] ] = _.merge( WAITING, taskArgs );
-            } else if ( _executing[ taskArgs["id"] ] ) {
-              _executing[ taskArgs["id"] ] = _.merge( EXECUTING, taskArgs );
+            switch( taskArgs["state"] ){
+              case "WAITING":
+                _waiting[ taskArgs["id"] ] = _.merge( WAITING, taskArgs );
+                break;
+
+              case "EXECUTING":
+                _executing[ taskArgs["id"] ] = _.merge( EXECUTING, taskArgs ) ;
+                break;
             }
+
             break;
         }
 

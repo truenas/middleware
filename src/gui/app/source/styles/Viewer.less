@@ -1,3 +1,11 @@
+.viewer-active-item {
+  background-color : @brand-info;
+  color            : white;
+}
+.viewer-active-item-hover {
+  background-color: darken( @brand-info, 5%);
+}
+
 // Main Viewer Rules
 .viewer {
   .flex-display(flex);
@@ -165,6 +173,19 @@
     color            : white;
   }
 
+  .viewer-detail-add-entity {
+    margin-bottom: 8px;
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .viewer-detail-sidebar {
+    .flex(1 0 150px);
+    margin-left : 15px;
+    flex-flow: column;
+    display: flex;
+  }
+
   .viewer-detail-nav-item-text {
     width          : 100%;
     display        : inline-block;
@@ -182,7 +203,6 @@
   }
 
   .viewer-detail-nav {
-    .flex(1 0 150px);
     overflow-y: auto;
   }
 
@@ -211,14 +231,15 @@
       color         : @gray-dark;
       border-radius : 0;
       &.active {
-        background-color : @brand-info;
+        .viewer-active-item();
         &:hover {
-          background-color : lighten(@brand-info, 5%)
+          .viewer-active-item-hover();
         }
       }
     }
   }
   .well {
+    flex: 1 1 auto;
     padding : 0;
     margin  : 0;
   }
@@ -263,7 +284,10 @@
 
 
     &.active {
-      background-color: @brand-info;
+      .viewer-active-item();
+      &:hover {
+        .viewer-active-item-hover();
+      }
 
         .viewer-icon-item-primary
       , .viewer-icon-item-secondary {
@@ -292,6 +316,12 @@
   position   : relative;
   width      : 100%;
   overflow-y : auto;
+  .table-hover > tbody > tr.active > td {
+    .viewer-active-item();
+  }
+  .table-hover > tbody > tr.active:hover > td {
+    .viewer-active-item-hover();
+  }
 }
 
 .icon {
@@ -359,7 +389,7 @@
   .justify-content(center);
   padding: 25px 0;
 
-  .viewer-item-info {
+  .editor-edit-wrapper {
     .flex(0 1 800px);
     .overlay-modal();
     background : white;
@@ -367,6 +397,22 @@
 
     & > .container-fluid {
       padding: 25px;
+    }
+  }
+
+  .editor-close {
+    margin      : 8px;
+    font-size   : 1.15em;
+    color       : #C7C7C7;
+    float       : right;
+    height      : 1.25em;
+    width       : 1.25em;
+    line-height : 1.25em;
+    text-align  : center;
+    &:hover {
+      color         : white;
+      background    : @brand-danger;
+      border-radius : 50%;
     }
   }
 }

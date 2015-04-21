@@ -79,7 +79,7 @@ var Shell = React.createClass({
 
   , render: function() {
       return (
-        <div style={{ flex: 1}} ref="termTarget" />
+        <div className="termFlex" ref="termTarget" />
       );
     }
 

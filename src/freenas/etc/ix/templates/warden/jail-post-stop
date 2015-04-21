@@ -1,5 +1,0 @@
-#!/bin/sh
-
-. /etc/rc.freenas
-
-jail_post_stop "${JAILNAME}"

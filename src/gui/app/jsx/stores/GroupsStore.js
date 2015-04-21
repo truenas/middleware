@@ -10,7 +10,6 @@ var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
 var FreeNASConstants  = require("../constants/FreeNASConstants");
 
 var GroupsMiddleware = require("../middleware/GroupsMiddleware");
-var UsersMiddleware = require("../middleware/UsersMiddleware");
 
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
@@ -74,6 +73,14 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.RECEIVE_GROUPS_LIST:
 
+      var updatedGroupIDs = _.pluck( action.groupsList, PRIMARY_KEY );
+
+      // When receiving new data, we can comfortably resolve anything that may
+      // have had an outstanding update indicated by the Middleware.
+      if ( _updatedOnServer.length > 0 ) {
+        _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
+      }
+
       action.groupsList.map( function ( group ) {
         _groups[ group [ PRIMARY_KEY ] ] = group;
       });
@@ -82,14 +89,19 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
+      var updateData = args[ "args" ];
 
-      if ( args["name"] === UPDATE_MASK ) {
-        var updateData = args["args"];
-
-        if ( updateData ["operation"] === "update" ) {
+      if ( args[ "name" ] === UPDATE_MASK ) {
+        if ( updateData[ "operation" ] === "delete" ) {
+            _groups = _.omit(_groups, updateData["ids"] );
+        } else if ( updateData[ "operation" ] === "create" || updateData[ "operation" ] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           GroupsMiddleware.requestGroupsList( _updatedOnServer );
         }
+        GroupsStore.emitChange();
+
+      } else if ( args[ "name" ] === "task.updated" && updateData["state"] === "FINISHED" ) {
+          delete _localUpdatePending[ updateData["id"] ];
       }
       break;
 

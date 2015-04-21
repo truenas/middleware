@@ -51,9 +51,10 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , findUserByKeyValue: function ( key, value ) {
-      return _.find( _users, function ( user ) {
-        return user[ key ] === value;
-      });
+      var predicate = {};
+          predicate[key] = value;
+
+      return _.find( _users, predicate );
     }
 
   , getUser: function( id ) {
@@ -103,24 +104,26 @@ UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
     case ActionTypes.MIDDLEWARE_EVENT:
       var args = action.eventData.args;
+      var updateData = args[ "args" ];
 
-      if ( args["name"] === UPDATE_MASK ) {
-        var updateData = args["args"];
-
-        if ( updateData["operation"] === "update" ) {
-          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          // FIXME: This is a workaround for the current implementation of task
-          // subscriptions and submission resolutions.
-          UsersMiddleware.requestUsersList( _updatedOnServer );
+      // FIXME: This is a workaround for the current implementation of task
+      // subscriptions and submission resolutions.
+      if ( args[ "name" ] === UPDATE_MASK ) {
+        if ( updateData[ "operation" ] === "delete" ) {
+            // FIXME: Will this cause an issue if the delete is unsuccessful?
+            // This will no doubt be overriden in the new patch-based world anyway.
+            _users = _.omit(_users, updateData["ids"] );
+        } else if ( updateData[ "operation" ] === "update" || updateData[ "operation" ] === "create" ) {
+            Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+            UsersMiddleware.requestUsersList( _updatedOnServer );
         } else {
-          // TODO: Can this be anything else?
+          // TODO: Are there any other cases?
         }
-
         UsersStore.emitChange();
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
-      } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" ) {
-        delete _localUpdatePending[ args.args["id"] ];
+      } else if ( args[ "name" ] === "task.updated" && args.args["state"] === "FINISHED" ) {
+          delete _localUpdatePending[ args.args["id"] ];
       }
 
       break;

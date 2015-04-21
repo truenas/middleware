@@ -8,8 +8,9 @@ var React = require("react");
 var Router       = require("react-router");
 var RouteHandler = Router.RouteHandler;
 
+var routerShim = require("../components/mixins/routerShim");
+
 // WebApp Components
-var LoginBox          = require("../components/LoginBox");
 var BusyBox           = require("../components/BusyBox");
 var NotificationBar   = require("../components/WebApp/NotificationBar");
 var InformationBar    = require("../components/WebApp/InformationBar");
@@ -17,39 +18,50 @@ var PrimaryNavigation = require("../components/PrimaryNavigation");
 var DebugTools        = require("../components/DebugTools");
 
 
-var FreeNASWebApp = React.createClass({render: function() {
+var FreeNASWebApp = React.createClass({
 
-    return (
-      <div className="app-wrapper">
-        {/* TODO: Add Modal mount div */}
+    mixins: [ routerShim ]
 
-        {/* Modal window for FreeNAS login - hidden when authenticated */}
-        <LoginBox />
+  , componentDidMount: function() {
+      this.calculateDefaultRoute( "/", "dashboard", "is" );
+    }
 
-        {/* Modal windows for busy spinner -- hidden normally except when invoked*/}
-        <BusyBox />
+  , componentDidUpdate: function( prevProps, prevState ) {
+      this.calculateDefaultRoute( "/", "dashboard", "is" );
+    }
 
-        {/* Header containing system status and information */}
-        <NotificationBar />
+  , render: function() {
 
-        <div className="app-content">
-          {/* Primary navigation menu */}
-          <PrimaryNavigation />
+      return (
+        <div className="app-wrapper">
+          {/* TODO: Add Modal mount div */}
 
-          {/* Primary view */}
-          <RouteHandler />
+          {/* Modal windows for busy spinner and/or FreeNAS login
+                -- hidden normally except when invoked*/}
+          <BusyBox />
 
-          {/* User-customizable component showing system events */}
-          <InformationBar />
+          {/* Header containing system status and information */}
+          <NotificationBar />
+
+          <div className="app-content">
+            {/* Primary navigation menu */}
+            <PrimaryNavigation />
+
+            {/* Primary view */}
+            <RouteHandler />
+
+            {/* User-customizable component showing system events */}
+            <InformationBar />
+          </div>
+
+          <footer className="app-footer">
+          </footer>
+
+          <DebugTools />
         </div>
+      );
+    }
 
-        <footer className="app-footer">
-        </footer>
-
-        <DebugTools />
-      </div>
-    );
-  }
 });
 
 module.exports = FreeNASWebApp;

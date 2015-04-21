@@ -32,22 +32,6 @@ var StatdWidgetContentHandler = React.createClass({
       var initialErrorMode = false;
       var initialStatdDataLoaded = false;
 
-      //We don't have any of this data yet. Using two same widgets maybe? How can we trust this data?
-      //I think this should be removed from getInitialState completly.
-      _.forEach( this.props.statdResources, function( resource ) {
-        initialStatdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
-
-        if ( initialStatdData[ resource.variable ] && initialStatdData[ resource.variable ].error ) {
-          initialErrorMode = true;
-        }
-
-      });
-
-      initialStatdDataLoaded = _.all( initialStatdData, function( dataArray ) {
-                                       return _.isArray( dataArray ) && dataArray.length > 0;
-                                    });
-
-
       return {
           chart           : ""
         , stagedUpdate    : {}
@@ -59,25 +43,45 @@ var StatdWidgetContentHandler = React.createClass({
     }
 
   , componentDidMount: function() {
-      var stop  = moment();
-      var start = moment().subtract( 15, "m" );
-
       StatdStore.addChangeListener( this.handleStatdChange );
-      StatdMiddleware.subscribeToPulse(
-          this.props.widgetIdentifier
-        , this.props.statdResources.map( this.createStatdSources )
-      );
 
-      _.forEach( this.props.statdResources, function( resource ) {
-        StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
-      });
+      if (this.props.statdResources.length > 0)
+      {
+        this.requestData();
+        this.subscribeToUpdates();
+      }
 
       this.setState({
           graphType : _.result( _.findWhere( this.props.chartTypes, { "primary": true } ), "type" )
       });
     }
 
+  , subscribeToUpdates: function () {
+
+      StatdMiddleware.subscribeToPulse(
+          this.props.widgetIdentifier
+        , this.props.statdResources.map( this.createStatdSources )
+      );
+  }
+
+  , requestData: function() {
+    var stop  = moment();
+    var start = moment().subtract( 15, "m" );
+
+    _.forEach( this.props.statdResources, function( resource ) {
+        StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
+    });
+
+  }
   , componentDidUpdate: function( prevProps, prevState ) {
+
+      if (this.props.statdResources.length !== prevProps.statdResources.length)
+      {
+        //console.log(this.props.statdResources);
+        //console.log(prevProps.statdResources);
+        //this.requestData();
+        //this.subscribeToUpdates();
+      }
 
       // Only update if we have the required props, there is no staged update
       // currently being assembled, and we have access to both D3 and NVD3
@@ -373,10 +377,15 @@ var StatdWidgetContentHandler = React.createClass({
     }
 
   , returnGraphOptions: function( resource, index ) {
+      var selectedGraphType ="";
+      if (resource.type === this.state.graphType)
+      {
+        selectedGraphType = " selected";
+      }
       return (
         <div
           key          = { index }
-          className    = { "ico-graph-type-" + resource.type }
+          className    = { "ico-graph-type-" + resource.type + selectedGraphType }
           onTouchStart = { this.toggleGraph }
           onClick      = { this.toggleGraph }>
             { resource.type }

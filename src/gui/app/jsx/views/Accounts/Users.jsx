@@ -8,9 +8,6 @@ var componentLongName = "Users";
 
 var React = require("react");
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
-
 var Viewer = require("../../components/Viewer");
 
 var UsersMiddleware = require("../../middleware/UsersMiddleware");
@@ -19,15 +16,17 @@ var UsersStore      = require("../../stores/UsersStore");
 var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../stores/GroupsStore");
 
-var SessionStore   = require("../../stores/SessionStore");
+var SessionStore = require("../../stores/SessionStore");
 
 var viewData = {
-    format  : require("../../../data/middleware-keys/users-display.json")[0]
-  , routing : {
-      "route" : "users-editor"
-    , "param" : "userID"
+    format    : require("../../../data/middleware-keys/users-display.json")[0]
+  , addEntity : "Add User"
+  , routing   : {
+      "route"      : "users-editor"
+    , "param"      : "userID"
+    , "addentity"  : "add-user"
   }
-  , display : {
+  , display   : {
       filterCriteria: {
           current: {
               name     : "current user account"
@@ -97,10 +96,10 @@ var Users = React.createClass({
     }
 
   , render: function() {
-      return <Viewer header    = { "Users" }
-                     inputData = { this.state.usersList }
-                     viewData  = { viewData }
-                     Editor    = { RouteHandler } />;
+      return <Viewer
+                header    = { "Users" }
+                inputData = { this.state.usersList }
+                viewData  = { viewData } />;
     }
 
 });

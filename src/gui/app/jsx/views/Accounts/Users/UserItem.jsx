@@ -9,32 +9,67 @@
 var _      = require("lodash");
 var React  = require("react");
 var TWBS   = require("react-bootstrap");
-var Router = require("react-router");
+
+var routerShim   = require("../../../components/mixins/routerShim");
+var clientStatus = require("../../../components/mixins/clientStatus");
 
 var viewerUtil  = require("../../../components/Viewer/viewerUtil");
 var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
-var activeRoute = require("../../../components/Viewer/mixins/activeRoute");
 
 var UsersMiddleware = require("../../../middleware/UsersMiddleware");
 var UsersStore      = require("../../../stores/UsersStore");
 
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
 var GroupsStore      = require("../../../stores/GroupsStore");
+
+var inputHelpers = require("../../../components/mixins/inputHelpers");
+var userMixins   = require("../../../components/mixins/userMixins");
+var viewerCommon = require("../../../components/mixins/viewerCommon");
 
 // OVERVIEW PANE
 var UserView = React.createClass({
 
-    propTypes: {
+    mixins: [  userMixins
+             , viewerCommon ]
+
+  , contextTypes: {
+        router: React.PropTypes.func
+    }
+
+  , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
-  , getPrimaryGroup: function(groupID) {
-    return GroupsStore.getGroup(groupID).name;
+  , getGroupName: function(groupID) {
+      var group = GroupsStore.getGroup(groupID);
+
+      if ( group ) {
+        return group.name;
+      } else {
+        // TODO: Have a policy to deal with a user assigned to a nonexistant group.
+        return null;
+      }
+    }
+
+  , createGroupDisplayList: function(){
+      var listGroupItemArray = [] ;
+
+      listGroupItemArray = _.map( this.props.item[ "groups" ], function( groupID ){
+        var displayItem = null;
+        var group = GroupsStore.getGroup( groupID );
+
+        if ( group ){
+          displayItem = <TWBS.ListGroupItem>{ group.name }</TWBS.ListGroupItem>;
+        }
+
+        return displayItem;
+      }, this );
+
+      return listGroupItemArray;
   }
 
   , render: function() {
       var builtInUserAlert = null;
-      var editButton       = null;
+      var editButtons      = null;
 
       if ( this.props.item["builtin"] ) {
         builtInUserAlert = (
@@ -45,20 +80,22 @@ var UserView = React.createClass({
         );
       }
 
-      editButton = (
-        <TWBS.Row>
-          <TWBS.Col xs={12}>
+      editButtons = (
+        <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-left"
+                         disabled  = { this.props.item["builtin"] }
+                         onClick   = { this.deleteUser }
+                         bsStyle   = "danger" >{"Delete User"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "edit") }
                          bsStyle   = "info" >{"Edit User"}</TWBS.Button>
-          </TWBS.Col>
-        </TWBS.Row>
+        </TWBS.ButtonToolbar>
       );
 
       return (
         <TWBS.Grid fluid>
           {/* "Edit User" Button - Top */}
-          { editButton }
+          { editButtons }
 
           {/* User icon and general information */}
           <TWBS.Row>
@@ -87,32 +124,39 @@ var UserView = React.createClass({
                                  entry  = { this.props.item["id"] } />
             <viewerUtil.DataCell title  = { "Primary Group" }
                                  colNum = { 3 }
-                                 entry  = { this.getPrimaryGroup(this.props.item["group"]) } />
+                                 entry  = { this.getGroupName(this.props.item["group"]) } />
             <viewerUtil.DataCell title  = { "Shell" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["shell"] } />
             <viewerUtil.DataCell title  = { "Locked Account" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["locked"] } />
+                                 entry  = { this.props.item["locked"] ? this.props.item["locked"] : false } />
             <viewerUtil.DataCell title  = { "Sudo Access" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["sudo"] } />
+                                 entry  = { this.props.item["sudo"] ? this.props.item["sudo"]: false } />
             <viewerUtil.DataCell title  = { "Password Disabled" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["password_disabled"] } />
+                                 entry  = { this.props.item["password_disabled"] ? this.props.item["password_disabled"]: false } />
             <viewerUtil.DataCell title  = { "Logged In" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["logged-in"] } />
+                                 entry  = { this.props.item["logged-in"] ? this.props.item["logged-in"]: false } />
             <viewerUtil.DataCell title  = { "Home Directory" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["home"] } />
             <viewerUtil.DataCell title  = { "email" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["email"] } />
+                                 entry  = { this.props.item["email"] ? this.props.item["email"]: "" } />
+            <TWBS.Col xs        = {12}
+                      className ="text-muted" >
+                        <h4 className = "text-muted" >{ "Other Groups" }</h4>
+                        <TWBS.ListGroup>
+                          { this.createGroupDisplayList() }
+                        </TWBS.ListGroup>
+            </TWBS.Col>
           </TWBS.Row>
 
           {/* "Edit User" Button - Bottom */}
-          { editButton }
+          { editButtons }
 
         </TWBS.Grid>
       );
@@ -124,9 +168,18 @@ var UserView = React.createClass({
 // EDITOR PANE
 var UserEdit = React.createClass({
 
-    propTypes: {
-      item: React.PropTypes.object.isRequired
+    mixins: [   inputHelpers
+              , userMixins
+              , viewerCommon ]
+
+  , contextTypes: {
+      router: React.PropTypes.func
     }
+
+  , propTypes: {
+        item     : React.PropTypes.object.isRequired
+      , viewData : React.PropTypes.object.isRequired
+      }
 
   , getInitialState: function() {
       var remoteState = this.setRemoteState( this.props );
@@ -137,59 +190,25 @@ var UserEdit = React.createClass({
         , remoteState            : remoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
+        , dataKeys               : this.props.viewData["format"]["dataKeys"]
       };
     }
-
-    // Remote state is set at load time and reset upon successful changes.
-  , setRemoteState: function ( incomingProps ) {
-      var nextRemoteState = {};
-
-      _.forEach( incomingProps["item"], function( value, key ) {
-        var itemKey = _.find(incomingProps["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if (!itemKey) {
-          // Do not accept unknown properties from the Middleware.
-          // TODO: If we want to accept arbitrary properies, we will need more
-          // sophisticated handling here.
-          console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
-          console.error(this.props.item);
-        } else {
-          nextRemoteState[ key ] = this.props.item[ key ];
-        }
-      }.bind(this) );
-
-      if (!nextRemoteState) {
-        console.error("Remote State could not be created! Check the incoming props:");
-        console.error(incomingProps);
-      }
-
-      return nextRemoteState;
-  }
 
   , componentWillReceiveProps: function( nextProps ) {
       var newRemoteModified  = {};
       var newLocallyModified = {};
+      var dataKeys = nextProps.viewData["format"]["dataKeys"];
 
       // remotelyModifiedValues represents everything that's changed remotely
       // since the view was opened. This is the difference between the newly arriving
       // props and the initial ones. Read-only and unknown values are ignored.
       // TODO: Use this to show alerts for remote changes on sections the local
       // administrator is working on.
-      _.forEach( nextProps.item, function( value, key ) {
-        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if (!itemKey) {
-          // Do not accept unknown properties from the Middleware.
-          // TODO: If we want to accept arbitrary properies, we will need more
-          // sophisticated handling here.
-          console.error("Received an unknown property \"" + key + "\" from the Middleware Server.");
-          console.error(nextProps.item);
-        } else if ( !_.isEqual( this.state.remoteState[ key ], nextProps.item[ key ] ) && itemKey.mutable ) {
-          newRemoteModified[ key ] = nextProps.item[ key ];
-        }
-      }.bind(this) );
+      var mismatchedRemoteFields = _.pick(nextProps.item, function( value, key ) {
+        return _.isEqual( this.state.remoteState[ key ], value );
+      }, this);
+
+      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, dataKeys);
 
       // remoteState records the item as it was when the view was first
       // opened. This is used to mark changes that have occurred remotely since
@@ -218,70 +237,27 @@ var UserEdit = React.createClass({
       });
     }
 
-  , handleValueChange: function( key, event ) {
-      var newLocallyModified = this.state.locallyModifiedValues;
-      var inputValue;
-
-      // Use different logic to interpret input from different kinds of fields.
-      // TODO: Cover every field in use with different cases as needed.
-      switch (event.target.type) {
-
-        case "checkbox" :
-          inputValue = event.target.checked;
-          break;
-
-        default:
-          inputValue = event.target.value;
-          break;
-      }
-
-      // We don't want to submit non-changed data to the middleware, and it's
-      // easy for data to appear "changed", even if it's the same. Here, we
-      // check to make sure that the input value we've just receieved isn't the
-      // same as what the last payload from the middleware shows as the value
-      // for the same key. If it is, we `delete` the key from our temp object
-      // and update state.
-      if ( _.isEqual( this.state.remoteState[ key ], inputValue ) ) {
-        delete newLocallyModified[ key ];
-      } else {
-        newLocallyModified[ key ] = inputValue;
-      }
-
-      // mixedValues functions as a clone of the original item passed down in
-      // props, and is modified with the values that have been changed by the
-      // user. This allows the display components to have access to the
-      // "canonically" correct item, merged with the un-changed values.
-      this.setState({
-          locallyModifiedValues : newLocallyModified
-        , mixedValues           : _.assign( _.cloneDeep( this.props.item ), newLocallyModified )
-      });
-    }
-
+    // TODO: Validate that input values are legitimate for their field. For example,
+    // id should be a number.
   , submitUserUpdate: function() {
-      var valuesToSend = {};
-
       // Make sure nothing read-only made it in somehow.
-      _.forEach( this.state.locallyModifiedValues, function( value, key ) {
-        var itemKey = _.find(this.props["dataKeys"], function ( item ) {
-          return item.key === key;
-        }.bind(this) );
-        if ( itemKey.mutable ) {
-          valuesToSend[ key ] = value;
-        } else {
-          console.error("USERS: Attempted to submit a change to a read-only property.");
-          console.error(this.state.locallyModifiedValues[value]);
-        }
-      }.bind(this) );
+      var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
-      if (valuesToSend){
-        // Only bother to submit an update if there is anything to update.
-        UsersMiddleware.updateUser( this.props.item["id"], valuesToSend );
+      // Convert the array of strings provided by the form to an array of integers.
+      if( !_.isEmpty( valuesToSend[ "groups" ] ) ){
+        valuesToSend[ "groups" ] = this.parseGroupsArray( valuesToSend[ "groups" ] );
+      }
+
+      // Only bother to submit an update if there is anything to update.
+      if (!_.isEmpty( valuesToSend ) ){
+        UsersMiddleware.updateUser( this.props.item[ "id" ], valuesToSend, this.submissionRedirect( valuesToSend ) );
+
         // Save a record of the last changes we sent.
         this.setState({
             lastSentValues : valuesToSend
         });
       } else {
-          console.warn("Attempted to send a User update with no valid fields.");
+          console.warn( "Attempted to send a User update with no valid fields." );
       }
 
     }
@@ -294,6 +270,7 @@ var UserEdit = React.createClass({
   , render: function() {
       var builtInUserAlert  = null;
       var editButtons       = null;
+      var inputForm         = null;
 
       if ( this.props.item["builtin"] ) {
         builtInUserAlert = (
@@ -306,6 +283,10 @@ var UserEdit = React.createClass({
 
       editButtons =
         <TWBS.ButtonToolbar>
+            <TWBS.Button className = "pull-left"
+                         disabled  = { this.props.item["builtin"] }
+                         onClick   = { this.deleteUser }
+                         bsStyle   = "danger" >{"Delete User"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
                          onClick   = { this.props.handleViewChange.bind(null, "view") }
                          bsStyle   = "default" >{"Cancel"}</TWBS.Button>
@@ -315,6 +296,155 @@ var UserEdit = React.createClass({
                          bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
         </TWBS.ButtonToolbar>;
 
+      inputForm =
+        <form className = "form-horizontal">
+          <TWBS.Grid fluid>
+            <TWBS.Row>
+              <TWBS.Col xs = {8}>
+                {/* User id */}
+                <TWBS.Input type             = "text"
+                            label            = { "User ID" }
+                            defaultValue     = { this.props.item[ "id" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "id" ) }
+                            key              = { "id" }
+                            ref              = "id"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* username */}
+                <TWBS.Input type             = "text"
+                            label            = { "User Name" }
+                            defaultValue     = { this.props.item[ "username" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "username" ) }
+                            key              = { "username" }
+                            ref              = "username"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["username"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* full_name*/}
+                <TWBS.Input type             = "text"
+                            label            = { "Full Name" }
+                            defaultValue     = { this.props.item[ "full_name" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "full_name" ) }
+                            key              = { "full_name" }
+                            ref              = "full_name"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["full_name"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* email */}
+                  <TWBS.Input type             = "text"
+                            label            = { "email" }
+                            defaultValue     = { this.props.item[ "email" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "email" ) }
+                            key              = { "email" }
+                            ref              = "email"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["email"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* shell */}
+                <TWBS.Input type             = "select"
+                            label            = { "Shell" }
+                            defaultValue     = { this.props.item[ "shell" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "shell" ) }
+                            key              = { "shell" }
+                            ref              = "shell"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["shell"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" >
+                            { this.generateOptionsList( this.state.shells, "name" ) }
+                </TWBS.Input>
+                {/* primary group */}
+                <TWBS.Input type             = "select"
+                            label            = { "Primary Group" }
+                            defaultValue     = { this.props.item[ "group" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "group" ) }
+                            key              = { "group" }
+                            ref              = "group"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["group"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" >
+                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
+                </TWBS.Input>
+                {/* sshpubkey */}
+                <TWBS.Input type             = "textarea"
+                            label            = { "Public Key" }
+                            defaultValue     = { this.props.item[ "sshpubkey" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "sshpubkey" ) }
+                            key              = { "sshpubkey" }
+                            ref              = "sshpubkey"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["sshpubkey"]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            rows             = "10" >
+                </TWBS.Input>
+                {/* Other Groups */}
+                <TWBS.Input type             = "select"
+                            label            = "Other Groups"
+                            defaultValue     = { this.props.item[ "groups" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "groups" ) }
+                            key              = "groups"
+                            ref              = "groups"
+                            groupClassName   = { _.has(this.state.locallyModifiedValues[ "groups" ]) ? "editor-was-modified" : "" }
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8"
+                            multiple >
+                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
+                </TWBS.Input>
+              </TWBS.Col>
+              <TWBS.Col xs = {4}>
+                {/* locked */}
+                <TWBS.Input type             = "checkbox"
+                            checked          = { this.state.mixedValues["locked"] }
+                            label            = { "Locked" }
+                            value            = { this.state.mixedValues["locked"] ? this.state.mixedValues["locked"] : "" }
+                            defaultValue     = { this.props.item[ "locked" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "locked" ) }
+                            key              = { "locked" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["locked"]) ? "editor-was-modified" : "" }
+                            ref              = "locked"
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* sudo */}
+                <TWBS.Input type             = "checkbox"
+                            checked          = { this.state.mixedValues["sudo"] }
+                            label            = { "sudo" }
+                            value            = { this.state.mixedValues["sudo"] ? this.state.mixedValues["sudo"] : "" }
+                            defaultValue     = { this.props.item[ "sudo" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "sudo" ) }
+                            key              = { "sudo" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["sudo"]) ? "editor-was-modified" : "" }
+                            ref              = "sudo"
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* password_disabled */}
+                <TWBS.Input type             = "checkbox"
+                            label            = { "password_disabled" }
+                            checked          = { this.state.mixedValues["password_disabled"] }
+                            value            = { this.state.mixedValues["password_disabled"] ? this.state.mixedValues["password_disabled"] : "" }
+                            defaultValue     = { this.props.item[ "password_disabled" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "password_disabled" ) }
+                            key              = { "password_disabled" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["password_disabled"]) ? "editor-was-modified" : "" }
+                            ref              = "password_disabled"
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+                {/* logged-in */}
+                <TWBS.Input type             = "checkbox"
+                            checked          = { this.state.mixedValues["logged-in"] }
+                            label            = { "logged-in" }
+                            value            = { this.state.mixedValues["logged-in"] ? this.state.mixedValues["logged-in"] : "" }
+                            defaultValue     = { this.props.item[ "logged-in" ] }
+                            onChange         = { this.editHandleValueChange.bind( null, "logged-in" ) }
+                            key              = { "logged-in" }
+                            groupClassName   = { _.has(this.state.locallyModifiedValues["logged-in"]) ? "editor-was-modified" : "" }
+                            ref              = "logged-in"
+                            labelClassName   = "col-xs-4"
+                            wrapperClassName = "col-xs-8" />
+              </TWBS.Col>
+            </TWBS.Row>
+          </TWBS.Grid>
+        </form>;
+
       return (
         <TWBS.Grid fluid>
           {/* Save and Cancel Buttons - Top */}
@@ -323,24 +453,7 @@ var UserEdit = React.createClass({
           {/* Shows a warning if the user account is built in */}
           { builtInUserAlert }
 
-          <form className="form-horizontal">
-            {
-              this.props["dataKeys"].map( function( displayKeys, index ) {
-                return editorUtil.identifyAndCreateFormElement(
-                          // value
-                          this.state.mixedValues[ displayKeys["key"] ]
-                          // displayKeys
-                        , displayKeys
-                          // changeHandler
-                        , this.handleValueChange
-                          // key
-                        , index
-                          // wasModified
-                        , _.has( this.state.locallyModifiedValues, displayKeys["key"] )
-                       );
-              }.bind( this ) )
-            }
-          </form>
+          {inputForm}
 
           {/* Save and Cancel Buttons - Bottom */}
           { editButtons }
@@ -358,18 +471,18 @@ var UserItem = React.createClass({
         viewData : React.PropTypes.object.isRequired
     }
 
-  , mixins: [ Router.State, activeRoute ]
+  , mixins: [ routerShim, clientStatus ]
 
   , getInitialState: function() {
       return {
           targetUser  : this.getUserFromStore()
         , currentMode : "view"
-        , activeRoute : this.getActiveRoute()
+        , activeRoute : this.getDynamicRoute()
       };
     }
 
   , componentDidUpdate: function( prevProps, prevState ) {
-      var activeRoute = this.getActiveRoute();
+      var activeRoute = this.getDynamicRoute();
 
       if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
@@ -389,7 +502,7 @@ var UserItem = React.createClass({
     }
 
   , getUserFromStore: function() {
-      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getActiveRoute() );
+      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
   , updateUserInState: function() {
@@ -404,23 +517,32 @@ var UserItem = React.createClass({
       var DisplayComponent = null;
       var processingText   = "";
 
-      // PROCESSING OVERLAY
-      if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
-        processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "'";
-      } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
-        processingText = "User '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
-      }
+      if ( this.state.SESSION_AUTHENTICATED && this.state.targetUser ) {
 
-      // DISPLAY COMPONENT
-      switch ( this.state.currentMode ) {
-        default:
-        case "view":
-          DisplayComponent = UserView;
-          break;
+        // PROCESSING OVERLAY
+        if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
+          processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "'";
+        } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
+          processingText = "User '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+        }
 
-        case "edit":
-          DisplayComponent = UserEdit;
-          break;
+        // DISPLAY COMPONENT
+        var childProps = {
+            handleViewChange : this.handleViewChange
+          , item             : this.state.targetUser
+          , viewData         : this.props.viewData
+        };
+
+        switch ( this.state.currentMode ) {
+          default:
+          case "view":
+            DisplayComponent = <UserView { ...childProps } />;
+            break;
+
+          case "edit":
+            DisplayComponent = <UserEdit { ...childProps } />;
+            break;
+        }
       }
 
       return (
@@ -429,9 +551,7 @@ var UserItem = React.createClass({
           {/* Overlay to block interaction while tasks or updates are processing */}
           <editorUtil.updateOverlay updateString={ processingText } />
 
-          <DisplayComponent handleViewChange = { this.handleViewChange }
-                            item             = { this.state.targetUser }
-                            dataKeys         = { this.props.viewData.format["dataKeys"] } />
+          { DisplayComponent }
 
         </div>
       );

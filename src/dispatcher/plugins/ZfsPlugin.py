@@ -30,7 +30,7 @@ import errno
 import libzfs
 import nvpair
 from gevent.event import Event
-from task import Provider, Task, TaskStatus, TaskException, VerifyException, query
+from task import Provider, Task, TaskStatus, TaskException, VerifyException, TaskAbortException, query
 from dispatcher.rpc import RpcException, accepts, returns, description
 from dispatcher.rpc import SchemaHelper as h
 from balancer import TaskState
@@ -117,6 +117,7 @@ class ZpoolScrubTask(Task):
         self.pool = None
         self.started = False
         self.finish_event = Event()
+        self.abort_flag = False
 
     def __scrub_finished(self, args):
         if args["pool"] == self.pool:
@@ -146,16 +147,21 @@ class ZpoolScrubTask(Task):
             raise TaskException(errno.EFAULT, str(err))
 
         self.finish_event.wait()
+        if self.abort_flag:
+            raise TaskAbortException(errno.EINTR, str("User invoked Task.abort()"))
 
     def abort(self):
         try:
             zfs = libzfs.ZFS()
             pool = zfs.get(self.pool)
-            pool.start_scrub()
+            pool.stop_scrub()
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
         self.finish_event.set()
+        # set the abort flag to True so that run() can raise
+        # propoer exception
+        self.abort_flag = True
         return True
 
     def get_status(self):

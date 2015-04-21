@@ -28,6 +28,13 @@ var ServicesStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
+  , findServiceByKeyValue: function( key, value ) {
+      var predicate = {};
+          predicate[key] = value;
+
+      return _.find( _services, predicate );
+    }
+
   , getAllServices: function() {
       return _services;
     }

@@ -8,6 +8,7 @@ var React = require("react");
 // Routing
 var Router        = require("react-router");
 var Route         = Router.Route;
+var Redirect      = Router.Redirect;
 var DefaultRoute  = Router.DefaultRoute;
 var NotFoundRoute = Router.NotFoundRoute;
 
@@ -18,9 +19,11 @@ var Root = require("./views/FreeNASWebApp");
   var Accounts     = require("./views/Accounts");
     var Users      = require("./views/Accounts/Users");
       var UserItem = require("./views/Accounts/Users/UserItem");
+      var AddUser  = require("./views/Accounts/Users/AddUser");
 
     var Groups       = require("./views/Accounts/Groups");
       var GroupItem = require("./views/Accounts/Groups/GroupItem");
+      var AddGroup  = require("./views/Accounts/Groups/AddGroup");
 
   var Tasks        = require("./views/Tasks");
 
@@ -29,61 +32,122 @@ var Root = require("./views/FreeNASWebApp");
 
   var Storage      = require("./views/Storage");
   var Sharing      = require("./views/Sharing");
+
   var Services     = require("./views/Services");
+    var ServiceItem = require("./views/Services/ServiceItem");
+
   var SystemTools  = require("./views/SystemTools");
   var ControlPanel = require("./views/ControlPanel");
   var Power        = require("./views/Power");
 
 var PageNotFound = require("./views/PageNotFound");
 
-var Editor = require("./components/Viewer/Editor");
-
 module.exports = (
   <Route path="/" handler={ Root }>
     <DefaultRoute handler={ Dashboard } />
-    <Route name="dashboard" handler={ Dashboard } />
+    <Route
+        name    = "dashboard"
+        route   = "dashboard"
+        handler = { Dashboard } />
 
     {/* ACCOUNTS */}
-    <Route name="accounts" handler={ Accounts }>
+    <Route
+        name    = "accounts"
+        path    = "accounts"
+        handler = { Accounts }>
       <DefaultRoute handler={ Users } />
-      <Route name    = "users"
-             path    = "/accounts/users"
-             handler = { Users } >
-        <Route name    = "users-editor"
-               path    = "/accounts/users/:userID"
-               handler = { UserItem } />
+
+      {/* USERS */}
+      <Route
+          name    = "users"
+          path    = "users"
+          handler = { Users } >
+        <Route
+            name    = "add-user"
+            path    = "add-user"
+            handler = { AddUser } />
+        <Route
+          name    = "users-editor"
+          path    = ":userID"
+          handler = { UserItem } />
       </Route>
-      <Route name    = "groups"
-             path    = "/accounts/groups"
-             handler = { Groups } >
-        <Route name    = "groups-editor"
-               path    = "/accounts/groups/:groupID"
-               handler = { GroupItem } />
+
+      {/* GROUPS */}
+      <Route
+          name    = "groups"
+          path    = "groups"
+          handler = { Groups } >
+        <Route
+            name    = "add-group"
+            path    = "add-group"
+            handler = { AddGroup } />
+        <Route
+            name    = "groups-editor"
+            path    = ":groupID"
+            handler = { GroupItem } />
       </Route>
     </Route>
 
-    <Route name="tasks" handler={ Tasks } />
+    {/* TASKS */}
+    <Route
+        name    = "tasks"
+        route   = "tasks"
+        handler = { Tasks } />
 
-      <Route name    = "networks"
-             path    = "networks"
-             handler = { Networks } >
-        <Route name    = "networks-editor"
-               path    = "/networks/:networksID"
-               handler = { NetworkItem } />
-      </Route>
 
-    <Route name="storage" handler={ Storage } />
-    <Route name="sharing" handler={ Sharing } />
+    {/* NETWORKS */}
+    <Route name    = "networks"
+           path    = "networks"
+           handler = { Networks } >
+      <Route name    = "networks-editor"
+             path    = ":networksID"
+             handler = { NetworkItem } />
+    </Route>
 
-    <Route name="services" handler={ Services }>
+
+    {/* STORAGE */}
+    <Route
+        name    = "storage"
+        route   = "storage"
+        handler = { Storage } />
+
+    {/* SHARING */}
+    <Route
+        name    = "sharing"
+        route   = "sharing"
+        handler = { Sharing } />
+
+
+    {/* SERVICES */}
+    <Route
+        name    = "services"
+        route   = "services"
+        handler = { Services }>
       <Route name    = "services-editor"
-             path    = "/services/:serviceID"
-             handler = { Editor } />
+             path    = ":serviceID"
+             handler = { ServiceItem } />
     </Route>
 
-    <Route name="system-tools" handler={ SystemTools } />
-    <Route name="control-panel" handler={ ControlPanel } />
-    <Route name="power" handler={ Power } />
-    <NotFoundRoute handler={ PageNotFound } />
+
+    {/* SYSTEM TOOLS */}
+    <Route
+        name    = "system-tools"
+        route   = "system-tools"
+        handler = { SystemTools } />
+
+    {/* CONTROL PANEL */}
+    <Route
+        name    = "control-panel"
+        route   = "control-panel"
+        handler = { ControlPanel } />
+
+    {/* POWER */}
+    <Route
+        name    = "power"
+        route   = "power"
+        handler = { Power } />
+
+    <NotFoundRoute handler={ Dashboard } />
+
   </Route>
 );

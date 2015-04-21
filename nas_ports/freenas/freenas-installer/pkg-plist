@@ -1,0 +1,9 @@
+/bin/install_worker.sh
+/bin/install_worker2.sh
+/etc/install.sh
+/etc/rc
+/lib/functions.sh
+/pre-install/0001.prevent_downgrade.sh
+/pre-install/0002.arch.sh
+/pre-install/0003.project_switch.sh
+/pre-install/0004.hardware_requirements.sh

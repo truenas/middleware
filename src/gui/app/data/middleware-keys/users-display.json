@@ -73,7 +73,7 @@
           "key"         : "group"
         , "name"        : "Primary Group"
         , "type"        : "integer"
-        , "formElement" : "input"
+        , "formElement" : "select"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -81,7 +81,7 @@
           "key"         : "shell"
         , "name"        : "Shell"
         , "type"        : "string"
-        , "formElement" : "input"
+        , "formElement" : "select"
         , "mutable"     : true
         , "defaultCol"  : false
       }
@@ -129,7 +129,7 @@
           "key"         : "groups"
         , "name"        : "Groups"
         , "type"        : "array"
-        , "formElement" : "textarea"
+        , "formElement" : "selectmultiple"
         , "mutable"     : true
         , "defaultCol"  : false
       }
