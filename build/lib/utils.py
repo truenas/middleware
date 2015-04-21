@@ -97,7 +97,7 @@ def readfile(filename):
 
 
 def setfile(filename, contents):
-    debug('setfile: {0} -> {1}', contents, filename)
+    debug('setfile: {1}', filename)
     filename = e(filename, **get_caller_vars())
 
     if not os.path.isdir(os.path.dirname(filename)):
