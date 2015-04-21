@@ -29,14 +29,14 @@
 
 import os
 from dsl import load_file
-from utils import sh, sh_str, info, debug, env
+from utils import sh, sh_str, info, debug, e, setfile
 
 
 dsl = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
 
 
 def checkout_repo(repo):
-    os.chdir(env('BUILD_ROOT'))
+    os.chdir(e('${BUILD_ROOT}'))
     if os.path.isdir(os.path.join(repo['path'], '.git')):
         os.chdir(repo['path'])
         branch = sh_str('git rev-parse --abbrev-ref HEAD')
@@ -56,3 +56,4 @@ if __name__ == '__main__':
         debug('Repository URL: {0}', i['url'])
         debug('Local branch: {0}', i['branch'])
         checkout_repo(i)
+        setfile('${BUILD_ROOT}/FreeBSD/.pulled', e('${PRODUCT}'))
