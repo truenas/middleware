@@ -291,6 +291,7 @@ def populate_ufsroot():
 
     for i in purge_dirs:
         for name in glob('${INSTUFS_DESTDIR}${i}/*'):
+            name = os.path.basename(name)
             if e('${i}/${name}') in files_to_preserve:
                 continue
 
