@@ -73,6 +73,7 @@ def build_pkgtools():
 
 def build_packages():
     info('Building packages')
+    sh('rm -rf ${pkgdir}/Packages')
     sh('mkdir -p ${pkgdir}/Packages')
     for i in dsl['package'].values():
         template = i['template']
