@@ -37,4 +37,5 @@ def main():
 
 
 if __name__ == '__main__':
+    info('Pushing release to internal storage')
     main()

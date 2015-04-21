@@ -43,4 +43,5 @@ def main():
 
 
 if __name__ == '__main__':
+    info('Pushing release to download server')
     main()

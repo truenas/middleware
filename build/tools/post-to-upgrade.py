@@ -64,4 +64,5 @@ def main():
     sh("ssh ${ssh} rm -rf ${temp_changelog}")
 
 if __name__ == '__main__':
+    info('Pushing upgrade packages to update server')
     main()
