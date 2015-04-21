@@ -45,7 +45,7 @@ var UserView = React.createClass({
       if ( group ) {
         return group.name;
       } else {
-        console.warn("Group " + groupID + " not found.");
+        // TODO: Have a policy to deal with a user assigned to a nonexistant group.
         return null;
       }
     }
