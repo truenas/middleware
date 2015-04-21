@@ -28,21 +28,40 @@
 
 
 import os
-from dsl import load_file
-from utils import e, sh, setup_env, import_function
-
-
-dsl = load_file('${BUILD_CONFIG}/upgrade.pyd', os.environ)
+import sys
+import tempfile
+from utils import sh, sh_str, e, setup_env, objdir, info, import_function
 create_aux_files = import_function('create-release-distribution', 'create_aux_files')
 
 
-def stage_upgrade():
-    sh('mkdir -p ${UPGRADE_STAGEDIR}')
-    sh('cp -R ${OBJDIR}/packages/Packages ${UPGRADE_STAGEDIR}/')
-    sh('rm -f ${OBJDIR}/objs/LATEST')
-    sh('ln -sf ${SEQUENCE}-Update ${BUILD_ROOT}/objs/LATEST')
+def main():
+    changelog = e('${CHANGELOG}')
+    ssh = e('${UPDATE_USER}@${UPDATE_HOST}')
+    temp_dest = sh_str("ssh ${ssh} mktemp -d /tmp/update-${PRODUCT}-XXXXXXXXX")
+    temp_changelog = sh_str("ssh ${ssh} mktemp /tmp/changelog-XXXXXXXXX")
 
+    sh('scp -r ${BUILD_ROOT}/objs/LATEST/. ${ssh}:${temp_dest}')
+    if changelog:
+        if changelog == '-':
+            print 'Enter changelog, ^D to end:'
+            changelog = sys.stdin.read()
+
+
+        sh('scp ${changelog} ${ssh}:${temp_changelog}')
+
+    sh(
+        "ssh ${ssh}",
+        "/usr/local/bin/freenas-release",
+        "-P ${PRODUCT}",
+        "-D ${UPDATE_DB}",
+        "--archive ${UPDATE_DEST}",
+        "-K ${FREENAS_KEYFILE}",
+        "-C ${temp_changelog}" if changelog else "",
+        "add ${temp_dest}"
+    )
+
+    sh("ssh ${ssh} rm -rf ${temp_dest}")
+    sh("ssh ${ssh} rm -rf ${temp_changelog}")
 
 if __name__ == '__main__':
-    stage_upgrade()
-    create_aux_files(dsl, e('${UPGRADE_STAGEDIR}'))
+    main()

@@ -23,7 +23,7 @@
 # SUCH DAMAGE.
 #
 
-aux_file(name=e("${PRODUCT}-MANIFEST"), source=e("${PKG_ROOT}/${PRODUCT}-MANIFEST"))
+aux_file(name=e("${PRODUCT}-MANIFEST"), source=e("${PACKAGES_DESTDIR}/${PRODUCT}-MANIFEST"))
 aux_file(name="ReleaseNotes", source=e("${BUILD_ROOT}/ReleaseNotes"))
 aux_file(name="ChangeLog", source=e("${BUILD_ROOT}/ChangeLog"))
 aux_file(name="NOTICE", source=e("${BUILD_ROOT}/NOTICE"))
