@@ -28,6 +28,7 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI import choices
 from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
@@ -105,15 +106,7 @@ class CIFS_Share(Model):
         max_length=255,
         blank=True,
         default='aio_pthread,streams_xattr',
-        choices=(
-            ('aio_pthread', 'aio_pthread'),
-            ('audit', 'audit'),
-            ('extd_audit', 'extd_audit'),
-            ('fake_perms', 'fake_perms'),
-            ('netatalk', 'netatalk'),
-            ('streams_depot', 'streams_depot'),
-            ('streams_xattr', 'streams_xattr'),
-        ),
+        choices=list(choices.CIFS_VFS_OBJECTS())
     )
     cifs_storage_task = models.ForeignKey(
         Task,
