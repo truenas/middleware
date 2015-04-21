@@ -10,14 +10,29 @@ class ManifestInvalidException(Exception):
 class ManifestInvalidSignature(Exception):
     pass
 
-class UpdateIncompleteCacheException(Exception):
+class UpdateException(Exception):
     pass
 
-class UpdateInvalidCacheException(Exception):
+class UpdateIncompleteCacheException(UpdateException):
     pass
 
-class UpdateBusyCacheException(Exception):
+class UpdateInvalidCacheException(UpdateException):
     pass
 
-class UpdateManifestNotFound(Exception):
+class UpdateBusyCacheException(UpdateException):
+    pass
+
+class UpdateManifestNotFound(UpdateException):
+    pass
+
+class UpdateApplyException(UpdateException):
+    pass
+
+class UpdateBootEnvironmentException(UpdateException):
+    pass
+
+class UpdateSnapshotException(UpdateException):
+    pass
+
+class UpdatePackageException(UpdateException):
     pass

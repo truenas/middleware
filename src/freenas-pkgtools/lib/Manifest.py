@@ -3,7 +3,6 @@ import json
 import hashlib
 import logging
 
-from . import Avatar, UPDATE_SERVER
 import Configuration
 import Exceptions
 import Package
@@ -53,6 +52,80 @@ def MakeString(obj):
     retval = json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '), cls = ManifestEncoder)
     return retval
 
+def DiffManifests(m1, m2):
+    """
+    Compare two manifests.  The return value is a dictionary,
+    with at least the following keys/values as possible:
+    Packages -- an array of tuples (pkg, op, old)
+    Sequence -- a tuple of (old, new)
+    Train -- a tuple of (old, new)
+    Reboot -- a boolean indicating whether a reboot is necessary.
+    (N.B.  This may be speculative; it's going to assume that any
+    updates listed in the packages are available, when they may not
+    be.)
+    If a key is not present, then there are no differences for that
+    value.
+    """
+    return_diffs = {}
+
+    def DiffPackages(old_packages, new_packages):
+        retval = []
+        old_list = {}
+        for P in old_packages:
+            old_list[P.Name()] = P
+
+        for P in new_packages:
+            if P.Name() in old_list:
+                # Either it's the same version, or a new version
+                if old_list[P.Name()].Version() != P.Version():
+                    retval.append((P, "upgrade", old_list[P.Name()]))
+                old_list.pop(P.Name())
+            else:
+                retval.append((P, "install", None))
+
+        for P in old_list.itervalues():
+            retval.insert(0, (P, "delete", None))
+    
+        return retval
+
+    # First thing, let's compare the packages
+    # This will go into the Packages key, if it's non-empty.
+    package_diffs = DiffPackages(m1.Packages(), m2.Packages())
+    if len(package_diffs) > 0:
+        return_diffs["Packages"] = package_diffs
+        # Now let's see if we need to do a reboot
+        reboot_required = False
+        for pkg, op, old in package_diffs:
+            if op == "delete":
+                # XXX You know, I hadn't thought this one out.
+                # Is there a case where a removal requires a reboot?
+                continue
+            elif op == "install":
+                if pkg.RequiresReboot() == True:
+                    reboot_required = True
+            elif op == "upgrade":
+                # This is a bit trickier.  We want to see
+                # if there is an upgrade for old
+                upd = pkg.Update(old.Version())
+                if upd:
+                    if upd.RequiresReboot() == True:
+                        reboot_required = True
+                else:
+                    if pkg.RequiresReboot() == True:
+                        reboot_required = True
+        return_diffs["Reboot"] = reboot_required
+        
+    # Next, let's look at the train
+    # XXX If NewTrain is set, should we use that?
+    if m1.Train() != m2.Train():
+        return_diffs["Train"] = (m1.Train(), m2.Train())
+
+    # Sequence
+    if m1.Sequence() != m2.Sequence():
+        return_diffs["Sequence"] = (m1.Sequence(), m2.Sequence())
+        
+    return return_diffs
+
 def CompareManifests(m1, m2):
     """
     Compare two manifests.  The return value is an
@@ -64,28 +137,10 @@ def CompareManifests(m1, m2):
     This only compares packages; it does not compare
     sequence, train names, notices, etc.
     """
-    old_packages = m1.Packages()
-    new_packages = m2.Packages()
-    old_list = {}
-
-    retval = []
-
-    for P in old_packages:
-        old_list[P.Name()] = P
-
-    for P in new_packages:
-        if P.Name() in old_list:
-            # Either it's the same version, or a new version
-            if old_list[P.Name()].Version() != P.Version():
-                retval.append((P, "upgrade", old_list[P.Name()]))
-            old_list.pop(P.Name())
-        else:
-            retval.append((P, "install", None))
-
-    for P in old_list:
-        retval.insert(0, (P, "delete", None))
-    
-    return retval
+    diffs = DiffManifests(m1, m2)
+    if "Packages" in diffs:
+        return diffs["Packages"]
+    return []
                     
 class ManifestEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -172,6 +227,11 @@ class Manifest(object):
         if PACKAGES_KEY not in self._dict \
            or len(self._dict[PACKAGES_KEY]) == 0:
             raise Exceptions.ManifestInvalidException("No packages")
+        if self._config and self._config.UpdateServerSigned() == False:
+            log.debug("Update server %s [%s] does not sign, so not checking" %
+                      (self._config.UpdateServerName(),
+                       self._config.UpdateServerURL()))
+            return True
         if SIGNATURE_KEY not in self._dict:
             # If we don't have a signature, but one is required,
             # raise an exception
@@ -223,7 +283,7 @@ class Manifest(object):
     def SetNote(self, name, location):
         if NOTES_KEY not in self._dict:
             self._dict[NOTES_KEY] = {}
-        if location.startswith(UPDATE_SERVER):
+        if location.startswith(self._config.UpdateServerURL()):
             location = location[len(location):]
         self._dict[NOTES_KEY][name] = location
 
@@ -232,8 +292,8 @@ class Manifest(object):
             rv = {}
             for name in self._dict[NOTES_KEY].keys():
                 loc = self._dict[NOTES_KEY][name]
-                if not loc.startswith(UPDATE_SERVER):
-                    loc = "%s/%s/Notes/%s" % (UPDATE_SERVER, self.Train(), loc)
+                if not loc.startswith(self._config.UpdateServerURL()):
+                    loc = "%s/%s/Notes/%s" % (self._config.UpdateServerURL(), self.Train(), loc)
                 rv[name] = loc
             return rv
         return None
@@ -242,8 +302,8 @@ class Manifest(object):
         self._notes = {}
         for name in notes.keys():
             loc = notes[name]
-            if loc.startswith(UPDATE_SERVER):
-                loc = loc[len(UPDATE_SERVER):]
+            if loc.startswith(self._config.UpdateServerURL()):
+                loc = loc[len(self._config.UpdateServerURL()):]
             self._notes[name] = os.path.basename(loc)
         return
 
@@ -254,8 +314,8 @@ class Manifest(object):
         if name not in notes:
             return None
         loc = notes[name]
-        if not loc.startswith(UPDATE_SERVER):
-            loc = UPDATE_SERVER + loc
+        if not loc.startswith(self._config.UpdateServerURL()):
+            loc = self._config.UpdateServerURL + loc
         return loc
 
     def Train(self):
@@ -313,7 +373,7 @@ class Manifest(object):
             if crl_file is None:
                 log.debug("Could not create CRL, ignoring for now")
             else:
-                if not self._config.TryGetNetworkFile(IX_CRL,
+                if not self._config.TryGetNetworkFile(url = IX_CRL,
                                                   pathname = crl_file.name,
                                                   reason = "FetchCRL"):
                     log.error("Could not get CRL file %s" % IX_CRL)

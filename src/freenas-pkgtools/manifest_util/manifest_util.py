@@ -119,7 +119,7 @@ def show_cmd(mani, args):
         for pkg in mani.Packages():
             updates = []
             for upd in pkg.Updates():
-                updates.append(upd[Package.VERSION_KEY])
+                updates.append(upd.Version())
             if len(updates) == 0:
                 x = ""
             else:
@@ -161,7 +161,7 @@ def list_cmd(mani, args):
                 print "\tSize %d" % pkg.Size()
             print "\tChecksum %s" % pkg.Checksum()
             for upd in pkg.Updates():
-                print "\t\tUpdate from %s: checksum %s" % (upd[Package.VERSION_KEY], upd[Package.CHECKSUM_KEY])
+                print "\t\tUpdate from %s: checksum %s" % (upd.Version(), upd.Checksum())
     return
 
 def verify_cmd(mani, args):

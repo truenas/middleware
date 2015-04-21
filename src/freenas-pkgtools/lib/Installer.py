@@ -272,7 +272,13 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
         return
     
     scriptName = "/%d-%s" % (os.getpid(), type)
-    scriptPath = "%s%s" % ("/tmp" if root is None else root, scriptName)
+    if root and root != "":
+        scriptPath = "%s%s" % (root, scriptName)
+    else:
+        # Writing to root isn't ideal, so this should be re-examined
+        scriptName = "/tmp" + scriptName
+        scriptPath = scriptName
+        
     with open(scriptPath, "w") as f:
         f.write(scripts[type])
     args = ["sh", "-x", scriptName]
@@ -289,7 +295,8 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
         pid = os.fork()
         if pid == 0:
             # Child
-            os.chroot(root)
+            if root:
+                os.chroot(root)
             if "PKG_PREFIX" in kwargs and kwargs["PKG_PREFIX"] is not None:
                 os.environ["PKG_PREFIX"] = kwargs["PKG_PREFIX"]
             os.execv("/bin/sh", args)
@@ -300,11 +307,12 @@ def RunPkgScript(scripts, type, root = None, **kwargs):
             if tpid != pid:
                 log.error("What?  I waited for process %d and I got %d instead!" % (pid, tpid))
             if status != 0:
+                # Should I raise an exception?
                 log.error("Sub procss exited with status %#x" % status)
         else:
             log.error("Huh?  Got -1 from os.fork and no exception?")
 
-    os.unlink("%s%s" % ("/tmp" if root is None else root, scriptName))
+    os.unlink(scriptPath)
         
     return
 
@@ -332,8 +340,11 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         pass
     else:
         fileName = "%s%s%s" % (prefix, "" if prefix.endswith("/") or entry.name.startswith("/") else "/", fileName)
-    full_path = "%s%s%s" % (root, "" if root.endswith("/") or fileName.startswith("/") else "/", fileName)
-            
+    if root:
+        full_path = "%s%s%s" % (root, "" if root.endswith("/") or fileName.startswith("/") else "/", fileName)
+    else:
+        full_path = "%s%s" % ("" if fileName.startswith("/") else "/", fileName)
+        root = ""
     # After that, we've got a full_path, and so we get the directory it's in,
     # and the name of the file.
     dirname = os.path.dirname(full_path)
@@ -445,7 +456,28 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
                 os.unlink(full_path)
             except:
                 pass
-            os.link(source_file, full_path)
+            try:
+                os.link(source_file, full_path)
+            except os.error as e:
+                if e[0] == errno.EXDEV:
+                    # Cross-device link, so we'll just copy it
+                    try:
+                        kBufSize = 1024 * 1024
+                        source = open(source_file, "rb")
+                        dest = open(full_path, "wb")
+                        while True:
+                            buffer = source.read(kBufSize)
+                            if buffer:
+                                dest.write(buffer)
+                            else:
+                                break
+                        os.lchmod(full_path, st.st_mode)
+                    except:
+                        log.error("Couldn't copy %s to %s" % (source_file, full_path))
+                        raise
+                else:
+                    log.error("Couldn't link %s to %s: %s" % (source_file, full_path, e[0]))
+                    raise e
             if st.st_flags != 0:
                 os.lchflags(source_file, st.st_flags)
         
@@ -573,7 +605,10 @@ def install_file(pkgfile, dest):
                             (PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE in old_scripts)) and \
                 ((PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_UPGRADE in pkgScripts) or \
                  (PKG_SCRIPT_TYPES.PKG_SCRIPT_UPGRADE in pkgScripts) or \
-                 (PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE in pkgScripts))
+                 (PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE in pkgScripts)) or \
+                (((PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_DELTA in pkgScripts) or \
+                  (PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_DELTA in pkgScripts)) and \
+                 pkgDeltaVersion is not None)
 
         print "upgrade_aware = %s" % upgrade_aware
         # First thing we do, if we're upgrade-aware, is to run the
@@ -589,6 +624,10 @@ def install_file(pkgfile, dest):
                 log.error("Delta package %s->%s cannot upgrade current version %s" % (
                     pkgDeltaVersion, pkgVersion, old_pkg[pkgName]))
                 return False
+            # Run a pre-delta script if any, but only if dest is none
+            if dest is None:
+                RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_PRE_DELTA, dest, PKG_PREFIX=prefix)
+            
             # Next step for a delta package is to remove any removed files and directories.
             # This is done in both the database and the filesystem.
             # If we can't remove a directory due to ENOTEMPTY, we don't care.
@@ -659,9 +698,12 @@ def install_file(pkgfile, dest):
         # the manifest may have relative or absolute paths,
         # and tar may remove a leading slash to make us secure.)
         # We also have to look in the directories hash
+        # print >> sys.stderr, "member = %s, prefix = %s" % (member.name, prefix)
         mFileHash = "-"
         if member.name in mfiles:
             mFileHash = mfiles[member.name]
+        elif member.name.startswith("/") == False and ("/" + member.name) in mfiles:
+            mFileHash = mfiles["/" + member.name]
         elif prefix + member.name in mfiles:
             mFileHash = mfiles[prefix + member.name]
         elif (prefix + member.name).startswith("/") == False:
@@ -671,6 +713,8 @@ def install_file(pkgfile, dest):
             # If it's not in the manifest, then ignore it
             # It may be a directory, however, so let's check
             if EntryInDictionary(member.name, mdirs, prefix) == False:
+                # If we don't skip it, we infinite loop.  That's bad.
+                member = t.next()
                 continue
         if pkgDeltaVersion is not None:
             if verbose or debug: log.debug("Extracting %s from delta package" % member.name)
@@ -678,7 +722,6 @@ def install_file(pkgfile, dest):
         if list is not None:
             pkgFiles.append((pkgName,) + list)
     
-#        print "prefix = %s, member = %s, hash = %s" % (prefix, member.name, mFileHash)
         member = t.next()
     
     if len(pkgFiles) > 0:
@@ -687,13 +730,15 @@ def install_file(pkgfile, dest):
     if upgrade_aware:
         RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_UPGRADE, dest, PKG_PREFIX=prefix)
         RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_UPGRADE, dest, PKG_PREFIX=prefix, SCRIPT_ARG="POST-UPGRADE")
+        if dest is None and pkgDeltaVersion is not None:
+            RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_DELTA, dest, PKG_PREFIX=prefix)
     else:
         RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_POST_INSTALL, dest, PKG_PREFIX=prefix)
         RunPkgScript(pkgScripts, PKG_SCRIPT_TYPES.PKG_SCRIPT_INSTALL, dest, PKG_PREFIX=prefix, SCRIPT_ARG="POST-INSTALL")
     return True
 
 class Installer(object):
-    _root = ""
+    _root = None
     _conf = None
     _manifest = None
     _packages = []

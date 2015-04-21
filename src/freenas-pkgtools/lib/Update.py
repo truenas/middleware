@@ -19,6 +19,8 @@ log = logging.getLogger('freenasOS.Update')
 
 debug = False
 
+REQUIRE_REBOOT = True
+
 # Used by the clone functions below
 beadm = "/usr/local/sbin/beadm"
 grub_dir = "/boot/grub"
@@ -57,7 +59,32 @@ def RunCommand(command, args):
     else:
         return False
 
-
+def GetRootDataset():
+    # Returns the name of the root dataset.
+    # This will be of the form zroot/ROOT/<be-name>
+    cmd = ["/bin/df", "/"]
+    if debug:
+        print >> sys.stderr, cmd
+        return None
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    except:
+        log.error("Could not run %s", cmd)
+        return None
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        log.error("%s returned %d" % (cmd, p.returncode))
+        return None
+    lines = stdout.rstrip().split("\n")
+    if len(lines) != 2:
+        log.error("Unexpected output from %s, too many lines (%d):  %s" % (cmd, len(lines), lines))
+        return None
+    if not lines[0].startswith("Filesystem"):
+        log.error("Unexpected output from %s:  %s" % (cmd, lines[0]))
+        return None
+    rv = lines[1].split()[0]
+    return rv
+                                                                                                                
 def ListClones():
     # Return a list of boot-environment clones.
     # This is just a simple wrapper for
@@ -75,13 +102,16 @@ def ListClones():
         return None
     stdout, stderr = p.communicate()
     if p.returncode != 0:
-        log.error("`%s' returned %d", cmd, p.returncode)
+        log.error("`%s' returned %d" %( cmd, p.returncode))
         return None
 
     for line in stdout.strip('\n').split('\n'):
         fields = line.split('\t')
+        name = fields[0]
+        if len(fields) > 5 and fields[5] != "-":
+            name = fields[5]
         rv.append({
-            'name': fields[0],
+            'name': name,
             'active': fields[1],
             'mountpoint': fields[2],
             'space': fields[3],
@@ -89,19 +119,78 @@ def ListClones():
         })
     return rv
 
+"""
+Notes to self:
+/beadm create pre-${NEW}
+zfs snapshot freenas-boot/ROOT/${CURRENT}@Pre-Upgrade-${NEW}
+zfs inherit -r beadm:nickname freenas-boot/ROOT/${CURRENT}@Pre-Upgrade-${NEW}
+/beadm rename -n ${CURRENT} ${NEW}
+/beadm rename -n pre-{$NEW} ${CURRENT}
 
-def CreateClone(name, snap_grub=True, bename=None):
+# Failure
+	/beadm destroy -F ${CURRENT}
+	/beadm rename -n ${NEW} ${CURRENT}
+	zfs rollback freenas-boot/ROOT/${CURRENT}@Pre-Upgrade-${NEW}
+	zfs set beadm:nickname=${CURRENT} freenas-boot/ROOT/${CURRENT}
+# Success
+	/beadm activate ${NEW}	# Not sure that's necessary or will work
+
+# Either case
+zfs destroy -r freenas-boot/ROOT/${CURRENT}@Pre-Upgrade-${NEW}	
+"""
+
+def CreateClone(name, snap_grub=True, bename=None, rename=None):
     # Create a boot environment from the current
     # root, using the given name.  Returns False
     # if it could not create it
+    # If rename is set, we need to create the clone with
+    # a temporary name, rename the root BE to its new
+    # name, and then rename the new clone to the root name.
+    # See above, excluding the snapshot.
+    # If rename is set, then we want to create a new,
+    # temporary BE, with the name pre-${name}; then
+    # we rename ${rename} to ${name}, and then rename
+    # pre-${name} to ${rename}.  In the event of
+    # an error anywhere along, we undo as much as we can
+    # and return an error.
+    args = ["create"]
     if bename:
-        args = ["create", "-e", bename, name]
+        args.extend(["-e", bename])
+    if rename:
+        import random
+        temp_name = "Pre-%s-%d" % (name, random.SystemRandom().randint(0, 1024 * 1024))
+        args.append(temp_name)
+        log.debug("CreateClone with rename, temp_name = %s" % temp_name)
     else:
-        args = ["create", name]
+        args.append(name)
     rv = RunCommand(beadm, args)
     if rv is False:
         return False
 
+    if rename:
+        # We've created Pre-<newname>-<random>
+        # Now we want to reame the root environment, which is rename, to
+        # the new name.
+        args = ["rename", rename, name]
+        rv = RunCommand(beadm, args)
+        if rv is False:
+            # We failed.  Clean up the temp one
+            args = ["destroy", "-F", temp_name]
+            RunCommand(beadm, args)
+            return False
+        # Root has been renamed, so let's rename the temporary one
+        args = ["rename", temp_name, rename]
+        rv = RunCommand(beadm, args)
+        if rv is False:
+            # We failed here.  How annoying.
+            # So let's delete the newlyp-created BE
+            # and rename root
+            args = ["destroy", "-F", rename]
+            RunCommand(beadm, args)
+            args = ["rename", name, rename]
+            RunCommand(beadm, args)
+            return False
+        
     if snap_grub:
         # Also create a snapshot of the grub filesystem,
         # but we don't do anything with it
@@ -149,8 +238,7 @@ def MountClone(name, mountpoint = None):
         return None
 
     # If all that worked... we now need
-    # to get /boot/grub into the clone's mount
-    # point, as a nullfs mount.
+    # to set up /dev, /var/tmp, and /boot/grub.
     # Let's see if we need to do that
     if os.path.exists(grub_cfg) is True:
         if os.path.exists(mount_point + grub_cfg) is True:
@@ -159,14 +247,27 @@ def MountClone(name, mountpoint = None):
                 os.remove(mount_point + grub_cfg)
             except:
                 pass
-        # Okay, it needs to be ounted
-        cmd = "/sbin/mount"
-        args = ["-t", "nullfs", grub_dir, mount_point + grub_dir]
+        # Okay, it needs to be mounted
+        # To mount the grub fs, however, we need to unmount
+        # it in root!  This is particularly annoying.
+        cmd = "/sbin/umount"
+        args = ["-f", grub_dir]
         rv = RunCommand(cmd, args)
         if rv is False:
             UnmountClone(name, None)
             return None
-
+        # Now let's mount devfs, tmpfs, and grub
+        args_array = [ ["-t", "devfs", "devfs", mount_point + "/dev"],
+                       ["-t", "tmpfs", "tmpfs", mount_point + "/var/tmp"],
+                       ["-t", "zfs", "freenas-boot/grub", mount_point + "/boot/grub" ]
+                       ]
+        cmd = "/sbin/mount"
+        for fs_args in args_array:
+            rv = RunCommand(cmd, fs_args)
+            if rv is False:
+                UnmountClone(name, None)
+                return None
+            
     return mount_point
 
 def ActivateClone(name):
@@ -178,13 +279,24 @@ def UnmountClone(name, mount_point = None):
     # Unmount the given clone.  After unmounting,
     # it removes the mount directory.
     # First thing we need to do is try to unmount
-    # the nullfs-mounted grub directory
+    # the grub directory, and then remount it in its
+    # proper place.  Then we can unmount /dev and /var/tmp
     # If this fails, we ignore it for now
     if mount_point is not None:
-        cmd = "umount"
+        cmd = "/sbin/umount"
         args = ["-f", mount_point + grub_dir]
         RunCommand(cmd, args)
-
+        cmd = "/sbin/mount"
+        args = ["/boot/grub"]
+        rv = RunCommand(cmd, args)
+        if rv is False:
+            log.error("UNABLE TO MOUNT /boot/grub; SYSTEM MAY NOT BOOT")
+            raise Exception("UNABLE TO REMOUNT /boot/grub; FIX MANUALLY OR SYSTEM AMY NOT BOOT")
+        cmd = "/sbin/umount"
+        for dir in ["/dev", "/var/tmp"]:
+            args = ["-f", mount_point + dir]
+            RunCommand(cmd, args)
+    
     # Now we ask beadm to unmount it.
     args = ["unmount", "-f", name]
     
@@ -213,7 +325,7 @@ def DeleteClone(name, delete_grub = False):
 
     return rv
 
-def CheckForUpdates(handler = None, train = None, cache_dir = None):
+def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler = None):
     """
     Check for an updated manifest.  If cache_dir is none, then we try
     to download just the latest manifest for the given train, and
@@ -259,183 +371,38 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None):
         log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
         return None
 
-    diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
+    diffs = Manifest.DiffManifests(conf.SystemManifest(), new_manifest)
     if diffs is None or len(diffs) == 0:
         return None
-    if handler:
-        for (pkg, op, old) in diffs:
-            handler(op, pkg, old)
-    return new_manifest
-
-def Update(root=None, conf=None, train = None, check_handler=None, get_handler=None,
-           install_handler=None, cache_dir = None):
-    """
-    Perform an update.  If cache_dir is set, and contains a valid
-    set of files (MANIFEST exists, and is for the current train, and
-    the sequence is not the same as the system sequence), it will
-    use that, rather than downloading.  It calls CheckForUpdates() otherwise,
-    to see if there are any. If there are, then magic happens.
-    """
-
-    log.debug("Update(root = %s, conf = %s, train = %s, cache_dir = %s)" % (root, conf, train, cache_dir))
-    if conf is None:
-        conf = Configuration.Configuration(root)
-
-    deleted_packages = []
-    process_packages = []
-    def UpdateHandler(op, pkg, old):
-        if op == "delete":
-            deleted_packages.append(pkg)
-        else:
-            process_packages.append(pkg)
-        if check_handler is not None:
-            check_handler(op, pkg, old)
-
-    new_man = None
-    if cache_dir:
-        if os.path.exists(cache_dir + "/MANIFEST"):
-            try:
-                cur = conf.SystemManifest()
-                new_man = Manifest.Manifest()
-                new_man.LoadPath(cache_dir + "/MANIFEST")
-                if new_man.Train() != cur.Train():
-                    new_man = None
-                    cache_dir = None
-                else:
-                    diffs = Manifest.CompareManifests(cur, new_man)
-                    for (pkg, op, old) in diffs:
-                        UpdateHandler(op, pkg, old)
-                    conf.SetPackageDir(cache_dir)
-            except Exception as e:
-                log.debug("Caught exception %s" % str(e))
-                new_man = None
-                cache_dir = None
-
-    if new_man is None:
-        new_man = CheckForUpdates(root, handler = UpdateHandler, train = train)
-
-    if new_man is None:
-        return
-
-    if len(deleted_packages) == 0 and len(process_packages) == 0:
-        # We have a case where a manifest was updated, but we
-        # don't actually have any changes to the packages.  We
-        # should install the new manifest, and be done -- it
-        # may have new release notes, or other issues.
-        # Right now, I'm not quite sure how to do this.
-        log.debug("Updated manifest but no package differences")
-        return
-
-    # Now we have a list of deleted packages, and a list
-    # of update/install packages.
-    # The task is to delete the first set of packages,
-    # and then run through the others to install/update.
-    # First, however, we need to get the files.
-    # We want to use the system configuration, unless one has been
-    # specified -- we don't want to use the target root's.
-    if conf is None:  
-        conf = Configuration.Configuration()
-
-    # If root is None, then we will try to create a clone
-    # environment.  (If the caller wants to install into the
-    # current boot environment, set root = "" or "/".)
-    clone_name = None
-    mount_point = None
-    try:
-        if root is None:
-            # We clone the existing boot environment to
-            # "Avatar()-<sequence>", unless it already does.
-            if new_man.Sequence().startswith(Avatar() + "-"):
-                clone_name = new_man.Sequence()
-            else:
-                clone_name = "%s-%s" % (Avatar(), new_man.Sequence())
+    log.debug("CheckForUpdate:  diffs = %s" % diffs)
+    reboot = False
+    if REQUIRE_REBOOT:
+        reboot = True
+        
+    if "Packages" in diffs:
+        for (pkg, op, old) in diffs["Packages"]:
+            if handler:
+                handler(op, pkg, old)
+            # We attempt to see if the update requires a reboot.
+            # This is only tentative -- if we can't download a delta package,
+            # and that's what allows the update to avoid a reboot, a reboot
+            # is going to be required.
+            if op == "install":
+                if pkg.RequiresReboot() == True:
+                    reboot = True
+            elif op == "upgrade":
+                upd = pkg.Update(old.Version())
+                if upd:
+                    if upd.RequiresReboot():
+                        reboot = True
+                elif pkg.RequiresReboot():
+                    reboot = True
                 
-            if CreateClone(clone_name) is False:
-                msg = "Unable to create boot-environment %s" % clone_name
-                # We set clone_name to None here because we may have gotten
-                # a failure due to an existing boot environment with that name,
-                # so let's not have the exception handler below delete it.
-                clone_name = None
-                log.error(msg)
-                raise Exception(msg)
-
-            mount_point = MountClone(clone_name)
-            if mount_point is None:
-                log.error("Unable to mount boot-environment %s" % clone_name)
-                DeleteClone(clone_name)
-                raise Exception("Unable to mount boot-environment %s" % clone_name)
-            else:
-                root = mount_point
-        else:
-            mount_point = None
-
-        for pkg in deleted_packages:
-            log.debug("Want to delete package %s" % pkg.Name())
-            if conf.PackageDB(root).RemovePackageContents(pkg) == False:
-                log.error("Unable to remove contents package %s" % pkg.Name())
-                if mount_point:
-                    UnmountClone(clone_name, mount_point)
-                    mount_point = None
-                DeleteClone(clone_name)
-                raise Exception("Unable to remove contents for package %s" % pkg.Name())
-            conf.PackageDB(root).RemovePackage(pkg.Name())
-
-        log.debug("Creating Installer object")
-        installer = Installer.Installer(manifest = new_man, root = root, config = conf)
-        log.debug("Getting packages")
-        installer.GetPackages(process_packages, handler=get_handler)
-
-        log.debug("Packages = %s" % installer._packages)
-
-        # Now let's actually install them.
-        # Only change on success
-        rv = False
-        if installer.InstallPackages(handler=install_handler) is False:
-            log.error("Unable to install packages")
-        else:
-            new_man.Save(root)
-            if mount_point is not None:
-                if UnmountClone(clone_name, mount_point) is False:
-                    log.error("Unable to mount clone enivironment %s" % clone_name)
-                else:
-                    mount_point = None
-                    if ActivateClone(clone_name) is False:
-                        log.error("Could not activate clone environment %s" % clone_name)
-                    else:
-                        # Downloaded package files are open-unlinked, so don't
-                        # have to be cleaned up.  If there's a cache directory,
-                        # however, we need to get rid of it.
-                        if cache_dir:
-                            import shutil
-                            if os.path.exists(cache_dir):
-                                try:
-                                    shutil.rmtree(cache_dir)
-                                except Exception as e:
-                                    # If that doesn't work, for now at least we'll
-                                    # simply ignore the error.
-                                    log.debug("Tried to remove cache directory %s, got exception %s" % (cache_dir, str(e)))
-                        rv = True
-                        # Start a scrub.  We ignore the return value.
-                        # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
-
-    except BaseException as e:
-        log.error("Update got exception during update: %s" % str(e))
-        if clone_name:
-            if mount_point:
-                # Ignore the error here
-                UnmountClone(clone_name, mount_point)
-            DeleteClone(clone_name)
-        raise e
-            
-    # Clean up
-    # That just leaves the clone, which
-    # we should unmount, and destroy if necessary.
-    # Unmounting attempts to delete the mount point that was created.
-    if rv is False:
-        if clone_name and DeleteClone(clone_name) is False:
-            log.error("Unable to delete boot environment %s in failure case" % clone_name)
-    
-    return rv
+    diffs["Reboot"] = reboot
+    if diff_handler:
+        diff_handler(diffs)
+        
+    return new_manifest
 
 def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     """
@@ -515,16 +482,32 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
         return False
 
     # Find out what differences there are
-    diffs = Manifest.CompareManifests(mani, latest_mani)
+    diffs = Manifest.DiffManifests(mani, latest_mani)
+    if diffs is None or len(diffs) == 0:
+        log.debug("DownloadUpdate:  No update available")
+        # Remove the cache directory and empty manifest file
+        RemoveUpdate(directory)
+        return False
+    log.debug("DownloadUpdate:  diffs = %s" % diffs)
+    
     download_packages = []
-    for pkg, op, old in diffs:
-        if op == "delete":
-            continue
-        log.debug("DownloadUpdate:  Will %s package %s" % (op, pkg.Name()))
-        download_packages.append(pkg)
+    reboot_required = True
+    if "Reboot" in diffs:
+        reboot_required = diffs["Reboot"]
+        
+    if "Packages" in diffs:
+        for pkg, op, old in diffs["Packages"]:
+            if op == "delete":
+                continue
+            log.debug("DownloadUpdate:  Will %s package %s" % (op, pkg.Name()))
+            download_packages.append(pkg)
 
+    log.debug("Update does%s seem to require a reboot" % "" if reboot_required else " not")
+    
     # Next steps:  download the package files.
     for indx, pkg in enumerate(download_packages):
+        # This is where we find out for real if a reboot is required.
+        # To do that, we may need to know which update was downloaded.
         if check_handler:
             check_handler(indx + 1,  pkg = pkg, pkgList = download_packages)
         pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler)
@@ -541,11 +524,28 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
     # Create the SEQUENCE file.
     with open(directory + "/SEQUENCE", "w") as f:
         f.write("%s" % conf.SystemManifest().Sequence())
+    # And create the SERVER file.
+    with open(directory + "/SERVER", "w") as f:
+        f.write("%s" % conf.UpdateServerName())
+        
     # Then return True!
     mani_file.close()
     return True
 
 def PendingUpdates(directory):
+    import traceback
+    try:
+        changes = PendingUpdatesChanges(directory)
+        if changes is None or len(changes) <= 1:
+            return False
+        else:
+            return True
+    except:
+        log.debug("PendingUpdatesChanges raised exception %s" % sys.exc_info()[0])
+        traceback.print_exc()
+        return False
+    
+def PendingUpdatesChanges(directory):
     """
     Return a list (a la CheckForUpdates handler right now) of
     changes between the currently installed system and the
@@ -563,26 +563,61 @@ def PendingUpdates(directory):
         mani_file = VerifyUpdate(directory)
     except UpdateBusyCacheException:
         log.debug("Cache directory %s is busy, so no update available" % directory)
-        return None
+        raise
     except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
         log.error(str(e))
         RemoveUpdate(directory)
-        return None
+        raise
     except BaseException as e:
         log.error("Got exception %s while trying to determine pending updates" % str(e))
-        return None
+        raise
     if mani_file:
         new_manifest = Manifest.Manifest(require_signature = True)
         try:
             new_manifest.LoadFile(mani_file)
         except ManifestInvalidSignature as e:
             log.error("Invalid signature in cached manifest: %s" % str(e))
+            raise
+        # This returns a set of differences.
+        # But we shouldn't rely on it until we can look at what we've
+        # actually downloaded.  To do that, we need to look at any
+        # package differences (diffs["Packages"]), and check the
+        # updates if that's what got downloaded.
+        # By definition, if there are no Packages differences, a reboot
+        # isn't required.
+        diffs = Manifest.DiffManifests(conf.SystemManifest(), new_manifest)
+        if len(diffs) == 0:
             return None
-        diffs = Manifest.CompareManifests(conf.SystemManifest(), new_manifest)
+        if "Packages" in diffs:
+            reboot = False
+            # Look through the install/upgrade packages
+            for pkg, op, old in diffs["Packages"]:
+                if op == "delete":
+                    continue
+                if op == "install":
+                    if pkg.RequiresReboot() == True:
+                        reboot = True
+                if op == "upgrade":
+                    # A bit trickier.
+                    upd = pkg.Update(old.Version())
+                    update_fname = os.path.join(directory, pkg.FileName(old.Version()))
+                    if upd and os.path.exists(update_fname):
+                        if upd.RequiresReboot() == True:
+                            reboot = True
+                    else:
+                        # Have to assume the full package exists
+                        if pkg.RequiresReboot() == True:
+                            reboot = True
+        else:
+            reboot = False
+        if len(diffs) == 0:
+            return None
+        diffs["Reboot"] = reboot
         return diffs
-    return None
+    else:
+        return None
 
-def ApplyUpdate(directory, install_handler = None):
+def ApplyUpdate(directory, install_handler = None, force_reboot = False):
     """
     Apply the update in <directory>.  As with PendingUpdates(), it will
     have to verify the contents before it actually installs them, so
@@ -590,103 +625,174 @@ def ApplyUpdate(directory, install_handler = None):
     """
     rv = False
     conf = Configuration.Configuration()
-    changes = PendingUpdates(directory)
+    # Note that PendingUpdates may raise an exception
+    changes = PendingUpdatesChanges(directory)
+        
     if changes is None:
-        # That could have happened for multiple reasons.
-        # PendingUpdates should probably throw an exception
-        # on error
-        return False
+        # This means no updates to apply, and so nothing to do.
+        return None
+
     # Do I have to worry about a race condition here?
     new_manifest = Manifest.Manifest(require_signature = True)
     try:
         new_manifest.LoadPath(directory + "/MANIFEST")
     except ManifestInvalidSignature as e:
         log.error("Cached manifest has invalid signature: %s" % str(e))
-        return False
+        raise e
 
     conf.SetPackageDir(directory)
 
+    # If we're here, then we have some change to make.
+    # PendingUpdatesChanges always sets this, unless it returns None
+    reboot = changes["Reboot"]
+    if force_reboot:
+        # Just in case
+        reboot = True
+    if REQUIRE_REBOOT:
+        # In case we have globally disabled rebootless updates
+        reboot = True
+    changes.pop("Reboot")
+    if len(changes) == 0:
+        # This shouldn't happen
+        log.debug("ApplyUupdate:  changes only has Reboot key")
+        return None
+
     deleted_packages = []
     updated_packages = []
-    for (pkg, op, old) in changes:
-        if op == "delete":
-            log.debug("Delete package %s" % pkg.Name())
-            deleted_packages.append(pkg)
-        elif op == "install":
-            log.debug("Install package %s" % pkg.Name())
-        else:
-            log.debug("Upgrade package %s-%s to %s-%s" % (old.Name(), old.Version(), pkg.Name(), pkg.Version()))
-            updated_packages.append(pkg)
+    if "Packages" in changes:
+        for (pkg, op, old) in changes["Packages"]:
+            if op == "delete":
+                log.debug("Delete package %s" % pkg.Name())
+                deleted_packages.append(pkg)
+                continue
+            elif op == "install":
+                log.debug("Install package %s" % pkg.Name())
+                updated_packages.append(pkg)
+            elif op == "upgrade":
+                log.debug("Upgrade package %s-%s to %s-%s" % (old.Name(), old.Version(), pkg.Name(), pkg.Version()))
+                updated_packages.append(pkg)
+            else:
+                log.error("Unknown package operation %s for %s" % (op, pkg.Name()))
 
-    if len(deleted_packages) == 0 and len(updated_packages) == 0:
-        # The manifest may have other differences, so we should
-        # probably do something.
-        log.debug("New manifest has no package changes, what should we do?")
-        RemoveUpdate(directory)
-        return True
-
-    # Now we start doing the update!
-    clone_name = None
+    if new_manifest.Sequence().startswith(Avatar() + "-"):
+        new_boot_name = new_manifest.Sequence()
+    else:
+        new_boot_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
+        
+    log.debug("new_boot_name = %s, reboot = %s" % (new_boot_name, reboot))
+    
     mount_point = None
-    try:
-        # We clone the existing boot environment to
-        # "Avatar()-<sequence>", unless it already does.
-        if new_manifest.Sequence().startswith(Avatar() + "-"):
-            clone_name = new_manifest.Sequence()
-        else:
-            clone_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
-        if CreateClone(clone_name) is False:
-            log.debug("Failed to create BE %s" % clone_name)
-            # It's possible the boot environment already exists.
-            s = None
-            clones = ListClones()
-            if clones:
-                found = False
-                for c in clones:
-                    if c["name"] == clone_name:
-                        found = True
-                        if c["mountpoint"] != "/":
-                            if c["mountpoint"] != "-":
-                                mount_point = c["mountpoint"]
-                                # We also need to see if grub is mounted
-                                # Note:  if mount_point or mount_point/boot/grub don't exist,
-                                # this is going to throw an exception.
-                                try:
-                                    if os.lstat(mount_point).st_dev == os.lstat(mount_point + grub_dir).st_dev:
-                                        if RunCommand("/sbin/mount", ["-t", "nullfs", grub_dir, mount_point + grub_dir]) == False:
-                                            s = "Unable to mount grub into already-existing boot environment %s" % clone_name
-                                except:
-                                    log.debug("Unable to check %s grub mount" % mount_point)
-                                    s = "Unable to set up %s as an installable mount point" % mount_point
+    if reboot:
+        # Need to create a new boot environment
+        try:
+            if CreateClone(new_boot_name) is False:
+                log.debug("Failed to create BE %s" % new_boot_name)
+                # It's possible the boot environment already exists.
+                s = None
+                clones = ListClones()
+                if clones:
+                    found = False
+                    for c in clones:
+                        if c["name"] == new_boot_name:
+                            found = True
+                            if c["mountpoint"] != "/":
+                                if c["mountpoint"] != "-":
+                                    mount_point = c["mountpoint"]
                         else:
-                            s = "Cannot create boot-environment with same name as current boot-environment (%s)" % clone_name
+                            s = "Cannot create boot-environment with same name as current boot-environment (%s)" % new_boot_name
                         break
-                if found is False:
-                    s = "Unable to create boot-environment %s" % clone_name
-            else:    
-                log.debug("Unable to list clones after creation failure")
-                s = "Unable to create boot-environment %s" % clone_name
-            if s:
-                log.error(s)
-                raise Exception(s)
+                    if found is False:
+                        s = "Unable to create boot-environment %s" % new_boot_name
+                else:    
+                    log.debug("Unable to list clones after creation failure")
+                    s = "Unable to create boot-environment %s" % new_boot_name
+                    if s:
+                        log.error(s)
+                    raise UpdateBootEnvironmentException(s)
+            if mount_point is None:
+                mount_point = MountClone(new_boot_name)
+        except:
+            mount_point = None
+            s = sys.exc_info()[0]
         if mount_point is None:
-            mount_point = MountClone(clone_name)
-        if mount_point is None:
-            s = "Unable to mount boot-environment %s" % clone_name
+            s = "Unable to mount boot-environment %s" % new_boot_name
             log.error(s)
-            DeleteClone(clone_name)
-            raise Exception(s)
-
+            DeleteClone(new_boot_name)
+            raise UpdateBootEnvironmentException(s)
+    else:
+        # Need to do magic to move the current boot environment aside,
+        # and assign the newname to the current boot environment.
+        # Also need to make a snapshot of the current root so we can
+        # clean up on error
+        mount_point = None
+        log.debug("We should try to do a non-rebooty update")
+        root_dataset = GetRootDataset()
+        if root_dataset is None:
+            log.error("Unable to determine root environment name")
+            raise UpdateBootEnvironmentException("Unable to determine root environment name")
+        # We also want the root name
+        root_env = None
+        clones = ListClones()
+        if clones is None:
+            log.error("Unable to determine root BE")
+            raise UpdateBootEnvironmentException("Unable to determine root BE")
+        for clone in clones:
+            if clone["mountpoint"] == "/":
+                root_env = clone
+                break
+        if root_env is None:
+            log.error("Unable to find root BE!")
+            raise UpdateBootEnvironmentException("Unable to find root BE!")
+        
+        # Now we want to snapshot the current boot environment,
+        # so we can rollback as needed.
+        snapshot_name = "%s@Pre-Uprgade-%s" % (root_dataset, new_manifest.Sequence())
+        cmd = "/sbin/zfs"
+        args = ["snapshot", "-r", snapshot_name ]
+        rv = RunCommand(cmd, args)
+        if rv is False:
+            log.error("Unable to create snapshot %s, bailing for now" % snapshot_name)
+            raise UpdateSnapshotException("Unable to create snapshot %s" % snapshot_name)
+        # We need to remove the beadm:nickname property.  I hate knowing this much
+        # about the implementation
+        args = ["inherit", "-r", "beadm:nickname", snapshot_name ]
+        RunCommand(cmd, args)
+        
+        # At this point, we'd want to rename the boot environment to be the new
+        # name, which would be new_manifest.Sequence()
+        if CreateClone(new_boot_name, rename = root_env["name"]) is False:
+            log.error("Unable to create new boot environment %s" % new_boot_name)
+            # Roll back and destroy the snapshot we took
+            cmd = "/sbin/zfs"
+            args = ["rollback", snapshot_name ]
+            RunCommand(cmd, args)
+            args[0] = "destroy"
+            RunCommand(cmd, args)
+            # And set the beadm:nickname property back
+            args = ["set", "beadm:nickname=%s" % root_env["name"]]
+            RunCommand(cmd, args)
+            
+            raise UpdateBootEnvironmentException("Unable to create new boot environment %s" % new_boot_nam)
+        
+    # Now we start doing the update!
+    # If we have to reboot, then we need to
+    # make a new boot environment, with the appropriate name.
+    # If we are *not* rebooting, then we want to rename the
+    # current one with the appropriate name, while at the same
+    # time cloning the current one and keeping the existing name.
+    # Easy peasy, right?
+    
+    try:
         # Remove any deleted packages
         for pkg in deleted_packages:
             log.debug("About to delete package %s" % pkg.Name())
             if conf.PackageDB(mount_point).RemovePackageContents(pkg) == False:
                 s = "Unable to remove contents for packate %s" % pkg.Name()
                 if mount_point:
-                    UnmountClone(clone_name, mount_point)
+                    UnmountClone(new_boot_name, mount_point)
                     mount_point = None
-                    DeleteClone(clone_name)
-                raise Exception(s)
+                    DeleteClone(new_boot_name)
+                raise UpdatePackageException(s)
             conf.PackageDB(mount_point).RemovePackage(pkg.Name())
 
         installer = Installer.Installer(manifest = new_manifest,
@@ -698,31 +804,65 @@ def ApplyUpdate(directory, install_handler = None):
         rv = False
         if installer.InstallPackages(handler = install_handler) is False:
             log.error("Unable to install packages")
-            raise Exception("Unable to install packages")
+            raise UpdatePackageException("Unable to install packages")
         else:
             new_manifest.Save(mount_point)
             if mount_point:
-                if UnmountClone(clone_name, mount_point) is False:
-                    s = "Unable to unmount clone environment %s from mount point %s" % (clone_name, mount_point)
+                if UnmountClone(new_boot_name, mount_point) is False:
+                    s = "Unable to unmount clone environment %s from mount point %s" % (new_boot_name, mount_point)
                     log.error(s)
-                    raise Exception(s)
+                    raise UpdateBootEnvironmentException(s)
                 mount_point = None
-                if ActivateClone(clone_name) is False:
-                    s = "Unable to activate clone environment %s" % clone_name
+            if reboot:
+                if ActivateClone(new_boot_name) is False:
+                    s = "Unable to activate clone environment %s" % new_boot_name
                     log.error(s)
-                    raise Exception(s)
-                RemoveUpdate(directory)
-                rv = True
-                # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
+                    raise UpdateBootEnvironmentException(s)
+            if not reboot:
+                # Clean up the emergency holographic snapshot
+                cmd = "/sbin/zfs"
+                args = ["destroy", "-r", snapshot_name ]
+                rv = RunCommand(cmd, args)
+                if rv is False:
+                    log.error("Unable to destroy snapshot %s" % snapshot_name)
+            RemoveUpdate(directory)
+            # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
     except BaseException as e:
+        # Cleanup code is entirely different for reboot vs non reboot
         log.error("Update got exception during update: %s" % str(e))
-        if mount_point:
-            UnmountClone(clone_name, mount_point)
-        if clone_name:
-            DeleteClone(clone_name)
+        if reboot:
+            if mount_point:
+                UnmountClone(new_boot_name, mount_point)
+            if new_boot_name:
+                DeleteClone(new_boot_name)
+        else:
+            # Need to roll back
+            # We also need to delete the renamed clone of /,
+            # and then rename / to the original name.
+            # First, however, destroy the clone
+            rv = DeleteClone(root_env["name"])
+            if rv:
+                # Next, rename the clone
+                rv = RenameClone(new_boot_name, root_env["name"])
+                if rv:
+                    # Now roll back the snapshot, and set the beadm:nickname value
+                    cmd = "/sbin/zfs"
+                    args = [ "rollback", "-r", snapshot_name]
+                    rv = RunCommand(cmd, args)
+                    if rv is False:
+                        log.error("Unable to rollback %s" % snapshot_name)
+                        # Don't know what to do then
+                    args = ["set", "beadm:nickname=%s" % root_env["name"], "freenas-boot/ROOT/%s" % root_env["name"]]
+                    rv = RunCommand(cmd, args)
+                    if rv is False:
+                        log.error("Unable to set nickname, wonder what I did wrong")
+                    args = ["destroy", "-r", snapshot_name ]
+                    rv = RunCommand(cmd, args)
+                    if rv is False:
+                        log.error("Unable to destroy snapshot %s" % snapshot_name)
         raise e
 
-    return rv
+    return reboot
 
 def VerifyUpdate(directory):
     """
@@ -773,74 +913,85 @@ def VerifyUpdate(directory):
         log.error("Could not sequence file in cache directory %s: %s" % (directory, str(e)))
         raise UpdateIncompleteCacheException("Cache directory %s does not have a sequence file" % directory)
 
+        
     # Now let's see if the sequence matches us.
     if cached_sequence != mani.Sequence():
         log.error("Cached sequence, %s, does not match system sequence, %s" % (cached_sequence, mani.Sequence()))
         raise UpdateInvalidCacheException("Cached sequence does not match system sequence")
 
-    # Next thing to do is go through the manifest, and decide which package files we need.
-    diffs = Manifest.CompareManifests(mani, cached_mani)
-    # This gives us an array to examine.
-    for (pkg, op, old) in diffs:
-        if op == "delete":
-            # Deleted package, so we don't need to do any verification here
-            continue
-        if op == "install":
-            # New package, being installed, so we need the full package
-            cur_vers = None
-        if op == "upgrade":
-            # Package being updated, so we can look for the delta package.
-            cur_vers = old.Version()
-        new_vers = pkg.Version()
-        # This is slightly redundant -- if cur_vers is None, it'll check
-        # the same filename twice.
-        if not os.path.exists(directory + "/" + pkg.FileName())  and \
-           not os.path.exists(directory + "/" + pkg.FileName(cur_vers)):
-            # Neither exists, so incoplete
-            log.error("Cache %s  directory missing files for package %s" % (directory, pkg.Name()))
-            raise UpdateIncompleteCacheException("Cache directory %s missing files for package %s" % (directory, pkg.Name()))
-        # Okay, at least one of them exists.
-        # Let's try the full file first
-        try:
-            with open(directory + "/" + pkg.FileName()) as f:
-                if pkg.Checksum():
-                    cksum = Configuration.ChecksumFile(f)
-                    if cksum == pkg.Checksum():
-                        continue
-                else:
-                    continue
-        except:
-            pass
+    # Second easy thing to do:  if there is a SERVER file, make sure it's the same server
+    # name we're using
+    cached_server = "default"
+    try:
+        cached_server = open(directory + "/SERVER", "r").read().rstrip()
+    except (IOError, Exception) as e:
+        log.debug("Could not open SERVER file in cache direcory %s: %s" % (directory, str(e)))
+        cached_server = "default"
 
-        if cur_vers is None:
-            e = "Cache directory %s missing files for package %s" % (directory, pkg.Name())
-            log.error(e)
-            raise UpdateIncompleteCacheException(e)
+    if cached_server != conf.UpdateServerName():
+        log.error("Cached server, %s, does not match system update server, %s" % (cached_server, conf.UpdateServerName()))
+        raise UpdateInvalidCacheException("Cached server name does not match system update server")
+    
+    # Next thing to do is go through the manifest, and decide which package files we need.
+    diffs = Manifest.DiffManifests(mani, cached_mani)
+    # This gives us an array to examine.
+    # All we care about for verification is the packages
+    if "Packages" in diffs:
+        for (pkg, op, old) in diffs["Packages"]:
+            if op == "delete":
+                # Deleted package, so we don't need to do any verification here
+                continue
+            if op == "install":
+                # New package, being installed, so we need the full package
+                cur_vers = None
+            if op == "upgrade":
+                # Package being updated, so we can look for the delta package.
+                cur_vers = old.Version()
+            new_vers = pkg.Version()
+            # This is slightly redundant -- if cur_vers is None, it'll check
+            # the same filename twice.
+            if not os.path.exists(directory + "/" + pkg.FileName())  and \
+               not os.path.exists(directory + "/" + pkg.FileName(cur_vers)):
+                # Neither exists, so incoplete
+                log.error("Cache %s  directory missing files for package %s" % (directory, pkg.Name()))
+                raise UpdateIncompleteCacheException("Cache directory %s missing files for package %s" % (directory, pkg.Name()))
+            # Okay, at least one of them exists.
+            # Let's try the full file first
+            try:
+                with open(directory + "/" + pkg.FileName()) as f:
+                    if pkg.Checksum():
+                        cksum = Configuration.ChecksumFile(f)
+                        if cksum == pkg.Checksum():
+                            continue
+                    else:
+                        continue
+            except:
+                pass
+
+            if cur_vers is None:
+                e = "Cache directory %s missing files for package %s" % (directory, pkg.Name())
+                log.error(e)
+                raise UpdateIncompleteCacheException(e)
         
-        # Now we try the delta file
-        # To do that, we need to find the right dictionary in the pkg
-        upd_cksum = None
-        found = False
-        for update_dict in pkg.Updates():
-            if update_dict[Package.VERSION_KEY] == cur_vers:
-                if Package.CHECKSUM_KEY in update_dict:
-                    upd_cksum = update_dict[Package.CHECKSUM_KEY]
-                    try:
-                        with open(directory + "/" + pkg.FileName(cur_vers)) as f:
-                            cksum = Configuration.ChecksumFile(f)
-                            if upd_cksum == cksum:
-                                found = True
-                                break
-                    except:
-                        pass
-                else:
-                    found = True
-                    break
-        if found is False:
-            # If we got here, we are missing this file
-            log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
-            log.error(log_msg)
-            raise UpdateIncompleteCacheException(log_msg)
+            # Now we try the delta file
+            # To do that, we need to find the right dictionary in the pkg
+            upd_cksum = None
+            update = pkg.Update(cur_vers)
+            if update and update.Checksum():
+                upd_cksum = update.Checksum()
+                try:
+                    with open(directory + "/" + pkg.FileName(cur_vers)) as f:
+                        cksum = Configuration.ChecksumFile(f)
+                        if upd_cksum != cksum:
+                            update = None
+                except:
+                    update = None
+            if update is None:
+                # If we got here, we are missing this file
+                log_msg = "Cache directory %s is missing package %s" % (directory, pkg.Name())
+                log.error(log_msg)
+                raise UpdateIncompleteCacheException(log_msg)
+        # And end that loop
     # And if we got here, then we have found all of the packages, the manifest is fine,
     # and the sequence tag is correct.
     mani_file.seek(0)

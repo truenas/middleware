@@ -22,9 +22,14 @@ from stat import (
     S_IMODE
 )
 
-VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache']
+VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache','/usr/local/share/smartmontools/drivedb.h', '/boot/device.hints', '/usr/local/lib/perl5/5.16/man/whatis', '/usr/share/man/whatis']
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
+CONFIG_SERVER = "update_server"
+
+UPDATE_SERVER_NAME_KEY = "name"
+UPDATE_SERVER_URL_KEY = "url"
+UPDATE_SERVER_SIGNED_KEY = "signing"
 
 TRAIN_DESC_KEY = "Descripton"
 TRAIN_SEQ_KEY = "Sequence"
@@ -41,7 +46,8 @@ log = logging.getLogger('freenasOS.Configuration')
 SEARCH_LOCATIONS = [ "http://update.freenas.org/" + Avatar() ]
 
 # List of trains
-TRAIN_FILE = UPDATE_SERVER + "/trains.txt"
+TRAIN_FILE = "trains.txt"
+
 
 def ChecksumFile(fobj):
     # Produce a SHA256 checksum of a file.
@@ -56,7 +62,7 @@ def ChecksumFile(fobj):
     fobj.seek(0)
     return hash.hexdigest()
 
-    
+
 def TryOpenFile(path):
     try:
         f = open(path, "r")
@@ -68,6 +74,7 @@ def TryOpenFile(path):
 # This code taken from
 # http://stackoverflow.com/questions/1087227/validate-ssl-certificates-with-python
 
+
 class InvalidCertificateException(httplib.HTTPException, urllib2.URLError):
     def __init__(self, host, cert, reason):
         httplib.HTTPException.__init__(self)
@@ -78,6 +85,7 @@ class InvalidCertificateException(httplib.HTTPException, urllib2.URLError):
     def __str__(self):
         return ('Host %s returned an invalid certificate (%s) %s\n' %
                 (self.host, self.reason, self.cert))
+
 
 class CertValidatingHTTPSConnection(httplib.HTTPConnection):
     default_port = httplib.HTTPS_PORT
@@ -155,6 +163,8 @@ class PackageDB:
     __close = True
 
     def __init__(self, root = "", create = True):
+        if root is None:
+            root = ""
         self.__db_root = root
         self.__db_path = self.__db_root + "/" + PackageDB.DB_NAME
         if os.path.exists(os.path.dirname(self.__db_path)) == False:
@@ -444,6 +454,45 @@ class PackageDB:
         self._closedb()
         return
 
+class UpdateServer(object):
+    def __init__(self, name = None, url = None, signing = True):
+        if name is None:
+            raise ValueError("Cannot initialize UpdateServer with no name")
+        else:
+            self._name = name
+        if url is None:
+            raise ValueError("Cannot initialize UpdateServer with no URL")
+        else:
+            self._url = url
+        self._signature_required = signing
+
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self, name):
+        if name is None:
+            raise ValueError("Cannot set UpdateServer name to nothing")
+        self._name = name
+    @property
+    def url(self):
+        return self._url
+    @url.setter
+    def url(self, url):
+        if url is None:
+            raise ValueError("Cannot set UpdateServer URL to nothing!")
+        self._url = url
+    @property
+    def signature_required(self):
+        return self._signature_required
+    @signature_required.setter
+    def signature_required(self, sr):
+        self._signature_required = sr
+
+default_update_server = UpdateServer(name = "default",
+                                     url = UPDATE_SERVER,
+                                     signing = True)
+
 class Configuration(object):
     _root = ""
     _config_path = "/data/update.conf"
@@ -455,17 +504,38 @@ class Configuration(object):
     def __init__(self, root = None, file = None):
         if root is not None: self._root = root
         if file is not None: self._config_path = file
+        self._update_server = default_update_server
         self.LoadConfigurationFile(self._config_path)
         # Set _temp to the system pool, if it exists.
         if os.path.exists(self._system_dataset):
             self._temp = self._system_dataset
 
-    def TryGetNetworkFile(self, url, handler=None, pathname = None, reason = None):
+    def UpdateServerURL(self):
+        return self._update_server.url
+    def UpdateServerName(self):
+        return self._update_server.name
+    def UpdateServerSigned(self):
+        return self._update_server.signature_required
+
+    def TryGetNetworkFile(self, file=None, url=None, handler=None, pathname = None, reason = None):
         from . import DEFAULT_CA_FILE
+        from freenasUI.support.utils import LICENSE_FILE
+
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
         host_id = None
-        log.debug("TryGetNetworkFile(%s)" % url)
+        if file and url:
+            log.debug("Cannot specify both file and url for TryGetNetworkFile")
+            raise Exception("Bad use of TryGetNetworkFile")
+        if (not file) and (not url):
+            log.debug("Must specify at file xor url for TryGetNetworkFile")
+            raise Exception("Bad use of TryGetNetworkFile again")
+
+        if file:
+            file_url = "%s/%s" % (self._update_server.url, file)
+        elif url:
+            file_url = url
+        log.debug("TryGetNetworkFile(%s)" % file_url)
         temp_mani = self.SystemManifest()
         if temp_mani:
             current_version = temp_mani.Sequence()
@@ -474,21 +544,31 @@ class Configuration(object):
         except:
             host_id = None
 
+        license_data = None
+        try:
+            if os.path.exists(LICENSE_FILE):
+                license_data = open(LICENSE_FILE, "r").read().rstrip()
+        except:
+            pass
+
         try:
             https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
             opener = urllib2.build_opener(https_handler)
-            req = urllib2.Request(url)
+            req = urllib2.Request(file_url)
             req.add_header("X-iXSystems-Project", Avatar())
             req.add_header("X-iXSystems-Version", current_version)
             if host_id:
                 req.add_header("X-iXSystems-HostID", host_id)
             if reason:
                 req.add_header("X-iXSystems-Reason", reason)
+            if license_data:
+                req.add_header("X-iXSystems-License", license_data)
+
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
             furl = opener.open(req, timeout=30)
         except BaseException as e:
-            log.error("Unable to load %s: %s", url, str(e))
+            log.error("Unable to load %s: %s", file_url, str(e))
             return None
         try:
             totalsize = int(furl.info().getheader('Content-Length').strip())
@@ -513,18 +593,18 @@ class Configuration(object):
                     downrate = chunk_size
                 lasttime = tmptime
                 if not data:
-                    log.debug("TryGetNetworkFile(%s):  Read %d bytes total" % (url, read))
+                    log.debug("TryGetNetworkFile(%s):  Read %d bytes total" % (file_url, read))
                     break
                 read += len(data)
                 if ((read % mbyte) == 0):
-                    log.debug("TryGetNetworkFile(%s):  Read %d bytes" % (url, read))
+                    log.debug("TryGetNetworkFile(%s):  Read %d bytes" % (file_url, read))
 
                 if handler and totalsize:
                     percent = int((float(read) / float(totalsize)) * 100.0)
                     if percent != lastpercent:
                         handler(
                             'network',
-                            url,
+                            file_url,
                             size=totalsize,
                             progress=percent,
                             download_rate=downrate,
@@ -572,7 +652,7 @@ class Configuration(object):
                 if new_man:
                     if new_man.Sequence() != train.LastSequence():
                         # We have an update
-                        train.SetLastSequence(new_main.Sequence())
+                        train.SetLastSequence(new_man.Sequence())
                         train.SetLastCheckedTime()
                         train.SetNotes(new_man.Notes())
                         train.SetNotice(new_man.Notice())
@@ -654,21 +734,38 @@ class Configuration(object):
         if cfp is None:
             return
 
+        upd = None
         for section in cfp.sections():
             if section == CONFIG_DEFAULT:
-                # Nothing to do for now.  Maybe later
-                pass
+                if cfp.has_option(CONFIG_DEFAULT, CONFIG_SERVER):
+                    upd = cfp.get(CONFIG_DEFAULT, CONFIG_SERVER)
             else:
-                # This is a train name
-                try:
-                    train = Train(section, cfp.get(section, TRAIN_DESC_KEY))
-                    train.SetLastSequence(cfp.get(section, TRAIN_SEQ_KEY))
-                    train.SetLastCheckedTime(cfp.get(section, TRAIN_CHECKED_KEY))
-                    self.AddTrain(train)
-                except:
+                if cfp.has_option(section, UPDATE_SERVER_NAME_KEY) and \
+                   cfp.has_option(section, UPDATE_SERVER_URL_KEY) and \
+                   section == upd:
+                    # This is an update server section
+                    n = cfp.get(section, UPDATE_SERVER_NAME_KEY)
+                    u = cfp.get(section, UPDATE_SERVER_URL_KEY)
+                    s = cfp.getboolean(section, UPDATE_SERVER_SIGNED_KEY) \
+                        if cfp.has_option(section, UPDATE_SERVER_SIGNED_KEY) else True
+                    try:
+                        update_server = UpdateServer(name = n, url = u, signing = s)
+                        self._update_server = update_server
+                    except:
+                        log.error("Cannot set update server to %s, using default", n)
+                elif cfp.has_option(section, TRAIN_DESC_KEY):
+                    # This is a train name
+                    try:
+                        train = Train(section, cfp.get(section, TRAIN_DESC_KEY))
+                        train.SetLastSequence(cfp.get(section, TRAIN_SEQ_KEY))
+                        train.SetLastCheckedTime(cfp.get(section, TRAIN_CHECKED_KEY))
+                        self.AddTrain(train)
+                    except:
                     # Ignore errors (for now at least)
-                    pass
-
+                        pass
+                else:
+                    log.debug("Don't know what to do with section %s" % section)
+        # End for loop here
         return
 
     def SetPackageDir(self, loc):
@@ -688,7 +785,7 @@ class Configuration(object):
         raise Exception("Deprecated method")
         self._search = list
         return
-    
+
     def SearchLocations(self):
         return SEARCH_LOCATIONS
 
@@ -704,7 +801,9 @@ class Configuration(object):
         """
         sys_mani = self.SystemManifest()
         if sys_mani:
-           return sys_mani.Train()
+            if sys_mani.NewTrain():
+                return sys_mani.NewTrain()
+            return sys_mani.Train()
         return None
 
     def AvailableTrains(self):
@@ -724,7 +823,7 @@ class Configuration(object):
         else:
             current_version = str(sys_mani.Sequence())
 
-        fileref = self.TryGetNetworkFile(TRAIN_FILE, reason = "FetchTrains")
+        fileref = self.TryGetNetworkFile(file = TRAIN_FILE, reason = "FetchTrains")
 
         if fileref is None:
             return None
@@ -787,7 +886,7 @@ class Configuration(object):
         if self._package_dir:
             return "%s/%s" % (self._package_dir, pkg.FileName())
         else:
-            return "%s/Packages/%s" % (UPDATE_SERVER, pkg.FileName())
+            return "%s/Packages/%s" % (self._update_server.url, pkg.FileName())
 
     def PackageUpdatePath(self, pkg, old_version):
         # Do we need this?  If we're given a package directory,
@@ -795,53 +894,8 @@ class Configuration(object):
         if self._package_dir:
             return "%s/%s" % (self._package_dir, pkg.FileName(old_version))
         else:
-            return "%s/Packages/%s" % (UPDATE_SERVER, pkg.FileName(old_version))
+            return "%s/Packages/%s" % (self._update_server.url, pkg.FileName(old_version))
 
-    def SearchForFile(self, path, handler=None):
-        # Iterate through the search locations,
-        # looking for $loc/$path.
-        # If we find the file, we return a file-like
-        # object for it.
-        sys_mani = self.SystemManifest()
-        if sys_mani is None:
-            current_version = "unknown"
-        else:
-            current_version = str(sys_mani.Sequence())
-
-        # Minor hack to minimize some code duplication
-        first_search = []
-        if path.startswith("Packages/") and self._package_dir is not None:
-            first_search = [self._package_dir]
-
-        for location in first_search + self.SearchLocations():
-            # A location will either be a path (beginning
-            # with a "/", a file url (beginning with
-            # "file://"), or a network URL.
-            # For files, we simply open it, and return
-            # that.
-            # For networking, we download it to a
-            # temporary location, and return a reference
-            # to that.
-            # We yield, so it can continue searching for
-            # more correct files.
-            if location.endswith("/") or path.startswith("/"):
-                full_pathname = location + path
-            else:
-                full_pathname = location + "/" + path
-            if full_pathname.startswith("/"):
-                file_ref = TryOpenFile(full_pathname)
-            elif full_pathname.startswith("file://"):
-                file_ref = TryOpenFile(full_pathname[len("file://"):])
-            else:
-                file_ref = self.TryGetNetworkFile(
-                    full_pathname,
-                    handler=handler,
-                    reason = "SearchForFile(%s)" % path,
-                )
-            if file_ref is not None:
-                yield file_ref
-        return
-            
     def GetManifest(self, train = None, sequence = None, handler = None):
         """
         GetManifest:  fetch, over the network, the requested
@@ -863,9 +917,9 @@ class Configuration(object):
             ManifestFile = "/%s/LATEST" % train
         else:
             # This needs to change for TrueNAS, doesn't it?
-            ManifestFile = "/%s/%s-%s" % (Avatar(), train, sequence)
+            ManifestFile = "%s/%s-%s" % (Avatar(), train, sequence)
 
-        file_ref = self.TryGetNetworkFile(UPDATE_SERVER + ManifestFile,
+        file_ref = self.TryGetNetworkFile(file = ManifestFile,
                                           handler=handler,
                                           reason = "GetManifest",
                                  )
@@ -890,7 +944,7 @@ class Configuration(object):
             else:
                 train = temp_mani.Train()
 
-        file = self.TryGetNetworkFile("%s/%s/LATEST" % (UPDATE_SERVER, train),
+        file = self.TryGetNetworkFile(file = "%s/LATEST" % train,
                                       reason = "GetLatestManifest",
                                   )
         if file is None:
@@ -915,19 +969,19 @@ class Configuration(object):
         # Look for the changelog file for the specific train, and attempt to
         # download it.  If save_dir is set, save it as save_dir/ChangeLog.txt
         # Returns a file for the ChangeLog, or None if it can't be found.
-        changelog_url = "%s/%s/ChangeLog.txt" % (UPDATE_SERVER, train)
+        changelog_url = "%s/ChangeLog.txt" % train
         if save_dir:
             save_path = "%s/ChangeLog.txt" % save_dir
         else:
             save_path = None
         file = self.TryGetNetworkFile(
-            url = changelog_url,
+            file = changelog_url,
             handler = handler,
             pathname = save_path,
             reason = "GetChangeLog",
             )
         return file
-    
+
     def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None):
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
@@ -964,16 +1018,18 @@ class Configuration(object):
                 if pkgInfo:
                     curVers = pkgInfo[package.Name()]
                     if curVers and curVers != package.Version():
-                        for upgrade in package.Updates():
-                            if upgrade[Package.VERSION_KEY] == curVers:
-                                tdict = { "Filename" : package.FileName(curVers),
-                                          "Checksum" : None,
-                                      }
-
-                                if Package.CHECKSUM_KEY in upgrade:
-                                    tdict[Package.CHECKSUM_KEY] = upgrade[Package.CHECKSUM_KEY]
-                                package_files.append(tdict)
-                                break
+                        upgrade = package.Update(curVers)
+                        if upgrade:
+                            tdict = { "Filename" : package.FileName(curVers),
+                                      "Checksum" : None,
+                                      "Reboot"   : upgrade.RequiresReboot(),
+                                      "Delta"    : True,
+                            }
+                            if upgrade.Checksum():
+                                tdict[Package.CHECKSUM_KEY] = upgrade.Checksum()
+                            if upgrade.Size():
+                                tdict[Package.SIZE_KEY] = upgrade.Size()    
+                            package_files.append(tdict)
         except:
             # No update packge that matches.
             pass
@@ -1010,13 +1066,13 @@ class Configuration(object):
 
         for search_attempt in reversed(package_files):
             # Next we try to get it from the network.
-            url = "%s/Packages/%s" % (UPDATE_SERVER, search_attempt["Filename"])
+            pFile = "Packages/%s" % search_attempt["Filename"]
             save_name = None
             if save_dir:
                 save_name = save_dir + "/" + search_attempt["Filename"]
 
             file = self.TryGetNetworkFile(
-                url = url,
+                file = pFile,
                 handler = handler,
                 pathname = save_name,
                 reason = "DownloadPackageFile",
@@ -1034,28 +1090,13 @@ class Configuration(object):
 
         return None
 
-    def GetManifestNote(self, manifest, note, handler = None):
-        # This returns the contents of the specified note,
-        # or None if it can't be found.
-        # We need the manifest so we can get the train name.
-        # Notes are stored at <base>/<train>/Notes, and
-        # the path of the note is stored in the manifest.
-        url = manifest.NotePath(note)
-        if url:
-            file = self.TryGetNetworkFile(
-                url = url,
-                handler = handler,
-            )
-            if file:
-                return file.read()
-        return None
-
 def is_ignore_path(path):
     for i in VERIFY_SKIP_PATHS:
         tlen = len(i)
         if path[:tlen] == i:
             return True
     return False
+
 
 def get_ftype_and_perm(mode):
     """ Returns a tuple of whether the file is: file(regular file)/dir/slink
@@ -1076,6 +1117,7 @@ def get_ftype_and_perm(mode):
     if S_ISSOCK(mode):
         return "socket", S_IMODE(mode)
     return "unknown", "unknown"
+
 
 def check_ftype(objs):
     """ Checks the filetype, permissions and uid,gid of the
@@ -1104,6 +1146,7 @@ def check_ftype(objs):
                 ('problem', pdtmp[1:]),
                 ('pkgdb_entry', objs)])
     return ed, pd
+
 
 def do_verify(verify_handler=None):
     """A function that goes through the provided pkgdb filelist and verifies it with

@@ -7,6 +7,29 @@ import os
 import sys
 import tempfile
 
+def PrintDifferences(diffs):
+    for type in diffs:
+        if type == "Packages":
+            pkg_diffs = diffs[type]
+            for (pkg, op, old) in pkg_diffs:
+                if op == "delete":
+                    print >> sys.stderr, "Delete package %s" % pkg.Name()
+                elif op == "install":
+                    print >> sys.stderr, "Install package %s-%s" % (pkg.Name(), pkg.Version())
+                elif op == "upgrade":
+                    print >> sys.stderr, "Upgrade package %s %s->%s" % (pkg.Name(), old.Version(), pkg.Version())
+                else:
+                    print >> sys.stderr, "Unknown package operation %s for packge %s-%s" % (op, pkg.Name(), pkg.Version())
+        elif type in ("Train", "Sequence"):
+            # Train and Sequence are a single tuple, (old, new)
+            old, new = diffs[type]
+            print >> sys.stderr, "%s %s -> %s" % (type, old, new)
+        elif type == "Reboot":
+            rr = diffs[type]
+            print >> sys.stderr, "Reboot is (conditionally) %srequired" % ("" if rr else "not ")
+        else:
+            print >> sys.stderrr, "*** Unknown key %s (value %s)" % (type, str(diffs[type]))
+
 def main():
     global log
     def usage():
@@ -53,7 +76,7 @@ def main():
             'std': {
                 'class': 'logging.StreamHandler',
                 'level': 'DEBUG',
-                'stream': 'ext://sys.stdout',
+                'stream': 'ext://sys.stderr',
             },
         },
         'loggers': {
@@ -99,19 +122,16 @@ def main():
         if rv is False:
             if verbose:
                 print "No updates available"
-                if cache_dir is None:
-                    Update.RemoveUpdate(download_dir)
-                sys.exit(1)
+            if cache_dir is None:
+                Update.RemoveUpdate(download_dir)
+            sys.exit(1)
         else:
             if verbose:
-                diffs = Update.PendingUpdates(download_dir)
-                for (pkg, op, old) in diffs:
-                    if op == "delete":
-                        print >> sys.stderr, "Delete package %s" % pkg.Name()
-                    elif op == "install":
-                        print >> sys.stderr, "Install package %s-%s" % (pkg.Name(), pkg.Version())
-                    elif op == "upgrade":
-                        print >> sys.stderr, "Upgrade package %s %s->%s" % (pkg.Name(), old.Version(), pkg.Version())
+                diffs = Update.PendingUpdatesChanges(download_dir)
+                if diffs is None or len(diffs) == 0:
+                    print >> sys.stderr, "Strangely, DownloadUpdate says there updates, but PendingUpdates says otherwise"
+                    sys.exit(1)
+                PrintDifferences(diffs)
             if cache_dir is None:
                 Update.RemoveUpdate(download_dir)
             sys.exit(0)
@@ -124,6 +144,19 @@ def main():
         # want to run "freenas-update -c /foo check" to look for an update,
         # and it will download the latest one as necessary, and then run
         # "freenas-update -c /foo update" if it said there was an update.
+        try:
+            update_opts, update_args = getopt.getopt(args[1:], "R", "--reboot")
+        except getopt.GetoptError as err:
+            print str(err)
+            usage()
+
+        force_reboot = False
+        for o, a in update_opts:
+            if o in ("-R", "--reboot"):
+                force_reboot = True
+            else:
+                assert False, "Unhandled option %s" % o
+        
         if cache_dir is None:
             download_dir = tempfile.mkdtemp(prefix = "UpdateUpdate-", dir = config.TemporaryDirectory())
             if download_dir is None:
@@ -137,29 +170,22 @@ def main():
         else:
             download_dir = cache_dir
         
-        diffs = Update.PendingUpdates(download_dir)
+        diffs = Update.PendingUpdatesChanges(download_dir)
         if diffs is None or diffs == {}:
             if verbose:
                 print >> sys.stderr, "No updates to apply"
         else:
             if verbose:
-                for (pkg, op, old) in diffs:
-                    if op == "delete":
-                        print >> sys.stderr, "Delete package %s" % pkg.Name()
-                    elif op == "install":
-                        print >> sys.stderr, "Install package %s-%s" % (pkg.Name(), pkg.Version())
-                    elif op == "upgrade":
-                        print >> sys.stderr, "Upgrade package %s %s -> %s" % (pkg.Name(), old.Version(), pkg.Version())
-            rv = Update.ApplyUpdate(download_dir)
-            if rv is False:
-                if verbose:
-                    print >> sys.stderr, "ApplyUpdates failed"
-                if cache_dir is None:
-                    Update.RemoveUpdate(download_dir)
+                PrintDifferences(diffs)
+            try:
+                rv = Update.ApplyUpdate(download_dir, force_reboot = force_reboot)
+            except BaseException as e:
+                print >> sys.stderr, "Unable to apply update: %s" % str(e)
                 sys.exit(1)
-            Update.RemoveUpdate(download_dir)
-            # Change this if/when we can do an update without a reboot.
-            print >> sys.stderr, "System should be rebooted now"
+            if cache_dir is None:
+                Update.RemoveUpdate(download_dir)    
+            if rv:
+                print >> sys.stderr, "System should be rebooted now"
             sys.exit(0)
     else:
         usage()
