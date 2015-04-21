@@ -12,7 +12,8 @@ import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
 import freenasOS.Package as Package
-from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException
+from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException, UpdateBootEnvironmentException
+
 from freenasOS.Exceptions import ManifestInvalidSignature, UpdateManifestNotFound
 
 log = logging.getLogger('freenasOS.Update')
