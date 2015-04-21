@@ -37,9 +37,9 @@ def main():
     if user == 'root':
         user = 'jkh'
 
-    sh('ssh ${user}@${DOWNLOAD_HOST} rm -rf ${TARGETDIR}')
-    sh('ssh ${user}@${DOWNLOAD_HOST} mkdir -p ${TARGETDIR}')
-    sh('scp -pr ${RELEASE_STAGEDIR} ${user}@${DOWNLOAD_HOST}:${TARGETDIR}')
+    sh('ssh ${user}@${DOWNLOAD_HOST} rm -rf ${DOWNLOAD_TARGETDIR}')
+    sh('ssh ${user}@${DOWNLOAD_HOST} mkdir -p ${DOWNLOAD_TARGETDIR}')
+    sh('scp -pr ${RELEASE_STAGEDIR} ${user}@${DOWNLOAD_HOST}:${DOWNLOAD_TARGETDIR}')
 
 
 if __name__ == '__main__':
