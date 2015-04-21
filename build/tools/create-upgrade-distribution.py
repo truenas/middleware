@@ -39,7 +39,7 @@ create_aux_files = import_function('create-release-distribution', 'create_aux_fi
 def stage_upgrade():
     sh('mkdir -p ${UPGRADE_STAGEDIR}')
     sh('cp -R ${OBJDIR}/packages/Packages ${UPGRADE_STAGEDIR}/')
-    sh('rm -f ${OBJDIR}/objs/LATEST')
+    sh('rm -f ${BUILD_ROOT}/objs/LATEST')
     sh('ln -sf ${SEQUENCE}-Update ${BUILD_ROOT}/objs/LATEST')
 
 
