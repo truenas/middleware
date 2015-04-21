@@ -44,6 +44,13 @@ imgfile = objdir('base.ufs')
 output = objdir('${NAME}.iso')
 
 
+purge_dirs = [
+    '/bin',
+    '/usr/bin',
+    '/usr/bin',
+    '/usr/sbin'
+]
+
 symlinks = {
     '[': '/bin/[',
     'badsect': '/sbin/badsect',
@@ -260,10 +267,13 @@ def install_files():
 
 def populate_ufsroot():
     info('Populating UFS root')
+    
+    for i in purge_dirs:
+        sh('chflags -f 0 ${INSTUFS_DESTDIR}${i}/*')
+        sh('rm -f ${INSTUFS_DESTDIR}{i}/*')
+
     for k, v in symlinks.items():
         p = os.path.join('/rescue', k)
-        sh('chflags -f 0 ${INSTUFS_DESTDIR}${v}')
-        sh('rm -f ${INSTUFS_DESTDIR}${v}')
         sh('ln -s ${p} ${INSTUFS_DESTDIR}${v}')
 
 

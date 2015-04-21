@@ -31,6 +31,8 @@ import os
 import sys
 import tempfile
 from utils import sh, sh_str, e, setup_env, objdir, info, import_function
+
+
 create_aux_files = import_function('create-release-distribution', 'create_aux_files')
 
 
@@ -45,7 +47,6 @@ def main():
         if changelog == '-':
             print 'Enter changelog, ^D to end:'
             changelog = sys.stdin.read()
-
 
         sh('scp ${changelog} ${ssh}:${temp_changelog}')
 
@@ -62,6 +63,7 @@ def main():
 
     sh("ssh ${ssh} rm -rf ${temp_dest}")
     sh("ssh ${ssh} rm -rf ${temp_changelog}")
+
 
 if __name__ == '__main__':
     info('Pushing upgrade packages to update server')
