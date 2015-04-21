@@ -125,15 +125,14 @@ release:
 	script -a ${RELEASE_LOGFILE} ${BUILD_TOOLS}/create-release-distribution.py
 	script -a ${RELEASE_LOGFILE} ${BUILD_TOOLS}/create-upgrade-distribution.py
 
-release-push: release
-	@${BUILD_TOOLS}/post-to-upgrade.py
+release-push: update-push
 	@${BUILD_TOOLS}/post-to-storage.py
 	@if [ "${PRODUCT}" == "FreeNAS" ]; then \
-		${BUILD_TOOLS}/post-to-download.py \
+		${BUILD_TOOLS}/post-to-download.py; \
 	fi
 
-update-push:	release
-	@${BUILD_TOOLS}/post-to-upgrade.py LATEST
+update-push:
+	@${BUILD_TOOLS}/post-to-upgrade.py
 
 rebuild: checkout all
 	@${BUILD_TOOLS}/create-release-distribution.py
