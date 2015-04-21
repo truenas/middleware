@@ -48,6 +48,7 @@ GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .export PYTHONPATH
 .export OBJDIR
 .export BUILD_STARTED
+.export GIT_REPO_SETTING
 
 git-verify:
 	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
