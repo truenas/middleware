@@ -46,7 +46,7 @@ output = objdir('${NAME}.iso')
 
 purge_dirs = [
     '/bin',
-    '/usr/bin',
+    '/sbin',
     '/usr/bin',
     '/usr/sbin'
 ]
@@ -217,7 +217,6 @@ def create_ufs_dirs():
     sh('mkdir -p ${INSTUFS_DESTDIR}/conf/default/var')
     sh('mkdir -p ${INSTUFS_DESTDIR}/tank')
     sh('rm -rf ${INSTUFS_DESTDIR}/boot')
-    sh('ln -s /.mount/boot ${INSTUFS_DESTDIR}/boot')
 
 
 def setup_diskless():
@@ -267,10 +266,10 @@ def install_files():
 
 def populate_ufsroot():
     info('Populating UFS root')
-    
+
     for i in purge_dirs:
         sh('chflags -f 0 ${INSTUFS_DESTDIR}${i}/*')
-        sh('rm -f ${INSTUFS_DESTDIR}{i}/*')
+        sh('rm -f ${INSTUFS_DESTDIR}${i}/*')
 
     for k, v in symlinks.items():
         p = os.path.join('/rescue', k)

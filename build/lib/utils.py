@@ -99,8 +99,8 @@ def readfile(filename):
 
 
 def setfile(filename, contents):
-    debug('setfile: {1}', filename)
     filename = e(filename, **get_caller_vars())
+    debug('setfile: {0}', filename)
 
     if not os.path.isdir(os.path.dirname(filename)):
         sh('mkdir -p', os.path.dirname(filename))
@@ -109,6 +109,18 @@ def setfile(filename, contents):
     f.write(contents)
     f.write('\n')
     f.close()
+
+
+def appendfile(filename, contents):
+    filename = e(filename, **get_caller_vars())
+    debug('appendfile: {0}', filename)
+
+    if not os.path.isdir(os.path.dirname(filename)):
+        sh('mkdir -p', os.path.dirname(filename))
+
+    f = open(filename, 'a')
+    f.write(contents)
+    f.write('\n')
 
 
 def on_abort(func):

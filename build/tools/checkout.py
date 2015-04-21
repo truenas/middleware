@@ -29,10 +29,11 @@
 
 import os
 from dsl import load_file
-from utils import sh, sh_str, info, debug, e, setfile
+from utils import sh, sh_str, info, debug, e, setfile, appendfile
 
 
 dsl = load_file('${BUILD_CONFIG}/repos.pyd', os.environ)
+manifest = {sh_str("git config --get remote.origin.url"): sh_str("git rev-parse --short HEAD")}
 
 
 def checkout_repo(repo):
@@ -48,7 +49,14 @@ def checkout_repo(repo):
         sh('git pull --rebase')
     else:
         sh('git clone', '-b', repo['branch'], repo['url'], repo['path'])
+        os.chdir(repo['path'])
 
+    manifest[repo['url']] = sh_str("git rev-parse --short HEAD")
+
+
+def generate_manifest():
+    for k, v in manifest.items():
+        appendfile('${BUILD_ROOT}/FreeBSD/repo-manifest', e('${k} ${v}'))
 
 if __name__ == '__main__':
     for i in dsl['repository'].values():
@@ -56,4 +64,6 @@ if __name__ == '__main__':
         debug('Repository URL: {0}', i['url'])
         debug('Local branch: {0}', i['branch'])
         checkout_repo(i)
-        setfile('${BUILD_ROOT}/FreeBSD/.pulled', e('${PRODUCT}'))
+
+    generate_manifest()
+    setfile('${BUILD_ROOT}/FreeBSD/.pulled', e('${PRODUCT}'))

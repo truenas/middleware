@@ -33,7 +33,8 @@ from utils import sh, sh_str, e, setup_env, info
 
 
 def main():
-    sh('cp -r ${RELEASE_STAGEDIR} ${IX_INTERNAL_PATH}/${NAME}')
+    name = os.path.basename(e('${RELEASE_STAGEDIR}'))
+    sh('cp -r ${RELEASE_STAGEDIR} ${IX_INTERNAL_PATH}/${name}')
 
 
 if __name__ == '__main__':
