@@ -39,7 +39,7 @@ def main():
 
     sh('ssh ${user}@${DOWNLOAD_HOST} rm -rf ${DOWNLOAD_TARGETDIR}')
     sh('ssh ${user}@${DOWNLOAD_HOST} mkdir -p ${DOWNLOAD_TARGETDIR}')
-    sh('scp -pr ${RELEASE_STAGEDIR} ${user}@${DOWNLOAD_HOST}:${DOWNLOAD_TARGETDIR}')
+    sh('scp -pr ${RELEASE_STAGEDIR}/ ${user}@${DOWNLOAD_HOST}:${DOWNLOAD_TARGETDIR}')
 
 
 if __name__ == '__main__':
