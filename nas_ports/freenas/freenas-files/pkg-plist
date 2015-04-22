@@ -22,6 +22,7 @@ usr/local/sbin/sas2flash
 usr/local/sbin/save_rrds.sh
 usr/local/sbin/scrub
 usr/local/share/perftests-nas/tests/iozone
+etc/local
 etc/csh.cshrc
 etc/devfs.rules
 etc/exports
