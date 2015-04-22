@@ -28,7 +28,6 @@ import base64
 import hashlib
 import hmac
 import logging
-import re
 import uuid
 
 from django.db import models
@@ -40,7 +39,6 @@ from django.core.validators import (
 from freenasUI import choices
 from freenasUI.directoryservice.models import (
     KerberosRealm,
-    idmap_tdb
 )
 from freenasUI.freeadmin.models import (
     Model, UserField, GroupField, PathField
@@ -765,6 +763,38 @@ class iSCSITargetAuthCredential(Model):
         verbose_name = _("Authorized Access")
         verbose_name_plural = _("Authorized Accesses")
 
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetAuthCredential, self).__init__(*args, **kwargs)
+        if self.iscsi_target_auth_secret:
+            self.iscsi_target_auth_secret = notifier().pwenc_decrypt(
+                self.iscsi_target_auth_secret
+            )
+        self._iscsi_target_auth_secret_encrypted = False
+
+        if self.iscsi_target_auth_peersecret:
+            self.iscsi_target_auth_peersecret = notifier().pwenc_decrypt(
+                self.iscsi_target_auth_peersecret
+            )
+        self._iscsi_target_auth_peersecret_encrypted = False
+
+    def save(self, *args, **kwargs):
+        if (
+            self.iscsi_target_auth_secret and
+            not self._iscsi_target_auth_secret_encrypted
+        ):
+            self.iscsi_target_auth_secret = notifier().pwenc_encrypt(
+                self.iscsi_target_auth_secret
+            )
+            self._iscsi_target_auth_secret_encrypted = True
+        if (
+            self.iscsi_target_auth_peersecret and
+            not self._iscsi_target_auth_peersecret_encrypted
+        ):
+            self.iscsi_target_auth_peersecret = notifier().pwenc_encrypt(
+                self.iscsi_target_auth_peersecret
+            )
+        super(iSCSITargetAuthCredential, self).save(*args, **kwargs)
+
     def __unicode__(self):
         return unicode(self.iscsi_target_auth_tag)
 
@@ -880,8 +910,8 @@ class DynamicDNS(Model):
     ddns_ipserver = models.CharField(
         max_length=150,
         verbose_name=_('IP Server'),
-	# todo: fix default not showing up in the form
-	default='checkip.dyndns.org:80 /.',
+        # todo: fix default not showing up in the form
+        default='checkip.dyndns.org:80 /.',
         help_text=_(
             'The client IP is detected by calling \'url\' from this '
             '\'ip_server_name:port /.\'. Leaving this field blank causes '
@@ -1873,6 +1903,7 @@ class DomainController(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"DomainControllerIcon"
+
 
 class WebDAV(Model):
     webdav_protocol = models.CharField(
