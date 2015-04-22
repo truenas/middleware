@@ -253,9 +253,10 @@ define([
         me.dapErrorMessage.appendChild(loading);
 
 
-        xhr.get(me.categoriesUrl, {
+        xhr.post(me.categoriesUrl, {
           handleAs: 'json',
-          query: query || ''
+          data: query || '',
+          headers: {"X-CSRFToken": CSRFToken}
         }).then(function(data) {
           if(data.error) {
             domConst.empty(me.dapErrorMessage);

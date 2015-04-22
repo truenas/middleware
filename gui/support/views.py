@@ -34,7 +34,7 @@ from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_POST
 
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
@@ -193,11 +193,11 @@ def ticket(request):
     return HttpResponse(data)
 
 
-@require_GET
+@require_POST
 def ticket_categories(request):
     success, msg = utils.fetch_categories({
-        'user': request.GET.get('user'),
-        'password': request.GET.get('password'),
+        'user': request.POST.get('user'),
+        'password': request.POST.get('password'),
     })
     data = {
         'error': not success,
