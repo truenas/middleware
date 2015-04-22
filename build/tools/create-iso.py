@@ -70,7 +70,9 @@ files_to_preserve = [
     '/usr/bin/xargs',
     '/usr/sbin/diskinfo',
     '/usr/sbin/vidcontrol'
-    '/sbin/geom'
+    '/sbin/geom',
+    '/bin/install_worker.sh',
+    '/bin/install_worker2.sh'
 ]
 
 symlinks = {
