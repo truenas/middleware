@@ -171,8 +171,10 @@ build-gui:
 	@${BUILD_TOOLS}/build-gui.py
 
 ports: check-root build-gui
+	@${BUILD_TOOLS}/create-ports-overlay.py
 	@${BUILD_TOOLS}/merge-pcbsd-ports.py
 	@${BUILD_TOOLS}/build-ports.py
+	@${BUILD_TOOLS}/cleanup-ports-overlay.py
 
 portsjail:
 	@${BUILD_TOOLS}/build-os.py

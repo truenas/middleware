@@ -31,7 +31,7 @@ BUILD_ROOT ?= ${.CURDIR}
 BUILD_CONFIG := ${BUILD_ROOT}/build/config
 BUILD_TOOLS := ${BUILD_ROOT}/build/tools
 PYTHONPATH := ${BUILD_ROOT}/build/lib
-OBJDIR := ${BUILD_ROOT}/objs/os-base/amd64
+OBJDIR ?= ${BUILD_ROOT}/objs/amd64
 MK := ${MAKE} -f ${BUILD_ROOT}/Makefile.inc1
 
 GIT_REPO_SETTING=${BUILD_ROOT}/.git-repo-setting

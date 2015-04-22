@@ -27,21 +27,15 @@
 #####################################################################
 
 
-import os
-import sys
-from utils import sh, sh_str, e, setup_env, info
+from utils import sh, info
 
 
 def main():
-    user = sh_str('id -un')
-    if user == 'root':
-        user = 'jkh'
-
-    sh('ssh ${user}@${DOWNLOAD_HOST} rm -rf ${DOWNLOAD_TARGETDIR}')
-    sh('ssh ${user}@${DOWNLOAD_HOST} mkdir -p ${DOWNLOAD_TARGETDIR}')
-    sh('scp -pr ${RELEASE_STAGEDIR}/* ${user}@${DOWNLOAD_HOST}:${DOWNLOAD_TARGETDIR}/')
+    sh('rm -rf ${PORTS_OVERLAY}')
+    sh('mkdir -p ${PORTS_OVERLAY}')
+    sh('mount_unionfs -o below ${PORTS_ROOT} ${PORTS_OVERLAY}')
 
 
 if __name__ == '__main__':
-    info('Pushing release to download server')
+    info('Creating ports overlay')
     main()

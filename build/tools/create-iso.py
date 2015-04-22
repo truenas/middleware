@@ -29,7 +29,7 @@
 
 import os
 from dsl import load_file
-from utils import sh, info, objdir, e, chroot, setup_env, setfile, template, sha256, import_function
+from utils import sh, info, objdir, e, chroot, glob, setup_env, setfile, template, sha256, import_function
 
 
 dsl = load_file('${BUILD_CONFIG}/config.pyd', os.environ)
@@ -49,6 +49,30 @@ purge_dirs = [
     '/sbin',
     '/usr/bin',
     '/usr/sbin'
+]
+
+files_to_preserve = [
+    '/bin/sleep',
+    '/usr/bin/dialog',
+    '/usr/bin/dirname',
+    '/usr/bin/awk',
+    '/usr/bin/cut',
+    '/usr/bin/cmp',
+    '/usr/bin/find',
+    '/usr/bin/grep',
+    '/usr/bin/logger',
+    '/usr/bin/mkfifo',
+    '/usr/bin/mktemp',
+    '/usr/bin/sed',
+    '/usr/bin/sort',
+    '/usr/bin/tr',
+    '/usr/bin/uname',
+    '/usr/bin/xargs',
+    '/usr/sbin/diskinfo',
+    '/usr/sbin/vidcontrol'
+    '/sbin/geom',
+    '/bin/install_worker.sh',
+    '/bin/install_worker2.sh'
 ]
 
 symlinks = {
@@ -268,8 +292,13 @@ def populate_ufsroot():
     info('Populating UFS root')
 
     for i in purge_dirs:
-        sh('chflags -f 0 ${INSTUFS_DESTDIR}${i}/*')
-        sh('rm -f ${INSTUFS_DESTDIR}${i}/*')
+        for name in glob('${INSTUFS_DESTDIR}${i}/*'):
+            name = os.path.basename(name)
+            if e('${i}/${name}') in files_to_preserve:
+                continue
+
+            sh('chflags -f 0 ${INSTUFS_DESTDIR}${i}/${name}')
+            sh('rm -f ${INSTUFS_DESTDIR}${i}/${name}')
 
     for k, v in symlinks.items():
         p = os.path.join('/rescue', k)
@@ -300,6 +329,7 @@ def make_iso_image():
     setfile('${ISO_DESTDIR}/boot/loader.conf', template('${BUILD_CONFIG}/templates/cdrom/loader.conf'))
     setfile('${ISO_DESTDIR}/boot/grub/grub.cfg', template('${BUILD_CONFIG}/templates/cdrom/grub.cfg'))
     setfile('${ISO_DESTDIR}/.mount.conf', template('${BUILD_CONFIG}/templates/cdrom/mount.conf'))
+    sh('cp ${WORLD_DESTDIR}/boot/device.hints ${ISO_DESTDIR}/boot/device.hints')
     sh('grub-mkrescue -o ${output} ${ISO_DESTDIR} -- -volid ${CDROM_LABEL}')
     sha256(output)
 

@@ -175,7 +175,7 @@ def template(filename, variables=None):
 
 def glob(path):
     import glob as g
-    return g.glob(e(path))
+    return g.glob(e(path, **get_caller_vars()))
 
 
 def walk(path):
