@@ -65,7 +65,7 @@ def create_poudriere_config():
 
     tree = e('${POUDRIERE_ROOT}/etc/poudriere.d/ports/p')
     sh('mkdir -p', tree)
-    setfile(pathjoin(tree, 'mnt'), env('PORTS_ROOT'))
+    setfile(pathjoin(tree, 'mnt'), e('${PORTS_OVERLAY}'))
     setfile(pathjoin(tree, 'method'), 'git')
 
 
@@ -105,6 +105,7 @@ def obtain_jail_name():
 
     error('No jail names available')
 
+
 def prepare_jail():
     basepath = e('${POUDRIERE_ROOT}/etc/poudriere.d/jails/${jailname}')
     sh('mkdir -p ${basepath}')
@@ -118,8 +119,8 @@ def prepare_jail():
 
 
 def merge_freenas_ports():
-    sh('mkdir -p ${PORTS_ROOT}/freenas')
-    sh('cp -a ${BUILD_ROOT}/nas_ports/freenas ${PORTS_ROOT}/')
+    sh('mkdir -p ${PORTS_OVERLAY}/freenas')
+    sh('cp -a ${BUILD_ROOT}/nas_ports/freenas ${PORTS_OVERLAY}/')
 
 
 def prepare_env():
@@ -136,7 +137,7 @@ def prepare_env():
 
 
 def cleanup_env():
-    sh('rm -rf ${PORTS_ROOT}/freenas')
+    sh('rm -rf ${PORTS_OVERLAY}/freenas')
     for cmd in jailconf.get('link', []).values():
         sh('umount', cmd['source'])
 

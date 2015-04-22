@@ -26,16 +26,15 @@
 #
 #####################################################################
 
-import os
-from dsl import load_file
-from utils import e, sh, info, setup_env
+
+from utils import sh, info
 
 
 def main():
-    os.chdir(e('${PCBSD_ROOT}'))
-    sh('./mkports.sh ${PORTS_OVERLAY} ${DISTFILES_CACHE}')
+    sh('umount -f ${PORTS_OVERLAY}')
+    sh('rm -rf ${PORTS_OVERLAY}')
 
 
 if __name__ == '__main__':
-    info('Merging PC-BSD ports tree')
+    info('Removing ports overlay')
     main()
