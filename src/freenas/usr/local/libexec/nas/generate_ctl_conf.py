@@ -251,11 +251,11 @@ def main():
                 cf_contents.append("\t\t}\n")
         cf_contents.append("}\n\n")
 
+    os.umask(077)
     fh = open(ctl_config, "w")
     for line in cf_contents:
         fh.write(line)
     fh.close()
-    os.chmod(ctl_config, 0600)
 
 if __name__ == "__main__":
     main()
