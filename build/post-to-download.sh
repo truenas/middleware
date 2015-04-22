@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ "${NANO_LABEL}" != "FreeNAS" ]; then
-	echo Cannot push-to-download for \"${NANO_LABEL}\" 1>&2
-	exit 1
+	echo Will not push-to-download for \"${NANO_LABEL}\" 1>&2
+	exit 0
 fi
 
 set -e
