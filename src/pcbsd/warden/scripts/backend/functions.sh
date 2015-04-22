@@ -355,6 +355,18 @@ copypbiscripts() {
   cp ${PROGDIR}/scripts/hooks/dhclient-exit-hooks "${1}/etc"
 }
 
+checkresolvconf() {
+  if [ -z "${1}" ] ; then return ; fi
+  if ! [ -s "${1}/etc/resolv.conf" ]; then
+    cp /etc/resolv.conf "${1}/etc/resolv.conf" 
+  fi 
+
+  grep -iq nameserver "${1}/etc/resolv.conf"
+  if [ "$?" != "0" ]; then
+    cp /etc/resolv.conf "${1}/etc/resolv.conf" 
+  fi
+}
+
 mkportjail() {
   if [ -z "${1}" ] ; then return ; fi
   ETCFILES="resolv.conf passwd master.passwd spwd.db pwd.db group localtime"
