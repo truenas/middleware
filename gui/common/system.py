@@ -601,7 +601,7 @@ def exclude_path(path, exclude):
 def backup_database():
     from freenasUI.middleware.notifier import notifier
 
-    systemdataset, volume, basename = notifier().system_dataset_settings()
+    systemdataset, basename = notifier().system_dataset_settings()
     systempath = notifier().system_dataset_path()
     if not systempath or not systemdataset:
         return
