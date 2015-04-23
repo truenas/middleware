@@ -130,8 +130,9 @@ class RunSQLRemote(threading.Thread):
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
-        # FIXME: cache value
         from freenasUI.middleware.notifier import notifier
+        from freenasUI.common.log import log_traceback
+        # FIXME: cache value
         ip, secret = notifier().failover_getpeer()
         s = notifier().failover_rpc(ip=ip)
         try:
@@ -145,6 +146,7 @@ class RunSQLRemote(threading.Thread):
                 f.queries.append((self._sql, self._params))
             return False
         except Exception as err:
+            log_traceback(log=log)
             log.error('Failed to run SQL remotely %s: %s', self._sql, err)
             return False
         return True
