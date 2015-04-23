@@ -90,7 +90,7 @@ class UpdateAFPShareTask(Task):
         share = self.datastore.get_by_id('shares', name)
         share.update(updated_fields)
         self.datastore.update('shares', name, share)
-        self.dispatcher.call_sync('etcd.generation.generate_group', 'afp')
+         'afp')
         self.dispatcher.call_sync('services.reload', 'afp')
         self.dispatcher.dispatch_event('shares.afp.changed', {
             'operation': 'update',
