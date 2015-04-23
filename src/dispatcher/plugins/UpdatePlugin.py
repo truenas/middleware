@@ -58,7 +58,6 @@ class CheckUpdateHandler(object):
             'new': newpkg,
         })
 
-    @property
     def output(self):
         output = ''
         for c in self.changes:
@@ -78,8 +77,7 @@ class UpdateProvider(Provider):
 
     def get_current_train(self):
         conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
-        return conf.LoadTrainsConfig()
+        return conf.CurrentTrain()
 
     def check_now_for_updates(self):
         handler = CheckUpdateHandler()

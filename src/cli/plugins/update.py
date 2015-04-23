@@ -61,7 +61,7 @@ class UpdateNamespace(Namespace):
     def commands(self):
         return {
             '?': IndexCommand(self),
-            # 'current_train': CurrentTrainCommand(),
+            'current_train': CurrentTrainCommand(),
             # 'check_now': CheckNowCommand(),
             # uncmment above when freenas-pkgtools get updated by sef
             'update_now': UpdateNowCommand(),

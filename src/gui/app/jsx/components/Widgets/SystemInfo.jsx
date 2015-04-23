@@ -48,9 +48,9 @@ var SystemInfo = React.createClass({
 
   , handleUpdateChange: function() {
       this.setState({
-          // TODO: This causes a traceback (#8620)
-          // updates  : UpdateStore.getUpdate( "check_now_for_updates" )
-          // train    : UpdateStore.getUpdate( "get_current_train" )
+          train    : UpdateStore.getUpdate( "get_current_train" )
+        // TODO: Yet to add
+        //, updates  : UpdateStore.getUpdate( "check_now_for_updates" )
       });
     }
 
@@ -75,6 +75,10 @@ var SystemInfo = React.createClass({
           <span className="wd-title">Version:</span>
           <span className="wd-value">{this.state.version}</span>
         </div>
+        <div className="wd-section wd-train">
+          <span className="wd-title">Current Update Train:</span>
+          <span className="wd-value">{this.state.train}</span>
+        </div>
 
 
       </Widget>
@@ -85,10 +89,6 @@ var SystemInfo = React.createClass({
 module.exports = SystemInfo;
 
 /* Temp. Removed
-        <div className="wd-section wd-train">
-          <span className="wd-title">Current Update Train:</span>
-          <span className="wd-value">{this.state.train}</span>
-        </div>
         <div className="wd-section wd-update">
           <span className="wd-title">Available updates:</span>
           <span className="wd-value">{this.state.updates}</span>
