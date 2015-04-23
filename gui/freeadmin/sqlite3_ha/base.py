@@ -358,6 +358,9 @@ class HASQLiteCursorWrapper(Database.Cursor):
                     # Get all placeholders from the query (%s)
                     placeholders = [a for a in p.flatten() if a.value == '%s']
 
+                # Remember correspondent cparams to delete
+                delete_idx = []
+
                 for l in lookup:
 
                     if l.get_name() not in no_sync['fields']:
@@ -367,7 +370,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
                     try:
                         idx = placeholders.index(l.tokens[-1])
                         if cparams:
-                            del cparams[idx]
+                            delete_idx.append(idx)
                     except ValueError:
                         pass
 
@@ -383,6 +386,10 @@ class HASQLiteCursorWrapper(Database.Cursor):
                     ) and prev_.value == ',':
                         del l.parent.tokens[l.parent.token_index(prev_)]
                     del l.parent.tokens[l.parent.token_index(l)]
+
+                delete_idx.sort(reverse=True)
+                for i in delete_idx:
+                    del cparams[i]
 
             if params is not None:
                 sql = self.convert_query(str(p))
