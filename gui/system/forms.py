@@ -1421,8 +1421,8 @@ class SystemDatasetForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SystemDatasetForm, self).__init__(*args, **kwargs)
-        pool_choices = [('', '')]
-        for v in Volume.objects.all():
+        pool_choices = [('', ''), ('freenas-boot', 'freenas-boot')]
+        for v in Volume.objects.filter(vol_fstype='ZFS'):
             pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['sys_pool'].choices = pool_choices
