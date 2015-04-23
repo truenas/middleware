@@ -30,8 +30,7 @@ import os
 import string
 import uuid
 
-from datetime import datetime
-from dateutil import tz, parser as dtparser
+from dateutil import parser as dtparser
 
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -46,11 +45,12 @@ from freenasUI.common.ssl import (
     write_certificate_signing_request,
     write_privatekey
 )
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import Model, UserField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.freeadmin.models import UserField
+from freenasUI.storage.models import Volume
 
 log = logging.getLogger('system.models')
+
 
 class Alert(Model):
     message_id = models.CharField(
@@ -511,6 +511,14 @@ class SystemDataset(Model):
     def usedataset(self):
         return self.sys_syslog_usedataset
 
+    def is_decrypted(self):
+        if self.sys_pool == 'freenas-boot':
+            return True
+        volume = Volume.objects.filter(vol_name=self.sys_pool)
+        if not volume.exists():
+            return False
+        return volume[0].is_decrypted()
+
     def new_uuid(self):
         self.sys_uuid = uuid.uuid4().hex
 
@@ -539,7 +547,6 @@ class Update(Model):
         if not self.upd_train or self.upd_train not in trains:
             return conf.CurrentTrain()
         return self.upd_train
-
 
 
 CA_TYPE_EXISTING        = 0x00000001

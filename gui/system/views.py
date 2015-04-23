@@ -49,7 +49,6 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.shortcuts import render, redirect
-from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
@@ -687,7 +686,7 @@ def testmail(request):
             subject=_('Test message from %s') % sw_name,
             text=_('This is a message test from %s') % sw_name,
             to=[email],
-	    timeout=10)
+            timeout=10)
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
@@ -856,7 +855,7 @@ def initialwizard_progress(request):
 
 def perftest(request):
 
-    systemdataset, volume, basename = notifier().system_dataset_settings()
+    systemdataset, basename = notifier().system_dataset_settings()
 
     if request.method == 'GET':
         p1 = subprocess.Popen([
@@ -867,7 +866,7 @@ def perftest(request):
             'tests': tests,
         })
 
-    if volume and not volume.is_decrypted():
+    if basename and not systemdataset.is_decrypted():
         raise MiddlewareError(
             _('Volume must be decrypted to perform this action.')
         )

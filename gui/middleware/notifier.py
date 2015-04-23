@@ -1633,7 +1633,7 @@ class notifier:
         out = out.split('\n')
         retval = OrderedDict()
         if system is False:
-            systemdataset, volume, basename = self.system_dataset_settings()
+            systemdataset, basename = self.system_dataset_settings()
         if proc.returncode == 0:
             for line in out:
                 if not line:
@@ -3665,7 +3665,7 @@ class notifier:
             sort = '-s %s' % sort
 
         if system is False:
-            systemdataset, volume, basename = self.system_dataset_settings()
+            systemdataset, basename = self.system_dataset_settings()
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
@@ -5359,29 +5359,31 @@ class notifier:
 
         # If there is a pool configured make sure the volume exists
         # Otherwise reset it to blank
-        # TODO: Maybe it would be better to use a ForeignKey
-        if systemdataset.sys_pool:
-            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
+        if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
+            volume = Volume.objects.filter(
+                vol_name=systemdataset.sys_pool,
+                vol_fstype='ZFS',
+            )
             if not volume.exists():
                 systemdataset.sys_pool = ''
                 systemdataset.save()
-            else:
-                volume = volume[0]
 
         if not systemdataset.sys_pool:
             volume = None
-            for o in Volume.objects.order_by('-vol_fstype', 'vol_encrypt'):
+            for o in Volume.objects.filter(vol_fstype='ZFS').order_by(
+                'vol_encrypt'
+            ):
                 if o.is_decrypted():
                     volume = o
                     break
             if not volume:
-                return systemdataset, None, None
+                return systemdataset, None
             else:
                 systemdataset.sys_pool = volume.vol_name
                 systemdataset.save()
 
-        basename = '%s/.system' % volume.vol_name
-        return systemdataset, volume, basename
+        basename = '%s/.system' % systemdataset.sys_pool
+        return systemdataset, basename
 
     def system_dataset_create(self, mount=True):
 
@@ -5393,8 +5395,8 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             return None
 
-        systemdataset, volume, basename = self.system_dataset_settings()
-        if not volume:
+        systemdataset, basename = self.system_dataset_settings()
+        if not basename:
             if os.path.exists(SYSTEMPATH):
                 try:
                     os.rmdir(SYSTEMPATH)
@@ -5402,7 +5404,7 @@ class notifier:
                     log.debug("Failed to delete %s: %s", SYSTEMPATH, e)
             return systemdataset
 
-        if not volume.is_decrypted():
+        if not systemdataset.is_decrypted():
             return None
 
         self.system_dataset_rename(basename, systemdataset)
@@ -5414,8 +5416,6 @@ class notifier:
             'configs-%s' % systemdataset.sys_uuid,
         ):
             datasets.append('%s/%s' % (basename, sub))
-
-        assert volume.vol_fstype in ('ZFS')
 
         createdds = False
         for dataset in datasets:
@@ -5443,7 +5443,7 @@ class notifier:
             self.set_dataset_aclmode(basename, 'passthrough')
 
         if mount:
-            self.system_dataset_mount(volume.vol_name, SYSTEMPATH)
+            self.system_dataset_mount(systemdataset.sys_pool, SYSTEMPATH)
 
             corepath = '%s/cores' % SYSTEMPATH
             if os.path.exists(corepath):
@@ -5458,7 +5458,7 @@ class notifier:
 
     def system_dataset_rename(self, basename=None, sysdataset=None):
         if basename is None:
-            basename = self.system_dataset_settings()[2]
+            basename = self.system_dataset_settings()[1]
         if sysdataset is None:
             sysdataset = self.system_dataset_settings()[0]
 
@@ -5520,7 +5520,7 @@ class notifier:
         return SYSTEMPATH
 
     def system_dataset_mount(self, pool, path=SYSTEMPATH):
-        systemdataset, volume, basename = self.system_dataset_settings()
+        systemdataset, basename = self.system_dataset_settings()
         sub = [
             'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
             'rrd-%s' % systemdataset.sys_uuid,
@@ -5540,7 +5540,7 @@ class notifier:
             self._system('/sbin/mount -t zfs "%s/.system/%s" "%s/%s"' % (pool, i, path, i))
 
     def system_dataset_umount(self, pool):
-        systemdataset, volume, basename = self.system_dataset_settings()
+        systemdataset, basename = self.system_dataset_settings()
         sub = [
             'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
             'rrd-%s' % systemdataset.sys_uuid,
