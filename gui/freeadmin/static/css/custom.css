@@ -337,6 +337,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.IPMIIcon {
+    background-image:url('/static/images/ui/tree/ipmi.png');
+    width:16px;
+    height:16px;
+}
 .LLDPIcon {
     background-image:url('/static/images/ui/tree/lldp.png');
     width:16px;
