@@ -138,7 +138,7 @@ class MultiSelectField(models.Field):
             'choices': self.get_choices(include_blank=False),
         }
         if self.has_default():
-            defaults['initial'] = self.get_default()
+            defaults['initial'] = self.default or []
         defaults.update(kwargs)
         return SelectMultipleField(**defaults)
 
