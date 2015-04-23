@@ -519,7 +519,6 @@ class Configuration(object):
 
     def TryGetNetworkFile(self, file=None, url=None, handler=None, pathname = None, reason = None):
         from . import DEFAULT_CA_FILE
-        from freenasUI.support.utils import LICENSE_FILE
 
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
         current_version = "unknown"
