@@ -1025,8 +1025,8 @@ Some TrueNAS® appliances use the Common Address Redundancy Protocol (`CARP <htt
 failover. CARP was originally developed by the OpenBSD project and provides an open source, non patent-encumbered alternative to the VRRP and HSRP protocols.
 
 Failover is only available on certain appliances and requires an advanced configuration between multiple TrueNAS® appliances that is created with the
-assistance of an iXsystems support engineer. At this time, failover can only be used with iSCSI or NFS. Contact your iXsystems representative if you wish to
-schedule a time to configure failover.
+assistance of an iXsystems support engineer. Seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted
+by the failover event. Contact your iXsystems representative if you wish to schedule a time to configure failover.
 
 This section provides an overview of the failover screen that is available in the graphical administrative interface. Your iXsystems support engineer will
 assist you in the configuration and testing of a failover that is suited to your specific environment.
@@ -1049,11 +1049,11 @@ The options available in :menuselection:`System --> Failovers --> Create Failove
 | Volume      | drop-down menu | select the ZFS pool                                                         |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
-| CARP        | drop-down menu | select the CARP that was previously created in Network -> CARPs -> Add CARP |
+| CARP        | drop-down menu | select *carp0*, previously created in Network -> CARPs -> Add CARP          |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
-| Remote IP   | string         | input the IP address associated with the existing CARP                      |
-|             |                |                                                                             |
+| Remote IP   | string         | input the IP address of the remote node's failover interface                |
+|             |                | (typically *169.254.10.x*)                                                  |
 +-------------+----------------+-----------------------------------------------------------------------------+
 
 
@@ -1090,10 +1090,10 @@ Table 5.11b summarizes the available options for this command.
 | **Option**         | **Description**                                                                             |
 |                    |                                                                                             |
 +====================+=============================================================================================+
-| **enable**         | activates the failover; must be run on a HA node                                            |
+| **enable**         | administratively enables failover                                                           |
 |                    |                                                                                             |
 +--------------------+---------------------------------------------------------------------------------------------+
-| **disable**        | disables the failover; must be run on a HA node                                             |
+| **disable**        | administratively disables failover                                                          |
 |                    |                                                                                             |
 +--------------------+---------------------------------------------------------------------------------------------+
 | **status**         | indicates whether the node is active, passive, or non-HA                                    |
