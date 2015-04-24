@@ -926,7 +926,11 @@ class DynamicDNS(Model):
             blank=True,
             help_text=_("A host name alias. This option can appear multiple "
                 "times, for each domain that has the same IP. Use a comma to "
-                "separate multiple alias names.")
+                "separate multiple alias names.  Some Dynamic DNS providers "
+                "require a hash after the host name, for these providers use "
+                "a # sign in the between the hostname and hash in the format "
+                "hostname#hash.  You may also use multiple hostname and hash "
+                "combinations in the format host1#hash1,host2#hash2.")
             )
     ddns_username = models.CharField(
             max_length=120,
