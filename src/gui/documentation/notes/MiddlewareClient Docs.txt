@@ -30,7 +30,7 @@ Public-facing middleware client functions:
     * 'callback' should be the function to be run upon the success of the call. The callback should usually be bound to the class making the request and will be called with the args TODO LIST CALLBACK ARGS.
     * 'errorCallback' will be called if the call returns failure. The errorCallback will be called with the args TODO LIST ERRORCALLBACK ARGS. The errorCallback should likely also be bound to the function making the request. NOT YET IMPLEMENTED
 
-  * subscribe( masks, componentID ) - ends the subscriptions to the supplied event masks for the supplied component
+  * subscribe( masks, componentID ) - subscribes to the supplied event masks for the supplied component
   ARGS:
     * 'masks' should be an array of strings that are legitimate event masks (NOTE: there should be no spaces leading or trainling in the masks, use trim on it before sending it to this function as an array)
     ADD: For example, one can send ["tasks.*", "system.*"] (good with a tick symbol next to it), but not [" tasks.*". "system.* "] (bad with a X sign next to it)
