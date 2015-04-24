@@ -629,6 +629,42 @@ class DynamicDNSForm(ModelForm):
             )
         return password2
 
+    def clean_ddns_domain(self):
+        domains = self.cleaned_data.get("ddns_domain")
+        if domains:
+            array = domains.split(',')
+            for i in range(0, len(array)):
+                element = array[i].strip()
+                if "#" in element:
+                    subarray = element.split('#')
+                    if len(subarray) != 2:
+                       raise forms.ValidationError(
+                        _("Incorrect usage of the # delimiter.")
+                    )
+                    else:
+                        if re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', subarray[0].strip()):
+                            if subarray[1].strip().isalnum():
+                                continue
+                            else:
+                                raise forms.ValidationError(
+                                    _("Incorrect usage of the # delimiter.")
+                                )
+                        else:
+                            raise forms.ValidationError(
+                                _("Invalid domain name.")
+                            )
+                elif re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', element):
+                    continue
+                elif i > 0 and element.strip().isalnum():
+                    raise forms.ValidationError(
+                        _("Invalid domain name or incorrect hash delimiter.")
+                    )
+                else:
+                    raise forms.ValidationError(
+                        _("Invalid domain name.")
+                    )
+        return domains
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("ddns_password"):
