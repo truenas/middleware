@@ -993,6 +993,20 @@ class SNMP(Model):
         editable=False,
         default=False,
     )
+    snmp_v3 = models.BooleanField(
+        verbose_name=_('SNMP v3 Support'),
+        default=False,
+    )
+    snmp_v3_username = models.CharField(
+        blank=True,
+        max_length=20,
+        verbose_name=_('Username'),
+    )
+    snmp_v3_password = models.CharField(
+        blank=True,
+        max_length=50,
+        verbose_name=_('Password'),
+    )
     snmp_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
         blank=True,
