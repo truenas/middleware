@@ -14,7 +14,7 @@ snmp_config=/etc/local/snmpd.conf
 generate_snmpconf()
 {
 	local IFS="|"
-	local f="snmp_location snmp_contact snmp_community"
+	local f="snmp_location snmp_contact snmp_community snmp_v3 snmp_v3_username snmp_v3_password"
 	eval local $f
 	local sf=$(var_to_sf $f)
 
@@ -36,6 +36,16 @@ sysDescr Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software
 rocommunity ${snmp_community} default
 pass .1.3.6.1.4.1.25359.1 /usr/local/bin/freenas-snmp/zfs-snmp
 EOF
+
+		if [ ${snmp_v3} -eq 1 ]; then
+
+			if [ "${snmp_v3_username}" != "" -a "${snmp_v3_password}" != "" ]; then
+				echo "createUser ${snmp_v3_username}	SHA \"${snmp_v3_password}\"" >> ${snmp_config}
+				echo "rwuser ${snmp_v3_username}" >> ${snmp_config}
+			fi
+
+		fi
+
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${snmp_config}
 }
