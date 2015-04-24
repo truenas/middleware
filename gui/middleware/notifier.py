@@ -5291,9 +5291,9 @@ class notifier:
             self.zfs_set_option(dataset, "aclmode", "passthrough")
 
         path = None
-        if share_type == "mac":
+        if share_type == "mac" and changeto != "mac":
             path = "/mnt/%s/.apple" % dataset
-        elif share_type == "windows":
+        elif share_type == "windows" and changeto != "windows":
             path = "/mnt/%s/.windows" % dataset
 
         if path and os.path.exists(path):
