@@ -75,9 +75,9 @@ updating itself when newer data is available.
 Input
 ^^^^^
 
-In the above screenshot, the Users view is open. Following the diagram
-at the top of this guide, the Users view receives new information from
-the Users Flux Store. The view does not modify the Flux store, and
+In the above screenshot, the Groups view is open. Following the diagram
+at the top of this guide, the Groups view receives new information from
+the Groups Flux Store. The view does not modify the Flux store, and
 has no opinions of its contents. When a React View is first initialized,
 it will often subscribe to an empty Flux store, and display nothing. In
 a few moments, when the Flux store is updated with the relevant data,
@@ -92,7 +92,7 @@ edited - for example, its name is changed - upon saving, the
 updated group object is sent to the Groups Middleware Utility Class. The
 React View is ignorant of what will then happen to the group, and does
 not register a callback or perform any followup actions. When the group
-is updated, or an error occurrs, it will be communicated through the
+is updated, or an error occurs, it will be communicated through the
 same subscription to the Flux Store described above.
 
 Submitting User Input
