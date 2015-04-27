@@ -137,9 +137,7 @@ Role
 The MUC pipes request data into a public method provided by the
 Middleware Client, and registers a callback that will be run when a
 matching response is receieved from the Middleware Server. The MUC does
-not modify input data, and does not manipulate response data. >\ *here
-will be server based validation done? Will even potentionally harmfull
-data go unmodified?*
+not modify input data, and does not manipulate response data.
 
 The ambiguation provided by this class is necessary for a few reasons:
 
@@ -174,9 +172,7 @@ The MUC recieves raw event data, objects, and other pre-packaged
 interactions from a React View. These might be as simple as a click
 event, or as complex as a dictionary object representing the changed
 properties for an array of hard disks. The MUC is deliberately ignorant
-of the Views which send it data. >\ *My previous question is probably
-explained here. Everything will go untouched to the Middleware Client
-which will probably do the validation.*
+of the Views which send it data.
 
 Output
 ^^^^^^
