@@ -125,12 +125,11 @@ callback for the appropriate Action Creator.
 
 .. code:: javascript
 
-
-        requestUsersList: function() {
-          MiddlewareClient.request( "accounts.query_users", null, function ( rawUsersList ) {
-            UsersActionCreators.receiveUsersList( rawUsersList );
-          });
-        }
+    requestGroupsList: function() {
+      MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
+        GroupsActionCreators.receiveGroupsList( groupsList );
+      });
+    }
 
 Role
 ^^^^
