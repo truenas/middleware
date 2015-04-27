@@ -81,6 +81,9 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
       }
 
+      // Updated groups come from the middleware as an array, but we store the
+      // data as an object keyed by the PRIMARY_KEY. Here, we map the changed groups
+      // into the object.
       action.groupsList.map( function ( group ) {
         _groups[ group [ PRIMARY_KEY ] ] = group;
       });
