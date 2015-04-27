@@ -95,13 +95,13 @@ function MiddlewareClient() {
 
   // Based on the status of the WebSocket connection and the authentication
   // state, either logs and sends an action, or enqueues it until it can be sent
-  function processNewRequest ( packedAction, callback, requestID ) {
+  function processNewRequest ( packedAction, successCallback, errorCallback, requestID, customTimeout ) {
 
     if ( socket.readyState === 1 && SessionStore.getLoginStatus() ) {
 
       if ( DEBUG("logging") ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
 
-      logPendingRequest( requestID, callback, packedAction );
+      logPendingRequest( requestID, successCallback, errorCallback, packedAction, customTimeout );
       socket.send( packedAction );
 
     } else {
@@ -109,9 +109,11 @@ function MiddlewareClient() {
       if ( DEBUG("queues") ) { console.info( "Enqueueing request %c'" + requestID + "'", debugCSS.idColor ); }
 
       queuedActions.push({
-          action   : packedAction
-        , id       : requestID
-        , callback : callback
+          action          : packedAction
+        , id              : requestID
+        , successCallback : successCallback
+        , errorCallback   : errorCallback
+        , customTimeout   : customTimeout
       });
 
     }
@@ -132,7 +134,7 @@ function MiddlewareClient() {
 
         if ( DEBUG("queues") ) { console.log( "Dequeueing %c'" + item.id + "'", debugCSS.idColor ); }
 
-        processNewRequest( item.action, item.callback, item.id );
+        processNewRequest( item.action, item.successCallback, item.errorCallback, item.id, item.customTimeout );
       }
     } else if ( DEBUG("queues") && queuedActions.length ) { console.info( "Middleware not authenticated, cannot dequeue actions" ); }
   }
@@ -140,14 +142,22 @@ function MiddlewareClient() {
   // Records a middleware request that was sent to the server, stored in the
   // private `pendingRequests` object. These are eventually resolved and
   // removed, either by a response from the server, or the timeout set here.
-  function logPendingRequest ( requestID, callback, originalRequest ) {
+  // the timeout can be specified whilst making the original request call to the
+  // middlewareClient, if not then the default of "requestTimeout" (it being 10000 --> 10 secs)
+  // will be used instead
+  function logPendingRequest ( requestID, successCallback, errorCallback, originalRequest, customTimeout ) {
+    var timeout = requestTimeout;
+    if ( typeof customTimeout !== undefined && customTimeout !== "None" && customTimeout ){
+      timeout = customTimeout;
+    }
     var request = {
-        callback        : callback
+        successCallback : successCallback
+      , errorCallback   : errorCallback
       , originalRequest : originalRequest
       , timeout : setTimeout(
           function() {
             handleTimeout( requestID );
-          }, requestTimeout
+          }, timeout
         )
     };
 
@@ -171,23 +181,19 @@ function MiddlewareClient() {
     switch ( outcome ) {
       case "success":
         if ( DEBUG("messages") ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
-        executeRequestCallback( requestID, args );
+        executeRequestSuccessCallback( requestID, args );
         break;
 
       case "error":
         var originalRequest;
 
-        // handle the login failure here (as it cannot be handled in the callback)
-        // as the callback function of this.login() is never called in case the action resulted in an error.
-        // TODO: Make LoginBox aware of a failed user/pass error.
-        if (args.code === 13) {
-          MiddlewareActionCreators.receiveAuthenticationChange( "", false );
-        }
         try {
           originalRequest = JSON.parse( pendingRequests[ requestID ]["originalRequest"] );
         } catch ( err ) {
           // Don't care about this, I think
         }
+
+        executeRequestErrorCallback( requestID, args );
 
         if ( args.message && _.startsWith( args.message, "Traceback" ) ) {
           console.groupCollapsed( "%cRequest %c'" + requestID + "'%c caused a Python traceback", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
@@ -224,6 +230,7 @@ function MiddlewareClient() {
 
       case "timeout":
         if ( DEBUG("messages") ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
+        executeRequestErrorCallback( requestID, args );
         break;
 
       default:
@@ -233,13 +240,20 @@ function MiddlewareClient() {
     delete pendingRequests[ requestID ];
   }
 
-  // Executes the specified request callback with the provided arguments. Should
-  // only be used in cases where a response has come from the server, and the
+  // Executes the specified request's successCallback with the provided arguments.
+  // Should only be used in cases where a response has come from the server, and the
   // status is successful in one way or another. Calling this function when the
-  // server returns an error could cause strange results.
-  function executeRequestCallback( requestID, args ) {
-    if ( typeof pendingRequests[ requestID ].callback === "function" ) {
-      pendingRequests[ requestID ].callback( args );
+  // server returns an error could cause strange results. Use the errorCallback for that case.
+  function executeRequestSuccessCallback( requestID, args ) {
+    if ( typeof pendingRequests[ requestID ].successCallback === "function" ) {
+      pendingRequests[ requestID ].successCallback( args );
+    }
+  }
+
+
+  function executeRequestErrorCallback( requestID, args ) {
+    if (typeof pendingRequests[ requestID ].errorCallback === "function" ) {
+      pendingRequests[ requestID ].errorCallback( args );
     }
   }
 
@@ -279,23 +293,23 @@ function MiddlewareClient() {
 
   // Authenticate a user to the middleware. Basically a specialized version of
   // the `request` function with a different payload.
-  this.login = function ( auth_type, credentials ) {
+  this.login = function ( authType, credentials ) {
     var requestID = freeNASUtil.generateUUID();
     var rpcName = "auth";
     var payload = {};
-    if (auth_type === "userpass") {
+    if (authType === "userpass") {
       payload = {
           "username" : credentials[0]
         , "password" : credentials[1]
       };
-    } else if (auth_type === "token") {
+    } else if (authType === "token") {
       payload = {
           "token" : credentials
       };
       rpcName = rpcName + "_token";
     }
 
-    var callback = function( response ) {
+    var successCallback = function( response ) {
 
       // Making a Cookie for token based login for the next time
       // and setting its max-age to the TTL (in seconds) specified by the
@@ -303,13 +317,19 @@ function MiddlewareClient() {
       myCookies.add("auth", response[0], response[1]);
       MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
     };
+
+    var errorCallback = function ( args ) {
+      // TODO: Make LoginBox aware of a failed user/pass error.
+      MiddlewareActionCreators.receiveAuthenticationChange( "", false );
+    };
+
     var packedAction = pack( "rpc", rpcName, payload, requestID );
 
     if ( socket.readyState === 1 ) {
 
       if ( DEBUG("authentication") ) { console.info( "Socket is ready: Sending login request." ); }
 
-      logPendingRequest( requestID, callback, packedAction );
+      logPendingRequest( requestID, successCallback, errorCallback, packedAction, null );
       socket.send( packedAction );
 
     } else {
@@ -317,9 +337,10 @@ function MiddlewareClient() {
       if ( DEBUG("authentication") ) { console.info( "Socket is NOT ready: Deferring login request." ); }
 
       queuedLogin = {
-          action   : packedAction
-        , callback : callback
-        , id       : requestID
+          action          : packedAction
+        , successCallback : successCallback
+        , errorCallback   : errorCallback
+        , id              : requestID
       };
     }
 
@@ -338,7 +359,7 @@ function MiddlewareClient() {
   // unique UUID is generated for each request, and is supplied to
   // `logPendingRequest` as a lookup key for resolving or timing out the
   // request.
-  this.request = function ( method, args, callback ) {
+  this.request = function ( method, args, successCallback, errorCallback, customTimeout ) {
     var requestID = freeNASUtil.generateUUID();
     var payload = {
         "method" : method
@@ -346,7 +367,7 @@ function MiddlewareClient() {
     };
     var packedAction = pack( "rpc", "call", payload, requestID );
 
-    processNewRequest( packedAction, callback, requestID );
+    processNewRequest( packedAction, successCallback, errorCallback, requestID, customTimeout );
   };
 
   // SUBSCRIPTION INTERFACES
@@ -379,7 +400,7 @@ function MiddlewareClient() {
         if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
         var requestID = freeNASUtil.generateUUID();
-        processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
+        processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, null, requestID, null );
       }
     });
 
@@ -405,7 +426,7 @@ function MiddlewareClient() {
         if ( DEBUG("subscriptions") ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
         var requestID = freeNASUtil.generateUUID();
-        processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, requestID );
+        processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, null, requestID, null );
       } else {
         if ( DEBUG("subscriptions") ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
         if ( DEBUG("subscriptions") ) { console.log( "Decreasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
@@ -420,7 +441,7 @@ function MiddlewareClient() {
     _.forEach( masks, function( mask ) {
       if ( DEBUG("subscriptions") ) { console.log( "Renewing subscription request for %c'" + mask + "' ", debugCSS.argsColor, debugCSS.defaultStyle ); }
       var requestID = freeNASUtil.generateUUID();
-      processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, requestID );
+      processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, null, requestID, null );
     });
   };
 
@@ -429,7 +450,7 @@ function MiddlewareClient() {
     _.forEach( masks, function( mask ) {
       if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
       var requestID = freeNASUtil.generateUUID();
-      processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, requestID );
+      processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, null, requestID, null );
     });
 
     SubscriptionsActionCreators.deleteAllSubscriptions();
@@ -473,7 +494,7 @@ function MiddlewareClient() {
       if ( DEBUG("queues") ) { console.info( "Resolving queued login %c" + queuedLogin.id, debugCSS.idColor ); }
       if ( DEBUG("queues") ) { console.log({ requestID : queuedLogin.action }); }
 
-      logPendingRequest( queuedLogin.id, queuedLogin.callback );
+      logPendingRequest( queuedLogin.id, queuedLogin.successCallback, queuedLogin.errorCallback, null );
       socket.send( queuedLogin.action );
       queuedLogin = null;
     } else {
