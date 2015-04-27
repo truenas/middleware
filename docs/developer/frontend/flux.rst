@@ -82,7 +82,7 @@ Input
 
 In the above screenshot, the Users view is open. Following the diagram
 at the top of this guide, the Users view receives new information from
-the Users Flux Store. The Users view does not modify the Flux store, and
+the Users Flux Store. The view does not modify the Flux store, and
 has no opinions of its contents. When a React View is first initialized,
 it will often subscribe to an empty Flux store, and display nothing. In
 a few moments, when the Flux store is updated with the relevant data,
@@ -91,12 +91,12 @@ the React View will re-render itself to display that data.
 Output
 ^^^^^^
 
-The React View submits events, data, and requests to the Users Middlware
-Utility Class. In the example of the Users View, if a user account is
-edited - for example, if its email address is changed - upon saving, the
-updated user object is sent to the Users Middleware Utility Class. The
-React View is ignorant of what will then happen to the user, and does
-not register a callback or perform any followup actions. When the user
+The React View submits events, data, and requests to the Middleware
+Utility Class. In the example of the Groups View, if a group is
+edited - for example, its name is changed - upon saving, the
+updated group object is sent to the Groups Middleware Utility Class. The
+React View is ignorant of what will then happen to the group, and does
+not register a callback or perform any followup actions. When the group
 is updated, or an error occurrs, it will be communicated through the
 same subscription to the Flux Store described above.
 
@@ -313,19 +313,18 @@ given for the original request. The response data is passed into the
 ActionCreator function, where it is packaged, tagged, and processed (if
 necessary).
 
-In the example below, the Middleware client receieves a list of users,
-packages them for the handleMiddlewareAction function in
+In the example below, the Middleware client receives a list of groups and
+packages them for the ``handleMiddlewareAction()`` function in
 FreeNASDispatcher.
 
 .. code:: javascript
 
-
-        receiveUsersList: function( rawUsers ) {
-          FreeNASDispatcher.handleMiddlewareAction({
-              type     : ActionTypes.RECEIVE_RAW_USERS
-            , rawUsers : rawUsers
-          });
-        }
+    receiveGroupsList: function( groupsList ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type       : ActionTypes.RECEIVE_GROUPS_LIST
+        , groupsList : groupsList
+      });
+    }
 
 Output
 ^^^^^^
