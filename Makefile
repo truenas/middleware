@@ -60,7 +60,7 @@ all:	build
 
 builder-verify:
 	${ENV_SETUP} /bin/sh build/check_build_host.sh
-.if !make(checkout) && !make(update) && !make(clean) && !make(distclean) && !make(git-internal) && !make(git-external)
+.if !make(checkout) && !make(update) && !make(clean) && !make(cleandist) && !make(git-internal) && !make(git-external)
 	${ENV_SETUP} /bin/sh build/check_sandbox.sh
 .endif
 
@@ -101,7 +101,7 @@ clean-package:
 clean-ui-package:
 	${ENV_SETUP} ${MAKE} clean-package p=freenas-ui
 
-distclean: clean
+cleandist: clean
 	rm -fr FreeBSD nas_source
 
 save-build-env:
