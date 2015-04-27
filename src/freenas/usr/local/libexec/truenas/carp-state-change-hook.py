@@ -5,7 +5,7 @@ import atexit
 import json
 import logging
 import logging.config
-import multiprocess
+import multiprocessing
 import os
 import subprocess
 import sys
