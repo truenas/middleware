@@ -228,6 +228,9 @@ meant to be called from a Middleware Utility Class. These methods should
 be provided input data to send to the Middleware Server, and also
 provided a registered callback to a method exposed by an ActionCreator.
 
+.. note:: At some point soon, we will functionality to accept a second callback
+specificaly for error handling. APRIL 2015
+
 Output
 ^^^^^^
 
