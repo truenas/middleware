@@ -102,9 +102,7 @@ The next step in the Flux Architecture is handling user input and
 sending it to the server. There is a deliberate pattern which will
 emerge, in which each "step" is ignorant of what came before it, and is
 only responsible for taking the data given to it and performing the
-appropriate next step. >\ *How does this corelate with the previous
-paragrph? Can you maybe give more detailed info on how the data will
-flow?*
+appropriate next step.
 
 Middleware Utility Class
 ~~~~~~~~~~~~~~~~~~~~~~~~
