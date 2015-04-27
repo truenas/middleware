@@ -261,11 +261,8 @@ FreeNAS 10 Base OS
 ~~~~~~~~~~~~~~~~~~
 
 |FreeNAS 10 Base OS| The core operating system. Out of scope for any UI
-work, and shown in the above diagram only to describe its exact
-relationship to the rest of the system. >\ *This feels like the end of
-the document. "Out of scope for any UI work" seems very definitive and
-might suggest to the readers that there is nothing directly concerning
-them further.*
+work, and shown in the above diagram only to describe its
+relationship to the rest of the system and position in the flow of logic.
 
 Handling Data From the Middleware
 ---------------------------------
