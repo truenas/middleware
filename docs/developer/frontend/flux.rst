@@ -485,11 +485,9 @@ Output
 Each React View will choose to subscribe to events emit by a specific
 Flux store, and additionally may request some or all of its data at
 various points in its lifecycle. When the Flux store updates, it will
-emit an event, causing the React View or Component to re-request the
-data (which may cause it to re-render to display the update). > *How the
-process of subscription works? I thought, that React Component is
-unaware of the source of data it is displaying and that it has to be the
-Flux store which is firehosing the component with data.*
+emit an event, causing the Change Listeners registered with that store to execute.
+Usually these will be functions to re-request the data updated in the store
+(which may cause the component to re-render to display the update).
 
 The Flux Store is ignorant of which views are subscribed to it, and
 persists as a singleton outside the lifecycle of any View or Component.
