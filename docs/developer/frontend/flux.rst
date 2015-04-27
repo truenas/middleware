@@ -427,28 +427,6 @@ Stores also tend to have utility functions for retrieving specific data.
       return _.values( _groups );
     }
 
-Another unique function of stores is the ability to act syncronously,
-and delay an update until another store has completed updating. Because
-each store registers a dispatchToken with the Dispatcher, it's a trivial
-matter to wait for another store to finish updating, then update the
-target.
-
-.. code:: javascript
-
-
-        case ActionTypes.UPDATE_USERS:
-
-          // waitFor will prevent the user update from occurring until GroupsStore
-          // is guaranteed to have updated
-
-          FreeNASDispatcher.waitFor([GroupsStore.dispatchToken]);
-
-          // GroupsStore has been updated, so now we can proceed
-
-          _users = action.rawUsers;
-          UsersStore.emitChange();
-          break;
-
 Input
 ^^^^^
 
