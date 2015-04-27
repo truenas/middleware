@@ -31,9 +31,7 @@ from dispatcher.rpc import (
     description,
     returns,
 )
-from task import (
-    Provider, Task, query
-)
+from task import Provider, query
 
 
 @description('Provides access to the alert system')
@@ -45,22 +43,13 @@ class AlertProvider(Provider):
             'alerts', *(filter or []), **(params or {})
         )
 
+    @accepts(h.ref('alert'))
+    def emit(self, alert):
+        self.datastore.insert('alerts', alert)
+
     @returns(h.array(str))
     def get_alert_plugins(self):
         return []
-
-
-@accepts(str, h.ref('alert'))
-class AlertEmitTask(Task):
-
-    def describe(self, alert):
-        return 'Emitting alert {0}'.format(alert['name'])
-
-    def verify(self, alert):
-        pass
-
-    def run(self, alert):
-        self.datastore.insert('alerts', alert)
 
 
 def _init(dispatcher):
@@ -77,5 +66,3 @@ def _init(dispatcher):
 
     dispatcher.require_collection('alerts')
     dispatcher.register_provider('alerts', AlertProvider)
-
-    dispatcher.register_task_handler('alert.emit', AlertEmitTask)
