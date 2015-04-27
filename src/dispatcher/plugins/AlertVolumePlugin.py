@@ -24,16 +24,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from datetime import datetime
 import logging
 
-from dispatcher.rpc import (
-    SchemaHelper as h,
-    accepts,
-    returns,
-)
-from task import (
-    Provider, Task, query
-)
+from dispatcher.rpc import accepts
+from task import Task
 
 logger = logging.getLogger('AlertVolume')
 
@@ -48,7 +43,7 @@ class AlertVolumeStatusTask(Task):
         pass
 
     def run(self):
-        for volume in dispatcher.rpc.call_sync('volumes.query'):
+        for volume in self.dispatcher.rpc.call_sync('volumes.query'):
 
             continue  # FIXME: pool status not implemented
             status = self.dispatcher.call_task_sync(
@@ -76,6 +71,8 @@ def _init(dispatcher):
     def on_status_change(args):
         dispatcher.call_task_sync('alert.volumes.status')
 
-    dispatcher.register_task_handler('alert.volumes.status', AlertVolumeStatusTask)
+    dispatcher.register_task_handler(
+        'alert.volumes.status', AlertVolumeStatusTask
+    )
 
     on_status_change({})
