@@ -290,12 +290,45 @@ mount_disk() {
 	return 0
 }
 	
+get_minimum_size() {
+    local _min=0
+    local _disk
+    local _size
+    # We use 1mbyte because the bios-boot is 512k,
+    # and there's some header space.
+    local _m1=$(expr 1024 \* 1024)
+    # If we decide we want to round it down,
+    # set this to the size (eg, 256 * 1024 * 1024)
+    local _round=0
+    local _g16=$(expr 16 \* 1024 \* 1024 \* 1024)
+
+    for _disk
+    do
+	_size=$(diskinfo ${_disk} | awk ' { print $3; }')
+	_size=$(expr ${_size} - ${_m1})
+	if is_truenas; then
+	    _size=$(expr ${_size} - ${_g16})
+	fi
+	if [ ${_round} -gt 0 ]; then
+	    _size=$(expr \( ${_size} / ${_round} \) \* ${_round})
+	fi
+	_size=$(expr ${_size} / 1024)
+	if [ ${_min} -eq 0 -o ${_size} -lt ${_min} ]; then
+	    _min=${_size}
+	fi
+    done
+    echo ${_min}k
+}
+
 partition_disk() {
 	local _disks _disksparts
 	local _mirror
-
+	local _minsize
+	
 	_disks=$*
 
+	_minsize=$(get_minimum_size ${_disks})
+	
 	_disksparts=$(for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} > /dev/null 2>&1 || true
 	    zpool labelclear -f ${_disk} > /dev/null 2>&1 || true
@@ -314,7 +347,7 @@ partition_disk() {
 	        gpart add -t freebsd-swap -i 3 -s 16g ${_disk} >&2
 	    fi
 	    # The rest of the disk
-	    gpart add -t freebsd-zfs -i 2 -a 4k ${_disk} >&2
+	    gpart add -t freebsd-zfs -i 2 -a 4k -s ${_minsize} ${_disk} >&2
 
 	    # And make it active
 	    gpart set -a active ${_disk} >&2
