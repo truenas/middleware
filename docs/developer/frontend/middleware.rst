@@ -1,6 +1,8 @@
 .. highlight:: javascript
    :linenothreshold: 5
 
+.. _Middleware Client:
+
 Middleware Client
 =================
 
@@ -41,6 +43,8 @@ for a few reasons:
 More information on the technical aspects of this architecture is
 available in `"Understanding the Flux Application
 Architecture" <flux.md>`__.
+
+.. _Public Facing Middleware Client Functions:
 
 Public-Facing Middleware Client Functions
 -----------------------------------------

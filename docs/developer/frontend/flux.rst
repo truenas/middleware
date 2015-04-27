@@ -193,14 +193,12 @@ Middleware Client
 ~~~~~~~~~~~~~~~~~
 
 |Middleware Client| The FreeNAS 10 UI uses a fully asyncronous WebSocket
-connection for communication with the hardware backend. The `Middleware
-Client <middleware.md>`__ is a simple WebSocket client which handles the
-connection lifecycle, as well as the packaging, identification,
-transmission, and (initial) receipt of data.
+connection for communication with the hardware backend. The :ref:`Middleware Client`
+is a simple WebSocket client which handles the connection lifecycle, as well as the
+packaging, identification, transmission, and (initial) receipt of data.
 
-It has `well-documented soruce
-code <../app/jsx/middleware/MiddlewareClient.js>`__ which explain the
-specific application of its methods.
+See the doumentation for the :ref:`Public Facing Middleware Client Functions`,
+which explains the relevant methods and their intended uses.
 
 Role
 ^^^^
