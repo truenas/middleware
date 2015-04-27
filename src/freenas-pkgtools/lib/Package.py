@@ -10,6 +10,7 @@ CHECKSUM_KEY = "Checksum"
 SIZE_KEY = "FileSize"
 UPGRADES_KEY = "Upgrades"
 REBOOT_KEY = "RequiresReboot"
+SERVICES_KEY = "RestartServices"
 
 class Package(object):
     _name = None
@@ -18,7 +19,8 @@ class Package(object):
     _size = None
     _updates = None
     _dirty = False
-
+    _services = None
+    
     class PackageUpdate(object):
         def __init__(self, pkg, dict):
             self._dict = dict
@@ -52,6 +54,36 @@ class Package(object):
 
         def SetRequiresReboot(self, rr):
             self._dict[REBOOT_KEY] = bool(rr)
+            
+        def SetRestartServices(self, rs):
+            self._dict[SERVICES_KEY] = rs
+            if not rs:
+                self._dict.pop(SERVICES_KEY)
+
+        def RestartServices(self, raw = False):
+            """
+            The list of restart services for an update is
+            different from the main package component:  the
+            update contains a list of booleans, which modify
+            the (possibly empty) set of services for the package
+            as a whole.
+            If raw is True, it returns the raw element, or an
+            empty array.
+            """
+            if raw:
+                if SERVICES_KEY in self._dict:
+                    return self._dict[SERVICES_KEY].copy()
+                else:
+                    return []
+            tmpSet = set(self._base.RestartServices())
+            if SERVICES_KEY in self._dict:
+                for svc, rst in self._dict[SERVICES_KEY].iteritems():
+                    if rst:
+                        tmpSet.add(svc)
+                    else:
+                        if svc in tmpSet:
+                            tmpSet.remove(svc)
+            return list(tmpSet)
             
     def __init__(self, *args):
         self._dict = {}
@@ -131,7 +163,7 @@ class Package(object):
                 t[REBOOT_KEY] = RequiresReboot
         self._dict[UPGRADES_KEY].append(t)
 
-        return
+        return Package.PackageUpdate(self, t)
 
     def Updates(self):
         if UPGRADES_KEY in self._dict:
@@ -167,3 +199,19 @@ class Package(object):
     def SetRequiresReboot(self, val = True):
         self._dict[REBOOT_KEY] = val
         
+    def SetRestartServices(self, rs):
+        self._dict[SERVICES_KEY] = rs
+        if not rs:
+            self._dict.pop(SERVICES_KEY)
+            
+    def RestartServices(self):
+        """
+        Unlike the PackageUpdate class, this
+        simply returns a set.  It is necessary to
+        query the update version to find what is to be
+        done then.
+        """
+        if SERVICES_KEY in self._dict:
+            return self._dict[SERVICES_KEY]
+        else:
+            return []
