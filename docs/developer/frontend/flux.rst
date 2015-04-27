@@ -60,11 +60,6 @@ React View
 is generally the primary view open in the webapp. While other persistent
 components (navigation, notifications, widgets etc) function in slightly
 different ways, they're broadly similar to a standard React View.
->\ *What makes them different? I tought the Navigation for example is
-completly same React Component as any other. Is it because some of them
-don't need input from the Flux Store? And isn't that only true for now
-and in close future even the menu structure different for each user will
-be served from the Middleware through the Flux Store?*
 
 .. figure:: images/architecture/flux/screenshot_react_view.png
    :alt: Example of a basic view
@@ -251,10 +246,7 @@ on the same hardware as the core FreeNAS 10 OS. It collects and
 disburses system data requested by a Middleware Client. It is capable of
 handling event queues and multiple (non-blocking) requests. It can
 connect to many clients at the same time, and correctly triage requests
-and responses to each, concurrently. >\ *Does it comunicate only with
-the Middleware Client? Isn't this the part where multiple machines will
-be able to talk to each other? And will this always run on the same HW
-where the core FN10 OS resides? Is **Remora** retired?* ---
+and responses to each, concurrently.
 
 FreeNAS 10 Base OS
 ~~~~~~~~~~~~~~~~~~
