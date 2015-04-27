@@ -28,6 +28,7 @@
 from dispatcher.rpc import (
     SchemaHelper as h,
     accepts,
+    description,
     returns,
 )
 from task import (
@@ -35,6 +36,7 @@ from task import (
 )
 
 
+@description('Provides access to the alert system')
 class AlertProvider(Provider):
 
     @query('alert')
@@ -53,6 +55,9 @@ class AlertEmitTask(Task):
 
     def describe(self, alert):
         return 'Emitting alert {0}'.format(alert['name'])
+
+    def verify(self, alert):
+        pass
 
     def run(self, alert):
         self.datastore.insert('alerts', alert)
