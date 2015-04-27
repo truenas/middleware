@@ -27,31 +27,26 @@
 from datetime import datetime
 import logging
 
-from dispatcher.rpc import accepts
-from task import Task
 
 logger = logging.getLogger('AlertVolume')
 
 
-@accepts(None)
-class AlertVolumeStatusTask(Task):
+def _depends():
+    return ['AlertPlugin', 'VolumePlugin', 'ZfsPlugin']
 
-    def describe(self,):
-        return 'Volumes status alert'
 
-    def verify(self):
-        pass
+def _init(dispatcher):
 
-    def run(self):
-        for volume in self.dispatcher.rpc.call_sync('volumes.query'):
+    def volumes_status():
+        for volume in dispatcher.rpc.call_sync('volumes.query'):
 
             continue  # FIXME: pool status not implemented
-            status = self.dispatcher.call_task_sync(
+            status = dispatcher.call_task_sync(
                 'zfs.pool.status', volume['name']
             )
             if status['status'] != 'ONLINE':
 
-                self.dispatcher.call_task_sync('alert.emit', {
+                dispatcher.rpc.call_sync('alert.emit', {
                     'name': 'alert.volumes.status',
                     'description': 'The volume {0} state is {1}'.format(
                         volume['name'],
@@ -61,18 +56,6 @@ class AlertVolumeStatusTask(Task):
                     'when': str(datetime.now()),
                 })
 
+    # TODO: register event handler
 
-def _depends():
-    return ['AlertPlugin', 'VolumePlugin', 'ZfsPlugin']
-
-
-def _init(dispatcher):
-
-    def on_status_change(args):
-        dispatcher.call_task_sync('alert.volumes.status')
-
-    dispatcher.register_task_handler(
-        'alert.volumes.status', AlertVolumeStatusTask
-    )
-
-    on_status_change({})
+    volumes_status()
