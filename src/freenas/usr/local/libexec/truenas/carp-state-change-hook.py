@@ -5,6 +5,7 @@ import atexit
 import json
 import logging
 import logging.config
+import multiprocess
 import os
 import subprocess
 import sys
@@ -284,12 +285,15 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
             run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
     log.warn('Beginning volume imports.')
+    os.system("kldload dtraceall")
     # TODO: now that we are all python, we should probably just absorb the code in.
     run(
         '/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py'
         ' attachall'
     )
 
+    p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
+    p.start()
     for volume in fobj['volumes']:
         log.warn('Importing %s', volume)
         error, output = run('/sbin/zpool import %s -o cachefile=none -R /mnt -f %s' % (
@@ -302,6 +306,8 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
             open(FAILED_FILE, 'w').close()
         run('/sbin/zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
 
+    p.terminate()
+    os.system("pkill -9 dtrace")
     if not os.path.exists(FAILOVER_NEEDOP):
         open(FAILOVER_ASSUMED_MASTER, 'w').close()
 
