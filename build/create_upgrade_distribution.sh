@@ -37,6 +37,16 @@ if [ -n "${DELTA_SCRIPTS}" -a -d "${DELTA_SCRIPTS}" ]; then
     cp -R "${DELTA_SCRIPTS}"/* "${UPDATE_DIR}"/Packages
 fi
 
+# If RESTART is given, save that
+if [ -n "${RESTART}" ]; then
+    echo ${RESTART} > ${UPDATE_DIR}/RESTART
+fi
+
+# And if REBOOT is given, put that in FORCEREBOOT
+if [ -n "${REBOOT}" ]; then
+    echo ${RBOOT} > ${UPDATE_DIR}/FORCEREBOOT
+fi
+
 rm -f "${LATEST}"
 ln -sf "${UPDATE_DIR}" "${LATEST}"
 

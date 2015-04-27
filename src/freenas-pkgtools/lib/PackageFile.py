@@ -15,6 +15,10 @@ kPkgDeltaKey = "delta-version"
 kPkgFlatSizeKey = "flatsize"
 kPkgDeltaStyleKey = "style"
 kPkgScriptsKey = "scripts"
+kPkgServicesKey = "ix-package-services"
+kPkgRebootKey = "requires-reboot"
+kPkgAddedServicesKey = "ix-added-services"
+kPkgRemovedServicesKey = "ix-removed-services"
 
 class PkgFileDiffException(Exception):
     pass
@@ -24,6 +28,9 @@ def PackageName(m):
 
 def PackageVersion(m):
     return m[kPkgVersionKey] if kPkgVersionKey in m else None
+
+def PackageServices(m):
+    return m[kPkgServicesKey] if kPkgServicesKey in m else None
 
 def FindManifest(tf):
     # Find the file named "+MANIFEST".
@@ -41,6 +48,21 @@ def FindManifest(tf):
 #            print >> sys.stderr, "MANIFEST"
 #            print >> sys.stderr, json.dumps(retval, sort_keys = True, indent = 4, separators=(',', ': '))
     return (retval, entry)
+
+def GetPackageServices(path = None, file = None):
+    """
+    Return the services dictionary (if any) for the packge file.
+    """
+    if path and file:
+        raise ValueError("Cannot have both path and file parameters set")
+    if not path and not file:
+        raise ValueError("Neither path nor file parameters are set")
+
+    m = GetManifest(path = path, file = file)
+    if file:
+        file.seek(0)
+        
+    return m[kPkgServicesKey] if kPkgServicesKey in m else None
 
 def GetManifest(path = None, file = None):
     """
@@ -69,12 +91,12 @@ def GetManifest(path = None, file = None):
 #
 # Given two manifests, come up with a set of
 # new or changed files/directories.  Also come
-# up with a list of removed files and directories.
-# Note that this does NOT compare the contents of
-# the package, so it is relying solely on the manifest
-# file being correct.  One side effect of this is that
-# it is currently unable to compute the flat size of
-# the package.
+# up with a list of removed files and directories
+# and services.  Note that this does NOT compare
+# the contents of the package, so it is relying solely
+# on the manifest file being correct.  One side
+# effect of this is that it is currently unable to compute
+# the flat size of the package.
 def CompareManifests(m1, m2):
     global debug
     if debug > 2: print "\nm1 = %s\nm2 = %s\n" % (m1, m2)
@@ -82,6 +104,9 @@ def CompareManifests(m1, m2):
     m2_files = {}
     m1_dirs = {}
     m2_dirs = {}
+    m1_services = {}
+    m2_services = {}
+    
     if debug:
         f1 = open("/tmp/file1.txt", "w")
         f1.write(str(m1))
@@ -107,7 +132,7 @@ def CompareManifests(m1, m2):
     removed_dirs = []
     modified_files = {}
     modified_dirs = {}
-
+    
     for file in m1_files.keys():
         if file not in m2_files:
             if debug:  print >> sys.stderr, "File %s is removed from new package" % file
@@ -136,11 +161,12 @@ def CompareManifests(m1, m2):
     for dir in m2_dirs.keys():
         modified_dirs[dir] = m2_dirs[dir]
 
-
-    return { kPkgRemovedFilesKey : removed_files,
+    rv = { kPkgRemovedFilesKey : removed_files,
              kPkgRemovedDirsKey : removed_dirs,
              kPkgFilesKey : modified_files,
              kPkgDirsKey : modified_dirs }
+
+    return rv
     
 def usage():
     print >> sys.stderr, "Usage: %s <pkg1> <pkg2> [<delta_pg>]" % sys.argv[0]
