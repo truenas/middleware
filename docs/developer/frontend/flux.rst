@@ -397,18 +397,17 @@ run when the store is updated.
 
 .. code:: javascript
 
+    emitChange: function() {
+      this.emit( CHANGE_EVENT );
+    }
 
-          emitChange: function() {
-            this.emit( CHANGE_EVENT );
-          }
+  , addChangeListener: function( callback ) {
+      this.on( CHANGE_EVENT, callback );
+    }
 
-        , addChangeListener: function( callback ) {
-            this.on( CHANGE_EVENT, callback );
-          }
-
-        , removeChangeListener: function( callback ) {
-            this.removeListener( CHANGE_EVENT, callback );
-          }
+  , removeChangeListener: function( callback ) {
+      this.removeListener( CHANGE_EVENT, callback );
+    }
 
 In this way, data upkeep and processing tasks are abstracted out of the
 view, and the view can rely on always having up-to-date data provided
@@ -418,16 +417,15 @@ Stores also tend to have utility functions for retrieving specific data.
 
 .. code:: javascript
 
+    // Return a specific group
+  , getGroup: function( id ) {
+      return _groups[ id ];
+    }
 
-        // Return a specific user
-          getUser: function( key ) {
-            return _users[ key ];
-          }
-
-        // Return all users
-        , getAllUsers: function() {
-            return _users;
-          }
+    // Return all groups
+  , getAllGroups: function() {
+      return _.values( _groups );
+    }
 
 Another unique function of stores is the ability to act syncronously,
 and delay an update until another store has completed updating. Because
