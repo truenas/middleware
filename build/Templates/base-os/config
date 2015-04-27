@@ -49,3 +49,18 @@ exclude = /usr/local/www/freenasUI
 	/conf/var/db/pkg
 	/conf/base/var/db/pkg
 	/dev/*
+
+[Services]
+
+# This is a list of comma-seperated services provided by this package.
+# "reboot" is kinda special.
+# Note that I removed "DirectoryServices"
+services = SMB, AFP, NFS, iSCSI, WebDAV, reboot
+
+# This is a list of comma-seperated services that will always be
+# be restarted when this package is update.  "all" means all services
+# provided by this package.
+# In this case, nothing is automatically restarted, because base-os requires
+# a reboot unless otherwise stated.
+# restart = all
+

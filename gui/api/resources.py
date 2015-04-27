@@ -2821,6 +2821,12 @@ class UpdateResourceMixin(NestedMixin):
         changes = Update.PendingUpdatesChanges(path)
         data = []
         if changes:
+            if changes.get("Reboot", True) == False:
+                for svc in changes.get("Restart", []):
+                    data.append({
+                        'operation' : svc,
+                        'name' : Update.GetServiceDescription(svc),
+                        })
             for new, op, old in changes['Packages']:
                 if op == 'upgrade':
                     name = '%s-%s -> %s-%s' % (

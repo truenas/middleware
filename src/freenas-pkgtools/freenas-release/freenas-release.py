@@ -756,6 +756,16 @@ class SQLiteReleaseDB(ReleaseDB):
 		CONSTRAINT package_delta_scripts_contraint UNIQUE (Pkg, ScriptName) ON CONFLICT IGNORE)
         """)
 
+        # A table for keeping track of which services are to be restarted on update
+        # ServiceRestart maps to a boolean.
+        self._cursor.execute("""
+        CREATE TABLE IF NOT EXISTS PackageServiceRestart(Pkg NOT NULL,
+        	ServiceName TEXT NOT NULL,
+        	ServiceRestart INTEGER NOT NULL,
+		indx INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+		CONSTRAINT package_servicerestart_key FOREIGN KEY (Pkg) REFERENCES Packages(indx))
+        """)
+        
         self.commit()
         self._in_transaction = False
 
@@ -1358,6 +1368,54 @@ class SQLiteReleaseDB(ReleaseDB):
         self.cursor().execute(sql, parms)
         return
     
+    def ServiceRestartDeleteForPackage(self, pkg, name = None):
+        sql = """
+        DELETE FROM PackageServiceRestart
+        WHERE
+        Pkg IN (SELECT indx FROM Packages WHERE PkgName = ? AND PkgVersion = ?)
+        """
+        parms = (pkg.Name(), pkg.Version())
+        if name:
+            sql += "AND ServiceName = ?"
+            parms += (name, )
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+        
+    def AddServiceForPackageUpdate(self, pkg, name, restart):
+        sql = """
+        INSERT INTO PackageServiceRestart(Pkg, ServiceName, ServiceRestart)
+        SELECT Packages.indx, ?, ?
+        FROM Packages
+        WHERE Packages.PkgName = ? AND Packages.PkgVersion = ?
+        """
+        parms = (name, int(restart), pkg.Name(), pkg.Version())
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+        return
+    
+    def ServicesForPackageUpdate(self, pkg):
+        """
+        Return a dictionary of services to be restarted for
+        a package update.
+        """
+        sql = """
+        SELECT ServiceName as Name, ServiceRestart as Restart
+        FROM PackageServiceRestart
+        JOIN Packages
+        WHERE
+        Packages.PkgName = ?
+        AND Packages.PkgVersion = ?
+        AND PackageServiceRestart.Pkg = Packages.indx
+        """
+        parms = (pkg.Name(), pkg.Version())
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+        retval = {}
+        for svc in self.cursor().fetchall():
+            retval[svc["Name"]] = bool(svc["Restart"])
+
+        return retval
+    
     def ScriptForPackage(self, pkg, name = None):
         """
         Get the update scripts for a particular package version.
@@ -1511,7 +1569,13 @@ def AddPackageUpdateScript(db, archive, pkg, name, script, lock = True):
     if a_lock:
         a_lock.close()
 
-def AddPackage(pkg, db = None, source = None, archive = None, train = None, scripts = None, fail_on_error = True):
+def AddPackage(pkg, db = None,
+               source = None,
+               archive = None,
+               train = None,
+               scripts = None,
+               fail_on_error = True,
+               restart_services = {}):
     """
     THE ARCHIVE MUST BE LOCKED BY THE CALLER.
 
@@ -1535,6 +1599,37 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
     Returns the new pkg object (which may be the same as in the invocation).
     """
 
+    def MergeServiceList(list1, list2):
+        """
+        Merge the cleverly-named list2 set of services
+        into list1.  Both are expected to be dictionaries.
+        True means to restart it; False means not to.  True
+        trumps False.
+        Returns a new dictionary.
+        """
+
+        if list1 is None and list2 is None:
+            return None
+        if list1 is None:
+            retval = {}
+        else:
+            retval = list1.copy()
+
+        if list2 is None:
+            return retval
+        
+        for (svc, val) in list2.iteritems():
+            if not svc in retval:
+                retval[svc] = val
+            else:
+                # It's in the first list, so we have
+                # to check the values
+                if retval[svc] != val:
+                    if val:
+                        retval[svc] = val
+                    # Do nothing if it's false
+        return retval
+    
     def PackageFromDB(package):
         """
         Given the package, we want to get all the information for it from
@@ -1567,7 +1662,18 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                 retval.SetSize(os.stat(pkgfile).st_size)
             else:
                 raise Exception("We should not be here")
+            # Should also get the list of services from the package file.
+            package_services = PackageFile.GetPackageServices(path = pkgfile)
 
+            if package_services:
+                if "Restart" in package_services:
+                    pkg_restart_list = package_services["Restart"]
+                    tlist = []
+                    for svc in pkg_restart_list.keys():
+                        tlist.append(svc)
+                    if tlist:
+                        pkg.SetRestartServices(tlist)
+                    
         # Now we want to get the updates from previous_versions to this version
         updates = db.UpdatesForPackage(retval)
         print >> sys.stderr, "\tFound updates %s" % updates
@@ -1579,13 +1685,18 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                 size = os.stat(delta_path).st_size
             else:
                 size = None
-            retval.AddUpdate(base,
-                             hash,
-                             size = size,
-                             RequiresReboot = rr)
+            upd = retval.AddUpdate(base,
+                                   hash,
+                                   size = size,
+                                   RequiresReboot = rr)
+            # Get any service restarts for this update
+            svcs = db.ServicesForPackageUpdate(Package.Package(retval.Name(), base))
+            if len(svcs) > 0:
+                upd.SetRestartServices(svcs)
+                
         return retval
     
-    print >> sys.stderr, "AddPackage(%s-%s, db = %s, source = %s, archive = %s, train = %s, scripts = %s, fail_on_error = %s)" % (pkg.Name(), pkg.Version(), db, source, archive, train, scripts, fail_on_error)
+    print >> sys.stderr, "AddPackage(%s-%s, db = %s, source = %s, archive = %s, train = %s, scripts = %s, fail_on_error = %s, restart_services = %s)" % (pkg.Name(), pkg.Version(), db, source, archive, train, scripts, fail_on_error, restart_services)
     
     add_pkg_to_db = True
     
@@ -1649,6 +1760,55 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                 # Now get the previous versions of this package for this train
                 previous_versions = db.RecentPackageVersionsForTrain(pkg, train)
 
+                # Find out if there are any services listed for this package.
+                package_services = PackageFile.GetPackageServices(path = pkg_file)
+                print >> sys.stderr, "\t**** package_services = %s" % package_services
+                
+                pkg_svc_list = None
+                pkg_restart_list = None
+                service_list = None
+                if package_services:
+                    # If the package doesn't have any services to restart,
+                    # we don't have to worry about it.
+                    # This is a dictionary, with two keys:
+                    # Services
+                    try:
+                        pkg_svc_list = package_services["Services"]
+                    except:
+                        pkg_svc_list = []
+                    # and Restart
+                    try:
+                        pkg_restart_list = package_services["Restart"]
+                    except:
+                        pkg_restart_list = {}
+                        
+                    # We want to remove anything from restart_services that
+                    # isn't listed in pkg_svc_list
+                    if restart_services:
+                        restart_services = restart_services.copy()
+                        for svc in restart_services.keys():
+                            print >> sys.stderr, "\t%s" % svc
+                            if not svc in pkg_svc_list:
+                                restart_services.pop(svc)
+                        # And now let's get rid of anything that simply
+                        # duplicates the defaults
+                        if pkg_restart_list and restart_services:
+                            for svc in restart_services.keys():
+                                if svc in pkg_restart_list and \
+                                   pkg_restart_list[svc] == restart_services[svc]:
+                                    restart_services.pop(svc)
+                                    
+                            # Just in case this ends up being the same
+                            if restart_services == pkg_restart_list:
+                                restart_services = None
+                else:
+                    restart_services = None
+
+                # We use this to add to the database, later on.
+                if restart_services:
+                    service_list = restart_services.copy()
+                print >> sys.stderr, "After rpuning: restart_services = %s" % restart_services
+                
                 # Note that we are doing this before adding the new package to
                 # the database, although that's not strictly necessary.  (But
                 # not doing so means we don't have to remove it later if
@@ -1682,17 +1842,46 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                             # Add the update to the pkg
                             delta_checksum = ChecksumFile(delta_pkgfile)
                             # If there is a delta script, then we set rr to false
+                            # We also don't need to reboot if a restart service
+                            # is specified.
+                            # Specifically for that:  if the package has any
+                            # services to restart, even after modification by
+                            # the options for this particular update, then we
+                            # don't reboot.
+                            # Note that pkg_restart_list is kept pristine, because
+                            # it's the default set of restarts for the packge, which
+                            # we need if there is no entry for the package.
+                            print >> sys.stderr, "########### pkg_restart_list = %s, restart_services = %s" % (pkg_restart_list, restart_services)
+                                
                             rr = None
                             if scripts:
                                 if "reboot" in scripts:
                                     rr = True
                                 else:
                                     rr = False
-                            pkg.AddUpdate(most_recent_pkg.Version(),
-                                          delta_checksum,
-                                          size = os.lstat(delta_pkgfile).st_size,
-                                          RequiresReboot = rr)
+                            # When we look at the service restart list,
+                            # a reboot is not required if ... what?
+                            if restart_services and "reboot" in restart_services:
+                                if restart_services["reboot"]:
+                                    rr = True
+                                else:
+                                    rr = False
+                                
+                            upd = pkg.AddUpdate(most_recent_pkg.Version(),
+                                                delta_checksum,
+                                                size = os.lstat(delta_pkgfile).st_size,
+                                                RequiresReboot = rr)
+                            
+                            print >> sys.stderr, "\t*** restart_services = %s" % restart_services
+                            print >> sys.stderr, "\t\tpkg_restart_list = %s" % pkg_restart_list
+                            upd.SetRestartServices(restart_services)
                             # Need to repeat for all the previous versions.
+                            # But first we start with this, the most recent version
+                            if restart_services:
+                                tmp_restart_list = db.ServicesForPackageUpdate(most_recent_pkg)
+                                restart_services = MergeServiceList(restart_services, tmp_restart_list)
+                            if restart_services == pkg_restart_list:
+                                restart_services = None
                             # Except that if diffs is none in those cases, we still
                             # need to create a delta package, even if it's empty.
                             if scripts:
@@ -1703,7 +1892,8 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                             update_scripts = UpgradeScriptsForPackage(archive, db, most_recent_pkg)
                             print >> sys.stderr, "*** update_scripts = %s" % update_scripts
                             if update_scripts is None:
-                                delta_scripts["reboot"] = "reboot"
+                                if not restart_services:
+                                    delta_scripts["reboot"] = "reboot"
                             else:
                                 for script in update_scripts:
                                     if script in delta_scripts:
@@ -1717,12 +1907,38 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                             # Note that we go through this most-recent to oldest
                             # This is important for the delta script creation
                             for older_pkg in previous_versions[1:]:
+                                # Need to get the service restart list for this update,
+                                # then merge it into a list to be used when updating from
+                                # this version to the current version.
+                                # If there were no specified service restarts for this
+                                # version, then we use the default for the package.  And
+                                # remember:  restart always trumps not restarting.
+                                # If the package requires a reboot, and any intervening
+                                # version requires a reboot (no delta script, and no
+                                # service restart list for that version), then the update
+                                # requires a reboot.
+                                print >> sys.stderr, "\tOlder version %s, restart_servces = %s" % (older_pkg.Version(), restart_services)
+                                if restart_services:
+                                    tmp_restart_list = db.ServicesForPackageUpdate(older_pkg)
+                                else:
+                                    tmp_restart_list = {}
+                                print >> sys.stderr, "\tRestart list for pkg %s-%s = %s, pkg_restart_list = %s" % (older_pkg.Name(), older_pkg.Version(), tmp_restart_list, pkg_restart_list)
+                                if tmp_restart_list:
+                                    restart_services = MergeServiceList(restart_services, tmp_restart_list)
+                                else:
+                                    restart_services = None
+
                                 update_scripts = UpgradeScriptsForPackage(archive, db, older_pkg)
+                                # If the update's service restart list is the same as the package default,
+                                # then don't include it at all.
+                                if restart_services == pkg_restart_list:
+                                    restart_services = None
                                 print >> sys.stderr, "\tUpdate scripts for pkg %s-%s = %s" % (older_pkg.Name(), older_pkg.Version(), update_scripts)
                                 if update_scripts is None:
                                     # That means a reboot is required
                                     # If the package default is to reboot, we have to reboot.
-                                    delta_scripts["reboot"] = "reboot"
+                                    if not restart_services and pkg.RequiresReboot():
+                                        delta_scripts["reboot"] = "reboot"
                                 else:
                                     for script in update_scripts:
                                         if script in delta_scripts:
@@ -1746,17 +1962,29 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
                                                                  delta_pkgfile,
                                                                  scripts = None if "reboot" in delta_scripts else delta_scripts,
                                                                  force_output = True)
-                                    if delta_scripts is None or len(delta_scripts) == 0:
+                                    if (not delta_scripts) and (not restart_services):
+                                        # Use the package default
                                         rr = None
-                                    elif "reboot" in delta_scripts:
+                                    elif (delta_scripts and "reboot" in delta_scripts):
                                         rr = True
-                                    else:
+                                    elif (restart_services and "reboot" in restart_services):
+                                        rr = restart_services["reboot"]
+                                    elif delta_scripts or restart_services:
                                         rr = False
-                                            
-                                    pkg.AddUpdate(older_pkg.Version(),
-                                                  ChecksumFile(delta_pkgfile),
-                                                  size = os.lstat(delta_pkgfile).st_size,
-                                                  RequiresReboot = rr)
+                                    else:
+                                        raise Exception("I do not understand boolean logic")
+                                        rr = False
+                                    # If the package requires a reboot, and there is no
+                                    # service restart list for this update, then we have
+                                    # to reboot.
+                                    print >> sys.stderr, "Package %s, second update:  RequiresReboot = %s, rr = %s, tmp_restart_list = %s" % (pkg.Name(), older_pkg.RequiresReboot(), rr, tmp_restart_list)
+                                    upd = pkg.AddUpdate(older_pkg.Version(),
+                                                        ChecksumFile(delta_pkgfile),
+                                                        size = os.lstat(delta_pkgfile).st_size,
+                                                        RequiresReboot = rr)
+                                    if restart_services:
+                                        upd.SetRestartServices(restart_services)
+                                    print >> sys.stderr, "\t#### second one:  restart_services = %s" % restart_services
                                 else:
                                     print >> sys.stderr, "Secondary Previous package file %s doesn't exist" % previous_pkgfile
                     else:
@@ -1809,11 +2037,18 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
     # Should the package be added to the database _here_?
     # All the updates would be added here as well, of so.
     # Let's add the package to the database
+    if restart_services and not add_pkg_to_db:
+        print >> sys.stderr, "Restart services = %s, but not adding package %s-%s to database.  Problem?" % \
+            (restart_services, pkg.Name(), pkg.Version())
     if add_pkg_to_db:
         if debug or verbose:  print >> sys.stderr, "\tAdding to database"
         db.AddPackage(pkg)
         # RequiresReboot defaults to the package default
         rr = pkg.RequiresReboot()
+        if service_list:
+            for svc, val in service_list.iteritems():
+                print >> sys.stderr, "Adding service %s -> %s for %s-%s" % (svc, val, pkg.Name(), pkg.Version())
+                db.AddServiceForPackageUpdate(pkg, svc, val)
         if scripts:
             if "reboot" in scripts:
                 # Force a reboot for this update
@@ -1836,7 +2071,12 @@ def AddPackage(pkg, db = None, source = None, archive = None, train = None, scri
             
     return pkg
 
-def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS", key_data = None, changelog = None):
+def ProcessRelease(source, archive,
+                   db = None,
+                   sign = False,
+                   project = "FreeNAS",
+                   key_data = None,
+                   changelog = None):
     """
     Process a directory containing the output from a freenas build.
     We're looking for source/${project}-MANIFEST, which will tell us
@@ -1844,6 +2084,8 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
     """
     global debug, verbose
 
+    force_reboot = None
+    
     if debug:  print >> sys.stderr, "Processelease(%s, %s, %s, %s)" % (source, archive, db, sign)
 
     if db is None:
@@ -1870,6 +2112,35 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 notes[note_name] = f.read()
         except:
             pass
+    
+    try:
+        service_file = open(os.path.join(source, "RESTART"), "r")
+        service_list = service_file.read().strip()
+        services = {}
+        for svc in service_list.split():
+            svc = svc.strip()
+            val = True
+            if "=" in svc:
+                (svc, val) = svc.split("=")
+                if val in ("no", "NO", "No", "False", "FALSE", "0"):
+                    val = False
+                else:
+                    val = True
+            services[svc] = val
+    except BaseException as e:
+        # Any errors -- usually going to be ENOENT -- means we
+        # have no services to list
+        services = {}
+    print >> sys.stderr, "******************* services = %s" % services
+    
+    try:
+        reboot_str = open(os.path.join(source, "FORCEREBOOT"), "r").read().strip()
+        if reboot_str in ("YES", "yes", "Yes", "True", "TRUE"):
+            force_reboot = True
+        elif reboot_str in ("NO", "no", "No", "False", "FALSE"):
+            force_reboot = False
+    except:
+        pass
     
     # Everything goes into the archive, and
     # most is relative to the name of the train.
@@ -1935,7 +2206,10 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                          archive = archive,
                          train = manifest.Train(),
                          scripts = scripts,
-                         fail_on_error = False)
+                         fail_on_error = False,
+                         restart_services = services,
+                         )
+
         # Unlock the archive now
         lock.close()
         pkg_list.append(pkg)
@@ -1994,6 +2268,8 @@ def ProcessRelease(source, archive, db = None, sign = False, project = "FreeNAS"
                 pass
             return
 
+    manifest.SetReboot(force_reboot)
+        
     lock = LockArchive(archive, "Saving manifest file", wait = True)
     manifest.StorePath(mani_file.name)
     mani_file.close()
@@ -2657,6 +2933,8 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
         if updates:
             print >> sys.stderr, "Doesn't look like we can delete package %s-%s entirely" % (pkg.Name(), pkg.Version())
             continue
+        # Next, remove any ServiceRestarts for this version of the package
+        db.ServiceRestartDeleteForPackage(pkg)
         # Nothing to delete from PackageUpdates, so now we want to
         # delete the PackageDeltaScripts for this package.
         scripts = db.ScriptForPackage(pkg)
