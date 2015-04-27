@@ -430,30 +430,39 @@ Stores also tend to have utility functions for retrieving specific data.
 Input
 ^^^^^
 
-Stores are **only ever modified by the Dispatcher**. They receieve every
+Stores are **only ever modified by the Dispatcher**. They receive every
 broadcast payload the Dispatcher ever sends out, and will generally have
 a ``switch`` function that determines whether the broadcast is
 applicable to the type of data that the Store is concerned with. This
 determination is usually based on the action type added by the
-ActionCreator.
+ActionCreator. The code snippet below is representative of a response to new
+data from the middleware.
 
 .. code:: javascript
 
+  GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+    var action = payload.action;
 
-        UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-          var action = payload.action;
+    switch( action.type ) {
 
-          switch( action.type ) {
+      case ActionTypes.RECEIVE_GROUPS_LIST:
 
-            case ActionTypes.RECEIVE_RAW_USERS:
-              _users = action.rawUsers;
-              UsersStore.emitChange();
-              break;
+        var updatedGroupIDs = _.pluck( action.groupsList, PRIMARY_KEY );
 
-            default:
-              // No action
-          }
+        // When receiving new data, we can comfortably resolve anything that may
+        // have had an outstanding update indicated by the Middleware.
+        if ( _updatedOnServer.length > 0 ) {
+          _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
+        }
+
+        // Updated groups come from the middleware as an array, but we store the
+        // data as an object keyed by the PRIMARY_KEY. Here, we map the changed groups
+        // into the object.
+        action.groupsList.map( function ( group ) {
+          _groups[ group [ PRIMARY_KEY ] ] = group;
         });
+        GroupsStore.emitChange();
+        break;
 
 Output
 ^^^^^^
