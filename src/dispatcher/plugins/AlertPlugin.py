@@ -79,59 +79,68 @@ class AlertFilterCreateTask(Task):
     def run(self, alertfilter):
         self.datastore.insert('alertsfilters', alertfilter)
 
-        #self.dispatcher.dispatch_event('alerts.filters.changed', {
-        #    'operation': 'create',
-        #    'ids': [alertfilter['name']]
-        #})
+        self.dispatcher.dispatch_event('alerts.filters.changed', {
+            'operation': 'create',
+            'ids': [alertfilter['name']]
+        })
 
 
-@accepts(int)
+@accepts(str)
 class AlertFilterDeleteTask(Task):
 
-    def describe(self, uid):
-        alertfilter = self.datastore.get_by_id('alertsfilters', uid)
-        return 'Deleting alert filter {0}'.format(alertfilter['name'])
+    def describe(self, name):
+        return 'Deleting alert filter {0}'.format(name)
 
-    def verify(self, uid):
+    def verify(self, name):
 
-        alertfilter = self.datastore.get_by_id('alertsfilters', uid)
+        alertfilter = self.datastore.get_by_id('alertsfilters', name)
         if alertfilter is None:
             raise VerifyException(
                 errno.ENOENT,
-                'Alert filter with ID {0} does not exists'.format(uid)
+                'Alert filter with ID {0} does not exists'.format(name)
             )
 
         return ['system']
 
-    def run(self, uid):
+    def run(self, name):
         try:
-            self.datastore.delete('alertsfilters', uid)
+            self.datastore.delete('alertsfilters', name)
         except DatastoreException, e:
             raise TaskException(
                 errno.EBADMSG,
                 'Cannot delete alert filter: {0}'.format(str(e))
             )
 
+        self.dispatcher.dispatch_event('alerts.filters.changed', {
+            'operation': 'delete',
+            'ids': [name]
+        })
 
-@accepts(int, h.ref('alert-filter'))
+
+@accepts(str, h.ref('alert-filter'))
 class AlertFilterUpdateTask(Task):
 
-    def describe(self, uid, alertfilter):
-        return 'Updating alert filter {0}'.format(alertfilter['name'])
+    def describe(self, name, alertfilter):
+        return 'Updating alert filter {0}'.format(name)
 
-    def verify(self, uid, updated_fields):
+    def verify(self, name, updated_fields):
         return ['system']
 
-    def run(self, uid, updated_fields):
+    def run(self, name, updated_fields):
         try:
-            alertfilter = self.datastore.get_by_id('alertsfilters', uid)
+            alertfilter = self.datastore.get_by_id('alertsfilters', name)
             alertfilter.update(updated_fields)
-            self.datastore.update('alertsfilters', uid, alertfilter)
+            self.datastore.update('alertsfilters', name, alertfilter)
         except DatastoreException, e:
             raise TaskException(
                 errno.EBADMSG,
                 'Cannot update alert filter: {0}'.format(str(e))
             )
+
+        self.dispatcher.dispatch_event('alerts.filters.changed', {
+            'operation': 'update',
+            'ids': [name]
+        })
 
 
 def _init(dispatcher):
