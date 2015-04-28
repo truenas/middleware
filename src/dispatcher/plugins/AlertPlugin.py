@@ -39,18 +39,12 @@ registered_alerts = []
 
 
 @description('Provides access to the alert system')
-class AlertProvider(Provider):
+class AlertsProvider(Provider):
 
     @query('alert')
     def query(self, filter=None, params=None):
         return self.datastore.query(
             'alerts', *(filter or []), **(params or {})
-        )
-
-    @query('alert-filter')
-    def query_filters(self, filter=None, params=None):
-        return self.datastore.query(
-            'alerts-filters', *(filter or []), **(params or {})
         )
 
     @accepts(h.ref('alert'))
@@ -67,6 +61,16 @@ class AlertProvider(Provider):
             registered_alerts.append(name)
 
 
+@description('Provides access to the alerts filters')
+class AlertsFiltersProvider(Provider):
+
+    @query('alert-filter')
+    def query(self, filter=None, params=None):
+        return self.datastore.query(
+            'alerts-filters', *(filter or []), **(params or {})
+        )
+
+
 @accepts(h.ref('alert-filter'))
 class AlertFilterCreateTask(Task):
 
@@ -74,37 +78,38 @@ class AlertFilterCreateTask(Task):
         return 'Creating alert filter {0}'.format(alertfilter['name'])
 
     def verify(self, alertfilter):
-        return ['system']
+        return []
 
     def run(self, alertfilter):
-        self.datastore.insert('alertsfilters', alertfilter)
+        self.datastore.insert('alerts-filters', alertfilter)
 
         self.dispatcher.dispatch_event('alerts.filters.changed', {
             'operation': 'create',
-            'ids': [alertfilter['name']]
+            'ids': [alertfilter['id']]
         })
 
 
 @accepts(str)
 class AlertFilterDeleteTask(Task):
 
-    def describe(self, name):
-        return 'Deleting alert filter {0}'.format(name)
+    def describe(self, id):
+        alertfilter = self.datastore.get_by_id('alerts-filters', id)
+        return 'Deleting alert filter {0}'.format(alertfilter['name'])
 
-    def verify(self, name):
+    def verify(self, id):
 
-        alertfilter = self.datastore.get_by_id('alertsfilters', name)
+        alertfilter = self.datastore.get_by_id('alerts-filters', id)
         if alertfilter is None:
             raise VerifyException(
                 errno.ENOENT,
-                'Alert filter with ID {0} does not exists'.format(name)
+                'Alert filter with ID {0} does not exists'.format(id)
             )
 
-        return ['system']
+        return []
 
-    def run(self, name):
+    def run(self, id):
         try:
-            self.datastore.delete('alertsfilters', name)
+            self.datastore.delete('alerts-filters', id)
         except DatastoreException, e:
             raise TaskException(
                 errno.EBADMSG,
@@ -113,24 +118,25 @@ class AlertFilterDeleteTask(Task):
 
         self.dispatcher.dispatch_event('alerts.filters.changed', {
             'operation': 'delete',
-            'ids': [name]
+            'ids': [id]
         })
 
 
 @accepts(str, h.ref('alert-filter'))
 class AlertFilterUpdateTask(Task):
 
-    def describe(self, name, alertfilter):
-        return 'Updating alert filter {0}'.format(name)
+    def describe(self, id, alertfilter):
+        alertfilter = self.datastore.get_by_id('alerts-filters', id)
+        return 'Updating alert filter {0}'.format(alertfilter['name'])
 
-    def verify(self, name, updated_fields):
-        return ['system']
+    def verify(self, id, updated_fields):
+        return []
 
-    def run(self, name, updated_fields):
+    def run(self, id, updated_fields):
         try:
-            alertfilter = self.datastore.get_by_id('alertsfilters', name)
+            alertfilter = self.datastore.get_by_id('alerts-filters', id)
             alertfilter.update(updated_fields)
-            self.datastore.update('alertsfilters', name, alertfilter)
+            self.datastore.update('alerts-filters', id, alertfilter)
         except DatastoreException, e:
             raise TaskException(
                 errno.EBADMSG,
@@ -139,7 +145,7 @@ class AlertFilterUpdateTask(Task):
 
         self.dispatcher.dispatch_event('alerts.filters.changed', {
             'operation': 'update',
-            'ids': [name]
+            'ids': [id],
         })
 
 
@@ -159,13 +165,17 @@ def _init(dispatcher):
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
-            'emitters': {'type': 'array'},
+            'emitters': {
+                'type': 'array',
+                'items': {'type': 'string'},
+            },
         }
     })
 
     dispatcher.require_collection('alerts')
     dispatcher.require_collection('alerts-filters')
-    dispatcher.register_provider('alerts', AlertProvider)
+    dispatcher.register_provider('alerts', AlertsProvider)
+    dispatcher.register_provider('alerts.filters', AlertsFiltersProvider)
 
     # Register task handlers
     dispatcher.register_task_handler(
