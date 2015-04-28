@@ -56,6 +56,8 @@ def _init(dispatcher):
                     'when': str(datetime.now()),
                 })
 
+    dispatcher.rpc.call_sync('alerts.register_alert', 'alert.volumes.status')
+
     # TODO: register event handler
 
     volumes_status()

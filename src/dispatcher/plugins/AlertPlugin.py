@@ -33,6 +33,8 @@ from dispatcher.rpc import (
 )
 from task import Provider, query
 
+registered_alerts = []
+
 
 @description('Provides access to the alert system')
 class AlertProvider(Provider):
@@ -48,8 +50,13 @@ class AlertProvider(Provider):
         self.datastore.insert('alerts', alert)
 
     @returns(h.array(str))
-    def get_alert_plugins(self):
-        return []
+    def get_registered_alerts(self):
+        return registered_alerts
+
+    @accepts(str)
+    def register_alert(self, name):
+        if name not in registered_alerts:
+            registered_alerts.append(name)
 
 
 def _init(dispatcher):
