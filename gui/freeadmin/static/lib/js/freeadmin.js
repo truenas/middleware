@@ -257,7 +257,7 @@ require([
     evilrestartHttpd = function(newurl) {
 
       dialog = new Dialog({
-                    title: gettext('Restating WebGUI'),
+                    title: gettext('Restarting WebGUI'),
                     content: "Please wait while the WebGUI restarts...</br>Refresh your browser manually if unresponsive after 15 seconds",
                     //parseOnLoad: true,
                     closable: true,
