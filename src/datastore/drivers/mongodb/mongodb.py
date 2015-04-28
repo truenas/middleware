@@ -215,7 +215,7 @@ class MongodbDatastore(object):
                 ret = self.db['collections'].find_and_modify({'_id': collection}, {'$inc': {'last-id': 1}})
                 pkey = ret['last-id']
             elif pkey_type == 'uuid':
-                pkey = uuid.uuid4()
+                pkey = str(uuid.uuid4())
 
         obj['_id'] = pkey
 
