@@ -33,9 +33,14 @@ To build the system (experts only):
 
 ```
 % cd /path/to/your-build-filesystem
-% git clone git://github.com/freenas/freenas.git --branch freenas10/development
-% cd freenas
+% git clone https://github.com/freenas/freenas-build
+% cd freenas-build
 ```
+
+## NOTE:  The freenas build infrastructure is now separate and in its own repo;
+## if you are reading this file in the freenas repo, you need to check out
+## the freenas-build repo separately, as above.  The freenas repo now contains
+## only the freenas sources.
 
 * Build it
 
@@ -48,14 +53,8 @@ To build the system (experts only):
 * Update the source tree, to pull in new source code changes
 
 ```
-% make update
-```
-
-This will also fetch TrueOS and ports for the build from github.
 
 ## The End Result:
 
-If your build completes successfully, you'll have both 32 and 64 bit
-release products in the release_stage directory.  You will also have
-a tarball in your build directory containing the entire release for
-easy transport.
+If your build completes successfully, you'll have 64 bit release products
+in the _BE directory. 
