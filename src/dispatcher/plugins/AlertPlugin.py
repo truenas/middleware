@@ -81,11 +81,11 @@ class AlertFilterCreateTask(Task):
         return []
 
     def run(self, alertfilter):
-        self.datastore.insert('alerts-filters', alertfilter)
+        id = self.datastore.insert('alerts-filters', alertfilter)
 
         self.dispatcher.dispatch_event('alerts.filters.changed', {
             'operation': 'create',
-            'ids': [alertfilter['id']]
+            'ids': [id]
         })
 
 
