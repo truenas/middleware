@@ -153,13 +153,13 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_sssd_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_sssd_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_webdav_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_webdav_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/register_mdns.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/register_mdns.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/scrub ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/scrub
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/dfree ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/dfree
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas3flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas3flash
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/save_rrds.sh ${STAGEDIR}/${PREFIX}/usr/local/sbin/save_rrds.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/scrub ${STAGEDIR}/${PREFIX}/usr/local/sbin/scrub
 	${MKDIR} ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/perftests-nas/tests/* ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests/
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/www/data
