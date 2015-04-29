@@ -12,6 +12,7 @@
     "moment": "^2.9.0",
     "react": "0.13.x",
     "react-bootstrap": "0.20.x",
+    "react-component-width-mixin": "^1.1.7",
     "react-router": "0.13.x",
     "react-tools": "^0.12.2",
     "round": "^1.0.1",
