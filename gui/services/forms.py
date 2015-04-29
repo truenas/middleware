@@ -706,6 +706,20 @@ class SNMPForm(ModelForm):
             'snmp_v3_password': forms.widgets.PasswordInput(render_value=False),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(SNMPForm, self).__init__(*args, **kwargs)
+        self.fields['snmp_v3'].widget.attrs['onChange'] = (
+            'toggleGeneric("id_snmp_v3", ["id_snmp_v3_password", '
+            '"id_snmp_v3_password2"], true);'
+        )
+        if self.instance.id and not self.instance.snmp_v3:
+            self.fields['snmp_v3_password'].widget.attrs['disabled'] = (
+                'disabled'
+            )
+            self.fields['snmp_v3_password2'].widget.attrs['disabled'] = (
+                'disabled'
+            )
+
     def clean_snmp_contact(self):
         contact = self.cleaned_data['snmp_contact']
         if '@' in contact:
