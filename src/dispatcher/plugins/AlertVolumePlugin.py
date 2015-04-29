@@ -46,8 +46,8 @@ def _init(dispatcher):
             )
             if status['status'] != 'ONLINE':
 
-                dispatcher.rpc.call_sync('alert.emit', {
-                    'name': 'alert.volumes.status',
+                dispatcher.rpc.call_sync('alerts.emit', {
+                    'name': 'volumes.status',
                     'description': 'The volume {0} state is {1}'.format(
                         volume['name'],
                         status['status'],
@@ -56,7 +56,7 @@ def _init(dispatcher):
                     'when': str(datetime.now()),
                 })
 
-    dispatcher.rpc.call_sync('alerts.register_alert', 'alert.volumes.status')
+    dispatcher.rpc.call_sync('alerts.register_alert', 'volumes.status')
 
     # TODO: register event handler
 
