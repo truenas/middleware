@@ -340,7 +340,7 @@ that have occurred since 9.3-RELEASE.
 
 * The mrsas(4) LSI MegaRAID driver was added.
 
-* Support for the Mach Xtreme MX-ES and the Kingston DT100G2 USB drives has been added.
+* Support for the Mach Xtreme MX-ES/MXUB3 and the Kingston DT100G2 USB drives has been added.
 
 * Man pages have been added and can be accessed from :ref:`Shell`.
 
@@ -381,6 +381,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "Exclude System Dataset" checkbox has been added to :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`.
 
+* The :file:`/usr/local/bin/test_ssh.py` script has been added for testing the SSH connection for a defined replication task.
+
 * The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
 
 * A pop-up warning will appear if you go to change :menuselection:`Directory Service --> Active Directory --> Advanced Mode -> Idmap backend` as selecting the wrong
@@ -393,6 +395,9 @@ that have occurred since 9.3-RELEASE.
 * The ability to "Online" a previously offlined disk has been added to :menuselection:`Storage --> Volumes --> Volume Status`.
 
 * The "Periodic Snapshot Task" drop-down menu has been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
+
+* All available VFS objects have been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`
+  and the "aio_pthread" and "streams_xattr" VFS objects are enabled by default.
 
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
   :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
@@ -408,6 +413,8 @@ that have occurred since 9.3-RELEASE.
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
 * The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
+* The "SNMP v3 Support" checkbox and the "Username" and "Password" fields have been added to :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
 
 * The MediaBrowser Plugin has been renamed to Emby.
 
