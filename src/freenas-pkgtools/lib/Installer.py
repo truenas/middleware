@@ -632,8 +632,11 @@ def install_file(pkgfile, dest):
             # This is done in both the database and the filesystem.
             # If we can't remove a directory due to ENOTEMPTY, we don't care.
             for file in pkgDeletedFiles:
-                if verbose or debug:  log.debug("Deleting file %s" % file)
-                full_path = dest + "/" + file
+                if verbose or debug:  log.debug("Deleting file %s, dest = %s" % (file, dest))
+                if dest:
+                    full_path = dest + "/" + file
+                else:
+                    full_path = "/" + file
                 if RemoveFile(full_path) == False:
                     if debug:  log.debug("Could not remove file %s" % file)
                     # Ignor error for now
@@ -641,7 +644,10 @@ def install_file(pkgfile, dest):
             # Now we try to delete the directories.
             for dir in pkgDeletedDirs:
                 if verbose or debug:  log.debug("Attempting to remove directory %s" % dir)
-                full_path = dest + "/" + dir
+                if dest:
+                    full_path = dest + "/" + dir
+                else:
+                    full_path = "/" + dir
                 RemoveDirectory(full_path)
                 pkgdb.RemoveFileEntry(dir)
             # Later on, when the package is upgraded, the scripts in the database are deleted.
