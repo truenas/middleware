@@ -8,6 +8,7 @@
 var _      = require("lodash");
 var React  = require("react");
 var moment = require("moment");
+var componentWidthMixin = require('react-component-width-mixin');
 
 var StatdMiddleware = require("../../../middleware/StatdMiddleware");
 var StatdStore      = require("../../../stores/StatdStore");
@@ -41,6 +42,8 @@ module.exports = {
   					, height  : "100%"
   					, "float" : "left"
 				}
+
+	, mixins: [componentWidthMixin]
 
     , getInitialState: function() {
       var initialStatdData = {};
@@ -124,15 +127,22 @@ module.exports = {
                     !_.isEmpty( prevState.stagedUpdate ) ){
           this.drawChart();
         }
+
+        if (prevState.componentWidth !== this.state.componentWidth)
+        {
+        	console.log("redraw");
+        	this.drawChart();
+        }
       }
     }
 
   , shouldComponentUpdate: function(nextProps, nextState) {
-    	return nextState.statdResources !== this.state.statdResources ||
-    		   nextState.chartTypes !== this.state.chartTypes ||
-    		   nextState.statdDataLoaded !== this.state.statdDataLoaded ||
-			   nextState.stagedUpdate !== this.state.stagedUpdate ||
-    		   nextState.graphType !== this.state.graphType;
+    	return nextState.statdResources   !==  this.state.statdResources 	||
+    		   nextState.chartTypes 	  !==  this.state.chartTypes 		||
+    		   nextState.statdDataLoaded  !==  this.state.statdDataLoaded 	||
+			   nextState.stagedUpdate 	  !==  this.state.stagedUpdate 		||
+    		   nextState.graphType 		  !==  this.state.graphType 		||
+    		   nextState.componentWidth   !==  this.state.componentWidth;
 	}
 
   , componentWillUnmount: function() {
