@@ -68,12 +68,12 @@ usr/local/libexec/nas/generate_ssl_certificates.py
 usr/local/libexec/nas/generate_sssd_conf.py
 usr/local/libexec/nas/generate_webdav_conf.py
 usr/local/libexec/nas/register_mdns.py
+usr/local/libexec/nas/scrub
 usr/local/libexec/samba/dfree
 usr/local/libexec/samba/samba-backtrace
 usr/local/sbin/sas2flash
 usr/local/sbin/sas3flash
 usr/local/sbin/save_rrds.sh
-usr/local/sbin/scrub
 usr/local/share/firmware/t5fw-1.12.25.0.bin
 usr/local/share/perftests-nas/tests/iozone
 usr/local/share/vpds/t580_cr_qsa_variable_2133_vpd.bin
