@@ -216,7 +216,7 @@ Therefore, ``groups-display.json`` might look like:
 
 It's then required, like everything else:
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var formatData = require("../../data/middleware-keys/services-display.json")[0];
@@ -245,7 +245,7 @@ information, based on predefined routes in ``routes.js``.
 
 For instance, if we set up ``routes.js`` such that
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         <Route name="services" handler={ Services }>
