@@ -1,58 +1,22 @@
-#4009	HA Peer sync 2.0
-#4013	Lock out passive node for non host specific configuration
-#4165	Add firmware and updates for the following 12 Gbps HBAs
-#6323	Group Ownership does not resolve from "account unknown"
-#6723	Fix Samba SID generation with group mappings
-#7076	We need to be able to rename to current boot environment
-#7277	Space thresholds for file-backed iSCSI LUNs
-#7388	Please remove warning from /usr/bin/su: (pam_group) neither luser nor ruser specified, assuming ruser
-#7497	LSI 9211-8i  Firmware: 19.00.00.00 Incompatible with Driver: 16.00.00.00-fbsd
-#8194	Documentation improvement for Freenas Install
-#8224	TrueNAS Docs use the Freenas Logo.
-#8236	Fix volume status alert for TrueNAS
-#8279	In TrueNAS-9.3-STABLE-201502271916 buld: Getting infinite  loop in fenceD after HA.
-#8293	Fix a bug in the snapshotter that was causing it to fail at taking snapshots of datasets  with spaces in the name.
-#8328	Unlock from GUI should set passphrase for escrow daemon
-#8335	Fix a bug that was changing replication stream compression to off.
-#8430	ProSys:  carp0 going down does not cause devd to run the interface down script
-#8459	Add the ability to recursive replicate the root pool to another FreeNAS system's root pool.
-#8481	hactl should not fail when Failover object is not found
-#8493	In TrueNAS-9.3-STABLE-201503100715:  When email object is not present,  the email entry options are not present.
-#8532	Set log rollover for auth.log and messages to be year
-#8535	In TrueNAS-9.3-STABLE-201502281915 buld: After  HA, giving syntax error  in " Failover.objects.all().exists()"
-#8667	Provide support for SSH Certificates
-#8675	Trigger an alert when the boot volume is getting full
-#8707	Fix a bug that was causing files requested by FreeNAS debug to be truncated.
-#8775	SSH setting not being applied (login as root with password) in HA
-#8801	carp-state-change-hook.py needs a shutdown verb
-#8901	Kingston 8GB DT 100 G2 USB stick doesn't work with FreeNAS 9.3
-#8917	Fix traceback when viewing permissions on newly created dataset
-#8919	Add the ability to specify the medium rotation rate of an iSCSI LUN.
-#8921	Creating a Virtual Box Jail with Spaces in the name causes odd behavior
-#8923	Disable vulnerable and/or obsolete SSL ciphers from the WebGUI.
-#8927	Fixed ctld termination when connection to iSCSI port is closed before being accepted.
-#8828	Service WebDAV/apache24 unable to start due to syntax error
-#8951	Fix a bug that prevented periodic.conf from being generated correct.
-#8953	SMART errors now generate Alerts
-#8995	Improve NFS performance
-#9005	Add security/stunnel to FreeNAS build
-#9013	Support hardware with 512GB of RAM
-#9028	TrueNAS upgrades leave swap misconfigured
-#9031	CARP tracebacks when VHID is not unique
-#9032	Automatical sync key for encrypted HA
-#9033	Fixes an error in a port causing each new build to have a different master.passwd entry for the user "cyrus".
-#9038	Fix a bug that occasional prevented the display of pending updates.
-#9051	Enforce length limitations of the iSCSI auth user passwords in the GUI
-#9057	Fix a bad interaction with Rsync Now and su(1)
-#9073	Fix API validation and docs for iSCSI Extent
-#9081	Show ZFS pool import progress on the console.
-#9092	Improve patch for SA-15:04.igmp to solve a potential buffer overflow. Fix multiple vulnerabilities of ntp. [SA-15:07] Fix Denial of Service with IPv6 Router Advertisements. [SA-15:09]
-#9093	Fix several vulnerabilities in FreeBSD 2015-04-07 patch batch
-#9111	In TrueNAS-9.3-STABLE-201504021408: Creating HA Pairing Failed.
-#9125	Proper document LDAP certificate handling
-#9149	API request for invalid values should return HTTP 409
-#9150	Document iscsi_target_extent_xen field in API docs
-#9180	Sync carp interfaces and carp with modified skew
-#9182	High Point driver update which provides better 4Kn drive support and exposes more disk details
-#9232	Fixed incorrect requirement for peer iSCSI secret to be set
-#9253	Traceback for SMART alert when the state file doesn't exist
+#7147	Bug	Nice to have	Fix problem with jails import/export
+#8002	Bug	Nice to have	Fix dataset sharing type and case sensitivity option on edit
+#8532	Bug	Nice to have	Set log rollover for auth.log and messages to be year
+#9057	Bug	Nice to have	Fix a bad interaction with Rsync Now and su(1)
+#9151	Bug	Nice to have	CIFS will not start
+#9204	Feature	Nice to have	Expose SNMP v3 configuration items to GUI
+#9221	Bug	Nice to have	Add a tool to check (and possib fix) ssh for replication tasks.
+#9227	Bug	Nice to have	Auto configure jails for plugins if applicable
+#9240	Bug	Nice to have	SSH Public Keys field too short
+#9253	Bug	Nice to have	Traceback for SMART alert when the state file doesn't exists
+#9291	Bug	Nice to have	Unable to upgrade: "Error: global name 'UpdatePackageException' is not defined"
+#9292	Bug	Nice to have	When changing a jail from DHCP to static, can't specify name servers for the jails in the UI
+#9325	Bug	Important	Replication shows .system dataset although snapshot tasks has box checked to "exclude system dataset"
+#9342	Bug	Nice to have	VFS objects aio_pthread and streams_xattr missing from "Add Windows (CIFS) Share" dialog
+#9343	Bug	Important	Change local Support validation from GET to POST
+#9344	Bug	Nice to have	Missing IPMI icon in tree menu
+#9346	Bug	Expected	Encrypt iscsi CHAP passwords in the database
+#9351	Bug	Important	Improved compatibility with  Mach Xtreme USB sticks
+#9352	Bug	Nice to have	generate_ctl_conf.py should create file with umask 077
+#9478	Bug	Nice to have	New SNMP Username/Password fields should be greyed out unless SNMPv3 is checked
+#9483	Bug	Nice to have	'scrub' should not be installed to sbin
+#9493	Bug	Critical	Resolves an issue where deleting a file during an update that doesn't require a reboot would cause an exception.
