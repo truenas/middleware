@@ -9,7 +9,14 @@
 doSubmit({
     form: this,
     event: e,
-    url: '{% block formpost %}{{ request.path }}{% endblock %}',
-    progressbar: '/storage/disks/wipe/{{ devname }}/progress/'
+    url: '{{ request.path }}',
+    progressbar: {
+      steps: [
+         {"label": gettext("Wiping Disk")},
+      ],
+      poolUrl: '/storage/disks/wipe/{{ devname }}/progress/',
+      mode: 'single',
+      fileUpload: false
+    }
 });
 {% endblock %}
