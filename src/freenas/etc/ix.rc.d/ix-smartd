@@ -127,7 +127,7 @@ EOF
 				;;
 			esac
 			prop_dev=`get_prop_dev ${disk_name} ${TMPFILE}`
-			if [ -z "echo ${prop_dev} | xargs $(/usr/local/sbin/smartctl -i | egrep -i "^.*SMART.*Enabled")" ]; then
+			if ! /usr/local/sbin/smartctl -i ${prop_dev} | egrep -i "^.*SMART.*Enabled" > /dev/null 2>&1; then
 				eval "/usr/local/sbin/smartctl -s on ${prop_dev} > /dev/null 2>&1" || continue
 			fi
 			echo -n "${prop_dev} -a"
