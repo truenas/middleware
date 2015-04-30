@@ -717,6 +717,10 @@ class KerberosKeytabEditForm(ModelForm):
             'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         )
 
+    def save(self):
+        super(KerberosKeytabEditForm, self).save()
+        notifier().start("ix-kerberos")
+
 
 class KerberosSettingsForm(ModelForm):
 

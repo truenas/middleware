@@ -2325,6 +2325,10 @@ class KerberosKeytabResourceMixin(object):
                 'directoryservice_kerberoskeytab_edit',
                 kwargs={'id': bundle.obj.id}
             )
+            bundle.data['_delete_url'] = reverse(
+                'directoryservice_kerberoskeytab_delete',
+                kwargs={'id': bundle.obj.id}
+            )
 
         return bundle
 
