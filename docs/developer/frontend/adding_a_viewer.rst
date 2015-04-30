@@ -218,8 +218,7 @@ It's then required, like everything else:
 
 .. code-block:: javascript
 
-
-        var formatData = require("../../data/middleware-keys/services-display.json")[0];
+  var formatData = require("../../data/middleware-keys/groups-display.json")[0];
 
     *To make this follow the workflow little bit better I will prefer if
     the data displaying part was following the previous paragraphs.
