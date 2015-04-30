@@ -35,6 +35,8 @@ generate_krb5_keytab()
 
 generate_kerberos_files()
 {
+	rm -f /etc/krb5.keytab
+
 	generate_krb5_conf
 	generate_krb5_keytab
 }

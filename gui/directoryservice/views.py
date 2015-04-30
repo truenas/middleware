@@ -34,6 +34,8 @@ from django.shortcuts import render
 from freenasUI.directoryservice import forms, models, utils
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import services
 
 log = logging.getLogger("directoryservice.views")
@@ -137,6 +139,29 @@ def directoryservice_kerberoskeytab_edit(request, id):
 
 def directoryservice_kerberoskeytab_add(request):
     return directoryservice_kerberoskeytab(request)
+
+
+def directoryservice_kerberoskeytab_delete(request, id):
+    kt = models.KerberosKeytab.objects.get(pk=id)
+    form = forms.KerberosKeytabEditForm(instance=kt)
+
+    if request.method == "POST":
+        try:
+            kt.delete() 
+            notifier().start("ix-kerberos")
+            return JsonResp(
+                request,
+                message="Kerberos Keytab successfully deleted."
+            )
+        except MiddlewareError:
+            raise
+        except Exception as e:
+            return JsonResp(request, error=True, message=repr(e))
+
+    return render(request, 'directoryservice/kerberos_keytab.html', {
+        'form': form,
+        'inline': True
+    });
 
 
 def get_directoryservice_status():
