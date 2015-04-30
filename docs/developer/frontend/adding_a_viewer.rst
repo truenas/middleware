@@ -224,12 +224,16 @@ It's then required, like everything else:
     the data displaying part was following the previous paragraphs.
     Dynamic Routing and Filteres/Groups are important, but maybe too
     distracting in this moment. First I want to see the data somehow and
-    afterwards worry abour routing and organizing them.* ## Dynamic
-    Routing Because the FreeNAS 10 GUI uses client-side routing, the
-    page is never refreshed or changed during a session. One of the
-    interesting effects of this is the ability to use client-side
-    routing - meaning that as the visible React components are changed
-    or selected, the route in the browser bar changes to reflect that.
+    afterwards worry abour routing and organizing them.* ##
+
+Dynamic Routing
+~~~~~~~~~~~~~~~
+
+Because the FreeNAS 10 GUI uses client-side routing, the
+page is never refreshed or changed during a session. One of the
+interesting effects of this is the ability to use client-side
+routing - meaning that as the visible React components are changed
+or selected, the route in the browser bar changes to reflect that.
 
 Part of the functionality of the viewer is the ability to create dynamic
 routes based on the visible item. For example, when you click on
