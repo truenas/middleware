@@ -257,8 +257,8 @@ For instance, if we set up ``routes.js`` such that
 our cooresponding ``itemData`` object in the Services view will look
 something like this:
 
-.. code:: javascript
 
+.. code-block:: javascript
 
         var itemData = {
             "route" : "services-editor"
@@ -289,7 +289,7 @@ Putting it all together, we're able to create our ``displaySettings``
 object. This is similar to the display JSON file, and is subject to the
 same potential future rewrite.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var displaySettings = {
@@ -328,7 +328,7 @@ set up the right way.
 
 Here's what we're going to need in addition to ``render``:
 
-.. code:: javascript
+.. code-block:: javascript
 
 
           getInitialState: function() {
@@ -370,7 +370,7 @@ everything else. >\ *Maybe add more about activating the debug mode?*
 
 Our Middleware Utility Class looks something like this:
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         // Services Middleware
@@ -407,7 +407,7 @@ other Flux stores).
 This ActionCreator will then call the dispatcher and broadcast this
 payload to all registered Flux stores.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         // Services Action Creators
@@ -444,7 +444,7 @@ The Flux stores unfortunately have a lot of boilerplate. I'm working on
 reducing this - likely will have them all inherit from more things in
 the future.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         // Services Flux Store
@@ -454,7 +454,7 @@ the future.
 
 It uses Lodash, mostly for its ``_.assign()`` function.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var _            = require("lodash");
@@ -462,14 +462,14 @@ It uses Lodash, mostly for its ``_.assign()`` function.
 One of the most important functions that a Flux store performs is that
 it also behaves as an EventEmitter.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var EventEmitter = require("events").EventEmitter;
 
 It requires the Dispatcher and the Constants (for the ActionTypes).
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
@@ -480,7 +480,7 @@ It requires the Dispatcher and the Constants (for the ActionTypes).
 We need to define a change event, just so that all the EventEmitter
 stuff can all use the same one.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var CHANGE_EVENT = "change";
@@ -490,7 +490,7 @@ heart of the Flux Store. This variable is what will ACTUALLY be modified
 and updated when the Middleware sends new data. It's just a normal
 JavaScript object with no hidden attributes or special sauce.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var _services = [];
@@ -506,7 +506,7 @@ know when it updates, and a way for it to stop doing that.
 On top of those, we need what we came here for - a way to get an
 up-to-date list of the services, right out of the ``_services`` array.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var ServicesStore = _.assign( {}, EventEmitter.prototype, {
@@ -533,7 +533,7 @@ Now we just need to register ``ServicesStore`` with the
 ``FreeNASDispatcher``, and add a switch-case to look for the ActionType
 we defined in our ServicesActionCreator.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         ServicesStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
@@ -553,7 +553,7 @@ we defined in our ServicesActionCreator.
 
 Oh, and don't forget your ``module.exports``.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         module.exports = ServicesStore;
@@ -569,7 +569,7 @@ Finally, we have some stuff to plumb into the React Lifecycle.
 Let's go back up and continue to fill in our list of requires. We should
 now only be missing the Item template.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         var ServicesMiddleware = require("../middleware/ServicesMiddleware");
@@ -583,7 +583,7 @@ In this case, it's pretty simple, but if we needed to ``concat()`` data
 from another store, or some hard-coded values, or do some other data
 merging, this would be a very convenient place.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         function getServicesFromStore() {
@@ -594,7 +594,7 @@ merging, this would be a very convenient place.
 
 Now we can fill in the lifecycle methods.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
           getInitialState: function() {
@@ -637,7 +637,7 @@ create just so that we have a single function for updating our
 controller-view's state. For now, it's basically the same thing we did
 in ``getInitialState``.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         , handleServicesChange: function() {
@@ -653,7 +653,7 @@ going to pay off, as we plug everything into the Viewer component.
 
 As before, we're still missing the ItemView, which the Viewer will need.
 
-.. code:: javascript
+.. code-block:: javascript
 
 
         , render: function() {
@@ -677,7 +677,7 @@ A Note on Debugging
 Now that we're ready to actually check our work, it can be helpful to
 change this value in ``MiddlewareClient.js``:
 
-.. code:: javascript
+.. code-block:: javascript
 
 
           // Change DEBUG to `true` to activate verbose console messages
