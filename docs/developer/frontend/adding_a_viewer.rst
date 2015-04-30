@@ -110,103 +110,109 @@ preselected keys.
 The current functional information contained by the display JSON file is
 something like this:
 
-.. code:: javascript
+.. code-block:: json
 
+  [{
+      "primaryKey"   : "name"
+    , "secondaryKey" : "id"
+    , "selectionKey" : "name"
+    , "uniqueKey"    : "id"
+    , "dataKeys": [
+        {
+            "key"         : "name"
+          , "name"        : "Group Name"
+          , "type"        : "string"
+          , "formElement" : "input"
+          , "mutable"     : true
+          , "defaultCol"  : true
+        }
+        // ...
 
-        [{
-            "primaryKey"   : "username"   // Displays prominently, is searchable
-          , "secondaryKey" : "full_name"  // Also searchable, displays as companion text
-          , "selectionKey" : "username"   // Used in URLs and other selections
-          , "imageKey"     : "user_icon"  // (Optional) A base64 encoded string to use as the image
-          , "uniqueKey"    : "id"         // (Optional) A reliably unique key
-          , "dataKeys": [
-              {
-                  "key"         : "builtin"       // One of the keys in a returned object
-                , "name"        : "Built-in User" // Human readable name for key
-                , "type"        : "boolean"       // (Optional) Used for type checking
-                , "defaultCol"  : true            // Should be used as a column in TableViewer by default
-              }
+      ]
+  }]
 
-              // ...
+When looking at the Middleware Server response for
+``groups.query``, we can see this:
 
-            ]
-        }]
+.. code-block:: json
 
-So then, when looking at the Middleware Server response for
-``service.query``, we can see this:
+  [
+    // ...
+    {
+      "name": "sshd",
+      "updated-at": 1429629023.899011,
+      "created-at": 1429629023.899011,
+      "builtin": true,
+      "id": 22
+    },
+    {
+      "name": "daemon",
+      "updated-at": 1429629023.89957,
+      "created-at": 1429629023.89957,
+      "builtin": true,
+      "id": 1
+    },
+    {
+      "name": "wheel",
+      "updated-at": 1429629023.900156,
+      "created-at": 1429629023.900156,
+      "builtin": true,
+      "id": 0
+    },
+    {
+      "name": "sys",
+      "updated-at": 1429629023.900732,
+      "created-at": 1429629023.900732,
+      "builtin": true,
+      "id": 3
+    },
+    // ...
+  ]
 
-.. code:: javascript
+Based on that, we can see that we have five keys: ``name``, ``updated-at``,
+``created-at``, ``builtin``, and ``id``. Some schema, like that for users, have
+optional fields that are only provided if they are in use.
 
+Additionally, there's information there we likely don't care about. Since we
+don't plan to display creation and modification times for groups in the UI,
+we don't need to include them in the format JSON. Naturally, this depends on the
+design of the view you're implementing.
 
-        [
-          {
-              "state": "stopped",
-              "name": "ftp"
-          },
-          {
-              "state": "running",
-              "pid": 629,
-              "name": "devd"
-          },
-          {
-              "state": "stopped",
-              "name": "snmp"
-          },
-          {
-              "state": "running",
-              "pid": 939,
-              "name": "nginx"
-          },
-          {
-              "state": "running",
-              "pid": 715,
-              "name": "syslog"
-          },
-          {
-              "state": "running",
-              "pid": 1032,
-              "name": "sshd"
-          },
-          {
-              "state": "unknown",
-              "name": "nfs"
-          }
-        ]
+Therefore, ``groups-display.json`` might look like:
 
-Based on that, we can see that we have three keys: ``state``, ``pid``,
-and ``name``. ``pid`` is clearly only provided if the state is "running"
-- something we'll want to take into account later on.
+.. code-block:: json
 
-Therefore, ``services-display.json`` might look like:
-
-.. code:: javascript
-
-
-        [{
-            "primaryKey"   : "name"
-          , "secondaryKey" : "state"
-          , "selectionKey" : "name"
-          , "dataKeys": [
-              {
-                  "key"         : "name"
-                , "name"        : "Service"
-                , "type"        : "string"
-                , "defaultCol"  : true
-              }
-            , {
-                  "key"         : "state"
-                , "name"        : "Status"
-                , "type"        : "string"
-                , "defaultCol"  : true
-              }
-            , {
-                  "key"         : "pid"
-                , "name"        : "PID"
-                , "type"        : "number"
-                , "defaultCol"  : true
-              }
-          ]
-    }]
+  [{
+      "primaryKey"   : "name"
+    , "secondaryKey" : "id"
+    , "selectionKey" : "name"
+    , "uniqueKey"    : "id"
+    , "dataKeys": [
+        {
+            "key"         : "name"
+          , "name"        : "Group Name"
+          , "type"        : "string"
+          , "formElement" : "input"
+          , "mutable"     : true
+          , "defaultCol"  : true
+        }
+      , {
+            "key"         : "builtin"
+          , "name"        : "Built-in Group"
+          , "type"        : "boolean"
+          , "formElement" : "checkbox"
+          , "mutable"     : false
+          , "defaultCol"  : true
+        }
+      , {   "key"         : "id"
+          , "name"        : "Group ID"
+          , "type"        : "number"
+          , "formElement" : "input"
+          , "mutable"     : false
+          , "defaultCol"  : true
+        }
+    ]
+  }]
 
 It's then required, like everything else:
 
