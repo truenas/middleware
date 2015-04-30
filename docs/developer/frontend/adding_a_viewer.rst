@@ -4,10 +4,11 @@
 Adding a New Viewer
 ===================
 
-Corey Vixie, Jan. 13, 2015
-
-In this guide (and accompanying screencast), I'll explain the process of
-creating a new Viewer implementation.
+This guide explains the process of creating a new view in the FreeNAS 10 GUI.
+A view is used to display data and will usually provide means to search through
+a list of items and edit each one. Examples of views are [FreeNAS URL]/Accounts/Users
+and [FreeNAS URL]/Services. This guide will use the implmentation of the Groups
+view as an example to show the entire implmentation process from beginning to end.
 
 What is the Viewer?
 -------------------
