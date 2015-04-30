@@ -35,36 +35,32 @@ dictate the steps we work through as we create the new Viewer instance.
 A New Viewer
 ------------
 
-A completely blank, basic view might look something like the Services
-view, below. This is currently doing nothing but displaying an ``<h2>``
-tag within ``<main>`` - which is the expected "base" tag in any Primary
-View.
+A completely blank, basic view might look something like the example below.
+This is currently doing nothing but displaying an ``<h2>`` tag within ``<main>``
+- which is the expected "base" tag in any Primary View.
 
-.. code:: javascript
+.. code-block:: javascript
 
+  // Groups
+  // ======
+  // Viewer for FreeNAS groups.
 
-        /** @jsx React.DOM */
-
-        // Services
-        // =======
-        // Viewer for individual services used by FreeNAS 10
-
-        "use strict";
+  "use strict";
 
 
-        var React = require("react");
+  var React = require("react");
 
-        var Services = React.createClass({
-          render: function() {
-            return (
-              <main>
-                <h2>Services View</h2>
-              </main>
-            );
-          }
-        });
+  var Groups = React.createClass({
+    render: function() {
+      return (
+        <main>
+          <h2>Groups View</h2>
+        </main>
+      );
+    }
+  });
 
-        module.exports = Services;
+  module.exports = Groups;
 
 Fleshing out a View
 -------------------
@@ -80,16 +76,16 @@ controller-view. The Viewer component itself is required, and eventual
 references will be made to the item view template, the Middleware
 Utility Class, and the Flux Store which will have the data we want.
 
-.. code:: javascript
+.. code-block:: javascript
 
+  var React = require("react");
 
-        var React = require("react");
+  var Viewer = require("../components/Viewer");
 
-        var Viewer   = require("../components/Viewer");
-        // var ServiceView =
+  // var GroupItem =
 
-        // var ServicesMiddleware =
-        // var ServicesStore      =
+  // var GroupsMiddleware =
+  // var GroupsStore      =
 
 Include Format Data
 ~~~~~~~~~~~~~~~~~~~
