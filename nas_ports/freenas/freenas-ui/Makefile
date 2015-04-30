@@ -17,7 +17,7 @@ USE_XZ=		yes
 
 USE_PYTHON=	yes
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django \
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django16 \
 	${PYTHON_PKGNAMEPREFIX}south:${PORTSDIR}/databases/py-south \
 	${PYTHON_PKGNAMEPREFIX}django-tastypie:${PORTSDIR}/www/py-django-tastypie \
 	${PYTHON_PKGNAMEPREFIX}ipaddr:${PORTSDIR}/devel/py-ipaddr \
