@@ -28,6 +28,7 @@
 import os
 import re
 import netif
+import time
 from resources import Resource
 from event import EventSource
 from task import Provider
@@ -38,15 +39,18 @@ from lib import geom
 from lib.freebsd import get_sysctl
 from lxml import etree
 
+
 @description("Provides information about devices installed in the system")
 class DeviceInfoPlugin(Provider):
     def initialize(self, context):
         # Enumerate disks and network interface and create initial resources
         for disk in self._get_class_disk():
-            context.dispatcher.register_resource(Resource('disk:{0}'.format(disk['path'])))
+            context.dispatcher.register_resource(
+                Resource('disk:{0}'.format(disk['path'])))
 
         for net in self._get_class_network():
-            context.dispatcher.register_resource(Resource('net:{0}'.format(net['name'])))
+            context.dispatcher.register_resource(
+                Resource('net:{0}'.format(net['name'])))
 
     @description("Returns list of available device classes")
     @returns(h.array(str))
@@ -90,7 +94,7 @@ class DeviceInfoPlugin(Provider):
             result.append({
                 "path": os.path.join("/dev", device),
                 "name": device,
-                "mediasize" : mediasize,
+                "mediasize": mediasize,
                 "description": descr
             })
 
@@ -184,29 +188,37 @@ class DevdEventSource(EventSource):
         self.emit_event(event_mapping[args["type"]][0], **params)
 
     def run(self):
-        self.socket = socket.socket(family=socket.AF_UNIX)
-        self.socket.connect("/var/run/devd.pipe")
-
-        f = self.socket.makefile("r", 0)
         while True:
-            line = f.readline()
-            if line is None:
-                # Connection closed - we need to reconnect
-                return
+            try:
+                self.socket = socket.socket(family=socket.AF_UNIX)
+                self.socket.connect("/var/run/devd.pipe")
+                f = self.socket.makefile("r", 0)
+                # with self.socket.makefile("r", 0) as f:
+                while True:
+                    line = f.readline()
+                    if line is None:
+                        # Connection closed - we need to reconnect
+                        # return
+                        raise
 
-            args = self.__tokenize(line[1:].strip())
-            if "system" not in args:
-                # WTF
-                continue
+                    args = self.__tokenize(line[1:].strip())
+                    if "system" not in args:
+                        # WTF
+                        continue
 
-            if args["system"] == "DEVFS":
-                self.__process_devfs(args)
+                    if args["system"] == "DEVFS":
+                        self.__process_devfs(args)
 
-            if args["system"] == "IFNET":
-                self.__process_ifnet(args)
+                    if args["system"] == "IFNET":
+                        self.__process_ifnet(args)
 
-            if args["system"] == "ZFS":
-                self.__process_zfs(args)
+                    if args["system"] == "ZFS":
+                        self.__process_zfs(args)
+            except:
+                # sleep for a half a second and retry
+                self.dispatcher.logger.debug(
+                    '/var/run/devd.pipe timedout/was not available retrying in 0.5 seconds')
+                time.sleep(0.5)
 
 
 def _depends():
@@ -218,7 +230,8 @@ def _init(dispatcher):
         if args['name'] == 'devd':
             # devd is running, kick in DevdEventSource
             dispatcher.register_event_source('system.device', DevdEventSource)
-            dispatcher.unregister_event_handler('service.started', on_service_started)
+            dispatcher.unregister_event_handler(
+                'service.started', on_service_started)
 
     dispatcher.register_schema_definition('disk-device', {
         'type': 'object',
@@ -248,7 +261,8 @@ def _init(dispatcher):
     if os.path.exists('/var/run/devd.pipe'):
         dispatcher.register_event_source('system.device', DevdEventSource)
     else:
-        dispatcher.register_event_handler('service.started', on_service_started)
+        dispatcher.register_event_handler(
+            'service.started', on_service_started)
 
     dispatcher.register_provider('system.device', DeviceInfoPlugin)
 
