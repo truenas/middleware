@@ -91,7 +91,7 @@ Utility Class, and the Flux Store which will have the data we want.
 Include Format Data
 ~~~~~~~~~~~~~~~~~~~
 
-*WARNING:* This is subject to change.
+.. warning:: This is subject to change.
 
 Currently, each Viewer instance relies on a JSON file with some display
 information. Really, this could be provided any other way. In the
