@@ -823,5 +823,16 @@
         <text>Delete</text>
       </controlProperties>
     </control>
+    <control controlID="570" controlTypeID="com.balsamiq.mockups::StickyNote" x="1208" y="287" w="183" h="107" measuredW="109" measuredH="123" zOrder="51" locked="false" isInGroup="-1">
+      <controlProperties>
+        <text>This%20should%20be%20unified%20through%20all%20gui.%20ON/OFF%20switch%20or%20checkbox</text>
+      </controlProperties>
+    </control>
+    <control controlID="571" controlTypeID="com.balsamiq.mockups::Arrow" x="1040" y="363" w="184" h="104" measuredW="150" measuredH="100" zOrder="52" locked="false" isInGroup="-1">
+      <controlProperties>
+        <direction>bottom</direction>
+        <text/>
+      </controlProperties>
+    </control>
   </controls>
 </mockup>
