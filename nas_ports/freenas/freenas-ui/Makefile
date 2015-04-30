@@ -13,26 +13,24 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS UI
 
-USE_XZ=		yes
+USES=		python
 
-USE_PYTHON=	yes
-
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django:${PORTSDIR}/www/py-django16 \
-	${PYTHON_PKGNAMEPREFIX}south:${PORTSDIR}/databases/py-south \
-	${PYTHON_PKGNAMEPREFIX}django-tastypie:${PORTSDIR}/www/py-django-tastypie \
-	${PYTHON_PKGNAMEPREFIX}ipaddr:${PORTSDIR}/devel/py-ipaddr \
-	${PYTHON_PKGNAMEPREFIX}bsddb3:${PORTSDIR}/databases/py-bsddb3 \
-	${PYTHON_PKGNAMEPREFIX}libxml2:${PORTSDIR}/textproc/py-libxml2 \
-	${PYTHON_PKGNAMEPREFIX}polib:${PORTSDIR}/devel/py-polib \
-	${PYTHON_PKGNAMEPREFIX}ldap:${PORTSDIR}/net/py-ldap2 \
-	${PYTHON_PKGNAMEPREFIX}dojango:${PORTSDIR}/www/py-dojango \
-	${PYTHON_PKGNAMEPREFIX}sysctl:${PORTSDIR}/devel/py-sysctl \
-	${PYTHON_PKGNAMEPREFIX}lxml:${PORTSDIR}/devel/py-lxml \
-	${PYTHON_PKGNAMEPREFIX}xml:${PORTSDIR}/textproc/py-xml \
-	${PYTHON_PKGNAMEPREFIX}bonjour:${PORTSDIR}/dns/py-bonjour \
-	${PYTHON_PKGNAMEPREFIX}dnspython:${PORTSDIR}/dns/py-dnspython \
-	${PYTHON_PKGNAMEPREFIX}requests:${PORTSDIR}/www/py-requests \
-	${PYTHON_PKGNAMEPREFIX}openssl:${PORTSDIR}/security/py-openssl \
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
+	${PYTHON_PKGNAMEPREFIX}south>0:${PORTSDIR}/databases/py-south \
+	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:${PORTSDIR}/www/py-django-tastypie \
+	${PYTHON_PKGNAMEPREFIX}ipaddr>0:${PORTSDIR}/devel/py-ipaddr \
+	${PYTHON_PKGNAMEPREFIX}bsddb3>0:${PORTSDIR}/databases/py-bsddb3 \
+	${PYTHON_PKGNAMEPREFIX}libxml2>0:${PORTSDIR}/textproc/py-libxml2 \
+	${PYTHON_PKGNAMEPREFIX}polib>0:${PORTSDIR}/devel/py-polib \
+	${PYTHON_PKGNAMEPREFIX}ldap2>0:${PORTSDIR}/net/py-ldap2 \
+	${PYTHON_PKGNAMEPREFIX}dojango>0:${PORTSDIR}/www/py-dojango \
+	${PYTHON_PKGNAMEPREFIX}sysctl>0:${PORTSDIR}/devel/py-sysctl \
+	${PYTHON_PKGNAMEPREFIX}lxml>0:${PORTSDIR}/devel/py-lxml \
+	${PYTHON_PKGNAMEPREFIX}xml>0:${PORTSDIR}/textproc/py-xml \
+	${PYTHON_PKGNAMEPREFIX}bonjour>0:${PORTSDIR}/dns/py-bonjour \
+	${PYTHON_PKGNAMEPREFIX}dnspython>0:${PORTSDIR}/dns/py-dnspython \
+	${PYTHON_PKGNAMEPREFIX}requests>0:${PORTSDIR}/www/py-requests \
+	${PYTHON_PKGNAMEPREFIX}openssl>0:${PORTSDIR}/security/py-openssl \
 	${PYTHON_PKGNAMEPREFIX}pycrypto>0:${PORTSDIR}/security/py-pycrypto \
 	${PYTHON_PKGNAMEPREFIX}simplejson>0:${PORTSDIR}/devel/py-simplejson \
 	${PYTHON_PKGNAMEPREFIX}sqlparse>0:${PORTSDIR}/databases/py-sqlparse \
