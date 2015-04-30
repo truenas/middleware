@@ -14,6 +14,8 @@ bootstrap_start()
 	# so datastore and dispatcher can start
 	/sbin/ifconfig lo0 inet 127.0.0.1 netmask 255.0.0.0 up
 	/sbin/mount -uw /
+	# Invoking "/etc/rc.d/cleanvar" manually before the dispatcher starts
+	/usr/sbin/service cleanvar start
 }
 
 name="ix-bootstrap"

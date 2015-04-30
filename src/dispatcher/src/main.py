@@ -66,7 +66,6 @@ from services import ManagementService, EventService, TaskService, PluginService
 from api.handler import ApiHandler
 from balancer import Balancer
 from auth import PasswordAuthenticator, TokenStore, Token, TokenException
-from lib.system import system
 
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
@@ -1040,9 +1039,6 @@ def main():
     if args.log_file:
         handler = logging.handlers.RotatingFileHandler(args.log_file)
         logging.root.addHandler(handler)
-
-    # Invoking "/etc/rc.d/cleanvar" manually before the dispatcher starts
-    system('/usr/sbin/service', 'cleanvar', 'start')
 
     # Initialization and dependency injection
     d = Dispatcher()
