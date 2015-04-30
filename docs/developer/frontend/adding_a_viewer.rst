@@ -24,12 +24,9 @@ the propagation of data to its children.
 Flux
 ----
 
-This guide will rely heavily on the `FreeNAS Flux
-Architecture <flux.md>`__ documentation. It's worth having the full
+This guide will rely heavily on :ref:`Flux`. It's worth having that full
 guide open alongside this one. This diagram, in particular, is going to
 dictate the steps we work through as we create the new Viewer instance.
->\ *I think that `FreeNAS Flux Architecture <flux.md>`__ should be read
-before reading this document.*
 
 .. figure:: images/architecture/flux/freenas_flux.png
    :alt: A high level data flow diagram for FreeNAS 10's UI

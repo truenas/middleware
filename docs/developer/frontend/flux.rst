@@ -1,8 +1,11 @@
 .. highlight:: javascript
    :linenothreshold: 5
 
-Understanding the Flux Application Architecture
-===============================================
+.. index:: Flux
+.. _Flux:
+
+The Flux Application Architecture
+=================================
 
 .. figure:: images/architecture/flux/freenas_flux.png
    :alt: A high level data flow diagram for FreeNAS 10's UI
