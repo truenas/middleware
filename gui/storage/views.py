@@ -977,7 +977,12 @@ def disk_wipe(request, devname):
 
 
 def disk_wipe_progress(request, devname):
-
+    details = 'Starting Disk Wipe'
+    indeterminate = True
+    progress = 0
+    step = 1
+    finished = False
+    error = False
     pidfile = '/var/tmp/disk_wipe_%s.pid' % (devname, )
     if not os.path.exists(pidfile):
         return HttpResponse('new Object({state: "starting"});')
@@ -988,6 +993,8 @@ def disk_wipe_progress(request, devname):
     try:
         os.kill(int(pid), signal.SIGINFO)
         received = 0
+        size = 0
+        indeterminate = False
         with open('/var/tmp/disk_wipe_%s.progress' % (devname, ), 'r') as f:
             data = f.read()
             transf = re.findall(
@@ -1002,14 +1009,33 @@ def disk_wipe_progress(request, devname):
                 output = pipe.communicate()[0]
                 size = output.split()[2]
                 received = transf[-1]
-        return HttpResponse(
-            'new Object({state: "uploading", received: %s, size: %s});' % (
-                received,
-                size))
+                details = 'Wiping Disk...'
+                if received == size:
+                    finished = True
+                    progress = 100
+                else:
+                    try:
+                        progress = int(float(received)/float(size) * 100)
+                    except:
+                        pass
 
     except Exception, e:
         log.warn("Could not check for disk wipe progress: %s", e)
-    return HttpResponse('new Object({state: "starting"});')
+        indeterminate = True
+
+    data = {
+            'error': error,
+            'finished': finished,
+            'indeterminate': indeterminate,
+            'percent': progress,
+            'step': step,
+            'mode': "single",
+            'details': details
+        }
+    return HttpResponse(
+        json.dumps(data),
+        content_type='application/json',
+    )
 
 
 def volume_create_passphrase(request, object_id):
