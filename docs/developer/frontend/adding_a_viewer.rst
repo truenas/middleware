@@ -7,8 +7,8 @@ Adding a New Viewer
 This guide explains the process of creating a new view in the FreeNAS 10 GUI.
 A view is used to display data and will usually provide means to search through
 a list of items and edit each one. Examples of views are [FreeNAS URL]/Accounts/Users
-and [FreeNAS URL]/Services. This guide will use the implmentation of the Groups
-view as an example to show the entire implmentation process from beginning to end.
+and [FreeNAS URL]/Services. This guide will largely use the implmentation of the Groups
+view as an example to show the entire process from beginning to end.
 
 What is the Viewer?
 -------------------
@@ -43,26 +43,31 @@ This is currently doing nothing but displaying an ``<h2>`` tag within ``<main>``
 
 .. code-block:: javascript
 
-  // Groups
+  // SystemTools
   // ======
-  // Viewer for FreeNAS groups.
+  //
 
   "use strict";
 
 
   var React = require("react");
 
-  var Groups = React.createClass({
+  var SystemTools = React.createClass({
     render: function() {
       return (
         <main>
-          <h2>Groups View</h2>
+          <h2>System Tools View</h2>
         </main>
       );
     }
   });
 
-  module.exports = Groups;
+  module.exports = SystemTools;
+
+.. figure:: images/viewer/system_tools_view_blank.png
+   :alt: An example of a blank view.
+
+   An example of a completely blank view.
 
 Fleshing out a View
 -------------------
