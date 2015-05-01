@@ -17,7 +17,6 @@ cache.get_apps()
 
 
 from freenasUI.middleware import zfs
-from freenasUI.middleware.notifier import notifier
 
 
 def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None, initiator=None):
@@ -34,9 +33,9 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
             auth_type = "Mutual"
             cf_contents.append("\tchap-mutual %s \"%s\" %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
-                notifier().pwenc_decrypt(auth.iscsi_target_auth_secret),
+                auth.iscsi_target_auth_secret,
                 auth.iscsi_target_auth_peeruser,
-                notifier().pwenc_decrypt(auth.iscsi_target_auth_peersecret),
+                auth.iscsi_target_auth_peersecret,
             ))
         elif auth_type != "Mutual":
             rv = True
