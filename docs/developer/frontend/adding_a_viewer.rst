@@ -126,8 +126,7 @@ The Viewer React component expects certain props.
 
 We're going to construct them one at a time.
 
-First we'll add some of the boilerplate that each Viewer instance
-requires.
+First we'll add some of the boilerplate that each Viewer instance requires.
 
 Require the Modules
 ~~~~~~~~~~~~~~~~~~~
@@ -147,6 +146,19 @@ Utility Class, and the Flux Store which will have the data we want.
 
   // var GroupsMiddleware =
   // var GroupsStore      =
+
+defaultMode
+~~~~~~~~~~~
+
+The Viewer supports three view modes: Detail, Icon, and Table. ``defaultMode`` is
+simply a string naming the desired default mode. This string should be "detail",
+"icon", or "table". If this prop is not submitted, the default is "detail".
+
+For more information on each of the view modes and how they display data, see the
+docs for :ref:`Viewer`.
+
+
+.. note:: There are plans to implement a fourth "heirarchical" mode which may or may not ever come to pass.
 
 Include Format Data
 ~~~~~~~~~~~~~~~~~~~
