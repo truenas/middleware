@@ -173,6 +173,14 @@ docs for :ref:`Viewer`.
 
 .. note:: There are plans to implement a fourth "heirarchical" mode which may or may not ever come to pass.
 
+addEntity
+^^^^^^^^^
+
+``addEntity`` is simply a string to display on the button for adding a new item.
+Not all views will need an addEntity entry. If addEntity is not provided in
+``viewData``, the button will simply not appear and functionality to add an item
+will not be available from the GUI.
+
 Include Format Data
 ~~~~~~~~~~~~~~~~~~~
 
