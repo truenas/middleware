@@ -715,9 +715,8 @@ now only be missing the Item template.
 
 .. code-block:: javascript
 
-
-        var ServicesMiddleware = require("../middleware/ServicesMiddleware");
-        var ServicesStore      = require("../stores/ServicesStore");
+  var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
+  var GroupsStore      = require("../../stores/GroupsStore");
 
 First, let's make a private method that we can use to quickly get the
 list of services out of the store, whenever we need to (we'll know we
