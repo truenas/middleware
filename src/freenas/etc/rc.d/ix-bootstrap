@@ -16,6 +16,7 @@ bootstrap_start()
 	/sbin/mount -uw /
 	# Invoking "/etc/rc.d/cleanvar" manually before the dispatcher starts
 	/usr/sbin/service cleanvar start
+	/usr/sbin/service ldconfig start
 }
 
 name="ix-bootstrap"
