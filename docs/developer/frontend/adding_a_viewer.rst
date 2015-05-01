@@ -456,7 +456,7 @@ Middleware Utility Class
 ------------------------
 
 In this class, we just need a single public method connected to the
-Middleware Client with a callback to the ServicesActionCreators (which
+Middleware Client with a callback to the GroupsActionCreators (which
 also don't exist yet).
 
 Looking at the middleware debugger, we can see that the right call is
@@ -467,25 +467,43 @@ Our Middleware Utility Class looks something like this:
 
 .. code-block:: javascript
 
+// Groups Middleware
+// ================
+// Handle the lifecycle and event hooks for the Groups channel of the middleware
 
-        // Services Middleware
-        // ===================
+"use strict";
 
-        "use strict";
+var MiddlewareClient = require("../middleware/MiddlewareClient");
 
-        var MiddlewareClient = require("../middleware/MiddlewareClient");
+var GroupsActionCreators = require("../actions/GroupsActionCreators");
 
-        var ServicesActionCreators = require("../actions/ServicesActionCreators");
+module.exports = {
 
-        module.exports = {
+    requestGroupsList: function() {
+      MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
+        GroupsActionCreators.receiveGroupsList( groupsList );
+      });
+    }
 
-          requestServicesList: function() {
-              MiddlewareClient.request( "service.query", [], function ( rawServicesList ) {
-                ServicesActionCreators.receiveServicesList( rawServicesList );
-              });
-          }
+  , createGroup: function( newGroupProps ) {
+      MiddlewareClient.request( "task.submit", ["groups.create" , [ newGroupProps ] ], function ( taskID, groupID ) {
+        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+      });
+    }
 
-        };
+  , updateGroup: function (groupID, props) {
+      MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function ( taskID ) {
+        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+      });
+    }
+
+  , deleteGroup: function( groupID ) {
+      MiddlewareClient.request( "task.submit", ["groups.delete", [ groupID ] ], function ( taskID, groupID ) {
+        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+      });
+    }
+
+};
 
 ActionCreators
 --------------
