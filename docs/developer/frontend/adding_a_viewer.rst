@@ -484,43 +484,43 @@ Our Middleware Utility Class looks something like this:
 
 .. code-block:: javascript
 
-// Groups Middleware
-// ================
-// Handle the lifecycle and event hooks for the Groups channel of the middleware
+  // Groups Middleware
+  // ================
+  // Handle the lifecycle and event hooks for the Groups channel of the middleware
 
-"use strict";
+  "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+  var MiddlewareClient = require("../middleware/MiddlewareClient");
 
-var GroupsActionCreators = require("../actions/GroupsActionCreators");
+  var GroupsActionCreators = require("../actions/GroupsActionCreators");
 
-module.exports = {
+  module.exports = {
 
-    requestGroupsList: function() {
-      MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
-        GroupsActionCreators.receiveGroupsList( groupsList );
-      });
-    }
+      requestGroupsList: function() {
+        MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
+          GroupsActionCreators.receiveGroupsList( groupsList );
+        });
+      }
 
-  , createGroup: function( newGroupProps ) {
-      MiddlewareClient.request( "task.submit", ["groups.create" , [ newGroupProps ] ], function ( taskID, groupID ) {
-        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-      });
-    }
+    , createGroup: function( newGroupProps ) {
+        MiddlewareClient.request( "task.submit", ["groups.create" , [ newGroupProps ] ], function ( taskID, groupID ) {
+          GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+        });
+      }
 
-  , updateGroup: function (groupID, props) {
-      MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function ( taskID ) {
-        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-      });
-    }
+    , updateGroup: function (groupID, props) {
+        MiddlewareClient.request( "task.submit", ["groups.update", [groupID, props]], function ( taskID ) {
+          GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+        });
+      }
 
-  , deleteGroup: function( groupID ) {
-      MiddlewareClient.request( "task.submit", ["groups.delete", [ groupID ] ], function ( taskID, groupID ) {
-        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-      });
-    }
+    , deleteGroup: function( groupID ) {
+        MiddlewareClient.request( "task.submit", ["groups.delete", [ groupID ] ], function ( taskID, groupID ) {
+          GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+        });
+      }
 
-};
+  };
 
 ActionCreators
 --------------
