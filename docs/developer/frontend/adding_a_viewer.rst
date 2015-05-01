@@ -69,8 +69,13 @@ This is currently doing nothing but displaying an ``<h2>`` tag within ``<main>``
 
    An example of a completely blank view.
 
-Fleshing out a View
--------------------
+The example above isn't using the Viewer yet, just rendering some html on its
+own. To actually use the Viewer, we're going to need all its props and a number
+of other modules and functions. This begins our journey through the Flux
+architecture cycle.
+
+.. figure:: images/architecture/flux/react_view.png
+   :alt: The React View
 
 The Viewer React component expects certain props.
 
