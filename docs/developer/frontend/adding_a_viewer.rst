@@ -120,7 +120,7 @@ The Viewer React component expects certain props.
     * ``defaultGroups`` - not currently in use?
     * ``defaultCollapsed`` - an array of strings representing groups that should
       begin in the collapsed state in the sidebar
-* ``displayData`` - not currently in use. Maybe have been obsoleted by moving
+* ``displayData`` - not currently in use. May have been obsoleted by moving
   ``format`` into ``viewdata``
 
 
