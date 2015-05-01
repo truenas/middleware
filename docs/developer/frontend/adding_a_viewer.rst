@@ -98,6 +98,9 @@ also require the already-established UsersMiddleware and UsersStore modules.
   var UsersMiddleware = require("../../middleware/UsersMiddleware");
   var UsersStore      = require("../../stores/UsersStore");
 
+Viewer Props
+~~~~~~~~~~~~
+
 The Viewer React component expects certain props.
 
 .. code-block:: javascript
@@ -158,7 +161,7 @@ The Viewer React component expects certain props.
 We're going to construct them one at a time.
 
 defaultMode
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 The Viewer supports three view modes: Detail, Icon, and Table. ``defaultMode`` is
 simply a string naming the desired default mode. This string should be "detail",
