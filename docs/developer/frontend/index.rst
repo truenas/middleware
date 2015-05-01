@@ -7,13 +7,14 @@ FreeNAS 10 Frontend Development Guide
 .. toctree::
    :maxdepth: 1
 
+   Glossary of Technologies <tech_glossary>
    Flux Architecture <flux>
    Webapp Architecture <webapp>
    Middleware Client <middleware>
-   Glossary of Technologies <tech_glossary>
    First-Time Setup <setup>
    The Live Development Environment <develop>
    Widgets <widgets>
+   The Viewer Component <viewer>
    Adding a Viewer <adding_a_viewer>
 
 
