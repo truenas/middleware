@@ -21,3 +21,4 @@
 #9480	Bug	No priority	Kerberos keytabs not removed from /etc/krb5.keytab when choosing "delete" in GUI
 #9483	Bug	Nice to have	'scrub' should not be installed to sbin
 #9493	Bug	Critical	Resolves an issue where deleting a file during an update that doesn't require a reboot would cause an exception.
+#9500	Bug	Expected	Fix Disk Wipe progress view
