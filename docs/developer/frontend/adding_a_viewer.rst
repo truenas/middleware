@@ -77,6 +77,27 @@ architecture cycle.
 .. figure:: images/architecture/flux/react_view.png
    :alt: The React View
 
+Require the Modules
+~~~~~~~~~~~~~~~~~~~
+
+The first step is to require everything we're about to need for this
+controller-view. The Viewer component itself is required, and eventual
+references will be made to the Middleware Utility Class the Flux Store, neither
+of which exist yet. Since this view will also interact with user data, we should
+also require the already-established UsersMiddleware and UsersStore modules.
+
+.. code-block:: javascript
+
+  var React = require("react");
+
+  var Viewer = require("../components/Viewer");
+
+  // var GroupsMiddleware =
+  // var GroupsStore      =
+
+  var UsersMiddleware = require("../../middleware/UsersMiddleware");
+  var UsersStore      = require("../../stores/UsersStore");
+
 The Viewer React component expects certain props.
 
 .. code-block:: javascript
@@ -135,27 +156,6 @@ The Viewer React component expects certain props.
 
 
 We're going to construct them one at a time.
-
-First we'll add some of the boilerplate that each Viewer instance requires.
-
-Require the Modules
-~~~~~~~~~~~~~~~~~~~
-
-The first step is to require everything we're about to need for this
-controller-view. The Viewer component itself is required, and eventual
-references will be made to the item view template, the Middleware
-Utility Class, and the Flux Store which will have the data we want.
-
-.. code-block:: javascript
-
-  var React = require("react");
-
-  var Viewer = require("../components/Viewer");
-
-  // var GroupItem =
-
-  // var GroupsMiddleware =
-  // var GroupsStore      =
 
 defaultMode
 ~~~~~~~~~~~
