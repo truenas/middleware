@@ -590,56 +590,50 @@ the future.
 
 .. code-block:: javascript
 
+  // Groups Flux Store
+  // -----------------
 
-        // Services Flux Store
-        // ----------------
-
-        "use strict";
+  "use strict";
 
 It uses Lodash, mostly for its ``_.assign()`` function.
 
 .. code-block:: javascript
 
-
-        var _            = require("lodash");
+  var _            = require("lodash");
 
 One of the most important functions that a Flux store performs is that
 it also behaves as an EventEmitter.
 
 .. code-block:: javascript
 
-
-        var EventEmitter = require("events").EventEmitter;
+  var EventEmitter = require("events").EventEmitter;
 
 It requires the Dispatcher and the Constants (for the ActionTypes).
 
 .. code-block:: javascript
 
+  var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
+  var FreeNASConstants  = require("../constants/FreeNASConstants");
 
-        var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-        var FreeNASConstants  = require("../constants/FreeNASConstants");
-
-        var ActionTypes  = FreeNASConstants.ActionTypes;
+  var ActionTypes  = FreeNASConstants.ActionTypes;
 
 We need to define a change event, just so that all the EventEmitter
 stuff can all use the same one.
 
 .. code-block:: javascript
 
+  var CHANGE_EVENT = "change";
 
-        var CHANGE_EVENT = "change";
-
-And finally, we'll define ``_services``, which is the actual beating
+And finally, we'll define ``_groups``, which is the actual beating
 heart of the Flux Store. This variable is what will ACTUALLY be modified
 and updated when the Middleware sends new data. It's just a normal
 JavaScript object with no hidden attributes or special sauce.
 
 .. code-block:: javascript
 
+  var _groups = [];
 
-        var _services = [];
-
-Now, we create the object for ``ServicesStore`` and assign the
+Now, we create the object for ``GroupsStore`` and assign the
 EventEmitter prototype to it (this gives it all the EventEmitter
 methods).
 
@@ -648,62 +642,68 @@ internally), a way for a React component to "listen" to the store and
 know when it updates, and a way for it to stop doing that.
 
 On top of those, we need what we came here for - a way to get an
-up-to-date list of the services, right out of the ``_services`` array.
+up-to-date list of the groups, right out of the ``_groups`` object.
 
 .. code-block:: javascript
 
+  var GroupsStore = _.assign( {}, EventEmitter.prototype, {
 
-        var ServicesStore = _.assign( {}, EventEmitter.prototype, {
+      emitChange: function() {
+        this.emit( CHANGE_EVENT );
+      }
 
-            emitChange: function() {
-              this.emit( CHANGE_EVENT );
-            }
+    , addChangeListener: function( callback ) {
+        this.on( CHANGE_EVENT, callback );
+      }
 
-          , addChangeListener: function( callback ) {
-              this.on( CHANGE_EVENT, callback );
-            }
+    , removeChangeListener: function( callback ) {
+        this.removeListener( CHANGE_EVENT, callback );
+      }
 
-          , removeChangeListener: function( callback ) {
-              this.removeListener( CHANGE_EVENT, callback );
-            }
+    , getAllGroups: function() {
+        return _groups;
+      }
 
-          , getAllServices: function() {
-              return _services;
-            }
+  });
 
-        });
-
-Now we just need to register ``ServicesStore`` with the
+Now we just need to register ``GroupsStore`` with the
 ``FreeNASDispatcher``, and add a switch-case to look for the ActionType
-we defined in our ServicesActionCreator.
+we defined in our ``GroupsActionCreator``.
 
 .. code-block:: javascript
 
+  GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+    var action = payload.action;
 
-        ServicesStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-          var action = payload.action;
+    switch( action.type ) {
 
-          switch( action.type ) {
+      case ActionTypes.RECEIVE_GROUPS_LIST:
 
-            case ActionTypes.RECEIVE_RAW_SERVICES:
-              _services = action.rawServices;
-              ServicesStore.emitChange();
-              break;
+        var updatedGroupIDs = _.pluck( action.groupsList, PRIMARY_KEY );
 
-            default:
-              // No action
-          }
+        // When receiving new data, we can comfortably resolve anything that may
+        // have had an outstanding update indicated by the Middleware.
+        if ( _updatedOnServer.length > 0 ) {
+          _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
+        }
+
+        // Updated groups come from the middleware as an array, but we store the
+        // data as an object keyed by the PRIMARY_KEY. Here, we map the changed groups
+        // into the object.
+        action.groupsList.map( function ( group ) {
+          _groups[ group [ PRIMARY_KEY ] ] = group;
         });
+        GroupsStore.emitChange();
+        break;
 
-Oh, and don't forget your ``module.exports``.
+      default:
+        // Do Nothing
+    }
 
-.. code-block:: javascript
+  });
 
-
-        module.exports = ServicesStore;
-
-    *It is a good reminder, but don't you unnecessarily break up the
-    code?*
+  // Typically this will be the end of the file, so here's the necessary module.exports.
+  module.exports = GroupsStore;
 
 Back to the Lifecycle
 ---------------------
