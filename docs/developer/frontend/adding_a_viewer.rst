@@ -719,8 +719,9 @@ now only be missing the Item template.
   var GroupsStore      = require("../../stores/GroupsStore");
 
 First, let's make a private method that we can use to quickly get the
-list of services out of the store, whenever we need to (we'll know we
-need to because the listener will call this later).
+list of groups out of the store, whenever we need to (we'll know we
+need to because the listener will call this later). This is also why we
+needed the UsersStore - we need a function to get access to user data as well.
 
 In this case, it's pretty simple, but if we needed to ``concat()`` data
 from another store, or some hard-coded values, or do some other data
@@ -728,12 +729,17 @@ merging, this would be a very convenient place.
 
 .. code-block:: javascript
 
+  function getGroupsFromStore() {
+    return {
+      groupsList : GroupsStore.getAllGroups()
+    };
+  }
 
-        function getServicesFromStore() {
-          return {
-            usersList: ServicesStore.getAllServices()
-          };
-        }
+  function getUsersFromStore() {
+    return {
+        usersList : UsersStore.getAllUsers()
+    };
+  }
 
 Now we can fill in the lifecycle methods.
 
