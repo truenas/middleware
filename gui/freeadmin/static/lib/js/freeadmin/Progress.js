@@ -41,7 +41,6 @@ define([
     backupProgress: false,
     fileUpload: false,
     importProgress: false,
-    _message: "",
     mode: "advanced",
     poolUrl: "",
     steps: "",
@@ -86,7 +85,7 @@ define([
         domStyle.set(this.dapMainLabel, "word-break", "break-word");
       }
 
-      if(this.backupProgress) {
+      if(this.backupProgress || this.importProgress ) {
         this.update("");
       }
 
@@ -128,7 +127,7 @@ define([
           me._masterProgress(0);
           me._subProgress.update({'indeterminate': true});
         }
-      }
+      };
 
       var me = this;
       if(uuid) this.uuid = uuid;
@@ -174,60 +173,58 @@ define([
           }
         });
         me._iter += 1;
-      } else if (this.importProgress) {
-        xhr.get(me.poolUrl, {
-          handleAs: "json"
-        }).then(function(data) {
-          if(data.status && data.volume && data.ftrans) {
-            me._message = data.status + " " + data.volume + " : " + data.ftrans.substring(data.ftrans.indexOf("/") + 1);;
-          }
-        });
-      } else if (this.backupProgress) {
-        xhr.get(me.poolUrl, {
-          handleAs: "json"
-        }).then(function(data) {
-          if(data.message) {
-            me._message = data.message;
-          }
-          if(data.status == 'error' || data.status == 'finished') {
-            me.onFinished();
-            return;
-          }
-          if(data.percent) {
-            if(data.percent == 100) {
-              me._mainProgress.update({'indeterminate': true});
-            } else {
-              me._mainProgress.update({
-                maximum: 100,
-                progress: data.percent,
-                indeterminate: false
-              });
+      } else if (this.importProgress || this.backupProgress) {
+          xhr.get(me.poolUrl, {
+            handleAs: "json"
+          }).then(function(data) {
+            if (this.importProgress) {
+              if(data.status && data.volume && data.ftrans) {
+                me._message = data.status + " " + data.volume + " : " + data.ftrans.substring(data.ftrans.indexOf("/") + 1);
+              }
             }
-          } else {
-            me._mainProgress.update({'indeterminate': true});
-          }
-          setTimeout(function() {
-            me.update();
-          }, 1000);
+            if (this.backupProgress) {
+              if(data.message) {
+                me._message = data.message;
+              }
+            }
+            if(data.status == 'error' || data.status == 'finished') {
+              me.onFinished();
+              return;
+            }
+            if(data.percent) {
+              if(data.percent == 100) {
+                me._mainProgress.update({'indeterminate': true});
+              } else {
+                me._mainProgress.update({
+                  maximum: 100,
+                  progress: data.percent,
+                  indeterminate: false
+                });}
+              } else {
+                  me._mainProgress.update({'indeterminate': true});
+              }
+              setTimeout(function() {
+                me.update();
+              }, 1000);
         });
       } else {
-        xhr.get(me.poolUrl, {
-          headers: {"X-Progress-ID": me.uuid},
-          handleAs: "json"
-        }).then(function(data) {
-          updateProgress(data);
-          setTimeout(function() {
-            me.update();
-          }, 1000);
-        }, function(evt) {
-          if(me.retries < 50) {
+          xhr.get(me.poolUrl, {
+            headers: {"X-Progress-ID": me.uuid},
+            handleAs: "json"
+          }).then(function(data) {
+            updateProgress(data);
             setTimeout(function() {
               me.update();
             }, 1000);
+          }, function(evt) {
+            if(me.retries < 50) {
+              setTimeout(function() {
+                me.update();
+              }, 1000);
             me.retries++;
+            }
+          });
           }
-        });
-      }
     },
     destroy: function() {
       //this.timer.stop();
