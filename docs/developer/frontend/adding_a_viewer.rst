@@ -427,25 +427,24 @@ Here's what we're going to need in addition to ``render``:
 .. code-block:: javascript
 
 
-          getInitialState: function() {
-            // ...
-          }
+    getInitialState: function() {
+      // ...
+    }
 
-        , componentDidMount: function() {
-            // ...
-          }
+  , componentDidMount: function() {
+      // ...
+    }
 
-        , componentWillUnmount: function() {
-            // ...
-          }
+  , componentWillUnmount: function() {
+      // ...
+    }
 
 In ``getInitialState``, what we'd really like to do is get the Services
 data out of our Flux store and use them to initialize state. Only one
 problem: we don't have a Flux store yet!
 
 Instead of trying to solve that problem right away (and to keep things
-simple), we're going to walk through the diagram in order. >\ *I like
-this part. It is comforting for the reader. You have a plan. :-)*
+simple), we're going to walk through the diagram in order.
 
 .. figure:: images/architecture/flux/freenas_flux.png
    :alt: A high level data flow diagram for FreeNAS 10's UI
