@@ -456,7 +456,7 @@ Here's what we're going to need in addition to ``render``:
       // ...
     }
 
-In ``getInitialState``, what we'd really like to do is get the Services
+In ``getInitialState``, what we'd really like to do is get the Groups
 data out of our Flux store and use them to initialize state. Only one
 problem: we don't have a Flux store yet!
 
@@ -526,8 +526,8 @@ ActionCreators
 --------------
 
 After that call returns from the Middleware, we need to handle the raw
-data. We assumed a function called ``receiveServicesList`` in our MUC's
-``requestServicesList`` function, so that's what we need to create now.
+data. We assumed a function called ``receiveGroupsList`` in our MUC's
+``requestGroupsList`` function, so that's what we need to create now.
 
 All it has to do here is tag the payload with a sensible action type,
 and provide the returned raw data as another parameter. These will be
