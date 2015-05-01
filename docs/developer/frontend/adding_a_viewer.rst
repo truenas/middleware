@@ -745,53 +745,57 @@ Now we can fill in the lifecycle methods.
 
 .. code-block:: javascript
 
+    getInitialState: function() {
+      return getGroupsFromStore();
+    }
 
-          getInitialState: function() {
-            return getServicesFromStore();
-          }
+  , componentDidMount: function() {
+      GroupsStore.addChangeListener( this.handleGroupsChange );
+      GroupsMiddleware.requestGroupsList();
+      GroupsMiddleware.subscribe( componentLongName );
 
-        , componentDidMount: function() {
-            ServicesMiddleware.requestUsersList();
+      UsersStore.addChangeListener( this.handleUsersChange );
+      UsersMiddleware.requestUsersList();
+      UsersMiddleware.subscribe( componentLongName );
+    }
 
-            ServicesStore.addChangeListener( this.handleServicesChange );
-          }
+  , componentWillUnmount: function() {
+      GroupsStore.removeChangeListener( this.handleGroupsChange );
+      GroupsMiddleware.unsubscribe( componentLongName );
 
-        , componentWillUnmount: function() {
-            ServicesStore.removeChangeListener( this.handleServicesChange );
-          }
+      UsersStore.removeChangeListener( this.handleUsersChange );
+      UsersMiddleware.unsubscribe( componentLongName );
+    }
 
-As you can probably tell, this initializes state with our utility
-function, which is important every time but the very first - since
-Stores are singletons and they're totally separate from the
-views/components, anything we've previously put in the store, either
+This initializes state with our utility function, which is important every time
+but the very first - since Stores are singletons and they're totally separate
+from the views/components, anything we've previously put in the store, either
 from another view, or from opening this view previously will still be in
-there, giving us a faster initialization without a flash of unstyled
-content (nice!). >\ *This is not important, but I was once told that
-phrases like "As you can probably tell" sounds condescending to the
-readers.*
+there. This in turn gives us a faster initialization without a flash of unstyled
+content (nice!).
 
-When the component mounts, it subscribes to the Services store, and when
-it unmounts, it unsubscribes.
+When the component mounts, it subscribes to the Groups and Users stores, and
+when it unmounts, it unsubscribes.
 
 The only difference is that ``componentDidMount`` also calls our
-original ``requestServicesList`` function, asking the Middleware for an
+original ``requestGroupsList`` function, asking the Middleware for an
 initial payload.
 
-(This is also where subscriptions will be handled, but they're not
-implemented yet.)
-
 You may also notice that I made reference to another method that doesn't
-exist yet - ``handleServicesChange``. This is a convenient method we'll
+exist yet - ``handleGroupsChange``. This is a convenient method we'll
 create just so that we have a single function for updating our
 controller-view's state. For now, it's basically the same thing we did
-in ``getInitialState``.
+in ``getInitialState``. We'll need one for Users changes as well.
 
 .. code-block:: javascript
 
+  , handleGroupsChange: function() {
+      this.setState( getGroupsFromStore() );
+    }
 
-        , handleServicesChange: function() {
-            this.setState( getServicesFromStore() );
-          }
+  , handleUsersChange: function() {
+      this.setState( getUsersfromStore() );
+    }
 
 The Actual Viewer Component
 ---------------------------
