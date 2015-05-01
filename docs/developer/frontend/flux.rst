@@ -64,9 +64,8 @@ is generally the primary view open in the webapp. While other persistent
 components (navigation, notifications, widgets etc) function in slightly
 different ways, they're broadly similar to a standard React View.
 
-.. figure:: images/architecture/flux/screenshot_react_view.png
-   :alt: Example of a basic view
-
+.. image:: images/viewer/groups_view_detail.png
+   :alt: An example of a basic view with an item selected.
    Example of a basic view
 Role
 ^^^^
