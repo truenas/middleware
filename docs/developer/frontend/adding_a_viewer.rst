@@ -539,27 +539,35 @@ payload to all registered Flux stores.
 
 .. code-block:: javascript
 
+  // Groups Action Creators
+  // ==================================
+  // Receive and handle events from the middleware, and call the dispatcher.
 
-        // Services Action Creators
-        // ==================================
+  "use strict";
 
-        "use strict";
+  var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
+  var FreeNASConstants  = require("../constants/FreeNASConstants");
 
-        var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-        var FreeNASConstants  = require("../constants/FreeNASConstants");
+  var ActionTypes = FreeNASConstants.ActionTypes;
 
-        var ActionTypes = FreeNASConstants.ActionTypes;
+  module.exports = {
 
-        module.exports = {
+      receiveGroupsList: function( groupsList ) {
+        FreeNASDispatcher.handleMiddlewareAction({
+            type       : ActionTypes.RECEIVE_GROUPS_LIST
+          , groupsList : groupsList
+        });
+      }
 
-            receieveServicesList: function( rawServices ) {
-              FreeNASDispatcher.handleMiddlewareAction({
-                  type        : ActionTypes.RECEIVE_RAW_SERVICES
-                , rawServices : rawServices
-              });
-            }
+    , receiveGroupUpdateTask: function( taskID, groupID ) {
+        FreeNASDispatcher.handleMiddlewareAction({
+            type    : ActionTypes.RECEIVE_GROUP_UPDATE_TASK
+          , taskID  : taskID
+          , groupID : groupID
+        });
+      }
 
-        };
+  };
 
 FreeNASConstants
 ----------------
