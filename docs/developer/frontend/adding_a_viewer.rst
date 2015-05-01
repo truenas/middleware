@@ -173,13 +173,19 @@ docs for :ref:`Viewer`.
 
 .. note:: There are plans to implement a fourth "heirarchical" mode which may or may not ever come to pass.
 
-addEntity
+allowedModes
+^^^^^^^^^^^^
+
+Not every viewer mode is suitable for every view. ``allowedModes`` should be an
+array containing the list of view modes to enable. If ``allowedModes`` is not
+submitted, all view modes will be available.
+
+inputData
 ^^^^^^^^^
 
-``addEntity`` is simply a string to display on the button for adding a new item.
-Not all views will need an addEntity entry. If addEntity is not provided in
-``viewData``, the button will simply not appear and functionality to add an item
-will not be available from the GUI.
+``inputData`` should be an array containing the raw data that the view is
+responsible for displaying. inputData depends on the rest of the Flux cycle,
+so we can't generate it at this point.
 
 Include Format Data
 ~~~~~~~~~~~~~~~~~~~
