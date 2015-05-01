@@ -840,9 +840,6 @@ This will cause the JavaScript console to contain very detailed messages
 about exactly what the Middleware Client is doing, what responses are
 being seen, and how they're being treated.
 
-Disallowing Viewer Modes
-------------------------
-
 Creating an Item Template
 -------------------------
 
