@@ -570,10 +570,16 @@ payload to all registered Flux stores.
   };
 
 FreeNASConstants
-----------------
+~~~~~~~~~~~~~~~~
 
-We'll need to jump into ``FreeNASConstants.js`` to add a key-value pair
-for ``RECEIVE_RAW_SERVICES``. Don't forget to do this.
+We'll need to jump into ``FreeNASConstants.js`` to add key-value pairs for
+``RECEIVE_GROUPS_LIST`` and ``RECEIVE_GROUP_UPDATE_TASK``.
+
+.. code-block:: javascript
+
+  // Groups
+  , RECEIVE_GROUPS_LIST       : null
+  , RECEIVE_GROUP_UPDATE_TASK : null
 
 Flux Store
 ----------
