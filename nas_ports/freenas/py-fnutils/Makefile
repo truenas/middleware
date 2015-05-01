@@ -16,8 +16,7 @@ COMMENT=        FreeNAS common Python modules
 
 BUILD_DEPENDS=	
 
-USE_XZ=		yes
-USE_PYTHON=	yes
+USES=		python
 EXTRACT_ONLY=
 
 WRKSRC=		/usr/freenas_src/py-fnutils

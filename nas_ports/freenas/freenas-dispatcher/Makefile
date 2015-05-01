@@ -13,8 +13,7 @@ VALID_CATEGORIES+= freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS middleware daemon
 
-USE_XZ=		yes
-USE_PYTHON=	yes
+USES=		python
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}psycopg2:${PORTSDIR}/databases/py-psycopg2
 
 EXTRACT_ONLY=

@@ -13,8 +13,7 @@ VALID_CATEGORIES+= freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS /etc filesystem daemon
 
-USE_XZ=		yes
-USE_PYTHON=	yes
+USES=		python
 EXTRACT_ONLY=
 
 NO_BUILD= 	yes

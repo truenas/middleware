@@ -13,8 +13,7 @@ VALID_CATEGORIES+= freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS data store layer
 
-USE_XZ=		yes
-USE_PYTHON=	yes
+USES=		python
 
 OPTIONS_SINGLE=	USE_POSTGRESQL USE_MONGODB
 

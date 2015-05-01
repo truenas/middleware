@@ -16,8 +16,7 @@ COMMENT=        Python network configuration library
 
 BUILD_DEPENDS=	
 
-USE_XZ=		yes
-USE_PYTHON=	yes
+USES=		python
 EXTRACT_ONLY=
 BUILD_DEPENDS=  ${LOCALBASE}/bin/cython:${PORTSDIR}/lang/cython
 
