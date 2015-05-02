@@ -725,6 +725,11 @@ class VolumeImportForm(Form):
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
         label=_('Member disk'),
+        help_text=_("This is the disk with the non-zfs filesystem. "
+                    "It will be mounted, its data copied over to the path "
+                    "specified in the 'Destination' field below and "
+                    "then unmounted. Importing non-zfs disks permanently "
+                    "as a Volume is deperecated"),
     )
     volume_fstype = forms.ChoiceField(
         choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
@@ -734,6 +739,7 @@ class VolumeImportForm(Form):
 
     volume_dest_path = PathField(
         label=_("Destination"),
+        help_text=_("This must be a dataset/folder in an existing Volume"),
     )
 
     def __init__(self, *args, **kwargs):
@@ -784,7 +790,8 @@ class VolumeImportForm(Form):
         path = cleaned_data.get("volume_dest_path")
         if path is None or not os.path.exists(path):
             self._errors["volume_dest_path"] = self.error_class(
-                [_(u"The path %s does not exist" % path)])
+                [_(u"The path %s does not exist.\
+                    This must be a dataset/folder in an existing Volume" % path)])
         return cleaned_data
 
     def done(self, request):
