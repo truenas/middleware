@@ -157,7 +157,6 @@ The Viewer React component expects certain props.
 * ``displayData`` - not currently in use. May have been obsoleted by moving
   ``format`` into ``viewdata``
 
-
 We're going to construct them one at a time.
 
 defaultMode
@@ -169,7 +168,6 @@ simply a string naming the desired default mode. This string should be "detail",
 
 For more information on each of the view modes and how they display data, see the
 docs for :ref:`Viewer`.
-
 
 .. note:: There are plans to implement a fourth "heirarchical" mode which may or may not ever come to pass.
 
@@ -404,7 +402,6 @@ same potential future rewrite.
 
 .. code-block:: javascript
 
-
         var displaySettings = {
             filterCriteria: {
                 stopped: {
@@ -432,6 +429,8 @@ and was somehow irrelevant to the user, we could add it to
 The "name" property here is a little different, and that's because it's
 expected to be part of a sentence, or a menu entry, or a heading in the
 DetailViewer or IconViewer.
+
+.. OutlineViewerLifecycle::
 
 Viewer Lifecycle
 ----------------
@@ -468,6 +467,8 @@ simple), we're going to walk through the diagram in order.
 
    A high level data flow diagram for FreeNAS 10's UI
 Based on that, the next thing we need is a Middleware Utility Class.
+
+.. _AddMiddlewareUtility::
 
 Middleware Utility Class
 ------------------------
@@ -522,6 +523,8 @@ Our Middleware Utility Class looks something like this:
 
   };
 
+.. _AddActionCreators::
+
 ActionCreators
 --------------
 
@@ -569,6 +572,8 @@ payload to all registered Flux stores.
 
   };
 
+.. _AddFreeNASConstants::
+
 FreeNASConstants
 ~~~~~~~~~~~~~~~~
 
@@ -580,6 +585,8 @@ We'll need to jump into ``FreeNASConstants.js`` to add key-value pairs for
   // Groups
   , RECEIVE_GROUPS_LIST       : null
   , RECEIVE_GROUP_UPDATE_TASK : null
+
+.. _AddFluxStore::
 
 Flux Store
 ----------
@@ -705,8 +712,10 @@ we defined in our ``GroupsActionCreator``.
   // Typically this will be the end of the file, so here's the necessary module.exports.
   module.exports = GroupsStore;
 
-Back to the Lifecycle
----------------------
+.. _AddLifecycleFunctions::
+
+Viewer Lifecycle Functions
+--------------------------
 
 Finally, we have some stuff to plumb into the React Lifecycle.
 
@@ -797,30 +806,23 @@ in ``getInitialState``. We'll need one for Users changes as well.
       this.setState( getUsersfromStore() );
     }
 
-The Actual Viewer Component
----------------------------
+.. _Viewer Component::
+
+The Viewer Component
+--------------------
 
 Now that we've gone and done all that, we can finally implement the
 actual ``<Viewer>`` in ``render``. All the setup we've done is finally
 going to pay off, as we plug everything into the Viewer component.
 
-As before, we're still missing the ItemView, which the Viewer will need.
-
 .. code-block:: javascript
-
 
         , render: function() {
             return (
-              <main>
-                <h2>Services</h2>
-                <Viewer header      = { "Services" }
-                        inputData   = { this.state.servicesList }
-                        displayData = { displaySettings }
-                        formatData  = { formatData }
-                        itemData    = { itemData }
-                        Editor      = { this.props.activeRouteHandler }>
-                </Viewer>
-              </main>
+              <Viewer header      = { "Groups" }
+                      inputData   = { this.state.groupsList }
+                      displayData = { displaySettings }
+              </Viewer>
             );
           }
 
