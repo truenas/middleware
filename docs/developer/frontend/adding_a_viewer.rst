@@ -824,25 +824,22 @@ As before, we're still missing the ItemView, which the Viewer will need.
             );
           }
 
-A Note on Debugging
--------------------
-
-Now that we're ready to actually check our work, it can be helpful to
-change this value in ``MiddlewareClient.js``:
-
-.. code-block:: javascript
-
-
-          // Change DEBUG to `true` to activate verbose console messages
-          var DEBUG = true;
-
-This will cause the JavaScript console to contain very detailed messages
-about exactly what the Middleware Client is doing, what responses are
-being seen, and how they're being treated.
+.. _Item::
 
 Creating an Item Template
 -------------------------
 
-    *Can you maybe add the names of used files/functions to the diagram?
-    It will visually demonstrate, where in this tutorial we are relative
-    to the more abstract diagram.*
+.. _Debugging::
+
+Debugging a view
+----------------
+
+Now that we're ready to actually check our work, we can go to the debug tools
+in the FreeNAS 10 GUI and activate any debug options we want to use. Each option
+logs different data to the browser console. Here we see message events caused
+by loading the Groups view as displayed in Chrome with the message logging
+option enabled.
+
+.. figure:: images/viewer/debug_tools_messages.png
+   :alt: The FreeNAS GUI with debug tools open and the messages logging option enabled.
+
