@@ -729,7 +729,7 @@ class VolumeImportForm(Form):
                     "It will be mounted, its data copied over to the path "
                     "specified in the 'Destination' field below and "
                     "then unmounted. Importing non-zfs disks permanently "
-                    "as a Volume is deperecated"),
+                    "as a Volume is deprecated"),
     )
     volume_fstype = forms.ChoiceField(
         choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
