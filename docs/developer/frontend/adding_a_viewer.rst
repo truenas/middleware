@@ -767,7 +767,7 @@ Now we can fill in the lifecycle methods.
       UsersMiddleware.unsubscribe( componentLongName );
     }
 
-This initializes state with our utility function, which is important every time
+This initializes state with our utility functions, which is important every time
 but the very first - since Stores are singletons and they're totally separate
 from the views/components, anything we've previously put in the store, either
 from another view, or from opening this view previously will still be in
@@ -781,9 +781,9 @@ The only difference is that ``componentDidMount`` also calls our
 original ``requestGroupsList`` function, asking the Middleware for an
 initial payload.
 
-You may also notice that I made reference to another method that doesn't
-exist yet - ``handleGroupsChange``. This is a convenient method we'll
-create just so that we have a single function for updating our
+For the ChangeListeners, we used two functions that don't exist yet -
+``handleGroupsChange`` and ``handleUsersChange``. These are convenient methods
+we'll create just so that we have a single function for updating our
 controller-view's state. For now, it's basically the same thing we did
 in ``getInitialState``. We'll need one for Users changes as well.
 
