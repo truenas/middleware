@@ -311,19 +311,19 @@ def parse_changelog(changelog, start = '', end = ''):
     if not reg:
         return None
 
-    changelog = ''
+    changelog = None
     for seq, changes in reg:
         if not changes.strip('\n'):
             continue
         if seq == start:
             # Once we found the right one, we start accumulating
             changelog = ''
-        else:
+        elif changelog:
             changelog += changes.strip('\n') + '\n'
         if seq == end:
             break    
 
-    return changelog if changelog else None
+    return changelog
 
 
 def debug_get_settings():
