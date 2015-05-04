@@ -38,6 +38,7 @@ $RECYCLE.BIN/
 *.swp
 *.mo
 *.o
+*.so
 /gui/local_settings.py
 /FreeBSD/
 /filtered-patches/
