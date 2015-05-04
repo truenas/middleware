@@ -10,6 +10,7 @@ var React = require("react");
 var TWBS  = require("react-bootstrap");
 
 var Icon  = require("../Icon");
+var MiddlewareClient = require("../../middleware/MiddlewareClient");
 
 
 var LogQueue = React.createClass({
@@ -99,7 +100,7 @@ var LogQueue = React.createClass({
                 badgeContent = { this.props.active.length }/>
 
           <div className = {["notification-box"
-                            , this.props.className,
+                            , this.props.className
                             , this.props.visible ? "visible" : "hidden"
                             ].join(" ") }
                onClick   = { this.handleNullClick }>
@@ -232,7 +233,8 @@ var NotificationBar = React.createClass({
             <TWBS.MenuItem key="2">Action!</TWBS.MenuItem>
             <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
             <TWBS.MenuItem divider />
-            <TWBS.MenuItem key="4">Logout</TWBS.MenuItem>
+            <TWBS.MenuItem key="4"
+                           onClick={ MiddlewareClient.logout } >Logout</TWBS.MenuItem>
           </TWBS.SplitButton>
 
         </div>

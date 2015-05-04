@@ -347,10 +347,13 @@ function MiddlewareClient() {
   };
 
   this.logout = function () {
-
-    // TODO: Allow logout functionality
-
-  };
+    // all this does is deletes the login cookie (which contains the token)
+    // and closes the socket connection. The handleClose() which is triggered as a result
+    // picks the connect being closed and then reconnects and brings back the login window
+    // for socket close codes (and why i used 1000) see the RFC: https://tools.ietf.org/html/rfc6455#page-64
+    myCookies.delete("auth");
+    this.disconnect( 1000, "User logged out" );
+  }.bind( this );
 
 
 // CHANNELS AND REQUESTS
