@@ -1,3 +1,0 @@
-#9540	Bug	Critical	WARNING: failed precmd routine for ctld
-#9552	Bug	Important	Imports a missing exception.
-#9559	Bug	No priority	Changes the default ChangeLog presentation to empty, rather than the full accumulated set.
