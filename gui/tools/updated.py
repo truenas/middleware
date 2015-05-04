@@ -111,7 +111,7 @@ def main(handler, args):
 
     if args.apply:
         log.debug('Starting ApplyUpdate')
-        Update.ApplyUpdate(
+        handler.reboot = Update.ApplyUpdate(
             args.cache,
             install_handler=handler.install_handler,
         )

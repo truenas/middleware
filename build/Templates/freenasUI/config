@@ -11,6 +11,7 @@ arch = freebsd:9:x86:64
 licenselogic = or
 licenses = [BSD, MIT, GPL]
 
+requires-reboot = False
 [Files]
 include = /usr/local/www/freenasUI
 
@@ -33,6 +34,12 @@ post-upgrade =
 	     yes | /usr/local/bin/python /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations > "/data/update.failed" 2>&1 && rm -f /data/update.failed
 	     rm -f /tmp/.sqlite3_ha_skip
 
+pre-delta =
+	/usr/sbin/service django stop
+
+post-delta =
+	   /usr/sbin/service django start
+	   
 #	/usr/bin/touch /data/cd-upgrade
 #	/usr/bin/touch /data/need-update
 #	/usr/bin/yes | /usr/local/bin/python \

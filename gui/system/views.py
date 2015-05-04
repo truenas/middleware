@@ -1338,11 +1338,18 @@ def update_apply(request):
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
-            request.session['allow_reboot'] = True
-            return render(request, 'system/done.html')
+            if handler.reboot:
+                request.session['allow_reboot'] = True
+                return render(request, 'system/done.html')
+            else:
+                return JsonResp(
+                    request,
+                    message=_('Update has been applied'),
+                )
     else:
         handler = CheckUpdateHandler()
         update = CheckForUpdates(
+            diff_handler=handler.diff_call,
             handler=handler.call,
             train=updateobj.get_train(),
             cache_dir=notifier().get_update_location(),
@@ -1433,8 +1440,14 @@ def update_check(request):
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
             if handler.apply:
-                request.session['allow_reboot'] = True
-                return render(request, 'system/done.html')
+                if handler.reboot:
+                    request.session['allow_reboot'] = True
+                    return render(request, 'system/done.html')
+                else:
+                    return JsonResp(
+                        request,
+                        message=_('Update has been applied'),
+                    )
             else:
                 return JsonResp(
                     request,
@@ -1444,6 +1457,7 @@ def update_check(request):
         handler = CheckUpdateHandler()
         try:
             update = CheckForUpdates(
+                diff_handler=handler.diff_call,
                 handler=handler.call,
                 train=updateobj.get_train(),
             )

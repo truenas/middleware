@@ -11,6 +11,7 @@ arch = freebsd:9:x86:64
 licenselogic = or
 licenses = [BSD, MIT, GPL]
 
+requires-reboot = True
 [Scripts]
 
 post-install = /usr/bin/touch /boot/kernel/linker.hints
@@ -46,4 +47,5 @@ exclude = /usr/local/www/freenasUI
 	/conf/base/var/db/fontconfig
 	/var/db/pkg
 	/conf/var/db/pkg
+	/conf/base/var/db/pkg
 	/dev/*

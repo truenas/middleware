@@ -12,7 +12,8 @@ import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 from freenasOS.Configuration import ChecksumFile
 import freenasOS.Package as Package
-        
+from freenasOS.PackageFile import GetManifest
+
 debug = 0
 quiet = False
 verbose = 0
@@ -122,6 +123,10 @@ if __name__ == "__main__":
         hash = None
         if pkgfile is not None:
             hash = ChecksumFile(pkgfile)
+            pkg_json = GetManifest(file = pkgfile)
+            if pkg_json:
+                if "requires-reboot" in pkg_json:
+                    pkg.SetRequiresReboot(pkg_json["requires-reboot"])
             pkgfile.seek(0, os.SEEK_END)
             size = pkgfile.tell()
             pkg.SetSize(size)
