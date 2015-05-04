@@ -12,6 +12,7 @@ import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 from freenasOS.Configuration import ChecksumFile
 import freenasOS.Package as Package
+import freenasOS.PackageFile as PF
 from freenasOS.PackageFile import GetManifest
 
 debug = 0
@@ -105,49 +106,47 @@ if __name__ == "__main__":
         conf.SetPackageDir(package_dir)
         
     for P in pkgs:
-        # Need to parse the name, which is pkg=version[:upgrade,upgrade,upgrade]
-        upgrades = []
-        if ":" in P:
-            (P, tmp) = P.split(":")
-            if "," in tmp:
-                upgrades = tmp.split(",")
-            else:
-                upgrades.append(tmp)
-        if "=" not in P:
-            usage()
-        (name, version) = P.split("=")
-        pkg = Package.Package(name, version, None)
-        pkgname = pkg.FileName()
-        print "Package file name is %s" % pkgname
-        pkgfile = conf.FindPackageFile(pkg)
-        hash = None
-        if pkgfile is not None:
+        # Two options here:  either P is a filename, or it's
+        # a template.  Let's try it as a file first
+        if os.path.exists(P):
+            # Let's get the manifest from it
+            pkgfile = open(P, "rb")
+            pkg_json = PF.GetManifest(file = pkgfile)
+            name = pkg_json[PF.kPkgNameKey]
+            version = pkg_json[PF.kPkgVersionKey]
             hash = ChecksumFile(pkgfile)
-            pkg_json = GetManifest(file = pkgfile)
-            if pkg_json:
-                if "requires-reboot" in pkg_json:
-                    pkg.SetRequiresReboot(pkg_json["requires-reboot"])
-            pkgfile.seek(0, os.SEEK_END)
-            size = pkgfile.tell()
-            pkg.SetSize(size)
-            pkgfile.seek(0)
+            size = os.lstat(P).st_size
+            try:
+                services = pkg_json[PF.kPkgServicesKey]
+            except:
+                print >> sys.stderr, "%s is not in pkg_json" % PF.kPkgServicesKey
+                services = None
+            try:
+                rr = pkg_json[PF.kPkgRebootKey]
+            except:
+                rr = None
+                
+            pkg = Package.Package({ Package.NAME_KEY : name,
+                                    Package.VERSION_KEY : version,
+                                    Package.CHECKSUM_KEY : hash,
+                                    Package.SIZE_KEY : size,
+                                    }
+                              )
+            if rr is not None:
+                print >> sys.stderr, "rr = %s" % rr
+                pkg.SetRequiresReboot(rr)
+                if rr is False:
+                    # Let's see if we have any services which are restarted by default.
+                    print >> sys.stderr, "services = %s" % services
+                    if services and "Restart" in services:
+                        # Services has two entries, we want the restart one
+                        svcs = services["Restart"]
+                        if len(svcs) > 0:
+                            print >> sys.stderr, "Restart Services = %s" % svcs.keys()
+                            pkg.SetRestartServices(svcs.keys())
         else:
+            print >> sys.stderr, "I think you did not update the makefile"
             print >> sys.stderr, "Can't find file for %s" % name
-
-        pkg.SetChecksum(hash)
-        for U in upgrades:
-            upgrade_file_name = pkg.FileName(U)
-            print "Delta package name is %s" % upgrade_file_name
-            upgrade_file = conf.FindPackageFile(pkg, U)
-            if upgrade_file is None:
-                print >> sys.stderr, "Could not find upgrade file %s" % upgrade_file_name
-            else:
-                hash = ChecksumFile(upgrade_file)
-                upgrade_file.seek(0, os.SEEK_END)
-                size = upgrade_file.tell()
-                upgrade_file.seek(0)
-                # See above for looking for upgrades.
-                pkg.AddUpdate(U, hash, size if size != 0 else None)
 
         mani.AddPackage(pkg)
         

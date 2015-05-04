@@ -76,7 +76,8 @@ class CheckUpdateHandler(object):
 
     def __init__(self):
         self.changes = []
-
+        self.restarts = []
+        
     def call(self, op, newpkg, oldpkg):
         self.changes.append({
             'operation': op,
@@ -86,7 +87,12 @@ class CheckUpdateHandler(object):
 
     def diff_call(self, diffs):
         self.reboot = diffs.get('Reboot', False)
-
+        if self.reboot is False:
+            from freenasOS.Update import GetServiceDescription
+            # We may have service changes
+            for svc in diffs.get("Restart", []):
+                self.restarts.append(GetServiceDescription(svc))
+                
     @property
     def output(self):
         output = ''
@@ -105,6 +111,8 @@ class CheckUpdateHandler(object):
                     c['new'].Name(),
                     c['new'].Version(),
                 )
+        for r in self.restarts:
+            output += r + "\n"
         return output
 
 
