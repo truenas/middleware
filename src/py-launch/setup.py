@@ -34,7 +34,7 @@ extensions = [
        "launchd",
        ["launchd.pyx"], 
        include_dirs=["/usr/src/sys/apsl/include"],
-       extra_link_args=["-llaunch", "-lmach", "-ldispatch", "-losxsupport", "-lcfxlite", "-lBlocksRuntime", "-licutu"]
+       extra_link_args=["-llaunch", "-lmach", "-ldispatch", "-losxsupport", "-lBlocksRuntime"]
     )
 ]
 

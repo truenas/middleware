@@ -26,7 +26,7 @@
 
 import enum
 import os
-from cython.errno cimport errno
+from libc.errno cimport errno
 from libc.stdint cimport uintptr_t
 cimport defs
 
