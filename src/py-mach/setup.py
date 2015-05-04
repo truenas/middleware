@@ -25,13 +25,24 @@
 #
 #####################################################################
 
+import platform
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
 
 
+libraries = []
+if platform.system() == 'FreeBSD':
+    libraries = ["-llaunch", "-lmach", "-ldispatch", "-losxsupport", "-lBlocksRuntime"]
+
+
 extensions = [
-    Extension("mach", ["src/mach.pyx"], extra_compile_args=["-g"])
+    Extension(
+        "mach",
+        ["src/mach.pyx"],
+        extra_compile_args=["-g"],
+        extra_link_args=libraries
+    )
 ]
 
 
