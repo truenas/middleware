@@ -16,10 +16,24 @@ var viewerUtil = require("../../components/Viewer/viewerUtil");
 var ServicesMiddleware = require("../../middleware/ServicesMiddleware");
 var ServicesStore      = require("../../stores/ServicesStore");
 
+var ToggleSwitch = require("../../components/common/ToggleSwitch");
+
 var ServiceView = React.createClass({
 
     propTypes: {
       item: React.PropTypes.object.isRequired
+    }
+
+  , getInitialState: function() {
+      return { serviceState  : (this.props.item["state"] === "running" ? true : false) };
+    }
+
+  , handleToggle: function( toggled ) {
+      this.setState({
+          serviceState: toggled
+      });
+
+      //TODO: Really change the state of the service.
     }
 
   , render: function() {
@@ -45,6 +59,11 @@ var ServiceView = React.createClass({
             <h3>{ this.props.item["name"] }</h3>
             <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["state"], "\u200B" ) }</h4>
             { pid }
+            <ToggleSwitch
+              toggled   =  { this.state.serviceState }
+              onChange  =  { this.handleToggle }
+
+               />
             <hr />
           </TWBS.Col>
         </TWBS.Row>
