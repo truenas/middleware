@@ -115,10 +115,10 @@ Our corresponding ``routing`` object in the Groups view will look like this:
     , "addentity" : "add-group"
   }
 
-* ``route`` is the ``name`` property to which each item will linked.
-* ``param`` is the name of the param that must be passed.
-* ``addentity`` is the static route used for the special path
-  pointing to the ``AddGroup`` component.
+* ``route`` is the ``name`` property of the Route to which the item will link.
+* ``param`` is the name of the param that must be passed for the dynamic route.
+* ``addentity`` is the static route used for the special path pointing to the
+  handler for adding entities of the appropriate type.
 
 .. note:: There is far more to react-router than just the above. We strongly
    encourage all FreeNAS developers to become familiar with
