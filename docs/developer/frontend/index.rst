@@ -15,6 +15,7 @@ FreeNAS 10 Frontend Development Guide
    The Live Development Environment <develop>
    Widgets <widgets>
    The Viewer Component <viewer>
+   Routing <routing>
    Adding a Viewer <adding_a_viewer>
 
 
