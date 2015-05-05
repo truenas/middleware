@@ -40,7 +40,7 @@ extensions = [
     Extension(
         "mach",
         ["src/mach.pyx"],
-        extra_compile_args=["-g"],
+        extra_compile_args=["-g", "-DWITH_THREAD"],
         extra_link_args=libraries
     )
 ]
