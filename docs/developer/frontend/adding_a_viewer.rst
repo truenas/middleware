@@ -334,50 +334,52 @@ Not all views will need an addEntity entry. If addEntity is not provided in
 ``viewData``, the button will simply not appear and functionality to add an item
 will not be available from the GUI.
 
-Dynamic Routing
-~~~~~~~~~~~~~~~
+routing
+*******
 
-Because the FreeNAS 10 GUI uses client-side routing, the
-page is never refreshed or changed during a session. One of the
-interesting effects of this is the ability to use client-side
-routing - meaning that as the visible React components are changed
-or selected, the route in the browser bar changes to reflect that.
+FreeNAS Routing is too much to explain here, so read :ref:`Routing` before
+proceeding.
 
-Part of the functionality of the viewer is the ability to create dynamic
-routes based on the visible item. For example, when you click on
-``root`` in the Users DetailViewer, the URL displayed in the browser bar
-changes to ``myfreenas.local/accounts/users/root``.
+``routing`` is an object containing three fields: route, param, and addentity.
 
-This is not automatic, however, and some setup is required to make it
-work.
+* ``route`` is the ``name`` property of the Route to which the item will link.
+* ``param`` is the name of the param that must be passed for the dynamic route.
+* ``addentity`` is the static route used for the special path pointing to the
+  handler for adding entities of the appropriate type.
 
-The Viewer requires an object called ``itemData`` which provides routing
-information, based on predefined routes in ``routes.js``.
+Before the routing object is meaningful, it's necessary to add the necessary
+routes to the routing table. These will include the main route for the view, the
+static route for adding an entity (if appropriate), and the dynamic route for
+displaying arbitrary items.
 
-For instance, if we set up ``routes.js`` such that
+Here are the example routes for Groups:
 
 .. code-block:: javascript
 
+  <Route name    = "groups"
+         path    = "groups"
+         handler = { Groups }>
+    <Route name    = "add-group"
+           path    = "add-group"
+           handler = { AddGroup } />
+    <Route name    = "groups-editor"
+           path    = "/groups/:groupID"
+           handler = { GroupsItem } />
+  </Route>
 
-        <Route name="services" handler={ Services }>
-          <Route name    = "services-editor"
-                 path    = "/services/:serviceID"
-                 handler = { Editor }
-        </Route>
-
-our cooresponding ``itemData`` object in the Services view will look
-something like this:
-
+And here is the matching ``routing`` object to be included in ``viewData``:
 
 .. code-block:: javascript
 
-        var itemData = {
-            "route" : "services-editor"
-          , "param" : "serviceID"
-        };
+  routing = {
+      "route"     : "groups-editor"
+    , "param"     : "groupID"
+    , "addentity" : "add-group"
+  }
 
-"Route" is the "name" property given to the ``<Route>`` in
-``routes.js``. "Param" is the variable part of the path.
+In this case, ``groups-editor`` is the dynamic route that handles each item,
+``groupID`` is the name of the param for the dynamic part of the ``groups-editor``
+path, and ``add-group`` is the path to the AddGroup component.
 
 Filters and Groups
 ------------------
