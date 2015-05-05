@@ -103,8 +103,67 @@ class KernReturn(enum.IntEnum):
     KERN_RETURN_MAX = mach.KERN_RETURN_MAX
 
 
+class MessageSendReturn(enum.IntEnum):
+    MACH_MSG_SUCCESS = mach.MACH_MSG_SUCCESS
+    MACH_MSG_MASK = mach.MACH_MSG_MASK
+    MACH_MSG_IPC_SPACE = mach.MACH_MSG_IPC_SPACE
+    MACH_MSG_VM_SPACE = mach.MACH_MSG_VM_SPACE
+    MACH_MSG_IPC_KERNEL = mach.MACH_MSG_IPC_KERNEL
+    MACH_MSG_VM_KERNEL = mach.MACH_MSG_VM_KERNEL
+    MACH_SEND_IN_PROGRESS = mach.MACH_SEND_IN_PROGRESS
+    MACH_SEND_INVALID_DATA = mach.MACH_SEND_INVALID_DATA
+    MACH_SEND_INVALID_DEST = mach.MACH_SEND_INVALID_DEST
+    MACH_SEND_TIMED_OUT = mach.MACH_SEND_TIMED_OUT
+    MACH_SEND_INTERRUPTED = mach.MACH_SEND_INTERRUPTED
+    MACH_SEND_MSG_TOO_SMALL = mach.MACH_SEND_MSG_TOO_SMALL
+    MACH_SEND_INVALID_REPLY = mach.MACH_SEND_INVALID_REPLY
+    MACH_SEND_INVALID_RIGHT = mach.MACH_SEND_INVALID_RIGHT
+    MACH_SEND_INVALID_NOTIFY = mach.MACH_SEND_INVALID_NOTIFY
+    MACH_SEND_INVALID_MEMORY = mach.MACH_SEND_INVALID_MEMORY
+    MACH_SEND_NO_BUFFER = mach.MACH_SEND_NO_BUFFER
+    MACH_SEND_TOO_LARGE = mach.MACH_SEND_TOO_LARGE
+    MACH_SEND_INVALID_TYPE = mach.MACH_SEND_INVALID_TYPE
+    MACH_SEND_INVALID_HEADER = mach.MACH_SEND_INVALID_HEADER
+    MACH_SEND_INVALID_TRAILER = mach.MACH_SEND_INVALID_TRAILER
+    MACH_SEND_INVALID_RT_OOL_SIZE = mach.MACH_SEND_INVALID_RT_OOL_SIZE
+
+class MessageReceiveReturn(enum.IntEnum):
+    MACH_RCV_IN_PROGRESS = mach.MACH_RCV_IN_PROGRESS
+    MACH_RCV_INVALID_NAME = mach.MACH_RCV_INVALID_NAME
+    MACH_RCV_TIMED_OUT = mach.MACH_RCV_TIMED_OUT
+    MACH_RCV_TOO_LARGE = mach.MACH_RCV_TOO_LARGE
+    MACH_RCV_INTERRUPTED = mach.MACH_RCV_INTERRUPTED
+    MACH_RCV_PORT_CHANGED = mach.MACH_RCV_PORT_CHANGED
+    MACH_RCV_INVALID_NOTIFY = mach.MACH_RCV_INVALID_NOTIFY
+    MACH_RCV_INVALID_DATA = mach.MACH_RCV_INVALID_DATA
+    MACH_RCV_PORT_DIED = mach.MACH_RCV_PORT_DIED
+    MACH_RCV_IN_SET = mach.MACH_RCV_IN_SET
+    MACH_RCV_HEADER_ERROR = mach.MACH_RCV_HEADER_ERROR
+    MACH_RCV_BODY_ERROR = mach.MACH_RCV_BODY_ERROR
+    MACH_RCV_INVALID_TYPE = mach.MACH_RCV_INVALID_TYPE
+    MACH_RCV_SCATTER_SMALL = mach.MACH_RCV_SCATTER_SMALL
+    MACH_RCV_INVALID_TRAILER = mach.MACH_RCV_INVALID_TRAILER
+    MACH_RCV_IN_PROGRESS_TIMED = mach.MACH_RCV_IN_PROGRESS_TIMED
+
+
 class MachException(Exception):
     pass
+
+
+class MessageSendException(Exception):
+    def __init__(self, no):
+        self.code = MessageSendReturn(no)
+
+    def __str__(self):
+        return self.code.name
+
+
+class MessageReceiveException(Exception):
+    def __init__(self, no):
+        self.code = MessageReceiveReturn(no)
+
+    def __str__(self):
+        return self.code.name
 
 
 cdef class Port:
@@ -119,8 +178,17 @@ cdef class Port:
     def __str__(self):
         return '<Mach port {0}>'.format(self.port)
 
-    def value(self):
+    cdef mach_port_t value(self):
         return self.port
+
+    def insert_right(self, right):
+        cdef mach.mach_msg_return_t kr
+        cdef mach.mach_msg_type_name_t type = right.value
+
+        with nogil:
+            kr = mach.mach_port_insert_right(mach_task_self(), self.port, self.port, type)
+        if kr != mach.KERN_SUCCESS:
+            raise MachException(kr)
 
     def allocate_port(self, right):
         cdef mach.mach_port_t port
@@ -134,25 +202,30 @@ cdef class Port:
 
     def send(self, Port dest, Message message):
         cdef mach.mach_msg_header_t* msg
-        cdef mach.kern_return_t kr
+        cdef mach.mach_msg_return_t kr
 
         msg = <mach.mach_msg_header_t*><void*>message.ptr()
         msg.msgh_local_port = self.port
         msg.msgh_remote_port = dest.value()
-        kr = mach.mach_msg_send(msg)
+        with nogil:
+            kr = mach.mach_msg_send(msg)
         if kr != mach.KERN_SUCCESS:
-            raise MachException(kr)
+            raise MessageSendException(kr)
+
+    def send_overwrite(self, Port dest, Message message):
+        pass
 
     def receive(self, max_size=16384):
         cdef mach.mach_msg_header_t* ptr
-        cdef mach.kern_return_t kr
+        cdef mach.mach_msg_return_t kr
 
         msg = Message(size=max_size)
         ptr = <mach.mach_msg_header_t*><void*>msg.ptr()
         ptr.msgh_local_port = self.port
-        kr = mach.mach_msg_receive(ptr)
+        with nogil:
+            kr = mach.mach_msg_receive(ptr)
         if kr != mach.KERN_SUCCESS:
-            raise MachException(kr)
+            raise MessageReceiveException(kr)
 
         return msg
 
@@ -176,9 +249,6 @@ cdef class Message:
         self.msg = <mach.mach_msg_header_t*>realloc(<void*>self.msg, self.length)
         self.buffer = (<char*>self.msg) + cython.sizeof(mach.mach_msg_header_t)
         self.msg.msgh_size = self.length
-
-    def make_bits(self, remote, local):
-        return remote | (local << 8)
 
     property body:
         def __get__(self):
@@ -209,14 +279,14 @@ cdef class Message:
         def __get__(self):
             return Port(self.msg.msgh_remote_port)
 
-        def __set__(self, value):
+        def __set__(self, Port value):
             self.msg.msgh_remote_port = value.value()
 
     property local_port:
         def __get__(self):
             return Port(self.msg.msgh_local_port)
 
-        def __set__(self, value):
+        def __set__(self, Port value):
             self.msg.msgh_local_port = value.value()
 
     property bits:
@@ -235,8 +305,11 @@ cdef class BootstrapServer:
     def checkin(name):
         cdef mach.kern_return_t kr
         cdef mach.mach_port_t port
+        cdef char* n = name
 
-        kr = mach.bootstrap_check_in(mach.bootstrap_port, name, &port)
+        with nogil:
+            kr = mach.bootstrap_check_in(mach.bootstrap_port, n, &port)
+
         if kr != mach.KERN_SUCCESS:
             raise MachException(kr)
 
@@ -246,9 +319,15 @@ cdef class BootstrapServer:
     def lookup(name):
         cdef mach.kern_return_t kr
         cdef mach.mach_port_t port
+        cdef char* n = name
 
-        kr = mach.bootstrap_look_up(mach.bootstrap_port, name, &port)
+        with nogil:
+            kr = mach.bootstrap_look_up(mach.bootstrap_port, n, &port)
+
         if kr != mach.KERN_SUCCESS:
             raise MachException(kr)
 
         return Port(port)
+
+def make_msg_bits(remote, local):
+    return remote | (local << 8)

@@ -78,7 +78,7 @@ cdef extern from "mach/kern_return.h":
         KERN_RETURN_MAX
 
 
-cdef extern from "mach/mach.h":
+cdef extern from "mach/mach.h" nogil:
     ctypedef int mach_msg_return_t
     ctypedef int mach_msg_option_t
     ctypedef int mach_msg_size_t
@@ -92,6 +92,8 @@ cdef extern from "mach/mach.h":
     ctypedef int mach_msg_trailer_type_t
     ctypedef int mach_msg_trailer_size_t
     ctypedef int kern_return_t
+    ctypedef int ipc_space_t
+    ctypedef int mach_msg_type_name_t
 
     ctypedef struct mach_msg_header_t:
         mach_msg_bits_t msgh_bits
@@ -111,18 +113,15 @@ cdef extern from "mach/mach.h":
     ctypedef struct mach_msg_ool_descriptor_t:
         pass
 
-    mach_msg_return_t mach_msg(mach_msg_header_t *msg,
-                               mach_msg_option_t option,
-                               mach_msg_size_t send_size,
-                               mach_msg_size_t rcv_size,
-                               mach_msg_timeout_t timeout,
-                               mach_port_t notify)
-
+    mach_msg_return_t mach_msg(mach_msg_header_t *msg, mach_msg_option_t option, mach_msg_size_t send_size,
+                               mach_msg_size_t rcv_size, mach_msg_timeout_t timeout, mach_port_t notify) nogil
     mach_msg_return_t mach_msg_send(mach_msg_header_t *msg)
     mach_msg_return_t mach_msg_receive(mach_msg_header_t *msg)
     kern_return_t mach_port_allocate(mach_port_t task, mach_port_right_t right, mach_port_t* name)
+    kern_return_t mach_port_insert_right(ipc_space_t task, mach_port_name_t name, mach_port_right_t right,
+                                         mach_msg_type_name_t right_type)
 
-cdef extern from "mach/port.h":
+cdef extern from "mach/port.h" nogil:
     enum:
         MACH_PORT_RIGHT_SEND
         MACH_PORT_RIGHT_RECEIVE
@@ -133,7 +132,9 @@ cdef extern from "mach/port.h":
     enum:
         MACH_PORT_NULL
 
-cdef extern from "mach/message.h":
+cdef extern from "mach/message.h" nogil:
+    ctypedef int mach_msg_return_t
+
     enum:
         MACH_MSG_TYPE_MOVE_RECEIVE
         MACH_MSG_TYPE_MOVE_SEND
@@ -183,11 +184,14 @@ cdef extern from "mach/message.h":
         MACH_RCV_INVALID_TRAILER
         MACH_RCV_IN_PROGRESS_TIMED
 
-cdef extern from "mach/mach_init.h":
+cdef extern from "mach/mach_init.h" nogil:
     mach_port_t mach_task_self()
 
-cdef extern from "servers/bootstrap.h":
-    ctypedef char[1] name_t
+cdef extern from "servers/bootstrap.h" nogil:
+    enum:
+        BOOTSTRAP_MAX_NAME_LEN
+
+    ctypedef char[BOOTSTRAP_MAX_NAME_LEN] name_t
 
     mach_port_t bootstrap_port
     kern_return_t bootstrap_create_service(mach_port_t bp, const name_t service_name, mach_port_t *sp)
