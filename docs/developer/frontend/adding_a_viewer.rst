@@ -281,7 +281,7 @@ don't plan to display creation and modification times for groups in the UI,
 we don't need to include them in the format JSON. Naturally, this depends on the
 design of the view you're implementing.
 
-Therefore, ``groups-display.json`` might look like:
+Therefore, ``groups-display.json`` looks like:
 
 .. code-block:: json
 
