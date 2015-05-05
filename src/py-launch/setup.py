@@ -24,9 +24,15 @@
 # SUCH DAMAGE.
 #
 
+import platform
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
+
+
+libraries = []
+if platform.system() == 'FreeBSD':
+    libraries = ["-llaunch", "-lmach", "-ldispatch", "-losxsupport", "-lBlocksRuntime"]
 
 
 extensions = [
@@ -34,7 +40,7 @@ extensions = [
        "launchd",
        ["launchd.pyx"], 
        include_dirs=["/usr/src/sys/apsl/include"],
-       extra_link_args=["-llaunch", "-lmach", "-ldispatch", "-losxsupport", "-lBlocksRuntime"]
+       extra_link_args=libraries
     )
 ]
 
