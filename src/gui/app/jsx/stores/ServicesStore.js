@@ -51,6 +51,13 @@ ServicesStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       ServicesStore.emitChange();
       break;
 
+    case ActionTypes.RECEIVE_USER_UPDATE_TASK:
+      console.log("ser více");
+      //_localUpdatePending[ action.taskID ] = action.userID;
+      //UsersStore.emitChange();
+      break;
+
+
     default:
       // No action
   }

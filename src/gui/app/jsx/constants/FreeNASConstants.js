@@ -36,7 +36,8 @@ module.exports = {
       , RECEIVE_GROUP_UPDATE_TASK : null
 
       // Services
-      , RECEIVE_RAW_SERVICES : null
+      , RECEIVE_RAW_SERVICES        : null
+      , RECEIVE_SERVICE_UPDATE_TASK : null
 
       //Widget Data
       , RECEIVE_RAW_WIDGET_DATA : null
