@@ -38,8 +38,8 @@ Information
 
 :menuselection:`System --> Information` displays general information about the TrueNAS® system. An example is seen in Figure 5.1a.
 
-The information includes the hostname, the build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, and the
-current load average.
+The information includes the hostname, build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, the
+current load average, and the system's serial number.
 
 To change the system's hostname, click its "Edit" button, type in the new hostname, and click "OK". The hostname must include the domain name. If the network
 does not use a domain name add *.local* to the end of the hostname.
@@ -131,7 +131,8 @@ wish to return a test system to the original configuration.
 **Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
 **Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** 
 
-**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
+red as an indication that the system will need to reboot in order to load the restored configuration.
 
 **NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
 operation of time sensitive applications such as Active Directory or other directory services. By default, TrueNAS® is pre-configured to use three public NTP
@@ -203,9 +204,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|tn_be.png|
+|tn_be1.png|
 
-.. |tn_be.png| image:: images/tn_be.png
+.. |tn_be1.png| image:: images/tn_be1.png
 
 Each boot environment entry contains the following information:
 
@@ -217,7 +218,7 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Rename:** used to change the name of the boot environment. Note that you cannot rename any boot environment which has an entry under the "Active" column.
+* **Rename:** used to change the name of the boot environment.
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
@@ -316,26 +317,35 @@ Advanced
 | Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
-| crash dumps and daily telemetry         |                                  | development team for diagnosis. The telemetry includes some system stats,    |
-|                                         |                                  | collectd RRDs, and select syslog messages.                                   |
+| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps and telemetry (some system stats, collectd    |
+| crash dumps and daily telemetry         |                                  | RRDs, and select syslog messages) are automatically sent to the  development |
+|                                         |                                  | team for diagnosis                                                           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-
+| Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
+|                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
-
 **Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
 button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
 backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+
+.. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
+             was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
+             option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
+
+.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
+
+**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
 **Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
 this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
@@ -658,6 +668,10 @@ To see if any updates are available, click the "Check Now" button. If there are 
 To apply the updates now, make sure that there aren't any clients currently connected to the TrueNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
 
+.. warning:: each update creates a boot environment and if the boot device does not have sufficient space to hold another boot environment, the upgrade will
+   fail. If you need to create more space on the boot device, use :menuselection:`System --> Boot` to review your current boot environments and to delete the
+   ones you no longer plan to boot into.
+
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
 in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
@@ -698,17 +712,7 @@ Before upgrading an existing ZFS pool, be aware of the following caveats first:
   the latest feature flags, you will not be able to import that pool into another operating system that does not yet support those feature flags.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
-"Upgrade" button as seen in Figure 5.8d.
-
-.. note:: if the "Upgrade" button does not appear, the pool is already at the latest feature flags and does not need to be upgraded.
-
-**Figure 5.8d: Upgrading a ZFS Pool**
-
-|tn_pool1.png|
-
-.. |tn_pool1.png| image:: images/tn_pool1.png
-
-The warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
+"Upgrade" button. A warning message will remind you that a pool upgrade is irreversible. Click "OK" to proceed with the upgrade.
 
 The upgrade itself should only take a seconds and is non-disruptive. This means that you do not need to stop any sharing services in order to upgrade the
 pool. However, you should choose to upgrade when the pool is not being heavily used. The upgrade process will suspend I/O for a short period, but should be
@@ -966,8 +970,8 @@ If you click an entry, it will activate the following configuration buttons:
 Support
 -------
 
-The TrueNAS® "Support" tab is used to view or update the system's license information. It also provides a built-in ticketing system for generating support
-requests. Figure 5.11a shows an example of...
+The TrueNAS® "Support" tab, shown in Figure 5.11a, is used to view or update the system's license information. It also provides a built-in ticketing system for generating support
+requests.
 
 **Figure 5.11a: Support Tab**
 
@@ -975,7 +979,11 @@ requests. Figure 5.11a shows an example of...
 
 .. |tn_support1.png| image:: images/tn_support1.png
 
-Describe licensing stuff here....
+In this example, the system has a valid license which indicates the hardware model, system serial number, support contract type, licensed period, customer name,
+licensed features, and additional supported hardware.
+
+If the license expires or additional hardware, features, or contract type are required, contact your iXsystems support engineer. Once you have the new license string,
+click the "Update License" button, paste in the new license, and click "OK". The new details should be displayed.
 
 To generate a support ticket, complete the following fields:
 
@@ -1017,20 +1025,20 @@ Some TrueNAS® appliances use the Common Address Redundancy Protocol (`CARP <htt
 failover. CARP was originally developed by the OpenBSD project and provides an open source, non patent-encumbered alternative to the VRRP and HSRP protocols.
 
 Failover is only available on certain appliances and requires an advanced configuration between multiple TrueNAS® appliances that is created with the
-assistance of an iXsystems support engineer. At this time, failover can only be used with iSCSI or NFS. Contact your iXsystems representative if you wish to
-schedule a time to configure failover.
+assistance of an iXsystems support engineer. Seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted
+by the failover event. Contact your iXsystems representative if you wish to schedule a time to configure failover.
 
 This section provides an overview of the failover screen that is available in the graphical administrative interface. Your iXsystems support engineer will
 assist you in the configuration and testing of a failover that is suited to your specific environment.
 **Do not attempt to configure failover on your own as it will fail and may render existing shares or volumes inaccessible.**
 
-The options available in :menuselection:`System --> Failovers --> View Failovers --> Add Failover` are shown in Figure 5.11a and described in Table 5.11a.
+The options available in :menuselection:`System --> Failovers --> Create Failover` are shown in Figure 5.11a and described in Table 5.11a.
 
 **Figure 5.11a: Creating a Failover**
 
-|failover1.png|
+|failover1a.png|
 
-.. |failover1.png| image:: images/failover1.png
+.. |failover1a.png| image:: images/failover1a.png
 
 **Table 5.11a: Options When Creating a Failover**
 
@@ -1041,23 +1049,66 @@ The options available in :menuselection:`System --> Failovers --> View Failovers
 | Volume      | drop-down menu | select the ZFS pool                                                         |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
-| CARP        | drop-down menu | select the CARP that was previously created in Network -> CARPs -> Add CARP |
+| CARP        | drop-down menu | select *carp0*, previously created in Network -> CARPs -> Add CARP          |
 |             |                |                                                                             |
 +-------------+----------------+-----------------------------------------------------------------------------+
-| IP Address  | string         | input the IP address associated with the existing CARP                      |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Disabled    | checkbox       | check to disable the failover without deleting the configuration            |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Master      | checkbox       | when checked, indicates that this is the master node                        |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Timeout     | integer        | seconds to wait before a network event will cause a failover                |
-|             |                |                                                                             |
+| Remote IP   | string         | input the IP address of the remote node's failover interface                |
+|             |                | (typically *169.254.10.x*)                                                  |
 +-------------+----------------+-----------------------------------------------------------------------------+
 
 
 Once a failover configuration is working, a new icon will be added between the Log Out and Alert icons to each device in the failover configuration. The
 active device will have a green Active icon and the passive device will have a red Passive icon. An entry will also be added to
 `System -> Failovers` on each device. 
+
+.. index:: Failovers
+
+.. _Failover Management:
+
+Failover Management
+~~~~~~~~~~~~~~~~~~~
+
+The :command:`hactl` command line utility is included for managing existing failovers. Once a failover has been configured, it is recommended
+to use :command:`hactl` instead of the GUI as any changes made using :menuselection:`System --> Failovers` will restart networking.
+
+If you type this command without any options, it will indicate the status of the failover. This example was run on an active node::
+
+ hactl
+ Node status: Active
+ Failover status: Enabled
+
+And this example was run on a system that has not been configured for failover::
+
+ hactl
+ Node status: Not an HA node
+
+Table 5.11b summarizes the available options for this command.
+
+**Table 5.11b: hactl Options**
+
++--------------------+---------------------------------------------------------------------------------------------+
+| **Option**         | **Description**                                                                             |
+|                    |                                                                                             |
++====================+=============================================================================================+
+| **enable**         | administratively enables failover                                                           |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **disable**        | administratively disables failover                                                          |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **status**         | indicates whether the node is active, passive, or non-HA                                    |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **takeover**       | can only be run from the passive node; will give a warning message that the current active  |
+|                    | node will reboot                                                                            |
++--------------------+---------------------------------------------------------------------------------------------+
+| **giveback**       | cannot be run from the active node; will give a warning message that this node will reboot  |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **-h** or **help** | shows the help message (options) for this command                                           |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+| **-q**             | will not display the current status if this is a non-HA node                                |
+|                    |                                                                                             |
++--------------------+---------------------------------------------------------------------------------------------+
+

@@ -240,6 +240,10 @@ A series of instructional videos are available for FreeNAS® 9.3. They include:
 
 * `How to Replace HDD in FreeNAS® 9.3 <https://www.youtube.com/watch?v=c8bvtj-LQ_A>`_
 
+* `TrueNAS 9.3 Snapshots Setup <https://www.youtube.com/watch?v=R92wb_xN9k4>`_
+
+* `Install Murmur (Mumble server) on FreeNAS/FreeBSD  <https://www.youtube.com/watch?v=aAeZRNfarJc>`_
+
 .. index:: Professional Support
 .. _Professional Support:
 

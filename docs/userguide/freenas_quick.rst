@@ -40,7 +40,7 @@ need to go to :menuselection:`Storage --> Volumes --> Import Volume` to re-impor
 **9) Shell:** enters a shell in order to run FreeBSD commands. To leave the shell, type :command:`exit`.
 
 **10) System Update:** if any system updates are available, they will automatically be downloaded and applied. The functionality is the same as described in
-:ref:`Updating Between Releases`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
+:ref:`Update`, except that the updates will be applied immediately for the currently selected train and access to the GUI is not
 required.
 
 **11) Create backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection.
@@ -63,6 +63,8 @@ point when the backup was created. The system will reboot once the restore is co
 .. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
              was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
              option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
+
+.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
 
 **13) Reboot:** reboots the system.
 

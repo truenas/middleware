@@ -774,6 +774,8 @@ point when the backup was created. The system will reboot once the restore is co
              was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
              option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
 
+.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
+
 **13) Reboot:** reboots the system.
 
 **14) Shutdown:** halts the system.

@@ -135,7 +135,8 @@ contains an alternate script which only saves a copy of the configuration when i
 `forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`__
 contains a script for backing up the configuration from another system.
 
-**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
+red as an indication that the system will need to reboot in order to load the restored configuration.
 
 **NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
 operation of time sensitive applications such as Active Directory or other directory services. By default, FreeNAS® is pre-configured to use three public NTP
@@ -206,9 +207,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1c.png|
+|be1d.png|
 
-.. |be1c.png| image:: images/be1c.png
+.. |be1d.png| image:: images/be1d.png
 
 Each boot environment entry contains the following information:
 
@@ -220,7 +221,7 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Rename:** used to change the name of the boot environment. Note that you cannot rename any boot environment which has an entry under the "Active" column.
+* **Rename:** used to change the name of the boot environment.
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
@@ -231,7 +232,7 @@ Highlight an entry to view its configuration buttons.  The following configurati
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete the
   *default* entry or an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
-  entry, which will clear the *On reboot* field of the currently activated entry.
+  entry, which will clear the *On reboot* field of the currently activated entry. 
 
 The buttons above the boot entries can be used to:
 
@@ -269,6 +270,9 @@ Mirroring the Boot Device
 
 If the system is currently booting from one device, you can add another device to create a mirrored boot device. This way, if one device fails, the system
 still has a copy of the boot file system and can be configured to boot from the remaining device in the mirror.
+
+.. note:: when adding another boot device, it must be the same size (or larger) as the existing boot device. Different models of USB devices which advertise the same size may
+   not necessarily be the same size. For this reason, it is recommended to use the same model of USB drive.
 
 In the example shown in Figure 5.3d, the user has clicked :menuselection:`System --> Boot --> Status` to display the current status of the boot device. The
 example indicates that there is currently one device, *ada0p2*, its status is "ONLINE", and it is currently the only boot device as indicated by the word
@@ -355,26 +359,35 @@ Advanced
 | Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
-| crash dumps and daily telemetry         |                                  | development team for diagnosis. The telemetry includes some system stats,    |
-|                                         |                                  | collectd RRDs, and select syslog messages.                                   |
+| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps and telemetry (some system stats, collectd    |
+| crash dumps and daily telemetry         |                                  | RRDs, and select syslog messages) are automatically sent to the  development |
+|                                         |                                  | team for diagnosis                                                           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-
+| Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
+|                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
-
 **Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
 button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
 backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+
+.. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
+             was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
+             option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
+
+.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
+
+**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
 **Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
 this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
@@ -710,14 +723,19 @@ of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
 
+.. warning:: each update creates a boot environment and if the boot device does not have sufficient space to hold another boot environment, the upgrade will
+   fail. If you need to create more space on the boot device, use :menuselection:`System --> Boot` to review your current boot environments and to delete the
+   ones you no longer plan to boot into.
+
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
 in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
-is included for backwards compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the
-necessary updates to upgrade the operating system.
+.. note:: the "Manual Update" button can be used to manually upgrade using a previously downloaded upgrade file, as described in :ref:`Upgrading From the GUI`. 
+   While this can be useful to upgrade to a specific point in time, this button is primarily included for backwards compatibility as this method is no longer
+   the recommended way to upgrade. Instead, select a train and apply any outstanding updates to ensure that the operating system has the most recent updates for
+   the specified train.
 
 .. index:: CA, Certificate Authority
 .. _CAs:
@@ -975,9 +993,9 @@ The FreeNAS® "Support" tab, shown in Figure 5.11a, provides a built-in ticketin
 
 **Figure 5.11a: Support Tab**
 
-|support1.png|
+|support1a.png|
 
-.. |support1.png| image:: images/support1.png
+.. |support1a.png| image:: images/support1a.png
 
 This screen provides a built-in interface to the FreeNAS® bug tracker located at `bugs.freenas.org <https://bugs.freenas.org>`_. If you have not yet used the
 FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a

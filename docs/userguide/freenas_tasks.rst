@@ -187,7 +187,8 @@ can be configured when creating an rsync task.
 |                                  |                             | characters                                                                                |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Remote Host                      | string                      | IP address or hostname of the remote system that will store the copy                      |
+| Remote Host                      | string                      | IP address or hostname of the remote system that will store the copy; use the format      |
+|                                  |                             | *username@remote_host* if the username differs on the remote host                         |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote SSH Port                  | integer                     | only available in  *Rsync over SSH* mode; allows you to specify an alternate SSH port     |

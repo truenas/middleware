@@ -40,7 +40,7 @@ raw-device semantics such as iSCSI device extents.
 **ZFS supports real-time data compression**. Compression happens when a block is written to disk, but only if the written data will benefit from compression.
 When a compressed block is accessed, it is automatically decompressed. Since compression happens at the block level, not the file level, it is transparent to
 any applications accessing the compressed data. By default, ZFS pools made using TrueNAS® version 9.2.1 or later will use the recommended LZ4 compression
-algorithm by default.
+algorithm.
   
 **ZFS provides low-cost, instantaneous snapshots** of the specified pool, dataset, or zvol. Due to COW, the initial size of a snapshot is 0 bytes and the size
 of the snapshot increases over time as changes to the files in the snapshot are written to disk. Snapshots can be used to provide a copy of data at the point

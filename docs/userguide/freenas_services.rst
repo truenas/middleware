@@ -375,8 +375,12 @@ section of the Samba documentation contains additional troubleshooting tips.
 Domain Controller
 -----------------
 
-FreeNAS® can be configured to act either as the domain controller for a network or to join an existing Active Directory network as a domain controller. Be
-aware that configuring a domain controller is a complex process that requires a good understanding of how Active Directory works. While
+FreeNAS® can be configured to act either as the domain controller for a network or to join an existing Active Directory network as a domain controller. 
+
+.. note:: this section demonstrates how to configure the FreeNAS® system to act as a domain controller. If your goal is to integrate with an existing Active
+   Directory network in order to access its authentication and authorization services, instead configure :ref:`Active Directory`.
+
+Be aware that configuring a domain controller is a complex process that requires a good understanding of how Active Directory works. While
 :menuselection:`Services --> Domain Controller` makes it easy to input the needed settings into the administrative graphical interface, it is up to you to
 understand what those settings should be. Before beginning your configuration, read through the
 `Samba AD DC HOWTO <http://wiki.samba.org/index.php/Samba_AD_DC_HOWTO>`_. Once FreeNAS® is configured, use the RSAT utility from a Windows system to manage
@@ -466,12 +470,9 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 | Password             | string         | password used to logon to the provider and update the record                                                       |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Update period        | integer        | in seconds; be careful with this setting as the provider may block you for abuse if this setting occurs more often |
-|                      |                | than the IP address changes                                                                                        |
-|                      |                |                                                                                                                    |
+| Update period        | integer        | how often the IP is checked in seconds                                                                             |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Forced update period | integer        | in seconds so be careful with this setting as the provider may block you for abuse; issues a DDNS update request   |
-|                      |                | even when the address has not changed so that the service provider knows that the account is still active          |
+| Forced update period | integer        | how often the IP should be updated, even it has not changed, in seconds                                            |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Auxiliary parameters | string         | additional parameters passed to the provider during record update; an example of specifying a custom provider is   |
@@ -600,9 +601,8 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 | Anonymous user download bandwidth                            | integer        | only available in "Advanced Mode"; in KB/s, default of *0*  means unlimited         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections; if not            |
-|                                                              |                | provided, a certificate will automatically be generated and will appear in the      |
-|                                                              |                | "Certificate and private key" box once you click "OK"                               |
+| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections and requires a     |
+|                                                              |                | certificate to be created or imported using :ref:`Certificates`                     |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS policy                                                   | drop-down menu | only available in "Advanced Mode"; the selected policy defines whether the          |
@@ -1102,30 +1102,38 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 
 **Figure 11.12a: Configuring SNMP**
 
-|snmp.png|
+|snmp1.png|
 
-.. |snmp.png| image:: images/snmp.png
+.. |snmp1.png| image:: images/snmp1.png
 
 **Table 11.12a: SNMP Configuration Options**
 
-+----------------------+------------+----------------------------------------------------------------+
-| **Setting**          | **Value**  | **Description**                                                |
-|                      |            |                                                                |
-+======================+============+================================================================+
-| Location             | string     | optional description of system's location                      |
-|                      |            |                                                                |
-+----------------------+------------+----------------------------------------------------------------+
-| Contact              | string     | optional email address of administrator                        |
-|                      |            |                                                                |
-+----------------------+------------+----------------------------------------------------------------+
-| Community            | string     | password used on the SNMP network, default is *public* and     |
-|                      |            | **should be changed for security reasons**                     |
-|                      |            |                                                                |
-+----------------------+------------+----------------------------------------------------------------+
-| Auxiliary Parameters | string     | additional                                                     |
-|                      |            | options not covered in this screen, one per line               |
-|                      |            |                                                                |
-+----------------------+------------+----------------------------------------------------------------+
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**  | **Description**                                                                                  |
+|                      |            |                                                                                                  |
++======================+============+==================================================================================================+
+| Location             | string     | optional description of system's location                                                        |
+|                      |            |                                                                                                  |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| Contact              | string     | optional email address of administrator                                                          |
+|                      |            |                                                                                                  |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| Community            | string     | password used on the SNMP network, default is *public* and                                       |
+|                      |            | **should be changed for security reasons**                                                       |
+|                      |            |                                                                                                  |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| SNMP v3 Support      | checkbox   | check this box to enable support for SNMP version 3                                              |
+|                      |            |                                                                                                  |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| Username             | string     | only applies if "SNMP v3 Support" is checked; specify the username to register with this service |
+|                      |            |                                                                                                  |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| Password             | string     | only applies if "SNMP v3 Support" is checked; specify and confirm a password of at least 8       |
+|                      |            | characters                                                                                       |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
+| Auxiliary Parameters | string     | additional options not covered in this screen, one per line                                      |
+|                      |            |                                                                                                  |
++----------------------+------------+--------------------------------------------------------------------------------------------------+
 
 
 .. index:: SSH, Secure Shell

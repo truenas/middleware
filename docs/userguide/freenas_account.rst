@@ -62,7 +62,8 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 | Group Name          | string    | mandatory                                                                                                                |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo         | checkbox  | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                    |
+| Permit Sudo         | checkbox  | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_; when using sudo, a user will be   |
+|                     |           | prompted for their own password                                                                                          |
 |                     |           |                                                                                                                          |
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 | Allow repeated GIDs | checkbox  | allows multiple groups to share the same group id (GID); this is useful when a GID is already associated with the UNIX   |
@@ -113,14 +114,14 @@ shown in Figure 4.2a.
 
 **Figure 4.2a: Managing User Accounts**
 
-|user1.png|
+|user1a.png|
 
-.. |user1.png| image:: images/user1.png
+.. |user1a.png| image:: images/user1a.png
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
-with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, and whether or not the user
-is allowed to use :command:`sudo`. To reorder the list, click the desired column name. An arrow indicates which column the view is sorted by; click the arrow
-to reverse the sort order.
+with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, whether or not the user
+is allowed to use :command:`sudo`, and whether or not the user connects from a Windows 8, 8.1, 10, or higher system. To reorder the list, click the desired
+column name. An arrow indicates which column the view is sorted by; click the arrow to reverse the sort order.
 
 If you click a user account, the following buttons will appear for that account:
 
@@ -207,7 +208,8 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | box will grey out "Disable password login" which is mutually exclusive                                                                                |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_                                                                 |
+| Permit Sudo                | checkbox        | if checked, members of the group have permission to use `sudo <http://www.sudo.ws/>`_; when using sudo, a user will be prompted for their own         |
+|                            |                 | password                                                                                                                                              |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Microsoft Account          | checkbox        | check this box if the user will be connecting from a Windows 8, 8.1, 10, or higher system                                                             |

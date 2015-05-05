@@ -31,7 +31,7 @@ The following types of shares and services are available:
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
-  containing only Windows systems.
+  containing any Windows systems.
 
 * :ref:`Block (iSCSI)` shares: this type of share appears as an unformatted disk to clients running iSCSI initiator software or a virtualization solution such
   as VMware.
@@ -301,7 +301,7 @@ a new dataset for the share, start the services required by NFS, and add an entr
 Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
 the permissions of the mounted share.
 
-**Figure 10.2a: NFS Share Settings**
+**Figure 10.2a: NFS Share Wizard**
 
 |nfs6.png|
 
@@ -574,6 +574,9 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
+Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® 9.3 uses TCP. To support UDP connections, go to
+:menuselection:`Services --> NFS` and check the box "Serve UDP NFS clients".
+
 .. index:: WebDAV
 .. _WebDAV Shares:
 
@@ -605,6 +608,9 @@ where:
 
 Inputting the URL into a web browser will bring up an authentication pop-up message. Input a username of *webdav* and the password configured in
 :menuselection:`Services --> WebDAV`.
+
+.. warning:: at this time, only the *webdav* user is supported. For this reason, it is important to set a good password for this account and to only give the password to
+   users which should have access to the WebDAV share.
 
 To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
 
@@ -1220,14 +1226,13 @@ Table 10.5d summarizes the settings that can be configured when adding an author
 |             |           | initiator name as the user                                                                                                       |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
+| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be between 12 and 16 characters                     |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 | Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
-|             |           | "Peer User" is set                                                                                                               |
+| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the "Peer User" is set                     |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 
@@ -1330,9 +1335,9 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent2.png|
+|extent2a.png|
 
-.. |extent2.png| image:: images/extent2.png
+.. |extent2a.png| image:: images/extent2a.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1383,6 +1388,10 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Xen initiator      | checkbox       | check this box when using Xen as the iSCSI initiator                                                                 |
 | compat mode        |                |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| LUN RPM            | drop-down menu | do **NOT** change this setting when using Windows as the initiator; only needs to be changed in large environments   |
+|                    |                | where the number of systems using a specific RPM is needed for accurate reporting statistics                         |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
