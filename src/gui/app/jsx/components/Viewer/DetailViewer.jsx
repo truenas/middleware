@@ -11,6 +11,11 @@ var RouteHandler = Router.RouteHandler;
 var viewerCommon = require("../mixins/viewerCommon");
 var viewerUtil   = require("./viewerUtil");
 
+var ToggleSwitch = require("../common/ToggleSwitch");
+
+var UsersMiddleware = require("../../middleware/ServicesMiddleware");
+
+
 var DetailNavSection = React.createClass({
 
     contextTypes: {
@@ -59,6 +64,15 @@ var DetailNavSection = React.createClass({
         secondaryText = viewerUtil.markSearch( secondaryText, searchString );
       }
 
+      var ts = null;
+      if ( this.props.viewData.display.ShowToggleSwitch )
+      {
+        var serviceState = (secondaryText === "running" ? true : false);
+        ts = <ToggleSwitch
+                toggled   = { serviceState }
+                onChange  = { this.handleToggle.bind( null, this.props.entries[index] ) } />;
+      }
+
       return (
         <li role      = "presentation"
             key       = { index }
@@ -76,9 +90,24 @@ var DetailNavSection = React.createClass({
               <strong className="primary-text">{ primaryText }</strong>
               <small className="secondary-text">{ secondaryText }</small>
             </div>
+            { ts }
           </Link>
         </li>
       );
+    }
+  ,
+  handleToggle: function( serviceObj, toggled ) {
+      var serviceName   = serviceObj.name;
+      var serviceState  = serviceObj.state;
+
+      console.log( serviceObj );
+      console.log( toggled );
+
+      var action = (serviceState === "running" ? "stop" : "start");
+
+      UsersMiddleware.updateService(serviceName, action);
+
+      //TODO: Really change the state of the service.
     }
 
   , toggleDisclosure: function () {

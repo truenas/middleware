@@ -35,6 +35,7 @@ var viewData = {
     , defaultFilters : [ ]
     , allowedGroups  : [ "running", "stopped" ]
     , defaultGroups  : [ "running", "stopped" ]
+    , ShowToggleSwitch : true
   }
 };
 
