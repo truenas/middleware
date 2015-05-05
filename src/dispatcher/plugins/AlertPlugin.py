@@ -47,6 +47,15 @@ class AlertsProvider(Provider):
             'alerts', *(filter or []), **(params or {})
         )
 
+    def dismiss(self, id):
+        try:
+            self.datastore.delete('alerts', id)
+        except DatastoreException, e:
+            raise TaskException(
+                errno.EBADMSG,
+                'Cannot delete alert: {0}'.format(str(e))
+            )
+
     @accepts(h.ref('alert'))
     def emit(self, alert):
         self.datastore.insert('alerts', alert)
