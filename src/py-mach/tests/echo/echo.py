@@ -64,7 +64,7 @@ def main():
         sys.exit(1)
 
     # Stop service
-    l.remove('org.freenas.test.mach.ipc-server')
+    l.unload('org.freenas.test.mach.ipc-server')
 
 
 if __name__ == '__main__':
