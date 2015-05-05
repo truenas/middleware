@@ -29,15 +29,12 @@ etc/exports
 etc/freenas.conf
 etc/gettytab
 etc/ipfw.conf.block
-etc/netcli
-etc/netcli.sh
 etc/newsyslog.conf
 etc/pf.conf.block
 etc/pw.conf
 etc/rc.subr
 etc/rc.conf
 etc/sysctl.conf
-etc/syslog.conf
 etc/ttys
 etc/rc.d/cleanvar
 etc/rc.d/ix-bootstrap

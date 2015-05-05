@@ -75,7 +75,6 @@ do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/nginx
-	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/rc.d
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/samba.gdb ${STAGEDIR}/${PREFIX}/usr/local/etc/samba.gdb
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/sudoers ${STAGEDIR}/${PREFIX}/usr/local/etc/sudoers
 	${INSTALL_DATA} ${WRKSRC}/freenas/usr/local/etc/appcafe.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/appcafe.conf
@@ -101,14 +100,11 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/freenas.conf ${STAGEDIR}${PREFIX}/etc/freenas.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/gettytab ${STAGEDIR}${PREFIX}/etc/gettytab
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ipfw.conf.block ${STAGEDIR}${PREFIX}/etc/ipfw.conf.block
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli ${STAGEDIR}${PREFIX}/etc/netcli
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/netcli.sh ${STAGEDIR}${PREFIX}/etc/netcli.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/newsyslog.conf ${STAGEDIR}${PREFIX}/etc/newsyslog.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/pf.conf.block ${STAGEDIR}${PREFIX}/etc/pf.conf.block
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/pw.conf ${STAGEDIR}${PREFIX}/etc/pw.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.conf ${STAGEDIR}${PREFIX}/etc/rc.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/sysctl.conf ${STAGEDIR}${PREFIX}/etc/sysctl.conf
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/syslog.conf ${STAGEDIR}${PREFIX}/etc/syslog.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ttys ${STAGEDIR}${PREFIX}/etc/ttys
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.bashrc ${STAGEDIR}${PREFIX}/.bashrc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.cshrc ${STAGEDIR}${PREFIX}/.cshrc
