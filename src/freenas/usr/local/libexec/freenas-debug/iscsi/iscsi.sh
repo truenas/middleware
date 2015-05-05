@@ -33,7 +33,7 @@ iscsi_directory() { echo "iSCSI"; }
 iscsi_func()
 {
 	section_header "/etc/ctl.conf"
-	sc "/etc/ctl.conf"
+	sc "/etc/ctl.conf.shadow"
 	section_footer
 
 	section_header "ctladm devlist -v"
