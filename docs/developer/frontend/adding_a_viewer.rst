@@ -414,8 +414,8 @@ same potential future rewrite.
                   , testProp : { "state": "stopped" }
                 }
             }
-          , remainingName  : "other services"
-          , ungroupedName  : "all services"
+          , remainingName  : "other groups"
+          , ungroupedName  : "all groups"
           , allowedFilters : [ ]
           , defaultFilters : [ ]
           , allowedGroups  : [ "running", stopped" ]
