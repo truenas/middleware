@@ -40,7 +40,7 @@ raw-device semantics such as iSCSI device extents.
 **ZFS supports real-time data compression**. Compression happens when a block is written to disk, but only if the written data will benefit from compression.
 When a compressed block is accessed, it is automatically decompressed. Since compression happens at the block level, not the file level, it is transparent to
 any applications accessing the compressed data. By default, ZFS pools made using TrueNAS® version 9.2.1 or later will use the recommended LZ4 compression
-algorithm by default.
+algorithm.
   
 **ZFS provides low-cost, instantaneous snapshots** of the specified pool, dataset, or zvol. Due to COW, the initial size of a snapshot is 0 bytes and the size
 of the snapshot increases over time as changes to the files in the snapshot are written to disk. Snapshots can be used to provide a copy of data at the point
@@ -53,11 +53,11 @@ minutes of the data loss). Snapshots are stored locally but can also be replicat
 copy but instead converts a snapshot into a stream of data. This design means that the ZFS pool on the receiving end does not need to be identical and can use
 a different RAIDZ level, volume size, compression settings, etc.
   
-**ZFS boot environments provide a method for recovering from a failed upgrade**. Beginning with TrueNAS® version 9.3, a snapshot of the dataset the operating
-system resides on is automatically taken before an upgrade or a system update. This saved boot environment is automatically added to the GRUB boot loader.
-Should the upgrade or configuration change fail, simply reboot and select the previous boot environment from the boot menu. Users can also create their own
-boot environments in :menuselection:`System --> Boot` as needed, for example before making configuration changes. This way, the system can be rebooted into
-a snapshot of the system that did not include the new configuration changes.
+**ZFS boot environments provide a method for recovering from a failed upgrade**. in TrueNAS® 9.3, a snapshot of the dataset the operating system resides on
+is automatically taken before an upgrade or a system update. This saved boot environment is automatically added to the GRUB boot loader. Should the upgrade or
+configuration change fail, simply reboot and select the previous boot environment from the boot menu. Users can also create their own boot environments in
+:menuselection:`System --> Boot` as needed, for example before making configuration changes. This way, the system can be rebooted into a snapshot of the
+system that did not include the new configuration changes.
 
 **ZFS provides a write cache** in RAM as well as a
 `ZFS Intent Log <http://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_ (ZIL). The ZIL is a temporary storage area for **synchronous** writes until they

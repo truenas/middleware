@@ -1,19 +1,6 @@
-:orphan:
-
-|tn_cover.jpg|
-
-.. centered:: Published XX, 2015
-
 .. centered:: Copyright iXsystems 2011-2015
 
 .. centered:: TrueNAS® and the TrueNAS® logo are registered trademarks of iXsystems.
-
-.. centered:: Cover art by Jenny Rosenberg
-
-
-.. |tn_cover.jpg| image:: images/tn_cover.jpg
-    :width: 8.5in
-    :height: 11.0in
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
@@ -64,7 +51,8 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
 * Chapter 2: ZFS Primer: many of the features in the TrueNAS® Storage Appliance rely on the ZFS file system. An overview is provided to familiarize the
   administrator with the terminology and features provided by ZFS.
 
-* Chapter 3: Accessing TrueNAS®: this chapter introduces the console, shows how to access the graphical administrative interface.
+* Chapter 3: Initial Setup: this chapter describes how to install the TrueNAS® Storage Appliance, how to configure the out-of-band management port, and
+  introduces the console and how to access the graphical administrative interface.
 
 * Chapters 4-14: these chapters cover the configuration options which are available in the TrueNAS® graphical administrative interface. The chapter order
   reflects the order that the configuration options appear within the administrative interface's tree structure. Chapter 4 describes how to create users and
@@ -74,9 +62,7 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
   11 describes how to configure, start, and stop the built-in services. Chapter 12 provides an overview of the Reporting mechanism. Chapter 13 introduces the
   configuration wizard, and chapter 14 covers the remaining configuration options.
 
-* Chapter 15: Upgrading TrueNAS®: this chapter demonstrates how to upgrade the TrueNAS® operating system to a newer version.
-
-* Chapter 16: Using the FreeNAS® API: this chapter demonstrates how to use the FreeNAS® API to remotely control a TrueNAS® system.
+* Chapter 15: Using the FreeNAS® API: this chapter demonstrates how to use the FreeNAS® API to remotely control a TrueNAS® system.
 
 **Typographic Conventions**
 

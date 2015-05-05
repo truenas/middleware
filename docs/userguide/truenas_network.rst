@@ -64,8 +64,6 @@ options.
 |carp.png|
 
 .. |carp.png| image:: images/carp.png
-    :width: 3.3in
-    :height: 2.7in
 
 **Table 7.1a: CARP Configuration Options**
 
@@ -85,14 +83,22 @@ options.
 | Advertisements Skew | integer   | change this value on the backup that should be promoted to master should the original master become unavailable |
 |                     |           |                                                                                                                 |
 +---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Critical for        | checkbox  |                                                                                                                 |
-| Failover            |           |                                                                                                                 |
+| Critical for        | checkbox  | check this box to indicate that if any interface in this CARP goes down that a failover should be initiated,    |
+| Failover            |           | even if other interfaces in the CARP are still up                                                               |
 |                     |           |                                                                                                                 |
 +---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Group               | drop-down |                                                                                                                 |
-|                     | menu      |                                                                                                                 |
+| Group               | drop-down | requires "Critical for Failover" to be checked; failover will only occur if all of the interfaces in this group |
+|                     | menu      | fail--see note below table                                                                                      |
 |                     |           |                                                                                                                 |
 +---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+
+.. note:: when selecting a group number, keep in mind that "0" and "1" are reserved. The group number itself does not matter as it merely provides a way to group
+   interfaces. For example, you could put laggs in one group and management interfaces in another group.  Interface groups allow for a configuration where there are MPIO iSCSI
+   interfaces, which support round-robin so failover needs not be triggered until all interfaces fail, an NFS interface, which does not support round-robin so a failover
+   should occur when that interface fails, as well as configurations where the management network is a convenience, but the data network is mission critical.
+   Any interface that is not put into a group will never failover, which can be useful when the network itself is highly redundant since if the network itself fails,
+   failover won't help.
+
 
 .. index:: Global Configuration
 
@@ -118,8 +124,6 @@ TrueNAS® system in the "Host name database" field.
 |tn_network1.png|
 
 .. |tn_network1.png| image:: images/tn_network1.png
-    :width: 5.5in
-    :height: 4.2in
 
 **Table 7.2a: Global Configuration Settings**
 
@@ -194,8 +198,6 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 |interface.png|
 
 .. |interface.png| image:: images/interface.png
-    :width: 3.2in
-    :height: 4.2in
 
 **Table 7.3a: Interface Configuration Settings**
 
@@ -252,25 +254,20 @@ fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of t
 IPMI
 ----
 
-TrueNAS® provides a graphical screen for configuring the built-in IPMI interface.
+The TrueNAS® Storage Appliance provides a built-in out-of-band management port which can be used to provide side-band management should the system become
+unavailable through the graphical administrative interface. This allows for a few vital functions, such as checking the log, accessing the BIOS setup, and
+powering on the system without requiring physical access to the system. It can also be used to allow another person remote access to the system in order to
+assist with a configuration or troubleshooting issue.
 
-IPMI provides side-band management should the system become unavailable through the graphical administrative interface. This allows for a few vital functions,
-such as checking the log, accessing the BIOS setup, and powering on the system without requiring physical access to the system. IPMI can also be used to allow
-another person remote access to the system in order to assist with a configuration or troubleshooting issue. Before configuring IPMI, ensure that the
-management interface is physically connected to the network. Depending upon the hardware, the IPMI device may share the primary Ethernet interface or it may
-be a dedicated IPMI interface.
-
-IPMI can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in Figure 7.4a, provides a shortcut to the most basic
-IPMI configuration. If you are already comfortable using the BMC's utilities, they can be used instead. Table 7.4a summarizes the options when configuring
-IPMI using the TrueNAS® GUI.
+The IP addressing information for the out-of-band management port can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen,
+shown in Figure 7.4a, provides a shortcut to the most basic IPMI configuration. Table 7.4a summarizes the options when configuring IPMI using the TrueNAS®
+GUI.
 
 **Figure 7.4a: IPMI Configuration**
 
 |ipmi.png|
 
 .. |ipmi.png| image:: images/ipmi.png
-    :width: 5.3291in
-    :height: 3.6854in
 
 **Table 7.4a: IPMI Options**
 
@@ -300,8 +297,11 @@ IPMI using the TrueNAS® GUI.
 
 
 Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will
-prompt for a username, where the default username is *ADMIN* (in all caps), and the password that you configured. Once you have logged into the management
-interface, you can change the administrative username as well as create additional users.
+prompt for a username, where the default username is *admin* and the password that you configured. Once you have logged into the management interface, you can
+change the administrative username as well as create additional users.
+
+Refer to Figures 3.5h through 3.5k in :ref:`Out-of-Band Management` for additional instructions on how to configure the Java KVM Client used by the IPMI
+management interface.
 
 .. index::Link Aggregations
 
@@ -388,8 +388,6 @@ Figure 7.5a shows the configuration options when adding a lagg interface using `
 |lagg.png|
 
 .. |lagg.png| image:: images/lagg.png
-    :width: 3.1in
-    :height: 2.7in
 
 Select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
@@ -506,8 +504,6 @@ By default, no static routes are defined on the TrueNAS® system. Should you nee
 |static.png|
 
 .. |static.png| image:: images/static.png
-    :width: 3.0in
-    :height: 1.8in
 
 The available options are summarized in Table 7.7a.
 
@@ -552,8 +548,6 @@ tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen sho
 |vlan.png|
 
 .. |vlan.png| image:: images/vlan.png
-    :width: 3.0in
-    :height: 2.1in
 
 Table 7.8a summarizes the configurable fields.
 

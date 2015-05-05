@@ -13,7 +13,7 @@ TrueNAS® supports integration with the following directory services:
 
 * :ref:`NT4` (for Windows networks older than Windows 2000)
 
-It also supports :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs`.
+It also supports :ref:`Kerberos Realms`, :ref:`Kerberos Keytabs`, and the ability to add additional parameters to :ref:`Kerberos Settings`.
 
 This section summarizes each of these services and their available configurations within the TrueNAS® GUI.
 
@@ -63,8 +63,6 @@ display these settings by checking the box "Show advanced fields by default" in 
 |ad1.png|
 
 .. |ad1.png| image:: images/ad1.png
-    :width: 4.5in
-    :height: 2.3in
 
 **Table 9.1a: Active Directory Configuration Options**
 
@@ -95,8 +93,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | *TLS*                                                                                                                                      |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Certificate              | browse button | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if                                         |
-|                          |               | SSL connections are used                                                                                                                   |
+| Certificate              | drop-down menu| only available in "Advanced Mode"; select the certificate of the LDAP server if SSL connections are                                        |
+|                          |               | used; if you do not have a certificate, first create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                    |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
@@ -159,7 +157,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
 Table 9.1b summarizes the backends which are available in the "Idmap backend" drop-down menu. Each backend has its own
-`man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details.
+`man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details. Since selecting the
+wrong backend will break Active Directory integration, a pop-up menu will appear whenever you attempt to change this setting.
 
 **Table 9.1b: Available ID Mapping Backends**
 
@@ -266,7 +265,7 @@ connect to the correct realm, check the SRV records on the DNS server.
 describes how to configure KDC discovery over DNS and provides some examples of records with differing priorities.
 
 If the cache becomes out of sync due to an AD server being taken off and back online, resync the cache using
-:menuselection:`System --> Advanced --> Rebuild LDAP/AD Cache`.
+:menuselection:`Directory Service --> Active Directory --> Rebuild Directory Service Cache`.
 
 An expired password for the administrator account will cause kinit to fail, so ensure that the password is still valid. Also, double-check that the password
 on the AD account being used does not include any spaces or special symbols, and is not unusually long. 
@@ -295,7 +294,7 @@ Start with these commands, where the :command:`echo` commands should return a va
  echo $?
  klist
 
-Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode"::
+Next, only run these two commands **if** the "Unix extensions" box is checked in "Advanced Mode" and a keytab has been uploaded using :ref:`Kerberos Keytabs`::
 
  service ix-sssd start
  service sssd start
@@ -327,7 +326,8 @@ the LDAP server and thus be provided authorized access to the data stored on the
 
 .. note:: LDAP authentication for CIFS shares will be disabled unless the LDAP directory has been configured for and populated with Samba attributes. The most
    popular script for performing this task is `smbldap-tools <http://download.gna.org/smbldap-tools/>`_ and instructions for using it can be found at
-   `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_.
+   `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_. In addition, the LDAP server must support SSL/TLS
+   and the certificate for the LDAP server needs to be imported.
 
 Figure 9.2a shows the LDAP Configuration screen that is seen when you click :menuselection:`Directory Service --> LDAP`.
 
@@ -336,8 +336,6 @@ Figure 9.2a shows the LDAP Configuration screen that is seen when you click :men
 |ldap1.png|
 
 .. |ldap1.png| image:: images/ldap1.png
-    :width: 4.5in
-    :height: 2.6in
 
 Table 9.2a summarizes the available configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -402,8 +400,9 @@ If you are new to LDAP terminology, skim through the
 |                         |                | *TLS* and a "Certificate" must be selected in order for authentication to work                                 |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Certificate             | browse button  | only available in "Advanced Mode"; browse to the location of the certificate of the LDAP server if             |
-|                         |                | SSL or TLS connections are used (required if authentication is used)                                           |
+| Certificate             | drop-down menu | only available in "Advanced Mode"; select the certificate of the LDAP server if                                |
+|                         |                | SSL or TLS connections are used (required if authentication is used); if you do not have a certificate, first  |
+|                         |                | create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                                      |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | LDAP timeout            | integer        | increase this value (in seconds) if obtaining a Kerberos ticket times out                                      |
@@ -464,8 +463,6 @@ options.
 |nis1.png|
 
 .. |nis1.png| image:: images/nis1.png
-    :width: 4.5in
-    :height: 2.6in
 
 **Table 9.3a: NIS Configuration Options**
 
@@ -515,8 +512,6 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 |nt1.png|
 
 .. |nt1.png| image:: images/nt1.png
-    :width: 4.5in
-    :height: 3.3in
 
 **Table 9.4a: NT4 Configuration Options**
 
@@ -528,7 +523,7 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 | Domain Controller      | string    | hostname of domain controller                                                                    |
 |                        |           |                                                                                                  |
 +------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of FreeNAS system                                                                       |
+| NetBIOS Name           | string    | hostname of FreeNAS system; cannot be greater than 15 characters                                 |
 |                        |           |                                                                                                  |
 +------------------------+-----------+--------------------------------------------------------------------------------------------------+
 | Workgroup Name         | string    | name of Windows server's workgroup                                                               |
@@ -562,7 +557,7 @@ automatically once a day as a cron job.
 Kerberos Realms
 ---------------
 
-Beginning with TrueNAS® 9.3, a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
+TrueNAS® 9.3 creates a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
 view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
 shown in Figure 9.5a.
 
@@ -571,8 +566,6 @@ shown in Figure 9.5a.
 |realm1.png|
 
 .. |realm1.png| image:: images/realm1.png
-    :width: 4.5in
-    :height: 3.3in
 
 Table 9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode"
 button or configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
@@ -632,3 +625,22 @@ Then, to instruct the Active Directory service to use the keytab, select the ins
 matches the "Domain Account Name" and "Domain Account Password" fields in :menuselection:`Directory Service --> Active Directory`.
 
 To instruct LDAP to use the keytab, select the installed keytab using the drop-down "Kerberos keytab" menu in :menuselection:`Directory Service --> LDAP`.
+
+.. _Kerberos Settings:
+
+Kerberos Settings
+-----------------
+
+To configure additional Kerberos parameters, use :menuselection:`Directory Service --> Kerberos Settings`. As seen in Figure 9.7a, two fields are available:
+
+* **Appdefaults auxiliary parameters:** contains settings used by some Kerberos applications. The available settings and their syntax are listed in the 
+  `[appdefaults] section of krb.conf(5) <http://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#appdefaults>`_.
+
+* **Libdefaults auxiliary parameters:** contains settings used by the Kerberos library. The available settings and their syntax are listed in the 
+  `[libdefaults] section of krb.conf(5) <http://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#libdefaults>`_.
+
+**Figure 9.7a: Additional Kerberos Settings**
+
+|kerberos1.png|
+
+.. |kerberos1.png| image:: images/kerberos1.png

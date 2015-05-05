@@ -31,7 +31,7 @@ The following types of shares and services are available:
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
-  containing only Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade
+  containing any Windows systems. However, it is a poor choice if the CPU on the FreeNAS® system is limited; if your CPU is maxed out, you need to upgrade
   the CPU or consider another type of share.
 
 * :ref:`Block (iSCSI)` shares: this type of share appears as an unformatted disk to clients running iSCSI initiator software or a virtualization solution such
@@ -77,8 +77,6 @@ created.
 |afp2.png|
 
 .. |afp2.png| image:: images/afp2.png
-    :width: 3.7in
-    :height: 4.5in
 
 .. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
           share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
@@ -186,8 +184,6 @@ fields in this screen:
 |afp6.png|
 
 .. |afp6.png| image:: images/afp6.png
-    :width: 3.5in
-    :height: 3.4in
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
 correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
@@ -204,8 +200,6 @@ frame and the contents of any data that has been saved in the share will be disp
 |afp3.png|
 
 .. |afp3.png| image:: images/afp3.png
-    :width: 6.9252in
-    :height: 3.4327in
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
@@ -248,16 +242,12 @@ entries to :menuselection:`Sharing --> Apple (AFP)`.
 |afp7.png|
 
 .. |afp7.png| image:: images/afp7.png
-    :width: 3.5in
-    :height: 3.4in
 
 **Figure 10.1e: Creating an Authenticated User**
 
 |afp8.png|
 
 .. |afp8.png| image:: images/afp8.png
-    :width: 4.3in
-    :height: 2.8in
 
 At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
 FreeNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
@@ -274,8 +264,6 @@ field then click "Edit Dataset" to save the change. In this example, the Time Ma
 |afp9.png|
 
 .. |afp9.png| image:: images/afp9.png
-    :width: 7.1in
-    :height: 4.6in
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
@@ -287,8 +275,6 @@ this example, the password that was set for the *user1* account.
 |afp5.png|
 
 .. |afp5.png| image:: images/afp5.png
-    :width: 6.9252in
-    :height: 4.6055in
 
 If you receive a "Time Machine could not complete the backup. The backup disk image could not be created (error 45)" error when backing up to the FreeNAS®
 system, you will need to create a sparsebundle image using
@@ -320,13 +306,11 @@ a new dataset for the share, start the services required by NFS, and add an entr
 Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
 the permissions of the mounted share.
 
-**Figure 10.2a: NFS Share Settings**
+**Figure 10.2a: NFS Share Wizard**
 
 |nfs6.png|
 
 .. |nfs6.png| image:: images/nfs6.png
-    :width: 3.5in
-    :height: 3.4in
 
 To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
 Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
@@ -336,8 +320,6 @@ Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
 |nfs2.png|
 
 .. |nfs2.png| image:: images/nfs2.png
-    :width: 3.7in
-    :height: 4.5in
 
 Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
 
@@ -386,7 +368,7 @@ Table 10.2a summarizes the available configuration options in this screen. Some 
 | Mapall Group        | drop-down menu | only available in "Advanced Mode"; the specified group's permission are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Security            | selection      | only available in "Advanced Mode"; choices are *sys* () or the following Kerberos options:                         |
+| Security            | selection      | only available in "Advanced Mode"; choices are *sys* or the following Kerberos options:                            |
 |                     |                | *krb5* (authentication only),                                                                                      |
 |                     |                | *krb5i* (authentication and integrity), or                                                                         |
 |                     |                | *krb5p* (authentication and privacy); if multiple security mechanisms are added to the "Selected" column using the |
@@ -549,8 +531,6 @@ example :file:`/mnt/data` share of the FreeNAS® system at
 |nfs5.jpg|
 
 .. |nfs5.jpg| image:: images/nfs5.jpg
-    :width: 6.9252in
-    :height: 5.3736in
 
 .. _From Mac OS X:
 
@@ -570,16 +550,12 @@ user can now copy files to and from the share.
 |nfs3.png|
 
 .. |nfs3.png| image:: images/nfs3.png
-    :width: 6.9252in
-    :height: 3.5618in
 
 **Figure 10.2e: Viewing the NFS Share in Finder**
 
 |nfs4.png|
 
 .. |nfs4.png| image:: images/nfs4.png
-    :width: 6.2193in
-    :height: 4.5102in
 
 .. _Troubleshooting NFS:
 
@@ -602,6 +578,9 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
+
+Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® 9.3 uses TCP. To support UDP connections, go to
+:menuselection:`Services --> NFS` and check the box "Serve UDP NFS clients".
 
 .. index:: WebDAV
 .. _WebDAV Shares:
@@ -635,6 +614,9 @@ where:
 Inputting the URL into a web browser will bring up an authentication pop-up message. Input a username of *webdav* and the password configured in
 :menuselection:`Services --> WebDAV`.
 
+.. warning:: at this time, only the *webdav* user is supported. For this reason, it is important to set a good password for this account and to only give the password to
+   users which should have access to the WebDAV share.
+
 To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
 
 **Figure 10.3a: Adding a WebDAV Share**
@@ -642,8 +624,6 @@ To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Ad
 |webdav.png|
 
 .. |webdav.png| image:: images/webdav.png
-    :width: 4.2in
-    :height: 2.4in
 
 Table 10.3a summarizes the available options.
 
@@ -698,8 +678,6 @@ Figure 10.4a shows the configuration screen that appears when you click :menusel
 |cifs2.png|
 
 .. |cifs2.png| image:: images/cifs2.png
-    :width: 3.9in
-    :height: 2.4in
 
 Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
 scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
@@ -785,27 +763,123 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
 the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
 
+Table 10.4b provides an overview of the available VFS modules. Be sure to research each module **before** adding or deleting it from the "Selected" column of
+the "VFS Objects" field for the share. Some modules will need additional configuration after they are added. Refer to
+`Stackable VFS modules <https://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/VFS.html>`_ and the
+`vfs_* man pages <https://www.samba.org/samba/docs/man/manpages/>`_
+for more details.
+
 **Table 10.4b: Available VFS Modules**
 
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| **Value**     | **Description**                                                                                                                            |
-|               |                                                                                                                                            |
-+===============+============================================================================================================================================+
-| audit         | logs share access, connects/disconnects, directory opens/creates/removes, and file opens/closes/renames/unlinks/chmods to syslog           |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| extd_audit    | sends "audit" logs to both syslog and the Samba log files                                                                                  |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| fake_perms    | allows roaming profile files and directories to be set as read-only                                                                        |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| netatalk      | eases the co-existence of CIFS and AFP shares                                                                                              |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| streams_depot | **experimental** module to store alternate data streams in a central directory                                                             |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| **Value**           | **Description**                                                                                                                            |
+|                     |                                                                                                                                            |
++=====================+============================================================================================================================================+
+| acl_tdb             | stores NTFS ACLs in a tdb file in order to enable full mapping of Windows ACLs                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| acl_xattr           | stores NTFS ACLs in Extended Attributes (EAs) in order to enable the full mapping of Windows ACLs                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| aio_fork            | enables async I/O                                                                                                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| aio_posix           | enables asynchronous I/O on systems running POSIX kernels                                                                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| aio_pthread         | implements async I/O in Samba vfs using a pthread pool instead of the internal Posix AIO interface                                         |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| audit               | logs share access, connects/disconnects, directory opens/creates/removes, and file opens/closes/renames/unlinks/chmods to syslog           |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| cacheprime          | primes the kernel file data cache                                                                                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| cap                 | translates filenames to and from the CAP encoding format, commonly used in Japanese language environments                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| catia               | creates filenames that use characters that are illegal in CIFS filenames                                                                   |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| commit              | tracks the amount of data written to a file and synchronizes it to disk when a specified amount accumulates                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| crossrename         | allows server side rename operations even if source and target are on different physical devices                                           |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| default_quota       | stores the default quotas that are reported to a windows client in the quota record of a user                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| dirsort             | sorts directory entries alphabetically before sending them to the client                                                                   |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| expand_msdfs        | enables support for Microsoft Distributed File System (DFS)                                                                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| extd_audit          | sends "audit" logs to both syslog and the Samba log files                                                                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| full_audit          | records selected client operations to the system log                                                                                       |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| linux_xfs_sgid      | used to work around an old Linux XFS bug                                                                                                   |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| media_harmony       | allows Avid editorial workstations to share a network drive                                                                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| netatalk            | eases the co-existence of CIFS and AFP shares                                                                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| notify_fam          | implements file change notifications from IRIX and some BSD systems to Windows clients                                                     |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| posix_eadb          | provides Extended Attributes (EAs) support so they can be used on filesystems which do not provide native support for EAs                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| preopen             | useful for video streaming applications that want to read one file per frame                                                               |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| readahead           | useful for Windows Vista clients reading data using Windows Explorer                                                                       |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| readonly            | marks a share as read-only for all clients connecting within the configured time period                                                    |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| recycle             | moves deleted files to the recycle directory instead of deleting them                                                                      |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| scannedonly         | ensures that only files that have been scanned for viruses are visible and accessible                                                      |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| shadow_copy         | allows Microsoft shadow copy clients to browse shadow copies on Windows shares                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| shadow_copy2        | a more recent implementation of "shadow_copy" with some additonal features                                                                 |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| smb_traffic_analyzer| logs Samba read and write operations through a socket to a helper application                                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| streams_depot       | **experimental** module to store alternate data streams in a central directory                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| streams_xattr       | enables storing of NTFS alternate data streams in the file system                                                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| syncops             | ensures metadata operations are performed synchronously                                                                                    |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| time_audit          | logs system calls that take longer than the number of defined milliseconds                                                                 |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
 .. _Configuring Unauthenticated Access:
 
@@ -835,8 +909,6 @@ following fields in this screen:
 |cifs7.png|
 
 .. |cifs7.png| image:: images/cifs7.png
-    :width: 3.5in
-    :height: 3.4in
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
@@ -886,16 +958,12 @@ correct ownership and start the CIFS service for you, so that the share(s) are i
 |cifs3.png|
 
 .. |cifs3.png| image:: images/cifs3.png
-    :width: 3.5in
-    :height: 3.4in
 
 **Figure 10.4d: Creating the User and Group**
 
 |cifs8.png|
 
 .. |cifs8.png| image:: images/cifs8.png
-    :width: 4.3in
-    :height: 2.9in
 
 You should now be able to test an authenticated share from any CIFS client. For example, to test an authenticated share from a Windows system, open Explorer
 and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "cifs_user1". If you click on
@@ -1004,8 +1072,6 @@ one of the previous versions, which will overwrite the existing file on the Wind
 |cifs6.png|
 
 .. |cifs6.png| image:: images/cifs6.png
-    :width: 6.9252in
-    :height: 5.8945in
 
 .. index:: iSCSI, Internet Small Computer System Interface
 .. _Block (iSCSI):
@@ -1104,8 +1170,6 @@ Target Global Configuration
 |global.png|
 
 .. |global.png| image:: images/global.png
-    :width: 5.7in
-    :height: 3.14in
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1156,8 +1220,6 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 |portal.png|
 
 .. |portal.png| image:: images/portal.png
-    :width: 6.0in
-    :height: 3.2in
 
 **Table 10.5b: Portal Configuration Settings**
 
@@ -1212,8 +1274,6 @@ which systems can connect, use :menuselection:`Sharing --> Block (iSCSI) --> Ini
 |initiator1.png|
 
 .. |initiator1.png| image:: images/initiator1.png
-    :width: 6.5in
-    :height: 2.5in
 
 Table 10.5c summarizes the settings that can be configured when adding an initiator.
 
@@ -1246,8 +1306,6 @@ from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to 
 |initiator2.png|
 
 .. |initiator2.png| image:: images/initiator2.png
-    :width: 6.1in
-    :height: 2.2in
 
 .. _Authorized Accesses:
 
@@ -1264,8 +1322,6 @@ If you will be using CHAP or mutual CHAP to provide authentication, you must cre
 |authorized1.png|
 
 .. |authorized1.png| image:: images/authorized1.png
-    :width: 3.989in
-    :height: 3.8429in
 
 Table 10.5d summarizes the settings that can be configured when adding an authorized access:
 
@@ -1283,14 +1339,13 @@ Table 10.5d summarizes the settings that can be configured when adding an author
 |             |           | initiator name as the user                                                                                                       |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be at least 12 characters long                      |
+| Secret      | string    | password to be associated with "User"; the iSCSI standard requires that this be between 12 and 16 characters                     |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 | Peer User   | string    | only input when configuring mutual CHAP; in most cases it will need to be the same value as "User"                               |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
-| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the                                        |
-|             |           | "Peer User" is set                                                                                                               |
+| Peer Secret | string    | the mutual secret password which **must be different than the "Secret"**; required if the "Peer User" is set                     |
 |             |           |                                                                                                                                  |
 +-------------+-----------+----------------------------------------------------------------------------------------------------------------------------------+
 
@@ -1309,8 +1364,6 @@ entry to display its "Edit" and "Delete" buttons.
 |authorized2.png|
 
 .. |authorized2.png| image:: images/authorized2.png
-    :width: 6.1in
-    :height: 2.2in
 
 .. _Targets:
 
@@ -1331,8 +1384,6 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 |target1png|
 
 .. |target1png| image:: images/target1.png
-    :width: 3.7in
-    :height: 3.0in
 
 **Table 10.5e: Target Settings**
 
@@ -1386,25 +1437,20 @@ advantage of VAAI primitives and should be used when using virtualization softwa
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
-.. warning::  for performance reasons and to avoid excessive fragmentation, it is recommended to keep the used space of an extent below 50%. As required, you
-   can increase the capacity of an extent using the instructions in :ref:`Growing LUNs`.
+.. warning::  for performance reasons and to avoid excessive fragmentation, it is recommended to keep the used space of the pool below 50% when using iSCSI.
+   As required, you can increase the capacity of an existing extent using the instructions in :ref:`Growing LUNs`.
 
 To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 10.5h, the device extent is using the
 :file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
-
-.. note:: in FreeNAS® versions prior to 8.3.1, if a physical disk was used instead of a zvol to create a device extent, a bug wiped the partition table on
-   the disk, resulting in data loss. This bug was fixed in 8.3.1.
 
 Table 10.5f summarizes the settings that can be configured when creating an extent. Note that
 **file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent2.png|
+|extent2a.png|
 
-.. |extent2.png| image:: images/extent2.png
-    :width: 4.5in
-    :height: 4.4in
+.. |extent2a.png| image:: images/extent2a.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1457,6 +1503,10 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 | compat mode        |                |                                                                                                                      |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| LUN RPM            | drop-down menu | do **NOT** change this setting when using Windows as the initiator; only needs to be changed in large environments   |
+|                    |                | where the number of systems using a specific RPM is needed for accurate reporting statistics                         |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 .. _Targets/Extents:
 
@@ -1471,8 +1521,6 @@ shown in Figure 10.5i. Use the drop-down menus to select the existing target and
 |target2.png|
 
 .. |target2.png| image:: images/target2.png
-    :width: 2.5in
-    :height: 1.8in
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1567,8 +1615,6 @@ the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is
 |grow1.png|
 
 .. |grow1.png| image:: images/grow1.png
-    :width: 4.8in
-    :height: 4.5in
 
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.

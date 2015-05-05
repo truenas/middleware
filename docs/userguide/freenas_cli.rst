@@ -126,16 +126,14 @@ For example, to perform a TCP test and start the server in daemon mode (so that 
    **before** starting the iperf process.
 
 From your desktop, open the client. Input the IP of address of the FreeNAS® system, specify the running time for the test under
-:menuselection:`Application layer options --> Transmit` (the default test time is 10 seconds), and click the "Run Iperf!" button. Figure 23.1a shows an
+:menuselection:`Application layer options --> Transmit` (the default test time is 10 seconds), and click the "Run Iperf!" button. Figure 24.1a shows an
 example of the client running on a Windows system while an SFTP transfer is occurring on the network.
 
-**Figure 23.1a: Viewing Bandwidth Statistics Using xjperf**
+**Figure 24.1a: Viewing Bandwidth Statistics Using xjperf**
 
 |iperf.png|
 
 .. |iperf.png| image:: images/iperf.png
-    :width: 6.9252in
-    :height: 4.9965in
 
 Depending upon the traffic being tested (e.g. the type of share running on your network), you may need to test UDP instead of TCP. To start the iperf server
 in UDP mode, use :command:`iperf -sDu` as the **u** specifies UDP; the startup message should indicate that the server is listening for UDP datagrams. If you
@@ -447,9 +445,9 @@ To view ARC statistics in real time, specify an interval and a count. This comma
  06:19:07	255	0	0	0	0	0	0	0	0	153M	6.6G
 
 
-Table 23.4a briefly describes the columns in the output.
+Table 24.4a briefly describes the columns in the output.
 
-**Table 23.4a: arcstat Column Descriptions**
+**Table 24.4a: arcstat Column Descriptions**
 
 +---------------------+-------------------------------------------------------------------------+
 | **Column**          | **Description**                                                         |
@@ -953,11 +951,14 @@ Using Shell, you can run this command manually to gather the specific debugging 
      -e		A list of comma delimited list of email addresses to email the debug log to.
      -a		Dump Active Directory Configuration
      -c		Dump (AD|LDAP) Cache
+     -C		Dump CIFS Configuration
+     -D		Dump Domain Controller Configuration
      -d		Dump dtrace scripts
      -g		Dump GEOM configuration
      -h		Dump Hardware Configuration
      -I		Dump IPMI Configuration
      -i		Dump iSCSI Configuration
+     -j		Dump jails Information
      -l		Dump LDAP Configuration
      -T		Loader Configuration Information
      -n		Dump Network Configuration
@@ -988,16 +989,14 @@ an alternative to GNU :command:`screen`. Similar to screen, :command:`tmux` can 
 reattached. Unlike :ref:`Shell`, :command:`tmux` allows you to have access to a command prompt while still providing access to the graphical administration
 screens.
 
-To start a session, simply type :command:`tmux`. As seen in Figure 23.9a, a new session with a single window will open with a status line at the bottom of the
+To start a session, simply type :command:`tmux`. As seen in Figure 24.9a, a new session with a single window will open with a status line at the bottom of the
 screen. This line shows information on the current session and is used to enter interactive commands.
 
-**Figure 23.9a: tmux Session**
+**Figure 24.9a: tmux Session**
 
 |tmux.png|
 
 .. |tmux.png| image:: images/tmux.png
-    :width: 4.5in
-    :height: 3.5in
 
 To create a second window, press :kbd:`Ctrl+b` then :kbd:`"`. To close a window, type :command:`exit` within the window.
 

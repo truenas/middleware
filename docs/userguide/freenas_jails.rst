@@ -61,8 +61,6 @@ named *jail1*, it will be installed into its own dataset named :file:`/mnt/volum
 |jails1.png|
 
 .. |jails1.png| image:: images/jails1.png
-    :width: 4.2in
-    :height: 2.4in
 
 .. warning:: if you have already installed any :ref:`Plugins`, the "Jail Root", "IPv4 Network", "IPv4 Network Start Address", and "IPv4 Network End Address"
    will automatically be filled in. You should double-check that the pre-configured IP addressing values are appropriate for your jails and will not conflict
@@ -149,17 +147,15 @@ Once you click the "Save" button to save the configuration, you are now ready to
 Adding Jails
 ------------
 
-To create a jail, click :menuselection:`Jails --> Add Jails` to access the screen shown in Figure 13.2a.
+To create a jail, click :menuselection:`Jails --> Add Jail` to access the screen shown in Figure 13.2a.
 
-.. note:: the "Add Jails" menu item will not appear until after you configure :menuselection:`Jails --> Configuration`.
+.. note:: the "Add Jail" menu item will not appear until after you configure :menuselection:`Jails --> Configuration`.
 
 **Figure 13.2a: Creating a Jail**
 
-|jails3.png|
+|jails3a.png|
 
-.. |jails3.png| image:: images/jails3.png
-    :width: 3.5in
-    :height: 2.9in
+.. |jails3a.png| image:: images/jails3a.png
 
 By default, the only required value to create a jail is to give it a name. The default is to create a FreeBSD jail.
 
@@ -293,11 +289,9 @@ system boot, whether or not it is currently running, and the type of jail (e.g. 
 
 **Figure 13.2b: Viewing Added Jails**
 
-|jails4.png|
+|jails4a.png|
 
-.. |jails4.png| image:: images/jails4.png
-    :width: 3.4in
-    :height: 4.5in
+.. |jails4a.png| image:: images/jails4a.png
 
 In order, from left to right, the following configuration icons are available:
 
@@ -309,15 +303,16 @@ changed so these fields will be greyed out.
 
 **Add Storage:** used to configure the jail to access an area of storage as described in :ref:`Add Storage`.
 
+**Upload Plugin:** used to manually upload a plugin previously downloaded from the `plugins repository <http://download.freenas.org/plugins/9/x64/>`_.
+
 **Start/Stop:** this icon will vary, depending upon the current "Status" of the jail. If the jail is currently stopped, the icon will be green and can be used
 to start the jail. If the jail is currently running, the icon will be red and can be used to stop the jail. A stopped jail and its applications are
 inaccessible until it is restarted.
 
-**Shell:** used to access a
-*root* command prompt in order to configure the selected jail from the command line. When finished, type :command:`exit` to close the shell.
+**Restart:** used to restart the jail.
 
-**Delete:** deleting the specified jail also deletes any software that was installed in that jail. The GUI will display a warning which requires you to click
-the "Yes" button, indicating that you are sure that you want to delete the jail, before this operation is performed.
+**Shell:** used to access a *root* command prompt in order to configure the selected jail from the command line. When finished, type :command:`exit` to close
+the shell.
 
 .. _Accessing a Jail Using SSH:
 
@@ -380,8 +375,6 @@ expanding the jail's name in the tree view and clicking :menuselection:`Storage 
 |jails5.png|
 
 .. |jails5.png| image:: images/jails5.png
-    :width: 7.2in
-    :height: 5.6in
 
 Browse to the "Source" and "Destination", where:
 
@@ -389,7 +382,9 @@ Browse to the "Source" and "Destination", where:
   **must**  reside outside of the volume or dataset being used by the jail. This is why it is recommended to create a separate dataset to store jails, so that
   the dataset holding the jails will always be separate from any datasets used for storage on the FreeNAS® system.
 
-* **Destination:** select the directory within the jail which will be linked to the "Source" storage area.
+* **Destination:** select an
+  **existing, empty** directory within the jail to link to the "Source" storage area. If that directory does not exist yet, type in the desired directory name and check the
+  "Create directory" box.
 
 When you are adding storage, it is typically because the user and group account associated with an application installed inside of a jail needs to access data
 stored on the FreeNAS® system. Before selecting the "Source", it is important to first ensure that the permissions of the selected directory or dataset grant
@@ -434,8 +429,6 @@ it was created as the "Create directory" box was left as checked. The resulting 
 |jails6.png|
 
 .. |jails6.png| image:: images/jails6.png
-    :width: 7.2in
-    :height: 5.2in
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -548,8 +541,6 @@ for audiotag.
 |ports1.png|
 
 .. |ports1.png| image:: images/ports1.png
-    :width: 6.9252in
-    :height: 4.5425in
 
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
@@ -582,8 +573,6 @@ Since this port has configurable options, the first time this command is run the
 |ports2.png|
 
 .. |ports2.png| image:: images/ports2.png
-    :width: 5.7701in
-    :height: 2.778in
 
 To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:`spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.
@@ -681,7 +670,7 @@ Using the phpVirtualBox Template
 --------------------------------
 
 If the software you need requires a different operating system or you wish to use a non-FreeBSD operating system to manage software, use the VirtualBox
-template to create an instance of phpVirtualBox. In the "Add Jails" screen, click the "Advanced Mode" button. As seen in the example in Figure 13.3a, input a
+template to create an instance of phpVirtualBox. In the "Add Jail" screen, click the "Advanced Mode" button. As seen in the example in Figure 13.3a, input a
 "Jail Name", verify that the "IPv4 address" is valid and not in use by another host or jail, and select *VirtualBox* from the "Template" drop-down menu. Press
 the "OK" button to begin the installation.
 
@@ -690,8 +679,6 @@ the "OK" button to begin the installation.
 |jails7.png|
 
 .. |jails7.png| image:: images/jails7.png
-    :width: 4.5in
-    :height: 4.4in
 
 Once installed, input the IP address of the VirtualBox jail into a web browser and enter the username and password of *admin* into the login screen. Once
 authenticated, the screen shown in Figure 13.3b will appear in the web browser.
@@ -701,10 +688,11 @@ authenticated, the screen shown in Figure 13.3b will appear in the web browser.
 |jails8.png|
 
 .. |jails8.png| image:: images/jails8.png
-    :width: 13.2in
-    :height: 6.3in
 
 Click the "New" button to create virtual machines. You can then install the desired operating systems and software into the created virtual machines.
+
+.. note:: if the FreeNAS® system reboots, the installed virtual machines will not automatically restart. To configure auto-start, refer to this 
+   `forum post <https://forums.freenas.org/index.php?threads/enabling-autostart-of-virtualbox-vms-on-freenas.26503/>`_.
 
 .. _Managing Jail Templates:
 
@@ -721,8 +709,6 @@ listing showing the default template is seen in Figure 13.4a.
 |jails9.png|
 
 .. |jails9.png| image:: images/jails9.png
-    :width: 5.6in
-    :height: 1.98in
 
 The listing contains the following columns:
 
@@ -736,24 +722,26 @@ The listing contains the following columns:
 To create a custom template, first install the desired operating system and configure it the way you want. The installation can be either to an existing jail
 or on another system.
 
+Next, create an mtree specification using this command::
+
+ mtree -c -p </path/to/jail> -k sha256digest > file.mtree
+
 Once your configuration is complete, create a tarball of the entire operating system that you wish to use as a template. This tarball needs to be compressed
 with :command:`gzip` and end in a :file:`.tgz` extension. Be careful when creating the tarball as you don't want to end up in a recursive loop. In other
 words, the resulting tarball needs to be saved outside of the operating system being tarballed, such as to an external USB drive or network share.
 Alternately, you can create a temporary directory within the operating system and use the *--exclude* switch to :command:`tar` to exclude this directory from
 the tarball. The exact :command:`tar` command to use will vary, depending upon the operating system being used to create the tarball.
 
-Once you have the :file:`.tgz` file for the operating system, save it to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
+Once you have generated the :file:`.mtree` and :file:`.tgz` files, save them to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
 in order to add the template to the list of available templates.
 
 To add the template, click :menuselection:`Jails --> Templates --> Add Jail Templates` which will open the screen seen in Figure 13.4b.
 
 **Figure 13.4b: Adding A Custom Jail Template**
 
-|jails11.png|
+|jails11a.png|
 
-.. |jails11.png| image:: images/jails11.png
-    :width: 2.6in
-    :height: 2.3in
+.. |jails11a.png| image:: images/jails11a.png
 
 Table 13.4a summarizes the fields in this screen.
 
@@ -771,17 +759,18 @@ Table 13.4a summarizes the fields in this screen.
 |              |                |                                                                                               |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
-| Architecture | drop-down menu | choices are *x86* or                                                                          |
-|              |                | *x64*;                                                                                        |
-|              |                | *x86* is required if                                                                          |
-|              |                | *Linux* is selected                                                                           |
+| Architecture | drop-down menu | choices are *x86* (32-bit) or                                                                 |
+|              |                | *x64* (64-bit)                                                                                |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
 | URL          | string         | input the full URL to the :file:`.tgz` file, including the protocol (*ftp://* or              |
 |              |                | or *http://*)                                                                                 |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
-| Jt readonly  | checkbox       | if this box is checked, the "Name" and "URL" of the template cannot be changed after creation |
+| Mtree        | string         | paste the mtree specification for the template                                                |
+|              |                |                                                                                               |
++--------------+----------------+-----------------------------------------------------------------------------------------------+
+| Read-only    | checkbox       | if this box is checked, the "Name" and "URL" of the template cannot be changed after creation |
 |              |                |                                                                                               |
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
 
@@ -792,12 +781,9 @@ it will open the configuration screen shown in the Figure 13.4c.
 
 **Figure 13.4c: Editing a Template's Options**
 
-|jails10.png|
+|jails10a.png|
 
-.. |jails10.png| image:: images/jails10.png
-    :width: 5.5in
-    :height: 4.5in
+.. |jails10a.png| image:: images/jails10a.png
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
-

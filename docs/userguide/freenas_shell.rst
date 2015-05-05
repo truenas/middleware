@@ -12,8 +12,6 @@ The link to Shell is the fourth entry from the bottom of the menu tree. In Figur
 |shell.png|
 
 .. |shell.png| image:: images/shell.png
-    :width: 4.9in
-    :height: 4.7in
 
 The prompt indicates that the current user is *root*, the hostname is
 *freenas*, and the current working directory is :file:`~`
@@ -33,6 +31,4 @@ While you are in Shell, you will not have access to any of the other GUI menus. 
 
 .. note:: not all of Shell's features render correctly in Chrome. Firefox is the recommended browser for using Shell.
 
-Due to the embedded nature of FreeNAS®, some FreeBSD components are missing and noticeable in Shell. For example, man pages are not included; however, a link
-to the online FreeBSD man pages is available from Help. Most FreeBSD command line utilities should be available in Shell. Additional troubleshooting utilities
-that are provided by FreeNAS® are described in Useful Command Line Utilities.
+Most FreeBSD command line utilities should be available in Shell. Additional troubleshooting utilities that are provided by FreeNAS® are described in :ref:`Command Line Utilities`.

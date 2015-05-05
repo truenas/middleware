@@ -5,16 +5,14 @@ Alert
 =====
 
 FreeNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 21a, a system update is available and one of the disks in a ZFS
-pool is offline which has degraded the state of the pool.
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 22a, one of the disks in a ZFS pool is offline which has
+degraded the state of the pool.
 
-**Figure 21a: Example Alert Message**
+**Figure 22a: Example Alert Message**
 
-|alert.png|
+|alert2.png|
 
-.. |alert.png| image:: images/alert.png
-    :width: 3.6in
-    :height: 1.6in
+.. |alert2.png| image:: images/alert2.png
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
@@ -33,6 +31,8 @@ is detected. Some of the conditions that trigger an alert include:
 * non-optimal multipath states
 
 * ZFS pool status changes from "HEALTHY"
+
+* a S.M.A.R.T. error occurs
 
 * the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
 

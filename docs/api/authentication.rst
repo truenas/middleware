@@ -22,6 +22,6 @@ Get list of users::
     import requests
 
     print requests.get(
-        'http://freenas.mydomain/api/v1.0/account/users/',
+        'http://freenas.mydomain/api/v1.0/account/bsdusers/',
         auth=('root', 'freenas'),
     )

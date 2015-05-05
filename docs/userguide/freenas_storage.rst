@@ -49,8 +49,6 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 |zfs1a.png|
 
 .. |zfs1a.png| image:: images/zfs1a.png
-    :width: 8.2in
-    :height: 4.2in
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -181,8 +179,7 @@ FreeNAS® system:
    sensitive data is stored on the system.
 
 To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. A pop-up message will remind you that
-**it is extremely important** to set a passphrase on the key, make a backup of the key, and create a recovery key. Refer to
-:ref:`Managing Encrypted Volumes` for instructions on how to perform those tasks.
+**it is extremely important** to make a backup of the key as without it the data on the disks is inaccessible. Refer to :ref:`Managing Encrypted Volumes` for instructions.
 
 .. _Manual Setup:
 
@@ -202,8 +199,6 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 |manual.png|
 
 .. |manual.png| image:: images/manual.png
-    :width: 4.1in
-    :height: 3.5in
 
 **Table 8.1b: Manual Setup Options**
 
@@ -291,8 +286,6 @@ Once a volume or dataset is created, it will be listed by its mount point name i
 |perms1.png|
 
 .. |perms1.png| image:: images/perms1.png
-    :width: 3.3in
-    :height: 4.2in
 
 **Table 8.1c: Options When Changing Permissions**
 
@@ -371,12 +364,10 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 |dataset.png|
 
 .. |dataset.png| image:: images/dataset.png
-    :width: 7.6in
-    :height: 4.7in
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
-:menuselection:`System --> Advanced`. Most attributes, except for the "Dataset Name" and  "Record Size", can be changed after dataset creation by highlighting
+:menuselection:`System --> Advanced`. Most attributes, except for the "Dataset Name", "Case Sensitivity", and  "Record Size", can be changed after dataset creation by highlighting
 the dataset name and clicking its "Edit Options" button in :menuselection:`Storage --> Volumes --> View Volumes`.
 
 **Table 8.1d: ZFS Dataset Options**
@@ -507,8 +498,6 @@ To create a zvol, select an existing ZFS volume or dataset from the tree then cl
 |zvol.png|
 
 .. |zvol.png| image:: images/zvol.png
-    :width: 3.2in
-    :height: 2.5in
 
 The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -559,8 +548,6 @@ be imported at a time.
 |import1.png|
 
 .. |import1.png| image:: images/import1.png
-    :width: 4.99in
-    :height: 4.2in
 
 Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
 When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
@@ -582,8 +569,6 @@ Figure 8.1g shows the initial pop-up window that appears when you select to impo
 |auto1.png|
 
 .. |auto1.png| image:: images/auto1.png
-    :width: 2.9in
-    :height: 1.7in
 
 If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
 
@@ -592,8 +577,6 @@ If you are importing an unencrypted ZFS pool, select "No: Skip to import" to ope
 |auto2.png|
 
 .. |auto2.png| image:: images/auto2.png
-    :width: 2.9in
-    :height: 1.7in
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
@@ -619,8 +602,6 @@ access the screen shown in Figure 8.1i.
 |decrypt.png|
 
 .. |decrypt.png| image:: images/decrypt.png
-    :width: 3.5in
-    :height: 2.4in
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
@@ -644,8 +625,6 @@ View Disks
 |view.png|
 
 .. |view.png| image:: images/view.png
-    :width: 7.6in
-    :height: 4.5in
 
 The current configuration of each device is displayed. Click a disk's entry and then its "Edit" button to change its configuration. The configurable options
 are described in Table 8.1f.
@@ -713,8 +692,6 @@ space is "Available", the type of "Compression", the "Compression Ratio", and th
 |volume1a.png|
 
 .. |volume1a.png| image:: images/volume1a.png
-    :width: 4.9in
-    :height: 4.5in
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
@@ -733,8 +710,6 @@ disk, writes data to the disk indicating that the export was done, and removes a
 |detach1.png|
 
 .. |detach1.png| image:: images/detach1.png
-    :width: 4.9in
-    :height: 4.5in
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
 scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
@@ -743,7 +718,7 @@ current status of a running scrub or the statistics from the last completed scru
 
 **Volume Status:** as seen in the example in Figure 8.1m, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
 write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the device's
-options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
+options (shown in Figure 8.1n), offline or online the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
 **Upgrade:** used to upgrade the pool to the latest ZFS features, as described in :ref:`Upgrading a ZFS Pool`. This button will not appear if the pool is
 running the latest versions of feature flags.
@@ -753,8 +728,6 @@ running the latest versions of feature flags.
 |volume2.png|
 
 .. |volume2.png| image:: images/volume2.png
-    :width: 3.2in
-    :height: 4.5in
 
 If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1n. Table 8.1f summarizes the
 configurable options.
@@ -764,8 +737,6 @@ configurable options.
 |disk.png|
 
 .. |disk.png| image:: images/disk.png
-    :width: 3.5in
-    :height: 3.3in
 
 .. note:: versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the "HDD Standby", "Advanced Power Management", and "Acoustic
    Level" settings. As of 8.3.1, changes to these settings are applied immediately.
@@ -804,8 +775,6 @@ If you check the "Encryption" box during the creation of a pool, five additional
 |encrypt1.png|
 
 .. |encrypt1.png| image:: images/encrypt1.png
-    :width: 4.8in
-    :height: 4.5in
 
 In order from left to right, these additional encryption buttons are used to:
 
@@ -866,7 +835,10 @@ Replacing a Failed Drive
 If you are using any form of redundant RAID, you should replace a failed drive as soon as possible to repair the degraded state of the RAID. Depending upon
 the capability of your hardware, you may or may not need to reboot in order to replace the failed drive. AHCI capable hardware does not require a reboot.
 
-.. note:: a stripe (RAID0) does not provide redundancy. If you lose a disk in a stripe, you will need to recreate the volume and restore the data from backup.
+.. note:: striping (RAID0) does not provide redundancy. If you lose a disk in a stripe, the volume will be destroyed and you will need to recreate the volume and restore the data from
+   backup.
+   
+.. note:: if your pool is encrypted with GELI, refer to :ref:`Replacing an Encrypted Drive` before proceeding.
 
 Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes`. Next, select your volume's name. At the bottom of
 the interface you will see several icons, one of which is "Volume Status". Click the "Volume Status" icon and locate the failed disk. Once you have located
@@ -884,8 +856,8 @@ the failed device in the GUI, perform the following steps:
 #.  If the hardware is not AHCI capable, shutdown the system in order to physically replace the disk. When finished, return to the GUI and locate the OFFLINE
     disk.
 
-#.  Once the disk is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
-    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, you will be prompted to input the passphrase for the pool.
+#.  Once the disk has been replaced and is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
+    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, the menu will also prompt you to input and confirm the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
 In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
@@ -895,8 +867,6 @@ In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ad
 |replace.png|
 
 .. |replace.png| image:: images/replace.png
-    :width: 4.9in
-    :height: 4.5in
 
 Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1q indicates that the
 disk replacement was successful for this example.
@@ -906,8 +876,6 @@ disk replacement was successful for this example.
 |replace2.png|
 
 .. |replace2.png| image:: images/replace2.png
-    :width: 4.9in
-    :height: 2.4in
     
 .. _Replacing an Encrypted Drive:
 
@@ -917,7 +885,8 @@ Replacing an Encrypted Drive
 If the ZFS pool is encrypted, additional steps are needed when replacing a failed drive.
 
 First, make sure that a passphrase has been set using the instructions in :ref:`Encryption` **before** attempting to replace the failed drive. Then, follow
-the steps 1 and 2 as described above. During step 3, you will be prompted to input the passphrase for the pool. Wait until the resilvering is complete.
+the steps 1 and 2 as described above. During step 3, you will be prompted to input and confirm the passphrase for the pool. Enter this information then click the "Replace Disk" button.
+Wait until the resilvering is complete.
 
 Next, restore the encryption keys to the pool.
 **If the following additional steps are not performed before the next reboot, you may lose access to the pool permanently.**
@@ -960,51 +929,39 @@ The recommended method for expanding the size of a ZFS pool is to pre-plan the n
 
 However, this is not an option if you do not have open drive ports or the ability to add a SAS/SATA HBA card. In this case, you can replace one disk at a time
 with a larger disk, wait for the resilvering process to incorporate the new disk into the pool completes, then repeat with another disk until all of the disks
-have been replaced. This process is slow and places the system in a degraded state. Since a failure at this point could be disastrous,
-**do not attempt this method unless the system has a reliable backup.**
+have been replaced.
 
-.. note:: this method requires the ZFS property autoexpand. This property became available starting with FreeNAS® version 8.3.0. If you are running an
-   earlier version of FreeNAS®, upgrade before attempting this method.
+The safest way to perform this is to use a spare drive port or an eSATA port and a hard drive dock. In this case, you can perform the following steps:
 
-Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not, the pool will not recognize that the disk
-capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. To verify the property, use Shell. This example checks
-the ZFS volume named :file:`Vol1`::
+#. Shut down the system.
 
+#. Install one new disk.
 
- zpool get all Vol1
+#. Start up the system.
+
+#. Go to :menuselection:`Storage --> Volumes`, select the pool to expand and click the "Volume Status" button. Select a disk and click the "Replace" button. Choose the new
+   disk as the replacement.
+
+#. You can view the status of the resilver process by running :command:`zpool status`. When the new disk has resilvered, the old one will be automatically offlined. You can
+   then shut down the system and physically remove the replaced disk. One advantage of this approach is that there is no loss of redundancy during the resilver.
+
+If you do not have a spare drive port, you will need to replace one drive with a larger drive using the instructions in :ref:`Replacing a Failed Drive`. This process is slow and
+places the system in a degraded state. Since a failure at this point could be disastrous, **do not attempt this method unless the system has a reliable backup.** Replace one drive
+at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are replaced and the resilver completes, you
+should see the added space in the pool.
+
+.. note:: either method requires the ZFS property "autoexpand".  Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not,
+   the pool will not recognize that the disk capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. 
+
+To verify the autoexpand property, run this command from :ref:`Shell`, replacing *Vol1* with the name of the volume to expand::
+
+ zpool get autoexpand Vol1
  NAME	PROPERTY	VALUE			SOURCE
- Vol1	size		4.53T			-
- Vol1	capacity	31%			-
- Vol1	altroot		/mnt			local
- Vol1	health		ONLINE			-
- Vol1	guid		8068631824452460057	default
- Vol1	version		28			default
- Vol1	bootfs		-			default
- Vol1	delegation	on			default
- Vol1	autoreplace	off			default
- Vol1	cachefile	/data/zfs/zpool.cache	local
- Vol1	failmode	wait			default
- Vol1	listsnapshots	off			default
  Vol1 	autoexpand 	on 			local
- Vol1	dedupditto	0			default
- Vol1	dedupratio	1.00x			-
- Vol1	free		3.12T			-
- Vol1	allocated	1.41T			-
- Vol1	readonly	off			-
- Vol1	comment		-			default
 
 If autoexpansion is not enabled, enable it by specifying the name of the ZFS volume::
 
  zpool set autoexpand=on Vol1 
-
-Verify that autoexpand is now enabled by repeating :command:`zpool get all Vol1`.
-
-You are now ready to replace one drive with a larger drive using the instructions in Replacing a Failed Drive.
-
-Replace one drive at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are
-replaced and the resilver completes, you should see the added space in the pool.
-
-You can view the status of the resilver process by running :command:`zpool status Vol1`.
 
 .. _Enabling ZFS Pool Expansion:
 
@@ -1183,11 +1140,9 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
-|periodic1a.png|
+|periodic1b.png|
 
-.. |periodic1a.png| image:: images/periodic1a.png
-    :width: 8.3in
-    :height: 4.5in
+.. |periodic1b.png| image:: images/periodic1b.png
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1200,6 +1155,10 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
 |                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
+|                |                            |                                                                                                              |
++----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
+| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another FreeNAS system              |
+| Dataset        |                            |                                                                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the      |
@@ -1284,8 +1243,6 @@ Key" button and copy its contents. An example is shown in Figure 8.3a.
 |replication1a.png|
 
 .. |replication1a.png| image:: images/replication1a.png
-    :width: 5.4in
-    :height: 2.7in
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1320,8 +1277,6 @@ For this example, the required configuration is as follows:
 |replication2a.png|
 
 .. |replication2a.png| image:: images/replication2a.png
-    :width: 6.6in
-    :height: 4.4in
 
 Table 8.3a summarizes the available options in the "Add Replication Task" screen.
 
@@ -1476,8 +1431,6 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 |scrub1.png|
 
 .. |scrub1.png| image:: images/scrub1.png
-    :width: 8.8in
-    :height: 4.4in
 
 **Table 8.4a: ZFS Scrub Options**
 
@@ -1543,8 +1496,6 @@ The "Snapshots" tab can be used to review the listing of available snapshots. An
 |periodic3a.png|
 
 .. |periodic3a.png| image:: images/periodic3a.png
-    :width: 11.1in
-    :height: 4.5in
 
 The listing will include the name of the volume or dataset, the name of each snapshot, and the amount of used and referenced data, where:
 
@@ -1624,8 +1575,6 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |vmware1a.png|
 
 .. |vmware1a.png| image:: images/vmware1a.png
-    :width: 3.2in
-    :height: 2.5in
 
 **Table 8.6a: VMware Snapshot Options**
 
@@ -1634,7 +1583,7 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |                |                             |                                                                                                             |
 |                |                             |                                                                                                             |
 +================+=============================+=============================================================================================================+
-| Hostname       | string                      | IP address or hostname of VMware host                                                                       |
+| Hostname       | string                      | IP address or hostname of VMware host; when clustering, this is the vCenter server for the cluster          |
 |                |                             |                                                                                                             |
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | Username       | string                      | user on VMware host with enough permission to snapshot virtual machines                                     |

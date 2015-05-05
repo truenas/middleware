@@ -11,8 +11,6 @@ If you click "Display System Processes", a screen will open showing the output o
 |process.png|
 
 .. |process.png| image:: images/process.png
-    :width: 6.0598in
-    :height: 3.8055in
 
 The display will automatically refresh itself. Simply click the "X" in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.

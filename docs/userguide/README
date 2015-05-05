@@ -1,0 +1,42 @@
+To build (and/or make changes to) the upcoming version of the User Guide:
+
+Install the following (these are the FreeBSD package names):
+
+- devel/git
+- textproc/py-sphinx
+
+Check out the source code from git:
+
+% cd /path/to/your-build-directory
+% git clone git://github.com/freenas/freenas.git
+% cd /path/to/your-build-directory/freenas/docs/userguide
+
+NOTE: all of the following commands should be run from /path/to/your-build-directory/freenas/docs/userguide.
+
+To set up the doc build environment for the first time:
+
+% sphinx-quickstart 
+
+If you want to edit the User Guide, make changes to *.rst file for the chapter to edit, using any ASCII text editor.
+Refer to http://docutils.sourceforge.net/docs/user/rst/quickref.html for formatting syntax.
+Refer to http://wiki.typo3.org/Editors_%28reST%29 for a list of reST editors.
+Need help getting started or want to discuss edits? Join the http://lists.freenas.org/mailman/listinfo/freenas-docs mailing list.
+
+To build a local copy of the HTML, run this command in /path/to/your-build-directory/freenas/docs/userguide:
+
+% sphinx-build -b html . _build
+
+When finished, open _build/freenas.html in a browser to verify the HTML output.
+
+To build a PDF version of the userguide you will need a few extra packages:
+
+- print/tex-formats (this will pull in a LOT of dependencies)
+- print/tex-dvipsk
+- devel/gmake
+
+Run this command *twice* to build the PDF:
+
+% yes '' | gmake latexpdf
+
+When finished running the second time, you will find the PDF in _build/latex/FreeNAS.pdf.
+

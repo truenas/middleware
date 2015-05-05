@@ -53,8 +53,6 @@ services, and to configure services. By default, all services, except for the S.
 |services.png|
 
 .. |services.png| image:: images/services.png
-    :width: 3.8in
-    :height: 4.5in
 
 A service is stopped if its icon is a red "OFF". A service is running if its icon is a blue "ON". To start or stop a service, click its ON/OFF icon.
 
@@ -82,8 +80,6 @@ Figure 11.2a shows the available global AFP configuration options which are desc
 |afp1a.png|
 
 .. |afp1a.png| image:: images/afp1a.png
-    :width: 5.2in
-    :height: 4.4in
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -163,8 +159,6 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |cifs1.png|
 
 .. |cifs1.png| image:: images/cifs1.png
-    :width: 4.9in
-    :height: 4.4in
 
 **Table 11.3a: Global CIFS Configuration Options**
 
@@ -366,8 +360,12 @@ section of the Samba documentation contains additional troubleshooting tips.
 Domain Controller
 -----------------
 
-TrueNAS® can be configured to act either as the domain controller for a network or to join an existing Active Directory network as a domain controller. Be
-aware that configuring a domain controller is a complex process that requires a good understanding of how Active Directory works. While
+TrueNAS® can be configured to act either as the domain controller for a network or to join an existing Active Directory network as a domain controller. 
+
+.. note:: this section demonstrates how to configure the TrueNAS® system to act as a domain controller. If your goal is to integrate with an existing Active
+   Directory network in order to access its authentication and authorization services, instead configure :ref:`Active Directory`.
+
+Be aware that configuring a domain controller is a complex process that requires a good understanding of how Active Directory works. While
 :menuselection:`Services --> Domain Controller` makes it easy to input the needed settings into the administrative graphical interface, it is up to you to
 understand what those settings should be. Before beginning your configuration, read through the
 `Samba AD DC HOWTO <http://wiki.samba.org/index.php/Samba_AD_DC_HOWTO>`_. Once TrueNAS® is configured, use the RSAT utility from a Windows system to manage
@@ -380,8 +378,6 @@ Figure 11.4a shows the configuration screen for creating a domain controller and
 |directory1a.png|
 
 .. |directory1a.png| image:: images/directory1a.png
-    :width: 3.7in
-    :height: 3.3in
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -436,8 +432,6 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 |ddns.png|
 
 .. |ddns.png| image:: images/ddns.png
-    :width: 4.2in
-    :height: 3.9in
 
 **Table 11.5a: DDNS Configuration Options**
 
@@ -461,12 +455,9 @@ DDNS provider. After configuring DDNS, don't forget to start the DDNS service in
 | Password             | string         | password used to logon to the provider and update the record                                                       |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Update period        | integer        | in seconds; be careful with this setting as the provider may block you for abuse if this setting occurs more often |
-|                      |                | than the IP address changes                                                                                        |
-|                      |                |                                                                                                                    |
+| Update period        | integer        | how often the IP is checked in seconds                                                                             |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Forced update period | integer        | in seconds so be careful with this setting as the provider may block you for abuse; issues a DDNS update request   |
-|                      |                | even when the address has not changed so that the service provider knows that the account is still active          |
+| Forced update period | integer        | how often the IP should be updated, even it has not changed, in seconds                                            |
 |                      |                |                                                                                                                    |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Auxiliary parameters | string         | additional parameters passed to the provider during record update; an example of specifying a custom provider is   |
@@ -499,8 +490,6 @@ either click the "Advanced Mode" button or configure the system to always displa
 |ftp1.png|
 
 .. |ftp1.png| image:: images/ftp1.png
-    :width: 4.7in
-    :height: 4.4in
 
 Table 11.6a summarizes the available options when configuring the FTP server:
 
@@ -594,9 +583,8 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 | Anonymous user download bandwidth                            | integer        | only available in "Advanced Mode"; in KB/s, default of *0*  means unlimited         |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections; if not            |
-|                                                              |                | provided, a certificate will automatically be generated and will appear in the      |
-|                                                              |                | "Certificate and private key" box once you click "OK"                               |
+| Enable TLS                                                   | checkbox       | only available in "Advanced Mode"; enables encrypted connections and requires a     |
+|                                                              |                | certificate to be created or imported using :ref:`Certificates`                     |
 |                                                              |                |                                                                                     |
 +--------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 | TLS policy                                                   | drop-down menu | only available in "Advanced Mode"; the selected policy defines whether the          |
@@ -724,8 +712,6 @@ In the example shown in Figure 11.6b, a user has input the following information
 |filezilla.png|
 
 .. |filezilla.png| image:: images/filezilla.png
-    :width: 6.9252in
-    :height: 2.2335in
 
 The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote
 site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system)
@@ -786,7 +772,7 @@ To configure any FTP scenario to use encrypted connections:
 #.  Import or create a certificate authority using the instructions in :ref:`CAs`. Then, import or create the certificate to use for encrypted connections
     using the instructions in :ref:`Certificates`.
 
-#.  In :menuselection:`Services --> FTP`. Check the box "Enable TLS" and select the certificate in the "Certificate drop-down menu.
+#.  In :menuselection:`Services --> FTP`. Check the box "Enable TLS" and select the certificate in the "Certificate" drop-down menu.
 
 #.  Specify secure FTP when accessing the TrueNAS® system. For example, in Filezilla input *ftps://IP_address* (for an implicit connection) or
     *ftpes://IP_address* (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the
@@ -839,8 +825,6 @@ Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the 
 |lldp.png|
 
 .. |lldp.png| image:: images/lldp.png
-    :width: 3.2in
-    :height: 1.8in
 
 **Table 11.8a: LLDP Configuration Options**
 
@@ -874,8 +858,6 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |nfs1a.png|
 
 .. |nfs1a.png| image:: images/nfs1a.png
-    :width: 3.6in
-    :height: 4.2in
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -942,8 +924,6 @@ Figure 11.10a shows the rsyncd configuration screen which is accessed from :menu
 |rsyncd.png|
 
 .. |rsyncd.png| image:: images/rsyncd.png
-    :width: 6in
-    :height: 1.8in
 
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
@@ -976,8 +956,6 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 |rsync3.png|
 
 .. |rsync3.png| image:: images/rsync3.png
-    :width: 6.8in
-    :height: 4.2in
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -1048,8 +1026,6 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 |smart2.png|
 
 .. |smart2.png| image:: images/smart2.png
-    :width: 2.9in
-    :height: 2.7in
 
 .. note:: :command:`smartd` will wake up at every configured "Check Interval". It will check the times you configured in
    :menuselection:`System --> S.M.A.R.T. Tests` to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it
@@ -1111,8 +1087,6 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 |snmp.png|
 
 .. |snmp.png| image:: images/snmp.png
-    :width: 4.2in
-    :height: 2.3in
 
 **Table 11.12a: SNMP Configuration Options**
 
@@ -1157,8 +1131,6 @@ Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. 
 |ssh1.png|
 
 .. |ssh1.png| image:: images/ssh1.png
-    :width: 4.8in
-    :height: 2.7in
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -1279,8 +1251,6 @@ Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes th
 |tftp.png|
 
 .. |tftp.png| image:: images/tftp.png
-    :width: 5.0in
-    :height: 3.1in
 
 **Table 11.14a: TFTP Configuration Options**
 
@@ -1331,8 +1301,6 @@ Figure 11.15a shows the UPS configuration screen:
 |ups.png|
 
 .. |ups.png| image:: images/ups.png
-    :width: 4.8in
-    :height: 4.4in
 
 Table 11.15a summarizes the options in the UPS Configuration screen.
 
@@ -1421,7 +1389,7 @@ this command. These users are created in the "Extra users" field.
 WebDAV
 ------
 
-Beginning with TrueNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection. Before starting this service, you must create at least
+In TrueNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection. Before starting this service, you must create at least
 one WebDAV share using :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share`. Refer to :ref:`WebDAV Shares` for instructions on how to create a
 share and then how to connect to it once the service is configured and started.
 
@@ -1433,8 +1401,6 @@ options.
 |webdav2.png|
 
 .. |webdav2.png| image:: images/webdav2.png
-    :width: 3.6in
-    :height: 2.4in
 
 **Table 11.16a: WebDAV Configuration Options**
 

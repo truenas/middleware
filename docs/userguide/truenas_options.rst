@@ -20,8 +20,6 @@ If you click Display System Processes, a screen will open showing the output of
 |process.png|
 
 .. |process.png| image:: images/process.png
-    :width: 6.0598in
-    :height: 3.8055in
 
 The display will automatically refresh itself. Simply click the X in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
@@ -41,8 +39,6 @@ fourth entry from the bottom of the menu tree. In Figure 14.2a, the link has bee
 |shell.png|
 
 .. |shell.png| image:: images/shell.png
-    :width: 6.9252in
-    :height: 4.9319in
 
 The prompt indicates that the current user is *root*, the hostname is
 *truenas*, and the current working directory is :file:`~`
@@ -62,9 +58,7 @@ completion (type a few letters and press tab to complete a command name or filen
 
 .. note:: not all of Shell's features render correctly in Chrome. Firefox is the recommended browser for using Shell.
 
-Due to the embedded nature of TrueNAS®, some FreeBSD components are missing and noticeable in Shell. For example, man pages are not included; however,
-FreeBSD man pages are available
-`online <http://www.freebsd.org/cgi/man.cgi>`_. Most FreeBSD command line utilities should be available in Shell.
+Most FreeBSD command line utilities should be available in Shell.
 
 .. index:: Log Out
 .. _Log Out:
@@ -90,8 +84,6 @@ an option that will negatively impact users of the TrueNAS® system.
 |reboot.png|
 
 .. |reboot.png| image:: images/reboot.png
-    :width: 6.0in
-    :height: 1.9in
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -118,8 +110,6 @@ selected an option that will negatively impact users of the TrueNAS® system.
 |shutdown.png|
 
 .. |shutdown.png| image:: images/shutdown.png
-    :width: 6.0in
-    :height: 1.9in
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the shutdown request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -128,20 +118,25 @@ process is complete. Once complete, the shutdown request can be re-issued.
 Click the "Cancel" button if you wish to cancel the shutdown request. Otherwise, click the "Shutdown" button to halt the system. Shutting down the system will
 disconnect all clients, including the web administration GUI, and will power off the TrueNAS® system.
 
-.. index:: Help
+.. index:: Support
 
-.. _Help:
+.. _Support Icon:
 
-Help
-----
+Support Icon
+------------
 
-The Help button in the upper right corner provides a pop-up menu containing hyperlinks to the following TrueNAS® support resources:
+The "Support" icon, located as the third icon from the left in the top menubar, provides a shortcut to :menuselection:`System --> Support`. This screen can be
+used to verify the system license or to create a support ticket. Refer to :ref:`Support` for detailed usage instructions.
 
-*   the link to open a support ticket
+.. index:: Guide
 
-*   the link to the TrueNAS® knowledge base
+.. _Guide:
 
-*   the email address of the support team
+Guide
+-----
+
+The "Guide" icon, located as the second icon from the left in the top menubar, provides a built-in browser to the TrueNAS® Administrator Guide (this
+documentation).
 
 .. index:: Alert
 
@@ -151,16 +146,14 @@ Alert
 -----
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.7a. one of the disks in a ZFS pool is offline which has
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 14.8a. one of the disks in a ZFS pool is offline which has
 degraded the state of the pool.
 
-**Figure 14.7a: Example Alert Message**
+**Figure 14.8a: Example Alert Message**
 
-|alert.png|
+|alert1.png|
 
-.. |alert.png| image:: images/alert.png
-    :width: 4.0618in
-    :height: 1.6453in
+.. |alert1.png| image:: images/alert1.png
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
@@ -178,6 +171,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * ZFS pool status changes from "HEALTHY"
 
+* a S.M.A.R.T. error occurs
+
 * the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
 
 * the system can not find an IP address configured on an iSCSI portal
@@ -185,6 +180,8 @@ is detected. Some of the conditions that trigger an alert include:
 * a replication task fails
 
 * a VMware login or a :ref:`VMware-Snapshot` task fails
+
+* 30 days before the license expires and when the license expires
 
 * the status of a LSI MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_

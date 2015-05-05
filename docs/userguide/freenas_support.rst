@@ -21,6 +21,8 @@ The rest of this section discusses the following resources which are available t
 
 * :ref:`Professional Support`
 
+* :ref:`Training`
+
 .. _Website and Social Media:
 
 Website and Social Media
@@ -138,6 +140,8 @@ language:
 
 * `Spanish - Espanol <http://forums.freenas.org/forumdisplay.php?33-Spanish-Espanol>`_
 
+* `Swedish - Svenske <https://forums.freenas.org/index.php?forums/swedish-svenske.51/>`_
+
 * `Turkish - Türkçe <http://forums.freenas.org/forumdisplay.php?36-Turkish-T%FCrk%E7e>`_
 
 If you wish to ask a question on the forum, you will need to click the "Sign Up Now!" link to create an account and login using that account.
@@ -234,6 +238,12 @@ A series of instructional videos are available for FreeNAS® 9.3. They include:
 
 * `FreeNAS® 9.3 Shares Overview (AFP, NFS, CIFS, + New WebDAV) <https://www.youtube.com/watch?v=GVJQ0Vx_6i4>`_
 
+* `How to Replace HDD in FreeNAS® 9.3 <https://www.youtube.com/watch?v=c8bvtj-LQ_A>`_
+
+* `TrueNAS 9.3 Snapshots Setup <https://www.youtube.com/watch?v=R92wb_xN9k4>`_
+
+* `Install Murmur (Mumble server) on FreeNAS/FreeBSD  <https://www.youtube.com/watch?v=aAeZRNfarJc>`_
+
 .. index:: Professional Support
 .. _Professional Support:
 
@@ -246,3 +256,13 @@ team can also configure your FreeNAS® hardware and software to deliver the high
 `iXsystems support page <http://www.ixsystems.com/solutions/support/>`_
 to request a quote.
 
+.. index:: Training
+.. _Training:
+
+Training
+--------
+
+iXsystems also offers professional training modules. Each module is designed to accelerate your FreeNAS® learning curve and to save you hours of learning by
+trial and error. FreeNAS® training classes are 1-4 hours in length, topic-specific, and provide the information you need to quickly get up to speed in
+FreeNAS® and ZFS. Refer to the `FreeNAS Training and Certification website <http://www.freenas.org/freenas-zfs-training/>`_ for more information about the
+courses, pricing, and availability.

@@ -3,8 +3,8 @@
 Wizard
 ------
 
-Beginning with TrueNAS® 9.3, a wizard is available which walks you through the steps needed to quickly configure TrueNAS® to start serving data over a
-network. This section describes the configuration steps which are available from the wizard.
+TrueNAS® provides a wizard which walks you through the steps needed to quickly configure TrueNAS® to start serving data over a network. This section
+describes the configuration steps which are available from the wizard.
 
 Figure 13a shows the first wizard configuration screen.
 
@@ -13,8 +13,6 @@ Figure 13a shows the first wizard configuration screen.
 |wizard.png|
 
 .. |wizard.png| image:: images/wizard.png
-    :width: 2.7in
-    :height: 1.8in
 
 Note that you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections.
 
@@ -30,8 +28,6 @@ Figure 13b shows the configuration screen that appears when unformatted disks ar
 |wizard1.png|
 
 .. |wizard1.png| image:: images/wizard1.png
-    :width: 4.7in
-    :height: 2.4in
 
 .. note:: the wizard will not recognize an **encrypted** ZFS pool. If your ZFS pool is GELI-encrypted, cancel the wizard and use the instructions in
           :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then rerun the wizard and it will recognize that the volume has been
@@ -67,8 +63,6 @@ Figure 13c.
 |wizard2.png|
 
 .. |wizard2.png| image:: images/wizard2.png
-    :width: 3.0in
-    :height: 1.2in
 
 Select the existing volume from the drop-down menu and click "Next" to continue.
 
@@ -79,8 +73,6 @@ The next screen in the wizard is shown in Figure 13d.
 |wizard3.png|
 
 .. |wizard3.png| image:: images/wizard3.png
-    :width: 3.8in
-    :height: 2.1in
 
 If the TrueNAS® system is on a network that does not contain an Active Directory, LDAP, NIS, or NT4 server, click "Next" to skip to the next screen.
 
@@ -161,7 +153,7 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 | Domain Controller       | string         | hostname of domain controller                                                                         |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| NetBIOS Name            | string         | hostname of FreeNAS system                                                                            |
+| NetBIOS Name            | string         | hostname of FreeNAS system; cannot be greater than 15 characters                                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Workgroup Name          | string         | name of Windows server's workgroup                                                                    |
@@ -181,8 +173,6 @@ The next configuration screen, shown in Figure 13e, can be used to create the ne
 |wizard4.png|
 
 .. |wizard4.png| image:: images/wizard4.png
-    :width: 3.5in
-    :height: 3.4in
 
 TrueNAS® supports several types of shares for providing storage data to the clients in a network. The initial wizard can be used to quickly make shares using
 default permissions which should "just work" for common scenarios. If you wish to configure more complex scenarios, refer to the section on :ref:`Sharing`.
@@ -209,8 +199,6 @@ After selecting the "Purpose", click the "Ownership" button to see the screen sh
 |wizard5.png|
 
 .. |wizard5.png| image:: images/wizard5.png
-    :width: 3.2in
-    :height: 2.3in
 
 The default permissions for the share will be displayed. To create a user or group, input the desired name, then check the "Create User" box, to create that
 user, and the "Create Group" box, to create that group. Check or uncheck the boxes in the "Mode" section to set the initial access permissions for the share.
@@ -227,8 +215,6 @@ When you are finished making shares, click the "Next" button to advance to the s
 |wizard6.png|
 
 .. |wizard6.png| image:: images/wizard6.png
-    :width: 3.44in
-    :height: 3.99in
 
 This screen can be used to configure the following settings:
 

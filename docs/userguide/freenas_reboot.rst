@@ -12,8 +12,6 @@ that you have selected an option that will negatively impact users of the FreeNA
 |reboot.png|
 
 .. |reboot.png| image:: images/reboot.png
-    :width: 6.0in
-    :height: 1.9in
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from Shell until it is verified that the scrub or resilver

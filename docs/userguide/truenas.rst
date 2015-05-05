@@ -4,7 +4,7 @@
 
    Introduction <truenas_introduction>
    ZFS Primer <truenas_zfsprimer>
-   Accessing TrueNAS® <truenas_quick>
+   Initial Setup <truenas_quick>
    Account <truenas_account>
    System <truenas_system>
    Tasks <truenas_tasks>
@@ -17,10 +17,6 @@
    Wizard <truenas_wizard>
    Additional Options <truenas_options>
    Using the FreeNAS® API <truenas_api>
-
-.. |tn_cover.jpg| image:: images/tn_cover.jpg
-    :width: 8.5in
-    :height: 11.0in
 
 .. only:: html
 

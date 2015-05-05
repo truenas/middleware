@@ -36,8 +36,6 @@ Figure 6.1a shows the screen that opens when you click :menuselection:`Tasks -->
 |cron.png|
 
 .. |cron.png| image:: images/cron.png
-    :width: 9.3in
-    :height: 4.4in
 
 Table 6.1a summarizes the configurable options when creating a cron job.
 
@@ -107,8 +105,6 @@ When scheduling a script, make sure that the script is executable and has been f
 |init.png|
 
 .. |init.png| image:: images/init.png
-    :width: 4.6in
-    :height: 2.6in
 
 **Table 6.2a: Options When Adding an Init/Shutdown Script**
 
@@ -174,8 +170,6 @@ can be configured when creating an rsync task.
 |rsync1a.png|
 
 .. |rsync1a.png| image:: images/rsync1a.png
-    :width: 11.1in
-    :height: 4.4in
 
 **Table 6.3a: Rsync Configuration Options**
 
@@ -193,7 +187,8 @@ can be configured when creating an rsync task.
 |                                  |                             | characters                                                                                |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Remote Host                      | string                      | IP address or hostname of the remote system that will store the copy                      |
+| Remote Host                      | string                      | IP address or hostname of the remote system that will store the copy; use the format      |
+|                                  |                             | *username@remote_host* if the username differs on the remote host                         |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote SSH Port                  | integer                     | only available in  *Rsync over SSH* mode; allows you to specify an alternate SSH port     |
@@ -352,9 +347,8 @@ configured before creating the rsync task:
 
 * the SSH service must be running on *PULL*
 
-To create the public/private key pair for the rsync user account, open Shell_on *PUSH*. The :file:`/` filesystem must first be mounted as read-write. The
-following example generates an RSA type public/private key pair for the *root* user. When creating the key pair, do not enter the passphrase as the key is
-meant to be used for an automated task.::
+To create the public/private key pair for the rsync user account, open Shell on *PUSH*. The following example generates an RSA type public/private key pair
+for the *root* user. When creating the key pair, do not enter the passphrase as the key is meant to be used for an automated task.::
 
  ssh-keygen -t rsa
  Generating public/private rsa key pair.
@@ -410,8 +404,6 @@ breaks.
 |rsync2.png|
 
 .. |rsync2.png| image:: images/rsync2.png
-    :width: 6.2in
-    :height: 4.5in
 
 While on *PULL*, verify that the SSH service is running in :menuselection:`Services --> Control Services` and start it if it is not.
 
@@ -474,8 +466,6 @@ created any volumes.
 |smart1.png|
 
 .. |smart1.png| image:: images/smart1.png
-    :width: 6.94in
-    :height: 4.9in
 
 Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 

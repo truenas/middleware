@@ -25,6 +25,8 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Certificates`: used to import existing certificates or to create self-signed certificates
 
+* :ref:`Support`: used to report a bug or request a new feature.
+
 Each of these is described in more detail in this section.
 
 .. _Information:
@@ -42,11 +44,9 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-|system1.png|
+|system1a.png|
 
-.. |system1.png| image:: images/system1.png
-    :width: 6.9in
-    :height: 3.5in
+.. |system1a.png| image:: images/system1a.png
 
 .. _General:
 
@@ -57,11 +57,9 @@ General
 
 **Figure 5.2a: General Screen**
 
-|system2.png|
+|system2a.png|
 
-.. |system2.png| image:: images/system2.png
-    :width: 6.2in
-    :height: 4.4in
+.. |system2a.png| image:: images/system2a.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -137,7 +135,8 @@ contains an alternate script which only saves a copy of the configuration when i
 `forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`__
 contains a script for backing up the configuration from another system.
 
-**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration.
+**Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
+red as an indication that the system will need to reboot in order to load the restored configuration.
 
 **NTP Servers:** The network time protocol (NTP) is used to synchronize the time on the computers in a network. Accurate time is necessary for the successful
 operation of time sensitive applications such as Active Directory or other directory services. By default, FreeNAS® is pre-configured to use three public NTP
@@ -152,8 +151,6 @@ explains these options in more detail.
 |ntp1.png|
 
 .. |ntp1.png| image:: images/ntp1.png
-    :width: 7.1in
-    :height: 3.9in
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -210,11 +207,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1b.png|
+|be1d.png|
 
-.. |be1b.png| image:: images/be1b.png
-    :width: 6.2in
-    :height: 4.5in
+.. |be1d.png| image:: images/be1d.png
 
 Each boot environment entry contains the following information:
 
@@ -226,7 +221,7 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Rename:** used to change the name of the boot environment. Note that you cannot rename any boot environment which has an entry under the "Active" column.
+* **Rename:** used to change the name of the boot environment.
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
@@ -237,7 +232,7 @@ Highlight an entry to view its configuration buttons.  The following configurati
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete the
   *default* entry or an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
-  entry, which will clear the *On reboot* field of the currently activated entry.
+  entry, which will clear the *On reboot* field of the currently activated entry. 
 
 The buttons above the boot entries can be used to:
 
@@ -255,8 +250,6 @@ The buttons above the boot entries can be used to:
 |be2.png|
 
 .. |be2.png| image:: images/be2.png
-    :width: 3.2in
-    :height: 4.4in
 
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
@@ -268,8 +261,6 @@ Figure 5.3c shows a sample boot menu containing entries for the default, initial
 |be3a.png|
 
 .. |be3a.png| image:: images/be3a.png
-    :width: 6.0in
-    :height: 3.3in
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
@@ -279,6 +270,9 @@ Mirroring the Boot Device
 
 If the system is currently booting from one device, you can add another device to create a mirrored boot device. This way, if one device fails, the system
 still has a copy of the boot file system and can be configured to boot from the remaining device in the mirror.
+
+.. note:: when adding another boot device, it must be the same size (or larger) as the existing boot device. Different models of USB devices which advertise the same size may
+   not necessarily be the same size. For this reason, it is recommended to use the same model of USB drive.
 
 In the example shown in Figure 5.3d, the user has clicked :menuselection:`System --> Boot --> Status` to display the current status of the boot device. The
 example indicates that there is currently one device, *ada0p2*, its status is "ONLINE", and it is currently the only boot device as indicated by the word
@@ -292,8 +286,6 @@ click "Attach Disk".
 |mirror1.png|
 
 .. |mirror1.png| image:: images/mirror1.png
-    :width: 3.6in
-    :height: 4.5in
 
 Once the mirror is created, the "Status" screen will indicate that it is now a *mirror* and the number of devices in the mirror will be shown, as seen in the
 example in Figure 5.3e.
@@ -303,8 +295,6 @@ example in Figure 5.3e.
 |mirror2.png|
 
 .. |mirror2.png| image:: images/mirror2.png
-    :width: 3.8in
-    :height: 1.9in
 
 .. _Advanced:
 
@@ -315,11 +305,9 @@ Advanced
 
 **Figure 5.4a: Advanced Screen**
 
-|system3.png|
+|system3a.png|
 
-.. |system3.png| image:: images/system3.png
-    :width: 9.4in
-    :height: 4.5in
+.. |system3a.png| image:: images/system3a.png
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -371,26 +359,35 @@ Advanced
 | Enable debug kernel                     | checkbox                         | if checked, next boot will boot into a debug version of the kernel           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps are automatically sent to the                 |
-| crash dumps and daily telemetry         |                                  | development team for diagnosis. The telemetry includes some system stats,    |
-|                                         |                                  | collectd RRDs, and select syslog messages.                                   |
+| Enable automatic upload of kernel       | checkbox                         | if checked, kernel crash dumps and telemetry (some system stats, collectd    |
+| crash dumps and daily telemetry         |                                  | RRDs, and select syslog messages) are automatically sent to the  development |
+|                                         |                                  | team for diagnosis                                                           |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
-
+| Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
+|                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
 If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
-
 **Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
 button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
 backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+
+.. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
+             was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
+             option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
+
+.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
+
+**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
 **Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
 this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
@@ -402,8 +399,6 @@ Uncompress the tar file and use the resources in :ref:`IOzone` to assist in inte
 |backup1.png|
 
 .. |backup1.png| image:: images/backup1.png
-    :width: 3.24in
-    :height: 3.3in
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -478,11 +473,9 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4a.png|
+|system4b.png|
 
-.. |system4a.png| image:: images/system4a.png
-    :width: 6.3in
-    :height: 3.7in
+.. |system4b.png| image:: images/system4b.png
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -532,11 +525,9 @@ a Domain Controller, all of the domain controller state is stored there as well,
 
 **Figure 5.6a: System Dataset Screen**
 
-|system5.png|
+|system5a.png|
 
-.. |system5.png| image:: images/system5.png
-    :width: 6.3in
-    :height: 1.8in
+.. |system5a.png| image:: images/system5a.png
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -587,8 +578,6 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 |tunable.png|
 
 .. |tunable.png| image:: images/tunable.png
-    :width: 2.5in
-    :height: 2.4in
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -695,11 +684,9 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-|update1.png|
+|update1a.png|
 
-.. |update1.png| image:: images/update1.png
-    :width: 6.25in
-    :height: 3.38in
+.. |update1a.png| image:: images/update1a.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -732,20 +719,23 @@ of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9
 |update2.png|
 
 .. |update2.png| image:: images/update2.png
-    :width: 6.95in
-    :height: 3.4in
 
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
+
+.. warning:: each update creates a boot environment and if the boot device does not have sufficient space to hold another boot environment, the upgrade will
+   fail. If you need to create more space on the boot device, use :menuselection:`System --> Boot` to review your current boot environments and to delete the
+   ones you no longer plan to boot into.
 
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
 in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-The "Manual Update" button can be used to manually upgrade the operating system as described in :ref:`Upgrading From the GUI`. Note that in 9.3, this button
-is included for backwards compatibility as this method of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the
-necessary updates to upgrade the operating system.
+.. note:: the "Manual Update" button can be used to manually upgrade using a previously downloaded upgrade file, as described in :ref:`Upgrading From the GUI`. 
+   While this can be useful to upgrade to a specific point in time, this button is primarily included for backwards compatibility as this method is no longer
+   the recommended way to upgrade. Instead, select a train and apply any outstanding updates to ensure that the operating system has the most recent updates for
+   the specified train.
 
 .. index:: CA, Certificate Authority
 .. _CAs:
@@ -761,11 +751,9 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 **Figure 5.9a: Initial CA Screen**
 
-|ca1.png|
+|ca1a.png|
 
-.. |ca1.png| image:: images/ca1.png
-    :width: 6.2in
-    :height: 1.9in
+.. |ca1a.png| image:: images/ca1a.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
@@ -775,8 +763,6 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 |ca2a.png|
 
 .. |ca2a.png| image:: images/ca2a.png
-    :width: 4.1in
-    :height: 3.1in
 
 **Table 5.9a: Importing a CA Options**
 
@@ -811,8 +797,6 @@ To create a CA for internal use only, click the "Create Internal CA" button whic
 |ca3.png|
 
 .. |ca3.png| image:: images/ca3.png
-    :width: 3.0in
-    :height: 3.96in
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
@@ -887,11 +871,9 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> Ce
 
 **Figure 5.10a: Initial Certificates Screen**
 
-|cert1.png|
+|cert1a.png|
 
-.. |cert1.png| image:: images/cert1.png
-    :width: 6.5in
-    :height: 1.8in
+.. |cert1a.png| image:: images/cert1a.png
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
 summarized in Table 5.10a.
@@ -901,8 +883,6 @@ summarized in Table 5.10a.
 |cert2a.png|
 
 .. |cert2a.png| image:: images/cert2a.png
-    :width: 4.2in
-    :height: 2.8in
 
 **Table 5.10a: Certificate Import Options**
 
@@ -930,11 +910,9 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 
 **Figure 5.10c: Creating a New Certificate**
 
-|cert3.png|
+|cert3a.png|
 
-.. |cert3.png| image:: images/cert3.png
-    :width: 3.6in
-    :height: 4.3in
+.. |cert3a.png| image:: images/cert3a.png
 
 **Table 5.10b: Certificate Creation Options**
 
@@ -991,8 +969,6 @@ connections.
 |cert4.png|
 
 .. |cert4.png| image:: images/cert4.png
-    :width: 6.2in
-    :height: 4.5in
 
 If you click an entry, it will activate the following configuration buttons:
 
@@ -1007,3 +983,52 @@ If you click an entry, it will activate the following configuration buttons:
 
 * **Delete:** used to delete a certificate or certificate signing request.
 
+.. index:: Support
+.. _Support:
+
+Support
+-------
+
+The FreeNAS® "Support" tab, shown in Figure 5.11a, provides a built-in ticketing system for generating bug reports and feature requests.
+
+**Figure 5.11a: Support Tab**
+
+|support1a.png|
+
+.. |support1a.png| image:: images/support1a.png
+
+This screen provides a built-in interface to the FreeNAS® bug tracker located at `bugs.freenas.org <https://bugs.freenas.org>`_. If you have not yet used the
+FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a
+username and password which can be used to create bug reports and receive notifications as your reports are actioned.
+
+Before creating a bug report or feature request, ensure that an existing report does not already exist at `bugs.freenas.org <https://bugs.freenas.org>`_. If
+you find a similar issue that is not yet marked as "closed" or "resolved", add a comment to that issue if you have new information to provide that can assist
+in resolving the issue. If you find a similar issue that is marked as "closed" or "resolved", you can create a new issue and refer to the earlier issue
+number.
+
+.. note:: if you are not updated to the latest version of STABLE, do that first to see if it resolves your issue.
+
+To generate a report using the built-in "Support" screen, complete the following fields:
+
+* **Username:** input the login name you created when registering at `bugs.freenas.org <https://bugs.freenas.org>`_.
+
+* **Password:** input the password associated with the registered login name.
+
+* **Type:** select "Bug" when reporting an issue or "Feature" when requesting a new feature.
+
+* **Category:** this drop-down menu will be empty until you input a registered "Username" and "Password" and an error message will display if either value is
+  incorrect. Once the "Username" and "Password" are validated, the possible categories will be populated to the drop-down menu. Select the one that best
+  describes the bug or feature that you are reporting.
+
+* **Attach Debug Info:** it is recommended to leave this box checked so that an overview of the system's hardware, build string, and configuration is
+  automatically generated and included with the ticket.
+
+* **Subject:** input a descriptive title for the ticket. A good "Subject" makes it easy for you and other users to find similar reports.
+
+* **Description:** input a 1 to 3 paragraph summary of the issue that describes the problem, and if applicable, what steps one can do to reproduce it.
+
+* **Attachments:** this is the only optional field. It is useful for including configuration files or screenshots of any errors or tracebacks.
+
+Once you have finished completing the fields, click the "Submit" button to automatically generate and upload the report to
+`bugs.freenas.org <https://bugs.freenas.org>`_. A pop-up menu will provide a clickable URL so that you can view the status of or add additional information to
+the report.

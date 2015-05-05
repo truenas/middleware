@@ -1,23 +1,19 @@
-.. index:: Help
-.. _Help:
+.. index:: Support
 
-Help
-====
+.. _Support Icon:
 
-The "Help" button in the upper right corner provides a pop-up menu containing hyperlinks to the various FreeNAS® online resources, including:
+Support Icon
+------------
 
-* the Community Forum
+The "Support" icon, located as the third icon from the left in the top menubar, provides a shortcut to :menuselection:`System --> Support`. This screen can be
+used to create a support ticket. Refer to :ref:`Support` for detailed usage instructions.
 
-* the mailing lists
 
-* the web interface to the IRC channel
+.. index:: Guide
+.. _Guide:
 
-* the bug tracker
+Guide
+-----
 
-* the online FreeBSD manual pages
-
-* this documentation
-
-* professional support
-
-These resources are discussed in more detail in :ref:`FreeNAS® Support Resources`.
+The "Documentation" icon, located as the second icon from the left in the top menubar, provides a built-in browser to the FreeNAS® User Guide (this
+documentation).

@@ -63,11 +63,11 @@ release = '9.3'
 if tags.has('truenas'):
     project = u'TrueNAS User Guide'
     master_doc = 'truenas'
-    exclude_patterns = ['_build', 'freenas*']
+    exclude_patterns = ['_build', 'freenas*', 'errata', 'zfsprimer*']
 else:
     project = u'FreeNAS User Guide'
     master_doc = 'freenas'
-    exclude_patterns = ['_build', 'truenas*']
+    exclude_patterns = ['_build', 'truenas*', 'errata']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -126,10 +126,7 @@ else:
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-if tags.has('truenas'):
-    html_favicon = "truenas.ico"
-else:
-    html_favicon = "freenas.ico"
+html_favicon = "freenas.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
