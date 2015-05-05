@@ -69,14 +69,12 @@ cdef extern from "mach/kern_return.h":
         KERN_LOCK_OWNED
         KERN_LOCK_OWNED_SELF
         KERN_SEMAPHORE_DESTROYED
-        KERN_RPC_SERVER_TERMINATE
         KERN_RPC_CONTINUE_ORPHAN
         KERN_NOT_SUPPORTED
         KERN_NODE_DOWN
         KERN_NOT_WAITING
         KERN_OPERATION_TIMED_OUT
         KERN_CODESIGN_ERROR
-        KERN_POLICY_STATIC
         KERN_RETURN_MAX
 
 
@@ -91,6 +89,8 @@ cdef extern from "mach/mach.h":
     ctypedef int mach_port_t
     ctypedef int mach_port_name_t
     ctypedef int mach_port_right_t
+    ctypedef int mach_msg_trailer_type_t
+    ctypedef int mach_msg_trailer_size_t
     ctypedef int kern_return_t
 
     ctypedef struct mach_msg_header_t:
@@ -102,6 +102,13 @@ cdef extern from "mach/mach.h":
         mach_msg_id_t msgh_id
 
     ctypedef struct mach_msg_trailer_t:
+        mach_msg_trailer_type_t msgh_trailer_type
+        mach_msg_trailer_size_t msgh_trailer_size
+
+    ctypedef struct mach_msg_port_descriptor_t:
+        pass
+
+    ctypedef struct mach_msg_ool_descriptor_t:
         pass
 
     mach_msg_return_t mach_msg(mach_msg_header_t *msg,
@@ -115,6 +122,67 @@ cdef extern from "mach/mach.h":
     mach_msg_return_t mach_msg_receive(mach_msg_header_t *msg)
     kern_return_t mach_port_allocate(mach_port_t task, mach_port_right_t right, mach_port_t* name)
 
+cdef extern from "mach/port.h":
+    enum:
+        MACH_PORT_RIGHT_SEND
+        MACH_PORT_RIGHT_RECEIVE
+        MACH_PORT_RIGHT_SEND_ONCE
+        MACH_PORT_RIGHT_PORT_SET
+        MACH_PORT_RIGHT_DEAD_NAME
+
+    enum:
+        MACH_PORT_NULL
+
+cdef extern from "mach/message.h":
+    enum:
+        MACH_MSG_TYPE_MOVE_RECEIVE
+        MACH_MSG_TYPE_MOVE_SEND
+        MACH_MSG_TYPE_MOVE_SEND_ONCE
+        MACH_MSG_TYPE_COPY_SEND
+        MACH_MSG_TYPE_MAKE_SEND
+        MACH_MSG_TYPE_MAKE_SEND_ONCE
+        MACH_MSG_TYPE_COPY_RECEIVE
+        
+    enum:
+        MACH_MSG_SUCCESS
+        MACH_MSG_MASK
+        MACH_MSG_IPC_SPACE
+        MACH_MSG_VM_SPACE
+        MACH_MSG_IPC_KERNEL
+        MACH_MSG_VM_KERNEL
+        MACH_SEND_IN_PROGRESS
+        MACH_SEND_INVALID_DATA
+        MACH_SEND_INVALID_DEST
+        MACH_SEND_TIMED_OUT
+        MACH_SEND_INTERRUPTED
+        MACH_SEND_MSG_TOO_SMALL
+        MACH_SEND_INVALID_REPLY
+        MACH_SEND_INVALID_RIGHT
+        MACH_SEND_INVALID_NOTIFY
+        MACH_SEND_INVALID_MEMORY
+        MACH_SEND_NO_BUFFER
+        MACH_SEND_TOO_LARGE
+        MACH_SEND_INVALID_TYPE
+        MACH_SEND_INVALID_HEADER
+        MACH_SEND_INVALID_TRAILER
+        MACH_SEND_INVALID_RT_OOL_SIZE
+        MACH_RCV_IN_PROGRESS
+        MACH_RCV_INVALID_NAME
+        MACH_RCV_TIMED_OUT
+        MACH_RCV_TOO_LARGE
+        MACH_RCV_INTERRUPTED
+        MACH_RCV_PORT_CHANGED
+        MACH_RCV_INVALID_NOTIFY
+        MACH_RCV_INVALID_DATA
+        MACH_RCV_PORT_DIED
+        MACH_RCV_IN_SET
+        MACH_RCV_HEADER_ERROR
+        MACH_RCV_BODY_ERROR
+        MACH_RCV_INVALID_TYPE
+        MACH_RCV_SCATTER_SMALL
+        MACH_RCV_INVALID_TRAILER
+        MACH_RCV_IN_PROGRESS_TIMED
+
 cdef extern from "mach/mach_init.h":
     mach_port_t mach_task_self()
 
@@ -124,3 +192,4 @@ cdef extern from "servers/bootstrap.h":
     mach_port_t bootstrap_port
     kern_return_t bootstrap_create_service(mach_port_t bp, const name_t service_name, mach_port_t *sp)
     kern_return_t bootstrap_check_in(mach_port_t bp, const name_t service_name, mach_port_t *sp)
+    kern_return_t bootstrap_look_up(mach_port_t bp, const name_t service_name, mach_port_t *sp)

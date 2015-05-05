@@ -30,6 +30,25 @@ import cython
 cimport mach
 from libc.stdint cimport uintptr_t
 from libc.stdlib cimport malloc, realloc, free
+from libc.string cimport memmove, memset
+
+
+class PortRight(enum.IntEnum):
+    MACH_PORT_RIGHT_SEND = mach.MACH_PORT_RIGHT_SEND
+    MACH_PORT_RIGHT_RECEIVE = mach.MACH_PORT_RIGHT_RECEIVE
+    MACH_PORT_RIGHT_SEND_ONCE = mach.MACH_PORT_RIGHT_SEND_ONCE
+    MACH_PORT_RIGHT_PORT_SET = mach.MACH_PORT_RIGHT_PORT_SET
+    MACH_PORT_RIGHT_DEAD_NAME = mach.MACH_PORT_RIGHT_DEAD_NAME
+
+
+class MessageType(enum.IntEnum):
+    MACH_MSG_TYPE_MOVE_RECEIVE = mach.MACH_MSG_TYPE_MOVE_RECEIVE
+    MACH_MSG_TYPE_MOVE_SEND = mach.MACH_MSG_TYPE_MOVE_SEND
+    MACH_MSG_TYPE_MOVE_SEND_ONCE = mach.MACH_MSG_TYPE_MOVE_SEND_ONCE
+    MACH_MSG_TYPE_COPY_SEND = mach.MACH_MSG_TYPE_COPY_SEND
+    MACH_MSG_TYPE_MAKE_SEND = mach.MACH_MSG_TYPE_MAKE_SEND
+    MACH_MSG_TYPE_MAKE_SEND_ONCE = mach.MACH_MSG_TYPE_MAKE_SEND_ONCE
+    MACH_MSG_TYPE_COPY_RECEIVE = mach.MACH_MSG_TYPE_COPY_RECEIVE    
 
 
 class KernReturn(enum.IntEnum):
@@ -75,14 +94,12 @@ class KernReturn(enum.IntEnum):
     KERN_LOCK_OWNED = mach.KERN_LOCK_OWNED
     KERN_LOCK_OWNED_SELF = mach.KERN_LOCK_OWNED_SELF
     KERN_SEMAPHORE_DESTROYED = mach.KERN_SEMAPHORE_DESTROYED
-    KERN_RPC_SERVER_TERMINATE = mach.KERN_RPC_SERVER_TERMINATE
     KERN_RPC_CONTINUE_ORPHAN = mach.KERN_RPC_CONTINUE_ORPHAN
     KERN_NOT_SUPPORTED = mach.KERN_NOT_SUPPORTED
     KERN_NODE_DOWN = mach.KERN_NODE_DOWN
     KERN_NOT_WAITING = mach.KERN_NOT_WAITING
     KERN_OPERATION_TIMED_OUT = mach.KERN_OPERATION_TIMED_OUT
     KERN_CODESIGN_ERROR = mach.KERN_CODESIGN_ERROR
-    KERN_POLICY_STATIC = mach.KERN_POLICY_STATIC
     KERN_RETURN_MAX = mach.KERN_RETURN_MAX
 
 
@@ -91,35 +108,63 @@ class MachException(Exception):
 
 
 cdef class Port:
-    def __init__(self):
-        pass
+    cdef mach_port_t port
 
-    cdef send(self, dest_port, Message message):
+    def __init__(self, port=None, right=PortRight.MACH_PORT_RIGHT_RECEIVE):
+        if port:
+            self.port = port
+        else:
+            self.port = self.allocate_port(right)
+
+    def __str__(self):
+        return '<Mach port {0}>'.format(self.port)
+
+    def value(self):
+        return self.port
+
+    def allocate_port(self, right):
+        cdef mach.mach_port_t port
+        cdef mach.kern_return_t kr
+
+        kr = mach.mach_port_allocate(mach_task_self(), right.value, &port)
+        if kr != mach.KERN_SUCCESS:
+            raise MachException(kr)
+
+        return port
+
+    def send(self, Port dest, Message message):
         cdef mach.mach_msg_header_t* msg
         cdef mach.kern_return_t kr
 
         msg = <mach.mach_msg_header_t*><void*>message.ptr()
+        msg.msgh_local_port = self.port
+        msg.msgh_remote_port = dest.value()
         kr = mach.mach_msg_send(msg)
         if kr != mach.KERN_SUCCESS:
             raise MachException(kr)
 
-    cdef receive(self, max_size=16384):
+    def receive(self, max_size=16384):
         cdef mach.mach_msg_header_t* ptr
         cdef mach.kern_return_t kr
 
         msg = Message(size=max_size)
         ptr = <mach.mach_msg_header_t*><void*>msg.ptr()
+        ptr.msgh_local_port = self.port
         kr = mach.mach_msg_receive(ptr)
         if kr != mach.KERN_SUCCESS:
             raise MachException(kr)
 
+        return msg
+
 
 cdef class Message:
     cdef mach.mach_msg_header_t *msg
+    cdef char *buffer
     cdef int length
 
     def __init__(self, size=None):
         self.msg = <mach.mach_msg_header_t*>malloc(cython.sizeof(mach.mach_msg_header_t))
+        self.buffer = (<char*>self.msg) + cython.sizeof(mach.mach_msg_header_t)
         if size:
             self.size = size
 
@@ -129,18 +174,21 @@ cdef class Message:
     def resize(self, body_size):
         self.length = body_size + cython.sizeof(mach.mach_msg_header_t)
         self.msg = <mach.mach_msg_header_t*>realloc(<void*>self.msg, self.length)
+        self.buffer = (<char*>self.msg) + cython.sizeof(mach.mach_msg_header_t)
         self.msg.msgh_size = self.length
+
+    def make_bits(self, remote, local):
+        return remote | (local << 8)
 
     property body:
         def __get__(self):
-            cdef char* body
+            return self.buffer[:self.size - cython.sizeof(mach.mach_msg_header_t)]
 
-            body = <char*>self.msg + cython.sizeof(mach.mach_msg_header_t)
-            return body[:self.size]
-
-        def __set__(self, value):
-            self.size = len(value)
-            self.body = value
+        def __set__(self, unsigned char [:] value):
+            cdef unsigned char *ptr
+            self.size = value.shape[0]
+            ptr = &value[0]
+            memmove(self.buffer, ptr, value.shape[0])
 
     property size:
         def __get__(self):
@@ -159,38 +207,48 @@ cdef class Message:
 
     property remote_port:
         def __get__(self):
-            return self.msg.msgh_remote_port
+            return Port(self.msg.msgh_remote_port)
 
         def __set__(self, value):
-            self.msg.msgh_remote_port = value
+            self.msg.msgh_remote_port = value.value()
 
     property local_port:
         def __get__(self):
-            return self.msg.msgh_local_port
+            return Port(self.msg.msgh_local_port)
 
         def __set__(self, value):
-            self.msg.msgh_local_port = value
+            self.msg.msgh_local_port = value.value()
 
     property bits:
         def __get__(self):
             pass
+
+        def __set__(self, value):
+            self.msg.msgh_bits = value
 
 
 cdef class BootstrapServer:
     def __init__(self):
         pass
 
+    @staticmethod
+    def checkin(name):
+        cdef mach.kern_return_t kr
+        cdef mach.mach_port_t port
 
-def create_service(name):
-    cdef mach.kern_return_t kr
-    cdef mach.mach_port_t port
+        kr = mach.bootstrap_check_in(mach.bootstrap_port, name, &port)
+        if kr != mach.KERN_SUCCESS:
+            raise MachException(kr)
 
-    kr = mach.bootstrap_create_service(mach.bootstrap_port, name, &port)
-    if kr != mach.KERN_SUCCESS:
-        raise MachException(kr)
+        return Port(port)
 
-    kr = mach.bootstrap_check_in(mach.bootstrap_port, name, &port)
-    if kr != mach.KERN_SUCCESS:
-        raise MachException(kr)
+    @staticmethod
+    def lookup(name):
+        cdef mach.kern_return_t kr
+        cdef mach.mach_port_t port
 
-    return Port(port)
+        kr = mach.bootstrap_look_up(mach.bootstrap_port, name, &port)
+        if kr != mach.KERN_SUCCESS:
+            raise MachException(kr)
+
+        return Port(port)
