@@ -34,14 +34,11 @@ class SMARTAlert(BaseAlert):
             except:
                 data = {}
 
-        msg = ''
         for msgs in data.itervalues():
             if not msgs:
                 continue
-            msg += '<br />\n'.join(msgs)
-
-        if msg:
-            alerts.append(Alert(Alert.CRIT, msg))
+            for msg in msgs:
+                alerts.append(Alert(Alert.CRIT, msg))
 
         lock.release()
 
