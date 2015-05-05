@@ -18,9 +18,42 @@ cache.get_apps()
 
 from freenasUI.middleware import zfs
 
+# NOTE
+# Normally global variables are a bad idea, and this is no
+# exception, however it was the best choice given that the
+# alternatives were duplicating a lot of code or doing
+# even more modifications to this script. Ideally you'd
+# instantiate a config object (or two)...
 
-def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None, initiator=None):
-    cf_contents.append("auth-group ag%s {\n" % auth_tag)
+# This file has plain text CHAP users and passwords in it, and is
+# the config file used by CTL.
+ctl_config = "/etc/ctl.conf"
+cf_contents = []
+# This file has the CHAP usernames and passwords replaced with
+# REDACTED.  It is consumed by freenas-debug.  We generate both
+# files every time the system determines a new config file
+# needs to be created from the database.
+ctl_config_shadow = "/etc/ctl.conf.shadow"
+cf_contents_shadow = []
+
+
+def addline(line, plaintextonly=False, shadowonly=False):
+    # Add "line" to both the shadow and plaintext config files
+    # The plaintextonly and shadowonly switches allow adding
+    # to only one of the files.  This is used in the one place
+    # that the shadow file diverges from the plain text file:
+    # CHAP passwords
+    if plaintextonly == shadowonly:
+        cf_contents.append(line)
+        cf_contents_shadow.append(line)
+    elif plaintextonly:
+        cf_contents.append(line)
+    elif shadowonly:
+        cf_contents_shadow.append(line)
+
+
+def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=None):
+    addline("auth-group ag%s {\n" % auth_tag)
     # It is an error to mix CHAP and Mutual CHAP in the same auth group
     # But not in istgt, so we need to catch this and do something.
     # For now just skip over doing something that would cause ctld to bomb
@@ -31,19 +64,21 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
         if auth.iscsi_target_auth_peeruser and auth_type != "CHAP":
             rv = True
             auth_type = "Mutual"
-            cf_contents.append("\tchap-mutual %s \"%s\" %s \"%s\"\n" % (
+            addline("\tchap-mutual %s \"%s\" %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
                 auth.iscsi_target_auth_peeruser,
                 auth.iscsi_target_auth_peersecret,
-            ))
+            ), plaintextonly=True)
+            addline("\tchap-mutual REDACTED REDACTED REDACTED REDACTED\n", shadowonly=True)
         elif auth_type != "Mutual":
             rv = True
             auth_type = "CHAP"
-            cf_contents.append("\tchap %s \"%s\"\n" % (
+            addline("\tchap %s \"%s\"\n" % (
                 auth.iscsi_target_auth_user,
                 auth.iscsi_target_auth_secret,
-            ))
+            ), plaintextonly=True)
+            addline("\tchap REDACTED REDACTED\n", shadowonly=True)
 
     if initiator:
         if initiator.iscsi_target_initiator_initiators:
@@ -56,7 +91,7 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
                 if name == 'ALL':
                     continue
                 rv = True
-                cf_contents.append("""\tinitiator-name "%s"\n""" % name.lstrip())
+                addline("""\tinitiator-name "%s"\n""" % name.lstrip())
         if initiator.iscsi_target_initiator_auth_network:
             sep = "\n"
             if "," in initiator.iscsi_target_initiator_auth_network:
@@ -67,10 +102,10 @@ def auth_group_config(cf_contents, auth_tag=None, auth_list=None, auth_type=None
                 if name == 'ALL':
                     continue
                 rv = True
-                cf_contents.append("""\tinitiator-portal "%s"\n""" % name.lstrip())
+                addline("""\tinitiator-portal "%s"\n""" % name.lstrip())
         if rv and not auth_list and auth_type == 'None':
-            cf_contents.append("\tauth-type \"none\"\n")
-    cf_contents.append("}\n\n")
+            addline("\tauth-type \"none\"\n")
+    addline("}\n\n")
     return rv
 
 
@@ -78,9 +113,6 @@ def main():
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
     out in one go"""
-
-    ctl_config = "/etc/ctl.conf"
-    cf_contents = []
 
     from freenasUI.services.models import iSCSITargetGlobalConfiguration
     from freenasUI.services.models import iSCSITargetPortal
@@ -93,36 +125,33 @@ def main():
 
     if gconf.iscsi_isns_servers:
         for server in gconf.iscsi_isns_servers.split(' '):
-            cf_contents.append('isns-server %s\n\n' % server)
+            addline('isns-server %s\n\n' % server)
 
     # We support multiple authentications for a single group
     auths = defaultdict(list)
     for auth in iSCSITargetAuthCredential.objects.order_by('iscsi_target_auth_tag'):
         auths[auth.iscsi_target_auth_tag].append(auth)
 
-    auth_ini_created = []
     for auth_tag, auth_list in auths.items():
-        auth_group_config(cf_contents, auth_tag, auth_list)
+        auth_group_config(auth_tag, auth_list)
 
     # Generate the portal-group section
     for portal in iSCSITargetPortal.objects.all():
-        cf_contents.append("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
-        cf_contents.append("\tdiscovery-filter portal-name\n")
+        addline("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
+        addline("\tdiscovery-filter portal-name\n")
         disc_authmethod = gconf.iscsi_discoveryauthmethod
         if disc_authmethod == "None" or ((disc_authmethod == "Auto" or disc_authmethod == "auto") and gconf.iscsi_discoveryauthgroup is None):
-            cf_contents.append("\tdiscovery-auth-group no-authentication\n")
+            addline("\tdiscovery-auth-group no-authentication\n")
         else:
-            cf_contents.append("\tdiscovery-auth-group ag%s\n" %
-                               gconf.iscsi_discoveryauthgroup)
+            addline("\tdiscovery-auth-group ag%s\n" % gconf.iscsi_discoveryauthgroup)
         listen = iSCSITargetPortalIP.objects.filter(iscsi_target_portalip_portal=portal)
         for obj in listen:
             if ':' in obj.iscsi_target_portalip_ip:
                 address = '[%s]' % obj.iscsi_target_portalip_ip
             else:
                 address = obj.iscsi_target_portalip_ip
-            cf_contents.append("\tlisten %s:%s\n" % (address,
-                                                     obj.iscsi_target_portalip_port))
-        cf_contents.append("}\n\n")
+            addline("\tlisten %s:%s\n" % (address, obj.iscsi_target_portalip_port))
+        addline("}\n\n")
 
     # Cache zpool threshold
     poolthreshold = {}
@@ -136,18 +165,18 @@ def main():
         else:
             auth_list = []
         agname = '4tg_%d' % target.id
-        has_auth = auth_group_config(cf_contents, auth_tag=agname, auth_list=auth_list, auth_type=target.iscsi_target_authtype, initiator=target.iscsi_target_initiatorgroup)
+        has_auth = auth_group_config(auth_tag=agname, auth_list=auth_list, auth_type=target.iscsi_target_authtype, initiator=target.iscsi_target_initiatorgroup)
         if target.iscsi_target_name.startswith("iqn."):
-            cf_contents.append("target %s {\n" % target.iscsi_target_name)
+            addline("target %s {\n" % target.iscsi_target_name)
         else:
-            cf_contents.append("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
+            addline("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
         if target.iscsi_target_name:
-            cf_contents.append("\talias %s\n" % target.iscsi_target_name)
+            addline("\talias %s\n" % target.iscsi_target_name)
         if not has_auth:
-            cf_contents.append("\tauth-group no-authentication\n")
+            addline("\tauth-group no-authentication\n")
         else:
-            cf_contents.append("\tauth-group ag%s\n" % agname)
-        cf_contents.append("\tportal-group pg%d\n" % (
+            addline("\tauth-group ag%s\n" % agname)
+        addline("\tportal-group pg%d\n" % (
             target.iscsi_target_portalgroup.iscsi_target_portal_tag,
         ))
         used_lunids = [
@@ -199,25 +228,25 @@ def main():
                         except OSError:
                             pass
             if os.path.exists(path):
-                cf_contents.append("\t\t\n")
+                addline("\t\t\n")
                 if t2e.iscsi_lunid is None:
                     while cur_lunid in used_lunids:
                         cur_lunid += 1
-                    cf_contents.append("\t\tlun %s {\n" % cur_lunid)
+                    addline("\t\tlun %s {\n" % cur_lunid)
                     cur_lunid += 1
                 else:
-                    cf_contents.append("\t\tlun %s {\n" % t2e.iscsi_lunid)
+                    addline("\t\tlun %s {\n" % t2e.iscsi_lunid)
                 size = t2e.iscsi_extent.iscsi_target_extent_filesize
                 if unmap:
-                    cf_contents.append("\t\t\toption unmap on\n")
-                cf_contents.append("\t\t\tpath %s\n" % path)
-                cf_contents.append("\t\t\tblocksize %s\n" % t2e.iscsi_extent.iscsi_target_extent_blocksize)
+                    addline("\t\t\toption unmap on\n")
+                addline("\t\t\tpath %s\n" % path)
+                addline("\t\t\tblocksize %s\n" % t2e.iscsi_extent.iscsi_target_extent_blocksize)
                 if t2e.iscsi_extent.iscsi_target_extent_pblocksize:
-                    cf_contents.append("\t\t\toption pblocksize 0\n")
+                    addline("\t\t\toption pblocksize 0\n")
                 if t2e.iscsi_lunid is None:
-                    cf_contents.append("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(cur_lunid-1)))
+                    addline("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(cur_lunid-1)))
                 else:
-                    cf_contents.append("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(t2e.iscsi_lunid)))
+                    addline("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(t2e.iscsi_lunid)))
                 padded_serial = target.iscsi_target_serial
                 if t2e.iscsi_lunid is None:
                     padded_serial += str(cur_lunid-1)
@@ -226,34 +255,41 @@ def main():
                 if not t2e.iscsi_extent.iscsi_target_extent_xen:
                     for i in xrange(31-len(target.iscsi_target_serial)):
                         padded_serial += " "
-                cf_contents.append('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
+                addline('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
                 if size != "0":
                     if size.endswith('B'):
                         size = size.strip('B')
-                    cf_contents.append("\t\t\tsize %s\n" % size)
-                cf_contents.append('\t\t\toption vendor "FreeBSD"\n')
-                cf_contents.append('\t\t\toption product "iSCSI Disk"\n')
-                cf_contents.append('\t\t\toption revision "0123"\n')
-                cf_contents.append('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
+                    addline("\t\t\tsize %s\n" % size)
+                addline('\t\t\toption vendor "FreeBSD"\n')
+                addline('\t\t\toption product "iSCSI Disk"\n')
+                addline('\t\t\toption revision "0123"\n')
+                addline('\t\t\toption naa %s\n' % t2e.iscsi_extent.iscsi_target_extent_naa)
                 if t2e.iscsi_extent.iscsi_target_extent_insecure_tpc:
-                    cf_contents.append('\t\t\toption insecure_tpc on\n')
+                    addline('\t\t\toption insecure_tpc on\n')
 
                 if lunthreshold:
-                    cf_contents.append('\t\t\toption avail-threshold %s\n' % lunthreshold)
+                    addline('\t\t\toption avail-threshold %s\n' % lunthreshold)
                 if poolname is not None and poolname in poolthreshold:
-                    cf_contents.append('\t\t\toption pool-avail-threshold %s\n' % poolthreshold[poolname])
+                    addline('\t\t\toption pool-avail-threshold %s\n' % poolthreshold[poolname])
                 if t2e.iscsi_extent.iscsi_target_extent_rpm == "Unknown":
-                    cf_contents.append('\t\t\toption rpm 0\n')
+                    addline('\t\t\toption rpm 0\n')
                 elif t2e.iscsi_extent.iscsi_target_extent_rpm == "SSD":
-                    cf_contents.append('\t\t\toption rpm 1\n')
-                else:    
-                    cf_contents.append('\t\t\toption rpm %s\n' % t2e.iscsi_extent.iscsi_target_extent_rpm)
-                cf_contents.append("\t\t}\n")
-        cf_contents.append("}\n\n")
+                    addline('\t\t\toption rpm 1\n')
+                else:
+                    addline('\t\t\toption rpm %s\n' % t2e.iscsi_extent.iscsi_target_extent_rpm)
+                addline("\t\t}\n")
+        addline("}\n\n")
 
     os.umask(077)
+    # Write out the CTL config file
     fh = open(ctl_config, "w")
     for line in cf_contents:
+        fh.write(line)
+    fh.close()
+
+    # Write out the CTL config file with redacted CHAP passwords
+    fh = open(ctl_config_shadow, "w")
+    for line in cf_contents_shadow:
         fh.write(line)
     fh.close()
 
