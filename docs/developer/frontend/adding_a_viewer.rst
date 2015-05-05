@@ -115,7 +115,10 @@ The Viewer React component expects certain props.
 
 * ``defaultMode`` - a string representing the view mode that the view should open with by default.
 * ``allowedModes`` - an array containing the list of view modes the user should have available.
-* ``inputData`` - an array containing the raw data that the view is responsible for displaying.
+* ``inputData`` - an array containing the raw data that the view is responsible
+  for displaying. This is obtained as needed from the Flux store and can only
+  be modified by sending changes to the middleware, not by manipulating data in
+  the view.
 * ``viewData`` - an object containing Viewer metadata, which in turn must contain the following fields:
 
   * ``format`` - information about the item schema including how to edit certain
