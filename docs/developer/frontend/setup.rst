@@ -308,7 +308,7 @@ it will run the sync of the web UI source and web UI service restart again.
 You're now ready to begin developing the FreeNAS 10 web UI!
 
 Recommended Development Software
---------------------------------
+================================
 
 These software tools are not necessary for the successful setup of your
 Development Environment, but can render some tasks easier.
@@ -317,9 +317,7 @@ Development Environment, but can render some tasks easier.
     client for both Mac OS X and Windows.
   * `Sublime Text <http://www.sublimetext.com/2>`_ is a highly customizable text
     editor, well equipped for editing markup & code.
-  * `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is
-    an SSH and telnet client for Windows.
+  * `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_
+    is an SSH and telnet client for Windows.
   * `PuTTYgen <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_
-  is a tool for the generation and conversion of SSH Keys.
-
-
+    is a tool for the generation and conversion of SSH Keys.
