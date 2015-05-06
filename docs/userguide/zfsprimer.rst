@@ -65,7 +65,7 @@ are written asynchronously to the ZFS pool. If the system has many synchronous w
 or when using NFS over ESXi, performance can be increased by adding a
 dedicated log device, or slog, using :ref:`Volume Manager`.  More detailed explanations can be found in this
 `forum post <http://forums.freenas.org/threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_ and in this
-`blog post <http://nex7.blogspot.com/2013/04/zfs-intent-log.html>`_. A dedicated log device will have no affect on CIFS, AFP, or iSCSI as these protocols
+`blog post <http://nex7.blogspot.com/2013/04/zfs-intent-log.html>`_. A dedicated log device will have no effect on CIFS, AFP, or iSCSI as these protocols
 rarely use synchronous writes. When creating a dedicated log device, it is recommended to use a fast SSD with a supercapacitor or a bank of capacitors that
 can handle writing the contents of the SSD's RAM to the SSD. The :command:`zilstat` utility can be run from Shell to help determine if the system would
 benefit from a dedicated ZIL device. See

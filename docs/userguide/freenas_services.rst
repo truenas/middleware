@@ -234,7 +234,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | for additional settings                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no affect on Windows     |
+| Unix Extensions                  | checkbox       | allows non-Windows CIFS clients to access symbolic links and hard links, has no effect on Windows     |
 |                                  |                | clients                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
