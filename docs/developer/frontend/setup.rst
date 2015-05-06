@@ -299,6 +299,14 @@ instance.
    interaction and just use the previous conenction information for your
    development target.
 
+Make Changes
+------------
+Once the first sync of your web UI code is complete, the script will continue to
+run, listening for changes to web UI source files. Anytime it detects a change,
+it will run the sync of the web UI source and web UI service restart again.
+
+You're now ready to begin developing the FreeNAS 10 web UI!
+
 Recommended Development Software
 --------------------------------
 
