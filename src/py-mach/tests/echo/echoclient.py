@@ -28,6 +28,7 @@
 import random
 import string
 import mach
+from utils import fail
 
 
 def random_str():
@@ -45,13 +46,27 @@ def main():
     # Send a few messages
     for i in range(0, 100):
         msg = mach.Message()
-        msg.bits = msg.make_bits(
+        msg.bits = mach.make_msg_bits(
             mach.MessageType.MACH_MSG_TYPE_COPY_SEND,
             mach.MessageType.MACH_MSG_TYPE_MAKE_SEND
         )
 
         msg.body = bytearray(random_str())
         local_port.send(server_port, msg)
+        reply = local_port.receive()
+        print 'Received reply: {0}'.format(reply.body)
+        if reply.body != msg.body:
+            fail('Reply mismatch: {0} != {1}'.format(msg.body, reply.body))
+
+    # Exit
+    msg = mach.Message()
+    msg.bits = mach.make_msg_bits(
+        mach.MessageType.MACH_MSG_TYPE_COPY_SEND,
+        mach.MessageType.MACH_MSG_TYPE_MAKE_SEND
+    )
+
+    msg.body = bytearray('EXIT')
+    mach.null_port.send(server_port, msg)
 
 if __name__ == '__main__':
     main()

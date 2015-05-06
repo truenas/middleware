@@ -42,7 +42,11 @@ def main():
             break
         else:
             # Send response
-            msg.remote_port.send()
+            print 'Sending response to remote port {0}'.format(msg.remote_port)
+            reply = mach.Message()
+            reply.body = bytearray(msg.body)
+            reply.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, 0)
+            mach.null_port.send(msg.remote_port, reply)
 
 if __name__ == '__main__':
     main()

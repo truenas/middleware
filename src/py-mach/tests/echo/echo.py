@@ -30,6 +30,7 @@ import os
 import sys
 import launchd
 import subprocess
+from utils import fail
 
 
 PLIST = {
@@ -49,19 +50,20 @@ PLIST = {
 
 def main():
     # Start service
-    l = launchd.Launchd()
-    l.load(PLIST)
+    try:
+        l = launchd.Launchd()
+        l.load(PLIST)
+    except OSError, e:
+        fail('Cannot load launchd job: {0}', e)
 
     # Ensure service is running
     job = l.jobs['org.freenas.test.mach.ipc-server']
     if 'PID' not in job:
-        print 'Service died'
-        sys.exit(1)
+        fail('Service died')
 
     # Start client
     if subprocess.call([sys.executable, os.path.join(os.getcwd(), 'echoclient.py')]) != 0:
-        print 'Client failed'
-        sys.exit(1)
+        fail('Client failed')
 
     # Stop service
     l.unload('org.freenas.test.mach.ipc-server')
