@@ -269,7 +269,7 @@ be configured as follows:
     corresponding private key in your development environment.
 
 Using the FreeNAS 10 Live Development Environment
-=================================================
+-------------------------------------------------
 
 Once all of the above setup is complete, you can use the FreeNAS 10 Live
 Development Environment. To do so, simply run the command ``grunt`` from the
@@ -300,7 +300,7 @@ instance.
    development target.
 
 Make Changes
-------------
+~~~~~~~~~~~~
 Once the first sync of your web UI code is complete, the script will continue to
 run, listening for changes to web UI source files. Anytime it detects a change,
 it will run the sync of the web UI source and web UI service restart again.
@@ -308,7 +308,7 @@ it will run the sync of the web UI source and web UI service restart again.
 You're now ready to begin developing the FreeNAS 10 web UI!
 
 Recommended Development Software
-================================
+--------------------------------
 
 These software tools are not necessary for the successful setup of your
 Development Environment, but can render some tasks easier.
