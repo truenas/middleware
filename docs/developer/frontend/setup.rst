@@ -238,6 +238,14 @@ public repository of the FreeNAS source code is
 the FreeNAS 10 branch on which you want to develop before continuing to set up
 your FreeNAS 10 development environment.
 
+Install Local Development Environment Packages
+----------------------------------------------
+
+Once you have the FreeNAS 10 source code, navigate to the ``src/gui/`` directory
+within your source code directory. Run the command ``npm install`` with root
+user permissions. After that, run the command ``bower install`` **without** root
+user permissions.
+
 Set up a Development Target
 ---------------------------
 
