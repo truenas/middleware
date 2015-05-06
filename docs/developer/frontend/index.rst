@@ -11,8 +11,7 @@ FreeNAS 10 Frontend Development Guide
    Flux Architecture <flux>
    Webapp Architecture <webapp>
    Middleware Client <middleware>
-   First-Time Setup <setup>
-   The Live Development Environment <develop>
+   The Live Development Environment <setup>
    Widgets <widgets>
    The Viewer Component <viewer>
    Routing <routing>
