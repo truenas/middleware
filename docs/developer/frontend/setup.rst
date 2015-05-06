@@ -30,7 +30,7 @@ Required Tools:
   * ``node``
   * ``npm``
 
-All environemnts will require superuser or Administrator permissions
+All environments will require superuser or Administrator permissions
 for setup and development.
 
 FreeBSD Development Environments
