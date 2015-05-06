@@ -230,7 +230,7 @@ All of the above packages may be installed in a single command with
 ``npm install -g bower grunt grunt-cli forever``.
 
 
-Set up a Development target
+Set up a Development Target
 ---------------------------
 
 FreeNAS 10 UI development works by pushing all changes immediately to a target
