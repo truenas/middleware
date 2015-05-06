@@ -35,7 +35,7 @@ from dispatcher.rpc import (
 )
 from task import Provider, Task, TaskException, VerifyException, query
 
-registered_alerts = []
+registered_alerts = {}
 
 
 @description('Provides access to the alert system')
@@ -65,9 +65,13 @@ class AlertsProvider(Provider):
         return registered_alerts
 
     @accepts(str)
-    def register_alert(self, name):
+    def register_alert(self, name, verbose_name=None, emitters=None):
         if name not in registered_alerts:
-            registered_alerts.append(name)
+            registered_alerts[name] = {
+                'name': name,
+                'verbose_name': verbose_name,
+                'emitters': emitters,
+            }
 
 
 @description('Provides access to the alerts filters')
