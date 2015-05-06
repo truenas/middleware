@@ -262,10 +262,10 @@ Requirements for FreeNAS Instance
 A FreeNAS instance to be used as a target for FreeNAS development must
 be configured as follows:
 
- *  rsync is enabled (enabled by default in FreeNAS 10 as of March 2015).
- *  ssh is enabled with root login allowed. Password login enabled may also
-    help (both are enabled by default in FreeNAS 10 as of March 2015).
- *  Has a public key installed for the FreeNAS root user, with the
+  * ``rsync`` is enabled (enabled by default in FreeNAS 10 as of May 2015).
+  * ``ssh`` is enabled with root login allowed. Password login enabled may also
+    help at first (both are enabled by default in FreeNAS 10 as of May 2015).
+  * Has a public key installed for the FreeNAS root user, with the
     corresponding private key in your development environment.
 
 Initialize Your FreeNAS Instance and Development Environment
