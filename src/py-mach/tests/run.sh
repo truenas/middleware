@@ -1,5 +1,6 @@
 #!/bin/sh
 export ROOT=`pwd`
+export PYTHON=${PYTHON:-python2.7}
 export PYTHONPATH=${ROOT}/lib
 
 total_tests=0
@@ -17,17 +18,19 @@ for i in ${ROOT}/*/; do
 
     if [ ! -f ${i}/${dir}.py ]; then
         total_skipped=$(( ${total_skipped} + 1 ))
-        skipped_tests="${failed_tests} ${dir}"
+        skipped_tests="${skipped_tests} ${dir}"
         continue
     fi
 
     echo "==> Running test ${dir}"
+    cd ${dir}
     if ${PYTHON} ${i}/${dir}.py; then
         total_success=$(( ${total_success} + 1 ))
     else
         total_failed=$(( ${total_failed} + 1 ))
         failed_tests="${failed_tests} ${dir}"
     fi
+    cd ${ROOT}
 done
 
 echo "==> SUMMARY:"
