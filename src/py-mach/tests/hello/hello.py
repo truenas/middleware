@@ -28,7 +28,7 @@
 import struct
 import threading
 import mach
-from lib import fail
+from utils import fail
 
 
 def server(port):
@@ -38,6 +38,7 @@ def server(port):
         fail('Cannot receive message: {0}'.format(e))
 
     contents, = struct.unpack('256p', msg.body)
+    print 'Received text: {0}'.format(contents)
     if contents != 'Hello World':
         fail('Invalid message payload returned: {0}'.format(contents))
 
@@ -64,6 +65,7 @@ def main():
     msg = mach.Message()
     msg.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
     msg.body = bytearray(struct.pack('256p', 'Hello World'))
+    print 'Sent text: {0}'.format('Hello World')
     try:
         send.send(receive, msg)
     except mach.SendMessageException, e:
