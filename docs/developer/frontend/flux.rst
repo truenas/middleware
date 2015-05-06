@@ -11,6 +11,7 @@ The Flux Application Architecture
    :alt: A high level data flow diagram for FreeNAS 10's UI
 
    A high level data flow diagram for FreeNAS 10's UI
+
 Flux and FreeNAS 10
 -------------------
 
