@@ -5324,6 +5324,28 @@ class notifier:
         rsync = Rsync.objects.get(id=oid)
         return rsync.commandline()
 
+    def get_dataset_aclmode(self, dataset):
+        aclmode = None
+        if not dataset:
+            return aclmode
+
+        proc = self._pipeopen('/sbin/zfs get -H -o value aclmode "%s"' % dataset)
+        stdout, stderr = proc.communicate()
+        if proc.returncode == 0:
+            aclmode = stdout.strip()
+
+        return aclmode
+
+    def set_dataset_aclmode(self, dataset, aclmode):
+        if not dataset or not aclmode:
+            return False
+
+        proc = self._pipeopen('/sbin/zfs set aclmode="%s" "%s"' % (aclmode, dataset))
+        if proc.returncode != 0:
+            return False
+
+        return True
+
     def system_dataset_settings(self):
         from freenasUI.storage.models import Volume
         from freenasUI.system.models import SystemDataset
@@ -5417,6 +5439,11 @@ class notifier:
             if os.path.exists(SYSTEMPATH):
                 os.unlink(SYSTEMPATH)
             os.mkdir(SYSTEMPATH)
+
+        system_dataset = '%s/.system' % volume.vol_name
+        aclmode = self.get_dataset_aclmode(system_dataset)
+        if aclmode and aclmode.lower() == 'restricted': 
+            self.set_dataset_aclmode(system_dataset, 'passthrough')
 
         if mount:
             self.system_dataset_mount(volume.vol_name, SYSTEMPATH)
