@@ -4,6 +4,13 @@
 Set up your Development Environment
 ===================================
 
+The FreeNAS 10 developers provide tools to automatically sync FreeNAS 10 Web UI
+code to a live FreeNAS 10 instance for fast iteration and testing. When properly
+configured, this tool will detect changes to any tracked file, rebuild the
+javascript for the GUI, rsnyc it to a running FreeNAS 10 instance, and restart
+the GUI service. In practice, this means that once the environment is set up,
+any local change to FreeNAS 10 GUI code can be tested live within seconds.
+
 Required Software
 -----------------
 
