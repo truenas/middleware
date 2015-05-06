@@ -39,15 +39,18 @@ for setup and development.
 FreeBSD Development Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On FreeBSD, use ``sudo pkg install`` to install any software you're missing.
-FreeBSD 10 is strongly recommended, as this will make it more likely that
-dependency versions will match and will also allow the same system to be used
-for frontend development and compiling the whole system.
+The only supported version of FreeBSD is FreeBSD 10.
 
-In FreeBSD, key tools will be installed from a terminal:
-  * ``npm`` must be installed with ``sudo pkg install npm`` This will also install
-    ``node`` as a dependency. To be certain npm is up to date, run ``sudo npm update npm -g``
-    after the install is complete.
+Use ``pkg install`` with superuser permissions to install any software you're
+missing.
+
+  * ``npm`` must be installed with ``pkg install npm`` This will also install
+    ``node`` as a dependency. To be certain npm is up to date, run ``sudo npm
+    update npm -g`` after the install is complete.
+  * ``rsync`` must also be installed with ``pkg install rsync``.
+
+Make sure you also have a ``git`` client installed. If you do not, the command
+line version of ``git`` can be installed with ``pkg install git``.
 
 Mac OS X Development Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
