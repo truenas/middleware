@@ -13,7 +13,7 @@ var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _services = [];
-
+var _scheduledForStateUpdate = {};
 var ServicesStore = _.assign( {}, EventEmitter.prototype, {
 
     emitChange: function() {
@@ -51,10 +51,10 @@ ServicesStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       ServicesStore.emitChange();
       break;
 
-    case ActionTypes.RECEIVE_USER_UPDATE_TASK:
-      console.log("ser více");
-      //_localUpdatePending[ action.taskID ] = action.userID;
-      //UsersStore.emitChange();
+    case ActionTypes.RECEIVE_SERVICE_UPDATE_TASK:
+      console.log("service update task");
+      _scheduledForStateUpdate[ action.taskID ] = action.serviceName;
+      ServicesStore.emitChange();
       break;
 
 
