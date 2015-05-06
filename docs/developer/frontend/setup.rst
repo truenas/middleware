@@ -229,6 +229,14 @@ permissions.
 All of the above packages may be installed in a single command with
 ``npm install -g bower grunt grunt-cli forever``.
 
+Get the FreeNAS 10 Source Code
+------------------------------
+
+It is necessary to obtain the FreeNAS 10 source code before proceeding. The
+public repository of the FreeNAS source code is
+`github.com/freenas/freenas <http://github.com/freenas/freenas>`__. Checkout
+the FreeNAS 10 branch on which you want to develop before continuing to set up
+your FreeNAS 10 development environment.
 
 Set up a Development Target
 ---------------------------
