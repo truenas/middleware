@@ -30,7 +30,6 @@
     "grunt-concurrent": "^0.5.0",
     "grunt-contrib-clean": "^0.5.0",
     "grunt-contrib-copy": "^0.5.0",
-    "grunt-contrib-jshint": "^0.10.0",
     "grunt-contrib-less": "^0.11.0",
     "grunt-contrib-uglify": "^0.4.0",
     "grunt-contrib-watch": "^0.6.1",
@@ -40,8 +39,7 @@
     "grunt-shell": "^0.7.0",
     "grunt-ssh-multi-exec": "^4.2.2",
     "inquirer": "^0.8.0",
-    "load-grunt-tasks": "^0.6.0",
-    "scp2": "^0.1.4"
+    "load-grunt-tasks": "^0.6.0"
   },
   "private": true
 }
