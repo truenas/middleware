@@ -28,6 +28,7 @@ import errno
 
 from datastore import DatastoreException
 from dispatcher.rpc import (
+    RpcException,
     SchemaHelper as h,
     accepts,
     description,
@@ -58,7 +59,15 @@ class AlertsProvider(Provider):
 
     @accepts(h.ref('alert'))
     def emit(self, alert):
-        self.datastore.insert('alerts', alert)
+        alertprops = registered_alerts.get(alert['name'])
+        if alertprops is None:
+            raise RpcException(
+                errno.ENOENT,
+                "Alert {0} not registered".format(alert['name'])
+            )
+
+        if 'UI' in alertprops['emitters']:
+            self.datastore.insert('alerts', alert)
 
     @returns(h.array(str))
     def get_registered_alerts(self):
