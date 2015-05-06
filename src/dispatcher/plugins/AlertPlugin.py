@@ -66,7 +66,26 @@ class AlertsProvider(Provider):
                 "Alert {0} not registered".format(alert['name'])
             )
 
-        if 'UI' in alertprops['emitters']:
+        # Try to find the first matching namespace
+        emitters = None
+        dot = alert['name'].split('.')
+        for i in xrange(len(dot), 0, -1):
+            namespace = '.'.join(dot[0:i])
+            afilter = self.datastore.get_one(
+                'alerts-filters', ('name', '=', namespace),
+                ('severity', '=', alert['severity']),
+            )
+            if afilter:
+                emitters = afilter['emitters']
+
+        # If there are no filters configured, set default emitters
+        if emitters is None:
+            if alert['severity'] = 'CRITICAL':
+                emitters = ['UI', 'Email']
+            else:
+                emitters = ['UI']
+
+        if 'UI' in emitters:
             self.datastore.insert('alerts', alert)
 
     @returns(h.array(str))
@@ -74,12 +93,11 @@ class AlertsProvider(Provider):
         return registered_alerts
 
     @accepts(str)
-    def register_alert(self, name, verbose_name=None, emitters=None):
+    def register_alert(self, name, verbose_name=None):
         if name not in registered_alerts:
             registered_alerts[name] = {
                 'name': name,
                 'verbose_name': verbose_name,
-                'emitters': emitters,
             }
 
 
@@ -178,7 +196,7 @@ def _init(dispatcher):
         'properties': {
             'name': {'type': 'string'},
             'description': {'type': 'string'},
-            'level': {'type': 'string'},
+            'severity': {'type': 'string'},
             'when': {'type': 'string'},
         }
     })
@@ -187,6 +205,10 @@ def _init(dispatcher):
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
+            'severity': {
+                'type': 'array',
+                'items': {'type': 'string'},
+            },
             'emitters': {
                 'type': 'array',
                 'items': {'type': 'string'},
