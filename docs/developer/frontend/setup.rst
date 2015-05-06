@@ -70,13 +70,18 @@ Windows Development Environments
 Only Windows 7 and later are even remotely supported.**
 
 The key tools for Windows are available with graphical installers:
-  * Microsoft Visual Studio 2010 is the most tested source of a Windows C++ compiler.
-    It is available from `MSDN
-    <http://msdn.microsoft.com/en-us/library/dd831853(v=vs.100).aspx>`_ or from the `Visual Studio Downloads Website <https://www.visualstudio.com/downloads/download-visual-studio-vs>`_ (registration is required for downloading from both locations).
+  * Microsoft Visual Studio 2010 is the most tested source of a Windows C++
+    compiler. It is available from
+    `MSDN <http://msdn.microsoft.com/en-us/library/dd831853(v=vs.100).aspx>`_
+    or from the
+    `Visual Studio Downloads Website <https://www.visualstudio.com/downloads/download-visual-studio-vs>`_
+    (registration is required for downloading from both locations).
     The version **Visual C++ 2010 Express** is the best free option.
-  * Python 2.7 is needed for the interpretation of the Python code. The best source of the Windows
-    package would be the `Official Python Website <https://www.python.org/downloads/>`_.
-    Make sure to select *Will be installed on local hard drive* for **add Python.exe to Path** option.
+  * Python 2.7 is needed for the interpretation of the Python code. The best
+    source of the Windows package would be the
+    `Official Python Website <https://www.python.org/downloads/>`_. Make sure to
+    select the *Will be installed on local hard drive* and *add Python.exe to Path*
+    options.
   * Cygwin is required to provide the UNIX-standard tools listed above.
     Cygwin may be downloaded from `Cygwin.com <http://cygwin.com/install.html>`_.
     Install Cygwin with all the recommended packages, plus rsync and openssh.
