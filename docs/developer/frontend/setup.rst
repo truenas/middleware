@@ -103,15 +103,6 @@ command ``ssh-keygen`` from the Cygwin64 Terminal. By default, the keys
 will be in the Cygwin home folder - you may wish to move them to make
 the path to them easier to enter later.
 
-Recommended Software:
-
-These software tools are not necessary for the successful setup of your Development Environment,
-but can render some tasks easier.
-  * `SourceTree <http://sourcetreeapp.com/download/>`_ is a powerful Git desktop client for both Mac and Windows.
-  * `Sublime Text <http://www.sublimetext.com/2>`_ is a highly customizable text editor, well equipped for editing markup & code.
-  * `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is an SSH and telnet client for Windows.
-  * `PuTTYgen <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is a tool for the generation and conversion of SSH Keys.
-
 Screenshots:
 
 .. image:: images/setup/winGUIscreen01.png
@@ -281,3 +272,20 @@ version of the FreeNAS GUI webapp to your FreeNAS instance.
 Once ``grunt`` is running and displaying the IP address of your FreeNAS
 development instance, you are ready to develop for the FreeNAS 10
 frontend!
+
+Recommended Development Software
+--------------------------------
+
+These software tools are not necessary for the successful setup of your
+Development Environment, but can render some tasks easier.
+
+  * `SourceTree <http://sourcetreeapp.com/download/>`_ is a powerful Git desktop
+    client for both Mac OS X and Windows.
+  * `Sublime Text <http://www.sublimetext.com/2>`_ is a highly customizable text
+    editor, well equipped for editing markup & code.
+  * `PuTTY <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_ is
+    an SSH and telnet client for Windows.
+  * `PuTTYgen <http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html>`_
+  is a tool for the generation and conversion of SSH Keys.
+
+
