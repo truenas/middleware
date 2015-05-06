@@ -114,7 +114,9 @@ cdef extern from "mach/mach.h" nogil:
         pass
 
     mach_msg_return_t mach_msg(mach_msg_header_t *msg, mach_msg_option_t option, mach_msg_size_t send_size,
-                               mach_msg_size_t rcv_size, mach_msg_timeout_t timeout, mach_port_t notify) nogil
+                               mach_msg_size_t rcv_size, mach_port_t rcv_name, mach_msg_timeout_t timeout,
+                               mach_port_t notify)
+
     mach_msg_return_t mach_msg_send(mach_msg_header_t *msg)
     mach_msg_return_t mach_msg_receive(mach_msg_header_t *msg)
     kern_return_t mach_port_allocate(mach_port_t task, mach_port_right_t right, mach_port_t* name)
@@ -183,6 +185,12 @@ cdef extern from "mach/message.h" nogil:
         MACH_RCV_SCATTER_SMALL
         MACH_RCV_INVALID_TRAILER
         MACH_RCV_IN_PROGRESS_TIMED
+
+    enum:
+        MACH_MSG_TIMEOUT_NONE
+        MACH_SEND_MSG
+        MACH_RCV_MSG
+
 
 cdef extern from "mach/mach_init.h" nogil:
     mach_port_t mach_task_self()

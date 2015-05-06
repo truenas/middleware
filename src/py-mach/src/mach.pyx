@@ -170,7 +170,7 @@ cdef class Port:
     cdef mach_port_t port
 
     def __init__(self, port=None, right=PortRight.MACH_PORT_RIGHT_RECEIVE):
-        if port:
+        if port is not None:
             self.port = port
         else:
             self.port = self.allocate_port(right)
@@ -213,7 +213,26 @@ cdef class Port:
             raise MessageSendException(kr)
 
     def send_overwrite(self, Port dest, Message message):
-        pass
+        cdef mach.mach_msg_header_t* msg
+        cdef mach.mach_msg_return_t kr
+
+        msg = <mach.mach_msg_header_t*><void*>message.ptr()
+        msg.msgh_local_port = self.port
+        msg.msgh_remote_port = dest.value()
+        with nogil:
+            kr = mach.mach_msg(
+                msg,
+                mach.MACH_SEND_MSG | mach.MACH_RCV_MSG,
+                msg.msgh_size,
+                msg.msgh_size,
+                msg.msgh_local_port,
+                mach.MACH_MSG_TIMEOUT_NONE,
+                mach.MACH_PORT_NULL)
+
+        if kr != mach.KERN_SUCCESS:
+            raise MessageSendException(kr)
+
+        return message
 
     def receive(self, max_size=16384):
         cdef mach.mach_msg_header_t* ptr
@@ -331,3 +350,5 @@ cdef class BootstrapServer:
 
 def make_msg_bits(remote, local):
     return remote | (local << 8)
+
+null_port = Port(port=mach.MACH_PORT_NULL)
