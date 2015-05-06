@@ -439,7 +439,7 @@ per TB of storage to be deduplicated.
 
 In FreeNAS®, deduplication can be enabled during dataset creation. Be forewarned that
 **there is no way to undedup the data within a dataset once deduplication is enabled** as disabling deduplication has
-**NO AFFECT** on existing data. The more data you write to a deduplicated dataset, the more RAM it requires and when the system starts storing the DDTs
+**NO EFFECT** on existing data. The more data you write to a deduplicated dataset, the more RAM it requires and when the system starts storing the DDTs
 (dedup tables) on disk because they no longer fit into RAM, performance craters. Furthermore, importing an unclean pool can require between 3-5 GB of RAM per
 TB of deduped data, and if the system doesn't have the needed RAM it will panic, with the only solution being to add more RAM or to recreate the pool.
 **Think carefully before enabling dedup!** This `article <http://constantin.glez.de/blog/2011/07/zfs-dedupe-or-not-dedupe>`_ provides a good description of
