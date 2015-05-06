@@ -268,23 +268,36 @@ be configured as follows:
   * Has a public key installed for the FreeNAS root user, with the
     corresponding private key in your development environment.
 
-Initialize Your FreeNAS Instance and Development Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using the FreeNAS 10 Live Development Environment
+=================================================
 
-Begin this process only once you have completed setup of your
-development environment and your target FreeNAS instance is configured
-as described. To begin the FreeNAS initialization process, navigate to
-the directory on your development environment where you're keeping the
-frontend source. By default this is <repository root>/src/gui/. Once
-you're there, run the command ``grunt``. A series of scripts will
-execute, first requesting information about how to connect to your FreeNAS
-instance and then sanity checking and installing all the necessary
-software to your FreeNAS instance. This will also install your local
-version of the FreeNAS GUI webapp to your FreeNAS instance.
+Once all of the above setup is complete, you can use the FreeNAS 10 Live
+Development Environment. To do so, simply run the command ``grunt`` from the
+``src/gui/`` directory in your FreeNAS 10 source directory.
 
-Once ``grunt`` is running and displaying the IP address of your FreeNAS
-development instance, you are ready to develop for the FreeNAS 10
-frontend!
+A series of scripts will execute, checking your development environment and
+requesting information on your development target. You will need to provide the
+IP address and ``ssh`` port of the FreeNAS instance. If you have already set up
+the instance with root login via public key authentication, it will request the
+path to the appropriate private key. If not, it will request the root password.
+
+.. note:: Password authentication can only be used for one-time setup of the
+   development target, not for full use of the live development environment.
+
+Once it can access the FreeNAS instance, it will check for all the necessary
+tools there as well. If any of them are missing, it will install them
+automatically using ``pkg install``. This may take some time, as one of the
+dependencies is a c++ compiler.
+
+Once the development target is verified, the script will rsync over your local
+version of the web UI code and restart the web UI service. A few seconds later,
+the updated web UI will be available at the IP of your FreeNAS development
+instance.
+
+.. note:: If you don't need to modify your existing grunt config because your
+   dev environment is stable, you can run ``grunt --silent`` to skip the user
+   interaction and just use the previous conenction information for your
+   development target.
 
 Recommended Development Software
 --------------------------------
