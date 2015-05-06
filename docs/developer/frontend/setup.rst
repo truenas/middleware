@@ -30,6 +30,9 @@ Required Tools:
   * ``node``
   * ``npm``
 
+``git`` is also required to obtain the FreeNAS 10 source code. Any git client
+will suffice.
+
 All environments will require superuser or Administrator permissions
 for setup and development.
 
