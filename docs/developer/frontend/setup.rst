@@ -214,24 +214,21 @@ Screenshots:
     :alt: You are ready for your first commit.
     :width: 15%
 
-Install Additional Packages
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install Global ``npm`` Packages
+-------------------------------
 
-Once these key tools for your environment are installed, the following
-additional packages must be installed from a terminal. On Windows, use
-a command prompt in Administrator mode and leave off the "sudo" from
-each command.
-  * ``bower`` must be installed with ``sudo npm install -g bower``.
+Once the key tools for your environment are installed, the following additional
+packages must be installed via ``npm`` with superuser or Administrator
+permissions.
+
+  * ``bower`` must be installed with ``npm install -g bower``.
   * ``grunt`` and ``grunt-cli`` must be installed with
-    ``sudo npm install -g grunt grunt-cli``.
-  * ``forever`` must be installed with ``sudo npm install -g forever``.
+    ``npm install -g grunt grunt-cli``.
+  * ``forever`` must be installed with ``npm install -g forever``.
 
 All of the above packages may be installed in a single command with
-``sudo npm install -g bower grunt grunt-cli forever``.
+``npm install -g bower grunt grunt-cli forever``.
 
-Once the necessary packages are installed, run ``sudo npm install`` and
-``bower install`` in that order from the directory you're using for
-your source repository.
 
 Set up a Development target
 ---------------------------
