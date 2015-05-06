@@ -106,6 +106,7 @@ var DetailNavSection = React.createClass({
       var action = (serviceState === "running" ? "stop" : "start");
 
       UsersMiddleware.updateService(serviceName, action);
+      this.props.handleItemSelect( serviceName );
 
       //TODO: Really change the state of the service.
     }
