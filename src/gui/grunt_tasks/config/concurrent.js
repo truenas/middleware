@@ -22,7 +22,7 @@ module.exports = function( grunt ) {
 
   // Initial build of app
   this.buildWorld = [
-      "react"
+      "babel"
     , "copy:images"
     , "copy:favicons"
     , "copy:openSans"
