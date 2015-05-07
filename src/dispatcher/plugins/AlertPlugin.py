@@ -80,7 +80,7 @@ class AlertsProvider(Provider):
 
         # If there are no filters configured, set default emitters
         if emitters is None:
-            if alert['severity'] = 'CRITICAL':
+            if alert['severity'] == 'CRITICAL':
                 emitters = ['UI', 'Email']
             else:
                 emitters = ['UI']
