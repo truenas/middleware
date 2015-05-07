@@ -11,7 +11,7 @@ module.exports = function( grunt ) {
   // Rebuild Browserify bundle when source JS/JSX changes
   this.jsx = {
       files: ["<%= dirTree.source.jsx %>/**"]
-    , tasks: [ "babel" ]
+    , tasks: [ "jscs:check-javascript-quality", "babel" ]
   };
 
   // Rebuild Browserify bundle from vanilla JS after it

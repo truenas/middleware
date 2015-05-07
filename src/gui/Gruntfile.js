@@ -51,7 +51,8 @@ module.exports = function(grunt) {
     // will simplify any changes to file structure, ports, etc.
 
     , dirTree: {
-          client : "app/client"
+          root   : "./"
+        , client : "app/client"
         , server : "app/server"
         , routes : "app/server-js/routes"
         , data   : "app/data"

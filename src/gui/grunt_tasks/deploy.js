@@ -38,6 +38,7 @@ module.exports = function(grunt) {
 
     grunt.task.run([
         "clean:deployment"
+      , "jscs:check-javascript-quality"
       , "concurrent:buildWorld"
       , "browserify"
       , "copy:deployment"
