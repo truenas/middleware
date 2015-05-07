@@ -12,12 +12,18 @@ FreeNAS 10 UI. It supports three modes of displaying items: Detail, Icon, and
 Table. Each mode has a distinct layout for displaying available items and
 displaying an item that's been selected.
 
+.. index:: DetailViewer
+.. _DetailViewer:
+
 DetailViewer
 ------------
 
 .. image:: images/viewer/groups_view_detail.png
    :alt: An example of the detail view with an item selected.
 The Groups view in detail mode with an item selected.
+
+.. index:: IconViewer
+.. _IconViewer:
 
 IconViewer
 ----------
@@ -30,6 +36,9 @@ The Groups view in icon mode without an item selected.
 .. image:: images/viewer/groups_view_icon_selected.png
    :alt: An example of the icon view with an item selected.
 The Groups view in icon mode with an item selected.
+
+.. index:: TableViewer
+.. _TableViewer:
 
 TableViewer
 -----------
