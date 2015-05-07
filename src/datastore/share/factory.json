@@ -710,7 +710,7 @@
 				"etcd-group": "mail",
 				"builtin": true,
 				"launchd": {
-					"Label": "org.untroubled.nullmaiuler",
+					"Label": "org.untroubled.nullmailer",
 					"ProgramArguments": [
 						"/usr/local/sbin/nullmailer-send",
 					],
