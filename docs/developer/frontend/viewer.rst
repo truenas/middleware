@@ -77,6 +77,49 @@ The Viewer expects certain props.
 * ``displayData`` - not currently in use. May have been obsoleted by moving
   ``format`` into ``viewdata``
 
+.. index:: defaultMode
+.. _defaultMode:
+
+``defaultMode``
+~~~~~~~~~~~~~~~
+
+``defaultMode`` is simply a string specifying the mode that the Viewer should start
+with when it first mounts. The accepted strings are:
+
+* "detail" - The DetailViewer will be used when the Viewer mounts.
+* "item" - the ItemViewer will be used when the Viewer mounts.
+* "table" - the TableViewer will be used when the Viewer mounts.
+* "heir" - not yet supported. This is planned for use with a future
+  heirarchical view mode.
+
+``defaultMode`` is completely optional. If it is not provided, the default view
+mode will be the DetailViewer.
+
+.. index:: allowedModes
+.. _allowedModes:
+
+``allowedModes``
+~~~~~~~~~~~~~~~~
+
+``allowedModes`` is an array of strings representing the view modes that should
+be available to a particular view. The accepted strings are the same as the ones
+that should be provided to ``defaultMode``: "detail", "item", and/or "table".
+
+``allowedModes`` is completely optional. If it is not provided, all view modes
+will be available to the Viewer.
+
+.. index:: inputData
+.. _inputData:
+
+``inputData``
+~~~~~~~~~~~~~
+
+``inputData`` is a collection containing all the data that should be
+displayed by the viewer. In almost all cases, ``inputData`` will be provided by
+the Flux store associated with the view being implemented.
+
+``inputData`` must always be provided, even if it's an empty collection.
+
 .. index:: DetailViewer
 .. _DetailViewer:
 
