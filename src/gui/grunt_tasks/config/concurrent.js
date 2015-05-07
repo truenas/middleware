@@ -5,30 +5,27 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
 
-  var serverCommon = [
-      "watch:jsx"
-    , "watch:ssrjs"
-    , "watch:less"
-    , "watch:images"
-    , "watch:internalScripts"
-  ];
+  var serverCommon = [ "watch:jsx"
+                     , "watch:ssrjs"
+                     , "watch:less"
+                     , "watch:images"
+                     , "watch:internalScripts"
+                     ];
 
-  this.options = {
-      logConcurrentOutput : true
-    , limit : 6
-  };
+  this.options = { logConcurrentOutput : true
+                 , limit : 6
+                 };
 
   // Initial build of app
-  this.buildWorld = [
-      "babel"
-    , "copy:images"
-    , "copy:favicons"
-    , "copy:openSans"
-    , "copy:fontawesome"
-    , "less"
-  ];
+  this.buildWorld = [ "babel"
+                    , "copy:images"
+                    , "copy:favicons"
+                    , "copy:openSans"
+                    , "copy:fontawesome"
+                    , "less"
+                    ];
 
   this["watchLocalServer"]   = serverCommon.concat( "watch:localServer" );
   this["watchRemoteFreeNAS"] = serverCommon.concat( "watch:freenasServer" );

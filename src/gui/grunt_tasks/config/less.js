@@ -5,14 +5,10 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
-  this.core = {
-      options: {
-        paths: [ "<%= dirTree.source.styles %>" ]
-    }
-    , files: {
-        "<%= dirTree.build.css %>/main.css"
-      : "<%= dirTree.source.styles %>/core.less"
-    }
-  };
+module.exports = function ( grunt ) {
+  this.core = { options: { paths: [ "<%= dirTree.source.styles %>" ] }
+              , files: { "<%= dirTree.build.css %>/main.css"
+                         : "<%= dirTree.source.styles %>/core.less"
+                       }
+              };
 };

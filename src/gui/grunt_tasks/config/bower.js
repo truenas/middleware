@@ -3,9 +3,7 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
-  this.options = {
-    targetDir: "./bower_components/"
-  };
+module.exports = function ( grunt ) {
+  this.options = { targetDir: "./bower_components/" };
   this.install = { /* No options needed */ };
 };
