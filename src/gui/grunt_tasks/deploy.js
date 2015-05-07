@@ -5,14 +5,14 @@
 
 "use strict";
 
-var chalk = require("chalk");
-var path  = require("path");
+var chalk = require( "chalk" );
+var path  = require( "path" );
 
-module.exports = function(grunt) {
+module.exports = function ( grunt ) {
   var targetPath = "";
 
   // Set and create deployment target's path relative to current working dir
-  var setTarget = function( inputPath ) {
+  var setTarget = function ( inputPath ) {
     if ( inputPath[0] === "/" ) {
       targetPath = inputPath;
     } else {
@@ -20,35 +20,41 @@ module.exports = function(grunt) {
     }
   };
 
-  grunt.registerTask( "deploy", function() {
+  grunt.registerTask( "deploy", function () {
     var asyncDone  = this.async();
 
     // Use dir specified by `--dir`, if supplied
     if ( grunt.option( "dir" ) ) {
       grunt.config.set( "dirTree.deployment", grunt.option( "dir" ) );
     } else {
-      console.log( chalk.yellow( "WARNING: No `--dir=` option was set. Using the default." ) );
+      console.log(
+        chalk.yellow( "WARNING: No `--dir=` option was set. Using the " +
+                      "default." )
+      );
     }
 
     setTarget( grunt.config( "dirTree.deployment" ) );
     grunt.file.mkdir( targetPath );
 
-    console.log( chalk.cyan( "Creating FreeNAS WebGUI deployment in this directory:" ) );
+    console.log(
+      chalk.cyan( "Creating FreeNAS WebGUI deployment in this directory:" )
+    );
     console.log( targetPath );
 
-    grunt.task.run([
-        "clean:deployment"
+    grunt.task.run(
+      [ "clean:deployment"
       , "jscs:check-javascript-quality"
       , "concurrent:buildWorld"
       , "browserify"
       , "copy:deployment"
       , "deploy-npm"
-    ]);
+      ]
+    );
 
     asyncDone();
   });
 
-  grunt.registerTask( "deploy-npm", function() {
+  grunt.registerTask( "deploy-npm", function () {
     // Don't run unless the copy task has already been run
     grunt.task.requires( "copy:deployment" );
 
