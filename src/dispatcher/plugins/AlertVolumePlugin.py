@@ -52,7 +52,7 @@ def _init(dispatcher):
                         volume['name'],
                         status['status'],
                     ),
-                    'level': status['status'],
+                    'severity': 'CRITICAL',
                     'when': str(datetime.now()),
                 })
 
