@@ -1,0 +1,12 @@
+{
+	"Label": "org.mongodb.mongod",
+	"ProgramArguments": [
+		"/usr/local/bin/mongod",
+		"--config", "${driverdir}/mongod.conf",
+		"--logpath", "${dbdir}/mongod.log",
+		"--dbpath", "${dbdir}",
+		"--quiet"
+	],
+	"RunAtLoad": true,
+	"KeepAlive": true
+}
