@@ -5,8 +5,8 @@
 
 "use strict";
 
-module.exports = function(grunt) {
-  grunt.registerTask( "develop", function() {
+module.exports = function ( grunt ) {
+  grunt.registerTask( "develop", function () {
     var asyncDone = this.async();
 
     // Run `npm install`
