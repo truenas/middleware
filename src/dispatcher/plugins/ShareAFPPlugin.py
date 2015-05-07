@@ -163,4 +163,4 @@ def _init(dispatcher):
     dispatcher.register_task_handler("share.afp.update", UpdateAFPShareTask)
     dispatcher.register_task_handler("share.afp.delete", DeleteAFPShareTask)
     dispatcher.register_provider("shares.afp", AFPSharesProvider)
-    dispatcher.register_resource(Resource('service:netatalk'), ['system'])
+    dispatcher.register_resource(Resource('service:afp'), ['system'])
