@@ -106,8 +106,8 @@ of them, view the docs for the :ref:`Viewer Props`.
 
 We're going to construct the necessary props one at a time.
 
-defaultMode
-^^^^^^^^^^^
+:ref:`defaultMode`
+^^^^^^^^^^^^^^^^^^
 
 The Viewer supports three view modes: Detail, Icon, and Table. ``defaultMode`` is
 simply a string naming the desired default mode. This string should be "detail",
@@ -118,15 +118,15 @@ docs for :ref:`Viewer`.
 
 .. note:: There are plans to implement a fourth "heirarchical" mode which may or may not ever come to pass.
 
-allowedModes
-^^^^^^^^^^^^
+:ref:`allowedModes`
+^^^^^^^^^^^^^^^^^^^
 
 Not every viewer mode is suitable for every view. ``allowedModes`` should be an
 array containing the list of view modes to enable. If ``allowedModes`` is not
 submitted, all view modes will be available.
 
-inputData
-^^^^^^^^^
+:ref:`inputData`
+^^^^^^^^^^^^^^^^
 
 ``inputData`` should be an array containing the raw data that the view is
 responsible for displaying. inputData depends on the rest of the Flux cycle,
