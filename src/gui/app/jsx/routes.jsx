@@ -3,52 +3,59 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 // Routing
-var Router        = require("react-router");
-var Route         = Router.Route;
-var Redirect      = Router.Redirect;
-var DefaultRoute  = Router.DefaultRoute;
-var NotFoundRoute = Router.NotFoundRoute;
+import Router from "react-router";
+const Route         = Router.Route;
+const Redirect      = Router.Redirect;
+const DefaultRoute  = Router.DefaultRoute;
+const NotFoundRoute = Router.NotFoundRoute;
 
 // STATIC ROUTES
-var Root = require("./views/FreeNASWebApp");
-  var Dashboard    = require("./views/Dashboard");
+import Root from "./views/FreeNASWebApp";
+import PageNotFound from "./views/PageNotFound";
 
-  var Accounts     = require("./views/Accounts");
-    var Users      = require("./views/Accounts/Users");
-      var UserItem = require("./views/Accounts/Users/UserItem");
-      var AddUser  = require("./views/Accounts/Users/AddUser");
+import Dashboard from "./views/Dashboard";
 
-    var Groups       = require("./views/Accounts/Groups");
-      var GroupItem = require("./views/Accounts/Groups/GroupItem");
-      var AddGroup  = require("./views/Accounts/Groups/AddGroup");
+import Accounts from "./views/Accounts";
+import Users from "./views/Accounts/Users";
+import UserItem from "./views/Accounts/Users/UserItem";
+import AddUser from "./views/Accounts/Users/AddUser";
 
-  var Tasks        = require("./views/Tasks");
+import Groups from "./views/Accounts/Groups";
+import GroupItem from "./views/Accounts/Groups/GroupItem";
+import AddGroup from "./views/Accounts/Groups/AddGroup";
 
-  var Networks      = require("./views/Networks");
-    var NetworkItem = require("./views/Networks/NetworkItem");
+import Tasks from "./views/Tasks";
 
-  var Storage      = require("./views/Storage");
-  var Sharing      = require("./views/Sharing");
+import Networks from "./views/Networks";
+import NetworkItem from "./views/Networks/NetworkItem";
 
-  var Services     = require("./views/Services");
-    var ServiceItem = require("./views/Services/ServiceItem");
+import Storage from "./views/Storage";
 
-  var SystemTools  = require("./views/SystemTools");
-  var ControlPanel = require("./views/ControlPanel");
-  var Power        = require("./views/Power");
+import Sharing from "./views/Sharing";
 
-var PageNotFound = require("./views/PageNotFound");
+import Services from "./views/Services";
+import ServiceItem from "./views/Services/ServiceItem";
+
+import SystemTools from "./views/SystemTools";
+
+import ControlPanel from "./views/ControlPanel";
+
+import Power from "./views/Power";
 
 module.exports = (
-  <Route path="/" handler={ Root }>
+  <Route
+      path    = "/"
+      handler = { Root } >
+
     <DefaultRoute handler={ Dashboard } />
+
     <Route
-        name    = "dashboard"
-        route   = "dashboard"
-        handler = { Dashboard } />
+       name    = "dashboard"
+       route   = "dashboard"
+       handler = { Dashboard } />
 
     {/* ACCOUNTS */}
     <Route
