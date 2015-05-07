@@ -36,6 +36,7 @@ etc/rc.subr
 etc/rc.conf
 etc/sysctl.conf
 etc/ttys
+etc/mail/mailer.conf
 etc/rc.d/cleanvar
 etc/rc.d/ix-bootstrap
 etc/rc.d/ix-etc
