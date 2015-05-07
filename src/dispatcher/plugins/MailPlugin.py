@@ -24,11 +24,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import errno
+from email.mime.text import MIMEText
 
-from task import Provider
 from dispatcher.rpc import (
-    SchemaHelper as h, accepts, description, returns
+    RpcException, SchemaHelper as h, accepts, description, returns
 )
+from lib.system import SubprocessException, system
+from task import Provider
 
 
 @description("Provides Information about the mail configuration")
@@ -44,6 +47,19 @@ class MailProvider(Provider):
                 'mail.{0}'.format(key)
             )
         return mailobj
+
+    @accepts(h.ref('mail-message'))
+    def send(self, email):
+        msg = MIMEText(email.get('message'))
+        msg['From'] = email.get('from')
+        msg['To'] = email.get('to')
+        msg['Subject'] = email.get('subject')
+        try:
+            system('sendmail', '-t', '-oi', stdin=msg.as_string())
+        except SubprocessException, err:
+            raise RpcException(
+                errno.EFAULT, 'Cannot send mail: {0}'.format(err.err)
+            )
 
     @accepts(h.ref('mail'))
     def update(self, mail):
@@ -67,6 +83,16 @@ def _init(dispatcher):
             'encryption': {'type': 'string'},
             'user': {'type': ['string', 'null']},
             'pass': {'type': ['string', 'null']},
+        }
+    })
+
+    dispatcher.register_schema_definition('mail-message', {
+        'type': 'object',
+        'properties': {
+            'from': {'type': 'string'},
+            'to': {'type': 'string'},
+            'subject': {'type': 'string'},
+            'message': {'type': 'string'},
         }
     })
 
