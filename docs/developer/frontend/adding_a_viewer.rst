@@ -528,7 +528,8 @@ Our Middleware Utility Class looks something like this:
 
   };
 
-.. _AddActionCreators::
+.. index:: AddActionCreators
+.. _AddActionCreators:
 
 ActionCreators
 --------------
@@ -577,7 +578,8 @@ payload to all registered Flux stores.
 
   };
 
-.. _AddFreeNASConstants::
+.. index:: AddFreeNASConstants
+.. _AddFreeNASConstants:
 
 FreeNASConstants
 ~~~~~~~~~~~~~~~~
@@ -591,7 +593,8 @@ We'll need to jump into ``FreeNASConstants.js`` to add key-value pairs for
   , RECEIVE_GROUPS_LIST       : null
   , RECEIVE_GROUP_UPDATE_TASK : null
 
-.. _AddFluxStore::
+.. index::
+.. _AddFluxStore:
 
 Flux Store
 ----------
@@ -717,7 +720,8 @@ we defined in our ``GroupsActionCreator``.
   // Typically this will be the end of the file, so here's the necessary module.exports.
   module.exports = GroupsStore;
 
-.. _AddLifecycleFunctions::
+.. index:: AddLifecycleFunctions
+.. _AddLifecycleFunctions:
 
 Viewer Lifecycle Functions
 --------------------------
@@ -811,7 +815,8 @@ in ``getInitialState``. We'll need one for Users changes as well.
       this.setState( getUsersfromStore() );
     }
 
-.. _Viewer Component::
+.. index:: ViewerComponent
+.. _ViewerComponent:
 
 The Viewer Component
 --------------------
@@ -831,12 +836,14 @@ going to pay off, as we plug everything into the Viewer component.
             );
           }
 
-.. _Item::
+.. index:: ItemTemplate
+.. _ItemTemplate:
 
 Creating an Item Template
 -------------------------
 
-.. _Debugging::
+.. index:: DebuggingView
+.. _DebuggingView:
 
 Debugging a view
 ----------------
