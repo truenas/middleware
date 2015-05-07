@@ -80,7 +80,10 @@ def _init(dispatcher):
             'server': {'type': 'string'},
             'port': {'type': 'integer'},
             'auth': {'type': 'boolean'},
-            'encryption': {'type': 'string'},
+            'encryption': {
+                'type': 'string',
+                'enum': ['PLAIN', 'TLS', 'SSL'],
+            },
             'user': {'type': ['string', 'null']},
             'pass': {'type': ['string', 'null']},
         }
