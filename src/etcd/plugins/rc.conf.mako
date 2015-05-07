@@ -22,3 +22,6 @@ performance_cpu_freq="HIGH"
         ${svc['rcng']['rc-scripts']}_enable="YES"
     % endif
 % endfor
+
+# MTA relay
+nullmailer_enable="YES"
