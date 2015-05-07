@@ -98,69 +98,13 @@ also require the already-established UsersMiddleware and UsersStore modules.
   var UsersMiddleware = require("../../middleware/UsersMiddleware");
   var UsersStore      = require("../../stores/UsersStore");
 
-Viewer Props
-~~~~~~~~~~~~
+Add Viewer Props
+~~~~~~~~~~~~~~~~
 
-The Viewer React component expects certain props.
+The Viewer React component expects certain props. For full documentation of all
+of them, view the docs for the :ref:`Viewer Props`.
 
-.. code-block:: javascript
-
-  propTypes: {
-      defaultMode  : React.PropTypes.string
-    , allowedModes : React.PropTypes.array
-    , inputData    : React.PropTypes.array.isRequired
-    , viewData     : React.PropTypes.object.isRequired
-    , displayData  : React.PropTypes.object // not currently used
-  }
-
-* ``defaultMode`` - a string representing the view mode that the view should open with by default.
-* ``allowedModes`` - an array containing the list of view modes the user should have available.
-* ``inputData`` - an array containing the raw data that the view is responsible
-  for displaying. This is obtained as needed from the Flux store and can only
-  be modified by sending changes to the middleware, not by manipulating data in
-  the view.
-* ``viewData`` - an object containing Viewer metadata, which in turn must contain the following fields:
-
-  * ``format`` - information about the item schema including how to edit certain
-    fields and which ones should be used for searching, path names, and certain
-    display defaults.
-  * ``addEntity`` - string to display on the button for adding a new item of the type
-    represented by the view.
-  * ``routing`` - information used for setting up routes to the view. It contains
-    the following fields:
-
-    * ``route`` - the identifier for the per-route that's specified in routes.js
-    * ``param`` - the identifier for the field to be used to create the per-item
-      routes, also as specified in routes.js
-    * ``addentity`` - the name of the route to be used for adding an item
-
-  * ``display`` - an object containing data used for how the sidebar display will
-    group and filter items It contains the following fields:
-
-    * ``filterCriteria`` - all the groupings into which items should be sorted.
-      It may contain an arbitrary number of groups. The keys used for each group
-      will be used in the rest of the display fields. Each group is an object
-      that must contain the following fields:
-
-      * ``name`` - a string that will be used to label the group when it is displayed
-      * ``testprop`` - an expression that will be evaluated to determine if an item
-        should be considered part of the group. The typical case is just to
-        check for a value of a field in the item
-
-    * ``remainingName`` - the string displayed as the name of the group containing
-      all otherwise ungrouped items
-    * ``ungroupedName`` - also a string to be displayed as the name of the group containing all otherwise ungrouped
-      items. fallback from remainingName
-    * ``allowedFilters`` - not currently in use?
-    * ``defaultFilters`` - not currently working according to a TODO (?)
-    * ``allowedGroups`` - not currently in use?
-    * ``defaultGroups`` - not currently in use?
-    * ``defaultCollapsed`` - an array of strings representing groups that should
-      begin in the collapsed state in the sidebar
-* ``displayData`` - not currently in use. May have been obsoleted by moving
-  ``format`` into ``viewdata``
-
-We're going to construct them one at a time.
+We're going to construct the necessary props one at a time.
 
 defaultMode
 ^^^^^^^^^^^
