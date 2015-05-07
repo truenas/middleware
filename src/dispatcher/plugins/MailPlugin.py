@@ -53,6 +53,7 @@ class MailProvider(Provider):
             self.dispatcher.configstore.set(
                 'mail.{0}'.format(key), mail.get(key)
             )
+        self.dispatcher.call_sync('etcd.generation.generate_group', 'mail')
 
 
 def _init(dispatcher):
