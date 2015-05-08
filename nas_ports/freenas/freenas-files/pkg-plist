@@ -93,6 +93,7 @@ etc/ix.rc.d/ix-aliases
 etc/ix.rc.d/ix-ataidle
 etc/ix.rc.d/ix-snmpd
 etc/ix.rc.d/ix-cache
+etc/ix.rc.d/ix-chelsio
 etc/ix.rc.d/ix-collectd
 etc/ix.rc.d/ix-crontab
 etc/ix.rc.d/ix-ctld
