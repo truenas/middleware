@@ -30,15 +30,15 @@ The Viewer expects certain props.
     , displayData  : React.PropTypes.object // not currently used
   }
 
-* ``defaultMode`` - a string representing the view mode that the view should open with by default.
-* ``allowedModes`` - an array containing the list of view modes the user should have available.
-* ``inputData`` - an array containing the raw data that the view is responsible
+* :ref:`defaultMode` - a string representing the view mode that the view should open with by default.
+* :ref:`allowedModes` - an array containing the list of view modes the user should have available.
+* :ref:`inputData` - an array containing the raw data that the view is responsible
   for displaying. This is obtained as needed from the Flux store and can only
   be modified by sending changes to the middleware, not by manipulating data in
   the view.
 * :ref:`viewData` - an object containing Viewer metadata, which in turn must contain the following fields:
 
-  * ``format`` - information about the item schema including how to edit certain
+  * :ref:`format` - information about the item schema including how to edit certain
     fields and which ones should be used for searching, path names, and certain
     display defaults.
   * ``addEntity`` - string to display on the button for adding a new item of the type
