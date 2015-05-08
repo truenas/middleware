@@ -1,3 +1,22 @@
+#4165	Add firmware and updates for the following 12 Gbps HBAs
+#7115	VAAI TP STUN fixed for quota overflows
+#8224	TrueNAS Docs use the Freenas Logo.
+#8236	Fix volume status alert for TrueNAS
+#8279	In TrueNAS-9.3-STABLE-201502271916 buld: Getting infinite  loop in fenceD after HA.
+#8328	Unlock from GUI should set passphrase for escrow daemon
+#8430	ProSys:  carp0 going down does not cause devd to run the interface down script
+#8481	hactl should not fail when Failover object is not found
+#8801	carp-state-change-hook.py needs a shutdown verb
+#9320	Fix a traceback from hactl enable/disable when running on a non HA system.
+#9324	Critical: Volume State is UNKNOWN
+#9345	Hide username/passwords for CHAP iSCSI in save debug output
+#9378	Traceback trying to set SSH services in HA
+#9428	Adds support for service-oriented updates, which may not require a reboot.
+#9546	201505010007 Update Killed my CIFS Share
+#9556	Fix line break for smart alerts
+#9562	Force system dataset to to be of type 'unix' (specifical, don't set aclmode to restricted). Use Thor hammer to do so.
+#9565	CIFS->workgroup cannot accept 1 char length
+#9617	Performance issue with the Chelsio T5 and CARP
 #7147	Bug	Nice to have	Fix problem with jails import/export
 #8002	Bug	Nice to have	Fix dataset sharing type and case sensitivity option on edit
 #8532	Bug	Nice to have	Set log rollover for auth.log and messages to be year
