@@ -39,6 +39,7 @@ def calculate_broadcast(address, netmask):
 
 @description("Provides access to global network configuration settings")
 class NetworkProvider(Provider):
+    @returns(h.ref('network-config'))
     def get_global_config(self):
         return ConfigNode('network', self.configstore)
 
@@ -76,32 +77,7 @@ class HostsProvider(Provider):
 
 
 @description("Updates global network configuration settings")
-@accepts({
-    'type': 'object',
-    'properties': {
-        'gateway': {
-            'type': 'object',
-            'properties': {
-                'ipv4': {'type': ['string', 'null']},
-                'ipv6': {'type': ['string', 'null']}
-            }
-        },
-        'dns': {
-            'type': 'object',
-            'properties': {
-                'servers': {'type': 'array'},
-                'search': {'type': 'array'}
-            }
-        },
-        'dhcp': {
-            'type': 'object',
-            'properties': {
-                'assign_gateway': {'type': 'boolean'},
-                'assign_dns': {'type': 'boolean'}
-            }
-        }
-    }
-})
+@accepts(h.ref('network-config'))
 class NetworkConfigureTask(Task):
     def verify(self, settings):
         return ['system']
@@ -381,7 +357,7 @@ def _init(dispatcher):
             'mtu': {'type': ['integer', 'null']},
             'aliases': {
                 'type': 'array',
-                'items': {'type': 'network-interface-alias'}
+                'items': {'$ref': 'network-interface-alias'}
             },
             'status': {
                 'type': 'object',
@@ -424,6 +400,33 @@ def _init(dispatcher):
         'properties': {
             'address': {'type': 'string'},
             'name': {'type': 'string'}
+        }
+    })
+
+    dispatcher.register_schema_definition('network-config', {
+        'type': 'object',
+        'properties': {
+            'gateway': {
+                'type': 'object',
+                'properties': {
+                    'ipv4': {'type': ['string', 'null']},
+                    'ipv6': {'type': ['string', 'null']}
+                }
+            },
+            'dns': {
+                'type': 'object',
+                'properties': {
+                    'servers': {'type': 'array'},
+                    'search': {'type': 'array'}
+                }
+            },
+            'dhcp': {
+                'type': 'object',
+                'properties': {
+                    'assign_gateway': {'type': 'boolean'},
+                    'assign_dns': {'type': 'boolean'}
+                }
+            }
         }
     })
 
