@@ -80,8 +80,8 @@ The Viewer expects certain props.
 .. index:: defaultMode
 .. _defaultMode:
 
-``defaultMode``
-~~~~~~~~~~~~~~~
+defaultMode
+~~~~~~~~~~~
 
 ``defaultMode`` is simply a string specifying the mode that the Viewer should start
 with when it first mounts. The accepted strings are:
@@ -98,8 +98,8 @@ mode will be the DetailViewer.
 .. index:: allowedModes
 .. _allowedModes:
 
-``allowedModes``
-~~~~~~~~~~~~~~~~
+allowedModes
+~~~~~~~~~~~~
 
 ``allowedModes`` is an array of strings representing the view modes that should
 be available to a particular view. The accepted strings are the same as the ones
@@ -111,8 +111,8 @@ will be available to the Viewer.
 .. index:: inputData
 .. _inputData:
 
-``inputData``
-~~~~~~~~~~~~~
+inputData
+~~~~~~~~~
 
 ``inputData`` is a collection containing all the data that should be
 displayed by the viewer. In almost all cases, ``inputData`` will be provided by
