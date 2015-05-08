@@ -476,6 +476,16 @@ class IPChoices(NICChoices):
             include_vlan_parent=include_vlan_parent
         )
 
+        from freenasUI.middleware.notifier import notifier
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() != 'SINGLE'
+        ):
+            self._NIClist = filter(
+                lambda y: re.search(r'^carp\d+$', y),
+                self._NIClist,
+            )
+
         self._IPlist = []
         for iface in self._NIClist:
             pipe = popen("/sbin/ifconfig %s" % iface)
