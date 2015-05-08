@@ -324,6 +324,21 @@
                 "group": 80,
                 "email": null,
                 "password_disabled": false
+            },
+            "522": {
+                "username": "nullmail",
+                "sshpubkey": null,
+                "shell": "/bin/sh",
+                "locked": false,
+                "unixhash": "*",
+                "sudo": false,
+                "smbhash": "*",
+                "builtin": true,
+                "full_name": "Nullmailer Mail System",
+                "home": "/var/spool/nullmailer",
+                "group": 522,
+                "email": null,
+                "password_disabled": false
             }
         }
     }, 
@@ -444,6 +459,10 @@
             },
             "80": {
                 "name": "www",
+                "builtin": true
+            },
+            "522": {
+                "name": "nullmail",
                 "builtin": true
             },
             "65533": {
