@@ -605,6 +605,9 @@
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
 				"name": "sshd",
 				"builtin": true,
+				"rcng": {
+					"rc-scripts": "sshd"
+				},
 				"launchd": {
 					"Label": "com.openssh.sshd",
 					"ProgramArguments": [
