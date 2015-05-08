@@ -482,7 +482,7 @@ class IPChoices(NICChoices):
             notifier().failover_status() != 'SINGLE'
         ):
             self._NIClist = filter(
-                lambda y: re.search(r'^carp\d+$', y),
+                lambda y: re.search(r'^carp[0,3-9]|carp\d\d+$', y),
                 self._NIClist,
             )
 
