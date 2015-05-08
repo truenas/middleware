@@ -13,8 +13,6 @@ var viewerUtil   = require("./viewerUtil");
 
 var ToggleSwitch = require("../common/ToggleSwitch");
 
-var UsersMiddleware = require("../../middleware/ServicesMiddleware");
-
 
 var DetailNavSection = React.createClass({
 
@@ -65,12 +63,12 @@ var DetailNavSection = React.createClass({
       }
 
       var ts = null;
-      if ( this.props.viewData.display.ShowToggleSwitch )
+      if ( this.props.viewData.display.showToggleSwitch )
       {
         var serviceState = (secondaryText === "running" ? true : false);
         ts = <ToggleSwitch
                 toggled   = { serviceState }
-                onChange  = { this.handleToggle.bind( null, this.props.entries[index] ) } />;
+                onChange  = { this.props.viewData.display.handleToggle.bind( null, rawItem ) } />;
       }
 
       return (
@@ -94,21 +92,6 @@ var DetailNavSection = React.createClass({
           </Link>
         </li>
       );
-    }
-  ,
-  handleToggle: function( serviceObj, toggled ) {
-      var serviceName   = serviceObj.name;
-      var serviceState  = serviceObj.state;
-
-      console.log( serviceObj );
-      console.log( toggled );
-
-      var action = (serviceState === "running" ? "stop" : "start");
-
-      UsersMiddleware.updateService(serviceName, action);
-      this.props.handleItemSelect( serviceName );
-
-      //TODO: Really change the state of the service.
     }
 
   , toggleDisclosure: function () {
