@@ -106,6 +106,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.conf ${STAGEDIR}${PREFIX}/etc/rc.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/sysctl.conf ${STAGEDIR}${PREFIX}/etc/sysctl.conf
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ttys ${STAGEDIR}${PREFIX}/etc/ttys
+	mkdir -p ${STAGEDIR}/${PREFIX}/etc/mail
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/mail/mailer.conf ${STAGEDIR}${PREFIX}/etc/mail/
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.bashrc ${STAGEDIR}${PREFIX}/.bashrc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.cshrc ${STAGEDIR}${PREFIX}/.cshrc
