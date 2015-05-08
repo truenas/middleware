@@ -27,26 +27,20 @@
 import errno
 from email.mime.text import MIMEText
 
+from datastore.config import ConfigNode
 from dispatcher.rpc import (
     RpcException, SchemaHelper as h, accepts, description, returns
 )
 from lib.system import SubprocessException, system
-from task import Provider, Task
+from task import Provider, Task, TaskException
 
 
 @description("Provides Information about the mail configuration")
 class MailProvider(Provider):
 
     @returns(h.ref('mail'))
-    def query(self):
-        mailobj = {}
-        for key in self.dispatcher.rpc.schema_definitions['mail'][
-            'properties'
-        ].keys():
-            mailobj[key] = self.dispatcher.configstore.get(
-                'mail.{0}'.format(key)
-            )
-        return mailobj
+    def get_config(self):
+        return ConfigNode('mail', self.configstore)
 
     @accepts(h.ref('mail-message'))
     def send(self, email):
@@ -69,15 +63,15 @@ class MailConfigureTask(Task):
         return []
 
     def run(self, mail):
-        for key in self.dispatcher.rpc.schema_definitions['mail'][
-            'properties'
-        ].keys():
-            if key not in mail:
-                continue
-            self.dispatcher.configstore.set(
-                'mail.{0}'.format(key), mail.get(key)
+        node = ConfigNode('mail', self.dispatcher.configstore)
+        node.update(mail)
+
+        try:
+            self.dispatcher.call_sync('etcd.generation.generate_group', 'mail')
+        except RpcException, e:
+            raise TaskException(
+                errno.ENXIO, 'Cannot reconfigure mail: {0}'.format(str(e))
             )
-        self.dispatcher.call_sync('etcd.generation.generate_group', 'mail')
 
 
 def _init(dispatcher):
