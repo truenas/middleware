@@ -477,14 +477,15 @@ class IPChoices(NICChoices):
         )
 
         from freenasUI.middleware.notifier import notifier
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_status() != 'SINGLE'
-        ):
-            self._NIClist = filter(
-                lambda y: re.search(r'^carp[0,3-9]|carp\d\d+$', y),
-                self._NIClist,
-            )
+        if hasattr(notifier, 'failover_status'):
+            try:
+                if notifier().failover_status() != 'SINGLE':
+                    self._NIClist = filter(
+                        lambda y: re.search(r'^carp[0,3-9]|carp\d\d+$', y),
+                        self._NIClist,
+                    )
+            except sqlite3.OperationalError:
+                pass
 
         self._IPlist = []
         for iface in self._NIClist:
@@ -876,7 +877,6 @@ CERT_DIGEST_ALGORITHM_CHOICES = (
 
 
 class COUNTRY_CHOICES(object):
-    import csv
 
     def __init__(self):
 
@@ -936,7 +936,7 @@ class COUNTRY_CHOICES(object):
         return self.__get_index('ISO 3166-1 3 Letter Code')
 
     def __iter__(self):
-        return iter((c[self.__2li], c[self.__cni]) \
+        return iter((c[self.__2li], c[self.__cni])
                     for c in self.__country_list)
 
 
@@ -959,6 +959,7 @@ LDAP_SCHEMA_CHOICES = (
     # ('AD', 'AD')
 )
 
+
 class CIFS_VFS_OBJECTS(object):
     def __init__(self):
         self.__vfs_module_path = '/usr/local/lib/shared-modules/vfs'
@@ -971,7 +972,7 @@ class CIFS_VFS_OBJECTS(object):
             for f in os.listdir(self.__vfs_module_path):
                 f = f.replace('.so', '')
                 if f not in self.__vfs_exclude:
-                     self.__vfs_modules.append(f) 
+                    self.__vfs_modules.append(f)
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
