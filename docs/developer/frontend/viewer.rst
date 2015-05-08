@@ -295,6 +295,15 @@ It is acceptable for ``uniqueKey`` and ``selectionKey`` to be identical.
 DetailViewer
 ------------
 
+The DetailViewer is the default view mode of the Viewer. It takes the items
+provided to the Viewer and displays them in a searchable list on the left side
+of the window. When an item is selected, it displays the item in the rest of the
+space in the window using the Item view component provided to the viewer.
+
+The DetailViewer also supports an optional button to add a new entity if the
+necessary route, label, and component are included. The addEntity button is
+placed above the item list search bar.
+
 .. image:: images/viewer/groups_view_detail.png
    :alt: An example of the detail view with an item selected.
 The Groups view in detail mode with an item selected.
