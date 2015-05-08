@@ -31,9 +31,9 @@ separation of concerns, and functional summaries and glossaries of terms
 which apply directly to the project.
 
 Special attention is given to significant patterns and tools, such as
-the :doc:`Flux Architecture <flux>` or :doc:`Middleware Client <middleware>`. While these build on
-established libraries and patterns, it is often helpful to understand
-the specific way in which they are applied to the FreeNAS 10 WebApp.
+the :doc:`Flux Architecture <flux>` or :doc:`Middleware Client <middleware>`.
+While these build on established libraries and patterns, it is often helpful to
+understand the specific way in which they are applied to the FreeNAS 10 WebApp.
 When possible, external documentation and articles are provided for
 further reading.
 
@@ -41,9 +41,9 @@ Warning: Work in Progress!
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This guide is a work in progress, and as such, may contain incomplete
-sections or factual inaccuracies. Please advise corey@ixsystems.com of
-any errors, confusing wording, etc. This guide aims to be a clear and
-complete explanation of the new GUI, and all feedback is appreciated
+sections or factual inaccuracies. Please advise corey@ixsystems.com or
+ben@ixsystems.com of any errors, confusing wording, etc. This guide aims to be a
+clear and complete explanation of the new GUI, and all feedback is appreciated
 along the way!
 
 Changes From Previous Versions
@@ -75,19 +75,67 @@ and links to source code where available.
 
 --------------
 
-:doc:`First-Time Setup <setup>`
+:doc:`Flux Architecture <flux>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set up a development environment on your workstation. This guide
-explains how to initialize the automated development environment, as
-well as which tools and packages are required for your platform.
+Data flow in the FreeNAS WebApp relies on the Flux architecture. This guide lays
+out the entire data lifecycle from requests in the view to data being stored in
+the app.
+
+--------------
+
+:doc:`Webapp Architecture <webapp>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section provides the layout of the FreeNAS WebApp and shows how the main
+components are nested.
+
+--------------
+
+:doc:`Middleware Client <middleware>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All interaction between the FreeNAS WebApp and the middleware server goes
+through the Middleware Client. This section documents all the WebApp-facing
+functions of the Middleware Client. In the future, it will cover internal
+functions as well.
 
 --------------
 
 :doc:`The Live Development Environment <develop>`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This brief guide explains how to use the automated ``grunt`` tools
+This guide explains how to setup and use the automated ``grunt`` tools
 included with the FreeNAS 10 source code for live development and
 automated webapp builds.
 
+--------------
+
+:doc:`Widgets <widgets>`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section covers how to implement a FreeNAS dashboard widget.
+
+--------------
+
+:doc:`The Viewer Component <viewer>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Viewer is the chief means of displaying data that comes in a list of items.
+This section covers the props of the Viewer and each of its view modes.
+
+--------------
+
+:doc:`Routing <routing>`
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+FreeNAS uses ``react-router`` for routing. This section covers FreeNAS' specific
+use of react-router and common patterns.
+
+--------------
+
+:doc:`Adding a Viewer <adding_a_viewer>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section covers the whole process of adding a new viewer, following the Flux
+lifecycle and making use of the information in the Viewer and Routing sections.
