@@ -37,7 +37,6 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-jscs": "^1.8.0",
     "grunt-npm-install": "^0.2.0",
-    "grunt-react": "^0.10.0",
     "grunt-rsync": "^0.6.2",
     "grunt-shell": "^0.7.0",
     "grunt-ssh-multi-exec": "^4.2.2",
