@@ -31,7 +31,7 @@ from dispatcher.rpc import (
     RpcException, SchemaHelper as h, accepts, description, returns
 )
 from lib.system import SubprocessException, system
-from task import Provider
+from task import Provider, Task
 
 
 @description("Provides Information about the mail configuration")
@@ -61,11 +61,19 @@ class MailProvider(Provider):
                 errno.EFAULT, 'Cannot send mail: {0}'.format(err.err)
             )
 
-    @accepts(h.ref('mail'))
-    def update(self, mail):
+
+@accepts(h.ref('mail'))
+class MailConfigureTask(Task):
+
+    def verify(self, mail):
+        return []
+
+    def run(self, mail):
         for key in self.dispatcher.rpc.schema_definitions['mail'][
             'properties'
         ].keys():
+            if key not in mail:
+                continue
             self.dispatcher.configstore.set(
                 'mail.{0}'.format(key), mail.get(key)
             )
@@ -99,4 +107,8 @@ def _init(dispatcher):
         }
     })
 
+    # Register providers
     dispatcher.register_provider('mail', MailProvider)
+
+    # Register task handlers
+    dispatcher.register_task_handler('mail.configure', MailConfigureTask)
