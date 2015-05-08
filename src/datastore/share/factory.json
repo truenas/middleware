@@ -477,6 +477,12 @@
 			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
+	    "mail.server": "",
+	    "mail.port": 25,
+	    "mail.encryption": "PLAIN",
+	    "mail.auth": false,
+	    "mail.user": "",
+	    "mail.pass": "",
             "network.autoconfigure": true,
             "network.gateway.ipv4": null,
             "network.gateway.ipv6": null,
@@ -712,10 +718,10 @@
 				"launchd": {
 					"Label": "org.untroubled.nullmailer",
 					"ProgramArguments": [
-						"/usr/local/sbin/nullmailer-send",
+						"/usr/local/sbin/nullmailer-send"
 					],
 					"RunAtLoad": true
-				}
+				},
 				"rcng": {
 					"rc-scripts": "nullmailer"
 				}
