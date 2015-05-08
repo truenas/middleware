@@ -29,13 +29,14 @@ var viewData = {
             , testProp : { "state": "stopped" }
           }
       }
-    , remainingName  : "other services"
-    , ungroupedName  : "all services"
-    , allowedFilters : [ ]
-    , defaultFilters : [ ]
-    , allowedGroups  : [ "running", "stopped" ]
-    , defaultGroups  : [ "running", "stopped" ]
-    , ShowToggleSwitch : true
+    , remainingName    : "other services"
+    , ungroupedName    : "all services"
+    , allowedFilters   : [ ]
+    , defaultFilters   : [ ]
+    , allowedGroups    : [ "running", "stopped" ]
+    , defaultGroups    : [ "running", "stopped" ]
+    , showToggleSwitch : true
+    , handleToggle     : handleToggle
   }
 };
 
@@ -45,6 +46,18 @@ function getServicesFromStore() {
   };
 }
 
+function handleToggle( serviceObj, toggled ) {
+      var serviceName   = serviceObj.name;
+      var serviceState  = serviceObj.state;
+
+      var action = (serviceState === "running" ? "stop" : "start");
+
+      ServicesMiddleware.updateService(serviceName, action);
+
+      //TODO: Select the service with changing state.
+    }
+
+
 var Services = React.createClass({
 
     getInitialState: function() {
@@ -53,11 +66,13 @@ var Services = React.createClass({
 
   , componentDidMount: function() {
       ServicesMiddleware.requestServicesList();
+      ServicesMiddleware.subscribeToTask( "Services Viewer" );
 
       ServicesStore.addChangeListener( this.handleServicesChange );
     }
 
   , componentWillUnmount: function() {
+      ServicesMiddleware.unsubscribeFromTask( "Services Viewer" );
       ServicesStore.removeChangeListener( this.handleServicesChange );
     }
 
