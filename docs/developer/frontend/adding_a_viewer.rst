@@ -132,13 +132,13 @@ submitted, all view modes will be available.
 responsible for displaying. inputData depends on the rest of the Flux cycle,
 so we can't generate it at this point.
 
-viewData
-^^^^^^^^
+:ref:`viewData`
+^^^^^^^^^^^^^^^
 
 .. warning:: This is subject to change.
 
-format
-******
+:ref:`format`
+*************
 
 Currently, each Viewer instance relies on a JSON file with some display
 information. Really, this could be provided any other way. In the
