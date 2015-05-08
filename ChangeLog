@@ -30,10 +30,12 @@
 #9351	Improved compatibility with  Mach Xtreme USB sticks
 #9352	generate_ctl_conf.py should create file with umask 077
 #9378	Traceback trying to set SSH services in HA
+#9417	Fix SMART status checking/fixing in ix-smartd, add alertmod for monitoring smartd's status, restart smartd after adding or replacing a drive to enable monitoring for it
 #9428	Adds support for service-oriented updates, which may not require a reboot.
 #9478	New SNMP Username/Password fields should be greyed out unless SNMPv3 is checked
 #9480	Kerberos keytabs not removed from /etc/krb5.keytab when choosing "delete" in GUI
 #9483	'scrub' should not be installed to sbin
+#9486	In TrueNAS HA several bind IPs are presented that don't make sense.
 #9493	Resolves an issue where deleting a file during an update that doesn't require a reboot would cause an exception.
 #9500	Fix Disk Wipe progress view
 #9546	201505010007 Update Killed my CIFS Share
@@ -41,3 +43,4 @@
 #9562	Force system dataset to to be of type 'unix' (specifical, don't set aclmode to restricted). Use Thor hammer to do so.
 #9565	CIFS->workgroup cannot accept 1 char length
 #9617	Performance issue with the Chelsio T5 and CARP
+#9623	Implement chelsio T5 tuning suggested by the vendor to lower CPU usage.
