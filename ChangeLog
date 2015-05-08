@@ -1,41 +1,41 @@
 #4165	Add firmware and updates for the following 12 Gbps HBAs
 #7115	VAAI TP STUN fixed for quota overflows
-#7147	Bug	Nice to have	Fix problem with jails import/export
-#8002	Bug	Nice to have	Fix dataset sharing type and case sensitivity option on edit
+#7147	Fix problem with jails import/export
+#8002	Fix dataset sharing type and case sensitivity option on edit
 #8224	TrueNAS Docs use the Freenas Logo.
 #8236	Fix volume status alert for TrueNAS
 #8279	In TrueNAS-9.3-STABLE-201502271916 buld: Getting infinite  loop in fenceD after HA.
 #8328	Unlock from GUI should set passphrase for escrow daemon
 #8430	ProSys:  carp0 going down does not cause devd to run the interface down script
 #8481	hactl should not fail when Failover object is not found
-#8532	Bug	Nice to have	Set log rollover for auth.log and messages to be year
+#8532	Set log rollover for auth.log and messages to be year
 #8801	carp-state-change-hook.py needs a shutdown verb
-#9057	Bug	Nice to have	Fix a bad interaction with Rsync Now and su(1)
-#9151	Bug	Nice to have	CIFS will not start
-#9204	Feature	Nice to have	Expose SNMP v3 configuration items to GUI
-#9221	Bug	Nice to have	Add a tool to check (and possib fix) ssh for replication tasks.
-#9227	Bug	Nice to have	Auto configure jails for plugins if applicable
-#9240	Bug	Nice to have	SSH Public Keys field too short
-#9253	Bug	Nice to have	Traceback for SMART alert when the state file doesn't exists
-#9291	Bug	Nice to have	Unable to upgrade: "Error: global name 'UpdatePackageException' is not defined"
-#9292	Bug	Nice to have	When changing a jail from DHCP to static, can't specify name servers for the jails in the UI
+#9057	Fix a bad interaction with Rsync Now and su(1)
+#9151	CIFS will not start
+#9204	Expose SNMP v3 configuration items to GUI
+#9221	Add a tool to check (and possib fix) ssh for replication tasks.
+#9227	Auto configure jails for plugins if applicable
+#9240	SSH Public Keys field too short
+#9253	Traceback for SMART alert when the state file doesn't exists
+#9291	Unable to upgrade: "Error: global name 'UpdatePackageException' is not defined"
+#9292	When changing a jail from DHCP to static, can't specify name servers for the jails in the UI
 #9320	Fix a traceback from hactl enable/disable when running on a non HA system.
-#9324	Critical: Volume State is UNKNOWN
-#9325	Bug	Important	Replication shows .system dataset although snapshot tasks has box checked to "exclude system dataset"
-#9342	Bug	Nice to have	VFS objects aio_pthread and streams_xattr missing from "Add Windows (CIFS) Share" dialog
-#9343	Bug	Important	Change local Support validation from GET to POST
-#9344	Bug	Nice to have	Missing IPMI icon in tree menu
+#9324	Volume State is UNKNOWN
+#9325	Replication shows .system dataset although snapshot tasks has box checked to "exclude system dataset"
+#9342	VFS objects aio_pthread and streams_xattr missing from "Add Windows (CIFS) Share" dialog
+#9343	Change local Support validation from GET to POST
+#9344	Missing IPMI icon in tree menu
 #9345	Hide username/passwords for CHAP iSCSI in save debug output
-#9346	Bug	Expected	Encrypt iscsi CHAP passwords in the database
-#9351	Bug	Important	Improved compatibility with  Mach Xtreme USB sticks
-#9352	Bug	Nice to have	generate_ctl_conf.py should create file with umask 077
+#9346	Encrypt iscsi CHAP passwords in the database
+#9351	Improved compatibility with  Mach Xtreme USB sticks
+#9352	generate_ctl_conf.py should create file with umask 077
 #9378	Traceback trying to set SSH services in HA
 #9428	Adds support for service-oriented updates, which may not require a reboot.
-#9478	Bug	Nice to have	New SNMP Username/Password fields should be greyed out unless SNMPv3 is checked
-#9480	Bug	No priority	Kerberos keytabs not removed from /etc/krb5.keytab when choosing "delete" in GUI
-#9483	Bug	Nice to have	'scrub' should not be installed to sbin
-#9493	Bug	Critical	Resolves an issue where deleting a file during an update that doesn't require a reboot would cause an exception.
-#9500	Bug	Expected	Fix Disk Wipe progress view
+#9478	New SNMP Username/Password fields should be greyed out unless SNMPv3 is checked
+#9480	Kerberos keytabs not removed from /etc/krb5.keytab when choosing "delete" in GUI
+#9483	'scrub' should not be installed to sbin
+#9493	Resolves an issue where deleting a file during an update that doesn't require a reboot would cause an exception.
+#9500	Fix Disk Wipe progress view
 #9546	201505010007 Update Killed my CIFS Share
 #9556	Fix line break for smart alerts
 #9562	Force system dataset to to be of type 'unix' (specifical, don't set aclmode to restricted). Use Thor hammer to do so.
