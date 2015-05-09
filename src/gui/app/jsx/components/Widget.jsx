@@ -1,28 +1,29 @@
 "use strict";
 
-var React = require("react");
+var React  = require( "react" );
 
-var Icon   = require("./Icon");
+var Icon   = require( "./Icon" );
 
 var Widget = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {  size    : this.props.size
             , count   : 0
-            , sizeArr : ["s", "m", "l"]
+            , sizeArr : [ "s", "m", "l" ]
     };
   }
-, changeSize: function() {
-    console.log("changeSize");
-    var i = (this.state.count < this.state.sizeArr.length ? this.state.count : 0);
-    console.log(i);
-    i++;
-    console.log(i);
 
-    this.setState( {    size   : this.state.sizeArr[i-1] + this.state.size.substring(1, this.state.size.length)
-                      , count  : i
+, changeSize: function () {
+    //console.log( "changeSize" );
+    var i = ( this.state.count < this.state.sizeArr.length ? this.state.count : 0 );
+    //console.log( i );
+    i++;
+    //console.log( i );
+
+    this.setState( {    size   : this.state.sizeArr[ i - 1 ] + this.state.size.substring( 1, this.state.size.length )                      , count  : i
                    } );
-    }
-, render: function() {
+  }
+
+, render: function () {
     return (
       <div className={"widget " + this.state.size}>
         <header>
