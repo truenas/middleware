@@ -1,20 +1,20 @@
 "use strict";
 
-var React = require("react");
+var React = require( "react" );
 
-var Widget = require("../Widget");
+var Widget = require( "../Widget" );
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var SystemMiddleware = require( "../../middleware/SystemMiddleware" );
+var SystemStore      = require( "../../stores/SystemStore" );
 
-var UpdateMiddleware = require("../../middleware/UpdateMiddleware");
-var UpdateStore      = require("../../stores/UpdateStore");
+var UpdateMiddleware = require( "../../middleware/UpdateMiddleware" );
+var UpdateStore      = require( "../../stores/UpdateStore" );
 
-var round            = require("round");
+var round            = require( "round" );
 
 var SystemInfo = React.createClass({
 
-  getInitialState: function() {
+  getInitialState: function () {
     return {
         hardware   :   ""
       , version    :   ""
@@ -23,7 +23,7 @@ var SystemInfo = React.createClass({
     };
   }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SystemStore.addChangeListener( this.handleSystemChange );
       //*Temp. Removed* UpdateStore.addChangeListener( this.handleUpdateChange );
 
@@ -34,19 +34,19 @@ var SystemInfo = React.createClass({
       //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "get_current_train" );
    }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       SystemStore.removeChangeListener( this.handleSystemChange );
       //*Temp. Removed* UpdateStore.removeChangeListener( this.handleUpdateChange );
     }
 
-  , handleSystemChange: function() {
+  , handleSystemChange: function () {
       this.setState({
           hardware : SystemStore.getSystemInfo( "hardware" )
         , version  : SystemStore.getSystemInfo( "version" )
       });
     }
 
-  , handleUpdateChange: function() {
+  , handleUpdateChange: function () {
       this.setState({
           train    : UpdateStore.getUpdate( "get_current_train" )
         // TODO: Yet to add
@@ -54,8 +54,8 @@ var SystemInfo = React.createClass({
       });
     }
 
-  , render: function() {
-    var memSize = round((this.state.hardware["memory-size"] / 1024) / 1024, 1);
+  , render: function () {
+    var memSize = round( ( this.state.hardware["memory-size"] / 1024 ) / 1024, 1 );
     return (
       <Widget
         positionX  =  {this.props.positionX}
