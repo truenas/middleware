@@ -41,6 +41,7 @@ extensions = [
         "mach",
         ["src/mach.pyx"],
         extra_compile_args=["-g", "-DWITH_THREAD"],
+        include_dirs=["/usr/src/sys/apsl/include"],
         extra_link_args=libraries
     )
 ]
