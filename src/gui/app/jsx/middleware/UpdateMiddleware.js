@@ -3,8 +3,8 @@
 
 "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
-var UpdateActionCreators = require("../actions/UpdateActionCreators");
+import MiddlewareClient from "../middleware/MiddlewareClient";
+import UpdateActionCreators from "../actions/UpdateActionCreators";
 
 module.exports = {
 

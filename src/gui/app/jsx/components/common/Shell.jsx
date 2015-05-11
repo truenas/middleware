@@ -7,10 +7,10 @@
 
 "use strict";
 
-var React    = require("react");
-var Terminal = require("term.js");
+import React from "react";
+import Terminal from "term.js";
 
-var ShellMiddleware = require("../../middleware/ShellMiddleware");
+import ShellMiddleware from "../../middleware/ShellMiddleware";
 
 var Shell = React.createClass({
 

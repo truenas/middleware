@@ -5,12 +5,12 @@
 "use strict";
 
 
-var React = require("react");
+import React from "react";
 
-var Viewer = require("../components/Viewer");
+import Viewer from "../components/Viewer";
 
-var ServicesMiddleware = require("../middleware/ServicesMiddleware");
-var ServicesStore      = require("../stores/ServicesStore");
+import ServicesMiddleware from "../middleware/ServicesMiddleware";
+import ServicesStore from "../stores/ServicesStore";
 
 var viewData = {
     format  : require("../../data/middleware-keys/services-display.json")[0]

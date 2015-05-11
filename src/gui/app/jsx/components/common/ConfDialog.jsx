@@ -7,10 +7,10 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 // Twitter Bootstrap React Components
-var TWBS = require("react-bootstrap");
+import TWBS from "react-bootstrap";
 
 var ConfDialog = React.createClass({
 

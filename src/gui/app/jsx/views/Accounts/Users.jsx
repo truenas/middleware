@@ -6,17 +6,17 @@
 
 var componentLongName = "Users";
 
-var React = require("react");
+import React from "react";
 
-var Viewer = require("../../components/Viewer");
+import Viewer from "../../components/Viewer";
 
-var UsersMiddleware = require("../../middleware/UsersMiddleware");
-var UsersStore      = require("../../stores/UsersStore");
+import UsersMiddleware from "../../middleware/UsersMiddleware";
+import UsersStore from "../../stores/UsersStore";
 
-var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
-var GroupsStore      = require("../../stores/GroupsStore");
+import GroupsMiddleware from "../../middleware/GroupsMiddleware";
+import GroupsStore from "../../stores/GroupsStore";
 
-var SessionStore = require("../../stores/SessionStore");
+import SessionStore from "../../stores/SessionStore";
 
 var viewData = {
     format    : require("../../../data/middleware-keys/users-display.json")[0]

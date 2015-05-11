@@ -1,17 +1,15 @@
 "use strict";
 
-var React = require("react");
-var _     = require("lodash");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import _ from "lodash";
+import TWBS from "react-bootstrap";
 
-var Router       = require("react-router");
-var Link         = Router.Link;
-var RouteHandler = Router.RouteHandler;
+import { Link, RouteHandler } from "react-router";
 
-var Icon = require("../Icon");
+import Icon from "../Icon";
 
-var viewerCommon = require("../mixins/viewerCommon");
-var viewerUtil = require("./viewerUtil");
+import viewerCommon from "../mixins/viewerCommon";
+import viewerUtil from "./viewerUtil";
 
 // Table Viewer
 var TableViewer = React.createClass({

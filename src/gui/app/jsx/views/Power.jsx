@@ -5,13 +5,13 @@
 "use strict";
 
 
-var React = require("react");
+import React from "react";
 
-var PowerMiddleware = require("../middleware/PowerMiddleware");
+import PowerMiddleware from "../middleware/PowerMiddleware";
 
-var Icon = require("../components/Icon")
+import Icon from "../components/Icon";
 
-var ConfDialog = require("../components/common/ConfDialog")
+import ConfDialog from "../components/common/ConfDialog";
 
 var Power = React.createClass({
   handlerebootbutton: function() {

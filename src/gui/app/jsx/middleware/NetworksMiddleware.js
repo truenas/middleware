@@ -3,9 +3,9 @@
 
 "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
-var NetworksActionCreators = require("../actions/NetworksActionCreators");
+import NetworksActionCreators from "../actions/NetworksActionCreators";
 
 module.exports = {
 

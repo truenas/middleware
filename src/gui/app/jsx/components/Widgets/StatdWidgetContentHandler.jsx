@@ -1,11 +1,11 @@
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var moment = require("moment");
+import _ from "lodash";
+import React from "react";
+import moment from "moment";
 
-var StatdMiddleware = require("../../middleware/StatdMiddleware");
-var StatdStore      = require("../../stores/StatdStore");
+import StatdMiddleware from "../../middleware/StatdMiddleware";
+import StatdStore from "../../stores/StatdStore";
 
 var svgStyle = {
     width   : "calc(100% - 36px)"

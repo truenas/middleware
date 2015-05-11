@@ -4,8 +4,8 @@
 
 "use strict";
 
-var _            = require("lodash");
-var EventEmitter = require("events").EventEmitter;
+import _ from "lodash";
+import { EventEmitter } from "events";
 
 var EventBus = _.assign( {}, EventEmitter.prototype, {
 

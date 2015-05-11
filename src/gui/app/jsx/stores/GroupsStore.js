@@ -3,15 +3,14 @@
 
 "use strict";
 
-var _            = require( "lodash" );
-var EventEmitter = require( "events" ).EventEmitter;
+import _ from "lodash";
+import { EventEmitter } from "events";
 
-var FreeNASDispatcher = require( "../dispatcher/FreeNASDispatcher" );
-var FreeNASConstants  = require( "../constants/FreeNASConstants" );
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var GroupsMiddleware = require( "../middleware/GroupsMiddleware" );
+import GroupsMiddleware from "../middleware/GroupsMiddleware";
 
-var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = "groups.changed";
 var PRIMARY_KEY  = "id";

@@ -4,19 +4,19 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var routerShim   = require("../../components/mixins/routerShim");
-var clientStatus = require("../../components/mixins/clientStatus");
+import routerShim from "../../components/mixins/routerShim";
+import clientStatus from "../../components/mixins/clientStatus";
 
-var viewerUtil = require("../../components/Viewer/viewerUtil");
+import viewerUtil from "../../components/Viewer/viewerUtil";
 
-var ServicesMiddleware = require("../../middleware/ServicesMiddleware");
-var ServicesStore      = require("../../stores/ServicesStore");
+import ServicesMiddleware from "../../middleware/ServicesMiddleware";
+import ServicesStore from "../../stores/ServicesStore";
 
-var ToggleSwitch = require("../../components/common/ToggleSwitch");
+import ToggleSwitch from "../../components/common/ToggleSwitch";
 
 var ServiceView = React.createClass({
 

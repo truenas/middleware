@@ -6,19 +6,19 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
 // Events
-var EventBus = require("./DebugTools/EventBus");
+import EventBus from "./DebugTools/EventBus";
 
 // Tabs
-var RPC           = require("./DebugTools/RPC");
-var Events        = require("./DebugTools/Events");
-var Subscriptions = require("./DebugTools/Subscriptions");
-var Tasks         = require("./DebugTools/Tasks");
-var Options       = require("./DebugTools/Options");
-var Terminal      = require("./DebugTools/Terminal");
+import RPC from "./DebugTools/RPC";
+import Events from "./DebugTools/Events";
+import Subscriptions from "./DebugTools/Subscriptions";
+import Tasks from "./DebugTools/Tasks";
+import Options from "./DebugTools/Options";
+import Terminal from "./DebugTools/Terminal";
 
 // Local variables
 var initialPanelHeight;

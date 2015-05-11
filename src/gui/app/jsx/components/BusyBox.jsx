@@ -6,25 +6,25 @@
 
 var componentLongName = "BusyBox";
 
-var React = require("react");
+import React from "react";
 
 // Middleware
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
 // SessionStore stores the logged in user and the fact that login happened.
-var SessionStore = require("../stores/SessionStore");
+import SessionStore from "../stores/SessionStore";
 
 // Powerstuff
-var PowerStore  = require("../stores/PowerStore");
+import PowerStore from "../stores/PowerStore";
 
 // Middleware
-var PowerMiddleware   = require("../middleware/PowerMiddleware");
+import PowerMiddleware from "../middleware/PowerMiddleware";
 
 // Throbber
-var Throbber = require("./common/Throbber");
+import Throbber from "./common/Throbber";
 
 // Twitter Bootstrap React components
-var TWBS = require("react-bootstrap");
+import TWBS from "react-bootstrap";
 
 var BusyBox = React.createClass({
 
@@ -144,7 +144,7 @@ var BusyBox = React.createClass({
           var throbberprops     = {};
           throbberprops.bsStyle = "primary";
           throbberprops.size    = 60;
-          var dispMsg           = "Please wait while I " + this.state.operation;  
+          var dispMsg           = "Please wait while I " + this.state.operation;
 
           busyBody = (
             <div className="overlay-dark" ref="Busy" style={{ opacity: 0 }}>

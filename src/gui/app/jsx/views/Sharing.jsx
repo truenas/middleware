@@ -5,7 +5,7 @@
 "use strict";
 
 
-var React = require("react");
+import React from "react";
 
 var Sharing = React.createClass({
   render: function() {

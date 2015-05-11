@@ -4,9 +4,9 @@
 
 "use strict";
 
-var MiddlewareClient = require( "../middleware/MiddlewareClient" );
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
-var GroupsActionCreators = require( "../actions/GroupsActionCreators" );
+import GroupsActionCreators from "../actions/GroupsActionCreators";
 
 module.exports = {
 

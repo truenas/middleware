@@ -5,7 +5,7 @@
 "use strict";
 
 
-var React = require("react");
+import React from "react";
 
 var ControlPanel = React.createClass({
   render: function() {

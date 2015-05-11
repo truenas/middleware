@@ -3,19 +3,18 @@
 // Top level controller-view for FreeNAS webapp
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
+import { RouteHandler } from "react-router";
 
-var routerShim = require("../components/mixins/routerShim");
+import routerShim from "../components/mixins/routerShim";
 
 // WebApp Components
-var BusyBox           = require("../components/BusyBox");
-var NotificationBar   = require("../components/WebApp/NotificationBar");
-var InformationBar    = require("../components/WebApp/InformationBar");
-var PrimaryNavigation = require("../components/PrimaryNavigation");
-var DebugTools        = require("../components/DebugTools");
+import BusyBox from "../components/BusyBox";
+import NotificationBar from "../components/WebApp/NotificationBar";
+import InformationBar from "../components/WebApp/InformationBar";
+import PrimaryNavigation from "../components/PrimaryNavigation";
+import DebugTools from "../components/DebugTools";
 
 
 var FreeNASWebApp = React.createClass({

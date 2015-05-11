@@ -5,15 +5,15 @@
 
 "use strict";
 
-var _                   = require( "lodash" );
-var React               = require( "react" );
-var moment              = require( "moment" );
-var componentWidthMixin = require( "react-component-width-mixin" );
+import _ from "lodash";
+import React from "react";
+import moment from "moment";
+import componentWidthMixin from "react-component-width-mixin";
 
-var StatdMiddleware     = require( "../../../middleware/StatdMiddleware" );
-var StatdStore          = require( "../../../stores/StatdStore" );
+import StatdMiddleware from "../../../middleware/StatdMiddleware";
+import StatdStore from "../../../stores/StatdStore";
 
-var Widget              = require( "../../Widget" );
+import Widget from "../../Widget";
 
 var i = 0;
 

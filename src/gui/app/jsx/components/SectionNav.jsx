@@ -4,11 +4,10 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Router = require("react-router");
-var Link   = Router.Link;
+import { Link } from "react-router";
 
 var Navigation = React.createClass({
     propTypes: {

@@ -6,7 +6,7 @@
 
 "use strict";
 
-var SessionStore = require("../../stores/SessionStore");
+import SessionStore from "../../stores/SessionStore";
 
 module.exports = {
 

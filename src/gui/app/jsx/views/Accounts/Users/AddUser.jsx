@@ -5,20 +5,20 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var UsersStore      = require("../../../stores/UsersStore");
-var UsersMiddleware = require("../../../middleware/UsersMiddleware");
+import UsersStore from "../../../stores/UsersStore";
+import UsersMiddleware from "../../../middleware/UsersMiddleware";
 
-var GroupsStore      = require("../../../stores/GroupsStore");
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
+import GroupsStore from "../../../stores/GroupsStore";
+import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
 
-var inputHelpers = require("../../../components/mixins/inputHelpers");
-var userMixins   = require("../../../components/mixins/userMixins");
-var groupMixins   = require("../../../components/mixins/groupMixins");
-var viewerCommon = require("../../../components/mixins/viewerCommon");
+import inputHelpers from "../../../components/mixins/inputHelpers";
+import userMixins from "../../../components/mixins/userMixins";
+import groupMixins from "../../../components/mixins/groupMixins";
+import viewerCommon from "../../../components/mixins/viewerCommon";
 
 var AddUser = React.createClass({
 

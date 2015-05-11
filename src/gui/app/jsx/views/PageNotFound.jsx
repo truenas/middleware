@@ -5,7 +5,7 @@
 "use strict";
 
 
-var React = require("react");
+import React from "react";
 
 var Accounts = React.createClass({
     render: function() {

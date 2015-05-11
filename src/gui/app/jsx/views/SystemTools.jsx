@@ -5,13 +5,13 @@
 "use strict";
 
 
-var React = require("react");
+import React from "react";
 
-var UpdaterMiddleware = require("../middleware/UpdaterMiddleware");
+import UpdaterMiddleware from "../middleware/UpdaterMiddleware";
 
-var Icon = require("../components/Icon")
+import Icon from "../components/Icon";
 
-var ConfDialog = require("../components/common/ConfDialog")
+import ConfDialog from "../components/common/ConfDialog";
 
 var SystemTools = React.createClass({
   handleupdatenowbutton: function() {

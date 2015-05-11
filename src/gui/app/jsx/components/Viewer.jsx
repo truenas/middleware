@@ -1,15 +1,15 @@
 "use strict";
 
-var React = require("react");
-var _     = require("lodash");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import _ from "lodash";
+import TWBS from "react-bootstrap";
 
-var viewerCommon = require("./mixins/viewerCommon");
+import viewerCommon from "./mixins/viewerCommon";
 
-var Icon         = require("./Icon");
-var DetailViewer = require("./Viewer/DetailViewer");
-var IconViewer   = require("./Viewer/IconViewer");
-var TableViewer  = require("./Viewer/TableViewer");
+import Icon from "./Icon";
+import DetailViewer from "./Viewer/DetailViewer";
+import IconViewer from "./Viewer/IconViewer";
+import TableViewer from "./Viewer/TableViewer";
 
 
 // Main Viewer Wrapper Component

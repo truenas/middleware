@@ -4,14 +4,13 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
+import { RouteHandler } from "react-router";
 
-var routerShim = require("../components/mixins/routerShim");
+import routerShim from "../components/mixins/routerShim";
 
-var SectionNav = require("../components/SectionNav");
+import SectionNav from "../components/SectionNav";
 
 var sections = [{
     route   : "users"

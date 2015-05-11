@@ -5,15 +5,14 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var Router = require("react-router");
-var Link   = Router.Link;
+import { Link } from "react-router";
 
-var TWBS = require("react-bootstrap");
-var Icon = require("./Icon");
+import TWBS from "react-bootstrap";
+import Icon from "./Icon";
 
-var EventBus = require("./DebugTools/EventBus");
+import EventBus from "./DebugTools/EventBus";
 
 // Path definitions
 // TODO: Convert to Flux or other external file

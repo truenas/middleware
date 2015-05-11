@@ -1,7 +1,7 @@
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
+import _ from "lodash";
+import React from "react";
 
 var Icon = React.createClass({
   propTypes: {

@@ -3,19 +3,19 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
-var _     = require("lodash");
+import React from "react";
+import TWBS from "react-bootstrap";
+import _ from "lodash";
 
 // Middleware
-var MiddlewareClient = require("../../middleware/MiddlewareClient");
-var MiddlewareStore  = require("../../stores/MiddlewareStore");
+import MiddlewareClient from "../../middleware/MiddlewareClient";
+import MiddlewareStore from "../../stores/MiddlewareStore";
 
 // Disclosure Triangles
-var DiscTri = require("../common/DiscTri");
+import DiscTri from "../common/DiscTri";
 
 // Fuzzy TypeAhead
-var FuzzyTypeAhead = require("../common/FuzzyTypeAhead");
+import FuzzyTypeAhead from "../common/FuzzyTypeAhead";
 
 
 var RPC = React.createClass({

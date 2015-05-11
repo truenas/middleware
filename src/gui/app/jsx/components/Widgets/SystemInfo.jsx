@@ -1,16 +1,16 @@
 "use strict";
 
-var React = require( "react" );
+import React from "react";
 
-var Widget = require( "../Widget" );
+import Widget from "../Widget";
 
-var SystemMiddleware = require( "../../middleware/SystemMiddleware" );
-var SystemStore      = require( "../../stores/SystemStore" );
+import SystemMiddleware from "../../middleware/SystemMiddleware";
+import SystemStore from "../../stores/SystemStore";
 
-var UpdateMiddleware = require( "../../middleware/UpdateMiddleware" );
-var UpdateStore      = require( "../../stores/UpdateStore" );
+import UpdateMiddleware from "../../middleware/UpdateMiddleware";
+import UpdateStore from "../../stores/UpdateStore";
 
-var round            = require( "round" );
+import round from "round";
 
 var SystemInfo = React.createClass({
 

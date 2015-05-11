@@ -3,7 +3,7 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 var Throbber = React.createClass({
 

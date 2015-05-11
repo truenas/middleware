@@ -4,10 +4,10 @@
 
 "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
 // Cookies!
-var myCookies = require("./cookies");
+import myCookies from "./cookies";
 
 module.exports = {
 

@@ -1,8 +1,8 @@
 "use strict";
 
-var React  = require( "react" );
+import React from "react";
 
-var Icon   = require( "./Icon" );
+import Icon from "./Icon";
 
 var Widget = React.createClass({
   getInitialState: function () {

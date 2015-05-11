@@ -8,19 +8,19 @@
 
 "use strict";
 
-var _ = require("lodash");
+import _ from "lodash";
 
-var freeNASUtil = require("../common/freeNASUtil");
+import freeNASUtil from "../common/freeNASUtil";
 
-var SubscriptionsStore          = require("../stores/SubscriptionsStore");
-var SubscriptionsActionCreators = require("../actions/SubscriptionsActionCreators");
+import SubscriptionsStore from "../stores/SubscriptionsStore";
+import SubscriptionsActionCreators from "../actions/SubscriptionsActionCreators";
 
-var MiddlewareStore          = require("../stores/MiddlewareStore");
-var MiddlewareActionCreators = require("../actions/MiddlewareActionCreators");
+import MiddlewareStore from "../stores/MiddlewareStore";
+import MiddlewareActionCreators from "../actions/MiddlewareActionCreators";
 
-var SessionStore = require("../stores/SessionStore");
+import SessionStore from "../stores/SessionStore";
 
-var myCookies = require("./cookies");
+import myCookies from "./cookies";
 
 
 function MiddlewareClient() {

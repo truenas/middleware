@@ -1,17 +1,15 @@
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Router       = require("react-router");
-var Link         = Router.Link;
-var RouteHandler = Router.RouteHandler;
+import { Link, RouteHandler } from "react-router";
 
-var viewerCommon = require("../mixins/viewerCommon");
-var viewerUtil   = require("./viewerUtil");
+import viewerCommon from "../mixins/viewerCommon";
+import viewerUtil from "./viewerUtil";
 
-var ToggleSwitch = require("../common/ToggleSwitch");
+import ToggleSwitch from "../common/ToggleSwitch";
 
 
 var DetailNavSection = React.createClass({

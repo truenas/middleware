@@ -6,10 +6,10 @@
 
 "use strict";
 
-var _     = require("lodash");
+import _ from "lodash";
 
-var GroupsStore      = require("../../stores/GroupsStore");
-var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
+import GroupsStore from "../../stores/GroupsStore";
+import GroupsMiddleware from "../../middleware/GroupsMiddleware";
 
 module.exports = {
 

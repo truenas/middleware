@@ -3,9 +3,9 @@
 
 "use strict";
 
-var MiddlewareClient    = require( "../middleware/MiddlewareClient" );
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
-var StatdActionCreators = require( "../actions/StatdActionCreators" );
+import StatdActionCreators from "../actions/StatdActionCreators";
 
 var createPulseSyntax = function ( dataSource ) {
   return "statd." + dataSource + ".pulse";

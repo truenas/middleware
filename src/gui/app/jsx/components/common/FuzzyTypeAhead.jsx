@@ -18,10 +18,10 @@
 
 "use strict";
 
-var React      = require("react");
-var fuzzy      = require("fuzzy");
-var classNames = require("classnames");
-var TWBS       = require("react-bootstrap");
+import React from "react";
+import fuzzy from "fuzzy";
+import classNames from "classnames";
+import TWBS from "react-bootstrap";
 /**
  * PolyFills make me(The author Peter Ruibal) sad
  */

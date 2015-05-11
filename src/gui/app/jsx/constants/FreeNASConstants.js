@@ -3,7 +3,7 @@
 // Objects containing constant mirrored key-value pairs for use with Flux stores
 // and dispatcher. Simple way to maintain consistency for actions and sources.
 
-var keyMirror = require("keymirror");
+import keyMirror from "keymirror";
 
 module.exports = {
 

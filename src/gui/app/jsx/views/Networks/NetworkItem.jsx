@@ -4,19 +4,16 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var routerShim   = require("../../components/mixins/routerShim");
-var clientStatus = require("../../components/mixins/clientStatus");
+import routerShim from "../../components/mixins/routerShim";
+import clientStatus from "../../components/mixins/clientStatus";
 
-var viewerUtil = require("../../components/Viewer/viewerUtil");
-// var editorUtil = require("../../components/Viewer/Editor/editorUtil");
+import viewerUtil from "../../components/Viewer/viewerUtil";
 
-// var NetworksMiddleware = require("../../middleware/NetworksMiddleware");
-var NetworksStore      = require("../../stores/NetworksStore");
+import NetworksStore from "../../stores/NetworksStore";
 
-var TWBS  = require("react-bootstrap");
-// var Icon   = require("../../components/Icon");
+import TWBS from "react-bootstrap";
 
 var NetworksView = React.createClass({
 

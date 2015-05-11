@@ -3,10 +3,10 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var ToggleSwitch = require("../common/ToggleSwitch");
+import ToggleSwitch from "../common/ToggleSwitch";
 
 var Options = React.createClass({
 

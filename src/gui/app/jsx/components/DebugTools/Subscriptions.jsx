@@ -3,18 +3,18 @@
 
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
 var componentLongName = "Debug Tools - Subscriptions Tab";
 
 // Disclosure Triangles
-var DiscTri = require("../common/DiscTri");
+import DiscTri from "../common/DiscTri";
 
 // Middleware
-var SubscriptionsStore  = require("../../stores/SubscriptionsStore");
-var MiddlewareClient    = require("../../middleware/MiddlewareClient");
+import SubscriptionsStore from "../../stores/SubscriptionsStore";
+import MiddlewareClient from "../../middleware/MiddlewareClient";
 
 
 var Subscriptions = React.createClass({

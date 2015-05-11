@@ -5,15 +5,15 @@
 
 var componentLongName = "Debug Tools - Tasks Tab";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
-var moment = require("moment");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
+import moment from "moment";
 
 // Middleware
-var MiddlewareClient = require("../../middleware/MiddlewareClient");
-var TasksStore       = require("../../stores/TasksStore");
-var TasksMiddleware  = require("../../middleware/TasksMiddleware");
+import MiddlewareClient from "../../middleware/MiddlewareClient";
+import TasksStore from "../../stores/TasksStore";
+import TasksMiddleware from "../../middleware/TasksMiddleware";
 
 
 var TasksSection = React.createClass({

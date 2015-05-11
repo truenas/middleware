@@ -4,10 +4,10 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Icon  = require("../../components/Icon");
+import Icon from "../../components/Icon";
 
 var viewerUtil = exports;
 

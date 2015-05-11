@@ -4,12 +4,12 @@
 
 "use strict";
 
-var _ = require("lodash");
+import _ from "lodash";
 
-var ShellMiddleware = require("../../middleware/ShellMiddleware");
+import ShellMiddleware from "../../middleware/ShellMiddleware";
 
-var UsersStore      = require("../../stores/UsersStore");
-var UsersMiddleware = require("../../middleware/UsersMiddleware");
+import UsersStore from "../../stores/UsersStore";
+import UsersMiddleware from "../../middleware/UsersMiddleware";
 
 module.exports = {
 

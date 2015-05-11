@@ -6,24 +6,24 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var routerShim   = require("../../../components/mixins/routerShim");
-var clientStatus = require("../../../components/mixins/clientStatus");
+import routerShim from "../../../components/mixins/routerShim";
+import clientStatus from "../../../components/mixins/clientStatus";
 
-var viewerUtil  = require("../../../components/Viewer/viewerUtil");
-var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
+import viewerUtil from "../../../components/Viewer/viewerUtil";
+import editorUtil from "../../../components/Viewer/Editor/editorUtil";
 
-var UsersMiddleware = require("../../../middleware/UsersMiddleware");
-var UsersStore      = require("../../../stores/UsersStore");
+import UsersMiddleware from "../../../middleware/UsersMiddleware";
+import UsersStore from "../../../stores/UsersStore";
 
-var GroupsStore      = require("../../../stores/GroupsStore");
+import GroupsStore from "../../../stores/GroupsStore";
 
-var inputHelpers = require("../../../components/mixins/inputHelpers");
-var userMixins   = require("../../../components/mixins/userMixins");
-var viewerCommon = require("../../../components/mixins/viewerCommon");
+import inputHelpers from "../../../components/mixins/inputHelpers";
+import userMixins from "../../../components/mixins/userMixins";
+import viewerCommon from "../../../components/mixins/viewerCommon";
 
 // OVERVIEW PANE
 var UserView = React.createClass({

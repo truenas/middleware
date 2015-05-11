@@ -1,13 +1,13 @@
 "use strict";
 
-var React  = require( "react" );
+import React from "react";
 
-var SystemMiddleware = require( "../../middleware/SystemMiddleware" );
-var SystemStore      = require( "../../stores/SystemStore" );
+import SystemMiddleware from "../../middleware/SystemMiddleware";
+import SystemStore from "../../stores/SystemStore";
 
-var chartHandler     = require( "./mixins/chartHandler" );
+import chartHandler from "./mixins/chartHandler";
 
-var round            = require( "round" );
+import round from "round";
 
 var statdResources = [
     {

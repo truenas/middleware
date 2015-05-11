@@ -3,12 +3,12 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var ShellMiddleware = require("../../middleware/ShellMiddleware");
+import ShellMiddleware from "../../middleware/ShellMiddleware";
 
-var Shell = require("../common/Shell");
+import Shell from "../common/Shell";
 
 var Terminal = React.createClass({
 

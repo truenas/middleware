@@ -5,14 +5,14 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 // Routing
-var Router = require("react-router");
-var Routes = require("./routes");
+import Router from "react-router";
+import Routes from "./routes";
 
 // Middleware
-var MiddlewareClient = require("./middleware/MiddlewareClient");
+import MiddlewareClient from "./middleware/MiddlewareClient";
 var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
 
 MiddlewareClient.connect( protocol + document.domain + ":5000/socket" );

@@ -1,13 +1,13 @@
 "use strict";
 
-var React         = require( "react" );
+import React from "react";
 
-var ZfsMiddleware = require( "../../middleware/ZfsMiddleware" );
-var ZfsStore      = require( "../../stores/ZfsStore" );
+import ZfsMiddleware from "../../middleware/ZfsMiddleware";
+import ZfsStore from "../../stores/ZfsStore";
 
-var chartHandler  = require( "./mixins/chartHandler" );
+import chartHandler from "./mixins/chartHandler";
 
-var round         = require( "round" );
+import round from "round";
 
 var DiskUsage = React.createClass({
 
