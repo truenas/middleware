@@ -334,7 +334,7 @@ def parse_changelog(changelog, start = '', end = ''):
         if seq == start:
             # Once we found the right one, we start accumulating
             changelog = ''
-        elif changelog:
+        elif changelog is not None:
             changelog += changes.strip('\n') + '\n'
         if seq == end:
             break    
