@@ -25,8 +25,8 @@ FAILOVER_NEEDOP = '/tmp/.failover_needop'
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
 HEARTBEAT_STATE = '/tmp/heartbeat_state'
 
+logging.raiseExceptions = False # Please, don't hate us this much
 log = logging.getLogger('carp-state-change-hook')
-
 
 def run(cmd):
     proc = subprocess.Popen(
@@ -473,7 +473,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 
 if __name__ == '__main__':
 
-    if os.path.exists("/var/run/log"):
+    try:
         logging.config.dictConfig({
             'version': 1,
             #'disable_existing_loggers': True,
@@ -498,7 +498,7 @@ if __name__ == '__main__':
                 },
             },
         })
-    else:
+    except:
         logging.config.dictConfig({
             'version': 1,
             #'disable_existing_loggers': True,
