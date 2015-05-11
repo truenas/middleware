@@ -13,10 +13,16 @@ import Routes from "./routes";
 
 // Middleware
 import MiddlewareClient from "./middleware/MiddlewareClient";
-var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
+
+let protocol = ( window.location.protocol === "https:" )
+  ? "wss://"
+  : "ws://";
 
 MiddlewareClient.connect( protocol + document.domain + ":5000/socket" );
 
-Router.run( Routes, Router.HistoryLocation, function( Handler, state ) {
-  React.render( <Handler />, document.body );
-});
+Router.run( Routes
+          , Router.HistoryLocation
+          , function ( Handler, state ) {
+              React.render( <Handler />, document.body );
+            }
+          );
