@@ -4,7 +4,6 @@
 
 "use strict";
 
-
 import React from "react";
 
 var Sharing = React.createClass({

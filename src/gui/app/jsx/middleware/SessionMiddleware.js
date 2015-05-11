@@ -2,7 +2,6 @@
 // ================
 // TODO: Decide whether we need this or not
 
-
 "use strict";
 
 import MiddlewareClient from "../middleware/MiddlewareClient";

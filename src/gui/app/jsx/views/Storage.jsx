@@ -6,7 +6,6 @@
 
 "use strict";
 
-
 import React from "react";
 
 var Storage = React.createClass({

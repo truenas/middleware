@@ -4,7 +4,6 @@
 // (Yes/No/Close etc.) before the actual thing happening
 // TODO: Give it a .less file for giving it custom themes
 
-
 "use strict";
 
 import React from "react";

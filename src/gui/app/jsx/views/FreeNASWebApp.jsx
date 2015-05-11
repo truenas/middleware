@@ -1,6 +1,7 @@
 // Main App Wrapper
 // ================
 // Top level controller-view for FreeNAS webapp
+
 "use strict";
 
 import React from "react";
