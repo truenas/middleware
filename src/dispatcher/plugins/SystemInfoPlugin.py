@@ -24,17 +24,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
 import os
 import sys
 import psutil
 import time
+
 from datetime import datetime
 from dateutil import tz
-from dispatcher.rpc import description, returns, accepts
-from task import Provider, Task
+from dispatcher.rpc import SchemaHelper as h, accepts, description, returns
 from lib.system import system, system_bg
 from lib.freebsd import get_sysctl
+from task import Provider, Task
 
 
 @description("Provides informations about the running system")
@@ -59,7 +59,9 @@ class SystemInfoProvider(Provider):
     def time(self):
         return {
             'system-time': datetime.now(tz=tz.tzlocal()),
-            'boot-time': datetime.fromtimestamp(psutil.BOOT_TIME, tz=tz.tzlocal()).isoformat(),
+            'boot-time': datetime.fromtimestamp(
+                psutil.BOOT_TIME, tz=tz.tzlocal()
+            ).isoformat(),
             'timezone': time.tzname[time.daylight],
         }
 
@@ -72,12 +74,48 @@ class SystemInfoProvider(Provider):
         return result
 
 
-class ConfigureTimeTask(Task):
+@accepts(h.ref('system-settings'))
+class SystemConfigureTask(Task):
+
+    def describe(self):
+        return "System Settings Configure"
+
     def verify(self):
         return ['system']
 
-    def run(self, updated_props):
-        pass
+    def run(self, props):
+        self.dispatcher.configstore.set(
+            'service.nginx.http.enable',
+            True if 'HTTP' in props.get('webui-procotol') else False,
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.https.enable',
+            True if 'HTTPS' in props.get('webui-procotol') else False,
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.listen',
+            props.get('webui-listen'),
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.http.port',
+            props.get('webui-http-port'),
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.https.port',
+            props.get('webui-https-port'),
+        )
+        self.dispatcher.configstore.set(
+            'system.language',
+            props.get('language'),
+        )
+        self.dispatcher.configstore.set(
+            'system.timezone',
+            props.get('timezone'),
+        )
+        self.dispatcher.configstore.set(
+            'system.console.kbdmap',
+            props.get('console-kbdmap'),
+        )
 
 
 @description("Reboots the System after a delay of 10 seconds")
@@ -113,9 +151,40 @@ class SystemHaltTask(Task):
 
 
 def _init(dispatcher):
+
+    # Register schemas
+    dispatcher.register_schema_definition('system-settings', {
+        'type': 'object',
+        'properties': {
+            'webui-protocol': {
+                'type': ['array'],
+                'items': {
+                    'type': 'string',
+                    'enum': ['HTTP', 'HTTPS'],
+                },
+            },
+            'webui-listen': {
+                'type': ['array'],
+                'items': {'type': 'string'},
+            },
+            'webui-http-port': {
+                'type': ['array'],
+                'items': {'type': 'integer'},
+            },
+            'webui-https-port': {
+                'type': ['array'],
+                'items': {'type': 'integer'},
+            },
+            'language': {'type': 'string'},
+            'timezone': {'type': 'string'},
+            'console-kbdmap': {'type': 'string'},
+        },
+    })
+
     # Register providers
     dispatcher.register_provider("system.info", SystemInfoProvider)
 
     # Register task handlers
+    dispatcher.register_task_handler("system.configure", SystemConfigureTask)
     dispatcher.register_task_handler("system.shutdown", SystemHaltTask)
     dispatcher.register_task_handler("system.reboot", SystemRebootTask)
