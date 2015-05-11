@@ -38,7 +38,6 @@ cdef extern from "mach/kern_return.h":
         KERN_NO_ACCESS
         KERN_MEMORY_FAILURE
         KERN_MEMORY_ERROR
-        KERN_ALREADY_IN_SET
         KERN_NOT_IN_SET
         KERN_NAME_EXISTS
         KERN_ABORTED
@@ -74,7 +73,6 @@ cdef extern from "mach/kern_return.h":
         KERN_NODE_DOWN
         KERN_NOT_WAITING
         KERN_OPERATION_TIMED_OUT
-        KERN_CODESIGN_ERROR
         KERN_RETURN_MAX
 
 
@@ -144,7 +142,6 @@ cdef extern from "mach/message.h" nogil:
         MACH_MSG_TYPE_COPY_SEND
         MACH_MSG_TYPE_MAKE_SEND
         MACH_MSG_TYPE_MAKE_SEND_ONCE
-        MACH_MSG_TYPE_COPY_RECEIVE
         
     enum:
         MACH_MSG_SUCCESS
