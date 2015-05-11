@@ -6,59 +6,54 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
   // BUILD WORLD
   // Rebuild Browserify bundle when source JS/JSX changes
-  this.jsx = {
-      files: ["<%= dirTree.source.jsx %>/**"]
-    , tasks: [ "react" ]
-  };
+  this.jsx = { files: [ "<%= dirTree.source.jsx %>/**" ]
+             , tasks: [ "jscs:check-javascript-quality", "babel" ]
+             };
 
   // Rebuild Browserify bundle from vanilla JS after it
-  this.ssrjs = {
-      files: ["<%= dirTree.build.ssrjs %>/**"]
-    , tasks: [ "browserify:app" ]
-  };
+  this.ssrjs = { files: [ "<%= dirTree.build.ssrjs %>/**" ]
+               , tasks: [ "browserify:app" ]
+               };
 
   // Rebuild libs.js when internal library changes
-  this.internalScripts = {
-      files: ["<%= dirTree.internalScripts %>/**"]
-    , tasks: [ "browserify:libs" ]
-  };
+  this.internalScripts = { files: [ "<%= dirTree.internalScripts %>/**" ]
+                         , tasks: [ "browserify:libs" ]
+                         };
 
   // Rebuild CSS when LESS files change
-  this.less = {
-      files: [ "<%= dirTree.source.styles %>/**" ]
-    , tasks: [ "less:core" ]
-  };
+  this.less = { files: [ "<%= dirTree.source.styles %>/**" ]
+              , tasks: [ "less:core" ]
+              };
 
   // Copy new/updated images into build
-  this.images = {
-      files: [ "<%= dirTree.source.images %>/**" ]
-    , tasks: [ "copy:images" ]
-  };
+  this.images = { files: [ "<%= dirTree.source.images %>/**" ]
+                , tasks: [ "copy:images" ]
+                };
 
 
   // SERVER LIFECYCLE
   // Run local express task, restart when
-  this.localServer = {
-      files: [
-          "<%= dirTree.routes %>.js"
-        , "<%= dirTree.server %>.js"
-      ]
-    , tasks: [ "express:devServer" ]
-  };
+  this.localServer = { files: [ "<%= dirTree.routes %>.js"
+                              , "<%= dirTree.server %>.js"
+                              ]
+                     , tasks: [ "express:devServer" ]
+                     };
 
   // Restarts GUI service on remote FreeNAS when server or app changes
-  var serverWatchFiles = [
-      "<%= dirTree.server %>.js"
-    , "<%= dirTree.source.templates %>/**"
-    , "<%= dirTree.build.root %>/**"
-    , "package.json"
-    , "bower_components/**"
-  ];
-  this["freenasServer"] = {
-      files: serverWatchFiles
-    , tasks: [ "freenas-config:silent", "rsync", "ssh-multi-exec:start-server" ]
-  };
+  var serverWatchFiles = [ "<%= dirTree.server %>.js"
+                         , "<%= dirTree.source.templates %>/**"
+                         , "<%= dirTree.build.root %>/**"
+                         , "package.json"
+                         , "bower_components/**"
+                         ];
+
+  this["freenasServer"] = { files: serverWatchFiles
+                          , tasks: [ "freenas-config:silent"
+                                   , "rsync"
+                                   , "ssh-multi-exec:start-server"
+                                   ]
+                          };
 };

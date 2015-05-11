@@ -3,13 +3,13 @@
 
 "use strict";
 
-var _            = require("lodash");
-var EventEmitter = require("events").EventEmitter;
+var _            = require( "lodash" );
+var EventEmitter = require( "events" ).EventEmitter;
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+var FreeNASDispatcher = require( "../dispatcher/FreeNASDispatcher" );
+var FreeNASConstants  = require( "../constants/FreeNASConstants" );
 
-var GroupsMiddleware = require("../middleware/GroupsMiddleware");
+var GroupsMiddleware = require( "../middleware/GroupsMiddleware" );
 
 var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
@@ -22,27 +22,27 @@ var _groups = {};
 
 var GroupsStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+  emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
-  , addChangeListener: function( callback ) {
+  , addChangeListener: function ( callback ) {
       this.on( CHANGE_EVENT, callback );
     }
 
-  , removeChangeListener: function( callback ) {
+  , removeChangeListener: function ( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getUpdateMask: function() {
+  , getUpdateMask: function () {
       return UPDATE_MASK;
     }
 
-  , getPendingUpdateIDs: function() {
+  , getPendingUpdateIDs: function () {
       return _updatedOnServer;
     }
 
-  , isLocalTaskPending: function( id ) {
+  , isLocalTaskPending: function ( id ) {
       return _.values( _localUpdatePending ).indexOf( id ) > -1;
     }
 
@@ -56,20 +56,20 @@ var GroupsStore = _.assign( {}, EventEmitter.prototype, {
       });
     }
 
-  , getGroup: function( id ) {
+  , getGroup: function ( id ) {
       return _groups[ id ];
     }
 
-  , getAllGroups: function() {
+  , getAllGroups: function () {
       return _.values( _groups );
     }
 
 });
 
-GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+GroupsStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
   var action = payload.action;
 
-  switch( action.type ) {
+  switch ( action.type ) {
 
     case ActionTypes.RECEIVE_GROUPS_LIST:
 
@@ -81,6 +81,9 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
         _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
       }
 
+      // Updated groups come from the middleware as an array, but we store the
+      // data as an object keyed by the PRIMARY_KEY. Here, we map the changed
+      // groups into the object.
       action.groupsList.map( function ( group ) {
         _groups[ group [ PRIMARY_KEY ] ] = group;
       });
@@ -93,15 +96,17 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
 
       if ( args[ "name" ] === UPDATE_MASK ) {
         if ( updateData[ "operation" ] === "delete" ) {
-            _groups = _.omit(_groups, updateData["ids"] );
-        } else if ( updateData[ "operation" ] === "create" || updateData[ "operation" ] === "update" ) {
+          _groups = _.omit( _groups, updateData["ids"] );
+        } else if ( updateData[ "operation" ] === "create"
+                  || updateData[ "operation" ] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           GroupsMiddleware.requestGroupsList( _updatedOnServer );
         }
         GroupsStore.emitChange();
 
-      } else if ( args[ "name" ] === "task.updated" && updateData["state"] === "FINISHED" ) {
-          delete _localUpdatePending[ updateData["id"] ];
+      } else if ( args[ "name" ] === "task.updated"
+                && updateData["state"] === "FINISHED" ) {
+        delete _localUpdatePending[ updateData["id"] ];
       }
       break;
 
@@ -111,7 +116,7 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       break;
 
     default:
-      // Do Nothing
+    // Do Nothing
   }
 
 });

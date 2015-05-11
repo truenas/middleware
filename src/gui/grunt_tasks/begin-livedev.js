@@ -4,17 +4,19 @@
 
 "use strict";
 
-var chalk = require("chalk");
+var chalk = require( "chalk" );
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
 
-  grunt.registerTask( "begin-livedev", function() {
-    grunt.log.writeln( chalk.green( "Beginning live development session for FreeNAS 10" ) );
+  grunt.registerTask( "begin-livedev", function () {
+    grunt.log.writeln(
+      chalk.green( "Beginning live development session for FreeNAS 10" )
+    );
 
     // Sanity check remote environment
-    grunt.task.run( "ssh-multi-exec:verify-development-environment");
+    grunt.task.run( "ssh-multi-exec:verify-development-environment" );
 
-    // rsync initial payload
+    // Rsync initial payload
     grunt.task.run( "rsync" );
 
     // Start remote server once app has been built

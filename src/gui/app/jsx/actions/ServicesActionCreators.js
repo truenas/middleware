@@ -17,4 +17,12 @@ module.exports = {
       });
     }
 
+  , receiveServiceUpdateTask: function( taskID, serviceName ) {
+      FreeNASDispatcher.handleClientAction({
+          type  	  : ActionTypes.RECEIVE_SERVICE_UPDATE_TASK
+        , taskID 	  : taskID
+        , serviceName : serviceName
+      });
+    }
+
 };

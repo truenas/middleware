@@ -4,23 +4,23 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+var FreeNASDispatcher = require( "../dispatcher/FreeNASDispatcher" );
+var FreeNASConstants  = require( "../constants/FreeNASConstants" );
 
 var ActionTypes = FreeNASConstants.ActionTypes;
 
 module.exports = {
 
-    receiveGroupsList: function( groupsList ) {
+  receiveGroupsList: function ( groupsList ) {
       FreeNASDispatcher.handleMiddlewareAction({
-          type       : ActionTypes.RECEIVE_GROUPS_LIST
+        type       : ActionTypes.RECEIVE_GROUPS_LIST
         , groupsList : groupsList
       });
     }
 
-  , receiveGroupUpdateTask: function( taskID, groupID ) {
+  , receiveGroupUpdateTask: function ( taskID, groupID ) {
       FreeNASDispatcher.handleMiddlewareAction({
-          type    : ActionTypes.RECEIVE_GROUP_UPDATE_TASK
+        type    : ActionTypes.RECEIVE_GROUP_UPDATE_TASK
         , taskID  : taskID
         , groupID : groupID
       });

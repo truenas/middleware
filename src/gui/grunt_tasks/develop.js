@@ -5,8 +5,8 @@
 
 "use strict";
 
-module.exports = function(grunt) {
-  grunt.registerTask( "develop", function() {
+module.exports = function ( grunt ) {
+  grunt.registerTask( "develop", function () {
     var asyncDone = this.async();
 
     // Run `npm install`
@@ -22,6 +22,10 @@ module.exports = function(grunt) {
 
     // Clean the build directory
     grunt.task.run( "clean:build" );
+
+    // Check the code quality
+    grunt.log.ok( "Checking JavaScript code quality" );
+    grunt.task.run( "jscs:check-javascript-quality" );
 
     // Compile app source into usable formats
     grunt.task.run( "concurrent:buildWorld" );

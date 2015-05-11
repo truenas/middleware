@@ -1,20 +1,20 @@
 "use strict";
 
-var React = require("react");
+var React = require( "react" );
 
-var Widget = require("../Widget");
+var Widget = require( "../Widget" );
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var SystemMiddleware = require( "../../middleware/SystemMiddleware" );
+var SystemStore      = require( "../../stores/SystemStore" );
 
-var UpdateMiddleware = require("../../middleware/UpdateMiddleware");
-var UpdateStore      = require("../../stores/UpdateStore");
+var UpdateMiddleware = require( "../../middleware/UpdateMiddleware" );
+var UpdateStore      = require( "../../stores/UpdateStore" );
 
-var round            = require("round");
+var round            = require( "round" );
 
 var SystemInfo = React.createClass({
 
-  getInitialState: function() {
+  getInitialState: function () {
     return {
         hardware   :   ""
       , version    :   ""
@@ -23,7 +23,7 @@ var SystemInfo = React.createClass({
     };
   }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SystemStore.addChangeListener( this.handleSystemChange );
       //*Temp. Removed* UpdateStore.addChangeListener( this.handleUpdateChange );
 
@@ -34,28 +34,28 @@ var SystemInfo = React.createClass({
       //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "get_current_train" );
    }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       SystemStore.removeChangeListener( this.handleSystemChange );
       //*Temp. Removed* UpdateStore.removeChangeListener( this.handleUpdateChange );
     }
 
-  , handleSystemChange: function() {
+  , handleSystemChange: function () {
       this.setState({
           hardware : SystemStore.getSystemInfo( "hardware" )
         , version  : SystemStore.getSystemInfo( "version" )
       });
     }
 
-  , handleUpdateChange: function() {
+  , handleUpdateChange: function () {
       this.setState({
-          // TODO: This causes a traceback (#8620)
-          // updates  : UpdateStore.getUpdate( "check_now_for_updates" )
-          // train    : UpdateStore.getUpdate( "get_current_train" )
+          train    : UpdateStore.getUpdate( "get_current_train" )
+        // TODO: Yet to add
+        //, updates  : UpdateStore.getUpdate( "check_now_for_updates" )
       });
     }
 
-  , render: function() {
-    var memSize = round((this.state.hardware["memory-size"] / 1024) / 1024, 1);
+  , render: function () {
+    var memSize = round( ( this.state.hardware["memory-size"] / 1024 ) / 1024, 1 );
     return (
       <Widget
         positionX  =  {this.props.positionX}
@@ -75,6 +75,10 @@ var SystemInfo = React.createClass({
           <span className="wd-title">Version:</span>
           <span className="wd-value">{this.state.version}</span>
         </div>
+        <div className="wd-section wd-train">
+          <span className="wd-title">Current Update Train:</span>
+          <span className="wd-value">{this.state.train}</span>
+        </div>
 
 
       </Widget>
@@ -85,10 +89,6 @@ var SystemInfo = React.createClass({
 module.exports = SystemInfo;
 
 /* Temp. Removed
-        <div className="wd-section wd-train">
-          <span className="wd-title">Current Update Train:</span>
-          <span className="wd-value">{this.state.train}</span>
-        </div>
         <div className="wd-section wd-update">
           <span className="wd-title">Available updates:</span>
           <span className="wd-value">{this.state.updates}</span>

@@ -1,13 +1,17 @@
 .. highlight:: javascript
    :linenothreshold: 5
 
-Understanding the Flux Application Architecture
-===============================================
+.. index:: Flux
+.. _Flux:
+
+The Flux Application Architecture
+=================================
 
 .. figure:: images/architecture/flux/freenas_flux.png
    :alt: A high level data flow diagram for FreeNAS 10's UI
 
    A high level data flow diagram for FreeNAS 10's UI
+
 Flux and FreeNAS 10
 -------------------
 
@@ -60,16 +64,12 @@ React View
 is generally the primary view open in the webapp. While other persistent
 components (navigation, notifications, widgets etc) function in slightly
 different ways, they're broadly similar to a standard React View.
->\ *What makes them different? I tought the Navigation for example is
-completly same React Component as any other. Is it because some of them
-don't need input from the Flux Store? And isn't that only true for now
-and in close future even the menu structure different for each user will
-be served from the Middleware through the Flux Store?*
 
-.. figure:: images/architecture/flux/screenshot_react_view.png
-   :alt: Example of a basic view
+.. figure:: images/viewer/groups_view_detail.png
+   :alt: An example of a basic view with an item selected.
 
    Example of a basic view
+
 Role
 ^^^^
 
@@ -80,9 +80,9 @@ updating itself when newer data is available.
 Input
 ^^^^^
 
-In the above screenshot, the Users view is open. Following the diagram
-at the top of this guide, the Users view receives new information from
-the Users Flux Store. The Users view does not modify the Flux store, and
+In the above screenshot, the Groups view is open. Following the diagram
+at the top of this guide, the Groups view receives new information from
+the Groups Flux Store. The view does not modify the Flux store, and
 has no opinions of its contents. When a React View is first initialized,
 it will often subscribe to an empty Flux store, and display nothing. In
 a few moments, when the Flux store is updated with the relevant data,
@@ -91,13 +91,13 @@ the React View will re-render itself to display that data.
 Output
 ^^^^^^
 
-The React View submits events, data, and requests to the Users Middlware
-Utility Class. In the example of the Users View, if a user account is
-edited - for example, if its email address is changed - upon saving, the
-updated user object is sent to the Users Middleware Utility Class. The
-React View is ignorant of what will then happen to the user, and does
-not register a callback or perform any followup actions. When the user
-is updated, or an error occurrs, it will be communicated through the
+The React View submits events, data, and requests to the Middleware
+Utility Class. In the example of the Groups View, if a group is
+edited - for example, its name is changed - upon saving, the
+updated group object is sent to the Groups Middleware Utility Class. The
+React View is ignorant of what will then happen to the group, and does
+not register a callback or perform any followup actions. When the group
+is updated, or an error occurs, it will be communicated through the
 same subscription to the Flux Store described above.
 
 Submitting User Input
@@ -107,9 +107,7 @@ The next step in the Flux Architecture is handling user input and
 sending it to the server. There is a deliberate pattern which will
 emerge, in which each "step" is ignorant of what came before it, and is
 only responsible for taking the data given to it and performing the
-appropriate next step. >\ *How does this corelate with the previous
-paragrph? Can you maybe give more detailed info on how the data will
-flow?*
+appropriate next step.
 
 Middleware Utility Class
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,12 +123,11 @@ callback for the appropriate Action Creator.
 
 .. code:: javascript
 
-
-        requestUsersList: function() {
-          MiddlewareClient.request( "accounts.query_users", null, function ( rawUsersList ) {
-            UsersActionCreators.receiveUsersList( rawUsersList );
-          });
-        }
+    requestGroupsList: function() {
+      MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
+        GroupsActionCreators.receiveGroupsList( groupsList );
+      });
+    }
 
 Role
 ^^^^
@@ -138,9 +135,7 @@ Role
 The MUC pipes request data into a public method provided by the
 Middleware Client, and registers a callback that will be run when a
 matching response is receieved from the Middleware Server. The MUC does
-not modify input data, and does not manipulate response data. >\ *here
-will be server based validation done? Will even potentionally harmfull
-data go unmodified?*
+not modify input data, and does not manipulate response data.
 
 The ambiguation provided by this class is necessary for a few reasons:
 
@@ -175,9 +170,7 @@ The MUC recieves raw event data, objects, and other pre-packaged
 interactions from a React View. These might be as simple as a click
 event, or as complex as a dictionary object representing the changed
 properties for an array of hard disks. The MUC is deliberately ignorant
-of the Views which send it data. >\ *My previous question is probably
-explained here. Everything will go untouched to the Middleware Client
-which will probably do the validation.*
+of the Views which send it data.
 
 Output
 ^^^^^^
@@ -194,14 +187,12 @@ Middleware Client
 ~~~~~~~~~~~~~~~~~
 
 |Middleware Client| The FreeNAS 10 UI uses a fully asyncronous WebSocket
-connection for communication with the hardware backend. The `Middleware
-Client <middleware.md>`__ is a simple WebSocket client which handles the
-connection lifecycle, as well as the packaging, identification,
-transmission, and (initial) receipt of data.
+connection for communication with the hardware backend. The :ref:`Middleware Client`
+is a simple WebSocket client which handles the connection lifecycle, as well as the
+packaging, identification, transmission, and (initial) receipt of data.
 
-It has `well-documented soruce
-code <../app/jsx/middleware/MiddlewareClient.js>`__ which explain the
-specific application of its methods.
+See the doumentation for the :ref:`Public Facing Middleware Client Functions`,
+which explains the relevant methods and their intended uses.
 
 Role
 ^^^^
@@ -231,6 +222,9 @@ meant to be called from a Middleware Utility Class. These methods should
 be provided input data to send to the Middleware Server, and also
 provided a registered callback to a method exposed by an ActionCreator.
 
+.. note:: At some point soon, we will functionality to accept a second callback
+specificaly for error handling. APRIL 2015
+
 Output
 ^^^^^^
 
@@ -255,20 +249,14 @@ on the same hardware as the core FreeNAS 10 OS. It collects and
 disburses system data requested by a Middleware Client. It is capable of
 handling event queues and multiple (non-blocking) requests. It can
 connect to many clients at the same time, and correctly triage requests
-and responses to each, concurrently. >\ *Does it comunicate only with
-the Middleware Client? Isn't this the part where multiple machines will
-be able to talk to each other? And will this always run on the same HW
-where the core FN10 OS resides? Is **Remora** retired?* ---
+and responses to each, concurrently.
 
 FreeNAS 10 Base OS
 ~~~~~~~~~~~~~~~~~~
 
 |FreeNAS 10 Base OS| The core operating system. Out of scope for any UI
-work, and shown in the above diagram only to describe its exact
-relationship to the rest of the system. >\ *This feels like the end of
-the document. "Out of scope for any UI work" seems very definitive and
-might suggest to the readers that there is nothing directly concerning
-them further.*
+work, and shown in the above diagram only to describe its
+relationship to the rest of the system and position in the flow of logic.
 
 Handling Data From the Middleware
 ---------------------------------
@@ -316,19 +304,18 @@ given for the original request. The response data is passed into the
 ActionCreator function, where it is packaged, tagged, and processed (if
 necessary).
 
-In the example below, the Middleware client receieves a list of users,
-packages them for the handleMiddlewareAction function in
+In the example below, the Middleware client receives a list of groups and
+packages them for the ``handleMiddlewareAction()`` function in
 FreeNASDispatcher.
 
 .. code:: javascript
 
-
-        receiveUsersList: function( rawUsers ) {
-          FreeNASDispatcher.handleMiddlewareAction({
-              type     : ActionTypes.RECEIVE_RAW_USERS
-            , rawUsers : rawUsers
-          });
-        }
+    receiveGroupsList: function( groupsList ) {
+      FreeNASDispatcher.handleMiddlewareAction({
+          type       : ActionTypes.RECEIVE_GROUPS_LIST
+        , groupsList : groupsList
+      });
+    }
 
 Output
 ^^^^^^
@@ -415,18 +402,17 @@ run when the store is updated.
 
 .. code:: javascript
 
+    emitChange: function() {
+      this.emit( CHANGE_EVENT );
+    }
 
-          emitChange: function() {
-            this.emit( CHANGE_EVENT );
-          }
+  , addChangeListener: function( callback ) {
+      this.on( CHANGE_EVENT, callback );
+    }
 
-        , addChangeListener: function( callback ) {
-            this.on( CHANGE_EVENT, callback );
-          }
-
-        , removeChangeListener: function( callback ) {
-            this.removeListener( CHANGE_EVENT, callback );
-          }
+  , removeChangeListener: function( callback ) {
+      this.removeListener( CHANGE_EVENT, callback );
+    }
 
 In this way, data upkeep and processing tasks are abstracted out of the
 view, and the view can rely on always having up-to-date data provided
@@ -436,66 +422,52 @@ Stores also tend to have utility functions for retrieving specific data.
 
 .. code:: javascript
 
+    // Return a specific group
+  , getGroup: function( id ) {
+      return _groups[ id ];
+    }
 
-        // Return a specific user
-          getUser: function( key ) {
-            return _users[ key ];
-          }
-
-        // Return all users
-        , getAllUsers: function() {
-            return _users;
-          }
-
-Another unique function of stores is the ability to act syncronously,
-and delay an update until another store has completed updating. Because
-each store registers a dispatchToken with the Dispatcher, it's a trivial
-matter to wait for another store to finish updating, then update the
-target.
-
-.. code:: javascript
-
-
-        case ActionTypes.UPDATE_USERS:
-
-          // waitFor will prevent the user update from occurring until GroupsStore
-          // is guaranteed to have updated
-
-          FreeNASDispatcher.waitFor([GroupsStore.dispatchToken]);
-
-          // GroupsStore has been updated, so now we can proceed
-
-          _users = action.rawUsers;
-          UsersStore.emitChange();
-          break;
+    // Return all groups
+  , getAllGroups: function() {
+      return _.values( _groups );
+    }
 
 Input
 ^^^^^
 
-Stores are **only ever modified by the Dispatcher**. They receieve every
+Stores are **only ever modified by the Dispatcher**. They receive every
 broadcast payload the Dispatcher ever sends out, and will generally have
 a ``switch`` function that determines whether the broadcast is
 applicable to the type of data that the Store is concerned with. This
 determination is usually based on the action type added by the
-ActionCreator.
+ActionCreator. The code snippet below is representative of a response to new
+data from the middleware.
 
 .. code:: javascript
 
+  GroupsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+    var action = payload.action;
 
-        UsersStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-          var action = payload.action;
+    switch( action.type ) {
 
-          switch( action.type ) {
+      case ActionTypes.RECEIVE_GROUPS_LIST:
 
-            case ActionTypes.RECEIVE_RAW_USERS:
-              _users = action.rawUsers;
-              UsersStore.emitChange();
-              break;
+        var updatedGroupIDs = _.pluck( action.groupsList, PRIMARY_KEY );
 
-            default:
-              // No action
-          }
+        // When receiving new data, we can comfortably resolve anything that may
+        // have had an outstanding update indicated by the Middleware.
+        if ( _updatedOnServer.length > 0 ) {
+          _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
+        }
+
+        // Updated groups come from the middleware as an array, but we store the
+        // data as an object keyed by the PRIMARY_KEY. Here, we map the changed groups
+        // into the object.
+        action.groupsList.map( function ( group ) {
+          _groups[ group [ PRIMARY_KEY ] ] = group;
         });
+        GroupsStore.emitChange();
+        break;
 
 Output
 ^^^^^^
@@ -503,11 +475,9 @@ Output
 Each React View will choose to subscribe to events emit by a specific
 Flux store, and additionally may request some or all of its data at
 various points in its lifecycle. When the Flux store updates, it will
-emit an event, causing the React View or Component to re-request the
-data (which may cause it to re-render to display the update). > *How the
-process of subscription works? I thought, that React Component is
-unaware of the source of data it is displaying and that it has to be the
-Flux store which is firehosing the component with data.*
+emit an event, causing the Change Listeners registered with that store to execute.
+Usually these will be functions to re-request the data updated in the store
+(which may cause the component to re-render to display the update).
 
 The Flux Store is ignorant of which views are subscribed to it, and
 persists as a singleton outside the lifecycle of any View or Component.

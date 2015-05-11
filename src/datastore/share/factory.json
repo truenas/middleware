@@ -324,6 +324,21 @@
                 "group": 80,
                 "email": null,
                 "password_disabled": false
+            },
+            "522": {
+                "username": "nullmail",
+                "sshpubkey": null,
+                "shell": "/bin/sh",
+                "locked": false,
+                "unixhash": "*",
+                "sudo": false,
+                "smbhash": "*",
+                "builtin": true,
+                "full_name": "Nullmailer Mail System",
+                "home": "/var/spool/nullmailer",
+                "group": 522,
+                "email": null,
+                "password_disabled": false
             }
         }
     }, 
@@ -446,6 +461,10 @@
                 "name": "www",
                 "builtin": true
             },
+            "522": {
+                "name": "nullmail",
+                "builtin": true
+            },
             "65533": {
                 "name": "nogroup",
                 "builtin": true
@@ -477,6 +496,12 @@
 			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
+	    "mail.server": "",
+	    "mail.port": 25,
+	    "mail.encryption": "PLAIN",
+	    "mail.auth": false,
+	    "mail.user": "",
+	    "mail.pass": "",
             "network.autoconfigure": true,
             "network.gateway.ipv4": null,
             "network.gateway.ipv6": null,
@@ -554,6 +579,12 @@
 					"file:hosts"
 				]
 			},
+      "5A35508B-AE0F-4C1A-B728-482956D1C12E": {
+              "name": "mail",
+              "dependencies": [
+                      "file:local/nullmailer/remotes"
+              ]
+      },
 			"52B83614-F3DD-47EC-A41B-39D297FE2ED8": {
 				"name": "collectd",
 				"dependencies": [
@@ -592,8 +623,31 @@
                 "builtin": true,
 				"rcng": {
 					"rc-scripts": "devd"
+				},
+				"launchd": {
+					"Label": "org.freebsd.devd",
+					"ProgramArguments": [
+						"/usr/sbin/devd",
+						"-d"
+					],
+					"RunAtLoad": true
 				}
             },
+			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
+				"name": "sshd",
+				"builtin": true,
+				"rcng": {
+					"rc-scripts": "sshd"
+				},
+				"launchd": {
+					"Label": "com.openssh.sshd",
+					"ProgramArguments": [
+						"/usr/sbin/sshd",
+						"-D"
+					],
+					"RunAtLoad": true
+				}
+			},
             "77C31BDA-A90A-495A-8D58-0063981EEC67": {
                 "name": "syslog",
                 "pidfile": "/var/run/syslog.pid",
@@ -674,6 +728,21 @@
 				"builtin": true,
 				"rcng": {
 					"rc-scripts": "netatalk"
+				}
+			},
+			"8117202A-ED32-430E-A6AF-88B168B1601A": {
+				"name": "nullmailer",
+				"etcd-group": "mail",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.untroubled.nullmailer",
+					"ProgramArguments": [
+						"/usr/local/sbin/nullmailer-send"
+					],
+					"RunAtLoad": true
+				},
+				"rcng": {
+					"rc-scripts": "nullmailer"
 				}
 			}
         }

@@ -1,6 +1,7 @@
 .highlight .hll { background-color: #515151 }
-.highlight      { background : #2d2d2d !important;
-                  color      : #cccccc !important; }   /* Hashtag YOLO */
+.highlight,
+.highlight pre  { color      : #cccccc !important; }   /* Hashtag YOLO */
+.highlight      { background : #2d2d2d !important; }
 .highlight .c   { color: #999999 }                     /* Comment */
 .highlight .err { color: #f2777a }                     /* Error */
 .highlight .k   { color: #cc99cc }                     /* Keyword */

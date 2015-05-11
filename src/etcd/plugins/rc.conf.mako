@@ -1,5 +1,6 @@
 hostname="${config.get("system.hostname")}"
-local_startup="/etc/ix.rc.d /usr/local/etc/rc.d"
+local_startup="/usr/local/etc/rc.d"
+early_late_divider="*"
 root_rw_mount="YES"
 clear_tmpX="NO"
 background_fsck="NO"
@@ -21,3 +22,6 @@ performance_cpu_freq="HIGH"
         ${svc['rcng']['rc-scripts']}_enable="YES"
     % endif
 % endfor
+
+# MTA relay
+nullmailer_enable="YES"

@@ -4,12 +4,12 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
   this.reloadPackages = {
-      command: [ "npm install", "bower install" ].join("&&")
+    command: [ "npm install", "bower install" ].join( "&&" )
   };
 
   this.npmProduction = {
-      command: "npm install --production"
+    command: "npm install --production"
   };
 };

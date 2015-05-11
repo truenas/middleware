@@ -938,10 +938,7 @@ cdef class RoutingMessage(RoutingPacket):
     def as_buffer(self):
         self.rt_msg.rtm_version = 5
         self.rt_msg.rtm_addrs = self._pack_sockaddrs(cython.sizeof(defs.rt_msghdr), self.addrs)
-        print 'bufsize: {0}'.format(self.bufsize)
         self.rt_msg.rtm_msglen = self.bufsize
-        print 'rtm_addrs: {0}'.format(self.rt_msg.rtm_addrs)
-        print 'rtm_msglen: {0}'.format(self.rt_msg.rtm_msglen)
         return self.buffer[:self.bufsize]
 
     property errno:

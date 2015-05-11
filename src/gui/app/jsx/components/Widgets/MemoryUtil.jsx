@@ -1,13 +1,13 @@
 "use strict";
 
-var React  = require("react");
+var React  = require( "react" );
 
-var SystemMiddleware = require("../../middleware/SystemMiddleware");
-var SystemStore      = require("../../stores/SystemStore");
+var SystemMiddleware = require( "../../middleware/SystemMiddleware" );
+var SystemStore      = require( "../../stores/SystemStore" );
 
-var chartHandler     = require("./mixins/chartHandler");
+var chartHandler     = require( "./mixins/chartHandler" );
 
-var round            = require("round");
+var round            = require( "round" );
 
 var statdResources = [
     {
@@ -46,7 +46,7 @@ var MemoryUtil = React.createClass({
 
   mixins: [ chartHandler ]
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {    hardware: SystemStore.getSystemInfo( "hardware" )
                 , statdResources : statdResources
                 , chartTypes : []
@@ -55,17 +55,17 @@ var MemoryUtil = React.createClass({
              };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SystemStore.addChangeListener( this.handleChange );
 
       SystemMiddleware.requestSystemInfo( "hardware" );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       SystemStore.removeChangeListener( this.handleChange );
     }
 
-  , primaryChart: function( type ) {
+  , primaryChart: function ( type ) {
       if ( this.props.primary === undefined && type === "line" ) {
         return true;
       } else if ( type === this.props.primary) {
@@ -75,33 +75,32 @@ var MemoryUtil = React.createClass({
       }
     }
 
-  , handleChange: function() {
+  , handleChange: function () {
       var newState = {};
       newState.hardware = SystemStore.getSystemInfo( "hardware" );
 
-      if (newState.hardware)
-      {
+      if ( newState.hardware ) {
 
         newState.chartTypes = [
                                 {
                                     type    : "stacked"
-                                  , primary : this.primaryChart("stacked")
-                                  , y: function(d) { return round( ( d[1]/1024 )/1024, 0.01 ); }
+                                  , primary : this.primaryChart( "stacked" )
+                                  , y: function ( d ) { return round( ( d[1] / 1024 ) / 1024, 0.01 ); }
                                 }
                               , {
                                     type    : "line"
-                                  , primary : this.primaryChart("line")
-                                  , forceY  : [0, 100]
+                                  , primary : this.primaryChart( "line" )
+                                  , forceY  : [ 0, 100 ]
                                   , yUnit   : "%"
-                                  , y: function(d) { return round(( ( d[1] / newState.hardware["memory-size"] )*100 ), 0.01 ); }.bind( this )
+                                  , y: function ( d ) { return round( ( ( d[1] / newState.hardware["memory-size"] ) * 100 ), 0.01 ); }.bind( this )
                                 }
                               , {
                                     type   : "pie"
-                                  , primary: this.primaryChart("pie")
+                                  , primary: this.primaryChart( "pie" )
                                 }
                             ];
 
-          this.setState( newState );
+        this.setState( newState );
       }
     }
 

@@ -5,6 +5,7 @@
 
 # PROVIDE: cleanvar
 # REQUIRE: var
+# KEYWORD: nostart
 
 . /etc/rc.subr
 

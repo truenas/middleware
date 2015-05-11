@@ -7,22 +7,19 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
 
   // WEBAPP
-  this.app = {
-      src  : [ "<%= dirTree.build.ssrjs %>/client.js" ]
-    , dest : "<%= dirTree.build.app %>/app.js"
-  };
+  this.app = { src  : [ "<%= dirTree.build.ssrjs %>/client.js" ]
+             , dest : "<%= dirTree.build.app %>/app.js"
+             };
 
   // EXTERNAL LIBRARIES
-  this.libs = {
-      src: [
-        "<%= dirTree.bower.velocity %>/velocity.min.js"
-      , "<%= dirTree.bower.velocity %>/velocity.ui.min.js"
-      , "<%= dirTree.bower.d3 %>/d3.js"
-      , "<%= dirTree.internalScripts %>/nv.d3.js"
-    ]
-    , dest : "<%= dirTree.build.dist %>/libs.js"
-  };
+  this.libs = { src: [ "<%= dirTree.bower.velocity %>/velocity.min.js"
+                     , "<%= dirTree.bower.velocity %>/velocity.ui.min.js"
+                     , "<%= dirTree.bower.d3 %>/d3.js"
+                     , "<%= dirTree.internalScripts %>/nv.d3.js"
+                     ]
+              , dest : "<%= dirTree.build.dist %>/libs.js"
+              };
 };

@@ -1,4 +1,5 @@
-# Copyright 2014 iXsystems, Inc.
+#+
+# Copyright 2015 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,6 +26,8 @@
 #####################################################################
 
 import enum
+import os
+from libc.errno cimport errno
 from libc.stdint cimport uintptr_t
 cimport defs
 
@@ -40,7 +43,7 @@ class ItemType(enum.IntEnum):
     STRING = defs.LAUNCH_DATA_STRING
     OPAQUE = defs.LAUNCH_DATA_OPAQUE
     ERRNO = defs.LAUNCH_DATA_ERRNO
-    MACHPORT = defs.LAUNCH_DATA_MACHPORT    
+    MACHPORT = defs.LAUNCH_DATA_MACHPORT
 
 
 cdef class Item(object):
@@ -212,6 +215,7 @@ cdef class Item(object):
         arr = <object>data
         arr.append(name)
 
+
 cdef class Launchd(object):
     def __init__(self):
         pass
@@ -221,12 +225,34 @@ cdef class Launchd(object):
         resp = <uintptr_t>defs.launch_msg(data._value)
 
         if resp == 0:
+            if errno != 0:
+                raise OSError(errno, os.strerror(errno))
+
             return None
 
         return Item(ptr=resp)
 
-    def load(self, label, plist):
-        pass
+    property jobs:
+        def __get__(self):
+            msg = Item("GetJobs")
+            return self.message(msg)
+
+    def load(self, plist):
+        msg = Item({"SubmitJob": plist})
+        return self.message(msg)
 
     def unload(self, label):
-        pass
+        msg = Item({"RemoveJob": label})
+        return self.message(msg)
+
+    def start(self, label):
+        msg = Item({"StartJob": label})
+        return self.message(msg)
+
+    def stop(self, label):
+        msg = Item({"StopJob": label})
+        return self.message(msg)
+
+    def checkin(self):
+        msg = Item("CheckIn")
+        return self.message(msg)

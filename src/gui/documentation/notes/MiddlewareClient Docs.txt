@@ -1,0 +1,57 @@
+Public-facing middleware client functions:
+
+  * connect( url, force ) - Attempts to open a connection to the freenas server. Applies:
+    * MiddlewareClient.handleMessage as the function for WebSocket.onmessage
+    * MiddlewareClient.handleOpen as the function for WebSocket.onopen
+    * MiddlewareClient.handleError as the function for WebSocket.onerror
+    * MiddlewareClient.onclose as the function for WebSocket.onclose
+  TODO: LIST WHAT EACH OF THOSE FUNCTIONS DOES.
+  ARGS:
+    * 'url' - the url of the FreeNAS server. CHECK THIS
+    * 'force' - boolean that determines whether a connection attempt should be made even if there is an active connection. treated as falsy if not included.
+
+  * disconnect( code, reason ) - close the websocket connection with the submitted code and reason.
+  EDIT: I do not think we should document this as yet, as it is not being used anywhere, I probably will use it soon and at that time I may modify it and
+  EDIT: then we could update the docs then
+    * 'code' - WHAT CODES ARE EXPECTED
+    * 'reason' - WHAT REASONS ARE EXPECTED
+
+  * login( auth_type, credentials ) Attemts to log in to the server. executes MiddlewareActionCreators.receiveAuthenticationChange( reponse, true) where response is an array of three elements: the string "auth", the first element of the array of responses from the server, and the second element of the array of responses from the middleware. DOCUMENT WHAT THOSE ELEMENTS REPRESENT.
+  ARGS:
+    * 'auth_type' - A valid auth type ("token" or "userpass")
+    * 'credentials' - the credentials for that auth type (respectively a stored credential token or an array containing a string representing the username and a string representing the submitted password)
+
+  * logout UNIMPLEMENTED (EDIT: This will probably be added with the this.diconnected call)
+
+  * request( method, args, callback, errorCallback ) - sends a new RPC call. executes the appropriate callback according to what the server returns
+  ARGS:
+    * 'method' should be a string that's the name of an legitimate call.
+    * 'args' should be the desired array of args for the call.
+    * 'callback' should be the function to be run upon the success of the call. The callback should usually be bound to the class making the request and will be called with the args TODO LIST CALLBACK ARGS.
+    * 'errorCallback' will be called if the call returns failure. The errorCallback will be called with the args TODO LIST ERRORCALLBACK ARGS. The errorCallback should likely also be bound to the function making the request. NOT YET IMPLEMENTED
+
+  * subscribe( masks, componentID ) - subscribes to the supplied event masks for the supplied component
+  ARGS:
+    * 'masks' should be an array of strings that are legitimate event masks (NOTE: there should be no spaces leading or trainling in the masks, use trim on it before sending it to this function as an array)
+    ADD: For example, one can send ["tasks.*", "system.*"] (good with a tick symbol next to it), but not [" tasks.*". "system.* "] (bad with a X sign next to it)
+    * 'componentID' should be the unique string representing the component that is unsubscribing
+
+  * unsubscribe( masks, componentID ) - unsubscribes the component represented by componentID from the masks provided
+  ARGS:
+    * 'masks' should be an array of strings that are legitimate event masks to which the component represented by the componentID is subscribed
+    * 'componentID' should be the unique string representing the component to be unsubscribed
+
+  * renewSubscriptions() - re-sends all subscriptions known to the client. Main use case is to return the GUI to an operable state after a FreeNAS server reboots or otherwise loses
+  the subscriptions.
+
+  * unsubscribeAll() - unsubscribes from all subscriptions known to the client
+
+  * getServices() - a pre-formed RPC call for "discovery.get_services". Calls MiddlewareActionCreators.receiveAvailableServices( services ) with an array of strings representing all services known the the middleware server. PROBABLY. CHECK EXACTLY WHAT THIS RETURNS
+
+  * getMethods( service ) - pre-formed RPC call for "discovery.get_methods". Submits MiddlewareActionCreators.receiveAvailableServices(service, methods) where service is the service that was requested and methods WHAT IS METHODS RETURNED AS
+  ARGS:
+    * 'service' - A string representing a service known the the middleware server
+
+
+
+

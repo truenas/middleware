@@ -3,8 +3,12 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
   this.deployment = [ "<%= dirTree.deployment %>" ];
-  this.build      = [ "<%= dirTree.build.root %>", "<%= dirTree.build.ssrjs %>" ];
-  this.pkgs       = [ "bower_components", "node_modules" ];
+  this.build = [ "<%= dirTree.build.root %>"
+               , "<%= dirTree.build.ssrjs %>"
+               ];
+  this.pkgs = [ "bower_components"
+              , "node_modules"
+              ];
 };

@@ -1,0 +1,6 @@
+{
+	"Label": "org.freenas.middleware.dispatcher",
+	"Program": "/usr/local/sbin/dispatcherd",
+	"RunAtLoad": true,
+	"KeepAlive": true
+}

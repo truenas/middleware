@@ -273,7 +273,7 @@ class Dispatcher(object):
             plugin.assign_module(imp.load_source(name, path))
             self.plugins[name] = plugin
         except Exception, err:
-            self.logger.warning("Cannot load plugin from %s: %s", path, str(err))
+            self.logger.exception("Cannot load plugin from %s", path)
             self.dispatch_event("server.plugin.load_error", {"name": os.path.basename(path)})
             return
 

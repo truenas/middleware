@@ -2,8 +2,8 @@
 // 2014-09-20
 "use strict";
 
-var _    = require("lodash");
-var glob = require("glob");
+var _    = require( "lodash" );
+var glob = require( "glob" );
 
 
 // Gruntfile
@@ -13,23 +13,23 @@ var glob = require("glob");
 // common development tasks.
 
 // Wrapper function for Grunt
-module.exports = function(grunt) {
+module.exports = function ( grunt ) {
 
   // Force use of Unix newlines
   grunt.util.linefeed = "\n";
 
   // GRUNT CONFIGURATION AND GLOBAL VARIABLES
   // Load task configurations from grunt_tasks/config
-  function loadConfig( path ) {
+  function loadConfig ( path ) {
     var object = {};
     var ConfigFile;
     var key;
 
     // Iterate over all config module files, and create a single config object.
-    glob.sync( "*", { cwd: path } ).forEach( function( option ) {
+    glob.sync( "*", { cwd: path } ).forEach( function ( option ) {
       // Each task file contains a constructor capable of creating a
       // representative options object for its task.
-      ConfigFile = require(path + option);
+      ConfigFile = require( path + option );
       key = option.replace( /\.js$/, "" );
       // Invoke constructor, append output to configuration object, keyed by the
       // name of its task.
@@ -39,90 +39,79 @@ module.exports = function(grunt) {
     return object;
   }
 
+  // DEVELOPMENT VARIABLES
+  // =====================
+  // These are some variables that commonly change during development, and
+  // will simplify any changes to file structure, ports, etc.
+
+  // Path variables for Bower components
+  var bc = "./bower_components/";
+  var bowerConfig =
+    { velocity : bc + "velocity"
+    , d3       : bc + "d3"
+    , openSans: { less  : bc + "lessfonts-open-sans/src/less"
+                , fonts : bc + "lessfonts-open-sans/dist/fonts/OpenSans"
+                }
+    , fontawesome: { less  : bc + "fontawesome/less"
+                   , fonts : bc + "fontawesome/fonts"
+                   }
+    };
+
+  var sourceConfig = { root      : "app"
+                     , images    : "app/source/images"
+                     , favicons  : "app/source/favicons"
+                     , jsx       : "app/jsx"
+                     , styles    : "app/source/styles"
+                     , templates : "app/templates"
+                     };
+
+  var buildConfig = { root  : "app/build/"
+                    , app   : "app/build/js"
+                    , img   : "app/build/img"
+                    , css   : "app/build/css"
+                    , font  : "app/build/font"
+                    , dist  : "app/build/js"
+                    , ssrjs : "app/ssrjs"
+                    };
+
 
   // Configuration environment and global variables
-  var gruntConfig = {
+  var gruntConfig =
     // Use npm manifest as a list of available packages
-    pkg: grunt.file.readJSON("package.json")
-
-    // DEVELOPMENT VARIABLES
-    // =========================================================================
-    // These are some variables that commonly change during development, and
-    // will simplify any changes to file structure, ports, etc.
-
-    , dirTree: {
-          client : "app/client"
-        , server : "app/server"
-        , routes : "app/server-js/routes"
-        , data   : "app/data"
-
-        // Bower components
-        , bower: {
-              velocity : "./bower_components/velocity"
-            , d3       : "./bower_components/d3"
-            , openSans: {
-                  less  : "./bower_components/lessfonts-open-sans/src/less"
-                , fonts : "./bower_components/lessfonts-open-sans/dist/fonts/OpenSans"
-              }
-            , fontawesome: {
-                  less  : "./bower_components/fontawesome/less"
-                , fonts : "./bower_components/fontawesome/fonts"
-              }
-          }
-
-        // Folder with internaly managed JS libraries
-        , internalScripts : "app/source/internalScripts"
-
-        // Sources
-        , source: {
-              root      : "app"
-            , images    : "app/source/images"
-            , favicons  : "app/source/favicons"
-            , jsx       : "app/jsx"
-            , styles    : "app/source/styles"
-            , templates : "app/templates"
-
-          }
-
-        // Build
-        , build: {
-            root  : "app/build/"
-          , app   : "app/build/js"
-          , img   : "app/build/img"
-          , css   : "app/build/css"
-          , font  : "app/build/font"
-          , dist  : "app/build/js"
-          , ssrjs : "app/ssrjs"
-        }
-
-        , deployment : "app-deploy"
-      }
+    { pkg: grunt.file.readJSON( "package.json" )
+    , dirTree: { root            : "./"
+               , client          : "app/client"
+               , server          : "app/server"
+               , routes          : "app/server-js/routes"
+               , data            : "app/data"
+               , bower           : bowerConfig
+               , internalScripts : "app/source/internalScripts"
+               , source          : sourceConfig
+               , build           : buildConfig
+               , deployment      : "app-deploy"
+               }
 
     // Environment
-    , env: {
-        port   : 4000
-      }
+    , env: { port: 4000 }
 
     // FreeNAS remote config
     , guiDirectory   : "/usr/local/www/gui"
     , configFilePath : "./freenas10-conf.json"
-    , conditionalCommands: {
-        enablePkg        : ""
-      , installGmake     : ""
-      , installGplusplus : ""
-      , symlinkGplusplus : ""
-      , symlinkCplusplus : ""
-      , installNpm       : ""
-      , updateNpm        : ""
-    }
-    , freeNASConfig: {
-          "notConfigured" : true
-        , "remoteHost"    : null
-        , "sshPort"       : null
-        , "authType"      : null
-        , "keyPath"       : null
-        , "rootPass"      : null
-      }
+    , conditionalCommands: { enablePkg        : ""
+                           , installGmake     : ""
+                           , installGplusplus : ""
+                           , symlinkGplusplus : ""
+                           , symlinkCplusplus : ""
+                           , installNpm       : ""
+                           , updateNpm        : ""
+                           }
+    , freeNASConfig: { notConfigured : true
+                     , remoteHost    : null
+                     , sshPort       : null
+                     , authType      : null
+                     , keyPath       : null
+                     , rootPass      : null
+                     }
   };
 
 
@@ -137,7 +126,7 @@ module.exports = function(grunt) {
   // Here, we tell grunt to load the packages from package.json. Tasks must be
   // loaded before they can be called.
 
-  require("load-grunt-tasks")( grunt );
+  require( "load-grunt-tasks" )( grunt );
 
 
   // LOAD OTHER GRUNT TASKS
@@ -146,7 +135,7 @@ module.exports = function(grunt) {
   // npm. Configuration tools and modularized grunt tasks belong here.
 
   // Registers task: 'bootstrap', installed as local module
-  grunt.loadTasks("grunt_tasks");
+  grunt.loadTasks( "grunt_tasks" );
 
 
   // DEFAULT
@@ -155,6 +144,7 @@ module.exports = function(grunt) {
   // and bootstrap the FreeNAS environment.
 
   // Options
-  // --local   Start a local dev server, ignore any config files. TODO: --local not working?
+  // --local   Start a local dev server, ignore any config files.
+  // TODO: --local not working?
   grunt.registerTask( "default", [ "develop" ] );
 };

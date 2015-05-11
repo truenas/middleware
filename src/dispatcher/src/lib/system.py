@@ -15,9 +15,11 @@ class SubprocessException(Exception):
 
 def system(*args, **kwargs):
     sh = kwargs["shell"] if "shell" in kwargs else False
+    stdin = kwargs.pop('stdin', None)
     proc = subprocess.Popen(args, stderr=subprocess.PIPE, shell=sh,
-                            stdout=subprocess.PIPE, close_fds=True)
-    out, err = proc.communicate()
+                            stdout=subprocess.PIPE, close_fds=True,
+                            stdin=subprocess.PIPE if stdin else None)
+    out, err = proc.communicate(input=stdin)
 
     logger.debug("Running command: %s", ' '.join(args))
 

@@ -5,14 +5,15 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var moment = require("moment");
+var _                   = require( "lodash" );
+var React               = require( "react" );
+var moment              = require( "moment" );
+var componentWidthMixin = require( "react-component-width-mixin" );
 
-var StatdMiddleware = require("../../../middleware/StatdMiddleware");
-var StatdStore      = require("../../../stores/StatdStore");
+var StatdMiddleware     = require( "../../../middleware/StatdMiddleware" );
+var StatdStore          = require( "../../../stores/StatdStore" );
 
-var Widget          = require("../../Widget");
+var Widget              = require( "../../Widget" );
 
 var i = 0;
 
@@ -29,20 +30,9 @@ var divStyle = {
 };
 
 module.exports = {
+    mixins: [ componentWidthMixin ]
 
-	divStyle: {
-  					  width   : "36px"
-  					, height  : "100%"
-  					, "float" : "right"
-				}
-
-	, svgStyle: {
-  					  width   : "calc(100% - 36px)"
-  					, height  : "100%"
-  					, "float" : "left"
-				}
-
-    , getInitialState: function() {
+  , getInitialState: function () {
       var initialStatdData = {};
 
       return {
@@ -57,7 +47,7 @@ module.exports = {
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       StatdStore.addChangeListener( this.handleStatdChange );
       var newState = {};
       if ( this.state.statdResources.length > 0 ) {
@@ -66,7 +56,7 @@ module.exports = {
       }
 
       if ( this.state.chartTypes.length > 0 ) {
-      	newState.graphType = _.result( _.findWhere( this.state.chartTypes, { "primary": true } ), "type" );
+        newState.graphType = _.result( _.findWhere( this.state.chartTypes, { "primary": true } ), "type" );
       }
 
       this.setState( newState );
@@ -74,33 +64,30 @@ module.exports = {
     }
 
   , subscribeToUpdates: function () {
-
       StatdMiddleware.subscribeToPulse(
           this.state.widgetIdentifier
         , this.state.statdResources.map( this.createStatdSources )
       );
   }
 
-  , requestData: function() {
+  , requestData: function () {
     var stop  = moment();
     var start = moment().subtract( 15, "m" );
 
-    _.forEach( this.state.statdResources, function( resource ) {
-        StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
+    _.forEach( this.state.statdResources, function ( resource ) {
+      StatdMiddleware.requestWidgetData( resource.dataSource, start.format(),  stop.format(), "10S" );
 
     });
 
   }
-  , componentDidUpdate: function( prevProps, prevState ) {
+  , componentDidUpdate: function ( prevProps, prevState ) {
       var newState = {};
-      if (this.state.statdResources.length !== prevState.statdResources.length )
-      {
+      if ( this.state.statdResources.length !== prevState.statdResources.length ) {
         this.requestData();
         this.subscribeToUpdates();
       }
 
-      if (this.state.chartTypes.length !== prevState.chartTypes.length )
-      {
+      if ( this.state.chartTypes.length !== prevState.chartTypes.length ) {
         newState.graphType = _.result( _.findWhere( this.state.chartTypes, { "primary": true } ), "type" );
       }
 
@@ -109,9 +96,9 @@ module.exports = {
       // Only update if we have the required props, there is no staged update
       // currently being assembled, and we have access to both D3 and NVD3
       // (on the basis that the component is mounted)
-      if ( this.isMounted() && this.state.chartTypes.length > 0 && this.state.statdDataLoaded){
+      if ( this.isMounted() && this.state.chartTypes.length > 0 && this.state.statdDataLoaded ) {
         if ( !this.state.chart ) {
-        	this.drawChart();
+          this.drawChart();
         }
         var chartShouldReload = ( prevState.graphType !== this.state.graphType );
         //var statdDataExists = _.all( this.state.statdData, function( dataArray ) {
@@ -121,21 +108,27 @@ module.exports = {
         if ( chartShouldReload ) {
           this.drawChart( chartShouldReload );
         } else if ( _.isEmpty( this.state.stagedUpdate ) &&
-                    !_.isEmpty( prevState.stagedUpdate ) ){
+                    !_.isEmpty( prevState.stagedUpdate ) ) {
+          this.drawChart();
+        }
+
+        if ( prevState.componentWidth !== this.state.componentWidth ) {
+          //console.log("redraw");
           this.drawChart();
         }
       }
     }
 
-  , shouldComponentUpdate: function(nextProps, nextState) {
-    	return nextState.statdResources !== this.state.statdResources ||
-    		   nextState.chartTypes !== this.state.chartTypes ||
-    		   nextState.statdDataLoaded !== this.state.statdDataLoaded ||
-			   nextState.stagedUpdate !== this.state.stagedUpdate ||
-    		   nextState.graphType !== this.state.graphType;
+  , shouldComponentUpdate: function ( nextProps, nextState ) {
+      return nextState.statdResources   !==  this.state.statdResources    ||
+             nextState.chartTypes       !==  this.state.chartTypes        ||
+             nextState.statdDataLoaded  !==  this.state.statdDataLoaded   ||
+             nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
+             nextState.graphType        !==  this.state.graphType         ||
+             nextState.componentWidth   !==  this.state.componentWidth;
 	}
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       StatdStore.removeChangeListener( this.handleStatdChange );
       StatdMiddleware.unsubscribeFromPulse(
           this.state.widgetIdentifier
@@ -143,19 +136,19 @@ module.exports = {
       );
     }
 
-  , createStatdSources: function( dataObject ) {
+  , createStatdSources: function ( dataObject ) {
       return dataObject.dataSource;
     }
 
-  , handleStatdChange: function() {
+  , handleStatdChange: function () {
       var newState     = {};
 
-      //Do we have initial stack of data?
-      if (this.state.statdDataLoaded === true) {
+      // Do we have initial stack of data?
+      if ( this.state.statdDataLoaded === true ) {
         var dataUpdate   = StatdStore.getWidgetDataUpdate();
         var updateTarget = _.find(
             this.state.statdResources
-          , function( resource ) {
+          , function ( resource ) {
               return dataUpdate.name === "statd." + resource.dataSource + ".pulse";
             }
         );
@@ -187,7 +180,7 @@ module.exports = {
           if ( _.keys( stagedUpdate ).length >= this.state.statdResources.length ) {
             newState.statdData = {};
 
-            _.forEach( stagedUpdate, function( data, key ) {
+            _.forEach( stagedUpdate, function ( data, key ) {
               var newData = this.state.statdData[ key ].concat( data );
               newState.statdData[ key ] = _.takeRight( newData, 100 );
             }.bind( this ) );
@@ -197,10 +190,9 @@ module.exports = {
           this.setState( _.merge(
               { "stagedUpdate": stagedUpdate }
             , newState
-          ));
+          ) );
         }
-      }
-      else {
+      } else {
         newState.statdData = {};
         _.forEach( this.state.statdResources,  function( resource ) {
           newState.statdData[ resource.variable ] = StatdStore.getWidgetData( resource.dataSource ) || [];
@@ -217,7 +209,7 @@ module.exports = {
       }
     }
 
-  , drawChart: function( chartShouldReload ) {
+  , drawChart: function ( chartShouldReload ) {
       var newState     = {};
       var chartSVGNode = this.refs.svg.getDOMNode();
       var xLabel;
@@ -234,7 +226,7 @@ module.exports = {
           .on( "mouseout", null )
           .on( "dblclick", null )
           .on( "click", null )
-          .selectAll("*").remove();
+          .selectAll( "*" ).remove();
 
         newState["chart"] = null;
         newState.legendStateArr = [];
@@ -248,17 +240,15 @@ module.exports = {
           .datum( this.chartData( this.state.graphType ) )
           .call( newState["chart"] );
 
-        if ( !_.isEmpty( newState.legendStateObj ) )
-        {
-        	if (this.state.graphType === "pie")	{
-	        	newState["chart"].dispatch.changeState( { disabled	: newState.legendStateObj } );
-	    	}
-	    	else {
-	        	newState["chart"].dispatch.changeState( { disabled	: newState.legendStateArr } );
-	    	}
+        if ( !_.isEmpty( newState.legendStateObj ) ) {
+          if ( this.state.graphType === "pie" )	{
+            newState["chart"].dispatch.changeState( { disabled: newState.legendStateObj } );
+          } else {
+            newState["chart"].dispatch.changeState( { disabled: newState.legendStateArr } );
+          }
 
-        } else  {
-        	newState["chart"].update();
+        } else {
+          newState["chart"].update();
         }
 
       } else {
@@ -267,14 +257,14 @@ module.exports = {
         var graphTypeObject = _.findWhere( this.state.chartTypes, { "type": this.state.graphType } );
         var newChart;
 
-        switch( this.state.graphType ) {
+        switch ( this.state.graphType ) {
 
           case "stacked":
             newChart = nv.models.stackedAreaChart()
               .options({
                   margin                  : { top: 15, right: 40, bottom: 60, left: 60 }
-                , x                       : graphTypeObject.x || function(d) { return d[0]; }   //We can modify the data accessor functions...
-                , y                       : graphTypeObject.y || function(d) { return d[1]; }   //...in case your data is formatted differently.
+                , x                       : graphTypeObject.x || function ( d ) { return d[0]; }   //We can modify the data accessor functions...
+                , y                       : graphTypeObject.y || function ( d)  { return d[1]; }   //...in case your data is formatted differently.
                 , transitionDuration      : 250
                 , style                   : "Expanded"
                 , showControls            : false       //Allow user to choose 'Stacked', 'Stream', 'Expanded' mode.
@@ -287,14 +277,14 @@ module.exports = {
             xLabel = graphTypeObject.xLabel || "Time";
             newChart.xAxis
               .axisLabel( xLabel )
-              .tickFormat( function(d) {
-                return moment.unix(d).format("HH:mm:ss");
+              .tickFormat( function ( d ) {
+                return moment.unix( d ).format( "HH:mm:ss" );
               });
 
             yUnit = graphTypeObject.yUnit || "";
             newChart.yAxis
               .axisLabel( graphTypeObject.yLabel )
-              .tickFormat( function(d) {
+              .tickFormat( function ( d ) {
                 return ( d + yUnit );
               });
             break;
@@ -303,8 +293,8 @@ module.exports = {
             newChart = nv.models.lineChart()
             .options({
                 margin                  : { top: 15, right: 40, bottom: 60, left: 60 }
-              , x                       : graphTypeObject.x || function(d) { return d[0]; }
-              , y                       : graphTypeObject.y || function(d) { return d[1]; }
+              , x                       : graphTypeObject.x || function ( d ) { return d[0]; }
+              , y                       : graphTypeObject.y || function ( d ) { return d[1]; }
               , showXAxis               : true
               , showYAxis               : true
               , transitionDuration      : 250
@@ -316,28 +306,28 @@ module.exports = {
             xLabel = graphTypeObject.xLabel || "Time";
             newChart.xAxis
               .axisLabel( xLabel )
-              .tickFormat( function(d) {
-                return moment.unix(d).format("HH:mm:ss");
+              .tickFormat( function ( d ) {
+                return moment.unix( d ).format( "HH:mm:ss" );
               });
 
             yUnit = graphTypeObject.yUnit || "";
             newChart.yAxis
               .axisLabel( graphTypeObject.yLabel )
-              .tickFormat( function(d) {
+              .tickFormat( function ( d ) {
                 return ( d + yUnit );
               });
             break;
 
           case "pie":
             var colors = [];
-            _.forEach( this.state.statdResources,  function( resource ) {
-              colors.push(resource.color);
+            _.forEach( this.state.statdResources,  function ( resource ) {
+              colors.push( resource.color );
             });
             newChart = nv.models.pieChart()
             .options({
                 margin             : { top: 0, right: 0, bottom: 0, left: 0 }
-              , x                  : graphTypeObject.x || function(d) { return d.label; }
-              , y                  : graphTypeObject.y || function(d) { return d.value; }
+              , x                  : graphTypeObject.x || function ( d ) { return d.label; }
+              , y                  : graphTypeObject.y || function ( d ) { return d.value; }
               , color              : colors
               , showLabels         : true
               , labelThreshold     : 1
@@ -353,44 +343,43 @@ module.exports = {
             return;
         }
         var hndlChrtStChng = this.handleChartStateChange;
-        newChart.dispatch.on("stateChange", function (e) { hndlChrtStChng(e); });
+        newChart.dispatch.on( "stateChange", function ( e ) { hndlChrtStChng( e ); });
         newState["chart"] = newChart;
 
         d3.select( chartSVGNode )
           .datum( this.chartData( this.state.graphType ) )
           .call( newState["chart"] );
 
-        //TODO: Figure out a good way to do this automatically
-        //nv.utils.windowResize(chart.update);
-        //nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
+        // TODO: Figure out a good way to do this automatically
+        // nv.utils.windowResize(chart.update);
+        // nv.utils.windowResize(function() { d3.select('#chart1 svg').call(chart) });
 
-        //chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
+        // chart.dispatch.on('stateChange', function(e) { nv.log('New State:', JSON.stringify(e)); });
       }
 
       this.setState( newState );
     }
 
-  , handleChartStateChange: function(newChartState) {
-  	var legendStateObject = {};
-  	var legendStateArray = newChartState["disabled"];
+  , handleChartStateChange: function( newChartState ) {
+    var legendStateObject = {};
+    var legendStateArray = newChartState["disabled"];
 
-  	for (var i = 0; i < newChartState["disabled"].length; i++)
-  	{
-    	legendStateObject[i] = newChartState["disabled"][i];
-	}
+    for ( var i = 0; i < newChartState["disabled"].length; i++ ) {
+      legendStateObject[i] = newChartState["disabled"][i];
+    }
 
-  	this.setState( {   legendStateObj: legendStateObject
-  					 , legendStateArr: legendStateArray } );
-  	//console.log(legendStateObject);
+    this.setState( {   legendStateObj: legendStateObject
+                     , legendStateArr: legendStateArray } );
+    // console.log(legendStateObject);
   }
 
-  , chartData: function( chartType ) {
+  , chartData: function ( chartType ) {
       var returnArray = [];
       var statdData   = this.state.statdData;
 
       switch ( chartType ) {
         case "line":
-          _.forEach( this.state.statdResources, function( resource ) {
+          _.forEach( this.state.statdResources, function ( resource ) {
             var returnArrayMember = {
                 area   : resource.area || false
               , values : statdData[ resource.variable ]
@@ -398,35 +387,35 @@ module.exports = {
               , color  : resource.color
             };
             returnArray.push( returnArrayMember );
-          }.bind( this ));
+          }.bind( this ) );
           break;
 
         case "stacked":
-          _.forEach( this.state.statdResources, function( resource ) {
+          _.forEach( this.state.statdResources, function ( resource ) {
             var returnArrayMember = {
                 values : statdData[ resource.variable ]
               , key    : resource.name
               , color  : resource.color
             };
             returnArray.push( returnArrayMember );
-          }.bind( this ));
+          }.bind( this ) );
           break;
 
         case "pie":
-          _.forEach( this.state.statdResources, function( resource ) {
+          _.forEach( this.state.statdResources, function ( resource ) {
             var returnArrayMember = {
-                value : statdData[ resource.variable ][ (statdData[ resource.variable ].length - 1) ][1]
+                value : statdData[ resource.variable ][ ( statdData[ resource.variable ].length - 1 ) ][1]
               , label : resource.name
             };
             returnArray.push( returnArrayMember );
-          }.bind( this ));
+          }.bind( this ) );
           break;
 
       }
       return returnArray;
     }
 
-  , returnErrorMsgs: function( resource, index ) {
+  , returnErrorMsgs: function ( resource, index ) {
       var errorMsg;
       var statdData = this.state.statdData;
 
@@ -441,10 +430,9 @@ module.exports = {
       );
     }
 
-  , returnGraphOptions: function( resource, index ) {
-      var selectedGraphType ="";
-      if (resource.type === this.state.graphType)
-      {
+  , returnGraphOptions: function ( resource, index ) {
+      var selectedGraphType = "";
+      if ( resource.type === this.state.graphType ) {
         selectedGraphType = " selected";
       }
       return (
@@ -458,58 +446,58 @@ module.exports = {
       );
     }
 
-  , toggleGraph: function( event ) {
+  , toggleGraph: function ( event ) {
       this.setState({ graphType: event.target.textContent });
     }
 
-  , render: function() {
-  	if ( this.state.errorMode ) {
-        return (
+  , render: function () {
+    if ( this.state.errorMode ) {
+      return (
         <Widget
           positionX = { this.props.positionX }
           positionY = { this.props.positionY }
           title     = { this.props.title }
           size      = { this.props.size } >
 
-	        <div className="widget-error-panel">
-	          	<h4>Something went sideways.</h4>
-	        	{ this.state.statdResources.map( this.returnErrorMsgs, this ) }
-	        </div>
+          <div className="widget-error-panel">
+              <h4>Something went sideways.</h4>
+            { this.state.statdResources.map( this.returnErrorMsgs, this ) }
+          </div>
 
-	    </Widget>
+      </Widget>
         );
-    } else if (this.state.statdDataLoaded && this.state.chartTypes.length > 0) {
-    	return (
+    } else if ( this.state.statdDataLoaded && this.state.chartTypes.length > 0 ) {
+      return (
         <Widget
           positionX = { this.props.positionX }
           positionY = { this.props.positionY }
           title     = { this.props.title }
           size      = { this.props.size } >
 
-	        <div className="widget-content">
-	        	<svg ref="svg" style={svgStyle}></svg>
-	            <div ref="controls" style={divStyle}>
-	              { this.state.chartTypes.map( this.returnGraphOptions ) }
-	            </div>
-	        </div>
+          <div className="widget-content">
+            <svg ref="svg" style={svgStyle}></svg>
+              <div ref="controls" style={divStyle}>
+                { this.state.chartTypes.map( this.returnGraphOptions ) }
+              </div>
+          </div>
 
-	    </Widget>
+      </Widget>
         );
     } else {
-    	return (
-      	<Widget
+      return (
+        <Widget
           positionX = { this.props.positionX }
           positionY = { this.props.positionY }
           title     = { this.props.title }
           size      = { this.props.size } >
 
-	        <div className="widget-error-panel">
-	          	<h4>Loading...</h4>
-	        </div>
+          <div className="widget-error-panel">
+              <h4>Loading...</h4>
+          </div>
 
-	    </Widget>
+      </Widget>
         );
-      }
     }
+  }
 };
 

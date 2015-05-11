@@ -38,6 +38,7 @@ $RECYCLE.BIN/
 *.swp
 *.mo
 *.o
+*.so
 /gui/local_settings.py
 /FreeBSD/
 /filtered-patches/
@@ -68,3 +69,4 @@ freenas10-conf.json
 src/gui/freenas9-conf - Copy.json
 src/gui/freenas9-conf - MiniHome.json
 src/gui/freenas10-conf - mini.json
+src/gui/log/

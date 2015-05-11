@@ -1,78 +1,73 @@
 "use strict";
 
-var React   =   require("react");
+var React         = require( "react" );
 
-var ZfsMiddleware = require("../../middleware/ZfsMiddleware");
-var ZfsStore      = require("../../stores/ZfsStore");
+var ZfsMiddleware = require( "../../middleware/ZfsMiddleware" );
+var ZfsStore      = require( "../../stores/ZfsStore" );
 
-var chartHandler  = require("./mixins/chartHandler");
+var chartHandler  = require( "./mixins/chartHandler" );
 
-var round         = require("round");
+var round         = require( "round" );
 
 var DiskUsage = React.createClass({
 
   mixins: [ chartHandler ]
 
-, getInitialState: function() {
+, getInitialState: function () {
     return {
-        pool:              ZfsStore.getZfsPoolGetDisks( "freenas-boot")
+        pool:              ZfsStore.getZfsPoolGetDisks( "freenas-boot" )
       , statdResources:    []
-      , chartTypes:        [  {   type:"line"
-                                , primary: this.primaryChart("line")
-                                , y:function(d) { return ( round( d[1]/1024, 0.01 ) ); }
+      , chartTypes:        [  {   type: "line"
+                                , primary: this.primaryChart( "line" )
+                                , y: function ( d ) { return ( round( d[1] / 1024, 0.01 ) ); }
                               }
                            ]
       , widgetIdentifier : "DiskUsage"
     };
   }
 
-, componentDidMount: function() {
+, componentDidMount: function () {
     ZfsStore.addChangeListener( this.handleChange );
     ZfsMiddleware.requestZfsPoolGetDisks( "freenas-boot" );
   }
 
-, componentWillUnmount: function() {
+, componentWillUnmount: function () {
     ZfsStore.removeChangeListener( this.handleChange );
   }
 
-, handleChange: function() {
+, handleChange: function () {
     var newState = {};
-    newState.pool = ZfsStore.getZfsPoolGetDisks( "freenas-boot");
+    newState.pool = ZfsStore.getZfsPoolGetDisks( "freenas-boot" );
 
-    if (newState.pool)    {
-      var systemPoolPath = newState.pool[0].split("/") ;
-      var systemPoolName = systemPoolPath[systemPoolPath.length - 1].slice(0, systemPoolPath[systemPoolPath.length - 1].indexOf("p"));
+    if ( newState.pool ) {
+      var systemPoolPath = newState.pool[0].split( "/" ) ;
+      var systemPoolName = systemPoolPath[systemPoolPath.length - 1]
+                            .slice( 0, systemPoolPath[systemPoolPath.length - 1].indexOf( "p" ) );
 
-          newState.statdResources = [
-                                        {   variable:"write"
-                                          , dataSource:"localhost.disk-" + systemPoolName + ".disk_octets.write"
-                                          , name: systemPoolName + " Write"
-                                          , color:"#9ecc3c"
-                                        }
-                                      , {   variable:"read"
-                                          , dataSource:"localhost.disk-" + systemPoolName + ".disk_octets.read"
-                                          , name: systemPoolName + " Read"
-                                          , color:"#77c5d5"
-                                        }
-                                    ];
+      newState.statdResources = [
+                                    {   variable: "write"
+                                      , dataSource: "localhost.disk-" + systemPoolName + ".disk_octets.write"
+                                      , name: systemPoolName + " Write"
+                                      , color: "#9ecc3c"
+                                    }
+                                  , {   variable: "read"
+                                      , dataSource: "localhost.disk-" + systemPoolName + ".disk_octets.read"
+                                      , name: systemPoolName + " Read"
+                                      , color: "#77c5d5"
+                                    }
+                                ];
       this.setState( newState );
     }
 
 
   }
 
-, primaryChart: function(type)
-  {
-    if (this.props.primary === undefined && type === "line")
-    {
+, primaryChart: function ( type ) {
+    if ( this.props.primary === undefined && type === "line" ) {
       return true;
-    }
-    else if (type === this.props.primary)
-    {
+    } else if ( type === this.props.primary ) {
       return true;
-    }
-    else
-    {
+    } else {
       return false;
     }
 
