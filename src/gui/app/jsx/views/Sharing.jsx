@@ -8,7 +8,7 @@
 import React from "react";
 
 var Sharing = React.createClass({
-  render: function() {
+  render: function () {
     return (
       <main>
         <h2>Sharing View</h2>

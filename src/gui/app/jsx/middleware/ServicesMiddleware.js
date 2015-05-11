@@ -23,7 +23,7 @@ module.exports = {
       });
     }
 
-  , requestServicesList: function() {
+  , requestServicesList: function () {
       MiddlewareClient.request( "services.query", [], function ( rawServicesList ) {
         ServicesActionCreators.receiveServicesList( rawServicesList );
       });

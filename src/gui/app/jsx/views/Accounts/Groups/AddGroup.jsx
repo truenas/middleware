@@ -27,7 +27,7 @@ var AddGroup = React.createClass({
       viewData: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
 
       var groupsList = GroupsStore.getAllGroups();
 
@@ -51,7 +51,7 @@ var AddGroup = React.createClass({
       this.setState( { locallyModifiedValues: newLocallyModified } );
     }
 
-  , submitNewGroup: function() {
+  , submitNewGroup: function () {
       var routing = this.props.viewData.routing;
       var newGroupValues = {};
       var params         = {};
@@ -74,7 +74,7 @@ var AddGroup = React.createClass({
       this.context.router.transitionTo( "groups" );
     }
 
-  , render: function() {
+  , render: function () {
       var addButtons =
         <TWBS.ButtonToolbar>
           <TWBS.Button className = "pull-right"

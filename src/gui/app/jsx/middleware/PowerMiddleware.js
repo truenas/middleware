@@ -19,12 +19,12 @@ module.exports = {
       MiddlewareClient.unsubscribe( ["power.changed", "update.changed"], componentID );
     }
 
-  , reboot: function() {
+  , reboot: function () {
       MiddlewareClient.request( "task.submit", ["system.reboot", ""]);
       myCookies.delete("auth");
     }
 
-  , shutdown: function() {
+  , shutdown: function () {
       MiddlewareClient.request( "task.submit", ["system.shutdown", ""]);
       myCookies.delete("auth");
    }

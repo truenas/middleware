@@ -46,7 +46,7 @@ var TypeaheadOption = React.createClass({
     hover: React.PropTypes.bool
   },
 
-  getDefaultProps: function() {
+  getDefaultProps: function () {
     return {
       customClasses: {},
       onClick: function(event) {
@@ -55,11 +55,11 @@ var TypeaheadOption = React.createClass({
     };
   },
 
-  getInitialState: function() {
+  getInitialState: function () {
     return {};
   },
 
-  _getClasses: function() {
+  _getClasses: function () {
     var classes = {
       "typeahead-option": true,
     };
@@ -68,7 +68,7 @@ var TypeaheadOption = React.createClass({
     return classNames(classes);
   },
 
-  render: function() {
+  render: function () {
     var classes = {};
     classes[this.props.customClasses.hover || "hover"] = !!this.props.hover;
     classes[this.props.customClasses.listItem] = !!this.props.customClasses.listItem;
@@ -108,7 +108,7 @@ var TypeaheadSelector = React.createClass({
     onOptionSelected: React.PropTypes.func
   },
 
-  getDefaultProps: function() {
+  getDefaultProps: function () {
     return {
       selectionIndex: null,
       customClasses: {},
@@ -117,14 +117,14 @@ var TypeaheadSelector = React.createClass({
     };
   },
 
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       selectionIndex: this.props.selectionIndex,
       selection: this.getSelectionForIndex(this.props.selectionIndex)
     };
   },
 
-  render: function() {
+  render: function () {
     var classes = {
       "typeahead-selector": true
     };
@@ -207,11 +207,11 @@ var TypeaheadSelector = React.createClass({
                    selection: newSelection});
   },
 
-  navDown: function() {
+  navDown: function () {
     this._nav(1);
   },
 
-  navUp: function() {
+  navUp: function () {
     this._nav(-1);
   }
 
@@ -238,7 +238,7 @@ var FuzzyTypeAhead = React.createClass({
     , filterOption      : React.PropTypes.func
   },
 
-  getDefaultProps: function() {
+  getDefaultProps: function () {
     return {
         options           : []
       , customClasses     : {}
@@ -251,7 +251,7 @@ var FuzzyTypeAhead = React.createClass({
     };
   },
 
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       // The currently visible set of options
       visible: this.getOptionsForValue(this.props.defaultValue, this.props.options),
@@ -279,7 +279,7 @@ var FuzzyTypeAhead = React.createClass({
     return result;
   },
 
-  _hasCustomValue: function() {
+  _hasCustomValue: function () {
     if (this.props.allowCustomValues > 0 &&
       this.state.entryValue.length >= this.props.allowCustomValues &&
       this.state.visible.indexOf(this.state.entryValue) < 0) {
@@ -288,14 +288,14 @@ var FuzzyTypeAhead = React.createClass({
     return false;
   },
 
-  _getCustomValue: function() {
+  _getCustomValue: function () {
     if (this._hasCustomValue()) {
       return this.state.entryValue;
     }
     return null;
   },
 
-  _renderIncrementalSearchResults: function() {
+  _renderIncrementalSearchResults: function () {
     // Nothing has been entered into the textbox
     if (!this.state.entryValue) {
       return "";
@@ -360,7 +360,7 @@ var FuzzyTypeAhead = React.createClass({
     return this._onOptionSelected(this.refs.sel.state.selection, event);
   },
 
-  _onEscape: function() {
+  _onEscape: function () {
     this.refs.sel.setSelectionIndex(null);
   },
 
@@ -418,7 +418,7 @@ var FuzzyTypeAhead = React.createClass({
     });
   },
 
-  render: function() {
+  render: function () {
     var inputClasses = {};
     inputClasses[this.props.customClasses.input] = !!this.props.customClasses.input;
     var inputClassList = classNames(inputClasses);
@@ -445,7 +445,7 @@ var FuzzyTypeAhead = React.createClass({
     );
   },
 
-  _renderHiddenInput: function() {
+  _renderHiddenInput: function () {
     if (!this.props.name) {
       return null;
     }

@@ -18,7 +18,7 @@ var socketConnected = false;
 
 var PowerStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -30,7 +30,7 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getUpdateMask: function() {
+  , getUpdateMask: function () {
       return UPDATE_MASK;
     }
 
@@ -44,7 +44,7 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
     return [false, ""];
   }
 
-  , isRebootPending: function() {
+  , isRebootPending: function () {
     if ( _.values(ongoingEvents).indexOf("reboot") !== -1 ) {
       return true;
     }

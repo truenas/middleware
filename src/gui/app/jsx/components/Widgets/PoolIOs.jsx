@@ -5,14 +5,14 @@ var React   =   require("react");
 var Widget  =   require("../Widget");
 
 var PoolIOs = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       element:    ""
       ,tickCount: 0
     };
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.setState({
       element:    this.refs.svg.getDOMNode()
     });
@@ -20,7 +20,7 @@ var PoolIOs = React.createClass({
     this.drawChart();
   },
 
-  serverData: function() {
+  serverData: function () {
     var data = [
       {
         "key" : "da0" ,
@@ -61,7 +61,7 @@ var PoolIOs = React.createClass({
     return data;
   },
 
-  drawChart: function() {
+  drawChart: function () {
     var chart = nv.models.stackedAreaChart()
                   .margin({top: 0, right: 50, bottom: 60, left: 50})
                   .x(function(d) { return d[0] })   //We can modify the data accessor functions...
@@ -90,7 +90,7 @@ var PoolIOs = React.createClass({
 
   },
 
-  render: function() {
+  render: function () {
     var divStyle = {
       width: "100%",
       height: "100%",

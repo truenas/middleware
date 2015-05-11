@@ -60,27 +60,27 @@ function handleToggle( serviceObj, toggled ) {
 
 var Services = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return getServicesFromStore();
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ServicesMiddleware.requestServicesList();
       ServicesMiddleware.subscribeToTask( "Services Viewer" );
 
       ServicesStore.addChangeListener( this.handleServicesChange );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       ServicesMiddleware.unsubscribeFromTask( "Services Viewer" );
       ServicesStore.removeChangeListener( this.handleServicesChange );
     }
 
-  , handleServicesChange: function() {
+  , handleServicesChange: function () {
       this.setState( getServicesFromStore() );
     }
 
-  , render: function() {
+  , render: function () {
     return (
       <main>
         <h2>Services</h2>

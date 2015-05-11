@@ -30,7 +30,7 @@ var TableViewer = React.createClass({
       , tableCols        : React.PropTypes.array.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           tableColWidths : this.getInitialColWidths( this.props.tableCols )
         , tableColOrder  : this.props.tableCols
@@ -39,12 +39,12 @@ var TableViewer = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
       window.addEventListener( "keyup", this.handleEscClose );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       window.removeEventListener( "keyup", this.handleEscClose );
     }
 
@@ -169,7 +169,7 @@ var TableViewer = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
 
     var tableData     = null;
     var editorContent = null;

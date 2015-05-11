@@ -5,21 +5,21 @@ var React   =   require("react");
 var Widget  =   require("../Widget");
 
 var ProcessesPie = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       element:    ""
       ,tickCount: 0
     };
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.setState({
       element:    this.refs.pieDiv.getDOMNode()
     });
     this.drawChart();
   },
 
-  drawChart: function() {
+  drawChart: function () {
     var w = 345;
     var h = 345;
     var r = (h/2)-5;
@@ -66,7 +66,7 @@ var ProcessesPie = React.createClass({
 
   },
 
-  render: function() {
+  render: function () {
     return (
       <Widget
         positionX  =  {this.props.positionX}

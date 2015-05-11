@@ -21,7 +21,7 @@ var FreeNASWebApp = React.createClass({
 
     mixins: [ routerShim ]
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       this.calculateDefaultRoute( "/", "dashboard", "is" );
     }
 
@@ -29,7 +29,7 @@ var FreeNASWebApp = React.createClass({
       this.calculateDefaultRoute( "/", "dashboard", "is" );
     }
 
-  , render: function() {
+  , render: function () {
 
       return (
         <div className="app-wrapper">

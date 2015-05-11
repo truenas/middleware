@@ -33,16 +33,16 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   // RPC
-  , getAvailableRPCServices: function() {
+  , getAvailableRPCServices: function () {
       return _rpcServices;
     }
 
-  , getAvailableRPCMethods: function() {
+  , getAvailableRPCMethods: function () {
       return _rpcMethods;
     }
 
   // EVENTS
-  , getEventLog: function() {
+  , getEventLog: function () {
       return _events;
     }
 

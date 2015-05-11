@@ -20,7 +20,7 @@ var _networks           = [];
 
 var NetworksStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -32,11 +32,11 @@ var NetworksStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
    }
 
-  , getUpdateMask: function() {
+  , getUpdateMask: function () {
       return UPDATE_MASK;
    }
 
-  , getPendingUpdateIDs: function() {
+  , getPendingUpdateIDs: function () {
      return _updatedOnServer;
     }
 
@@ -61,7 +61,7 @@ var NetworksStore = _.assign( {}, EventEmitter.prototype, {
       return _networks[ linkAddress ];
   }
 
-  ,  getAllNetworks: function() {
+  ,  getAllNetworks: function () {
       return _networks;
    }
 

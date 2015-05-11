@@ -22,13 +22,13 @@ var Shell = React.createClass({
       shellType: React.PropTypes.string
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
         shellType: "/bin/sh"
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
     }
 
@@ -77,7 +77,7 @@ var Shell = React.createClass({
       this.term.open( this.refs.termTarget.getDOMNode() );
     }
 
-  , render: function() {
+  , render: function () {
       return (
         <div className="termFlex" ref="termTarget" />
       );

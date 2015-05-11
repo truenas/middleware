@@ -13,21 +13,21 @@ import GroupsMiddleware from "../../middleware/GroupsMiddleware";
 
 module.exports = {
 
-    componentDidMount: function(){
+    componentDidMount: function (){
       GroupsStore.addChangeListener(this.updateGroupsListInState);
     }
 
-  , componentWillUnMount: function() {
+  , componentWillUnMount: function () {
       GroupsStore.removeChangeListener(this.updateGroupsListInState);
     }
 
-  , updateGroupsListInState: function(){
+  , updateGroupsListInState: function (){
       var groupsList = GroupsStore.getAllGroups();
       this.setState({ groupsList: groupsList});
     }
 
     // Will return the first available GID above 1000 (to be used as a default).
-  , getNextGID: function() {
+  , getNextGID: function () {
       var groups = {};
 
       // Turn the array of groups into an object for easier GID checking.
@@ -46,7 +46,7 @@ module.exports = {
 
     }
 
-  , deleteGroup: function(){
+  , deleteGroup: function (){
       GroupsMiddleware.deleteGroup(this.props.item["id"], this.returnToViewerRoot() );
     }
 };

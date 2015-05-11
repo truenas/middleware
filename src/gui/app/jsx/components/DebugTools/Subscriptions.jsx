@@ -19,22 +19,22 @@ import MiddlewareClient from "../../middleware/MiddlewareClient";
 
 var Subscriptions = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           subscriptions : SubscriptionsStore.getAllSubscriptions()
         , subsMasks     : ""
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SubscriptionsStore.addChangeListener( this.handleMiddlewareChange );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       SubscriptionsStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
-  , handleMiddlewareChange: function() {
+  , handleMiddlewareChange: function () {
       this.setState({
           subscriptions : SubscriptionsStore.getAllSubscriptions()
       });
@@ -46,7 +46,7 @@ var Subscriptions = React.createClass({
       });
     }
 
-  , handleSubsSubmit: function() {
+  , handleSubsSubmit: function () {
       MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), componentLongName);
     }
 
@@ -74,7 +74,7 @@ var Subscriptions = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
       var subscriptionsContent = null;
       var removeALL = MiddlewareClient.unsubscribeALL;
 

@@ -65,11 +65,11 @@ function getGroupsFromStore() {
 
 var Users = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return getUsersStoreData();
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       UsersStore.addChangeListener( this.handleUsersChange );
       UsersMiddleware.requestUsersList();
       UsersMiddleware.subscribe( componentLongName );
@@ -79,7 +79,7 @@ var Users = React.createClass({
       GroupsMiddleware.subscribe( componentLongName );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       UsersStore.removeChangeListener( this.handleUsersChange );
       UsersMiddleware.unsubscribe( componentLongName );
 
@@ -87,15 +87,15 @@ var Users = React.createClass({
       GroupsMiddleware.unsubscribe( componentLongName );
     }
 
-  , handleGroupsChange: function() {
+  , handleGroupsChange: function () {
       this.setState( getGroupsFromStore() );
     }
 
-  , handleUsersChange: function() {
+  , handleUsersChange: function () {
       this.setState( getUsersStoreData() );
     }
 
-  , render: function() {
+  , render: function () {
       return <Viewer
                 header    = { "Users" }
                 inputData = { this.state.usersList }

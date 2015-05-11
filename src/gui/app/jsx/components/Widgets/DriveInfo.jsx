@@ -5,7 +5,7 @@ var React   =   require("react");
 var Widget  = 	require("../Widget");
 
 var DriveInfo = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       context:		""
       ,width:  		""
@@ -16,7 +16,7 @@ var DriveInfo = React.createClass({
     };
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
 	this.setState({
 	  context:	  this.refs.canvas.getDOMNode().getContext('2d')
       ,width:  	  this.refs.canvas.getDOMNode().width
@@ -28,7 +28,7 @@ var DriveInfo = React.createClass({
     this.interval = setInterval(this.tick, 1000);
   },
 
-  tick: function(){
+  tick: function (){
   	if (this.state.temp >= 99) {
   		this.setState({
       	temp:	35
@@ -42,7 +42,7 @@ var DriveInfo = React.createClass({
     this.paint();
   },
 
-  paint: function() {
+  paint: function () {
 	var width = this.state.width;
 	var height = this.state.height;
 	var x = parseInt(width/2);
@@ -98,7 +98,7 @@ var DriveInfo = React.createClass({
 	context.rotate(-1*(Math.PI / 1.33));
   },
 
-  render: function() {
+  render: function () {
     return (
       <Widget
     	   positionX  =  {this.props.positionX}

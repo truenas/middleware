@@ -14,11 +14,11 @@ import Icon from "../components/Icon";
 import ConfDialog from "../components/common/ConfDialog";
 
 var SystemTools = React.createClass({
-  handleupdatenowbutton: function() {
+  handleupdatenowbutton: function () {
       UpdaterMiddleware.updatenow();
   },
 
-  render: function() {
+  render: function () {
     var updateText = (<div style = { {margin: "5px"
                                     , cursor: "pointer"} }>
                         <Icon glyph = "bomb"

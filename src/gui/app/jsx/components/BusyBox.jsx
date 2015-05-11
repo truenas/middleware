@@ -33,14 +33,14 @@ var BusyBox = React.createClass({
       , animDelay    : React.PropTypes.number
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
           animDuration : 500
         , animDelay    : 0
       };
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           boxIsVisible  : false
         , userText      : ""
@@ -52,7 +52,7 @@ var BusyBox = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SessionStore.addChangeListener( this.handleMiddlewareChange );
       PowerStore.addChangeListener( this.handlePowerChange );
       PowerMiddleware.subscribe( componentLongName );
@@ -105,11 +105,11 @@ var BusyBox = React.createClass({
       );
     }
 
-  , handleMiddlewareChange: function() {
+  , handleMiddlewareChange: function () {
       this.setState({ loggedIn: SessionStore.getLoginStatus() });
     }
 
-  , handlePowerChange: function() {
+  , handlePowerChange: function () {
       var retcode = PowerStore.isEventPending();
       this.setState({
           kickin    : retcode[0]

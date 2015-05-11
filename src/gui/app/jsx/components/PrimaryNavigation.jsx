@@ -84,7 +84,7 @@ var menuTiming = 600;
 
 var PrimaryNavigation = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return { expanded: true };
     }
 
@@ -150,7 +150,7 @@ var PrimaryNavigation = React.createClass({
       Velocity.RunSequence( expandSequence );
     }
 
-  , render: function() {
+  , render: function () {
       var createNavItem = function ( rawItem, index ) {
         if ( rawItem["disabled"] ) {
           return (

@@ -33,7 +33,7 @@ var _subscribed = {};
 
 var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -46,7 +46,7 @@ var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   // SUBSCRIPTIONS
-  , getAllSubscriptions: function() {
+  , getAllSubscriptions: function () {
       return _subscribed;
     }
 

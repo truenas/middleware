@@ -17,7 +17,7 @@ var _services = [];
 var _scheduledForStateUpdate = {};
 var ServicesStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -36,7 +36,7 @@ var ServicesStore = _.assign( {}, EventEmitter.prototype, {
       return _.find( _services, predicate );
     }
 
-  , getAllServices: function() {
+  , getAllServices: function () {
       return _services;
     }
 

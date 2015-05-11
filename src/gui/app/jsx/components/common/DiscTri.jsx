@@ -20,7 +20,7 @@ var DiscTri = React.createClass({
       , defaultExpanded : React.PropTypes.bool
     }
 
-  , getDefaultProps : function() {
+  , getDefaultProps : function () {
       return {
           headerShow   : "Hide"
         , headerHide   : "Show"
@@ -50,7 +50,7 @@ var DiscTri = React.createClass({
     this.setState({expanded:!this.state.expanded});
   }
 
-  , render: function(){
+  , render: function (){
       // TODO: change to classnames?
       var text = this.props.headerHide;
       var img  = this.props.DiscHideImg;

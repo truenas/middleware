@@ -27,7 +27,7 @@ var initialY;
 
 var DebugTools = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           isVisible   : false
         , panelHeight : 350
@@ -65,7 +65,7 @@ var DebugTools = React.createClass({
       }
     }
 
-  , toggleVisibility: function() {
+  , toggleVisibility: function () {
       if ( this.state.isVisible ) {
         this.setState({ isVisible: false });
       } else {
@@ -73,17 +73,17 @@ var DebugTools = React.createClass({
       }
   }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       EventBus.addListener( this.toggleVisibility );
       window.addEventListener("keyup", this.handleKeypress );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       EventBus.removeListener( this.toggleVisibility );
       window.removeEventListener("keyup", this.handleKeypress );
     }
 
-  , render: function() {
+  , render: function () {
     var content = null;
 
     if ( this.state.isVisible ) {

@@ -55,26 +55,26 @@ function getNetworksFromStore() {
 
 var Networks = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return getNetworksFromStore();
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
     NetworksStore.addChangeListener( this.handleNetworksChange );
     NetworksMiddleware.requestNetworksList();
     NetworksMiddleware.subscribe( componentLongName );
   }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
     NetworksStore.removeChangeListener( this.handleNetworksChange );
     NetworksMiddleware.unsubscribe( componentLongName );
   }
 
-  , handleNetworksChange: function() {
+  , handleNetworksChange: function () {
       this.setState( getNetworksFromStore() );
   }
 
-  , render: function() {
+  , render: function () {
       return <Viewer header      = { "Networks" }
                      inputData   = { this.state.networksList }
                      viewData    = { viewData }

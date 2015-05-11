@@ -5,21 +5,21 @@ var React   =   require("react");
 var Widget  =   require("../Widget");
 
 var NetworkChart = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       element:    ""
       ,tickCount: 0
     };
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.setState({
       element:    this.refs.svg.getDOMNode()
     });
     this.drawChart();
   },
 
-  drawChart: function() {
+  drawChart: function () {
     var chart;
 
     chart = nv.models.lineChart()
@@ -52,7 +52,7 @@ var NetworkChart = React.createClass({
 
   },
 
-  sinAndCos: function() {
+  sinAndCos: function () {
     var sin = [],
     cos = [],
     rand = [],
@@ -93,7 +93,7 @@ var NetworkChart = React.createClass({
   },
 
 
-  render: function() {
+  render: function () {
     return (
       <Widget
         positionX  =  {this.props.positionX}

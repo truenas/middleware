@@ -12,14 +12,14 @@ import Shell from "../common/Shell";
 
 var Terminal = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           currentShell : "/bin/sh"
         , shells       : []
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ShellMiddleware.requestAvailableShells( function( shells ) {
         this.setState({ shells: shells });
       }.bind( this ) );
@@ -39,7 +39,7 @@ var Terminal = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
       return (
         <div className="debug-content-flex-wrapper">
 

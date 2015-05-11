@@ -5,7 +5,7 @@ var React   =   require("react");
 var Widget  =   require("../Widget");
 
 var DriveInfo2 = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       context:		""
       ,width:  		""
@@ -23,7 +23,7 @@ var DriveInfo2 = React.createClass({
     };
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
 	  var hddVar = new Image();
     if (this.props.diskData.type === "ssd") {
       hddVar.src = '/img/ssd.png';
@@ -58,7 +58,7 @@ var DriveInfo2 = React.createClass({
     this.interval = setInterval(this.tick, 200);
   },
 
-  tick: function(){
+  tick: function (){
   	if (this.state.tickCount >= 4) {
   		this.setState({
       	tickCount:	0
@@ -83,7 +83,7 @@ var DriveInfo2 = React.createClass({
     this.paint();
   },
 
-  paint: function() {
+  paint: function () {
 	var width = this.state.width;
 	var height = this.state.height;
 	var x = parseInt(width/2);
@@ -165,7 +165,7 @@ var DriveInfo2 = React.createClass({
 
   },
 
-  render: function() {
+  render: function () {
     return (
       <Widget
          positionX  =  {this.props.positionX}

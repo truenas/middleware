@@ -35,7 +35,7 @@ var AddUser = React.createClass({
         viewData: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       var defaultValues = { shell : "/bin/csh" };
 
       var usersList = UsersStore.getAllUsers();
@@ -65,7 +65,7 @@ var AddUser = React.createClass({
     }
 
     // Will return the first available UID above 1000 (to be used as a default).
-  , getNextUID: function() {
+  , getNextUID: function () {
       var users = {};
 
       // Turn the array of users into an object for easier UID checking.
@@ -84,7 +84,7 @@ var AddUser = React.createClass({
 
     }
 
-  , submitNewUser: function() {
+  , submitNewUser: function () {
       var routing = this.props.viewData.routing;
       var newUserValues = {};
       var params        = {};
@@ -124,7 +124,7 @@ var AddUser = React.createClass({
       });
     }
 
-  , render: function() {
+  , render: function () {
 
       var addButtons =
         <TWBS.ButtonToolbar>

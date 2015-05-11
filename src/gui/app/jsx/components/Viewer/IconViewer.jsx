@@ -29,11 +29,11 @@ var IconViewer = React.createClass({
       , filteredData     : React.PropTypes.object.isRequired
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       window.addEventListener( "keyup", this.handleEscClose );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       window.removeEventListener( "keyup", this.handleEscClose );
     }
 
@@ -107,7 +107,7 @@ var IconViewer = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
       var fd = this.props.filteredData;
       var editorContent      = null;
       var groupedIconItems   = null;

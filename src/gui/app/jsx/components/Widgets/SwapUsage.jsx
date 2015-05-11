@@ -5,14 +5,14 @@ var React   =   require("react");
 var Widget  =   require("../Widget");
 
 var SwapUsage = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {
       element:    ""
       ,tickCount: 0
     };
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.setState({
       element:    this.refs.svg.getDOMNode()
     });
@@ -20,7 +20,7 @@ var SwapUsage = React.createClass({
     this.drawChart();
   },
 
-  exampleData: function() {
+  exampleData: function () {
     return {
       "title":"Swap",    //Label the bullet chart
       "subtitle":"Usage",   //sub-label for bullet chart
@@ -30,7 +30,7 @@ var SwapUsage = React.createClass({
     };
   },
 
-  drawChart: function() {
+  drawChart: function () {
       var chart = nv.models.bulletChart();
 
       chart.margin({top:25, right:20, bottom:0, left:50}) ;
@@ -44,7 +44,7 @@ var SwapUsage = React.createClass({
 
   },
 
-  render: function() {
+  render: function () {
     var divStyle = {
       width: "100%",
       height: "100%",

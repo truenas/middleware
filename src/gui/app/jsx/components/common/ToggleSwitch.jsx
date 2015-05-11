@@ -14,7 +14,7 @@ var ToggleSwitch = React.createClass({
       , onChange : React.PropTypes.func
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
           toggled : false
         , onChange: function( toggleState, reactID ) {
@@ -30,7 +30,7 @@ var ToggleSwitch = React.createClass({
       this.props.onChange( !this.props.toggled, reactID );
     }
 
-  , render: function() {
+  , render: function () {
       var toggleClasses = ["toggle-switch"];
 
       if ( this.props.toggled ) {

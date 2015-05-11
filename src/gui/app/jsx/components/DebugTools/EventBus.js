@@ -9,7 +9,7 @@ import { EventEmitter } from "events";
 
 var EventBus = _.assign( {}, EventEmitter.prototype, {
 
-    emitToggle: function() {
+    emitToggle: function () {
       this.emit( "toggle" );
     }
 

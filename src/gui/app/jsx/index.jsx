@@ -11,10 +11,10 @@ var Index = React.createClass({
 
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
     }
 
-  , render: function() {
+  , render: function () {
 
     return (
       <html>

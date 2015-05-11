@@ -17,7 +17,7 @@ var _loggedIn        = false;
 
 var SessionStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 

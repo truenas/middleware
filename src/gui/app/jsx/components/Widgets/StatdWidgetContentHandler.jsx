@@ -27,7 +27,7 @@ var StatdWidgetContentHandler = React.createClass({
       , widgetIdentifier  : React.PropTypes.string.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       var initialStatdData = {};
       var initialErrorMode = false;
       var initialStatdDataLoaded = false;
@@ -42,7 +42,7 @@ var StatdWidgetContentHandler = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       StatdStore.addChangeListener( this.handleStatdChange );
 
       if (this.props.statdResources.length > 0)
@@ -64,7 +64,7 @@ var StatdWidgetContentHandler = React.createClass({
       );
   }
 
-  , requestData: function() {
+  , requestData: function () {
     var stop  = moment();
     var start = moment().subtract( 15, "m" );
 
@@ -101,7 +101,7 @@ var StatdWidgetContentHandler = React.createClass({
       }
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       StatdStore.removeChangeListener( this.handleStatdChange );
       StatdMiddleware.unsubscribeFromPulse(
           this.props.widgetIdentifier
@@ -113,7 +113,7 @@ var StatdWidgetContentHandler = React.createClass({
       return dataObject.dataSource;
     }
 
-  , handleStatdChange: function() {
+  , handleStatdChange: function () {
       var newState     = {};
 
       //Do we have initial stack of data?
@@ -397,7 +397,7 @@ var StatdWidgetContentHandler = React.createClass({
       this.setState({ graphType: event.target.textContent });
     }
 
-  , render: function() {
+  , render: function () {
       if ( this.state.errorMode ) {
         return (
           <div className="widget-error-panel">

@@ -20,7 +20,7 @@ module.exports = {
     }
 
 
-  , requestNetworksList: function() {
+  , requestNetworksList: function () {
       MiddlewareClient.request( "network.interfaces.query", [], function ( rawNetworksList ) {
         NetworksActionCreators.receiveNetworksList( rawNetworksList );
       });

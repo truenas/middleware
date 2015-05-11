@@ -21,7 +21,7 @@ var _users              = {};
 
 var UsersStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -33,11 +33,11 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getUpdateMask: function() {
+  , getUpdateMask: function () {
       return UPDATE_MASK;
     }
 
-  , getPendingUpdateIDs: function() {
+  , getPendingUpdateIDs: function () {
       return _updatedOnServer;
     }
 
@@ -60,7 +60,7 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
       return _users[ id ];
     }
 
-  , getAllUsers: function() {
+  , getAllUsers: function () {
       return _.values( _users );
     }
 

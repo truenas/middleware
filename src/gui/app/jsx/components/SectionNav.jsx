@@ -23,7 +23,7 @@ var Navigation = React.createClass({
               type            = "button">{ item.display }</Link>
       );
     }
-  , render: function() {
+  , render: function () {
       return (
         <TWBS.Row className="text-center">
           <TWBS.ButtonGroup bsSize="large">
@@ -38,7 +38,7 @@ var Sections = React.createClass({
     propTypes: {
       views: React.PropTypes.array
     }
-  , render: function() {
+  , render: function () {
     if ( this.props.views.length > 1 ) {
       return (
         <TWBS.Grid fluid>

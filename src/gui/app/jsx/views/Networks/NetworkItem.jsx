@@ -21,7 +21,7 @@ var NetworksView = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
-  , render: function() {
+  , render: function () {
 
       var configureButton = null;
 
@@ -85,7 +85,7 @@ var NetworkItem = React.createClass({
 
   , mixins: [ routerShim, clientStatus ]
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           targetNetwork : this.getNetworkFromStore()
         , currentMode   : "view"
@@ -105,19 +105,19 @@ var NetworkItem = React.createClass({
       }
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       NetworksStore.addChangeListener( this.updateNetworkInState );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       NetworksStore.removeChangeListener( this.updateNetworkInState );
     }
 
-  , getNetworkFromStore: function() {
+  , getNetworkFromStore: function () {
       return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
-  , updateNetworkInState: function() {
+  , updateNetworkInState: function () {
       this.setState({ targetNetwork: this.getNetworkFromStore() });
     }
 
@@ -125,7 +125,7 @@ var NetworkItem = React.createClass({
       this.setState({ currentMode: nextMode });
     }
 
-  , render: function() {
+  , render: function () {
 
       var DisplayComponent      = null;
 

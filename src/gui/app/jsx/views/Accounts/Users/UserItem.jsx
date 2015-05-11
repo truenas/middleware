@@ -50,7 +50,7 @@ var UserView = React.createClass({
       }
     }
 
-  , createGroupDisplayList: function(){
+  , createGroupDisplayList: function (){
       var listGroupItemArray = [] ;
 
       listGroupItemArray = _.map( this.props.item[ "groups" ], function( groupID ){
@@ -67,7 +67,7 @@ var UserView = React.createClass({
       return listGroupItemArray;
   }
 
-  , render: function() {
+  , render: function () {
       var builtInUserAlert = null;
       var editButtons      = null;
 
@@ -181,7 +181,7 @@ var UserEdit = React.createClass({
       , viewData : React.PropTypes.object.isRequired
       }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       var remoteState = this.setRemoteState( this.props );
 
       return {
@@ -239,7 +239,7 @@ var UserEdit = React.createClass({
 
     // TODO: Validate that input values are legitimate for their field. For example,
     // id should be a number.
-  , submitUserUpdate: function() {
+  , submitUserUpdate: function () {
       // Make sure nothing read-only made it in somehow.
       var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
@@ -267,7 +267,7 @@ var UserEdit = React.createClass({
     // to have a deliberate design.
     // TODO: Add alerts when a remote administrator has changed items that the
     // local administrator is also working on.
-  , render: function() {
+  , render: function () {
       var builtInUserAlert  = null;
       var editButtons       = null;
       var inputForm         = null;
@@ -473,7 +473,7 @@ var UserItem = React.createClass({
 
   , mixins: [ routerShim, clientStatus ]
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           targetUser  : this.getUserFromStore()
         , currentMode : "view"
@@ -493,19 +493,19 @@ var UserItem = React.createClass({
       }
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       UsersStore.addChangeListener( this.updateUserInState );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       UsersStore.removeChangeListener( this.updateUserInState );
     }
 
-  , getUserFromStore: function() {
+  , getUserFromStore: function () {
       return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
-  , updateUserInState: function() {
+  , updateUserInState: function () {
       this.setState({ targetUser: this.getUserFromStore() });
     }
 
@@ -513,7 +513,7 @@ var UserItem = React.createClass({
       this.setState({ currentMode: nextMode });
     }
 
-  , render: function() {
+  , render: function () {
       var DisplayComponent = null;
       var processingText   = "";
 

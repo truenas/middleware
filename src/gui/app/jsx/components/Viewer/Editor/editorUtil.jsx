@@ -22,14 +22,14 @@ editorUtil.updateOverlay = React.createClass({
       , animDelay     : React.PropTypes.number
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
           animDuration : 250
         , animDelay    : 600
       };
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return { animating: false };
     }
 
@@ -76,7 +76,7 @@ editorUtil.updateOverlay = React.createClass({
     }
 
 
-  , render: function() {
+  , render: function () {
       var overlay = null;
 
       // Using !! performs boolean type coercion

@@ -14,15 +14,15 @@ import Icon from "../components/Icon";
 import ConfDialog from "../components/common/ConfDialog";
 
 var Power = React.createClass({
-  handlerebootbutton: function() {
+  handlerebootbutton: function () {
       PowerMiddleware.reboot();
   },
 
-  handleshutdownbutton: function() {
+  handleshutdownbutton: function () {
       PowerMiddleware.shutdown();
   },
 
-  render: function() {
+  render: function () {
     var rebootprops        = {};
     rebootprops.dataText   = (<div style = { {margin: "5px"
                                      , cursor: "pointer"} }>

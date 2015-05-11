@@ -22,7 +22,7 @@ var defaultPredicate = {
 
 var Events = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           events           : MiddlewareStore.getEventLog()
         , timeFormat       : "absolute"
@@ -32,12 +32,12 @@ var Events = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe( ["task.*","system.*"], componentLongName );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.unsubscribe( ["task.*","system.*"], componentLongName );
     }
@@ -122,7 +122,7 @@ var Events = React.createClass({
       }
     }
 
-  , render: function() {
+  , render: function () {
       var filteredEventLog = [];
       var logContent       = null;
 

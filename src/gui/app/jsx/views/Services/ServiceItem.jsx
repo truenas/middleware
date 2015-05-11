@@ -24,7 +24,7 @@ var ServiceView = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return { serviceState  : (this.props.item["state"] === "running" ? true : false) };
     }
 
@@ -36,7 +36,7 @@ var ServiceView = React.createClass({
       //TODO: Really change the state of the service.
     }
 
-  , render: function() {
+  , render: function () {
 
     var pid = null;
 
@@ -83,7 +83,7 @@ var ServiceItem = React.createClass({
 
   , mixins: [ routerShim, clientStatus ]
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           targetService : this.getServiceFromStore()
         , currentMode   : "view"
@@ -103,23 +103,23 @@ var ServiceItem = React.createClass({
       }
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ServicesStore.addChangeListener( this.updateServiceTarget );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       ServicesStore.removeChangeListener( this.updateServiceTarget );
     }
 
-  , getServiceFromStore: function() {
+  , getServiceFromStore: function () {
       return ServicesStore.findServiceByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
-  , updateServiceTarget: function() {
+  , updateServiceTarget: function () {
       this.setState({ targetService: this.getServiceFromStore() });
     }
 
-  , render: function() {
+  , render: function () {
       var DisplayComponent = null;
 
       if ( this.state.SESSION_AUTHENTICATED && this.state.targetService ) {

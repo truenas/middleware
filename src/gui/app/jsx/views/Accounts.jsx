@@ -24,7 +24,7 @@ var Accounts = React.createClass({displayName: "Accounts",
 
     mixins: [ routerShim ]
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       this.calculateDefaultRoute( "accounts", "users", "endsWith" );
     }
 
@@ -32,7 +32,7 @@ var Accounts = React.createClass({displayName: "Accounts",
       this.calculateDefaultRoute( "accounts", "users", "endsWith" );
     }
 
-  , render: function() {
+  , render: function () {
       return (
         <main>
           <SectionNav views = { sections } />

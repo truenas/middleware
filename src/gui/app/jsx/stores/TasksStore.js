@@ -33,7 +33,7 @@ var TasksStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getAllTasks: function() {
+  , getAllTasks: function () {
       return {
           CREATED   : _created
         , WAITING   : _waiting
@@ -44,27 +44,27 @@ var TasksStore = _.assign( {}, EventEmitter.prototype, {
       };
     }
 
-  , getCreatedTasks: function() {
+  , getCreatedTasks: function () {
       return _created;
     }
 
-  , getWaitingTasks: function() {
+  , getWaitingTasks: function () {
       return _waiting;
     }
 
-  , getExecutingTasks: function() {
+  , getExecutingTasks: function () {
       return _executing;
     }
 
-  , getFinishedTasks: function() {
+  , getFinishedTasks: function () {
       return _finished;
     }
 
-  , getFailedTasks: function() {
+  , getFailedTasks: function () {
       return _failed;
     }
 
-  , getAbortedTasks: function() {
+  , getAbortedTasks: function () {
       return _aborted;
     }
 });
