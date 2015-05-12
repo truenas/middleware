@@ -8,7 +8,7 @@
 import React from "react";
 
 // Routing
-import Router from "react-router";
+import Router, { HistoryLocation } from "react-router";
 import Routes from "./routes";
 
 // Middleware
@@ -21,7 +21,7 @@ let protocol = ( window.location.protocol === "https:" )
 MiddlewareClient.connect( protocol + document.domain + ":5000/socket" );
 
 Router.run( Routes
-          , Router.HistoryLocation
+          , HistoryLocation
           , function ( Handler, state ) {
               React.render( <Handler />, document.body );
             }
