@@ -44,5 +44,5 @@
 #9617	Performance issue with the Chelsio T5 and CARP
 #9623	Implement chelsio T5 tuning suggested by the vendor to lower CPU usage.
 #9708	Increase smartd's read buffer to allow for up to 512 characters so more complex SMART test schedules will work proper
-#9715	ChnageLog does not work proper
+#9715	Fixes where the ChangeLog is not properly appended to for display
 #9718	Failover may fail when rebooting master due to logging failure
