@@ -7,53 +7,44 @@
 "use strict";
 
 module.exports = function ( grunt ) {
+
+  var serverTasks = [ "freenas-config:silent"
+                    , "rsync"
+                    , "ssh-multi-exec:start-server"
+                    ]
+
   // BUILD WORLD
   // Rebuild Browserify bundle when source JS/JSX changes
   this.jsx = { files: [ "<%= dirTree.source.jsx %>/**" ]
-             , tasks: [ "jscs:check-javascript-quality", "babel" ]
+             , tasks: [ "jscs:check-javascript-quality"
+                      , "babel"
+                      , "browserify:app"
+                      ].concat( serverTasks )
              };
-
-  // Rebuild Browserify bundle from vanilla JS after it
-  this.ssrjs = { files: [ "<%= dirTree.build.ssrjs %>/**" ]
-               , tasks: [ "browserify:app" ]
-               };
 
   // Rebuild libs.js when internal library changes
   this.internalScripts = { files: [ "<%= dirTree.internalScripts %>/**" ]
-                         , tasks: [ "browserify:libs" ]
+                         , tasks: [ "browserify:libs" ].concat( serverTasks )
                          };
 
   // Rebuild CSS when LESS files change
   this.less = { files: [ "<%= dirTree.source.styles %>/**" ]
-              , tasks: [ "less:core" ]
+              , tasks: [ "less:core" ].concat( serverTasks )
               };
 
   // Copy new/updated images into build
   this.images = { files: [ "<%= dirTree.source.images %>/**" ]
-                , tasks: [ "copy:images" ]
+                , tasks: [ "copy:images" ].concat( serverTasks )
                 };
 
 
   // SERVER LIFECYCLE
-  // Run local express task, restart when
-  this.localServer = { files: [ "<%= dirTree.routes %>.js"
-                              , "<%= dirTree.server %>.js"
-                              ]
-                     , tasks: [ "express:devServer" ]
-                     };
-
   // Restarts GUI service on remote FreeNAS when server or app changes
-  var serverWatchFiles = [ "<%= dirTree.server %>.js"
-                         , "<%= dirTree.source.templates %>/**"
-                         , "<%= dirTree.build.root %>/**"
-                         , "package.json"
-                         , "bower_components/**"
-                         ];
-
-  this["freenasServer"] = { files: serverWatchFiles
-                          , tasks: [ "freenas-config:silent"
-                                   , "rsync"
-                                   , "ssh-multi-exec:start-server"
+  this["freenasServer"] = { files: [ "<%= dirTree.server %>.js"
+                                   , "<%= dirTree.source.templates %>/**"
+                                   , "package.json"
+                                   , "bower_components/**"
                                    ]
+                          , tasks: serverTasks
                           };
 };
