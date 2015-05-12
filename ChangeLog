@@ -46,3 +46,4 @@
 #9708	Increase smartd's read buffer to allow for up to 512 characters so more complex SMART test schedules will work proper
 #9715	Fixes where the ChangeLog is not properly appended to for display
 #9718	Failover may fail when rebooting master due to logging failure
+#9747	Alert module failure exception for incorrect type
