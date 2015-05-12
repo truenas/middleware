@@ -64,7 +64,17 @@ cdef class Item(object):
                 return
 
             if type(value) is int or type(value) is long:
-                self._value = defs.launch_data_new_integer(value)
+                if typ:
+                    if typ == ItemType.INTEGER:
+                        self._value = defs.launch_data_new_integer(value)
+
+                    if typ == ItemType.FD:
+                        self._value = defs.launch_data_new_fd(value)
+
+                    if typ == ItemType.MACHPORT:
+                        self._value = defs.launch_data_new_machport(value)
+               else:
+                   self._value = defs.launch_data_new_integer(value)
 
             if type(value) is bool:
                 self._value = defs.launch_data_new_bool(value)
@@ -151,6 +161,9 @@ cdef class Item(object):
             if self.type == ItemType.OPAQUE:
                 return (<char*>defs.launch_data_get_opaque(self._value))[defs.launch_data_get_opaque_size(self._value):]
 
+            if self.type == ItemType.FD:
+                return defs.launch_data_get_fd(self._value)
+
             if self.type == ItemType.MACHPORT:
                 return defs.launch_data_get_machport(self._value)
 
@@ -165,6 +178,12 @@ cdef class Item(object):
 
             if t == defs.LAUNCH_DATA_INTEGER:
                 defs.launch_data_set_integer(self._value, value)
+
+            if t == defs.LAUNCH_DATA_FD:
+                defs.launch_data_set_fd(self._value, value)
+
+            if t == defs.LAUNCH_DATA_MACHPORT:
+                defs.launch_data_set_machport(self._value, value)
 
             if t == defs.LAUNCH_DATA_BOOL:
                 defs.launch_data_set_bool(self._value, value)
