@@ -24,21 +24,29 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
+import errno
 import os
-import sys
 import psutil
+import re
 import time
+
 from datetime import datetime
 from dateutil import tz
-from dispatcher.rpc import description, returns, accepts
-from task import Provider, Task
+from dispatcher.rpc import (
+    RpcException, SchemaHelper as h, accepts, description, returns
+)
 from lib.system import system, system_bg
 from lib.freebsd import get_sysctl
+from task import Provider, Task, TaskException
+
+
+KEYMAPS_INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
+ZONEINFO_DIR = "/usr/share/zoneinfo"
 
 
 @description("Provides informations about the running system")
 class SystemInfoProvider(Provider):
+
     @returns(str)
     def uname_full(self):
         out, _ = system('uname', '-a')
@@ -59,25 +67,168 @@ class SystemInfoProvider(Provider):
     def time(self):
         return {
             'system-time': datetime.now(tz=tz.tzlocal()),
-            'boot-time': datetime.fromtimestamp(psutil.BOOT_TIME, tz=tz.tzlocal()).isoformat(),
+            'boot-time': datetime.fromtimestamp(
+                psutil.BOOT_TIME, tz=tz.tzlocal()
+            ).isoformat(),
             'timezone': time.tzname[time.daylight],
         }
 
+
+@description("Provides informations about general system settings")
+class SystemGeneralProvider(Provider):
+
+    @returns(h.ref('system-general'))
+    def get_config(self):
+
+        return {
+            'language': self.dispatcher.configstore.get(
+                'system.language',
+            ),
+            'timezone': self.dispatcher.configstore.get(
+                'system.timezone',
+            ),
+            'console-keymap': self.dispatcher.configstore.get(
+                'system.console.keymap',
+            ),
+        }
+
+    def keymaps(self):
+        if not os.path.exists(KEYMAPS_INDEX):
+            return []
+
+        rv = []
+        with open(KEYMAPS_INDEX, 'r') as f:
+            d = f.read()
+        fnd = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+        for name, desc in fnd:
+            rv.append((name, desc))
+        return rv
+
     def timezones(self):
         result = []
-        for root, _, files in os.walk(sys.argv[1]):
+        for root, _, files in os.walk(ZONEINFO_DIR):
             for f in files:
-                result.append(os.path.join(root, f))
-
+                if f in (
+                    'zone.tab',
+                ):
+                    continue
+                result.append(os.path.join(root, f).replace(
+                    ZONEINFO_DIR + '/', '')
+                )
         return result
 
 
-class ConfigureTimeTask(Task):
-    def verify(self):
+@description("Provides informations about UI system settings")
+class SystemUIProvider(Provider):
+
+    @returns(h.ref('system-ui'))
+    def get_config(self):
+
+        protocol = []
+        if self.dispatcher.configstore.get('service.nginx.http.enable'):
+            protocol.append('HTTP')
+        if self.dispatcher.configstore.get('service.nginx.https.enable'):
+            protocol.append('HTTPS')
+
+        return {
+            'webui-procotol': protocol,
+            'webui-listen': self.dispatcher.configstore.get(
+                'service.nginx.listen',
+            ),
+            'webui-http-port': self.dispatcher.configstore.get(
+                'service.nginx.http.port',
+            ),
+            'webui-https-port': self.dispatcher.configstore.get(
+                'service.nginx.https.port',
+            ),
+        }
+
+
+@accepts(h.ref('system-general'))
+class SystemGeneralConfigureTask(Task):
+
+    def describe(self):
+        return "System General Settings Configure"
+
+    def verify(self, props):
         return ['system']
 
-    def run(self, updated_props):
-        pass
+    def run(self, props):
+        self.dispatcher.configstore.set(
+            'system.language',
+            props.get('language'),
+        )
+        self.dispatcher.configstore.set(
+            'system.timezone',
+            props.get('timezone'),
+        )
+        self.dispatcher.configstore.set(
+            'system.console.keymap',
+            props.get('console-keymap'),
+        )
+
+        try:
+            self.dispatcher.call_sync(
+                'etcd.generation.generate_group', 'localtime'
+            )
+        except RpcException, e:
+            raise TaskException(
+                errno.ENXIO,
+                'Cannot reconfigure system: {0}'.format(str(e),)
+            )
+
+        self.dispatcher.dispatch_event('system.general.changed', {
+            'operation': 'update',
+            'ids': ['system.general'],
+        })
+
+
+@accepts(h.ref('system-ui'))
+class SystemUIConfigureTask(Task):
+
+    def describe(self):
+        return "System UI Settings Configure"
+
+    def verify(self, props):
+        return ['system']
+
+    def run(self, props):
+        self.dispatcher.configstore.set(
+            'service.nginx.http.enable',
+            True if 'HTTP' in props.get('webui-protocol') else False,
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.https.enable',
+            True if 'HTTPS' in props.get('webui-protocol') else False,
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.listen',
+            props.get('webui-listen'),
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.http.port',
+            props.get('webui-http-port'),
+        )
+        self.dispatcher.configstore.set(
+            'service.nginx.https.port',
+            props.get('webui-https-port'),
+        )
+
+        try:
+            self.dispatcher.call_sync(
+                'etcd.generation.generate_group', 'nginx'
+            )
+            self.dispatcher.call_sync('services.reload', 'nginx')
+        except RpcException, e:
+            raise TaskException(
+                errno.ENXIO,
+                'Cannot reconfigure system UI: {0}'.format(str(e),)
+            )
+
+        self.dispatcher.dispatch_event('system.ui.changed', {
+            'operation': 'update',
+            'ids': ['system.ui'],
+        })
 
 
 @description("Reboots the System after a delay of 10 seconds")
@@ -113,9 +264,45 @@ class SystemHaltTask(Task):
 
 
 def _init(dispatcher):
+
+    # Register schemas
+    dispatcher.register_schema_definition('system-general', {
+        'type': 'object',
+        'properties': {
+            'language': {'type': 'string'},
+            'timezone': {'type': 'string'},
+            'console-keymap': {'type': 'string'},
+        },
+    })
+
+    dispatcher.register_schema_definition('system-ui', {
+        'type': 'object',
+        'properties': {
+            'webui-protocol': {
+                'type': ['array'],
+                'items': {
+                    'type': 'string',
+                    'enum': ['HTTP', 'HTTPS'],
+                },
+            },
+            'webui-listen': {
+                'type': ['array'],
+                'items': {'type': 'string'},
+            },
+            'webui-http-port': {'type': 'integer'},
+            'webui-https-port': {'type': 'integer'},
+        },
+    })
+
     # Register providers
+    dispatcher.register_provider("system.general", SystemGeneralProvider)
     dispatcher.register_provider("system.info", SystemInfoProvider)
+    dispatcher.register_provider("system.ui", SystemUIProvider)
 
     # Register task handlers
+    dispatcher.register_task_handler("system.general.configure",
+                                     SystemGeneralConfigureTask)
+    dispatcher.register_task_handler("system.ui.configure",
+                                     SystemUIConfigureTask)
     dispatcher.register_task_handler("system.shutdown", SystemHaltTask)
     dispatcher.register_task_handler("system.reboot", SystemRebootTask)

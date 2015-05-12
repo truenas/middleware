@@ -493,6 +493,9 @@
 			"system.dataset.pool": "freenas-boot",
 			"system.dataset.id": null,
 			"system.dataset.services": ["syslog", "fnstatd"],
+			"system.language": "English",
+			"system.timezone": "America/Los_Angeles",
+			"system.console.keymap": null,
 			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
@@ -563,6 +566,12 @@
                     "group:services",
                     "file:ssh/sshd_config",
                     "plugin:ssh/sshd_keys"
+                ]
+            },
+            "3C42EFC3-9C17-4CAF-8DFB-931711EB2D7A": {
+                "name": "localtime",
+                "dependencies": [
+                    "plugin:localtime"
                 ]
             },
             "1E784623-8CB9-442E-9AC6-1125E2692A0C": {
