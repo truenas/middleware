@@ -59,7 +59,7 @@ cdef class Item(object):
             self._value = <defs.launch_data_t>ptr
             return
 
-        if typ is not None:
+        if typ is not None and value is None:
             self._value = defs.launch_data_alloc(typ.value)
 
         if value is not None:
@@ -107,6 +107,15 @@ cdef class Item(object):
     def __repr__(self):
         return "<item '{0}', type {1}>".format(self.value, self.type.name)
 
+    def __contains__(self, item):
+        cdef uintptr_t ptr
+
+        if self.type == ItemType.DICTIONARY:
+            ptr=<uintptr_t>defs.launch_data_dict_lookup(self._value, item)
+            return ptr != 0
+
+        raise NotImplementedError('Primitive types doesn\'t support indexing')
+
     def __getitem__(self, item):
         cdef uintptr_t ptr
 
@@ -118,14 +127,14 @@ cdef class Item(object):
             if ptr == 0:
                 raise KeyError(item)
 
-            return Item(ptr=ptr).value
+            return Item(ptr=ptr)
 
         if self.type == ItemType.DICTIONARY:
             ptr=<uintptr_t>defs.launch_data_dict_lookup(self._value, item)
             if ptr == 0:
                 raise KeyError(item)
 
-            return Item(ptr=ptr).value
+            return Item(ptr=ptr)
 
         raise NotImplementedError('Primitive types doesn\'t support indexing')
 
@@ -143,6 +152,15 @@ cdef class Item(object):
             return
 
         raise NotImplementedError('Primitive types doesn\'t support indexing')
+
+    def __iadd__(self, other):
+        if self.type == ItemType.ARRAY:
+            for i in other:
+                self.append(i)
+
+            return self
+
+        raise NotImplementedError('Not supported for this type')
 
     property ptr:
         def __get__(self):
@@ -217,11 +235,15 @@ cdef class Item(object):
     def get(self, indice, default=None):
         if isinstance(indice, basestring) and self.type == ItemType.DICTIONARY:
             if indice in self:
-                return self[indice]
+                return self[indice].value
+
+            return default
 
         if isinstance(indice, (int, long)) and self.type == ItemType.ARRAY:
             if indice in self:
-                return self[indice]
+                return self[indice].value
+
+            return default
 
         raise NotImplementedError('Unsupported for that item type')
 
@@ -269,15 +291,16 @@ cdef class Launchd(object):
     def create_sockets(self, plist):
         passive = plist.get('SockPassive', True)
         pathname = plist.get('SockPathName', None)
+        st_str = plist.get('SockType', '').lower()
         st = socket.SOCK_STREAM
         family = socket.AF_INET
         proto = socket.IPPROTO_TCP
 
-        if plist['SockType'].lower() == 'stream':
+        if st_str == 'stream':
             st = socket.SOCK_STREAM
-        elif plist['SockType'].lower() == 'dgram':
+        elif st_str == 'dgram':
             st = socket.SOCK_DGRAM
-        elif plist['SockType'].lower() == 'seqpacket':
+        elif st_str == 'seqpacket':
             st = socket.SOCK_SEQPACKET
 
         if pathname:
@@ -290,7 +313,7 @@ cdef class Launchd(object):
                     pass
 
                 sock.bind(pathname)
-                yield Item(value=sock.fileno, typ=ItemType.FD)
+                yield sock
         else:
             if plist.get('SockProtocol') == 'TCP':
                 proto = socket.IPPROTO_TCP
@@ -302,7 +325,14 @@ cdef class Launchd(object):
             elif plist.get('SockFamily') == 'IPv6':
                 family = socket.AF_INET6
 
-            for ai in socket.getaddrinfo(plist.get('SockNodeName'), plist['SockServiceName'], family, st, proto):
+            ai_ret = socket.getaddrinfo(
+                plist.get('SockNodeName'),
+                plist.get('SockServiceName'),
+                family,
+                st,
+                proto)
+
+            for ai in ai_ret:
                 ai_family, ai_socktype, ai_proto, ai_canon, ai_addr = ai
                 sock = socket.socket(ai_family, ai_socktype, ai_proto)
 
@@ -314,20 +344,27 @@ cdef class Launchd(object):
                 else:
                     sock.connect(ai_addr)
 
-                yield Item(value=sock.fileno, typ=ItemType.FD)
+                yield sock
 
     def convert_sockets(self, plist):
+        sockets = []
         result = Item(typ=ItemType.DICTIONARY)
         for k, v in plist.items():
             arr = Item(typ=ItemType.ARRAY)
             if v.type == ItemType.ARRAY:
                 for i in v:
-                    arr += list(self.create_sockets(i))
+                    s = list(self.create_sockets(i))
+                    sockets += s
+                    arr += map(lambda x: Item(value=x.fileno(), typ=ItemType.FD), s)
 
             if v.type == ItemType.DICTIONARY:
-                arr += list(self.create_sockets(v))
+                    s = list(self.create_sockets(v))
+                    sockets += s
+                    arr += map(lambda x: Item(value=x.fileno(), typ=ItemType.FD), s)
 
-        return result
+            result[k] = arr
+
+        return sockets, result
 
     property jobs:
         def __get__(self):
@@ -335,11 +372,15 @@ cdef class Launchd(object):
             return self.message(msg)
 
     def load(self, plist):
+        sockets = []
+        plist = Item(plist)
         if 'Sockets' in plist:
-            plist['Sockets'] = self.convert_sockets(plist['Sockets'])
+            sockets, result = self.convert_sockets(plist['Sockets'])
+            plist['Sockets'] = result
 
         msg = Item({"SubmitJob": plist})
-        return self.message(msg)
+        ret = self.message(msg)
+        return ret
 
     def unload(self, label):
         msg = Item({"RemoveJob": label})
