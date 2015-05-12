@@ -27,7 +27,6 @@
 import os
 import psutil
 import re
-import sys
 import time
 
 from datetime import datetime
@@ -44,6 +43,38 @@ ZONEINFO_DIR = "/usr/share/zoneinfo"
 
 @description("Provides informations about the running system")
 class SystemInfoProvider(Provider):
+
+    @returns(h.ref('system-settings'))
+    def get_system_config(self):
+
+        protocol = []
+        if self.dispatcher.configstore.get('service.nginx.http.enable'):
+            protocol.append('HTTP')
+        if self.dispatcher.configstore.get('service.nginx.https.enable'):
+            protocol.append('HTTPS')
+
+        return {
+            'webui-procotol': protocol,
+            'webui-listen': self.dispatcher.configstore.get(
+                'service.nginx.listen',
+            ),
+            'webui-http-port': self.dispatcher.configstore.get(
+                'service.nginx.http.port',
+            ),
+            'webui-https-port': self.dispatcher.configstore.get(
+                'service.nginx.https.port',
+            ),
+            'language': self.dispatcher.configstore.get(
+                'system.language',
+            ),
+            'timezone': self.dispatcher.configstore.get(
+                'system.timezone',
+            ),
+            'console-keymap': self.dispatcher.configstore.get(
+                'system.console.keymap',
+            ),
+        }
+
     @returns(str)
     def uname_full(self):
         out, _ = system('uname', '-a')
