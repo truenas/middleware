@@ -54,6 +54,8 @@ def read_config(filename):
         print("Cannot initialize datastore: configuration not found", file=sys.stderr)
         sys.exit(1)
 
+    return conf
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -63,7 +65,7 @@ def main():
 
     ds = config['datastore']
     db_dir = ds['dbdir']
-    driver_name = ds['drier']
+    driver_name = ds['driver']
     driver_dir = os.path.join('/usr/local/lib/datastore/drivers', ds['driver'])
 
     with open(os.path.join(driver_dir, driver_name + '.json'), 'r') as f:
@@ -84,7 +86,9 @@ def main():
         sys.exit(1)
 
     try:
-        launchd.load(plist)
+        ld = launchd.Launchd()
+        ld.load(plist)
+        ld.start(plist['Label'])
     except OSError, e:
         print("Cannot load datastore job: {0}".format(e))
         sys.exit(1)

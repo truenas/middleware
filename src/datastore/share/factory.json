@@ -490,18 +490,23 @@
             "system.motd": "FreeBSD ?.?.?  (UNKNOWN)\n\nFreeNAS (c) 2009-2014, The FreeNAS Development Team\nAll rights reserved.\nFreeNAS is released under the modified BSD license.\nFor more information, documentation, help or support, go here:\nhttp://freenas.org",
             "system.shells": ["/bin/sh", "/bin/csh", "/usr/local/bin/zsh", "/usr/local/bin/bash", "/usr/local/bin/cli"],
 			"system.boot_pool_name": "freenas-boot",
+			"system.vt_count": 10,
 			"system.dataset.pool": "freenas-boot",
 			"system.dataset.id": null,
 			"system.dataset.services": ["syslog", "fnstatd"],
+
 			"server.token_lifetime": 600,
+
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
-	    "mail.server": "",
-	    "mail.port": 25,
-	    "mail.encryption": "PLAIN",
-	    "mail.auth": false,
-	    "mail.user": "",
-	    "mail.pass": "",
+
+			"mail.server": "",
+			"mail.port": 25,
+			"mail.encryption": "PLAIN",
+			"mail.auth": false,
+			"mail.user": "",
+			"mail.pass": "",
+
             "network.autoconfigure": true,
             "network.gateway.ipv4": null,
             "network.gateway.ipv6": null,
@@ -510,12 +515,19 @@
             "network.http_proxy": null,
 			"network.dhcp.assign_gateway": true,
 			"network.dhcp.assign_dns": true,
+
             "service.nginx.enable": true,
-            "service.nginx.listen": ["0.0.0.0", "[::]"],
+            "service.nginx.listen": [
+				{"address": "0.0.0.0", "port": 80, "protocol": "IPv4"},
+				{"address": "::", "port": 80, "protocol": "IPv6"}
+			],
             "service.nginx.http.enable": true,
-            "service.nginx.http.port": 80,
+
             "service.sshd.enable": true,
-            "service.sshd.port": 22,
+            "service.sshd.listen": [
+				{"address": "0.0.0.0", "port": 22, "protocol": "IPv4"},
+				{"address": "::", "port": 22, "protocol": "IPv6"}
+			],
             "service.sshd.sftp_log_level": "ERROR",
             "service.sshd.sftp_log_facility": "AUTH",
             "service.sshd.permit_root_login": true,
@@ -523,8 +535,10 @@
             "service.sshd.compression": false,
             "service.sshd.allow_password_auth": true,
             "service.sshd.allow_pubkey_auth": true,
+
             "service.ftp.enable": true,
             "service.ftp.port": 21,
+
 			"service.snmp.enable": true,
 			"service.collectd.enable": true
         }
@@ -610,13 +624,52 @@
         "metadata": {
             "last-id": null,
             "pkey-type": "uuid",
-            "name": "service_definitions",
+            "name": "service-definitions",
 			"migration": "replace",
             "attributes": {
                 "type": "persistent"
             }
         },
         "data": {
+			"03E16710-C1EA-4BEE-BAF0-C3CAFFE6B308": {
+				"name": "etcd",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.middleware.etcd",
+					"KeepAlive": true,
+					"ProgramArguments": [
+						"/usr/local/sbin/etcd",
+						"/etc"
+					]
+				}
+			},
+			"BABF90D2-4764-4739-9164-F48FF5D6A109": {
+				"name": "networkd",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.middleware.networkd",
+					"KeepAlive": true,
+					"Program": "/usr/local/sbin/networkd"
+				}
+			},
+			"CDE643AF-542E-4031-94ED-6E3295242698": {
+				"name": "fnstatd",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.middleware.statd",
+					"KeepAlive": true,
+					"Program": "/usr/local/sbin/fnstatd"
+				}
+			},
+			"1D79DFF2-DBDD-4A97-B42E-417A31927A01": {
+				"name": "gui",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.gui",
+					"KeepAlive": true,
+					"Program": "/usr/local/sbin/gui"
+				}
+			},
             "721F2D5E-8395-4477-A01A-D23330A37752": {
                 "name": "devd",
                 "pidfile": "/var/run/devd.pid",
@@ -635,6 +688,7 @@
             },
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
 				"name": "sshd",
+				"socket-server": true,
 				"builtin": true,
 				"rcng": {
 					"rc-scripts": "sshd"
@@ -643,7 +697,7 @@
 					"Label": "com.openssh.sshd",
 					"ProgramArguments": [
 						"/usr/sbin/sshd",
-						"-D"
+						"-i"
 					],
 					"RunAtLoad": true
 				}
@@ -662,6 +716,10 @@
                 "builtin": true,
 				"rcng": {
 					"rc-scripts": "nginx"
+				},
+				"launchd": {
+					"Label": "org.nginx.nginx",
+					"Program": "/usr/local/sbin/nginx"
 				},
                 "settings": [
                     "service.nginx.*"

@@ -5,7 +5,6 @@ ChallengeResponseAuthentication no
 ClientAliveCountMax 3
 ClientAliveInterval 15
 NoneEnabled yes
-Port ${config.get("service.sshd.port")}
 PermitRootLogin ${"yes" if config.get("service.sshd.permit_root_login") else "without-password"}
 AllowTcpForwarding ${"yes" if config.get("service.sshd.allow_port_forwarding") else "no"}
 Compression ${"delayed" if config.get("service.sshd.compression") else "no"}

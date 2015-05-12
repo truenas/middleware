@@ -17,7 +17,7 @@ syslogd_enable="NO"
 # turbo boost
 performance_cpu_freq="HIGH"
 
-% for svc in ds.query("service_definitions"):
+% for svc in ds.query("service-definitions"):
     % if config.get("service.{0}.enable".format(svc["name"])):
         ${svc['rcng']['rc-scripts']}_enable="YES"
     % endif
