@@ -25,8 +25,9 @@
 #
 #####################################################################
 import os
-import sys
 import psutil
+import re
+import sys
 import time
 
 from datetime import datetime
@@ -35,6 +36,9 @@ from dispatcher.rpc import SchemaHelper as h, accepts, description, returns
 from lib.system import system, system_bg
 from lib.freebsd import get_sysctl
 from task import Provider, Task
+
+
+KEYMAPS_INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
 
 
 @description("Provides informations about the running system")
@@ -56,6 +60,18 @@ class SystemInfoProvider(Provider):
             'memory-size': get_sysctl("hw.physmem")
         }
 
+    def keymaps(self):
+        if not os.path.exists(KEYMAPS_INDEX):
+            return []
+
+        rv = []
+        with open(KEYMAPS_INDEX, 'r') as f:
+            d = f.read()
+        fnd = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
+        for name, desc in fnd:
+            rv.append((name, desc))
+        return rv
+
     def time(self):
         return {
             'system-time': datetime.now(tz=tz.tzlocal()),
@@ -70,7 +86,6 @@ class SystemInfoProvider(Provider):
         for root, _, files in os.walk(sys.argv[1]):
             for f in files:
                 result.append(os.path.join(root, f))
-
         return result
 
 
