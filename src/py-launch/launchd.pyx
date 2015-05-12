@@ -27,6 +27,7 @@
 
 import enum
 import os
+import socket
 from libc.errno cimport errno
 from libc.stdint cimport uintptr_t
 cimport defs
@@ -58,6 +59,9 @@ cdef class Item(object):
             self._value = <defs.launch_data_t>ptr
             return
 
+        if typ is not None:
+            self._value = defs.launch_data_alloc(typ.value)
+
         if value is not None:
             if type(value) is Item:
                 self._value = defs.launch_data_copy(<defs.launch_data_t><uintptr_t>value.ptr)
@@ -73,7 +77,7 @@ cdef class Item(object):
 
                     if typ == ItemType.MACHPORT:
                         self._value = defs.launch_data_new_machport(value)
-               else:
+                else:
                    self._value = defs.launch_data_new_integer(value)
 
             if type(value) is bool:
@@ -210,6 +214,17 @@ cdef class Item(object):
         for i in self.keys():
             yield (i, self[i])
 
+    def get(self, indice, default=None):
+        if isinstance(indice, basestring) and self.type == ItemType.DICTIONARY:
+            if indice in self:
+                return self[indice]
+
+        if isinstance(indice, (int, long)) and self.type == ItemType.ARRAY:
+            if indice in self:
+                return self[indice]
+
+        raise NotImplementedError('Unsupported for that item type')
+
     def append(self, value):
         if self.type != ItemType.ARRAY:
             raise NotImplementedError('Not an array')
@@ -251,12 +266,78 @@ cdef class Launchd(object):
 
         return Item(ptr=resp)
 
+    def create_sockets(self, plist):
+        passive = plist.get('SockPassive', True)
+        pathname = plist.get('SockPathName', None)
+        st = socket.SOCK_STREAM
+        family = socket.AF_INET
+        proto = socket.IPPROTO_TCP
+
+        if plist['SockType'].lower() == 'stream':
+            st = socket.SOCK_STREAM
+        elif plist['SockType'].lower() == 'dgram':
+            st = socket.SOCK_DGRAM
+        elif plist['SockType'].lower() == 'seqpacket':
+            st = socket.SOCK_SEQPACKET
+
+        if pathname:
+            sock = socket.socket(socket.AF_UNIX, st)
+
+            if passive:
+                try:
+                    os.remove(pathname)
+                except OSError:
+                    pass
+
+                sock.bind(pathname)
+                yield Item(value=sock.fileno, typ=ItemType.FD)
+        else:
+            if plist.get('SockProtocol') == 'TCP':
+                proto = socket.IPPROTO_TCP
+            elif plist.get('SockProtocol') == 'UDP':
+                proto = socket.IPPROTO_UDP
+
+            if plist.get('SockFamily') == 'IPv4':
+                family = socket.AF_INET
+            elif plist.get('SockFamily') == 'IPv6':
+                family = socket.AF_INET6
+
+            for ai in socket.getaddrinfo(plist.get('SockNodeName'), plist['SockServiceName'], family, st, proto):
+                ai_family, ai_socktype, ai_proto, ai_canon, ai_addr = ai
+                sock = socket.socket(ai_family, ai_socktype, ai_proto)
+
+                if passive:
+                    sock.bind(ai_addr)
+
+                    if ai_socktype in (socket.SOCK_STREAM, socket.SOCK_SEQPACKET):
+                        sock.listen(-1)
+                else:
+                    sock.connect(ai_addr)
+
+                yield Item(value=sock.fileno, typ=ItemType.FD)
+
+    def convert_sockets(self, plist):
+        result = Item(typ=ItemType.DICTIONARY)
+        for k, v in plist.items():
+            arr = Item(typ=ItemType.ARRAY)
+            if v.type == ItemType.ARRAY:
+                for i in v:
+                    arr += list(self.create_sockets(i))
+
+            if v.type == ItemType.DICTIONARY:
+                arr += list(self.create_sockets(v))
+
+        return result
+
     property jobs:
         def __get__(self):
             msg = Item("GetJobs")
             return self.message(msg)
 
     def load(self, plist):
+        if 'Sockets' in plist:
+            plist['Sockets'] = self.convert_sockets(plist['Sockets'])
+
         msg = Item({"SubmitJob": plist})
         return self.message(msg)
 
