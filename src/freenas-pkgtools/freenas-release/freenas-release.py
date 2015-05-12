@@ -2011,6 +2011,11 @@ def AddPackage(pkg, db = None,
         # rebuilding the database.  We expect that the input
         # package has all the updates as required (for a rebuild,
         # that would come from the manifest file).
+        if restart_services:
+            service_list = restart_services
+        else:
+            service_list = None
+            
         # So first let's see if the package is already in the database.
         if db.FindPackage(pkg):
             if debug or verbose:  print >> sys.stderr, "\tPackage is already in database"
@@ -2024,6 +2029,8 @@ def AddPackage(pkg, db = None,
                 script_dir = os.path.join(archive, "Packages", pkg.Name(), pkg.Version())
                 if os.path.exists(script_dir):
                     for script_name in os.listdir(script_dir):
+                        if script_name == "Services":
+                            continue
                         scripts[script_name] = open(os.path.join(script_dir, script_name), "r").read()
                 if len(scripts) == 0:
                     scripts = None
@@ -2046,6 +2053,21 @@ def AddPackage(pkg, db = None,
         # RequiresReboot defaults to the package default
         rr = pkg.RequiresReboot()
         if service_list:
+            import json
+            svclist_dir = os.path.join(archive, "Packages", pkg.Name(), pkg.Version());
+            try:
+                os.makedirs(svclist_dir)
+            except:
+                pass
+            svc_list_file_name = os.path.join(svclist_dir, "Services")
+            try:
+                svc_list_file = open(svc_list_file_name, "wx")
+                json.dump(service_list, svc_list_file)
+                svc_list_file.close()
+                print >> sys.stderr, "Wrote service list to %s" % svc_list_file_name
+            except BaseException as e:
+                print >> sys.stderr, "Could NOT write service list to %s: %s" % (svc_list_file_name, str(e))
+                svc_list_file = None
             for svc, val in service_list.iteritems():
                 print >> sys.stderr, "Adding service %s -> %s for %s-%s" % (svc, val, pkg.Name(), pkg.Version())
                 db.AddServiceForPackageUpdate(pkg, svc, val)
@@ -2569,7 +2591,7 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
     based on the filename if the mtime is equal.
     """
     found_manifests = []
-    pkg_directory = "%s/Packages" % archive
+    pkg_directory = os.path.join(archive, "Packages")
     copy = None
     verify = False
     
@@ -2627,14 +2649,33 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
         
         pkg_list = []
         for pkg in m.Packages():
+            import json
             # This handles copy and normal rebuild.  To verify, we would
             # need to get the checksums for the package file and any update files.
             if copy:
+                svc_list_filename = os.path.join(source, pkg.Name(), pkg.Version(), "Services")
+                try:
+                    svc_list = json.load(open(svc_list_filename, "r"))
+                except:
+                    svc_list = {}
                 lock = LockArchive(copy, "Copying package file %s-%s" % (pkg.Name(), pkg.Version()), wait = True)
-                pkg = AddPackage(pkg, db, source = pkg_directory, archive = copy, train = m.Train())
+                pkg = AddPackage(pkg, db, source = pkg_directory,
+                                 archive = copy,
+                                 train = m.Train(),
+                                 restart_services = svc_list)
                 lock.close()
             else:
-                pkg = AddPackage(pkg, db, source = None, archive = archive, train = m.Train())
+                svc_list_filename = os.path.join(pkg_directory, pkg.Name(), pkg.Version(), "Services")
+                print >> sys.stderr, "svc_list_filename = %s" % svc_list_filename
+                try:
+                    svc_list = json.load(open(svc_list_filename, "r"))
+                    print >> sys.stderr, "\tsvc_list = %s" % svc_list
+                except:
+                    svc_list = {}
+                pkg = AddPackage(pkg, db, source = None,
+                                 archive = archive,
+                                 train = m.Train(),
+                                 restart_services = svc_list)
 
             pkg_list.append(pkg)
 
