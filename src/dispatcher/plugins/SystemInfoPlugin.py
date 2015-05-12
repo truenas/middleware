@@ -168,20 +168,29 @@ class SystemConfigureTask(Task):
             'system.timezone',
             props.get('timezone'),
         )
-        if props.get('timezone'):
-            try:
-                self.dispatcher.call_sync(
-                    'etcd.generation.generate_group', 'localtime'
-                )
-            except RpcException, e:
-                raise TaskException(
-                    errno.ENXIO,
-                    'Cannot reconfigure localtime: {0}'.format(str(e),)
-                )
         self.dispatcher.configstore.set(
             'system.console.keymap',
             props.get('console-keymap'),
         )
+
+        try:
+            self.dispatcher.call_sync(
+                'etcd.generation.generate_group', 'localtime'
+            )
+            self.dispatcher.call_sync(
+                'etcd.generation.generate_group', 'nginx'
+            )
+            self.dispatcher.call_sync('services.reload', 'nginx')
+        except RpcException, e:
+            raise TaskException(
+                errno.ENXIO,
+                'Cannot reconfigure system: {0}'.format(str(e),)
+            )
+
+        self.dispatcher.dispatch_event('system.info.changed', {
+            'operation': 'update',
+            'ids': ['system.info'],
+        })
 
 
 @description("Reboots the System after a delay of 10 seconds")
