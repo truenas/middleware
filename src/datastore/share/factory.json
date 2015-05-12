@@ -495,7 +495,7 @@
 			"system.dataset.services": ["syslog", "fnstatd"],
 			"system.language": "English",
 			"system.timezone": "America/Los_Angeles",
-			"system.console.kbdmap": null,
+			"system.console.keymap": null,
 			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],

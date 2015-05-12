@@ -128,8 +128,8 @@ class SystemConfigureTask(Task):
             props.get('timezone'),
         )
         self.dispatcher.configstore.set(
-            'system.console.kbdmap',
-            props.get('console-kbdmap'),
+            'system.console.keymap',
+            props.get('console-keymap'),
         )
 
 
@@ -192,7 +192,7 @@ def _init(dispatcher):
             },
             'language': {'type': 'string'},
             'timezone': {'type': 'string'},
-            'console-kbdmap': {'type': 'string'},
+            'console-keymap': {'type': 'string'},
         },
     })
 
