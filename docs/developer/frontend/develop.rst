@@ -1,8 +1,11 @@
 .. highlight:: javascript
    :linenothreshold: 5
 
-Set up your Development Environment
-===================================
+.. index:: Frontend Dev Environment
+.. _Frontend Dev Environment:
+
+FreeNAS 10 Frontend Development Environment
+===========================================
 
 The FreeNAS 10 developers provide tools to automatically sync FreeNAS 10 Web UI
 code to a live FreeNAS 10 instance for fast iteration and testing. When properly
