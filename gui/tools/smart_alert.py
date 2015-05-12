@@ -51,10 +51,17 @@ def main():
                 pass
 
     device = os.environ.get('SMARTD_DEVICE')
+    if device is None:
+        lock.release()
+        return
+
     if device not in data:
         data[device] = []
 
     message = os.environ.get('SMARTD_MESSAGE')
+    if message is None:
+        lock.release()
+        return
     if message not in data[device]:
         data[device].append(message)
 

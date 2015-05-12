@@ -38,6 +38,8 @@ class SMARTAlert(BaseAlert):
             if not msgs:
                 continue
             for msg in msgs:
+                if msg is None:
+                    continue
                 alerts.append(Alert(Alert.CRIT, msg))
 
         lock.release()
