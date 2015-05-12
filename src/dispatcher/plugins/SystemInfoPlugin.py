@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import errno
 import os
 import psutil
 import re
@@ -31,10 +32,12 @@ import time
 
 from datetime import datetime
 from dateutil import tz
-from dispatcher.rpc import SchemaHelper as h, accepts, description, returns
+from dispatcher.rpc import (
+    RpcException, SchemaHelper as h, accepts, description, returns
+)
 from lib.system import system, system_bg
 from lib.freebsd import get_sysctl
-from task import Provider, Task
+from task import Provider, Task, TaskException
 
 
 KEYMAPS_INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
@@ -133,17 +136,17 @@ class SystemConfigureTask(Task):
     def describe(self):
         return "System Settings Configure"
 
-    def verify(self):
+    def verify(self, props):
         return ['system']
 
     def run(self, props):
         self.dispatcher.configstore.set(
             'service.nginx.http.enable',
-            True if 'HTTP' in props.get('webui-procotol') else False,
+            True if 'HTTP' in props.get('webui-protocol') else False,
         )
         self.dispatcher.configstore.set(
             'service.nginx.https.enable',
-            True if 'HTTPS' in props.get('webui-procotol') else False,
+            True if 'HTTPS' in props.get('webui-protocol') else False,
         )
         self.dispatcher.configstore.set(
             'service.nginx.listen',
@@ -165,6 +168,16 @@ class SystemConfigureTask(Task):
             'system.timezone',
             props.get('timezone'),
         )
+        if props.get('timezone'):
+            try:
+                self.dispatcher.call_sync(
+                    'etcd.generation.generate_group', 'localtime'
+                )
+            except RpcException, e:
+                raise TaskException(
+                    errno.ENXIO,
+                    'Cannot reconfigure localtime: {0}'.format(str(e),)
+                )
         self.dispatcher.configstore.set(
             'system.console.keymap',
             props.get('console-keymap'),
@@ -220,14 +233,8 @@ def _init(dispatcher):
                 'type': ['array'],
                 'items': {'type': 'string'},
             },
-            'webui-http-port': {
-                'type': ['array'],
-                'items': {'type': 'integer'},
-            },
-            'webui-https-port': {
-                'type': ['array'],
-                'items': {'type': 'integer'},
-            },
+            'webui-http-port': {'type': 'integer'},
+            'webui-https-port': {'type': 'integer'},
             'language': {'type': 'string'},
             'timezone': {'type': 'string'},
             'console-keymap': {'type': 'string'},
