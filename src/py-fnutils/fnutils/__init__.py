@@ -61,3 +61,23 @@ def materialized_paths_to_tree(lst, separator='.'):
         add(result, path)
 
     return result
+
+
+def template(d, **kwargs):
+    if isinstance(d, dict):
+        result = {}
+        for k, v in d.items():
+            result[template(k, **kwargs)] = template(v, **kwargs)
+
+        return result
+
+    if isinstance(d, list):
+        result = []
+        for i in d:
+            result.append(template(i, **kwargs))
+
+    if isinstance(d, int):
+        return d
+
+    if isinstance(d, basestring):
+        return d.format(d, **kwargs)
