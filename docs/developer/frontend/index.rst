@@ -16,6 +16,7 @@ FreeNAS 10 Frontend Development Guide
    The Viewer Component <viewer>
    Routing <routing>
    Adding a Viewer <adding_a_viewer>
+   JavaScript Style Guide <javascript>
 
 
 
