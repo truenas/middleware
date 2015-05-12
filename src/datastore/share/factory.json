@@ -568,6 +568,12 @@
                     "plugin:ssh/sshd_keys"
                 ]
             },
+            "3C42EFC3-9C17-4CAF-8DFB-931711EB2D7A": {
+                "name": "localtime",
+                "dependencies": [
+                    "plugin:localtime"
+                ]
+            },
             "1E784623-8CB9-442E-9AC6-1125E2692A0C": {
                 "name": "nginx",
                 "dependencies": [
