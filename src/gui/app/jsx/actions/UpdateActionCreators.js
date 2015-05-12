@@ -6,14 +6,17 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-module.exports = {
+class UpdateActionCreators {
 
-    receiveUpdateInfo: function( updateInfo, updateInfoName ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        		: ActionTypes.RECEIVE_UPDATE_DATA
-        , updateInfo 		: updateInfo
-        , updateInfoName 	: updateInfoName
-      });
-    }
+  receiveUpdateInfo ( updateInfo, updateInfoName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_UPDATE_DATA
+      , updateInfo: updateInfo
+      , updateInfoName: updateInfoName
+      }
+    );
+  }
 
 };
+
+export default new UpdateActionCreators();

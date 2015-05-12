@@ -8,13 +8,16 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-module.exports = {
+class TasksActionCreators {
 
-    receiveTaskHistory: function ( tasks ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type  : ActionTypes.RECEIVE_TASK_HISTORY
-        , tasks : tasks
-      });
-    }
+  receiveTaskHistory ( tasks ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_TASK_HISTORY
+      , tasks: tasks
+      }
+    );
+  }
 
 };
+
+export default new TasksActionCreators();

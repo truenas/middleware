@@ -6,13 +6,16 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-module.exports = {
+class NetworksActionCreators {
 
-    receiveNetworksList: function( rawNetworksList ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type            : ActionTypes.RECEIVE_RAW_NETWORKS
-        , rawNetworksList : rawNetworksList
-      });
-    }
+  receiveNetworksList ( rawNetworksList ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_RAW_NETWORKS
+      , rawNetworksList: rawNetworksList
+      }
+    );
+  }
 
 };
+
+export default new NetworksActionCreators();

@@ -8,28 +8,33 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-module.exports = {
+class SubscriptionsActionCreators {
 
-    recordNewSubscriptions: function ( masks, componentID ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        : ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS
-        , masks       : masks
-        , componentID : componentID
-      });
-    }
+  recordNewSubscriptions ( masks, componentID ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS
+      , masks: masks
+      , componentID: componentID
+      }
+    );
+  }
 
-  , deleteCurrentSubscriptions: function ( masks, componentID ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        : ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS
-        , masks       : masks
-        , componentID : componentID
-      });
-    }
+  deleteCurrentSubscriptions ( masks, componentID ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS
+      , masks: masks
+      , componentID: componentID
+      }
+    );
+  }
 
-  , deleteAllSubscriptions: function () {
-      FreeNASDispatcher.handleMiddlewareAction({
-        type          : ActionTypes.UNSUBSCRIBE_ALL
-      });
-    }
+  deleteAllSubscriptions () {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UNSUBSCRIBE_ALL
+      }
+    );
+  }
 
 };
+
+export default new SubscriptionsActionCreators();

@@ -6,14 +6,17 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-module.exports = {
+class StatdActionCreators {
 
-  receiveWidgetData: function ( rawWidgetData, dataSourceName ) {
-    FreeNASDispatcher.handleMiddlewareAction({
-        type        : ActionTypes.RECEIVE_RAW_WIDGET_DATA
-      , rawWidgetData : rawWidgetData
-      , dataSourceName : dataSourceName
-    });
+  receiveWidgetData ( rawWidgetData, dataSourceName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_RAW_WIDGET_DATA
+      , rawWidgetData: rawWidgetData
+      , dataSourceName: dataSourceName
+      }
+    );
   }
 
 };
+
+export default new StatdActionCreators();

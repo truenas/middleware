@@ -6,23 +6,26 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-module.exports = {
+class SystemActionCreators {
 
-    receiveSystemInfo: function( systemInfo, systemInfoName ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        		: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
-        , systemInfo 		: systemInfo
-        , systemInfoName 	: systemInfoName
-      });
-    }
+  receiveSystemInfo ( systemInfo, systemInfoName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
+      , systemInfo: systemInfo
+      , systemInfoName: systemInfoName
+      }
+    );
+  }
 
-  , receiveSystemDevice: function( systemDevice, systemDeviceArgument ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        			: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
-        , systemDevice 			: systemDevice
-        , systemDeviceArgument 	: systemDeviceArgument
-      });
-
+  receiveSystemDevice ( systemDevice, systemDeviceArgument ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
+      , systemDevice: systemDevice
+      , systemDeviceArgument: systemDeviceArgument
+      }
+    );
   }
 
 };
+
+export default new SystemActionCreators();
