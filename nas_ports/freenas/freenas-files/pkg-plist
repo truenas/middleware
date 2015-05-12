@@ -41,6 +41,8 @@ etc/rc.d/cleanvar
 etc/rc.d/ix-bootstrap
 etc/rc.d/ix-etc
 etc/rc.d/ix-network
+etc/launchd.d/datastore.json
+etc/launchd.d/dispatcher.json
 .bashrc
 .cshrc
 .profile
