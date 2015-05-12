@@ -24,6 +24,30 @@ selected rules added from the
 `npm style guide <https://docs.npmjs.com/misc/coding-style>`__. This guide is
 largely adapted from those two sources.
 
+JSCS Plugins
+------------
+
+There are JSCS for a number of popular editors. This guide will cover only
+editors known to be in popular use among FreeNAS 10 developers.
+
+For a list of other plugins and tools, see the
+`JSCS website <http://jscs.info/overview.html#friendly-packages>`_.
+
+SublimeText
+~~~~~~~~~~~
+
+vim
+~~~
+
+emacs
+~~~~~
+
+atom
+~~~~
+
+Awaiting a volunteer to document how to install the
+`Atom JSCS plugin <https://atom.io/packages/linter-jscs>`_!
+
 ------------------
 
 This page licensed under CC-BY-SA.
