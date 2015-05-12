@@ -44,6 +44,7 @@ import errno
 import setproctitle
 import pty
 import termios
+import traceback
 import networkx as nx
 
 import gevent
@@ -101,6 +102,7 @@ class Plugin(object):
             self.module._init(dispatcher)
             self.state = self.LOADED
         except Exception, err:
+            dispatcher.logger.warning("Plugin traceback: {0}".format(traceback.format_exc()))
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
 
     def unload(self):
