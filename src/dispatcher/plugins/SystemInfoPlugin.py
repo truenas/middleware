@@ -39,6 +39,7 @@ from task import Provider, Task
 
 
 KEYMAPS_INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
+ZONEINFO_DIR = "/usr/share/zoneinfo"
 
 
 @description("Provides informations about the running system")
@@ -83,9 +84,15 @@ class SystemInfoProvider(Provider):
 
     def timezones(self):
         result = []
-        for root, _, files in os.walk(sys.argv[1]):
+        for root, _, files in os.walk(ZONEINFO_DIR):
             for f in files:
-                result.append(os.path.join(root, f))
+                if f in (
+                    'zone.tab',
+                ):
+                    continue
+                result.append(os.path.join(root, f).replace(
+                    ZONEINFO_DIR + '/', '')
+                )
         return result
 
 
