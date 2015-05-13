@@ -19,9 +19,8 @@ FreeNAS 10 Frontend Development Guide
    JavaScript Style Guide <javascript>
 
 
-
-Introduction
-------------
+FreeNAS 10 Frontend Development
+-------------------------------
 
 This colleciton of documents (The Frontend Development Guide) describe
 the fundamental architecture and underlying technologies employed by the
