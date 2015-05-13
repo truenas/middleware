@@ -741,17 +741,6 @@
                     "service.nfs.*"
                 ]
             },
-            "1B3133B1-F8F4-44C0-AFAE-4CEAD5C1F4EA": {
-                "name": "sshd",
-                "etcd-group": "sshd",
-                "pidfile": "/var/run/sshd.pid",
-				"rcng": {
-					"rc-scripts": "sshd"
-				},
-                "settings": [
-                    "service.sshd.*"
-                ]
-            },
             "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
                 "name": "ftp",
                 "etcd-group": "ftpd",
