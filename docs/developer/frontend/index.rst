@@ -22,11 +22,10 @@ FreeNAS 10 Frontend Development Guide
 FreeNAS 10 Frontend Development
 -------------------------------
 
-This colleciton of documents (The Frontend Development Guide) describe
-the fundamental architecture and underlying technologies employed by the
-FreeNAS 10 GUI. It is not intended as a tutorial for git, JavaScript, or
-any of the libraries or packages used by FreeNAS 10. Rather, it focuses
-on the setup of a development environment, best practices, architecture,
+This collection of documents describes the architecture and technologies
+employed by the FreeNAS 10 GUI. It is not intended as a tutorial for git,
+JavaScript, or any of the libraries or packages used by FreeNAS 10. Rather, it
+focuses on the setup of a development environment, best practices, architecture,
 separation of concerns, and functional summaries and glossaries of terms
 which apply directly to the project.
 
