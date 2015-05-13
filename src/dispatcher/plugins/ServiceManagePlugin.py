@@ -215,7 +215,7 @@ class UpdateServiceConfigTask(Task):
         self.chain('service.manage', service, 'reload')
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     def on_rc_command(args):
         cmd = args['action']
         name = args['name']
@@ -236,7 +236,7 @@ def _init(dispatcher):
             'name': svc['name']
         })
 
-    dispatcher.register_schema_definition('service', {
+    plugin.register_schema_definition('service', {
         'type': 'object',
         'properties': {
             'id': {'type': 'string'},
@@ -249,10 +249,10 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_event_handler("service.rc.command", on_rc_command)
-    dispatcher.register_task_handler("service.manage", ServiceManageTask)
-    dispatcher.register_task_handler("service.configure", UpdateServiceConfigTask)
-    dispatcher.register_provider("services", ServiceInfoProvider)
+    plugin.register_event_handler("service.rc.command", on_rc_command)
+    plugin.register_task_handler("service.manage", ServiceManageTask)
+    plugin.register_task_handler("service.configure", UpdateServiceConfigTask)
+    plugin.register_provider("services", ServiceInfoProvider)
 
     for svc in dispatcher.datastore.query('service_defintions'):
-        dispatcher.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])
+        plugin.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])

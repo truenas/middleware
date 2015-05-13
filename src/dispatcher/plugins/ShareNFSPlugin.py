@@ -119,8 +119,8 @@ def _metadata():
     }
 
 
-def _init(dispatcher):
-    dispatcher.register_schema_definition('nfs-share-properties', {
+def _init(dispatcher, plugin):
+    plugin.register_schema_definition('nfs-share-properties', {
         'type': 'object',
         'properties': {
             'alldirs': {'type': 'boolean'},
@@ -136,11 +136,11 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_task_handler("share.nfs.create", CreateNFSShareTask)
-    dispatcher.register_task_handler("share.nfs.update", UpdateNFSShareTask)
-    dispatcher.register_task_handler("share.nfs.delete", DeleteNFSShareTask)
-    dispatcher.register_provider("shares.nfs", NFSSharesProvider)
-    dispatcher.register_resource(Resource('service:nfs'), ['system'])
+    plugin.register_task_handler("share.nfs.create", CreateNFSShareTask)
+    plugin.register_task_handler("share.nfs.update", UpdateNFSShareTask)
+    plugin.register_task_handler("share.nfs.delete", DeleteNFSShareTask)
+    plugin.register_provider("shares.nfs", NFSSharesProvider)
+    plugin.register_resource(Resource('service:nfs'), ['system'])
 
     # Start NFS server if there are any configured shares
     if dispatcher.datastore.exists('shares', ('type', '=', 'nfs')):

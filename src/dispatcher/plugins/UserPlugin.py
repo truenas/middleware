@@ -326,13 +326,13 @@ class GroupDeleteTask(Task):
         })
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     # Make sure collections are present
     dispatcher.require_collection('users', pkey_type='serial')
     dispatcher.require_collection('groups', pkey_type='serial')
 
     # Register definitions for objects used
-    dispatcher.register_schema_definition('user', {
+    plugin.register_schema_definition('user', {
         'type': 'object',
         'properties': {
             'id': {'type': 'number'},
@@ -364,7 +364,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('group', {
+    plugin.register_schema_definition('group', {
         'type': 'object',
         'properties': {
             'id': {'type': 'integer'},
@@ -374,17 +374,17 @@ def _init(dispatcher):
     })
 
     # Register provider for querying accounts and groups data
-    dispatcher.register_provider('users', UserProvider)
-    dispatcher.register_provider('groups', GroupProvider)
+    plugin.register_provider('users', UserProvider)
+    plugin.register_provider('groups', GroupProvider)
 
     # Register task handlers
-    dispatcher.register_task_handler('users.create', UserCreateTask)
-    dispatcher.register_task_handler('users.update', UserUpdateTask)
-    dispatcher.register_task_handler('users.delete', UserDeleteTask)
-    dispatcher.register_task_handler('groups.create', GroupCreateTask)
-    dispatcher.register_task_handler('groups.update', GroupUpdateTask)
-    dispatcher.register_task_handler('groups.delete', GroupDeleteTask)
+    plugin.register_task_handler('users.create', UserCreateTask)
+    plugin.register_task_handler('users.update', UserUpdateTask)
+    plugin.register_task_handler('users.delete', UserDeleteTask)
+    plugin.register_task_handler('groups.create', GroupCreateTask)
+    plugin.register_task_handler('groups.update', GroupUpdateTask)
+    plugin.register_task_handler('groups.delete', GroupDeleteTask)
 
     # Register event types
-    dispatcher.register_event_type('users.changed')
-    dispatcher.register_event_type('groups.changed')
+    plugin.register_event_type('users.changed')
+    plugin.register_event_type('groups.changed')

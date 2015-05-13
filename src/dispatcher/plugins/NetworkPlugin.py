@@ -346,8 +346,8 @@ def _depends():
     return ['DevdPlugin']
 
 
-def _init(dispatcher):
-    dispatcher.register_schema_definition('network-interface', {
+def _init(dispatcher, plugin):
+    plugin.register_schema_definition('network-interface', {
         'type': 'object',
         'properties': {
             'type': {'type': 'string'},
@@ -368,7 +368,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('network-interface-alias', {
+    plugin.register_schema_definition('network-interface-alias', {
         'type': 'object',
         'properties': {
             'type': {
@@ -384,7 +384,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('network-route', {
+    plugin.register_schema_definition('network-route', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -395,7 +395,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('network-host', {
+    plugin.register_schema_definition('network-host', {
         'type': 'object',
         'properties': {
             'address': {'type': 'string'},
@@ -403,7 +403,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('network-config', {
+    plugin.register_schema_definition('network-config', {
         'type': 'object',
         'properties': {
             'gateway': {
@@ -434,22 +434,22 @@ def _init(dispatcher):
     dispatcher.require_collection('network.routes')
     dispatcher.require_collection('network.hosts')
 
-    dispatcher.register_provider('network.config', NetworkProvider)
-    dispatcher.register_provider('network.interfaces', InterfaceProvider)
-    dispatcher.register_provider('network.routes', RouteProvider)
-    dispatcher.register_provider('network.hosts', HostsProvider)
+    plugin.register_provider('network.config', NetworkProvider)
+    plugin.register_provider('network.interfaces', InterfaceProvider)
+    plugin.register_provider('network.routes', RouteProvider)
+    plugin.register_provider('network.hosts', HostsProvider)
 
-    dispatcher.register_task_handler('network.configure', NetworkConfigureTask)
-    dispatcher.register_task_handler('network.host.add', AddHostTask)
-    dispatcher.register_task_handler('network.host.update', UpdateHostTask)
-    dispatcher.register_task_handler('network.host.delete', DeleteHostTask)
-    dispatcher.register_task_handler('network.route.add', AddRouteTask)
-    dispatcher.register_task_handler('network.route.update', UpdateRouteTask)
-    dispatcher.register_task_handler('network.route.delete', DeleteRouteTask)
-    dispatcher.register_task_handler('network.interface.up', InterfaceUpTask)
-    dispatcher.register_task_handler('network.interface.down', InterfaceDownTask)
-    dispatcher.register_task_handler('network.interface.configure', ConfigureInterfaceTask)
-    dispatcher.register_task_handler('network.interface.create', CreateInterfaceTask)
-    dispatcher.register_task_handler('network.interface.delete', DeleteInterfaceTask)
+    plugin.register_task_handler('network.configure', NetworkConfigureTask)
+    plugin.register_task_handler('network.host.add', AddHostTask)
+    plugin.register_task_handler('network.host.update', UpdateHostTask)
+    plugin.register_task_handler('network.host.delete', DeleteHostTask)
+    plugin.register_task_handler('network.route.add', AddRouteTask)
+    plugin.register_task_handler('network.route.update', UpdateRouteTask)
+    plugin.register_task_handler('network.route.delete', DeleteRouteTask)
+    plugin.register_task_handler('network.interface.up', InterfaceUpTask)
+    plugin.register_task_handler('network.interface.down', InterfaceDownTask)
+    plugin.register_task_handler('network.interface.configure', ConfigureInterfaceTask)
+    plugin.register_task_handler('network.interface.create', CreateInterfaceTask)
+    plugin.register_task_handler('network.interface.delete', DeleteInterfaceTask)
 
 

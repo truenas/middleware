@@ -43,7 +43,7 @@ class SessionProvider(Provider):
         return sender.user.name
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     def pam_event(args):
         if args['type'] == 'open_session':
             dispatcher.datastore.insert('sessions', {
@@ -69,7 +69,7 @@ def _init(dispatcher):
             session['active'] = False
             dispatcher.datastore.update('session', session['id'], session)
 
-    dispatcher.register_schema_definition('session', {
+    plugin.register_schema_definition('session', {
         'type': 'object',
         'properties': {
             'username': {'type': 'string'},
@@ -81,5 +81,5 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_provider('sessions', SessionProvider)
-    dispatcher.register_event_handler('system.pam.event', pam_event)
+    plugin.register_provider('sessions', SessionProvider)
+    plugin.register_event_handler('system.pam.event', pam_event)

@@ -528,7 +528,7 @@ def _depends():
     return ['DevdPlugin', 'DiskPlugin']
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     def on_pool_create(args):
         guid = args['guid']
         dispatcher.dispatch_event('zfs.pool.changed', {
@@ -545,7 +545,7 @@ def _init(dispatcher):
 
     def on_dataset_create(args):
         guid = args['guid']
-        dispatcher.register_resource(Resource('zfs:{0}'.format(args['ds'])), parents=[])
+        plugin.register_resource(Resource('zfs:{0}'.format(args['ds'])), parents=[])
         dispatcher.dispatch_event('zfs.pool.changed', {
             'operation': 'create',
             'ids': [guid]
@@ -553,7 +553,7 @@ def _init(dispatcher):
 
     def on_dataset_delete(args):
         guid = args['guid']
-        dispatcher.unregister_resource('zfs:{0}'.format(args['ds']))
+        plugin.unregister_resource('zfs:{0}'.format(args['ds']))
         dispatcher.dispatch_event('zfs.pool.changed', {
             'operation': 'update',
             'ids': [guid]
@@ -566,7 +566,7 @@ def _init(dispatcher):
             'ids': [guid]
         })
 
-    dispatcher.register_schema_definition('zfs-vdev', {
+    plugin.register_schema_definition('zfs-vdev', {
         'type': 'object',
         'properties': {
             'path': {'type': 'string'},
@@ -581,7 +581,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('zfs-topology', {
+    plugin.register_schema_definition('zfs-topology', {
         'type': 'object',
         'properties': {
             'data': {
@@ -603,30 +603,30 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_event_handler('fs.zfs.pool.created', on_pool_create)
-    dispatcher.register_event_handler('fs.zfs.pool.destroyed', on_pool_destroy)
-    dispatcher.register_event_handler('fs.zfs.dataset.created', on_dataset_create)
-    dispatcher.register_event_handler('fs.zfs.dataset.deleted', on_dataset_delete)
-    dispatcher.register_event_handler('fs.zfs.dataset.renamed', on_dataset_rename)
+    plugin.register_event_handler('fs.zfs.pool.created', on_pool_create)
+    plugin.register_event_handler('fs.zfs.pool.destroyed', on_pool_destroy)
+    plugin.register_event_handler('fs.zfs.dataset.created', on_dataset_create)
+    plugin.register_event_handler('fs.zfs.dataset.deleted', on_dataset_delete)
+    plugin.register_event_handler('fs.zfs.dataset.renamed', on_dataset_rename)
 
-    dispatcher.register_provider('zfs.pool', ZpoolProvider)
-    dispatcher.register_task_handler('zfs.pool.create', ZpoolCreateTask)
-    dispatcher.register_task_handler('zfs.pool.configure', ZpoolConfigureTask)
-    dispatcher.register_task_handler('zfs.pool.extend', ZpoolExtendTask)
-    dispatcher.register_task_handler('zfs.pool.import', ZpoolImportTask)
-    dispatcher.register_task_handler('zfs.pool.export', ZpoolExportTask)
-    dispatcher.register_task_handler('zfs.pool.destroy', ZpoolDestroyTask)
-    dispatcher.register_task_handler('zfs.pool.scrub', ZpoolScrubTask)
+    plugin.register_provider('zfs.pool', ZpoolProvider)
+    plugin.register_task_handler('zfs.pool.create', ZpoolCreateTask)
+    plugin.register_task_handler('zfs.pool.configure', ZpoolConfigureTask)
+    plugin.register_task_handler('zfs.pool.extend', ZpoolExtendTask)
+    plugin.register_task_handler('zfs.pool.import', ZpoolImportTask)
+    plugin.register_task_handler('zfs.pool.export', ZpoolExportTask)
+    plugin.register_task_handler('zfs.pool.destroy', ZpoolDestroyTask)
+    plugin.register_task_handler('zfs.pool.scrub', ZpoolScrubTask)
 
-    dispatcher.register_task_handler('zfs.mount', ZfsDatasetMountTask)
-    dispatcher.register_task_handler('zfs.umount', ZfsDatasetUmountTask)
-    dispatcher.register_task_handler('zfs.create_dataset', ZfsDatasetCreateTask)
-    dispatcher.register_task_handler('zfs.create_snapshot', ZfsSnapshotCreateTask)
-    dispatcher.register_task_handler('zfs.create_zvol', ZfsVolumeCreateTask)
-    dispatcher.register_task_handler('zfs.configure', ZfsConfigureTask)
-    dispatcher.register_task_handler('zfs.destroy', ZfsDestroyTask)
-    dispatcher.register_task_handler('zfs.rename', ZfsRenameTask)
-    dispatcher.register_task_handler('zfs.clone', ZfsCloneTask)
+    plugin.register_task_handler('zfs.mount', ZfsDatasetMountTask)
+    plugin.register_task_handler('zfs.umount', ZfsDatasetUmountTask)
+    plugin.register_task_handler('zfs.create_dataset', ZfsDatasetCreateTask)
+    plugin.register_task_handler('zfs.create_snapshot', ZfsSnapshotCreateTask)
+    plugin.register_task_handler('zfs.create_zvol', ZfsVolumeCreateTask)
+    plugin.register_task_handler('zfs.configure', ZfsConfigureTask)
+    plugin.register_task_handler('zfs.destroy', ZfsDestroyTask)
+    plugin.register_task_handler('zfs.rename', ZfsRenameTask)
+    plugin.register_task_handler('zfs.clone', ZfsCloneTask)
 
     try:
         zfs = libzfs.ZFS()

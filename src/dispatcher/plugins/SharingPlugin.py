@@ -96,8 +96,8 @@ class DeleteShareTask(Task):
         self.join_subtasks(self.run_subtask('share.{0}.delete'.format(self.share_type), name))
 
 
-def _init(dispatcher):
-    dispatcher.register_schema_definition('share', {
+def _init(dispatcher, plugin):
+    plugin.register_schema_definition('share', {
         'type': 'object',
         'properties': {
             'id': {'type': 'string'},
@@ -107,7 +107,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('share-client', {
+    plugin.register_schema_definition('share-client', {
         'type': 'object',
         'properties': {
             'host': {'type': 'string'},
@@ -117,7 +117,7 @@ def _init(dispatcher):
     })
 
     dispatcher.require_collection('shares', 'string')
-    dispatcher.register_provider('shares', SharesProvider)
-    dispatcher.register_task_handler('share.create', CreateShareTask)
-    dispatcher.register_task_handler('share.update', UpdateShareTask)
-    dispatcher.register_task_handler('share.delete', DeleteShareTask)
+    plugin.register_provider('shares', SharesProvider)
+    plugin.register_task_handler('share.create', CreateShareTask)
+    plugin.register_task_handler('share.update', UpdateShareTask)
+    plugin.register_task_handler('share.delete', DeleteShareTask)

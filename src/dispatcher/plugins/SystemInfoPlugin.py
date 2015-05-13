@@ -263,10 +263,10 @@ class SystemHaltTask(Task):
                   shell=True)
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
 
     # Register schemas
-    dispatcher.register_schema_definition('system-general', {
+    plugin.register_schema_definition('system-general', {
         'type': 'object',
         'properties': {
             'language': {'type': 'string'},
@@ -275,7 +275,7 @@ def _init(dispatcher):
         },
     })
 
-    dispatcher.register_schema_definition('system-ui', {
+    plugin.register_schema_definition('system-ui', {
         'type': 'object',
         'properties': {
             'webui-protocol': {
@@ -295,14 +295,14 @@ def _init(dispatcher):
     })
 
     # Register providers
-    dispatcher.register_provider("system.general", SystemGeneralProvider)
-    dispatcher.register_provider("system.info", SystemInfoProvider)
-    dispatcher.register_provider("system.ui", SystemUIProvider)
+    plugin.register_provider("system.general", SystemGeneralProvider)
+    plugin.register_provider("system.info", SystemInfoProvider)
+    plugin.register_provider("system.ui", SystemUIProvider)
 
     # Register task handlers
-    dispatcher.register_task_handler("system.general.configure",
-                                     SystemGeneralConfigureTask)
-    dispatcher.register_task_handler("system.ui.configure",
-                                     SystemUIConfigureTask)
-    dispatcher.register_task_handler("system.shutdown", SystemHaltTask)
-    dispatcher.register_task_handler("system.reboot", SystemRebootTask)
+    plugin.register_task_handler("system.general.configure",
+                           SystemGeneralConfigureTask)
+    plugin.register_task_handler("system.ui.configure",
+                           SystemUIConfigureTask)
+    plugin.register_task_handler("system.shutdown", SystemHaltTask)
+    plugin.register_task_handler("system.reboot", SystemRebootTask)

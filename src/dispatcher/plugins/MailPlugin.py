@@ -74,9 +74,9 @@ class MailConfigureTask(Task):
             )
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
 
-    dispatcher.register_schema_definition('mail', {
+    plugin.register_schema_definition('mail', {
         'type': 'object',
         'properties': {
             'server': {'type': 'string'},
@@ -91,7 +91,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('mail-message', {
+    plugin.register_schema_definition('mail-message', {
         'type': 'object',
         'properties': {
             'from': {'type': 'string'},
@@ -102,7 +102,7 @@ def _init(dispatcher):
     })
 
     # Register providers
-    dispatcher.register_provider('mail', MailProvider)
+    plugin.register_provider('mail', MailProvider)
 
     # Register task handlers
-    dispatcher.register_task_handler('mail.configure', MailConfigureTask)
+    plugin.register_task_handler('mail.configure', MailConfigureTask)
