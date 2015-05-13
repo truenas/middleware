@@ -27,6 +27,114 @@ selected rules added from the
 `npm style guide <https://docs.npmjs.com/misc/coding-style>`__. This guide is
 largely adapted from those two sources.
 
+General Rules
+~~~~~~~~~~~~~
+
+These are the main rules with which you will interact.
+
+
+80-column lines
+^^^^^^^^^^^^^^^
+
+This is typically for consideration to those using terminal editors with limited
+space. However, the real reason we're requiring this is to force you to keep
+your code relatively concise. If you find yourself in need of 120 characters
+to express a single statement, consider rewriting it. A number of other rules
+in this guide will help with keeping your lines short.
+
+
+Opening Braces on the same Line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When you use a keyword that requires a bracket to contain the subsequent
+statement, put the opening brace of that statement on the same line as the
+keyword.
+
+.. code-block:: javascript
+
+   if ( "Good Times" ) { // Good
+     console.log( "That's the way uh huh uh huh we like it." );
+   } else if ( "pls no" ) // Bad
+   {
+     console.log( "KNF has its place, but it is not here." );
+   }
+
+
+Method Chaining
+^^^^^^^^^^^^^^^
+
+If you must chain method after method, put one on each line, leading with the
+dot. This is your way around the 80-character limit when you really need that
+long statement.
+
+.. code-block:: javascript
+
+   User
+     .findOne({ name: 'foo' })
+     .populate( "bar" )
+     .exec( function( err, user ) {
+       return true;
+   });
+
+
+One Variable per Statement
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Declaring a bunch of variables on one line may be appealing, but it makes
+finding where a variable is declared annoying and can easily lead to simple
+mistakes (like missing commas). Type ``var`` once per variable.
+
+.. code-block:: javascript
+
+   // Good:
+   var foo;
+   var bar;
+   var baz;
+
+   //Bad:
+   var
+     foo
+     , bar
+     , baz;
+
+   // Very Bad:
+   var foo, bar. baz; //oops!
+
+
+Use ===
+^^^^^^^
+
+Fuzzy comparisons result in fuzzy bugs. Use ===, or lodash ``isEqual``, rather
+than ==. != is right out.
+
+
+Comma First in Multi-Line Lists
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is a bit different. Basically, when you're listing a bunch of things on
+multiple lines, each line should start with a comma except the first one. This
+lets you line up all the commas under the opening brace or bracket, as a bonus.
+
+The chief benefit of this is that it's immediately obvious when you've forgotten
+to put a comma between two items. It also makes those long arrays and objects
+much easier to read.
+
+.. code-block:: javascript
+
+   // Good:
+   var bestArray = [ foo
+                   , bar
+                   , baz ];
+
+   // Bad:
+   var badArray = [ foo,
+                    bar,
+                    baz ];
+
+   // Very Bad:
+   var uncoolObject { foo: "Don't", bar: "do". baz: "this" }; // Broke it again!
+
+
 JSCS Plugins
 ------------
 
