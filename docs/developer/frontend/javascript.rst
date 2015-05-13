@@ -14,9 +14,12 @@ For the exact JSCS rules used in FreeNAS 10, look at the ``.jscsrc`` file in the
 root of the FreeNAS 10 source code.
 
 The :ref:`Frontend Dev Environment` includes a tool for automatically checking
-compliance with all style guide rules. There are also :ref:`JSCS Plugins` for popular
-editors that show JavaScript errors, warnings, and style guide deviations live
-as you develop.
+compliance with all style guide rules. There are also :ref:`JSCS Plugins` for
+popular editors that show JavaScript errors, warnings, and style guide
+deviations live as you develop.
+
+JavaScript Code Rules
+---------------------
 
 Our style rules are based largely on the rules from the
 `node style guide <https://github.com/felixge/node-style-guide>`__, with
