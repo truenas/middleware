@@ -10,12 +10,12 @@ FreeNAS 10 Frontend Development Guide
    Glossary of Technologies <tech_glossary>
    Flux Architecture <flux>
    Webapp Architecture <webapp>
-   Middleware Client <middleware>
    The Live Development Environment <develop>
-   Widgets <widgets>
+   Middleware Client <middleware>
    The Viewer Component <viewer>
    Routing <routing>
    Adding a Viewer <adding_a_viewer>
+   Widgets <widgets>
    JavaScript Style Guide <javascript>
 
 
