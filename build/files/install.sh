@@ -990,7 +990,7 @@ menu_install()
     if [ ${_dlv:=0} -ne 0 ]; then
         _msg="${_msg}Please reboot, and change BIOS boot order to *not* boot over network."
     else
-        _msg="${_msg}Please remove the CDROM and reboot."
+        _msg="${_msg}Please reboot and remove the installation media."
     fi
     ${INTERACTIVE} && dialog --msgbox "$_msg" 6 74
 
