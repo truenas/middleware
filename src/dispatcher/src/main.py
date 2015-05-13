@@ -457,11 +457,14 @@ class Dispatcher(object):
 
     def unregister_provider(self, name):
         self.logger.debug("Unregistering provider: %s", name)
-        del self.providers[name]
         self.rpc.unregister_service(name)
+        del self.providers[name]
 
     def register_schema_definition(self, name, definition):
         self.rpc.register_schema_definition(name, definition)
+
+    def unregister_schema_definition(self, name):
+        self.rpc.unregister_schema_definition(name)
 
     def require_collection(self, collection, pkey_type='uuid', type='config'):
         if not self.datastore.collection_exists(collection):
