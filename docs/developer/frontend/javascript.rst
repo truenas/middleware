@@ -95,4 +95,4 @@ Awaiting a volunteer to document how to install the
 
 This page licensed under CC-BY-SA.
 
-.. image:: http://i.creativecommons.org/l/by-sa/3.0/88x31.png
+.. image:: images/cc-by-sa-88x31.png
