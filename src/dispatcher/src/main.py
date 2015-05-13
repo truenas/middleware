@@ -372,7 +372,45 @@ class Dispatcher(object):
         self.discover_plugins()
 
     def unload_plugins(self):
-        for i in self.plugins.values():
+
+        # Generate a list of inverse plugin dependency
+        required_by = {}
+        for name, plugin in self.plugins.items():
+            if name not in required_by:
+                required_by[name] = set()
+            for dep in plugin.dependencies:
+                if dep not in required_by:
+                    required_by[dep] = set()
+                required_by[dep].add(name)
+
+        # Get a sequential list of plugins to unload
+        # Plugins that no other depend on come first
+        unloadlist = []
+        while len(required_by) > 0:
+            found = False
+            for name, deps in required_by.items():
+                if len(deps) > 0:
+                    continue
+
+                # Remove the plugin from the list that it depends on
+                plugin = self.plugins.get(name)
+                for dep in plugin.dependencies:
+                    if dep in required_by and name in required_by[dep]:
+                        required_by[dep].remove(name)
+                unloadlist.append(plugin)
+
+                del required_by[name]
+                found = True
+                break
+
+            if not found:
+                self.logger.warning(
+                    "Could not unload following plugins due to circular "
+                    "dependencies: {0}".format(required_by)
+                )
+                break
+
+        for i in unloadlist:
             try:
                 i.unload()
             except RuntimeError:
