@@ -450,6 +450,11 @@ class Dispatcher(object):
         self.providers[name] = clazz
         self.rpc.register_service(name, clazz)
 
+    def unregister_provider(self, name):
+        self.logger.debug("Unregistering provider: %s", name)
+        del self.providers[name]
+        self.rpc.unregister_service(name)
+
     def register_schema_definition(self, name, definition):
         self.rpc.register_schema_definition(name, definition)
 
