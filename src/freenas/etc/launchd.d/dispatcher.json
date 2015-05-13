@@ -1,6 +1,9 @@
 {
 	"Label": "org.freenas.middleware.dispatcher",
 	"Program": "/usr/local/sbin/dispatcherd",
+	"StandardInPath": "/dev/null",
+	"StandardOutPath": "/var/log/dispatcher.log",
+	"StandardErrorPath": "/var/log/dispatcher.log",
 	"RunAtLoad": true,
 	"KeepAlive": true
 }
