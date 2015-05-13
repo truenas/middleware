@@ -241,9 +241,49 @@ object.
 JSX Code Rules
 --------------
 
+These rules apply to JSX-specific syntax. These rules are NOT automatically
+enforced by JSCS, and are not yet implemented throughout the UI. However, they
+will still help with readability and reasonable line lengths, so they may be
+considered strongly recommended best practices.
+
+
 One Prop Per Line
 ~~~~~~~~~~~~~~~~~
 
+When rendering a Component with more than one prop, put each prop on a new line.
+The props should be indented two spaces, measuring from the "<" that starts the
+Component.
+
+.. code-block:: javascript
+
+   render: function() {
+
+   // ...
+
+   <TWBS.Grid fluid> // One prop, one line.
+     {/* "Edit Group" Button - Top */}
+     { editButtons }
+
+     <TWBS.Row>
+       <TWBS.Col // Many props, many lines.
+         xs={3}
+         className="text-center">
+         <viewerUtil.ItemIcon
+           primaryString = { this.props.item["name"] }
+           fallbackString = { this.props.item["id"] }
+           seedNumber = { this.props.item["id"] } />
+       </TWBS.Col>
+       <TWBS.Col xs={9}>
+         <h3>{ this.props.item["name"] }</h3>
+         <hr />
+       </TWBS.Col>
+     </TWBS.Row>
+
+   // ...
+
+   </TWBS.Grid>
+
+   });
 
 .. index:: JSCS Plugins
 .. _JSCS Plugins:
@@ -251,7 +291,7 @@ One Prop Per Line
 JSCS Plugins
 ------------
 
-There are JSCS for a number of popular editors. This guide will cover only
+There are JSCS plugins for a number of popular editors. This guide will cover only
 editors known to be in popular use among FreeNAS 10 developers.
 
 For a list of other plugins and tools, see the
