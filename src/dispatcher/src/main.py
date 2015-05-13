@@ -114,7 +114,11 @@ class Plugin(object):
 
     def load(self, dispatcher):
         try:
-            self.module._init(self.dispatcher)
+            # TODO: remove when every plugin catches up the argument change
+            try:
+                self.module._init(self.dispatcher)
+            except TypeError:
+                self.module._init(self.dispatcher, self)
             self.state = self.LOADED
         except Exception, err:
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
