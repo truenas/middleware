@@ -280,7 +280,8 @@ cdef class Launchd(object):
 
     def message(self, Item data):
         cdef uintptr_t resp
-        resp = <uintptr_t>defs.launch_msg(data._value)
+        with nogil:
+            resp = <uintptr_t>defs.launch_msg(data._value)
 
         if resp == 0:
             if errno != 0:
