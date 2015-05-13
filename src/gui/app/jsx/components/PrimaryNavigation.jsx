@@ -36,9 +36,9 @@ var paths = [
     , status   : null
     , disabled : true
   },{
-      path     : "networks"
+      path     : "network"
     , icon     : "moon-o"
-    , label    : "Networks"
+    , label    : "Network"
     , status   : null
     , disabled : false
   },{

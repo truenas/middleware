@@ -29,8 +29,8 @@ import AddGroup from "./views/Accounts/Groups/AddGroup";
 
 import Tasks from "./views/Tasks";
 
-import Networks from "./views/Networks";
-import NetworkItem from "./views/Networks/NetworkItem";
+import Network from "./views/Network";
+import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
 
 import Storage from "./views/Storage";
 
@@ -103,12 +103,12 @@ module.exports = (
 
 
     {/* NETWORKS */}
-    <Route name    = "networks"
-           path    = "networks"
-           handler = { Networks } >
+    <Route name    = "network"
+           path    = "network"
+           handler = { Network } >
       <Route name    = "networks-editor"
              path    = ":networksID"
-             handler = { NetworkItem } />
+             handler = { InterfaceItem } />
     </Route>
 
 

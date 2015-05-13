@@ -6,12 +6,12 @@
 
 import React from "react";
 
-import routerShim from "../../components/mixins/routerShim";
-import clientStatus from "../../components/mixins/clientStatus";
+import routerShim from "../../../components/mixins/routerShim";
+import clientStatus from "../../../components/mixins/clientStatus";
 
-import viewerUtil from "../../components/Viewer/viewerUtil";
+import viewerUtil from "../../../components/Viewer/viewerUtil";
 
-import NetworksStore from "../../stores/NetworksStore";
+import NetworksStore from "../../../stores/NetworksStore";
 
 import TWBS from "react-bootstrap";
 
