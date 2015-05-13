@@ -2,7 +2,6 @@ PREFIX ?= /usr/local
 PYTHON ?= python
 
 install:
-	install etc/dispatcher ${PREFIX}/etc/rc.d/
 	install etc/middleware.conf ${PREFIX}/etc/middleware.conf
 	install tools/dispatcherd ${PREFIX}/sbin/
 	install tools/dispatcherctl ${PREFIX}/sbin/

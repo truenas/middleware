@@ -67,7 +67,6 @@
 /usr/local/lib/dispatcher/plugins/SystemDatasetPlugin.py
 /usr/local/lib/dispatcher/plugins/UpdatePlugin.py
 /usr/local/libexec/dispatcher/notify-pam
-/usr/local/etc/rc.d/dispatcher
 /usr/local/sbin/dispatcherd
 /usr/local/sbin/dispatcherctl
 /usr/local/etc/middleware.conf

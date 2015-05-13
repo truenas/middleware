@@ -2,7 +2,6 @@ PREFIX ?= /usr/local
 PYTHON ?= python
 
 install:
-	install etc/fnstatd ${PREFIX}/etc/rc.d/
 	install sbin/fnstatd ${PREFIX}/sbin/
 	install -d ${PREFIX}/lib/fnstatd
 	install -d ${PREFIX}/lib/fnstatd/src
