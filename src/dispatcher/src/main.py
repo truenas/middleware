@@ -112,6 +112,10 @@ class Plugin(object):
         self.dispatcher.attach_hook(name, func)
         self.registers['attach_hooks'].append((name, func))
 
+    def detach_hook(self, name, func):
+        self.dispatcher.detach_hook(name, func)
+        self.registers['attach_hooks'].remove((name, func))
+
     def load(self, dispatcher):
         try:
             # TODO: remove when every plugin catches up the argument change
@@ -141,25 +145,49 @@ class Plugin(object):
         self.dispatcher.register_event_type(name, source)
         self.registers['event_types'].append(name)
 
+    def unregister_event_type(self, name):
+        self.dispatcher.unregister_event_type(name)
+        self.registers['event_types'].remove(name)
+
     def register_task_handler(self, name, clazz):
         self.dispatcher.register_task_handler(name, clazz)
         self.registers['task_handlers'].append(name)
+
+    def unregister_task_handler(self, name):
+        self.dispatcher.unregister_task_handler(name)
+        self.registers['task_handlers'].remove(name)
 
     def register_provider(self, name, clazz):
         self.dispatcher.register_provider(name, clazz)
         self.registers['providers'].append(name)
 
+    def unregister_provider(self, name):
+        self.dispatcher.unregister_provider(name)
+        self.registers['providers'].remove(name)
+
     def register_schema_definition(self, name, definition):
         self.dispatcher.register_schema_definition(name, definition)
         self.registers['schema_definitions'].append(name)
+
+    def unregister_schema_definition(self, name):
+        self.dispatcher.unregister_schema_definition(name)
+        self.registers['schema_definitions'].remove(name)
 
     def register_resource(self, res, parents=None):
         self.dispatcher.register_resource(res, parents)
         self.registers['resources'].append((res, parents))
 
+    def unregister_resource(self, res):
+        self.dispatcher.unregister_resource(res)
+        self.registers['resources'].remove(res)
+
     def register_hook(self, name):
         self.dispatcher.register_hook(name)
         self.registers['hooks'].append(name)
+
+    def unregister_hook(self, name):
+        self.dispatcher.unregister_hook(name)
+        self.registers['hooks'].remove(name)
 
     def unload(self):
         if hasattr(self.module, '_cleanup'):
@@ -169,32 +197,32 @@ class Plugin(object):
             self.filename
         ))
 
-        for name, handler in self.registers['event_handlers']:
-            self.dispatcher.unregister_event_handler(name, handler)
+        for name, handler in list(self.registers['event_handlers']):
+            self.unregister_event_handler(name, handler)
 
         #for name in self.registers['event_sources']:
         #    pass
 
         for name in list(self.registers['event_types']):
-            self.dispatcher.unregister_event_types(name)
+            self.unregister_event_types(name)
 
-        for name, func in self.registers['attach_hooks']:
-            self.dispatcher.detach_hook(name)
+        for name, func in list(self.registers['attach_hooks']):
+            self.detach_hook(name, func)
 
-        for name in self.registers['hooks']:
-            self.dispatcher.unregister_hook(name)
+        for name in list(self.registers['hooks']):
+            self.unregister_hook(name)
 
-        #for name in self.registers['providers']:
-        #    pass
+        for name in list(self.registers['providers']):
+            self.unregister_provider(name)
 
-        #for name, parents in self.registers['resources']:
-        #    pass
+        for name in list(self.registers['resources']):
+            self.unregister_resource(name)
 
-        #for name in self.registers['schema_definitions']:
-        #    pass
+        for name in list(self.registers['schema_definitions']):
+            self.unregister_schema_definition(name)
 
-        #for name in self.registers['task_handlers']:
-        #    pass
+        for name in list(self.registers['task_handlers']):
+            self.unregister_task_handler(name)
 
         self.state = self.UNLOADED
 
