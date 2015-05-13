@@ -85,11 +85,13 @@ class Plugin(object):
         self.state = self.UNLOADED
         self.metadata = None
         self.registers = {
+            'attach_hooks': [],
             'event_handlers': [],
             'event_sources': [],
             'event_types': [],
             'hooks': [],
             'providers': [],
+            'resources': [],
             'schema_definitions': [],
             'task_handlers': [],
         }
@@ -105,6 +107,10 @@ class Plugin(object):
             self.metadata = module._metadata()
 
         self.module = module
+
+    def attach_hook(self, name, func):
+        self.dispatcher.attach_hook(name, func)
+        self.registers['attach_hooks'].append((name, func))
 
     def load(self, dispatcher):
         try:
@@ -139,8 +145,8 @@ class Plugin(object):
         self.registers['schema_definitions'].append(name)
 
     def register_resource(self, res, parents=None):
-        self.logger.debug('Resource added: {0}'.format(res.name))
-        self.resource_graph.add_resource(res, parents)
+        self.dispatcher.register_resource(res, parents)
+        self.registers['resources'].append((res, parents))
 
     def register_hook(self, name):
         self.dispatcher.register_hook(name)
@@ -149,6 +155,37 @@ class Plugin(object):
     def unload(self):
         if hasattr(self.module, '_cleanup'):
             self.module._cleanup(self.dispatcher)
+
+        self.dispatcher.logger.debug('Unregistering plugin {0} types'.format(
+            self.filename
+        ))
+
+        for name, handler in self.registers['event_handlers']:
+            self.dispatcher.unregister_event_handler(name, handler)
+
+        #for name in self.registers['event_sources']:
+        #    pass
+
+        for name in list(self.registers['event_types']):
+            self.dispatcher.unregister_event_types(name)
+
+        for name, func in self.registers['attach_hooks']:
+            self.dispatcher.detach_hook(name)
+
+        for name in self.registers['hooks']:
+            self.dispatcher.unregister_hook(name)
+
+        #for name in self.registers['providers']:
+        #    pass
+
+        #for name, parents in self.registers['resources']:
+        #    pass
+
+        #for name in self.registers['schema_definitions']:
+        #    pass
+
+        #for name in self.registers['task_handlers']:
+        #    pass
 
         self.state = self.UNLOADED
 
