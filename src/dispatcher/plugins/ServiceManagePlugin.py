@@ -59,6 +59,7 @@ class ServiceInfoProvider(Provider):
             jlist = i.get('launchd', None)
             if not jlist:
                 return {
+                    'id': i['id'],
                     'name': i['name'],
                     'state': 'UNKNOWN'
                 }
@@ -68,7 +69,9 @@ class ServiceInfoProvider(Provider):
             state = 'RUNNING' if 'PID' in job else 'STOPPED'
 
             entry = {
+                'id': i['id'],
                 'name': i['name'],
+                'label': label,
                 'state': state,
             }
 
@@ -203,6 +206,7 @@ def _init(dispatcher):
         'properties': {
             'id': {'type': 'string'},
             'name': {'type': 'string'},
+            'label': {'type': 'string'},
             'pid': {'type': 'integer'},
             'state': {
                 'type': 'string',
