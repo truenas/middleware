@@ -813,8 +813,7 @@
 					"Label": "org.untroubled.nullmailer",
 					"ProgramArguments": [
 						"/usr/local/sbin/nullmailer-send"
-					],
-					"RunAtLoad": true
+					]
 				},
 				"rcng": {
 					"rc-scripts": "nullmailer"
