@@ -235,6 +235,13 @@ object.
    }
 
 
+JSX Code Rules
+--------------
+
+One Prop Per Line
+~~~~~~~~~~~~~~~~~
+
+
 .. index:: JSCS Plugins
 .. _JSCS Plugins:
 
