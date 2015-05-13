@@ -1,10 +1,14 @@
-#7115	Bug	VAAI TP STUN fixed for quota overflows
-#8955	Bug	UFS Disk Import Progress not working
-#9255	Bug	Adds support for service-oriented updates, which may not require a reboot.
-#9345	Bug	Hide username/passwords for CHAP iSCSI in save debug output
-#9417	Bug	Fix SMART status checking/fixing in ix-smartd, add alertmod for monitoring smartd's status, restart smartd after adding or replacing a drive to enable monitoring for it
-#9428	Bug	Adds support for service-oriented updates, which may not require a reboot.
-#9546	Bug	201505010007 Update Killed my CIFS Share
-#9556	Bug	Fix line break for smart alerts
-#9562	Bug	Force system dataset to to be of type 'unix' (specifical, don't set aclmode to restricted). Use Thor hammer to do so.
-#9565	Bug	CIFS->workgroup cannot accept 1 char length
+#7115	Bug	Nice to have	VAAI TP STUN fixed for quota overflows
+#8955	Bug	Nice to have	UFS Disk Import Progress not working
+#9255	Bug	Nice to have	Adds support for service-oriented updates, which may not require a reboot.
+#9345	Bug	Expected	Hide username/passwords for CHAP iSCSI in save debug output
+#9417	Bug	No priority	Fix SMART status checking/fixing in ix-smartd
+			Add alertmod for monitoring smartd's status
+			Restart smartd after adding or replacing a drive to enable monitoring for it
+#9428	Bug	Important	Adds support for service-oriented updates, which may not require a reboot.
+#9546	Bug	Nice to have	201505010007 Update Killed my CIFS Share
+#9556	Bug	Nice to have	Fix line break for smart alerts
+#9562	Bug	Important	Force system dataset to to be of type 'unix' (specifical, don't set aclmode to restricted). Use Thor hammer to do so.
+#9565	Bug	Nice to have	CIFS->workgroup cannot accept 1 char length
+#9708	Bug	Important	Increase smartd's read buffer to allow for up to 512 characters so more complex SMART test schedules will work proper
+#9715	Bug	Expected	Fixes where ChangeLog is not be proper appended to for display.
