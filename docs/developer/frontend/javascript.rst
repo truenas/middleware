@@ -272,8 +272,8 @@ Syntastic may differ on your distribution of choice.
 7. ``curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim``
 8. ``cd ~/.vim/bundle``
 9. ``git clone https://github.com/scrooloose/syntastic.git``
-10. Edit ``~/.vimrc`` and add these lines to the end of it (copy the default 
-    one over from ``/usr/local/share/vim/vim74/vimrc_example.vim`` if you 
+10. Edit ``~/.vimrc`` and add these lines to the end of it (copy the default
+    one over from ``/usr/local/share/vim/vim74/vimrc_example.vim`` if you
     don't already have one):
 
 .. code-block:: vim
@@ -294,7 +294,7 @@ Syntastic may differ on your distribution of choice.
    This configuration will make JSCS work so long as you open files from
    within a terminal in the FreeNAS build directory. If you want it to work a
    little more universally (i.e. opening files in gVim from a file manager)
-   you can create a symbolic link from your home directory to the ``.jscsrc`` 
+   you can create a symbolic link from your home directory to the ``.jscsrc``
    in your FreeNAS source directory.
 
 For more information on the Syntastic vim plugin please visit their GitHub page:
