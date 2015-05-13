@@ -983,7 +983,7 @@ def run(d, args):
 
     # Signal handlers
     gevent.signal(signal.SIGQUIT, d.die)
-    gevent.signal(signal.SIGQUIT, d.die)
+    gevent.signal(signal.SIGTERM, d.die)
     gevent.signal(signal.SIGINT, d.die)
 
     # WebSockets server
