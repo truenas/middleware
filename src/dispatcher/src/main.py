@@ -128,6 +128,11 @@ class Plugin(object):
         self.registers['event_handlers'].append((name, handler))
         return handler
 
+    def unregister_event_handler(self, name, handler):
+        self.dispatcher.unregister_event_handler(name, handler)
+        self.registers['event_handlers'].remove((name, handler))
+        return handler
+
     def register_event_source(self, name, clazz):
         self.dispatcher.register_event_source(name, clazz)
         self.registers['event_sources'].append(name)
