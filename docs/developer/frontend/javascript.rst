@@ -39,6 +39,46 @@ SublimeText
 vim
 ~~~
 
+This was done on PC-BSD 10.1, the process for installing and configuring
+Syntastic may differ on your distribution of choice.
+
+1. ``sudo npm install -g jscs``
+2. ``sudo npm install -g esprima-fb``
+3. ``cd ~/.vim``
+4. ``mkdir bundle``
+5. ``mkdir plugin``
+6. ``mkdir autoload``
+7. ``curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim``
+8. ``cd ~/.vim/bundle``
+9. ``git clone https://github.com/scrooloose/syntastic.git``
+10. Edit ``~/.vimrc`` and add these lines to the end of it (copy the default 
+    one over from ``/usr/local/share/vim/vim74/vimrc_example.vim`` if you 
+    don't already have one):
+
+.. code-block:: vim
+
+   call pathogen#infect()
+
+   set statusline+=%#warningmsg#
+   set statusline+=%{SyntasticStatuslineFlag()}
+   set statusline+=%*
+
+   let g:syntastic_always_populate_loc_list = 1
+   let g:syntastic_auto_loc_list = 1
+   let g:syntastic_check_on_open = 1
+   let g:syntastic_check_on_wq = 0
+   autocmd FileType javascript let b:syntastic_checkers = findfile('.jscsrc', '.;') != '' ? ['jscs'] : ['jshint']
+
+.. note::
+   This configuration will make JSCS work so long as you open files from
+   within a terminal in the FreeNAS build directory. If you want it to work a
+   little more universally (i.e. opening files in gVim from a file manager)
+   you can create a symbolic link from your home directory to the ``.jscsrc`` 
+   in your FreeNAS source directory.
+
+For more information on the Syntastic vim plugin please visit their GitHub page:
+`Syntastic GitHub <https://github.com/scrooloose/syntastic>`_
+
 emacs
 ~~~~~
 
