@@ -57,7 +57,6 @@ cdef class Item(object):
 
         if ptr:
             self._value = <defs.launch_data_t>ptr
-            return
 
         if typ is not None and value is None:
             self._value = defs.launch_data_alloc(typ.value)
@@ -65,7 +64,6 @@ cdef class Item(object):
         if value is not None:
             if type(value) is Item:
                 self._value = defs.launch_data_copy(<defs.launch_data_t><uintptr_t>value.ptr)
-                return
 
             if type(value) is int or type(value) is long:
                 if typ:
@@ -78,7 +76,7 @@ cdef class Item(object):
                     if typ == ItemType.MACHPORT:
                         self._value = defs.launch_data_new_machport(value)
                 else:
-                   self._value = defs.launch_data_new_integer(value)
+                    self._value = defs.launch_data_new_integer(value)
 
             if type(value) is bool:
                 self._value = defs.launch_data_new_bool(value)
@@ -97,6 +95,10 @@ cdef class Item(object):
             if type(value) is dict:
                 self._value = defs.launch_data_alloc(defs.LAUNCH_DATA_DICTIONARY)
                 self.update(value)
+
+        if self._value == NULL:
+            raise NotImplementedError(
+                'Value {0} of type {1} cannot be converted to launch data item'.format(value, type(value)))
 
     def __int__(self):
         return int(self.value)
