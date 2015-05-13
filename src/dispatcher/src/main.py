@@ -204,7 +204,7 @@ class Plugin(object):
         #    pass
 
         for name in list(self.registers['event_types']):
-            self.unregister_event_types(name)
+            self.unregister_event_type(name)
 
         for name, func in list(self.registers['attach_hooks']):
             self.detach_hook(name, func)
