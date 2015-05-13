@@ -156,7 +156,7 @@ update-push:	release
 	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 
 update-undo:
-	${ENV_SETUP} ssh ${UPDATE_USER}@update.freenas.org freenas-release --archive /tank/www/${NANO_LABEL} --project ${NANO_LABEL} -D ~${UPDATE_USER}/FreeNAS-updates.db rollback ${TRAIN}
+	${ENV_SETUP} ssh ${UPDATE_USER}@update.freenas.org freenas-release --archive /tank/www/${NANO_LABEL} --project ${NANO_LABEL} -D \~${UPDATE_USER}/TrueNAS-updates.db rollback ${TRAIN}
 
 archive:	release
 .if !defined(ARCHIVE)
