@@ -214,7 +214,7 @@ class DevdEventSource(EventSource):
 
                     if args["system"] == "ZFS":
                         self.__process_zfs(args)
-            except:
+            except socket.error:
                 # sleep for a half a second and retry
                 self.dispatcher.logger.debug(
                     '/var/run/devd.pipe timedout/was not available retrying in 0.5 seconds')
