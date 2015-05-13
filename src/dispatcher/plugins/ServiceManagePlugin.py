@@ -41,7 +41,7 @@ GETTY_TEMPLATE = {
     'RunAtLoad': True,
     'KeepAlive': True,
     'ProgramArguments': [
-        '/libexec/getty'
+        '/usr/libexec/getty',
         '{type}',
         '{vt}'
     ]
@@ -56,7 +56,14 @@ class ServiceInfoProvider(Provider):
         ld = launchd.Launchd()
 
         def extend(i):
-            label = i['launchd.Label']
+            jlist = i.get('launchd', None)
+            if not jlist:
+                return {
+                    'name': i['name'],
+                    'state': 'UNKNOWN'
+                }
+
+            label = jlist['Label']
             job = ld.jobs[label]
             state = 'RUNNING' if 'PID' in job else 'STOPPED'
 
@@ -230,8 +237,11 @@ def _init(dispatcher):
 
             plist['Sockets'] = {'Listeners': sockets}
 
+        try:
+            ld.load(plist)
+        except:
+            pass
 
-        ld.load(plist)
         if dispatcher.configstore.get('service.{0}.enable'.format(svc['name'])):
             ld.start(label)
 
