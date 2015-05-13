@@ -64,7 +64,7 @@ The key tools for Mac OS X are available with graphical installers:
   * ``node`` is available at `Nodejs.org <http://nodejs.org/>`_. This installer
     will also install ``npm``. To ensure that npm is up to date, run
     ``sudo npm update -g npm`` after the install is complete.
-  * ``git`` is available at `git-scm.org <http://git-scm.com/downloads>`_.
+  * ``git`` is also supplied by XCode.
 
 Windows Development Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
