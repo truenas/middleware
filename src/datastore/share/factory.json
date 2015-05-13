@@ -680,7 +680,7 @@
 				"launchd": {
 					"Label": "org.freebsd.devd",
 					"ProgramArguments": [
-						"/usr/sbin/devd",
+						"/sbin/devd",
 						"-d"
 					],
 					"RunAtLoad": true
@@ -699,6 +699,9 @@
 						"/usr/sbin/sshd",
 						"-i"
 					],
+					"inetdCompatibility": {
+						"Wait": false
+					},
 					"RunAtLoad": true
 				}
 			},
