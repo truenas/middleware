@@ -225,15 +225,15 @@ def _depends():
     return ['ServiceManagePlugin']
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     def on_service_started(args):
         if args['name'] == 'devd':
             # devd is running, kick in DevdEventSource
-            dispatcher.register_event_source('system.device', DevdEventSource)
-            dispatcher.unregister_event_handler(
+            plugin.register_event_source('system.device', DevdEventSource)
+            plugin.unregister_event_handler(
                 'service.started', on_service_started)
 
-    dispatcher.register_schema_definition('disk-device', {
+    plugin.register_schema_definition('disk-device', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -242,7 +242,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('network-device', {
+    plugin.register_schema_definition('network-device', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -250,7 +250,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('cpu-device', {
+    plugin.register_schema_definition('cpu-device', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -259,15 +259,9 @@ def _init(dispatcher):
     })
 
     if os.path.exists('/var/run/devd.pipe'):
-        dispatcher.register_event_source('system.device', DevdEventSource)
+        plugin.register_event_source('system.device', DevdEventSource)
     else:
-        dispatcher.register_event_handler(
+        plugin.register_event_handler(
             'service.started', on_service_started)
 
-    dispatcher.register_provider('system.device', DeviceInfoPlugin)
-
-
-def _cleanup(dispatcher):
-    dispatcher.unregister_event_handler('service.started')
-    dispatcher.unregister_event_source('system.device')
-    dispatcher.unregister_provider('system.device')
+    plugin.register_provider('system.device', DeviceInfoPlugin)
