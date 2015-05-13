@@ -796,6 +796,13 @@
 				"builtin": true,
 				"rcng": {
 					"rc-scripts": "netatalk"
+				},
+				"launchd": {
+					"Label": "net.sourceforge.netatalk.afpd",
+					"ProgramArguments": [
+						"/usr/local/bin/afpd",
+						"-d"
+					]
 				}
 			},
 			"8117202A-ED32-430E-A6AF-88B168B1601A": {
