@@ -485,8 +485,9 @@ class notifier:
     def _start_jails(self):
         self._system("/usr/sbin/service ix-warden start")
         from freenasUI.jails.models import Jails
-        for jail in Jails.objects.filter(jail_autostart=True):
-            Warden().start(jail=jail.jail_host)
+        for jail in Jails.objects.all():
+            if jail.jail_autostart:
+                Warden().start(jail=jail.jail_host)
         self._system("/usr/sbin/service ix-plugins start")
         self.reload("http")
 
