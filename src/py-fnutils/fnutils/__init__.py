@@ -76,6 +76,8 @@ def template(d, **kwargs):
         for i in d:
             result.append(template(i, **kwargs))
 
+        return result
+
     if isinstance(d, int):
         return d
 
