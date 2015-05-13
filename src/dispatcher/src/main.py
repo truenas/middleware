@@ -191,7 +191,7 @@ class Plugin(object):
 
     def unload(self):
         if hasattr(self.module, '_cleanup'):
-            self.module._cleanup(self.dispatcher)
+            self.module._cleanup(self.dispatcher, self)
 
         self.dispatcher.logger.debug('Unregistering plugin {0} types'.format(
             self.filename
