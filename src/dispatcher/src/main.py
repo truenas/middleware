@@ -76,13 +76,23 @@ class Plugin(object):
     LOADED = 2
     ERROR = 3
 
-    def __init__(self, filename=None):
+    def __init__(self, dispatcher, filename=None):
         self.filename = filename
         self.init = None
         self.dependencies = set()
+        self.dispatcher = dispatcher
         self.module = None
         self.state = self.UNLOADED
         self.metadata = None
+        self.registers = {
+            'event_handlers': [],
+            'event_sources': [],
+            'event_types': [],
+            'hooks': [],
+            'providers': [],
+            'schema_definitions': [],
+            'task_handlers': [],
+        }
 
     def assign_module(self, module):
         if not hasattr(module, '_init'):
@@ -98,14 +108,47 @@ class Plugin(object):
 
     def load(self, dispatcher):
         try:
-            self.module._init(dispatcher)
+            self.module._init(self.dispatcher)
             self.state = self.LOADED
         except Exception, err:
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
 
-    def unload(self, dispatcher):
+    def register_event_handler(self, name, handler):
+        self.dispatcher.register_event_handler(name, handler)
+        self.registers['event_handlers'].append((name, handler))
+        return handler
+
+    def register_event_source(self, name, clazz):
+        self.dispatcher.register_event_source(name, clazz)
+        self.registers['event_sources'].append(name)
+
+    def register_event_type(self, name, source=None):
+        self.dispatcher.register_event_type(name, source)
+        self.registers['event_types'].append(name)
+
+    def register_task_handler(self, name, clazz):
+        self.dispatcher.register_task_handler(name, clazz)
+        self.registers['task_handlers'].append(name)
+
+    def register_provider(self, name, clazz):
+        self.dispatcher.register_provider(name, clazz)
+        self.registers['providers'].append(name)
+
+    def register_schema_definition(self, name, definition):
+        self.dispatcher.register_schema_definition(name, definition)
+        self.registers['schema_definitions'].append(name)
+
+    def register_resource(self, res, parents=None):
+        self.logger.debug('Resource added: {0}'.format(res.name))
+        self.resource_graph.add_resource(res, parents)
+
+    def register_hook(self, name):
+        self.dispatcher.register_hook(name)
+        self.registers['hooks'].append(name)
+
+    def unload(self):
         if hasattr(self.module, '_cleanup'):
-            self.module._cleanup(dispatcher)
+            self.module._cleanup(self.dispatcher)
 
         self.state = self.UNLOADED
 
@@ -261,7 +304,7 @@ class Dispatcher(object):
     def unload_plugins(self):
         for i in self.plugins.values():
             try:
-                i.unload(self)
+                i.unload()
             except RuntimeError:
                 self.logger.warning(
                     "Error unloading plugin {0}".format(i.filename),
@@ -279,7 +322,7 @@ class Dispatcher(object):
         self.logger.debug("Loading plugin from %s", path)
         try:
             name = os.path.splitext(os.path.basename(path))[0]
-            plugin = Plugin(path)
+            plugin = Plugin(self, path)
             plugin.assign_module(imp.load_source(name, path))
             self.plugins[name] = plugin
         except Exception, err:
