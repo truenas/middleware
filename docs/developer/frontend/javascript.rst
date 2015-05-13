@@ -135,6 +135,106 @@ much easier to read.
    var uncoolObject { foo: "Don't", bar: "do". baz: "this" }; // Broke it again!
 
 
+Whitespace
+~~~~~~~~~~
+
+There are a number of rules just about where whitespace is forbidden and
+required, and how it must be used in general.
+
+
+Two Space Indentation
+^^^^^^^^^^^^^^^^^^^^^
+
+All frontend code must use two-space indentation. Not two-space tabs - two
+spaces. On the bright side, that will give you some extra space to work with
+compared to 4-space or 8-space tabs, because we also use 80-column lines.
+
+
+No Trailing Whitespace
+^^^^^^^^^^^^^^^^^^^^^^
+
+Whitespace at the end of a line has no reason to exist. This also means that
+when a line is just a newline, there shouldn't be any spaces or tabs in it.
+
+
+Spaces Before Parentheses
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For just about any keyword that is followed by a parenthesized statement, put
+a single space before the opening parenthesis. Function calls are just about the
+only time not to use a space before a parenthesis.
+
+.. code-block:: javascript
+
+   var youDoTheGoodThing = true;
+   var youDoTheBadThing = { please: "don't" };
+
+   if ( youDoTheGoodThing ) {
+     console.log( "Everyone will be happy!" );
+   } else if( youDoTheBadThing ){
+     console.log( "Everyone, especially you, will be sad when your code is "
+                + "full of warnings." );
+   }
+
+
+Spaces Inside Braces and Brackets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Don't press your braces, brackets, and parentheses up against their contents.
+The only exception is when it's an array or object and the very next character
+is another brace or bracket. This is mostly for readability.
+
+.. code-block:: javascript
+
+   // Good:
+   var floor = { room: "for activities" };
+
+   var hardwareStore = [ "look"
+                       , "at"
+                       , "all"
+                       , "this"
+                       , "stuff" ];
+
+   var iStealPets = [{ I: "have"
+                     , so: "many" }
+                    , { friends: null }];
+
+   // Bad:
+   var magicLamp = {phenomenal: "cosmic power"
+                   , itty: "bitty living space"}; // eww, it doesn't line up
+
+   var musicalChairs = ["the"
+                       , "music"
+                       , "stops"];
+
+
+Spaces Inside Parentheses
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Whenever you have parentheses around something, put spaces between each
+parenthesis and what it contains. The only exception is when it contains an
+object.
+
+.. code-block:: javascript
+
+   var youWantToDoItRight = true;
+   var youDontWantToDoItRight = "WHY?";
+
+   if ( youWantToDoItRight ) {
+     console.log( "You'll do it like this:"
+                , { haha: I'm printing an object" });
+     console.log( [ "check"
+                  , "out"
+                  , "this"
+                  , "array" ] );
+   } else if (youDontWantToDoItRight) {
+     console.log("Oh Man I Am Not Good With Computer"
+                , [ "pls"
+                  , "to"
+                  , "help" ]);
+   }
+
+
 JSCS Plugins
 ------------
 
