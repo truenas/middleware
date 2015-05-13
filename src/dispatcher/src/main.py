@@ -103,9 +103,9 @@ class Plugin(object):
         except Exception, err:
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
 
-    def unload(self):
+    def unload(self, dispatcher):
         if hasattr(self.module, '_cleanup'):
-            self.module._cleanup()
+            self.module._cleanup(dispatcher)
 
         self.state = self.UNLOADED
 
@@ -258,6 +258,16 @@ class Dispatcher(object):
         # And look for new ones
         self.discover_plugins()
 
+    def unload_plugins(self):
+        for i in self.plugins.values():
+            try:
+                i.unload(self)
+            except RuntimeError:
+                self.logger.warning(
+                    "Error unloading plugin {0}".format(i.filename),
+                    exc_info=True
+                )
+
     def __discover_plugin_dir(self, dir):
         for i in glob.glob1(dir, "*.py"):
             self.__try_load_plugin(os.path.join(dir, i))
@@ -389,6 +399,8 @@ class Dispatcher(object):
     def die(self):
         self.logger.warning('Exiting from "die" command')
         gevent.killall(self.threads)
+        self.logger.warning('Unloading plugins')
+        self.unload_plugins()
         sys.exit(0)
 
 
