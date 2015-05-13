@@ -235,6 +235,9 @@ object.
    }
 
 
+.. index:: JSCS Plugins
+.. _JSCS Plugins:
+
 JSCS Plugins
 ------------
 
