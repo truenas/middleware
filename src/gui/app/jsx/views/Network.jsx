@@ -17,7 +17,7 @@ import NetworksMiddleware from "../middleware/NetworksMiddleware";
 import NetworksStore from "../stores/NetworksStore";
 
 var viewData = {
-    format  : require("../../data/middleware-keys/networks-display.json")[0]
+    format  : require("../../data/middleware-keys/interfaces-display.json")[0]
   , routing : {
       "route" : "networks-editor"
     , "param" : "networksID"
