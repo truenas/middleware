@@ -1,6 +1,9 @@
-============
-Introduction
-============
+.. index:: Style Guide
+.. _Style Guide:
+
+===============================
+FreeNAS 10 Frontend Style Guide
+===============================
 
 FreeNAS 10 Frontend uses a strict style guide and a highly encouraged set of
 other best practices for all JavaScript and JSX code. The goal of these rules is

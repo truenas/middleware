@@ -138,3 +138,11 @@ use of react-router and common patterns.
 
 This section covers the whole process of adding a new viewer, following the Flux
 lifecycle and making use of the information in the Viewer and Routing sections.
+
+--------------
+
+:doc:`JavaScript Style Guide <javascript>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section describes the mandatory style for all JavaScript and JSX
+code in the FreeNAS 10 frontend.
