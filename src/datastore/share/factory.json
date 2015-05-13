@@ -770,6 +770,14 @@
 				"rcng": {
 					"rc-scripts": "snmpd"
 				},
+				"launchd": {
+					"Label": "org.net-snmp.snmpd",
+					"ProgramArguments": [
+						"/usr/local/sbin/snmpd",
+						"-f"
+					],
+					"KeepAlive": true
+				},
                 "settings": [
                     "service.snmp.*"
                 ]
@@ -781,6 +789,16 @@
 				"builtin": true,
 				"rcng": {
 					"rc-scripts": "collectd"
+				},
+				"launchd": {
+					"Label": "org.collectd.collectd",
+					"ProgramArguments": [
+						"/usr/local/sbin/collectd",
+						"-f",
+						"-C",
+						"/usr/local/etc/collectd.conf"
+					],
+					"KeepAlive": true
 				}
 			},
 			"858EFB54-F5DC-4207-ACB6-8BA793984794": {
