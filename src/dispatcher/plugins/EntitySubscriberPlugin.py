@@ -85,5 +85,5 @@ class EntitySubscriberEventSource(EventSource):
             self.services.append(service)
 
 
-def _init(dispatcher):
-    dispatcher.register_event_source('entity-subscriber', EntitySubscriberEventSource)
+def _init(dispatcher, plugin):
+    plugin.register_event_source('entity-subscriber', EntitySubscriberEventSource)

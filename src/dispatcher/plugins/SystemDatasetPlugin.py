@@ -164,7 +164,7 @@ def _depends():
     return ['ZfsPlugin', 'VolumePlugin']
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     def on_volumes_changed(args):
         if args['operation'] == 'create':
             pass
@@ -179,13 +179,13 @@ def _init(dispatcher):
         dispatcher.configstore.set('system.dataset.id', dsid)
         logger.info('New system dataset ID: {0}'.format(dsid))
 
-    dispatcher.register_event_handler('volumes.changed', on_volumes_changed)
-    dispatcher.attach_hook('volume.pre-destroy', volume_pre_destroy)
-    dispatcher.attach_hook('volume.pre-detach', volume_pre_destroy)
-    dispatcher.register_provider('system-dataset', SystemDatasetProvider)
-    dispatcher.register_task_handler('system-dataset.configure', SystemDatasetConfigure)
+    plugin.register_event_handler('volumes.changed', on_volumes_changed)
+    plugin.attach_hook('volume.pre-destroy', volume_pre_destroy)
+    plugin.attach_hook('volume.pre-detach', volume_pre_destroy)
+    plugin.register_provider('system-dataset', SystemDatasetProvider)
+    plugin.register_task_handler('system-dataset.configure', SystemDatasetConfigure)
 
-    dispatcher.register_hook('system-dataset.pre-detach')
-    dispatcher.register_hook('system-dataset.pre-attach')
+    plugin.register_hook('system-dataset.pre-detach')
+    plugin.register_hook('system-dataset.pre-attach')
 
     dispatcher.call_sync('system-dataset.init')

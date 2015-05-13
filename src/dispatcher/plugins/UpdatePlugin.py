@@ -111,9 +111,9 @@ class UpdateTask(Task):
                                 'Update Process Failed! Reason: %s' % e)
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     # Register providers
-    dispatcher.register_provider("update", UpdateProvider)
+    plugin.register_provider("update", UpdateProvider)
 
     # Register task handlers
-    dispatcher.register_task_handler("update.update", UpdateTask)
+    plugin.register_task_handler("update.update", UpdateTask)

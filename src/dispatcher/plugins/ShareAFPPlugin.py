@@ -124,8 +124,8 @@ def _metadata():
     }
 
 
-def _init(dispatcher):
-    dispatcher.register_schema_definition('afp-share', {
+def _init(dispatcher, plugin):
+    plugin.register_schema_definition('afp-share', {
         'type': 'object',
         'properties': {
             'id': {'type': 'string'},
@@ -159,8 +159,8 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_task_handler("share.afp.create", CreateAFPShareTask)
-    dispatcher.register_task_handler("share.afp.update", UpdateAFPShareTask)
-    dispatcher.register_task_handler("share.afp.delete", DeleteAFPShareTask)
-    dispatcher.register_provider("shares.afp", AFPSharesProvider)
-    dispatcher.register_resource(Resource('service:afp'), ['system'])
+    plugin.register_task_handler("share.afp.create", CreateAFPShareTask)
+    plugin.register_task_handler("share.afp.update", UpdateAFPShareTask)
+    plugin.register_task_handler("share.afp.delete", DeleteAFPShareTask)
+    plugin.register_provider("shares.afp", AFPSharesProvider)
+    plugin.register_resource(Resource('service:afp'), ['system'])

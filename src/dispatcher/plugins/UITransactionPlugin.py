@@ -125,8 +125,8 @@ class UITransactionProvider(Provider):
         return transactions
 
 
-def _init(dispatcher):
-    dispatcher.register_schema_definition('ui-transaction', {
+def _init(dispatcher, plugin):
+    plugin.register_schema_definition('ui-transaction', {
         'type': 'object',
         'properties': {
             'identifier': {'type': 'string'},
@@ -145,4 +145,4 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_provider('ui.transactions', UITransactionProvider)
+    plugin.register_provider('ui.transactions', UITransactionProvider)
