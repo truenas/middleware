@@ -450,6 +450,9 @@ class Dispatcher(object):
         self.logger.debug("New task handler: %s", name)
         self.tasks[name] = clazz
 
+    def unregister_task_handler(self, name):
+        del self.tasks[name]
+
     def register_provider(self, name, clazz):
         self.logger.debug("New provider: %s", name)
         self.providers[name] = clazz
