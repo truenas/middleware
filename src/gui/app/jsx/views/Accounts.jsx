@@ -12,23 +12,24 @@ import routerShim from "../components/mixins/routerShim";
 
 import SectionNav from "../components/SectionNav";
 
-var sections = [{
-    route   : "users"
-  , display : "Users"
-},{
-    route   : "groups"
-  , display : "Groups"
-}];
+var sections = [ { route : "users"
+                 , display : "Users"
+                 }
+               , { route : "groups"
+                 , display : "Groups"
+                 } ];
 
-var Accounts = React.createClass({displayName: "Accounts",
+var Accounts = React.createClass({
 
-    mixins: [ routerShim ]
+  displayName: "Accounts"
+
+  ,  mixins: [ routerShim ]
 
   , componentDidMount: function () {
       this.calculateDefaultRoute( "accounts", "users", "endsWith" );
     }
 
-  , componentWillUpdate: function( prevProps, prevState ) {
+  , componentWillUpdate: function ( prevProps, prevState ) {
       this.calculateDefaultRoute( "accounts", "users", "endsWith" );
     }
 
