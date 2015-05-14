@@ -35,7 +35,7 @@ def _depends():
     return ['AlertPlugin', 'VolumePlugin', 'ZfsPlugin']
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
 
     def volumes_status():
         for volume in dispatcher.rpc.call_sync('volumes.query'):

@@ -189,9 +189,9 @@ class AlertFilterUpdateTask(Task):
         })
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
 
-    dispatcher.register_schema_definition('alert', {
+    plugin.register_schema_definition('alert', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -201,7 +201,7 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_schema_definition('alert-filter', {
+    plugin.register_schema_definition('alert-filter', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -218,19 +218,21 @@ def _init(dispatcher):
 
     dispatcher.require_collection('alerts')
     dispatcher.require_collection('alerts-filters')
-    dispatcher.register_provider('alerts', AlertsProvider)
-    dispatcher.register_provider('alerts.filters', AlertsFiltersProvider)
+
+    # Register providers
+    plugin.register_provider('alerts', AlertsProvider)
+    plugin.register_provider('alerts.filters', AlertsFiltersProvider)
 
     # Register task handlers
-    dispatcher.register_task_handler(
+    plugin.register_task_handler(
         'alerts.filters.create', AlertFilterCreateTask
     )
-    dispatcher.register_task_handler(
+    plugin.register_task_handler(
         'alerts.filters.delete', AlertFilterDeleteTask
     )
-    dispatcher.register_task_handler(
+    plugin.register_task_handler(
         'alerts.filters.update', AlertFilterUpdateTask
     )
 
     # Register event types
-    dispatcher.register_event_type('alerts.filters.changed')
+    plugin.register_event_type('alerts.filters.changed')
