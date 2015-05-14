@@ -81,7 +81,7 @@ class AlertsProvider(Provider):
         # If there are no filters configured, set default emitters
         if emitters is None:
             if alert['severity'] == 'CRITICAL':
-                emitters = ['UI', 'Email']
+                emitters = ['UI', 'EMAIL']
             else:
                 emitters = ['UI']
 
@@ -211,7 +211,10 @@ def _init(dispatcher, plugin):
             },
             'emitters': {
                 'type': 'array',
-                'items': {'type': 'string'},
+                'items': {
+                    'type': 'string',
+                    'enum': ['UI', 'EMAIL'],
+                },
             },
         }
     })
