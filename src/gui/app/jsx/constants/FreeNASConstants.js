@@ -49,6 +49,10 @@ module.exports = {
       //Update Data
       , RECEIVE_UPDATE_DATA : null
 
+      // Global Network Configuration
+      , RECEIVE_GLOBAL_NETWORK_CONFIG: null
+      , RECEIVE_GLOBAL_NETWORK_CONFIG_UPDATE: null
+
       // Interfaces
       , RECEIVE_INTERFACES_LIST: null
       , RECEIVE_INTERFACES_UPDATE_TASK: null
