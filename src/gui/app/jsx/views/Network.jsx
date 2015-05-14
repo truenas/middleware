@@ -1,7 +1,5 @@
-// Networks
-// ========
-// View showing network information, link state, VLANs, and other entities.
-// For now, just interfaces.
+// Network
+// =======
 
 "use strict";
 
@@ -11,76 +9,40 @@ import React from "react";
 
 import { RouteHandler } from "react-router";
 
-import Viewer from "../components/Viewer";
+import routerShim from "../components/mixins/routerShim";
 
-import NetworksMiddleware from "../middleware/NetworksMiddleware";
-import NetworksStore from "../stores/NetworksStore";
+import SectionNav from "../components/SectionNav";
 
-var viewData = {
-    format  : require("../../data/middleware-keys/interfaces-display.json")[0]
-  , routing : {
-      "route" : "networks-editor"
-    , "param" : "networksID"
-  }
-  , display : {
-      filterCriteria: {
-          connected: {
-              name     : "connected interfaces"
-            , testProp : { "link_state": "LINK_STATE_UP" }
-          }
-       , disconnected: {
-              name     : "disconnected interfaces"
-           , testprop : { "link_state": "LINK_STATE_DOWN" }
-         }
-        , unknown: {
-              name     : "invalid or unknown interfaces"
-            , testprop : { "link_state": "LINK_STATE_UNKNOWN" }
-          }
-      }
-    , remainingName    : "other interfaces"
-    , ungroupedName    : "all interfaces"
-    , allowedFilters   : [ ]
-    , defaultFilters   : [ ]
-    , allowedGroups    : [ "connected", "disconnected", "unknown" ]
-    , defaultGroups    : [ "connected", "disconnected", "unknown" ]
-    , defaultCollapsed : [ "unknown" ]
-  }
-};
+var sections = [ { route : "interfaces"
+                 , display : "Interfaces"
+                 }
+               , { route: "global-config"
+                 , display: "Global Config"
+                } ]
 
-function getNetworksFromStore() {
-  return {
-    networksList : NetworksStore.getAllNetworks()
-  };
-}
+var Network = React.createClass({
 
-var Networks = React.createClass({
+  displayName: "Network"
 
-    getInitialState: function () {
-      return getNetworksFromStore();
-    }
+  , mixins: [ routerShim ]
 
   , componentDidMount: function () {
-    NetworksStore.addChangeListener( this.handleNetworksChange );
-    NetworksMiddleware.requestNetworksList();
-    NetworksMiddleware.subscribe( componentLongName );
-  }
+      this.calculateDefaultRoute( "network", "interfaces", "endsWith" );
+    }
 
-  , componentWillUnmount: function () {
-    NetworksStore.removeChangeListener( this.handleNetworksChange );
-    NetworksMiddleware.unsubscribe( componentLongName );
-  }
-
-  , handleNetworksChange: function () {
-      this.setState( getNetworksFromStore() );
-  }
+  , componentWillUpdate: function ( prevProps, prevState ) {
+      this.calculateDefaultRoute( "network", "interfaces", "endsWith" );
+    }
 
   , render: function () {
-      return <Viewer header      = { "Networks" }
-                     inputData   = { this.state.networksList }
-                     viewData    = { viewData }
-                     Editor      = { RouteHandler } />;
-    }
+    return (
+      <main>
+        <SectionNav views = { sections } />
+        <RouteHandler />
+      </main>
+    );
+  }
 
 });
 
-module.exports = Networks;
+module.exports = Network;

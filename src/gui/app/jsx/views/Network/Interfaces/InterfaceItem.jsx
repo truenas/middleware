@@ -1,5 +1,5 @@
-// Networks Item Template
-// ======================
+// Interface Item Template
+// =======================
 // Handles viewing and and changing of network interfaces.
 
 "use strict";
@@ -11,114 +11,126 @@ import clientStatus from "../../../components/mixins/clientStatus";
 
 import viewerUtil from "../../../components/Viewer/viewerUtil";
 
-import NetworksStore from "../../../stores/NetworksStore";
+import InterfacesStore from "../../../stores/InterfacesStore";
 
 import TWBS from "react-bootstrap";
 
-var NetworksView = React.createClass({
+var InterfacesView = React.createClass({
 
-    propTypes: {
-      item: React.PropTypes.object.isRequired
-    }
+  propTypes: {
+    item: React.PropTypes.object.isRequired
+  }
 
   , render: function () {
 
-      var configureButton = null;
+    var configureButton = null;
 
-      configureButton = (
+    configureButton = (
+      <TWBS.Row>
+        <TWBS.Col xs={12}>
+          <TWBS.Button
+            className = "pull-right"
+            bsStyle   = "primary">{"Configure Interface"}
+          </TWBS.Button>
+        </TWBS.Col>
+      </TWBS.Row>
+    );
+
+    return (
+      <TWBS.Grid fluid>
+
+        { configureButton }
+
         <TWBS.Row>
-          <TWBS.Col xs={12}>
-            <TWBS.Button className = "pull-right"
-                         bsStyle   = "primary">{"Configure Interface"}
-            </TWBS.Button>
+          <TWBS.Col
+            xs={3}
+            className="text-center">
+            <viewerUtil.ItemIcon
+              fontIcon = { this.props.item["font_icon"] }
+              primaryString = { this.props.item["ip"] }
+              fallbackString = { this.props.item["name"] } />
+          </TWBS.Col>
+          <TWBS.Col xs={9}>
+            <h3>{ this.props.item["name"] }</h3>
+            <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["ip"], "\u200B" ) }</h4>
+            <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["type"] ) }</h4>
+            <hr />
           </TWBS.Col>
         </TWBS.Row>
-      );
 
-      return (
-        <TWBS.Grid fluid>
-
-          { configureButton }
-
-          <TWBS.Row>
-            <TWBS.Col xs={3}
-                      className="text-center">
-              <viewerUtil.ItemIcon fontIcon       = { this.props.item["font_icon"] }
-                                   primaryString  = { this.props.item["ip"] }
-                                   fallbackString = { this.props.item["name"] } />
-            </TWBS.Col>
-            <TWBS.Col xs={9}>
-              <h3>{ this.props.item["name"] }</h3>
-              <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["ip"], "\u200B" ) }</h4>
-              <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["type"] ) }</h4>
-              <hr />
-            </TWBS.Col>
-          </TWBS.Row>
-
-          <TWBS.Row>
-            <viewerUtil.DataCell title  = { this.props.item["ip_version"] + " Address" }
-                                 colNum = { 2 }
-                                 entry  = { this.props.item["ip"] } />
-            <viewerUtil.DataCell title  = { "DHCP" }
-                                 colNum = { 2 }
-                                 entry  = { this.props.item["dhcp"] ? "Enabled" : "Disabled" } />
-          </TWBS.Row>
-          <TWBS.Row>
-            <viewerUtil.DataCell title  = { "Netmask" }
-                                 colNum = { 2 }
-                                 entry  = {  this.props.item["netmask"] ? "/" + this.props.item["netmask"] : "N/A" } />
-            <viewerUtil.DataCell title  = { "IPv6 Address" }
-                                 colNum = { 2 }
-                                 entry  = { "--" } />
-          </TWBS.Row>
-        </TWBS.Grid>
-      );
-    }
+        <TWBS.Row>
+          <viewerUtil.DataCell
+            title  = { this.props.item["ip_version"] + " Address" }
+            colNum = { 2 }
+            entry  = { this.props.item["ip"] } />
+          <viewerUtil.DataCell
+            title  = { "DHCP" }
+            colNum = { 2 }
+            entry  = { this.props.item["dhcp"]
+                       ? "Enabled"
+                       : "Disabled" } />
+        </TWBS.Row>
+        <TWBS.Row>
+          <viewerUtil.DataCell
+            title  = { "Netmask" }
+            colNum = { 2 }
+            entry  = { this.props.item["netmask"]
+                       ? "/" + this.props.item["netmask"]
+                       : "N/A" } />
+          <viewerUtil.DataCell
+            title = { "IPv6 Address" }
+            colNum = { 2 }
+            entry = { "--" } />
+        </TWBS.Row>
+      </TWBS.Grid>
+    );
+  }
 
 });
 
-var NetworkItem = React.createClass({
+var InterfaceItem = React.createClass({
 
-    propTypes: {
-        viewData : React.PropTypes.object.isRequired
-    }
+  propTypes: {
+    viewData: React.PropTypes.object.isRequired
+  }
 
   , mixins: [ routerShim, clientStatus ]
 
   , getInitialState: function () {
       return {
-          targetNetwork : this.getNetworkFromStore()
-        , currentMode   : "view"
-        , activeRoute   : this.getDynamicRoute()
+        targetInterface: this.getInterfaceFromStore()
+        , currentMode: "view"
+        , activeRoute: this.getDynamicRoute()
       };
     }
 
-  , componentDidUpdate: function( prevProps, prevState ) {
+  , componentDidUpdate: function ( prevProps, prevState ) {
       var activeRoute = this.getDynamicRoute();
 
       if ( activeRoute !== prevState.activeRoute ) {
         this.setState({
-            targetNetwork : this.getNetworkFromStore()
-          , currentMode   : "view"
-          , activeRoute   : activeRoute
+          targetInterface: this.getInterfaceFromStore()
+          , currentMode: "view"
+          , activeRoute: activeRoute
         });
       }
     }
 
   , componentDidMount: function () {
-      NetworksStore.addChangeListener( this.updateNetworkInState );
+      InterfacesStore.addChangeListener( this.updateInterfaceInState );
     }
 
   , componentWillUnmount: function () {
-      NetworksStore.removeChangeListener( this.updateNetworkInState );
+      InterfacesStore.removeChangeListener( this.updateInterfaceInState );
     }
 
-  , getNetworkFromStore: function () {
-      return NetworksStore.findNetworkByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
+  , getInterfaceFromStore: function () {
+      return InterfacesStore.findInterfaceByKeyValue( this.props.viewData.format["selectionKey"]
+                                                    , this.getDynamicRoute() );
     }
 
-  , updateNetworkInState: function () {
-      this.setState({ targetNetwork: this.getNetworkFromStore() });
+  , updateInterfaceInState: function () {
+      this.setState({ targetInterface: this.getInterfaceFromStore() });
     }
 
   , handleViewChange: function ( nextMode, event ) {
@@ -127,32 +139,32 @@ var NetworkItem = React.createClass({
 
   , render: function () {
 
-      var DisplayComponent      = null;
+    var DisplayComponent      = null;
 
-      if ( this.state.SESSION_AUTHENTICATED && this.state.targetNetwork ) {
-        var childProps = {
-                handleViewChange : this.handleViewChange
-              , item             : this.state.targetNetwork
-              , dataKeys         : this.props.viewData.format["dataKeys"]
-            };
+    if ( this.state.SESSION_AUTHENTICATED && this.state.targetInterface ) {
+      var childProps = {
+        handleViewChange: this.handleViewChange
+        , item: this.state.targetInterface
+        , dataKeys: this.props.viewData.format["dataKeys"]
+      };
 
-        switch ( this.state.currentMode ) {
-          default:
-          case "view":
-            DisplayComponent = <NetworksView {...childProps} />;
-            break;
-        }
+      switch ( this.state.currentMode ) {
+        default:
+        case "view":
+          DisplayComponent = <InterfacesView {...childProps} />;
+          break;
       }
-
-      return (
-        <div className="viewer-item-info">
-
-        { DisplayComponent }
-
-      </div>
-      );
     }
+
+    return (
+      <div className="viewer-item-info">
+
+      { DisplayComponent }
+
+    </div>
+    );
+  }
 
 });
 
-module.exports = NetworkItem;
+module.exports = InterfaceItem;

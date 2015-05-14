@@ -1,4 +1,4 @@
-// Networks Action Creators
+// Interfaces Action Creators
 // =======================
 
 "use strict";
@@ -6,16 +6,16 @@
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-class NetworksActionCreators {
+class InterfacesActionCreators {
 
-  receiveNetworksList ( rawNetworksList ) {
+  receiveInterfacesList ( rawInterfacesList ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RAW_NETWORKS
-      , rawNetworksList: rawNetworksList
+      , rawInterfacesList: rawInterfacesList
       }
     );
   }
 
 };
 
-export default new NetworksActionCreators();
+export default new InterfacesActionCreators();

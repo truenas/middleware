@@ -1,4 +1,4 @@
-// Networks Flux Store
+// Interfaces Flux Store
 // ==================
 
 "use strict";
@@ -9,16 +9,16 @@ import EventEmitter from "events";
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-import NetworksMiddleware from "../middleware/NetworksMiddleware";
+import InterfacesMiddleware from "../middleware/InterfacesMiddleware";
 
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = "networks.changed";
 
 var _updatedOnServer    = [];
 var _localUpdatePending = {};
-var _networks           = [];
+var _interfaces           = [];
 
-var NetworksStore = _.assign( {}, EventEmitter.prototype, {
+var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
 
     emitChange: function () {
       this.emit( CHANGE_EVENT );
@@ -40,58 +40,59 @@ var NetworksStore = _.assign( {}, EventEmitter.prototype, {
      return _updatedOnServer;
     }
 
-// Returns true if the selected network is in the
-// list of networks with pending updates.
+// Returns true if the selected interface is in the
+// list of interfaces with pending updates.
   , isLocalTaskPending: function( linkAddress ) {
       return _.values(_localUpdatePending ).indexof( linkAddress ) > -1;
     }
 
-// Returns true if selected network is in the list of updated networks.
-  , isNetworkUpdatePending: function( linkAddress ) {
+// Returns true if selected interface is in the list of updated interfaces.
+  , isInterfaceUpdatePending: function( linkAddress ) {
       return _updatedOnServer.indexof( linkAddress ) > -1;
     }
 
-  , findNetworkByKeyValue: function ( key, value ) {
-      return _.find( _networks, function ( network ) {
-        return network[ key ] === value;
+  , findInterfaceByKeyValue: function ( key, value ) {
+      // 'interface' is a reserved word. arg renamed 'thisInterface'.
+      return _.find( _interfaces, function ( thisInterface ) {
+        return thisInterface[ key ] === value;
       });
   }
 
-  , getNetwork: function ( linkAddress ) {
-      return _networks[ linkAddress ];
+  , getInterface: function ( linkAddress ) {
+      return _interfaces[ linkAddress ];
   }
 
-  ,  getAllNetworks: function () {
-      return _networks;
+  ,  getAllInterfaces: function () {
+      return _interfaces;
    }
 
 });
 
-NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
+InterfacesStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
   var action = payload.action;
 
   switch( action.type ) {
 
     case ActionTypes.RECEIVE_RAW_NETWORKS:
 
-      // Re-map the complex network objects into flat ones.
+      // Re-map the complex interface objects into flat ones.
       // TODO: Account for multiple aliases and static configurations.
-      var mapNetwork = function ( currentNetwork ) {
+      var mapInterface = function ( currentInterface ) {
 
-        var newNetwork = {};
+        var newInterface = {};
 
         // Make the block below less absurdly wide.
-        var status  = currentNetwork.status;
+        var status  = currentInterface.status;
 
         // Initialize desired fields with existing ones.
-        newNetwork[ "name" ]         = currentNetwork[ "name" ] ? currentNetwork[ "name" ] : null;
-        newNetwork[ "ip" ]           = status[ "aliases" ][1] ? status[ "aliases" ][1][ "address" ] : "--";
-        newNetwork[ "link_state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
-        newNetwork[ "link_address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
-        newNetwork[ "flags" ]        = status[ "flags" ] ? status[ "flags" ] : [];
-        newNetwork[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
-        newNetwork[ "enabled" ]      = currentNetwork[ "enabled" ] ? true : false;
-        newNetwork[ "dhcp" ]         = currentNetwork[ "dhcp" ] ? true : false;
+        newInterface[ "name" ]         = currentInterface[ "name" ] ? currentInterface[ "name" ] : null;
+        newInterface[ "ip" ]           = status[ "aliases" ][1] ? status[ "aliases" ][1][ "address" ] : "--";
+        newInterface[ "link_state" ]   = status[ "link-state" ] ? status[ "link-state" ] : null;
+        newInterface[ "link_address" ] = status[ "link-address" ] ? status[ "link-address" ] : null;
+        newInterface[ "flags" ]        = status[ "flags" ] ? status[ "flags" ] : [];
+        newInterface[ "netmask" ]      = status[ "aliases" ][1] ? status[ "aliases" ][1][ "netmask" ] : null;
+        newInterface[ "enabled" ]      = currentInterface[ "enabled" ] ? true : false;
+        newInterface[ "dhcp" ]         = currentInterface[ "dhcp" ] ? true : false;
 
         // Figure out interface type. Only knows about Ethernet right now.
         // TODO: There are tons more types that could show up. See:
@@ -99,18 +100,18 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
         // ETHER and FIBRECHANNEL will definitely have different logos.
         // Many of the others, such as LAPD and CARP will be discarded and only
         // used by other parts of the UI. The vast majority of that list doesn't matter.
-        newNetwork[ "type"]          = currentNetwork[ "type" ] === "ETHER" ? "Ethernet" : "Unknown";
+        newInterface[ "type"]          = currentInterface[ "type" ] === "ETHER" ? "Ethernet" : "Unknown";
 
         // Determine Internet Protocol version
         if (!status[ "aliases" ][1]) {
-          newNetwork[ "ip_version" ] = "IP";
+          newInterface[ "ip_version" ] = "IP";
         } else {
           switch (status[ "aliases" ][1][ "family" ]) {
             case "INET":
-              newNetwork[ "ip_version" ] = "IPv4";
+              newInterface[ "ip_version" ] = "IPv4";
               break;
             case "INET6":
-              newNetwork[ "ip_version" ] = "IPv6";
+              newInterface[ "ip_version" ] = "IPv6";
               break;
             default:
             // Nothing to do here.
@@ -119,23 +120,23 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
 
         // Map the interface type and/or status to an appropriate icon.
         // TODO: This also needs to handle other interface types.
-        switch (newNetwork[ "type"]) {
+        switch (newInterface[ "type"]) {
           // Ethernet gets the FontAwesome "exchange" icon for now.
           // TODO: Other conditions, such as different icons for connected and
           // disconnected interfaces of different types.
           case "Ethernet":
-          newNetwork[ "font_icon" ] = "exchange";
+          newInterface[ "font_icon" ] = "exchange";
           break;
           default:
-          newNetwork[ "icon" ] = null;
+          newInterface[ "icon" ] = null;
           break;
         }
 
-        return newNetwork;
+        return newInterface;
       };
 
-      _networks = action.rawNetworksList.map( mapNetwork );
-      NetworksStore.emitChange();
+      _interfaces = action.rawInterfacesList.map( mapInterface );
+      InterfacesStore.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
@@ -146,19 +147,19 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
 
         if (updateData ["operation"] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          NetworksMiddleware.requestUsersList( _updatedOnServer );
+          InterfacesMiddleware.requestUsersList( _updatedOnServer );
         }
       }
       break;
 
     case ActionTypes.RECEIVE_NETWORK_UPDATE_TASK:
       _localUpdatePending[ action.taskID ] = action.networkID;
-      NetworksStore.emitChange();
+      InterfacesStore.emitChange();
       break;
 
     case ActionTypes.RESOLVE_USER_UPDATE_TASK:
       delete _localUpdatePending [ action.taskID ];
-      NetworksStore.emitChange();
+      InterfacesStore.emitChange();
       break;
 
     default:
@@ -166,4 +167,4 @@ NetworksStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
   }
 });
 
-module.exports = NetworksStore;
+module.exports = InterfacesStore;
