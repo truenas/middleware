@@ -51,9 +51,12 @@ module.exports = {
   , deleteGroup: function ( groupID ) {
     MiddlewareClient.request( "task.submit"
                             , [ "groups.delete", [ groupID ] ]
-                            , function ( taskID, groupID ) {
-      GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-    });
+                            , deleteGroupCallback
+                            );
+  }
+
+  , deleteGroupCallback: function ( taskID, groupID ) {
+    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
   }
 
 };
