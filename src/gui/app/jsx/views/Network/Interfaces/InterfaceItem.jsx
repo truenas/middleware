@@ -1,5 +1,5 @@
-// Interface Item Template
-// =======================
+// Interface Item
+// ==============
 // Handles viewing and and changing of network interfaces.
 
 "use strict";
