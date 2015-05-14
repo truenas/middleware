@@ -10,7 +10,7 @@ class InterfacesActionCreators {
 
   receiveInterfacesList ( rawInterfacesList ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_RAW_NETWORKS
+      { type: ActionTypes.RECEIVE_INTERFACES_LIST
       , rawInterfacesList: rawInterfacesList
       }
     );

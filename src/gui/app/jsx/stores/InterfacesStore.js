@@ -73,7 +73,7 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
 
   switch( action.type ) {
 
-    case ActionTypes.RECEIVE_RAW_NETWORKS:
+    case ActionTypes.RECEIVE_INTERFACES_LIST:
 
       // Re-map the complex interface objects into flat ones.
       // TODO: Account for multiple aliases and static configurations.
@@ -152,13 +152,8 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function( payload) {
       }
       break;
 
-    case ActionTypes.RECEIVE_NETWORK_UPDATE_TASK:
+    case ActionTypes.RECEIVE_INTERFACE_UPDATE_TASK:
       _localUpdatePending[ action.taskID ] = action.networkID;
-      InterfacesStore.emitChange();
-      break;
-
-    case ActionTypes.RESOLVE_USER_UPDATE_TASK:
-      delete _localUpdatePending [ action.taskID ];
       InterfacesStore.emitChange();
       break;
 
