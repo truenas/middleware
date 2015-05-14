@@ -86,7 +86,6 @@ class WebSocketClient {
 // some reason, the existing connection should be ignored and overridden, supply
 // `true` as the `force` parameter.
   connect ( url, force ) {
-    console.log( url );
     if ( window.WebSocket ) {
       if ( !this.socket || force ) {
 
@@ -107,7 +106,7 @@ class WebSocketClient {
                 , this
                 );
 
-      } else if ( DL.reoports( "connection" ) ) {
+      } else if ( DL.reports( "connection" ) ) {
         DL.warn( "Attempted to create a new WebSocket connection while a " +
                  "connection already exists."
                );
