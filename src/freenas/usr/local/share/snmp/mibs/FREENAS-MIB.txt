@@ -33,9 +33,219 @@ IMPORTS
 
 freenas	OBJECT IDENTIFIER ::= {enterprises 25359}
 
-zfs	OBJECT IDENTIFIER ::= {freenas 1}
+zfs     OBJECT IDENTIFIER ::= {freenas 1}
 
-vols 	OBJECT IDENTIFIER ::= {zfs 5}
+fs      OBJECT IDENTIFIER ::= {zfs 1}
+
+arc     OBJECT IDENTIFIER ::= {zfs 2}
+
+l2arc   OBJECT IDENTIFIER ::= {zfs 3}
+
+vols    OBJECT IDENTIFIER ::= {zfs 5}
+
+zil     OBJECT IDENTIFIER ::= {zfs 6}
+
+zfsFilesystemName OBJECT-TYPE
+    SYNTAX  DisplayString
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+        "The name of the filesystem."
+    ::= {fs 1}
+
+zfsFilesystemAvailableKB OBJECT-TYPE
+    SYNTAX  GAUGE
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+             "The number of 1 KB blocks that are available for use."
+    ::= {fs 2}
+
+zfsFilesystemUsedKB OBJECT-TYPE
+    SYNTAX  GAUGE
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+             "The number of 1 KB blocks that are in use."
+    ::= {fs 3}
+
+zfsPoolHealth OBJECT-TYPE
+    SYNTAX  INTEGER { online(1), degraded(2), faulted(3), unknown(4) }
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+             "The current health of the containing pool, as reported
+         by zpool status."
+    ::= {fs 4}
+
+zfsFilesystemSizeKB OBJECT-TYPE
+        SYNTAX  INTEGER32 { online(1), degraded(2), faulted(3), unknown(4) }
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+             "The number of 1 MB blocks that are assigned"
+    ::= {fs 5}
+
+zfsFilesystemAvailableMB OBJECT-TYPE
+    SYNTAX  GAUGE
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+             "The number of 1 MB blocks that are available for use.
+         Useful if zfsFilesystemAvailableKB exceeds a 32 bit
+         integer."
+    ::= {fs 12}
+
+zfsFilesystemUsedMB OBJECT-TYPE
+    SYNTAX  GAUGE
+    ACCESS  read-only
+    STATUS  mandatory
+    DESCRIPTION
+             "The number of 1 MB blocks that are in use Useful if
+         zfsFilesystemUsedKB exceeds a 32 bit integer."
+    ::= {fs 13}
+
+zfsFilesystemSizeMB OBJECT-TYPE
+        SYNTAX  GAUGE
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                 "The number of 1 MB blocks that are assigned  Useful if
+                 zfsFilesystemSizeKB exceeds a 32 bit integer."
+        ::= {fs 14}
+
+zfsFilesystemOpRead OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of read I/O operations sent to the pool or device,
+                including metadata requests."
+        ::= {fs 15}
+
+zfsFilesystemOpWrite OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of write I/O operations sent to the pool or device."
+        ::= {fs 16}
+
+zfsFilesystemBwRead OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The bandwidth of all read operations (including metadata),
+                expressed as units per second"
+        ::= {fs 17}
+
+zfsFilesystemBwWrite OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The bandwidth of all write operations, expressed as units per second."
+        ::= {fs 18}
+
+zfsArcSize OBJECT-TYPE
+        SYNTAX GAUGE
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 1}
+
+zfsArcMeta OBJECT-TYPE
+        SYNTAX GAUGE
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 2}
+
+zfsArcData OBJECT-TYPE
+        SYNTAX GAUGE
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 3}
+
+zfsArcHits OBJECT-TYPE
+        SYNTAX Counter32
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 4}
+
+zfsArcMisses OBJECT-TYPE
+        SYNTAX Counter32
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 5}
+
+zfsArcC OBJECT-TYPE
+        SYNTAX GAUGE
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 6}
+
+zfsArcP OBJECT-TYPE
+        SYNTAX GAUGE
+        ACCESS read-only
+        STATUS mandatory
+        ::= {arc 7}
+
+zfsArcMissPercent OBJECT-TYPE
+        SYNTAX DisplayString
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Arc Miss Percentage.
+                (Note: Floating precision sent across SNMP as a String"
+        ::= {arc 8}
+
+zfsArcCacheHitRatio OBJECT-TYPE
+        SYNTAX DisplayString
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Arc Cache Hit Ration Percentage.
+                (Note: Floating precision sent across SNMP as a String"
+        ::= {arc 9}
+
+zfsArcCacheMissRatio OBJECT-TYPE
+        SYNTAX DisplayString
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "Arc Cache Miss Ration Percentage.
+                (Note: Floating precision sent across SNMP as a String"
+        ::= {arc 10} 
+
+zfsL2ArcHits OBJECT-TYPE
+        SYNTAX Counter32
+        ACCESS read-only
+        STATUS mandatory
+        ::= {l2arc  1}
+
+zfsL2ArcMisses OBJECT-TYPE
+        SYNTAX Counter32
+        ACCESS read-only
+        STATUS mandatory
+        ::= {l2arc  2}
+
+zfsL2ArcRead OBJECT-TYPE
+        SYNTAX Counter32
+        ACCESS read-only
+        STATUS mandatory
+        ::= {l2arc  3}
+
+zfsL2ArcWrite OBJECT-TYPE
+        SYNTAX Counter32
+        ACCESS read-only
+        STATUS mandatory
+        ::= {l2arc  4}
+
+zfsL2ArcSize OBJECT-TYPE
+        SYNTAX GAUGE
+        ACCESS read-only
+        STATUS mandatory
+        ::= {l2arc  5}
 
 zfsVolumeName OBJECT-TYPE
         SYNTAX  DisplayString
@@ -97,74 +307,27 @@ zfsVolumeSizeMB OBJECT-TYPE
                  zfsVolumeSizeKB exceeds a 32 bit integer."
         ::= {vols 14}
 
-fs	OBJECT IDENTIFIER ::= {zfs 1}
-
-zfsFilesystemName OBJECT-TYPE
-	SYNTAX	DisplayString
-	ACCESS	read-only
-	STATUS	mandatory
-	DESCRIPTION
-		"The name of the filesystem."
-	::= {fs 1}
-
-zfsFilesystemAvailableKB OBJECT-TYPE
-	SYNTAX	GAUGE
-	ACCESS	read-only
-	STATUS	mandatory
-	DESCRIPTION
-	         "The number of 1 KB blocks that are available for use."
-	::= {fs 2}
-
-zfsFilesystemUsedKB OBJECT-TYPE
-	SYNTAX	GAUGE
-	ACCESS	read-only
-	STATUS	mandatory
-	DESCRIPTION
-	         "The number of 1 KB blocks that are in use."
-	::= {fs 3}
-
-zfsPoolHealth OBJECT-TYPE
-	SYNTAX	INTEGER { online(1), degraded(2), faulted(3), unknown(4) }
-	ACCESS	read-only
-	STATUS	mandatory
-	DESCRIPTION
-	         "The current health of the containing pool, as reported
-		 by zpool status."
-	::= {fs 4}
-
-zfsFilesystemSizeKB OBJECT-TYPE
-        SYNTAX  INTEGER32 { online(1), degraded(2), faulted(3), unknown(4) }
+zfsZilstatOps1sec OBJECT-TYPE
+        SYNTAX  COUNTER64
         ACCESS  read-only
         STATUS  mandatory
         DESCRIPTION
-        	 "The number of 1 MB blocks that are assigned"
-	::= {fs 5}
+                "The ops column parsed from the command zilstat 1 1"
+        ::= {zil 1}
 
-zfsFilesystemAvailableMB OBJECT-TYPE
-	SYNTAX	GAUGE
-	ACCESS	read-only
-	STATUS	mandatory
-	DESCRIPTION
-	         "The number of 1 MB blocks that are available for use.
-		 Useful if zfsFilesystemAvailableKB exceeds a 32 bit
-		 integer."
-	::= {fs 12}
-
-zfsFilesystemUsedMB OBJECT-TYPE
-	SYNTAX	GAUGE
-	ACCESS	read-only
-	STATUS	mandatory
-	DESCRIPTION
-	         "The number of 1 MB blocks that are in use Useful if
-		 zfsFilesystemUsedKB exceeds a 32 bit integer."
-	::= {fs 13}
-
-zfsFilesystemSizeMB OBJECT-TYPE
-        SYNTAX  GAUGE
+zfsZilstatOps5sec OBJECT-TYPE
+        SYNTAX  COUNTER64
         ACCESS  read-only
         STATUS  mandatory
         DESCRIPTION
-                 "The number of 1 MB blocks that are assigned  Useful if
-                 zfsFilesystemSizeKB exceeds a 32 bit integer."
-        ::= {fs 14}
+                "The ops column parsed from the command zilstat 5 1"
+        ::= {zil 2}
+
+zfsZilstatOps10sec OBJECT-TYPE
+        SYNTAX  COUNTER64
+        ACCESS  read-only
+        STATUS  mandatory
+        DESCRIPTION
+                "The ops column parsed from the command zilstat 10 1"
+        ::= {zil 3}
 END

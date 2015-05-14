@@ -20,6 +20,9 @@ system_start()
 	if [ "$(notifier pwenc_check)" = "False" ]; then
 		notifier pwenc_generate_secret
 	fi
+	# start zilstatd daemon (needed by snmp for stats from zilstat)
+	/usr/local/bin/python \
+	/usr/local/www/freenasUI/tools/zilstatd.py >/dev/null 2>&1
 }
 
 name="ix-system"
