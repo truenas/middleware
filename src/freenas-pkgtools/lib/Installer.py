@@ -460,6 +460,7 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
                 os.link(source_file, full_path)
             except os.error as e:
                 if e[0] == errno.EXDEV:
+                    log.debug("Unable to link %s -> %s, trying a copy" % (source_file, full_path))
                     # Cross-device link, so we'll just copy it
                     try:
                         kBufSize = 1024 * 1024
