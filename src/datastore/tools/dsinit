@@ -30,7 +30,9 @@ from __future__ import print_function
 import argparse
 import os
 import sys
+import pwd
 import string
+import subprocess
 import launchd
 import json
 
@@ -57,9 +59,24 @@ def read_config(filename):
     return conf
 
 
+def do_init(control, db_dir):
+    return subprocess.call(control, db_dir, 'init')
+
+
+def do_start_forked(control, db_dir):
+    return subprocess.call(control, db_dir, 'start')
+
+
+def do_stop_forked(control, db_dir):
+    return subprocess.call(control, db_dir, 'stop')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
+    parser.add_argument('--init', help='Initialize datastore directory')
+    parser.add_argument('--start-forked')
+    parser.add_argument('--stop-forked')
     args = parser.parse_args()
     config = read_config(args.c)
 
@@ -67,6 +84,16 @@ def main():
     db_dir = ds['dbdir']
     driver_name = ds['driver']
     driver_dir = os.path.join('/usr/local/lib/datastore/drivers', ds['driver'])
+    control = os.path.join(driver_dir, 'control')
+
+    if args.init:
+        sys.exit(do_init(control, db_dir))
+
+    if args.start_forked:
+        sys.exit(do_start_forked(control, db_dir))
+
+    if args.stop_forked:
+        sys.exit(do_stop_forked(control, db_dir))
 
     with open(os.path.join(driver_dir, driver_name + '.json'), 'r') as f:
         plist = f.read()
