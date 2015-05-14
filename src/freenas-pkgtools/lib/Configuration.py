@@ -496,7 +496,6 @@ default_update_server = UpdateServer(name = "default",
 class Configuration(object):
     _root = ""
     _config_path = "/data/update.conf"
-    _trains = None
     _temp = "/tmp"
     _system_dataset = "/var/db/system"
     _package_dir = None
@@ -695,33 +694,10 @@ class Configuration(object):
             man = None
         return man
 
-    def StoreConfigurationFile(self, path):
-        # I'm not really sure this'll work in reality;
-        # it may need to be handled through the database.
-        raise Exception("This is obsolete")
-        cfp = ConfigParser.SafeConfigParser()
-        if self._trains is not None:
-            for train in self._trains:
-                cfp.add_section(train.Name())
-                if train.LastSequence() is not None:
-                    cfp.set(train.Name(), TRAIN_SEQ_KEY, train.LastSequence())
-                if train.Description() is not None:
-                    cfp.set(train.Name(), TRAIN_DESC_KEY, train.Description())
-                if train.LastCheckedTime() is not None:
-                    cfp.set(train.Name(), TRAIN_CHECKED_KEY, train.LastCheckedTime())
-        if path is None:
-            filename = self._root + self._config_path
-        else:
-            filename = path
-        with open(filename, "w") as f:
-            cfp.write(f)
-        return
-
     def PackageDB(self, create = True):
         return PackageDB(self._root, create)
 
     def LoadConfigurationFile(self, path):
-        self._trains = None
         cfp = None
         try:
             with open(self._root + path, "r") as f:
@@ -752,18 +728,6 @@ class Configuration(object):
                         self._update_server = update_server
                     except:
                         log.error("Cannot set update server to %s, using default", n)
-                elif cfp.has_option(section, TRAIN_DESC_KEY):
-                    # This is a train name
-                    try:
-                        train = Train(section, cfp.get(section, TRAIN_DESC_KEY))
-                        train.SetLastSequence(cfp.get(section, TRAIN_SEQ_KEY))
-                        train.SetLastCheckedTime(cfp.get(section, TRAIN_CHECKED_KEY))
-                        self.AddTrain(train)
-                    except:
-                    # Ignore errors (for now at least)
-                        pass
-                else:
-                    log.debug("Don't know what to do with section %s" % section)
         # End for loop here
         return
 
@@ -1211,53 +1175,3 @@ def do_verify(verify_handler=None):
                 ('problem', 'checksum does not match'),
                 ('pkgdb_entry', objs)]))
     return error_flag, error_list, warn_flag, warn_list
-
-if __name__ == "__main__":
-    conf = Configuration()
-
-    pkg = Package.Package("freenas", "1.0", "abcd")
-    pkg.AddUpdate("0.9", "1234")
-
-    manifest = Manifest.Manifest(conf)
-    manifest.SetSequence(100)
-    manifest.SetTrain("FreeNAS-ALPHA")
-    manifest.SetVersion("FreeNAS-9.3-ALPHA")
-    manifest.AddPackage(pkg)
-    manifest.SetSignature()
-
-    if manifest.Validate() != True:
-        print "Validation failed"
-
-    print manifest.String()
-    manifest.StorePath("manifest")
-    new_manifest = Manifest.Manifest(conf)
-    new_manifest.LoadPath("manifest")
-    if new_manifest.Validate() == True:
-        print "Re-loaded manifest validated"
-
-    test_conf = Configuration("root")
-    test_conf.AddSearchLocation("file:///cdrom/FreeNAS")
-#    test_conf.AddSearchLocation("http://www.freenas.org/Downloads/FreeNAS")
-#    test_conf.AddSearchLocation("http://k3/~sef/FreeNAS")
-    test_conf.AddSearchLocation("http://www.kithrup.com/~sef/FreeNAS")
-    test_conf.AddSearchLocation("/tmp")
-
-    test_mani = test_conf.SystemManifest()
-    print "System manifest = %s" % test_mani.String()
-
-    test_conf.StoreConfigurationFile("freenas.conf")
-
-    for file in test_conf.SearchForFile("sef.iso"):
-        print "Found %s" % file.name
-
-    latest = test_conf.FindLatestManifest(test_mani.Train())
-    if latest is None:
-        print >> sys.stderr, "Could not find latest manifest for train %s" % test_mani.Train()
-    else:
-        print "Train %s:  current = %d, latest = %d" % (test_mani.Train(), test_mani.Sequence(), latest.Sequence())
-
-    test_conf.FindPackageFile(pkg)
-
-    pkgdb = PackageDB("root")
-    pkgdb.AddPackage("freenas", "1.0", "")
-    pkgdb.AddFile("freenas", "/bin/sh", "file")
