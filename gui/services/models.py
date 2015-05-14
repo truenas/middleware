@@ -431,7 +431,7 @@ class iSCSITargetGlobalConfiguration(Model):
             verbose_name=_("Base Name"),
             help_text=_("The base name (e.g. iqn.2005-10.org.freenas.ctl, "
                 "see RFC 3720 and 3721 for details) will append the target "
-                "name that is not starting with 'iqn.'")
+                "name that is not starting with 'iqn.', 'eui.' or 'naa.'")
             )
     iscsi_discoveryauthmethod = models.CharField(
             max_length=120,
@@ -805,7 +805,7 @@ class iSCSITarget(Model):
             max_length=120,
             verbose_name=_("Target Name"),
             help_text=_("Base Name will be appended automatically when "
-                "starting without 'iqn.'."),
+                "starting without 'iqn.', 'eui.' or 'naa.'."),
             )
     iscsi_target_alias = models.CharField(
             unique=True,

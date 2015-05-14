@@ -166,7 +166,9 @@ def main():
             auth_list = []
         agname = '4tg_%d' % target.id
         has_auth = auth_group_config(auth_tag=agname, auth_list=auth_list, auth_type=target.iscsi_target_authtype, initiator=target.iscsi_target_initiatorgroup)
-        if target.iscsi_target_name.startswith("iqn."):
+        if (target.iscsi_target_name.startswith("iqn.") or
+                target.iscsi_target_name.startswith("eui.") or
+                target.iscsi_target_name.startswith("naa.")):
             addline("target %s {\n" % target.iscsi_target_name)
         else:
             addline("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
