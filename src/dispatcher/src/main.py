@@ -44,7 +44,6 @@ import errno
 import setproctitle
 import pty
 import termios
-import networkx as nx
 
 import gevent
 from pyee import EventEmitter
@@ -297,6 +296,15 @@ class Dispatcher(object):
         self.rpc.register_service('plugin', PluginService)
         self.rpc.register_service('shell', ShellService)
 
+        self.register_event_type('server.client_connected')
+        self.register_event_type('server.client_disconnected')
+        self.register_event_type('server.client_logged')
+        self.register_event_type('server.plugin.load_error')
+        self.register_event_type('server.plugin.loaded')
+        self.register_event_type('server.ready')
+        self.register_event_type('server.service_logged')
+        self.register_event_type('server.shutdown')
+
     def start(self):
         for name, clazz in self.event_sources.items():
             source = clazz(self)
@@ -305,6 +313,12 @@ class Dispatcher(object):
 
         self.started_at = time.time()
         self.balancer.start()
+
+        self.ready.set()
+
+        self.dispatch_event('server.ready', {
+            'description': 'Server is completely loaded and ready to use.',
+        })
 
     def read_config_file(self, file):
         try:
@@ -560,6 +574,11 @@ class Dispatcher(object):
 
     def die(self):
         self.logger.warning('Exiting from "die" command')
+
+        self.dispatch_event('server.shutdown', {
+            'description': 'Server is shutting down.',
+        })
+
         gevent.killall(self.threads)
         self.logger.warning('Unloading plugins')
         self.unload_plugins()
@@ -1195,7 +1214,6 @@ def run(d, args):
     d.discover_plugins()
     d.load_plugins()
     d.start()
-    d.ready.set()
     gevent.joinall(d.threads + [serv_thread])
 
 
