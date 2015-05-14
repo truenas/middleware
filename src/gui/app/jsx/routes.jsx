@@ -32,7 +32,7 @@ import Tasks from "./views/Tasks";
 import Network from "./views/Network";
 import Interfaces from "./views/Network/Interfaces"
 import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
-import GlobalConfig from "./views/Network/GlobalConfig";
+import NetworkConfig from "./views/Network/NetworkConfig";
 
 import Storage from "./views/Storage";
 
@@ -110,7 +110,13 @@ module.exports = (
       path = "network"
       handler = { Network } >
 
-      {/* Interfaces */}
+      {/* GLOBAL NETWORK CONFIGURATION */}
+      <Route
+        name = "network-config"
+        path = "network-config"
+        handler = { NetworkConfig } />
+
+      {/* NETWORK INTERFACES */}
       <Route
         name = "interfaces"
         path = "interfaces"
@@ -120,12 +126,6 @@ module.exports = (
           path = ":interfaceID"
           handler = { InterfaceItem } />
       </Route>
-
-      {/* Global Config*/}
-      <Route
-        name = "global-config"
-        path = "global-config"
-        handler = { GlobalConfig } />
 
     </Route>
 

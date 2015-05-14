@@ -16,8 +16,8 @@ import SectionNav from "../components/SectionNav";
 var sections = [ { route : "interfaces"
                  , display : "Interfaces"
                  }
-               , { route: "global-config"
-                 , display: "Global Config"
+               , { route: "network-config"
+                 , display: "Network Configuration"
                 } ]
 
 var Network = React.createClass({
