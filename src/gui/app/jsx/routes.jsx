@@ -49,32 +49,32 @@ import Power from "./views/Power";
 
 module.exports = (
   <Route
-      path    = "/"
-      handler = { Root } >
+    path    = "/"
+    handler = { Root } >
 
     <DefaultRoute handler={ Dashboard } />
 
     <Route
-       name    = "dashboard"
-       route   = "dashboard"
-       handler = { Dashboard } />
+      name    = "dashboard"
+      route   = "dashboard"
+      handler = { Dashboard } />
 
     {/* ACCOUNTS */}
     <Route
-        name    = "accounts"
-        path    = "accounts"
-        handler = { Accounts }>
+      name    = "accounts"
+      path    = "accounts"
+      handler = { Accounts }>
       <DefaultRoute handler={ Users } />
 
       {/* USERS */}
       <Route
-          name    = "users"
-          path    = "users"
-          handler = { Users } >
+        name    = "users"
+        path    = "users"
+        handler = { Users } >
         <Route
-            name    = "add-user"
-            path    = "add-user"
-            handler = { AddUser } />
+          name    = "add-user"
+          path    = "add-user"
+          handler = { AddUser } />
         <Route
           name    = "users-editor"
           path    = ":userID"
@@ -83,25 +83,25 @@ module.exports = (
 
       {/* GROUPS */}
       <Route
-          name    = "groups"
-          path    = "groups"
-          handler = { Groups } >
+        name    = "groups"
+        path    = "groups"
+        handler = { Groups } >
         <Route
-            name    = "add-group"
-            path    = "add-group"
-            handler = { AddGroup } />
+          name    = "add-group"
+          path    = "add-group"
+          handler = { AddGroup } />
         <Route
-            name    = "groups-editor"
-            path    = ":groupID"
-            handler = { GroupItem } />
+          name    = "groups-editor"
+          path    = ":groupID"
+          handler = { GroupItem } />
       </Route>
     </Route>
 
     {/* TASKS */}
     <Route
-        name    = "tasks"
-        route   = "tasks"
-        handler = { Tasks } />
+      name    = "tasks"
+      route   = "tasks"
+      handler = { Tasks } />
 
 
     {/* NETWORK */}
@@ -132,45 +132,46 @@ module.exports = (
 
     {/* STORAGE */}
     <Route
-        name    = "storage"
-        route   = "storage"
-        handler = { Storage } />
+      name    = "storage"
+      route   = "storage"
+      handler = { Storage } />
 
     {/* SHARING */}
     <Route
-        name    = "sharing"
-        route   = "sharing"
-        handler = { Sharing } />
+      name    = "sharing"
+      route   = "sharing"
+      handler = { Sharing } />
 
 
     {/* SERVICES */}
     <Route
-        name    = "services"
-        route   = "services"
-        handler = { Services }>
-      <Route name    = "services-editor"
-             path    = ":serviceID"
-             handler = { ServiceItem } />
+      name    = "services"
+      route   = "services"
+      handler = { Services }>
+      <Route
+        name    = "services-editor"
+        path    = ":serviceID"
+        handler = { ServiceItem } />
     </Route>
 
 
     {/* SYSTEM TOOLS */}
     <Route
-        name    = "system-tools"
-        route   = "system-tools"
-        handler = { SystemTools } />
+      name    = "system-tools"
+      route   = "system-tools"
+      handler = { SystemTools } />
 
     {/* CONTROL PANEL */}
     <Route
-        name    = "control-panel"
-        route   = "control-panel"
-        handler = { ControlPanel } />
+      name    = "control-panel"
+      route   = "control-panel"
+      handler = { ControlPanel } />
 
     {/* POWER */}
     <Route
-        name    = "power"
-        route   = "power"
-        handler = { Power } />
+      name    = "power"
+      route   = "power"
+      handler = { Power } />
 
     <NotFoundRoute handler={ Dashboard } />
 
