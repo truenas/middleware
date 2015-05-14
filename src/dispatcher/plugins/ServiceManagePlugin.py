@@ -200,8 +200,8 @@ def spawn_gettys(dispatcher):
         ld.load(plist)
 
 
-def _init(dispatcher):
-    dispatcher.register_schema_definition('service', {
+def _init(dispatcher, plugin):
+    plugin.register_schema_definition('service', {
         'type': 'object',
         'properties': {
             'id': {'type': 'string'},
@@ -215,9 +215,9 @@ def _init(dispatcher):
         }
     })
 
-    dispatcher.register_task_handler("service.manage", ServiceManageTask)
-    dispatcher.register_task_handler("service.configure", UpdateServiceConfigTask)
-    dispatcher.register_provider("services", ServiceInfoProvider)
+    plugin.register_task_handler("service.manage", ServiceManageTask)
+    plugin.register_task_handler("service.configure", UpdateServiceConfigTask)
+    plugin.register_provider("services", ServiceInfoProvider)
 
     ld = launchd.Launchd()
     for svc in dispatcher.datastore.query('service-definitions'):
@@ -249,6 +249,6 @@ def _init(dispatcher):
         if dispatcher.configstore.get('service.{0}.enable'.format(svc['name'])):
             ld.start(label)
 
-        dispatcher.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])
+        plugin.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])
 
     spawn_gettys(dispatcher)
