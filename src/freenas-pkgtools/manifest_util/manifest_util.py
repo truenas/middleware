@@ -33,7 +33,7 @@ logging.config.dictConfig({
         'std': {
             'class': 'logging.StreamHandler',
             'level': 'DEBUG',
-            'stream': 'ext://sys.stdout',
+            'stream': 'ext://sys.stderr',
         },
     },
     'loggers': {
