@@ -6,25 +6,25 @@
 
 var componentLongName = "BusyBox";
 
-var React = require("react");
+import React from "react";
 
 // Middleware
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
 // SessionStore stores the logged in user and the fact that login happened.
-var SessionStore = require("../stores/SessionStore");
+import SessionStore from "../stores/SessionStore";
 
 // Powerstuff
-var PowerStore  = require("../stores/PowerStore");
+import PowerStore from "../stores/PowerStore";
 
 // Middleware
-var PowerMiddleware   = require("../middleware/PowerMiddleware");
+import PowerMiddleware from "../middleware/PowerMiddleware";
 
 // Throbber
-var Throbber = require("./common/Throbber");
+import Throbber from "./common/Throbber";
 
 // Twitter Bootstrap React components
-var TWBS = require("react-bootstrap");
+import TWBS from "react-bootstrap";
 
 var BusyBox = React.createClass({
 
@@ -33,14 +33,14 @@ var BusyBox = React.createClass({
       , animDelay    : React.PropTypes.number
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
           animDuration : 500
         , animDelay    : 0
       };
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           boxIsVisible  : false
         , userText      : ""
@@ -52,7 +52,7 @@ var BusyBox = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SessionStore.addChangeListener( this.handleMiddlewareChange );
       PowerStore.addChangeListener( this.handlePowerChange );
       PowerMiddleware.subscribe( componentLongName );
@@ -105,11 +105,11 @@ var BusyBox = React.createClass({
       );
     }
 
-  , handleMiddlewareChange: function() {
+  , handleMiddlewareChange: function () {
       this.setState({ loggedIn: SessionStore.getLoginStatus() });
     }
 
-  , handlePowerChange: function() {
+  , handlePowerChange: function () {
       var retcode = PowerStore.isEventPending();
       this.setState({
           kickin    : retcode[0]
@@ -144,7 +144,7 @@ var BusyBox = React.createClass({
           var throbberprops     = {};
           throbberprops.bsStyle = "primary";
           throbberprops.size    = 60;
-          var dispMsg           = "Please wait while I " + this.state.operation;  
+          var dispMsg           = "Please wait while I " + this.state.operation;
 
           busyBody = (
             <div className="overlay-dark" ref="Busy" style={{ opacity: 0 }}>

@@ -432,7 +432,7 @@ def _depends():
     return ['DevdPlugin', 'ZfsPlugin']
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     boot_pool = dispatcher.call_sync('zfs.pool.get_boot_pool')
 
     def on_pool_change(args):
@@ -447,7 +447,7 @@ def _init(dispatcher):
             'ids': ids
         })
 
-    dispatcher.register_schema_definition('volume', {
+    plugin.register_schema_definition('volume', {
         'type': 'object',
         'title': 'volume',
         'properties': {
@@ -460,24 +460,24 @@ def _init(dispatcher):
     })
 
     dispatcher.require_collection('volumes')
-    dispatcher.register_provider('volumes', VolumeProvider)
-    dispatcher.register_task_handler('volume.create', VolumeCreateTask)
-    dispatcher.register_task_handler('volume.create_auto', VolumeAutoCreateTask)
-    dispatcher.register_task_handler('volume.destroy', VolumeDestroyTask)
-    dispatcher.register_task_handler('volume.import', VolumeImportTask)
-    dispatcher.register_task_handler('volume.detach', VolumeDetachTask)
-    dispatcher.register_task_handler('volume.update', VolumeUpdateTask)
-    dispatcher.register_task_handler('volume.dataset.create', DatasetCreateTask)
-    dispatcher.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
-    dispatcher.register_task_handler('volume.dataset.update', DatasetConfigureTask)
+    plugin.register_provider('volumes', VolumeProvider)
+    plugin.register_task_handler('volume.create', VolumeCreateTask)
+    plugin.register_task_handler('volume.create_auto', VolumeAutoCreateTask)
+    plugin.register_task_handler('volume.destroy', VolumeDestroyTask)
+    plugin.register_task_handler('volume.import', VolumeImportTask)
+    plugin.register_task_handler('volume.detach', VolumeDetachTask)
+    plugin.register_task_handler('volume.update', VolumeUpdateTask)
+    plugin.register_task_handler('volume.dataset.create', DatasetCreateTask)
+    plugin.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
+    plugin.register_task_handler('volume.dataset.update', DatasetConfigureTask)
 
-    dispatcher.register_hook('volume.pre-destroy')
-    dispatcher.register_hook('volume.pre-detach')
-    dispatcher.register_hook('volume.pre-create')
-    dispatcher.register_hook('volume.pre-attach')
+    plugin.register_hook('volume.pre-destroy')
+    plugin.register_hook('volume.pre-detach')
+    plugin.register_hook('volume.pre-create')
+    plugin.register_hook('volume.pre-attach')
 
-    dispatcher.register_event_handler('zfs.pool.changed', on_pool_change)
-    dispatcher.register_event_type('volumes.changed')
+    plugin.register_event_handler('zfs.pool.changed', on_pool_change)
+    plugin.register_event_type('volumes.changed')
 
     for vol in dispatcher.datastore.query('volumes'):
         dispatcher.call_task_sync('zfs.mount', vol['name'], True)

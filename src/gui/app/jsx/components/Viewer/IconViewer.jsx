@@ -1,17 +1,17 @@
+
+
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var Router       = require("react-router");
-var Link         = Router.Link;
-var RouteHandler = Router.RouteHandler;
+import { Link, RouteHandler } from "react-router";
 
-var Icon = require("../Icon");
+import Icon from "../Icon";
 
-var viewerCommon = require("../mixins/viewerCommon");
-var viewerUtil = require("./viewerUtil");
+import viewerCommon from "../mixins/viewerCommon";
+import viewerUtil from "./viewerUtil";
 
-var ToggleSwitch = require("../common/ToggleSwitch");
+import ToggleSwitch from "../common/ToggleSwitch";
 
 // Icon Viewer
 var IconViewer = React.createClass({
@@ -31,11 +31,11 @@ var IconViewer = React.createClass({
       , filteredData     : React.PropTypes.object.isRequired
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       window.addEventListener( "keyup", this.handleEscClose );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       window.removeEventListener( "keyup", this.handleEscClose );
     }
 
@@ -109,7 +109,7 @@ var IconViewer = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
       var fd = this.props.filteredData;
       var editorContent      = null;
       var groupedIconItems   = null;

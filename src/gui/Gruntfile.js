@@ -47,31 +47,31 @@ module.exports = function ( grunt ) {
   // Path variables for Bower components
   var bc = "./bower_components/";
   var bowerConfig =
-    { velocity : bc + "velocity"
-    , d3       : bc + "d3"
-    , openSans: { less  : bc + "lessfonts-open-sans/src/less"
-                , fonts : bc + "lessfonts-open-sans/dist/fonts/OpenSans"
+    { velocity: bc + "velocity"
+    , d3: bc + "d3"
+    , openSans: { less: bc + "lessfonts-open-sans/src/less"
+                , fonts: bc + "lessfonts-open-sans/dist/fonts/OpenSans"
                 }
-    , fontawesome: { less  : bc + "fontawesome/less"
-                   , fonts : bc + "fontawesome/fonts"
+    , fontawesome: { less: bc + "fontawesome/less"
+                   , fonts: bc + "fontawesome/fonts"
                    }
     };
 
-  var sourceConfig = { root      : "app"
-                     , images    : "app/source/images"
-                     , favicons  : "app/source/favicons"
-                     , jsx       : "app/jsx"
-                     , styles    : "app/source/styles"
-                     , templates : "app/templates"
+  var sourceConfig = { root: "app"
+                     , images: "app/source/images"
+                     , favicons: "app/source/favicons"
+                     , jsx: "app/jsx"
+                     , styles: "app/source/styles"
+                     , templates: "app/templates"
                      };
 
-  var buildConfig = { root  : "app/build/"
-                    , app   : "app/build/js"
-                    , img   : "app/build/img"
-                    , css   : "app/build/css"
-                    , font  : "app/build/font"
-                    , dist  : "app/build/js"
-                    , ssrjs : "app/ssrjs"
+  var buildConfig = { root: "app/build/"
+                    , app: "app/build/js"
+                    , img: "app/build/img"
+                    , css: "app/build/css"
+                    , font: "app/build/font"
+                    , dist: "app/build/js"
+                    , ssrjs: "app/ssrjs"
                     };
 
 
@@ -79,38 +79,39 @@ module.exports = function ( grunt ) {
   var gruntConfig =
     // Use npm manifest as a list of available packages
     { pkg: grunt.file.readJSON( "package.json" )
-    , dirTree: { root            : "./"
-               , client          : "app/client"
-               , server          : "app/server"
-               , routes          : "app/server-js/routes"
-               , data            : "app/data"
-               , bower           : bowerConfig
-               , internalScripts : "app/source/internalScripts"
-               , source          : sourceConfig
-               , build           : buildConfig
-               , deployment      : "app-deploy"
+    , dirTree: { root: "./"
+               , client: "app/client"
+               , server: "app/server"
+               , routes: "app/server-js/routes"
+               , data: "app/data"
+               , bower: bowerConfig
+               , babel: "./node_modules/babel-core/"
+               , internalScripts: "app/source/internalScripts"
+               , source: sourceConfig
+               , build: buildConfig
+               , deployment: "app-deploy"
                }
 
     // Environment
     , env: { port: 4000 }
 
     // FreeNAS remote config
-    , guiDirectory   : "/usr/local/www/gui"
-    , configFilePath : "./freenas10-conf.json"
-    , conditionalCommands: { enablePkg        : ""
-                           , installGmake     : ""
-                           , installGplusplus : ""
-                           , symlinkGplusplus : ""
-                           , symlinkCplusplus : ""
-                           , installNpm       : ""
-                           , updateNpm        : ""
+    , guiDirectory: "/usr/local/www/gui"
+    , configFilePath: "./freenas10-conf.json"
+    , conditionalCommands: { enablePkg: ""
+                           , installGmake: ""
+                           , installGplusplus: ""
+                           , symlinkGplusplus: ""
+                           , symlinkCplusplus: ""
+                           , installNpm: ""
+                           , updateNpm: ""
                            }
-    , freeNASConfig: { notConfigured : true
-                     , remoteHost    : null
-                     , sshPort       : null
-                     , authType      : null
-                     , keyPath       : null
-                     , rootPass      : null
+    , freeNASConfig: { notConfigured: true
+                     , remoteHost: null
+                     , sshPort: null
+                     , authType: null
+                     , keyPath: null
+                     , rootPass: null
                      }
   };
 

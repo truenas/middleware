@@ -4,11 +4,10 @@
 
 "use strict";
 
-
-var React = require("react");
+import React from "react";
 
 var ControlPanel = React.createClass({
-  render: function() {
+  render: function () {
     return (
       <main>
         <h1>Control Panel View</h1>

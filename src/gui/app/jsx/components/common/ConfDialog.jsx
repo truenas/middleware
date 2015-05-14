@@ -4,13 +4,12 @@
 // (Yes/No/Close etc.) before the actual thing happening
 // TODO: Give it a .less file for giving it custom themes
 
-
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 // Twitter Bootstrap React Components
-var TWBS = require("react-bootstrap");
+import TWBS from "react-bootstrap";
 
 var ConfDialog = React.createClass({
 
@@ -28,7 +27,7 @@ var ConfDialog = React.createClass({
 
   , mixins: [TWBS.OverlayMixin]
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
         bsStyle : "primary"
       , title : "Confirmation"
@@ -40,13 +39,13 @@ var ConfDialog = React.createClass({
       };
   }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
         isModalOpen: false
       };
   }
 
-  , handleToggle: function() {
+  , handleToggle: function () {
       this.setState({
         isModalOpen: !this.state.isModalOpen
       });
@@ -62,12 +61,12 @@ var ConfDialog = React.createClass({
       );
     }
 
-  , saveClick: function() {
+  , saveClick: function () {
         this.props.callFunc();
         this.handleToggle();
       }
 
-  , renderOverlay: function() {
+  , renderOverlay: function () {
       if (!this.state.isModalOpen) {
         return <span/>;
       }

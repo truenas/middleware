@@ -1,22 +1,21 @@
 // Service Item Template
 // =====================
 
-
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var routerShim   = require("../../components/mixins/routerShim");
-var clientStatus = require("../../components/mixins/clientStatus");
+import routerShim from "../../components/mixins/routerShim";
+import clientStatus from "../../components/mixins/clientStatus";
 
-var viewerUtil = require("../../components/Viewer/viewerUtil");
+import viewerUtil from "../../components/Viewer/viewerUtil";
 
-var ServicesMiddleware = require("../../middleware/ServicesMiddleware");
-var ServicesStore      = require("../../stores/ServicesStore");
+import ServicesMiddleware from "../../middleware/ServicesMiddleware";
+import ServicesStore from "../../stores/ServicesStore";
 
-var ToggleSwitch = require("../../components/common/ToggleSwitch");
+import ToggleSwitch from "../../components/common/ToggleSwitch";
 
 var ServiceView = React.createClass({
 
@@ -24,7 +23,7 @@ var ServiceView = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return { serviceState  : (this.props.item["state"] === "running" ? true : false) };
     }
 
@@ -36,7 +35,7 @@ var ServiceView = React.createClass({
       //TODO: Really change the state of the service.
     }
 
-  , render: function() {
+  , render: function () {
 
     var pid = null;
 
@@ -83,7 +82,7 @@ var ServiceItem = React.createClass({
 
   , mixins: [ routerShim, clientStatus ]
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           targetService : this.getServiceFromStore()
         , currentMode   : "view"
@@ -103,23 +102,23 @@ var ServiceItem = React.createClass({
       }
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ServicesStore.addChangeListener( this.updateServiceTarget );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       ServicesStore.removeChangeListener( this.updateServiceTarget );
     }
 
-  , getServiceFromStore: function() {
+  , getServiceFromStore: function () {
       return ServicesStore.findServiceByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
     }
 
-  , updateServiceTarget: function() {
+  , updateServiceTarget: function () {
       this.setState({ targetService: this.getServiceFromStore() });
     }
 
-  , render: function() {
+  , render: function () {
       var DisplayComponent = null;
 
       if ( this.state.SESSION_AUTHENTICATED && this.state.targetService ) {

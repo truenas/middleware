@@ -4,13 +4,12 @@
 
 "use strict";
 
+import React from "react";
 
-var React = require("react");
+import Viewer from "../components/Viewer";
 
-var Viewer = require("../components/Viewer");
-
-var ServicesMiddleware = require("../middleware/ServicesMiddleware");
-var ServicesStore      = require("../stores/ServicesStore");
+import ServicesMiddleware from "../middleware/ServicesMiddleware";
+import ServicesStore from "../stores/ServicesStore";
 
 var viewData = {
     format  : require("../../data/middleware-keys/services-display.json")[0]
@@ -60,27 +59,27 @@ function handleToggle( serviceObj, toggled ) {
 
 var Services = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return getServicesFromStore();
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ServicesMiddleware.requestServicesList();
       ServicesMiddleware.subscribeToTask( "Services Viewer" );
 
       ServicesStore.addChangeListener( this.handleServicesChange );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       ServicesMiddleware.unsubscribeFromTask( "Services Viewer" );
       ServicesStore.removeChangeListener( this.handleServicesChange );
     }
 
-  , handleServicesChange: function() {
+  , handleServicesChange: function () {
       this.setState( getServicesFromStore() );
     }
 
-  , render: function() {
+  , render: function () {
     return (
       <main>
         <h2>Services</h2>

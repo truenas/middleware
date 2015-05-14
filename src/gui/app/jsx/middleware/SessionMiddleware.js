@@ -2,10 +2,9 @@
 // ================
 // TODO: Decide whether we need this or not
 
-
 "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
 module.exports = {
 

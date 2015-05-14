@@ -5,18 +5,18 @@
 
 "use strict";
 
-var _     = require( "lodash" );
-var React = require( "react" );
+import _ from "lodash";
+import React from "react";
 
-var ServicesMiddleware = require( "../middleware/ServicesMiddleware" );
-var ServicesStore      = require( "../stores/ServicesStore" );
+import ServicesMiddleware from "../middleware/ServicesMiddleware";
+import ServicesStore from "../stores/ServicesStore";
 
-var MemoryUtil   = require( "../components/Widgets/MemoryUtil" );
-var CpuUtil      = require( "../components/Widgets/CpuUtil" );
-var SystemInfo   = require( "../components/Widgets/SystemInfo" );
-var SystemLoad   = require( "../components/Widgets/SystemLoad" );
-var NetworkUsage = require( "../components/Widgets/NetworkUsage" );
-var DiskUsage    = require( "../components/Widgets/DiskUsage" );
+import MemoryUtil from "../components/Widgets/MemoryUtil";
+import CpuUtil from "../components/Widgets/CpuUtil";
+import SystemInfo from "../components/Widgets/SystemInfo";
+import SystemLoad from "../components/Widgets/SystemLoad";
+import NetworkUsage from "../components/Widgets/NetworkUsage";
+import DiskUsage from "../components/Widgets/DiskUsage";
 
 function getServicesFromStore () {
   return {

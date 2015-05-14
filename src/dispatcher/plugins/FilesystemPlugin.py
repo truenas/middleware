@@ -90,5 +90,5 @@ class UploadFileTask(Task):
         pass
 
 
-def _init(dispatcher):
-    dispatcher.register_provider('filesystem', FilesystemProvider)
+def _init(dispatcher, plugin):
+    plugin.register_provider('filesystem', FilesystemProvider)

@@ -5,11 +5,11 @@
 
 "use strict";
 
-var _ = require("lodash");
+import _ from "lodash";
 
 module.exports = {
 
-    addingEntity: function() {
+    addingEntity: function () {
       if ( _.endsWith( this.context.router.getCurrentPathname(), this.props.viewData.routing.addentity ) ) {
         return true;
       } else {
@@ -18,7 +18,7 @@ module.exports = {
 
     }
 
-  , dynamicPathIsActive: function() {
+  , dynamicPathIsActive: function () {
       if ( this.context.router.getCurrentParams()[ this.props.viewData.routing.param ] ) {
         return true;
       } else {
@@ -26,7 +26,7 @@ module.exports = {
       }
     }
 
-  , returnToViewerRoot: function() {
+  , returnToViewerRoot: function () {
       if ( this.isMounted() && this.dynamicPathIsActive() ) {
         var currentRoutes = this.context.router.getCurrentRoutes();
         var currentIndex = _.findIndex( currentRoutes, function( routeData ) {
@@ -37,7 +37,7 @@ module.exports = {
       }
     }
 
-  , tryPathChange: function() {
+  , tryPathChange: function () {
       if ( true ) {
 
       } else {

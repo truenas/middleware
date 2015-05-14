@@ -1,8 +1,11 @@
 .. highlight:: javascript
    :linenothreshold: 5
 
-Set up your Development Environment
-===================================
+.. index:: Frontend Dev Environment
+.. _Frontend Dev Environment:
+
+FreeNAS 10 Frontend Development Environment
+===========================================
 
 The FreeNAS 10 developers provide tools to automatically sync FreeNAS 10 Web UI
 code to a live FreeNAS 10 instance for fast iteration and testing. When properly
@@ -61,7 +64,7 @@ The key tools for Mac OS X are available with graphical installers:
   * ``node`` is available at `Nodejs.org <http://nodejs.org/>`_. This installer
     will also install ``npm``. To ensure that npm is up to date, run
     ``sudo npm update -g npm`` after the install is complete.
-  * ``git`` is available at `git-scm.org <http://git-scm.com/downloads>`_.
+  * ``git`` is also supplied by XCode.
 
 Windows Development Environments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

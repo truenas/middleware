@@ -4,21 +4,20 @@
 
 "use strict";
 
+import React from "react";
 
-var React = require("react");
+import UpdaterMiddleware from "../middleware/UpdaterMiddleware";
 
-var UpdaterMiddleware = require("../middleware/UpdaterMiddleware");
+import Icon from "../components/Icon";
 
-var Icon = require("../components/Icon")
-
-var ConfDialog = require("../components/common/ConfDialog")
+import ConfDialog from "../components/common/ConfDialog";
 
 var SystemTools = React.createClass({
-  handleupdatenowbutton: function() {
+  handleupdatenowbutton: function () {
       UpdaterMiddleware.updatenow();
   },
 
-  render: function() {
+  render: function () {
     var updateText = (<div style = { {margin: "5px"
                                     , cursor: "pointer"} }>
                         <Icon glyph = "bomb"

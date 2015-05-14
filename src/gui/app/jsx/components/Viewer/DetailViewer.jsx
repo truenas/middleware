@@ -1,17 +1,17 @@
+
+
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Router       = require("react-router");
-var Link         = Router.Link;
-var RouteHandler = Router.RouteHandler;
+import { Link, RouteHandler } from "react-router";
 
-var viewerCommon = require("../mixins/viewerCommon");
-var viewerUtil   = require("./viewerUtil");
+import viewerCommon from "../mixins/viewerCommon";
+import viewerUtil from "./viewerUtil";
 
-var ToggleSwitch = require("../common/ToggleSwitch");
+import ToggleSwitch from "../common/ToggleSwitch";
 
 
 var DetailNavSection = React.createClass({
@@ -34,7 +34,7 @@ var DetailNavSection = React.createClass({
       , entries             : React.PropTypes.array.isRequired
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return { disclosureThreshold: 1 };
     }
 
@@ -42,7 +42,7 @@ var DetailNavSection = React.createClass({
       return { disclosure: this.props.initialDisclosure || "open" };
     }
 
-  , isUnderThreshold: function() {
+  , isUnderThreshold: function () {
       return this.props.entries.length <= this.props.disclosureThreshold;
     }
 
@@ -140,7 +140,7 @@ var DetailViewer = React.createClass({
       , filteredData     : React.PropTypes.object.isRequired
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       // TODO: This will be an array once we implement multi-select
       var params = {};
       if ( _.isNumber( this.props.selectedItem ) || _.isString( this.props.selectedItem ) ) {
@@ -149,7 +149,7 @@ var DetailViewer = React.createClass({
       }
     }
 
-  , createAddEntityButton: function() {
+  , createAddEntityButton: function () {
       var addEntityButton;
 
       if ( this.props.viewData.addEntity && this.props.viewData.routing.addentity ) {

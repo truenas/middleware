@@ -1,15 +1,17 @@
+
+
 "use strict";
 
-var React = require("react");
-var _     = require("lodash");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import _ from "lodash";
+import TWBS from "react-bootstrap";
 
-var viewerCommon = require("./mixins/viewerCommon");
+import viewerCommon from "./mixins/viewerCommon";
 
-var Icon         = require("./Icon");
-var DetailViewer = require("./Viewer/DetailViewer");
-var IconViewer   = require("./Viewer/IconViewer");
-var TableViewer  = require("./Viewer/TableViewer");
+import Icon from "./Icon";
+import DetailViewer from "./Viewer/DetailViewer";
+import IconViewer from "./Viewer/IconViewer";
+import TableViewer from "./Viewer/TableViewer";
 
 
 // Main Viewer Wrapper Component
@@ -32,7 +34,7 @@ var Viewer = React.createClass({
 
   // REACT LIFECYCLE
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       // Viewer allows all modes by default, except for heirarchical. This list
       // can be overwritten by passing allowedModes into your <Viewer />.
       // Allowed modes are:
@@ -45,7 +47,7 @@ var Viewer = React.createClass({
       };
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       // render will always use currentMode - in an uninitialized Viewer, the
       // mode will not have been set, and should therefore come from either a
       // passed in currentMode or defaultMode, falling back to getDefaultProps
@@ -281,7 +283,7 @@ var Viewer = React.createClass({
                 filteredData     = { this.state.filteredData } />;
     }
 
-  , render: function() {
+  , render: function () {
       var viewerModeNav = null;
 
       // Create navigation mode icons

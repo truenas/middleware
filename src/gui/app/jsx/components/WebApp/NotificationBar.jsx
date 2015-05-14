@@ -6,11 +6,11 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Icon  = require("../Icon");
-var MiddlewareClient = require("../../middleware/MiddlewareClient");
+import Icon from "../Icon";
+import MiddlewareClient from "../../middleware/MiddlewareClient";
 
 
 var LogQueue = React.createClass({

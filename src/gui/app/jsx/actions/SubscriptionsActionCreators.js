@@ -5,33 +5,36 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class SubscriptionsActionCreators {
 
-module.exports = {
+  recordNewSubscriptions ( masks, componentID ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS
+      , masks: masks
+      , componentID: componentID
+      }
+    );
+  }
 
-    recordNewSubscriptions: function ( masks, componentID ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        : ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS
-        , masks       : masks
-        , componentID : componentID
-      });
-    }
+  deleteCurrentSubscriptions ( masks, componentID ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS
+      , masks: masks
+      , componentID: componentID
+      }
+    );
+  }
 
-  , deleteCurrentSubscriptions: function ( masks, componentID ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        : ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS
-        , masks       : masks
-        , componentID : componentID
-      });
-    }
-
-  , deleteAllSubscriptions: function () {
-      FreeNASDispatcher.handleMiddlewareAction({
-        type          : ActionTypes.UNSUBSCRIBE_ALL
-      });
-    }
+  deleteAllSubscriptions () {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UNSUBSCRIBE_ALL
+      }
+    );
+  }
 
 };
+
+export default new SubscriptionsActionCreators();

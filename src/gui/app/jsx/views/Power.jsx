@@ -4,25 +4,24 @@
 
 "use strict";
 
+import React from "react";
 
-var React = require("react");
+import PowerMiddleware from "../middleware/PowerMiddleware";
 
-var PowerMiddleware = require("../middleware/PowerMiddleware");
+import Icon from "../components/Icon";
 
-var Icon = require("../components/Icon")
-
-var ConfDialog = require("../components/common/ConfDialog")
+import ConfDialog from "../components/common/ConfDialog";
 
 var Power = React.createClass({
-  handlerebootbutton: function() {
+  handlerebootbutton: function () {
       PowerMiddleware.reboot();
   },
 
-  handleshutdownbutton: function() {
+  handleshutdownbutton: function () {
       PowerMiddleware.shutdown();
   },
 
-  render: function() {
+  render: function () {
     var rebootprops        = {};
     rebootprops.dataText   = (<div style = { {margin: "5px"
                                      , cursor: "pointer"} }>

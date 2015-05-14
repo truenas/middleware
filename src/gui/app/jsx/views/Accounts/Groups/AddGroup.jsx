@@ -4,15 +4,15 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var GroupsStore      = require("../../../stores/GroupsStore");
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
+import GroupsStore from "../../../stores/GroupsStore";
+import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
 
-var inputHelpers = require("../../../components/mixins/inputHelpers");
-var groupMixins  = require("../../../components/mixins/groupMixins");
+import inputHelpers from "../../../components/mixins/inputHelpers";
+import groupMixins from "../../../components/mixins/groupMixins";
 
 var AddGroup = React.createClass({
 
@@ -27,7 +27,7 @@ var AddGroup = React.createClass({
       viewData: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
 
       var groupsList = GroupsStore.getAllGroups();
 
@@ -51,7 +51,7 @@ var AddGroup = React.createClass({
       this.setState( { locallyModifiedValues: newLocallyModified } );
     }
 
-  , submitNewGroup: function() {
+  , submitNewGroup: function () {
       var routing = this.props.viewData.routing;
       var newGroupValues = {};
       var params         = {};
@@ -74,7 +74,7 @@ var AddGroup = React.createClass({
       this.context.router.transitionTo( "groups" );
     }
 
-  , render: function() {
+  , render: function () {
       var addButtons =
         <TWBS.ButtonToolbar>
           <TWBS.Button className = "pull-right"

@@ -6,24 +6,24 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var routerShim   = require("../../../components/mixins/routerShim");
-var clientStatus = require("../../../components/mixins/clientStatus");
+import routerShim from "../../../components/mixins/routerShim";
+import clientStatus from "../../../components/mixins/clientStatus";
 
-var viewerUtil = require("../../../components/Viewer/viewerUtil");
-var editorUtil  = require("../../../components/Viewer/Editor/editorUtil");
+import viewerUtil from "../../../components/Viewer/viewerUtil";
+import editorUtil from "../../../components/Viewer/Editor/editorUtil";
 
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
-var GroupsStore      = require("../../../stores/GroupsStore");
+import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
+import GroupsStore from "../../../stores/GroupsStore";
 
-var UsersStore      = require("../../../stores/UsersStore");
+import UsersStore from "../../../stores/UsersStore";
 
-var groupMixins   = require("../../../components/mixins/groupMixins");
-var inputHelpers = require("../../../components/mixins/inputHelpers");
-var viewerCommon = require("../../../components/mixins/viewerCommon");
+import groupMixins from "../../../components/mixins/groupMixins";
+import inputHelpers from "../../../components/mixins/inputHelpers";
+import viewerCommon from "../../../components/mixins/viewerCommon";
 
 var GroupView = React.createClass({
 
@@ -45,7 +45,7 @@ var GroupView = React.createClass({
       return [];
     }
   }
-  
+
   , createUserDisplayList: function( groupid ) {
       var listUserItemArray = [];
       var users = this.getMembers( groupid );
@@ -57,7 +57,7 @@ var GroupView = React.createClass({
       return listUserItemArray;
   }
 
-  , render: function() {
+  , render: function () {
       var builtInGroupAlert = null;
       var editButtons = null;
 
@@ -121,7 +121,7 @@ var GroupView = React.createClass({
                        <TWBS.ListGroup>
                           { this.createUserDisplayList( this.props.item["id"] ) }
 		       </TWBS.ListGroup>
-          </TWBS.Col>		       
+          </TWBS.Col>
         </TWBS.Row>
 
           {/* "Edit Group" Button - Bottom */}
@@ -147,7 +147,7 @@ var GroupEdit = React.createClass({
       item: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       var remoteState = this.setRemoteState( this.props );
 
       return {
@@ -202,7 +202,7 @@ var GroupEdit = React.createClass({
       });
     }
 
-  , submitGroupUpdate: function() {
+  , submitGroupUpdate: function () {
       var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
 
       // Only bother to submit an update if there is anything to update.
@@ -217,7 +217,7 @@ var GroupEdit = React.createClass({
       }
     }
 
-  , render: function() {
+  , render: function () {
       var builtInGroupAlert = null;
       var editButtons       = null;
       var inputForm         = null;
@@ -305,7 +305,7 @@ var GroupItem = React.createClass({
 
     , mixins: [ routerShim, clientStatus ]
 
-    , getInitialState: function() {
+    , getInitialState: function () {
         return {
             targetGroup : this.getGroupFromStore()
           , currentMode : "view"
@@ -325,19 +325,19 @@ var GroupItem = React.createClass({
         }
       }
 
-    , componentDidMount: function() {
+    , componentDidMount: function () {
         GroupsStore.addChangeListener( this.updateGroupInState );
       }
 
-    , componentWillUnmount: function() {
+    , componentWillUnmount: function () {
         GroupsStore.removeChangeListener( this.updateGroupInState );
       }
 
-    , getGroupFromStore: function() {
+    , getGroupFromStore: function () {
         return GroupsStore.findGroupByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
       }
 
-    , updateGroupInState: function() {
+    , updateGroupInState: function () {
         this.setState({ targetGroup: this.getGroupFromStore() });
       }
 
@@ -345,7 +345,7 @@ var GroupItem = React.createClass({
         this.setState({ currentMode: nextMode });
       }
 
-    , render: function() {
+    , render: function () {
         var DisplayComponent = null;
         var processingText = "";
 

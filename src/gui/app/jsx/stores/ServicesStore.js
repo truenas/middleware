@@ -3,22 +3,21 @@
 
 "use strict";
 
-var _            = require("lodash");
-var EventEmitter = require("events").EventEmitter;
+import _ from "lodash";
+import { EventEmitter } from "events";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ServicesMiddleware = require("../middleware/ServicesMiddleware");
+import ServicesMiddleware from "../middleware/ServicesMiddleware";
 
-var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _services = [];
 var _scheduledForStateUpdate = {};
 var ServicesStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -37,7 +36,7 @@ var ServicesStore = _.assign( {}, EventEmitter.prototype, {
       return _.find( _services, predicate );
     }
 
-  , getAllServices: function() {
+  , getAllServices: function () {
       return _services;
     }
 

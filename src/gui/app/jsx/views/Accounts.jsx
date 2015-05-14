@@ -4,36 +4,36 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var Router       = require("react-router");
-var RouteHandler = Router.RouteHandler;
+import { RouteHandler } from "react-router";
 
-var routerShim = require("../components/mixins/routerShim");
+import routerShim from "../components/mixins/routerShim";
 
-var SectionNav = require("../components/SectionNav");
+import SectionNav from "../components/SectionNav";
 
-var sections = [{
-    route   : "users"
-  , display : "Users"
-},{
-    route   : "groups"
-  , display : "Groups"
-}];
+var sections = [ { route : "users"
+                 , display : "Users"
+                 }
+               , { route : "groups"
+                 , display : "Groups"
+                 } ];
 
-var Accounts = React.createClass({displayName: "Accounts",
+var Accounts = React.createClass({
 
-    mixins: [ routerShim ]
+  displayName: "Accounts"
 
-  , componentDidMount: function() {
+  ,  mixins: [ routerShim ]
+
+  , componentDidMount: function () {
       this.calculateDefaultRoute( "accounts", "users", "endsWith" );
     }
 
-  , componentWillUpdate: function( prevProps, prevState ) {
+  , componentWillUpdate: function ( prevProps, prevState ) {
       this.calculateDefaultRoute( "accounts", "users", "endsWith" );
     }
 
-  , render: function() {
+  , render: function () {
       return (
         <main>
           <SectionNav views = { sections } />

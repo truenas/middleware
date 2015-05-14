@@ -1,17 +1,17 @@
+
+
 "use strict";
 
-var React = require("react");
-var _     = require("lodash");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import _ from "lodash";
+import TWBS from "react-bootstrap";
 
-var Router       = require("react-router");
-var Link         = Router.Link;
-var RouteHandler = Router.RouteHandler;
+import { Link, RouteHandler } from "react-router";
 
-var Icon = require("../Icon");
+import Icon from "../Icon";
 
-var viewerCommon = require("../mixins/viewerCommon");
-var viewerUtil = require("./viewerUtil");
+import viewerCommon from "../mixins/viewerCommon";
+import viewerUtil from "./viewerUtil";
 
 // Table Viewer
 var TableViewer = React.createClass({
@@ -32,7 +32,7 @@ var TableViewer = React.createClass({
       , tableCols        : React.PropTypes.array.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return {
           tableColWidths : this.getInitialColWidths( this.props.tableCols )
         , tableColOrder  : this.props.tableCols
@@ -41,12 +41,12 @@ var TableViewer = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
       window.addEventListener( "keyup", this.handleEscClose );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       window.removeEventListener( "keyup", this.handleEscClose );
     }
 
@@ -171,7 +171,7 @@ var TableViewer = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
 
     var tableData     = null;
     var editorContent = null;

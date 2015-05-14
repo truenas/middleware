@@ -3,19 +3,20 @@
 
 "use strict";
 
-var FreeNASDispatcher = require( "../dispatcher/FreeNASDispatcher" );
-var FreeNASConstants  = require( "../constants/FreeNASConstants" );
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class StatdActionCreators {
 
-module.exports = {
-
-  receiveWidgetData: function ( rawWidgetData, dataSourceName ) {
-    FreeNASDispatcher.handleMiddlewareAction({
-        type        : ActionTypes.RECEIVE_RAW_WIDGET_DATA
-      , rawWidgetData : rawWidgetData
-      , dataSourceName : dataSourceName
-    });
+  receiveWidgetData ( rawWidgetData, dataSourceName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_RAW_WIDGET_DATA
+      , rawWidgetData: rawWidgetData
+      , dataSourceName: dataSourceName
+      }
+    );
   }
 
 };
+
+export default new StatdActionCreators();

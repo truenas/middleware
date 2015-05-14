@@ -4,10 +4,10 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Icon  = require("../../components/Icon");
+import Icon from "../../components/Icon";
 
 var viewerUtil = exports;
 
@@ -89,14 +89,14 @@ viewerUtil.ItemIcon = React.createClass({
       , seedNumber      : React.PropTypes.number
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
           size     : null
         , fontSize : null
       };
     }
 
-  , componentWillMount: function() {
+  , componentWillMount: function () {
       this.setIcon( this.props );
   }
 
@@ -149,7 +149,7 @@ viewerUtil.ItemIcon = React.createClass({
       });
     }
 
-  , render: function() {
+  , render: function () {
       if ( this.props.iconImage ) {
         // TODO: BASE64 encoded user images from middleware
         return (
@@ -246,7 +246,7 @@ viewerUtil.DataCell = React.createClass({
           , React.PropTypes.number
         ]).isRequired
     }
-  , render: function() {
+  , render: function () {
       if ( typeof this.props.entry !== "undefined" ) {
         return (
           <TWBS.Col className="text-center"

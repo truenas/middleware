@@ -6,17 +6,17 @@
 
 var componentLongName = "Users";
 
-var React = require("react");
+import React from "react";
 
-var Viewer = require("../../components/Viewer");
+import Viewer from "../../components/Viewer";
 
-var UsersMiddleware = require("../../middleware/UsersMiddleware");
-var UsersStore      = require("../../stores/UsersStore");
+import UsersMiddleware from "../../middleware/UsersMiddleware";
+import UsersStore from "../../stores/UsersStore";
 
-var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
-var GroupsStore      = require("../../stores/GroupsStore");
+import GroupsMiddleware from "../../middleware/GroupsMiddleware";
+import GroupsStore from "../../stores/GroupsStore";
 
-var SessionStore = require("../../stores/SessionStore");
+import SessionStore from "../../stores/SessionStore";
 
 var viewData = {
     format    : require("../../../data/middleware-keys/users-display.json")[0]
@@ -65,11 +65,11 @@ function getGroupsFromStore() {
 
 var Users = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return getUsersStoreData();
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       UsersStore.addChangeListener( this.handleUsersChange );
       UsersMiddleware.requestUsersList();
       UsersMiddleware.subscribe( componentLongName );
@@ -79,7 +79,7 @@ var Users = React.createClass({
       GroupsMiddleware.subscribe( componentLongName );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       UsersStore.removeChangeListener( this.handleUsersChange );
       UsersMiddleware.unsubscribe( componentLongName );
 
@@ -87,15 +87,15 @@ var Users = React.createClass({
       GroupsMiddleware.unsubscribe( componentLongName );
     }
 
-  , handleGroupsChange: function() {
+  , handleGroupsChange: function () {
       this.setState( getGroupsFromStore() );
     }
 
-  , handleUsersChange: function() {
+  , handleUsersChange: function () {
       this.setState( getUsersStoreData() );
     }
 
-  , render: function() {
+  , render: function () {
       return <Viewer
                 header    = { "Users" }
                 inputData = { this.state.usersList }

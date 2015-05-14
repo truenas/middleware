@@ -6,13 +6,12 @@
 
 "use strict";
 
-var _     = require("lodash");
-var async = require("async");
+import _ from "lodash";
+import async from "async";
 
-var Dispatcher = require("flux").Dispatcher;
+import { Dispatcher } from "flux";
 
-var FreeNASConstants  = require("../constants/FreeNASConstants");
-var PayloadSources    = FreeNASConstants.PayloadSources;
+import { PayloadSources } from "../constants/FreeNASConstants";
 
 var dispatchQueue;
 var FreeNASDispatcher;

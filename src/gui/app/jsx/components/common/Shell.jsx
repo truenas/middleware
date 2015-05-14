@@ -7,10 +7,10 @@
 
 "use strict";
 
-var React    = require("react");
-var Terminal = require("term.js");
+import React from "react";
+import Terminal from "term.js";
 
-var ShellMiddleware = require("../../middleware/ShellMiddleware");
+import ShellMiddleware from "../../middleware/ShellMiddleware";
 
 var Shell = React.createClass({
 
@@ -22,13 +22,13 @@ var Shell = React.createClass({
       shellType: React.PropTypes.string
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
         shellType: "/bin/sh"
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
     }
 
@@ -77,7 +77,7 @@ var Shell = React.createClass({
       this.term.open( this.refs.termTarget.getDOMNode() );
     }
 
-  , render: function() {
+  , render: function () {
       return (
         <div className="termFlex" ref="termTarget" />
       );

@@ -4,13 +4,12 @@
 
 "use strict";
 
-var _            = require("lodash");
-var EventEmitter = require("events").EventEmitter;
+import _ from "lodash";
+import { EventEmitter } from "events";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = ["power.changed", "update.changed"];
 
@@ -19,7 +18,7 @@ var socketConnected = false;
 
 var PowerStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function() {
+    emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -31,7 +30,7 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getUpdateMask: function() {
+  , getUpdateMask: function () {
       return UPDATE_MASK;
     }
 
@@ -45,7 +44,7 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
     return [false, ""];
   }
 
-  , isRebootPending: function() {
+  , isRebootPending: function () {
     if ( _.values(ongoingEvents).indexOf("reboot") !== -1 ) {
       return true;
     }

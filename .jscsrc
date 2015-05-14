@@ -23,7 +23,6 @@
     "disallowTrailingWhitespace": true,
     "maximumLineLength": 80,
     "requireCamelCaseOrUpperCaseIdentifiers": true,
-    "requireCapitalizedComments": true,
     "requireCapitalizedConstructors": true,
     "requireCurlyBraces": [
         "if",
@@ -34,6 +33,7 @@
         "try",
         "catch"
     ],
+    "requireLineFeedAtFileEnd": true,
     "requireSpaceAfterKeywords": [
         "if",
         "else",

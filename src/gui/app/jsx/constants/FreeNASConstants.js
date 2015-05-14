@@ -3,7 +3,7 @@
 // Objects containing constant mirrored key-value pairs for use with Flux stores
 // and dispatcher. Simple way to maintain consistency for actions and sources.
 
-var keyMirror = require("keymirror");
+import keyMirror from "keymirror";
 
 module.exports = {
 
@@ -49,10 +49,9 @@ module.exports = {
       //Update Data
       , RECEIVE_UPDATE_DATA : null
 
-      //Networks
-      , RECEIVE_RAW_NETWORKS        : null
-      , RECEIVE_NETWORK_UPDATE_TASK : null
-      , RESOLVE_NETWORK_UPDATE_TASK : null
+      // Interfaces
+      , RECEIVE_INTERFACES_LIST: null
+      , RECEIVE_INTERFACES_UPDATE_TASK: null
 
       //ZFS
       , RECEIVE_ZFS_POOL_GET_DISKS_DATA    :null

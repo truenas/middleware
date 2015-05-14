@@ -3,38 +3,38 @@
 
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
 var componentLongName = "Debug Tools - Subscriptions Tab";
 
 // Disclosure Triangles
-var DiscTri = require("../common/DiscTri");
+import DiscTri from "../common/DiscTri";
 
 // Middleware
-var SubscriptionsStore  = require("../../stores/SubscriptionsStore");
-var MiddlewareClient    = require("../../middleware/MiddlewareClient");
+import SubscriptionsStore from "../../stores/SubscriptionsStore";
+import MiddlewareClient from "../../middleware/MiddlewareClient";
 
 
 var Subscriptions = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           subscriptions : SubscriptionsStore.getAllSubscriptions()
         , subsMasks     : ""
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       SubscriptionsStore.addChangeListener( this.handleMiddlewareChange );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       SubscriptionsStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
-  , handleMiddlewareChange: function() {
+  , handleMiddlewareChange: function () {
       this.setState({
           subscriptions : SubscriptionsStore.getAllSubscriptions()
       });
@@ -46,7 +46,7 @@ var Subscriptions = React.createClass({
       });
     }
 
-  , handleSubsSubmit: function() {
+  , handleSubsSubmit: function () {
       MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), componentLongName);
     }
 
@@ -74,7 +74,7 @@ var Subscriptions = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
       var subscriptionsContent = null;
       var removeALL = MiddlewareClient.unsubscribeALL;
 

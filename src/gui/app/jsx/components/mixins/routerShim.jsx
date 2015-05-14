@@ -6,8 +6,8 @@
 
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
+import _ from "lodash";
+import React from "react";
 
 module.exports = {
 
@@ -53,7 +53,7 @@ module.exports = {
       }
     }
 
-  , getDynamicRoute: function() {
+  , getDynamicRoute: function () {
       var rc = this.context.router;
 
       return rc.getCurrentParams()[ this.props.viewData.routing["param"] ];

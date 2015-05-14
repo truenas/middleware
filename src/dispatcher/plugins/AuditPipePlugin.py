@@ -44,5 +44,5 @@ class AuditPipeEventSource(EventSource):
                 # Connection closed - we need to reconnect
                 pass
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     pass

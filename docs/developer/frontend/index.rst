@@ -10,23 +10,22 @@ FreeNAS 10 Frontend Development Guide
    Glossary of Technologies <tech_glossary>
    Flux Architecture <flux>
    Webapp Architecture <webapp>
-   Middleware Client <middleware>
    The Live Development Environment <develop>
-   Widgets <widgets>
+   Middleware Client <middleware>
    The Viewer Component <viewer>
    Routing <routing>
    Adding a Viewer <adding_a_viewer>
+   Widgets <widgets>
+   JavaScript Style Guide <javascript>
 
 
+FreeNAS 10 Frontend Development
+-------------------------------
 
-Introduction
-------------
-
-This colleciton of documents (The Frontend Development Guide) describe
-the fundamental architecture and underlying technologies employed by the
-FreeNAS 10 GUI. It is not intended as a tutorial for git, JavaScript, or
-any of the libraries or packages used by FreeNAS 10. Rather, it focuses
-on the setup of a development environment, best practices, architecture,
+This collection of documents describes the architecture and technologies
+employed by the FreeNAS 10 GUI. It is not intended as a tutorial for git,
+JavaScript, or any of the libraries or packages used by FreeNAS 10. Rather, it
+focuses on the setup of a development environment, best practices, architecture,
 separation of concerns, and functional summaries and glossaries of terms
 which apply directly to the project.
 
@@ -139,3 +138,11 @@ use of react-router and common patterns.
 
 This section covers the whole process of adding a new viewer, following the Flux
 lifecycle and making use of the information in the Viewer and Routing sections.
+
+--------------
+
+:doc:`JavaScript Style Guide <javascript>`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This section describes the mandatory style for all JavaScript and JSX
+code in the FreeNAS 10 frontend.

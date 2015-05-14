@@ -4,10 +4,10 @@
 
 "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
 module.exports = {
-   updatenow: function() {
+   updatenow: function () {
       MiddlewareClient.request( "task.submit", ["update.update", ""]);
     }
 

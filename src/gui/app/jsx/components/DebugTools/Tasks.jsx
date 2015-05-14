@@ -5,15 +5,15 @@
 
 var componentLongName = "Debug Tools - Tasks Tab";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
-var moment = require("moment");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
+import moment from "moment";
 
 // Middleware
-var MiddlewareClient = require("../../middleware/MiddlewareClient");
-var TasksStore       = require("../../stores/TasksStore");
-var TasksMiddleware  = require("../../middleware/TasksMiddleware");
+import MiddlewareClient from "../../middleware/MiddlewareClient";
+import TasksStore from "../../stores/TasksStore";
+import TasksMiddleware from "../../middleware/TasksMiddleware";
 
 
 var TasksSection = React.createClass({
@@ -100,7 +100,7 @@ var TasksSection = React.createClass({
         </div>
       );
     }
-  , render: function() {
+  , render: function () {
       var taskIDs = _.sortBy( _.keys( this.props.tasks ), ["id"] ).reverse();
       return(
         <div className="debug-column-content">
@@ -113,7 +113,7 @@ var TasksSection = React.createClass({
 
 var Tasks = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           tasks           : _.assign( {}, TasksStore.getAllTasks() )
         , taskMethodValue : ""
@@ -150,7 +150,7 @@ var Tasks = React.createClass({
       });
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       TasksStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe( ["task.*"], componentLongName );
 
@@ -163,12 +163,12 @@ var Tasks = React.createClass({
       TasksMiddleware.getCompletedTaskHistory( this.init, totalLength );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       TasksStore.removeChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.unsubscribe( ["task.*"], componentLongName );
     }
 
-  , handleMiddlewareChange: function() {
+  , handleMiddlewareChange: function () {
       this.setState({
           tasks : _.merge( {}, { "FINISHED": this.state.tasks["FINISHED"] },
                        { "FAILED": this.state.tasks["FAILED"] },
@@ -189,12 +189,12 @@ var Tasks = React.createClass({
       });
     }
 
-  , handleTaskSubmit: function() {
+  , handleTaskSubmit: function () {
       var taskAgg = [String(this.state.taskMethodValue)].concat( JSON.parse( this.state.argsValue ) );
       MiddlewareClient.request( "task.submit", taskAgg );
     }
 
-  , render: function() {
+  , render: function () {
       return (
         <div className="debug-content-flex-wrapper">
 

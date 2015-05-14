@@ -4,11 +4,10 @@
 
 "use strict";
 
-
-var React = require("react");
+import React from "react";
 
 var Tasks = React.createClass({
-  render: function() {
+  render: function () {
     return (
       <main>
         <h2>Tasks View</h2>

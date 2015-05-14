@@ -6,21 +6,21 @@
 
 "use strict";
 
-var SessionStore = require("../../stores/SessionStore");
+import SessionStore from "../../stores/SessionStore";
 
 module.exports = {
 
-    getInitialState: function() {
+    getInitialState: function () {
         return {
           SESSION_AUTHENTICATED: SessionStore.getLoginStatus()
         };
       }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
         SessionStore.addChangeListener( this.handleSessionChange );
       }
 
-  , handleSessionChange: function() {
+  , handleSessionChange: function () {
         this.setState({ SESSION_AUTHENTICATED: SessionStore.getLoginStatus() });
       }
 

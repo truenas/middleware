@@ -4,11 +4,10 @@
 
 "use strict";
 
-
-var React = require("react");
+import React from "react";
 
 var Accounts = React.createClass({
-    render: function() {
+    render: function () {
       return (
         <h1>{"Page not found"}</h1>
       );

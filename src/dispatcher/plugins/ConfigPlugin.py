@@ -57,6 +57,6 @@ class UpdateConfigTask(Task):
         })
 
 
-def _init(dispatcher):
-    dispatcher.register_task_handler('config.update', UpdateConfigTask)
-    dispatcher.register_provider('config', ConfigProvider)
+def _init(dispatcher, plugin):
+    plugin.register_task_handler('config.update', UpdateConfigTask)
+    plugin.register_provider('config', ConfigProvider)

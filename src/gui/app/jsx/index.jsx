@@ -3,7 +3,7 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 var Index = React.createClass({
 
@@ -11,10 +11,10 @@ var Index = React.createClass({
 
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
     }
 
-  , render: function() {
+  , render: function () {
 
     return (
       <html>

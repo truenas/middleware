@@ -5,62 +5,69 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class MiddleWareActionCreators {
 
-module.exports = {
+  receiveAuthenticationChange ( currentUser, loggedIn ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UPDATE_AUTH_STATE
+      , currentUser: currentUser
+      , loggedIn: loggedIn
+      }
+    );
+  }
 
-    receiveAuthenticationChange: function ( currentUser, loggedIn ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        : ActionTypes.UPDATE_AUTH_STATE
-        , currentUser : currentUser
-        , loggedIn    : loggedIn
-      });
-    }
+  updateSocketState ( sockState ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UPDATE_SOCKET_STATE
+      , sockState: sockState
+      }
+    );
+  }
 
-  , updateSocketState: function ( sockState ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type      : ActionTypes.UPDATE_SOCKET_STATE
-        , sockState : sockState
-      });
-    }
+  increaseSubscriptionCount ( mask ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.SUBSCRIBE_TO_MASK
+      , mask: mask
+      }
+    );
+  }
 
-  , increaseSubscriptionCount: function ( mask ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type : ActionTypes.SUBSCRIBE_TO_MASK
-        , mask : mask
-      });
-    }
+  decreaseSubscriptionCount ( mask ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UNSUBSCRIBE_FROM_MASK
+      , mask: mask
+      }
+    );
+  }
 
-  , decreaseSubscriptionCount: function ( mask ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type : ActionTypes.UNSUBSCRIBE_FROM_MASK
-        , mask : mask
-      });
-    }
+  receiveEventData ( eventData ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.MIDDLEWARE_EVENT
+      , eventData: eventData
+      }
+    );
+  }
 
-  , receiveEventData: function ( eventData ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type      : ActionTypes.MIDDLEWARE_EVENT
-        , eventData : eventData
-      });
-    }
+  receiveAvailableServices ( services ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_RPC_SERVICES
+      , services: services
+      }
+    );
+  }
 
-  , receiveAvailableServices: function ( services ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type     : ActionTypes.RECEIVE_RPC_SERVICES
-        , services : services
-      });
-    }
-
-  , receiveAvailableServiceMethods: function ( service, methods ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type    : ActionTypes.RECEIVE_RPC_SERVICE_METHODS
-        , service : service
-        , methods : methods
-      });
-    }
+  receiveAvailableServiceMethods ( service, methods ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_RPC_SERVICE_METHODS
+      , service: service
+      , methods: methods
+      }
+    );
+  }
 
 };
+
+export default new MiddleWareActionCreators();

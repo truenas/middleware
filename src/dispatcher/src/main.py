@@ -77,13 +77,25 @@ class Plugin(object):
     LOADED = 2
     ERROR = 3
 
-    def __init__(self, filename=None):
+    def __init__(self, dispatcher, filename=None):
         self.filename = filename
         self.init = None
         self.dependencies = set()
+        self.dispatcher = dispatcher
         self.module = None
         self.state = self.UNLOADED
         self.metadata = None
+        self.registers = {
+            'attach_hooks': [],
+            'event_handlers': [],
+            'event_sources': [],
+            'event_types': [],
+            'hooks': [],
+            'providers': [],
+            'resources': [],
+            'schema_definitions': [],
+            'task_handlers': [],
+        }
 
     def assign_module(self, module):
         if not hasattr(module, '_init'):
@@ -97,17 +109,118 @@ class Plugin(object):
 
         self.module = module
 
+    def attach_hook(self, name, func):
+        self.dispatcher.attach_hook(name, func)
+        self.registers['attach_hooks'].append((name, func))
+
+    def detach_hook(self, name, func):
+        self.dispatcher.detach_hook(name, func)
+        self.registers['attach_hooks'].remove((name, func))
+
     def load(self, dispatcher):
         try:
-            self.module._init(dispatcher)
+            self.module._init(self.dispatcher, self)
             self.state = self.LOADED
         except Exception, err:
             dispatcher.logger.warning("Plugin traceback: {0}".format(traceback.format_exc()))
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
 
+    def register_event_handler(self, name, handler):
+        self.dispatcher.register_event_handler(name, handler)
+        self.registers['event_handlers'].append((name, handler))
+        return handler
+
+    def unregister_event_handler(self, name, handler):
+        self.dispatcher.unregister_event_handler(name, handler)
+        self.registers['event_handlers'].remove((name, handler))
+        return handler
+
+    def register_event_source(self, name, clazz):
+        self.dispatcher.register_event_source(name, clazz)
+        self.registers['event_sources'].append(name)
+
+    def register_event_type(self, name, source=None):
+        self.dispatcher.register_event_type(name, source)
+        self.registers['event_types'].append(name)
+
+    def unregister_event_type(self, name):
+        self.dispatcher.unregister_event_type(name)
+        self.registers['event_types'].remove(name)
+
+    def register_task_handler(self, name, clazz):
+        self.dispatcher.register_task_handler(name, clazz)
+        self.registers['task_handlers'].append(name)
+
+    def unregister_task_handler(self, name):
+        self.dispatcher.unregister_task_handler(name)
+        self.registers['task_handlers'].remove(name)
+
+    def register_provider(self, name, clazz):
+        self.dispatcher.register_provider(name, clazz)
+        self.registers['providers'].append(name)
+
+    def unregister_provider(self, name):
+        self.dispatcher.unregister_provider(name)
+        self.registers['providers'].remove(name)
+
+    def register_schema_definition(self, name, definition):
+        self.dispatcher.register_schema_definition(name, definition)
+        self.registers['schema_definitions'].append(name)
+
+    def unregister_schema_definition(self, name):
+        self.dispatcher.unregister_schema_definition(name)
+        self.registers['schema_definitions'].remove(name)
+
+    def register_resource(self, res, parents=None):
+        self.dispatcher.register_resource(res, parents)
+        self.registers['resources'].append((res, parents))
+
+    def unregister_resource(self, res):
+        self.dispatcher.unregister_resource(res)
+        self.registers['resources'].remove(res)
+
+    def register_hook(self, name):
+        self.dispatcher.register_hook(name)
+        self.registers['hooks'].append(name)
+
+    def unregister_hook(self, name):
+        self.dispatcher.unregister_hook(name)
+        self.registers['hooks'].remove(name)
+
     def unload(self):
         if hasattr(self.module, '_cleanup'):
-            self.module._cleanup()
+            self.module._cleanup(self.dispatcher, self)
+
+        self.dispatcher.logger.debug('Unregistering plugin {0} types'.format(
+            self.filename
+        ))
+
+        for name, handler in list(self.registers['event_handlers']):
+            self.unregister_event_handler(name, handler)
+
+        #for name in self.registers['event_sources']:
+        #    pass
+
+        for name in list(self.registers['event_types']):
+            self.unregister_event_type(name)
+
+        for name, func in list(self.registers['attach_hooks']):
+            self.detach_hook(name, func)
+
+        for name in list(self.registers['hooks']):
+            self.unregister_hook(name)
+
+        for name in list(self.registers['providers']):
+            self.unregister_provider(name)
+
+        for name in list(self.registers['resources']):
+            self.unregister_resource(name)
+
+        for name in list(self.registers['schema_definitions']):
+            self.unregister_schema_definition(name)
+
+        for name in list(self.registers['task_handlers']):
+            self.unregister_task_handler(name)
 
         self.state = self.UNLOADED
 
@@ -260,6 +373,54 @@ class Dispatcher(object):
         # And look for new ones
         self.discover_plugins()
 
+    def unload_plugins(self):
+
+        # Generate a list of inverse plugin dependency
+        required_by = {}
+        for name, plugin in self.plugins.items():
+            if name not in required_by:
+                required_by[name] = set()
+            for dep in plugin.dependencies:
+                if dep not in required_by:
+                    required_by[dep] = set()
+                required_by[dep].add(name)
+
+        # Get a sequential list of plugins to unload
+        # Plugins that no other depend on come first
+        unloadlist = []
+        while len(required_by) > 0:
+            found = False
+            for name, deps in required_by.items():
+                if len(deps) > 0:
+                    continue
+
+                # Remove the plugin from the list that it depends on
+                plugin = self.plugins.get(name)
+                for dep in plugin.dependencies:
+                    if dep in required_by and name in required_by[dep]:
+                        required_by[dep].remove(name)
+                unloadlist.append(plugin)
+
+                del required_by[name]
+                found = True
+                break
+
+            if not found:
+                self.logger.warning(
+                    "Could not unload following plugins due to circular "
+                    "dependencies: {0}".format(required_by)
+                )
+                break
+
+        for i in unloadlist:
+            try:
+                i.unload()
+            except RuntimeError:
+                self.logger.warning(
+                    "Error unloading plugin {0}".format(i.filename),
+                    exc_info=True
+                )
+
     def __discover_plugin_dir(self, dir):
         for i in glob.glob1(dir, "*.py"):
             self.__try_load_plugin(os.path.join(dir, i))
@@ -271,7 +432,7 @@ class Dispatcher(object):
         self.logger.debug("Loading plugin from %s", path)
         try:
             name = os.path.splitext(os.path.basename(path))[0]
-            plugin = Plugin(path)
+            plugin = Plugin(self, path)
             plugin.assign_module(imp.load_source(name, path))
             self.plugins[name] = plugin
         except Exception, err:
@@ -353,13 +514,24 @@ class Dispatcher(object):
         self.logger.debug("New task handler: %s", name)
         self.tasks[name] = clazz
 
+    def unregister_task_handler(self, name):
+        del self.tasks[name]
+
     def register_provider(self, name, clazz):
         self.logger.debug("New provider: %s", name)
         self.providers[name] = clazz
         self.rpc.register_service(name, clazz)
 
+    def unregister_provider(self, name):
+        self.logger.debug("Unregistering provider: %s", name)
+        self.rpc.unregister_service(name)
+        del self.providers[name]
+
     def register_schema_definition(self, name, definition):
         self.rpc.register_schema_definition(name, definition)
+
+    def unregister_schema_definition(self, name):
+        self.rpc.unregister_schema_definition(name)
 
     def require_collection(self, collection, pkey_type='uuid', type='config'):
         if not self.datastore.collection_exists(collection):
@@ -391,6 +563,8 @@ class Dispatcher(object):
     def die(self):
         self.logger.warning('Exiting from "die" command')
         gevent.killall(self.threads)
+        self.logger.warning('Unloading plugins')
+        self.unload_plugins()
         sys.exit(0)
 
 
@@ -985,7 +1159,7 @@ def run(d, args):
 
     # Signal handlers
     gevent.signal(signal.SIGQUIT, d.die)
-    gevent.signal(signal.SIGQUIT, d.die)
+    gevent.signal(signal.SIGTERM, d.die)
     gevent.signal(signal.SIGINT, d.die)
 
     # WebSockets server

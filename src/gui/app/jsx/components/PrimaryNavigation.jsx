@@ -5,15 +5,14 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
-var Router = require("react-router");
-var Link   = Router.Link;
+import { Link } from "react-router";
 
-var TWBS = require("react-bootstrap");
-var Icon = require("./Icon");
+import TWBS from "react-bootstrap";
+import Icon from "./Icon";
 
-var EventBus = require("./DebugTools/EventBus");
+import EventBus from "./DebugTools/EventBus";
 
 // Path definitions
 // TODO: Convert to Flux or other external file
@@ -37,9 +36,9 @@ var paths = [
     , status   : null
     , disabled : true
   },{
-      path     : "networks"
+      path     : "network"
     , icon     : "moon-o"
-    , label    : "Networks"
+    , label    : "Network"
     , status   : null
     , disabled : false
   },{
@@ -85,7 +84,7 @@ var menuTiming = 600;
 
 var PrimaryNavigation = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return { expanded: true };
     }
 
@@ -151,7 +150,7 @@ var PrimaryNavigation = React.createClass({
       Velocity.RunSequence( expandSequence );
     }
 
-  , render: function() {
+  , render: function () {
       var createNavItem = function ( rawItem, index ) {
         if ( rawItem["disabled"] ) {
           return (

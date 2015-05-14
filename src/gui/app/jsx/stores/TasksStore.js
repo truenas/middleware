@@ -4,13 +4,12 @@
 
 "use strict";
 
-var _            = require("lodash");
-var EventEmitter = require("events").EventEmitter;
+import _ from "lodash";
+import { EventEmitter } from "events";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _created   = {};
@@ -34,7 +33,7 @@ var TasksStore = _.assign( {}, EventEmitter.prototype, {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getAllTasks: function() {
+  , getAllTasks: function () {
       return {
           CREATED   : _created
         , WAITING   : _waiting
@@ -45,27 +44,27 @@ var TasksStore = _.assign( {}, EventEmitter.prototype, {
       };
     }
 
-  , getCreatedTasks: function() {
+  , getCreatedTasks: function () {
       return _created;
     }
 
-  , getWaitingTasks: function() {
+  , getWaitingTasks: function () {
       return _waiting;
     }
 
-  , getExecutingTasks: function() {
+  , getExecutingTasks: function () {
       return _executing;
     }
 
-  , getFinishedTasks: function() {
+  , getFinishedTasks: function () {
       return _finished;
     }
 
-  , getFailedTasks: function() {
+  , getFailedTasks: function () {
       return _failed;
     }
 
-  , getAbortedTasks: function() {
+  , getAbortedTasks: function () {
       return _aborted;
     }
 });

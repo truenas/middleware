@@ -4,9 +4,9 @@
 
 "use strict";
 
-var MiddlewareClient = require("../middleware/MiddlewareClient");
+import MiddlewareClient from "../middleware/MiddlewareClient";
 
-var TasksActionCreators = require("../actions/TasksActionCreators");
+import TasksActionCreators from "../actions/TasksActionCreators";
 
 module.exports = {
 

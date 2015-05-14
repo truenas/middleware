@@ -3,19 +3,20 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class UpdateActionCreators {
 
-module.exports = {
-
-    receiveUpdateInfo: function( updateInfo, updateInfoName ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        		: ActionTypes.RECEIVE_UPDATE_DATA
-        , updateInfo 		: updateInfo
-        , updateInfoName 	: updateInfoName
-      });
-    }
+  receiveUpdateInfo ( updateInfo, updateInfoName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_UPDATE_DATA
+      , updateInfo: updateInfo
+      , updateInfoName: updateInfoName
+      }
+    );
+  }
 
 };
+
+export default new UpdateActionCreators();

@@ -5,18 +5,19 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class TasksActionCreators {
 
-module.exports = {
-
-    receiveTaskHistory: function ( tasks ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type  : ActionTypes.RECEIVE_TASK_HISTORY
-        , tasks : tasks
-      });
-    }
+  receiveTaskHistory ( tasks ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_TASK_HISTORY
+      , tasks: tasks
+      }
+    );
+  }
 
 };
+
+export default new TasksActionCreators();

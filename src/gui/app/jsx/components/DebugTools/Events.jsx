@@ -5,14 +5,14 @@
 
 var componentLongName = "Debug Tools - Events Tab";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
-var moment = require("moment");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
+import moment from "moment";
 
 // Middleware
-var MiddlewareClient = require("../../middleware/MiddlewareClient");
-var MiddlewareStore  = require("../../stores/MiddlewareStore");
+import MiddlewareClient from "../../middleware/MiddlewareClient";
+import MiddlewareStore from "../../stores/MiddlewareStore";
 
 var defaultPredicate = {
     "Object" : "{ \"args\": { \"args\": { \"percentage\": 100 } } }"
@@ -22,7 +22,7 @@ var defaultPredicate = {
 
 var Events = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           events           : MiddlewareStore.getEventLog()
         , timeFormat       : "absolute"
@@ -32,12 +32,12 @@ var Events = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe( ["task.*","system.*"], componentLongName );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.unsubscribe( ["task.*","system.*"], componentLongName );
     }
@@ -122,7 +122,7 @@ var Events = React.createClass({
       }
     }
 
-  , render: function() {
+  , render: function () {
       var filteredEventLog = [];
       var logContent       = null;
 

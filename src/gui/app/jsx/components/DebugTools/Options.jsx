@@ -3,14 +3,14 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var ToggleSwitch = require("../common/ToggleSwitch");
+import ToggleSwitch from "../common/ToggleSwitch";
 
 var Options = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
         MIDDLEWARE_CLIENT_DEBUG: {
             connection     : false
@@ -24,11 +24,11 @@ var Options = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       window.DEBUG_FLAGS = this.state;
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       window.DEBUG_FLAGS = null;
     }
 
@@ -64,7 +64,7 @@ var Options = React.createClass({
       );
     }
 
-  , render: function() {
+  , render: function () {
 
       return (
         <div className="debug-content-flex-wrapper debug-options">

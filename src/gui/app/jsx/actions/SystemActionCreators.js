@@ -3,28 +3,29 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class SystemActionCreators {
 
-module.exports = {
+  receiveSystemInfo ( systemInfo, systemInfoName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
+      , systemInfo: systemInfo
+      , systemInfoName: systemInfoName
+      }
+    );
+  }
 
-    receiveSystemInfo: function( systemInfo, systemInfoName ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        		: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
-        , systemInfo 		: systemInfo
-        , systemInfoName 	: systemInfoName
-      });
-    }
-
-  , receiveSystemDevice: function( systemDevice, systemDeviceArgument ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        			: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
-        , systemDevice 			: systemDevice
-        , systemDeviceArgument 	: systemDeviceArgument
-      });
-
+  receiveSystemDevice ( systemDevice, systemDeviceArgument ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
+      , systemDevice: systemDevice
+      , systemDeviceArgument: systemDeviceArgument
+      }
+    );
   }
 
 };
+
+export default new SystemActionCreators();

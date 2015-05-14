@@ -3,36 +3,38 @@
 
 "use strict";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class ZfsActionCreators {
 
-module.exports = {
-
-    receiveZfsPool: function( zfsPool, zfsPoolName ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type        	: ActionTypes.RECEIVE_ZFS_POOL_DATA
-        , zfsPool     	: zfsPool
-        , zfsPoolName   : zfsPoolName
-      });
-    } 
-
-  , receiveZfsBootPool: function( zfsBootPool, zfsBootPoolArgument ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type                  : ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA
-        , zfsBootPool           : zfsBootPool
-        , zfsBootPoolArgument   : zfsBootPoolArgument
-      });
+  receiveZfsPool ( zfsPool, zfsPoolName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_ZFS_POOL_DATA
+      , zfsPool: zfsPool
+      , zfsPoolName: zfsPoolName
+      }
+    );
   }
 
-  , receiveZfsPoolGetDisks: function( zfsPoolGetDisks, zfsPoolGetDisksArgument ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-          type                      : ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA
-        , zfsPoolGetDisks           : zfsPoolGetDisks
-        , zfsPoolGetDisksArgument   : zfsPoolGetDisksArgument
-      });
+  receiveZfsBootPool ( zfsBootPool, zfsBootPoolArgument ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA
+      , zfsBootPool: zfsBootPool
+      , zfsBootPoolArgument: zfsBootPoolArgument
+      }
+    );
   }
-  
+
+  receiveZfsPoolGetDisks ( zfsPoolGetDisks, zfsPoolGetDisksArgument ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA
+      , zfsPoolGetDisks: zfsPoolGetDisks
+      , zfsPoolGetDisksArgument: zfsPoolGetDisksArgument
+      }
+    );
+  }
 
 };
+
+export default new ZfsActionCreators();

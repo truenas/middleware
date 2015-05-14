@@ -420,7 +420,7 @@ def _depends():
     return ['DevdPlugin']
 
 
-def _init(dispatcher):
+def _init(dispatcher, plugin):
     def on_device_attached(args):
         path = args['path']
         if not re.match(r'^/dev/(da|ad|ada)[0-9]+$', path):
@@ -467,7 +467,7 @@ def _init(dispatcher):
             'ids': [disk['id']]
         })
 
-    dispatcher.register_schema_definition('disk', {
+    plugin.register_schema_definition('disk', {
         'type': 'object',
         'properties': {
             'name': {'type': 'string'},
@@ -489,16 +489,16 @@ def _init(dispatcher):
     })
 
     dispatcher.require_collection('disks')
-    dispatcher.register_provider('disks', DiskProvider)
-    dispatcher.register_event_handler('system.device.attached', on_device_attached)
-    dispatcher.register_event_handler('system.device.detached', on_device_detached)
-    dispatcher.register_event_handler('system.device.mediachange', on_device_mediachange)
-    dispatcher.register_task_handler('disk.erase', DiskEraseTask)
-    dispatcher.register_task_handler('disk.format.gpt', DiskGPTFormatTask)
-    dispatcher.register_task_handler('disk.configure', DiskConfigureTask)
-    dispatcher.register_task_handler('disk.delete', DiskDeleteTask)
+    plugin.register_provider('disks', DiskProvider)
+    plugin.register_event_handler('system.device.attached', on_device_attached)
+    plugin.register_event_handler('system.device.detached', on_device_detached)
+    plugin.register_event_handler('system.device.mediachange', on_device_mediachange)
+    plugin.register_task_handler('disk.erase', DiskEraseTask)
+    plugin.register_task_handler('disk.format.gpt', DiskGPTFormatTask)
+    plugin.register_task_handler('disk.configure', DiskConfigureTask)
+    plugin.register_task_handler('disk.delete', DiskDeleteTask)
 
-    dispatcher.register_event_type('disks.changed')
+    plugin.register_event_type('disks.changed')
 
     for i in dispatcher.rpc.call_sync('system.device.get_devices', 'disk'):
         on_device_attached({'path': i['path']})

@@ -62,7 +62,7 @@ LoadPlugin write_graphite
 
 <Plugin "write_graphite">
     <Node "freenas">
-        Host "localhost"
+        Host "127.0.0.1"
         Port "2003"
         StoreRates true
         AlwaysAppendDS true

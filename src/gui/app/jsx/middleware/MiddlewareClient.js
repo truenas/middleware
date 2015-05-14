@@ -8,24 +8,24 @@
 
 "use strict";
 
-var _ = require("lodash");
+import _ from "lodash";
 
-var freeNASUtil = require("../common/freeNASUtil");
+import freeNASUtil from "../common/freeNASUtil";
 
-var SubscriptionsStore          = require("../stores/SubscriptionsStore");
-var SubscriptionsActionCreators = require("../actions/SubscriptionsActionCreators");
+import SubscriptionsStore from "../stores/SubscriptionsStore";
+import SubscriptionsActionCreators from "../actions/SubscriptionsActionCreators";
 
-var MiddlewareStore          = require("../stores/MiddlewareStore");
-var MiddlewareActionCreators = require("../actions/MiddlewareActionCreators");
+import MiddlewareStore from "../stores/MiddlewareStore";
+import MiddlewareActionCreators from "../actions/MiddlewareActionCreators";
 
-var SessionStore = require("../stores/SessionStore");
+import SessionStore from "../stores/SessionStore";
 
-var myCookies = require("./cookies");
+import myCookies from "./cookies";
 
 
-function MiddlewareClient() {
+function MiddlewareClient ( ) {
 
-  var DEBUG = function( flag ) {
+  var DEBUG = function ( flag ) {
     if ( typeof window === "undefined" ) {
       return null;
     } else if ( window.DEBUG_FLAGS && window.DEBUG_FLAGS.MIDDLEWARE_CLIENT_DEBUG ) {
@@ -33,12 +33,11 @@ function MiddlewareClient() {
     }
   };
 
-  var debugCSS = {
-      idColor      : "color: rgb(33, 114, 218);"
-    , argsColor    : "color: rgb(215, 110, 20); font-style: italic;"
-    , errorColor   : "color: rgb(235, 15, 15);"
-    , codeStyle    : "color: rgb(62, 28, 86);"
-    , defaultStyle : ""
+  var debugCSS = { idColor      : "color: rgb(33, 114, 218);"
+                 , argsColor    : "color: rgb(215, 110, 20); font-style: italic;"
+                 , errorColor   : "color: rgb(235, 15, 15);"
+                 , codeStyle    : "color: rgb(62, 28, 86);"
+                 , defaultStyle : ""
   };
 
   var socket          = null;
@@ -47,12 +46,70 @@ function MiddlewareClient() {
   var queuedActions   = [];
   var pendingRequests = {};
 
-  // counter for stepped timeout
+  // Counter for stepped timeout
   this.k = 0;
-  // modified fibonacci series to use with stepped Timeout
-  this.modFibonacci = [5000, 8000, 13000, 21000, 34000];
+  // Modified fibonacci series to use with stepped Timeout
+  this.modFibonacci = [ 5000, 8000, 13000, 21000, 34000 ];
 
-// UTILITY FUNCTIONS
+  // UTILITY FUNCTIONS
+
+  // Timer object (code taken from: http://stackoverflow.com/questions/3144711/javascript-find-the-time-left-in-a-settimeout/20745721#20745721)
+  // the above code is modified to be able to suit what we need it to do
+  // This is primarily needed so that the reconnection interval can be
+  // obtained at the same time while the timer is in use.
+  // delay is to be specified in milliseconds (example 10000 for 10 seconds)
+  var ReconnectTimer = function ( doAfter, delay ) {
+    var id, started, running;
+    var remaining = 0;
+    if ( delay && typeof delay !== "undefined" ) {
+      remaining = delay;
+    }
+
+    this.start = function ( delay ) {
+      // console.log( "suraj in ReconnetTimers start" );
+      if ( delay ) {
+        remaining = delay;
+      }
+      running = true;
+      started = new Date();
+      id = setTimeout( doAfter, remaining );
+    };
+
+    this.pause = function ( ) {
+      running = false;
+      clearTimeout( id );
+      remaining -= new Date() - started;
+    };
+
+    this.getTimeLeft = function ( ) {
+      remaining -= new Date() - started;
+      return remaining;
+    };
+
+    this.isRunning = function ( ) {
+      remaining -= new Date() - started;
+      if ( remaining <= 0 ) {
+        running = false;
+        // console.log( "suraj clearing the timeout" );
+        clearTimeout( id );
+      }
+      return running;
+    };
+
+    this.stop = function ( ) {
+      clearTimeout( id );
+      running = false;
+      //doAfter = null;
+      remaining = 0;
+    };
+
+  };
+
+  // Publically accessible reconectHandle
+  this.reconnectHandle = new ReconnectTimer ( function ( ) {
+    var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
+    this.connect( protocol + document.domain + ":5000/socket" );
+  }.bind( this ) );
 
   // Creates a JSON-formatted object to send to the middleware. Contains the
   // following key-values:
@@ -65,7 +122,7 @@ function MiddlewareClient() {
   //               If left blank, `generateUUID` will be called. This is a
   //               fallback, and will likely result in a "Spurious reply" error
   function pack ( namespace, name, args, id ) {
-    if ( DEBUG("packing") ) {
+    if ( DEBUG( "packing" ) ) {
       var validPack = true;
 
       if ( typeof namespace !== "string" )             { validPack = false; console.warn( "BAD PACK: Provided namespace was not a string for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
@@ -76,20 +133,18 @@ function MiddlewareClient() {
       if ( validPack ) {
         console.info( "Packed request %c'" + id + "'%c successfully.", debugCSS.idColor, debugCSS.defaultStyle );
       } else {
-        console.log( "Dump of bad pack:", {
-                        "namespace" : namespace
-                      , "name"      : name
-                      , "id"        : id
-                      , "args"      : args
+        console.log( "Dump of bad pack:", { "namespace" : namespace
+                                          , "name"      : name
+                                          , "id"        : id
+                                          , "args"      : args
                     });
       }
     }
 
-    return JSON.stringify({
-        "namespace" : namespace
-      , "name"      : name
-      , "id"        : id
-      , "args"      : args
+    return JSON.stringify({ "namespace" : namespace
+                          , "name"      : name
+                          , "id"        : id
+                          , "args"      : args
     });
   }
 
@@ -99,22 +154,21 @@ function MiddlewareClient() {
 
     if ( socket.readyState === 1 && SessionStore.getLoginStatus() ) {
 
-      if ( DEBUG("logging") ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
+      if ( DEBUG( "logging" ) ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
 
       logPendingRequest( requestID, successCallback, errorCallback, packedAction, customTimeout );
       socket.send( packedAction );
 
     } else {
 
-      if ( DEBUG("queues") ) { console.info( "Enqueueing request %c'" + requestID + "'", debugCSS.idColor ); }
+      if ( DEBUG( "queues" ) ) { console.info( "Enqueueing request %c'" + requestID + "'", debugCSS.idColor ); }
 
-      queuedActions.push({
-          action          : packedAction
-        , id              : requestID
-        , successCallback : successCallback
-        , errorCallback   : errorCallback
-        , customTimeout   : customTimeout
-      });
+      queuedActions.push({ action          : packedAction
+                         , id              : requestID
+                         , successCallback : successCallback
+                         , errorCallback   : errorCallback
+                         , customTimeout   : customTimeout
+                        });
 
     }
 
@@ -126,17 +180,17 @@ function MiddlewareClient() {
   // object and `queuedLogin`, and then are dequeued by this function.
   function dequeueActions () {
 
-    if ( DEBUG("queues") && queuedActions.length ) { console.log( "Attempting to dequeue actions" ); }
+    if ( DEBUG( "queues" ) && queuedActions.length ) { console.log( "Attempting to dequeue actions" ); }
 
     if ( SessionStore.getLoginStatus() ) {
       while ( queuedActions.length ) {
         var item = queuedActions.shift();
 
-        if ( DEBUG("queues") ) { console.log( "Dequeueing %c'" + item.id + "'", debugCSS.idColor ); }
+        if ( DEBUG( "queues" ) ) { console.log( "Dequeueing %c'" + item.id + "'", debugCSS.idColor ); }
 
         processNewRequest( item.action, item.successCallback, item.errorCallback, item.id, item.customTimeout );
       }
-    } else if ( DEBUG("queues") && queuedActions.length ) { console.info( "Middleware not authenticated, cannot dequeue actions" ); }
+    } else if ( DEBUG( "queues" ) && queuedActions.length ) { console.info( "Middleware not authenticated, cannot dequeue actions" ); }
   }
 
   // Records a middleware request that was sent to the server, stored in the
@@ -147,23 +201,22 @@ function MiddlewareClient() {
   // will be used instead
   function logPendingRequest ( requestID, successCallback, errorCallback, originalRequest, customTimeout ) {
     var timeout = requestTimeout;
-    if ( typeof customTimeout !== undefined && customTimeout !== "None" && customTimeout ){
+    if ( typeof customTimeout !== undefined && customTimeout !== "None" && customTimeout ) {
       timeout = customTimeout;
     }
-    var request = {
-        successCallback : successCallback
-      , errorCallback   : errorCallback
-      , originalRequest : originalRequest
-      , timeout : setTimeout(
-          function() {
-            handleTimeout( requestID );
-          }, timeout
-        )
-    };
+    var request = { successCallback : successCallback
+                  , errorCallback   : errorCallback
+                  , originalRequest : originalRequest
+                  , timeout : setTimeout(
+                      function ( ) {
+                        handleTimeout( requestID );
+                      }, timeout
+                    )
+                  };
 
     pendingRequests[ requestID ] = request;
 
-    if ( DEBUG("logging") ) { console.log ( "Current pending requests:", pendingRequests ); }
+    if ( DEBUG( "logging" ) ) { console.log( "Current pending requests:", pendingRequests ); }
   }
 
   // Resolve a middleware request by clearing its timeout, and optionally
@@ -173,14 +226,15 @@ function MiddlewareClient() {
 
     // Add this if for cases in which the requestID is None or undefined
     // as an example the server side dispatcher will send a None in the
-    // requestID when returing the following error (code 22): 'Request is not valid JSON'
+    // requestID when returing the following error (code 22):
+    // 'Request is not valid JSON'
     if ( typeof requestID !== undefined && requestID !== "None" ) {
       clearTimeout( pendingRequests[ requestID ].timeout );
     }
 
     switch ( outcome ) {
       case "success":
-        if ( DEBUG("messages") ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
+        if ( DEBUG( "messages" ) ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
         executeRequestSuccessCallback( requestID, args );
         break;
 
@@ -207,7 +261,7 @@ function MiddlewareClient() {
           console.groupEnd();
           console.log( "%c" + args.message , debugCSS.codeStyle );
           console.groupEnd();
-        } else if ( args.code && args.message ){
+        } else if ( args.code && args.message ) {
           console.groupCollapsed( "%cERROR %s: Request %c'%s'%c returned: %s", debugCSS.errorColor, args.code, debugCSS.idColor, requestID, debugCSS.errorColor, args.message );
           if ( originalRequest ) {
             console.groupCollapsed( "Original request" );
@@ -229,7 +283,7 @@ function MiddlewareClient() {
         break;
 
       case "timeout":
-        if ( DEBUG("messages") ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
+        if ( DEBUG( "messages" ) ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
         executeRequestErrorCallback( requestID, args );
         break;
 
@@ -244,22 +298,22 @@ function MiddlewareClient() {
   // Should only be used in cases where a response has come from the server, and the
   // status is successful in one way or another. Calling this function when the
   // server returns an error could cause strange results. Use the errorCallback for that case.
-  function executeRequestSuccessCallback( requestID, args ) {
+  function executeRequestSuccessCallback ( requestID, args ) {
     if ( typeof pendingRequests[ requestID ].successCallback === "function" ) {
       pendingRequests[ requestID ].successCallback( args );
     }
   }
 
 
-  function executeRequestErrorCallback( requestID, args ) {
-    if (typeof pendingRequests[ requestID ].errorCallback === "function" ) {
+  function executeRequestErrorCallback ( requestID, args ) {
+    if ( typeof pendingRequests[ requestID ].errorCallback === "function" ) {
       pendingRequests[ requestID ].errorCallback( args );
     }
   }
 
 
-// LIFECYCLE FUNCTIONS
-// Public methods used to manage the middleware's connection and authentication
+  // LIFECYCLE FUNCTIONS
+  // Public methods used to manage the middleware's connection and authentication
 
   // This method should only be called when there's no existing connection. If for
   // some reason, the existing connection should be ignored and overridden, supply
@@ -268,18 +322,18 @@ function MiddlewareClient() {
     if ( window.WebSocket ) {
       if ( !socket || force ) {
 
-        if ( DEBUG("connection") ) { console.info( "Creating WebSocket instance" ); }
-        if ( DEBUG("connection") && force ) { console.warn( "Forcing creation of new WebSocket instance" ); }
+        if ( DEBUG( "connection" ) ) { console.info( "Creating WebSocket instance" ); }
+        if ( DEBUG( "connection" ) && force ) { console.warn( "Forcing creation of new WebSocket instance" ); }
 
         socket = new WebSocket( url );
         socket.onmessage = handleMessage;
         socket.onopen    = handleOpen;
         socket.onerror   = handleError;
         socket.onclose   = handleClose;
-      } else if ( DEBUG("connection") ) {
+      } else if ( DEBUG( "connection" ) ) {
         console.warn( "Attempted to create a new middleware connection while a connection already exists." );
       }
-    } else if ( DEBUG("connection") ) {
+    } else if ( DEBUG( "connection" ) ) {
       console.error( "This browser doesn't support WebSockets." );
       // TODO: Visual error for legacy browsers with links to download others
     }
@@ -297,24 +351,21 @@ function MiddlewareClient() {
     var requestID = freeNASUtil.generateUUID();
     var rpcName = "auth";
     var payload = {};
-    if (authType === "userpass") {
-      payload = {
-          "username" : credentials[0]
-        , "password" : credentials[1]
+    if ( authType === "userpass" ) {
+      payload = { username : credentials[0]
+                , password : credentials[1]
       };
-    } else if (authType === "token") {
-      payload = {
-          "token" : credentials
-      };
+    } else if ( authType === "token" ) {
+      payload = { token : credentials };
       rpcName = rpcName + "_token";
     }
 
-    var successCallback = function( response ) {
+    var successCallback = function ( response ) {
 
       // Making a Cookie for token based login for the next time
       // and setting its max-age to the TTL (in seconds) specified by the
       // middleware response. The token value is stored in the Cookie.
-      myCookies.add("auth", response[0], response[1]);
+      myCookies.add( "auth", response[0], response[1] );
       MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
     };
 
@@ -327,47 +378,45 @@ function MiddlewareClient() {
 
     if ( socket.readyState === 1 ) {
 
-      if ( DEBUG("authentication") ) { console.info( "Socket is ready: Sending login request." ); }
+      if ( DEBUG( "authentication" ) ) { console.info( "Socket is ready: Sending login request." ); }
 
       logPendingRequest( requestID, successCallback, errorCallback, packedAction, null );
       socket.send( packedAction );
 
     } else {
 
-      if ( DEBUG("authentication") ) { console.info( "Socket is NOT ready: Deferring login request." ); }
+      if ( DEBUG( "authentication" ) ) { console.info( "Socket is NOT ready: Deferring login request." ); }
 
-      queuedLogin = {
-          action          : packedAction
-        , successCallback : successCallback
-        , errorCallback   : errorCallback
-        , id              : requestID
+      queuedLogin = { action          : packedAction
+                    , successCallback : successCallback
+                    , errorCallback   : errorCallback
+                    , id              : requestID
       };
     }
 
   };
 
   this.logout = function () {
-    // all this does is deletes the login cookie (which contains the token)
-    // and closes the socket connection. The handleClose() which is triggered as a result
-    // picks the connect being closed and then reconnects and brings back the login window
-    // for socket close codes (and why i used 1000) see the RFC: https://tools.ietf.org/html/rfc6455#page-64
-    myCookies.delete("auth");
+    // All this does is deletes the login cookie (which contains the token)
+    // And closes the socket connection. The handleClose() which is triggered as a result
+    // Picks the connect being closed and then reconnects and brings back the login window
+    // For socket close codes (and why i used 1000) see the RFC: https://tools.ietf.org/html/rfc6455#page-64
+    myCookies.delete( "auth" );
     this.disconnect( 1000, "User logged out" );
   }.bind( this );
 
 
-// CHANNELS AND REQUESTS
+  // CHANNELS AND REQUESTS
 
   // Make a request to the middleware, which translates to an RPC call. A
   // unique UUID is generated for each request, and is supplied to
   // `logPendingRequest` as a lookup key for resolving or timing out the
-  // request.
+  // Request.
   this.request = function ( method, args, successCallback, errorCallback, customTimeout ) {
     var requestID = freeNASUtil.generateUUID();
-    var payload = {
-        "method" : method
-      , "args"   : args
-    };
+    var payload = { method : method
+                  , args   : args
+                  };
     var packedAction = pack( "rpc", "call", payload, requestID );
 
     processNewRequest( packedAction, successCallback, errorCallback, requestID, customTimeout );
@@ -393,15 +442,15 @@ function MiddlewareClient() {
       return;
     }
 
-    if ( DEBUG("subscriptions") ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    if ( DEBUG( "subscriptions" ) ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
-    _.forEach( masks, function( mask ) {
+    _.forEach( masks, function ( mask ) {
       if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) > 0 ) {
-        if ( DEBUG("subscriptions") ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG("subscriptions") ) { console.log( "Increasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
+        if ( DEBUG( "subscriptions" ) ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG( "subscriptions" ) ) { console.log( "Increasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
       } else {
-        if ( DEBUG("subscriptions") ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG("subscriptions") ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG( "subscriptions" ) ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG( "subscriptions" ) ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
         var requestID = freeNASUtil.generateUUID();
         processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, null, requestID, null );
       }
@@ -422,17 +471,17 @@ function MiddlewareClient() {
       return;
     }
 
-    if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    if ( DEBUG( "subscriptions" ) ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
 
-    _.forEach( masks, function( mask ) {
+    _.forEach( masks, function ( mask ) {
       if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) === 1 ) {
-        if ( DEBUG("subscriptions") ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG("subscriptions") ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
+        if ( DEBUG( "subscriptions" ) ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG( "subscriptions" ) ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
         var requestID = freeNASUtil.generateUUID();
         processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, null, requestID, null );
       } else {
-        if ( DEBUG("subscriptions") ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG("subscriptions") ) { console.log( "Decreasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
+        if ( DEBUG( "subscriptions" ) ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
+        if ( DEBUG( "subscriptions" ) ) { console.log( "Decreasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
       }
     });
 
@@ -440,18 +489,18 @@ function MiddlewareClient() {
   };
 
   this.renewSubscriptions = function () {
-    var masks = _.keys(SubscriptionsStore.getAllSubscriptions());
-    _.forEach( masks, function( mask ) {
-      if ( DEBUG("subscriptions") ) { console.log( "Renewing subscription request for %c'" + mask + "' ", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    var masks = _.keys( SubscriptionsStore.getAllSubscriptions( ) );
+    _.forEach( masks, function ( mask ) {
+      if ( DEBUG( "subscriptions" ) ) { console.log( "Renewing subscription request for %c'" + mask + "' ", debugCSS.argsColor, debugCSS.defaultStyle ); }
       var requestID = freeNASUtil.generateUUID();
       processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, null, requestID, null );
     });
   };
 
   this.unsubscribeALL =  function () {
-    var masks = _.keys(SubscriptionsStore.getAllSubscriptions());
-    _.forEach( masks, function( mask ) {
-      if ( DEBUG("subscriptions") ) { console.log( "Requested: Unsubscribe to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    var masks = _.keys( SubscriptionsStore.getAllSubscriptions() );
+    _.forEach( masks, function ( mask ) {
+      if ( DEBUG( "subscriptions" ) ) { console.log( "Requested: Unsubscribe to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
       var requestID = freeNASUtil.generateUUID();
       processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, null, requestID, null );
     });
@@ -459,49 +508,49 @@ function MiddlewareClient() {
     SubscriptionsActionCreators.deleteAllSubscriptions();
   };
 
-// MIDDLEWARE DISCOVERY METHODS
-// These are public methods used to gather more information about the Middleware's
-// capabilities and overall state. These can be used to return a list of services
-// supported by your connection to the middleware, and methods supported by each
-// service. (These are helpful wrappers more than core functionality.)
+  // MIDDLEWARE DISCOVERY METHODS
+  // These are public methods used to gather more information about the Middleware's
+  // capabilities and overall state. These can be used to return a list of services
+  // supported by your connection to the middleware, and methods supported by each
+  // service. (These are helpful wrappers more than core functionality.)
 
-  this.getServices = function() {
-    this.request( "discovery.get_services", [], function( services ) {
+  this.getServices = function ( ) {
+    this.request( "discovery.get_services", [], function ( services ) {
       MiddlewareActionCreators.receiveAvailableServices( services );
     });
   };
 
-  this.getMethods = function( service ) {
-    this.request( "discovery.get_methods", [ service ], function( methods ) {
+  this.getMethods = function ( service ) {
+    this.request( "discovery.get_methods", [ service ], function ( methods ) {
       MiddlewareActionCreators.receiveAvailableServiceMethods( service, methods );
     });
   };
 
 
-// SOCKET DATA HANDLERS
-// Private methods for handling data from the WebSocket connection
+  // SOCKET DATA HANDLERS
+  // Private methods for handling data from the WebSocket connection
 
   // Triggered by the WebSocket's onopen event.
   var handleOpen = function () {
-    // set stepped reconnect counter back to 0
+    // Set stepped reconnect counter back to 0
     this.k = 0;
-    // dispatch message stating that we have just connected
-    MiddlewareActionCreators.updateSocketState("connected");
-    if ( myCookies.obtain("auth") !== null ) {
-        this.login("token", myCookies.obtain("auth"));
-      }
+    // Dispatch message stating that we have just connected
+    MiddlewareActionCreators.updateSocketState( "connected" );
+    if ( myCookies.obtain( "auth" ) !== null ) {
+      this.login( "token", myCookies.obtain( "auth" ) );
+    }
     this.renewSubscriptions();
     if ( SessionStore.getLoginStatus() === false && queuedLogin ) {
       // If the connection opens and we aren't authenticated, but we have a
       // queued login, dispatch the login and reset its variable.
-      if ( DEBUG("queues") ) { console.info( "Resolving queued login %c" + queuedLogin.id, debugCSS.idColor ); }
-      if ( DEBUG("queues") ) { console.log({ requestID : queuedLogin.action }); }
+      if ( DEBUG( "queues" ) ) { console.info( "Resolving queued login %c" + queuedLogin.id, debugCSS.idColor ); }
+      if ( DEBUG( "queues" ) ) { console.log({ requestID : queuedLogin.action }); }
 
       logPendingRequest( queuedLogin.id, queuedLogin.successCallback, queuedLogin.errorCallback, null );
       socket.send( queuedLogin.action );
       queuedLogin = null;
     } else {
-        MiddlewareActionCreators.receiveAuthenticationChange( "", false );
+      MiddlewareActionCreators.receiveAuthenticationChange( "", false );
     }
   }.bind( this );
 
@@ -512,18 +561,28 @@ function MiddlewareClient() {
     queuedLogin     = null;
     queuedActions   = [];
 
-    if ( DEBUG("connection") ) { console.warn( "WebSocket connection closed" ); }
+    if ( DEBUG( "connection" ) ) { console.warn( "WebSocket connection closed" ); }
 
     // Log out
     MiddlewareActionCreators.receiveAuthenticationChange( "", false );
-    // dispatch message stating that we have disconnected
-    MiddlewareActionCreators.updateSocketState("disconnected");
-    setTimeout(function(){
-      var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
-      this.connect( protocol + document.domain + ":5000/socket" );
-    }.bind( this ), this.modFibonacci[this.k]);
-    // increase k in a cyclic fashion (it goes back to 0 after reachin 4)
-    this.k = ++this.k % this.modFibonacci.length;
+    MiddlewareActionCreators.updateSocketState( "disconnected" );
+    if ( !this.reconnectHandle.isRunning() ) {
+      this.reconnectHandle.start( this.modFibonacci[this.k] );
+    }
+    var _this = this;
+    ( function checkReconnectHandle ( ) {
+      // console.log( "suraj in checkReconnectHandle... time remaining is: ", _this.reconnectHandle.getTimeLeft() );
+      setTimeout( function () {
+        if ( _this.reconnectHandle.isRunning() ) {
+          checkReconnectHandle();       // Call checkReconnectHandle again
+        } else if ( !socket ) {
+          // Increase k in a cyclic fashion (it goes back to 0 after reachin 4)
+          _this.k = ++_this.k % _this.modFibonacci.length;
+          _this.reconnectHandle.stop();
+          _this.reconnectHandle.start( _this.modFibonacci[_this.k] );
+        }
+      }, 500 );
+    }() );
   }.bind( this );
 
   // MESSAGES
@@ -533,13 +592,13 @@ function MiddlewareClient() {
   var handleMessage = function ( message ) {
     var data = JSON.parse( message.data );
 
-    if ( DEBUG("messages") ) { console.log( "Message from Middleware:", data.namespace, message ); }
+    if ( DEBUG( "messages" ) ) { console.log( "Message from Middleware:", data.namespace, message ); }
 
     switch ( data.namespace ) {
 
       // A FreeNAS event has occurred
       case "events":
-        if ( DEBUG("messages") ) { console.log( "Message contained event data" ); }
+        if ( DEBUG( "messages" ) ) { console.log( "Message contained event data" ); }
         MiddlewareActionCreators.receiveEventData( data );
         break;
 
@@ -563,23 +622,25 @@ function MiddlewareClient() {
 
       // There was an error with a request or with its execution on FreeNAS
       case "error":
-        if ( DEBUG("messages") ) { console.error( "Middleware has indicated an error:", data.args ); }
+        if ( DEBUG( "messages" ) ) { console.error( "Middleware has indicated an error:", data.args ); }
         break;
 
       // A reply was sent from the middleware with no recognizable namespace
       // This shouldn't happen, and probably indicates a problem with the
       // middleware itself.
       default:
-        if ( DEBUG("messages") ) { console.warn( "Spurious reply from Middleware:", message ); }
+        if ( DEBUG( "messages" ) ) {
+          console.warn( "Spurious reply from Middleware:", message );
+        }
         // Do nothing
     }
   };
 
   // CONNECTION ERRORS
-  // Triggered by the WebSocket's `onerror` event. Handles errors with the client
-  // connection to the middleware.
+  // Triggered by the WebSocket's `onerror` event. Handles errors
+  // With the client connection to the middleware.
   var handleError = function ( error ) {
-    if ( DEBUG("connection") ) { console.error( "The WebSocket connection to the Middleware encountered an error:", error ); }
+    if ( DEBUG( "connection" ) ) { console.error( "The WebSocket connection to the Middleware encountered an error:", error ); }
   };
 
   // REQUEST TIMEOUTS
@@ -587,7 +648,7 @@ function MiddlewareClient() {
   // triggers resolution of the request with a "timeout" status.
   var handleTimeout = function ( requestID ) {
 
-    if ( DEBUG("messages") ) { console.warn( "Request %c'" + requestID + "'%c timed out without a response from the middleware", debugCSS.idColor, debugCSS.defaultStyle ); }
+    if ( DEBUG( "messages" ) ) { console.warn( "Request %c'" + requestID + "'%c timed out without a response from the middleware", debugCSS.idColor, debugCSS.defaultStyle ); }
 
     resolvePendingRequest( requestID, null, "timeout" );
   };

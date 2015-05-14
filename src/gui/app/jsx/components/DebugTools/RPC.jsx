@@ -3,24 +3,24 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
-var _     = require("lodash");
+import React from "react";
+import TWBS from "react-bootstrap";
+import _ from "lodash";
 
 // Middleware
-var MiddlewareClient = require("../../middleware/MiddlewareClient");
-var MiddlewareStore  = require("../../stores/MiddlewareStore");
+import MiddlewareClient from "../../middleware/MiddlewareClient";
+import MiddlewareStore from "../../stores/MiddlewareStore";
 
 // Disclosure Triangles
-var DiscTri = require("../common/DiscTri");
+import DiscTri from "../common/DiscTri";
 
 // Fuzzy TypeAhead
-var FuzzyTypeAhead = require("../common/FuzzyTypeAhead");
+import FuzzyTypeAhead from "../common/FuzzyTypeAhead";
 
 
 var RPC = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           services          : MiddlewareStore.getAvailableRPCServices()
         , methods           : MiddlewareStore.getAvailableRPCMethods()
@@ -31,12 +31,12 @@ var RPC = React.createClass({
       };
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.getServices();
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
     }
 
@@ -81,7 +81,7 @@ var RPC = React.createClass({
       this.setState( newState );
     }
 
-  , handleRPCSubmit: function() {
+  , handleRPCSubmit: function () {
       this.setState({ submissionPending: true });
 
       MiddlewareClient.request( this.state.methodValue, JSON.parse( this.state.argsValue ), function( results ) {
@@ -106,7 +106,7 @@ var RPC = React.createClass({
       this.handleRPCSubmit();
   }
 
-  , optionSelected: function() {
+  , optionSelected: function () {
       this.setState({
         methodValue : arguments[0]
       });
@@ -153,7 +153,7 @@ var RPC = React.createClass({
       }
     }
 
-  , render: function() {
+  , render: function () {
       var agmeth = [];
       _.forEach( this.state.methods, function ( value, key ) {
         var svc = key;

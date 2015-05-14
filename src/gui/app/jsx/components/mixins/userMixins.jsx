@@ -4,16 +4,16 @@
 
 "use strict";
 
-var _ = require("lodash");
+import _ from "lodash";
 
-var ShellMiddleware = require("../../middleware/ShellMiddleware");
+import ShellMiddleware from "../../middleware/ShellMiddleware";
 
-var UsersStore      = require("../../stores/UsersStore");
-var UsersMiddleware = require("../../middleware/UsersMiddleware");
+import UsersStore from "../../stores/UsersStore";
+import UsersMiddleware from "../../middleware/UsersMiddleware";
 
 module.exports = {
 
-    componentDidMount: function() {
+    componentDidMount: function () {
       ShellMiddleware.requestAvailableShells( function( shells ) {
         var systemShells = _.map(shells, function( shell ){
           return ( { name : shell }
@@ -27,11 +27,11 @@ module.exports = {
       UsersStore.addChangeListener(this.updateUsersInState);
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       UsersStore.removeChangeListener(this.updateUsersInState);
     }
 
-  , updateUsersInState: function() {
+  , updateUsersInState: function () {
       var usersList = UsersStore.getAllUsers();
       this.setState( { usersList : usersList } );
     }
@@ -48,7 +48,7 @@ module.exports = {
       return integerArray;
     }
 
-  , deleteUser: function(){
+  , deleteUser: function (){
         UsersMiddleware.deleteUser(this.props.item["id"], this.returnToViewerRoot() );
     }
 };

@@ -60,6 +60,9 @@ class RpcContext(object):
     def register_schema_definition(self, name, definition):
         self.schema_definitions['{0}'.format(name)] = definition
 
+    def unregister_schema_definition(self, name):
+        del self.schema_definitions['{0}'.format(name)]
+
     def get_schema_resolver(self, schema):
         return RefResolver('', schema, self.schema_definitions)
 

@@ -6,11 +6,10 @@
 
 "use strict";
 
-
-var React = require("react");
+import React from "react";
 
 var Storage = React.createClass({
-  render: function() {
+  render: function () {
     return (
       <main>
         <h2>Storage View</h2>

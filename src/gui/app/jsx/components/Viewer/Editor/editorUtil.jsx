@@ -5,11 +5,11 @@
 
 "use strict";
 
-var _     = require("lodash");
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var Throbber = require("../../common/Throbber");
+import Throbber from "../../common/Throbber";
 
 var editorUtil = exports;
 
@@ -22,14 +22,14 @@ editorUtil.updateOverlay = React.createClass({
       , animDelay     : React.PropTypes.number
     }
 
-  , getDefaultProps: function() {
+  , getDefaultProps: function () {
       return {
           animDuration : 250
         , animDelay    : 600
       };
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       return { animating: false };
     }
 
@@ -76,7 +76,7 @@ editorUtil.updateOverlay = React.createClass({
     }
 
 
-  , render: function() {
+  , render: function () {
       var overlay = null;
 
       // Using !! performs boolean type coercion

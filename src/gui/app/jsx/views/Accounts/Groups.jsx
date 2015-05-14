@@ -6,15 +6,15 @@
 
 var componentLongName = "Groups";
 
-var React = require("react");
+import React from "react";
 
-var Viewer = require("../../components/Viewer");
+import Viewer from "../../components/Viewer";
 
-var GroupsMiddleware = require("../../middleware/GroupsMiddleware");
-var GroupsStore      = require("../../stores/GroupsStore");
+import GroupsMiddleware from "../../middleware/GroupsMiddleware";
+import GroupsStore from "../../stores/GroupsStore";
 
-var UsersMiddleware = require("../../middleware/UsersMiddleware");
-var UsersStore      = require("../../stores/UsersStore");
+import UsersMiddleware from "../../middleware/UsersMiddleware";
+import UsersStore from "../../stores/UsersStore";
 
 var viewData = {
     format    : require("../../../data/middleware-keys/groups-display.json")[0]
@@ -59,11 +59,11 @@ function getUsersStoreData() {
 
 var Groups = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return getGroupsFromStore();
     }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       GroupsStore.addChangeListener( this.handleGroupsChange );
       GroupsMiddleware.requestGroupsList();
       GroupsMiddleware.subscribe( componentLongName );
@@ -73,7 +73,7 @@ var Groups = React.createClass({
       UsersMiddleware.subscribe( componentLongName );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       GroupsStore.removeChangeListener( this.handleGroupsChange );
       GroupsMiddleware.unsubscribe( componentLongName );
 
@@ -81,15 +81,15 @@ var Groups = React.createClass({
       UsersMiddleware.unsubscribe( componentLongName );
     }
 
-  , handleGroupsChange: function() {
+  , handleGroupsChange: function () {
       this.setState( getGroupsFromStore() );
     }
 
-  , handleUsersChange: function() {
+  , handleUsersChange: function () {
       this.setState( getUsersStoreData() );
     }
 
-  , render: function() {
+  , render: function () {
       return <Viewer header     = { "Groups" }
                      inputData  = { this.state.groupsList }
                      viewData   = { viewData } />;

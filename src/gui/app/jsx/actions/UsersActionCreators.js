@@ -4,26 +4,28 @@
 
 "use strict";
 
-var FreeNASDispatcher = require( "../dispatcher/FreeNASDispatcher" );
-var FreeNASConstants  = require( "../constants/FreeNASConstants" );
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes = FreeNASConstants.ActionTypes;
+class UsersActionCreators {
 
-module.exports = {
+  receiveUsersList ( rawUsers ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_RAW_USERS
+      , rawUsers: rawUsers
+      }
+    );
+  }
 
-  receiveUsersList: function ( rawUsers ) {
-      FreeNASDispatcher.handleMiddlewareAction({
-        type     : ActionTypes.RECEIVE_RAW_USERS
-        , rawUsers : rawUsers
-      });
-    }
-
-  , receiveUserUpdateTask: function ( taskID, userID ) {
-      FreeNASDispatcher.handleClientAction({
-        type   : ActionTypes.RECEIVE_USER_UPDATE_TASK
-        , taskID : taskID
-        , userID : userID
-      });
-    }
+  receiveUserUpdateTask ( taskID, userID ) {
+    FreeNASDispatcher.handleClientAction(
+      { type: ActionTypes.RECEIVE_USER_UPDATE_TASK
+      , taskID: taskID
+      , userID: userID
+      }
+    );
+  }
 
 };
+
+export default new UsersActionCreators();

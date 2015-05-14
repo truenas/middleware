@@ -5,20 +5,20 @@
 
 "use strict";
 
-var _      = require("lodash");
-var React  = require("react");
-var TWBS   = require("react-bootstrap");
+import _ from "lodash";
+import React from "react";
+import TWBS from "react-bootstrap";
 
-var UsersStore      = require("../../../stores/UsersStore");
-var UsersMiddleware = require("../../../middleware/UsersMiddleware");
+import UsersStore from "../../../stores/UsersStore";
+import UsersMiddleware from "../../../middleware/UsersMiddleware";
 
-var GroupsStore      = require("../../../stores/GroupsStore");
-var GroupsMiddleware = require("../../../middleware/GroupsMiddleware");
+import GroupsStore from "../../../stores/GroupsStore";
+import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
 
-var inputHelpers = require("../../../components/mixins/inputHelpers");
-var userMixins   = require("../../../components/mixins/userMixins");
-var groupMixins   = require("../../../components/mixins/groupMixins");
-var viewerCommon = require("../../../components/mixins/viewerCommon");
+import inputHelpers from "../../../components/mixins/inputHelpers";
+import userMixins from "../../../components/mixins/userMixins";
+import groupMixins from "../../../components/mixins/groupMixins";
+import viewerCommon from "../../../components/mixins/viewerCommon";
 
 var AddUser = React.createClass({
 
@@ -35,7 +35,7 @@ var AddUser = React.createClass({
         viewData: React.PropTypes.object.isRequired
     }
 
-  , getInitialState: function() {
+  , getInitialState: function () {
       var defaultValues = { shell : "/bin/csh" };
 
       var usersList = UsersStore.getAllUsers();
@@ -65,7 +65,7 @@ var AddUser = React.createClass({
     }
 
     // Will return the first available UID above 1000 (to be used as a default).
-  , getNextUID: function() {
+  , getNextUID: function () {
       var users = {};
 
       // Turn the array of users into an object for easier UID checking.
@@ -84,7 +84,7 @@ var AddUser = React.createClass({
 
     }
 
-  , submitNewUser: function() {
+  , submitNewUser: function () {
       var routing = this.props.viewData.routing;
       var newUserValues = {};
       var params        = {};
@@ -124,7 +124,7 @@ var AddUser = React.createClass({
       });
     }
 
-  , render: function() {
+  , render: function () {
 
       var addButtons =
         <TWBS.ButtonToolbar>

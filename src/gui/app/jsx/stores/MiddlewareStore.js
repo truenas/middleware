@@ -5,13 +5,12 @@
 
 "use strict";
 
-var _            = require("lodash");
-var EventEmitter = require("events").EventEmitter;
+import _ from "lodash";
+import { EventEmitter } from "events";
 
-var FreeNASDispatcher = require("../dispatcher/FreeNASDispatcher");
-var FreeNASConstants  = require("../constants/FreeNASConstants");
+import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
+import { ActionTypes } from "../constants/FreeNASConstants";
 
-var ActionTypes  = FreeNASConstants.ActionTypes;
 var CHANGE_EVENT = "change";
 
 var _rpcServices   = [];
@@ -34,16 +33,16 @@ var MiddlewareStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   // RPC
-  , getAvailableRPCServices: function() {
+  , getAvailableRPCServices: function () {
       return _rpcServices;
     }
 
-  , getAvailableRPCMethods: function() {
+  , getAvailableRPCMethods: function () {
       return _rpcMethods;
     }
 
   // EVENTS
-  , getEventLog: function() {
+  , getEventLog: function () {
       return _events;
     }
 

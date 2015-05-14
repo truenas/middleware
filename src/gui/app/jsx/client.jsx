@@ -5,18 +5,24 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 // Routing
-var Router = require("react-router");
-var Routes = require("./routes");
+import Router, { HistoryLocation } from "react-router";
+import Routes from "./routes";
 
 // Middleware
-var MiddlewareClient = require("./middleware/MiddlewareClient");
-var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
+import MiddlewareClient from "./middleware/MiddlewareClient";
+
+let protocol = ( window.location.protocol === "https:" )
+  ? "wss://"
+  : "ws://";
 
 MiddlewareClient.connect( protocol + document.domain + ":5000/socket" );
 
-Router.run( Routes, Router.HistoryLocation, function( Handler, state ) {
-  React.render( <Handler />, document.body );
-});
+Router.run( Routes
+          , HistoryLocation
+          , function ( Handler, state ) {
+              React.render( <Handler />, document.body );
+            }
+          );

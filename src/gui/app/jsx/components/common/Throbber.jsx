@@ -3,7 +3,7 @@
 
 "use strict";
 
-var React = require("react");
+import React from "react";
 
 var Throbber = React.createClass({
 
@@ -13,7 +13,7 @@ var Throbber = React.createClass({
       , className : React.PropTypes.string
     }
 
-  , render: function() {
+  , render: function () {
       var throbberSize  = this.props.size ? { height: this.props.size + "px", width: this.props.size + "px" } : null;
       var bsStyle       = this.props.bsStyle ? " throbber-" + this.props.bsStyle : "";
       var throbberClass = this.props.className ? " " + this.props.className : "";

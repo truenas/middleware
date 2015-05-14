@@ -6,19 +6,19 @@
 
 "use strict";
 
-var React = require("react");
-var TWBS  = require("react-bootstrap");
+import React from "react";
+import TWBS from "react-bootstrap";
 
 // Events
-var EventBus = require("./DebugTools/EventBus");
+import EventBus from "./DebugTools/EventBus";
 
 // Tabs
-var RPC           = require("./DebugTools/RPC");
-var Events        = require("./DebugTools/Events");
-var Subscriptions = require("./DebugTools/Subscriptions");
-var Tasks         = require("./DebugTools/Tasks");
-var Options       = require("./DebugTools/Options");
-var Terminal      = require("./DebugTools/Terminal");
+import RPC from "./DebugTools/RPC";
+import Events from "./DebugTools/Events";
+import Subscriptions from "./DebugTools/Subscriptions";
+import Tasks from "./DebugTools/Tasks";
+import Options from "./DebugTools/Options";
+import Terminal from "./DebugTools/Terminal";
 
 // Local variables
 var initialPanelHeight;
@@ -27,7 +27,7 @@ var initialY;
 
 var DebugTools = React.createClass({
 
-    getInitialState: function() {
+    getInitialState: function () {
       return {
           isVisible   : false
         , panelHeight : 350
@@ -65,7 +65,7 @@ var DebugTools = React.createClass({
       }
     }
 
-  , toggleVisibility: function() {
+  , toggleVisibility: function () {
       if ( this.state.isVisible ) {
         this.setState({ isVisible: false });
       } else {
@@ -73,17 +73,17 @@ var DebugTools = React.createClass({
       }
   }
 
-  , componentDidMount: function() {
+  , componentDidMount: function () {
       EventBus.addListener( this.toggleVisibility );
       window.addEventListener("keyup", this.handleKeypress );
     }
 
-  , componentWillUnmount: function() {
+  , componentWillUnmount: function () {
       EventBus.removeListener( this.toggleVisibility );
       window.removeEventListener("keyup", this.handleKeypress );
     }
 
-  , render: function() {
+  , render: function () {
     var content = null;
 
     if ( this.state.isVisible ) {
