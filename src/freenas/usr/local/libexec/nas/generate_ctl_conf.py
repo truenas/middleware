@@ -172,8 +172,10 @@ def main():
             addline("target %s {\n" % target.iscsi_target_name)
         else:
             addline("target %s:%s {\n" % (target_basename, target.iscsi_target_name))
-        if target.iscsi_target_name:
-            addline("\talias %s\n" % target.iscsi_target_name)
+        if target.iscsi_target_alias:
+            addline("\talias \"%s\"\n" % target.iscsi_target_alias)
+        elif target.iscsi_target_name:
+            addline("\talias \"%s\"\n" % target.iscsi_target_name)
         if not has_auth:
             addline("\tauth-group no-authentication\n")
         else:
