@@ -60,23 +60,23 @@ def read_config(filename):
 
 
 def do_init(control, db_dir):
-    return subprocess.call(control, db_dir, 'init')
+    return subprocess.call([control, db_dir, 'init'])
 
 
 def do_start_forked(control, db_dir):
-    return subprocess.call(control, db_dir, 'start')
+    return subprocess.call([control, db_dir, 'start'])
 
 
 def do_stop_forked(control, db_dir):
-    return subprocess.call(control, db_dir, 'stop')
+    return subprocess.call([control, db_dir, 'stop'])
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
-    parser.add_argument('--init', help='Initialize datastore directory')
-    parser.add_argument('--start-forked')
-    parser.add_argument('--stop-forked')
+    parser.add_argument('--init', action='store_true', help='Initialize datastore directory')
+    parser.add_argument('--start-forked', action='store_true')
+    parser.add_argument('--stop-forked', action='store_true')
     args = parser.parse_args()
     config = read_config(args.c)
 
