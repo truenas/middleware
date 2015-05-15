@@ -710,13 +710,16 @@ class SNMPForm(ModelForm):
         super(SNMPForm, self).__init__(*args, **kwargs)
         self.fields['snmp_v3'].widget.attrs['onChange'] = (
             'toggleGeneric("id_snmp_v3", ["id_snmp_v3_password", '
-            '"id_snmp_v3_password2"], true);'
+            '"id_snmp_v3_password2", "id_snmp_v3_username"], true);'
         )
         if self.instance.id and not self.instance.snmp_v3:
             self.fields['snmp_v3_password'].widget.attrs['disabled'] = (
                 'disabled'
             )
             self.fields['snmp_v3_password2'].widget.attrs['disabled'] = (
+                'disabled'
+            )
+            self.fields['snmp_v3_username'].widget.attrs['disabled'] = (
                 'disabled'
             )
 
