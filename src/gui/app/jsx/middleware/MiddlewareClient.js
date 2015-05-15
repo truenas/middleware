@@ -320,7 +320,8 @@ class MiddlewareClient extends WebSocketClient {
 
 
     if ( MCD.reports( "logging" ) ) {
-      MCD.log( [ "Current pending requests:", this.pendingRequests ] );
+      MCD.info( "Current pending requests:" );
+      MCD.dir( this.pendingRequests );
     }
   }
 

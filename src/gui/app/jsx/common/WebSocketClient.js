@@ -89,7 +89,9 @@ class WebSocketClient {
     if ( window.WebSocket ) {
       if ( !this.socket || force ) {
 
-        DL.info( "Creating WebSocket instance" );
+        if ( DL.reports( "connection" ) ) {
+          DL.info( "Creating WebSocket instance" );
+        }
 
         if ( force ) {
           DL.warn( "Forcing creation of new WebSocket instance" );
