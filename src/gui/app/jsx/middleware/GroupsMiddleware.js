@@ -29,7 +29,7 @@ module.exports = {
   , createGroup: function ( newGroupProps ) {
     MiddlewareClient.request( "task.submit"
                             , [ "groups.create" , [ newGroupProps ] ]
-                            , createGroupCallback
+                            , this.createGroupCallback
                             );
   }
 
@@ -40,7 +40,7 @@ module.exports = {
   , updateGroup: function ( groupID, props ) {
     MiddlewareClient.request( "task.submit"
                             , [ "groups.update", [ groupID, props ]]
-                            , updateGroupCallback
+                            , this.updateGroupCallback
                             );
   }
 
@@ -51,7 +51,7 @@ module.exports = {
   , deleteGroup: function ( groupID ) {
     MiddlewareClient.request( "task.submit"
                             , [ "groups.delete", [ groupID ] ]
-                            , deleteGroupCallback
+                            , this.deleteGroupCallback
                             );
   }
 
