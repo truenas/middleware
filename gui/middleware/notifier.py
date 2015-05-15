@@ -5437,10 +5437,9 @@ class notifier:
                 os.unlink(SYSTEMPATH)
             os.mkdir(SYSTEMPATH)
 
-        system_dataset = '%s/.system' % volume.vol_name
-        aclmode = self.get_dataset_aclmode(system_dataset)
-        if aclmode and aclmode.lower() == 'restricted': 
-            self.set_dataset_aclmode(system_dataset, 'passthrough')
+        aclmode = self.get_dataset_aclmode(basename)
+        if aclmode and aclmode.lower() == 'restricted':
+            self.set_dataset_aclmode(basename, 'passthrough')
 
         if mount:
             self.system_dataset_mount(volume.vol_name, SYSTEMPATH)
