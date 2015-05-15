@@ -17,8 +17,9 @@ const DEBUGCSS =
 class DebugLogger {
 
   constructor ( namespace, defaultType ) {
-    this.defaultType = defaultType || "log";
     this.namespace = namespace || null;
+    this.defaultType = defaultType || "log";
+    this.DEBUGCSS = DEBUGCSS;
   }
 
   reports ( flag ) {
@@ -33,17 +34,31 @@ class DebugLogger {
     return false;
   }
 
-  static formatOutput () {
+  formatOutput ( contents, css ) {
     let output = [];
 
-    if ( _.isArray( contents ) ) {
-      output.concat( contents );
-    } else {
-      output.push( contents );
+    if ( contents && contents.length ) {
+      if ( _.isArray( contents ) ) {
+
+        output = output.concat( contents );
+
+      } else if ( _.isString( contents ) ) {
+
+        output.push( contents );
+
+      }
     }
 
-    if ( _.isArray( css ) && css.length ) {
-      output.concat( css.map( style => DEBUGCSS[ style ] ) );
+    if ( css && css.length ) {
+      if ( _.isArray( css ) && css.length ) {
+
+        output = output.concat( css.map( style => this.DEBUGCSS[ style ] ) );
+
+      } else if ( _.isString( css ) && this.DEBUGCSS[ css ] ) {
+
+        output.push( this.DEBUGCSS[ css ] )
+
+      }
     }
 
     return output;
@@ -59,17 +74,11 @@ class DebugLogger {
         case "table":
         case "trace":
         case "warn":
-          console[ type ]
-            .apply( null
-                  , this.constructor.formatOutput( contents, css )
-                  );
+          console[ type ]( ...this.formatOutput( contents, css ) );
           break;
 
         default:
-          console.log
-            .apply( null
-                  , this.constructor.formatOutput( contents, css )
-                  );
+          console.log( ...this.formatOutput( contents, css ) );
           break;
       }
     }
@@ -77,25 +86,25 @@ class DebugLogger {
 
   // Shortcut methods aliasing write(). Reduces clutter in calls.
   dir () {
-    this.write.apply( [ "dir" ].concat( arguments ) )
+    this.write( "dir", ...arguments )
   }
   error () {
-    this.write.apply( [ "error" ].concat( arguments ) )
+    this.write( "error", ...arguments )
   }
   info () {
-    this.write.apply( [ "info" ].concat( arguments ) )
+    this.write( "info", ...arguments )
   }
   log () {
-    this.write.apply( [ "log" ].concat( arguments ) )
+    this.write( "log", ...arguments )
   }
   table () {
-    this.write.apply( [ "table" ].concat( arguments ) )
+    this.write( "table", ...arguments )
   }
   trace () {
-    this.write.apply( [ "trace" ].concat( arguments ) )
+    this.write( "trace", ...arguments )
   }
   warn () {
-    this.write.apply( [ "warn" ].concat( arguments ) )
+    this.write( "warn", ...arguments )
   }
 
   group ( type, flag, heading, contents, css ) {
