@@ -50,6 +50,13 @@ class MessageType(enum.IntEnum):
     MACH_MSG_TYPE_MAKE_SEND_ONCE = mach.MACH_MSG_TYPE_MAKE_SEND_ONCE
 
 
+class DescriptorType(enum.IntEnum):
+    MACH_MSG_PORT_DESCRIPTOR = mach.MACH_MSG_PORT_DESCRIPTOR
+    MACH_MSG_OOL_DESCRIPTOR = mach.MACH_MSG_OOL_DESCRIPTOR
+    MACH_MSG_OOL_PORTS_DESCRIPTOR = mach.MACH_MSG_OOL_PORTS_DESCRIPTOR
+    MACH_MSG_OOL_VOLATILE_DESCRIPTOR = mach.MACH_MSG_OOL_VOLATILE_DESCRIPTOR
+
+
 class KernReturn(enum.IntEnum):
     KERN_SUCCESS = mach.KERN_SUCCESS
     KERN_INVALID_ADDRESS = mach.KERN_INVALID_ADDRESS
@@ -246,6 +253,14 @@ cdef class Port:
         return msg
 
 
+
+cdef class MessageDescriptor:
+    cdef mach.mach_msg_type_descriptor_t desc
+
+    def __init__(self, typ):
+        pass
+
+
 cdef class Message:
     cdef mach.mach_msg_header_t *msg
     cdef char *buffer
@@ -289,7 +304,6 @@ cdef class Message:
 
         def __set__(self, value):
             self.msg.msgh_id = value
-
 
     property remote_port:
         def __get__(self):

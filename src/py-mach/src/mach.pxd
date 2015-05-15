@@ -77,6 +77,7 @@ cdef extern from "mach/kern_return.h":
 
 
 cdef extern from "mach/mach.h" nogil:
+    ctypedef int boolean_t
     ctypedef int mach_msg_return_t
     ctypedef int mach_msg_option_t
     ctypedef int mach_msg_size_t
@@ -92,6 +93,8 @@ cdef extern from "mach/mach.h" nogil:
     ctypedef int kern_return_t
     ctypedef int ipc_space_t
     ctypedef int mach_msg_type_name_t
+    ctypedef int mach_msg_copy_options_t
+    ctypedef int mach_msg_descriptor_type_t
 
     ctypedef struct mach_msg_header_t:
         mach_msg_bits_t msgh_bits
@@ -105,11 +108,26 @@ cdef extern from "mach/mach.h" nogil:
         mach_msg_trailer_type_t msgh_trailer_type
         mach_msg_trailer_size_t msgh_trailer_size
 
+    ctypedef struct mach_msg_type_descriptor_t:
+        void* pad1
+        mach_msg_size_t pad2
+        unsigned int pad3
+        mach_msg_descriptor_type_t type
+
     ctypedef struct mach_msg_port_descriptor_t:
-        pass
+        mach_port_t name
+        mach_msg_size_t pad1
+        unsigned int pad2
+        mach_msg_type_name_t disposition
+        mach_msg_descriptor_type_t type
 
     ctypedef struct mach_msg_ool_descriptor_t:
-        pass
+        void* address
+        mach_msg_size_t size
+        boolean_t deallocate
+        mach_msg_copy_options_t copy
+        unsigned int pad1
+        mach_msg_descriptor_type_t type
 
     mach_msg_return_t mach_msg(mach_msg_header_t *msg, mach_msg_option_t option, mach_msg_size_t send_size,
                                mach_msg_size_t rcv_size, mach_port_t rcv_name, mach_msg_timeout_t timeout,
@@ -142,7 +160,13 @@ cdef extern from "mach/message.h" nogil:
         MACH_MSG_TYPE_COPY_SEND
         MACH_MSG_TYPE_MAKE_SEND
         MACH_MSG_TYPE_MAKE_SEND_ONCE
-        
+
+    enum:
+        MACH_MSG_PORT_DESCRIPTOR
+        MACH_MSG_OOL_DESCRIPTOR
+        MACH_MSG_OOL_PORTS_DESCRIPTOR
+        MACH_MSG_OOL_VOLATILE_DESCRIPTOR
+
     enum:
         MACH_MSG_SUCCESS
         MACH_MSG_MASK
