@@ -16,75 +16,74 @@ import EventBus from "./DebugTools/EventBus";
 
 // Path definitions
 // TODO: Convert to Flux or other external file
-var paths = [
-  {
-      path     : "dashboard"
+const paths =
+  [ { path     : "dashboard"
     , icon     : "dashboard"
     , label    : "Dashboard"
     , status   : "danger"
     , disabled : false
-  },{
-      path     : "accounts"
-    , icon     : "paper-plane"
-    , label    : "Accounts"
-    , status   : null
-    , disabled : false
-  },{
-      path     : "tasks"
-    , icon     : "paw"
-    , label    : "Tasks"
-    , status   : null
-    , disabled : true
-  },{
-      path     : "network"
-    , icon     : "moon-o"
-    , label    : "Network"
-    , status   : null
-    , disabled : false
-  },{
-      path     : "storage"
+    }
+  , { path     : "storage"
     , icon     : "magic"
     , label    : "Storage"
     , status   : null
     , disabled : true
-  },{
-      path     : "sharing"
+    }
+  , { path     : "network"
+    , icon     : "moon-o"
+    , label    : "Network"
+    , status   : null
+    , disabled : false
+    }
+  , { path     : "sharing"
     , icon     : "cut"
     , label    : "Sharing"
     , status   : null
     , disabled : true
-  },{
-      path     : "services"
+    }
+  , { path     : "services"
     , icon     : "bitcoin"
     , label    : "Services"
     , status   : null
     , disabled : false
-  },{
-      path     : "system-tools"
+    }
+  , { path     : "accounts"
+    , icon     : "paper-plane"
+    , label    : "Accounts"
+    , status   : null
+    , disabled : false
+    }
+  , { path     : "tasks"
+    , icon     : "paw"
+    , label    : "Tasks"
+    , status   : null
+    , disabled : true
+    }
+  , { path     : "system-tools"
     , icon     : "ambulance"
     , label    : "System Tools"
     , status   : "warning"
     , disabled : false
-  },{
-      path     : "control-panel"
+    }
+  , { path     : "control-panel"
     , icon     : "paragraph"
     , label    : "Control Panel"
     , status   : null
     , disabled : true
-  },{
-      path     : "power"
+    }
+  , { path     : "power"
     , icon     : "plug"
     , label    : "Power"
     , status   : null
     , disabled : false
-  }
-];
+    }
+  ];
 
-var menuTiming = 600;
+const menuTiming = 600;
 
-var PrimaryNavigation = React.createClass({
+const PrimaryNavigation = React.createClass(
 
-    getInitialState: function () {
+  { getInitialState: function () {
       return { expanded: true };
     }
 
@@ -96,7 +95,7 @@ var PrimaryNavigation = React.createClass({
       });
     }
 
-  , handleMenuToggle: function( event ) {
+  , handleMenuToggle: function ( event ) {
       event.stopPropagation();
 
       if ( this.state.expanded ) {
@@ -107,95 +106,105 @@ var PrimaryNavigation = React.createClass({
     }
 
   , expandMenu: function () {
-      var expandSequence = [
-        {   elements   : this.refs.navRoot.getDOMNode()
-          , properties : { width: this.state.fullNavWidth }
-          , options    : {
-                duration : menuTiming
-              , easing   : "easeInOutBounce"
-            }
-        },{
-            elements      : document.getElementsByClassName("nav-item-label")
-          , properties    : "fadeIn"
-          , options: {
-                duration      : menuTiming
-              , sequenceQueue : false
-              , complete      : this.setState({ expanded: true })
-            }
-        }
-      ];
+      const expandSequence =
+        [ { elements: this.refs.navRoot.getDOMNode()
+          , properties: { width: this.state.fullNavWidth }
+          , options: { duration: menuTiming
+                     , easing: "easeInOutBounce"
+                     }
+          }
+        , { elements: document.getElementsByClassName( "nav-item-label" )
+          , properties: "fadeIn"
+          , options: { duration: menuTiming
+                     , sequenceQueue: false
+                     , complete: this.setState({ expanded: true })
+                     }
+          }
+        ];
 
       Velocity.RunSequence( expandSequence );
     }
 
   , collapseMenu: function () {
-      var expandSequence = [
-        {   elements   : this.refs.navRoot.getDOMNode()
-          , properties : { width: "60px" }
-          , options    : {
-                duration : menuTiming
-              , easing   : "easeInOutBounce"
-            }
-        },{
-            elements      : document.getElementsByClassName("nav-item-label")
-          , properties    : "fadeOut"
-          , options: {
-                duration      : menuTiming
-              , sequenceQueue : false
-              , complete      : this.setState({ expanded: false })
-            }
-        }
-      ];
+      const collapseSequence =
+        [ { elements: this.refs.navRoot.getDOMNode()
+          , properties: { width: "60px" }
+          , options: { duration: menuTiming
+                     , easing: "easeInOutBounce"
+                     }
+          }
+        , { elements: document.getElementsByClassName( "nav-item-label" )
+          , properties: "fadeOut"
+          , options: { duration: menuTiming
+                     , sequenceQueue: false
+                     , complete: this.setState({ expanded: false })
+                     }
+          }
+        ];
 
-      Velocity.RunSequence( expandSequence );
+      Velocity.RunSequence( collapseSequence );
+    }
+
+  , createNavItem ( rawItem, index ) {
+      if ( rawItem["disabled"] ) {
+        return (
+          <li
+            role = "presentation"
+            className = "nav-item disabled"
+            key = { index } >
+            <a href = "#">
+              <Icon
+                glyph = { rawItem["icon"] }
+                badgeContent = { rawItem["status"]
+                             ? "!"
+                             : "" /* TODO: Better content, from Flux store */
+                             }
+                badgeStyle = { rawItem["status"] } />
+              <span className = "nav-item-label" >{ rawItem["label"] }</span>
+            </a>
+          </li>
+        );
+      } else {
+        return (
+          <li
+            role = "presentation"
+            className = "nav-item"
+            key = { index } >
+            <Link to = { rawItem["path"] } >
+              <Icon
+                glyph = { rawItem["icon"] }
+                badgeContent = { rawItem["status"]
+                             ? "!"
+                             : "" /* TODO: Better content, from Flux store */
+                             }
+                badgeStyle = { rawItem["status"] } />
+              <span className = "nav-item-label" >{ rawItem["label"] }</span>
+            </Link>
+          </li>
+        );
+      }
     }
 
   , render: function () {
-      var createNavItem = function ( rawItem, index ) {
-        if ( rawItem["disabled"] ) {
-          return (
-            <li
-              role      = "presentation"
-              className = "nav-item disabled"
-              key       = { index } >
-              <a href="#">
-                <Icon glyph        = { rawItem["icon"] }
-                      badgeContent = { rawItem["status"] ? "!" : "" /* TODO: Better content, from Flux store */ }
-                      badgeStyle   = { rawItem["status"] } />
-                <span className = "nav-item-label" >{ rawItem["label"] }</span>
-              </a>
-            </li>
-          );
-        } else {
-          return (
-            <li
-              role      = "presentation"
-              className = "nav-item"
-              key       = { index } >
-              <Link to = { rawItem["path"] } >
-                <Icon glyph        = { rawItem["icon"] }
-                      badgeContent = { rawItem["status"] ? "!" : "" /* TODO: Better content, from Flux store */ }
-                      badgeStyle   = { rawItem["status"] } />
-                <span className = "nav-item-label" >{ rawItem["label"] }</span>
-              </Link>
-            </li>
-          );
-        }
-      };
-
       // TODO: Revert changes made for #7908 once externally resolved.
       return (
-        <TWBS.Nav stacked
-                  ref       = "navRoot"
-                  className = "primary-nav">
-          <div className= "primary-nav-label-toggle"
-               onClick  = { this.handleMenuToggle }>
+        <TWBS.Nav
+          stacked
+          ref = "navRoot"
+          className = "primary-nav" >
+          <div
+            className = "primary-nav-label-toggle"
+            onClick = { this.handleMenuToggle } >
             {"…"}
           </div>
 
-          { paths.map( createNavItem ) }
+          { paths.map( this.createNavItem ) }
 
-          <button className="btn btn-info primary-nav-debug-button" onClick={ function() { EventBus.emitToggle(); } }>Toggle Debug Tools</button>
+          <button
+            className="btn btn-info primary-nav-debug-button"
+            onClick={ EventBus.emitToggle.bind( this ) }>
+            Toggle Debug Tools
+          </button>
 
         </TWBS.Nav>
       );
