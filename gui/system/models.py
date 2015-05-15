@@ -662,13 +662,16 @@ class CertificateBase(Model):
 
     def get_certificate(self):
         certificate = None
-        if self.cert_certificate:
-            certificate = crypto.load_certificate(
-                crypto.FILETYPE_PEM,
-                self.cert_certificate
-            )
+        try:
+            if self.cert_certificate:
+                certificate = crypto.load_certificate(
+                    crypto.FILETYPE_PEM,
+                    self.cert_certificate
+                )
+        except:
+            pass
         return certificate
-            
+
     def get_privatekey(self):
         privatekey = None
         if self.cert_privatekey:
