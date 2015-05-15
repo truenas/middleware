@@ -10,166 +10,257 @@
 
 import _ from "lodash";
 
-import freeNASUtil from "../common/freeNASUtil";
+import WebSocketClient
+  from "../common/WebSocketClient";
+import freeNASUtil
+  from "../common/freeNASUtil";
+import MCD
+  from "./MiddlewareClientDebug";
 
-import SubscriptionsStore from "../stores/SubscriptionsStore";
-import SubscriptionsActionCreators from "../actions/SubscriptionsActionCreators";
+import SubscriptionsStore
+  from "../stores/SubscriptionsStore";
+import SubscriptionsActionCreators
+  from "../actions/SubscriptionsActionCreators";
 
-import MiddlewareStore from "../stores/MiddlewareStore";
-import MiddlewareActionCreators from "../actions/MiddlewareActionCreators";
+import MiddlewareStore
+  from "../stores/MiddlewareStore";
+import MiddlewareActionCreators
+  from "../actions/MiddlewareActionCreators";
 
-import SessionStore from "../stores/SessionStore";
+import SessionStore
+  from "../stores/SessionStore";
 
-import myCookies from "./cookies";
+import sessionCookies
+  from "./cookies";
 
 
-function MiddlewareClient ( ) {
+const defaultTimeoutDelay = 10000;
 
-  var DEBUG = function ( flag ) {
-    if ( typeof window === "undefined" ) {
-      return null;
-    } else if ( window.DEBUG_FLAGS && window.DEBUG_FLAGS.MIDDLEWARE_CLIENT_DEBUG ) {
-      return window.DEBUG_FLAGS.MIDDLEWARE_CLIENT_DEBUG[ flag ];
+class MiddlewareClient extends WebSocketClient {
+
+  constructor () {
+    super();
+    this.queuedLogin = null;
+    this.queuedActions = [];
+    this.pendingRequests = {};
+
+    // On a successful login, dequeue any actions which may have been requested
+    // either before the connection was made, or before the authentication was
+    // complete.
+    SessionStore.addChangeListener( this.dequeueActions.bind( this ) );
+  }
+
+
+  // WEBSOCKET DATA HANDLERS
+  // Instance methods for handling data from the WebSocket connection. These are
+  // inherited from the WebSocketClient base class, which implements core
+  // functionality.
+
+  // Triggered by the WebSocket's onopen event.
+  handleOpen () {
+    super.handleOpen();
+
+    // Dispatch message stating that we have just connected
+    MiddlewareActionCreators.updateSocketState( "connected" );
+
+    // Re-subscribe to any namespaces that may have been active during the
+    // session. On the first login, this will do nothing.
+    this.renewSubscriptions();
+
+    if ( SessionStore.getLoginStatus() === false ) {
+      if ( sessionCookies.obtain( "auth" ) !== null ) {
+        // If our cookies contain a usable auth token, attempt a login
+        this.login( "token", sessionCookies.obtain( "auth" ) );
+      } else if ( this.queuedLogin ) {
+        // If the connection opens and we aren't authenticated, but we have a
+        // queued login, dispatch the login and reset its variable.
+        this.logPendingRequest( this.queuedLogin.id
+                              , this.queuedLogin.successCallback
+                              , this.queuedLogin.errorCallback
+                              , null
+                              );
+        this.socket.send( this.queuedLogin.action );
+        this.queuedLogin = null;
+
+        if ( MCD.reports( "queues" ) ) {
+          MCD.info( `Resolving queued login %c${ this.queuedLogin.id }`
+                  , [ "uuid" ]
+                  );
+          MCD.dir( this.queuedLogin.action );
+        }
+      }
+    } else {
+      MiddlewareActionCreators.receiveAuthenticationChange( "", false );
+    }
+  }
+
+  // Triggered by the WebSocket's `onclose` event. Performs any cleanup
+  // necessary to allow for a clean session end and prepares for a new session.
+  handleClose () {
+    super.handleClose();
+    this.queuedLogin = null;
+    this.queuedActions = [];
+
+    if ( MCD.reports( "connection" ) ) {
+      MCD.info( "WebSocket connection closed" );
+    }
+
+    // Dispatch logout status
+    MiddlewareActionCreators.receiveAuthenticationChange( "", false );
+    MiddlewareActionCreators.updateSocketState( "disconnected" );
+  }
+
+  // Triggered by the WebSocket's `onmessage` event. Parses the JSON from the
+  // middleware's response, and then performs followup tasks depending on the
+  // message's namespace.
+  handleMessage ( message ) {
+    super.handleMessage();
+    let data;
+    try {
+      data = JSON.parse( message.data );
+    } catch ( error ) {
+      MCD.error( [ "Could not parse JSON from message:", message ] );
+      return false;
+    }
+
+    if ( MCD.reports( "messages" ) ) {
+      MCD.info( [ "Message from Middleware:", data.namespace, message ] );
+    }
+
+    switch ( data.namespace ) {
+
+      // A FreeNAS event has occurred
+      case "events":
+        if ( MCD.reports( "messages" ) ) {
+          MCD.log( "Message contained event data" );
+        }
+        MiddlewareActionCreators.receiveEventData( data );
+        break;
+
+      // An RPC call is returning a response
+      case "rpc":
+        switch ( data.name ) {
+          case "response":
+            this.resolvePendingRequest( data.id, data.args, "success" );
+            break;
+
+          case "error":
+            this.resolvePendingRequest( data.id, data.args, "error" );
+            break;
+
+          default:
+            MCD.warn( "Was sent an rpc message from middleware, the client " +
+                      "was unable to identify its purpose:" );
+            MCD.log( message );
+            break;
+        }
+        break;
+
+      // There was an error with a request or with its execution on FreeNAS
+      case "error":
+        if ( MCD.reports( "messages" ) ) {
+          MCD.error( [ "Middleware has indicated an error:", data.args ] );
+        }
+        break;
+
+      // A reply was sent from the middleware with no recognizable namespace
+      // This shouldn't happen, and probably indicates a problem with the
+      // middleware itself.
+      default:
+        MCD.warn( "Spurious reply from Middleware:", message );
+        break;
     }
   };
 
-  var debugCSS = { idColor      : "color: rgb(33, 114, 218);"
-                 , argsColor    : "color: rgb(215, 110, 20); font-style: italic;"
-                 , errorColor   : "color: rgb(235, 15, 15);"
-                 , codeStyle    : "color: rgb(62, 28, 86);"
-                 , defaultStyle : ""
+  // CONNECTION ERRORS
+  // Triggered by the WebSocket's `onerror` event. Handles errors
+  // With the client connection to the middleware.
+  handleError ( error ) {
+    super.handleError();
+    if ( MCD.reports( "connection" ) ) {
+      MCD.error( "The WebSocket connection to the Middleware encountered " +
+                 "an error:"
+               , [ "error" ]
+               );
+    }
   };
 
-  var socket          = null;
-  var requestTimeout  = 10000;
-  var queuedLogin     = null;
-  var queuedActions   = [];
-  var pendingRequests = {};
+  // REQUEST TIMEOUTS
+  // Called by a request function without a matching response. Automatically
+  // triggers resolution of the request with a "timeout" status.
+  handleTimeout ( reqID ) {
 
-  // Counter for stepped timeout
-  this.k = 0;
-  // Modified fibonacci series to use with stepped Timeout
-  this.modFibonacci = [ 5000, 8000, 13000, 21000, 34000 ];
-
-  // UTILITY FUNCTIONS
-
-  // Timer object (code taken from: http://stackoverflow.com/questions/3144711/javascript-find-the-time-left-in-a-settimeout/20745721#20745721)
-  // the above code is modified to be able to suit what we need it to do
-  // This is primarily needed so that the reconnection interval can be
-  // obtained at the same time while the timer is in use.
-  // delay is to be specified in milliseconds (example 10000 for 10 seconds)
-  var ReconnectTimer = function ( doAfter, delay ) {
-    var id, started, running;
-    var remaining = 0;
-    if ( delay && typeof delay !== "undefined" ) {
-      remaining = delay;
+    if ( MCD.reports( "messages" ) ) {
+      MCD.warn( `Request %c'${ reqID }'%c timed out without a response from ` +
+                `the middleware`
+              , [ "uuid", "normal" ]
+              );
     }
 
-    this.start = function ( delay ) {
-      // console.log( "suraj in ReconnetTimers start" );
-      if ( delay ) {
-        remaining = delay;
-      }
-      running = true;
-      started = new Date();
-      id = setTimeout( doAfter, remaining );
-    };
-
-    this.pause = function ( ) {
-      running = false;
-      clearTimeout( id );
-      remaining -= new Date() - started;
-    };
-
-    this.getTimeLeft = function ( ) {
-      remaining -= new Date() - started;
-      return remaining;
-    };
-
-    this.isRunning = function ( ) {
-      remaining -= new Date() - started;
-      if ( remaining <= 0 ) {
-        running = false;
-        // console.log( "suraj clearing the timeout" );
-        clearTimeout( id );
-      }
-      return running;
-    };
-
-    this.stop = function ( ) {
-      clearTimeout( id );
-      running = false;
-      //doAfter = null;
-      remaining = 0;
-    };
-
+    this.resolvePendingRequest( reqID, null, "timeout" );
   };
 
-  // Publically accessible reconectHandle
-  this.reconnectHandle = new ReconnectTimer ( function ( ) {
-    var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
-    this.connect( protocol + document.domain + ":5000/socket" );
-  }.bind( this ) );
+  // DATA AND REQUEST HANDLING
 
   // Creates a JSON-formatted object to send to the middleware. Contains the
   // following key-values:
-  // "namespace" : The target middleware namespace. (eg. "rpc", "events")
-  // "name"      : Name of middleware action within the namespace (eg.
-  //               "subscribe", "auth")
-  // "args"      : The arguments to be used by the middleware action (eg. username
-  //               and password)
-  // "id"        : The unique UUID used to identify the origin and response
-  //               If left blank, `generateUUID` will be called. This is a
-  //               fallback, and will likely result in a "Spurious reply" error
-  function pack ( namespace, name, args, id ) {
-    if ( DEBUG( "packing" ) ) {
-      var validPack = true;
+  // "namespace": The target middleware namespace. (eg. "rpc", "events")
+  // "name": Name of middleware action within the namespace
+  //         (eg. "subscribe", "auth")
+  // "args": The arguments to be used by the middleware action
+  //         (eg. username and password)
+  // "id": The unique UUID used to identify the origin and response If left
+  //       blank, `generateUUID` will be called. This is a fallback, and will
+  //       likely result in a "Spurious reply" error
+  pack ( namespace, name, args, id ) {
+    if ( MCD.reports( "packing" ) ) { MCD.logPack( ...arguments ); }
 
-      if ( typeof namespace !== "string" )             { validPack = false; console.warn( "BAD PACK: Provided namespace was not a string for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
-      if ( typeof name !== "string" )                  { validPack = false; console.warn( "BAD PACK: Provided name was not a string for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
-      if ( typeof args === ( "null" || "undefined" ) ) { validPack = false; console.warn( "BAD PACK: Provided args value was null or undefined for request %c'" + id + "'%c", debugCSS.idColor, debugCSS.defaultStyle ); }
-      if ( typeof id !== "string" )                    { validPack = false; console.warn( "BAD PACK: UUID %c'" + id + "'%c for '" + namespace + "'" + ( args ? ":" + args : "" ) + " had to be generated because none was provided", debugCSS.idColor, debugCSS.defaultStyle ); }
-
-      if ( validPack ) {
-        console.info( "Packed request %c'" + id + "'%c successfully.", debugCSS.idColor, debugCSS.defaultStyle );
-      } else {
-        console.log( "Dump of bad pack:", { "namespace" : namespace
-                                          , "name"      : name
-                                          , "id"        : id
-                                          , "args"      : args
-                    });
+    return JSON.stringify(
+      { namespace: namespace
+      , name: name
+      , id: id
+      , args: args
       }
-    }
+    );
 
-    return JSON.stringify({ "namespace" : namespace
-                          , "name"      : name
-                          , "id"        : id
-                          , "args"      : args
-    });
   }
 
   // Based on the status of the WebSocket connection and the authentication
   // state, either logs and sends an action, or enqueues it until it can be sent
-  function processNewRequest ( packedAction, successCallback, errorCallback, requestID, customTimeout ) {
+  processNewRequest ( action, onSuccess, onError, id, timeout ) {
+    if ( this.socket ) {
+      if ( this.socket.readyState === 1 && SessionStore.getLoginStatus() ) {
 
-    if ( socket.readyState === 1 && SessionStore.getLoginStatus() ) {
+        if ( MCD.reports( "logging" ) ) {
+          MCD.info( `Logging and sending request %c'${ id }'`
+                  , [ "uuid" ]
+                  );
+          MCD.dir( action )
+        }
 
-      if ( DEBUG( "logging" ) ) { console.info( "Logging and sending request %c'" + requestID + "'", debugCSS.idColor, { requestID : packedAction } ); }
+        this.logPendingRequest( id, onSuccess, onError, action, timeout );
+        this.socket.send( action );
 
-      logPendingRequest( requestID, successCallback, errorCallback, packedAction, customTimeout );
-      socket.send( packedAction );
+      } else {
 
+        if ( MCD.reports( "queues" ) ) {
+          MCD.info( `Enqueueing request %c'${ id }'`, [ "uuid" ] );
+        }
+
+        this.queuedActions.push(
+          { action: action
+          , id: id
+          , successCallback: onSuccess
+          , errorCallback: onError
+          , timeout: timeout
+          }
+        );
+
+      }
     } else {
-
-      if ( DEBUG( "queues" ) ) { console.info( "Enqueueing request %c'" + requestID + "'", debugCSS.idColor ); }
-
-      queuedActions.push({ action          : packedAction
-                         , id              : requestID
-                         , successCallback : successCallback
-                         , errorCallback   : errorCallback
-                         , customTimeout   : customTimeout
-                        });
-
+      MCD.error(
+        "Tried to process a request without an active WebSocket connection"
+      );
     }
 
   }
@@ -178,491 +269,361 @@ function MiddlewareClient ( ) {
   // and before the login credentials have been accepted. These requests are
   // enqueued by the `login` and `request` functions into the `queuedActions`
   // object and `queuedLogin`, and then are dequeued by this function.
-  function dequeueActions () {
+  dequeueActions () {
 
-    if ( DEBUG( "queues" ) && queuedActions.length ) { console.log( "Attempting to dequeue actions" ); }
+    if ( MCD.reports( "queues" ) && this.queuedActions.length ) {
+      MCD.log( "Attempting to dequeue actions" );
+    }
 
     if ( SessionStore.getLoginStatus() ) {
-      while ( queuedActions.length ) {
-        var item = queuedActions.shift();
+      while ( this.queuedActions.length ) {
+        let request = this.queuedActions.shift();
 
-        if ( DEBUG( "queues" ) ) { console.log( "Dequeueing %c'" + item.id + "'", debugCSS.idColor ); }
+        if ( MCD.reports( "queues" ) ) {
+          MCD.log( `Dequeueing %c'${ request.id }'`, [ "uuid" ] );
+        }
 
-        processNewRequest( item.action, item.successCallback, item.errorCallback, item.id, item.customTimeout );
+        this.processNewRequest( request.action
+                              , request.successCallback
+                              , request.errorCallback
+                              , request.id
+                              , request.timeout
+                              );
       }
-    } else if ( DEBUG( "queues" ) && queuedActions.length ) { console.info( "Middleware not authenticated, cannot dequeue actions" ); }
+    } else if ( MCD.reports( "queues" ) && this.queuedActions.length ) {
+      MCD.info( "Cannot dequeue actions: Client is not authenticated" );
+    }
   }
 
   // Records a middleware request that was sent to the server, stored in the
-  // private `pendingRequests` object. These are eventually resolved and
+  // constructor's `pendingRequests` object. These are eventually resolved and
   // removed, either by a response from the server, or the timeout set here.
-  // the timeout can be specified whilst making the original request call to the
-  // middlewareClient, if not then the default of "requestTimeout" (it being 10000 --> 10 secs)
-  // will be used instead
-  function logPendingRequest ( requestID, successCallback, errorCallback, originalRequest, customTimeout ) {
-    var timeout = requestTimeout;
-    if ( typeof customTimeout !== undefined && customTimeout !== "None" && customTimeout ) {
-      timeout = customTimeout;
+  // If `timeoutDelay` is provided, its value will be used for the timeout.
+  // Otherwise, the default timeout (10s) is used.
+  logPendingRequest ( reqID, onSuccess, onError, origReq, timeoutDelay ) {
+
+    const delay = timeoutDelay || defaultTimeoutDelay;
+
+    function requestTimeoutHandler () {
+      this.handleTimeout( reqID );
+    };
+
+    // const newRequest =
+    this.pendingRequests[ reqID ] =
+      { successCallback: onSuccess
+      , errorCallback: onError
+      , origReq: origReq
+      , timeout: setTimeout( requestTimeoutHandler.bind( this ), delay )
+      };
+
+    // this.pendingRequests[ reqID ] = newRequest;
+
+
+    if ( MCD.reports( "logging" ) ) {
+      MCD.log( [ "Current pending requests:", this.pendingRequests ] );
     }
-    var request = { successCallback : successCallback
-                  , errorCallback   : errorCallback
-                  , originalRequest : originalRequest
-                  , timeout : setTimeout(
-                      function ( ) {
-                        handleTimeout( requestID );
-                      }, timeout
-                    )
-                  };
-
-    pendingRequests[ requestID ] = request;
-
-    if ( DEBUG( "logging" ) ) { console.log( "Current pending requests:", pendingRequests ); }
   }
 
   // Resolve a middleware request by clearing its timeout, and optionally
   // calling its callback. Callbacks should not be called if the function timed
   // out before a response was received.
-  function resolvePendingRequest ( requestID, args, outcome ) {
+  resolvePendingRequest ( reqID, args, outcome ) {
 
-    // Add this if for cases in which the requestID is None or undefined
-    // as an example the server side dispatcher will send a None in the
-    // requestID when returing the following error (code 22):
-    // 'Request is not valid JSON'
-    if ( typeof requestID !== undefined && requestID !== "None" ) {
-      clearTimeout( pendingRequests[ requestID ].timeout );
+    // The server side dispatcher will send a None in the reqID when returing
+    // error (code 22): 'Request is not valid JSON'
+    if ( reqID && reqID !== "None" ) {
+      clearTimeout( this.pendingRequests[ reqID ].timeout );
     }
 
     switch ( outcome ) {
       case "success":
-        if ( DEBUG( "messages" ) ) { console.info( "SUCCESS: Resolving request %c'" + requestID + "'", debugCSS.idColor ); }
-        executeRequestSuccessCallback( requestID, args );
+        if ( MCD.reports( "messages" ) ) {
+          MCD.info( `SUCCESS: Resolving request %c'${ reqID }'`, [ "uuid" ] );
+        }
+        this.executeRequestSuccessCallback( reqID, args );
         break;
 
       case "error":
-        var originalRequest;
+        let origReq;
 
         try {
-          originalRequest = JSON.parse( pendingRequests[ requestID ]["originalRequest"] );
+          origReq = JSON.parse( this.pendingRequests[ reqID ]["origReq"] );
         } catch ( err ) {
-          // Don't care about this, I think
+          MCD.error( [ `Could not parse JSON from request %c'${ reqID }'`
+                     , this.pendingRequests[ reqID ]["origReq"]
+                     ]
+                   , [ "uuid" ]
+                   );
         }
 
-        executeRequestErrorCallback( requestID, args );
+        this.executeRequestErrorCallback( reqID, args );
 
         if ( args.message && _.startsWith( args.message, "Traceback" ) ) {
-          console.groupCollapsed( "%cRequest %c'" + requestID + "'%c caused a Python traceback", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
-          if ( originalRequest ) {
-            console.groupCollapsed( "Original request" );
-            console.log( originalRequest );
-            console.groupEnd();
-          }
-          console.groupCollapsed( "Response data" );
-          console.log( args );
-          console.groupEnd();
-          console.log( "%c" + args.message , debugCSS.codeStyle );
-          console.groupEnd();
+          MCD.logPythonTraceback( reqID, args, origReq );
         } else if ( args.code && args.message ) {
-          console.groupCollapsed( "%cERROR %s: Request %c'%s'%c returned: %s", debugCSS.errorColor, args.code, debugCSS.idColor, requestID, debugCSS.errorColor, args.message );
-          if ( originalRequest ) {
-            console.groupCollapsed( "Original request" );
-            console.log( originalRequest );
-            console.groupEnd();
-          }
-          console.log( args );
-          console.groupEnd();
+          MCD.logErrorWithCode( reqID, args, origReq );
         } else {
-          console.groupCollapsed( "%cERROR: Request %c'" + requestID + "'%c returned with an error status", debugCSS.errorColor, debugCSS.idColor, debugCSS.errorColor );
-          if ( originalRequest ) {
-            console.groupCollapsed( "Original request" );
-            console.log( originalRequest );
-            console.groupEnd();
-          }
-          console.log( args );
-          console.groupEnd();
+          MCD.logErrorResponse( reqID, args, origReq );
         }
         break;
 
       case "timeout":
-        if ( DEBUG( "messages" ) ) { console.warn( "TIMEOUT: Stopped waiting for request %c'" + requestID + "'", debugCSS.idColor ); }
-        executeRequestErrorCallback( requestID, args );
+        if ( MCD.reports( "messages" ) ) {
+          MCD.warn( `TIMEOUT: Stopped waiting for request %c'${ reqID }'`
+                  , [ "uuid" ]
+                  );
+        }
+        this.executeRequestErrorCallback( reqID, args );
         break;
 
       default:
         break;
     }
 
-    delete pendingRequests[ requestID ];
+    delete this.pendingRequests[ reqID ];
   }
 
-  // Executes the specified request's successCallback with the provided arguments.
-  // Should only be used in cases where a response has come from the server, and the
-  // status is successful in one way or another. Calling this function when the
-  // server returns an error could cause strange results. Use the errorCallback for that case.
-  function executeRequestSuccessCallback ( requestID, args ) {
-    if ( typeof pendingRequests[ requestID ].successCallback === "function" ) {
-      pendingRequests[ requestID ].successCallback( args );
+  // Executes the specified request's successCallback with the provided
+  // arguments. Should only be used in cases where a response has come from the
+  // server, and the status is successful in one way or another. Calling this
+  // function when the server returns an error could cause strange results.
+  // Use the errorCallback for that case.
+  executeRequestSuccessCallback ( reqID, args ) {
+    if ( _.isFunction( this.pendingRequests[ reqID ].successCallback ) ) {
+      this.pendingRequests[ reqID ].successCallback( args );
     }
   }
 
-
-  function executeRequestErrorCallback ( requestID, args ) {
-    if ( typeof pendingRequests[ requestID ].errorCallback === "function" ) {
-      pendingRequests[ requestID ].errorCallback( args );
+  executeRequestErrorCallback ( reqID, args ) {
+    if ( _.isFunction( this.pendingRequests[ reqID ].errorCallback ) ) {
+      this.pendingRequests[ reqID ].errorCallback( args );
     }
   }
-
-
-  // LIFECYCLE FUNCTIONS
-  // Public methods used to manage the middleware's connection and authentication
-
-  // This method should only be called when there's no existing connection. If for
-  // some reason, the existing connection should be ignored and overridden, supply
-  // `true` as the `force` parameter.
-  this.connect = function ( url, force ) {
-    if ( window.WebSocket ) {
-      if ( !socket || force ) {
-
-        if ( DEBUG( "connection" ) ) { console.info( "Creating WebSocket instance" ); }
-        if ( DEBUG( "connection" ) && force ) { console.warn( "Forcing creation of new WebSocket instance" ); }
-
-        socket = new WebSocket( url );
-        socket.onmessage = handleMessage;
-        socket.onopen    = handleOpen;
-        socket.onerror   = handleError;
-        socket.onclose   = handleClose;
-      } else if ( DEBUG( "connection" ) ) {
-        console.warn( "Attempted to create a new middleware connection while a connection already exists." );
-      }
-    } else if ( DEBUG( "connection" ) ) {
-      console.error( "This browser doesn't support WebSockets." );
-      // TODO: Visual error for legacy browsers with links to download others
-    }
-  };
-
-  // Shortcut method for closing the WebSocket connection. Will also trigger
-  // `handleClose` for any cleanup that needs to happen.
-  this.disconnect = function ( code, reason ) {
-    socket.close( code, reason );
-  };
 
   // Authenticate a user to the middleware. Basically a specialized version of
   // the `request` function with a different payload.
-  this.login = function ( authType, credentials ) {
-    var requestID = freeNASUtil.generateUUID();
-    var rpcName = "auth";
-    var payload = {};
+  login ( authType, credentials ) {
+    let reqID = freeNASUtil.generateUUID();
+    let rpcName = "auth";
+    let payload;
+
     if ( authType === "userpass" ) {
       payload = { username : credentials[0]
                 , password : credentials[1]
-      };
+                };
     } else if ( authType === "token" ) {
-      payload = { token : credentials };
+      payload = { token: credentials };
       rpcName = rpcName + "_token";
     }
 
-    var successCallback = function ( response ) {
-
+    const onSuccess = function ( response ) {
       // Making a Cookie for token based login for the next time
       // and setting its max-age to the TTL (in seconds) specified by the
       // middleware response. The token value is stored in the Cookie.
-      myCookies.add( "auth", response[0], response[1] );
+      sessionCookies.add( "auth", response[0], response[1] );
       MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
     };
 
-    var errorCallback = function ( args ) {
+    const onError = function ( args ) {
       // TODO: Make LoginBox aware of a failed user/pass error.
       MiddlewareActionCreators.receiveAuthenticationChange( "", false );
     };
 
-    var packedAction = pack( "rpc", rpcName, payload, requestID );
+    const action = this.pack( "rpc", rpcName, payload, reqID );
 
-    if ( socket.readyState === 1 ) {
+    if ( this.socket.readyState === 1 ) {
 
-      if ( DEBUG( "authentication" ) ) { console.info( "Socket is ready: Sending login request." ); }
+      if ( MCD.reports( "authentication" ) ) {
+        MCD.info( "Socket is ready: Sending login request." );
+      }
 
-      logPendingRequest( requestID, successCallback, errorCallback, packedAction, null );
-      socket.send( packedAction );
+      this.logPendingRequest( reqID, onSuccess, onError, action, null );
+      this.socket.send( action );
 
     } else {
 
-      if ( DEBUG( "authentication" ) ) { console.info( "Socket is NOT ready: Deferring login request." ); }
+      if ( MCD.reports( "authentication" ) ) {
+        MCD.info( "Socket is not ready: Deferring login request." );
+      }
 
-      queuedLogin = { action          : packedAction
-                    , successCallback : successCallback
-                    , errorCallback   : errorCallback
-                    , id              : requestID
-      };
+      this.queuedLogin = { action: action
+                         , successCallback: onSuccess
+                         , errorCallback: onerror
+                         , id: reqID
+                         };
     }
 
-  };
+  }
 
-  this.logout = function () {
-    // All this does is deletes the login cookie (which contains the token)
-    // And closes the socket connection. The handleClose() which is triggered as a result
-    // Picks the connect being closed and then reconnects and brings back the login window
-    // For socket close codes (and why i used 1000) see the RFC: https://tools.ietf.org/html/rfc6455#page-64
-    myCookies.delete( "auth" );
+  logout () {
+    // Deletes the login cookie (which contains the token) and closes the socket
+    // connection. `handleClose` is triggered, and the reconnect process begins.
+    // For socket close codes (and why 1000 is used here) see the RFC:
+    // https://tools.ietf.org/html/rfc6455#page-64
+    sessionCookies.delete( "auth" );
     this.disconnect( 1000, "User logged out" );
-  }.bind( this );
+  }
 
 
   // CHANNELS AND REQUESTS
-
   // Make a request to the middleware, which translates to an RPC call. A
   // unique UUID is generated for each request, and is supplied to
-  // `logPendingRequest` as a lookup key for resolving or timing out the
+  // `this.logPendingRequest` as a lookup key for resolving or timing out the
   // Request.
-  this.request = function ( method, args, successCallback, errorCallback, customTimeout ) {
-    var requestID = freeNASUtil.generateUUID();
+  request ( method, args, onSuccess, onError, timeoutDelay ) {
+    var reqID = freeNASUtil.generateUUID();
     var payload = { method : method
                   , args   : args
                   };
-    var packedAction = pack( "rpc", "call", payload, requestID );
+    var packedAction = this.pack( "rpc", "call", payload, reqID );
 
-    processNewRequest( packedAction, successCallback, errorCallback, requestID, customTimeout );
-  };
+    this.processNewRequest( packedAction
+                          , onSuccess
+                          , onError
+                          , reqID
+                          , timeoutDelay
+                          );
+  }
+
 
   // SUBSCRIPTION INTERFACES
   // Generic interface for subscribing to Middleware namespaces. The Middleware
   // Flux store records the number of React components which have required a
   // subscription to a Middleware namespace. This allows the Middleware Client
   // to make intelligent decisions about whether to query a namespace for fresh
-  // data, begin or end a subscription, or even garbage collect a Flux store which
-  // is no longer being used.
+  // data, begin or end a subscription, or even garbage collect a Flux store
+  // which is no longer being used.
 
-  this.subscribe = function ( masks, componentID ) {
+  subscribe ( masks, componentID ) {
 
     if ( !_.isArray( masks ) ) {
-      console.error( "The first argument in MiddlewareClient.subscribe() must be an array of FreeNAS RPC namespaces." );
-      return;
+      MCD.error( "The first argument in MiddlewareClient.subscribe() must " +
+                 "be an array of FreeNAS RPC namespaces."
+                 );
+      return false;
     }
 
     if ( !_.isString( componentID ) ) {
-      console.error( "The second argument in MiddlewareClient.subscribe() must be a string (usually the name of the React component calling it)." );
-      return;
+      MCD.error( "The second argument in MiddlewareClient.subscribe() must " +
+                 "be a string (usually the name of the React component " +
+                 "calling it)."
+                 );
+      return false;
     }
 
-    if ( DEBUG( "subscriptions" ) ) { console.log( "Requested: Subscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    if ( MCD.reports( "subscriptions" ) ) {
+      MCD.logNewSubscriptionMasks( masks );
+    }
 
     _.forEach( masks, function ( mask ) {
-      if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) > 0 ) {
-        if ( DEBUG( "subscriptions" ) ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG( "subscriptions" ) ) { console.log( "Increasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
-      } else {
-        if ( DEBUG( "subscriptions" ) ) { console.info( "No React components are currently subscribed to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG( "subscriptions" ) ) { console.log( "Sending subscription request, and setting subscription count for %c'" + mask + "'%c to 1", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        var requestID = freeNASUtil.generateUUID();
-        processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, null, requestID, null );
+      let subCount = SubscriptionsStore.getNumberOfSubscriptionsForMask( mask );
+
+      if ( MCD.reports( "subscriptions" ) ) {
+        MCD.logSubscription( subCount, mask );
       }
-    });
+
+      if ( subCount < 1 ) {
+        const reqID = freeNASUtil.generateUUID();
+        const action = this.pack( "events", "subscribe", [ mask ], reqID );
+
+        this.processNewRequest( action, null, null, reqID, null );
+      }
+    }, this );
 
     SubscriptionsActionCreators.recordNewSubscriptions( masks, componentID );
-  };
+  }
 
-  this.unsubscribe = function ( masks, componentID ) {
+  unsubscribe ( masks, componentID ) {
 
     if ( !_.isArray( masks ) ) {
-      console.warn( "The first argument in MiddlewareClient.unsubscribe() must be an array of FreeNAS RPC namespaces." );
+      MCD.warn( "The first argument in MiddlewareClient.unsubscribe() must " +
+                "be an array of FreeNAS RPC namespaces."
+              );
       return;
     }
 
     if ( !_.isString( componentID ) ) {
-      console.warn( "The second argument in MiddlewareClient.unsubscribe() must be a string (usually the name of the React component calling it)." );
+      MCD.warn( "The second argument in MiddlewareClient.unsubscribe() must " +
+                "be a string (usually the name of the React component " +
+                "calling it)."
+              );
       return;
     }
 
-    if ( DEBUG( "subscriptions" ) ) { console.log( "Requested: Unsubscribe to %c'" + ( masks.length > 1 ? _.clone( masks ).splice( masks.length - 1, 0, " and " ).join( ", " ) : masks ) + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
+    if ( MCD.reports( "subscriptions" ) ) {
+      MCD.logUnsubscribeMasks( masks );
+    }
 
     _.forEach( masks, function ( mask ) {
-      if ( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) === 1 ) {
-        if ( DEBUG( "subscriptions" ) ) { console.info( "Only one React component is currently subscribed to %c'" + mask + "'%c events, so the subscription will be removed", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG( "subscriptions" ) ) { console.log( "Sending unsubscribe request, and deleting subscription count entry for %c'" + mask + "'", debugCSS.argsColor ); }
-        var requestID = freeNASUtil.generateUUID();
-        processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, null, requestID, null );
-      } else {
-        if ( DEBUG( "subscriptions" ) ) { console.info( SubscriptionsStore.getNumberOfSubscriptionsForMask( mask ) + " React components are currently subscribed to %c'" + mask + "'%c events, and one will be unsubscribed", debugCSS.argsColor, debugCSS.defaultStyle ); }
-        if ( DEBUG( "subscriptions" ) ) { console.log( "Decreasing subscription count for %c'" + mask + "'", debugCSS.argsColor ); }
+      let subCount = SubscriptionsStore.getNumberOfSubscriptionsForMask( mask );
+
+      if ( subCount === 1 ) {
+        const reqID = freeNASUtil.generateUUID();
+        const action = this.pack( "events", "unsubscribe", [ mask ], reqID );
+
+        this.processNewRequest( action, null, null, reqID, null );
       }
-    });
+    }, this );
 
-    SubscriptionsActionCreators.deleteCurrentSubscriptions( masks, componentID );
-  };
+    SubscriptionsActionCreators.deleteCurrentSubscriptions( masks
+                                                          , componentID
+                                                          );
+  }
 
-  this.renewSubscriptions = function () {
-    var masks = _.keys( SubscriptionsStore.getAllSubscriptions( ) );
+  renewSubscriptions () {
+    const masks = _.keys( SubscriptionsStore.getAllSubscriptions() );
     _.forEach( masks, function ( mask ) {
-      if ( DEBUG( "subscriptions" ) ) { console.log( "Renewing subscription request for %c'" + mask + "' ", debugCSS.argsColor, debugCSS.defaultStyle ); }
-      var requestID = freeNASUtil.generateUUID();
-      processNewRequest( pack( "events", "subscribe", [ mask ], requestID ), null, null, requestID, null );
-    });
-  };
+      if ( MCD.reports( "subscriptions" ) ) {
+        MCD.log( `Renewing subscription request for %c'${ mask }' `
+               , [ "args", "normal" ]
+               );
+      }
 
-  this.unsubscribeALL =  function () {
-    var masks = _.keys( SubscriptionsStore.getAllSubscriptions() );
+      const reqID = freeNASUtil.generateUUID();
+      const action = this.pack( "events", "subscribe", [ mask ], reqID );
+
+      this.processNewRequest( action, null, null, reqID, null );
+    }, this );
+  }
+
+  unsubscribeALL () {
+    const masks = _.keys( SubscriptionsStore.getAllSubscriptions() );
     _.forEach( masks, function ( mask ) {
-      if ( DEBUG( "subscriptions" ) ) { console.log( "Requested: Unsubscribe to %c'" + mask + "'%c events", debugCSS.argsColor, debugCSS.defaultStyle ); }
-      var requestID = freeNASUtil.generateUUID();
-      processNewRequest( pack( "events", "unsubscribe", [ mask ], requestID ), null, null, requestID, null );
-    });
+      if ( MCD.reports( "subscriptions" ) ) {
+        MCD.log( `Requested: Unsubscribe to %c'${ mask }'%c events`
+               , [ "args", "normal" ]
+               );
+      }
+
+      const reqID = freeNASUtil.generateUUID();
+      const action = this.pack( "events", "unsubscribe", [ mask ], reqID );
+
+      this.processNewRequest( action, null, null, reqID, null );
+    }, this );
 
     SubscriptionsActionCreators.deleteAllSubscriptions();
-  };
+  }
 
   // MIDDLEWARE DISCOVERY METHODS
-  // These are public methods used to gather more information about the Middleware's
-  // capabilities and overall state. These can be used to return a list of services
-  // supported by your connection to the middleware, and methods supported by each
-  // service. (These are helpful wrappers more than core functionality.)
+  // These are instance methods used to request information about the
+  // Middleware server's capabilities and overall state. These can be used to
+  // return a list of services supported by your connection to the middleware,
+  // and methods supported by each service.
 
-  this.getServices = function ( ) {
+  getServices () {
     this.request( "discovery.get_services", [], function ( services ) {
       MiddlewareActionCreators.receiveAvailableServices( services );
     });
   };
 
-  this.getMethods = function ( service ) {
+  getMethods ( service ) {
     this.request( "discovery.get_methods", [ service ], function ( methods ) {
-      MiddlewareActionCreators.receiveAvailableServiceMethods( service, methods );
+      MiddlewareActionCreators.receiveAvailableServiceMethods( service
+                                                             , methods
+                                                             );
     });
   };
 
-
-  // SOCKET DATA HANDLERS
-  // Private methods for handling data from the WebSocket connection
-
-  // Triggered by the WebSocket's onopen event.
-  var handleOpen = function () {
-    // Set stepped reconnect counter back to 0
-    this.k = 0;
-    // Dispatch message stating that we have just connected
-    MiddlewareActionCreators.updateSocketState( "connected" );
-    if ( myCookies.obtain( "auth" ) !== null ) {
-      this.login( "token", myCookies.obtain( "auth" ) );
-    }
-    this.renewSubscriptions();
-    if ( SessionStore.getLoginStatus() === false && queuedLogin ) {
-      // If the connection opens and we aren't authenticated, but we have a
-      // queued login, dispatch the login and reset its variable.
-      if ( DEBUG( "queues" ) ) { console.info( "Resolving queued login %c" + queuedLogin.id, debugCSS.idColor ); }
-      if ( DEBUG( "queues" ) ) { console.log({ requestID : queuedLogin.action }); }
-
-      logPendingRequest( queuedLogin.id, queuedLogin.successCallback, queuedLogin.errorCallback, null );
-      socket.send( queuedLogin.action );
-      queuedLogin = null;
-    } else {
-      MiddlewareActionCreators.receiveAuthenticationChange( "", false );
-    }
-  }.bind( this );
-
-  // Triggered by the WebSocket's onclose event. Performs any cleanup necessary
-  // to allow for a clean session end and prepares for a new session.
-  var handleClose = function () {
-    socket          = null;
-    queuedLogin     = null;
-    queuedActions   = [];
-
-    if ( DEBUG( "connection" ) ) { console.warn( "WebSocket connection closed" ); }
-
-    // Log out
-    MiddlewareActionCreators.receiveAuthenticationChange( "", false );
-    MiddlewareActionCreators.updateSocketState( "disconnected" );
-    if ( !this.reconnectHandle.isRunning() ) {
-      this.reconnectHandle.start( this.modFibonacci[this.k] );
-    }
-    var _this = this;
-    ( function checkReconnectHandle ( ) {
-      // console.log( "suraj in checkReconnectHandle... time remaining is: ", _this.reconnectHandle.getTimeLeft() );
-      setTimeout( function () {
-        if ( _this.reconnectHandle.isRunning() ) {
-          checkReconnectHandle();       // Call checkReconnectHandle again
-        } else if ( !socket ) {
-          // Increase k in a cyclic fashion (it goes back to 0 after reachin 4)
-          _this.k = ++_this.k % _this.modFibonacci.length;
-          _this.reconnectHandle.stop();
-          _this.reconnectHandle.start( _this.modFibonacci[_this.k] );
-        }
-      }, 500 );
-    }() );
-  }.bind( this );
-
-  // MESSAGES
-  // Triggered by the WebSocket's onmessage event. Parses the JSON from the
-  // middleware's response, and then performs followup tasks depending on the
-  // message's namespace.
-  var handleMessage = function ( message ) {
-    var data = JSON.parse( message.data );
-
-    if ( DEBUG( "messages" ) ) { console.log( "Message from Middleware:", data.namespace, message ); }
-
-    switch ( data.namespace ) {
-
-      // A FreeNAS event has occurred
-      case "events":
-        if ( DEBUG( "messages" ) ) { console.log( "Message contained event data" ); }
-        MiddlewareActionCreators.receiveEventData( data );
-        break;
-
-      // An RPC call is returning a response
-      case "rpc":
-        switch ( data.name ) {
-          case "response":
-            resolvePendingRequest( data.id, data.args, "success" );
-            break;
-
-          case "error":
-            resolvePendingRequest( data.id, data.args, "error" );
-            break;
-
-          default:
-            console.warn( "Was sent an rpc message from middleware, the client was unable to identify its purpose:" );
-            console.log( message );
-            break;
-        }
-        break;
-
-      // There was an error with a request or with its execution on FreeNAS
-      case "error":
-        if ( DEBUG( "messages" ) ) { console.error( "Middleware has indicated an error:", data.args ); }
-        break;
-
-      // A reply was sent from the middleware with no recognizable namespace
-      // This shouldn't happen, and probably indicates a problem with the
-      // middleware itself.
-      default:
-        if ( DEBUG( "messages" ) ) {
-          console.warn( "Spurious reply from Middleware:", message );
-        }
-        // Do nothing
-    }
-  };
-
-  // CONNECTION ERRORS
-  // Triggered by the WebSocket's `onerror` event. Handles errors
-  // With the client connection to the middleware.
-  var handleError = function ( error ) {
-    if ( DEBUG( "connection" ) ) { console.error( "The WebSocket connection to the Middleware encountered an error:", error ); }
-  };
-
-  // REQUEST TIMEOUTS
-  // Called by a request function without a matching response. Automatically
-  // triggers resolution of the request with a "timeout" status.
-  var handleTimeout = function ( requestID ) {
-
-    if ( DEBUG( "messages" ) ) { console.warn( "Request %c'" + requestID + "'%c timed out without a response from the middleware", debugCSS.idColor, debugCSS.defaultStyle ); }
-
-    resolvePendingRequest( requestID, null, "timeout" );
-  };
-
-  // On a successful login, dequeue any actions which may have been requested
-  // either before the connection was made, or before the authentication was
-  // complete.
-  SessionStore.addChangeListener( dequeueActions );
-
-  // The comment above would have us believe that this listener is just
-  // for login happening, which would indicate that the following is not needed.
-  // This is just a precaution in case there are hidden assumptions there.
-  MiddlewareStore.addChangeListener( dequeueActions );
-
 }
 
-module.exports = new MiddlewareClient();
+export default new MiddlewareClient();
