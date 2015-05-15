@@ -1423,7 +1423,8 @@ class SystemDatasetForm(ModelForm):
         super(SystemDatasetForm, self).__init__(*args, **kwargs)
         pool_choices = [('', ''), ('freenas-boot', 'freenas-boot')]
         for v in Volume.objects.filter(vol_fstype='ZFS'):
-            pool_choices.append((v.vol_name, v.vol_name))
+            if v.is_decrypted():
+                pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['sys_pool'].choices = pool_choices
         self.instance._original_sys_pool = self.instance.sys_pool
