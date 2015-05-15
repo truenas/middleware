@@ -48,7 +48,7 @@ parse_devlist()
 		# Areca Controller support(at least the 12xx family, possibly others)
 		${disk}:arcmsr*)
 			DEVID=$(($LUN_ID+1+($CHANNEL_NO*8)))
-			echo -n "/dev/arcmsr${CONTROLLER_ID} -d areca,${DEVID}"
+			propdev="/dev/arcmsr${CONTROLLER_ID} -d areca,${DEVID}"
 			break
 			;;
 		# Highpoint Rocket Raid 27xx controller
@@ -60,34 +60,40 @@ parse_devlist()
 			elif [ $CHANNEL_NO -gt 8 ]; then
 				CHANNEL_NO=$(($CHANNEL_NO-8))
 			fi
-			echo -n "/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
+			propdev="/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
 			break
 			;;
 		# Highpoint Rocket Raid controller
 		${disk}:hpt*)
 			CONTROLLER_ID=$(($CONTROLLER_ID+1))
 			CHANNEL_NO=$(($CHANNEL_NO+1))
-			echo -n "/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
+			propdev="/dev/${DRIVER} -d hpt,${CONTROLLER_ID}/${CHANNEL_NO}"
 			break
 			;;
 		# HP Smart Array Controller
 		${disk}:ciss*)
-			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -d cciss,${CHANNEL_NO}"
+			propdev="/dev/${DRIVER}${CONTROLLER_ID} -d cciss,${CHANNEL_NO}"
 			break
 			;;
-                # 3ware controller
-                ${disk}:twa*)
+		# 3ware controller
+		${disk}:twa*)
 			port=`/usr/local/sbin/tw_cli /c${CONTROLLER_ID}/u${CHANNEL_NO} show | egrep "^u" | sed -E 's/.*p([0-9]+).*/\1/'`
-			echo -n "/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${port}"
+			propdev="/dev/${DRIVER}${CONTROLLER_ID} -d 3ware,${port}"
 			break
 			;;
 		# Common device
 		${disk}:* )
-			echo -n /dev/$disk
+			propdev=/dev/$disk
 			break
 			;;
 		esac
 	done
+
+	if ! /usr/local/sbin/smartctl -i ${propdev} | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
+		propdev=/dev/$disk
+	fi
+
+	echo -n $propdev
 }
 
 get_prop_dev()
