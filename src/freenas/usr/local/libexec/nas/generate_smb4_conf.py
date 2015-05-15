@@ -1020,9 +1020,9 @@ def smb4_setup():
     if hasattr(notifier, 'failover_status') and notifier().failover_status() == 'BACKUP':
         return
 
-    systemdataset, volume, basename = notifier().system_dataset_settings()
+    systemdataset, basename = notifier().system_dataset_settings()
 
-    if not volume or not volume.is_decrypted():
+    if not basename or not systemdataset or not systemdataset.is_decrypted():
         if os.path.islink(statedir):
             smb4_unlink(statedir)
             smb4_mkdir(statedir)
