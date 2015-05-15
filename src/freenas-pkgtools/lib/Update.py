@@ -218,12 +218,31 @@ def ListClones():
         if len(fields) > 5 and fields[5] != "-":
             name = fields[5]
         rv.append({
+            'realname' : fields[0],
             'name': name,
             'active': fields[1],
             'mountpoint': fields[2],
             'space': fields[3],
             'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
         })
+    return rv
+
+def FindClone(name):
+    """
+    Find a BE with the given name.  We look for nickname first,
+    and then realname.  In order to do this, we first have to
+    get the list of clones.
+    Returns None if it can't be found, otherwise returns a
+    dictionary.
+    """
+    rv = None
+    clones = ListClones()
+    for clone in clones:
+        if clone["name"] == name:
+            rv = clone
+            break
+        if clone["realname"] == name and rv is None:
+            rv = clone
     return rv
 
 """
@@ -262,7 +281,14 @@ def CreateClone(name, snap_grub=True, bename=None, rename=None):
     # and return an error.
     args = ["create"]
     if bename:
-        args.extend(["-e", bename])
+        # Due to how beadm works, if we are given a starting name,
+        # we need to find the real name.
+        cl = FindClone(bename)
+        if cl is None:
+            log.error("CreateClone:  Cannot find starting clone %s" % bename)
+            return False
+        log.debug("FindClone returned %s" % cl)
+        args.extend(["-e", cl["realname"]])
     if rename:
         import random
         temp_name = "Pre-%s-%d" % (name, random.SystemRandom().randint(0, 1024 * 1024))
