@@ -332,7 +332,7 @@ class MiddlewareClient extends WebSocketClient {
 
     // The server side dispatcher will send a None in the reqID when returing
     // error (code 22): 'Request is not valid JSON'
-    if ( reqID && reqID !== "None" ) {
+    if ( reqID && this.pendingRequests[ reqID ] ) {
       clearTimeout( this.pendingRequests[ reqID ].timeout );
     }
 
