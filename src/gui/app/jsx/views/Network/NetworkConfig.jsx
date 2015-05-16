@@ -25,13 +25,13 @@ const NetworkConfig = React.createClass({
         <main>
           <div className = "network-config container-fluid">
             <TWBS.PanelGroup>
-              <TWBS.Panel className = "panel-left">
+              <TWBS.Panel>
                 <TWBS.ListGroup fill>
                   <TWBS.ListGroupItem className = "network-attribute"/>
                   <TWBS.ListGroupItem className = "network-attribute"/>
                 </TWBS.ListGroup>
               </TWBS.Panel>
-              <TWBS.Panel className = "panel-right">
+              <TWBS.Panel>
                 <TWBS.ListGroup fill>
                   <TWBS.ListGroupItem className = "network-attribute"/>
                   <TWBS.ListGroupItem className = "network-attribute"/>
