@@ -16,17 +16,31 @@ const SectionNav = React.createClass(
     }
 
   , createNavItems: function ( item, index ) {
-      return (
-        <Link
-          to = { item.route }
-          key = { index }
-          className = "btn btn-default"
-          activeClassName = "active btn-info"
-          role = "button"
-          type = "button">
-          { item.display }
-        </Link>
-      );
+      let navItem;
+
+      if ( item.disabled || !item.route ) {
+        navItem =
+          <a
+            key = { index }
+            className = "btn btn-default disabled"
+            role = "button"
+            href = "#">
+            { item.display }
+          </a>
+      } else {
+        navItem =
+          <Link
+            to = { item.route }
+            key = { index }
+            className = "btn btn-default"
+            activeClassName = "active btn-info"
+            role = "button"
+            type = "button">
+            { item.display }
+          </Link>;
+      }
+
+      return navItem;
     }
 
   , render: function () {
