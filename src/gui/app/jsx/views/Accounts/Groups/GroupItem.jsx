@@ -25,7 +25,7 @@ import groupMixins from "../../../components/mixins/groupMixins";
 import inputHelpers from "../../../components/mixins/inputHelpers";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 
-var GroupView = React.createClass({
+const GroupView = React.createClass({
 
     mixins: [   groupMixins
               , viewerCommon ]
@@ -133,7 +133,7 @@ var GroupView = React.createClass({
 });
 
 // EDITOR PANE
-var GroupEdit = React.createClass({
+const GroupEdit = React.createClass({
 
     mixins: [  inputHelpers
               , groupMixins
@@ -297,7 +297,7 @@ var GroupEdit = React.createClass({
 
 
 // CONTROLLER-VIEW
-var GroupItem = React.createClass({
+const GroupItem = React.createClass({
 
       propTypes: {
         viewData : React.PropTypes.object.isRequired

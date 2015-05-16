@@ -6,7 +6,7 @@
 
 import React from "react";
 
-var Sharing = React.createClass({
+const Sharing = React.createClass({
   render: function () {
     return (
       <main>

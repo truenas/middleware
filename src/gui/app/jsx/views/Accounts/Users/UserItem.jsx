@@ -26,7 +26,7 @@ import userMixins from "../../../components/mixins/userMixins";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 
 // OVERVIEW PANE
-var UserView = React.createClass({
+const UserView = React.createClass({
 
     mixins: [  userMixins
              , viewerCommon ]
@@ -166,7 +166,7 @@ var UserView = React.createClass({
 
 
 // EDITOR PANE
-var UserEdit = React.createClass({
+const UserEdit = React.createClass({
 
     mixins: [   inputHelpers
               , userMixins
@@ -465,7 +465,7 @@ var UserEdit = React.createClass({
 
 
 // CONTROLLER-VIEW
-var UserItem = React.createClass({
+const UserItem = React.createClass({
 
     propTypes: {
         viewData : React.PropTypes.object.isRequired

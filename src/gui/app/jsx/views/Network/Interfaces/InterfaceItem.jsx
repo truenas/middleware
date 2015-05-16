@@ -15,7 +15,7 @@ import InterfacesStore from "../../../stores/InterfacesStore";
 
 import TWBS from "react-bootstrap";
 
-var InterfacesView = React.createClass({
+const InterfacesView = React.createClass({
 
   propTypes: {
     item: React.PropTypes.object.isRequired
@@ -88,7 +88,7 @@ var InterfacesView = React.createClass({
 
 });
 
-var InterfaceItem = React.createClass({
+const InterfaceItem = React.createClass({
 
   propTypes: {
     viewData: React.PropTypes.object.isRequired

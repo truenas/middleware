@@ -12,7 +12,7 @@ import Icon from "../components/Icon";
 
 import ConfDialog from "../components/common/ConfDialog";
 
-var Power = React.createClass({
+const Power = React.createClass({
   handlerebootbutton: function () {
       PowerMiddleware.reboot();
   },

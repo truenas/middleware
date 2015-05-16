@@ -6,7 +6,7 @@
 
 import React from "react";
 
-var ControlPanel = React.createClass({
+const ControlPanel = React.createClass({
   render: function () {
     return (
       <main>

@@ -24,7 +24,7 @@ function getServicesFromStore () {
   };
 }
 
-var Dashboard = React.createClass({
+const Dashboard = React.createClass({
 
     getInitialState: function () {
       return getServicesFromStore();

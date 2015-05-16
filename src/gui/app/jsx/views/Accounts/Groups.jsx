@@ -57,7 +57,7 @@ function getUsersStoreData() {
   };
 }
 
-var Groups = React.createClass({
+const Groups = React.createClass({
 
     getInitialState: function () {
       return getGroupsFromStore();

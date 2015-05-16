@@ -6,7 +6,7 @@
 
 import React from "react";
 
-var Accounts = React.createClass({
+const Accounts = React.createClass({
     render: function () {
       return (
         <h1>{"Page not found"}</h1>

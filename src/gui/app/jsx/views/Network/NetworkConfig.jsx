@@ -5,7 +5,7 @@
 
 import React from "react";
 
-var NetworkConfig = React.createClass({
+const NetworkConfig = React.createClass({
 
 
 

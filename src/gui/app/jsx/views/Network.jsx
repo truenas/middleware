@@ -20,7 +20,7 @@ var sections = [ { route : "interfaces"
                  , display: "Network Configuration"
                 } ]
 
-var Network = React.createClass({
+const Network = React.createClass({
 
   displayName: "Network"
 

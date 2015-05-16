@@ -50,7 +50,7 @@ function getInterfacesFromStore () {
   return { interfacesList: InterfacesStore.getAllInterfaces() };
 }
 
-var Interfaces = React.createClass({
+const Interfaces = React.createClass({
 
   getInitialState: function () {
     return getInterfacesFromStore();

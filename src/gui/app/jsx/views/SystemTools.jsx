@@ -12,7 +12,7 @@ import Icon from "../components/Icon";
 
 import ConfDialog from "../components/common/ConfDialog";
 
-var SystemTools = React.createClass({
+const SystemTools = React.createClass({
   handleupdatenowbutton: function () {
       UpdaterMiddleware.updatenow();
   },
