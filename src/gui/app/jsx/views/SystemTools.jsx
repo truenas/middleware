@@ -40,4 +40,4 @@ var SystemTools = React.createClass({
   }
 });
 
-module.exports = SystemTools;
+export default SystemTools;

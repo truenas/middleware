@@ -54,4 +54,4 @@ var Power = React.createClass({
   }
 });
 
-module.exports = Power;
+export default Power;

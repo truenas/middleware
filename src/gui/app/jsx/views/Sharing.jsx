@@ -16,4 +16,4 @@ var Sharing = React.createClass({
   }
 });
 
-module.exports = Sharing;
+export default Sharing;

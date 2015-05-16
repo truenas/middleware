@@ -275,4 +275,4 @@ var AddUser = React.createClass({
     }
 });
 
-module.exports = AddUser;
+export default AddUser;

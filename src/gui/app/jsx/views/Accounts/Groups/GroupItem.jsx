@@ -389,4 +389,4 @@ var GroupItem = React.createClass({
       }
 });
 
-module.exports = GroupItem;
+export default GroupItem;

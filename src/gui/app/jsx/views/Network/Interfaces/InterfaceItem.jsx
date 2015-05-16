@@ -167,4 +167,4 @@ var InterfaceItem = React.createClass({
 
 });
 
-module.exports = InterfaceItem;
+export default InterfaceItem;

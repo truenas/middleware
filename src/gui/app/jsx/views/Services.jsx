@@ -91,4 +91,4 @@ var Services = React.createClass({
   }
 });
 
-module.exports = Services;
+export default Services;

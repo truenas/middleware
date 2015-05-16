@@ -64,4 +64,4 @@ var FreeNASWebApp = React.createClass({
 
 });
 
-module.exports = FreeNASWebApp;
+export default FreeNASWebApp;

@@ -20,4 +20,4 @@ var NetworkConfig = React.createClass({
 
 });
 
-module.exports = NetworkConfig;
+export default NetworkConfig;

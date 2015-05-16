@@ -16,4 +16,4 @@ var Tasks = React.createClass({
   }
 });
 
-module.exports = Tasks;
+export default Tasks;

@@ -45,4 +45,4 @@ var Network = React.createClass({
 
 });
 
-module.exports = Network;
+export default Network;

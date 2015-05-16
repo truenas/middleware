@@ -80,4 +80,4 @@ var Interfaces = React.createClass({
 
 });
 
-module.exports = Interfaces;
+export default Interfaces;

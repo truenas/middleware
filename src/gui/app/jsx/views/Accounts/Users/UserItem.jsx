@@ -559,4 +559,4 @@ var UserItem = React.createClass({
 
 });
 
-module.exports = UserItem;
+export default UserItem;

@@ -43,4 +43,4 @@ var Accounts = React.createClass({
     }
 });
 
-module.exports = Accounts;
+export default Accounts;

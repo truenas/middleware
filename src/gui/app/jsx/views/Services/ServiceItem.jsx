@@ -154,4 +154,4 @@ var ServiceItem = React.createClass({
 
 });
 
-module.exports = ServiceItem;
+export default ServiceItem;

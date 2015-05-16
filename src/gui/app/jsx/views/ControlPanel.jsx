@@ -16,4 +16,4 @@ var ControlPanel = React.createClass({
   }
 });
 
-module.exports = ControlPanel;
+export default ControlPanel;

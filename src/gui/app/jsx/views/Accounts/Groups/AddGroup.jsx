@@ -129,4 +129,4 @@ var AddGroup = React.createClass({
     }
 });
 
-module.exports = AddGroup;
+export default AddGroup;

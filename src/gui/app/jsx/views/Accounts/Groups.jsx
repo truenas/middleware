@@ -96,4 +96,4 @@ var Groups = React.createClass({
     }
 });
 
-module.exports = Groups;
+export default Groups;
