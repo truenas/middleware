@@ -1,9 +1,11 @@
-// Global Network Configuration
-// ============================
+// Network Configuration Overview
+// ==============================
 
 "use strict";
 
 import React from "react";
+import TWBS from "react-bootstrap"
+
 
 const NetworkConfig = React.createClass({
 
@@ -17,6 +19,28 @@ const NetworkConfig = React.createClass({
 
       </div> )
   }
+
+  , render: function () {
+      return (
+        <main>
+          <div className = "network-config container-fluid">
+            <TWBS.PanelGroup>
+              <TWBS.Panel className = "panel-left">
+                <TWBS.ListGroup fill>
+                  <TWBS.ListGroupItem className = "network-attribute"/>
+                  <TWBS.ListGroupItem className = "network-attribute"/>
+                </TWBS.ListGroup>
+              </TWBS.Panel>
+              <TWBS.Panel className = "panel-right">
+                <TWBS.ListGroup fill>
+                  <TWBS.ListGroupItem className = "network-attribute"/>
+                  <TWBS.ListGroupItem className = "network-attribute"/>
+                </TWBS.ListGroup>
+              </TWBS.Panel>
+            </TWBS.PanelGroup>
+          </div>
+        </main> )
+    }
 
 });
 
