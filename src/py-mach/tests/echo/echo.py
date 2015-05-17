@@ -59,10 +59,12 @@ def main():
     # Ensure service is running
     job = l.jobs['org.freenas.test.mach.ipc-server']
     if 'PID' not in job:
+        l.unload('org.freenas.test.mach.ipc-server')
         fail('Service died')
 
     # Start client
     if subprocess.call([sys.executable, os.path.join(os.getcwd(), 'echoclient.py')]) != 0:
+        l.unload('org.freenas.test.mach.ipc-server')
         fail('Client failed')
 
     # Stop service

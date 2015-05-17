@@ -30,7 +30,7 @@ import cython
 cimport mach
 from libc.stdint cimport uintptr_t
 from libc.stdlib cimport malloc, realloc, free
-from libc.string cimport memmove, memset
+from libc.string cimport memcpy, memmove, memset
 
 
 class PortRight(enum.IntEnum):
@@ -170,8 +170,8 @@ class MessageReceiveException(Exception):
         return self.code.name
 
 
-cdef class Port:
-    cdef mach_port_t port
+cdef class Port(object):
+    cdef mach.mach_port_t port
 
     def __init__(self, port=None, right=PortRight.MACH_PORT_RIGHT_RECEIVE):
         if port is not None:
@@ -208,7 +208,7 @@ cdef class Port:
         cdef mach.mach_msg_header_t* msg
         cdef mach.mach_msg_return_t kr
 
-        msg = <mach.mach_msg_header_t*><void*>message.ptr()
+        msg = <mach.mach_msg_header_t*><void*>message.pack()
         msg.msgh_local_port = self.port
         msg.msgh_remote_port = dest.value()
         with nogil:
@@ -220,7 +220,7 @@ cdef class Port:
         cdef mach.mach_msg_header_t* msg
         cdef mach.mach_msg_return_t kr
 
-        msg = <mach.mach_msg_header_t*><void*>message.ptr()
+        msg = <mach.mach_msg_header_t*><void*>message.pack()
         msg.msgh_local_port = self.port
         msg.msgh_remote_port = dest.value()
         with nogil:
@@ -243,53 +243,251 @@ cdef class Port:
         cdef mach.mach_msg_return_t kr
 
         msg = Message(size=max_size)
-        ptr = <mach.mach_msg_header_t*><void*>msg.ptr()
+        ptr = <mach.mach_msg_header_t*><void*>msg.pack()
         ptr.msgh_local_port = self.port
         with nogil:
             kr = mach.mach_msg_receive(ptr)
         if kr != mach.KERN_SUCCESS:
             raise MessageReceiveException(kr)
 
+        msg.unpack()
         return msg
 
 
+cdef class MemoryBuffer(object):
+    cdef char* buffer
+    cdef size_t size
 
-cdef class MessageDescriptor:
+    def __init__(self, bytearray data=None, address=None, size=None):
+        self.buffer = NULL
+        self.size = 0
+
+        if data:
+            self.data = data
+            return
+
+        if address and size:
+            self.buffer = <char*><uintptr_t>address
+            self.size = size
+            return
+
+        if size:
+            self.allocate(size)
+
+    def allocate(self, size_t size):
+        cdef mach.kern_return_t kr
+
+        if self.buffer != NULL:
+            raise MemoryError('Buffer already allocated')
+
+        self.size = size
+        kr = mach.vm_allocate(mach.mach_task_self(), <mach.vm_address_t*>&self.buffer, size, True)
+        if kr != 0:
+            raise MachException(kr)
+
+    def deallocate(self):
+        cdef mach.kern_return_t kr
+
+        kr = mach.vm_deallocate(mach.mach_task_self(), <mach.vm_address_t>self.buffer, self.size)
+        if kr != 0:
+            raise MachException(kr)
+
+        self.buffer = NULL
+        self.size = 0
+
+    def __getitem__(self, item):
+        if not self.allocated:
+            raise MemoryError('Buffer is not allocated')
+
+        if type(item) is slice:
+            pass
+
+        if item > self.size:
+            raise IndexError('Index {0} is greater than buffer size'.format(item))
+
+        return self.buffer[item]
+
+    def __setitem__(self, key, value):
+        if not self.allocated:
+            raise MemoryError('Buffer is not allocated')
+
+        if type(key) is slice:
+            pass
+
+        if key > self.size:
+            raise IndexError('Index {0} is greater than buffer size'.format(key))
+
+        self.buffer[key] = value
+
+    property data:
+        def __get__(self):
+            return <bytearray>self.buffer[:self.size]
+
+        def __set__(self, bytearray value):
+            if self.allocated:
+                raise MemoryError('Already allocated, try deallocating first')
+
+            self.allocate(len(value))
+            memcpy(self.buffer, <char*>value, len(value))
+
+    property allocated:
+        def __get__(self):
+            return self.buffer != NULL
+
+    property address:
+        def __get__(self):
+            return <uintptr_t>self.buffer
+
+    property size:
+        def __get__(self):
+            return self.size
+
+
+cdef class MessageDescriptor(object):
     cdef mach.mach_msg_type_descriptor_t desc
 
-    def __init__(self, typ):
-        pass
+    def __init__(self):
+        memset(&self.desc, 0, cython.sizeof(mach.mach_msg_type_descriptor_t))
+
+    @staticmethod
+    def create(ptr):
+        cdef mach.mach_msg_type_descriptor_t* desc
+        desc = <mach.mach_msg_type_descriptor_t*><uintptr_t>ptr
+
+        if desc.type == MACH_MSG_OOL_DESCRIPTOR:
+            return MemoryDescriptor(ptr=ptr)
+
+    def ptr(self):
+            return <uintptr_t>&self.desc
+
+    property desc_size:
+        def __get__(self):
+            raise NotImplementedError()
 
 
-cdef class Message:
-    cdef mach.mach_msg_header_t *msg
-    cdef char *buffer
+cdef class PortDescriptor(MessageDescriptor):
+    def __init__(self):
+        super(PortDescriptor, self).__init__()
+
+
+cdef class MemoryDescriptor(MessageDescriptor):
+    cdef mach.mach_msg_ool_descriptor_t* mem_desc
+
+    def __init__(self, ptr=None):
+        super(MemoryDescriptor, self).__init__()
+        if ptr:
+            self.mem_desc =  <mach.mach_msg_ool_descriptor_t*><uintptr_t>ptr
+            return
+
+        self.mem_desc = <mach.mach_msg_ool_descriptor_t*>&self.desc
+        self.mem_desc.type = mach.MACH_MSG_OOL_DESCRIPTOR
+
+    property buffer:
+        def __get__(self):
+            return MemoryBuffer(address=self.address, size=self.size)
+
+        def __set__(self, value):
+            self.address = value.address
+            self.size = value.size
+
+    property address:
+        def __get__(self):
+            return <uintptr_t>self.mem_desc.address
+
+        def __set__(self, uintptr_t value):
+            self.mem_desc.address = <void*>value
+
+    property size:
+        def __get__(self):
+            return self.mem_desc.size
+
+        def __set__(self, size_t value):
+            self.mem_desc.size = value
+
+    property deallocate:
+        def __get__(self):
+            return self.mem_desc.deallocate
+
+        def __set__(self, value):
+            self.mem_desc.deallocate = value
+
+    property desc_size:
+        def __get__(self):
+            return cython.sizeof(mach.mach_msg_ool_descriptor_t)
+
+
+cdef class Message(object):
+    cdef mach.mach_msg_header_t* msg
+    cdef public descriptors
+    cdef bytearray buffer
     cdef int length
 
     def __init__(self, size=None):
         self.msg = <mach.mach_msg_header_t*>malloc(cython.sizeof(mach.mach_msg_header_t))
-        self.buffer = (<char*>self.msg) + cython.sizeof(mach.mach_msg_header_t)
+        self.descriptors = []
         if size:
-            self.size = size
+            self.buffer = bytearray(size)
 
-    cdef uintptr_t ptr(self):
+    cdef uintptr_t pack(self):
+        cdef mach.mach_msg_body_t* body
+        cdef char* buf
+        cdef void* ptr
+
+        desc_size = 0
+        body_size = len(self.buffer)
+        desc_count = len(self.descriptors) if self.descriptors else 0
+        if self.descriptors:
+            desc_size = cython.sizeof(mach.mach_msg_body_t)
+            for i in self.descriptors:
+                desc_size += i.desc_size
+
+        self.resize(body_size + desc_size)
+        ptr = <void*>self.msg + cython.sizeof(mach.mach_msg_header_t)
+
+        if self.descriptors:
+            self.msg.msgh_bits |= mach.MACH_MSGH_BITS_COMPLEX
+            body = <mach.mach_msg_body_t*>ptr
+            body.msgh_descriptor_count = desc_count
+            ptr += cython.sizeof(mach.mach_msg_body_t)
+            for desc in self.descriptors:
+                memcpy(ptr, <void*><uintptr_t>desc.ptr(), desc.desc_size)
+                ptr += <uintptr_t>desc.desc_size
+
+        buf = self.buffer
+        memcpy(ptr, buf, body_size)
         return <uintptr_t>self.msg
+
+    cdef void unpack(self):
+        cdef mach.mach_msg_body_t* body
+        cdef mach.mach_msg_type_descriptor_t* desc
+        cdef char* buf
+
+        offset = cython.sizeof(mach.mach_msg_header_t)
+        buf = <char*>self.msg
+
+        if self.msg.msgh_bits & mach.MACH_MSGH_BITS_COMPLEX:
+            body = <mach.mach_msg_body_t*>&buf[offset]
+            offset += cython.sizeof(mach.mach_msg_body_t)
+            for i in range(0, body.msgh_descriptor_count):
+                desc = <mach.mach_msg_type_descriptor_t*>&buf[offset]
+                md = MessageDescriptor.create(<uintptr_t>desc)
+                self.descriptors.append(md)
+                offset += md.desc_size
+
+        body_size = self.msg.msgh_size - offset
+        self.buffer = buf[offset:offset+body_size]
 
     def resize(self, body_size):
         self.length = body_size + cython.sizeof(mach.mach_msg_header_t)
         self.msg = <mach.mach_msg_header_t*>realloc(<void*>self.msg, self.length)
-        self.buffer = (<char*>self.msg) + cython.sizeof(mach.mach_msg_header_t)
         self.msg.msgh_size = self.length
 
     property body:
         def __get__(self):
-            return self.buffer[:self.size - cython.sizeof(mach.mach_msg_header_t)]
+            return self.buffer
 
-        def __set__(self, unsigned char [:] value):
-            cdef unsigned char *ptr
-            self.size = value.shape[0]
-            ptr = &value[0]
-            memmove(self.buffer, ptr, value.shape[0])
+        def __set__(self, value):
+            self.buffer = value
 
     property size:
         def __get__(self):
@@ -327,7 +525,7 @@ cdef class Message:
             self.msg.msgh_bits = value
 
 
-cdef class BootstrapServer:
+cdef class BootstrapServer(object):
     def __init__(self):
         pass
 

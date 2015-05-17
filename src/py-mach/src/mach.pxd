@@ -104,6 +104,9 @@ cdef extern from "mach/mach.h" nogil:
         mach_port_name_t msgh_voucher_port
         mach_msg_id_t msgh_id
 
+    ctypedef struct mach_msg_body_t:
+        mach_msg_size_t msgh_descriptor_count
+
     ctypedef struct mach_msg_trailer_t:
         mach_msg_trailer_type_t msgh_trailer_type
         mach_msg_trailer_size_t msgh_trailer_size
@@ -123,11 +126,11 @@ cdef extern from "mach/mach.h" nogil:
 
     ctypedef struct mach_msg_ool_descriptor_t:
         void* address
-        mach_msg_size_t size
         boolean_t deallocate
         mach_msg_copy_options_t copy
         unsigned int pad1
         mach_msg_descriptor_type_t type
+        mach_msg_size_t size
 
     mach_msg_return_t mach_msg(mach_msg_header_t *msg, mach_msg_option_t option, mach_msg_size_t send_size,
                                mach_msg_size_t rcv_size, mach_port_t rcv_name, mach_msg_timeout_t timeout,
@@ -138,6 +141,14 @@ cdef extern from "mach/mach.h" nogil:
     kern_return_t mach_port_allocate(mach_port_t task, mach_port_right_t right, mach_port_t* name)
     kern_return_t mach_port_insert_right(ipc_space_t task, mach_port_name_t name, mach_port_right_t right,
                                          mach_msg_type_name_t right_type)
+
+cdef extern from "mach/vm_map.h" nogil:
+    ctypedef int vm_map_t
+    ctypedef int vm_address_t
+    ctypedef int vm_size_t
+
+    kern_return_t vm_allocate(vm_map_t target_task, vm_address_t *address, vm_size_t size, int flags)
+    kern_return_t vm_deallocate(vm_map_t target_task, vm_address_t address, vm_size_t size)
 
 cdef extern from "mach/port.h" nogil:
     enum:
@@ -160,6 +171,7 @@ cdef extern from "mach/message.h" nogil:
         MACH_MSG_TYPE_COPY_SEND
         MACH_MSG_TYPE_MAKE_SEND
         MACH_MSG_TYPE_MAKE_SEND_ONCE
+        MACH_MSGH_BITS_COMPLEX
 
     enum:
         MACH_MSG_PORT_DESCRIPTOR

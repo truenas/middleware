@@ -31,14 +31,29 @@ import mach
 from utils import fail
 
 
+def describe_msg(msg):
+    print 'Body length: {0}'.format(len(msg.body))
+    print 'Descriptors:'
+    for idx, desc in enumerate(msg.descriptors):
+        print 'Descriptor #{0}: {1}'.format(idx, str(desc))
+        print '    address: 0x{0:x}, size: {1}'.format(desc.address, desc.size)
+        print '    data: {0}'.format(desc.buffer.data)
+
 def server(port):
     try:
         msg = port.receive()
     except mach.MessageReceiveException, e:
         fail('Cannot receive message: {0}'.format(e))
 
+    print 'Received message:'
+    describe_msg(msg)
     contents, = struct.unpack('256p', msg.body)
+
+    if len(msg.body) != 256:
+        fail('Invalid body length, {0} instead of {1}'.format(msg.body, 256))
+
     print 'Received text: {0}'.format(contents)
+
     if contents != 'Hello World':
         fail('Invalid message payload returned: {0}'.format(contents))
 
@@ -62,13 +77,21 @@ def main():
 
     threading.Thread(target=server, args=(receive,)).start()
 
+    buffer = mach.MemoryBuffer(data=bytearray('Hello from OOL descriptor'))
+    desc = mach.MemoryDescriptor()
+    desc.buffer = buffer
     msg = mach.Message()
     msg.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
+    msg.descriptors = [desc]
     msg.body = bytearray(struct.pack('256p', 'Hello World'))
-    print 'Sent text: {0}'.format('Hello World')
+
+    print 'Text to send: {0}'.format('Hello World')
+    print 'Message to send:'
+    describe_msg(msg)
+
     try:
         send.send(receive, msg)
-    except mach.SendMessageException, e:
+    except mach.MessageSendException, e:
         fail('Cannot send message: {0}'.format(e))
 
 

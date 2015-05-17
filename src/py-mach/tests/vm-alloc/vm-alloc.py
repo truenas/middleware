@@ -25,52 +25,38 @@
 #
 #####################################################################
 
-import struct
-import threading
 import mach
 from utils import fail
 
 
-def server(port):
-    try:
-        msg = port.receive()
-    except mach.MessageReceiveException, e:
-        fail('Cannot receive message: {0}'.format(e))
-
-    contents, = struct.unpack('256p', msg.body)
-    print 'Received text: {0}'.format(contents)
-    if contents != 'Hello World':
-        fail('Invalid message payload returned: {0}'.format(contents))
+BUFSIZE = 1024
 
 
 def main():
-    # Create send port
-    try:
-        send = mach.Port()
-        send.insert_right(mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
-        print 'Send port: {0}'.format(send)
-    except mach.MachException, e:
-        fail('Cannot create send port: {0}'.format(e))
+    buf = mach.MemoryBuffer()
+    assert not buf.allocated
+    assert buf.size == 0
+    assert buf.address == 0
 
-    # Create receive port
-    try:
-        receive = mach.Port()
-        receive.insert_right(mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
-        print 'Receive port: {0}'.format(receive)
-    except mach.MachException, e:
-        fail('Cannot create receive port: {0}'.format(e))
+    buf.allocate(BUFSIZE)
+    assert buf.allocated
+    assert buf.size == BUFSIZE
+    assert buf.address != 0
 
-    threading.Thread(target=server, args=(receive,)).start()
+    print 'Buffer address: 0x{0:x}'.format(buf.address)
 
-    msg = mach.Message()
-    msg.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
-    msg.body = bytearray(struct.pack('256p', 'Hello World'))
-    print 'Sent text: {0}'.format('Hello World')
-    try:
-        send.send(receive, msg)
-    except mach.SendMessageException, e:
-        fail('Cannot send message: {0}'.format(e))
+    buf.deallocate()
+    assert not buf.allocated
+    assert buf.size == 0
+    assert buf.address == 0
 
+    buf = mach.MemoryBuffer(data=bytearray('Testing 1234'))
+    assert buf.allocated
+    assert buf.size == len(bytearray('Testing 1234'))
+    buf[0] = ord('F')
+    assert buf.data == bytearray('Festing 1234')
+    buf.deallocate()
+    assert not buf.allocated
 
 if __name__ == '__main__':
     main()
