@@ -1102,9 +1102,9 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 
 **Figure 11.12a: Configuring SNMP**
 
-|snmp1.png|
+|snmp2.png|
 
-.. |snmp1.png| image:: images/snmp1.png
+.. |snmp2.png| image:: images/snmp2.png
 
 **Table 11.12a: SNMP Configuration Options**
 
