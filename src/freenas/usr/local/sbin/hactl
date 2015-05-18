@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+# -
 # Copyright (c) 2015 iXsystems, Inc.
 # All rights reserved.
 # This file is a part of TrueNAS
@@ -27,9 +27,9 @@ _not = notifier()
 
 
 def main(command, quiet):
+    fo_exists = Failover.objects.all().exists()
     if command == "status":
         ret = _not.failover_status()
-        fo_exists = Failover.objects.all().exists()
         if ret == "MASTER":
             print "Node status: Active"
         elif ret == "BACKUP":
@@ -57,11 +57,14 @@ def main(command, quiet):
 
     elif command == "enable":
         if not fo_exists:
-            print "Not configured for failover.  There's nothing to enable here."
+            print("Not configured for failover. "
+                  "There's nothing to enable here.")
             sys.exit(7)
         if Failover.objects.all()[0].disabled is True:
             ip = Failover.objects.all()[0].ipaddress
-            ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker enable" % ip)
+            ret = os.system("ssh -o ConnectTimeout=3 %s "
+                            "/usr/local/libexec/truenas/hactl-worker enable"
+                            % ip)
             if not ret:
                 for item in Failover.objects.all():
                     item.disabled = False
@@ -78,16 +81,22 @@ def main(command, quiet):
             sys.exit(3)
     elif command == "disable":
         if not fo_exists:
-            print "Not configured for failover.  There's nothing to disable here."
+            print("Not configured for failover. "
+                  "There's nothing to disable here.")
             sys.exit(8)
         if Failover.objects.all()[0].disabled is False:
             ip = Failover.objects.all()[0].ipaddress
-            if _not.failover_status() == "MASTER" or _not.failover_status() == "IMPORTING":
+            if (_not.failover_status() == "MASTER" or
+                    _not.failover_status() == "IMPORTING"):
                 status = "master"
-                ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable passive" % ip)
+                ret = os.system("ssh -o ConnectTimeout=3 %s "
+                                "/usr/local/libexec/truenas/hactl-worker "
+                                "disable passive" % ip)
             else:
                 status = "passive"
-                ret = os.system("ssh -o ConnectTimeout=3 %s /usr/local/libexec/truenas/hactl-worker disable active" % ip)
+                ret = os.system("ssh -o ConnectTimeout=3 %s "
+                                "/usr/local/libexec/truenas/hactl-worker "
+                                "disable active" % ip)
             if not ret:
                 for item in Failover.objects.all():
                     item.disabled = True
@@ -112,7 +121,8 @@ def main(command, quiet):
             sys.exit(5)
         print "This will likely cause the active node to reboot."
         while True:
-            ret = raw_input("Are you sure you wish to proceed with making this node active? (y/n): ")
+            ret = raw_input("Are you sure you wish to proceed with making "
+                            "this node active? (y/n): ")
             if ret.lower() == "y":
                 break
             elif ret.lower() == "n":
@@ -128,7 +138,8 @@ def main(command, quiet):
             sys.exit(6)
         print "Volume giveback will reboot this node."
         while True:
-            ret = raw_input("Are you sure you wish to proceed with making the other node active? (y/n): ")
+            ret = raw_input("Are you sure you wish to proceed with making "
+                            "the other node active? (y/n): ")
             if ret.lower() == "y":
                 break
             elif ret.lower() == "n":
@@ -143,8 +154,10 @@ if __name__ == "__main__":
     parser.add_argument('command',
                         default="status",
                         nargs='?',
-                        help="subcommand: enable disable status takeover giveback",
-                        choices=['enable', 'disable', 'status', 'takeover', 'giveback'],
+                        help=("subcommand: enable disable status takeover "
+                              "giveback"),
+                        choices=['enable', 'disable', 'status',
+                                 'takeover', 'giveback'],
                         )
     parser.add_argument('-q',
                         help="Be silent if this is a non HA node",
