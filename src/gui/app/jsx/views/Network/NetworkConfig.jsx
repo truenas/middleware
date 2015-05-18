@@ -10,17 +10,7 @@ import TWBS from "react-bootstrap"
 const NetworkConfig = React.createClass({
 
 
-
   render: function () {
-    return (
-      <div className = "networkconfig" >
-
-
-
-      </div> )
-  }
-
-  , render: function () {
       return (
         <main>
           <div className = "network-config container-fluid">
