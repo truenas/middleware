@@ -45,10 +45,10 @@ EOF
 generate_upsmon()
 {
     local IFS="|"
-    local f="ups_mode ups_remotehost ups_remoteport ups_monuser ups_monpwd ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject"
+    local f="ups_mode ups_remotehost ups_remoteport ups_monuser ups_monpwd ups_identifier ups_shutdown ups_shutdowntimer ups_emailnotify ups_toemail ups_subject ups_powerdown"
     eval local $f
     local sf=$(var_to_sf $f)
-    local user passwd ident
+    local user passwd ident powerdown
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM services_ups ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
@@ -59,6 +59,11 @@ generate_upsmon()
 			ident="${ups_identifier}"
 		else
 			ident="${ups_identifier}@${ups_remotehost}:${ups_remoteport}"
+		fi
+		if [ "${ups_powerdown}" = "1" ]; then
+			powerdown="/etc/killpower"
+		else
+			powerdown="/etc/nokillpower"
 		fi
 
 		cat <<EOF
@@ -75,7 +80,7 @@ NOTIFYFLAG NOCOMM SYSLOG+EXEC
 NOTIFYFLAG FSD SYSLOG+EXEC
 NOTIFYFLAG SHUTDOWN SYSLOG+EXEC
 SHUTDOWNCMD "/sbin/shutdown -p now"
-POWERDOWNFLAG "/etc/killpower"
+POWERDOWNFLAG ${powerdown}
 EOF
 
     done
