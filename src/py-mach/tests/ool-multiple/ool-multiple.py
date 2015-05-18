@@ -27,8 +27,18 @@
 
 import struct
 import threading
+import random
+import string
 import mach
 from utils import fail
+
+
+descriptors = []
+
+
+def random_str(len):
+    set = string.letters + string.digits + string.punctuation
+    return ''.join([random.choice(set) for _ in range(len)])
 
 
 def describe_msg(msg):
@@ -37,7 +47,6 @@ def describe_msg(msg):
     for idx, desc in enumerate(msg.descriptors):
         print 'Descriptor #{0}: {1}'.format(idx, str(desc))
         print '    address: 0x{0:x}, size: {1}'.format(desc.address, desc.size)
-        print '    data: {0}'.format(desc.buffer.data)
 
 def server(port):
     try:
@@ -57,6 +66,15 @@ def server(port):
     if contents != 'Hello World':
         fail('Invalid message payload returned: {0}'.format(contents))
 
+    for i in range(0, len(descriptors)):
+        if msg.descriptors[i].size != descriptors[i].size:
+            fail('Descriptor #{0}: invalid size ({1} != {2})'.format(i, msg.descriptors[i].size, descriptors[i].size))
+
+        if msg.descriptors[i].buffer.data != descriptors[i].buffer.data:
+            fail('Descriptor #{0}: data mismatch')
+
+        print 'Descriptor #{0}: OK'.format(i)
+
 
 def main():
     # Create send port
@@ -75,15 +93,19 @@ def main():
     except mach.MachException, e:
         fail('Cannot create receive port: {0}'.format(e))
 
+    # Prepare descriptors
+    for i in range(0, random.randrange(5, 15)):
+        buffer = mach.MemoryBuffer(data=bytearray(random_str(random.randrange(1, 1024 * 1024))))
+        desc = mach.MemoryDescriptor()
+        desc.buffer = buffer
+        descriptors.append(desc)
+
     t = threading.Thread(target=server, args=(receive,))
     t.start()
 
-    buffer = mach.MemoryBuffer(data=bytearray('Hello from OOL descriptor'))
-    desc = mach.MemoryDescriptor()
-    desc.buffer = buffer
     msg = mach.Message()
     msg.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
-    msg.descriptors = [desc]
+    msg.descriptors = descriptors
     msg.body = bytearray(struct.pack('256p', 'Hello World'))
 
     print 'Text to send: {0}'.format('Hello World')

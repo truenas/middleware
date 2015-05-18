@@ -60,7 +60,8 @@ def main():
     except mach.MachException, e:
         fail('Cannot create receive port: {0}'.format(e))
 
-    threading.Thread(target=server, args=(receive,)).start()
+    t = threading.Thread(target=server, args=(receive,))
+    t.start()
 
     msg = mach.Message()
     msg.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)
