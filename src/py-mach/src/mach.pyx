@@ -357,6 +357,9 @@ cdef class MessageDescriptor(object):
         if desc.type == MACH_MSG_OOL_DESCRIPTOR:
             return MemoryDescriptor(ptr=ptr)
 
+        if desc.type == MACH_MSG_PORT_DESCRIPTOR:
+            return PortDescriptor(ptr=ptr)
+
     def ptr(self):
             return <uintptr_t>&self.desc
 
@@ -366,8 +369,34 @@ cdef class MessageDescriptor(object):
 
 
 cdef class PortDescriptor(MessageDescriptor):
-    def __init__(self):
+    cdef mach.mach_msg_port_descriptor_t *port_desc
+
+    def __init__(self, ptr=None):
         super(PortDescriptor, self).__init__()
+        if ptr:
+            self.port_desc =  <mach.mach_msg_port_descriptor_t*><uintptr_t>ptr
+            return
+
+        self.port_desc = <mach.mach_msg_port_descriptor_t*>&self.desc
+        self.port_desc.type = mach.MACH_MSG_PORT_DESCRIPTOR
+
+    property port:
+        def __get__(self):
+            return Port(port=self.port_desc.name)
+
+        def __set__(self, Port value):
+            self.port_desc.name = value.value()
+
+    property disposition:
+        def __get__(self):
+            return self.port_desc.disposition
+
+        def __set__(self, value):
+            self.port_desc.disposition = value
+
+    property desc_size:
+        def __get__(self):
+            return cython.sizeof(mach.mach_msg_port_descriptor_t)
 
 
 cdef class MemoryDescriptor(MessageDescriptor):
