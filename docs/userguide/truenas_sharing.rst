@@ -758,27 +758,124 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
 the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
 
+Table 10.4b provides an overview of the available VFS modules. Be sure to research each module **before** adding or deleting it from the "Selected" column of
+the "VFS Objects" field for the share. Some modules will need additional configuration after they are added. Refer to
+`Stackable VFS modules <https://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/VFS.html>`_ and the
+`vfs_* man pages <https://www.samba.org/samba/docs/man/manpages/>`_
+for more details.
+
 **Table 10.4b: Available VFS Modules**
 
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| **Value**     | **Description**                                                                                                                            |
-|               |                                                                                                                                            |
-+===============+============================================================================================================================================+
-| audit         | logs share access, connects/disconnects, directory opens/creates/removes, and file opens/closes/renames/unlinks/chmods to syslog           |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| extd_audit    | sends "audit" logs to both syslog and the Samba log files                                                                                  |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| fake_perms    | allows roaming profile files and directories to be set as read-only                                                                        |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| netatalk      | eases the co-existence of CIFS and AFP shares                                                                                              |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| streams_depot | **experimental** module to store alternate data streams in a central directory                                                             |
-|               |                                                                                                                                            |
-+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| **Value**           | **Description**                                                                                                                            |
+|                     |                                                                                                                                            |
++=====================+============================================================================================================================================+
+| acl_tdb             | stores NTFS ACLs in a tdb file in order to enable full mapping of Windows ACLs                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| acl_xattr           | stores NTFS ACLs in Extended Attributes (EAs) in order to enable the full mapping of Windows ACLs                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| aio_fork            | enables async I/O                                                                                                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| aio_posix           | enables asynchronous I/O on systems running POSIX kernels                                                                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| aio_pthread         | implements async I/O in Samba vfs using a pthread pool instead of the internal Posix AIO interface                                         |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| audit               | logs share access, connects/disconnects, directory opens/creates/removes, and file opens/closes/renames/unlinks/chmods to syslog           |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| cacheprime          | primes the kernel file data cache                                                                                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| cap                 | translates filenames to and from the CAP encoding format, commonly used in Japanese language environments                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| catia               | creates filenames that use characters that are illegal in CIFS filenames                                                                   |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| commit              | tracks the amount of data written to a file and synchronizes it to disk when a specified amount accumulates                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| crossrename         | allows server side rename operations even if source and target are on different physical devices                                           |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| default_quota       | stores the default quotas that are reported to a windows client in the quota record of a user                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| dirsort             | sorts directory entries alphabetically before sending them to the client                                                                   |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| expand_msdfs        | enables support for Microsoft Distributed File System (DFS)                                                                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| extd_audit          | sends "audit" logs to both syslog and the Samba log files                                                                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| full_audit          | records selected client operations to the system log                                                                                       |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| linux_xfs_sgid      | used to work around an old Linux XFS bug                                                                                                   |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| media_harmony       | allows Avid editorial workstations to share a network drive                                                                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| netatalk            | eases the co-existence of CIFS and AFP shares                                                                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| notify_fam          | implements file change notifications from IRIX and some BSD systems to Windows clients                                                     |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| posix_eadb          | provides Extended Attributes (EAs) support so they can be used on filesystems which do not provide native support for EAs                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| preopen             | useful for video streaming applications that want to read one file per frame                                                               |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| readahead           | useful for Windows Vista clients reading data using Windows Explorer                                                                       |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| readonly            | marks a share as read-only for all clients connecting within the configured time period                                                    |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| recycle             | moves deleted files to the recycle directory instead of deleting them                                                                      |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| scannedonly         | ensures that only files that have been scanned for viruses are visible and accessible                                                      |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| shadow_copy         | allows Microsoft shadow copy clients to browse shadow copies on Windows shares                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| shadow_copy2        | a more recent implementation of "shadow_copy" with some additonal features                                                                 |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| smb_traffic_analyzer| logs Samba read and write operations through a socket to a helper application                                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| streams_depot       | **experimental** module to store alternate data streams in a central directory                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| streams_xattr       | enables storing of NTFS alternate data streams in the file system                                                                          |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| syncops             | ensures metadata operations are performed synchronously                                                                                    |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| time_audit          | logs system calls that take longer than the number of defined milliseconds                                                                 |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+
 
 .. _Configuring Unauthenticated Access:
 
