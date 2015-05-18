@@ -915,19 +915,27 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                     for c in clones:
                         if c["name"] == new_boot_name:
                             found = True
-                            if c["mountpoint"] != "/":
-                                if c["mountpoint"] != "-":
-                                    mount_point = c["mountpoint"]
-                        else:
-                            s = "Cannot create boot-environment with same name as current boot-environment (%s)" % new_boot_name
-                        break
+                            if c["mountpoint"] == "/":
+                                s = "Cannot create boot-environment with same name as current boot-environment (%s)" % new_boot_name
+                                break
+                            else:
+                                # We'll have to destroy it.
+                                # I'd like to rename it, but that gets tricky, due
+                                # to nicknames.
+                                if DeleteClone(new_boot_name) == False:
+                                    s = "Cannot destroy BE %s which is necessary for upgrade" % new_boot_name
+                                    log.debug(s)
+                                elif CreateClone(new_boot_name) is False:
+                                    s = "Cannot create new BE %s even after a second attempt" % new_boot_name
+                                    log.debug(s)
+                            break
                     if found is False:
                         s = "Unable to create boot-environment %s" % new_boot_name
                 else:    
                     log.debug("Unable to list clones after creation failure")
                     s = "Unable to create boot-environment %s" % new_boot_name
-                    if s:
-                        log.error(s)
+                if s:
+                    log.error(s)
                     raise UpdateBootEnvironmentException(s)
             if mount_point is None:
                 mount_point = MountClone(new_boot_name)
