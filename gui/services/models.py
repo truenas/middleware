@@ -1136,6 +1136,11 @@ class UPS(Model):
             "parameters for substitution:<br /><ul><li>%d - Date</li><li>"
             "%h - Hostname</li></ul>"),
     )
+    ups_powerdown = models.BooleanField(
+        verbose_name=_("Power Off UPS"),
+        help_text=_("Signal the UPS to power off after FreeNAS shuts down."),
+        default=True,
+    )
 
     def __init__(self, *args, **kwargs):
         super(UPS, self).__init__(*args, **kwargs)
