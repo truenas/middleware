@@ -454,10 +454,10 @@ module.exports = {
     if ( this.state.errorMode ) {
       return (
         <Widget
-          positionX = { this.props.positionX }
-          positionY = { this.props.positionY }
-          title     = { this.props.title }
-          size      = { this.props.size } >
+          dimensions  =  {this.props.dimensions}
+          position    =  {this.props.position}
+          title       = { this.props.title }
+          size        = { this.props.size } >
 
           <div className="widget-error-panel">
               <h4>Something went sideways.</h4>
@@ -469,8 +469,8 @@ module.exports = {
     } else if ( this.state.statdDataLoaded && this.state.chartTypes.length > 0 ) {
       return (
         <Widget
-          positionX = { this.props.positionX }
-          positionY = { this.props.positionY }
+          dimensions  =  {this.props.dimensions}
+          position    =  {this.props.position}
           title     = { this.props.title }
           size      = { this.props.size } >
 
@@ -486,8 +486,8 @@ module.exports = {
     } else {
       return (
         <Widget
-          positionX = { this.props.positionX }
-          positionY = { this.props.positionY }
+          dimensions  =  {this.props.dimensions}
+          position    =  {this.props.position}
           title     = { this.props.title }
           size      = { this.props.size } >
 
