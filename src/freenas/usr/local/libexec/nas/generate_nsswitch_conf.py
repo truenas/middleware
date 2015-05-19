@@ -30,7 +30,7 @@ from freenasUI.common.system import (
 def main():
     nsswitch_conf = {
         'group': ['files'],
-        'hosts': ['files', 'dns'],
+        'hosts': ['files', 'mdns', 'dns'],
         'networks': ['files'],
         'passwd': ['files'],
         'shells': ['files'],
