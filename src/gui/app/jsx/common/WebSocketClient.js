@@ -70,7 +70,7 @@ class WebSocketClient {
 
   constructor () {
     // Counter for stepped timeout
-    this._k = 0;
+    this.k = 0;
     this.socket = null;
 
     // Publically accessible reconectHandle
@@ -82,9 +82,9 @@ class WebSocketClient {
   }
 
 
-// This method should only be called when there's no existing connection. If for
-// some reason, the existing connection should be ignored and overridden, supply
-// `true` as the `force` parameter.
+  // This method should only be called when there's no existing connection. If for
+  // some reason, the existing connection should be ignored and overridden, supply
+  // `true` as the `force` parameter.
   connect ( url, force ) {
     if ( window.WebSocket ) {
       if ( !this.socket || force ) {
