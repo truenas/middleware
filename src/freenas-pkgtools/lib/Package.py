@@ -146,11 +146,14 @@ class Package(object):
 
     def SetUpdates(self, updates):
         self._dict[UPGRADES_KEY] = []
-        for upd in updates:
-            size = None
-            if SIZE_KEY in upd:
-                size = up[SIZE_KEY]
-            self.AddUpdate(upd[VERSION_KEY], upd[CHECKSUM_KEY], size)
+        if updates is None:
+            self._dict.pop(UPGRADES_KEY)
+        else:
+            for upd in updates:
+                size = None
+                if SIZE_KEY in upd:
+                    size = up[SIZE_KEY]
+                self.AddUpdate(upd[VERSION_KEY], upd[CHECKSUM_KEY], size)
         return
 
     def AddUpdate(self, old, checksum, size = None, RequiresReboot = None):
