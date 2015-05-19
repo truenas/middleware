@@ -49,6 +49,10 @@ if ! is_truenas ; then
                             REVISION=${SVNREVISION}
 fi
 
+add_port freenas/nss-mdns PRODUCT_VERSION=${VERSION} \
+                            BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+                            REVISION=${SVNREVISION}
+
 add_port net/mDNSResponder
 add_port textproc/libxml2
 add_port devel/libffi
