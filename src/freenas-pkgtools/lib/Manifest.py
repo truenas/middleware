@@ -265,6 +265,8 @@ class Manifest(object):
 
     def SetNotice(self, n):
         self._dict[NOTICE_KEY] = n
+        if n is None:
+            self._dict.pop(NOTICE_KEY)
         return
 
     def Scheme(self):
@@ -291,24 +293,26 @@ class Manifest(object):
             location = location[len(location):]
         self._dict[NOTES_KEY][name] = location
 
-    def Notes(self):
+    def Notes(self, raw = False):
         if NOTES_KEY in self._dict:
             rv = {}
             for name in self._dict[NOTES_KEY].keys():
                 loc = self._dict[NOTES_KEY][name]
-                if not loc.startswith(self._config.UpdateServerURL()):
+                if raw is False and not loc.startswith(self._config.UpdateServerURL()):
                     loc = "%s/%s/Notes/%s" % (self._config.UpdateServerURL(), self.Train(), loc)
                 rv[name] = loc
             return rv
         return None
 
     def SetNotes(self, notes):
-        self._notes = {}
-        for name in notes.keys():
-            loc = notes[name]
-            if loc.startswith(self._config.UpdateServerURL()):
-                loc = loc[len(self._config.UpdateServerURL()):]
-            self._notes[name] = os.path.basename(loc)
+        self._dict[NOTES_KEY] = {}
+        if notes is None:
+            self._dict.pop(NOTES_KEY)
+        else:
+            for name, loc in notes.iteritems():
+                if loc.startswith(self._config.UpdateServerURL()):
+                    loc = loc[len(self._config.UpdateServerURL()):]
+                self._dict[NOTES_KEY][name] = os.path.basename(loc)
         return
 
     def Note(self, name):
