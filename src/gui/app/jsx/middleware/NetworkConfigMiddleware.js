@@ -21,9 +21,9 @@ class NetworkConfigMiddleware {
   }
 
   requestNetworkConfig () {
-    MiddlewareClient.request( "task.submit"
-                              , [ "network.config.get_global_config" ]
-                              , requestNetworkConfigCallback
+    MiddlewareClient.request( "network.config.get_global_config"
+                            , []
+                            , this.requestNetworkConfigCallback
                             );
   }
 
@@ -34,7 +34,7 @@ class NetworkConfigMiddleware {
   updateNetworkConfig ( newNetworkConfig ) {
     MiddlewareClient.request( "task.submit"
                             , [ "network.configure" ]
-                            , updateNetworkConfigCallback
+                            , this.updateNetworkConfigCallback
                             );
   }
 
