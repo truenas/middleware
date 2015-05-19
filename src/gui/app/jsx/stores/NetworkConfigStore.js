@@ -18,34 +18,36 @@ var _localUpdatePending = false;
 var _networkConfig = {};
 
 
+var NetworkConfigStore = _.assign( {}, EventEmitter.prototype, {
 
-class NetworkConfigStore extends EventEmitter.prototype {
+  emitChange: function () {
+      this.emit( CHANGE_EVENT );
+    }
 
-  emitChange () {
-    this.emit( CHANGE_EVENT );
-  }
+  , addChangeListener: function ( callback ) {
+      this.on( CHANGE_EVENT, callback );
+    }
 
-  addChangeListener ( callback ) {
-    this.on( CHANGE_EVENT, callback );
-  }
+  , removeChangeListener: function ( callback ) {
+      this.removeListener( CHANGE_EVENT, callback );
+    }
 
-  removeChangeListener ( callback ) {
-    this.removeListener( CHANGE_EVENT, callback );
-  }
+  , getUpdateMask: function () {
+      return UPDATE_MASK;
+    }
 
-  getUpdateMask () {
-    return UPDATE_MASK;
-  }
+  , isLocalUpdatePending: function () {
+      return _localUpdatePending;
+    }
 
-  isLocalUpdatePending () {
-    return _localUpdatePending;
-  }
+  , getNetworkConfig: function () {
+      return _networkConfig;
+    }
 
-  getNetworkConfig () {
-    return _networkConfig;
-  }
+});
 
-  dispatchTokenCallback ( payload ) {
+NetworkConfigStore.dispatchToken = FreeNASDispatcher.register(
+  function ( payload ) {
     var action = payload.action;
 
     switch ( action.type ) {
@@ -53,6 +55,7 @@ class NetworkConfigStore extends EventEmitter.prototype {
       case ActionTypes.RECEIVE_NETWORK_CONFIG:
 
         _networkConfig = action.networkConfig;
+        NetworkConfigStore.emitChange();
         break;
 
       case ActionTypes.MIDDLEWARE_EVENT:
@@ -67,7 +70,7 @@ class NetworkConfigStore extends EventEmitter.prototype {
 
         if ( validUpdate ) {
           _localUpdatePending = false;
-          this.emitChange();
+          NetworkConfigStore.emitChange();
         }
 
         break;
@@ -75,14 +78,10 @@ class NetworkConfigStore extends EventEmitter.prototype {
       case ActionTypes.RECEIVE_NETWORK_UPDATE_TASK:
 
         _localUpdatePending = true;
-        this.emitChange()
+        NetworkConfigStore.emitChange();
         break;
     }
   }
+);
 
-};
-
-NetworkConfigStore.dispatchToken = ( dispatchTokenCallback );
-
-export default new NetworkConfigStore ( );
-
+module.exports = NetworkConfigStore;
