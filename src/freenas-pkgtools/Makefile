@@ -21,34 +21,24 @@ beforeinstall:
 
 .include <bsd.subdir.mk>
 
+# Any similarity to a port Makefile is coincidental.
 PORTNAME=	freenas-pkgtools
-PORTVERSION=	0.0.1
-PORTREVISION=	1
-CATEGORIES= sysutils
-MAINTAINER=	dev@ixsystems.com
-COMMENT=	FreeNAS package tools
-LIB_DEPENDS=	libsqlite3.so:${PORTSDIR}/databases/sqlite3 \
-		libopenssl.so libcrypto.so
-USE_PYTHON=     yes
-USE_OPENSSL=	yes
+.if !defined(REVISION)
+REVISION!=	git rev-parse --short HEAD
+.endif
+
+.if ${REVISION} == ""
+REVISION=	1
+.endif
+
+PYTHON_PKGNAMEPREFIX=	py27-
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}openssl \
+		${PYTHON_PKGNAMEPREFIX}sqlite3 \
+		python \
+		python2 \
+		python27
 
 .ORDER:	install package
-
-# Create a package from the install
-# Since we just installed the tools we need,
-# we use them.
-# Note that this requires python and various
-# other packages to be installed on the system.
-
-.if defined(VERSION) && defined(REVISION)
-MVERSION=	${VERSION}-${REVISION}
-.elif defined(VERSION)
-MVERSION=	${VERSION}
-.elif defined(REVISION)
-MVERSION=	${REVISION}
-.else
-MVERSION=	1
-.endif
 
 ROOTDIR= ${DESTDIR}${BINDIR:S/usr\/local\/bin//}
 
@@ -57,10 +47,21 @@ PACKAGE_DIR=	/tmp/Packages
 .endif
 
 # This creates a package to be installed
-# on FreeNAS.  "make install" will add more
-# files.
+# on the update server.  This is a slightly
+# different set of files than are installed on
+# FreeNAS itself.
 
+# There's got to be a better way to do this.
 package: install
 	mkdir -p ${PACKAGE_DIR}
-	sed -e 's/VERSION/${MVERSION}/' < ${.CURDIR}/files/+MANIFEST > ${.OBJDIR}/+MANIFEST
+	( echo ' { '; for dep in ${RUN_DEPENDS}; do \
+		pkg query "	\"%n\" : { \"origin\" : \"%o\", \"version\" : \"%v\" }," $$dep; \
+		done ; echo '}' ) | \
+		python -c 'import os, sys, json; m = json.load(open(sys.argv[1])); \
+			m["version"] = "'${REVISION}'"; d = eval(sys.stdin.read()); \
+			m["deps"] = d; \
+			json.dump(m, sys.stdout, sort_keys=True, indent=4, separators=(",", ": "));' \
+				${.CURDIR}/files/+MANIFEST \
+			> ${.OBJDIR}/+MANIFEST
 	/usr/sbin/pkg create -o ${PACKAGE_DIR} -p ${.CURDIR}/files/pkg-plist -r ${ROOTDIR} -m ${.OBJDIR} -f tgz
+

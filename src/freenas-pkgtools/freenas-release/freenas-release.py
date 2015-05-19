@@ -37,10 +37,129 @@ debug = 0
 verbose = 1
 debugsql = False
 
+# A brief note here:
+# The database_version should change only when absolutely
+# necessary -- new tables that can happily be empty should
+# have the same version number.  But if new semantics are needed,
+# or tables are removed or repurosed, then the database version
+# should change.
+database_version = 1
+
+class DatabaseException(Exception):
+    pass
+
+class DatabaseIncompatibleVersionException(DatabaseException):
+    pass
+
 def DebugSQL(sql, parms):
     if debugsql:
         print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
         
+CONFIG_KEYFILE_KEY = "keyfile"
+CONFIG_DBPATH_KEY = "db"
+CONFIG_ARCHIVE_KEY = "archive"
+
+CONFIG_FILE_DEFAULT = "/usr/local/etc/freenas-release-default.conf"
+CONFIG_FILE_SYSTEM = "/usr/local/etc/freenas-release.conf"
+CONFIG_FILE_USER = os.path.expanduser("~/.freenas-release.conf")
+
+def SetConfiguration(path, project, arg_dict = {}):
+    """
+    Set configuration files for the configuration file at
+    path.  If path doesn't exist, it will attempt to create
+    it; if it does exist, it loads it up first, and then
+    replaces as needed.
+    Values are taken from kwargs, which should be the keys
+    from above.
+    If project does not exist as a section in the file, then
+    it is created; it may be an empty section.
+    """
+    import ConfigParser
+
+    # Just a raw config parser so we do no interpolation.
+    cfp = ConfigParser.RawConfigParser()
+    try:
+        fp = open(path, "r")
+    except:
+        pass
+    else:
+        try:
+            cfp.readfp(fp)
+            fp.close()
+        except BaseException as e:
+            print >> sys.stderr, "Could not load config file %s: %s" % (path, str(e))
+            return False
+
+    # Now see if the section exists
+    if cfp.has_section(project) == False:
+        cfp.add_section(project)
+
+    # Now go through arg_dict
+    for key, value in arg_dict.iteritems():
+        cfp.set(project, key, value)
+        if value == "":
+            cfp.remove_option(project, key)
+            
+    # Now save the object
+    try:
+        fp = open(path, "w")
+    except BaseException as e:
+        print >> sys.stderr, "Could not open config file %s for writing: %s" % (path, str(e))
+        return False
+    else:
+        cfp.write(fp)
+
+    return True
+        
+def GetConfiguration(path, project):
+    """
+    Load the configuration file at path, and
+    return a dictionary with the setings for project.
+    If path does not exist, or project does not exist in
+    it, return None
+    For now, we use ConfigParser.  May go to JSON after
+    some experience with it.
+    The contents of the configuration file will be parsed
+    for environment variables and ~expansion.
+    This uses the default config file.
+    """
+    import ConfigParser
+    # This file is only used in this one function.
+    
+    retval = None
+
+    cfp = ConfigParser.SafeConfigParser()
+    # Read in the default config file, the system one, and the one given.
+    # It's possible that the latter two will be the same, but that's okay.
+    cfp.read([CONFIG_FILE_DEFAULT, CONFIG_FILE_SYSTEM, path])
+
+    # Okay, got a file.  Now let's look for project.
+    if cfp.has_section(project):
+        # We may want to figure out how to have some default
+        # values.
+        # We do want to stash the project name in the environment space
+        old_env = None
+        if "PROJECT" in os.environ:
+            old_env = os.environ["PROJECT"]
+        os.environ["PROJECT"] = project
+        # Okay, let's load the values from it
+        # Most of the values are just strings, but
+        # there are some known-type values, so we'll
+        # look for those specially.  (Okay, none come
+        # to mind just yet.)
+        retval = {}
+        for option in cfp.options(project):
+            tstr = cfp.get(project, option)
+            retval[option] = os.path.expanduser(os.path.expandvars(tstr))
+        # And that's it
+        # So now undo th eenvironment change
+        if old_env:
+            os.environ["PROJECT"] = old_env
+        else:
+            os.environ.pop("PROJECT")
+            
+    return retval
+
 # Obtain a lock for an archive.
 # This should be done before creating any files,
 # such as manifests or package files.
@@ -187,514 +306,54 @@ class ReleaseDB(object):
     def NoticeForSequence(self, sequence):
         return None
 
-class PyReleaseDB(ReleaseDB):
-    """
-    Database as a json file.
-    __init__ loads the json file and converts it to
-    a python object; close writes it out.
-    The layout of the object is:
-    PACKAGES_KEY:	Dictionary, key is package name.
-			Value is an array of tuples.  Item 0 is the version;
-    			item 1 is a dictionary, with the keys being:
-			CHECKSUM_KEY	-- checksum for this package version
-			UPDATES_KEY	-- An array of tuples, item 0 being
-					version, and item 1 being a checksum
-					(may be None)
-    SEQUENCES_KEY:	An array of sequences.  Each element is a tuple,
-			with item 0 being the sequence name, and item 1 being
-			a dictionary.  The keys are:
-			PACKAGES_KEY	-- An array of packages.  Each package
-    					is a tuple (PackageName, Package Version)
-					that references the PACKAGES_KEY for the
-    					db object.
-			RELNAME_KEY	-- A string indicating the release name.
-			RELNOTES_KEY	-- An array of unknown at this time.
-			TRAINS_KEY	-- The name of the train for this sequence.
-    			NOTICES_KEY	-- A special note, kept with the manifest.
-    TRAINS_KEY:		A dictionary.  Key is the name of the train,
-			value is an array of sequences.
-    
-    """
-    global debug, verbose
-    PACKAGES_KEY = "kPackages"
-    SEQUENCES_KEY = "kSequences"
-    RELNAME_KEY = "kReleaseName"
-    RELNOTES_KEY = "kReleaseNotes"
-    NOTICES_KEY = "kNotices"
-    CHECKSUM_KEY = "kChecksum"
-    TRAINS_KEY = "kTrains"
-    UPDATES_KEY = "kUpdates"
-
-    def __init__(self, use_transactions = False, initialize = False, dbfile = None):
-        import json
-
-        super(PyReleaseDB, self).__init__(use_transactions, initialize)
-        self._dbfile = dbfile
-        if initialize:
-            try:
-                os.remove(self._dbfile)
-            except:
-                pass
-        try:
-            with open(self._dbfile, "r") as f:
-                self._db = json.load(f)
-        except:
-            # Just assume an empty database for now
-            self._db = {}
-
-    def commit(self):
-        # Write the file out
-        import json
-
-        if debug: print >> sys.stderr, "PYReleaseDB::commit"
-        with open(self._dbfile, "w") as f:
-            json.dump(self._db, f, sort_keys=True,
-                      indent=4, separators=(',', ': '))
-
-    def close(self):
-        # Just write it out.
-        self.commit()
-
-    def abort(self):
-        # Reload the object
-        self._db = {}
-        try:
-            with open(self._dbfile, "r") as f:
-                self._db = json.load(f)
-        except:
-            pass
-
-    def _sequences(self):
-        if self.SEQUENCES_KEY not in self._db:
-            self._db[self.SEQUENCES_KEY] = []
-        return self._db[self.SEQUENCES_KEY]
-
-    def _packages(self):
-        if self.PACKAGES_KEY not in self._db:
-            self._db[self.PACKAGES_KEY] = {}
-        return self._db[self.PACKAGES_KEY]
-
-    def _trains(self):
-        if self.TRAINS_KEY not in self._db:
-            self._db[self.TRAINS_KEY] = {}
-        return self._db[self.TRAINS_KEY]
-
-    def _find_sequence(self, sequence):
-        seqs = self._sequences()
-        for s in seqs:
-            if s == sequence:
-                return s
-        return None
-
-    def AddRelease(self, manifest):
-        # Add the sequence, train, packages, name
-
-        if self._find_sequence(manifest.Sequence()):
-            raise Exception("Duplicate sequence %s" % manifest.Sequence())
-        pkg_list = []
-        for pkg in manifet.Package():
-            # See if this package/version is in the db's package list.
-            pkgs = self._packages()
-            if pkg.Name() not in pkgs:
-                pkgs[pkg.Name()] = []
-            
-            version_array = pkgs[pkg.Name()]
-            if pkg.Version() not in version_array:
-                version_array.append(
-                    (
-                        pkg.Version(),
-                        {
-                            self.CHECKSUM_KEY : pkg.Checksum(),
-                            self.UPDATES_KEY : [],
-                        }
-                        )
-                    )
-                pkg_list.append((pkg.Name(), pkg.Version()))
-        # Now add pkg_list to the list of sequences
-        elem = (
-            manifest.Sequence(),
-            {
-                self.PACKAGES_KEY : pkg_list,
-                self.RELNOTES_KEY : manifest.Notes(),
-                self.TRAINS_KEY : manifest.Train(),
-                self.NOTICE_KEY : manifest.Notice(),
-            }
-        )
-        self._sequences().append(elem)
-        if manifest.Train() not in self._trains():
-            self._trains()[manifest.Train()] = []
-        self._trains()[manifest.Train()].append(manifest.Sequence())
-        self.commit()
-
-    def PackageForSequence(self, sequence, name = None):
-        """
-        For a given sequence, return the packages for it.
-        If name is None, then return all of the packages
-        for that sequence.
-        The return objects are Package objects
-        """
-        rv = []
-        for seq in self._sequences():
-            if seq[0] == sequence:
-                break
-        for pkg in seq[1][self.PACKAGES_KEY]:
-            if name is None or name == pkg[0]:
-                (n, v) = pkg
-                rv.append(self._find_package(n, v))
-                if name: break
-
-        if rv and name:
-            return rv[0]
-        return rv
-
-    def TrainForSequence(self, sequence):
-        """
-        Return the name of the train for a given sequence.
-        """
-        for seq in self._sequences():
-            if seq[0] == sequence:
-                return seq[1][self.TRAINS_KEY]
-
-    def RecentSequencesForTrain(self, train, count = 5):
-        """
-        Get the count-most recent sequences for a given train
-        """
-        if debug:  print >> sys.stderr, "RecentSequencesForTrain(%s, %d)" % (train, count)
-        rv = []
-        if debug:  print >> sys.stderr, "\ttarins = %s" % self._trains()
-        if train in self._trains():
-            sequences = self._trains()[train]
-            if debug:  print >> sys.stderr, "\tsequences = %s" % sequences
-            rev_sequences = sequences[::-1]
-            if rev_sequences:
-                rv = rev_sequences[0:count]
-        if debug: print >> sys.stderr, "\trv = %s" % rv
-        return rv
-
-    def AddPackageUpdate(self, Pkg, OldVersion, DeltaChecksum = None, RequiresReboot = True):
-        """
-        Add an update for Pkg.
-        """
-        pkg_array = self._packages()[Pkg.Name()]
-        for p in pkg_array:
-            if p[0] == Pkg.Version():
-                p_dict = p[1]
-                updates = p_dict[self.UPDATES_KEY]
-                updates.append((OldVersion, DeltaChecksum))
-                self.commit()
-                return
-        raise Exception("Should not have reached this point")
-
-    def UpdatesForPackage(self, Pkg, count = 5):
-        """
-        Return an array of updates for the package, most
-        recent first
-        """
-        p_array = self._packages()[Pkg.Name()]
-        for p in p_array:
-            if p[0] == Pkg.Version():
-                rv = []
-                for upd in p[1][UPDATES_KEY]:
-                    rv.append((upd[0], upd[1]))
-                if count == 0:
-                    return rv
-                else:
-                    return rv[0 : count]
-        return []
-
-    def _find_package(self, name, version):
-        pkg = self._packages()[name]
-        for p in pkg:
-            if p[0] == version:
-                P = Package.Package(p[1])
-                return P
-
-    def Trains(self):
-        rv = []
-        for t in self._trains().keys():
-            rv.append(t)
-
-        return rv
-
-    def NotesForSequence(self, sequence):
-        seq = self._find_sequence(sequence)
-        if seq and self.NOTES_KEY in seq:
-            return seq[self.NOTES_KEY]
-        return {}
-
-    def NoticeForSequence(self, sequence):
-        seq = self._find_sequence(sequence)
-        if seq and self.NOTICE_KEY in seq:
-            return seq[self.NOTICE_KEY]
-        return None
-
-class FSReleaseDB(ReleaseDB):
-    """
-    Filesystem as database.
-    This is a dumb idea, it's mainly because it's fairly simple,
-    light-weight, and quick.
-    Too quick, in fact, since the normal unix file time resolution
-    is 1 second, and that makes it not possible to determine order
-    properly.
-    The layout is:
-    <dbpath>
-	packages
-		<pkgname>
-			<pkgversion> -- file
-	sequences
-		<sequence name>	-- symlink to ../<train name>/<sequence name>
-	<train name>
-		<sequence name>
-			<pkg name> -- symlink to ../../packages/<pkgname>/<pkg version>
-    """
-
-    global debug, verbose
-
-    def SafeMakedir(self, path, mode = 0755):
-        """
-        Make a directory.  Returns True if it can,
-        or if it already exists; False if it can't.
-        """
-        import errno
-        try:
-            os.makedirs(path, mode)
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                return True
-            return False
-        return True
-
-    def __init__(self, use_transactions = False, initialize = False, dbpath = None):
-        super(FSReleaseDB, self).__init__(use_transactions, initialize)
-        if initialize:
-            try:
-                os.removedirs(dbpath)
-            except:
-                pass
-        if self.SafeMakedir(dbpath) is False:
-            raise Exception("Cannot create database path %s" % dbpath)
-        self._dbpath = dbpath
-        if not self.SafeMakedir("%s/packages" % dbpath):
-            raise Exception("Cannot create database path %s/packages" % dbpath)
-        if not self.SafeMakedir("%s/sequences" % dbpath):
-            raise Exception("Cannot create database path %s/sequences" % dbpath)
-
-    def AddRelease(self, manifest):
-        """
-        Add the release into the database:
-        Create a directory _dbpath/$train (okay if already exists)
-        Create a directory _dbpath/$train/$sequence (cannot already exist)
-        Create a direcotry _dbpath/$train/$sequence/Notes (if manifest.Notes())
-        	Create a file for each manifest.Notes(), contents being the note
-        Create a file _dbpath/$train/$sequence/NOTICE (if manifest.Notice())
-        Soft link _dbpath/$train/$sequence -> _dbpath/sequences/$sequence (cannot already exist)
-        Create directories _dbpath/packages/$package_name (okay if already exists)
-        Create a file _dbpath/packages/$package_name/$package_version (okay if already exists)
-        Write the checksum for the package file into that.
-        Soft link _dbpath/pckages/$package_name/$package_version -> _dbpath/$train/$sequence/$package_name
-        """
-
-        if debug: print >> sys.stderr, "FSReleaseDB::AddRelease(%s, %s, %s, %s)" % (manifet.Sequence(), manifest.Train(), manifest.Packages(), manifest.Notes())
-        if not self.SafeMakedir("%s/%s" % (self._dbpath, manifest.Train())):
-            raise Exception("Cannot create database path %s/%s" % (self._dbpath, manifest.Train()))
-        os.makedirs("%s/%s/%s" % (self._dbpath, manifest.Train(), manifest.Sequence()))
-        if manifest.Notes():
-            npath = "%s/%s/%s/Notes" % (self._dbpath, manifest.Train(), manifest.Sequence())
-            os.makedirs(npath)
-            for note in manifest.Notes.keys():
-                with open("%s/%s" % (npath, note), "w") as f:
-                    f.write(manifest.Notes()[note])
-        if manifest.Notice():
-            with open("%s/%s/%s/NOTICE" % (self._dbpath, manifest.Train(), manifest.Sequence()), "w") as f:
-                f.write(manifest.Notice())
-        os.symlink("../%s/%s" % (manifest.Train(), manifest.Sequence()),
-                   "%s/sequences/%s" % (self._dbpath, manifest.Sequence()))
-        for pkg in manifest.Packages():
-            if not self.SafeMakedir("%s/packages/%s" % (self._dbpath, pkg.Name())):
-                raise Exception("Cannot create database path %s/packages/%s" % (self._dbpath, pkg.Name()))
-            if not os.path.exists("%s/packages/%s/%s" % (self._dbpath, pkg.Name(), pkg.Version())):
-                with open("%s/packages/%s/%s" % (self._dbpath, pkg.Name(), pkg.Version()), "w") as f:
-                    if pkg.Checksum():
-                        f.write(pkg.Checksum())
-            os.symlink("../../packages/%s/%s" % (pkg.Name(), pkg.Version()),
-                       "%s/%s/%s/%s" % (self._dbpath, manifest.Train(), manifest.Sequence(), pkg.Name()))
-
-    def PackageForSequence(self, sequence, name = None):
-        """
-        For a given sequence, return the package for it.
-        If name is none, return all of the packages for that
-        sequence.
-        We do this by opening _dbpath/sequences/$sequence,
-        and os.listdirs if name is None
-        """
-        if debug:  print >> sys.stderr, "FSReleaseDB::PackageForSequence(%s, %s)" % (sequence, name)
-        sdir = "%s/sequences/%s" % (self._dbpath, sequence)
-        if name:
-            pkgs = (name,)
-        else:
-            pkgs = os.listdir(sdir)
-        rv = []
-        for pkg in pkgs:
-            # sdir/pkg is a symlink to the package version.
-            # The contents, if any, are a checksum
-            if debug:  print >> sys.stderr, "FSReleaseDB::PackageForSequence(%s, %s):  pkg = %s" % (sequence, name, pkg)
-            pkgfile = sdir + "/" + pkg
-            pkg_version = os.path.basename(os.readlink(pkgfile))
-            if debug:  print >> sys.stderr, "\tpkgfile = %s, pkg_version = %s" % (pkgfile, pkg_version)
-            with open(pkgfile, "r") as f:
-                cksum = f.read()
-                if not cksum:
-                    cksum = None
-            P = Package.Package(pkg, pkg_version, cksum)
-            if debug:  print >> sys.stderr, "\tP = %s-%s" % (P.Name(), P.Version())
-            rv.append(P)
-        if rv and name:
-            if len(rv) > 1:
-                raise Exception("Too many results for packge %s:  expected 1, got %d" % (P.Name(), len(rv)))
-            return rv[0]
-        return rv
-
-    def TrainForSequence(self, sequence):
-        """
-        Return the name of the train for a given sequence.
-        This is _dbpath/sequences/$sequence, which
-        has ../%s/%s, so we'll break it by "/", and
-        use the middle component.
-        """
-        buf = os.readlink("%s/sequences/%s" % (self._dbpath, sequence))
-        comps = buf.split("/")
-        return comps[1]
-
-    def RecentSequencesForTrain(self, train, count = 5):
-        """
-        Get the most recent sequences for the given train.
-        """
-        import operator
-        import errno
-        train_path = "%s/%s" % (self._dbpath, train)
-        # To sort this, we have to go by ctime.
-        sequences = {}
-        try:
-            for s in os.listdir(train_path):
-                sequences[s] = os.lstat("%s/%s" % (train_path, s)).st_ctime
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                return []
-            else:
-                raise e
-        sorted_sequences = sorted(sequences.iteritems(),
-                                  key = operator.itemgetter(1))[::-1]
-        rv = []
-        for s, t in sorted_sequences:
-            rv.append(s)
-        return rv
-
-    def AddPackageUpdate(self, Pkg, OldVersion, DeltaChecksum = None, RequiresReboot = True):
-        """
-        Note the existence of a delta update from OldVersion to Pkg.Version.
-        With FSReleaseDB, we do this by creating a file
-        _dbpath/packages/$package/Updates/$Pkg.Version()/$OldVersion, with the
-        contents being DeltaChecksum.
-        """
-        dirname = "%s/packages/%s/Updates/%s" % (self._dbpath, Pkg.Name(), Pkg.Version())
-        if not self.SafeMakedir(dirname):
-            raise Exception("Could not create database directory %s" % dirname)
-        ufile = "%s/%s" % (dirname, OldVersion)
-        if not os.path.exists(ufile):
-            with open(ufile, "w") as f:
-                if DeltaChecksum:
-                    f.write(DeltaChecksum)
-
-    def UpdatesForPackage(self, Pkg, count = 5):
-        # Return an array of package update for Pkg.
-        import errno
-        import operator
-
-        dirname = "%s/packages/%s/Updates/%s" % (self._dbpath, Pkg.Name(), Pkg.Version())
-        updates = {}
-        try:
-            for entry in os.listdir(dirname):
-                updates[entry] = os.lstat("%s/%s" % (dirname, entry)).st_ctime
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                return []
-            else:
-                raise e
-        sorted_updates = sorted(updates.iteritems(),
-                                key = operator.itemgetter(1))[::-1]
-
-        rv = []
-        for u, t in sorted_updates:
-            with open("%s/%s" % (dirname, u), "r") as f:
-                cksum = f.read()
-                if not cksum:
-                    cksum = None
-                rv.append((u, cksum))
-        if count == 0 or len(rv) == 0:
-            return rv
-        else:
-            return rv[0 : count]
-
-    def Trains(self):
-        """
-        For the FS database, trains are everything in self._dbpath
-        except for "sequences" and "packages"
-        """
-        rv = []
-        for t in os.listdir(self._dbpath):
-            if t == "packages" or t == "sequences":
-                continue
-            if os.path.isdir("%s/%s" % (self._dbpath, t)):
-                rv.append(t)
-        return rv
-
-    def NotesForSequence(self, sequence):
-        train = self.TrainForSequence(sequence)
-        if train:
-            rv = {}
-            npath = "%s/%s/%s/Notes" % (self._dbpath, train, sequence)
-            for note in os.listdir(npath):
-                rv[note] = open("%s/%s" % (npath, note)).read()
-            return rv
-        return {}
-
-    def NoticeForSequence(self, sequence):
-        train = self.TrainForSeauence(sequence)
-        if train:
-            npath = "%s/%s/%s/NOTICE" % (self._dbpath, train, sequence)
-            try:
-                with open(npath, "r") as f:
-                    return f.read()
-            except:
-                return None
-        return None
-
-class SQLiteReleaseDB(ReleaseDB):
+class SQLiteReleaseDB(object):
     """
     SQLite subclass for ReleaseDB
     """
     global debug, verbose
 
-    def __init__(self, use_transactions = False, initialize = False, dbfile = None):
+    def __init__(self, initialize = False, dbfile = None):
         global debug
         import sqlite3
         if dbfile is None:
             raise Exception("dbfile must be specified")
-        super(SQLiteReleaseDB, self).__init__(use_transactions, initialize)
         self._dbfile = dbfile
         if initialize:
             try:
                 os.remove(self._dbfile)
             except:
                 pass
+        else:
+            # If it doesn't exist, we act as if we've been asked to initialize
+            if not os.path.exists(self._dbfile):
+                initialize = True
+                
         self._connection = sqlite3.connect(self._dbfile, isolation_level = None)
         if self._connection is None:
             raise Exception("Could not connect to sqlie db file %s" % dbfile)
+
         self._connection.text_factory = str
         self._connection.row_factory = sqlite3.Row
         self._cursor = self._connection.cursor()
         self._cursor.execute("PRAGMA foreign_keys = ON")
 
+        if not initialize:
+            # Check the version number
+            try:
+                self._cursor.execute("SELECT Version FROM Version")
+            except sqlite3.OperationalError:
+                version = None
+            else:
+                rows = self._cursor.fetchone()
+                version = rows["Version"]
+            if version != database_version:
+                raise DatabaseIncompatibleVersionException("Database version incompatible; may need a rebuild")
+        else:
+            self._cursor.execute("CREATE TABLE Version(dumb_text TEXT PRIMARY KEY, Version INTEGER NOT NULL)")
+            self._cursor.execute("INSERT INTO Version(dumb_text, Version) VALUES(?, ?)", ("version", database_version))
+            self._connection.commit()
+            self._cursor = self._connection.cursor()
+            
         # The Packages table consists of the package names, package version, optional checksum.
         # The indx value is used to determine which versions are newer, and also as a foreign
         # key to create the Releases table below.
@@ -767,12 +426,10 @@ class SQLiteReleaseDB(ReleaseDB):
         """)
         
         self.commit()
-        self._in_transaction = False
 
     def commit(self):
         if self._cursor:
             self._connection.commit()
-            self._in_transaction = False
             self._cursor = self._connection.cursor()
         else:
             print >> sys.stderr, "Commit attempted with no cursor"
@@ -782,13 +439,6 @@ class SQLiteReleaseDB(ReleaseDB):
             print >> sys.stderr, "Cursor was none, so getting a new one"
             self._cursor = self._connection.cursor()
         return self._cursor
-
-    def abort(self):
-        if self._in_transaction:
-            if self._cursor:
-                self._cursor.execute("ROLLBACK")
-            self._in_transaction = False
-        self._cursor = None
 
     def close(self, commit = True):
         if commit:
@@ -864,12 +514,6 @@ class SQLiteReleaseDB(ReleaseDB):
         Add the release into the database.  This inserts values into
         the Releases, Packages, Trains, and ReleaseNotes tables, as appropriate.
         """
-
-        if self._use_transactions:
-            pass
-            self.cursor().execute("BEGIN")
-            self._in_transaction = True
-
 
         # First, make sure the train name is in the database
         # The "ON CONFLICT IGNORE" ensures it won't cause a problem if it's already in there.
@@ -1475,7 +1119,7 @@ def ChecksumFile(path):
     return sum.hexdigest()
 
 def usage():
-    print >> sys.stderr, """Usage: %s [--database|-D db] [--debug|-d] [--verbose|-v] --archive|--destination|-a archive_directory <cmd> [args]
+    print >> sys.stderr, """Usage: %s [--config config_file] [--database|-D db] [--debug|-d] [--verbose|-v] [--archive|--destination|-a archive_directory] <cmd> [args]
     Command is:
 	add	Add the build-output directories (args) to the archive and database
 	check	Check the archive for self-consistency.
@@ -2461,22 +2105,18 @@ def Check(archive, db, project = "FreeNAS"):
                         sequences_for_packages[o_vers] = []
                     sequences_for_packages[o_vers].append(sequence_file)
             if sequence_file != "LATEST":
-                # I have to cheat a bit here
-                # Manifest.Notes() returns URLs, but that's not what I want.
-                # So I'll look at the notes dictionary directly.
-                if Manifest.NOTES_KEY in temp_mani.dict():
-                    notes_dict = temp_mani.dict()[Manifest.NOTES_KEY]
-                    for note in notes_dict:
-                        if note == "NOTICE":
-                            # Special case, not a file
-                            continue
-                        note_file = notes_dict[note]
-                        if note_file in expected_notes:
-                            print >> sys.stderr, "Note file %s already expected, this is confusing" % note_file
-                            if debug:
-                                print >> sys.stderr, "\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence())
-                        expected_notes[note_file] = True
-                        if debug:  print >> sys.stderr, "Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence())
+                notes_dict = temp_mani.Notes(raw = True)
+                for note in notes_dict:
+                    if note == "NOTICE":
+                        # Special case, not a file
+                        continue
+                    note_file = notes_dict[note]
+                    if note_file in expected_notes:
+                        print >> sys.stderr, "Note file %s already expected, this is confusing" % note_file
+                        if debug:
+                            print >> sys.stderr, "\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence())
+                    expected_notes[note_file] = True
+                    if debug:  print >> sys.stderr, "Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence())
 
         # Now let's check the found_contents and expected_contents dictionaries
         if expected_contents != found_contents:
@@ -2577,7 +2217,7 @@ def Dump(archive, db, project = "FreeNAS", args = []):
 
     return 0
 
-def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
+def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
     """
     Given an archive, rebuild the database by examining the
     manifests.
@@ -2594,8 +2234,9 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
     pkg_directory = os.path.join(archive, "Packages")
     copy = None
     verify = False
+    ifneeded = False
     
-    long_options = [ "copy=", "verify" ]
+    long_options = [ "copy=", "verify", "ifneeded" ]
     try:
         opts, args = getopt.getopt(args, None, long_options)
     except getopt.GetoptError as err:
@@ -2607,6 +2248,8 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
             copy = a
         elif o in ("--verify"):
             verify = True
+        elif o in ("--ifneeded"):
+            ifneeded = True
         else:
             usage()
 
@@ -2614,6 +2257,14 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
         print >> sys.stderr, "Only one of --verify or --copy is allowed"
         usage()
 
+    try:
+        db = SQLiteReleaseDB(dbfile = dbfile)
+        if ifneeded:
+            print >> sys.stderr, "Database rebuild not needed due to compatible versions"
+            return
+    except DatabaseIncompatibleVersionException:
+        db = SQLiteReleaseDB(dbfile = dbfile, initialize = True)
+        
     for train_name in os.listdir(archive):
         if train_name == "Packages":
             continue
@@ -2644,7 +2295,7 @@ def Rebuild(archive, db, project = "FreeNAS", key = None, args = []):
         try:
             m.LoadPath(manifest)
         except BaseException as e:
-            print >> sys.stderr, "Got exception %s trying to load %s, skipping" % manifest
+            print >> sys.stderr, "Got exception %s trying to load %s, skipping" % (str(e), manifest)
             continue
         
         pkg_list = []
@@ -3195,6 +2846,296 @@ def Rollback(archive, db, project = "FreeNAS", args = []):
     
     return
 
+def Project(config_file, args = None):
+    """
+    Manipulate the configuration file config_file.
+    This can be used to create an initial config file,
+    or to alter an existing one.
+    The usage is:
+    project <project_name> <options>
+    Op
+    """
+    def project_usage():
+        print >> sys.stderr, """
+Usage for project command:
+\tproject <project_name> <options>
+Options are:
+\t--print\tPrint out the settings for the project
+\t--archive <archive>\tLocation of archive for project
+\t--database|--db <dbfile>\tLocation of database file
+\t--key <keyfile>\tLocation of key file (for signing)
+\t--delete\tDelete the project.
+
+Use '${PROJECT}' in pathnames to specify the project name;
+use an empty string to remove the key from the project settings.
+Use no options to simply create a project using the default
+values.
+"""
+        usage()
+        
+    propt = None
+    long_options = ["archive=",
+                    "database=",
+                    "db=",
+                    "key=",
+                    "delete",
+                    "print",
+                    ]
+    if len(args) == 0:
+        project_usage()
+    else:
+        project = args[0]
+        
+    try:
+        opts, args = getopt.getopt(args[1:], None, long_options)
+    except getopt.GetoptError as err:
+        print >> sys.stderr, str(err)
+        project_usage()
+
+    arg_dict = {}
+    del_project = None
+    
+    for o, a in opts:
+        if o in ("--archive"):
+            arg_dict[CONFIG_ARCHIVE_KEY] = a
+        elif o in ("--db", "--database"):
+            arg_dict[CONFIG_DBPATH_KEY] = a
+        elif o in ("--key"):
+            arg_dict[CONFIG_KEYFILE_KEY] = a
+        elif o in ("--delete"):
+            del_project = project
+        elif o in ("--print"):
+            propt = True
+        else:
+            project_usage()
+
+    if del_project and (propt or len(arg_dict) > 0):
+        print >> sys.stderr, "Do not set options and then delete the project at the same time"
+        project_usage()
+
+    if del_project:
+        # Just do the work here
+        import ConfigParser
+        cfp = ConfigParser.RawConfigParser()
+        try:
+            fp = open(config_file, "r")
+        except BaseException as e:
+            print >> sys.stderr, "Cannot delete project %s because can't read config file %s: %s" % (project, config_file, str(e))
+            return
+        try:
+            cfp.readfp(fp)
+        except BaseException as e:
+            print >> sys.stderr, "Could not delete project %s because could not parse config file %s: %s" % (project, config_file, str(e))
+            return
+
+        try:
+            cfp.remove_section(project)
+        except:
+            pass
+
+        try:
+            fp = open(config_file, "w")
+        except BaseException as e:
+            print >> sys.stderr, "Could not delete project %s because could not open config file %s for writing: %s" % (project, config_file, str(e))
+            return
+
+        try:
+            cfp.write(fp)
+        except BaseException as e:
+            print >> sys.stderr, "Could not write config file %s: %s" % (config_file, str(e))
+            return
+    else:
+        if arg_dict or not propt:
+            rv = SetConfiguration(config_file, project, arg_dict)
+            if rv is False:
+                print >> sys.stderr, "Unable to alter project %s in config file %s" % (project, config_file)
+
+    if propt:
+        # Print out things
+        cdict = GetConfiguration(config_file, project)
+        if cdict:
+            for k, v in cdict.iteritems():
+                # Better hope there are no quotes or escaped characters here...
+                print "%s=\"%s\"" % (k, v)
+    return
+
+def Copy(archive, db, project, args):
+    """
+    This is used to re-create a release.
+    That is, for a given sequence, and a target, it will
+    create the target directory, ${PROJECT}-MANIFEST,
+    Packages directory, and various other files necessary
+    (such as ReleaseNotes, ChangeLog (maybe?), upgrade
+    scripts, and RESTART service-restart file.
+    """
+    def Copy_usage():
+        print >> sys.stderr, "Usage:  %s copy [--full] [--dest dest] sequence" % sys.argv[0]
+        usage()
+        
+    sequence = None
+    dest = None
+    full = False
+
+    long_options = ["full",
+                    "dest=",
+                    ]
+
+    try:
+        opts, args = getopt.getopt(args, None, long_options)
+    except getopt.GetoptError as err:
+        print >> sys.stderr, str(err)
+        Copy_usage()
+
+    for o, a in opts:
+        if o in ("--full"):
+            full = True
+        elif o in ("--dest"):
+            dest = a
+        else:
+            print >> sys.stderr, "Unknown option %s" % o
+            Copy_usage()
+
+    if len(args) != 1:
+        print >> sys.stderr, "Incorrect number of arguments (%d)" % len(args)
+        Copy_usage()
+
+    sequence = args[0]
+    
+
+    # This allows "copy FreeNAS-9.3-Nightlies/LATEST" to work.
+    if "/" in sequence:
+        (train, sequence) = sequence.split("/")
+        print >> sys.stderr, "train = %s, sequence = %s" % (train, sequence)
+        if train is None or sequence is None:
+            print >> sys.stderr, "Don't know how to handle %s" % args[0]
+            sys.exit(1)
+        manifest_file = os.path.join(archive, train, sequence)
+    else:
+        train = db.TrainForSequence(sequence)
+        if train is None:
+            print >> sys.stderr, "Sequence %s does not seem to exist" % sequence
+            sys.exit(1)
+        manifest_file = os.path.join(archive, train, project + "-" +  sequence)
+    
+    man = Manifest.Manifest()
+    try:
+        man.LoadPath(manifest_file)
+    except BaseException as e:
+        print >> sys.stderr, "Could not load manifest file %s: %s" % (manifest_file, str(e))
+        sys.exit(1)
+
+    pkgs = man.Packages()
+    pkg_files = []
+    update_scripts = {}
+    svc_list = {}
+    notes_dict = man.Notes(raw = True)
+    notice = man.Notice()
+    
+    if notes_dict:
+        for note, loc in notes_dict.iteritems():
+            note_file = os.path.join(archive, train, "Notes", loc)
+            try:
+                notes_dict[note] = open(note_file).read()
+            except:
+                notes_dict.pop(note)
+                
+    for pkg in pkgs:
+        pkg.SetUpdates(None)
+        pkg_files.append(os.path.join(archive, "Packages", pkg.FileName()))
+        scripts = db.ScriptForPackage(pkg)
+        t = {}
+        if scripts:
+            for script_name in scripts:
+                if script_name == "reboot":
+                    t["reboot"] = "reboot"
+                else:
+                    script_path = os.path.join(archive, "Packages", pkg.Name(), pkg.Version(), script_name)
+                    try:
+                        script_contents = open(script_path).read()
+                        t[script_name] = script_contents
+                    except:
+                        pass
+        if t:
+            update_scripts[pkg.Name()] = t
+        svc_list_file = os.path.join(archive, "Paackages", pkg.Name(), pkg.Version(), "Services")
+        if os.path.exists(svc_list_file):
+            try:
+                svc_json = json.load(open(svc_list_file))
+                for k, v in svc_json.iteritems():
+                    svc_list[k] = v
+            except:
+                pass
+            
+    man.SetPackages(pkgs)
+    man.SetNotes(None)
+    man.SetNotice(None)
+    
+    if dest is None:
+        dest = os.path.join("/tmp", man.Sequence())
+        
+    try:
+        os.makedirs(os.path.join(dest, "Packages"))
+    except BaseException as e:
+        print >> sys.stderr, "Cannot create destination bundle directory %s" % dest
+        sys.exit(1)
+        
+    for pkg_file in pkg_files:
+        import shutil
+        try:
+            dst_file = os.path.basename(pkg_file)
+            dst_file = os.path.join(dest, "Packages", dst_file)
+            shutil.copy(pkg_file, dst_file)
+        except BaseException as e:
+            print >> sys.stderr, "Unable to copy package file %s: %s" % (os.path.basename(pkg_file), str(e))
+            sys.exit(1)
+            
+    if notice:
+        try:
+            notice_path = os.path.join(dest, "NOTICE")
+            open(notice_path, "w").write(notice)
+        except BaseException as e:
+            print >> sys.stderr, "Unable to write NOTICE file: %s" % str(e)
+            sys.exit(1)
+
+    if notes_dict:
+        for note, contents in notes_dict.iteritems():
+            try:
+                note_path = os.path.join(dest, note)
+                open(note_path, "w").write(contents)
+            except BaseException as e:
+                print >> sys.stderr, "Unable to write note file %s: %s" % (note, str(e))
+                sys.exit(1)
+
+    if svc_list:
+        svcs = []
+        for s, v in svc_list.iteritems():
+            svcs.append("%s=%s" % s, v)
+        try:
+            svc_path = os.path.join(dest, "RESTART")
+            open(svc_path, "w".write(" ".join(svcs)))
+        except BaseException as e:
+            print >> sys.stderr, "Unable to write RESTART file: %s" % str(e)
+            sys.exit(1)
+    
+    if update_scripts:
+        for pkg_name, d in update_scripts.iteritems():
+            try:
+                script_path = os.path.join(dest, "Packages", pkg_name)
+                os.makedirs(script_path)
+            except BaseException as e:
+                print >> sys.stderr, "Unable to create script directory for package %s: %s" % (pkg_name, str(e))
+                sys.exit(1)
+                
+            for n, s in d.iteritems():
+                try:
+                    p = os.path.join(script_path, n)
+                    open(p, "w").write(s)
+                except BaseException as e:
+                    print >> sys.stderr, "Unable to create update script %s for package %s: %s" % (n, pkg_name, str(e))
+                    sys.exit(1)
+                    
+    man.StorePath(os.path.join(dest, "%s-MANIFEST" % project))
+    
 def main():
     global debug, verbose
     # Variables set via getopt
@@ -3208,11 +3149,17 @@ def main():
     key_data = None
     # Changelog
     changelog = None
+    # Configuration file
+    # Can be over-ridden
+    if os.geteuid() == 0:
+        config_file = CONFIG_FILE_SYSTEM
+    else:
+        config_file = CONFIG_FILE_USER
     # Locabl variables
     db = None
 
     options = "a:C:D:dK:P:v"
-    long_options = ["archive=", "destination=",
+    long_options = ["archive=", "config=", "destination=",
                     "database=",
                     "key=",
                     "project=",
@@ -3242,10 +3189,22 @@ def main():
             key_file = a
         elif o in ('-C', '--changelog'):
             changelog = a
+        elif o in ("--config"):
+            config_file = a
         else:
             usage()
 
-    if archive is None:
+    # Now get any config settings
+    cs = GetConfiguration(config_file, project_name)
+    if cs:
+        if CONFIG_ARCHIVE_KEY in cs and archive is None:
+            archive = cs[CONFIG_ARCHIVE_KEY]
+        if CONFIG_KEYFILE_KEY in cs and key_file is None:
+            key_file = cs[CONFIG_KEYFILE_KEY]
+        if CONFIG_DBPATH_KEY in cs and Database is None:
+            Database = cs[CONFIG_DBPATH_KEY]
+            
+    if archive is None and args[0] != "project":
         print >> sys.stderr, "For now, archive directory must be specified"
         usage()
 
@@ -3253,11 +3212,24 @@ def main():
         print >> sys.stderr, "No command specified"
         usage()
 
+    cmd = args[0]
+    args = args[1:]
+
+    if Database and Database.startswith("sqlite:"):
+        # Holdover from old implementations.
+        Database = Database[len("sqlite:"):]
+        
     if Database is not None:
-        if Database.startswith("sqlite:"):
-            db = SQLiteReleaseDB(dbfile = Database[len("sqlite:"):])
-        else:
-            db = SQLiteReleaseDB(dbfile = Database)
+        # rebuild may recreate the database, or it
+        # may not depending on options.  So it gets
+        # the filename; everything else gets the database
+        # itself.
+        if cmd != "rebuild":
+            try:
+                db = SQLiteReleaseDB(dbfile = Database)
+            except BaseException as e:
+                print >> sys.stderr, "Could not use database %s: %s" % (Database, str(e))
+                sys.exit(1)
 
     if key_file and key_file != "/dev/null" and key_file != "":
         import OpenSSL.crypto as Crypto
@@ -3268,9 +3240,6 @@ def main():
             print >> sys.stderr, "Cannot open key file %s, aborting" % key_file
             sys.exit(1)
 
-    cmd = args[0]
-    args = args[1:]
-
     if cmd == "add":
         if len(args) == 0:
             print >> sys.stderr, "No source directories specified"
@@ -3280,7 +3249,24 @@ def main():
     elif cmd == "check":
         Check(archive, db, project = project_name)
     elif cmd == "rebuild":
-        Rebuild(archive, db, project = project_name, key = key_data, args = args)
+        st = None
+        if os.path.exists(Database):
+            st = os.lstat(Database)
+        Rebuild(archive, dbfile = Database, project = project_name, key = key_data, args = args)
+        if st and os.path.exists(Database):
+            # Change ownership/group
+            st = os.lstat(Database)
+            uid = st.st_uid
+            gid = st.st_gid
+            mode = st.st_mode
+            try:
+                os.lchmod(Database, mode)
+            except:
+                pass
+            try:
+                os.lchown(Database, uid, gid)
+            except:
+                pass
     elif cmd == "dump":
         Dump(archive, db, args = args)
     elif cmd == "rollback":
@@ -3290,6 +3276,10 @@ def main():
         Prune(archive, db, project = project_name, args = args)
     elif cmd == "delete":
         Delete(archive, db, project = project_name, args = args)
+    elif cmd == "copy":
+        Copy(archive, db, project = project_name, args = args)
+    elif cmd == "project":
+        Project(config_file, args = args)
     else:
         print >> sys.stderr, "Unknown command %s" % cmd
         usage()
