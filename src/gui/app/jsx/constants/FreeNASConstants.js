@@ -5,7 +5,7 @@
 
 import keyMirror from "keymirror";
 
-module.exports = {
+export default {
 
   ActionTypes: keyMirror(
     // Authentication, Socket State and other SID stuff
@@ -60,7 +60,6 @@ module.exports = {
 
     // ZFS
     , RECEIVE_ZFS_POOL_GET_DISKS_DATA: null
-
     }
   )
 
