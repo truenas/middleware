@@ -4,7 +4,7 @@
 		"/usr/local/bin/mongod",
 		"--config", "${driverdir}/mongod.conf",
 		"--logpath", "${dbdir}/mongod.log",
-		"--dbpath", "${dbdir}",
+		"--dbpath", "${dbdir}/freenas.db",
 		"--quiet"
 	],
 	"RunAtLoad": true,
