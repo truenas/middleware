@@ -1,6 +1,6 @@
 --- /dev/null	2015-05-19 07:56:40.113521000 -0700
-+++ nss_mdns.c	2015-05-19 05:02:29.239159375 -0700
-@@ -0,0 +1,3055 @@
++++ nss_mdns.c	2015-05-20 13:21:31.285658000 -0700
+@@ -0,0 +1,3059 @@
 +/*
 +   NICTA Public Software Licence
 +   Version 1.0
@@ -91,6 +91,7 @@
 +#include <arpa/nameser.h>
 +
 +#include <dns_sd.h>
++
 +
 +//----------
 +// Public functions
@@ -652,6 +653,7 @@
 +
 +//----------
 +// Global variables
++
 +
 +//----------
 +// NSS functions
@@ -2798,11 +2800,12 @@
 +get_one_ai(const char *hostname, int af, const struct addrinfo *hints)
 +{
 +	nss_status lookup_status;
-+	hostent hostent_buf = { 0 };
++	hostent hostent_buf;
 +	char buf[1024] = { 0 };
 +	int err1, h_err1;
 +	struct addrinfo *retval = NULL;
 +	
++	memset(&hostent_buf, 0, sizeof(hostent_buf));
 +	lookup_status = mdns_gethostbyname2(hostname,
 +					    af,
 +					    &hostent_buf,
@@ -2829,7 +2832,7 @@
 +				struct sockaddr_in *sin = (void*)retval->ai_addr;
 +				retval->ai_addrlen = sizeof(*sin);
 +				memcpy(&sin->sin_addr, hostent_buf.h_addr, hostent_buf.h_length);
-+			} else if (retval->ai_family = PF_INET6) {
++			} else if (retval->ai_family == PF_INET6) {
 +				struct sockaddr_in6 *sin = (void*)retval->ai_addr;
 +				retval->ai_addrlen = sizeof(*sin);
 +				memcpy(&sin->sin6_addr, hostent_buf.h_addr, hostent_buf.h_length);
@@ -2867,10 +2870,10 @@
 +#endif
 +		}
 +	} 
-+#ifdef DEBUG
++//#ifdef DEBUG
 +	if (retval == NULL)
 +		fprintf(stderr, "%s: returning %p, lookup_status = %d\n", __FUNCTION__, retval, lookup_status);
-+#endif
++//#endif
 +	return retval;
 +}
 +
@@ -2956,7 +2959,8 @@
 +	{
 +		// Do both!
 +		struct addrinfo *ipv4, *ipv6;
-+		struct addrinfo sentinel = { 0 }, *tmp = &sentinel;
++		struct addrinfo sentinel, *tmp = &sentinel;
++		memset(&sentinel, 0, sizeof(sentinel));
 +		if ((ipv6 = get_one_ai(hostname, PF_INET6, pai)) != NULL) {
 +			tmp->ai_next = ipv6;
 +			tmp = ipv6;
@@ -3044,7 +3048,7 @@
 +}
 +
 +ns_mtab *
-+nss_module_register(const char *source, unsigned int *mtabsize,
++nss_module_register(const char *source __unused, unsigned int *mtabsize,
 +		    nss_module_unregister_fn *unreg)
 +{
 +#ifdef DEBUG
