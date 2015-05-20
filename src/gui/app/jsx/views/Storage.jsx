@@ -8,11 +8,39 @@
 
 import React from "react";
 
+import { RouteHandler } from "react-router";
+
+import routerShim from "../components/mixins/routerShim";
+
+import SectionNav from "../components/SectionNav";
+
+const sections = [ { route: null
+                   , display: "Files"
+                   , disabled: true
+                   }
+                 , { route: null
+                   , display: "Snapshots"
+                   , disabled: true
+                   }
+                 , { route: "null"
+                   , display: "Volumes"
+                   , disabled: true
+                   }
+                 , { route: "disks"
+                   , display: "Disks"
+                   }
+                 ];
+
 const Storage = React.createClass(
-  { render: function () {
+  { displayName: "Storage"
+
+  , mixins: [ routerShim ]
+
+  , render: function () {
       return (
         <main>
-          <h2>Storage View</h2>
+          <SectionNav views = { sections } />
+          <RouteHandler />
         </main>
       );
     }

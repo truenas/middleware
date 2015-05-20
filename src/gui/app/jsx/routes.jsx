@@ -35,6 +35,7 @@ import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
 import NetworkConfig from "./views/Network/NetworkConfig";
 
 import Storage from "./views/Storage";
+import Disks from "./views/Storage/Disks";
 
 import Sharing from "./views/Sharing";
 
@@ -134,7 +135,12 @@ module.exports = (
     <Route
       name    = "storage"
       route   = "storage"
-      handler = { Storage } />
+      handler = { Storage } >
+      <Route
+        name    = "disks"
+        route   = "disks"
+        handler = { Disks } />
+    </Route>
 
     {/* SHARING */}
     <Route

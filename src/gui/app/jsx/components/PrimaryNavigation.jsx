@@ -27,7 +27,7 @@ const paths =
     , icon     : "magic"
     , label    : "Storage"
     , status   : null
-    , disabled : true
+    , disabled : false
     }
   , { path     : "network"
     , icon     : "moon-o"
