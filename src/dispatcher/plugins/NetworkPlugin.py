@@ -351,18 +351,31 @@ def _init(dispatcher, plugin):
         'type': 'object',
         'properties': {
             'type': {'type': 'string'},
+            'id': {'type': 'string'},
             'name': {'type': 'string'},
             'enabled': {'type': 'boolean'},
             'dhcp': {'type': 'boolean'},
             'mtu': {'type': ['integer', 'null']},
-            'aliases': {
-                'type': 'array',
-                'items': {'$ref': 'network-interface-alias'}
-            },
             'status': {
                 'type': 'object',
                 'properties': {
-
+                    'name': {'type': 'string'},
+                    'link-state': {'type': 'string'},
+                    'link-address': {'type': 'string'},
+                    'flags': {
+                        'type': 'string',
+                        'enum': [
+                            'DRV_RUNNING',
+                            'UP',
+                            'BROADCAST',
+                            'SIMPLEX',
+                            'MULTICAST'
+                        ]
+                    },
+                    'aliases': {
+                        'type': 'array',
+                        'items': {'$ref': 'network-interface-alias'}
+                    }
                 }
             }
         }
