@@ -1272,7 +1272,7 @@ def set_to_bitmask(value):
 
 
 def get_interface(name):
-    return list_interfaces(name)[name]
+    return list_interfaces(name)
 
 
 def create_interface(name):
