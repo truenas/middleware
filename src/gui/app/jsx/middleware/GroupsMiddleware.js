@@ -11,43 +11,52 @@ import GroupsActionCreators from "../actions/GroupsActionCreators";
 module.exports = {
 
   subscribe: function ( componentID ) {
-      MiddlewareClient.subscribe( [ "groups.changed" ], componentID );
-      MiddlewareClient.subscribe( [ "task.*" ], componentID );
-    }
+    MiddlewareClient.subscribe( [ "groups.changed" ], componentID );
+    MiddlewareClient.subscribe( [ "task.*" ], componentID );
+  }
 
   , unsubscribe: function ( componentID ) {
-      MiddlewareClient.unsubscribe( [ "groups.changed" ], componentID );
-      MiddlewareClient.unsubscribe( [ "task.*" ], componentID );
-    }
+    MiddlewareClient.unsubscribe( [ "groups.changed" ], componentID );
+    MiddlewareClient.unsubscribe( [ "task.*" ], componentID );
+  }
 
   , requestGroupsList: function () {
-      MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
-        GroupsActionCreators.receiveGroupsList( groupsList );
-      });
-    }
+    MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
+      GroupsActionCreators.receiveGroupsList( groupsList );
+    });
+  }
 
   , createGroup: function ( newGroupProps ) {
-      MiddlewareClient.request( "task.submit"
-                              , [ "groups.create" , [ newGroupProps ] ]
-                              , function ( taskID, groupID ) {
-        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-      });
-    }
+    MiddlewareClient.request( "task.submit"
+                            , [ "groups.create" , [ newGroupProps ] ]
+                            , this.createGroupCallback
+                            );
+  }
+
+  , createGroupCallback: function ( taskID, groupID ) {
+    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+  }
 
   , updateGroup: function ( groupID, props ) {
-      MiddlewareClient.request( "task.submit"
-                              , [ "groups.update", [ groupID, props ]]
-                              , function ( taskID ) {
-        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-      });
-    }
+    MiddlewareClient.request( "task.submit"
+                            , [ "groups.update", [ groupID, props ]]
+                            , this.updateGroupCallback
+                            );
+  }
+
+  , updateGroupCallback: function ( taskID, GroupID ) {
+    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+  }
 
   , deleteGroup: function ( groupID ) {
-      MiddlewareClient.request( "task.submit"
-                              , [ "groups.delete", [ groupID ] ]
-                              , function ( taskID, groupID ) {
-        GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-      });
-    }
+    MiddlewareClient.request( "task.submit"
+                            , [ "groups.delete", [ groupID ] ]
+                            , this.deleteGroupCallback
+                            );
+  }
+
+  , deleteGroupCallback: function ( taskID, groupID ) {
+    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+  }
 
 };

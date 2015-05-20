@@ -19,7 +19,7 @@ var sections = [ { route : "users"
                  , display : "Groups"
                  } ];
 
-var Accounts = React.createClass({
+const Accounts = React.createClass({
 
   displayName: "Accounts"
 
@@ -43,4 +43,4 @@ var Accounts = React.createClass({
     }
 });
 
-module.exports = Accounts;
+export default Accounts;

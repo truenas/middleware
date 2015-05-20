@@ -57,7 +57,7 @@ function handleToggle( serviceObj, toggled ) {
     }
 
 
-var Services = React.createClass({
+const Services = React.createClass({
 
     getInitialState: function () {
       return getServicesFromStore();
@@ -91,4 +91,4 @@ var Services = React.createClass({
   }
 });
 
-module.exports = Services;
+export default Services;

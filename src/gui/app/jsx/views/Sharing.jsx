@@ -6,7 +6,7 @@
 
 import React from "react";
 
-var Sharing = React.createClass({
+const Sharing = React.createClass({
   render: function () {
     return (
       <main>
@@ -16,4 +16,4 @@ var Sharing = React.createClass({
   }
 });
 
-module.exports = Sharing;
+export default Sharing;

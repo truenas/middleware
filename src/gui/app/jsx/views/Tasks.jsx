@@ -6,7 +6,7 @@
 
 import React from "react";
 
-var Tasks = React.createClass({
+const Tasks = React.createClass({
   render: function () {
     return (
       <main>
@@ -16,4 +16,4 @@ var Tasks = React.createClass({
   }
 });
 
-module.exports = Tasks;
+export default Tasks;

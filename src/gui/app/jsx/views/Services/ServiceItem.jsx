@@ -17,7 +17,7 @@ import ServicesStore from "../../stores/ServicesStore";
 
 import ToggleSwitch from "../../components/common/ToggleSwitch";
 
-var ServiceView = React.createClass({
+const ServiceView = React.createClass({
 
     propTypes: {
       item: React.PropTypes.object.isRequired
@@ -74,7 +74,7 @@ var ServiceView = React.createClass({
 
 });
 
-var ServiceItem = React.createClass({
+const ServiceItem = React.createClass({
 
     propTypes: {
         viewData : React.PropTypes.object.isRequired
@@ -154,4 +154,4 @@ var ServiceItem = React.createClass({
 
 });
 
-module.exports = ServiceItem;
+export default ServiceItem;

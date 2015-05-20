@@ -14,7 +14,7 @@ import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
 import inputHelpers from "../../../components/mixins/inputHelpers";
 import groupMixins from "../../../components/mixins/groupMixins";
 
-var AddGroup = React.createClass({
+const AddGroup = React.createClass({
 
     mixins: [   inputHelpers
               , groupMixins ]
@@ -129,4 +129,4 @@ var AddGroup = React.createClass({
     }
 });
 
-module.exports = AddGroup;
+export default AddGroup;

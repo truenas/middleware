@@ -63,7 +63,7 @@ function getGroupsFromStore() {
   };
 }
 
-var Users = React.createClass({
+const Users = React.createClass({
 
     getInitialState: function () {
       return getUsersStoreData();
@@ -104,4 +104,4 @@ var Users = React.createClass({
 
 });
 
-module.exports = Users;
+export default Users;

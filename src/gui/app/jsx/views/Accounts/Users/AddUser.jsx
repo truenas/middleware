@@ -20,7 +20,7 @@ import userMixins from "../../../components/mixins/userMixins";
 import groupMixins from "../../../components/mixins/groupMixins";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 
-var AddUser = React.createClass({
+const AddUser = React.createClass({
 
     mixins: [   inputHelpers
               , userMixins
@@ -275,4 +275,4 @@ var AddUser = React.createClass({
     }
 });
 
-module.exports = AddUser;
+export default AddUser;

@@ -18,7 +18,7 @@ import PrimaryNavigation from "../components/PrimaryNavigation";
 import DebugTools from "../components/DebugTools";
 
 
-var FreeNASWebApp = React.createClass({
+const FreeNASWebApp = React.createClass({
 
     mixins: [ routerShim ]
 
@@ -64,4 +64,4 @@ var FreeNASWebApp = React.createClass({
 
 });
 
-module.exports = FreeNASWebApp;
+export default FreeNASWebApp;

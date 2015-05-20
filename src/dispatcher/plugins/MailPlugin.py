@@ -46,7 +46,7 @@ class MailProvider(Provider):
     def send(self, email):
         msg = MIMEText(email.get('message'))
         msg['From'] = email.get('from')
-        msg['To'] = email.get('to')
+        msg['To'] = ', '.join(email.get('to'))
         msg['Subject'] = email.get('subject')
         try:
             system('sendmail', '-t', '-oi', stdin=msg.as_string())
@@ -95,7 +95,10 @@ def _init(dispatcher, plugin):
         'type': 'object',
         'properties': {
             'from': {'type': 'string'},
-            'to': {'type': 'string'},
+            'to': {
+                'type': 'array',
+                'items': {'type': 'string'},
+            },
             'subject': {'type': 'string'},
             'message': {'type': 'string'},
         }

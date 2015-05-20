@@ -13,26 +13,30 @@ import routerShim from "../components/mixins/routerShim";
 
 import SectionNav from "../components/SectionNav";
 
-var sections = [ { route : "interfaces"
+var sections = [ { route: "network-config"
+                 , display: "Network Overview"
+                 }
+               , { route : "interfaces"
                  , display : "Interfaces"
                  }
-               , { route: "global-config"
-                 , display: "Global Config"
-                } ]
+               , { display: "LAGGs" }
+               , { display: "Routes" }
+               , { display: "VLANs" }
+               ]
 
-var Network = React.createClass({
+const Network = React.createClass({
 
   displayName: "Network"
 
   , mixins: [ routerShim ]
 
   , componentDidMount: function () {
-      this.calculateDefaultRoute( "network", "interfaces", "endsWith" );
-    }
+    this.calculateDefaultRoute( "network", "network-config", "endsWith" );
+  }
 
   , componentWillUpdate: function ( prevProps, prevState ) {
-      this.calculateDefaultRoute( "network", "interfaces", "endsWith" );
-    }
+    this.calculateDefaultRoute( "network", "network-config", "endsWith" );
+  }
 
   , render: function () {
     return (
@@ -45,4 +49,4 @@ var Network = React.createClass({
 
 });
 
-module.exports = Network;
+export default Network;
