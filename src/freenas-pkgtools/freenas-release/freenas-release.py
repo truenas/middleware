@@ -2959,7 +2959,7 @@ values.
                 print "%s=\"%s\"" % (k, v)
     return
 
-def Copy(archive, db, project, args):
+def Copy(archive, db, project = "FreeNAS", key = None, args = []):
     """
     This is used to re-create a release.
     That is, for a given sequence, and a target, it will
@@ -3069,6 +3069,7 @@ def Copy(archive, db, project, args):
     man.SetPackages(pkgs)
     man.SetNotes(None)
     man.SetNotice(None)
+    man.SignWithKey(key)
     
     if dest is None:
         dest = os.path.join("/tmp", man.Sequence())
@@ -3277,7 +3278,7 @@ def main():
     elif cmd == "delete":
         Delete(archive, db, project = project_name, args = args)
     elif cmd == "copy":
-        Copy(archive, db, project = project_name, args = args)
+        Copy(archive, db, project = project_name, key = key_data, args = args)
     elif cmd == "project":
         Project(config_file, args = args)
     else:
