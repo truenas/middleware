@@ -14,77 +14,112 @@ const DL = new DebugLogger( "MIDDLEWARE_CLIENT_DEBUG" );
 // Modified fibonacci series to use with stepped timeout
 const MODFIBONACCI = [ 5000, 8000, 13000, 21000, 34000 ];
 
-// Timer object (code taken from: http://stackoverflow.com/questions/3144711/javascript-find-the-time-left-in-a-settimeout/20745721#20745721)
+// Timer object (code taken from: http://stackoverflow.com/questions/3144711/...
+// ...javascript-find-the-time-left-in-a-settimeout/20745721#20745721)
 // the above code is modified to be able to suit what we need it to do
 // This is primarily needed so that the reconnection interval can be
 // obtained at the same time while the timer is in use.
 // delay is to be specified in milliseconds (example 10000 for 10 seconds)
 function ReconnectTimer ( doAfter, delay ) {
-  var id, started, running;
-  var remaining = 0;
+  let idTimeout, idInterval, running;
+  let remaining = 0;
+  let updateFunc = function () {};
+  let modAfter = function ( ) {
+    running = false;
+    remaining = 0;
+    doAfter();
+  };
   if ( delay && typeof delay !== "undefined" ) {
     remaining = delay;
   }
 
+  let myCusTimeout = function  ( code, delay, listener, interval ) {
+    let elapsed = 0;
+    let h;
+    h = setInterval( function () {
+      elapsed += interval;
+      if ( elapsed < delay ) {
+        listener( delay - elapsed );
+      } else {
+        clearInterval( h );
+      }
+    }, interval );
+    return [ h, setTimeout( code, delay ) ];
+  };
+
+  let modUpdateFunc = function ( t ) {
+    remaining = t;
+    updateFunc( t );
+  };
+
+  this.setUpdateFunc = function ( foo ) {
+    updateFunc = foo;
+  };
+
   this.start = function ( delay ) {
-    // console.log( "suraj in ReconnetTimers start" );
     if ( delay ) {
       remaining = delay;
     }
     running = true;
-    started = new Date();
-    id = setTimeout( doAfter, remaining );
+    [ idInterval, idTimeout ] = myCusTimeout( modAfter
+                                             , remaining
+                                             , modUpdateFunc
+                                             , 100 );
   };
 
   this.pause = function ( ) {
     running = false;
-    clearTimeout( id );
-    remaining -= new Date() - started;
+    clearTimeout( idTimeout );
+    clearInterval( idInterval );
   };
 
   this.getTimeLeft = function ( ) {
-    remaining -= new Date() - started;
-    return remaining;
+    if ( running ) {
+      return remaining;
+    } else {
+      remaining = 0;
+      return 0;
+    }
   };
 
   this.isRunning = function ( ) {
-    remaining -= new Date() - started;
-    if ( remaining <= 0 ) {
-      running = false;
-      // console.log( "suraj clearing the timeout" );
-      clearTimeout( id );
-    }
+    if ( remaining === 0 ) { running = false };
     return running;
   };
 
   this.stop = function ( ) {
-    clearTimeout( id );
+    clearTimeout( idTimeout );
+    clearInterval( idInterval );
     running = false;
-    //doAfter = null;
-    remaining = 0;
+    this.remaining = 0;
   };
 
+  this.reconnectNow = function ( ) {
+    this.stop();
+    doAfter();
+  };
 };
+
 
 class WebSocketClient {
 
   constructor () {
     // Counter for stepped timeout
-    this.k = 0;
+    this.k = -1;
     this.socket = null;
 
     // Publically accessible reconectHandle
     this.reconnectHandle = new ReconnectTimer ( function ( ) {
-      var protocol = ( window.location.protocol === "https:" ? "wss://" : "ws://" );
+      var protocol = ( window.location.protocol === "https:" ?
+                         "wss://" : "ws://" );
       this.connect( protocol + document.domain + ":5000/socket" );
     }.bind( this ) );
-
   }
 
 
-  // This method should only be called when there's no existing connection. If for
-  // some reason, the existing connection should be ignored and overridden, supply
-  // `true` as the `force` parameter.
+  // This method should only be called when there's no existing connection. If
+  // for some reason, the existing connection should be ignored and overridden,
+  // supply `true` as the `force` parameter.
   connect ( url, force ) {
     if ( window.WebSocket ) {
       if ( !this.socket || force ) {
@@ -127,7 +162,7 @@ class WebSocketClient {
 
   handleOpen () {
     // Set stepped reconnect counter back to 0
-    this.k = 0;
+    this.k = -1;
   }
 
   handleMessage () {
@@ -139,23 +174,28 @@ class WebSocketClient {
   }
 
   handleClose () {
-    if ( !this.reconnectHandle.isRunning() ) {
-      this.reconnectHandle.start( MODFIBONACCI[this.k] );
+    this.socket = null;
+    if ( this.reconnectHandle.isRunning() ) {
+      this.reconnectHandle.stop();
     }
-    var _this = this;
-    ( function checkReconnectHandle ( ) {
-      // console.log( "suraj in checkReconnectHandle... time remaining is: ", _this.reconnectHandle.getTimeLeft() );
-      setTimeout( function () {
-        if ( _this.reconnectHandle.isRunning() ) {
-          checkReconnectHandle();       // Call checkReconnectHandle again
-        } else if ( !this.socket ) {
-          // Increase k in a cyclic fashion (it goes back to 0 after reachin 4)
-          _this.k = ++_this.k % MODFIBONACCI.length;
-          _this.reconnectHandle.stop();
-          _this.reconnectHandle.start( MODFIBONACCI[_this.k] );
-        }
-      }, 500 );
-    }() );
+    // Increase k in a cyclic fashion (it goes back to 0 after reachin 4)
+    this.k = ++this.k % MODFIBONACCI.length;
+    this.reconnectHandle.start( MODFIBONACCI[this.k] );
+    // Uncomment the below if debugging the reconnect timer, else let it be!
+    // var _this = this;
+    // ( function checkReconnectHandle ( ) {
+    //     let tvar = 0;
+    //     setTimeout( function () {
+    //       if ( _this.reconnectHandle.isRunning() ) {
+    //         let temp = Math.round( _this.reconnectHandle.getTimeLeft()/1000);
+    //         if ( temp !== tvar ) {
+    //           tvar = temp;
+    //           console.log( tvar, " seconds to reconnection..." );
+    //         };
+    //         checkReconnectHandle();       // Call checkReconnectHandle again
+    //       }
+    //     }, 1000 );
+    //   }() );
   }
 
 }

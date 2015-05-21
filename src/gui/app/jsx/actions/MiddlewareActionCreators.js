@@ -27,6 +27,14 @@ class MiddleWareActionCreators {
     );
   }
 
+  updateReconnectTime ( ETA ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.UPDATE_RECONNECT_TIME
+      , ETA: ETA
+      }
+    );
+  }
+
   increaseSubscriptionCount ( mask ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.SUBSCRIBE_TO_MASK

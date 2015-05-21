@@ -40,6 +40,10 @@ class MiddlewareClient extends WebSocketClient {
 
   constructor () {
     super();
+    this.reconnectHandle.setUpdateFunc( function ( time ) {
+      MiddlewareActionCreators.updateReconnectTime( time );
+    } );
+    // this.logout = this.logout.bind( this );
     this.queuedLogin = null;
     this.queuedActions = [];
     this.pendingRequests = {};
