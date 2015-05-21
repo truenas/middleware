@@ -356,6 +356,10 @@ def _init(dispatcher, plugin):
             'enabled': {'type': 'boolean'},
             'dhcp': {'type': 'boolean'},
             'mtu': {'type': ['integer', 'null']},
+            'aliases': {
+                'type': 'array',
+                'items': {'$ref': 'network-interface-alias'}
+            },
             'status': {
                 'type': 'object',
                 'properties': {
