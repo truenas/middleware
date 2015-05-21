@@ -234,7 +234,7 @@ var NotificationBar = React.createClass({
             <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
             <TWBS.MenuItem divider />
             <TWBS.MenuItem key="4"
-                           onClick={ MiddlewareClient.logout } >Logout</TWBS.MenuItem>
+                           onClick={ MiddlewareClient.logout.bind( MiddlewareClient ) } >Logout</TWBS.MenuItem>
           </TWBS.SplitButton>
 
         </div>

@@ -11,10 +11,10 @@ import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
 var CHANGE_EVENT = "change";
-var UPDATE_MASK  = ["power.changed", "update.changed"];
+var UPDATE_MASK  = [ "power.changed", "update.changed" ];
 
 var ongoingEvents = {};
-var socketConnected = false;
+
 
 var PowerStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -22,11 +22,11 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
       this.emit( CHANGE_EVENT );
     }
 
-  , addChangeListener: function( callback ) {
+  , addChangeListener: function ( callback ) {
       this.on( CHANGE_EVENT, callback );
     }
 
-  , removeChangeListener: function( callback ) {
+  , removeChangeListener: function ( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
@@ -35,31 +35,28 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
     }
 
   , isEventPending: function () {
-    if ( typeof(_.keys(ongoingEvents)[0]) !== "undefined" ) {
-      return [true, ongoingEvents[_.keys(ongoingEvents)[0]]];
+    if ( typeof ( _.keys( ongoingEvents )[0] ) !== "undefined" ) {
+      return [ true, ongoingEvents[_.keys( ongoingEvents )[0]]];
     }
-    if ( !socketConnected ) {
-      return [true, "Reconnect you to FreeNAS..."];
-    }
-    return [false, ""];
+    return [ false, "" ];
   }
 
   , isRebootPending: function () {
-    if ( _.values(ongoingEvents).indexOf("reboot") !== -1 ) {
+    if ( _.values( ongoingEvents ).indexOf( "reboot" ) !== -1 ) {
       return true;
     }
     return false;
   }
 
   , isShutDownPending: function () {
-    if ( _.values(ongoingEvents).indexOf("shutdown") !== -1 ) {
+    if ( _.values( ongoingEvents ).indexOf( "shutdown" ) !== -1 ) {
       return true;
     }
     return false;
   }
 
   , isUpdatePending: function () {
-    if ( _.values(ongoingEvents).indexOf("update") !== -1 ) {
+    if ( _.values( ongoingEvents ).indexOf( "update" ) !== -1 ) {
       return true;
     }
     return false;
@@ -67,19 +64,14 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
 
 });
 
-PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+PowerStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
   var action = payload.action;
 
-  switch( action.type ) {
+  switch ( action.type ) {
 
     case ActionTypes.UPDATE_SOCKET_STATE:
       // clear ongoingEvents
       ongoingEvents = {};
-      if ( action.sockState === "connected" ) {
-        socketConnected = true;
-      } else if ( action.sockState === "disconnected" ) {
-        socketConnected = false;
-      }
       PowerStore.emitChange();
       break;
 
@@ -87,20 +79,25 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       var args = action.eventData.args;
       var taskID   = args.args["id"];
 
-      if ( UPDATE_MASK.indexOf(args["name"]) !== -1  ) {
+      if ( UPDATE_MASK.indexOf( args["name"] ) !== -1  ) {
         var updateData = args["args"];
 
-        if ( args["name"] === "power.changed") {
+        if ( args["name"] === "power.changed" ) {
           ongoingEvents[taskID] = updateData["operation"];
-        } else if ( args["name"] === "update.changed" && updateData["operation"] === "started" ) {
+        } else if ( args["name"] === "update.changed" &&
+                    updateData["operation"] === "started" ) {
           ongoingEvents[taskID] = "update";
         }
 
         PowerStore.emitChange();
 
-      // TODO: Make this more generic, triage it earlier, create ActionTypes for it
-      } else if ( args["name"] === "task.updated" && args.args["state"] === "FINISHED" && _.keys(ongoingEvents).indexOf(taskID) !== -1 ) {
-        if ( ongoingEvents[taskID] !== "shutdown" || ongoingEvents[taskID] !== "reboot" ) {
+      // TODO: Make this more generic, triage it earlier,
+      // create ActionTypes for it
+      } else if ( args["name"] === "task.updated" &&
+                  args.args["state"] === "FINISHED" &&
+                  _.keys( ongoingEvents ).indexOf( taskID ) !== -1 ) {
+        if ( ongoingEvents[taskID] !== "shutdown" ||
+             ongoingEvents[taskID] !== "reboot" ) {
           delete ongoingEvents.taskID;
         }
         PowerStore.emitChange();
@@ -109,7 +106,7 @@ PowerStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       break;
 
     default:
-      // No action
+    // No action
   }
 });
 

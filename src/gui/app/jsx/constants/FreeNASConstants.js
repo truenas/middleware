@@ -11,6 +11,7 @@ module.exports = {
     // Authentication, Socket State and other SID stuff
     { UPDATE_AUTH_STATE: null
     , UPDATE_SOCKET_STATE: null
+    , UPDATE_RECONNECT_TIME : null
 
     // Subscriptions
     , SUBSCRIBE_COMPONENT_TO_MASKS: null
