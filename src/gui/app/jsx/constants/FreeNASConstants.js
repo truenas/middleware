@@ -39,6 +39,10 @@ module.exports = {
     , RECEIVE_RAW_SERVICES: null
     , RECEIVE_SERVICE_UPDATE_TASK: null
 
+    // Shares
+    , RECIEVE_NFS_SHARES_LIST: null
+    , RECIEVE_NFS_SHARE_UPDATE_TASK: null
+
     // Widget Data
     , RECEIVE_RAW_WIDGET_DATA: null
 

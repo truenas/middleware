@@ -1,0 +1,64 @@
+[{
+    "primary-key" : "id"
+  , "secondary-key" : "target"
+  , "selection-key" : "id"
+  , "unique-key"  : "id"
+  , "data-keys"   : [
+      {
+          "key"         : "id"
+        , "name"        : "Share name"
+        , "type"        : "string"
+        , "formElement" : "input"
+        , "mutable"     : true
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "target"
+        , "name"        : "Target"
+        , "type"        : "string"
+        , "formElement" : "input"
+        , "mutable"     : true
+        , "defaultCol"  : true
+      }
+    , {
+          "key"         : "alldirs"
+        , "name"        : "All directories"
+        , "type"        : "boolean"
+        , "formElement" : "checkbox"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "read-only"
+        , "name"        : "Read Only"
+        , "type"        : "boolean"
+        , "formElement" : "checkbox"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "maproot-user"
+        , "name"        : "Root user"
+        , "type"        : "string"
+        , "formElement" : "select"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "maproot-group"
+        , "name"        : "Root group"
+        , "type"        : "string"
+        , "formElement" : "select"
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+    , {
+          "key"         : "hosts"
+        , "name"        : "Allowed hosts/networks"
+        , "type"        : "array"
+        , "formElement" : "textarea" 
+        , "mutable"     : true
+        , "defaultCol"  : false
+      }
+  ]
+}]
