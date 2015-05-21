@@ -202,7 +202,7 @@ const PrimaryNavigation = React.createClass(
 
           <button
             className="btn btn-info primary-nav-debug-button"
-            onClick={ EventBus.emitToggle.bind( this ) }>
+            onClick={ EventBus.emitToggle.bind( EventBus ) }>
             Toggle Debug Tools
           </button>
 
