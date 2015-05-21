@@ -12,9 +12,8 @@ import Terminal from "term.js";
 
 import ShellMiddleware from "../../middleware/ShellMiddleware";
 
-var Shell = React.createClass({
-
-    ws              : null
+var Shell = React.createClass(
+  {  ws             : null
   , term            : null
   , isAuthenticated : false
 
@@ -32,7 +31,7 @@ var Shell = React.createClass({
       ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
     }
 
-  , componentDidUpdate: function( prevProps, prevState ) {
+  , componentDidUpdate: function ( prevProps, prevState ) {
       if ( this.props.shellType !== prevProps.shellType ) {
         this.ws.close();
         this.term.destroy();
@@ -40,25 +39,26 @@ var Shell = React.createClass({
         ShellMiddleware.spawnShell( this.props.shellType, this.createNewShell );
       }
       if ( this.refs.termTarget.getDOMNode().clientHeight !== 0 ) {
-        this.term.resize(80, this.refs.termTarget.getDOMNode().clientHeight * 0.05 );
+        this.term.resize( 80
+                        , this.refs.termTarget.getDOMNode().clientHeight * 0.05 );
       }
     }
 
-  , createNewShell: function( token ) {
-      var url = window.location.protocol === "https:" ? "wss://" : "ws://" + document.domain + ":5000/shell";
+  , createNewShell: function ( token ) {
+      var url = window.location.protocol === "https:" ? "wss://" : "ws://"
+              + document.domain + ":5000/shell";
 
       this.ws   = new WebSocket( url );
-      this.term = new Terminal({
-          cols       : 80
-        , rows       : 14
-        , screenKeys : true
+      this.term = new Terminal({ cols       : 80
+                               , rows       : 14
+                               , screenKeys : true
       });
 
-      this.ws.onopen = function( event ) {
-        this.ws.send( JSON.stringify({ "token": token }) );
+      this.ws.onopen = function ( event ) {
+        this.ws.send( JSON.stringify({ token: token }) );
       }.bind( this );
 
-      this.ws.onmessage = function( event ) {
+      this.ws.onmessage = function ( event ) {
         if ( !this.isAuthenticated ) {
           if ( JSON.parse( event.data )["status"] === "ok" ) {
             this.isAuthenticated = true;
@@ -70,7 +70,7 @@ var Shell = React.createClass({
         this.term.write( event.data );
       }.bind( this );
 
-      this.term.on( "data", function( data ) {
+      this.term.on( "data", function ( data ) {
         this.ws.send( data );
       }.bind( this ) );
 
@@ -83,6 +83,7 @@ var Shell = React.createClass({
       );
     }
 
-});
+  }
+);
 
 module.exports = Shell;
