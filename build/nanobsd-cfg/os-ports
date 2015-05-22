@@ -334,6 +334,7 @@ add_port sysutils/lsof
 add_port sysutils/grub2-pcbsd
 add_port sysutils/beadm
 add_port net/py-pysphere
+add_port net/py-pyvmomi
 add_port sysutils/throttle
 add_port misc/xtail
 add_port security/pam_google_authenticator
