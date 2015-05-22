@@ -9,7 +9,6 @@ import Widget from "../Widget";
 import SystemMiddleware from "../../middleware/SystemMiddleware";
 import SystemStore from "../../stores/SystemStore";
 
-import UpdateMiddleware from "../../middleware/UpdateMiddleware";
 import UpdateStore from "../../stores/UpdateStore";
 
 import round from "round";
@@ -31,9 +30,6 @@ var SystemInfo = React.createClass({
 
       SystemMiddleware.requestSystemInfo( "hardware" );
       SystemMiddleware.requestSystemInfo( "version" );
-      // TODO: This causes a traceback (#8620)
-      //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
-      //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "get_current_train" );
    }
 
   , componentWillUnmount: function () {
