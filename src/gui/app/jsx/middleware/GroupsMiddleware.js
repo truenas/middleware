@@ -4,59 +4,59 @@
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import GroupsActionCreators from "../actions/GroupsActionCreators";
+import GAC from "../actions/GroupsActionCreators";
 
-module.exports = {
+class GroupsMiddleware extends AbstractBase {
 
-  subscribe: function ( componentID ) {
-    MiddlewareClient.subscribe( [ "groups.changed" ], componentID );
-    MiddlewareClient.subscribe( [ "task.*" ], componentID );
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "groups.changed" ], componentID );
+    MC.subscribe( [ "task.*" ], componentID );
   }
 
-  , unsubscribe: function ( componentID ) {
-    MiddlewareClient.unsubscribe( [ "groups.changed" ], componentID );
-    MiddlewareClient.unsubscribe( [ "task.*" ], componentID );
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "groups.changed" ], componentID );
+    MC.unsubscribe( [ "task.*" ], componentID );
   }
 
-  , requestGroupsList: function () {
-    MiddlewareClient.request( "groups.query", [], function ( groupsList ) {
-      GroupsActionCreators.receiveGroupsList( groupsList );
-    });
+  static requestGroupsList () {
+    MC.request( "groups.query"
+              , []
+              , function handleRequestGroupsList ( groupsList ) {
+                  GAC.receiveGroupsList( groupsList );
+                }
+              );
   }
 
-  , createGroup: function ( newGroupProps ) {
-    MiddlewareClient.request( "task.submit"
-                            , [ "groups.create" , [ newGroupProps ] ]
-                            , this.createGroupCallback
-                            );
+  static createGroup ( newGroupProps ) {
+    MC.request( "task.submit"
+              , [ "groups.create" , [ newGroupProps ] ]
+              , function handleCreateGroup ( taskID, groupID ) {
+                  GAC.receiveGroupUpdateTask( taskID, groupID );
+                }
+              );
   }
 
-  , createGroupCallback: function ( taskID, groupID ) {
-    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+  static updateGroup ( groupID, props ) {
+    MC.request( "task.submit"
+              , [ "groups.update", [ groupID, props ] ]
+              , function handleUpdateGroup ( taskID, GroupID ) {
+                  GAC.receiveGroupUpdateTask( taskID, groupID );
+                }
+              );
   }
 
-  , updateGroup: function ( groupID, props ) {
-    MiddlewareClient.request( "task.submit"
-                            , [ "groups.update", [ groupID, props ]]
-                            , this.updateGroupCallback
-                            );
-  }
-
-  , updateGroupCallback: function ( taskID, GroupID ) {
-    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
-  }
-
-  , deleteGroup: function ( groupID ) {
-    MiddlewareClient.request( "task.submit"
-                            , [ "groups.delete", [ groupID ] ]
-                            , this.deleteGroupCallback
-                            );
-  }
-
-  , deleteGroupCallback: function ( taskID, groupID ) {
-    GroupsActionCreators.receiveGroupUpdateTask( taskID, groupID );
+  static deleteGroup ( groupID ) {
+    MC.request( "task.submit"
+              , [ "groups.delete", [ groupID ] ]
+              , function handleDeleteGroup ( taskID, groupID ) {
+                  GAC.receiveGroupUpdateTask( taskID, groupID );
+                }
+              );
   }
 
 };
+
+export default GroupsMiddleware;

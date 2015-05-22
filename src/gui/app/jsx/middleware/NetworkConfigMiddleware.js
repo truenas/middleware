@@ -3,45 +3,42 @@
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import NetworkConfigActionCreators
+import NCAC
   from "../actions/NetworkConfigActionCreators";
 
 class NetworkConfigMiddleware {
 
-  subscribe ( componentID ) {
-    MiddlewareClient.subscribe( [ "network.changed" ], componentID );
-    MiddlewareClient.subscribe( [ "task.*" ], componentID );
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "network.changed" ], componentID );
+    MC.subscribe( [ "task.*" ], componentID );
   }
 
-  unsubscribe ( componentID ) {
-    MiddlewareClient.unsubscribe( [ "network.changed" ], componentID );
-    MiddlewareClient.unsubscribe( [ "task.*" ], componentID );
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "network.changed" ], componentID );
+    MC.unsubscribe( [ "task.*" ], componentID );
   }
 
-  requestNetworkConfig () {
-    MiddlewareClient.request( "network.config.get_global_config"
-                            , []
-                            , this.requestNetworkConfigCallback
-                            );
+  static requestNetworkConfig () {
+    MC.request( "network.config.get_global_config"
+              , []
+              , function handleRequestNetworkConfig ( networkConfig ) {
+                  NCAC.receiveNetworkConfig( networkConfig );
+                }
+              );
   }
 
-  requestNetworkConfigCallback ( networkConfig ) {
-    NetworkConfigActionCreators.receiveNetworkConfig( networkConfig );
-  }
-
-  updateNetworkConfig ( newNetworkConfig ) {
-    MiddlewareClient.request( "task.submit"
-                            , [ "network.configure" ]
-                            , this.updateNetworkConfigCallback
-                            );
-  }
-
-  updateNetworkConfigCallback ( taskID ) {
-    NetworkConfigActionCreators.receiveNetworkUpdateTask( taskID );
+  static updateNetworkConfig ( newNetworkConfig ) {
+    MC.request( "task.submit"
+              , [ "network.configure" ]
+              , function handleUpdateConfig ( taskID ) {
+                  NCAC.receiveNetworkUpdateTask( taskID );
+                }
+              );
   }
 
 };
 
-export default new NetworkConfigMiddleware ();
+export default NetworkConfigMiddleware;

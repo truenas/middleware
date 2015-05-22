@@ -3,28 +3,39 @@
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import StatdActionCreators from "../actions/StatdActionCreators";
+import SAC from "../actions/StatdActionCreators";
 
-var createPulseSyntax = function ( dataSource ) {
+function createPulseSyntax ( dataSource ) {
   return "statd." + dataSource + ".pulse";
 };
 
-module.exports = {
+class StatdMiddleware extends AbstractBase {
 
-    subscribeToPulse: function ( componentID, dataSourceArray ) {
-      MiddlewareClient.subscribe( dataSourceArray.map( createPulseSyntax ), componentID );
-    }
+  static subscribeToPulse ( componentID, dataSources ) {
+    MC.subscribe( dataSources.map( createPulseSyntax ), componentID );
+  }
 
-  , unsubscribeFromPulse: function ( componentID, dataSourceArray ) {
-      MiddlewareClient.unsubscribe( dataSourceArray.map( createPulseSyntax ), componentID );
-    }
+  static unsubscribeFromPulse ( componentID, dataSources ) {
+    MC.unsubscribe( dataSources.map( createPulseSyntax ), componentID );
+  }
 
-  , requestWidgetData: function ( dataSourceName, startIsoTimestamp, endIsoTimestamp, frequency ) {
-      MiddlewareClient.request( "statd.output.query", [ dataSourceName, {"start": startIsoTimestamp, "end": endIsoTimestamp, "frequency": frequency}], function ( rawWidgetData ) {
-        StatdActionCreators.receiveWidgetData( rawWidgetData, dataSourceName );
-      });
+  static requestWidgetData ( sourceName, startTime, endTime, freq ) {
+    MC.request( "statd.output.query"
+              , [ sourceName
+                , { start: startTime
+                  , end: endTime
+                  , frequency: freq
+                  }
+                ]
+              , function handleWidgetData ( rawWidgetData ) {
+                  SAC.receiveWidgetData( rawWidgetData, sourceName );
+                }
+              );
   }
 
 };
+
+export default StatdMiddleware;

@@ -3,28 +3,32 @@
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import InterfacesActionCreators from "../actions/InterfacesActionCreators";
+import IAC from "../actions/InterfacesActionCreators";
 
-module.exports = {
+class InterfacesMiddleware extends AbstractBase {
 
-  subscribe: function ( componentID ) {
-    MiddlewareClient.subscribe( [ "networks.changed" ], componentID );
-    MiddlewareClient.subscribe( [ "task.*" ], componentID );
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "networks.changed" ], componentID );
+    MC.subscribe( [ "task.*" ], componentID );
   }
 
-  , unsubscribe: function ( componentID ) {
-    MiddlewareClient.unsubscribe( [ "networks.changed" ], componentID );
-    MiddlewareClient.unsubscribe( [ "task.*" ], componentID );
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "networks.changed" ], componentID );
+    MC.unsubscribe( [ "task.*" ], componentID );
   }
 
-  , requestInterfacesList: function () {
-      MiddlewareClient.request( "network.interfaces.query"
-                              , []
-                              , function ( rawInterfacesList ) {
-        InterfacesActionCreators.receiveInterfacesList( rawInterfacesList );
-      });
+  static requestInterfacesList () {
+      MC.request( "network.interfaces.query"
+                , []
+                , function handleRequestInterfacesList ( rawInterfacesList ) {
+                    IAC.receiveInterfacesList( rawInterfacesList );
+                  }
+                );
     }
 
 };
+
+export default InterfacesMiddleware;

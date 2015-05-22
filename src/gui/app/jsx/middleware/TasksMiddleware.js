@@ -4,29 +4,33 @@
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import TasksActionCreators from "../actions/TasksActionCreators";
+// There are no subscribe or unsubscribe functions here, because task
+// subscription can be handled directly through the Middleware Client.
 
-module.exports = {
+class TasksMiddleware extends AbstractBase {
 
-    // There are no subscribe or unsubscribe functions here, because task
-    // subscription can be handled directly through the Middleware Client.
+  static getCompletedTaskHistory ( callback, offset ) {
+    // TODO: This MUST go through the Flux pattern, and needs to be limited
+    // by the value set in StoreLimits
+    return MC.request( "task.query"
+                     , [ [[ "state", "~", "FINISHED|ABORTED|FAILED" ]]
+                       , { offset: ( offset || 0 )
+                         , limit: 100
+                         , sort: "id"
+                         , dir: "desc"
+                         }
+                       ]
+                     , callback
+                     );
+  }
 
-    getCompletedTaskHistory: function( callback, offset ) {
-      return MiddlewareClient.request(
-          "task.query"
-        , [[["state","~","FINISHED|ABORTED|FAILED"]]
-        , {
-            "offset": ( offset || 0 )
-          , "limit": 100
-          , "sort": "id"
-          , "dir": "desc" }] // TODO: Sort dir doesn't work?
-        , callback );
-    }
-
-  , abortTask: function ( taskID ) {
-      MiddlewareClient.request( "task.abort", [parseInt(taskID, 10)]);
-    }
+  static abortTask ( taskID ) {
+    MC.request( "task.abort", [ parseInt( taskID, 10 ) ] );
+  }
 
 };
+
+export default TasksMiddleware;

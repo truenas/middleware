@@ -4,15 +4,19 @@
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-module.exports = {
+class ShellMiddleware extends AbstractBase {
 
-    requestAvailableShells: function( callback ) {
-      MiddlewareClient.request( "shell.get_shells", null, callback );
-    }
+  static requestAvailableShells ( callback ) {
+    MC.request( "shell.get_shells", null, callback );
+  }
 
-  , spawnShell: function( shellType, callback ) {
-      MiddlewareClient.request( "shell.spawn", [ shellType ], callback );
-    }
+  static spawnShell ( shellType, callback ) {
+    MC.request( "shell.spawn", [ shellType ], callback );
+  }
+
 };
+
+export default ShellMiddleware;

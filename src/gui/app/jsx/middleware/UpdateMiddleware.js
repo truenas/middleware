@@ -1,14 +1,19 @@
 // Update Middleware
 // ================
-// Provides abstraction functions to use freenas's updater in the rest of the GUI
+// Provides abstraction functions to use freenas's updater in the rest
+// of the GUI
 
 "use strict";
 
-import MiddlewareClient from "./MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-module.exports = {
-   updatenow: function () {
-      MiddlewareClient.request( "task.submit", ["update.update", ""]);
-    }
+class UpdateMiddleware extends AbstractBase {
+
+  static updatenow () {
+    MC.request( "task.submit", [ "update.update", "" ] );
+  }
 
 };
+
+export default UpdateMiddleware;
