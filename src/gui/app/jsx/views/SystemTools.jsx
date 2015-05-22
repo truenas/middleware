@@ -6,7 +6,7 @@
 
 import React from "react";
 
-import UpdaterMiddleware from "../middleware/UpdaterMiddleware";
+import UpdateMiddleware from "../middleware/UpdateMiddleware";
 
 import Icon from "../components/Icon";
 
@@ -14,7 +14,7 @@ import ConfDialog from "../components/common/ConfDialog";
 
 const SystemTools = React.createClass({
   handleupdatenowbutton: function () {
-      UpdaterMiddleware.updatenow();
+      UpdateMiddleware.updatenow();
   },
 
   render: function () {
