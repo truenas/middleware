@@ -4,7 +4,9 @@
 
 "use strict";
 
+import _ from "lodash";
 import React from "react";
+import TWBS from "react-bootstrap";
 
 import routerShim from "../../../components/mixins/routerShim";
 import clientStatus from "../../../components/mixins/clientStatus";
@@ -13,7 +15,7 @@ import viewerUtil from "../../../components/Viewer/viewerUtil";
 
 import InterfacesStore from "../../../stores/InterfacesStore";
 
-import TWBS from "react-bootstrap";
+import Icon from "../../../components/Icon";
 
 const InterfacesView = React.createClass({
 
