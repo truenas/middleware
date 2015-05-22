@@ -9,6 +9,9 @@ import React from "react";
 import ByteCalc from "../../common/ByteCalc";
 import Viewer from "../../components/Viewer";
 
+import DisksStore from "../../stores/DisksStore";
+// import DisksMiddleware from "../../middleware/DisksMiddleware";
+
 const Disks = React.createClass(
 
   { getInitialState: function () {
