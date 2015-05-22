@@ -25,14 +25,14 @@ const InterfacesView = React.createClass({
 
   , render: function () {
 
-    var configureButton = null;
 
-    configureButton = (
+    let configureButton = (
       <TWBS.Row>
         <TWBS.Col xs={12}>
           <TWBS.Button
             className = "pull-right"
-            bsStyle   = "primary">{"Configure Interface"}
+            bsStyle   = "primary">
+            {"Configure Interface"}
           </TWBS.Button>
         </TWBS.Col>
       </TWBS.Row>
