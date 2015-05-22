@@ -46,11 +46,11 @@ const NetworkConfig = React.createClass({
     let gatewayIPv6 = "";
 
     if ( !_.isEmpty( this.state.networkConfig ) ) {
-      dhcpGatewayIcon = this.state.networkConfig.dhcp.assign_gateway
+      dhcpGatewayIcon = this.state.networkConfig.dhcp["assign_gateway"]
                       ? "check text-primary"
                       : "times text-muted";
 
-      dhcpDNSIcon = this.state.networkConfig.dhcp.assign_dns
+      dhcpDNSIcon = this.state.networkConfig.dhcp["assign_dns"]
                   ? "check text-primary"
                   : "times text-muted";
 
