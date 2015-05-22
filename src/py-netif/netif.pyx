@@ -1175,7 +1175,7 @@ class RoutingSocket(object):
         os.write(self.socket.fileno(), buf)
 
 
-def list_interfaces(name=None):
+def list_interfaces(iname=None):
     cdef defs.ifaddrs* ifa
     cdef defs.ifaddrs* orig
     cdef defs.sockaddr_in* sin
@@ -1246,6 +1246,8 @@ def list_interfaces(name=None):
             break
 
     defs.freeifaddrs(orig)
+    if iname:
+        return result[iname]
     return result
 
 
