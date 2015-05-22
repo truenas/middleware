@@ -3,7 +3,7 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
+import MiddlewareClient from "./MiddlewareClient";
 import SystemActionCreators from "../actions/SystemActionCreators";
 
 module.exports = {

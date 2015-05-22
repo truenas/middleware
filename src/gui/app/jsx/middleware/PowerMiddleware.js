@@ -4,7 +4,7 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
+import MiddlewareClient from "./MiddlewareClient";
 
 // Cookies!
 import myCookies from "./cookies";

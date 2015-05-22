@@ -3,7 +3,7 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
+import MiddlewareClient from "./MiddlewareClient";
 
 import ServicesActionCreators from "../actions/ServicesActionCreators";
 
