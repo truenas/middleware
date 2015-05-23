@@ -337,7 +337,7 @@ var FuzzyTypeAhead = React.createClass(
   }
 
   , _onOptionSelected: function ( option, event ) {
-      var nEntry = this.refs.entry.getDOMNode();
+      let nEntry = React.findDOMNode( this.refs.entry );
       nEntry.focus();
       nEntry.value = option;
       this.setState({ visible: this.getOptionsForValue( option
@@ -410,15 +410,18 @@ var FuzzyTypeAhead = React.createClass(
     }
 
   , componentWillReceiveProps: function ( nextProps ) {
-      var value = this.state.entryValue;
       if ( nextProps.defaultValue !== this.props.defaultValue ) {
-        value = nextProps.defaultValue;
-      }
-      this.setState({ entryValue : value
+        let value = nextProps.defaultValue;
+        this.setState({ entryValue : value
                     , visible    : this.getOptionsForValue(
                                     value, nextProps.options )
       });
+      }
     }
+
+  // Uncomment this if need be
+  // , componentDidUpdate: function ( prevProps, prevState ) {
+  //   }
 
   , _renderHiddenInput: function ( ) {
       if ( !this.props.name ) {
