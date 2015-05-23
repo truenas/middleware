@@ -1125,6 +1125,11 @@ def usage():
 	check	Check the archive for self-consistency.
     	rebuild	Rebuild the databse (--copy <new_dest> and --verify options)
 	dump	Print out the sequences in order (--train=<train> to limit to a specific train)
+    	extract	Extract a particular release from the archive
+	project	Settings for a project (run as root for system-wide, as user for user-specific).
+    	delete	Delete a sequence or package.
+    	rollback	Delete the most recent sequence for a train.
+	prune	Delete oldest sequences.
 """ % sys.argv[0]
     sys.exit(1)
 
@@ -2959,17 +2964,17 @@ values.
                 print "%s=\"%s\"" % (k, v)
     return
 
-def Copy(archive, db, project = "FreeNAS", key = None, args = []):
+def Extract(archive, db, project = "FreeNAS", key = None, args = []):
     """
-    This is used to re-create a release.
+    This is used to extract a release from the archive.
     That is, for a given sequence, and a target, it will
     create the target directory, ${PROJECT}-MANIFEST,
     Packages directory, and various other files necessary
     (such as ReleaseNotes, ChangeLog (maybe?), upgrade
     scripts, and RESTART service-restart file.
     """
-    def Copy_usage():
-        print >> sys.stderr, "Usage:  %s copy [--full] [--dest dest] sequence" % sys.argv[0]
+    def Extract_usage():
+        print >> sys.stderr, "Usage:  %s extract [--full] [--dest dest] sequence" % sys.argv[0]
         usage()
         
     sequence = None
@@ -2984,7 +2989,7 @@ def Copy(archive, db, project = "FreeNAS", key = None, args = []):
         opts, args = getopt.getopt(args, None, long_options)
     except getopt.GetoptError as err:
         print >> sys.stderr, str(err)
-        Copy_usage()
+        Extract_usage()
 
     for o, a in opts:
         if o in ("--full"):
@@ -2993,16 +2998,16 @@ def Copy(archive, db, project = "FreeNAS", key = None, args = []):
             dest = a
         else:
             print >> sys.stderr, "Unknown option %s" % o
-            Copy_usage()
+            Extract_usage()
 
     if len(args) != 1:
         print >> sys.stderr, "Incorrect number of arguments (%d)" % len(args)
-        Copy_usage()
+        Extract_usage()
 
     sequence = args[0]
     
 
-    # This allows "copy FreeNAS-9.3-Nightlies/LATEST" to work.
+    # This allows "extract FreeNAS-9.3-Nightlies/LATEST" to work.
     if "/" in sequence:
         (train, sequence) = sequence.split("/")
         print >> sys.stderr, "train = %s, sequence = %s" % (train, sequence)
@@ -3277,8 +3282,8 @@ def main():
         Prune(archive, db, project = project_name, args = args)
     elif cmd == "delete":
         Delete(archive, db, project = project_name, args = args)
-    elif cmd == "copy":
-        Copy(archive, db, project = project_name, key = key_data, args = args)
+    elif cmd == "extract":
+        Extract(archive, db, project = project_name, key = key_data, args = args)
     elif cmd == "project":
         Project(config_file, args = args)
     else:
