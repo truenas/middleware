@@ -17,18 +17,6 @@ import Widget from "../../Widget";
 
 var i = 0;
 
-var svgStyle = {
-    width   : "calc(100% - 36px)"
-  , height  : "100%"
-  , "float" : "left"
-};
-
-var divStyle = {
-    width   : "36px"
-  , height  : "100%"
-  , "float" : "right"
-};
-
 module.exports = {
     mixins: [ componentWidthMixin ]
 
@@ -44,6 +32,16 @@ module.exports = {
         , errorMode       : false
         , statdData       : initialStatdData
         , statdDataLoaded : false
+        , svgStyle        : {
+                                width   : "calc(100% - 36px)"
+                              , height  : ( this.props.dimensions[1] - 16 )
+                              , "float" : "left"
+                            }
+        , divStyle        : {
+                                width   : "36px"
+                              , height  : "100%"
+                              , "float" : "right"
+                            }
       };
     }
 
@@ -475,8 +473,8 @@ module.exports = {
           size      = { this.props.size } >
 
           <div className="widget-content">
-            <svg ref="svg" style={svgStyle}></svg>
-              <div ref="controls" style={divStyle}>
+            <svg ref="svg" style={this.state.svgStyle}></svg>
+              <div ref="controls" style={this.state.divStyle}>
                 { this.state.chartTypes.map( this.returnGraphOptions ) }
               </div>
           </div>

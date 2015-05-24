@@ -12,7 +12,7 @@ var Widget = React.createClass({
     return {  count              : 0
             , sizeArr            : [ "s", "m", "l" ]
             , widgetStyle        : { left: this.props.position[0], top: this.props.position[1] }
-            , widgetContetnStyle : { width: this.props.dimensions[0], height: this.props.dimensions[1] }
+            , widgetContetnStyle : { width: this.props.dimensions[0], height: this.props.dimensions[1] - 16 }
     };
   }
 
