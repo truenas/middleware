@@ -132,6 +132,14 @@ cdef extern from "mach/mach.h" nogil:
         mach_msg_descriptor_type_t type
         mach_msg_size_t size
 
+    ctypedef struct mach_msg_ool_ports_descriptor_t:
+        void* address
+        boolean_t deallocate
+        mach_msg_copy_options_t copy
+        mach_msg_type_name_t disposition
+        mach_msg_descriptor_type_t type
+        mach_msg_size_t count
+
     mach_msg_return_t mach_msg(mach_msg_header_t *msg, mach_msg_option_t option, mach_msg_size_t send_size,
                                mach_msg_size_t rcv_size, mach_port_t rcv_name, mach_msg_timeout_t timeout,
                                mach_port_t notify)

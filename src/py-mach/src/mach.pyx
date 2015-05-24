@@ -343,6 +343,50 @@ cdef class MemoryBuffer(object):
             return self.size
 
 
+cdef class PortArrayBuffer(MemoryBuffer):
+    def __init__(self, bytearray data=None, address=None, size=None):
+        if size:
+            size *= cython.sizeof(mach.mach_port_t)
+
+        super(PortArrayBuffer, self).__init__(data, address, size)
+
+    property count:
+        def __get__(self):
+            return self.size / cython.sizeof(mach.mach_port_t)
+
+    def __getitem__(self, item):
+        cdef mach.mach_port_t *array
+
+        if not self.allocated:
+            raise MemoryError('Buffer is not allocated')
+
+        array = <mach.mach_port_t*><uintptr_t>self.address
+
+        if type(item) is slice:
+            pass
+
+        if item > self.count:
+            raise IndexError('Index {0} is greater than buffer size'.format(item))
+
+        return Port(port=array[item])
+
+    def __setitem__(self, key, Port value):
+        cdef mach.mach_port_t *array
+
+        if not self.allocated:
+            raise MemoryError('Buffer is not allocated')
+
+        array = <mach.mach_port_t*><uintptr_t>self.address
+
+        if type(key) is slice:
+            pass
+
+        if key > self.count:
+            raise IndexError('Index {0} is greater than buffer size'.format(key))
+
+        array[key] = <mach.mach_port_t>value.value()
+
+
 cdef class MessageDescriptor(object):
     cdef mach.mach_msg_type_descriptor_t desc
 
@@ -357,8 +401,12 @@ cdef class MessageDescriptor(object):
         if desc.type == MACH_MSG_OOL_DESCRIPTOR:
             return MemoryDescriptor(ptr=ptr)
 
+        if desc.type == MACH_MSG_OOL_PORTS_DESCRIPTOR:
+            return PortArrayDescriptor(ptr=ptr)
+
         if desc.type == MACH_MSG_PORT_DESCRIPTOR:
             return PortDescriptor(ptr=ptr)
+
 
     def ptr(self):
             return <uintptr_t>&self.desc
@@ -443,6 +491,52 @@ cdef class MemoryDescriptor(MessageDescriptor):
     property desc_size:
         def __get__(self):
             return cython.sizeof(mach.mach_msg_ool_descriptor_t)
+
+
+cdef class PortArrayDescriptor(MessageDescriptor):
+    cdef mach.mach_msg_ool_ports_descriptor_t* arr_desc
+
+    def __init__(self, ptr=None):
+        super(PortArrayDescriptor, self).__init__()
+        if ptr:
+            self.arr_desc =  <mach.mach_msg_ool_ports_descriptor_t*><uintptr_t>ptr
+            return
+
+        self.arr_desc = <mach.mach_msg_ool_ports_descriptor_t*>&self.desc
+        self.arr_desc.type = mach.MACH_MSG_OOL_PORTS_DESCRIPTOR
+
+    property address:
+        def __get__(self):
+            return <uintptr_t>self.arr_desc.address
+
+        def __set__(self, uintptr_t value):
+            self.arr_desc.address = <void*>value
+
+    property count:
+        def __get__(self):
+            return self.arr_desc.count
+
+        def __set__(self, value):
+            self.arr_desc.count = value
+
+    property ports:
+        def __get__(self):
+            return PortArrayBuffer(address=self.address, size=self.count)
+
+        def __set__(self, PortArrayBuffer value):
+            self.address = value.address
+            self.count = value.count
+
+    property disposition:
+        def __get__(self):
+            return self.arr_desc.disposition
+
+        def __set__(self, value):
+            self.arr_desc.disposition = value
+
+    property desc_size:
+        def __get__(self):
+            return cython.sizeof(mach.mach_msg_ool_ports_descriptor_t)
 
 
 cdef class Message(object):
