@@ -349,7 +349,7 @@ class FreeNAS_LDAP_Directory(object):
         result = []
         results = []
         paged = SimplePagedResultsControl(
-            True,
+            criticality=False,
             size=self.pagesize,
             cookie=''
         )
@@ -2194,14 +2194,13 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
                 self.__ducache[CN] = u
 
             u = u[1]
-            if self.use_default_domain:
+ 
+            if u.has_key('sAMAccountName'):
+                uid = u['sAMAccountName'][0]
+            elif u.has_key('uid'):
                 uid = u['uid'][0]
             else:
-                uid = "{}{}{}".format(
-                    host,
-                    FREENAS_AD_SEPARATOR,
-                    u['uid'][0]
-                )
+                uid = u['cn'][0]
 
             self.__usernames.append(uid)
 
@@ -2492,14 +2491,10 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
                 self.__dgcache[CN] = g
 
             g = g[1]
-            if self.use_default_domain:
-                cn = g['cn'][0]
+            if g.has_key('sAMAccountName'):
+                cn = g['sAMAccountName'][0]
             else:
-                cn = "{}{}{}".format(
-                    host,
-                    FREENAS_AD_SEPARATOR,
-                    g['cn'][0]
-                )
+                cn = g['cn'][0]
 
             self.__groupnames.append(cn)
 
@@ -2751,15 +2746,7 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
             parts = self.host.split('.')
             host = parts[0].upper()
 
-            if self.use_default_domain:
-                cn = ldap_group[1]['cn'][0]
-            else:
-                cn = "{}{}{}".format(
-                    host,
-                    FREENAS_AD_SEPARATOR,
-                    ldap_group[1]['cn'][0]
-                )
-
+            cn = ldap_group[1]['cn'][0]
             try:
                 gr = grp.getgrnam(cn)
 
@@ -2964,14 +2951,12 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
             parts = self.host.split('.')
             host = parts[0].upper()
 
-            if self.use_default_domain:
-                uid = ldap_user[1]['uid'][0]
-            else:
-                uid = "{}{}{}".format(
-                    host,
-                    FREENAS_AD_SEPARATOR,
-                    ldap_user[1]['uid'][0]
-                )
+            if ldap_user[1].has_key('sAMAccountName'):
+                uid = u['sAMAccountName'][0]
+            elif ldap_user[1].has_key('uid'):
+                uid = u['uid'][0]
+            else: 
+                uid = u['cn'][0]
 
             try:
                 pw = pwd.getpwnam(uid)
