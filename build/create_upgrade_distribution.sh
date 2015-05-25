@@ -44,7 +44,7 @@ fi
 
 # And if REBOOT is given, put that in FORCEREBOOT
 if [ -n "${REBOOT}" ]; then
-    echo ${RBOOT} > ${UPDATE_DIR}/FORCEREBOOT
+    echo ${REBOOT} > ${UPDATE_DIR}/FORCEREBOOT
 fi
 
 rm -f "${LATEST}"
