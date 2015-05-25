@@ -446,12 +446,14 @@ class iSCSITargetGlobalConfiguration(Model):
     iscsi_isns_servers = models.TextField(
         verbose_name=_('iSNS Servers'),
         blank=True,
+        help_text=_("List of Internet Storage Name Service (iSNS) Servers"),
     )
     iscsi_pool_avail_threshold = models.IntegerField(
         verbose_name=_('Pool Available Space Threshold (%)'),
         blank=True,
         null=True,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
+        help_text=_("Remaining ZFS pool capacity warning threshold when using zvol extents"),
     )
 
     class Meta:
@@ -514,6 +516,7 @@ class iSCSITargetExtent(Model):
         blank=True,
         null=True,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
+        help_text=_("Remaining dataset/zvol capacity warning threshold"),
     )
     iscsi_target_extent_comment = models.CharField(
         blank=True,
