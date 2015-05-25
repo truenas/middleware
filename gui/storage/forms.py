@@ -1550,6 +1550,7 @@ class ZVol_CreateForm(Form):
     zvol_force = forms.BooleanField(
         label=_('Force size'),
         required=False,
+        help_text=_('Allow the zvol to consume more then 80% of available space'),
     )
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
