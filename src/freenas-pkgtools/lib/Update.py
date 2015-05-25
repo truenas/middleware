@@ -20,15 +20,14 @@ log = logging.getLogger('freenasOS.Update')
 
 debug = False
 
-REQUIRE_REBOOT = False
+REQUIRE_REBOOT = True
 
 # Not sure if these should go into their own file
-from django.utils.translation import ugettext_lazy as _
 
 SERVICES = {
-    "WebUI" : {
-        "Name" : "WebUI",
-        "ServiceName": "django",
+    "gui" : {
+        "Name" : "gui",
+        "ServiceName": "gui",
         "Description": "Restart Web UI (forces a logout)",
         "CheckStatus" : False,
     },
@@ -93,44 +92,22 @@ def StopServices(svc_list):
     Stop a set of services.  Returns the list of those that
     were stopped.
     """
-    old_path = []
-    old_environ = None
-    if not "DJANGO_SETTINGS_MODULE" in os.environ:
-        old_environ = True
-        os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-    if not "/usr/local/www" in sys.path:
-        old_path.append("/usr/local/www")
-        sys.path.append("/usr/local/www")
-    if not "/usr/local/www/freenasUI" in sys.path:
-        old_path.append("/usr/local/www/freenasUI")
-        sys.path.append("/usr/local/www/freenasUI")
-        
-    from django.db.models.loading import cache
-    cache.get_apps()
-
-    from freenasUI.middleware.notifier import notifier
-    n = notifier()
     retval = []
     # Hm, this doesn't handle any particular ordering.
     # May need to fix this.
-    for svc in svc_list:
-        if not svc in SERVICES:
-            raise ValueError("%s is not a known service" % svc)
-        s = SERVICES[svc]
-        svc_name = s["ServiceName"]
-        log.debug("StopServices:  svc %s maps to %s" % (svc, svc_name))
-        if (not s["CheckStatus"]) or n.started(svc_name):
-            retval.append(svc)
-            n.stop(svc_name)
-        else:
-            log.debug("svc %s is not started" % svc)
-            
-    # Should I remove the environment settings?
-    if old_environ:
-        os.environ.pop("DJANGO_SETTINGS_MODULE")
-    for p in old_path:
-        sys.path.remove(p)
-        
+    # TODO: Uncomment the below when freenas10 is ready for rebootless updates
+    # But also fix it for being appropriate to freenas10
+    # for svc in svc_list:
+    #     if not svc in SERVICES:
+    #         raise ValueError("%s is not a known service" % svc)
+    #     s = SERVICES[svc]
+    #     svc_name = s["ServiceName"]
+    #     log.debug("StopServices:  svc %s maps to %s" % (svc, svc_name))
+    #     if (not s["CheckStatus"]) or n.started(svc_name):
+    #         retval.append(svc)
+    #         n.stop(svc_name)
+    #     else:
+    #         log.debug("svc %s is not started" % svc)
     return retval
 
 
@@ -139,37 +116,15 @@ def StartServices(svc_list):
     Start a set of services.  THis is the output
     from StopServices
     """
-    old_path = []
-    old_environ = None
-    if not "DJANGO_SETTINGS_MODULE" in os.environ:
-        old_environ = True
-        os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-    if not "/usr/local/www" in sys.path:
-        old_path.append("/usr/local/www")
-        sys.path.append("/usr/local/www")
-    if not "/usr/local/www/freenasUI" in sys.path:
-        old_path.append("/usr/local/www/freenasUI")
-        sys.path.append("/usr/local/www/freenasUI")
-        
-    from django.db.models.loading import cache
-    cache.get_apps()
-
-    from freenasUI.middleware.notifier import notifier
-    n = notifier()
     # Hm, this doesn't handle any particular ordering.
     # May need to fix this.
-    for svc in svc_list:
-        if not svc in SERVICES:
-            raise ValueError("%s is not a known service" % svc)
-        svc_name = SERVICES[svc]["ServiceName"]
-        n.start(svc_name)
-    
-    # Should I remove the environment settings?
-    if old_environ:
-        os.environ.pop("DJANGO_SETTINGS_MODULE")
-    for p in old_path:
-        sys.path.remove(p)
-        
+    # TODO: Uncomment the below when freenas10 is ready for rebootless updates
+    # But also fix it for being appropriate to freenas10
+    # for svc in svc_list:
+    #     if not svc in SERVICES:
+    #         raise ValueError("%s is not a known service" % svc)
+    #     svc_name = SERVICES[svc]["ServiceName"]
+    #     n.start(svc_name)
     return
 
 
