@@ -20,6 +20,14 @@ def PrintDifferences(diffs):
                     print >> sys.stderr, "Upgrade package %s %s->%s" % (pkg.Name(), old.Version(), pkg.Version())
                 else:
                     print >> sys.stderr, "Unknown package operation %s for packge %s-%s" % (op, pkg.Name(), pkg.Version())
+        elif type == "Restart":
+            from freenasOS.Update import GetServiceDescription
+            for svc in diffs[type]:
+                desc = GetServiceDescription(svc)
+                if desc:
+                    print "%s" % desc
+                else:
+                    print "Unknown service restart %s?!" % svc
         elif type in ("Train", "Sequence"):
             # Train and Sequence are a single tuple, (old, new)
             old, new = diffs[type]
@@ -126,12 +134,11 @@ def main():
                 Update.RemoveUpdate(download_dir)
             sys.exit(1)
         else:
-            if verbose:
-                diffs = Update.PendingUpdatesChanges(download_dir)
-                if diffs is None or len(diffs) == 0:
-                    print >> sys.stderr, "Strangely, DownloadUpdate says there updates, but PendingUpdates says otherwise"
-                    sys.exit(1)
-                PrintDifferences(diffs)
+            diffs = Update.PendingUpdatesChanges(download_dir)
+            if diffs is None or len(diffs) == 0:
+                print >> sys.stderr, "Strangely, DownloadUpdate says there updates, but PendingUpdates says otherwise"
+                sys.exit(1)
+            PrintDifferences(diffs)
             if cache_dir is None:
                 Update.RemoveUpdate(download_dir)
             sys.exit(0)

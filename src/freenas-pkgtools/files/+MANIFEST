@@ -1,9 +1,14 @@
-name freenas-pkg-tools
-version VERSION
-origin freenas/pkg-tools
-comment FreeNAS Package tools
-arch freebsd:10:x86:64
-www http://www.freenas.org/
-maintainer dev@ixsystems.com
-prefix /
-desc FreeNAS package management tools.  Packages are PKGNG-like.
+{
+	"name": "freenas-pkg-tools",
+	"version": "VERSION",
+	"origin": "freenas/pkg-tools",
+	"comment": "FreeNAS Package tools",
+	"arch": "freebsd:10:x86:64",
+	"www": "http://www.freenas.org/",
+	"maintainer": "dev@ixsystems.com",
+	"prefix": "/",
+	"desc": "FreeNAS package management tools.  Packages are PKGNG-like.",
+	"scripts" : {
+		"post-install" : "#!/bin/sh\nset -x ; if [ -f /usr/local/etc/freenas-release.conf ]; then\n sed -n -e 's/^\\[\\(.*\\)\\]$/\\1/p' < /usr/local/etc/freenas-release.conf | \\\n while read project; do /usr/local/bin/freenas-release -P ${project} rebuild --ifneeded; done\n fi\n"
+	}
+}
