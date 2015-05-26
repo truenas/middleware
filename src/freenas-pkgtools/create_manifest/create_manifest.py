@@ -147,7 +147,7 @@ if __name__ == "__main__":
             # changed how the command-line is constructed.  So we'll complain, and
             # then exit abnormally.
             print >> sys.stderr, "I think you did not update the makefile"
-            print >> sys.stderr, "%s does not appear to be a valid file" % pkg
+            print >> sys.stderr, "%s does not appear to be a valid file" % P
             sys.exit(1)
 
         mani.AddPackage(pkg)
