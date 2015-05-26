@@ -179,7 +179,7 @@ module.exports = {
             newState.statdData = {};
 
             _.forEach( stagedUpdate, function ( data, key ) {
-              var newData = this.state.statdData[ key ].concat( data );
+              var newData = this.state.statdData[ key ] ? this.state.statdData[ key ].concat( data ) : [];
               newState.statdData[ key ] = _.takeRight( newData, 100 );
             }.bind( this ) );
             stagedUpdate = {};
