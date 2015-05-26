@@ -106,8 +106,6 @@ if __name__ == "__main__":
         conf.SetPackageDir(package_dir)
         
     for P in pkgs:
-        # Two options here:  either P is a filename, or it's
-        # a template.  Let's try it as a file first
         if os.path.exists(P):
             # Let's get the manifest from it
             pkgfile = open(P, "rb")
@@ -145,8 +143,12 @@ if __name__ == "__main__":
                             print >> sys.stderr, "Restart Services = %s" % svcs.keys()
                             pkg.SetRestartServices(svcs.keys())
         else:
+            # This is most likely due to the makefile not being updated, since I
+            # changed how the command-line is constructed.  So we'll complain, and
+            # then exit abnormally.
             print >> sys.stderr, "I think you did not update the makefile"
-            print >> sys.stderr, "Can't find file for %s" % name
+            print >> sys.stderr, "%s does not appear to be a valid file" % pkg
+            sys.exit(1)
 
         mani.AddPackage(pkg)
         
