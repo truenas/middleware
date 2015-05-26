@@ -12,8 +12,9 @@ dispatcher_flags="--log-level=DEBUG"
 datastore_dbdir="/data"
 datastore_driver="mongodb"
 etcd_flags="/etc"
-#Disabling syslogd
-syslogd_enable="NO"
+#Disabling syslog_ng
+syslogd_enable="YES"
+syslog_ng_enable="NO"
 # turbo boost
 performance_cpu_freq="HIGH"
 
