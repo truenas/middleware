@@ -42,8 +42,8 @@ class InterfaceCreateCommand(Command):
 
 
 class InterfaceManageCommand(Command):
-    def __init__(self, name, up):
-        self.name = name
+    def __init__(self, parent, up):
+        self.parent = parent
         self.up = up
 
     @property
@@ -55,9 +55,11 @@ class InterfaceManageCommand(Command):
 
     def run(self, context, args, kwargs, opargs):
         if self.up:
-            context.submit_task('network.interface.up', self.name)
+            context.submit_task('network.interface.up',
+                                self.parent.primary_key)
         else:
-             context.submit_task('network.interface.down', self.name)
+             context.submit_task('network.interface.down',
+                                 self.parent.primary_key)
 
 
 @description("Network interfaces configuration")
@@ -144,9 +146,9 @@ class InterfacesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
         )
 
         self.primary_key = self.get_mapping('name')
-        self.entity_commands = lambda name: {
-            'up': InterfaceManageCommand(name, True),
-            'down': InterfaceManageCommand(name, False),
+        self.entity_commands = lambda this: {
+            'up': InterfaceManageCommand(this, True),
+            'down': InterfaceManageCommand(this, False),
         }
 
         self.entity_namespaces = lambda this: [
