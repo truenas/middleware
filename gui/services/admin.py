@@ -57,6 +57,12 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
     icon_model = u"TargetIcon"
     icon_add = u"AddTargetIcon"
     icon_view = u"ViewAllTargetsIcon"
+    inlines = [
+        {
+            'form': 'iSCSITargetGroupsForm',
+            'prefix': 'targetgroups_set',
+        },
+    ]
 
     exclude_fields = (
         'id',

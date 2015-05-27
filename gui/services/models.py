@@ -441,7 +441,10 @@ class iSCSITargetGlobalConfiguration(Model):
         blank=True,
         null=True,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
-        help_text=_("Remaining ZFS pool capacity warning threshold when using zvol extents"),
+        help_text=_(
+            "Remaining ZFS pool capacity warning threshold when using zvol "
+            "extents"
+        ),
     )
 
     class Meta:
@@ -873,8 +876,62 @@ class iSCSITarget(Model):
         started = notifier().reload("iscsitarget")
         if started is False and services.objects.get(
                 srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
+            raise ServiceFailed(
+                "iscsitarget",
+                _("The iSCSI service failed to reload.")
+            )
+
+
+class iSCSITargetGroups(Model):
+    iscsi_target = models.ForeignKey(
+        iSCSITarget,
+        verbose_name=_("Target"),
+        help_text=_("Target this group belongs to"),
+    )
+    iscsi_target_type = models.CharField(
+        choices=(
+            ('ISCSI', _('iSCSI')),
+            ('FC', _('Fiber Channel')),
+        ),
+        default='ISCSI',
+        max_length=10,
+        verbose_name=_('Group Type'),
+    )
+    iscsi_target_portalgroup = models.ForeignKey(
+        iSCSITargetPortal,
+        verbose_name=_("Portal Group ID"),
+    )
+    iscsi_target_initiatorgroup = models.ForeignKey(
+        iSCSITargetAuthorizedInitiator,
+        verbose_name=_("Initiator Group ID"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    iscsi_target_authtype = models.CharField(
+        max_length=120,
+        choices=choices.AUTHMETHOD_CHOICES,
+        default="None",
+        verbose_name=_("Auth Method"),
+        help_text=_("The authentication method accepted by the target."),
+    )
+    iscsi_target_authgroup = models.IntegerField(
+        max_length=120,
+        verbose_name=_("Authentication Group ID"),
+        null=True,
+        blank=True,
+    )
+    iscsi_target_initialdigest = models.CharField(
+        max_length=120,
+        default="Auto",
+        verbose_name=_("Auth Method"),
+        help_text=_("The method can be accepted by the target. Auto means "
+                    "both none and authentication."),
+    )
+
+    class Meta:
+        verbose_name = _("Target Groups")
+        verbose_name_plural = _("Targets Groups")
 
 
 class iSCSITargetToExtent(Model):
