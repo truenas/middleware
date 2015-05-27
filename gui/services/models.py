@@ -857,15 +857,6 @@ class iSCSITargetGroups(Model):
         verbose_name=_("Target"),
         help_text=_("Target this group belongs to"),
     )
-    iscsi_target_type = models.CharField(
-        choices=(
-            ('ISCSI', _('iSCSI')),
-            ('FC', _('Fiber Channel')),
-        ),
-        default='ISCSI',
-        max_length=10,
-        verbose_name=_('Group Type'),
-    )
     iscsi_target_portalgroup = models.ForeignKey(
         iSCSITargetPortal,
         verbose_name=_("Portal Group ID"),
@@ -899,8 +890,8 @@ class iSCSITargetGroups(Model):
     )
 
     class Meta:
-        verbose_name = _("Target Groups")
-        verbose_name_plural = _("Targets Groups")
+        verbose_name = _("iSCSI Groups")
+        verbose_name_plural = _("iSCSI Groups")
 
 
 class iSCSITargetToExtent(Model):
