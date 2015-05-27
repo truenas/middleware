@@ -113,5 +113,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.profile ${STAGEDIR}${PREFIX}/.profile
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.shrc ${STAGEDIR}${PREFIX}/.shrc
 
+	mkdir -p ${STAGEDIR}/${PREFIX}/data/zfs
+
 
 .include <bsd.port.mk>

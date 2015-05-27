@@ -45,3 +45,4 @@ etc/rc.d/ix-network
 .cshrc
 .profile
 .shrc
+@exec mkdir -p /data/zfs
