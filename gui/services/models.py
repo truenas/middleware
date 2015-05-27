@@ -431,18 +431,6 @@ class iSCSITargetGlobalConfiguration(Model):
                     "target " "name that is not starting with 'iqn.', "
                     "'eui.' or 'naa.'"),
     )
-    iscsi_discoveryauthmethod = models.CharField(
-        max_length=120,
-        choices=choices.AUTHMETHOD_CHOICES,
-        default='None',
-        verbose_name=_("Discovery Auth Method")
-    )
-    iscsi_discoveryauthgroup = models.IntegerField(
-        max_length=120,
-        verbose_name=_("Discovery Auth Group"),
-        blank=True,
-        null=True,
-    )
     iscsi_isns_servers = models.TextField(
         verbose_name=_('iSNS Servers'),
         blank=True,
