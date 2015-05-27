@@ -57,7 +57,11 @@ class InterfaceProvider(Provider):
         ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
 
         def extend(i):
-            i['status'] = ifaces[i['name']]
+            try:
+                i['status'] = ifaces[i['name']]
+            except KeyError:
+                # The given interface is either removed or disconnected
+                return None
             return i
 
         return self.datastore.query('network.interfaces', *(filter or []), callback=extend, **(params or {}))
@@ -208,7 +212,10 @@ class InterfaceDownTask(Task):
         try:
             self.dispatcher.call_sync('networkd.configuration.down_interface', name)
         except RpcException, err:
-            raise TaskException(err)
+            # XXX: Fix the split (RPCExpection, which is the base class for
+            # TaskException needs to handle passing of an exisitng RPCException
+            # to it, instead of demanding a err.code, err.message)
+            raise TaskException(err.split(":",1))
 
         self.dispatcher.dispatch_event('network.interface.changed', {
             'operation': 'update',
