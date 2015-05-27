@@ -58,33 +58,33 @@ const Dashboard = React.createClass({
   , getInitialState: function () {
       return {
           servicesList: ServicesStore.getAllServices()
-        , movementMode: false
-        , widgets    : {
-                        "SystemInfo"  : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "MemoryUtil"  : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "CpuUtil"     : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "SystemLoad"  : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "NetworkUsage": {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["l-rect"]
-                                        }
-                      , "DiskUsage"   : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["l-rect"]
-                                        }
-                       }
+        , movementMode : false
+        , widgets      : {
+                          "SystemInfo"  : {
+                                              id           : generateUUID()
+                                            , dimensions   : widgetSizes["m-rect"]
+                                          }
+                        , "MemoryUtil"  : {
+                                              id           : generateUUID()
+                                            , dimensions   : widgetSizes["m-rect"]
+                                          }
+                        , "CpuUtil"     : {
+                                              id           : generateUUID()
+                                            , dimensions   : widgetSizes["m-rect"]
+                                          }
+                        , "SystemLoad"  : {
+                                              id           : generateUUID()
+                                            , dimensions   : widgetSizes["m-rect"]
+                                          }
+                        , "NetworkUsage": {
+                                              id           : generateUUID()
+                                            , dimensions   : widgetSizes["l-rect"]
+                                          }
+                        , "DiskUsage"   : {
+                                              id           : generateUUID()
+                                            , dimensions   : widgetSizes["l-rect"]
+                                          }
+                         }
       };
     }
 
@@ -96,7 +96,6 @@ const Dashboard = React.createClass({
       this.setState({
         gridWidth: this.calculateGridWidth()
       });
-      console.log( this.state.widgets );
     }
 
   , componentWillUnmount: function () {
@@ -127,7 +126,10 @@ const Dashboard = React.createClass({
 
     // Begin moving a widget around. Records the id of the moving widget
     // and its starting location.
-  , enterMovementMode: function( id, event ) {
+
+  , enterMovementMode: function ( id, event ) {
+      console.log( id );
+      console.log( event );
       this.setState({
           movementMode   : true
         , widgetInMotion : {
@@ -137,23 +139,33 @@ const Dashboard = React.createClass({
       });
     }
 
-  , calculateMovement: function( event ) {
+  , calculateMovement: function ( event ) {
       if ( this.state.movementMode ) {
         var newPos = [];
         var wim    = this.state.widgetInMotion;
 
+
+        _.forEach( this.state.widgets, function ( widgt ) {
+          if ( widgt.id === wim.id ) {
+            newPos.push.apply( newPos, widgt.position );
+          }
+        });
+
         newPos[1] =
           this.toPixels(
-            this.state.widgetMeta[ wim.id ].pos[1] +
+            newPos[1] +
             this.toGridUnits( event.nativeEvent.clientY - wim.origin[1] )
           ) + "px";
         newPos[0] =
           this.toPixels(
-            this.state.widgetMeta[ wim.id ].pos[0] +
+            newPos[0] +
             this.toGridUnits( event.nativeEvent.clientX - wim.origin[0] )
           ) + "px";
 
-        this.moveWidget( this.refs[ "widget-" + wim["id"] ].getDOMNode(), newPos );
+        console.log( newPos );
+        console.log( this.refs );
+
+        this.moveWidget( this.refs[ "widget-" + wim.id ].getDOMNode(), newPos );
       }
     }
 
@@ -235,7 +247,8 @@ const Dashboard = React.createClass({
     }
 
     // Animation for widget movement.
-  , moveWidget: function( widgetElement, newPos, duration ) {
+  , moveWidget: function ( widgetElement, newPos, duration ) {
+      console.log( widgetElement );
       Velocity(
           widgetElement
         , {
@@ -402,7 +415,6 @@ const Dashboard = React.createClass({
         widget.position[1] = toPixels( position[1] );
       });
 
-      console.log( widgets );
       this.setState({
           widgets       : widgets
         , displayMatrix : displayMatrix
@@ -410,7 +422,6 @@ const Dashboard = React.createClass({
     }
 
   , renderWidgets: function () {
-      console.log( this.state.widgets );
       var mapka = _.map( this.state.widgets, function ( data, id ) {
         var inMotion = this.state.movementMode &&
                        this.state.widgetInMotion &&
@@ -470,14 +481,25 @@ const Dashboard = React.createClass({
               ref         = "thePlayground"
               onMouseMove = { this.calculateMovement }
               className   = { "playground grid-on" } >
-              <div ref="widgetAreaRef" className="widget-wrapper">
+              <div
+                ref       = "widgetAreaRef"
+                className = "widget-wrapper" >
                 <SystemInfo
-                  stacked     = "true"
-                  title       = "System Info"
-                  size        = "m-rect"
-                  dimensions  = { this.state.widgets.SystemInfo.dimensions }
-                  position    = { this.state.widgets.SystemInfo.position }
-                  id          = { this.state.widgets.SystemInfo.id }  />
+                  stacked           = "true"
+                  title             = "System Info"
+                  size              = "m-rect"
+                  inMotion          = { ( ( this.state.movementMode &&
+                                            this.state.widgetInMotion &&
+                                            this.state.widgetInMotion.id ===
+                                            this.state.widgets.SystemInfo.id )
+                                                        ? true
+                                                        : false ) }
+                  onMouseDownHolder = { this.enterMovementMode
+                                            .bind( this, this.state.widgets.SystemInfo.id ) }
+                  refHolder         = { "widget-" + this.state.widgets.SystemInfo.id }
+                  dimensions        = { this.state.widgets.SystemInfo.dimensions }
+                  position          = { this.state.widgets.SystemInfo.position }
+                  id                = { this.state.widgets.SystemInfo.id }  />
                 <MemoryUtil
                   title = "Memory Value"
                   size  = "m-rect"

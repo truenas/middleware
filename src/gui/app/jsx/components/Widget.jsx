@@ -23,14 +23,16 @@ var Widget = React.createClass({
     i++;
     //console.log( i );
 
-    this.setState( {    size   : this.state.sizeArr[ i - 1 ] + this.state.size.substring( 1, this.state.size.length )                      , count  : i
+    this.setState( {    size   : this.state.sizeArr[ i - 1 ] + this.state.size.substring( 1, this.state.size.length ), count  : i
                    } );
   }
 
   , render: function () {
-    console.log( this.state );
     return (
-      <div className={"widget " + this.props.size} style= { this.state.widgetStyle }>
+      <div  ref = { this.props.refHolder }
+            onMouseDown = { this.props.onMouseDownHolder }
+            className={"widget " + this.props.size + ( this.props.inMotion ? " in-motion" : "" ) }
+            style= { this.state.widgetStyle }>
         <header>
           <span className="widgetTitle">
             {this.props.title}
