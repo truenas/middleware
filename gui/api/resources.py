@@ -1386,24 +1386,6 @@ class ISCSITargetResourceMixin(object):
     class Meta:
         resource_name = 'services/iscsi/target'
 
-    def dehydrate(self, bundle):
-        bundle = super(ISCSITargetResourceMixin, self).dehydrate(bundle)
-        if self.is_webclient(bundle.request):
-            bundle.data['iscsi_target_portalgroup'] = (
-                bundle.obj.iscsi_target_portalgroup
-            )
-            bundle.data['iscsi_target_initiatorgroup'] = (
-                bundle.obj.iscsi_target_initiatorgroup
-            )
-        else:
-            bundle.data['iscsi_target_portalgroup'] = (
-                bundle.obj.iscsi_target_portalgroup.id
-            )
-            bundle.data['iscsi_target_initiatorgroup'] = (
-                bundle.obj.iscsi_target_initiatorgroup.id
-            )
-        return bundle
-
 
 class ISCSIPortalResourceMixin(object):
 
