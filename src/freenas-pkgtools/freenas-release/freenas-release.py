@@ -2197,7 +2197,7 @@ def Dump(archive, db, project = "FreeNAS", args = []):
     long_options = [ "train=" ]
     try:
         opts, arguments = getopt.getopt(args, short_options, long_options)
-    except getoptGetoptError as err:
+    except getopt.GetoptError as err:
         print >> sys.stderr, str(err)
 
     for o, a in opts:
