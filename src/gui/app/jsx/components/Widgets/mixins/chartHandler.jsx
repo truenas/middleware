@@ -123,7 +123,8 @@ module.exports = {
              nextState.statdDataLoaded  !==  this.state.statdDataLoaded   ||
              nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
              nextState.graphType        !==  this.state.graphType         ||
-             nextState.componentWidth   !==  this.state.componentWidth;
+             nextState.componentWidth   !==  this.state.componentWidth    ||
+             nextProps.position         !==  this.props.position;
 	}
 
   , componentWillUnmount: function () {

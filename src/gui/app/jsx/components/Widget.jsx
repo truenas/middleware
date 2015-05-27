@@ -11,7 +11,6 @@ var Widget = React.createClass({
   getInitialState: function () {
     return {  count              : 0
             , sizeArr            : [ "s", "m", "l" ]
-            , widgetStyle        : { left: this.props.position[0], top: this.props.position[1] }
             , widgetContetnStyle : { width: this.props.dimensions[0], height: this.props.dimensions[1] - 16 }
     };
   }
@@ -27,12 +26,15 @@ var Widget = React.createClass({
                    } );
   }
 
+
+
   , render: function () {
+    var widgetStyle  = { left: this.props.position[0], top: this.props.position[1] };
     return (
       <div  ref = { this.props.refHolder }
             onMouseDown = { this.props.onMouseDownHolder }
             className={"widget " + this.props.size + ( this.props.inMotion ? " in-motion" : "" ) }
-            style= { this.state.widgetStyle }>
+            style= { widgetStyle }>
         <header>
           <span className="widgetTitle">
             {this.props.title}

@@ -92,6 +92,7 @@ const Dashboard = React.createClass({
       ServicesMiddleware.requestServicesList();
       ServicesStore.addChangeListener( this.handleServicesChange );
       window.addEventListener( "mouseup", this.exitMovementMode );
+      window.addEventListener( "resize", this.handleResize );
       this.initializeWidgets();
       this.setState({
         gridWidth: this.calculateGridWidth()
@@ -101,6 +102,7 @@ const Dashboard = React.createClass({
   , componentWillUnmount: function () {
       ServicesStore.removeChangeListener( this.handleServicesChange );
       window.removeEventListener( "mouseup", this.exitMovementMode );
+      window.removeEventListener( "resize', this.handleResize" );
     }
 
   , handleServicesChange: function () {
@@ -109,18 +111,26 @@ const Dashboard = React.createClass({
       });
     }
 
+  , handleResize: function () {
+    this.setState({
+      gridWidth : this.calculateGridWidth()
+    });
+    this.initializeWidgets();
+
+  }
+
     // Calculate how many grid units will fit in the window.
-  , calculateGridWidth: function() {
-      return this.toGridUnits( this.getDOMNode("thePlayground").offsetWidth );
+  , calculateGridWidth: function () {
+      return this.toGridUnits( this.getDOMNode( "thePlayground" ).offsetWidth );
     }
 
     // Converts pixels to grid units. Rounds down.
-  , toGridUnits: function( pixels ) {
-      return Math.round( parseInt( pixels )/this.props.gridSize );
+  , toGridUnits: function ( pixels ) {
+      return Math.round( parseInt( pixels ) / this.props.gridSize );
     }
 
     // Converts grid units to pixels.
-  , toPixels: function( gridUnits ) {
+  , toPixels: function ( gridUnits ) {
       return gridUnits * this.props.gridSize;
     }
 
@@ -171,12 +181,14 @@ const Dashboard = React.createClass({
 
     // When a widget is released from movement, change its location and move any
     // overlapping widgets out of the way.
-  , exitMovementMode: function() {
-      var movedWidget = document.querySelector(".widget.in-motion");
+  , exitMovementMode: function () {
+      var movedWidget = document.querySelector( ".widget.in-motion" );
       var newState    = {};
 
       if ( movedWidget ) {
-        var newPosition   = [ this.toGridUnits( movedWidget.style.left ), this.toGridUnits( movedWidget.style.top ) ];
+        var newPosition   = [ this.toGridUnits( movedWidget.style.left )
+                            , this.toGridUnits( movedWidget.style.top )
+                            ];
         var displayMatrix = _.clone( this.state.displayMatrix );
         var widgetMeta    = this.state.widgetMeta;
         var intersections;
