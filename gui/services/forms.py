@@ -1082,7 +1082,6 @@ class iSCSITargetToExtentForm(ModelForm):
 
 
 class iSCSITargetGlobalConfigurationForm(ModelForm):
-    iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
 
     class Meta:
         fields = '__all__'
@@ -1090,11 +1089,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         widgets = {
             'iscsi_pool_avail_threshold': forms.widgets.TextInput(),
         }
-
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        self.fields['iscsi_discoveryauthgroup'].required = False
-        self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
     def _clean_number_range(self, field, start, end):
         f = self.cleaned_data[field]
@@ -1107,18 +1101,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
                     }
             )
         return f
-
-    def clean_iscsi_discoveryauthgroup(self):
-        discoverymethod = self.cleaned_data['iscsi_discoveryauthmethod']
-        discoverygroup = self.cleaned_data['iscsi_discoveryauthgroup']
-        if discoverygroup in ('', None):
-            return None
-        if discoverymethod in ('CHAP', 'CHAP Mutual'):
-            if int(discoverygroup) == -1:
-                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
-        elif int(discoverygroup) == -1:
-            return None
-        return discoverygroup
 
     def clean_iscsi_isns_servers(self):
         servers = self.cleaned_data.get('iscsi_isns_servers')
@@ -1433,6 +1415,9 @@ iSCSITargetExtentForm.base_fields.keyOrder.insert(2, 'iscsi_target_extent_disk')
 
 
 class iSCSITargetPortalForm(ModelForm):
+    iscsi_target_portal_discoveryauthgroup = forms.ChoiceField(
+        label=_("Discovery Auth Group")
+    )
 
     class Meta:
         fields = '__all__'
@@ -1445,6 +1430,21 @@ class iSCSITargetPortalForm(ModelForm):
         super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
         self.fields["iscsi_target_portal_tag"].initial = (
             models.iSCSITargetPortal.objects.all().count() + 1)
+        self.fields['iscsi_target_portal_discoveryauthgroup'].required = False
+        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+    def clean_iscsi_target_portal_discoveryauthgroup(self):
+        discoverymethod = self.cleaned_data['iscsi_target_portal_discoveryauthmethod']
+        discoverygroup = self.cleaned_data['iscsi_target_portal_discoveryauthgroup']
+        if discoverygroup in ('', None):
+            return None
+        if discoverymethod in ('CHAP', 'CHAP Mutual'):
+            if int(discoverygroup) == -1:
+                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
+        elif int(discoverygroup) == -1:
+            return None
+        return discoverygroup
+
 
     def clean_iscsi_target_portal_tag(self):
         tag = self.cleaned_data["iscsi_target_portal_tag"]
