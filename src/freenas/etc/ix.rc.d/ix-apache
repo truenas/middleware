@@ -159,8 +159,10 @@ generate_webdav_conf ()
     # First check if the webdav service is enabled or not.
     # We do this here as executing a django query just for this one value
     # would be expensive.
-    ison=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'webdav'")
-    if [ ${ison} -eq 0 ]; then
+    if checkyesno apache24_enable; then
+        # The service is enabled so call its python-based config generator
+        /usr/local/bin/python /usr/local/libexec/nas/generate_webdav_conf.py
+    else
         # webdav is disabled, we now write blanks to the webdav config files
         echo "" > /etc/local/apache24/Includes/webdav.conf
         echo "" > /etc/local/apache24/Includes/webdav-ssl.conf
@@ -169,9 +171,6 @@ generate_webdav_conf ()
         # file. Else, it will try to bind to port 80 and fail as nginx is using it and thus spit out a
         # mesaage stating that unable to bind to port, cannot create logs.
         echo "Listen 8080" > /etc/local/apache24/httpd.conf
-    elif [ ${ison} -eq 1 ]; then
-        # The service is enabled so call its python-based config generator
-        /usr/local/bin/python /usr/local/libexec/nas/generate_webdav_conf.py
     fi
 
 }
