@@ -826,12 +826,6 @@ class iSCSITarget(Model):
         verbose_name=_("Target Alias"),
         help_text=_("Optional user-friendly string of the target."),
     )
-    iscsi_target_serial = models.CharField(
-        verbose_name=_("Serial"),
-        max_length=16,
-        default="10000001",
-        help_text=_("Serial number for the logical unit")
-    )
     iscsi_target_portalgroup = models.ForeignKey(
         iSCSITargetPortal,
         verbose_name=_("Portal Group ID"),
