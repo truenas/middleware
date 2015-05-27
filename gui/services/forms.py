@@ -1636,6 +1636,22 @@ class iSCSITargetForm(ModelForm):
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 
+class iSCSITargetGroupsForm(ModelForm):
+
+    iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
+
+    class Meta:
+        fields = '__all__'
+        model = models.iSCSITargetGroups
+        exclude = ('iscsi_target_initialdigest', )
+
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetGroupsForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_target_authgroup'].required = False
+        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+
+
 class ExtentDelete(Form):
     delete = forms.BooleanField(
         label=_("Delete underlying file"),
