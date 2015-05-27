@@ -9,29 +9,13 @@
 
 . /etc/rc.subr
 
-check_service()
-{
-	local ison
-	ison=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'iscsitarget'")
-	if [ $? -ne 0 ]; then
-		# Something has gone horribly awry.  Pull the ejection handle now
-		exit
-	fi
-	if [ ${ison} -eq 0 ]; then
-		# The django ORM is expensive.  The service isn't on so bail out
-		# now without generating a config file.  This speeds up boot times
-		# when iSCSI isn't enabled.
-		exit
-	fi
-
-}
-
 generate_ctl()
 {
 	/usr/local/libexec/nas/generate_ctl_conf.py
 }
 
 name="ix-ctld"
+rcvar="ctld_enable"
 start_precmd='check_service'
 start_cmd='generate_ctl'
 stop_cmd=':'
