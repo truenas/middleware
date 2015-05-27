@@ -2192,6 +2192,10 @@ def Dump(archive, db, project = "FreeNAS", args = []):
     Current format is:
     <train> <sequence> <package> [...]
     """
+    def DumpUsage():
+        print >> sys.stderr, "Usage: %s [-T|--train train]" % sys.argv[0]
+        usage()
+        
     train = None
     short_options = "T:"
     long_options = [ "train=" ]
@@ -2199,12 +2203,13 @@ def Dump(archive, db, project = "FreeNAS", args = []):
         opts, arguments = getopt.getopt(args, short_options, long_options)
     except getopt.GetoptError as err:
         print >> sys.stderr, str(err)
-
+        DumpUsage()
+        
     for o, a in opts:
         if o in ("-T", "--train"):
             train = a
         else:
-            usage()
+            DumpUsage()
 
     # Now we get all the sequences
     sequences = db.RecentSequencesForTrain(train, count = 0, oldest_first = True)
