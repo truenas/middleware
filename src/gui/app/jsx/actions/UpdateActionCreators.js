@@ -8,7 +8,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class UpdateActionCreators {
 
-  receiveUpdateInfo ( updateInfo, updateInfoName ) {
+  static receiveUpdateInfo ( updateInfo, updateInfoName ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_UPDATE_DATA
       , updateInfo: updateInfo
@@ -19,4 +19,4 @@ class UpdateActionCreators {
 
 };
 
-export default new UpdateActionCreators();
+export default UpdateActionCreators;

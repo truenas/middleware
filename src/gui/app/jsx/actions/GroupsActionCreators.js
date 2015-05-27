@@ -9,7 +9,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class GroupsActionCreators {
 
-  receiveGroupsList ( groupsList ) {
+  static receiveGroupsList ( groupsList ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_GROUPS_LIST
       , groupsList: groupsList
@@ -17,7 +17,7 @@ class GroupsActionCreators {
     );
   }
 
-  receiveGroupUpdateTask ( taskID, groupID ) {
+  static receiveGroupUpdateTask ( taskID, groupID ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_GROUP_UPDATE_TASK
       , taskID: taskID
@@ -28,4 +28,4 @@ class GroupsActionCreators {
 
 };
 
-export default new GroupsActionCreators();
+export default GroupsActionCreators;

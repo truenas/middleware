@@ -8,7 +8,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class NetworkConfigActionCreators {
 
-  receiveNetworkConfig ( networkConfig ) {
+  static receiveNetworkConfig ( networkConfig ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_NETWORK_CONFIG
       , networkConfig: networkConfig
@@ -16,7 +16,7 @@ class NetworkConfigActionCreators {
     );
   }
 
-  receiveNetworkUpdateTask ( taskID ) {
+  static receiveNetworkUpdateTask ( taskID ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_NETWORK_CONFIG_UPDATE
       , taskID: taskID
@@ -26,4 +26,4 @@ class NetworkConfigActionCreators {
 
 };
 
-export default new NetworkConfigActionCreators ();
+export default NetworkConfigActionCreators;

@@ -9,7 +9,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class UsersActionCreators {
 
-  receiveUsersList ( rawUsers ) {
+  static receiveUsersList ( rawUsers ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RAW_USERS
       , rawUsers: rawUsers
@@ -17,7 +17,7 @@ class UsersActionCreators {
     );
   }
 
-  receiveUserUpdateTask ( taskID, userID ) {
+  static receiveUserUpdateTask ( taskID, userID ) {
     FreeNASDispatcher.handleClientAction(
       { type: ActionTypes.RECEIVE_USER_UPDATE_TASK
       , taskID: taskID
@@ -28,4 +28,4 @@ class UsersActionCreators {
 
 };
 
-export default new UsersActionCreators();
+export default UsersActionCreators;

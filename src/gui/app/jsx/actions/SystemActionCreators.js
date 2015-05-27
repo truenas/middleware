@@ -8,7 +8,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class SystemActionCreators {
 
-  receiveSystemInfo ( systemInfo, systemInfoName ) {
+  static receiveSystemInfo ( systemInfo, systemInfoName ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
       , systemInfo: systemInfo
@@ -17,7 +17,7 @@ class SystemActionCreators {
     );
   }
 
-  receiveSystemDevice ( systemDevice, systemDeviceArgument ) {
+  static receiveSystemDevice ( systemDevice, systemDeviceArgument ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
       , systemDevice: systemDevice
@@ -28,4 +28,4 @@ class SystemActionCreators {
 
 };
 
-export default new SystemActionCreators();
+export default SystemActionCreators;

@@ -8,7 +8,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class InterfacesActionCreators {
 
-  receiveInterfacesList ( rawInterfacesList ) {
+  static receiveInterfacesList ( rawInterfacesList ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_INTERFACES_LIST
       , rawInterfacesList: rawInterfacesList
@@ -18,4 +18,4 @@ class InterfacesActionCreators {
 
 };
 
-export default new InterfacesActionCreators();
+export default InterfacesActionCreators;
