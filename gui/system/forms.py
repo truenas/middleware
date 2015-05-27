@@ -608,7 +608,7 @@ class InitialWizard(CommonWizard):
                                                "awk '{print $2}'|tr -d :" % (nic, ),
                                                shell=True,
                                                stdout=subprocess.PIPE).communicate()[0]
-                        ltg = iSCSITarget.objects.order_by('-id')
+                        ltg = iSCSITargetExtent.objects.order_by('-id')
                         if ltg.count() > 0:
                             lid = ltg[0].id
                         else:
@@ -620,7 +620,6 @@ class InitialWizard(CommonWizard):
                         iscsi_target_name='%sTarget' % share_name,
                         iscsi_target_portalgroup=portal,
                         iscsi_target_initiatorgroup=authini,
-                        iscsi_target_serial=serial,
                     )
 
                     iscsi_target_extent_path = 'zvol/%s/%s' % (
@@ -632,6 +631,7 @@ class InitialWizard(CommonWizard):
                         iscsi_target_extent_name='%sExtent' % share_name,
                         iscsi_target_extent_type='ZVOL',
                         iscsi_target_extent_path=iscsi_target_extent_path,
+                        iscsi_target_extent_serial=serial,
                     )
                     iSCSITargetToExtent.objects.create(
                         iscsi_target=target,
