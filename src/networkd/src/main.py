@@ -501,8 +501,14 @@ class ConfigurationService(RpcService):
 
         # Remove all IP addresses from interface
         for addr in iface.addresses:
-            iface.delete_address(addr)
-
+            try:
+                iface.remove_address(addr)
+            except:
+                raise RpcException(errno.ENXIO,
+                                   "Interface {0} could not be downed because\
+                                   address {1} could not be removed".format(
+                                        name, addr)
+                                   )
         iface.down()
 
 

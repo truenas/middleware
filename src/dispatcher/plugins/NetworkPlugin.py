@@ -207,8 +207,8 @@ class InterfaceDownTask(Task):
     def run(self, name):
         try:
             self.dispatcher.call_sync('networkd.configuration.down_interface', name)
-        except RpcException:
-            raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+        except RpcException, err:
+            raise TaskException(err)
 
         self.dispatcher.dispatch_event('network.interface.changed', {
             'operation': 'update',
