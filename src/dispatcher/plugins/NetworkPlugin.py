@@ -212,10 +212,7 @@ class InterfaceDownTask(Task):
         try:
             self.dispatcher.call_sync('networkd.configuration.down_interface', name)
         except RpcException, err:
-            # XXX: Fix the split (RPCExpection, which is the base class for
-            # TaskException needs to handle passing of an exisitng RPCException
-            # to it, instead of demanding a err.code, err.message)
-            raise TaskException(err.split(":",1))
+            raise TaskException(err.code, err.message, err.extra)
 
         self.dispatcher.dispatch_event('network.interface.changed', {
             'operation': 'update',

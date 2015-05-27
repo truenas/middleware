@@ -471,7 +471,7 @@ cdef class NetworkInterface(object):
                 raise OSError(errno, strerror(errno))
 
             self.addresses.append(address)
-        elif address.af == AddressFamily.AF_INET6:
+        elif address.af == AddressFamily.INET6:
             self.ioctl(cmd, <void*>&req)
             self.addresses.append(address)
         else:
