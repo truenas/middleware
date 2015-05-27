@@ -829,37 +829,6 @@ class iSCSITarget(Model):
         verbose_name=_("Target Alias"),
         help_text=_("Optional user-friendly string of the target."),
     )
-    iscsi_target_portalgroup = models.ForeignKey(
-        iSCSITargetPortal,
-        verbose_name=_("Portal Group ID"),
-    )
-    iscsi_target_initiatorgroup = models.ForeignKey(
-        iSCSITargetAuthorizedInitiator,
-        verbose_name=_("Initiator Group ID"),
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
-    iscsi_target_authtype = models.CharField(
-        max_length=120,
-        choices=choices.AUTHMETHOD_CHOICES,
-        default="None",
-        verbose_name=_("Auth Method"),
-        help_text=_("The authentication method accepted by the target."),
-    )
-    iscsi_target_authgroup = models.IntegerField(
-        max_length=120,
-        verbose_name=_("Authentication Group ID"),
-        null=True,
-        blank=True,
-    )
-    iscsi_target_initialdigest = models.CharField(
-        max_length=120,
-        default="Auto",
-        verbose_name=_("Auth Method"),
-        help_text=_("The method can be accepted by the target. Auto means "
-                    "both none and authentication."),
-    )
 
     class Meta:
         verbose_name = _("Target")
