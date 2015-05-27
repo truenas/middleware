@@ -463,6 +463,12 @@ class iSCSITargetExtent(Model):
         verbose_name=_("Extent Name"),
         help_text=_("String identifier of the extent."),
     )
+    iscsi_target_extent_serial = models.CharField(
+        verbose_name=_("Serial"),
+        max_length=16,
+        default="10000001",
+        help_text=_("Serial number for the logical unit")
+    )
     iscsi_target_extent_type = models.CharField(
         max_length=120,
         verbose_name=_("Extent Type"),
