@@ -169,7 +169,9 @@ class MongodbDatastore(object):
 
         for i in cur:
             i['id'] = i.pop('_id')
-            result.append(postprocess(i) if postprocess else i)
+            result = postprocess(i) if postprocess else i
+            if result is not None:
+                result.append(result)
 
         return result
 
