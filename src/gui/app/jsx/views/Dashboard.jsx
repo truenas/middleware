@@ -433,57 +433,10 @@ const Dashboard = React.createClass({
        });
     }
 
-  , renderWidgets: function () {
-      var mapka = _.map( this.state.widgets, function ( data, id ) {
-        var inMotion = this.state.movementMode &&
-                       this.state.widgetInMotion &&
-                       this.state.widgetInMotion.id === data.id;
-
-        return (
-          data.reactElement
-        );
-      }, this );
-      console.log( mapka );
-      console.log( "poklad" )
-      return mapka;
-
-    }
-
   // TODO:
   // Maybe this should be moved into some kind of utility class, and generalized
   , isServiceRunning: function ( service ) {
       return ( _.findIndex( this.state.servicesList, { name: service, state: "running" } ) > -1 );
-    }
-
-  , renderX: function() {
-      var playgroundClasses = ["playground"];
-      var bodyClasses;
-
-      // Enable the grid display by appending its class to the body
-      if ( document ) {
-        bodyClasses = document.body.className.split(/\s+/);
-        var gridIndex = bodyClasses.indexOf("grid-on");
-
-        if ( this.state.movementMode && gridIndex === -1 ) {
-          bodyClasses.push("grid-on");
-        } else if ( !this.state.movementMode && gridIndex > -1 ) {
-          bodyClasses.splice( gridIndex, 1 );
-        }
-
-        document.body.className = bodyClasses.join(" ");
-      }
-
-      return (
-        <div>
-          <button onClick={ this.initializeWidgets.bind( null ) }>New widgets</button>
-          <div
-            ref         = "thePlayground"
-            onMouseMove = { this.calculateMovement }
-            className   = { playgroundClasses.join(" ") } >
-            { this.renderWidgets() }
-          </div>
-        </div>
-      );
     }
 
   , render: function () {
