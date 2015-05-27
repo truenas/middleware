@@ -501,6 +501,9 @@ class ConfigurationService(RpcService):
 
         # Remove all IP addresses from interface
         for addr in iface.addresses:
+            if addr.af == netif.AddressFamily.LINK:
+                continue
+                
             try:
                 iface.remove_address(addr)
             except:
