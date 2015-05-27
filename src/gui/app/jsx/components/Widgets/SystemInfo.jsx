@@ -56,10 +56,13 @@ var SystemInfo = React.createClass({
     var memSize = round( ( this.state.hardware["memory-size"] / 1024 ) / 1024, 1 );
     return (
       <Widget
-        dimensions  =  {this.props.dimensions}
-        position  =  {this.props.position}
-        title      =  {this.props.title}
-        size       =  {this.props.size} >
+        dimensions  =  { this.props.dimensions }
+        position  =  { this.props.position }
+        title      =  { this.props.title }
+        size       =  { this.props.size }
+        onMouseDownHolder = { this.props.onMouseDownHolder }
+        refHolder = {this.props.refHolder} >
+
         <div className="wd-section wd-cpu-model">
           <span className="wd-title">CPU Model:</span>
           <span className="wd-value">{this.state.hardware["cpu-model"]}</span>
