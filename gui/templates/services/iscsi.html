@@ -1,23 +1,23 @@
 <div data-dojo-type="dijit.layout.TabContainer" data-dojo-props="nested: true, title: '{% trans "iSCSI Management"|force_escape|force_escape %}', doLayout: true" style="width:100%;" id="tab_iscsi">
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Target Global Configuration"|force_escape|force_escape %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Target Global Configuration"|escapejs %}',
     doLayout: false
     {% if focus_tab == "sharing.ISCSI.iSCSITargetGlobalConfiguration" %}, selected: true{% endif %},
     href: '{% url "freeadmin_services_iscsitargetglobalconfiguration_edit" oid=gconfid %}?inline=true',
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetGlobalConfiguration" class="objrefresh data_services_iSCSITarget" id="tab_iSCSITargetGlobalConfiguration">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Portals"|force_escape|force_escape %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Portals (iSCSI)"|escapejs %}',
     doLayout: false,
     href: '{% url "freeadmin_services_iscsitargetportal_datagrid" %}'
     {% if focus_tab == "sharing.ISCSI.iSCSITargetPortal.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetPortal.View" class="objrefresh data_services_iSCSITargetPortal" id="tab_iSCSITargetPortal">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Initiators"|force_escape|force_escape %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Initiators (iSCSI)"|escapejs %}',
     doLayout: false,
     href: '{% url "freeadmin_services_iscsitargetauthorizedinitiator_datagrid" %}'
     {% if focus_tab == "sharing.ISCSI.iSCSITargetAuthorizedInitiator.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetAuthorizedInitiator.View" class="objrefresh data_services_iSCSITargetAuthorizedInitiator" id="tab_iSCSITargetAuthorizedInitiator">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Access"|force_escape|force_escape %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Access (iSCSI)"|escapejs %}',
     doLayout: false,
     href: '{% url "freeadmin_services_iscsitargetauthcredential_datagrid" %}'
     {% if focus_tab == "sharing.ISCSI.iSCSITargetAuthCredential.View" %}, selected: true{% endif %},
