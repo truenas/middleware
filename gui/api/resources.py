@@ -2901,3 +2901,78 @@ class UpdateResourceMixin(NestedMixin):
             request,
             data,
         )
+
+
+class FCPort(object):
+
+    def __init__(self, port=None, name=None):
+        self.port = port
+        self.name = name
+
+
+class FCPortsResource(DojoResource):
+
+    id = fields.CharField(attribute='port')
+    port = fields.CharField(attribute='port')
+    name = fields.CharField(attribute='name')
+
+    class Meta:
+        allowed_methods = ['get', 'put']
+        object_class = FCPort
+        resource_name = 'sharing/fcports'
+        max_limit = 0
+
+    def get_list(self, request, **kwargs):
+        from lxml import etree
+
+        proc = subprocess.Popen([
+            "/usr/sbin/ctladm",
+            "portlist",
+            "-x",
+        ], stdout=subprocess.PIPE)
+        data = proc.communicate()[0]
+        doc = etree.fromstring(data)
+        results = []
+        for e in doc.xpath("//frontend_type[text()='tpc']"):
+            tag_port = e.getparent()
+            results.append(FCPort(
+                port=tag_port.get('id'),
+                name=tag_port.xpath('./port_name')[0].text,
+            ))
+
+        limit = self._meta.limit
+        if 'HTTP_X_RANGE' in request.META:
+            _range = request.META['HTTP_X_RANGE'].split('-')
+            if len(_range) > 1 and _range[1] == '':
+                limit = 0
+
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
+        return response
