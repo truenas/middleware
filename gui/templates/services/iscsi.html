@@ -41,4 +41,10 @@
     {% if focus_tab == "sharing.ISCSI.iSCSITargetToExtent.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetToExtent.View" class="objrefresh data_services_iSCSITargetToExtent" id="tab_iSCSITargetToExtent">
     </div>
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Fiber Channel Ports"|escapejs %}',
+    doLayout: false,
+    href: '{% url "sharing_fc_ports" %}'
+    {% if focus_tab == "sharing.ISCSI.FCPorts" %}, selected: true{% endif %},
+    refreshOnShow: true" tab="sharing.ISCSI.FCPorts" class="objrefresh data_services_FCPorts" id="tab_FCPorts">
+    </div>
 </div>
