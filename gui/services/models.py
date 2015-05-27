@@ -619,6 +619,18 @@ class iSCSITargetPortal(Model):
         verbose_name=_("Comment"),
         help_text=_("You may enter a description here for your reference."),
     )
+    iscsi_target_portal_discoveryauthmethod = models.CharField(
+        max_length=120,
+        choices=choices.AUTHMETHOD_CHOICES,
+        default='None',
+        verbose_name=_("Discovery Auth Method")
+    )
+    iscsi_target_portal_discoveryauthgroup = models.IntegerField(
+        max_length=120,
+        verbose_name=_("Discovery Auth Group"),
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = _("Portal")
