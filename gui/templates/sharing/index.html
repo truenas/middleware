@@ -24,7 +24,7 @@
   refreshOnShow: true" class="objrefresh data_sharing_CIFS_Share" tab="sharing.CIFS_Share.View" id="tab_CIFS_Share">
   </div>
 
-  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Block (iSCSI)"|escapejs %}'
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Block (iSCSI/FC)"|escapejs %}'
   {% if focus_form == "sharing.ISCSI" or ntab == "sharing.ISCSI" %}, selected: true{% endif %},
   href: '{% url "services_iscsi" %}{% if focus_form %}?tab={{ focus_form }}{% endif %}',
   refreshOnShow: true" class="objrefresh data_services_iSCSI" tab="sharing.iSCSI" id="tab_iSCSI">
