@@ -1571,17 +1571,9 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 
 class iSCSITargetForm(ModelForm):
 
-    iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
-
     class Meta:
         fields = '__all__'
         model = models.iSCSITarget
-        exclude = ('iscsi_target_initialdigest', 'iscsi_target_type')
-
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetForm, self).__init__(*args, **kwargs)
-        self.fields['iscsi_target_authgroup'].required = False
-        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
     def clean_iscsi_target_name(self):
         name = self.cleaned_data.get("iscsi_target_name").lower()
@@ -1595,24 +1587,6 @@ class iSCSITargetForm(ModelForm):
                 _(u'A target with that name already exists.')
             )
         return name
-
-    def clean_iscsi_target_authgroup(self):
-        method = self.cleaned_data['iscsi_target_authtype']
-        group = self.cleaned_data.get('iscsi_target_authgroup')
-        if group in ('', None):
-            return None
-        if method == 'CHAP Mutual' and group:
-            auth = models.iSCSITargetAuthCredential.objects.get(id=group)
-            if not auth.iscsi_target_auth_peeruser:
-                raise forms.ValidationError(_(
-                    'This authentication group does not support CHAP MUTUAL'
-                ))
-        if method in ('CHAP', 'CHAP Mutual'):
-            if group != '' and int(group) == -1:
-                raise forms.ValidationError(_("This field is required."))
-        elif group != '' and int(group) == -1:
-            return None
-        return int(group)
 
     def clean_iscsi_target_alias(self):
         alias = self.cleaned_data['iscsi_target_alias']
@@ -1650,6 +1624,23 @@ class iSCSITargetGroupsForm(ModelForm):
         self.fields['iscsi_target_authgroup'].required = False
         self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
+    def clean_iscsi_target_authgroup(self):
+        method = self.cleaned_data['iscsi_target_authtype']
+        group = self.cleaned_data.get('iscsi_target_authgroup')
+        if group in ('', None):
+            return None
+        if method == 'CHAP Mutual' and group:
+            auth = models.iSCSITargetAuthCredential.objects.get(id=group)
+            if not auth.iscsi_target_auth_peeruser:
+                raise forms.ValidationError(_(
+                    'This authentication group does not support CHAP MUTUAL'
+                ))
+        if method in ('CHAP', 'CHAP Mutual'):
+            if group != '' and int(group) == -1:
+                raise forms.ValidationError(_("This field is required."))
+        elif group != '' and int(group) == -1:
+            return None
+        return int(group)
 
 
 class ExtentDelete(Form):
