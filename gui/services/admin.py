@@ -15,6 +15,10 @@ class ServicesFAdmin(BaseFreeAdmin):
     resource_mixin = ServicesResourceMixin
 
 
+class FiberChannelToTargetFAdmin(BaseFreeAdmin):
+    pass
+
+
 class FTPFAdmin(BaseFreeAdmin):
 
     resource_mixin = FTPResourceMixin
@@ -158,6 +162,7 @@ class NFSFAdmin(BaseFreeAdmin):
     icon_model = 'NFSIcon'
 
 
+site.register(models.FiberChannelToTarget, FiberChannelToTargetFAdmin)
 site.register(models.FTP, FTPFAdmin)
 site.register(models.iSCSITarget, ISCSITargetFAdmin)
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)

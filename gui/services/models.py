@@ -929,6 +929,22 @@ class iSCSITargetToExtent(Model):
                                 _("The iSCSI service failed to reload."))
 
 
+class FiberChannelToTarget(Model):
+    fc_port = models.CharField(
+        verbose_name=_('Port'),
+        max_length=10,
+    )
+    fc_target = models.ForeignKey(
+        iSCSITarget,
+        verbose_name=_("Target"),
+        help_text=_("Target this extent belongs to"),
+    )
+
+    class Meta:
+        verbose_name = _('Fiber Channel Target')
+        verbose_name_plural = _('Fiber Channel Targets')
+
+
 class DynamicDNS(Model):
     ddns_provider = models.CharField(
         max_length=120,

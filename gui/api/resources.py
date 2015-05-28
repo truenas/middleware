@@ -2868,9 +2868,10 @@ class UpdateResourceMixin(NestedMixin):
 
 class FCPort(object):
 
-    def __init__(self, port=None, name=None):
+    def __init__(self, port=None, name=None, mode=None):
         self.port = port
         self.name = name
+        self.mode = mode
 
 
 class FCPortsResource(DojoResource):
