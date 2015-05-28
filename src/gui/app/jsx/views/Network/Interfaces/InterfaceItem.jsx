@@ -13,7 +13,7 @@ import clientStatus from "../../../components/mixins/clientStatus";
 
 import viewerUtil from "../../../components/Viewer/viewerUtil";
 
-import InterfacesStore from "../../../stores/InterfacesStore";
+import IS from "../../../stores/InterfacesStore";
 
 import Icon from "../../../components/Icon";
 
@@ -119,16 +119,17 @@ const InterfaceItem = React.createClass({
     }
 
   , componentDidMount: function () {
-      InterfacesStore.addChangeListener( this.updateInterfaceInState );
+      IS.addChangeListener( this.updateInterfaceInState );
     }
 
   , componentWillUnmount: function () {
-      InterfacesStore.removeChangeListener( this.updateInterfaceInState );
+      IS.removeChangeListener( this.updateInterfaceInState );
     }
 
   , getInterfaceFromStore: function () {
-      return InterfacesStore.findInterfaceByKeyValue( this.props.viewData.format["selectionKey"]
-                                                    , this.getDynamicRoute() );
+      let format = this.props.viewData.format;
+      return IS.findInterfaceByKeyValue( format["selectionKey"]
+                                       , this.getDynamicRoute() );
     }
 
   , updateInterfaceInState: function () {
@@ -141,7 +142,7 @@ const InterfaceItem = React.createClass({
 
   , render: function () {
 
-    var DisplayComponent      = null;
+    var DisplayComponent = null;
 
     if ( this.state.SESSION_AUTHENTICATED && this.state.targetInterface ) {
       var childProps = {
