@@ -86,8 +86,8 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
 
         // Initialize desired fields with existing ones.
         newInterface[ "name" ] = currentInterface[ "name" ]
-                                 ? currentInterface[ "name" ]
-                                 : null;
+                               ? currentInterface[ "name" ]
+                               : null;
         newInterface[ "ip" ] = status[ "aliases" ][1]
                              ? status[ "aliases" ][1][ "address" ]
                              : "--";
@@ -98,17 +98,18 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
                                      ? status[ "link-address" ]
                                      : null;
         newInterface[ "flags" ] = status[ "flags" ]
-                                  ? status[ "flags" ]
-                                  : [];
+                                ? status[ "flags" ]
+                                : [];
         newInterface[ "netmask" ] = status[ "aliases" ][1]
-                                    ? status[ "aliases" ][1][ "netmask" ]
-                                    : null;
+                                  ? status[ "aliases" ][1][ "netmask" ]
+                                  : null;
         newInterface[ "enabled" ] = currentInterface[ "enabled" ]
-                                    ? true
-                                    : false;
+                                  ? true
+                                  : false;
         newInterface[ "dhcp" ] = currentInterface[ "dhcp" ]
-                                 ? true
-                                 : false;
+                               ? true
+                               : false;
+        newInterface[ "status" ] = status;
 
         // Figure out interface type. Only knows about Ethernet right now.
         // TODO: There are tons more types that could show up. See:
@@ -118,8 +119,8 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
         // used by other parts of the UI. The vast majority of that list doesn'
         // matter.
         newInterface[ "type"] = currentInterface[ "type" ] === "ETHER"
-                                ? "Ethernet"
-                                : "Unknown";
+                              ? "Ethernet"
+                              : "Unknown";
 
         // Determine Internet Protocol version
         if ( !status[ "aliases" ][1] ) {
@@ -161,6 +162,11 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
       };
 
       _interfaces = action.rawInterfacesList.map( mapInterface );
+
+      console.log( "action.rawInterfacesList", action.rawInterfacesList )
+      console.log( "_interfaces", _interfaces );
+
+
       InterfacesStore.emitChange();
       break;
 
