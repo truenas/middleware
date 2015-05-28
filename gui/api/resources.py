@@ -68,7 +68,9 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
-from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
+from freenasUI.services.models import (
+    iSCSITargetPortal, iSCSITargetPortalIP, FiberChannelToTarget
+)
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
@@ -2879,6 +2881,7 @@ class FCPortsResource(DojoResource):
     id = fields.CharField(attribute='port')
     port = fields.CharField(attribute='port')
     name = fields.CharField(attribute='name')
+    mode = fields.CharField(attribute='mode')
 
     class Meta:
         allowed_methods = ['get', 'put']
@@ -2888,6 +2891,10 @@ class FCPortsResource(DojoResource):
 
     def get_list(self, request, **kwargs):
         from lxml import etree
+
+        fcportmap = {}
+        for fbtt in FiberChannelToTarget.objects.all():
+            fcportmap[fbtt.fc_port] = fbtt.fc_target
 
         proc = subprocess.Popen([
             "/usr/sbin/ctladm",
@@ -2899,9 +2906,15 @@ class FCPortsResource(DojoResource):
         results = []
         for e in doc.xpath("//frontend_type[text()='tpc']"):
             tag_port = e.getparent()
+            name = tag_port.xpath('./port_name')[0].text
+            if name in fcportmap:
+                mode = 'TARGET'
+            else:
+                mode = 'INITIATOR'
             results.append(FCPort(
                 port=tag_port.get('id'),
-                name=tag_port.xpath('./port_name')[0].text,
+                name=name,
+                mode=mode,
             ))
 
         limit = self._meta.limit

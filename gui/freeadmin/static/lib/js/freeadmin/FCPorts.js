@@ -71,6 +71,7 @@ define([
       templateString: template,
       name: null,
       port: null,
+      mode: null,
       postCreate: function() {
 
         var me = this;
@@ -79,12 +80,14 @@ define([
 
         new RadioButton({
           name: "mode",
-          value: "initiator"
+          value: "initiator",
+          checked: (me.mode == 'INITIATOR') ? true : false
         }, this.dapFCModeIni);
 
         new RadioButton({
           name: "mode",
-          value: "target"
+          value: "target",
+          checked: (me.mode == 'TARGET') ? true : false
         }, this.dapFCModeTgt);
 
         this.inherited(arguments);
@@ -113,7 +116,8 @@ define([
             var entry = data[i];
             var fcport = FCPort({
               name: entry.name,
-              port: entry.port
+              port: entry.port,
+              mode: entry.mode
             })
             me.dapTable.appendChild(fcport.domNode);
           }
