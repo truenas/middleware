@@ -23,8 +23,68 @@ const InterfacesView = React.createClass({
     item: React.PropTypes.object.isRequired
   }
 
-  , render: function () {
+  // Map an array of aliases into an array of ListGroupItems representing all
+  // aliases of 'family' (ie INET, INET6). Not providing a family will  map all
+  // the aliases.
+  , createAliasDisplayList: function ( family ) {
+    let aliasDisplayItems = null;
 
+    // Only do anything if the interface exists and there are any aliases.
+    // The first check should never fail, but I've said that before and
+    // regretted it.
+    if ( !_.isEmpty( this.props.item )
+      && !_.isEmpty( this.props.item.status ) ) {
+      aliasDisplayItems =
+        _.map( this.props.item.status.aliases
+             , function mapAliasesToList ( alias, key ) {
+
+               // Only return items for aliases matching the given family.
+               if ( family === "INET" && alias.family === "INET" ) {
+                 return ( this.createAliasDisplayItem( alias ) );
+               } else if ( family === "INET6" && alias.family === "INET6" ) {
+                 return ( this.createAliasDisplayItem( alias ) );
+               // If no family was specified or the family was unrecognized,
+               // create a list item for every alias. This item is different
+               // because we can't make certain assumptions.
+               } else if ( family !== "INET" && family !== "INET6" ) {
+                 return (
+                   <TWBS.ListGroupItem>
+                     { "Link Type: " + family }
+                     <br />
+                     <br />
+                     { "Address: " }
+                     <br />
+                     <strong>{ alias.address }</strong>
+                   </TWBS.ListGroupItem>
+                 )
+               }
+             }
+             , this )
+      return ( _.compact( aliasDisplayItems ) )
+    } else {
+      return null;
+    }
+
+  }
+
+  // Create the individual items for createAliasDisplayList.
+  , createAliasDisplayItem: function ( alias ) {
+    return (
+      <TWBS.ListGroupItem className = "aliasDisplayItem">
+        <span className = "aliasItemIP">
+          <strong>{ alias.address }</strong>
+        </span>
+        <span className = "aliasItemNetmask">
+          <em>{ "/" + alias.netmask
+              + " (" + alias.broadcast
+              + ")" }
+          </em>
+        </span>
+      </TWBS.ListGroupItem>
+    )
+  }
+
+  , render: function () {
 
     let configureButton = (
       <TWBS.Row>
@@ -38,51 +98,78 @@ const InterfacesView = React.createClass({
       </TWBS.Row>
     );
 
+    let interfaceName = (
+      <TWBS.Panel>
+        { "Interface Name: " }
+        <strong>{ this.props.item[ "name" ] }</strong>
+      </TWBS.Panel>
+    );
+
+    let linkState = (
+      <TWBS.Panel>
+        { "Link State: " }
+        <strong>{ this.props.item[ "link_state" ] }</strong>
+      </TWBS.Panel>
+    );
+
+    let dhcpConfigured = (
+      <TWBS.Panel>
+        { "DHCP Configured: " }
+        <Icon glyph = { this.props.item[ "dhcp" ]
+                      ? "check text-primary"
+                      : "times text-muted"
+                      } />
+      </TWBS.Panel>
+    )
+
+    let interfaceType = (
+      <TWBS.Panel>
+        { "Interface Type: " }
+        <strong>{ this.props.item[ "type" ] }</strong>
+      </TWBS.Panel>
+    )
+
     return (
       <TWBS.Grid fluid>
-
         { configureButton }
-
         <TWBS.Row>
-          <TWBS.Col
-            xs={3}
-            className="text-center">
-            <viewerUtil.ItemIcon
-              fontIcon = { this.props.item["font_icon"] }
-              primaryString = { this.props.item["ip"] }
-              fallbackString = { this.props.item["name"] } />
+          <TWBS.Col xs = {6}>
+            { interfaceName }
           </TWBS.Col>
-          <TWBS.Col xs={9}>
-            <h3>{ this.props.item["name"] }</h3>
-            <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["ip"], "\u200B" ) }</h4>
-            <h4 className = "text-muted">{ viewerUtil.writeString( this.props.item["type"] ) }</h4>
-            <hr />
+          <TWBS.Col xs = {6}>
+            { linkState }
           </TWBS.Col>
         </TWBS.Row>
-
         <TWBS.Row>
-          <viewerUtil.DataCell
-            title  = { this.props.item["ip_version"] + " Address" }
-            colNum = { 2 }
-            entry  = { this.props.item["ip"] } />
-          <viewerUtil.DataCell
-            title  = { "DHCP" }
-            colNum = { 2 }
-            entry  = { this.props.item["dhcp"]
-                       ? "Enabled"
-                       : "Disabled" } />
+          <TWBS.Col xs = {6}>
+            { dhcpConfigured }
+          </TWBS.Col>
+          <TWBS.Col xs = {6}>
+            { interfaceType }
+          </TWBS.Col>
         </TWBS.Row>
         <TWBS.Row>
-          <viewerUtil.DataCell
-            title  = { "Netmask" }
-            colNum = { 2 }
-            entry  = { this.props.item["netmask"]
-                       ? "/" + this.props.item["netmask"]
-                       : "N/A" } />
-          <viewerUtil.DataCell
-            title = { "IPv6 Address" }
-            colNum = { 2 }
-            entry = { "--" } />
+          <TWBS.Col xs = {6} >
+            <h4>{ "IPv4 Aliases" }</h4>
+            <TWBS.PanelGroup>
+
+              <TWBS.Panel>
+                <TWBS.ListGroup fill className ="aliasDisplayList">
+                  { this.createAliasDisplayList( "INET" ) }
+                </TWBS.ListGroup>
+              </TWBS.Panel>
+            </TWBS.PanelGroup>
+          </TWBS.Col>
+          <TWBS.Col xs = {6} >
+            <h4>{ "IPv6 Aliases" }</h4>
+            <TWBS.PanelGroup>
+              <TWBS.Panel>
+                <TWBS.ListGroup fill className ="aliasDisplayList">
+                  { this.createAliasDisplayList( "INET6" ) }
+                </TWBS.ListGroup>
+              </TWBS.Panel>
+            </TWBS.PanelGroup>
+          </TWBS.Col>
         </TWBS.Row>
       </TWBS.Grid>
     );
@@ -141,8 +228,7 @@ const InterfaceItem = React.createClass({
     }
 
   , render: function () {
-
-    var DisplayComponent = null;
+    let DisplayComponent = null;
 
     if ( this.state.SESSION_AUTHENTICATED && this.state.targetInterface ) {
       var childProps = {
