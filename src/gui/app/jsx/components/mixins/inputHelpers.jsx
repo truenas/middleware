@@ -184,21 +184,22 @@ module.exports = {
     // props, and is modified with the values that have been changed by the
     // user. This allows the display components to have access to the
     // "canonically" correct item, merged with the un-changed values.
-    this.setState({ locallyModifiedValues : newLocallyModified
-                  , mixedValues : _.assign( _.cloneDeep( this.props.item )
-                                          , newLocallyModified
-                                          )
-                  }
+    this.setState( { locallyModifiedValues : newLocallyModified
+                   , mixedValues : _.assign( _.cloneDeep( this.props.item )
+                                           , newLocallyModified
+                                           )
+                   }
     );
   }
 
   , submissionRedirect: function ( valuesToSend ) {
     let routing = this.props.viewData.routing;
+    let format = this.props.viewData.format;
     let params = {};
     let newEntityPath;
 
-    if ( valuesToSend[ this.props.viewData.format[ "primaryKey" ] ] ) {
-      newEntityPath = valuesToSend[this.props.viewData.format["primaryKey"]];
+    if ( valuesToSend[ format[ "primaryKey" ] ] ) {
+      newEntityPath = valuesToSend[ format[ "primaryKey" ] ];
       params[ routing[ "param" ] ] = newEntityPath;
       this.context.router.transitionTo( routing[ "route" ]
                                       , params
