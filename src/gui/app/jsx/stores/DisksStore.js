@@ -7,17 +7,16 @@
 "use strict";
 
 import _ from "lodash";
-import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
+import FluxStore from "./FluxBase";
 
-// TODO: This doesn't exist yet.
-// import DisksMiddleware from "../middleware/DisksMiddleware";
+import DisksMiddleware from "../middleware/DisksMiddleware";
 
-const CHANGE_EVENT = "change";
+let disks = {};
 
-class DisksStore extends EventEmitter {
+class DisksStore extends FluxStore {
 
   constructor () {
     super();
@@ -25,8 +24,12 @@ class DisksStore extends EventEmitter {
     this.dispatchToken = FreeNASDispatcher.register(
       handlePayload.bind( this )
     );
-
   }
+
+  getAllDisks () {
+    return disks;
+  }
+
 };
 
 function handlePayload ( payload ) {
@@ -34,8 +37,8 @@ function handlePayload ( payload ) {
 
   switch ( ACTION.type ) {
 
-    case ActionTypes.RECEIVE_RAW_DISKS:
-      // TODO: Disk schema needs to be fixed.
+    case ActionTypes.RECEIVE_DISKS_OVERVIEW:
+      ACTION.disksOverview.forEach( disk => disks[ disk.serial ] = disk );
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:

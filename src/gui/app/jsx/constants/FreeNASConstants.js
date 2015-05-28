@@ -60,6 +60,10 @@ export default {
 
     // ZFS
     , RECEIVE_ZFS_POOL_GET_DISKS_DATA: null
+
+    // Disks
+    , RECEIVE_DISKS_OVERVIEW: null
+    , RECEIVE_DISK_DETAILS: null
     }
   )
 
