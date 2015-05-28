@@ -72,6 +72,7 @@ define([
       name: null,
       port: null,
       mode: null,
+      targets: null,
       postCreate: function() {
 
         var me = this;
@@ -90,6 +91,18 @@ define([
           checked: (me.mode == 'TARGET') ? true : false
         }, this.dapFCModeTgt);
 
+        var tgtoptions = [{label: '------', value: ''}];
+        for(var i=0;i<me.targets.length;i++) {
+          var tgt = me.targets[i];
+          tgtoptions.push({label: tgt.iscsi_target_name, value: tgt.id})
+        }
+
+        new Select({
+          name: "target",
+          value: '',
+          options: tgtoptions
+        }, this.dapFCTarget);
+
         this.inherited(arguments);
 
       },
@@ -102,6 +115,19 @@ define([
       postCreate: function() {
 
         var me = this;
+        var targets;
+
+        xhr.get('/api/v1.0/services/iscsi/target/', {
+          headers: {
+            "X-Requested-From": "WebUI",
+            "Content-Type": "application/json"
+          },
+          handleAs: "json",
+          query: {"format": "json"},
+          sync: true
+        }).then(function(data) {
+          targets = data;
+        });
 
         xhr.get('/api/v1.0/sharing/fcports/', {
           headers: {
@@ -117,7 +143,8 @@ define([
             var fcport = FCPort({
               name: entry.name,
               port: entry.port,
-              mode: entry.mode
+              mode: entry.mode,
+              targets: targets,
             })
             me.dapTable.appendChild(fcport.domNode);
           }
