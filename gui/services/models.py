@@ -893,6 +893,9 @@ class iSCSITargetGroups(Model):
         verbose_name = _("iSCSI Groups")
         verbose_name_plural = _("iSCSI Groups")
 
+    class FreeAdmin:
+        icon_model = 'SettingsIcon'
+
 
 class iSCSITargetToExtent(Model):
     iscsi_lunid = models.IntegerField(
