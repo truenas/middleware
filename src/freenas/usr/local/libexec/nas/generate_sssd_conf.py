@@ -48,25 +48,30 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.system.models import Settings
 
-SSSD_CONFIGFILE	="/usr/local/etc/sssd/sssd.conf"
+SSSD_CONFIGFILE	= "/usr/local/etc/sssd/sssd.conf"
 
 class SSSDBase(object):
+    keys = [
+        'stdin',
+        'stdout',
+        'stderr',
+        'path',
+        'domain',
+        'cookie',
+        '_config',
+    ]
+
     def __init__(self, *args, **kwargs):
         self.path = SSSD_CONFIGFILE
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
+        self.cookie = None
         self._config = []
 
-        for key in kwargs:
-            if key == 'path' and kwargs[key]:
-                self.path = kwargs[key]
-            elif key == 'stdin' and kwargs[key]:
-                self.stdin = kwargs[key]
-            elif key == 'stdout' and kwargs[key]:
-                self.stdout = kwargs[key]
-            elif key == 'stderr' and kwargs[key]:
-                self.stderr = kwargs[key]
+        for key in SSSDBase.keys:
+            if kwargs.has_key(key) and kwargs[key]:
+                self.__dict__[key] = kwargs[key]
 
     def parse(self, line):
         if not line:
@@ -147,6 +152,9 @@ class SSSDBase(object):
                 len += 1  
         return len
 
+    def __delitem__(self, name):
+        pass
+
 
 class SSSDSectionBase(SSSDBase):
     def add_newline(self):
@@ -156,7 +164,7 @@ class SSSDSectionBase(SSSDBase):
         self._config.append('%s %s' % (delim, comment.strip()))
 
     def __setattr__(self, name, value):
-        if name in ('stdin', 'stdout', 'stderr', 'path', 'domain', '_config'):
+        if name in self.keys:
             super(SSSDSectionBase, self).__setattr__(name, value)  
         else:
             i = 0
@@ -176,13 +184,19 @@ class SSSDSectionBase(SSSDBase):
 
     def __getattr__(self, name):
         attr = None
-        if name in ('stdin', 'stdout', 'stderr', 'path', 'domain', '_config'):
+        if name in self.keys:
             attr = super(SSSDSectionBase, self).__getattr__(name)
         else:
             for pair in self._config:
                 if isinstance(pair, dict) and name in pair:
                     attr = pair[name]
         return attr
+
+    def __setitem__(self, name, value):
+        return self.__setattr__(name, value)
+
+    def __getitem__(self, name):
+        return self.__getattr__(name)
 
     def __iter__(self):
         for pair in self._config:
@@ -221,6 +235,17 @@ class SSSDSectionSSSD(SSSDSectionBase):
             domains.append(domain)
             self.domains = string.join(domains, ',')
 
+    def remove_domain(self, domain):
+        domains = []
+        self_domains = self.domains.split(',')
+        for d in self_domains:
+            d = d.strip()  
+            if d == domain:
+                continue
+            else:
+                domains.append(domain)
+        self.domains = string.join(domains, ',')
+
     def add_service(self, service):
         if not service in ('nss', 'pam', 'sudo', 'ssh'):
             return
@@ -236,6 +261,17 @@ class SSSDSectionSSSD(SSSDSectionBase):
                     return
             services.append(service)
             self.services = string.join(services, ',')
+
+    def remove_service(self, service):
+        services = []
+        self_services = self.services.split(',')
+        for s in self_services:
+            s = s.strip()  
+            if s == service:
+                continue
+            else:
+                services.append(service)
+        self.services = string.join(services, ',')
 
 
 class SSSDServiceSectionBase(SSSDSectionBase):
@@ -345,6 +381,16 @@ class SSSDSectionContainer(object):
     def __getitem__(self, name):
         return self.__getattr__(name)
 
+    def __delitem__(self, name):
+        i = 0
+        while i < len(self.sections):
+            s = self.sections[i]
+            key = s.keys()[0]
+            if key == name:
+                del self.sections[i]
+                break
+            i += 1
+
     def __iter__(self):
         for section in self.sections:
             yield section[section.keys()[0]]
@@ -360,12 +406,90 @@ class SSSDConf(SSSDBase):
 
         self.parse()
 
+    def add_sssd_section(self):
+        if not self.sections['sssd']:
+            self.sections['sssd'] = SSSDSectionSSSD()
+            self.sections['sssd'].config_file_version = 2
+        self.sections['sssd'].full_name_format = r"%2$s\%1$s"
+        self.sections['sssd'].re_expression = r"(((?P<domain>[^\\]+)\\(?P<name>.+$))" \
+            r"|((?P<name>[^@]+)@(?P<domain>.+$))|(^(?P<name>[^@\\]+)$))"
+
+    def add_nss_section(self):
+        if not self.sections['nss']:
+            self.sections['nss'] = SSSDSectionNSS()
+        self.sections['sssd'].add_service('nss')
+
+    def add_pam_section(self):
+        if not self.sections['pam']:
+            self.sections['pam'] = SSSDSectionPAM()
+        self.sections['sssd'].add_service('pam')
+
+    def merge_config(self, sc):
+        ndomains = 0
+
+        for s in sc.sections:
+            self_st = self_s.get_section_type()
+            if self_st.startswith('domain'):
+                ndomains += 1
+
+        for self_s in self.sections:
+            self_st = self_s.get_section_type()
+
+            for s in sc.sections:    
+                if not s.is_empty():
+                    st = s.get_section_type()
+
+                    if self_st.startswith('domain') and st.startswith('domain'):
+                        if self_st == st:
+                            for var in s:  
+                                self_s[var] = s[var]
+
+                        else:
+                            self.sections[st] = s
+                            self.sections['sssd'].add_domain(s.domain)
+
+                    elif self_st == st:
+                        self.sections[st] = s
+
+    def num_sections(self):
+        lines = []
+
+        with open(self.path, 'r') as f:
+            lines = f.readlines()
+            f.close()
+
+        nsections = 0
+        for line in lines:
+            line = line.strip()
+
+            if line.startswith('['):
+                nsections += 1
+
+        return nsections
+
     def parse(self):
+        nsections = self.num_sections()
+
         with open(self.path, "r") as f:
             lines = f.readlines()
             f.close()
 
         section = None
+        if not nsections:
+            print 'XXX: foo'  
+            #cookie = 'domain/%s' % self.cookie
+            cookie = 'domain/LDAP'
+            section = SSSDSectionDomain(cookie)
+
+            self.add_sssd_section()
+            self.add_nss_section()
+            self.add_pam_section()
+
+            self.sections[cookie] = section
+            #self.sections['sssd'].add_domain(self.cookie)
+            self.sections['sssd'].add_domain('LDAP')
+            self.sections['sssd'].add_newline()
+
         for line in lines:
             line = line.strip()
 
@@ -454,7 +578,7 @@ def sssd_setup():
         os.chmod(SSSD_CONFIGFILE, 0600)
 
 
-def add_ldap(sc):
+def add_ldap_section(sc):
     ldap = LDAP.objects.all()[0]
     cifs = CIFS.objects.all()[0]
 
@@ -542,14 +666,15 @@ def add_ldap(sc):
             ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
 
-    if ldap.ldap_auxiliary_parameters:
-        lines = ldap.ldap_auxiliary_parameters.splitlines()
-        for l in lines:
-            parts = l.split('=',1)
-            if len(parts) < 2:
-                continue
-            setattr(ldap_section, parts[0].strip(), parts[1].strip())
+#    if ldap.ldap_auxiliary_parameters:
+#        lines = ldap.ldap_auxiliary_parameters.splitlines()
+#        for l in lines:
+#            parts = l.split('=',1)
+#            if len(parts) < 2:
+#                continue
+#            setattr(ldap_section, parts[0].strip(), parts[1].strip())
 
+    ldap_save = ldap
     ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
     
     if ldap.keytab_name and ldap.kerberos_realm:
@@ -570,8 +695,19 @@ def add_ldap(sc):
     sc['sssd'].add_domain(ldap_cookie)
     sc['sssd'].add_newline()
 
+    ldap = ldap_save
+    if ldap.ldap_auxiliary_parameters:
+        path = tempfile.mktemp(dir='/tmp')
+        with open(path, 'wb+') as f:
+            f.write(ldap.ldap_auxiliary_parameters)
+            f.close()
 
-def add_activedirectory(sc):
+        aux_sc = SSSDConf(path=path, cookie=sc.cookie)
+        os.unlink(path)
+
+	sc.merge_config(aux_sc)
+
+def add_activedirectory_section(sc):
     activedirectory = ActiveDirectory.objects.all()[0]
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
     use_ad_provider = False
@@ -676,6 +812,35 @@ def add_activedirectory(sc):
     sc['sssd'].add_domain(ad_cookie)
     sc['sssd'].add_newline()
 
+def get_activedirectory_cookie():
+    cookie = ''
+
+    if activedirectory_enabled():
+        activedirectory = ActiveDirectory.objects.all()[0]
+        cookie = activedirectory.ad_netbiosname.upper()
+        parts = cookie.split('.')
+        cookie = parts[0]
+
+    return cookie
+
+def get_ldap_cookie():
+    cookie = ''
+
+    if ldap_enabled():
+        ldap = LDAP.objects.all()[0]
+        cookie = ldap.ldap_hostname.upper()
+        parts = cookie.split('.')
+        cookie = parts[0]
+
+    return cookie
+
+def get_directoryservice_cookie():
+    if activedirectory_enabled():
+        return get_activedirectory_cookie()
+    if ldap_enabled():
+        return get_ldap_cookie()
+
+    return None
 
 def main():
     sssd_conf = None
@@ -684,27 +849,21 @@ def main():
     if os.path.exists(SSSD_CONFIGFILE):
         sssd_conf = SSSD_CONFIGFILE
 
+    cookie = get_directoryservice_cookie()
+    if not cookie:
+        sys.exit(1)
+
     def nullfunc(): pass
-    sc = SSSDConf(path=sssd_conf, parse=nullfunc)
-    if not sc['sssd']:
-        sc['sssd'] = SSSDSectionSSSD()
-        sc['sssd'].config_file_version = 2
-    sc['sssd'].full_name_format = r"%2$s\%1$s"
-    sc['sssd'].re_expression = r"(((?P<domain>[^\\]+)\\(?P<name>.+$))" \
-        r"|((?P<name>[^@]+)@(?P<domain>.+$))|(^(?P<name>[^@\\]+)$))"
+    sc = SSSDConf(path=sssd_conf, parse=nullfunc, cookie=cookie)
 
-    if not sc['nss']:
-        sc['nss'] = SSSDSectionNSS()
-    sc['sssd'].add_service('nss')
+    sc.add_sssd_section()
+    sc.add_nss_section()
+    sc.add_pam_section()
 
-    if not sc['pam']:
-        sc['pam'] = SSSDSectionPAM()
-    sc['sssd'].add_service('pam')
-    
     if activedirectory_enabled() and activedirectory_has_unix_extensions():
-        add_activedirectory(sc)
+        add_activedirectory_section(sc)
     if ldap_enabled():
-        add_ldap(sc)
+        add_ldap_section(sc)
 
     sc.save(SSSD_CONFIGFILE)
 
