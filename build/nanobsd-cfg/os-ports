@@ -328,9 +328,8 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=WINBIND \
        OPTIONS_FILE_SET+=NSUPDATE \
        OPTIONS_FILE_UNSET+=BIND99 \
-       OPTIONS_FILE_UNSET+=BIND910
-       WITH_DEBUG=yes\
-       CRAZY=yes
+       OPTIONS_FILE_UNSET+=BIND910 \
+       WITH_DEBUG=yes CRAZY=yes
 
 add_port sysutils/lsof
 add_port sysutils/grub2-pcbsd
