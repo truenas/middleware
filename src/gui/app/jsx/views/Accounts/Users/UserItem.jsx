@@ -168,29 +168,27 @@ const UserView = React.createClass({
 // EDITOR PANE
 const UserEdit = React.createClass({
 
-    mixins: [   inputHelpers
-              , userMixins
-              , viewerCommon ]
+  mixins: [ inputHelpers
+          , userMixins
+          , viewerCommon ]
 
   , contextTypes: {
       router: React.PropTypes.func
     }
 
-  , propTypes: {
-        item     : React.PropTypes.object.isRequired
-      , viewData : React.PropTypes.object.isRequired
-      }
+  , propTypes: { item : React.PropTypes.object.isRequired
+               , viewData : React.PropTypes.object.isRequired
+               }
 
   , getInitialState: function () {
       var remoteState = this.setRemoteState( this.props );
 
-      return {
-          locallyModifiedValues  : {}
-        , remotelyModifiedValues : {}
-        , remoteState            : remoteState
-        , mixedValues            : this.props.item
-        , lastSentValues         : {}
-        , dataKeys               : this.props.viewData["format"]["dataKeys"]
+      return { locallyModifiedValues : {}
+             , remotelyModifiedValues : {}
+             , remoteState : remoteState
+             , mixedValues : this.props.item
+             , lastSentValues : {}
+             , dataKeys : this.props.viewData["format"]["dataKeys"]
       };
     }
 
