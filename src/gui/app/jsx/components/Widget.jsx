@@ -29,7 +29,9 @@ var Widget = React.createClass({
 
 
   , render: function () {
-    var widgetStyle  = { left: this.props.position[0], top: this.props.position[1] };
+    var widgetStyle  = this.props.position ? { left: this.props.position[0]
+                                             , top: this.props.position[1] }
+                                           : {};
     return (
       <div  ref = { this.props.refHolder }
             onMouseDown = { this.props.onMouseDownHolder }
