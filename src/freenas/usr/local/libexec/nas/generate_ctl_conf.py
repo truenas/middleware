@@ -247,17 +247,10 @@ def main():
                 addline("\t\t\tblocksize %s\n" % t2e.iscsi_extent.iscsi_target_extent_blocksize)
                 if t2e.iscsi_extent.iscsi_target_extent_pblocksize:
                     addline("\t\t\toption pblocksize 0\n")
-                if t2e.iscsi_lunid is None:
-                    addline("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(cur_lunid-1)))
-                else:
-                    addline("\t\t\tserial %s%s\n" % (target.iscsi_target_serial, str(t2e.iscsi_lunid)))
-                padded_serial = target.iscsi_target_serial
-                if t2e.iscsi_lunid is None:
-                    padded_serial += str(cur_lunid-1)
-                else:
-                    padded_serial += str(t2e.iscsi_lunid)
+                addline("\t\t\tserial %s\n" % (t2e.iscsi_extent.iscsi_target_extent_serial, ))
+                padded_serial = t2e.iscsi_extent.iscsi_target_extent_serial
                 if not t2e.iscsi_extent.iscsi_target_extent_xen:
-                    for i in xrange(31-len(target.iscsi_target_serial)):
+                    for i in xrange(31-len(t2e.iscsi_extent.iscsi_target_extent_serial)):
                         padded_serial += " "
                 addline('\t\t\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
                 if size != "0":
