@@ -79,17 +79,19 @@ define([
 
         this.dapFCName.innerHTML = this.name + " (#" + this.port + ")";
 
-        new RadioButton({
+        me._mini = new RadioButton({
           name: "mode",
-          value: "initiator",
+          value: "INITIATOR",
           checked: (me.mode == 'INITIATOR') ? true : false
         }, this.dapFCModeIni);
 
-        new RadioButton({
+        me._mtgt = new RadioButton({
           name: "mode",
-          value: "target",
+          value: "TARGET",
           checked: (me.mode == 'TARGET') ? true : false
         }, this.dapFCModeTgt);
+
+        on(me._mini, 'change', lang.hitch(me, me.modeChange));
 
         var tgtoptions = [{label: '------', value: ''}];
         for(var i=0;i<me.targets.length;i++) {
@@ -97,14 +99,24 @@ define([
           tgtoptions.push({label: tgt.iscsi_target_name, value: tgt.id})
         }
 
-        new Select({
+        me._target = new Select({
           name: "target",
           value: '',
           options: tgtoptions
         }, this.dapFCTarget);
 
+        me.modeChange();
+
         this.inherited(arguments);
 
+      },
+      modeChange: function() {
+        var me = this;
+        if(me._mtgt.get('checked') == true) {
+          domStyle.set(me._target.domNode, "display", "");
+        } else {
+          domStyle.set(me._target.domNode, "display", "none");
+        }
       },
       submit: function() {
       }
