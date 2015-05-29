@@ -2907,7 +2907,8 @@ class FCPortsResource(DojoResource):
         for e in doc.xpath("//frontend_type[text()='tpc']"):
             tag_port = e.getparent()
             name = tag_port.xpath('./port_name')[0].text
-            if name in fcportmap:
+            port = tag_port.get('id')
+            if port in fcportmap:
                 mode = 'TARGET'
             else:
                 mode = 'INITIATOR'
