@@ -2870,10 +2870,11 @@ class UpdateResourceMixin(NestedMixin):
 
 class FCPort(object):
 
-    def __init__(self, port=None, name=None, mode=None):
+    def __init__(self, port=None, name=None, mode=None, target=None):
         self.port = port
         self.name = name
         self.mode = mode
+        self.target = target
 
 
 class FCPortsResource(DojoResource):
@@ -2882,6 +2883,7 @@ class FCPortsResource(DojoResource):
     port = fields.CharField(attribute='port')
     name = fields.CharField(attribute='name')
     mode = fields.CharField(attribute='mode')
+    target = fields.IntegerField(attribute='target')
 
     class Meta:
         allowed_methods = ['get', 'put']
@@ -2910,12 +2912,15 @@ class FCPortsResource(DojoResource):
             port = tag_port.get('id')
             if port in fcportmap:
                 mode = 'TARGET'
+                target = fcportmap[port].id
             else:
                 mode = 'INITIATOR'
+                target = None
             results.append(FCPort(
                 port=tag_port.get('id'),
                 name=name,
                 mode=mode,
+                target=target,
             ))
 
         limit = self._meta.limit
