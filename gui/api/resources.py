@@ -2920,7 +2920,7 @@ class FCPortsResource(DojoResource):
     port = fields.CharField(attribute='port')
     name = fields.CharField(attribute='name')
     mode = fields.CharField(attribute='mode')
-    target = fields.IntegerField(attribute='target')
+    target = fields.IntegerField(attribute='target', null=True)
 
     class Meta:
         allowed_methods = ['get', 'put']

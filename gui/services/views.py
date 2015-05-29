@@ -308,8 +308,12 @@ def fiberchanneltotarget(request):
     else:
         fctt = models.FiberChannelToTarget()
         fctt.fc_port = fc_port
-    fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
-    fctt.save()
+    if not fc_target:
+        if fctt.id:
+            fctt.delete()
+    else:
+        fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
+        fctt.save()
 
     data = {}
     return HttpResponse(

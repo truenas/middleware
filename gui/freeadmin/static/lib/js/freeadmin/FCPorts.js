@@ -65,7 +65,6 @@ define([
         }, this.dapFCTarget);
 
         on(me._target, 'change', function(val) {
-          console.log(this.get('value'), val);
           xhr.post('/services/fiberchanneltotarget/', {
             headers: {
               "X-CSRFToken": CSRFToken
@@ -92,6 +91,19 @@ define([
           domStyle.set(me._target.domNode, "display", "");
         } else {
           domStyle.set(me._target.domNode, "display", "none");
+          xhr.post('/services/fiberchanneltotarget/', {
+            headers: {
+              "X-CSRFToken": CSRFToken
+            },
+            handleAs: "json",
+            data: {
+              fc_port: me.port,
+              fc_target: null
+            }
+          }).then(function(data) {
+
+          });
+
         }
       },
       submit: function() {
