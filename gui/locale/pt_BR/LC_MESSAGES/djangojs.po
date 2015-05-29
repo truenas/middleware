@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-11-13 11:00+0000\n"
-"Last-Translator: rogerinho_g12 <rogerinho_g12@hotmail.com>\n"
+"PO-Revision-Date: 2015-05-08 05:37+0000\n"
+"Last-Translator: Thiago <thiagogoncalves@outlook.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1415876444.0\n"
+"X-POOTLE-MTIME: 1431063468.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Relatório"
@@ -265,39 +265,35 @@ msgstr "Fechar"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Configuração manual"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Nome do Volume"
+msgstr "Gerenciador de Unidades"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Confirmar"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
-#, fuzzy
 msgid "System"
-msgstr "Sistema de Alerta"
+msgstr "Sistema"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Tarefas"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Configurações de Rede"
+msgstr "Rede"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
-#, fuzzy
 msgid "Sharing"
-msgstr "Compartilhamentos"
+msgstr "Compartilhamento"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Serviços de diretório"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
@@ -306,52 +302,53 @@ msgid "Initial Wizard"
 msgstr "Inicializar com Segurança"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
-#, fuzzy
 msgid "Share name"
-msgstr "Compartilhamentos"
+msgstr "Nome do compartilhamento"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
+"Este campo só pode conter caracteres alfanuméricos e seguir os: \"_\", \"-\""
+", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Especifique o tamanho usando os prefixos B, K, M, G e T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Adicionar"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Excluir"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Atualizar"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Propriedade"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Esse usuário não existe."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Este grupo não existe."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Voltar"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #, fuzzy
 msgid "Wizard"
-msgstr "Inicializar com Segurança"
+msgstr "Assistente"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
@@ -359,7 +356,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Atenção!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
@@ -373,7 +370,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Configuração manual"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
@@ -381,29 +378,29 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Aplicar as operações pendentes"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Hostname não pode ficar em branco."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Nome de usuário não pode ficar em branco."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "A senha não pode estar em branco"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Atualização Manual"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Verificar agora"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
@@ -428,4 +425,4 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr ""
+msgstr "As senhas não coincidem."
