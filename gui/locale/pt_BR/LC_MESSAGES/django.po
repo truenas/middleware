@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-11-13 11:00+0000\n"
-"Last-Translator: rogerinho_g12 <rogerinho_g12@hotmail.com>\n"
+"PO-Revision-Date: 2015-05-11 17:05+0000\n"
+"Last-Translator: WellmaxBR <wellmax@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1415876444.0\n"
+"X-POOTLE-MTIME: 1431363915.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Plano            "
+msgstr "Plano"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -399,17 +399,17 @@ msgstr "Leitura e Escrita"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes)s minutos"
+msgstr "%(minutos)s minutos"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour)s hora"
+msgstr "%(hora)s hora"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours)s horas"
+msgstr "%(hora)s horas"
 
 #: choices.py:518
 #, python-format
@@ -419,26 +419,29 @@ msgstr "%(day)s dia"
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week)s semana"
+msgstr "%(semana)s semana"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nunca - Verifica o dispositivo independentemente do modo de energia"
+msgstr ""
+"Nunca - Verifica o dispositivo, independentemente do seu modo de energia"
 
 # Tirada do Freenas 7.2
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sleep - Verifica o dispositivo caso não esteja em modo SLEEP"
+msgstr "Suspensão - Verifica o dispositivo caso não esteja em modo de Suspensão"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Standby - Verifica o dispositivo caso não esteja no modo SLEEP ou STANDBY"
+"Espera - Verifica o dispositivo caso não esteja no modo Suspensão ou em "
+"Espera"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Idle - Verifica o dispositivo caso não esteja no modo SLEEP, STANDBY ou IDLE"
+"Inativo- Verifica o dispositivo caso não esteja no modo Suspensão, em Espera "
+"ou Inativo"
 
 #: choices.py:530
 msgid "Long Self-Test"
@@ -450,7 +453,7 @@ msgstr "Auto-Teste Rápido"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Auto-Teste de Transmissão (somente  ATA)"
+msgstr "Auto-Teste de Transferência (somente  ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -2825,7 +2828,7 @@ msgstr "Senha da conta de Administrador do Domínio."
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr "Active Directory"
+msgstr "Active Directory (AD)                "
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -6811,11 +6814,11 @@ msgstr "autenticação"
 
 #: choices.py:700
 msgid "ctrl+!data"
-msgstr "ctrl+!data"
+msgstr "ctrl+!dados"
 
 #: choices.py:702
 msgid "auth+!data"
-msgstr "auth+!data"
+msgstr "autorização+!dados"
 
 #: account/forms.py:60
 msgid "Confirm New Password"
@@ -7744,7 +7747,7 @@ msgstr "desligado"
 
 #: choices.py:696
 msgid "!data"
-msgstr "!data"
+msgstr "Dados"
 
 #: choices.py:698
 msgid "ctrl"
@@ -7752,7 +7755,7 @@ msgstr "ctrl"
 
 #: choices.py:699
 msgid "ctrl+data"
-msgstr "ctrl+data"
+msgstr "ctrl+dados"
 
 #: account/forms.py:55
 msgid "New Password"
@@ -8613,11 +8616,11 @@ msgstr "9600"
 
 #: choices.py:693
 msgid "on"
-msgstr "ligado"
+msgstr "Ligado"
 
 #: choices.py:701
 msgid "auth+data"
-msgstr "auth+data"
+msgstr "autorização+dados"
 
 #: account/forms.py:561
 msgid "Home directory must end with username"
@@ -8961,11 +8964,11 @@ msgstr "NÚCLEO ADICIONAL"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr "LANMAN1"
+msgstr "Rede Principal 1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr "LANMAN2"
+msgstr "Rede Principal 2"
 
 #: choices.py:175
 msgid "NT1"
@@ -9489,7 +9492,7 @@ msgstr ""
 
 #: storage/models.py:951
 msgid "Sending"
-msgstr ""
+msgstr "Enviando"
 
 #: storage/views.py:980
 #, fuzzy
@@ -9873,9 +9876,8 @@ msgstr "Serviço de Diretório"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Ler"
+msgstr "Anúncio"
 
 #: choices.py:788
 msgid "autorid"
@@ -10523,9 +10525,8 @@ msgid "Basic Authentication"
 msgstr "Autenticação básica"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Autenticação sintética"
+msgstr "Autenticação Assimilada"
 
 #: choices.py:799
 msgid "adex"
@@ -10554,7 +10555,7 @@ msgstr "Criar um certificado interno"
 #: choices.py:819
 #, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "TLS sem requisição de certificado"
+msgstr "Crie uma Assinatura de requisição de certificado                "
 
 #: choices.py:823
 msgid "512"
@@ -11847,15 +11848,13 @@ msgid ""
 msgstr ""
 
 #: templates/system/update_check.html:32
-#, fuzzy
 msgid "The system will reboot"
 msgstr "Sistema está reiniciando"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week)s semana"
+msgstr "%(semana)s semanas"
 
 #: system/views.py:419
 #, fuzzy

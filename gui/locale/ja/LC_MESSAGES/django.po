@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-03-24 13:32+0000\n"
-"Last-Translator: polamjag <s@polamjag.info>\n"
+"PO-Revision-Date: 2015-05-19 07:35+0000\n"
+"Last-Translator: ReiKirishima <rei@kirishima.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1427203970.0\n"
+"X-POOTLE-MTIME: 1432020923.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -5191,7 +5191,7 @@ msgstr "すべてを展開"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr "すべてをたたみます"
+msgstr "すべてをたたむ"
 
 #: templates/menubar.html:36
 msgid "Log Out"
@@ -7474,19 +7474,19 @@ msgstr ""
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "ZLE （連続したゼロを圧縮）"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz （汎用）"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip （最大の圧縮）"
 
 #: choices.py:675
 msgid "Verbose"
-msgstr ""
+msgstr "詳細"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -9802,9 +9802,8 @@ msgstr "暗号化方式"
 #: storage/forms.py:605
 #: storage/forms.py:1448
 #: storage/forms.py:1562
-#, fuzzy
 msgid "ZFS Deduplication"
-msgstr "ZFS リプリケーション"
+msgstr "ZFS 重複排除"
 
 #: storage/forms.py:1091
 #, fuzzy
@@ -10081,7 +10080,7 @@ msgstr ""
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr ""
+msgstr "エクステント名は一意でなければなりません。"
 
 #: services/models.py:414
 msgid "Enable experimental target"
@@ -11224,7 +11223,7 @@ msgstr "公開鍵と秘密鍵をコピーして貼り付けてください。"
 
 #: system/models.py:550
 msgid "Check Automatically For Updates"
-msgstr ""
+msgstr "更新を自動的にチェックする"
 
 #: system/utils.py:82
 msgid "Downloading"
