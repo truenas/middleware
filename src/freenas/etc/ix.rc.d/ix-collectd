@@ -115,6 +115,7 @@ LoadPlugin aggregation
 LoadPlugin cpu
 LoadPlugin df
 LoadPlugin disk
+LoadPlugin geom_stat
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
@@ -125,6 +126,7 @@ LoadPlugin swap
 LoadPlugin uptime
 LoadPlugin syslog
 LoadPlugin zfs_arc
+LoadPlugin zfs_arc_v2
 
 <Plugin "syslog">
     LogLevel err
