@@ -219,7 +219,7 @@ class VolumeAutoCreateTask(Task):
         if self.datastore.exists('volumes', ('name', '=', name)):
             raise VerifyException(errno.EEXIST, 'Volume with same name already exists')
 
-        return ['disk:{0}'.format(i) for i in disks]
+        return ['disk:{0}'.format(os.path.join('/dev', i)) for i in disks]
 
     def run(self, name, type, disks, params=None):
         vdevs = []
