@@ -17,8 +17,6 @@ The Storage section of the graphical interface allows you to configure the follo
 
 * :ref:`VMware-Snapshot`: is used to coordinate ZFS snapshots with a VWware datastore.
 
-* :ref:`HAReplication`:
-
 These configurations are described in more detail in this section.
 
 .. note:: if the TrueNAS® system has been configured as the passive node in a failover configuration, the screens shown in this chapter will be replaced by a
@@ -51,9 +49,9 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 
 **Figure 8.1a: Creating a ZFS Pool Using Volume Manager**
 
-|tn_zfs1.png|
+|tn_zfs1a.png|
 
-.. |tn_zfs1.png| image:: images/tn_zfs1.png
+.. |tn_zfs1a.png| image:: images/tn_zfs1a.png
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -348,9 +346,9 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 
 **Figure 8.1d: Creating a ZFS Dataset**
 
-|tn_dataset.png|
+|tn_dataset1.png|
 
-.. |tn_dataset.png| image:: images/tn_dataset.png
+.. |tn_dataset1.png| image:: images/tn_dataset1.png
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -640,9 +638,9 @@ space is "Used", how much disk space is "Available", the type of "Compression", 
 
 **Figure 8.1k: Viewing Volumes**
 
-|tn_volume1.png|
+|tn_volume1a.png|
 
-.. |tn_volume1.png| image:: images/tn_volume1.png
+.. |tn_volume1a.png| image:: images/tn_volume1a.png
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
@@ -658,9 +656,9 @@ disk, writes data to the disk indicating that the export was done, and removes a
 
 **Figure 8.1l: Detaching or Deleting a Volume**
 
-|tn_detach.png|
+|tn_detach1.png|
 
-.. |tn_detach.png| image:: images/tn_detach.png
+.. |tn_detach1.png| image:: images/tn_detach1.png
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
 scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
@@ -720,9 +718,9 @@ If you check the "Encryption" box during the creation of a pool, five additional
 
 **Figure 8.1o: Encryption Icons Associated with an Encrypted Pool**
 
-|tn_encrypt1.png|
+|tn_encrypt1a.png|
 
-.. |tn_encrypt1.png| image:: images/tn_encrypt1.png
+.. |tn_encrypt1a.png| image:: images/tn_encrypt1a.png
 
 In order from left to right, these additional encryption buttons are used to:
 
@@ -1537,9 +1535,3 @@ Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarize
 |                |                             | the menu and select the datastore to synchronize with                                                       |
 |                |                             |                                                                                                             |
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
-
-.. index:: HA Replication
-.. _HAReplication:
-
-HAReplication
--------------
