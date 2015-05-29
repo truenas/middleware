@@ -139,11 +139,11 @@ def main():
     for portal in iSCSITargetPortal.objects.all():
         addline("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
         addline("\tdiscovery-filter portal-name\n")
-        disc_authmethod = gconf.iscsi_discoveryauthmethod
-        if disc_authmethod == "None" or ((disc_authmethod == "Auto" or disc_authmethod == "auto") and gconf.iscsi_discoveryauthgroup is None):
+        disc_authmethod = portal.iscsi_target_portal_discoveryauthmethod
+        if disc_authmethod == "None" or ((disc_authmethod == "Auto" or disc_authmethod == "auto") and portal.iscsi_target_portal_discoveryauthgroup is None):
             addline("\tdiscovery-auth-group no-authentication\n")
         else:
-            addline("\tdiscovery-auth-group ag%s\n" % gconf.iscsi_discoveryauthgroup)
+            addline("\tdiscovery-auth-group ag%s\n" % portal.iscsi_target_portal_discoveryauthgroup)
         listen = iSCSITargetPortalIP.objects.filter(iscsi_target_portalip_portal=portal)
         for obj in listen:
             if ':' in obj.iscsi_target_portalip_ip:
