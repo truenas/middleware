@@ -1,6 +1,12 @@
+# Hacking on the FreeNAS 10 Webapp
+
+The FreeNAS 10 Web User Interface is a web application that runs on node.js.
+For documentation of the tools and processes for hacking on the FreeNAS 10
+webapp, visit http://doc.freenas.org/10/devdocs.
+
 # Building FreeNAS
 
-To build the system (experts only):
+To build the entire FreeNAS system (experts only):
 
 ## Requirements:
 
@@ -57,4 +63,4 @@ To build the system (experts only):
 ## The End Result:
 
 If your build completes successfully, you'll have 64 bit release products
-in the _BE directory. 
+in the _BE directory.
