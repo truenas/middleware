@@ -34,4 +34,5 @@ urlpatterns = patterns('freenasUI.services.views',
     url(r'^iscsi/$', 'iscsi', name="services_iscsi"),
     url(r'toggle/(?P<formname>\w+)/.*$', 'servicesToggleView', name="services_toggle"),
     url(r'enable/(?P<svc>\w+)/.*$', 'enable', name="services_enable"),
+    url(r'^fiberchanneltotarget/$', 'fiberchanneltotarget', name="services_fiberchanneltotarget"),
 )

@@ -105,6 +105,23 @@ define([
           options: tgtoptions
         }, this.dapFCTarget);
 
+        on(me._target, 'change', function(val) {
+          console.log(this.get('value'), val);
+          xhr.post('/services/fiberchanneltotarget/', {
+            headers: {
+              "X-CSRFToken": CSRFToken
+            },
+            handleAs: "json",
+            data: {
+              fc_port: me.port,
+              fc_target: val
+            }
+          }).then(function(data) {
+
+          });
+
+        });
+
         me.modeChange();
 
         this.inherited(arguments);

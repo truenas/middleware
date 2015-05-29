@@ -295,3 +295,24 @@ def services_cifs(request):
         'form': form,
         'idmap_form': idmap_form
     })
+
+
+def fiberchanneltotarget(request):
+
+    fc_port = request.POST.get('fc_port')
+    fc_target = request.POST.get('fc_target')
+
+    qs = models.FiberChannelToTarget.objects.filter(fc_port=fc_port)
+    if qs.exists():
+        fctt = qs[0]
+    else:
+        fctt = models.FiberChannelToTarget()
+        fctt.fc_port = fc_port
+    fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
+    fctt.save()
+
+    data = {}
+    return HttpResponse(
+        json.dumps(data),
+        content_type='application/json',
+    )
