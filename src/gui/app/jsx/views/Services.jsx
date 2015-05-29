@@ -45,15 +45,15 @@ function getServicesFromStore() {
   };
 }
 
-function handleToggle( serviceObj, toggled ) {
+function handleToggle ( serviceObj, toggled ) {
       var serviceName   = serviceObj.name;
       var serviceState  = serviceObj.state;
 
-      var action = (serviceState === "running" ? "stop" : "start");
+      var action = ( serviceState === "running" ? "stop" : "start" );
 
-      ServicesMiddleware.updateService(serviceName, action);
+      ServicesMiddleware.updateService( serviceName, action );
 
-      //TODO: Select the service with changing state.
+      // TODO: Select the service with changing state.
     }
 
 

@@ -24,7 +24,9 @@ const ServiceView = React.createClass({
     }
 
   , getInitialState: function () {
-      return { serviceState  : (this.props.item["state"] === "running" ? true : false) };
+      return { serviceState: ( this.props.item.state === "running"
+                                                      ? true
+                                                      : false ) };
     }
 
   , handleToggle: function( toggled ) {
@@ -90,7 +92,7 @@ const ServiceItem = React.createClass({
       };
     }
 
-  , componentDidUpdate: function( prevProps, prevState ) {
+  , componentDidUpdate: function ( prevProps, prevState ) {
       var activeRoute = this.getDynamicRoute();
 
       if ( activeRoute !== prevState.activeRoute ) {
