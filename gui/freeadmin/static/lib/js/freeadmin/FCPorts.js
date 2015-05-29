@@ -72,6 +72,7 @@ define([
       name: null,
       port: null,
       mode: null,
+      target: null,
       targets: null,
       postCreate: function() {
 
@@ -101,7 +102,7 @@ define([
 
         me._target = new Select({
           name: "target",
-          value: '',
+          value: (me.target) ? me.target : '',
           options: tgtoptions
         }, this.dapFCTarget);
 
@@ -173,6 +174,7 @@ define([
               name: entry.name,
               port: entry.port,
               mode: entry.mode,
+              target: entry.target,
               targets: targets,
             })
             me.dapTable.appendChild(fcport.domNode);
