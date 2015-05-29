@@ -17,7 +17,8 @@ var Widget = React.createClass({
 
   , changeSize: function () {
     //console.log( "changeSize" );
-    var i = ( this.state.count < this.state.sizeArr.length ? this.state.count : 0 );
+    var i = ( this.state.count < this.state.sizeArr.length ? this.state.count
+                                                           : 0 );
     //console.log( i );
     i++;
     //console.log( i );

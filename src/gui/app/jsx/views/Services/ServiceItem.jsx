@@ -29,12 +29,28 @@ const ServiceView = React.createClass({
                                                       : false ) };
     }
 
-  , handleToggle: function( toggled ) {
-      this.setState({
-          serviceState: toggled
-      });
+  , configureService: function ( action, command ) {
 
-      //TODO: Really change the state of the service.
+    switch ( action ) {
+      // Start stop
+      case 1:
+        ServicesMiddleware.configureService( this.props.item.name
+                                           , { enable: command } );
+      break;
+
+      // Start stop once
+      case 2:
+        ServicesMiddleware.updateService( this.props.item.name
+                                           , command );
+      break;
+
+
+
+      ServicesMiddleware.updateService(serviceName, action);
+    }
+
+
+
     }
 
   , render: function () {
@@ -60,12 +76,26 @@ const ServiceView = React.createClass({
             <h3>{ this.props.item["name"] }</h3>
             <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["state"], "\u200B" ) }</h4>
             { pid }
-            <ToggleSwitch
-              toggled   =  { this.state.serviceState }
-              onChange  =  { this.handleToggle }
 
-               />
             <hr />
+            <TWBS.ButtonToolbar>
+              <TWBS.SplitButton title   = { "Enable" }
+                                bsStyle = { "success" }
+                                key     = { "1" }
+                                onClick = { this.configureService.bind( null, 1, true ) } >
+                <TWBS.MenuItem eventKey="1" onClick = { this.configureService.bind( null, 2, "start" ) }>{ "Enable once" }</TWBS.MenuItem>
+                <TWBS.MenuItem eventKey="2">{ "Enable after reboot" }</TWBS.MenuItem>
+              </TWBS.SplitButton>
+              <TWBS.SplitButton title   = { "Disable" }
+                                bsStyle = { "danger" }
+                                key     = { "2" }
+                                onClick = { this.configureService.bind( null, 1, false ) } >
+                <TWBS.MenuItem eventKey="1" onClick = { this.configureService.bind( null, 2, "stop" ) }>{ "Disable once" }</TWBS.MenuItem>
+                <TWBS.MenuItem eventKey="2">{ "Disable after reboot" }</TWBS.MenuItem>
+                <TWBS.MenuItem eventKey="3">{ "Disconect current users" }</TWBS.MenuItem>
+                </TWBS.SplitButton>
+            </TWBS.ButtonToolbar>
+
           </TWBS.Col>
         </TWBS.Row>
 

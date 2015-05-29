@@ -27,6 +27,15 @@ class ServicesMiddleware extends AbstractBase {
               );
   }
 
+  static configureService ( serviceName, configArray ) {
+    MC.request( "task.submit"
+              , [ "service.configure", [ serviceName, configArray ] ]
+              , function handleUpdateService ( taskID ) {
+                  SAC.receiveServiceUpdateTask( taskID, serviceName );
+                }
+              );
+  }
+
   static requestServicesList () {
     MC.request( "services.query"
               , []
