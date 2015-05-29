@@ -2953,3 +2953,7 @@ class FCPortsResource(DojoResource):
             len(results)
         )
         return response
+
+
+class FiberChannelToTargetResourceMixin:
+    pass
