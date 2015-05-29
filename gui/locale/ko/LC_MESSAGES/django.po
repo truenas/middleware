@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2014-09-26 18:10+0000\n"
-"Last-Translator: Hyung-il <hyulee@hotmail.com>\n"
+"PO-Revision-Date: 2015-05-17 14:50+0000\n"
+"Last-Translator: wontack <osx86@sixflow.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411755055.0\n"
+"X-POOTLE-MTIME: 1431874204.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "분명한"
+msgstr "                  평문                "
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -560,7 +560,7 @@ msgstr "이미 존재하는 사용자 이름입니다."
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr ""
+msgstr "이 필드는 설정이 필요합니다.               "
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -743,7 +743,7 @@ msgstr "사용자 계정 %s 는 유효하지 않습니다. "
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr ""
+msgstr " % 그룹이 유효하지 않습니다 "
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
@@ -2723,7 +2723,7 @@ msgstr ""
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
+msgstr "액티브 디렉토리"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -2837,7 +2837,7 @@ msgstr ""
 #: services/models.py:1357 services/models.py:1358
 #: templates/services/core.html:74
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1369
 #, fuzzy
@@ -3427,7 +3427,7 @@ msgstr ""
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
-msgstr ""
+msgstr "저소음"
 
 #: sharing/models.py:282
 msgid ""
@@ -4857,7 +4857,7 @@ msgstr ""
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "구성원"
 
 #~ msgid "Modify"
 #~ msgstr "수정"
@@ -4868,7 +4868,7 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "그룹 변경"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
@@ -4916,7 +4916,7 @@ msgstr ""
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 #, fuzzy
 msgid "Change E-mail"
-msgstr "전자우편"
+msgstr "E-mail 변경"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
@@ -6365,7 +6365,7 @@ msgstr "무손실데이터압축 [lzjp] (권장)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip"
 
 #: choices.py:613
 msgid "115200"
@@ -6377,7 +6377,7 @@ msgstr "자세히"
 
 #: choices.py:683
 msgid "Daemon"
-msgstr ""
+msgstr "데몬"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -6390,7 +6390,7 @@ msgstr "도메인 컨트롤러"
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "데이터"
 
 #: choices.py:711
 msgid "auth"
@@ -6410,11 +6410,11 @@ msgstr "암호 확인"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "홈 디렉토리는 콜론을 포함할 수 없습니다"
 
 #: account/models.py:139
 msgid "Built-in User"
-msgstr ""
+msgstr "빌트-인 사용자"
 
 #: api/resources.py:888
 #: storage/models.py:745
@@ -7305,11 +7305,11 @@ msgstr "무손실데이터압축 [lzjp] (권장)"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz"
 
 #: choices.py:610
 msgid "19200"
@@ -7331,13 +7331,13 @@ msgstr "Debug3"
 
 #: choices.py:685
 msgid "Auth"
-msgstr ""
+msgstr "인증"
 
 # 로컬 사용자
 #: choices.py:688
 #, fuzzy
 msgid "Local 2"
-msgstr "Local User"
+msgstr "Local 2"
 
 # 로컬 사용자
 #: choices.py:691
@@ -7410,7 +7410,7 @@ msgstr "비직렬화를 행하는도중 %(url)s: %(error)s 로부터 오류가 �
 #: jails/models.py:521
 #: templates/plugins/plugins.html:21
 msgid "Jail"
-msgstr ""
+msgstr "jail"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
@@ -8288,11 +8288,11 @@ msgstr "SMB3_00"
 #: choices.py:317
 #, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (매우 빠름)"
+msgstr "lz4 (매우 빠름)"
 
 #: choices.py:569
 msgid "Verify"
-msgstr ""
+msgstr "검증"
 
 #: choices.py:611
 msgid "38400"
@@ -8312,25 +8312,25 @@ msgstr "Local User"
 #: choices.py:687
 #, fuzzy
 msgid "Local 1"
-msgstr "Local User"
+msgstr "Local 1"
 
 # 로컬 사용자
 #: choices.py:689
 #, fuzzy
 msgid "Local 3"
-msgstr "Local User"
+msgstr "Local 3"
 
 # 로컬 사용자
 #: choices.py:690
 #, fuzzy
 msgid "Local 4"
-msgstr "Local User"
+msgstr "Local 4"
 
 # 로컬 사용자
 #: choices.py:692
 #, fuzzy
 msgid "Local 6"
-msgstr "로컬 사용자"
+msgstr "local 6"
 
 # 로컬 사용자
 #: choices.py:693
@@ -8353,7 +8353,7 @@ msgstr "Off"
 
 #: choices.py:710
 msgid "!data"
-msgstr ""
+msgstr "idata"
 
 #: choices.py:712
 msgid "ctrl"
@@ -8375,7 +8375,7 @@ msgstr "홈 디렉토리는 읽기전용이므로 공백으로 남겨두세요."
 #: account/models.py:58
 #: account/models.py:154
 msgid "Permit Sudo"
-msgstr ""
+msgstr "sudo 허가 "
 
 #: account/models.py:146
 #, fuzzy
@@ -8389,7 +8389,7 @@ msgstr "Group Name"
 
 #: account/models.py:265
 msgid "Group Memberships"
-msgstr ""
+msgstr "그룹 구성원"
 
 #: freeadmin/navtree.py:611
 #, fuzzy
@@ -9228,7 +9228,7 @@ msgstr "이 서비스를 활성화 하시겠습니까?"
 
 #: choices.py:609
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: jails/models.py:135
 #, fuzzy
@@ -9366,7 +9366,7 @@ msgstr "Loader"
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
-msgstr ""
+msgstr "패스워드에 ? 마크를 포함하고 있어 현재 CIFS 문제를 해결할 수 없습니다."
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -9511,19 +9511,19 @@ msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
-msgstr ""
+msgstr "autorid"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "hash"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
@@ -9587,16 +9587,16 @@ msgstr ""
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Ldmap"
 
 #: directoryservice/models.py:182
 msgid "Range Size"
-msgstr ""
+msgstr "Range Size"
 
 #: directoryservice/models.py:184
 msgid ""
@@ -10093,9 +10093,8 @@ msgid "Basic Authentication"
 msgstr "기본 인증"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "인증 모델"
+msgstr "Digest 인증"
 
 #: choices.py:799
 msgid "adex"
@@ -10151,15 +10150,15 @@ msgstr ""
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10858,7 +10857,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 #, fuzzy
