@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
@@ -7,6 +8,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('storage', '0051_auto__add_field_task_task_excludesystemdataset'),
+    )
+
     def forwards(self, orm):
         # Adding field 'iSCSITargetExtent.iscsi_target_extent_serial'
         db.add_column(u'services_iscsitargetextent', 'iscsi_target_extent_serial',
@@ -14,27 +19,72 @@ class Migration(SchemaMigration):
                       keep_default=False)
 
         if not db.dry_run:
-            for i, t2e in enumerate(orm['services.iSCSITargetToExtent'].objects.all()):
-                extent = t2e.iscsi_extent
-                if t2e.iscsi_lunid is not None:
-                    extent.iscsi_target_extent_serial = "%s%s" % (
-                        t2e.iscsi_target.iscsi_target_serial,
-                        t2e.iscsi_lunid,
+            # Serial must be preserved as they were generated before
+            for target in orm['services.iSCSITarget'].objects.all():
+                used_lunids = [
+                    o.iscsi_lunid
+                    for o in target.iscsitargettoextent_set.all().exclude(
+                        iscsi_lunid=None,
                     )
-                else:
-                    extent.iscsi_target_extent_serial = "%s%s" % (
-                        t2e.iscsi_target.iscsi_target_serial,
-                        i,
-                    )
-                extent.save()
+                ]
+                cur_lunid = 0
 
+                for t2e in target.iscsitargettoextent_set.all().extra({
+                    'null_first': 'iscsi_lunid IS NULL',
+                }).order_by('null_first', 'iscsi_lunid'):
+
+                    path = t2e.iscsi_extent.iscsi_target_extent_path
+                    if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
+                        disk = orm['storage.Disk'].objects.filter(id=path).order_by('disk_enabled')
+                        if not disk.exists():
+                            continue
+                        disk = disk[0]
+                        if disk.disk_multipath_name:
+                            path = "/dev/multipath/%s" % disk.disk_multipath_name
+                        else:
+                            path = "/dev/%s" % disk.identifier_to_device()
+                    else:
+                        if not path.startswith("/mnt"):
+                            path = "/dev/" + path
+                    if os.path.exists(path):
+                        if t2e.iscsi_lunid is None:
+                            while cur_lunid in used_lunids:
+                                cur_lunid += 1
+                            cur_lunid += 1
+                        if t2e.iscsi_lunid is None:
+                            serial = "%s%s" % (target.iscsi_target_serial, str(cur_lunid-1))
+                        else:
+                            serial = "%s%s" % (target.iscsi_target_serial, str(t2e.iscsi_lunid))
+
+                        extent = t2e.iscsi_extent
+                        extent.iscsi_target_extent_serial = serial
+                        extent.save()
 
     def backwards(self, orm):
         # Deleting field 'iSCSITargetExtent.iscsi_target_extent_serial'
         db.delete_column(u'services_iscsitargetextent', 'iscsi_target_extent_serial')
 
-
     models = {
+        u'storage.disk': {
+            'Meta': {'ordering': "['disk_subsystem', 'disk_number']", 'object_name': 'Disk'},
+            'disk_acousticlevel': ('django.db.models.fields.CharField', [], {'default': "'Disabled'", 'max_length': '120'}),
+            'disk_advpowermgmt': ('django.db.models.fields.CharField', [], {'default': "'Disabled'", 'max_length': '120'}),
+            'disk_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'disk_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'disk_hddstandby': ('django.db.models.fields.CharField', [], {'default': "'Always On'", 'max_length': '120'}),
+            'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42'}),
+            'disk_multipath_member': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'disk_multipath_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'disk_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
+            'disk_number': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
+            'disk_serial': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'disk_size': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
+            'disk_smartoptions': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
+            'disk_subsystem': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '10'}),
+            'disk_togglesmart': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+        },
         u'directoryservice.kerberosrealm': {
             'Meta': {'object_name': 'KerberosRealm'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
