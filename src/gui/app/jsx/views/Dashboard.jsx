@@ -19,12 +19,13 @@ import NetworkUsage from "../components/Widgets/NetworkUsage";
 import DiskUsage from "../components/Widgets/DiskUsage";
 
 var generateUUID = function () {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace( /[xy]/g, function ( c ) {
-      var r = Math.random() * 16 | 0;
-      var v = ( c === "x" ) ? r : ( r & 0x3 | 0x8 );
+  var rawUUID = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+  return rawUUID.replace( /[xy]/g, function ( c ) {
+    var r = Math.random() * 16 | 0;
+    var v = ( c === "x" ) ? r : ( r & 0x3 | 0x8 );
 
-      return v.toString( 16 );
-    }
+    return v.toString( 16 );
+  }
   );
 };
 
@@ -45,10 +46,10 @@ const widgetSizes =
 
 const Dashboard = React.createClass({
 
-    getDefaultProps: function() {
+  getDefaultProps: function () {
       return {
         // The size of each grid unit in pixels.
-          gridSize   : 15
+        gridSize   : 15
         // The amount of padding in grid units that should be in between any
         // two adjacent widgets.
         , gridGutter : 1
@@ -57,34 +58,34 @@ const Dashboard = React.createClass({
 
   , getInitialState: function () {
       return {
-          servicesList: ServicesStore.getAllServices()
+        servicesList: ServicesStore.getAllServices()
         , movementMode : false
         , widgets      : {
-                          "SystemInfo"  : {
-                                              id           : generateUUID()
-                                            , dimensions   : widgetSizes["m-rect"]
-                                          }
-                        , "MemoryUtil"  : {
-                                              id           : generateUUID()
-                                            , dimensions   : widgetSizes["m-rect"]
-                                          }
-                        , "CpuUtil"     : {
-                                              id           : generateUUID()
-                                            , dimensions   : widgetSizes["m-rect"]
-                                          }
-                        , "SystemLoad"  : {
-                                              id           : generateUUID()
-                                            , dimensions   : widgetSizes["m-rect"]
-                                          }
-                        , "NetworkUsage": {
-                                              id           : generateUUID()
-                                            , dimensions   : widgetSizes["l-rect"]
-                                          }
-                        , "DiskUsage"   : {
-                                              id           : generateUUID()
-                                            , dimensions   : widgetSizes["l-rect"]
-                                          }
-                         }
+          SystemInfo   : {
+            id           : generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+          }
+          , MemoryUtil  : {
+            id           : generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+          }
+          , CpuUtil     : {
+            id           : generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+          }
+          , SystemLoad  : {
+            id           : generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+          }
+          , NetworkUsage: {
+            id           : generateUUID()
+            , dimensions : widgetSizes["l-rect"]
+          }
+          , DiskUsage   : {
+            id           : generateUUID()
+            , dimensions : widgetSizes["l-rect"]
+          }
+        }
       };
     }
 
@@ -119,33 +120,33 @@ const Dashboard = React.createClass({
 
   }
 
-    // Calculate how many grid units will fit in the window.
+  // Calculate how many grid units will fit in the window.
   , calculateGridWidth: function () {
       return this.toGridUnits( this.getDOMNode( "thePlayground" ).offsetWidth );
     }
 
-    // Converts pixels to grid units. Rounds down.
+  // Converts pixels to grid units. Rounds down.
   , toGridUnits: function ( pixels ) {
       return Math.round( parseInt( pixels ) / this.props.gridSize );
     }
 
-    // Converts grid units to pixels.
+  // Converts grid units to pixels.
   , toPixels: function ( gridUnits ) {
       return gridUnits * this.props.gridSize;
     }
 
-    // Begin moving a widget around. Records the id of the moving widget
-    // and its starting location.
+  // Begin moving a widget around. Records the id of the moving widget
+  // and its starting location.
 
   , enterMovementMode: function ( id, event ) {
       console.log( id );
       console.log( event );
       this.setState({
-          movementMode   : true
+        movementMode   : true
         , widgetInMotion : {
-              id     : id
-            , origin : [ event.nativeEvent.clientX, event.nativeEvent.clientY ]
-          }
+          id     : id
+          , origin : [ event.nativeEvent.clientX, event.nativeEvent.clientY ]
+        }
       });
     }
 
@@ -179,8 +180,8 @@ const Dashboard = React.createClass({
       }
     }
 
-    // When a widget is released from movement, change its location and move any
-    // overlapping widgets out of the way.
+  // When a widget is released from movement, change its location and move any
+  // overlapping widgets out of the way.
   , exitMovementMode: function () {
       var movedWidget = document.querySelector( ".widget.in-motion" );
       var newState    = {};
@@ -237,7 +238,8 @@ const Dashboard = React.createClass({
 
           this.moveWidget(
               this.refs[ "widget-" + intersections[i] ].getDOMNode()
-            , [ this.toPixels( newPos[0] ) + "px", this.toPixels( newPos[1] ) + "px" ]
+            , [ this.toPixels( newPos[0] ) + "px"
+              , this.toPixels( newPos[1] ) + "px" ]
             , 350
           );
           this.createMatrixFootprint(
@@ -258,33 +260,33 @@ const Dashboard = React.createClass({
       this.setState( newState );
     }
 
-    // Animation for widget movement.
+  // Animation for widget movement.
   , moveWidget: function ( widgetElement, newPos, duration ) {
       console.log( widgetElement );
       Velocity(
           widgetElement
         , {
-            left : newPos[0]
+          left   : newPos[0]
           , top  : newPos[1]
         }
         , {
-            easing   : [ 0, 0.77, 0.47, 0.99 ]
+          easing     : [ 0, 0.77, 0.47, 0.99 ]
           , duration : duration ? duration : 50
           , queue    : false
         });
     }
 
-    // Add more space to the bottom of the grid. Used when a widget doesn't fit.
-  , addEmptyRows: function( displayMatrix, rows ) {
+  // Add more space to the bottom of the grid. Used when a widget doesn't fit.
+  , addEmptyRows: function ( displayMatrix, rows ) {
       for ( var i = 0; i < rows; i++ ) {
         displayMatrix.push( _.fill( Array( displayMatrix[0].length ), 0 ) );
       }
     }
 
-    // Finds the first [x, y] position in the widget grid large enough to fit
-    // a widget of the submitted size. Check is performed from left to right and
-    // top to bottom.
-  , findEmptySpace: function( displayMatrix, dimensions ) {
+  // Finds the first [x, y] position in the widget grid large enough to fit
+  // a widget of the submitted size. Check is performed from left to right and
+  // top to bottom.
+  , findEmptySpace: function ( displayMatrix, dimensions ) {
       var newPos;
       var candidatePositions = [];
 
@@ -299,8 +301,13 @@ const Dashboard = React.createClass({
         for ( var j = 0; j < displayMatrix[i].length; j++ ) {
           if (
             displayMatrix[i][j] === 0 &&
-            typeof displayMatrix[i][ j + dimensions[0] + this.props.gridGutter ] !== "undefined" &&
-            _.every( displayMatrix[i].slice( j, j + dimensions[0] + this.props.gridGutter ), function( val ) { return val === 0; } )
+            typeof displayMatrix[i][ j +
+                                     dimensions[0] +
+                                     this.props.gridGutter ] !== "undefined" &&
+            _.every( displayMatrix[i]
+             .slice( j
+                    , j + dimensions[0] + this.props.gridGutter )
+                    , function ( val ) { return val === 0; } )
           ) {
             // If all the condtions are met, push this index as a candidate.
             candidateIndexes.push( j );
@@ -324,13 +331,19 @@ const Dashboard = React.createClass({
       for ( var k = 0; k < candidatePositions.length; k++ ) {
         // Only check for shared candidate x indicies within the height needed
         // for the widget.
-        var candidateRange = candidatePositions.slice( k, k + dimensions[1] + this.props.gridGutter );
+        var candidateRange = candidatePositions
+                            .slice( k
+                                    , k + dimensions[1]
+                                        + this.props.gridGutter );
         var winners;
 
         // Make sure there are any candidate x indicies in this row to test.
         if ( _.isArray( candidatePositions[k] ) ) {
-          // Only check for qualifying rows if there are no null rows in the range
-          if ( _.every( candidateRange, function( entry ) { return _.isArray( entry ); } ) ) {
+          // Only check for qualifying rows
+          // if there are no null rows in the range
+          if ( _.every( candidateRange, function ( entry ) {
+            return _.isArray( entry );
+          } ) ) {
             // If there's only one row with qualifiying indicies, you must be at
             // the bottom of the grid. Identify the first qualifiying x-index on
             // the bottom row as the winner. Extra vertical space is created
@@ -355,7 +368,11 @@ const Dashboard = React.createClass({
           if ( winners.length ) {
             // It's possible for a winner to be too close to the bottom of the
             // grid to fit. In this case, add extra space.
-            this.addEmptyRows( displayMatrix, Math.max( 0, dimensions[1] + this.props.gridGutter - candidateRange.length ) );
+            this.addEmptyRows( displayMatrix
+                               , Math.max( 0
+                                           , dimensions[1]
+                                             + this.props.gridGutter
+                                             - candidateRange.length ) );
             // Identify the actual new position as the first x-index in the
             // array of vertical intersections and leave the loop.
             newPos = [ winners[0], k ];
@@ -371,10 +388,12 @@ const Dashboard = React.createClass({
         // rows to the grid to fit the entire widget and give the top left
         // coordinate of the new space as the new position.
         } else if ( candidatePositions.length - 1 === k ) {
-          this.addEmptyRows( displayMatrix, dimensions[1] + this.props.gridGutter );
+          this.addEmptyRows( displayMatrix
+                             , dimensions[1] + this.props.gridGutter );
           newPos = [ 0, candidatePositions.length ];
           break;
-        // If the row is empty but not past the end of the grid, try another row.
+        // If the row is empty but not past the end of the grid,
+        // try another row.
         } else {
           continue;
         }
@@ -383,26 +402,40 @@ const Dashboard = React.createClass({
       return newPos;
     }
 
-    // Find the positions where a widget of the specified position and
-    // dimensions would intersect with another widget or its gutter.
-  , findIntersections: function( displayMatrix, position, dimensions ) {
+  // Find the positions where a widget of the specified position and
+  // dimensions would intersect with another widget or its gutter.
+  , findIntersections: function ( displayMatrix, position, dimensions ) {
       var intersections = [];
 
-      for ( var i = position[1]; i < position[1] + dimensions[1] + this.props.gridGutter; i++ ) {
-        intersections.push( displayMatrix[i].slice( position[0], position[0] + dimensions[0] + this.props.gridGutter ) );
+      for ( var i = position[1];
+            i < position[1] + dimensions[1] + this.props.gridGutter;
+            i++ ) {
+        intersections.push( displayMatrix[i]
+                            .slice( position[0]
+                                    , position[0]
+                                      + dimensions[0]
+                                      + this.props.gridGutter ) );
       }
 
       return _.without( _.uniq( _.flattenDeep( intersections ) ), 0 );
     }
 
-  , createMatrixFootprint: function( displayMatrix, position, dimensions, fillEntry ) {
-      for ( var i = position[1]; i < position[1] + dimensions[1] + this.props.gridGutter; i++ ) {
-        _.fill( displayMatrix[i], fillEntry, position[0], position[0] + dimensions[0] + this.props.gridGutter );
-      }
+  , createMatrixFootprint: function ( displayMatrix
+                                      , position
+                                      , dimensions
+                                      , fillEntry ) {
+    for ( var i = position[1];
+          i < position[1] + dimensions[1] + this.props.gridGutter;
+          i++ ) {
+      _.fill( displayMatrix[i]
+              , fillEntry
+              , position[0]
+              , position[0] + dimensions[0] + this.props.gridGutter );
     }
+  }
 
-    // Used when a new set of widgets is requested to create random widgets and
-    // distribute them around the page as necessary.
+  // Used when a new set of widgets is requested to create random widgets and
+  // distribute them around the page as necessary.
   , initializeWidgets: function () {
       var widgets               = this.state.widgets;
       var toGridUnits           = this.toGridUnits;
@@ -415,7 +448,7 @@ const Dashboard = React.createClass({
       var displayMatrix = [ _.fill( Array( this.calculateGridWidth() ), 0 ) ];
 
       _.forEach( widgets, function ( widget ) {
-        var dimensions = [   toGridUnits( widget.dimensions[0] )
+        var dimensions = [ toGridUnits( widget.dimensions[0] )
                            , toGridUnits( widget.dimensions[1] )
                          ];
         var position   = findEmptySpace( displayMatrix, dimensions );
@@ -428,15 +461,16 @@ const Dashboard = React.createClass({
       });
 
       this.setState({
-          widgets       : widgets
+        widgets       : widgets
         , displayMatrix : displayMatrix
-       });
+      });
     }
 
   // TODO:
   // Maybe this should be moved into some kind of utility class, and generalized
   , isServiceRunning: function ( service ) {
-      return ( _.findIndex( this.state.servicesList, { name: service, state: "running" } ) > -1 );
+      return ( _.findIndex( this.state.servicesList
+                            , { name: service, state: "running" } ) > -1 );
     }
 
   , render: function () {
@@ -460,9 +494,13 @@ const Dashboard = React.createClass({
                                                         ? true
                                                         : false ) }
                   onMouseDownHolder = { this.enterMovementMode
-                                            .bind( this, this.state.widgets.SystemInfo.id ) }
-                  refHolder         = { "widget-" + this.state.widgets.SystemInfo.id }
-                  dimensions        = { this.state.widgets.SystemInfo.dimensions }
+                                        .bind( this
+                                              , this.state.
+                                                widgets.SystemInfo.id ) }
+                  refHolder         = { "widget-"
+                                        + this.state.widgets.SystemInfo.id }
+                  dimensions        = { this.state.widgets
+                                        .SystemInfo.dimensions }
                   position          = { this.state.widgets.SystemInfo.position }
                   id                = { this.state.widgets.SystemInfo.id }  />
                 <MemoryUtil
