@@ -17,7 +17,7 @@ import IS from "../../../stores/InterfacesStore";
 
 import Icon from "../../../components/Icon";
 
-const InterfacesView = React.createClass({
+const InterfaceView = React.createClass({
 
   propTypes: {
     item: React.PropTypes.object.isRequired
@@ -240,7 +240,7 @@ const InterfaceItem = React.createClass({
       switch ( this.state.currentMode ) {
         default:
         case "view":
-          DisplayComponent = <InterfacesView {...childProps} />;
+          DisplayComponent = <InterfaceView {...childProps} />;
           break;
       }
     }
