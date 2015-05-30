@@ -17,6 +17,8 @@ import IS from "../../../stores/InterfacesStore";
 
 import Icon from "../../../components/Icon";
 
+import InterfaceEdit from "./InterfaceEdit";
+
 const InterfaceView = React.createClass({
 
   propTypes: {
@@ -91,7 +93,8 @@ const InterfaceView = React.createClass({
         <TWBS.Col xs={12}>
           <TWBS.Button
             className = "pull-right"
-            bsStyle   = "primary">
+            onClick = { this.props.handleViewChange.bind( null, "edit" ) }
+            bsStyle = "primary">
             {"Configure Interface"}
           </TWBS.Button>
         </TWBS.Col>
@@ -234,13 +237,16 @@ const InterfaceItem = React.createClass({
       var childProps = {
         handleViewChange: this.handleViewChange
         , item: this.state.targetInterface
-        , dataKeys: this.props.viewData.format["dataKeys"]
+        , viewData: this.props.viewData
       };
 
       switch ( this.state.currentMode ) {
         default:
         case "view":
           DisplayComponent = <InterfaceView {...childProps} />;
+          break;
+        case "edit":
+          DisplayComponent = <InterfaceEdit {...childProps} />;
           break;
       }
     }
