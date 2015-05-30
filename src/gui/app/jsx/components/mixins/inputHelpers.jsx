@@ -192,12 +192,6 @@ module.exports = {
     );
   }
 
-  , checkMatch: function ( value, key ) {
-    return _.isEqual( this.state.remoteState[ key ]
-                    , value
-                    );
-  }
-
   , submissionRedirect: function ( valuesToSend ) {
     let routing = this.props.viewData.routing;
     let format = this.props.viewData.format;
