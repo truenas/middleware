@@ -110,6 +110,9 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
                                ? true
                                : false;
         newInterface[ "status" ] = status;
+        newInterface[ "mtu" ] = currentInterface[ "mtu" ]
+                              ? currentInterface[ "mtu" ]
+                              : null;
 
         // Figure out interface type. Only knows about Ethernet right now.
         // TODO: There are tons more types that could show up. See:
