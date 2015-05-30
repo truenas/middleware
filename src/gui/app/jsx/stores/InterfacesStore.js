@@ -11,8 +11,8 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 import InterfacesMiddleware from "../middleware/InterfacesMiddleware";
 
-var CHANGE_EVENT = "change";
-var UPDATE_MASK  = "networks.changed";
+const CHANGE_EVENT = "change";
+const UPDATE_MASK  = "network.interface.changed";
 
 var _updatedOnServer    = [];
 var _localUpdatePending = {};
@@ -36,14 +36,14 @@ var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
     return UPDATE_MASK;
   }
 
-  , getPendingUpdateIDs: function () {
+  , getPendingUpdateNames: function () {
     return _updatedOnServer;
   }
 
   // Returns true if the selected interface is in the
   // list of interfaces with pending updates.
-  , isLocalTaskPending: function ( linkAddress ) {
-      return _.values( _localUpdatePending ).indexof( linkAddress ) > -1;
+  , isLocalTaskPending: function ( interfaceName ) {
+      return _.values( _localUpdatePending ).indexof( interfaceName ) > -1;
     }
 
   // Returns true if selected interface is in the list of updated interfaces.
@@ -69,7 +69,7 @@ var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
 });
 
 InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
-  var action = payload.action;
+  let action = payload.action;
 
   switch ( action.type ) {
 
@@ -77,12 +77,12 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
 
       // Re-map the complex interface objects into flat ones.
       // TODO: Account for multiple aliases and static configurations.
-      var mapInterface = function ( currentInterface ) {
+      let mapInterface = function ( currentInterface ) {
 
-        var newInterface = {};
+        let newInterface = {};
 
         // Make the block below less absurdly wide.
-        var status  = currentInterface.status;
+        let status  = currentInterface.status;
 
         // Initialize desired fields with existing ones.
         newInterface[ "name" ] = currentInterface[ "name" ]
@@ -166,28 +166,28 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
 
       _interfaces = action.rawInterfacesList.map( mapInterface );
 
-      console.log( "action.rawInterfacesList", action.rawInterfacesList )
-      console.log( "_interfaces", _interfaces );
-
-
       InterfacesStore.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
-      var args = action.eventData.args;
+      let args = action.eventData.args;
 
       if ( args["name"] === UPDATE_MASK ) {
-        var updateData = args["args"];
+        let updateData = args["args"];
 
         if ( updateData ["operation"] === "update" ) {
+
+          // Not reall sure this is doing something useful.
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          InterfacesMiddleware.requestUsersList( _updatedOnServer );
+          InterfacesMiddleware.requestInterfacesList( );
         }
       }
+
+      InterfacesStore.emitChange();
       break;
 
-    case ActionTypes.RECEIVE_INTERFACE_UPDATE_TASK:
-      _localUpdatePending[ action.taskID ] = action.networkID;
+    case ActionTypes.RECEIVE_INTERFACE_CONFIGURE_TASK:
+      _localUpdatePending[ action.taskID ] = action.interfaceName;
       InterfacesStore.emitChange();
       break;
 

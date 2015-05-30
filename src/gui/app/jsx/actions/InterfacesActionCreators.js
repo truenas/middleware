@@ -16,6 +16,15 @@ class InterfacesActionCreators {
     );
   }
 
+  static receiveInterfaceConfigureTask ( taskID, interfaceName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes. RECEIVE_INTERFACE_CONFIGURE_TASK
+      , taskID: taskID
+      , interfaceName: interfaceName
+      }
+    );
+  }
+
 };
 
 export default InterfacesActionCreators;

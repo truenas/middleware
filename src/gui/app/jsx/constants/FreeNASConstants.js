@@ -56,7 +56,7 @@ export default {
 
     // Interfaces
     , RECEIVE_INTERFACES_LIST: null
-    , RECEIVE_INTERFACES_UPDATE_TASK: null
+    , RECEIVE_INTERFACE_CONFIGURE_TASK: null
 
     // ZFS
     , RECEIVE_ZFS_POOL_GET_DISKS_DATA: null

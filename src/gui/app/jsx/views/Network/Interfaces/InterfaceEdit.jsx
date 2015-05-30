@@ -10,6 +10,8 @@ import TWBS from "react-bootstrap";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 import inputHelpers from "../../../components/mixins/inputHelpers";
 
+import IM from "../../../middleware/InterfacesMiddleware";
+
 const InterfaceEdit = React.createClass({
 
   mixins: [ viewerCommon
@@ -84,15 +86,27 @@ const InterfaceEdit = React.createClass({
     this.setState( { remotelyModifiedValues: newRemoteModified } );
   }
 
-  , submitInterfaceUpdate: function () {
+  , submitInterfaceConfigureTask: function () {
     // Don't let read-only values in.
     let locallyModifiedValues = this.state.locallyModifiedValues;
     let mixedValues = this.state.mixedValues;
 
-    let dataKeys = this.state.viewData[ "format" ][ "dataKeys" ];
+    let dataKeys = this.props.viewData[ "format" ][ "dataKeys" ];
     let valuesToSend = this.removeReadOnlyFields( locallyModifiedValues
-                                                , datakeys
+                                                , dataKeys
                                                 );
+    console.log( "valuesToSend", valuesToSend );
+    if ( !_.isEmpty( valuesToSend ) ) {
+      IM.configureInterface( this.props.item[ "name" ]
+                           , valuesToSend
+                           , this.submissionRedirect( valuesToSend )
+                           );
+      this.setState({ lastSentValues: valuesToSend });
+    } else {
+      console.warn( "Attempted to sent an Interface Configure task"
+                  + " with no valid fields"
+                  );
+    }
   }
 
   , render: function () {
@@ -127,7 +141,7 @@ const InterfaceEdit = React.createClass({
                        disabled = { _.isEmpty( locallyModifiedValues )
                                              ? true
                                              : false }
-                       onClick = { this.submitGroupUpdate }
+                       onClick = { this.submitInterfaceConfigureTask }
                        bsStyle = "info" >{"Save Changes"}</TWBS.Button>
       </TWBS.ButtonToolbar>;
 

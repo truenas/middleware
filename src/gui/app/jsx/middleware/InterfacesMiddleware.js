@@ -11,12 +11,12 @@ import IAC from "../actions/InterfacesActionCreators";
 class InterfacesMiddleware extends AbstractBase {
 
   static subscribe ( componentID ) {
-    MC.subscribe( [ "networks.changed" ], componentID );
+    MC.subscribe( [ "network.interface.*" ], componentID );
     MC.subscribe( [ "task.*" ], componentID );
   }
 
   static unsubscribe ( componentID ) {
-    MC.unsubscribe( [ "networks.changed" ], componentID );
+    MC.unsubscribe( [ "network.interface.*" ], componentID );
     MC.unsubscribe( [ "task.*" ], componentID );
   }
 
@@ -28,6 +28,15 @@ class InterfacesMiddleware extends AbstractBase {
                   }
                 );
     }
+
+  static configureInterface ( interfaceName, props ) {
+    MC.request( "task.submit"
+              , [ "network.interface.configure", [ interfaceName, props ] ]
+              , function handleConfigureInterface ( taskID, interfaceName ) {
+                  IAC.receiveInterfaceConfigureTask( taskID, interfaceName );
+                }
+              );
+  }
 
 };
 
