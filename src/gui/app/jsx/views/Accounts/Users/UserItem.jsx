@@ -202,10 +202,9 @@ const UserEdit = React.createClass({
       // props and the initial ones. Read-only and unknown values are ignored.
       // TODO: Use this to show alerts for remote changes on sections the local
       // administrator is working on.
-      var mismatchedRemoteFields = _.pick( nextProps.item
-                                         , this.checkMatch( value, key )
-                                         , this
-                                         );
+      var mismatchedRemoteFields = _.pick(nextProps.item, function( value, key ) {
+        return _.isEqual( this.state.remoteState[ key ], value );
+      }, this);
 
       newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, dataKeys);
 
