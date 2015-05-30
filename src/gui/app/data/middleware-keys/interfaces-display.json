@@ -9,66 +9,77 @@
           "key"         : "name"
         , "name"        : "Interface"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "ip"
         , "name"        : "IP Address"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "ip_version"
         , "name"        : "IP Version"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : false
      }
     , {
           "key"         : "link_state"
         , "name"        : "Link State"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "link_address"
         , "name"        : "MAC Address"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "flags"
         , "name"        : "Interface Flags"
         , "type"        : "array"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
           "key"         : "netmask"
         , "name"        : "Netmask"
         , "type"        : "number"
+        , "mutable"     : false
         , "defaultCol"  : true
       }
     , {
           "key"         : "enabled"
         , "name"        : "Enabled"
         , "type"        : "boolean"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "dhcp"
         , "name"        : "DHCP Enabled"
         , "type"        : "boolean"
+        , "mutable"     : true
         , "defaultCol"  : false
       }
     , {
           "key"         : "type"
         , "name"        : "Interface Type"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : false
       }
     , {
           "key"         : "font_icon"
         , "name"        : "Font Icon Class"
         , "type"        : "string"
+        , "mutable"     : false
         , "defaultCol"  : null
      }
   ]
