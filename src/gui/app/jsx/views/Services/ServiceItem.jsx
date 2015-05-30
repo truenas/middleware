@@ -92,7 +92,7 @@ const ServiceView = React.createClass({
                                 onClick = { this.configureService.bind( null, 1, false ) } >
                 <TWBS.MenuItem eventKey="1" onClick = { this.configureService.bind( null, 2, "stop" ) }>{ "Disable once" }</TWBS.MenuItem>
                 <TWBS.MenuItem eventKey="2">{ "Disable after reboot" }</TWBS.MenuItem>
-                <TWBS.MenuItem eventKey="3">{ "Disconect current users" }</TWBS.MenuItem>
+                <TWBS.MenuItem eventKey="3">{ "Disconnect current users" }</TWBS.MenuItem>
                 </TWBS.SplitButton>
             </TWBS.ButtonToolbar>
 
