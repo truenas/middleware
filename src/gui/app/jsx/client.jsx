@@ -5,6 +5,8 @@
 
 "use strict";
 
+require( "babel/polyfill" );
+
 import React from "react";
 
 // Routing
