@@ -1015,9 +1015,9 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
     try:
         # Remove any deleted packages
         for pkg in deleted_packages:
-            log.debug("About to delete package %s" % pkg.Name())
-            if conf.PackageDB(mount_point).RemovePackageContents(pkg) == False:
-                s = "Unable to remove contents for packate %s" % pkg.Name()
+            log.debug("About to delete package %s from %s" % (pkg.Name(), mount_point))
+            if conf.PackageDB(mount_point).RemovePackageContents(pkg.Name()) == False:
+                s = "Unable to remove contents for package %s" % pkg.Name()
                 if mount_point:
                     UnmountClone(new_boot_name, mount_point)
                     mount_point = None
