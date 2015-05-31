@@ -694,8 +694,9 @@ class Configuration(object):
             man = None
         return man
 
-    def PackageDB(self, create = True):
-        return PackageDB(self._root, create)
+    def PackageDB(self, root = None, create = True):
+        if root is None: root = self._root
+        return PackageDB(root, create)
 
     def LoadConfigurationFile(self, path):
         cfp = None
