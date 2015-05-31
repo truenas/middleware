@@ -440,7 +440,16 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         try:
             os.unlink(full_path)
         except os.error as e:
-            if e[0] != errno.ENOENT:
+            if e[0] == errno.EPERM and os.path.isdir(full_path):
+                # You can't unlink a directory these days.
+                import shutil
+                try:
+                    # This is a truly terrifying thing to do
+                    shutil.rmtree(full_path)
+                except BaseException as e2:
+                    log.error("Couldn't rmtree %s: %s" % (full_path, str(e2)))
+                    raise e2
+            elif e[0] != errno.ENOENT:
                 log.error("Couldn't unlink %s: %s" % (full_path, e[0]))
                 raise e
         os.symlink(entry.linkname, full_path)
