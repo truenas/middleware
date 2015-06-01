@@ -1028,7 +1028,7 @@ FreeNAS® uses the
 `smartd(8) <http://smartmontools.sourceforge.net/man/smartd.8.html>`_
 service to monitor disk S.M.A.R.T. data for disk health. To fully configure S.M.A.R.T. you need to:
 
-#.  Schedule when to run the S.M.A.R.T. tests in :menuselection:`System --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`.
+#.  Schedule when to run the S.M.A.R.T. tests in :menuselection:`Tasks --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`.
 
 #.  Enable or disable S.M.A.R.T. for each disk member of a volume in :menuselection:`Volumes --> View Volumes`. By default, this is already enabled on all
     disks that support S.M.A.R.T.
