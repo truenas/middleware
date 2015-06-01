@@ -16,7 +16,6 @@ generate_ctl()
 
 name="ix-ctld"
 rcvar="ctld_enable"
-start_precmd='check_service'
 start_cmd='generate_ctl'
 stop_cmd=':'
 
