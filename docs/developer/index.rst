@@ -6,6 +6,28 @@
 FreeNAS 10 Developer's Guide
 ============================
 
+FreeNAS is an embedded software storage appliance based on FreeBSD. There are
+many ways to get involved with FreeNAS.
+
+Visit our Websites:
+ * Website: `freenas.org <FreeNAS.org>`__
+ * Download: `freenas.org/download <FreeNAS.org/download>`__
+
+
+Talk to the Community:
+ * IRC: #freenas on Freenode
+ * Forums: `forum.freenas.org <FreeNAS.org/download>`__
+
+
+Contributing code to FreeNAS:
+ * Fork us on Github!
+   `github.com/freenas/freenas <github.com/freenas/freenas>`__
+ * Bug tracker: `bugs.freenas.org <bugs.freenas.org>`__
+
+iXsystems, the sponsors of FreeNAS, offer the
+`TrueNAS Unified Storage Appliance <ixsystems.com/truenas>`__,
+currently based on FreeNAS 9.3.
+
 Contents:
 
 .. toctree::
@@ -17,7 +39,4 @@ Contents:
    Compiling <compiling/index>
    Roadmap <roadmap>
    Notes <notes>
-
-Welcome!
-========
-There is literally nothing wrong with this index being empty in this commit.
+   History <history>
