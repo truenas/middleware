@@ -2952,11 +2952,11 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
             host = parts[0].upper()
 
             if ldap_user[1].has_key('sAMAccountName'):
-                uid = u['sAMAccountName'][0]
+                uid = ldap_user[1]['sAMAccountName'][0]
             elif ldap_user[1].has_key('uid'):
-                uid = u['uid'][0]
+                uid = ldap_user[1]['uid'][0]
             else: 
-                uid = u['cn'][0]
+                uid = ldap_user[1]['cn'][0]
 
             try:
                 pw = pwd.getpwnam(uid)
