@@ -29,7 +29,7 @@ to go to the
 `FreeBSD Foundation <www.freebsdfoundation.org/donate/>`__. Everything
 that makes FreeBSD better makes FreeNAS better as well, and by donating to
 FreeBSD directly you help out the entire community, not just FreeNAS. The
-FreeBSD Foundation is a 501(c) organization, so donations to the FreeBSD
+FreeBSD Foundation is a 501(c)3 organization, so donations to the FreeBSD
 Foundation may be tax-deductible in the United States.
 
 iXsystems, the sponsors of FreeNAS, offer the
