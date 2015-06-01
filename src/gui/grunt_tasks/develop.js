@@ -33,18 +33,12 @@ module.exports = function ( grunt ) {
     // Create the browserify bundle
     grunt.task.run( "browserify" );
 
+    // Check for a configuration file before proceeding
+    grunt.task.run( "freenas-config" );
 
-    // Development is remote by default
-    if ( grunt.option( "local" ) ) {
-      // Run concurrent watch operations for local development
-      grunt.task.run( "concurrent:watchLocalServer" );
-    } else {
-      // Check for a configuration file before proceeding
-      grunt.task.run( "freenas-config" );
+    // Begin live development
+    grunt.task.run( "begin-livedev" );
 
-      // Begin live development
-      grunt.task.run( "begin-livedev" );
-    }
     asyncDone();
   });
 };

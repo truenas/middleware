@@ -10,7 +10,6 @@ module.exports = function ( grunt ) {
   var serverCommon = [ "watch:jsx"
                      , "watch:less"
                      , "watch:images"
-                     , "watch:internalScripts"
                      ];
 
   this.options = { logConcurrentOutput : true
@@ -26,6 +25,5 @@ module.exports = function ( grunt ) {
                     , "less"
                     ];
 
-  this["watchLocalServer"]   = serverCommon.concat( "watch:localServer" );
   this["watchRemoteFreeNAS"] = serverCommon.concat( "watch:freenasServer" );
 };
