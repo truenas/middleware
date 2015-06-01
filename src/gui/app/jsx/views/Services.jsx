@@ -12,22 +12,22 @@ import ServicesMiddleware from "../middleware/ServicesMiddleware";
 import ServicesStore from "../stores/ServicesStore";
 
 var viewData = {
-    format  : require("../../data/middleware-keys/services-display.json")[0]
+  format    : require( "../../data/middleware-keys/services-display.json" )[0]
   , routing : {
-      "route" : "services-editor"
-    , "param" : "serviceID"
+    route     : "services-editor"
+    , param   : "serviceID"
   }
   , display: {
-      filterCriteria: {
-          running: {
-              name     : "active services"
-            , testProp : { "state": "running" }
+    filterCriteria: {
+      running: {
+            name        : "active services"
+            , testProp  : { state: "running" }
           }
-        , stopped: {
-              name     : "stopped services"
-            , testProp : { "state": "stopped" }
-          }
+      , stopped: {
+        name        : "stopped services"
+        , testProp  : { state: "stopped" }
       }
+    }
     , remainingName    : "other services"
     , ungroupedName    : "all services"
     , allowedFilters   : [ ]
@@ -39,7 +39,7 @@ var viewData = {
   }
 };
 
-function getServicesFromStore() {
+function getServicesFromStore () {
   return {
     servicesList: ServicesStore.getAllServices()
   };
@@ -59,7 +59,7 @@ function handleToggle ( serviceObj, toggled ) {
 
 const Services = React.createClass({
 
-    getInitialState: function () {
+  getInitialState: function () {
       return getServicesFromStore();
     }
 
