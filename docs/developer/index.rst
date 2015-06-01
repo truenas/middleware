@@ -28,8 +28,9 @@ If you want to donate money, don't give it to us - we prefer donations
 to go to the
 `FreeBSD Foundation <www.freebsdfoundation.org/donate/>`__. Everything
 that makes FreeBSD better makes FreeNAS better as well, and by donating to
-FreeBSD directly you help out the entire community, not just FreeNAS. Donations
-to the FreeBSD foundation are also tax-deductible in the United States!
+FreeBSD directly you help out the entire community, not just FreeNAS. The
+FreeBSD Foundation is a 501(c) organization, so donations to the FreeBSD
+Foundation may be tax-deductible in the United States.
 
 iXsystems, the sponsors of FreeNAS, offer the
 `TrueNAS Unified Storage Appliance <ixsystems.com/truenas>`__,
