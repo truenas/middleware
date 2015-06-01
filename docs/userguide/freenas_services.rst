@@ -1046,7 +1046,7 @@ Figure 11.11a shows the configuration screen that appears when you click :menuse
 .. |smart2.png| image:: images/smart2.png
 
 .. note:: :command:`smartd` will wake up at every configured "Check Interval". It will check the times you configured in
-   :menuselection:`System --> S.M.A.R.T. Tests` to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it
+   :menuselection:`Tasks --> S.M.A.R.T. Tests` to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it
    does not make sense to set a "Check Interval" value higher than 60 minutes. For example, if you set the "Check Interval" for *120* minutes and the smart
    test to every hour, the test will only be run every 2 hours since the daemon only wakes up every 2 hours.
 
