@@ -24,6 +24,13 @@ Contributing code to FreeNAS:
    `github.com/freenas/freenas <github.com/freenas/freenas>`__
  * Bug tracker: `bugs.freenas.org <bugs.freenas.org>`__
 
+If you want to donate money, don't give it to us - we prefer donations
+to go to the
+`FreeBSD Foundation <www.freebsdfoundation.org/donate/>`__. Everything
+that makes FreeBSD better makes FreeNAS better as well, and by donating to
+FreeBSD directly you help out the entire community, not just FreeNAS. Donations
+to the FreeBSD foundation are also tax-deductible in the United States!
+
 iXsystems, the sponsors of FreeNAS, offer the
 `TrueNAS Unified Storage Appliance <ixsystems.com/truenas>`__,
 currently based on FreeNAS 9.3.
