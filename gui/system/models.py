@@ -29,6 +29,7 @@ import logging
 import os
 import string
 import uuid
+import signal
 
 from dateutil import parser as dtparser
 
@@ -898,11 +899,45 @@ class CertificateAuthority(CertificateBase):
         if not os.path.exists(self.cert_root_path):
             os.mkdir(self.cert_root_path, 0755)
 
+    def delete(self):
+        temp_cert_name = self.cert_name
+        super(CertificateAuthority, self).delete()
+        # If this was a malformed CA then delete its alert sentinel file
+        try:
+            os.unlink('/tmp/alert_invalidCA_{0}'.format(temp_cert_name))
+            try:
+                with open("/var/run/alertd.pid", "r") as f:
+                    alertd_pid = int(f.read())
+                os.kill(alertd_pid, signal.SIGUSR1)
+            except:
+                # alertd not running?
+                pass
+        except OSError:
+            # It was not a malformed CA after all!
+            pass
+
     class Meta:
         verbose_name = _("CA")
 
 
 class Certificate(CertificateBase):
+
+    def delete(self):
+        temp_cert_name = self.cert_name
+        super(Certificate, self).delete()
+        # If this was a malformed CA then delete its alert sentinel file
+        try:
+            os.unlink('/tmp/alert_invalidcert_{0}'.format(temp_cert_name))
+            try:
+                with open("/var/run/alertd.pid", "r") as f:
+                    alertd_pid = int(f.read())
+                os.kill(alertd_pid, signal.SIGUSR1)
+            except:
+                # alertd not running?
+                pass
+        except OSError:
+            # It was not a malformed CA after all!
+            pass
 
     class Meta:
         verbose_name = _("Certificate")

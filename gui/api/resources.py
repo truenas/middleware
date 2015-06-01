@@ -31,6 +31,7 @@ import os
 import re
 import subprocess
 import urllib
+import signal
 
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -2343,37 +2344,56 @@ class KerberosSettingsResourceMixin(object):
 class CertificateAuthorityResourceMixin(object):
 
     def dehydrate(self, bundle):
-        bundle = super(CertificateAuthorityResourceMixin, self).dehydrate(bundle)
+        bundle = super(CertificateAuthorityResourceMixin,
+                       self).dehydrate(bundle)
 
-        bundle.data['cert_internal'] = bundle.obj.cert_internal
-        bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-        bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
-        bundle.data['cert_DN'] = bundle.obj.cert_DN
-        bundle.data['cert_from'] = bundle.obj.cert_from
-        bundle.data['cert_until'] = bundle.obj.cert_until
+        try:
+            bundle.data['cert_internal'] = bundle.obj.cert_internal
+            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
+            bundle.data['cert_ncertificates'] = bundle.obj.cert_ncertificates
+            bundle.data['cert_DN'] = bundle.obj.cert_DN
+            bundle.data['cert_from'] = bundle.obj.cert_from
+            bundle.data['cert_until'] = bundle.obj.cert_until
 
-        bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
-        bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
-        bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
+            bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
+            bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
+            bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
 
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse('CA_edit',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
-            )
-            bundle.data['_export_certificate_url'] = reverse(
-                 'CA_export_certificate',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
-            )
-            bundle.data['_export_privatekey_url'] = reverse(
-                 'CA_export_privatekey',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
-            )
+            if self.is_webclient(bundle.request):
+                bundle.data['_edit_url'] = reverse(
+                    'CA_edit',
+                    kwargs={
+                       'id': bundle.obj.id
+                    }
+                )
+                bundle.data['_export_certificate_url'] = reverse(
+                    'CA_export_certificate',
+                    kwargs={
+                       'id': bundle.obj.id
+                    }
+                )
+                bundle.data['_export_privatekey_url'] = reverse(
+                     'CA_export_privatekey',
+                     kwargs={
+                        'id': bundle.obj.id
+                     }
+                )
+        except Exception as err:
+            bundle.data['cert_DN'] = "ERROR: " + str(err)
+            # There was an error parsing this Certificate Authority object
+            # Creating a sentinel file for the alertmod to pick it up
+            with open('/tmp/alert_invalidCA_{0}'.format(bundle.obj.cert_name),
+                      'w') as fout:
+                fout.write('')
+            # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
+            # alertmods)
+            try:
+                with open("/var/run/alertd.pid", "r") as f:
+                    alertd_pid = int(f.read())
+                os.kill(alertd_pid, signal.SIGUSR1)
+            except:
+                # alertd not running?
+                pass
 
         return bundle
 
@@ -2383,48 +2403,65 @@ class CertificateResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
 
-        bundle.data['cert_issuer'] = bundle.obj.cert_issuer
-        bundle.data['cert_DN'] = bundle.obj.cert_DN
-        bundle.data['cert_CSR'] = bundle.obj.cert_CSR
-        bundle.data['cert_from'] = bundle.obj.cert_from
-        bundle.data['cert_until'] = bundle.obj.cert_until
+        try:
+            bundle.data['cert_issuer'] = bundle.obj.cert_issuer
+            bundle.data['cert_DN'] = bundle.obj.cert_DN
+            bundle.data['cert_CSR'] = bundle.obj.cert_CSR
+            bundle.data['cert_from'] = bundle.obj.cert_from
+            bundle.data['cert_until'] = bundle.obj.cert_until
 
-        bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
-        bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
-        bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
+            bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
+            bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
+            bundle.data['cert_type_CSR'] = bundle.obj.cert_type_CSR
 
-        if self.is_webclient(bundle.request):
-            if bundle.obj.cert_type_CSR:
-                bundle.data['_CSR_edit_url'] = reverse(
-                    'CSR_edit',
+            if self.is_webclient(bundle.request):
+                if bundle.obj.cert_type_CSR:
+                    bundle.data['_CSR_edit_url'] = reverse(
+                        'CSR_edit',
+                        kwargs={
+                            'id': bundle.obj.id
+                        }
+                    )
+
+                bundle.data['_edit_url'] = reverse(
+                    'certificate_edit',
+                    kwargs={
+                       'id': bundle.obj.id
+                    }
+                )
+                bundle.data['_export_certificate_url'] = reverse(
+                    'certificate_export_certificate',
+                    kwargs={
+                       'id': bundle.obj.id
+                    }
+                )
+                bundle.data['_export_privatekey_url'] = reverse(
+                    'certificate_export_privatekey',
                     kwargs={
                         'id': bundle.obj.id
                     }
                 )
-
-            bundle.data['_edit_url'] = reverse('certificate_edit',
-                 kwargs={
-                    'id': bundle.obj.id
-                 }
-            )
-            bundle.data['_export_certificate_url'] = reverse(
-                 'certificate_export_certificate',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
-            )
-            bundle.data['_export_privatekey_url'] = reverse(
-                 'certificate_export_privatekey',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
-            )
-            bundle.data['_export_certificate_and_privatekey_url'] = reverse(
-                 'certificate_export_certificate_and_privatekey',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
-            )
+                bundle.data['_export_certificate_and_privatekey_url'] = reverse(
+                    'certificate_export_certificate_and_privatekey',
+                    kwargs={
+                       'id': bundle.obj.id
+                    }
+                )
+        except:
+            # There was an error parsing this Certificate object
+            # Creating a sentinel file for the alertmod to pick it up
+            with open('/tmp/alert_invalidcert_{0}'.format(bundle.obj.cert_name),
+                      'w') as fout:
+                fout.write('')
+            # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
+            # alertmods)
+            try:
+                with open("/var/run/alertd.pid", "r") as f:
+                    alertd_pid = int(f.read())
+                os.kill(alertd_pid, signal.SIGUSR1)
+            except:
+                # alertd not running?
+                pass
 
         return bundle
 

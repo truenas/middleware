@@ -199,16 +199,18 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
-        actions['edit'] = {
-            'button_name': 'Edit',
-            'on_click': """function() {
-                var mybtn = this;
-                for (var i in grid.selection) {
-                    var data = grid.row(i).data;
-                    editObject('Edit', data._edit_url, [mybtn,]);
-                }
-            }""",
-        }
+        # Commenting this out as it can lead to users corrupting a CA
+        # uncomment if the certificate integrity check can be added to this
+        # actions['edit'] = {
+        #     'button_name': 'Edit',
+        #     'on_click': """function() {
+        #         var mybtn = this;
+        #         for (var i in grid.selection) {
+        #             var data = grid.row(i).data;
+        #             editObject('Edit', data._edit_url, [mybtn,]);
+        #         }
+        #     }""",
+        # }
 
         actions['export_certificate'] = {
             'button_name': 'Export Certificate',
