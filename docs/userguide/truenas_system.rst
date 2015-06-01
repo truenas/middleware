@@ -227,8 +227,7 @@ Highlight an entry to view its configuration buttons.  The following configurati
   but won't be used on the next boot.
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
-  **can not** delete the
-  *default* entry or an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
+  **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
   entry, which will clear the *On reboot* field of the currently activated entry.
 
 The buttons above the boot entries can be used to:
