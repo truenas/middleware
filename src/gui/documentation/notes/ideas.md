@@ -4,3 +4,9 @@
 
 * Table settings
 ** https://forums.freenas.org/index.php?threads/remember-window-and-column-settings.26863/
+
+
+##Users and Groups
+
+* Settings services or other stuff for each user/group
+** https://bugs.freenas.org/issues/10028
