@@ -369,25 +369,6 @@ class MainLoop(object):
         print _("Welcome to FreeNAS CLI! Type '?' for help at any point.")
         print
 
-    def list_ips(self):
-        output_msg(_("You may try the following URLs to access"
-                     " the web user interface:"))
-        my_ips = self.context.connection.call_sync('network.config.get_my_ips')
-        my_protocols = self.context.connection.call_sync(
-            'system.ui.get_config')
-        urls = []
-        for proto in my_protocols['webui-procotol']:
-            proto_port = my_protocols['webui-{0}-port'.format(proto.lower())]
-            if proto_port is not None:
-                if proto_port in [80, 443]:
-                    for x in my_ips:
-                        urls.append('{0}://{1}'.format(proto.lower(), x))
-                else:
-                    for x in my_ips:
-                        urls.append('{0}://{1}:{2}'.format(proto.lower(), x,
-                                                           proto_port))
-        output_list(urls, label=_('URLs'))
-
     def cd(self, ns):
         if not self.cwd.on_leave():
             return
@@ -445,7 +426,8 @@ class MainLoop(object):
         readline.set_completer(self.complete)
 
         self.greet()
-        self.list_ips()
+        a = ShowUrlsCommand()
+        a.run(self.context, None, None, None)
 
         while True:
             try:
