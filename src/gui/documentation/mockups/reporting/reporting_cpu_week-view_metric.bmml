@@ -141,9 +141,9 @@
         <text>Day%2C%20Week%2C%20Month%2C%20Year%2C%20Custom</text>
       </controlProperties>
     </control>
-    <control controlID="523" controlTypeID="com.balsamiq.mockups::ButtonBar" x="393" y="235" w="-1" h="-1" measuredW="367" measuredH="21" zOrder="22" locked="false" isInGroup="-1">
+    <control controlID="523" controlTypeID="com.balsamiq.mockups::ButtonBar" x="393" y="235" w="-1" h="-1" measuredW="421" measuredH="21" zOrder="22" locked="false" isInGroup="-1">
       <controlProperties>
-        <text>CPU%2C%20Disk%2C%20Memory%2C%20Partition%2C%20System%2C%20%20ZFS</text>
+        <text>CPU%2C%20Disk%2C%20Memory%2C%20Partition%2C%20System%2C%20%20ZFS%2C%20Logs</text>
       </controlProperties>
     </control>
     <control controlID="526" controlTypeID="com.balsamiq.mockups::Canvas" x="956" y="369" w="21" h="10" measuredW="100" measuredH="70" zOrder="23" locked="false" isInGroup="-1">
