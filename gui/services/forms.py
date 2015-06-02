@@ -1578,6 +1578,12 @@ class iSCSITargetForm(ModelForm):
             'iscsi_target_mode': forms.widgets.RadioSelect(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_target_mode'].widget.attrs['onChange'] = (
+            'targetMode();'
+        )
+
     def clean_iscsi_target_name(self):
         name = self.cleaned_data.get("iscsi_target_name").lower()
         if not re.search(r'^[-a-z0-9\.:]+$', name):
