@@ -43,7 +43,33 @@ const widgetSizes =
     , "xl-rect"   : [ 705, 525 ]
   };
 
+var fooProps = {
+  foo: "foo!"
+  , bar: "bar!"
+  , onMouseDown: function() {
 
+  }
+}
+
+const DragDropGrid = React.createClass(
+  { renderChildren: function () {
+      return React.Children.map( this.props.children
+                               , function ( Child ) {
+          return React.cloneElement( Child, fooProps )
+        }
+      )
+    }
+
+  , render: function () {
+    return (
+      <div className={ this.props.className }>
+        { this.renderChildren() }
+      </div>
+    );
+  }
+
+  }
+);
 const Dashboard = React.createClass({
 
   getDefaultProps: function () {
@@ -516,8 +542,7 @@ const Dashboard = React.createClass({
               ref         = "thePlayground"
               onMouseMove = { this.calculateMovement }
               className   = { "playground grid-on" } >
-              <div
-                ref       = "widgetAreaRef"
+              <DragDropGrid
                 className = "widget-wrapper" >
                 <SystemInfo
                   stacked           = "true"
@@ -540,7 +565,8 @@ const Dashboard = React.createClass({
                   dimensions        = { this.state.widgets
                                         .SystemInfo.dimensions }
                   position          = { this.state.widgets.SystemInfo.position }
-                  id                = { this.state.widgets.SystemInfo.id }  />
+                  id                = { this.state.widgets.SystemInfo.id }
+                  { ...fooProps } />
                 <MemoryUtil
                   title = "Memory Value"
                   size  = { this.state.widgets.MemoryUtil.size }
@@ -585,7 +611,7 @@ const Dashboard = React.createClass({
                   dimensions  = { this.state.widgets.DiskUsage.dimensions }
                   position    = { this.state.widgets.DiskUsage.position }
                   id          = { this.state.widgets.DiskUsage.id }  />
-              </div>
+              </DragDropGrid>
           </main>
         );
       } else {
