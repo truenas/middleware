@@ -45,16 +45,23 @@ class NetworkProvider(Provider):
 
     @returns(h.array(str))
     def get_my_ips(self):
-        ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
-        for i in ifaces:
-            if i['type'] == 'LOOP':
+        ips = []
+        ifaces = self.dispatcher.call_sync(
+                     'networkd.configuration.query_interfaces')
+        for i, v in ifaces.iteritems():
+            if 'LOOPBACK' in v['flags']:
                 continue
+            for aliases in v['aliases']:
+                if aliases['address'] and aliases['family'] != 'LINK':
+                    ips.append(aliases['address'])
+        return ips
 
 
 class InterfaceProvider(Provider):
     @query('network-interface')
     def query(self, filter=None, params=None):
-        ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
+        ifaces = self.dispatcher.call_sync(
+                     'networkd.configuration.query_interfaces')
 
         def extend(i):
             try:

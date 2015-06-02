@@ -48,12 +48,17 @@ import Queue
 import threading
 from descriptions import events
 from namespace import Namespace, RootNamespace, Command
-from output import ValueType, ProgressBar, output_lock, output_msg, read_value, format_value
+from output import (
+    ValueType, ProgressBar, output_lock, output_msg, read_value, format_value,
+    output_list
+)
 from dispatcher.client import Client, ClientError
 from dispatcher.rpc import RpcException
 from fnutils.query import wrap
-from commands import (ExitCommand, PrintenvCommand, SetenvCommand, ShellCommand, ShutdownCommand, RebootCommand,
-                      EvalCommand, HelpCommand)
+from commands import (
+    ExitCommand, PrintenvCommand, SetenvCommand, ShellCommand, ShutdownCommand,
+    RebootCommand, EvalCommand, HelpCommand, ShowUrlsCommand, ShowIpsCommand
+)
 
 if platform.system() == 'Darwin':
     import gnureadline as readline
@@ -341,7 +346,9 @@ class MainLoop(object):
         'eval': EvalCommand(),
         'shutdown': ShutdownCommand(),
         'reboot': RebootCommand(),
-        'help': HelpCommand()
+        'help': HelpCommand(),
+        'showips': ShowIpsCommand(),
+        'showurls': ShowUrlsCommand()
     }
 
     def __init__(self, context):
@@ -361,6 +368,25 @@ class MainLoop(object):
     def greet(self):
         print _("Welcome to FreeNAS CLI! Type '?' for help at any point.")
         print
+
+    def list_ips(self):
+        output_msg(_("You may try the following URLs to access"
+                     " the web user interface:"))
+        my_ips = self.context.connection.call_sync('network.config.get_my_ips')
+        my_protocols = self.context.connection.call_sync(
+            'system.ui.get_config')
+        urls = []
+        for proto in my_protocols['webui-procotol']:
+            proto_port = my_protocols['webui-{0}-port'.format(proto.lower())]
+            if proto_port is not None:
+                if proto_port in [80, 443]:
+                    for x in my_ips:
+                        urls.append('{0}://{1}'.format(proto.lower(), x))
+                else:
+                    for x in my_ips:
+                        urls.append('{0}://{1}:{2}'.format(proto.lower(), x,
+                                                           proto_port))
+        output_list(urls, label=_('URLs'))
 
     def cd(self, ns):
         if not self.cwd.on_leave():
@@ -419,6 +445,7 @@ class MainLoop(object):
         readline.set_completer(self.complete)
 
         self.greet()
+        self.list_ips()
 
         while True:
             try:
