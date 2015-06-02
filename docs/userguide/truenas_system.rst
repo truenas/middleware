@@ -346,10 +346,6 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
-**Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
-this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
-that will least impact users. Once the tests are complete, which can take a few minutes, a pop-up message will prompt to save the results as a tarball.
-
 **Figure 5.4b: Backup Configuration Screen**
 
 |backup1.png|
@@ -485,6 +481,8 @@ a Domain Controller, all of the domain controller state is stored there as well,
 |tn_system5.png|
 
 .. |tn_system5.png| image:: images/tn_system5.png
+
+.. note:: encrypted volumes will not be displayed in the "System dataset pool" drop-down menu.
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -827,8 +825,6 @@ whether or not it is an internal CA, whether or not the issuer is self-signed, t
 name of the CA, the date and time the CA was created, and the date and time the CA expires.
 
 If you click the entry for a CA, the following buttons become available:
-
-* **Edit:** can be used to edit the "Name", "Certificate", "Private Key", or "Serial" of the CA.
 
 * **Export Certificate:** will prompt to browse to the location, on the system being used to access the TrueNAS® system, to save a copy of the CA's
   X.509 certificate.

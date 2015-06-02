@@ -448,9 +448,9 @@ To create a zvol, select an existing ZFS volume or dataset from the tree then cl
 
 **Figure 8.1e: Creating a zvol**
 
-|zvol.png|
+|zvol1.png|
 
-.. |zvol.png| image:: images/zvol.png
+.. |zvol1.png| image:: images/zvol1.png
 
 The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in

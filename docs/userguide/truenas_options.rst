@@ -181,6 +181,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a VMware login or a :ref:`VMware-Snapshot` task fails
 
+* a Certificate Authority or certificate is invalid or malformed
+
 * 30 days before the license expires and when the license expires
 
 * the status of a LSI MegaRAID SAS controller has changed;
