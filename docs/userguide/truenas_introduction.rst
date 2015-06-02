@@ -68,7 +68,7 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
 
 The TrueNAS® Administrator Guide uses the following typographic conventions:
 
-* Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Performance Test" button.
+* Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Import Ca" button.
 
 * Menu selections are italicized and separated by arrows. For example: :menuselection:`System --> Information`.
 
