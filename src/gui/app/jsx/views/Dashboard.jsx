@@ -60,30 +60,43 @@ const Dashboard = React.createClass({
       return {
         servicesList: ServicesStore.getAllServices()
         , movementMode : false
+        , sizeArr      : [ "s", "m", "l" ]
         , widgets      : {
           SystemInfo   : {
             id           : generateUUID()
             , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
           }
           , MemoryUtil  : {
             id           : generateUUID()
             , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
           }
           , CpuUtil     : {
             id           : generateUUID()
             , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
           }
           , SystemLoad  : {
             id           : generateUUID()
             , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
           }
           , NetworkUsage: {
             id           : generateUUID()
             , dimensions : widgetSizes["l-rect"]
+            , size       : "l-rect"
+            , count      : 0
           }
           , DiskUsage   : {
             id           : generateUUID()
             , dimensions : widgetSizes["l-rect"]
+            , size       : "l-rect"
+            , count      : 0
           }
         }
       };
@@ -466,6 +479,29 @@ const Dashboard = React.createClass({
       });
     }
 
+  , changeSize: function ( widgtName ) {
+    var newWidgetsState = this.state.widgets;
+    var i = ( this.state.widgets[ widgtName ].count
+              < this.state.sizeArr.length
+              ? this.state.widgets[ widgtName ].count
+              : 0 );
+    // console.log( i );
+    i++;
+    // console.log( i );
+    newWidgetsState[ widgtName ].count = i;
+    newWidgetsState[ widgtName ].size = this.state.sizeArr[ i - 1 ]
+                                 + this.state.widgets[ widgtName ].size
+                                   .substring( 1
+                                               , this.state.widgets[ widgtName ]
+                                                       .size
+                                                       .length );
+    newWidgetsState[ widgtName ].dimensions =
+    widgetSizes[ newWidgetsState[ widgtName ].size ];
+
+    this.setState( { widgets: newWidgetsState } );
+    this.handleResize();
+  }
+
   // TODO:
   // Maybe this should be moved into some kind of utility class, and generalized
   , isServiceRunning: function ( service ) {
@@ -486,13 +522,15 @@ const Dashboard = React.createClass({
                 <SystemInfo
                   stacked           = "true"
                   title             = "System Info"
-                  size              = "m-rect"
+                  size              = { this.state.widgets.SystemInfo.size }
                   inMotion          = { ( ( this.state.movementMode &&
                                             this.state.widgetInMotion &&
                                             this.state.widgetInMotion.id ===
                                             this.state.widgets.SystemInfo.id )
                                                         ? true
                                                         : false ) }
+                  changeSize        = { this.changeSize
+                                        .bind( this, "SystemInfo" )}
                   onMouseDownHolder = { this.enterMovementMode
                                         .bind( this
                                               , this.state.
@@ -505,34 +543,44 @@ const Dashboard = React.createClass({
                   id                = { this.state.widgets.SystemInfo.id }  />
                 <MemoryUtil
                   title = "Memory Value"
-                  size  = "m-rect"
+                  size  = { this.state.widgets.MemoryUtil.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "MemoryUtil" )}
                   dimensions  = { this.state.widgets.MemoryUtil.dimensions }
                   position    = { this.state.widgets.MemoryUtil.position }
                   id          = { this.state.widgets.MemoryUtil.id }  />
                 <CpuUtil
                   primary = "pie"
                   title = "CPU utilization"
-                  size  = "m-rect"
+                  size  = { this.state.widgets.CpuUtil.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "CpuUtil" )}
                   dimensions  = { this.state.widgets.CpuUtil.dimensions }
                   position    = { this.state.widgets.CpuUtil.position }
                   id          = { this.state.widgets.CpuUtil.id }  />
                 <SystemLoad
                   primary   = "stacked"
                   title     = "System Load"
-                  size      = "m-rect"
+                  size      = { this.state.widgets.SystemLoad.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "SystemLoad" )}
                   dimensions  = { this.state.widgets.SystemLoad.dimensions }
                   position    = { this.state.widgets.SystemLoad.position }
                   id          = { this.state.widgets.SystemLoad.id }  />
                 <NetworkUsage
                   title = "Network Usage"
-                  size  = "l-rect"
+                  size  = { this.state.widgets.NetworkUsage.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "NetworkUsage" )}
                   graphType = "line"
                   dimensions  = { this.state.widgets.NetworkUsage.dimensions }
                   position    = { this.state.widgets.NetworkUsage.position }
                   id          = { this.state.widgets.NetworkUsage.id }  />
                 <DiskUsage
                   title = "Disk Usage"
-                  size  = "l-rect"
+                  size  = { this.state.widgets.DiskUsage.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "DiskUsage" )}
                   graphType = "line"
                   dimensions  = { this.state.widgets.DiskUsage.dimensions }
                   position    = { this.state.widgets.DiskUsage.position }

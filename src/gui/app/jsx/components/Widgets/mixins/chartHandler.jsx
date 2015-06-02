@@ -124,7 +124,9 @@ module.exports = {
              nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
              nextState.graphType        !==  this.state.graphType         ||
              nextState.componentWidth   !==  this.state.componentWidth    ||
-             nextProps.position         !==  this.props.position;
+             nextProps.position         !==  this.props.position          ||
+             nextProps.dimensions       !==  this.props.dimensions        ||
+             nextProps.size             !==  this.props.size;
 	}
 
   , componentWillUnmount: function () {
@@ -453,10 +455,11 @@ module.exports = {
     if ( this.state.errorMode ) {
       return (
         <Widget
-          dimensions  =  {this.props.dimensions}
-          position    =  {this.props.position}
+          dimensions  =  { this.props.dimensions }
+          position    =  { this.props.position }
           title       = { this.props.title }
-          size        = { this.props.size } >
+          size        = { this.props.size }
+          changeSize = { this.props.changeSize } >
 
           <div className="widget-error-panel">
               <h4>Something went sideways.</h4>
@@ -465,13 +468,15 @@ module.exports = {
 
       </Widget>
         );
-    } else if ( this.state.statdDataLoaded && this.state.chartTypes.length > 0 ) {
+    } else if ( this.state.statdDataLoaded &&
+                this.state.chartTypes.length > 0 ) {
       return (
         <Widget
-          dimensions  =  {this.props.dimensions}
-          position    =  {this.props.position}
+          dimensions  =  { this.props.dimensions }
+          position    =  { this.props.position }
           title     = { this.props.title }
-          size      = { this.props.size } >
+          size      = { this.props.size }
+          changeSize = { this.props.changeSize } >
 
           <div className="widget-content">
             <svg ref="svg" style={this.state.svgStyle}></svg>
@@ -485,10 +490,11 @@ module.exports = {
     } else {
       return (
         <Widget
-          dimensions  =  {this.props.dimensions}
-          position    =  {this.props.position}
+          dimensions  =  { this.props.dimensions }
+          position    =  { this.props.position }
           title     = { this.props.title }
-          size      = { this.props.size } >
+          size      = { this.props.size }
+          changeSize = { this.props.changeSize } >
 
           <div className="widget-error-panel">
               <h4>Loading...</h4>

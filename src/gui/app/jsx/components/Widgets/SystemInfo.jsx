@@ -64,6 +64,7 @@ var SystemInfo = React.createClass({
         title      =  { this.props.title }
         size       =  { this.props.size }
         onMouseDownHolder = { this.props.onMouseDownHolder }
+        changeSize = { this.props.changeSize }
         refHolder = {this.props.refHolder} >
 
         <div className="wd-section wd-cpu-model">
