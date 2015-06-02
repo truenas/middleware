@@ -1,7 +1,7 @@
 {% load freeadmin %}
     {% for name, formset in formsets.items %}
     {% if formset.position = position %}
-    <tr>
+    <tr id="inline_{{ verbose_name }}_{{ name }}">
         <td colspan="2">
             <table>
                 {{ formset.instance.management_form }}
