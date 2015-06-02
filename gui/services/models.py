@@ -829,6 +829,15 @@ class iSCSITarget(Model):
         verbose_name=_("Target Alias"),
         help_text=_("Optional user-friendly string of the target."),
     )
+    iscsi_target_mode = models.CharField(
+        choices=(
+            ('iscsi', _('iSCSI')),
+            ('fc', _('Fiber Channel')),
+            ('both', _('Both')),
+        ),
+        default='iscsi',
+        max_length=20,
+    )
 
     class Meta:
         verbose_name = _("Target")
