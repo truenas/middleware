@@ -25,6 +25,12 @@ JAIL=$(basename $(realpath ${NANO_OBJ}/poudriere/etc/poudriere.d/jails/j))
 
 mkdir -p ${NANO_OBJ}/_.w/usr/ports/packages
 mount -t nullfs ${NANO_OBJ}/ports/packages/${JAIL}-${PORTS} ${NANO_OBJ}/_.w/usr/ports/packages  || exit 1
+echo "PACKAGES RIAK CS============="
+fetch -o ${NANO_OBJ}/_.w/usr/ports/packages/All/riak-cs-2.0.0-FreeBSD-amd64.tbz http://s3.amazonaws.com/downloads.basho.com/riak-cs/2.0/2.0.0/freebsd/9.2/riak-cs-2.0.0-FreeBSD-amd64.tbz
+echo "PACKAGES STANCION============="
+fetch -o ${NANO_OBJ}/_.w/usr/ports/packages/All/stanchion-2.0.0-FreeBSD-amd64.tbz http://s3.amazonaws.com/downloads.basho.com/stanchion/2.0/2.0.0/freebsd/9.2/stanchion-2.0.0-FreeBSD-amd64.tbz
+echo "PACKAGES RIAK CS CONTROL============="
+fetch -o ${NANO_OBJ}/_.w/usr/ports/packages/All/riak-cs-control-1.0.2-FreeBSD-amd64.tbz http://s3.amazonaws.com/downloads.basho.com/riak-cs-control/1.0/1.0.2/freebsd/9/riak-cs-control-1.0.2-FreeBSD-amd64.tbz
 
 set -e
 set -x
@@ -45,6 +51,12 @@ if [ -n "$WITH_PKGNG" ]; then
 	mkdir -p ${NANO_OBJ}/_.w/dev
 	chroot ${NANO_OBJ}/_.w /sbin/mount -t devfs devfs /dev
 	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install $PACKAGES_TO_INSTALL"
+echo "PACKAGES INSTALL RIAK CS CONTROL============="
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install /usr/ports/packages/All/riak-cs-control-1.0.2-FreeBSD-amd64.tbz"
+echo "PACKAGES INSTALL RIAK CS============="
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install /usr/ports/packages/All/riak-cs-2.0.0-FreeBSD-amd64.tbz"
+echo "PACKAGES INSTALL STANCION========="
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install /usr/ports/packages/All/stanchion-2.0.0-FreeBSD-amd64.tbz"
 	rm -f ${NANO_OBJ}/_.w/usr/local/etc/pkg.conf
 	umount ${NANO_OBJ}/_.w/dev
 
