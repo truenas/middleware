@@ -335,6 +335,7 @@ add_port_debug net/samba41 \
 add_port sysutils/lsof
 add_port sysutils/grub2-pcbsd
 add_port sysutils/beadm
+add_port net/mosh
 add_port net/py-pysphere
 add_port net/py-pyvmomi
 add_port sysutils/throttle
