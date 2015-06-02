@@ -91,6 +91,7 @@ add_port security/libgcrypt
 add_port databases/db48
 add_port security/cyrus-sasl2-gssapi
 add_port net/openldap24-sasl-client WITH_OPENSSL_PORT=y
+add_port net/nss_ldap
 add_port net/smbldap-tools
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UNSET+=FLAGS
 add_port lang/python27 OPTIONS_FILE_UNSET+=NLS
