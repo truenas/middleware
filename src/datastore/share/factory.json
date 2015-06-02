@@ -671,10 +671,7 @@
                 "builtin": true,
 				"rcng": {
 					"rc-scripts": "nginx"
-				},
-                "settings": [
-                    "service.nginx.*"
-                ]
+				}
             },
             "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
                 "name": "nfs",
@@ -684,10 +681,7 @@
                         "nfsd",
 						"mountd"
                     ]
-                },
-                "settings": [
-                    "service.nfs.*"
-                ]
+                }
             },
             "1B3133B1-F8F4-44C0-AFAE-4CEAD5C1F4EA": {
                 "name": "sshd",
@@ -695,10 +689,7 @@
                 "pidfile": "/var/run/sshd.pid",
 				"rcng": {
 					"rc-scripts": "sshd"
-				},
-                "settings": [
-                    "service.sshd.*"
-                ]
+				}
             },
             "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
                 "name": "ftp",
@@ -706,10 +697,7 @@
                 "pidfile": "/var/run/proftpd.pid",
 				"rcng": {
 					"rc-scripts": "proftpd"
-				},
-                "settings": [
-                    "service.ftp.*"
-                ]
+				}
             },
             "702DD24D-BF1A-4D36-B69B-C96971B37A9D": {
                 "name": "snmp",
@@ -717,10 +705,7 @@
                 "pidfile": "/var/run/net_snmpd.pid",
 				"rcng": {
 					"rc-scripts": "snmpd"
-				},
-                "settings": [
-                    "service.snmp.*"
-                ]
+				}
             },
 			"7498B5D8-457F-442B-BF48-ED29D8DB5FC5": {
 				"name": "collectd",

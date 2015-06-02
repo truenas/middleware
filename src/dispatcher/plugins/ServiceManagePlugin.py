@@ -33,6 +33,7 @@ from task import Task, Provider, TaskException, VerifyException, query
 from resources import Resource
 from dispatcher.rpc import RpcException, description, accepts, private
 from dispatcher.rpc import SchemaHelper as h
+from datastore.config import ConfigNode
 from lib.system import system, SubprocessException
 
 
@@ -94,12 +95,8 @@ class ServiceInfoProvider(Provider):
         if not svc:
             raise RpcException(errno.EINVAL, 'Invalid service name')
 
-        result = {}
-
-        for i in svc['settings']:
-            result.update(self.dispatcher.configstore.list_children(i))
-
-        return result
+        node = ConfigNode('service.{0}'.format(service), self.configstore)
+        return node
 
     @private
     @accepts(str)
@@ -201,18 +198,13 @@ class UpdateServiceConfigTask(Task):
 
     def run(self, service, updated_fields):
         service_def = self.datastore.get_one('service_definitions', ('name', '=', service))
-        for k, v in updated_fields.items():
-            if k not in service_def['settings'].keys():
-                raise TaskException(errno.EINVAL, 'Invalid setting {0}'.format(k))
-
-            self.configstore.set(k, v)
+        node = ConfigNode('service.{0}'.format(service), self.dispatcher.configstore)
+        node.update(updated_fields)
 
         self.dispatcher.dispatch_event('service.changed', {
             'operation': 'update',
             'ids': [service_def['id']]
         })
-
-        self.chain('service.manage', service, 'reload')
 
 
 def _init(dispatcher, plugin):
