@@ -837,6 +837,7 @@ class iSCSITarget(Model):
         ),
         default='iscsi',
         max_length=20,
+        verbose_name=_('Target Mode'),
     )
 
     class Meta:
