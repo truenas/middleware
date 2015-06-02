@@ -207,9 +207,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1d.png|
+|be1e.png|
 
-.. |be1d.png| image:: images/be1d.png
+.. |be1e.png| image:: images/be1e.png
 
 Each boot environment entry contains the following information:
 
@@ -223,11 +223,11 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Rename:** used to change the name of the boot environment.
 
-* **Clone:** used to create a copy of the highlighted boot environment.
-
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
   but won't be used on the next boot.
+
+* **Clone:** used to create a copy of the highlighted boot environment.
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
@@ -388,11 +388,6 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
-**Performance Test:** runs the `IOzone <http://iozone.org/>`_ write/rewrite and read/re-read tests. Since running these tests can affect performance, clicking
-this button will turn the screen red and warn that the tests can impact performance of a running system. For this reason, the tests should be run at a time
-that will least impact users. Once the tests are complete, which can take a few minutes, a pop-up message will prompt to save the results as a tarball.
-Uncompress the tar file and use the resources in :ref:`IOzone` to assist in interpreting the results of the file.
-
 **Figure 5.4b: Backup Configuration Screen**
 
 |backup1.png|
@@ -527,6 +522,8 @@ a Domain Controller, all of the domain controller state is stored there as well,
 |system5a.png|
 
 .. |system5a.png| image:: images/system5a.png
+
+.. note:: encrypted volumes will not be displayed in the "System dataset pool" drop-down menu.
 
 The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
@@ -846,8 +843,6 @@ whether or not it is an internal CA, whether or not the issuer is self-signed, t
 name of the CA, the date and time the CA was created, and the date and time the CA expires.
 
 If you click the entry for a CA, the following buttons become available:
-
-* **Edit:** can be used to edit the "Name", "Certificate", "Private Key", or "Serial" of the CA.
 
 * **Export Certificate:** will prompt to browse to the location, on the system being used to access the FreeNAS® system, to save a copy of the CA's
   X.509 certificate.

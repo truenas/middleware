@@ -1394,7 +1394,9 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 | Email subject             | string         | if "Send Email" box checked, subject of email updates                                                 |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-
+| Power Off UPS             | checkbox       | if checked, the UPS will also power off after shutting down the FreeNAS system                        |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 .. note:: for USB devices, the easiest way to determine the correct device name is to check the box "Show console messages" in
    :menuselection:`System --> Advanced`. Plug in the USB device and the console messages will give the name of the */dev/ugenX.X* device; where the X's are

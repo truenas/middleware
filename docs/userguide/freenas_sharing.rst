@@ -1167,9 +1167,9 @@ Target Global Configuration
 
 **Figure 10.5a: iSCSI Target Global Configuration Variables**
 
-|global.png|
+|global1.png|
 
-.. |global.png| image:: images/global.png
+.. |global1.png| image:: images/global1.png
 
 **Table 10.5a: Target Global Configuration Settings**
 
