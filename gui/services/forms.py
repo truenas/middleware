@@ -1574,6 +1574,9 @@ class iSCSITargetForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.iSCSITarget
+        widgets = {
+            'iscsi_target_mode': forms.widgets.RadioSelect(),
+        }
 
     def clean_iscsi_target_name(self):
         name = self.cleaned_data.get("iscsi_target_name").lower()
