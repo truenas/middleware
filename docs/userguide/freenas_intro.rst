@@ -69,7 +69,7 @@ Windows® is a registered trademark of Microsoft Corporation in the United State
 
 The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
 
-* Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Performance Test" button.
+* Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Import CA" button.
 
 * Menu selections are italicized and separated by arrows. For example: :menuselection:`System --> Information`.
 
@@ -330,7 +330,7 @@ that have occurred since 9.3-RELEASE.
 .. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
-* Samba was updated to `4.1.17 <https://www.samba.org/samba/history/samba-4.1.17.html>`_ which fixes a security vulnerability.
+* Samba was updated to `4.1.18 <https://www.samba.org/samba/history/samba-4.1.18.html>`_.
 
 * Netatalk was updated to `3.1.7 <http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.7.html>`_.
 
@@ -341,6 +341,8 @@ that have occurred since 9.3-RELEASE.
 * The mrsas(4) LSI MegaRAID driver was added.
 
 * Support for the Mach Xtreme MX-ES/MXUB3 and the Kingston DT100G2 USB drives has been added.
+
+* Support for LSI MegaRAID SAS passthrough has been added.
 
 * Man pages have been added and can be accessed from :ref:`Shell`.
 
@@ -366,6 +368,8 @@ that have occurred since 9.3-RELEASE.
 * A "Backup" button has been added to :menuselection:`System --> Advanced`.
 
 * The "Periodic Notification User" drop-down menu has been added to :menuselection:`System --> Advanced`.
+
+* The "Performance Test" button has been removed from :menuselection:`System --> Advanced`.
 
 * The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
 
@@ -416,6 +420,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "SNMP v3 Support" checkbox and the "Username" and "Password" fields have been added to :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
 
+* The "Power Off UPS" checkbox had been added to :menuselection:`Services --> UPS`.
+
 * The MediaBrowser Plugin has been renamed to Emby.
 
 * The :menuselection:`Jails --> Add Jails` button has been renamed to "Add Jail".
@@ -438,6 +444,8 @@ that have occurred since 9.3-RELEASE.
 * An alert will be generated when a new update becomes available.
 
 * An alert will be generated when a S.M.A.R.T. error occurs.
+
+* An alert will be generated if a Certificate Authority or certificate is invalid or malformed.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
