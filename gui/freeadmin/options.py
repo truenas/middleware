@@ -301,6 +301,8 @@ class BaseFreeAdmin(object):
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
+                    formset = inlineopts.get("formset")
+
                     _temp = __import__(
                         '%s.forms' % app,
                         globals(),
@@ -308,6 +310,12 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
+
+                    if formset:
+                        formset = getattr(_temp, formset)
+                    else:
+                        formset = FreeBaseInlineFormSet
+
                     extrakw = {
                         'can_delete': False
                     }
@@ -315,7 +323,7 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
-                        formset=FreeBaseInlineFormSet,
+                        formset=formset,
                         extra=0,
                         **extrakw)
                     try:
@@ -393,6 +401,8 @@ class BaseFreeAdmin(object):
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
+                    formset = inlineopts.get("formset")
+
                     _temp = __import__(
                         '%s.forms' % app,
                         globals(),
@@ -400,11 +410,17 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
+
+                    if formset:
+                        formset = getattr(_temp, formset)
+                    else:
+                        formset = FreeBaseInlineFormSet
+
                     fset_fac = inlineformset_factory(
                         m,
                         inline._meta.model,
                         form=inline,
-                        formset=FreeBaseInlineFormSet,
+                        formset=formset,
                         extra=1,
                         **extrakw)
                     fsname = 'formset_%s' % (
@@ -486,6 +502,8 @@ class BaseFreeAdmin(object):
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
+                    formset = inlineopts.get("formset")
+
                     _temp = __import__(
                         '%s.forms' % m._meta.app_label,
                         globals(),
@@ -493,6 +511,12 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
+
+                    if formset:
+                        formset = getattr(_temp, formset)
+                    else:
+                        formset = FreeBaseInlineFormSet
+
                     extrakw = {
                         'can_delete': True,
                     }
@@ -500,7 +524,7 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
-                        formset=FreeBaseInlineFormSet,
+                        formset=formset,
                         extra=0,
                         **extrakw)
                     try:
@@ -590,6 +614,8 @@ class BaseFreeAdmin(object):
                 for inlineopts in m._admin.inlines:
                     inline = inlineopts.get("form")
                     prefix = inlineopts.get("prefix")
+                    formset = inlineopts.get("formset")
+
                     _temp = __import__(
                         '%s.forms' % m._meta.app_label,
                         globals(),
@@ -597,6 +623,11 @@ class BaseFreeAdmin(object):
                         [inline],
                         -1)
                     inline = getattr(_temp, inline)
+
+                    if formset:
+                        formset = getattr(_temp, formset)
+                    else:
+                        formset = FreeBaseInlineFormSet
 
                     """
                     Do not add any extra empty form for the inline formset
@@ -619,7 +650,7 @@ class BaseFreeAdmin(object):
                         m,
                         inline._meta.model,
                         form=inline,
-                        formset=FreeBaseInlineFormSet,
+                        formset=formset,
                         extra=extra,
                         **extrakw)
                     fsname = 'formset_%s' % (
@@ -832,6 +863,7 @@ class BaseFreeAdmin(object):
         for inlineopts in m._admin.inlines:
             _inline = inlineopts.get("form")
             prefix = inlineopts.get("prefix")
+            formset = inlineopts.get("formset")
             if prefix == request.GET.get("fsname"):
                 _temp = __import__(
                     '%s.forms' % m._meta.app_label,
@@ -840,6 +872,10 @@ class BaseFreeAdmin(object):
                     [_inline],
                     -1)
                 inline = getattr(_temp, _inline)
+                if formset:
+                    formset = getattr(_temp, formset)
+                else:
+                    formset = FreeBaseInlineFormSet
                 break
 
         if inline:
@@ -847,7 +883,7 @@ class BaseFreeAdmin(object):
                 m,
                 inline._meta.model,
                 form=inline,
-                formset=FreeBaseInlineFormSet,
+                formset=formset,
                 extra=1)
             fsins = fset(prefix=prefix)
 

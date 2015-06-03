@@ -28,13 +28,9 @@ import glob
 import logging
 import os
 import re
-import shutil
 import subprocess
-import sys
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import validate_email
-from django.forms import FileField
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
     ugettext_lazy as _, ungettext_lazy
@@ -53,9 +49,9 @@ from freenasUI.common.system import (
     validate_netbios_names
 )
 from freenasUI.freeadmin.forms import DirectoryBrowser
+from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import Interfaces
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, MountPoint, Disk
@@ -117,7 +113,7 @@ class servicesForm(ModelForm):
             started = True
 
         elif obj.srv_service == 'domaincontroller':
-            if obj.srv_enable == True:
+            if obj.srv_enable is True:
                 if _notifier._started_domaincontroller():
                     started = _notifier.restart("domaincontroller")
                 else:
@@ -126,7 +122,7 @@ class servicesForm(ModelForm):
                 started = _notifier.stop("domaincontroller")
 
         elif obj.srv_service == 'domaincontroller':
-            if obj.srv_enable == True:
+            if obj.srv_enable is True:
                 if _notifier._started_domaincontroller():
                     started = _notifier.restart("domaincontroller")
                 else:
@@ -177,7 +173,7 @@ class CIFSForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = [ 'cifs_SID', 'cifs_srv_bindip' ]
+        exclude = ['cifs_SID', 'cifs_srv_bindip']
         model = models.CIFS
 
     def __init__(self, *args, **kwargs):
@@ -191,7 +187,7 @@ class CIFSForm(ModelForm):
                 )
         self.fields['cifs_srv_bindip'].choices = list(choices.IPChoices())
         if self.instance.id and self.instance.cifs_srv_bindip:
-            bindips = []  
+            bindips = []
             for ip in self.instance.cifs_srv_bindip:
                 bindips.append(ip.encode('utf-8'))
 
@@ -211,7 +207,7 @@ class CIFSForm(ModelForm):
         workgroup = self.cleaned_data.get("cifs_srv_workgroup").strip()
         if netbios and netbios.lower() == workgroup.lower():
             raise forms.ValidationError("NetBIOS and Workgroup must be unique")
-        try: 
+        try:
             validate_netbios_name(workgroup)
         except Exception as e:
             raise forms.ValidationError(_("workgroup: %s" % e))
@@ -219,7 +215,7 @@ class CIFSForm(ModelForm):
 
     def clean_cifs_srv_netbiosname(self):
         netbios = self.cleaned_data.get("cifs_srv_netbiosname")
-        try: 
+        try:
             validate_netbios_names(netbios)
         except Exception as e:
             raise forms.ValidationError(_("netbiosname: %s" % e))
@@ -303,13 +299,13 @@ class AFPForm(ModelForm):
         if hdir and not home:
             self._errors['afp_srv_homedir_enable'] = self.error_class()
             self._errors['afp_srv_homedir_enable'] += self.error_class([
-                    _("This field is required for \"Home directories\"."),
+                _("This field is required for \"Home directories\"."),
             ])
             cleaned_data.pop('afp_srv_homedir_enable', None)
         if home and not hdir:
             self._errors['afp_srv_homedir'] = self.error_class()
             self._errors['afp_srv_homedir'] += self.error_class([
-                    _("This field is required for \"Home directories\"."),
+                _("This field is required for \"Home directories\"."),
             ])
             cleaned_data.pop('afp_srv_homedir', None)
         return cleaned_data
@@ -470,7 +466,7 @@ class FTPForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
         ftp_tls = cdata.get("ftp_tls")
-        if not ftp_tls: 
+        if not ftp_tls:
             return cdata
 
         certificate = cdata["ftp_ssltls_certificate"]
@@ -638,9 +634,9 @@ class DynamicDNSForm(ModelForm):
                 if "#" in element:
                     subarray = element.split('#')
                     if len(subarray) != 2:
-                       raise forms.ValidationError(
-                        _("Incorrect usage of the # delimiter.")
-                    )
+                        raise forms.ValidationError(
+                            _("Incorrect usage of the # delimiter.")
+                        )
                     else:
                         if re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', subarray[0].strip()):
                             if subarray[1].strip().isalnum():
@@ -882,7 +878,7 @@ class UPSForm(ModelForm):
         return email
 
     def save(self):
-        obj = super(UPSForm, self).save()
+        super(UPSForm, self).save()
         started = notifier().restart("ups")
         if (
             started is False
@@ -900,7 +896,7 @@ class LLDPForm(ModelForm):
 
     def save(self):
         super(LLDPForm, self).save()
-        started = notifier().restart("lldp")
+        notifier().restart("lldp")
 
 
 class iSCSITargetAuthCredentialForm(ModelForm):
@@ -957,8 +953,10 @@ class iSCSITargetAuthCredentialForm(ModelForm):
         return secret2
 
     def clean_iscsi_target_auth_secret2(self):
-        if (len(self._clean_secret_common("iscsi_target_auth_secret")) < 12 or
-            len(self._clean_secret_common("iscsi_target_auth_secret")) > 16):
+        if (
+            len(self._clean_secret_common("iscsi_target_auth_secret")) < 12 or
+            len(self._clean_secret_common("iscsi_target_auth_secret")) > 16
+        ):
             raise forms.ValidationError(_("Secret must be between 12 and 16 characters."))
         return self._clean_secret_common("iscsi_target_auth_secret")
 
@@ -1082,7 +1080,6 @@ class iSCSITargetToExtentForm(ModelForm):
 
 
 class iSCSITargetGlobalConfigurationForm(ModelForm):
-    iscsi_discoveryauthgroup = forms.ChoiceField(label=_("Discovery Auth Group"))
 
     class Meta:
         fields = '__all__'
@@ -1090,11 +1087,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         widgets = {
             'iscsi_pool_avail_threshold': forms.widgets.TextInput(),
         }
-
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        self.fields['iscsi_discoveryauthgroup'].required = False
-        self.fields['iscsi_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
     def _clean_number_range(self, field, start, end):
         f = self.cleaned_data[field]
@@ -1107,18 +1099,6 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
                     }
             )
         return f
-
-    def clean_iscsi_discoveryauthgroup(self):
-        discoverymethod = self.cleaned_data['iscsi_discoveryauthmethod']
-        discoverygroup = self.cleaned_data['iscsi_discoveryauthgroup']
-        if discoverygroup in ('', None):
-            return None
-        if discoverymethod in ('CHAP', 'CHAP Mutual'):
-            if int(discoverygroup) == -1:
-                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
-        elif int(discoverygroup) == -1:
-            return None
-        return discoverygroup
 
     def clean_iscsi_isns_servers(self):
         servers = self.cleaned_data.get('iscsi_isns_servers')
@@ -1193,7 +1173,25 @@ class iSCSITargetExtentForm(ModelForm):
         super(iSCSITargetExtentForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder.remove('iscsi_target_extent_type')
         self.fields.keyOrder.insert(1, 'iscsi_target_extent_type')
+
         if self.instance.id:
+            try:
+                nic = list(choices.NICChoices(nolagg=True,
+                                              novlan=True,
+                                              exclude_configured=False))[0][0]
+                mac = subprocess.Popen("ifconfig %s ether| grep ether | "
+                                       "awk '{print $2}'|tr -d :" % (nic, ),
+                                       shell=True,
+                                       stdout=subprocess.PIPE).communicate()[0]
+                ltg = models.iSCSITargetExtent.objects.order_by('-id')
+                if ltg.count() > 0:
+                    lid = ltg[0].id
+                else:
+                    lid = 0
+                self.fields['iscsi_target_extent_serial'].initial = mac.strip() + "%.2d" % lid
+            except:
+                self.fields['iscsi_target_extent_serial'].initial = "10000001"
+
             if self.instance.iscsi_target_extent_type == 'File':
                 self.fields['iscsi_target_extent_type'].initial = 'File'
             else:
@@ -1433,6 +1431,9 @@ iSCSITargetExtentForm.base_fields.keyOrder.insert(2, 'iscsi_target_extent_disk')
 
 
 class iSCSITargetPortalForm(ModelForm):
+    iscsi_target_portal_discoveryauthgroup = forms.ChoiceField(
+        label=_("Discovery Auth Group")
+    )
 
     class Meta:
         fields = '__all__'
@@ -1445,6 +1446,21 @@ class iSCSITargetPortalForm(ModelForm):
         super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
         self.fields["iscsi_target_portal_tag"].initial = (
             models.iSCSITargetPortal.objects.all().count() + 1)
+        self.fields['iscsi_target_portal_discoveryauthgroup'].required = False
+        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+    def clean_iscsi_target_portal_discoveryauthgroup(self):
+        discoverymethod = self.cleaned_data['iscsi_target_portal_discoveryauthmethod']
+        discoverygroup = self.cleaned_data['iscsi_target_portal_discoveryauthgroup']
+        if discoverygroup in ('', None):
+            return None
+        if discoverymethod in ('CHAP', 'CHAP Mutual'):
+            if int(discoverygroup) == -1:
+                raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
+        elif int(discoverygroup) == -1:
+            return None
+        return discoverygroup
+
 
     def clean_iscsi_target_portal_tag(self):
         tag = self.cleaned_data["iscsi_target_portal_tag"]
@@ -1554,36 +1570,33 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
             )
 
 
-class iSCSITargetForm(ModelForm):
+class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):
 
-    iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
+    def clean(self):
+        rv = super(iSCSITargetGroupsInlineFormSet, self).clean()
+        if self._fparent.data and self._fparent.data.get(
+            'iscsi_target_mode'
+        ) == 'fc':
+            self._errors = []
+            for form in self.forms:
+                form._errors = []
+        return rv
+
+
+class iSCSITargetForm(ModelForm):
 
     class Meta:
         fields = '__all__'
         model = models.iSCSITarget
-        exclude = ('iscsi_target_initialdigest', 'iscsi_target_type')
+        widgets = {
+            'iscsi_target_mode': forms.widgets.RadioSelect(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetForm, self).__init__(*args, **kwargs)
-        if 'instance' not in kwargs:
-            try:
-                nic = list(choices.NICChoices(nolagg=True,
-                                              novlan=True,
-                                              exclude_configured=False))[0][0]
-                mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                                       "awk '{print $2}'|tr -d :" % (nic, ),
-                                       shell=True,
-                                       stdout=subprocess.PIPE).communicate()[0]
-                ltg = models.iSCSITarget.objects.order_by('-id')
-                if ltg.count() > 0:
-                    lid = ltg[0].id
-                else:
-                    lid = 0
-                self.fields['iscsi_target_serial'].initial = mac.strip() + "%.2d" % lid
-            except:
-                self.fields['iscsi_target_serial'].initial = "10000001"
-        self.fields['iscsi_target_authgroup'].required = False
-        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+        self.fields['iscsi_target_mode'].widget.attrs['onChange'] = (
+            'targetMode();'
+        )
 
     def clean_iscsi_target_name(self):
         name = self.cleaned_data.get("iscsi_target_name").lower()
@@ -1597,24 +1610,6 @@ class iSCSITargetForm(ModelForm):
                 _(u'A target with that name already exists.')
             )
         return name
-
-    def clean_iscsi_target_authgroup(self):
-        method = self.cleaned_data['iscsi_target_authtype']
-        group = self.cleaned_data.get('iscsi_target_authgroup')
-        if group in ('', None):
-            return None
-        if method == 'CHAP Mutual' and group:
-            auth = models.iSCSITargetAuthCredential.objects.get(id=group)
-            if not auth.iscsi_target_auth_peeruser:
-                raise forms.ValidationError(_(
-                    'This authentication group does not support CHAP MUTUAL'
-                ))
-        if method in ('CHAP', 'CHAP Mutual'):
-            if group != '' and int(group) == -1:
-                raise forms.ValidationError(_("This field is required."))
-        elif group != '' and int(group) == -1:
-            return None
-        return int(group)
 
     def clean_iscsi_target_alias(self):
         alias = self.cleaned_data['iscsi_target_alias']
@@ -1636,6 +1631,39 @@ class iSCSITargetForm(ModelForm):
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+
+
+class iSCSITargetGroupsForm(ModelForm):
+
+    iscsi_target_authgroup = forms.ChoiceField(label=_("Authentication Group number"))
+
+    class Meta:
+        fields = '__all__'
+        model = models.iSCSITargetGroups
+        exclude = ('iscsi_target_initialdigest', )
+
+    def __init__(self, *args, **kwargs):
+        super(iSCSITargetGroupsForm, self).__init__(*args, **kwargs)
+        self.fields['iscsi_target_authgroup'].required = False
+        self.fields['iscsi_target_authgroup'].choices = [(-1, _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
+
+    def clean_iscsi_target_authgroup(self):
+        method = self.cleaned_data['iscsi_target_authtype']
+        group = self.cleaned_data.get('iscsi_target_authgroup')
+        if group in ('', None):
+            return None
+        if method == 'CHAP Mutual' and group:
+            auth = models.iSCSITargetAuthCredential.objects.get(id=group)
+            if not auth.iscsi_target_auth_peeruser:
+                raise forms.ValidationError(_(
+                    'This authentication group does not support CHAP MUTUAL'
+                ))
+        if method in ('CHAP', 'CHAP Mutual'):
+            if group != '' and int(group) == -1:
+                raise forms.ValidationError(_("This field is required."))
+        elif group != '' and int(group) == -1:
+            return None
+        return int(group)
 
 
 class ExtentDelete(Form):
@@ -1780,6 +1808,7 @@ class DomainControllerForm(ModelForm):
 
         if self.__dc_passwd_changed():
             Samba4().set_administrator_password()
+
 
 class WebDAVForm(ModelForm):
     webdav_password2 = forms.CharField(

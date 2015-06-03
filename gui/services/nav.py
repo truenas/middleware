@@ -11,8 +11,9 @@ ICON = u'ServicesIcon'
 BLACKLIST = [
     'services',
     'iSCSITargetPortalIP',
+    'iSCSITargetGroups',
     'RPCToken',
-    'CIFS'
+    'CIFS',
 ]
 ORDER = 40
 

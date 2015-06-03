@@ -69,7 +69,9 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
-from freenasUI.services.models import iSCSITargetPortal, iSCSITargetPortalIP
+from freenasUI.services.models import (
+    iSCSITargetPortal, iSCSITargetPortalIP, FiberChannelToTarget
+)
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
 from freenasUI.storage.forms import (
@@ -1386,24 +1388,6 @@ class ISCSITargetResourceMixin(object):
 
     class Meta:
         resource_name = 'services/iscsi/target'
-
-    def dehydrate(self, bundle):
-        bundle = super(ISCSITargetResourceMixin, self).dehydrate(bundle)
-        if self.is_webclient(bundle.request):
-            bundle.data['iscsi_target_portalgroup'] = (
-                bundle.obj.iscsi_target_portalgroup
-            )
-            bundle.data['iscsi_target_initiatorgroup'] = (
-                bundle.obj.iscsi_target_initiatorgroup
-            )
-        else:
-            bundle.data['iscsi_target_portalgroup'] = (
-                bundle.obj.iscsi_target_portalgroup.id
-            )
-            bundle.data['iscsi_target_initiatorgroup'] = (
-                bundle.obj.iscsi_target_initiatorgroup.id
-            )
-        return bundle
 
 
 class ISCSIPortalResourceMixin(object):
@@ -2919,3 +2903,100 @@ class UpdateResourceMixin(NestedMixin):
             request,
             data,
         )
+
+
+class FCPort(object):
+
+    def __init__(self, port=None, name=None, mode=None, target=None):
+        self.port = port
+        self.name = name
+        self.mode = mode
+        self.target = target
+
+
+class FCPortsResource(DojoResource):
+
+    id = fields.CharField(attribute='port')
+    port = fields.CharField(attribute='port')
+    name = fields.CharField(attribute='name')
+    mode = fields.CharField(attribute='mode')
+    target = fields.IntegerField(attribute='target', null=True)
+
+    class Meta:
+        allowed_methods = ['get', 'put']
+        object_class = FCPort
+        resource_name = 'sharing/fcports'
+        max_limit = 0
+
+    def get_list(self, request, **kwargs):
+        from lxml import etree
+
+        fcportmap = {}
+        for fbtt in FiberChannelToTarget.objects.all():
+            fcportmap[fbtt.fc_port] = fbtt.fc_target
+
+        proc = subprocess.Popen([
+            "/usr/sbin/ctladm",
+            "portlist",
+            "-x",
+        ], stdout=subprocess.PIPE)
+        data = proc.communicate()[0]
+        doc = etree.fromstring(data)
+        results = []
+        for e in doc.xpath("//frontend_type[text()='tpc']"):
+            tag_port = e.getparent()
+            name = tag_port.xpath('./port_name')[0].text
+            port = tag_port.get('id')
+            if port in fcportmap:
+                mode = 'TARGET'
+                target = fcportmap[port].id
+            else:
+                mode = 'INITIATOR'
+                target = None
+            results.append(FCPort(
+                port=tag_port.get('id'),
+                name=name,
+                mode=mode,
+                target=target,
+            ))
+
+        limit = self._meta.limit
+        if 'HTTP_X_RANGE' in request.META:
+            _range = request.META['HTTP_X_RANGE'].split('-')
+            if len(_range) > 1 and _range[1] == '':
+                limit = 0
+
+        paginator = self._meta.paginator_class(
+            request,
+            results,
+            resource_uri=self.get_resource_uri(),
+            limit=limit,
+            max_limit=self._meta.max_limit,
+            collection_name=self._meta.collection_name,
+        )
+        to_be_serialized = paginator.page()
+        # Dehydrate the bundles in preparation for serialization.
+        bundles = []
+
+        for obj in to_be_serialized[self._meta.collection_name]:
+            bundle = self.build_bundle(obj=obj, request=request)
+            bundles.append(self.full_dehydrate(bundle))
+
+        length = len(bundles)
+        to_be_serialized[self._meta.collection_name] = bundles
+        to_be_serialized = self.alter_list_data_to_serialize(
+            request,
+            to_be_serialized
+        )
+
+        response = self.create_response(request, to_be_serialized)
+        response['Content-Range'] = 'items %d-%d/%d' % (
+            paginator.offset,
+            paginator.offset+length-1,
+            len(results)
+        )
+        return response
+
+
+class FiberChannelToTargetResourceMixin:
+    pass

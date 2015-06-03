@@ -563,6 +563,20 @@ require([
 
     }
 
+    targetMode = function() {
+
+      var q = query('input[name=iscsi_target_mode]:checked');
+      if(q.length == 0) return false;
+      var mode = q[0];
+
+      if(mode.value == 'fc') {
+        domStyle.set('inline_Target_formset_iscsitargetgroups', 'display', 'none');
+      } else {
+        domStyle.set('inline_Target_formset_iscsitargetgroups', 'display', '');
+      }
+
+    }
+
     jail_is_linuxjail = function() {
         var type = registry.byId("id_jail_type");
         if (!type) {

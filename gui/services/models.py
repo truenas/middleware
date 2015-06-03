@@ -431,18 +431,6 @@ class iSCSITargetGlobalConfiguration(Model):
                     "target " "name that is not starting with 'iqn.', "
                     "'eui.' or 'naa.'"),
     )
-    iscsi_discoveryauthmethod = models.CharField(
-        max_length=120,
-        choices=choices.AUTHMETHOD_CHOICES,
-        default='None',
-        verbose_name=_("Discovery Auth Method")
-    )
-    iscsi_discoveryauthgroup = models.IntegerField(
-        max_length=120,
-        verbose_name=_("Discovery Auth Group"),
-        blank=True,
-        null=True,
-    )
     iscsi_isns_servers = models.TextField(
         verbose_name=_('iSNS Servers'),
         blank=True,
@@ -453,7 +441,10 @@ class iSCSITargetGlobalConfiguration(Model):
         blank=True,
         null=True,
         validators=[MinValueValidator(1), MaxValueValidator(99)],
-        help_text=_("Remaining ZFS pool capacity warning threshold when using zvol extents"),
+        help_text=_(
+            "Remaining ZFS pool capacity warning threshold when using zvol "
+            "extents"
+        ),
     )
 
     class Meta:
@@ -474,6 +465,12 @@ class iSCSITargetExtent(Model):
         unique=True,
         verbose_name=_("Extent Name"),
         help_text=_("String identifier of the extent."),
+    )
+    iscsi_target_extent_serial = models.CharField(
+        verbose_name=_("Serial"),
+        max_length=16,
+        default="10000001",
+        help_text=_("Serial number for the logical unit")
     )
     iscsi_target_extent_type = models.CharField(
         max_length=120,
@@ -618,6 +615,18 @@ class iSCSITargetPortal(Model):
         blank=True,
         verbose_name=_("Comment"),
         help_text=_("You may enter a description here for your reference."),
+    )
+    iscsi_target_portal_discoveryauthmethod = models.CharField(
+        max_length=120,
+        choices=choices.AUTHMETHOD_CHOICES,
+        default='None',
+        verbose_name=_("Discovery Auth Method")
+    )
+    iscsi_target_portal_discoveryauthgroup = models.IntegerField(
+        max_length=120,
+        verbose_name=_("Discovery Auth Group"),
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -820,11 +829,43 @@ class iSCSITarget(Model):
         verbose_name=_("Target Alias"),
         help_text=_("Optional user-friendly string of the target."),
     )
-    iscsi_target_serial = models.CharField(
-        verbose_name=_("Serial"),
-        max_length=16,
-        default="10000001",
-        help_text=_("Serial number for the logical unit")
+    iscsi_target_mode = models.CharField(
+        choices=(
+            ('iscsi', _('iSCSI')),
+            ('fc', _('Fiber Channel')),
+            ('both', _('Both')),
+        ),
+        default='iscsi',
+        max_length=20,
+        verbose_name=_('Target Mode'),
+    )
+
+    class Meta:
+        verbose_name = _("Target")
+        verbose_name_plural = _("Targets")
+        ordering = ['iscsi_target_name']
+
+    def __unicode__(self):
+        return self.iscsi_target_name
+
+    def delete(self):
+        for te in iSCSITargetToExtent.objects.filter(iscsi_target=self):
+            te.delete()
+        super(iSCSITarget, self).delete()
+        started = notifier().reload("iscsitarget")
+        if started is False and services.objects.get(
+                srv_service='iscsitarget').srv_enable:
+            raise ServiceFailed(
+                "iscsitarget",
+                _("The iSCSI service failed to reload.")
+            )
+
+
+class iSCSITargetGroups(Model):
+    iscsi_target = models.ForeignKey(
+        iSCSITarget,
+        verbose_name=_("Target"),
+        help_text=_("Target this group belongs to"),
     )
     iscsi_target_portalgroup = models.ForeignKey(
         iSCSITargetPortal,
@@ -859,22 +900,11 @@ class iSCSITarget(Model):
     )
 
     class Meta:
-        verbose_name = _("Target")
-        verbose_name_plural = _("Targets")
-        ordering = ['iscsi_target_name']
+        verbose_name = _("iSCSI Groups")
+        verbose_name_plural = _("iSCSI Groups")
 
-    def __unicode__(self):
-        return self.iscsi_target_name
-
-    def delete(self):
-        for te in iSCSITargetToExtent.objects.filter(iscsi_target=self):
-            te.delete()
-        super(iSCSITarget, self).delete()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
+    class FreeAdmin:
+        icon_model = 'SettingsIcon'
 
 
 class iSCSITargetToExtent(Model):
@@ -907,6 +937,22 @@ class iSCSITargetToExtent(Model):
                 srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget",
                                 _("The iSCSI service failed to reload."))
+
+
+class FiberChannelToTarget(Model):
+    fc_port = models.CharField(
+        verbose_name=_('Port'),
+        max_length=10,
+    )
+    fc_target = models.ForeignKey(
+        iSCSITarget,
+        verbose_name=_("Target"),
+        help_text=_("Target this extent belongs to"),
+    )
+
+    class Meta:
+        verbose_name = _('Fiber Channel Target')
+        verbose_name_plural = _('Fiber Channel Targets')
 
 
 class DynamicDNS(Model):
