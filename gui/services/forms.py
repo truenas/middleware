@@ -56,6 +56,7 @@ from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Volume, MountPoint, Disk
 from freenasUI.storage.widgets import UnixPermissionField
+from freenasUI.support.utils import fc_enabled
 from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
@@ -1597,6 +1598,9 @@ class iSCSITargetForm(ModelForm):
         self.fields['iscsi_target_mode'].widget.attrs['onChange'] = (
             'targetMode();'
         )
+        if not fc_enabled():
+            self.fields['iscsi_target_mode'].initial = 'iscsi'
+            self.fields['iscsi_target_mode'].widget = forms.widgets.HiddenInput()
 
     def clean_iscsi_target_name(self):
         name = self.cleaned_data.get("iscsi_target_name").lower()
