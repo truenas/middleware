@@ -499,6 +499,8 @@
 			"server.token_lifetime": 600,
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
+            "update.train": "FreeNAS-10-Nightlies",
+            "update.check_auto": true,
 	    "mail.server": "",
 	    "mail.port": 25,
 	    "mail.encryption": "PLAIN",

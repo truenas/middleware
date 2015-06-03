@@ -28,19 +28,53 @@
 import errno
 import os
 import sys
-from task import (Provider, Task, ProgressTask, TaskException,
-                  VerifyException, query)
+import re
+from task import (Provider, Task, ProgressTask, TaskException, VerifyException)
 from dispatcher.rpc import (RpcException, description, accepts,
-                            returns)
+                            returns, SchemaHelper as h)
 from lib.system import system
 
 sys.path.append('/usr/local/lib')
 from freenasOS import Configuration
+from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
     ActivateClone,
     CheckForUpdates,
     DeleteClone,
 )
+
+
+@description("Utility function to parse an available changelog")
+def parse_changelog(changelog, start='', end=''):
+    regexp = r'### START (\S+)(.+?)### END \1'
+    reg = re.findall(regexp, changelog, re.S | re.M)
+
+    if not reg:
+        return None
+
+    changelog = None
+    for seq, changes in reg:
+        if not changes.strip('\n'):
+            continue
+        if seq == start:
+            # Once we found the right one, we start accumulating
+            changelog = ''
+        elif changelog is not None:
+            changelog += changes.strip('\n') + '\n'
+        if seq == end:
+            break
+
+    return changelog
+
+
+@description("Utility to get and eventually parse a changelog if available")
+def get_changelog(train, start='', end=''):
+    conf = Configuration.Configuration()
+    changelog = conf.GetChangeLog(train=train)
+    if not changelog:
+        return None
+
+    return parse_changelog(changelog.read(), start, end)
 
 
 # The handler(s) below is/are taken from the freenas 9.3 code
@@ -59,35 +93,137 @@ class CheckUpdateHandler(object):
         })
 
     def output(self):
-        output = ''
+        output = None
         for c in self.changes:
-            if c['operation'] == 'upgrade':
-                output += '%s: %s-%s -> %s-%s\n' % (
-                    'Upgrade',
-                    c['old'].Name(),
-                    c['old'].Version(),
-                    c['new'].Name(),
-                    c['new'].Version(),
-                )
+            opdict = {
+                'operation': c['operation'],
+                'prev_name': c['old'].Name(),
+                'prev_ver': c['old'].Version(),
+                'new_name': c['new'].Name(),
+                'new_ver': c['new'].Version()
+            }
+            output.append(opdict)
         return output
 
 
-@description("Provides information of Available Updates and Trains")
+@description("Provides System Updater Configuration")
 class UpdateProvider(Provider):
 
+    @returns(str)
     def get_current_train(self):
-        conf = Configuration.Configuration()
-        return conf.CurrentTrain()
+        return self.dispatcher.configstore.get('update.train')
 
-    def check_now_for_updates(self):
-        handler = CheckUpdateHandler()
-        update = CheckForUpdates(
-            handler=handler.call,
-            train=self.get_current_train(),
+    @returns(h.ref('update'))
+    def get_config(self):
+        return {
+            'train': self.dispatcher.configstore.get('update.train'),
+            'updateCheckAuto': self.dispatcher.configstore.get(
+                'update.check_auto'),
+        }
+
+
+@description("Set the System Updater Cofiguration Settings")
+@accepts(h.ref('update'))
+class UpdateConfigureTask(Task):
+
+    def describe(self):
+        return "System Updater Configure Settings"
+
+    def verify(self, props):
+        # TODO: Fix this verify's resource allocation as unique task
+        train_to_set = props.get('train')
+        conf = Configuration.Configuration()
+        conf.LoadTrainsConfig()
+        trains = conf.AvailableTrains() or []
+        if trains:
+            trains = trains.keys()
+        if train_to_set not in trains:
+            raise VerifyException(
+                errno.ENOENT,
+                '{0} is not a valid train'.format(train_to_set))
+        return ['']
+
+    def run(self, props):
+        self.dispatcher.configstore.set(
+            'update.train',
+            props.get('train'),
         )
+        self.dispatcher.configstore.set(
+            'update.check_auto',
+            props.get('updateCheckAuto'),
+        )
+        self.dispatcher.dispatch_event('update.changed', {
+            'operation': 'update',
+            'ids': ['update'],
+        })
+
+
+@description("Checks for Available Updates and returns if update is availabe" +
+             " and if yes returns information on operations that will be" +
+             " performed during the update")
+@accepts()
+class CheckUpdateTask(Task):
+    def describe(self):
+        return "Checks for Updates and Reports Operations to be performed"
+
+    def verify(self):
+        # TODO: Fix this verify's resource allocation as unique task
+        return ['']
+
+    def run(self):
+        conf = Configuration.Configuration()
+        update_ops = None
+        handler = CheckUpdateHandler()
         # Fix get_current_train() with datastore object of user specified train
+        train = self.dispatcher.configstore.get('update.train')
+        try:
+            update = CheckForUpdates(
+                handler=handler.call,
+                train=train,
+            )
+            network = True
+        except UpdateManifestNotFound:
+            update = False
+            network = False
         if update:
-            return handler.output()
+            update_ops = handler.output()
+            sys_mani = conf.SystemManifest()
+            if sys_mani:
+                sequence = sys_mani.Sequence()
+            else:
+                sequence = ''
+            changelog = get_changelog(train,
+                                      start=sequence,
+                                      end=update.Sequence())
+        else:
+            changelog = None
+        return {
+            'updateAvailable': True if update else False,
+            'network': network,
+            'updateOperations': update_ops,
+            'changelog': changelog,
+        }
+
+
+@description("Downloads Updates for the current system update train")
+@accepts()
+class DownloadUpdateTask(ProgressTask):
+    def describe(self):
+        return "Downloads the Updates and caches them to apply when needed"
+
+    def verify(self):
+        # TODO: Fix this verify's resource allocation as unique task
+        return ['']
+
+    def run(self):
+        self.progress = 0
+        self.message = 'Executing...'
+        # Fix cache_dir with either this or "sys_dataset_path/update" path
+        cache_dir = '/var/tmp/update'
+        train = self.dispatcher.configstore.get('update.train')
+        # To be continued after discussion with Sef
+
+
 
 
 # Fix this when the fn10 freenas-pkg tools is updated by sef
@@ -112,8 +248,19 @@ class UpdateTask(Task):
 
 
 def _init(dispatcher, plugin):
+    # Register Schemas
+    plugin.register_schema_definition('update', {
+        'type': 'object',
+        'properties': {
+            'train': {'type': 'string'},
+            'updateCheckAuto': {'type': 'boolean'},
+        },
+    })
     # Register providers
     plugin.register_provider("update", UpdateProvider)
 
     # Register task handlers
+    plugin.register_task_handler("update.configure", UpdateConfigureTask)
+    plugin.register_task_handler("update.check", CheckUpdateTask)
+    plugin.register_task_handler("update.download", DownloadUpdateTask)
     plugin.register_task_handler("update.update", UpdateTask)
