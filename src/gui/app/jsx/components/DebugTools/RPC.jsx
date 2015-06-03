@@ -85,7 +85,9 @@ var RPC = React.createClass(
       // The below is hack to avoid the single-click event's call to
       // handleRPCSubmit to assign a SyntheticMouseEvent to val
       // Fix if possible.
-      if ( typeof val === "object" ) { val = this.state.methodValue }
+      if ( typeof val === "object" || typeof val === "undefined" ) {
+        val = this.state.methodValue
+      }
       this.setState({ submissionPending: true });
 
       MiddlewareClient.request( val
@@ -107,8 +109,14 @@ var RPC = React.createClass(
       this.handleRPCSubmit( rpcString );
     }
 
-  , optionSelected: function () {
+  , optionSelected: function ( ) {
       this.setState({ methodValue: arguments[0].trim() });
+    }
+
+  , handleInputKeyPress: function ( event ) {
+      if ( event.which === 13 ) {
+        this.handleRPCSubmit();
+      }
     }
 
   , handleArgsInputChange: function ( event ) {
@@ -177,6 +185,7 @@ var RPC = React.createClass(
                   className="typeahead-list"
                   maxVisible={ 7 }
                   onOptionSelected={ this.optionSelected }
+                  onKeyPress={ this.handleInputKeyPress }
                   customClasses={{ input     : "typeahead-text-input"
                                  , results   : "typeahead-list__container"
                                  , listItem  : "typeahead-list__item"

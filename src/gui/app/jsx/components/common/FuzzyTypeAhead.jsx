@@ -237,6 +237,7 @@ var FuzzyTypeAhead = React.createClass(
                , onOptionSelected  : React.PropTypes.func
                , onKeyDown         : React.PropTypes.func
                , filterOption      : React.PropTypes.func
+               , onKeyPress        : React.PropTypes.func
     }
 
   , getDefaultProps: function ( ) {
@@ -248,6 +249,7 @@ var FuzzyTypeAhead = React.createClass(
              , onOptionSelected  : function ( option ) {}
              , onKeyDown         : function ( event ) {}
              , filterOption      : null
+             , onKeyPress        : function ( event ) {}
       };
     }
 
@@ -456,6 +458,7 @@ var FuzzyTypeAhead = React.createClass(
               placeholder  = { this.props.placeholder }
               className    = { inputClassList }
               value        = { this.state.entryValue }
+              onKeyPress   = { this.props.onKeyPress }
               onChange     = { this._onTextEntryUpdated }
               onKeyDown    = { this._onKeyDown } />
           { this._renderIncrementalSearchResults() }
