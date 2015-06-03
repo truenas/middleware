@@ -132,7 +132,7 @@ add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port devel/py-sysctl
 add_port www/py-flup
-add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
+add_port www/py-django16 OPTIONS_FILE_SET+=FASTCGI
 add_port www/py-dojango
 add_port www/dojo
 add_port databases/py-south
