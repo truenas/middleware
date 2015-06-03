@@ -157,6 +157,9 @@ class SSSDBase(object):
 
 
 class SSSDSectionBase(SSSDBase):
+    def section_types(self):
+        return ('nss', 'pam', 'sudo', 'ssh')
+
     def add_newline(self):
         self._config.append('\n')
 
@@ -247,7 +250,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
         self.domains = string.join(domains, ',')
 
     def add_service(self, service):
-        if not service in ('nss', 'pam', 'sudo', 'ssh'):
+        if not service in self.section_types():
             return
         if not self.services:
             self.services = service
@@ -272,6 +275,14 @@ class SSSDSectionSSSD(SSSDSectionBase):
             else:
                 services.append(service)
         self.services = string.join(services, ',')
+
+    def get_services(self):
+        services = []
+        self_services = self.services.split(',')
+        for s in self_services:
+            s = s.strip()  
+            services.append(s)
+        return services
 
 
 class SSSDServiceSectionBase(SSSDSectionBase):
@@ -363,6 +374,7 @@ class SSSDSectionContainer(object):
                     section[key] = value
                     return
             self.sections.append({ name : value })
+
         else:
             super(SSSDSectionContainer, self).__setitem__(name, value)
 
@@ -395,11 +407,18 @@ class SSSDSectionContainer(object):
         for section in self.sections:
             yield section[section.keys()[0]]
 
+    def keys(self):
+        keys = [] 
+        for section in self.sections:
+             keys.append(section.keys()[0])
+        return keys
+
 
 class SSSDConf(SSSDBase):
     def __init__(self, *args, **kwargs):
         super(SSSDConf, self).__init__(*args, **kwargs)
         self.sections = SSSDSectionContainer()
+        self.domain_override = True
 
         if 'parse' in kwargs:
             self.parse = kwargs.pop('parse')
@@ -425,32 +444,24 @@ class SSSDConf(SSSDBase):
         self.sections['sssd'].add_service('pam')
 
     def merge_config(self, sc):
-        ndomains = 0
+        services = self.sections['sssd'].get_services()
 
         for s in sc.sections:
-            self_st = self_s.get_section_type()
-            if self_st.startswith('domain'):
-                ndomains += 1
+            st = s.get_section_type()
+            self_s = self.sections[st]
 
-        for self_s in self.sections:
-            self_st = self_s.get_section_type()
+            if st.startswith('domain') and self_s and not sc.domain_override:
+                for var in s: 
+                    self_s[var] = s[var]
+            else:
+                self.sections[st] = s
 
-            for s in sc.sections:    
-                if not s.is_empty():
-                    st = s.get_section_type()
+            if st not in services:
+                services.append(st)
 
-                    if self_st.startswith('domain') and st.startswith('domain'):
-                        if self_st == st:
-                            for var in s:  
-                                self_s[var] = s[var]
-
-                        else:
-                            self.sections[st] = s
-                            self.sections['sssd'].add_domain(s.domain)
-
-                    elif self_st == st:
-                        self.sections[st] = s
-
+        for s in services:
+            self.sections['sssd'].add_service(s)
+                
     def num_sections(self):
         lines = []
 
@@ -475,23 +486,23 @@ class SSSDConf(SSSDBase):
             f.close()
 
         section = None
+
         if not nsections:
-            print 'XXX: foo'  
-            #cookie = 'domain/%s' % self.cookie
-            cookie = 'domain/LDAP'
+            self.add_sssd_section()
+
+            cookie = 'domain/%s' % self.cookie
             section = SSSDSectionDomain(cookie)
 
-            self.add_sssd_section()
-            self.add_nss_section()
-            self.add_pam_section()
-
             self.sections[cookie] = section
-            #self.sections['sssd'].add_domain(self.cookie)
-            self.sections['sssd'].add_domain('LDAP')
+            self.sections['sssd'].add_domain(self.cookie)
             self.sections['sssd'].add_newline()
+
+            self.domain_override = False
 
         for line in lines:
             line = line.strip()
+            if not line:
+                continue
 
             if line.startswith('['):
                 r = re.match('^\[([^\s]+)\]', line)
@@ -499,6 +510,10 @@ class SSSDConf(SSSDBase):
                     s = r.group(1)
                     section = SSSDSection(s)
                     self.sections[s] = section
+                    if not s.startswith('domain'):
+                        if not self.sections['sssd']:
+                            self.add_sssd_section()
+                        self.sections['sssd'].add_service(s)
 
             elif section != None:
                 section.parse(line)  
@@ -665,14 +680,6 @@ def add_ldap_section(sc):
         if certpath:
             ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
-
-#    if ldap.ldap_auxiliary_parameters:
-#        lines = ldap.ldap_auxiliary_parameters.splitlines()
-#        for l in lines:
-#            parts = l.split('=',1)
-#            if len(parts) < 2:
-#                continue
-#            setattr(ldap_section, parts[0].strip(), parts[1].strip())
 
     ldap_save = ldap
     ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
