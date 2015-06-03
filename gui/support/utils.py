@@ -74,6 +74,16 @@ def jails_enabled():
     return False
 
 
+def fc_enabled():
+    license, reason = get_license()
+    sw_name = get_sw_name().lower()
+    if sw_name == 'truenas' and (
+        license and Features.fiberchannel in license.features
+    ):
+        return True
+    return False
+
+
 def new_ticket(data):
 
     sw_name = get_sw_name().lower()
