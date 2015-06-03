@@ -160,12 +160,21 @@ def main():
     # Generate the target section
     target_basename = gconf.iscsi_basename
     for target in iSCSITarget.objects.all():
-        if target.iscsi_target_authgroup:
-            auth_list = iSCSITargetAuthCredential.objects.filter(iscsi_target_auth_tag=target.iscsi_target_authgroup)
-        else:
-            auth_list = []
-        agname = '4tg_%d' % target.id
-        has_auth = auth_group_config(auth_tag=agname, auth_list=auth_list, auth_type=target.iscsi_target_authtype, initiator=target.iscsi_target_initiatorgroup)
+        has_auth = False
+        authgroups = {}
+        for grp in target.iscsitargetgroups_set.all():
+            if grp.iscsi_target_authgroup:
+                auth_list = iSCSITargetAuthCredential.objects.filter(iscsi_target_auth_tag=grp.iscsi_target_authgroup)
+            else:
+                auth_list = []
+            agname = '4tg_%d_%d' % (
+                target.id,
+                grp.id,
+            )
+            _has_auth = auth_group_config(auth_tag=agname, auth_list=auth_list, auth_type=grp.iscsi_target_authtype, initiator=grp.iscsi_target_initiatorgroup)
+            has_auth |= _has_auth
+            if _has_auth:
+                authgroups[grp.id] = agname
         if (target.iscsi_target_name.startswith("iqn.") or
                 target.iscsi_target_name.startswith("eui.") or
                 target.iscsi_target_name.startswith("naa.")):
@@ -178,11 +187,13 @@ def main():
             addline("\talias \"%s\"\n" % target.iscsi_target_name)
         if not has_auth:
             addline("\tauth-group no-authentication\n")
-        else:
-            addline("\tauth-group ag%s\n" % agname)
-        addline("\tportal-group pg%d\n" % (
-            target.iscsi_target_portalgroup.iscsi_target_portal_tag,
-        ))
+
+        for grp in target.iscsitargetgroups_set.all():
+            agname = authgroups.get(grp.id) or None
+            addline("\tportal-group pg%d%s\n" % (
+                grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
+                ' ' + agname if agname else '',
+            ))
         used_lunids = [
             o.iscsi_lunid
             for o in target.iscsitargettoextent_set.all().exclude(
