@@ -44,6 +44,7 @@ from freenasUI.services.forms import (
     servicesForm,
     CIFSForm
 )
+from freenasUI.support.utils import fc_enabled
 
 log = logging.getLogger("services.views")
 
@@ -165,6 +166,7 @@ def iscsi(request):
     return render(request, 'services/iscsi.html', {
         'focus_tab': request.GET.get('tab', ''),
         'gconfid': gconfid,
+        'fc_enabled': fc_enabled(),
     })
 
 
