@@ -55,3 +55,9 @@ def home(request):
         'focus_form': tab,
         'ntab': ntab,
     })
+
+
+def fc_ports(request):
+
+    return render(request, 'sharing/fc_ports.html', {
+    })
