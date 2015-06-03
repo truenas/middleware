@@ -29,6 +29,7 @@ import logging
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.support.utils import fc_enabled
 
 log = logging.getLogger('sharing.views')
 
@@ -54,6 +55,7 @@ def home(request):
     return render(request, 'sharing/index.html', {
         'focus_form': tab,
         'ntab': ntab,
+        'fc_enabled': fc_enabled(),
     })
 
 
