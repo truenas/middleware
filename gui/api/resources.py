@@ -2943,10 +2943,10 @@ class FCPortsResource(DojoResource):
         data = proc.communicate()[0]
         doc = etree.fromstring(data)
         results = []
-        for e in doc.xpath("//frontend_type[text()='tpc']"):
+        for e in doc.xpath("//frontend_type[text()='camtgt']"):
             tag_port = e.getparent()
             name = tag_port.xpath('./port_name')[0].text
-            port = tag_port.get('id')
+            port = re.search('\d+', name).group(0)
             if port in fcportmap:
                 mode = 'TARGET'
                 target = fcportmap[port].id
