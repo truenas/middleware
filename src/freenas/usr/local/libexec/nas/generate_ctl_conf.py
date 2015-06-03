@@ -160,6 +160,7 @@ def main():
     # Generate the target section
     target_basename = gconf.iscsi_basename
     for target in iSCSITarget.objects.all():
+
         has_auth = False
         authgroups = {}
         for grp in target.iscsitargetgroups_set.all():
@@ -185,6 +186,15 @@ def main():
             addline("\talias \"%s\"\n" % target.iscsi_target_alias)
         elif target.iscsi_target_name:
             addline("\talias \"%s\"\n" % target.iscsi_target_name)
+
+
+        for fctt in target.fiberchanneltotarget_set.all():
+            addline("\tport %s\n" % fctt.fc_port)
+
+        if target.iscsi_target_mode == 'fc':
+            addline("}\n\n")
+            continue
+
         if not has_auth:
             addline("\tauth-group no-authentication\n")
 
@@ -192,7 +202,7 @@ def main():
             agname = authgroups.get(grp.id) or None
             addline("\tportal-group pg%d%s\n" % (
                 grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
-                ' ' + agname if agname else '',
+                ' ag' + agname if agname else '',
             ))
         used_lunids = [
             o.iscsi_lunid
