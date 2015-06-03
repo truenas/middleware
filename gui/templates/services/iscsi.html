@@ -5,19 +5,19 @@
     href: '{% url "freeadmin_services_iscsitargetglobalconfiguration_edit" oid=gconfid %}?inline=true',
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetGlobalConfiguration" class="objrefresh data_services_iSCSITarget" id="tab_iSCSITargetGlobalConfiguration">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Portals (iSCSI)"|escapejs %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Portals"|escapejs %}{% if fc_enabled %} ({% trans "iSCSI"|escapejs %}){% endif %}',
     doLayout: false,
     href: '{% url "freeadmin_services_iscsitargetportal_datagrid" %}'
     {% if focus_tab == "sharing.ISCSI.iSCSITargetPortal.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetPortal.View" class="objrefresh data_services_iSCSITargetPortal" id="tab_iSCSITargetPortal">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Initiators (iSCSI)"|escapejs %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Initiators"|escapejs %}{% if fc_enabled %} ({% trans "iSCSI"|escapejs %}){% endif %}',
     doLayout: false,
     href: '{% url "freeadmin_services_iscsitargetauthorizedinitiator_datagrid" %}'
     {% if focus_tab == "sharing.ISCSI.iSCSITargetAuthorizedInitiator.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetAuthorizedInitiator.View" class="objrefresh data_services_iSCSITargetAuthorizedInitiator" id="tab_iSCSITargetAuthorizedInitiator">
     </div>
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Access (iSCSI)"|escapejs %}',
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Authorized Access"|escapejs %}{% if fc_enabled %} ({% trans "iSCSI"|escapejs %}){% endif %}',
     doLayout: false,
     href: '{% url "freeadmin_services_iscsitargetauthcredential_datagrid" %}'
     {% if focus_tab == "sharing.ISCSI.iSCSITargetAuthCredential.View" %}, selected: true{% endif %},
@@ -41,10 +41,12 @@
     {% if focus_tab == "sharing.ISCSI.iSCSITargetToExtent.View" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.iSCSITargetToExtent.View" class="objrefresh data_services_iSCSITargetToExtent" id="tab_iSCSITargetToExtent">
     </div>
+    {% if fc_enabled %}
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Fiber Channel Ports"|escapejs %}',
     doLayout: false,
     href: '{% url "sharing_fc_ports" %}'
     {% if focus_tab == "sharing.ISCSI.FCPorts" %}, selected: true{% endif %},
     refreshOnShow: true" tab="sharing.ISCSI.FCPorts" class="objrefresh data_services_FCPorts" id="tab_FCPorts">
     </div>
+    {% endif %}
 </div>
