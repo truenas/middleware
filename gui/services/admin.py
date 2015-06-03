@@ -73,8 +73,7 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
 
     exclude_fields = (
         'id',
-        'iscsi_target_initialdigest',
-        'iscsi_target_type',
+        'iscsi_target_mode',
     )
     nav_extra = {'order': 10}
 
