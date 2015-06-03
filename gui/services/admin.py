@@ -67,6 +67,7 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
         {
             'form': 'iSCSITargetGroupsForm',
             'prefix': 'targetgroups_set',
+            'formset': 'iSCSITargetGroupsInlineFormSet',
         },
     ]
 

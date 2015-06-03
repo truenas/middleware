@@ -49,6 +49,7 @@ from freenasUI.common.system import (
     validate_netbios_names
 )
 from freenasUI.freeadmin.forms import DirectoryBrowser
+from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -1567,6 +1568,19 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
             raise ServiceFailed(
                 "iscsitarget", _("The iSCSI service failed to reload.")
             )
+
+
+class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):
+
+    def clean(self):
+        rv = super(iSCSITargetGroupsInlineFormSet, self).clean()
+        if self._fparent.data and self._fparent.data.get(
+            'iscsi_target_mode'
+        ) == 'fc':
+            self._errors = []
+            for form in self.forms:
+                form._errors = []
+        return rv
 
 
 class iSCSITargetForm(ModelForm):
