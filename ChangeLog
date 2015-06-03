@@ -1,0 +1,26 @@
+#6764	Bug	Important	Performance Test - iozone failes
+#6971	Bug	Important	Make Certificate Admin Datagrid View more Robust
+#8309	Bug	Nice to have	Use # delimiter for freedns.afraid.org hashes
+#9160	Bug	Nice to have	Include MFIP driver in FreeNAS
+#9229	Feature	Nice to have	Feature for LDAP authentication via SSH public keys
+#9353	Bug	Expected	Allow freenas-boot to be used as system dataset
+#9478	Bug	Nice to have	Grey out username field if SNMPv3 is not checked
+#9602	Bug	Important	volumes that are encrypted show up in system dataset dropdown
+#9721	Bug	Important	Fix rare panic on iSCSI connection start/close.
+#9737	Bug	Important	ix-smartd Areca ARC-1880 fails
+#9745	Bug	Expected	Reload iSCSI when deleting a target.
+#9771	Bug	Important	Fixes an issue where a second upgrade to the same version may have failed.
+#9784	Feature	Important	Make NUT UPS shutoff optional
+#9785	Bug	Nice to have	malfunction
+#9797	Bug	Important	Fixes an issue where cloning a renamed boot environment would fail.
+#9822	Bug	Important	AFP should not be the default category for bugs submitted in FreeNAS
+#9867	Feature	Nice to have	Allows .local hosts to be resolved.
+#9869	Bug	Important	netperf netserver "unknown test number 97"
+#9913	Bug	Important	Bootup error:  False Bad Number
+#9915	Bug	Nice to have	Use the already-existing port for nss-mdns
+#9931	Bug	Nice to have	Missing iSCSI information buttons
+#9937	Bug	Nice to have	Added information button for 'Force size' checkbox.
+#9948	Bug	Nice to have	Noise from a shell script while booting
+#9964	Bug	Expected	Unable to use root as maproot user
+#9983	Bug	Important	Update Samba to 4.1.18
+#10013	Bug	Expected	Critical NetBIOS Workgroup Name Error in GUI for CIFS
