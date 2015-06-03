@@ -52,11 +52,11 @@ if [ -n "$WITH_PKGNG" ]; then
 	chroot ${NANO_OBJ}/_.w /sbin/mount -t devfs devfs /dev
 	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install $PACKAGES_TO_INSTALL"
 echo "PACKAGES INSTALL RIAK CS CONTROL============="
-	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install /usr/ports/packages/All/riak-cs-control-1.0.2-FreeBSD-amd64.tbz"
+##	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg_add /usr/ports/packages/All/riak-cs-control-1.0.2-FreeBSD-amd64.tbz"
 echo "PACKAGES INSTALL RIAK CS============="
-	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install /usr/ports/packages/All/riak-cs-2.0.0-FreeBSD-amd64.tbz"
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg_add /usr/ports/packages/All/riak-cs-2.0.0-FreeBSD-amd64.tbz"
 echo "PACKAGES INSTALL STANCION========="
-	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg install /usr/ports/packages/All/stanchion-2.0.0-FreeBSD-amd64.tbz"
+	chroot ${NANO_OBJ}/_.w /bin/sh -c "env ASSUME_ALWAYS_YES=yes ${PACKAGESITE} pkg_add /usr/ports/packages/All/stanchion-2.0.0-FreeBSD-amd64.tbz"
 	rm -f ${NANO_OBJ}/_.w/usr/local/etc/pkg.conf
 	umount ${NANO_OBJ}/_.w/dev
 
