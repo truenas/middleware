@@ -164,7 +164,6 @@ if is_truenas ; then
 	add_port devel/bison
 	add_port devel/libffi
 fi
-add_port misc/gnomehier
 add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
