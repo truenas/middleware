@@ -27,6 +27,8 @@ var RPC = React.createClass(
              , results           : []
              , methodValue       : ""
              , argsValue         : "[]"
+             , anErrorOccurred    : false
+             , RPCTraceback      : ""
       };
     }
 
@@ -80,6 +82,14 @@ var RPC = React.createClass(
       this.setState( newState );
     }
 
+  , handleRPCErrorCallback: function ( args ) {
+      this.setState(
+        { anErrorOccurred : true
+        , RPCTraceback    : args
+        }
+      )
+    }
+
   , handleRPCSubmit: function ( value, otherArg ) {
       let val = value;
       // The below is hack to avoid the single-click event's call to
@@ -93,10 +103,12 @@ var RPC = React.createClass(
       MiddlewareClient.request( val
                               , JSON.parse( this.state.argsValue )
                               , function ( results ) {
-        this.setState({ submissionPending : false
-                      , results           : results
-        });
-      }.bind( this ) );
+          this.setState({ submissionPending : false
+                        , results           : results
+                        });
+        }.bind( this )
+                              , this.handleRPCErrorCallback.bind( this )
+      );
 
     }
 
@@ -125,6 +137,13 @@ var RPC = React.createClass(
 
   , handleResultsChange: function ( event ) {
       this.setState({ results: this.state.results });
+    }
+
+  , handleAlertDismiss: function () {
+      this.setState(
+        { anErrorOccurred   : false
+        , submissionPending : false
+        })
     }
 
   , createMethodPanel: function ( service, index ) {
@@ -169,8 +188,24 @@ var RPC = React.createClass(
         }
         );
       });
+      let RPCAlert = "";
+      if ( this.state.anErrorOccurred ) {
+        RPCAlert = (
+          <div className="overlay-error">
+            <TWBS.Alert bsStyle='danger' onDismiss={this.handleAlertDismiss}>
+              <h4>Oh snap! A very specific Error Occurred</h4>
+              <p>{ this.state.RPCTraceback }</p>
+              <p>
+                <TWBS.Button onClick={this.handleAlertDismiss}>
+                 Done
+                </TWBS.Button>
+              </p>
+             </TWBS.Alert>
+           </div> )
+      }
       return (
         <div className="debug-content-flex-wrapper">
+            { RPCAlert }
 
           <TWBS.Col xs={6} className="debug-column" >
 
