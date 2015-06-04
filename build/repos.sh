@@ -30,7 +30,7 @@ fi
 : ${GIT_FREEBSD_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/trueos.git}
 : ${GIT_FREEBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/src"}
 
-: ${GIT_PORTS_BRANCH=masters/2015q2}
+: ${GIT_PORTS_BRANCH=masters/2014q4}
 : ${GIT_PORTS_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/ports.git}
 : ${GIT_PORTS_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/ports"}
 
