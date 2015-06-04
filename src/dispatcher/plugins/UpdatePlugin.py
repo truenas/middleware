@@ -26,11 +26,12 @@
 #####################################################################
 
 import errno
-import os
 import sys
 import re
+import gettext
+from cache import CacheStore
 from task import (Provider, Task, ProgressTask, TaskException, VerifyException)
-from dispatcher.rpc import (RpcException, description, accepts,
+from dispatcher.rpc import (RpcException, description, accepts, TaskException,
                             returns, SchemaHelper as h)
 from lib.system import system
 
@@ -38,10 +39,17 @@ sys.path.append('/usr/local/lib')
 from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
-    ActivateClone,
-    CheckForUpdates,
-    DeleteClone,
+    ActivateClone, CheckForUpdates, DeleteClone, PendingUpdates,
+    PendingUpdatesChanges, DownloadUpdate, ApplyUpdate
 )
+
+# TODO: Will the below translation func work?
+t = gettext.translation('freenas-dispatcher', fallback=True)
+_ = t.ugettext
+
+update_cache = CacheStore()
+# Fix cache_dir with either this or "sys_dataset_path/update" path
+cache_dir = '/var/tmp/update'
 
 
 @description("Utility function to parse an available changelog")
@@ -93,21 +101,159 @@ class CheckUpdateHandler(object):
         })
 
     def output(self):
-        output = None
+        output = []
         for c in self.changes:
             opdict = {
                 'operation': c['operation'],
-                'prev_name': c['old'].Name(),
-                'prev_ver': c['old'].Version(),
-                'new_name': c['new'].Name(),
-                'new_ver': c['new'].Version()
+                'prevName': c['old'].Name(),
+                'prevVer': c['old'].Version(),
+                'newName': c['new'].Name(),
+                'newVer': c['new'].Version()
             }
             output.append(opdict)
         return output
 
 
+@description("A handler for Downloading and Applying Updates calls")
+class UpdateHandler(object):
+
+    def __init__(self, apply_=None):
+        self.apply = apply_
+        self.details = ''
+        self.indeterminate = False
+        self.progress = 0
+        self.step = 1
+        self.finished = False
+        self.error = False
+        self.reboot = False
+        self.pkgname = ''
+        self.pkgversion = ''
+        self.operation = ''
+        self.filename = ''
+        self.filesize = 0
+        self.numfilestotal = 0
+        self.numfilesdone = 0
+        self._baseprogress = 0
+
+    def check_handler(self, index, pkg, pkgList):
+        self.step = 1
+        self.pkgname = pkg.Name()
+        self.pkgversion = pkg.Version()
+        self.operation = _('Downloading')
+        self.details = '%s %s' % (
+            _('Downloading'),
+            '%s-%s' % (self.pkgname, self.pkgversion),
+        )
+        stepprogress = int((1.0 / float(len(pkgList))) * 100)
+        self._baseprogress = index * stepprogress
+        self.progress = (index - 1) * stepprogress
+        self.emit_uptate_details()
+
+    def get_handler(
+        self, method, filename, size=None, progress=None, download_rate=None
+    ):
+        filename = filename.rsplit('/', 1)[-1]
+        if progress is not None:
+            self.progress = (progress * self._baseprogress) / 100
+            if self.progress == 0:
+                self.progress = 1
+            self.details = '%s %s(%d%%)%s' % (
+                filename,
+                '%s ' % size
+                if size else '',
+                progress,
+                '  %s/s' % download_rate
+                if download_rate else '',
+            )
+        self.emit_uptate_details()
+
+    def install_handler(self, index, name, packages):
+        if self.apply:
+            self.step = 2
+        else:
+            self.step = 1
+        self.indeterminate = False
+        total = len(packages)
+        self.numfilesdone = index
+        self.numfilesdone = total
+        self.progress = int((float(index) / float(total)) * 100.0)
+        self.operation = _('Installing')
+        self.details = '%s %s (%d/%d)' % (
+            _('Installing'),
+            name,
+            index,
+            total,
+        )
+
+    def emit_uptate_details(self):
+        data = {
+            'apply': self.apply,
+            'error': self.error,
+            'operation': self.operation,
+            'finished': self.finished,
+            'indeterminate': self.indeterminate,
+            'percent': self.progress,
+            'step': self.step,
+            'reboot': self.reboot,
+            'pkgName': self.pkgname,
+            'pkgVersion': self.pkgversion,
+            'filename': self.filename,
+            'filesize': self.filesize,
+            'numFilesDone': self.numfilesdone,
+            'numFilesTotal': self.numfilestotal,
+        }
+        if self.details:
+            data['details'] = self.details
+
+
+def generate_update_cache(dispatcher, cache_dir):
+    # update_cache.put(path, disk)
+    pass
+
+
 @description("Provides System Updater Configuration")
 class UpdateProvider(Provider):
+
+    @returns(str)
+    def is_update_availabe(self):
+        temp_updateAvailable = update_cache.get('updateAvailable',
+                                                timeout=1)
+        if temp_updateAvailable is not None:
+            return temp_updateAvailable
+        elif update_cache.is_valid('updateAvailable'):
+            return temp_updateAvailable
+        else:
+            raise RpcException(
+                errno.EBUSY,
+                'Update Availability flag is invalidated, an Update Check' +
+                ' might be underway. Try again in some time.')
+
+    # TODO: Change to array of strings instead of one gigantic string
+    @returns(str)
+    def get_changelog(self):
+        temp_changelog = update_cache.get('changelog')
+        if temp_changelog is not None:
+            return temp_changelog
+        elif update_cache.is_valid('changelog'):
+            return temp_changelog
+        else:
+            raise RpcException(
+                errno.EBUSY,
+                'Changelog list is invalidated, an Update Check' +
+                ' might be underway. Try again in some time.')
+
+    # TODO: dont be lazy and write the schema for this
+    def get_update_ops(self):
+        temp_updateOperations = update_cache.get('updateOperations')
+        if temp_updateOperations is not None:
+            return temp_updateOperations
+        elif update_cache.is_valid('updateOperations'):
+            return temp_updateOperations
+        else:
+            raise RpcException(
+                errno.EBUSY,
+                'Update Operations Dict is invalidated, an Update Check' +
+                ' might be underway. Try again in some time.')
 
     @returns(str)
     def get_current_train(self):
@@ -141,7 +287,7 @@ class UpdateConfigureTask(Task):
             raise VerifyException(
                 errno.ENOENT,
                 '{0} is not a valid train'.format(train_to_set))
-        return ['']
+        return []
 
     def run(self, props):
         self.dispatcher.configstore.set(
@@ -168,9 +314,12 @@ class CheckUpdateTask(Task):
 
     def verify(self):
         # TODO: Fix this verify's resource allocation as unique task
-        return ['']
+        return []
 
     def run(self):
+        update_cache.invalidate('updateAvailable')
+        update_cache.invalidate('updateOperations')
+        update_cache.invalidate('changelog')
         conf = Configuration.Configuration()
         update_ops = None
         handler = CheckUpdateHandler()
@@ -181,10 +330,13 @@ class CheckUpdateTask(Task):
                 handler=handler.call,
                 train=train,
             )
-            network = True
         except UpdateManifestNotFound:
-            update = False
-            network = False
+            update_cache.put('updateAvailable', False)
+            update_cache.put('updateOperations', update_ops)
+            update_cache.put('changelog', '')
+            TaskException(errno.ENETUNREACH,
+                          'Update server could not be reached')
+
         if update:
             update_ops = handler.output()
             sys_mani = conf.SystemManifest()
@@ -197,12 +349,9 @@ class CheckUpdateTask(Task):
                                       end=update.Sequence())
         else:
             changelog = None
-        return {
-            'updateAvailable': True if update else False,
-            'network': network,
-            'updateOperations': update_ops,
-            'changelog': changelog,
-        }
+        update_cache.put('updateAvailable', True if update else False)
+        update_cache.put('updateOperations', update_ops)
+        update_cache.put('changelog', changelog)
 
 
 @description("Downloads Updates for the current system update train")
@@ -213,17 +362,13 @@ class DownloadUpdateTask(ProgressTask):
 
     def verify(self):
         # TODO: Fix this verify's resource allocation as unique task
-        return ['']
+        return []
 
     def run(self):
         self.progress = 0
-        self.message = 'Executing...'
-        # Fix cache_dir with either this or "sys_dataset_path/update" path
-        cache_dir = '/var/tmp/update'
+        self.message = 'Downloading Updates...'
         train = self.dispatcher.configstore.get('update.train')
-        # To be continued after discussion with Sef
-
-
+        # To be continued ...
 
 
 # Fix this when the fn10 freenas-pkg tools is updated by sef
@@ -264,3 +409,6 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("update.check", CheckUpdateTask)
     plugin.register_task_handler("update.download", DownloadUpdateTask)
     plugin.register_task_handler("update.update", UpdateTask)
+
+    # Get the Update Cache (if any) at system boot (and hence in init here)
+    generate_update_cache(dispatcher, cache_dir)
