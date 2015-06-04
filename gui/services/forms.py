@@ -1125,11 +1125,6 @@ class iSCSITargetToExtentForm(ModelForm):
             choices=choices,
             required=False,
         )
-        qs = self.fields['iscsi_extent'].queryset
-        exc = models.iSCSITargetToExtent.objects.all()
-        if self.instance:
-            exc = exc.exclude(id=self.instance.id)
-        self.fields['iscsi_extent'].queryset = qs.exclude(id__in=[e.iscsi_extent.id for e in exc])
 
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
