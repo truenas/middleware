@@ -34,19 +34,6 @@ const widgetSizes =
     , "xl-rect"   : [ 705, 525 ]
   };
 
-var fooProps = {
-  foo: "foo!"
-  , bar: "bar!"
-  , onMouseDown: function ( e ) {
-    console.log( e );
-    // onMouseDownHolder = { this.enterMovementMode
-    //                  .bind( this
-    //                        , this.state.
-    //                          widgets.SystemInfo.id ) }
-
-  }
-}
-
 const DragDropGrid = React.createClass({
 
 
@@ -80,7 +67,6 @@ const DragDropGrid = React.createClass({
 
   , componentWillReceiveProps: function ( nextProps ) {
     this.initializeWidgets();
-    console.log( "Props on the way!" );
   }
 
   , handleWindowResize: function () {
@@ -111,8 +97,6 @@ const DragDropGrid = React.createClass({
   // and its starting location.
 
   , enterMovementMode: function ( id, event ) {
-      console.log( id );
-      console.log( event );
       this.setState({
         movementMode   : true
         , widgetInMotion : {
@@ -127,14 +111,15 @@ const DragDropGrid = React.createClass({
         var newPos = [];
         var wim    = this.state.widgetInMotion;
 
-        newPos[1] = (
+        newPos[1] = this.toPixels(
             this.state.widgetMeta[ wim.id ].position[1] +
-            event.nativeEvent.clientY - wim.origin[1] ) + "px";
-        newPos[0] = (
-            this.state.widgetMeta[ wim.id ].position[0] +
-            event.nativeEvent.clientX - wim.origin[0] ) + "px";
+            this.toGridUnits( event.nativeEvent.clientY - wim.origin[1] )
+            ) + "px";
 
-        console.log( newPos );
+        newPos[0] = this.toPixels(
+            this.state.widgetMeta[ wim.id ].position[0] +
+            this.toGridUnits( event.nativeEvent.clientX - wim.origin[0] )
+            ) + "px";
 
         this.moveWidget( this.refs[ "widget-" + wim.id ].getDOMNode(), newPos );
       }
@@ -145,8 +130,6 @@ const DragDropGrid = React.createClass({
   , exitMovementMode: function () {
       var movedWidget = document.querySelector( ".widget.in-motion" );
       var newState    = {};
-
-      console.log( movedWidget );
 
       if ( movedWidget ) {
         var newPosition   = [ this.toGridUnits( movedWidget.style.left )
@@ -159,7 +142,7 @@ const DragDropGrid = React.createClass({
         // Fill the moved widget's old spot with zeroes
         this.createMatrixFootprint(
             displayMatrix
-          , widgetMeta[ this.state.widgetInMotion["id"] ]["pos"]
+          , widgetMeta[ this.state.widgetInMotion["id"] ]["position"]
           , widgetMeta[ this.state.widgetInMotion["id"] ]["size"]
           , 0
         );
@@ -174,14 +157,14 @@ const DragDropGrid = React.createClass({
         for ( var i = 0; i < intersections.length; i++ ) {
           this.createMatrixFootprint(
               displayMatrix
-            , widgetMeta[ intersections[i] ]["pos"]
+            , widgetMeta[ intersections[i] ]["position"]
             , widgetMeta[ intersections[i] ]["size"]
             , 0
           );
         }
 
         // Identify and assign the new widget position
-        widgetMeta[ this.state.widgetInMotion["id"] ]["pos"] = newPosition;
+        widgetMeta[ this.state.widgetInMotion["id"] ]["position"] = newPosition;
         this.createMatrixFootprint(
             displayMatrix
           , newPosition
@@ -196,7 +179,7 @@ const DragDropGrid = React.createClass({
             , widgetMeta[ intersections[i] ]["size"]
           );
 
-          widgetMeta[ intersections[i] ]["pos"] = newPos;
+          widgetMeta[ intersections[i] ]["position"] = newPos;
 
           this.moveWidget(
               this.refs[ "widget-" + intersections[i] ].getDOMNode()
@@ -206,7 +189,7 @@ const DragDropGrid = React.createClass({
           );
           this.createMatrixFootprint(
               displayMatrix
-            , widgetMeta[ intersections[i] ]["pos"]
+            , widgetMeta[ intersections[i] ]["position"]
             , widgetMeta[ intersections[i] ]["size"]
             , intersections[i]
           );
@@ -224,7 +207,6 @@ const DragDropGrid = React.createClass({
 
   // Animation for widget movement.
   , moveWidget: function ( widgetElement, newPos, duration ) {
-      console.log( widgetElement );
       Velocity(
           widgetElement
         , {
@@ -400,7 +382,6 @@ const DragDropGrid = React.createClass({
   // distribute them around the page as necessary.
   , initializeWidgets: function () {
       var widgetMeta = {};
-      console.log( "displayMatrix renewed" );
       // The displayMatrix is a two-dimensional array in which empty positions
       // are represented as zeros and occupied ones are set to the UUID of the
       // widget occupying that space.
@@ -419,11 +400,12 @@ const DragDropGrid = React.createClass({
                                     , Widget.props.id );
 
         var widgetPosition  = [];
-        widgetPosition[0]   = this.toPixels( position[0] );
-        widgetPosition[1]   = this.toPixels( position[1] );
+        widgetPosition[0]   = position[0];
+        widgetPosition[1]   = position[1];
 
         widgetMeta[Widget.props.id] = {};
-        widgetMeta[Widget.props.id].position = widgetPosition
+        widgetMeta[Widget.props.id].position = widgetPosition;
+        widgetMeta[Widget.props.id].size = dimensions;
       }.bind( this ) )
 
 
@@ -437,7 +419,12 @@ const DragDropGrid = React.createClass({
       if ( this.state.displayMatrix ) {
         return React.Children.map( this.props.children, function ( Widget ) {
           return React.cloneElement( Widget, {
-            position: this.state.widgetMeta[Widget.props.id].position
+            position: [
+                        this.toPixels(
+                            this.state.widgetMeta[Widget.props.id].position[0] )
+                        , this.toPixels(
+                            this.state.widgetMeta[Widget.props.id].position[1] )
+                      ]
             , ref: "widget-" + Widget.props.id
             , onMouseDownHolder: this.enterMovementMode
                                  .bind( null, Widget.props.id )
@@ -531,7 +518,6 @@ const Dashboard = React.createClass({
     }
 
   , changeSize: function ( widgtName ) {
-    console.log( "Resizing: " + widgtName );
     var newWidgetsState = this.state.widgets;
     var i = ( this.state.widgets[ widgtName ].count
               < this.state.sizeArr.length
@@ -548,7 +534,6 @@ const Dashboard = React.createClass({
     newWidgetsState[ widgtName ].dimensions =
     widgetSizes[ newWidgetsState[ widgtName ].size ];
 
-    console.log( newWidgetsState );
     this.setState( { widgets: newWidgetsState } );
   }
 

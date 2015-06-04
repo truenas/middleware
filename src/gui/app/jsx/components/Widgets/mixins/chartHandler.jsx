@@ -118,17 +118,17 @@ module.exports = {
     }
 
   , shouldComponentUpdate: function ( nextProps, nextState ) {
-      return nextState.statdResources   !==  this.state.statdResources    ||
-             nextState.chartTypes       !==  this.state.chartTypes        ||
-             nextState.statdDataLoaded  !==  this.state.statdDataLoaded   ||
-             nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
-             nextState.graphType        !==  this.state.graphType         ||
-             nextState.componentWidth   !==  this.state.componentWidth    ||
-             nextProps.position         !==  this.props.position          ||
-             nextProps.dimensions       !==  this.props.dimensions        ||
-             nextProps.size             !==  this.props.size;
-	}
-
+    return nextState.statdResources   !==  this.state.statdResources    ||
+           nextState.chartTypes       !==  this.state.chartTypes        ||
+           nextState.statdDataLoaded  !==  this.state.statdDataLoaded   ||
+           nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
+           nextState.graphType        !==  this.state.graphType         ||
+           nextState.componentWidth   !==  this.state.componentWidth    ||
+           nextProps.position         !==  this.props.position          ||
+           nextProps.dimensions       !==  this.props.dimensions        ||
+           nextProps.inMotion         !==  this.props.inMotion          ||
+           nextProps.size             !==  this.props.size;
+  }
   , componentWillUnmount: function () {
       StatdStore.removeChangeListener( this.handleStatdChange );
       StatdMiddleware.unsubscribeFromPulse(
@@ -459,6 +459,7 @@ module.exports = {
           position    =  { this.props.position }
           title       = { this.props.title }
           size        = { this.props.size }
+          inMotion = { this.props.inMotion }
           onMouseDownHolder = { this.props.onMouseDownHolder }
           changeSize = { this.props.changeSize } >
 
@@ -477,6 +478,7 @@ module.exports = {
           position    =  { this.props.position }
           title     = { this.props.title }
           size      = { this.props.size }
+          inMotion = { this.props.inMotion }
           onMouseDownHolder = { this.props.onMouseDownHolder }
           changeSize = { this.props.changeSize } >
 
@@ -496,6 +498,7 @@ module.exports = {
           position    =  { this.props.position }
           title     = { this.props.title }
           size      = { this.props.size }
+          inMotion = { this.props.inMotion }
           onMouseDownHolder = { this.props.onMouseDownHolder }
           changeSize = { this.props.changeSize } >
 
