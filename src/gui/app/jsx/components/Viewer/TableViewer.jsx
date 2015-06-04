@@ -11,59 +11,35 @@ import { Link, RouteHandler } from "react-router";
 import Icon from "../Icon";
 
 import viewerCommon from "../mixins/viewerCommon";
+import viewerMode from "../mixins/viewerMode";
+import viewerOverlay from "../mixins/viewerOverlay";
 import viewerUtil from "./viewerUtil";
 
 // Table Viewer
-var TableViewer = React.createClass({
+const TableViewer = React.createClass(
 
-    mixins: [ viewerCommon ]
-
-  , contextTypes: {
-      router: React.PropTypes.func
-    }
-
-  , propTypes: {
-        inputData        : React.PropTypes.array.isRequired
-      , handleItemSelect : React.PropTypes.func.isRequired
-      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
-      , searchString     : React.PropTypes.string
-      , filteredData     : React.PropTypes.object.isRequired
-      , tableCols        : React.PropTypes.array.isRequired
-    }
+  { mixins: [ viewerOverlay, viewerMode, viewerCommon ]
 
   , getInitialState: function () {
-      return {
-          tableColWidths : this.getInitialColWidths( this.props.tableCols )
-        , tableColOrder  : this.props.tableCols
-        , sortTableBy    : null
-        , sortOrder      : "none"
-      };
+      // TODO: User preferences will rescue this
+      const columnArray = [ ...this.props.columnsInitial ];
+
+      return (
+        { columnWidths : this.getInitialColWidths( columnArray )
+        , columnOrder  : columnArray
+        , sortTableBy  : null
+        , sortOrder    : "none"
+        }
+      );
     }
 
   , componentDidMount: function () {
-      this.setState({ tableColWidths: this.getUpdatedColWidths( this.state.tableColOrder ) });
-      window.addEventListener( "keyup", this.handleEscClose );
+      this.setState(
+        { columnWidths: this.getUpdatedColWidths( this.state.columnOrder ) }
+      );
     }
 
-  , componentWillUnmount: function () {
-      window.removeEventListener( "keyup", this.handleEscClose );
-    }
-
-  , handleEscClose: function( event ) {
-      if ( event.which === 27 && this.dynamicPathIsActive() ) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.returnToViewerRoot();
-      }
-    }
-
-  , handleClickOut: function( event, componentID ) {
-      if ( event.dispatchMarker === componentID ) {
-        this.returnToViewerRoot();
-      }
-    }
-
-  , handleRowClick: function( params, selectionValue, event, componentID ) {
+  , handleRowClick: function ( params, selectionValue, event, componentID ) {
       switch ( event.type ) {
         case "click":
           this.props.handleItemSelect( selectionValue );
@@ -75,7 +51,7 @@ var TableViewer = React.createClass({
       }
     }
 
-  , changeSortState: function( key, event ) {
+  , changeSortState: function ( key, event ) {
       var nextSortTableBy = key;
       var nextSortOrder;
 
