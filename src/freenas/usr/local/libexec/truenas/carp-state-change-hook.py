@@ -370,7 +370,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/usr/sbin/service ix-collectd quietstart')
     run('/usr/sbin/service collectd quietrestart')
     run('/usr/sbin/service ix-syslogd quietstart')
-    run('/usr/sbin/service syslogd quietrestart')
+    run('/usr/sbin/service syslog-ng quietrestart')
 
     log.warn('Failover event complete.')
 
@@ -455,7 +455,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
 
     run('/etc/rc.d/watchdogd quietstart')
     run('/usr/sbin/service ix-syslogd quietstart')
-    run('/usr/sbin/service syslogd quietrestart')
+    run('/usr/sbin/service syslog-ng quietrestart')
     run('/usr/sbin/service ix-crontab quietstart')
     run('/usr/sbin/service ix-collectd quietstart')
     run('/usr/sbin/service collectd forcestop')
