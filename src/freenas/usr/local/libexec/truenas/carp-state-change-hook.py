@@ -143,7 +143,6 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
     if os.path.exists(FAILOVER_ASSUMED_MASTER):
         error, output = run("ifconfig -l")
         for iface in output.split():
-            print iface
             if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
                 run("ifconfig %s advskew 1" % iface)
         sys.exit(0)
@@ -173,7 +172,7 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
 pass in quick proto tcp from any to %(ip)s  port {22, 80, 443}
 block drop in quick proto tcp from any to %(ip)s
 block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
-    run('pfctl -ef /etc/pf.conf.block')
+    run('/sbin/pfctl -ef /etc/pf.conf.block')
 
     try:
         os.unlink(FAILED_FILE)
@@ -258,7 +257,6 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     # Bring up all carps we own.
     error, output = run("ifconfig -l")
     for iface in output.split():
-        print iface
         if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
             run("ifconfig %s advskew 1" % iface)
 
@@ -353,7 +351,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     # downstream effect of that, instead we take a chill pill for 2 seconds.
     time.sleep(1)
 
-    run('pfctl -d')
+    run('/sbin/pfctl -d')
 
     log.warn('Allowing network traffic.')
     run('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
@@ -433,7 +431,7 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
 pass in quick proto tcp from any to %(ip)s port {22, 80, 443}
 block drop in quick proto tcp from any to %(ip)s
 block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
-    run('pfctl -ef /etc/pf.conf.block')
+    run('/sbin/pfctl -ef /etc/pf.conf.block')
 
     run('/etc/rc.d/statd stop')
     run('/etc/rc.d/watchdogd quietstop')
