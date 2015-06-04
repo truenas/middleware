@@ -145,9 +145,9 @@ viewerUtil.ItemIcon = React.createClass({
       if ( typeof props.seedNumber === "number" ) {
         userRGB = viewerUtil.getPastelColor( props.seedNumber );
       } else {
-        let makeshiftSeed = props.primaryString.length
-                          + props.fallbackString.length;
-        userRGB = viewerUtil.getPastelColor( makeshiftSeed * Math.E );
+        userRGB = viewerUtil.getPastelColor( props.seedNumber.length
+                                           * 100 * Math.E
+                                           );
       }
 
       this.setState({
