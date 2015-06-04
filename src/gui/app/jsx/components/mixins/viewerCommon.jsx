@@ -6,10 +6,48 @@
 "use strict";
 
 import _ from "lodash";
+import React from "react";
 
 const ViewerCommon =
 
-  { addingEntity: function () {
+  { contextTypes: { router: React.PropTypes.func }
+
+  , propTypes:
+    { keyUnique           : React.PropTypes.string.isRequired
+    , keyPrimary          : React.PropTypes.oneOfType(
+                              [ React.PropTypes.number
+                              , React.PropTypes.string
+                              ]
+                            )
+    , keySecondary        : React.PropTypes.oneOfType(
+                              [ React.PropTypes.number
+                              , React.PropTypes.string
+                              ]
+                            )
+
+    , searchKeys          : React.PropTypes.instanceOf( Set )
+
+    , itemData            : React.PropTypes.oneOfType(
+                              [ React.PropTypes.object
+                              , React.PropTypes.array
+                              ]
+                            )
+    , itemSchema          : React.PropTypes.object
+    , itemLabels          : React.PropTypes.object
+
+    , routeName           : React.PropTypes.string.isRequired
+    , routeParam          : React.PropTypes.string.isRequired
+    , routeNewItem        : React.PropTypes.string
+
+    , textNewItem         : React.PropTypes.string.isRequired
+    , textRemaining       : React.PropTypes.string.isRequired
+    , textUngrouped       : React.PropTypes.string.isRequired
+
+    , customDetailNavItem : React.PropTypes.func
+    , customIconNavItem   : React.PropTypes.func
+    }
+
+  , addingEntity: function () {
       return _.endsWith( this.context.router.getCurrentPathname()
                        , this.props.routeAdd );
     }

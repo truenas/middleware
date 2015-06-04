@@ -13,6 +13,7 @@ import TWBS from "react-bootstrap";
 
 import viewerCommon from "./mixins/viewerCommon";
 
+import DL from "../common/DebugLogger";
 import Icon from "./Icon";
 import DetailViewer from "./Viewer/DetailViewer";
 import IconViewer from "./Viewer/IconViewer";
@@ -23,67 +24,7 @@ const Viewer = React.createClass(
 
   { mixins: [ viewerCommon ]
 
-  , contextTypes: { router: React.PropTypes.func }
-
-  , propTypes:
-      { keyUnique           : React.PropTypes.string.isRequired
-      , keyPrimary          : React.PropTypes.oneOfType(
-                                [ React.PropTypes.number
-                                , React.PropTypes.string
-                                ]
-                              )
-      , keySecondary        : React.PropTypes.oneOfType(
-                                [ React.PropTypes.number
-                                , React.PropTypes.string
-                                ]
-                              )
-
-      , searchKeys          : React.PropTypes.instanceOf( Set )
-
-      , itemData            : React.PropTypes.oneOfType(
-                                [ React.PropTypes.object
-                                , React.PropTypes.array
-                                ]
-                              )
-      , itemSchema          : React.PropTypes.object
-      , itemLabels          : React.PropTypes.object
-
-      , routeName           : React.PropTypes.string.isRequired
-      , routeParam          : React.PropTypes.string.isRequired
-      , routeNewItem        : React.PropTypes.string
-
-      , textNewItem         : React.PropTypes.string.isRequired
-      , textRemaining       : React.PropTypes.string.isRequired
-      , textUngrouped       : React.PropTypes.string.isRequired
-
-      , customDetailNavItem : React.PropTypes.func
-      , customIconNavItem   : React.PropTypes.func
-
-      , filtersInitial      : React.PropTypes.instanceOf( Set )
-      , filtersAllowed      : React.PropTypes.instanceOf( Set )
-
-      , groupsInitial       : React.PropTypes.instanceOf( Set )
-      , groupsAllowed       : React.PropTypes.instanceOf( Set )
-
-      , collapsedInitial    : React.PropTypes.instanceOf( Set )
-      , collapsedAllowed    : React.PropTypes.instanceOf( Set )
-
-      , columnsInitial      : React.PropTypes.instanceOf( Set )
-      , columnsAllowed      : React.PropTypes.instanceOf( Set )
-
-      // Viewer allows all modes by default. This list can be overwritten by
-      // passing different  into your <Viewer />.
-      // Allowed modes are:
-      // detail : Items on left, with properties on right, configurable
-      // icon   : Items as icons, with properties as modal
-      // table  : Items as table rows, showing more data
-      , modesInitial          : React.PropTypes.string
-      , modesAllowed          : React.PropTypes.instanceOf( Set )
-      , groupBy               : React.PropTypes.object
-      }
-
-
-  // REACT LIFECYCLE
+  // LIFECYCLE
   , getDefaultProps: function () {
       return (
         { keyPrimary       : ""
@@ -124,10 +65,10 @@ const Viewer = React.createClass(
       let selectedItem = currentParams[ this.props.routeParam ];
 
       return (
-        { currentMode: this.changeViewerMode( this.props.modesInitial )
-        , tableCols: this.props.columnsInitial
-        , enabledGroups: this.props.groupsInitial
-        , enabledFilters: this.props.filtersInitial
+        { modeActive: this.changeViewerMode( this.props.modesInitial )
+        , columnsEnabled: this.props.columnsInitial
+        , groupsEnabled: this.props.groupsInitial
+        , filtersEnabled: this.props.filtersInitial
         , filteredData: { grouped: false
                         , groups: []
                         , remaining: { entries: [] }
@@ -143,7 +84,7 @@ const Viewer = React.createClass(
     }
 
 
-  // VIEWER DATA HANDLING
+  // DATA HANDLING
 
     // processDisplayData applys filters, searches, and then groups before
     // handing the data to any of its sub-views. The structure is deliberately
@@ -153,8 +94,8 @@ const Viewer = React.createClass(
       let displayParams =
         _.assign( { itemData: this.props.itemData
                   , searchString: this.state.searchString
-                  , enabledGroups: this.state.enabledGroups
-                  , enabledFilters: this.state.enabledFilters
+                  , groupsEnabled: this.state.groupsEnabled
+                  , filtersEnabled: this.state.filtersEnabled
                   }
                   , options
                 );
@@ -169,8 +110,8 @@ const Viewer = React.createClass(
 
       // Reduce the array by applying exclusion filters (defined in the view)
       // TODO: Debug this - doesn't work right!
-      if ( displayParams.enabledFilters.size > 0 ) {
-        for ( let groupType of displayParams.enabledFilters ) {
+      if ( displayParams.filtersEnabled.size > 0 ) {
+        for ( let groupType of displayParams.filtersEnabled ) {
           _.remove( workingCollection
                   , this.props.groupBy[ groupType ].testProp
                   );
@@ -203,8 +144,8 @@ const Viewer = React.createClass(
       filteredData["rawList"] = _.clone( workingCollection );
 
       // Convert array into object based on groups
-      if ( displayParams.enabledGroups.size > 0 ) {
-        for ( let groupType of displayParams.enabledGroups ) {
+      if ( displayParams.groupsEnabled.size > 0 ) {
+        for ( let groupType of displayParams.groupsEnabled ) {
           let groupData  = this.props.groupBy[ groupType ];
           let newEntries = _.remove( workingCollection, groupData.testProp );
 
@@ -232,8 +173,8 @@ const Viewer = React.createClass(
       this.setState(
         { filteredData: filteredData
         , searchString: displayParams.searchString
-        , enabledGroups: displayParams.enabledGroups
-        , enabledFilters: displayParams.enabledFilters
+        , groupsEnabled: displayParams.groupsEnabled
+        , filtersEnabled: displayParams.filtersEnabled
         }
       );
     }
@@ -270,7 +211,7 @@ const Viewer = React.createClass(
     }
 
   , handleModeSelect: function ( selectedKey, foo, bar ) {
-      this.setState({ currentMode: this.changeViewerMode( selectedKey ) });
+      this.setState({ modeActive: this.changeViewerMode( selectedKey ) });
     }
 
   , changeTargetItem: function ( params ) {
@@ -289,7 +230,7 @@ const Viewer = React.createClass(
     }
 
 
-  // VIEWER DISPLAY
+  // DISPLAY
   , createModeNav: function ( mode, index ) {
       var modeIcons = { detail: "th-list"
                       , icon: "th"
@@ -301,7 +242,7 @@ const Viewer = React.createClass(
         <TWBS.Button
           onClick = { this.handleModeSelect.bind( this, mode ) }
           key = { index }
-          bsStyle = { ( mode === this.state.currentMode )
+          bsStyle = { ( mode === this.state.modeActive )
                     ? "info"
                     : "default"
                     }
@@ -313,9 +254,21 @@ const Viewer = React.createClass(
 
   , createViewerContent: function () {
       let ViewerContent = null;
+      const commonProps =
+        { handleItemSelect : this.handleItemSelect
 
-      switch ( this.state.currentMode ) {
+        , columnsEnabled   : this.state.columnsEnabled
+        , selectedItem     : this.state.selectedItem
+        , searchString     : this.state.searchString
+        , filteredData     : this.state.filteredData
+        }
+
+      switch ( this.state.modeActive ) {
+
         default:
+          DL.warn( "Viewer defaulting to default mode." );
+          // Fall through to "detail".
+
         case "detail":
           ViewerContent = DetailViewer;
           break;
@@ -329,13 +282,9 @@ const Viewer = React.createClass(
           break;
       }
 
-      return <ViewerContent
-                tableCols = { this.state.tableCols }
-                handleItemSelect = { this.handleItemSelect }
-                selectedItem = { this.state.selectedItem }
-                searchString = { this.state.searchString }
-                filteredData = { this.state.filteredData }
-                { ...this.props } />;
+      return (
+        <ViewerContent { ...commonProps } { ...this.props } />
+      );
     }
 
   , render: function () {
@@ -346,7 +295,7 @@ const Viewer = React.createClass(
         viewerModeNav = (
           <TWBS.ButtonGroup
             className = "navbar-btn navbar-right"
-            activeMode = { this.state.currentMode } >
+            activeMode = { this.state.modeActive } >
             { [ ...this.props.modesAllowed ].map( this.createModeNav ) }
           </TWBS.ButtonGroup>
         );
@@ -355,16 +304,17 @@ const Viewer = React.createClass(
       return (
         <div className="viewer">
           <TWBS.Navbar fluid className="viewer-nav">
-            {/* Searchbox for Viewer (1) */}
+            {/* Searchbox for Viewer */}
             <TWBS.Input
               type           = "text"
               placeholder    = "Search"
-              value          = { this.state.searchString }
               groupClassName = "navbar-form navbar-left"
+              value          = { this.state.searchString }
               onChange       = { this.handleSearchChange }
-              addonBefore    = { <Icon glyph ="search" /> } />
+              addonBefore    = { <Icon glyph ="search" /> }
+            />
 
-            {/* Select view mode (3) */}
+            {/* Select view mode */}
             { viewerModeNav }
 
           </TWBS.Navbar>
