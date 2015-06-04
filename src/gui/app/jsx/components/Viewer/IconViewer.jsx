@@ -8,82 +8,52 @@ import { Link, RouteHandler } from "react-router";
 
 import Icon from "../Icon";
 
+import viewerMode from "../mixins/viewerMode";
 import viewerCommon from "../mixins/viewerCommon";
+import viewerOverlay from "../mixins/viewerOverlay";
 import viewerUtil from "./viewerUtil";
 
 import ToggleSwitch from "../common/ToggleSwitch";
 
 // Icon Viewer
-var IconViewer = React.createClass({
+var IconViewer = React.createClass(
 
-    mixins: [ viewerCommon ]
+  { mixins: [ viewerOverlay, viewerMode, viewerCommon ]
 
-  , contextTypes: {
-      router: React.PropTypes.func
-    }
-
-  , propTypes: {
-        viewData         : React.PropTypes.object.isRequired
-      , inputData        : React.PropTypes.array.isRequired
-      , handleItemSelect : React.PropTypes.func.isRequired
-      , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
-      , searchString     : React.PropTypes.string
-      , filteredData     : React.PropTypes.object.isRequired
-    }
-
-  , componentDidMount: function () {
-      window.addEventListener( "keyup", this.handleEscClose );
-    }
-
-  , componentWillUnmount: function () {
-      window.removeEventListener( "keyup", this.handleEscClose );
-    }
-
-  , handleEscClose: function( event ) {
-      if ( event.which === 27 && this.dynamicPathIsActive() ) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.returnToViewerRoot();
-      }
-    }
-
-  , handleClickOut: function( event, componentID ) {
-      if ( event.dispatchMarker === componentID ) {
-        this.returnToViewerRoot();
-      }
-    }
-
-  , handleItemClick: function( params, selectionValue, event ) {
+  , handleItemClick: function ( params, selectionValue, event ) {
       switch ( event.type ) {
         case "click":
           this.props.handleItemSelect( selectionValue );
           break;
 
         case "dblclick":
-          this.context.router.transitionTo( this.props.viewData.routing.route, params );
+          this.context.router.transitionTo( this.props.routeName, params );
           break;
       }
     }
 
-  , createItem: function( rawItem ) {
-      var searchString   = this.props.searchString;
-      var selectionValue = rawItem[ this.props.viewData.format["selectionKey"] ];
+  , createItem: function ( rawItem ) {
+      const search    = this.props.searchString;
+      const selection = rawItem[ this.props.keyUnique ];
       var params = {};
 
-      params[ this.props.viewData.routing["param"] ] = selectionValue;
+      params[ this.props.routeParam ] = selection;
 
-      var primaryText   = rawItem[ this.props.viewData.format["primaryKey"] ];
-      var secondaryText = rawItem[ this.props.viewData.format["secondaryKey"] ];
+      var textPrimary   = rawItem[ this.props.keyPrimary ];
+      var textSecondary = rawItem[ this.props.keySecondary ];
 
-      if ( searchString.length ) {
-        primaryText   = viewerUtil.markSearch( primaryText.split( searchString ), searchString );
-        secondaryText = viewerUtil.markSearch( secondaryText.split( searchString ), searchString );
+      if ( search.length ) {
+        textPrimary   = viewerUtil.markSearch(
+                          textPrimary.split( search ), search
+                        );
+        textSecondary = viewerUtil.markSearch(
+                          textSecondary.split( search ), search
+                        );
       }
 
       var ts = null;
-      if ( this.props.viewData.display.showToggleSwitch )
-      {
-        var serviceState = (secondaryText === "running" ? true : false);
+      if ( this.props.viewData.display.showToggleSwitch ) {
+        var serviceState = (textSecondary === "running" ? true : false);
         ts = <ToggleSwitch
                 toggled   = { serviceState }
                 onChange  = { this.props.viewData.display.handleToggle.bind( null, rawItem ) } />;
@@ -91,18 +61,18 @@ var IconViewer = React.createClass({
 
       return (
         <div
-          className     = { "viewer-icon-item" + ( selectionValue === this.props.selectedItem ? " active" : "" ) }
-          onClick       = { this.handleItemClick.bind( null, null, selectionValue ) }
-          onDoubleClick = { this.handleItemClick.bind( null, params, selectionValue ) } >
-          <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.viewData.format["secondaryKey"] ] }
-                               fallbackString = { rawItem[ this.props.viewData.format["primaryKey"] ] }
-                               iconImage      = { rawItem[ this.props.viewData.format["imageKey"] ] }
-                               fontIcon       = { rawItem[ this.props.viewData.format["fontIconKey"] ] }
-                               seedNumber     = { rawItem[ this.props.viewData.format["uniqueKey"] ] }
+          className     = { "viewer-icon-item" + ( selection === this.props.selectedItem ? " active" : "" ) }
+          onClick       = { this.handleItemClick.bind( null, null, selection ) }
+          onDoubleClick = { this.handleItemClick.bind( null, params, selection ) } >
+          <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.keySecondary ] }
+                               fallbackString = { rawItem[ this.props.keyPrimary ] }
+                               seedNumber     = { { String( rawItem[ this.props.keyPrimary ] )
+                               + String( rawItem[ this.props.keySecondary ] )
+                               } }
                                fontSize       = { 1 } />
           <div className="viewer-icon-item-text">
-            <h6 className="viewer-icon-item-primary">{ primaryText }</h6>
-            <small className="viewer-icon-item-secondary">{ secondaryText }</small>
+            <h6 className="viewer-icon-item-primary">{ textPrimary }</h6>
+            <small className="viewer-icon-item-secondary">{ textSecondary }</small>
             { ts }
           </div>
         </div>
@@ -127,7 +97,6 @@ var IconViewer = React.createClass({
                   onClick  = { this.handleClickOut } />
               </span>
               <RouteHandler
-                viewData  = { this.props.viewData }
                 inputData = { this.props.inputData }
                 activeKey = { this.props.selectedKey } />
             </div>

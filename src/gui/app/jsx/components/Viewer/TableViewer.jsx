@@ -23,8 +23,7 @@ var TableViewer = React.createClass({
     }
 
   , propTypes: {
-        viewData         : React.PropTypes.object.isRequired
-      , inputData        : React.PropTypes.array.isRequired
+        inputData        : React.PropTypes.array.isRequired
       , handleItemSelect : React.PropTypes.func.isRequired
       , selectedItem     : React.PropTypes.oneOfType([ React.PropTypes.number, React.PropTypes.string ])
       , searchString     : React.PropTypes.string
@@ -71,7 +70,7 @@ var TableViewer = React.createClass({
           break;
 
         case "dblclick":
-          this.context.router.transitionTo( this.props.viewData.routing.route, params );
+          this.context.router.transitionTo( this.props.routeName, params );
           break;
       }
     }
@@ -134,28 +133,27 @@ var TableViewer = React.createClass({
 
   , createHeader: function( key, index ) {
       var thIsActive  = ( this.state.sortTableBy === key );
-      var targetEntry = _.where( this.props.viewData.format["dataKeys"], { "key" : key })[0];
       return(
         <th className     = "fixed-table-header-th"
             ref           = { "COL_" + key }
             style         = {{ width: this.state.tableColWidths[ key ] }}
             key           = { index } >
           <span className="th-spacing">
-            { targetEntry["name"] }
+            { this.props.itemLabels[ key ] }
           </span>
           <div className = { "th-content sortable-table-th" + ( thIsActive ? " " + this.state.sortOrder : "" ) }
                onClick   = { this.changeSortState.bind( null, key ) } >
-            { targetEntry["name"] }
+            { this.props.itemLabels[ key ] }
           </div>
         </th>
       );
     }
 
   , createRows: function( item, index ) {
-      var selectionValue = item[ this.props.viewData.format["selectionKey"] ];
+      var selectionValue = item[ this.props.keyUnique ];
       var params         = {};
 
-      params[ this.props.viewData.routing["param"] ] = selectionValue;
+      params[ this.props.routeParam ] = selectionValue;
 
       return(
         <tr
@@ -188,7 +186,6 @@ var TableViewer = React.createClass({
                 onClick  = { this.handleClickOut } />
             </span>
             <RouteHandler
-              viewData  = { this.props.viewData }
               inputData = { this.props.inputData }
               activeKey = { this.props.selectedKey } />
           </div>
