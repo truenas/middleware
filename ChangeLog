@@ -14,6 +14,7 @@
 #9785	Bug	Nice to have	malfunction
 #9797	Bug	Important	Fixes an issue where cloning a renamed boot environment would fail.
 #9822	Bug	Important	AFP should not be the default category for bugs submitted in FreeNAS
+#9862	Bug	Important	Unable to create cron task running as root
 #9867	Feature	Nice to have	Allows .local hosts to be resolved.
 #9869	Bug	Important	netperf netserver "unknown test number 97"
 #9913	Bug	Important	Bootup error:  False Bad Number
