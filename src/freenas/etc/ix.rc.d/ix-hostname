@@ -26,6 +26,7 @@ generate_hostname()
 
 	if dirsrv_enabled nis; then
 		echo -e "127.0.0.1\t${gc_hostname}.${gc_domain} ${gc_hostname}" >> /etc/hosts
+		echo -e "::1\t\t${gc_hostname}.${gc_domain} ${gc_hostname}" >> /etc/hosts
 		echo nis >> /etc/host.conf
 		echo "${NIS_HOSTSSTR}" >> /etc/hosts
 	elif dirsrv_enabled activedirectory; then
@@ -39,9 +40,11 @@ generate_hostname()
 			domainname="$(echo "${domainname}"|tr A-Z a-z)"
 
 			echo -e "127.0.0.1\t"${netbiosname}.${domainname}" "${netbiosname}"" >> /etc/hosts
+			echo -e "::1\t\t"${netbiosname}.${domainname}" "${netbiosname}"" >> /etc/hosts
 		done
 	else
 		echo -e "127.0.0.1\t${gc_hostname}.${gc_domain} ${gc_hostname}" >> /etc/hosts
+		echo -e "::1\t\t${gc_hostname}.${gc_domain} ${gc_hostname}" >> /etc/hosts
 		local tmpfile="$(mktemp /tmp/.XXXXXX)"
 		grep -Ev '^nis' /etc/host.conf > "${tmpfile}" 2> /dev/null
 		mv "${tmpfile}" /etc/host.conf
