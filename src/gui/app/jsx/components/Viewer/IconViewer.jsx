@@ -51,14 +51,6 @@ var IconViewer = React.createClass(
                         );
       }
 
-      var ts = null;
-      if ( this.props.viewData.display.showToggleSwitch ) {
-        var serviceState = (textSecondary === "running" ? true : false);
-        ts = <ToggleSwitch
-                toggled   = { serviceState }
-                onChange  = { this.props.viewData.display.handleToggle.bind( null, rawItem ) } />;
-      }
-
       return (
         <div
           className     = { "viewer-icon-item" + ( selection === this.props.selectedItem ? " active" : "" ) }
@@ -73,7 +65,6 @@ var IconViewer = React.createClass(
           <div className="viewer-icon-item-text">
             <h6 className="viewer-icon-item-primary">{ textPrimary }</h6>
             <small className="viewer-icon-item-secondary">{ textSecondary }</small>
-            { ts }
           </div>
         </div>
       );

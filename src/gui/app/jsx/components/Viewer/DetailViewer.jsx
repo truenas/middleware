@@ -66,17 +66,6 @@ const DetailNavSection = React.createClass(
         secondaryText = viewerUtil.markSearch( secondaryText, searchString );
       }
 
-      var ts = null;
-      if ( this.props.showToggleSwitch ) {
-        var serviceState = ( secondaryText === "running" ? true : false );
-        ts = <ToggleSwitch
-                toggled   = { serviceState }
-                onChange  = { this.props.handleToggle
-                                        .bind( null, rawItem )
-                            }
-             />;
-      }
-
       return (
         <li
           role      = "presentation"
@@ -101,7 +90,6 @@ const DetailNavSection = React.createClass(
               <strong className="primary-text">{ primaryText }</strong>
               <small className="secondary-text">{ secondaryText }</small>
             </div>
-            { ts }
           </Link>
         </li>
       );
