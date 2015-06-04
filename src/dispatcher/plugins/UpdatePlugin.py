@@ -204,10 +204,12 @@ class UpdateHandler(object):
         }
         if self.details:
             data['details'] = self.details
+        # TODO: add actual dispatcher event emit code
 
 
 def generate_update_cache(dispatcher, cache_dir):
-    # update_cache.put(path, disk)
+    # update_cache.put()
+    # TODO Add check to cached updates in cache_dir
     pass
 
 
@@ -231,7 +233,7 @@ class UpdateProvider(Provider):
     # TODO: Change to array of strings instead of one gigantic string
     @returns(str)
     def get_changelog(self):
-        temp_changelog = update_cache.get('changelog')
+        temp_changelog = update_cache.get('changelog', timeout=1)
         if temp_changelog is not None:
             return temp_changelog
         elif update_cache.is_valid('changelog'):
@@ -244,7 +246,7 @@ class UpdateProvider(Provider):
 
     # TODO: dont be lazy and write the schema for this
     def get_update_ops(self):
-        temp_updateOperations = update_cache.get('updateOperations')
+        temp_updateOperations = update_cache.get('updateOperations', timeout=1)
         if temp_updateOperations is not None:
             return temp_updateOperations
         elif update_cache.is_valid('updateOperations'):
