@@ -1625,8 +1625,8 @@ class iSCSITargetForm(ModelForm):
             raise forms.ValidationError(_("target is a reserved word, please choose a different name for this alias."))
         return alias
 
-    def save(self):
-        super(iSCSITargetForm, self).save()
+    def done(self, *args, **kwargs):
+        super(iSCSITargetForm, self).done(*args, **kwargs)
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
