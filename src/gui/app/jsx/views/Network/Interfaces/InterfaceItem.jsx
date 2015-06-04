@@ -23,6 +23,9 @@ const InterfaceView = React.createClass({
 
   propTypes: {
     item: React.PropTypes.object.isRequired
+    , handleViewChange: React.PropTypes.func.isRequired
+    , toggleInterface: React.PropTypes.func.isRequired
+    , viewData: React.PropTypes.object.isRequired
   }
 
   // Map an array of aliases into an array of ListGroupItems representing all
@@ -88,17 +91,27 @@ const InterfaceView = React.createClass({
 
   , render: function () {
 
-    let configureButton = (
-      <TWBS.Row>
-        <TWBS.Col xs={12}>
-          <TWBS.Button
-            className = "pull-right"
-            onClick = { this.props.handleViewChange.bind( null, "edit" ) }
-            bsStyle = "primary">
-            {"Configure Interface"}
-          </TWBS.Button>
-        </TWBS.Col>
-      </TWBS.Row>
+    let toggleInterfaceButton = (
+      <TWBS.Button
+          className = "pull-right"
+          onClick = { this.props.toggleInterface }
+          bsStyle = "primary">
+          { this.props.item[ "status" ][ "enabled" ]
+            ? "Down Interface"
+            : "Up Interface" }
+      </TWBS.Button>
+    );
+
+    let configureButtons = (
+      <TWBS.ButtonToolbar>
+        { toggleInterfaceButton }
+        <TWBS.Button
+          className = "pull-right"
+          onClick = { this.props.handleViewChange.bind( null, "edit" ) }
+          bsStyle = "primary">
+          { "Configure Interface" }
+        </TWBS.Button>
+      </TWBS.ButtonToolbar>
     );
 
     let interfaceName = (
@@ -108,10 +121,10 @@ const InterfaceView = React.createClass({
       </TWBS.Panel>
     );
 
-    let linkState = (
+    let linkAddress = (
       <TWBS.Panel>
-        { "Link State: " }
-        <strong>{ this.props.item[ "link_state" ] }</strong>
+        { "MAC Address: " }
+        <strong>{ this.props.item[ "status" ][ "link-address" ] }</strong>
       </TWBS.Panel>
     );
 
@@ -134,13 +147,17 @@ const InterfaceView = React.createClass({
 
     return (
       <TWBS.Grid fluid>
-        { configureButton }
+        <TWBS.Row>
+          <TWBS.Col xs = {12}>
+            { configureButtons }
+          </TWBS.Col>
+        </TWBS.Row>
         <TWBS.Row>
           <TWBS.Col xs = {6}>
             { interfaceName }
           </TWBS.Col>
           <TWBS.Col xs = {6}>
-            { linkState }
+            { linkAddress }
           </TWBS.Col>
         </TWBS.Row>
         <TWBS.Row>
@@ -225,6 +242,9 @@ const InterfaceItem = React.createClass({
   , updateInterfaceInState: function () {
       this.setState({ targetInterface: this.getInterfaceFromStore() });
     }
+  , toggleInterface: function () {
+
+  }
 
   , handleViewChange: function ( nextMode, event ) {
       this.setState({ currentMode: nextMode });
@@ -238,6 +258,7 @@ const InterfaceItem = React.createClass({
         handleViewChange: this.handleViewChange
         , item: this.state.targetInterface
         , viewData: this.props.viewData
+        , toggleInterface: this.toggleInterface
       };
 
       switch ( this.state.currentMode ) {

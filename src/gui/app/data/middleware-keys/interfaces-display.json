@@ -1,6 +1,6 @@
 [{
     "primaryKey"   : "name"
-  , "secondaryKey" : "ip"
+  , "secondaryKey" : "type"
   , "selectionKey" : "name"
   , "fontIconKey"  : "font_icon"
   , "uniqueKey"    : "link_address"
@@ -13,39 +13,11 @@
         , "defaultCol"  : true
       }
     , {
-          "key"         : "ip"
-        , "name"        : "IP Address"
-        , "type"        : "string"
-        , "mutable"     : false
-        , "defaultCol"  : true
-      }
-    , {
-          "key"         : "ip_version"
-        , "name"        : "IP Version"
-        , "type"        : "string"
-        , "mutable"     : false
-        , "defaultCol"  : false
-     }
-    , {
-          "key"         : "link_state"
-        , "name"        : "Link State"
-        , "type"        : "string"
-        , "mutable"     : false
-        , "defaultCol"  : true
-      }
-    , {
           "key"         : "link_address"
         , "name"        : "MAC Address"
         , "type"        : "string"
         , "mutable"     : false
         , "defaultCol"  : true
-      }
-    , {
-          "key"         : "flags"
-        , "name"        : "Interface Flags"
-        , "type"        : "array"
-        , "mutable"     : false
-        , "defaultCol"  : false
       }
     , {
           "key"         : "netmask"

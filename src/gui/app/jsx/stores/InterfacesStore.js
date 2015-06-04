@@ -88,21 +88,8 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
         newInterface[ "name" ] = currentInterface[ "name" ]
                                ? currentInterface[ "name" ]
                                : null;
-        newInterface[ "ip" ] = status[ "aliases" ][1]
-                             ? status[ "aliases" ][1][ "address" ]
-                             : "--";
-        newInterface[ "link_state" ] = status[ "link-state" ]
-                                     ? status[ "link-state" ]
-                                     : null;
-        newInterface[ "link_address" ] = status[ "link-address" ]
-                                     ? status[ "link-address" ]
-                                     : null;
-        newInterface[ "flags" ] = status[ "flags" ]
-                                ? status[ "flags" ]
-                                : [];
-        newInterface[ "netmask" ] = status[ "aliases" ][1]
-                                  ? status[ "aliases" ][1][ "netmask" ]
-                                  : null;
+        // Gotta do it like this even though enabled is already a boolean
+        // because sometimes it's not in the object. Undefined is no fun.
         newInterface[ "enabled" ] = currentInterface[ "enabled" ]
                                   ? true
                                   : false;
@@ -124,26 +111,6 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
         newInterface[ "type"] = currentInterface[ "type" ] === "ETHER"
                               ? "Ethernet"
                               : "Unknown";
-
-        // Determine Internet Protocol version
-        if ( !status[ "aliases" ][1] ) {
-          newInterface[ "ip_version" ] = "IP";
-        } else {
-
-          switch ( status[ "aliases" ][1][ "family" ] ) {
-
-            case "INET":
-              newInterface[ "ip_version" ] = "IPv4";
-              break;
-
-            case "INET6":
-              newInterface[ "ip_version" ] = "IPv6";
-              break;
-
-            default:
-            // Nothing to do here.
-          }
-        }
 
         // Map the interface type and/or status to an appropriate icon.
         // TODO: This also needs to handle other interface types.
