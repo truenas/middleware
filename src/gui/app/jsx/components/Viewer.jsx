@@ -72,6 +72,7 @@ const Viewer = React.createClass(
         , filteredData: { grouped: false
                         , groups: []
                         , remaining: { entries: [] }
+                        , rawList: []
                         }
         , searchString: ""
         , selectedItem: selectedItem
