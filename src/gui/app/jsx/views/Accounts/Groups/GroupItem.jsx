@@ -148,59 +148,12 @@ const GroupEdit = React.createClass({
     }
 
   , getInitialState: function () {
-      var remoteState = this.setRemoteState( this.props );
-
       return {
           locallyModifiedValues  : {}
-        , remotelyModifiedValues : {}
-        , remoteState            : remoteState
         , mixedValues            : this.props.item
         , lastSentValues         : {}
         , dataKeys               : this.props.viewData["format"]["dataKeys"]
       };
-    }
-
-  , componentWillRecieveProps: function( nextProps ) {
-      var newRemoteModified = {};
-      var newLocallyModified = {};
-
-      // remotelyModifiedValues represents everything that's changed remotely
-      // since the view was opened. This is the difference between the newly arriving
-      // props and the initial ones. Read-only and unknown values are ignored.
-      // TODO: Use this to show alerts for remote changes on sections the local
-      // administrator is working on.
-      var mismatchedRemoteFields = _.pick( nextProps.item
-                                   , this.checkMatch( value, key )
-                                   , this
-                                   );
-
-      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, nextProps.viewData["format"]["dataKeys"]);
-
-      // remoteState records the item as it was when the view was first
-      // opened. This is used to mark changes that have occurred remotely since
-      // the user began editing.
-      // It is important to know if the incoming change resulted from a call
-      // made by the local administrator. When this happens, we reset the
-      // remoteState to get rid of remote edit markers, as the local version
-      // has thus become authoritative.
-      // We check this by comparing the incoming changes (newRemoteModified) to the
-      // last request sent (this.state.lastSentValues). If this check succeeds,
-      // we reset newLocallyModified and newRemoteModified, as there are no longer
-      // any remote or local changes to record.
-      // TODO: Do this in a deterministic way, instead of relying on comparing
-      // values.
-      if (_.isEqual(this.state.lastSentValues, newRemoteModified)){
-          newRemoteModified  = {};
-          newLocallyModified = {};
-          this.setState ({
-              remoteState           : this.setRemoteState(nextProps)
-            , locallyModifiedValues : newLocallyModified
-          });
-      }
-
-      this.setState({
-          remotelyModifiedValues : newRemoteModified
-      });
     }
 
   , submitGroupUpdate: function () {
@@ -262,7 +215,7 @@ const GroupEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "id", this.state.dataKeys) } />
+                            disabled         />
                 {/* name */}
                 <TWBS.Input type             = "text"
                             label            = { "Group Name" }
@@ -273,7 +226,7 @@ const GroupEdit = React.createClass({
                             groupClassName   = { _.has(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : "" }
                             labelClassName   = "col-xs-4"
                             wrapperClassName = "col-xs-8"
-                            disabled         = { !this.isMutable( "name", this.state.dataKeys) } />
+                />
               </TWBS.Col>
             </TWBS.Row>
           </TWBS.Grid>
@@ -335,7 +288,7 @@ const GroupItem = React.createClass({
       }
 
     , getGroupFromStore: function () {
-        return GroupsStore.findGroupByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
+        return GroupsStore.findGroupByKeyValue( this.props.keyUnique, this.getDynamicRoute() );
       }
 
     , updateGroupInState: function () {
@@ -356,7 +309,7 @@ const GroupItem = React.createClass({
           if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
             processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
           } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
-            processingText = "Group '" + this.state.targetGroup[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+            processingText = "Group '" + this.state.targetGroup[ this.props.keyPrimary ] + "' was updated remotely.";
           }
 
           // DISPLAY COMPONENT

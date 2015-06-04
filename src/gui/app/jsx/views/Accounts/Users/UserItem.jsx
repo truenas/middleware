@@ -181,59 +181,12 @@ const UserEdit = React.createClass({
                }
 
   , getInitialState: function () {
-      var remoteState = this.setRemoteState( this.props );
 
       return { locallyModifiedValues : {}
-             , remotelyModifiedValues : {}
-             , remoteState : remoteState
              , mixedValues : this.props.item
              , lastSentValues : {}
              , dataKeys : this.props.viewData["format"]["dataKeys"]
       };
-    }
-
-  , componentWillReceiveProps: function( nextProps ) {
-      var newRemoteModified  = {};
-      var newLocallyModified = {};
-      var dataKeys = nextProps.viewData["format"]["dataKeys"];
-
-      // remotelyModifiedValues represents everything that's changed remotely
-      // since the view was opened. This is the difference between the newly arriving
-      // props and the initial ones. Read-only and unknown values are ignored.
-      // TODO: Use this to show alerts for remote changes on sections the local
-      // administrator is working on.
-      var mismatchedRemoteFields = _.pick( nextProps.item
-                                         , this.checkMatch( value, key )
-                                         , this
-                                         );
-
-      newRemoteModified = this.removeReadOnlyFields( mismatchedRemoteFields, dataKeys);
-
-      // remoteState records the item as it was when the view was first
-      // opened. This is used to mark changes that have occurred remotely since
-      // the user began editing.
-      // It is important to know if the incoming change resulted from a call
-      // made by the local administrator. When this happens, we reset the
-      // remoteState to get rid of remote edit markers, as the local version
-      // has thus become authoritative.
-      // We check this by comparing the incoming changes (newRemoteModified) to the
-      // last request sent (this.state.lastSentValues). If this check succeeds,
-      // we reset newLocallyModified and newRemoteModified, as there are no longer
-      // any remote or local changes to record.
-      // TODO: Do this in a deterministic way, instead of relying on comparing
-      // values.
-      if (_.isEqual(this.state.lastSentValues, newRemoteModified)){
-          newRemoteModified  = {};
-          newLocallyModified = {};
-          this.setState ({
-              remoteState           : this.setRemoteState(nextProps)
-            , locallyModifiedValues : newLocallyModified
-          });
-      }
-
-      this.setState({
-          remotelyModifiedValues : newRemoteModified
-      });
     }
 
     // TODO: Validate that input values are legitimate for their field. For example,
@@ -501,7 +454,7 @@ const UserItem = React.createClass({
     }
 
   , getUserFromStore: function () {
-      return UsersStore.findUserByKeyValue( this.props.viewData.format["selectionKey"], this.getDynamicRoute() );
+      return UsersStore.findUserByKeyValue( this.props.keyUnique, this.getDynamicRoute() );
     }
 
   , updateUserInState: function () {
@@ -520,9 +473,9 @@ const UserItem = React.createClass({
 
         // PROCESSING OVERLAY
         if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
-          processingText = "Saving changes to '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "'";
+          processingText = "Saving changes to '" + this.state.targetUser[ this.props.keyPrimary ] + "'";
         } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
-          processingText = "User '" + this.state.targetUser[ this.props.viewData.format["primaryKey"] ] + "' was updated remotely.";
+          processingText = "User '" + this.state.targetUser[ this.props.keyPrimary ] + "' was updated remotely.";
         }
 
         // DISPLAY COMPONENT
