@@ -101,134 +101,159 @@ var TableViewer = React.createClass({
         nextSortOrder = "descending";
       }
 
-      this.setState({
-          sortTableBy : nextSortTableBy
+      this.setState(
+        { sortTableBy : nextSortTableBy
         , sortOrder   : nextSortOrder
-      });
+        }
+      );
 
     }
 
-  , getInitialColWidths: function( colArray ) {
+  , getInitialColWidths: function ( columnSet ) {
       var tempWidths = {};
 
-      colArray.map( function( targetCol, index ) {
-        tempWidths[ targetCol ] = "auto";
-      });
+      columnSet.map( column => tempWidths[ column ] = "auto" );
 
       return tempWidths;
     }
 
-  , getUpdatedColWidths: function( colArray ) {
+  , getUpdatedColWidths: function ( columnSet ) {
       var tempWidths  = {};
-      var viewerRefs  = this.refs;
       var viewerWidth = this.refs[ "TABLE_VIEWER" ].getDOMNode().offsetWidth;
 
-      colArray.map( function( targetCol, index ) {
-        var colWidth = viewerRefs[ "COL_" + targetCol ].getDOMNode().offsetWidth;
-        tempWidths[ targetCol ] = Math.round( colWidth / viewerWidth * 10000 ) / 100 + "%";
+      columnSet.map( column => {
+        let colWidth = this.refs[ "COL_" + column ].getDOMNode().offsetWidth;
+
+        tempWidths[ column ] =
+          Math.round( colWidth / viewerWidth * 10000 ) / 100 + "%";
       });
 
       return tempWidths;
     }
 
-  , createHeader: function( key, index ) {
+  , createHeader: function ( key, index ) {
       var thIsActive  = ( this.state.sortTableBy === key );
-      return(
-        <th className     = "fixed-table-header-th"
-            ref           = { "COL_" + key }
-            style         = {{ width: this.state.tableColWidths[ key ] }}
-            key           = { index } >
+      return (
+        <th
+          className = "fixed-table-header-th"
+          ref       = { "COL_" + key }
+          style     = {{ width: this.state.columnWidths[ key ] }}
+          key       = { index }
+        >
           <span className="th-spacing">
             { this.props.itemLabels[ key ] }
           </span>
-          <div className = { "th-content sortable-table-th" + ( thIsActive ? " " + this.state.sortOrder : "" ) }
-               onClick   = { this.changeSortState.bind( null, key ) } >
+          <div
+            className = { "th-content sortable-table-th"
+                        + ( thIsActive
+                          ? " " + this.state.sortOrder
+                          : ""
+                          )
+                        }
+            onClick   = { this.changeSortState.bind( null, key ) }
+          >
             { this.props.itemLabels[ key ] }
           </div>
         </th>
       );
     }
 
-  , createRows: function( item, index ) {
+  , createRows: function ( item, index ) {
       var selectionValue = item[ this.props.keyUnique ];
       var params         = {};
 
       params[ this.props.routeParam ] = selectionValue;
 
-      return(
+      return (
         <tr
           key           = { index }
-          className     = { this.props.selectedItem === selectionValue ? "active" : "" }
-          onClick       = { this.handleRowClick.bind( null, null, selectionValue ) }
-          onDoubleClick = { this.handleRowClick.bind( null, params, selectionValue ) } >
-          { this.props.tableCols.map( function( key, index ) {
-              return ( <td key={ index }>{ viewerUtil.identifyAndWrite( item[ key ] ) }</td> );
-            })
+          className     = { this.props.selectedItem === selectionValue
+                                                    ? "active"
+                                                    : ""
+                          }
+          onClick       = { this.handleRowClick
+                              .bind( null, null, selectionValue )
+                          }
+          onDoubleClick = { this.handleRowClick
+                              .bind( null, params, selectionValue )
+                          }
+        >
+          { this.state.columnOrder.map(
+              function ( key, index ) {
+                return (
+                  <td key={ index }>
+                    { viewerUtil.identifyAndWrite( item[ key ] ) }
+                  </td>
+                );
+              }
+            )
           }
         </tr>
       );
     }
 
   , render: function () {
+      var tableData     = null;
+      var editorContent = null;
 
-    var tableData     = null;
-    var editorContent = null;
+      if ( this.dynamicPathIsActive() ) {
+        editorContent = (
+          <div className = "overlay-light editor-edit-overlay"
+               onClick   = { this.handleClickOut } >
+            <div className="editor-edit-wrapper">
+              <span className="clearfix">
+                <Icon
+                  glyph    = "close"
+                  icoClass = "editor-close"
+                  onClick  = { this.handleClickOut } />
+              </span>
+              <RouteHandler
+                inputData = { this.props.inputData }
+                activeKey = { this.props.selectedKey } />
+            </div>
+          </div>
+        );
+      }
 
-    if ( this.dynamicPathIsActive() ) {
-      editorContent = (
-        <div className = "overlay-light editor-edit-overlay"
-             onClick   = { this.handleClickOut } >
-          <div className="editor-edit-wrapper">
-            <span className="clearfix">
-              <Icon
-                glyph    = "close"
-                icoClass = "editor-close"
-                onClick  = { this.handleClickOut } />
-            </span>
-            <RouteHandler
-              inputData = { this.props.inputData }
-              activeKey = { this.props.selectedKey } />
+      if ( this.state.sortTableBy ) {
+        tableData = _.sortBy( this.props.filteredData["rawList"]
+                            , this.state.sortTableBy );
+
+        if ( this.state.sortOrder === "ascending" ) {
+          tableData = tableData.reverse();
+        }
+
+      } else {
+        tableData = this.props.filteredData["rawList"];
+      }
+
+      return (
+        <div className = "viewer-table fixed-table-container">
+          { editorContent }
+          <div className = "fixed-table-container-inner">
+
+            <TWBS.Table
+              striped bordered condensed hover
+              ref       = "TABLE_VIEWER"
+              className = "fixed-table"
+            >
+
+              <thead>
+                <tr>
+                  { this.state.columnOrder.map( this.createHeader ) }
+                </tr>
+              </thead>
+
+              <tbody>
+                { tableData.map( this.createRows ) }
+              </tbody>
+
+            </TWBS.Table>
           </div>
         </div>
       );
     }
-
-    if ( this.state.sortTableBy ) {
-      tableData = _.sortBy( this.props.filteredData["rawList"], this.state.sortTableBy );
-
-      if ( this.state.sortOrder === "ascending" ) {
-        tableData = tableData.reverse();
-      }
-
-    } else {
-      tableData = this.props.filteredData["rawList"];
-    }
-
-    return(
-      <div className = "viewer-table fixed-table-container">
-        { editorContent }
-        <div className = "fixed-table-container-inner">
-
-          <TWBS.Table striped bordered condensed hover
-                      ref       = "TABLE_VIEWER"
-                      className = "fixed-table">
-
-            <thead>
-              <tr>
-                { this.props.tableCols.map( this.createHeader ) }
-              </tr>
-            </thead>
-
-            <tbody>
-              { tableData.map( this.createRows ) }
-            </tbody>
-
-          </TWBS.Table>
-        </div>
-      </div>
-    );
   }
+);
 
-});
-
-module.exports = TableViewer;
+export default TableViewer;

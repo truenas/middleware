@@ -131,4 +131,4 @@ var IconViewer = React.createClass(
     }
 });
 
-module.exports = IconViewer;
+export default IconViewer;
