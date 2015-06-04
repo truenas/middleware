@@ -66,7 +66,7 @@ const DragDropGrid = React.createClass({
     }
 
   , componentWillReceiveProps: function ( nextProps ) {
-    this.initializeWidgets();
+    this.initializeWidgets( nextProps.children );
   }
 
   , handleWindowResize: function () {
@@ -380,14 +380,15 @@ const DragDropGrid = React.createClass({
 
   // Used when a new set of widgets is requested to create random widgets and
   // distribute them around the page as necessary.
-  , initializeWidgets: function () {
+  , initializeWidgets: function ( chldrn ) {
+      var children = chldrn || this.props.children;
       var widgetMeta = {};
       // The displayMatrix is a two-dimensional array in which empty positions
       // are represented as zeros and occupied ones are set to the UUID of the
       // widget occupying that space.
       var displayMatrix = [ _.fill( Array( this.calculateGridWidth() ), 0 ) ];
 
-      React.Children.map( this.props.children, function ( Widget ) {
+      React.Children.map( children, function ( Widget ) {
         var dimensions = [ this.toGridUnits( Widget.props.dimensions[0] )
                            , this.toGridUnits( Widget.props.dimensions[1] )
                          ];
