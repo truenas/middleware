@@ -899,6 +899,12 @@ class iSCSITargetGroups(Model):
                     "both none and authentication."),
     )
 
+    def __unicode__(self):
+        return 'iSCSI Target Group (%s,%d)' % (
+            self.iscsi_target,
+            self.id,
+        )
+
     class Meta:
         verbose_name = _("iSCSI Groups")
         verbose_name_plural = _("iSCSI Groups")
