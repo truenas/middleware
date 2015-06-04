@@ -48,7 +48,8 @@ FreeNAS 10 M4
 
   * Jail-based app system
   * base development instance on github, forked to create new apps.
-  * Manual Jail creation will not be brought back
+  * Manual Jail creation will probably not be brought back in this milestone;
+    see FreeNAS 10 SU
   * iX will provide signed and well tested jails for the most needed or
     ix-relevant apps
   * user contibuted apps will be scraped from github and have no signing
@@ -75,3 +76,10 @@ FreeNAS 10 SU - Post 10.0 RELEASE features
   * Allows use of virtualized Linux, replacing the inferior functionality of
     Linux jails.
   * Replaces arbitrary jails, which we conflated with the plugin system in 9.x.
+
+- Jails UI
+
+  * Once apps and basic functionality aimed at the majority of our user
+    community are working, bring back completely custom jails.
+  * Full GUI controls: create, delete, start, stop, configure, migrate, and
+    update.
