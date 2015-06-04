@@ -58,9 +58,9 @@ var IconViewer = React.createClass(
           onDoubleClick = { this.handleItemClick.bind( null, params, selection ) } >
           <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.keySecondary ] }
                                fallbackString = { rawItem[ this.props.keyPrimary ] }
-                               seedNumber     = { { String( rawItem[ this.props.keyPrimary ] )
-                               + String( rawItem[ this.props.keySecondary ] )
-                               } }
+                               seedNumber     = { String( rawItem[ this.props.keyPrimary ] )
+                                                + String( rawItem[ this.props.keySecondary ] )
+                                                }
                                fontSize       = { 1 } />
           <div className="viewer-icon-item-text">
             <h6 className="viewer-icon-item-primary">{ textPrimary }</h6>
