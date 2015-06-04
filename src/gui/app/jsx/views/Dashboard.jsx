@@ -8,6 +8,8 @@
 import _ from "lodash";
 import React from "react";
 
+import freeNASUtil from "../common/freeNASUtil";
+
 import ServicesMiddleware from "../middleware/ServicesMiddleware";
 import ServicesStore from "../stores/ServicesStore";
 
@@ -17,17 +19,6 @@ import SystemInfo from "../components/Widgets/SystemInfo";
 import SystemLoad from "../components/Widgets/SystemLoad";
 import NetworkUsage from "../components/Widgets/NetworkUsage";
 import DiskUsage from "../components/Widgets/DiskUsage";
-
-var generateUUID = function () {
-  var rawUUID = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  return rawUUID.replace( /[xy]/g, function ( c ) {
-    var r = Math.random() * 16 | 0;
-    var v = ( c === "x" ) ? r : ( r & 0x3 | 0x8 );
-
-    return v.toString( 16 );
-  }
-  );
-};
 
 const widgetSizes =
   {   "xs-square" : [ 75, 75 ]
@@ -46,112 +37,53 @@ const widgetSizes =
 var fooProps = {
   foo: "foo!"
   , bar: "bar!"
-  , onMouseDown: function() {
+  , onMouseDown: function ( e ) {
+    console.log( e );
+    // onMouseDownHolder = { this.enterMovementMode
+    //                  .bind( this
+    //                        , this.state.
+    //                          widgets.SystemInfo.id ) }
 
   }
 }
 
-const DragDropGrid = React.createClass(
-  { renderChildren: function () {
-      return React.Children.map( this.props.children
-                               , function ( Child ) {
-          return React.cloneElement( Child, fooProps )
-        }
-      )
-    }
+const DragDropGrid = React.createClass({
 
-  , render: function () {
-    return (
-      <div className={ this.props.className }>
-        { this.renderChildren() }
-      </div>
-    );
-  }
-
-  }
-);
-const Dashboard = React.createClass({
 
   getDefaultProps: function () {
-      return {
-        // The size of each grid unit in pixels.
-        gridSize   : 15
-        // The amount of padding in grid units that should be in between any
-        // two adjacent widgets.
-        , gridGutter : 1
-      };
-    }
+    return {
+      // The size of each grid unit in pixels.
+      gridSize   : 15
+      // The amount of padding in grid units that should be in between any
+      // two adjacent widgets.
+      , gridGutter : 1
+    };
+  }
 
   , getInitialState: function () {
-      return {
-        servicesList: ServicesStore.getAllServices()
-        , movementMode : false
-        , sizeArr      : [ "s", "m", "l" ]
-        , widgets      : {
-          SystemInfo   : {
-            id           : generateUUID()
-            , dimensions : widgetSizes["m-rect"]
-            , size       : "m-rect"
-            , count      : 0
-          }
-          , MemoryUtil  : {
-            id           : generateUUID()
-            , dimensions : widgetSizes["m-rect"]
-            , size       : "m-rect"
-            , count      : 0
-          }
-          , CpuUtil     : {
-            id           : generateUUID()
-            , dimensions : widgetSizes["m-rect"]
-            , size       : "m-rect"
-            , count      : 0
-          }
-          , SystemLoad  : {
-            id           : generateUUID()
-            , dimensions : widgetSizes["m-rect"]
-            , size       : "m-rect"
-            , count      : 0
-          }
-          , NetworkUsage: {
-            id           : generateUUID()
-            , dimensions : widgetSizes["l-rect"]
-            , size       : "l-rect"
-            , count      : 0
-          }
-          , DiskUsage   : {
-            id           : generateUUID()
-            , dimensions : widgetSizes["l-rect"]
-            , size       : "l-rect"
-            , count      : 0
-          }
-        }
-      };
-    }
+    return { movementMode: false }
+  }
 
-  , componentDidMount: function () {
-      ServicesMiddleware.requestServicesList();
-      ServicesStore.addChangeListener( this.handleServicesChange );
+  ,  componentDidMount: function () {
       window.addEventListener( "mouseup", this.exitMovementMode );
-      window.addEventListener( "resize", this.handleResize );
-      this.initializeWidgets();
+      window.addEventListener( "resize", this.handleWindowResize );
       this.setState({
         gridWidth: this.calculateGridWidth()
       });
+      this.initializeWidgets();
     }
 
   , componentWillUnmount: function () {
-      ServicesStore.removeChangeListener( this.handleServicesChange );
       window.removeEventListener( "mouseup", this.exitMovementMode );
-      window.removeEventListener( "resize', this.handleResize" );
+      window.removeEventListener( "resize", this.handleWindowResize );
     }
 
-  , handleServicesChange: function () {
-      this.setState({
-        servicesList: ServicesStore.getAllServices()
-      });
-    }
+  , componentWillReceiveProps: function ( nextProps ) {
+    this.initializeWidgets();
+    console.log( "Props on the way!" );
+  }
 
-  , handleResize: function () {
+  , handleWindowResize: function () {
     this.setState({
       gridWidth : this.calculateGridWidth()
     });
@@ -160,8 +92,9 @@ const Dashboard = React.createClass({
   }
 
   // Calculate how many grid units will fit in the window.
-  , calculateGridWidth: function () {
-      return this.toGridUnits( this.getDOMNode( "thePlayground" ).offsetWidth );
+  ,  calculateGridWidth: function () {
+      return this.toGridUnits( React.findDOMNode( this.refs.thePlayground )
+                                    .offsetWidth );
     }
 
   // Converts pixels to grid units. Rounds down.
@@ -194,26 +127,14 @@ const Dashboard = React.createClass({
         var newPos = [];
         var wim    = this.state.widgetInMotion;
 
-
-        _.forEach( this.state.widgets, function ( widgt ) {
-          if ( widgt.id === wim.id ) {
-            newPos.push.apply( newPos, widgt.position );
-          }
-        });
-
-        newPos[1] =
-          this.toPixels(
-            newPos[1] +
-            this.toGridUnits( event.nativeEvent.clientY - wim.origin[1] )
-          ) + "px";
-        newPos[0] =
-          this.toPixels(
-            newPos[0] +
-            this.toGridUnits( event.nativeEvent.clientX - wim.origin[0] )
-          ) + "px";
+        newPos[1] = (
+            this.state.widgetMeta[ wim.id ].position[1] +
+            event.nativeEvent.clientY - wim.origin[1] ) + "px";
+        newPos[0] = (
+            this.state.widgetMeta[ wim.id ].position[0] +
+            event.nativeEvent.clientX - wim.origin[0] ) + "px";
 
         console.log( newPos );
-        console.log( this.refs );
 
         this.moveWidget( this.refs[ "widget-" + wim.id ].getDOMNode(), newPos );
       }
@@ -224,6 +145,8 @@ const Dashboard = React.createClass({
   , exitMovementMode: function () {
       var movedWidget = document.querySelector( ".widget.in-motion" );
       var newState    = {};
+
+      console.log( movedWidget );
 
       if ( movedWidget ) {
         var newPosition   = [ this.toGridUnits( movedWidget.style.left )
@@ -476,44 +399,145 @@ const Dashboard = React.createClass({
   // Used when a new set of widgets is requested to create random widgets and
   // distribute them around the page as necessary.
   , initializeWidgets: function () {
-      var widgets               = this.state.widgets;
-      var toGridUnits           = this.toGridUnits;
-      var toPixels              = this.toPixels;
-      var findEmptySpace        = this.findEmptySpace;
-      var createMatrixFootprint = this.createMatrixFootprint;
+      var widgetMeta = {};
+      console.log( "displayMatrix renewed" );
       // The displayMatrix is a two-dimensional array in which empty positions
       // are represented as zeros and occupied ones are set to the UUID of the
       // widget occupying that space.
       var displayMatrix = [ _.fill( Array( this.calculateGridWidth() ), 0 ) ];
 
-      _.forEach( widgets, function ( widget ) {
-        var dimensions = [ toGridUnits( widget.dimensions[0] )
-                           , toGridUnits( widget.dimensions[1] )
+      React.Children.map( this.props.children, function ( Widget ) {
+        var dimensions = [ this.toGridUnits( Widget.props.dimensions[0] )
+                           , this.toGridUnits( Widget.props.dimensions[1] )
                          ];
-        var position   = findEmptySpace( displayMatrix, dimensions );
+        var position   = this.findEmptySpace( displayMatrix
+                                              , dimensions );
 
-        createMatrixFootprint( displayMatrix, position, dimensions, widget.id );
+        this.createMatrixFootprint( displayMatrix
+                                    , position
+                                    , dimensions
+                                    , Widget.props.id );
 
-        widget.position    = [];
-        widget.position[0] = toPixels( position[0] );
-        widget.position[1] = toPixels( position[1] );
-      });
+        var widgetPosition  = [];
+        widgetPosition[0]   = this.toPixels( position[0] );
+        widgetPosition[1]   = this.toPixels( position[1] );
+
+        widgetMeta[Widget.props.id] = {};
+        widgetMeta[Widget.props.id].position = widgetPosition
+      }.bind( this ) )
+
 
       this.setState({
-        widgets       : widgets
-        , displayMatrix : displayMatrix
+        displayMatrix : displayMatrix
+        , widgetMeta  : widgetMeta
+      });
+    }
+
+  , renderChildren: function () {
+      if ( this.state.displayMatrix ) {
+        return React.Children.map( this.props.children, function ( Widget ) {
+          return React.cloneElement( Widget, {
+            position: this.state.widgetMeta[Widget.props.id].position
+            , ref: "widget-" + Widget.props.id
+            , onMouseDownHolder: this.enterMovementMode
+                                 .bind( null, Widget.props.id )
+            , inMotion: ( ( this.state.widgetInMotion &&
+                            this.state.widgetInMotion.id ===
+                            Widget.props.id )
+                                                        ? true
+                                                        : false )
+          })
+        }.bind( this ) )
+      } else {
+        return ( <div></div> )
+      }
+
+    }
+
+  , render: function () {
+    return (
+      <main
+        ref         = "thePlayground"
+        onMouseMove = { this.calculateMovement }
+        className   = { this.props.className + " playground grid-on" } >
+          { this.renderChildren() }
+      </main>
+    );
+  }
+
+}
+);
+
+const Dashboard = React.createClass({
+
+  getInitialState: function () {
+      return {
+        servicesList: ServicesStore.getAllServices()
+        , sizeArr      : [ "s", "m", "l" ]
+        , widgets      : {
+          SystemInfo   : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , MemoryUtil  : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , CpuUtil     : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , SystemLoad  : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , NetworkUsage: {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["l-rect"]
+            , size       : "l-rect"
+            , count      : 0
+          }
+          , DiskUsage   : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["l-rect"]
+            , size       : "l-rect"
+            , count      : 0
+          }
+        }
+      };
+    }
+
+  , componentDidMount: function () {
+      ServicesMiddleware.requestServicesList();
+      ServicesStore.addChangeListener( this.handleServicesChange );
+    }
+
+  , componentWillUnmount: function () {
+      ServicesStore.removeChangeListener( this.handleServicesChange );
+    }
+
+  , handleServicesChange: function () {
+      this.setState({
+        servicesList: ServicesStore.getAllServices()
       });
     }
 
   , changeSize: function ( widgtName ) {
+    console.log( "Resizing: " + widgtName );
     var newWidgetsState = this.state.widgets;
     var i = ( this.state.widgets[ widgtName ].count
               < this.state.sizeArr.length
               ? this.state.widgets[ widgtName ].count
               : 0 );
-    // console.log( i );
     i++;
-    // console.log( i );
     newWidgetsState[ widgtName ].count = i;
     newWidgetsState[ widgtName ].size = this.state.sizeArr[ i - 1 ]
                                  + this.state.widgets[ widgtName ].size
@@ -524,8 +548,8 @@ const Dashboard = React.createClass({
     newWidgetsState[ widgtName ].dimensions =
     widgetSizes[ newWidgetsState[ widgtName ].size ];
 
+    console.log( newWidgetsState );
     this.setState( { widgets: newWidgetsState } );
-    this.handleResize();
   }
 
   // TODO:
@@ -538,35 +562,21 @@ const Dashboard = React.createClass({
   , render: function () {
       if ( this.isServiceRunning( "collectd" ) === true ) {
         return (
-            <main
-              ref         = "thePlayground"
-              onMouseMove = { this.calculateMovement }
-              className   = { "playground grid-on" } >
-              <DragDropGrid
-                className = "widget-wrapper" >
+              <DragDropGrid className = "widget-wrapper" >
+
                 <SystemInfo
                   stacked           = "true"
                   title             = "System Info"
                   size              = { this.state.widgets.SystemInfo.size }
-                  inMotion          = { ( ( this.state.movementMode &&
-                                            this.state.widgetInMotion &&
-                                            this.state.widgetInMotion.id ===
-                                            this.state.widgets.SystemInfo.id )
-                                                        ? true
-                                                        : false ) }
                   changeSize        = { this.changeSize
                                         .bind( this, "SystemInfo" )}
-                  onMouseDownHolder = { this.enterMovementMode
-                                        .bind( this
-                                              , this.state.
-                                                widgets.SystemInfo.id ) }
-                  refHolder         = { "widget-"
+                  ref               = { "widget-"
                                         + this.state.widgets.SystemInfo.id }
                   dimensions        = { this.state.widgets
                                         .SystemInfo.dimensions }
                   position          = { this.state.widgets.SystemInfo.position }
-                  id                = { this.state.widgets.SystemInfo.id }
-                  { ...fooProps } />
+                  id                = { this.state.widgets.SystemInfo.id } />
+
                 <MemoryUtil
                   title = "Memory Value"
                   size  = { this.state.widgets.MemoryUtil.size }
@@ -575,6 +585,7 @@ const Dashboard = React.createClass({
                   dimensions  = { this.state.widgets.MemoryUtil.dimensions }
                   position    = { this.state.widgets.MemoryUtil.position }
                   id          = { this.state.widgets.MemoryUtil.id }  />
+
                 <CpuUtil
                   primary = "pie"
                   title = "CPU utilization"
@@ -584,6 +595,7 @@ const Dashboard = React.createClass({
                   dimensions  = { this.state.widgets.CpuUtil.dimensions }
                   position    = { this.state.widgets.CpuUtil.position }
                   id          = { this.state.widgets.CpuUtil.id }  />
+
                 <SystemLoad
                   primary   = "stacked"
                   title     = "System Load"
@@ -593,6 +605,7 @@ const Dashboard = React.createClass({
                   dimensions  = { this.state.widgets.SystemLoad.dimensions }
                   position    = { this.state.widgets.SystemLoad.position }
                   id          = { this.state.widgets.SystemLoad.id }  />
+
                 <NetworkUsage
                   title = "Network Usage"
                   size  = { this.state.widgets.NetworkUsage.size }
@@ -602,6 +615,7 @@ const Dashboard = React.createClass({
                   dimensions  = { this.state.widgets.NetworkUsage.dimensions }
                   position    = { this.state.widgets.NetworkUsage.position }
                   id          = { this.state.widgets.NetworkUsage.id }  />
+
                 <DiskUsage
                   title = "Disk Usage"
                   size  = { this.state.widgets.DiskUsage.size }
@@ -612,7 +626,6 @@ const Dashboard = React.createClass({
                   position    = { this.state.widgets.DiskUsage.position }
                   id          = { this.state.widgets.DiskUsage.id }  />
               </DragDropGrid>
-          </main>
         );
       } else {
         return (

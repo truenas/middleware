@@ -459,6 +459,7 @@ module.exports = {
           position    =  { this.props.position }
           title       = { this.props.title }
           size        = { this.props.size }
+          onMouseDownHolder = { this.props.onMouseDownHolder }
           changeSize = { this.props.changeSize } >
 
           <div className="widget-error-panel">
@@ -476,6 +477,7 @@ module.exports = {
           position    =  { this.props.position }
           title     = { this.props.title }
           size      = { this.props.size }
+          onMouseDownHolder = { this.props.onMouseDownHolder }
           changeSize = { this.props.changeSize } >
 
           <div className="widget-content">
@@ -494,6 +496,7 @@ module.exports = {
           position    =  { this.props.position }
           title     = { this.props.title }
           size      = { this.props.size }
+          onMouseDownHolder = { this.props.onMouseDownHolder }
           changeSize = { this.props.changeSize } >
 
           <div className="widget-error-panel">
