@@ -33,32 +33,18 @@ class Migration(SchemaMigration):
                     'null_first': 'iscsi_lunid IS NULL',
                 }).order_by('null_first', 'iscsi_lunid'):
 
-                    path = t2e.iscsi_extent.iscsi_target_extent_path
-                    if t2e.iscsi_extent.iscsi_target_extent_type == 'Disk':
-                        disk = orm['storage.Disk'].objects.filter(id=path).order_by('disk_enabled')
-                        if not disk.exists():
-                            continue
-                        disk = disk[0]
-                        if disk.disk_multipath_name:
-                            path = "/dev/multipath/%s" % disk.disk_multipath_name
-                        else:
-                            path = "/dev/%s" % disk.identifier_to_device()
-                    else:
-                        if not path.startswith("/mnt"):
-                            path = "/dev/" + path
-                    if os.path.exists(path):
-                        if t2e.iscsi_lunid is None:
-                            while cur_lunid in used_lunids:
-                                cur_lunid += 1
+                    if t2e.iscsi_lunid is None:
+                        while cur_lunid in used_lunids:
                             cur_lunid += 1
-                        if t2e.iscsi_lunid is None:
-                            serial = "%s%s" % (target.iscsi_target_serial, str(cur_lunid-1))
-                        else:
-                            serial = "%s%s" % (target.iscsi_target_serial, str(t2e.iscsi_lunid))
+                        cur_lunid += 1
+                    if t2e.iscsi_lunid is None:
+                        serial = "%s%s" % (target.iscsi_target_serial, str(cur_lunid-1))
+                    else:
+                        serial = "%s%s" % (target.iscsi_target_serial, str(t2e.iscsi_lunid))
 
-                        extent = t2e.iscsi_extent
-                        extent.iscsi_target_extent_serial = serial
-                        extent.save()
+                    extent = t2e.iscsi_extent
+                    extent.iscsi_target_extent_serial = serial
+                    extent.save()
 
     def backwards(self, orm):
         # Deleting field 'iSCSITargetExtent.iscsi_target_extent_serial'
