@@ -531,7 +531,12 @@
             "service.ftp.enable": true,
             "service.ftp.port": 21,
 			"service.snmp.enable": true,
-			"service.collectd.enable": true
+            "service.collectd.enable": true,
+            "service.syslog.enable": true,
+            "service.devd.enable": true,
+            "service.nfs.enable": false,
+            "service.afp.enable": false,
+            "service.nullmailer.enable": false
         }
     },
     {
@@ -646,7 +651,7 @@
             },
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
 				"name": "sshd",
-				"builtin": true,
+				"builtin": false,
 				"rcng": {
 					"rc-scripts": "sshd"
 				},
@@ -664,7 +669,7 @@
                 "pidfile": "/var/run/syslog.pid",
                 "builtin": true,
 				"rcng": {
-					"rc-scripts": "syslog-ng"
+					"rc-scripts": "syslogd"
 				}
             },
             "DFC8C5C9-6825-43B3-BDFA-45466D0F77D1": {
@@ -678,6 +683,7 @@
             "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
                 "name": "nfs",
                 "etcd-group": "nfs",
+                "builtin": false,
                 "rcng": {
                     "rc-scripts": [
                         "nfsd",
@@ -685,18 +691,11 @@
                     ]
                 }
             },
-            "1B3133B1-F8F4-44C0-AFAE-4CEAD5C1F4EA": {
-                "name": "sshd",
-                "etcd-group": "sshd",
-                "pidfile": "/var/run/sshd.pid",
-				"rcng": {
-					"rc-scripts": "sshd"
-				}
-            },
             "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
                 "name": "ftp",
                 "etcd-group": "ftpd",
                 "pidfile": "/var/run/proftpd.pid",
+                "builtin": false,
 				"rcng": {
 					"rc-scripts": "proftpd"
 				}
@@ -705,6 +704,7 @@
                 "name": "snmp",
                 "etcd-group": "snmpd",
                 "pidfile": "/var/run/net_snmpd.pid",
+                "builtin": false,
 				"rcng": {
 					"rc-scripts": "snmpd"
 				}
@@ -721,7 +721,7 @@
 			"858EFB54-F5DC-4207-ACB6-8BA793984794": {
 				"name": "afp",
 				"etcd-group": "afp",
-				"builtin": true,
+				"builtin": false,
 				"rcng": {
 					"rc-scripts": "netatalk"
 				}
@@ -729,7 +729,7 @@
 			"8117202A-ED32-430E-A6AF-88B168B1601A": {
 				"name": "nullmailer",
 				"etcd-group": "mail",
-				"builtin": true,
+				"builtin": false,
 				"launchd": {
 					"Label": "org.untroubled.nullmailer",
 					"ProgramArguments": [

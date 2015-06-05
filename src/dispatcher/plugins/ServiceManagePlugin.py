@@ -194,6 +194,18 @@ class UpdateServiceConfigTask(Task):
         return "Updating configuration for service {0}".format(service)
 
     def verify(self, service, updated_fields):
+        if not self.datastore.exists('service_definitions',
+                                     ('name', '=', service)):
+            raise VerifyException(
+                errno.ENOENT,
+                'Service {0} not found'.format(service))
+        for x in updated_fields:
+            if not self.dispatcher.configstore.exists(
+                    'service.{0}.{1}'.format(service, x)):
+                raise VerifyException(
+                    errno.ENOENT,
+                    'Service {0} does not have the following key: {1}'.format(
+                        service, x))
         return ['system']
 
     def run(self, service, updated_fields):

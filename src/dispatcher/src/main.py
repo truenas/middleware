@@ -455,7 +455,7 @@ class Dispatcher(object):
         self.dispatch_event("server.plugin.loaded", {"name": os.path.basename(path)})
 
     def __on_service_started(self, args):
-        if args['name'] == 'syslog-ng':
+        if args['name'] == 'syslog':
             try:
                 self.__init_syslog()
                 self.unregister_event_handler('service.started', self.__on_service_started)

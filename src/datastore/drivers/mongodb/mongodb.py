@@ -200,10 +200,10 @@ class MongodbDatastore(object):
     def exists(self, collection, *args, **kwargs):
         return self.get_one(collection, *args, **kwargs) is not None
 
-    def insert(self, collection, obj, pkey=None, timestamp=True):
+    def insert(self, collection, obj, pkey=None, timestamp=True, config=False):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
-        elif type(obj) is not dict:
+        elif type(obj) is not dict or config:
             obj = {'value': obj}
         else:
             obj = copy.copy(obj)
@@ -229,10 +229,10 @@ class MongodbDatastore(object):
         self.db[collection].insert(obj)
         return pkey
 
-    def update(self, collection, pkey, obj, upsert=False, timestamp=True):
+    def update(self, collection, pkey, obj, upsert=False, timestamp=True, config=False):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
-        elif type(obj) is not dict:
+        elif type(obj) is not dict or config:
             obj = {'value': obj}
         else:
             obj = copy.deepcopy(obj)
@@ -254,8 +254,8 @@ class MongodbDatastore(object):
 
         self.db[collection].update({'_id': pkey}, obj, upsert=upsert)
 
-    def upsert(self, collection, pkey, obj):
-        return self.update(collection, pkey, obj, upsert=True)
+    def upsert(self, collection, pkey, obj, config=False):
+        return self.update(collection, pkey, obj, upsert=True, config=config)
 
     def delete(self, collection, pkey):
         self.db[collection].remove(pkey)
