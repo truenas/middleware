@@ -329,8 +329,7 @@ def fiberchanneltotarget(request):
     if i > 0:
         notifier().reload("iscsitarget")
 
-    data = {}
-    return HttpResponse(
-        json.dumps(data),
-        content_type='application/json',
+    return JsonResp(
+        request,
+        message=_('Fiber Channel Ports have been successfully changed.'),
     )
