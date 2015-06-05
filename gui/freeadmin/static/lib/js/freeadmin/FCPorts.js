@@ -8,6 +8,8 @@ define([
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/registry",
+  "dijit/form/Button",
+  "dijit/form/Form",
   "dijit/form/RadioButton",
   "dijit/form/Select",
   "dojo/text!freeadmin/templates/fcport.html",
@@ -21,6 +23,8 @@ define([
   _Widget,
   _Templated,
   registry,
+  Button,
+  Form,
   RadioButton,
   Select,
   template) {
@@ -64,22 +68,7 @@ define([
           options: tgtoptions
         }, this.dapFCTarget);
 
-        on(me._target, 'change', function(val) {
-          xhr.post('/services/fiberchanneltotarget/', {
-            headers: {
-              "X-CSRFToken": CSRFToken
-            },
-            handleAs: "json",
-            data: {
-              fc_port: me.name,
-              fc_target: val
-            }
-          }).then(function(data) {
-
-          });
-
-        });
-
+        on(me._target, 'change', me.modeChange);
         me.modeChange();
 
         this.inherited(arguments);
@@ -91,31 +80,21 @@ define([
           domStyle.set(me._target.domNode, "display", "");
         } else {
           domStyle.set(me._target.domNode, "display", "none");
-          xhr.post('/services/fiberchanneltotarget/', {
-            headers: {
-              "X-CSRFToken": CSRFToken
-            },
-            handleAs: "json",
-            data: {
-              fc_port: me.port,
-              fc_target: null
-            }
-          }).then(function(data) {
-
-          });
+          me.target = null;
 
         }
-      },
-      submit: function() {
       }
     });
 
     var FCPorts = declare("freeadmin.FCPorts", [ _Widget, _Templated ], {
-      templateString: '<table data-dojo-attach-point="dapTable"></table>',
+      templateString: '<div data-dojo-attach-point="dapFCPorts"><table data-dojo-attach-point="dapTable"></table><div data-dojo-attach-point="dapSubmit"></div></div>',
+      ports: null,
       postCreate: function() {
 
         var me = this;
         var targets;
+
+        me.ports = [];
 
         xhr.get('/api/v1.0/services/iscsi/target/', {
           headers: {
@@ -147,12 +126,44 @@ define([
               target: entry.target,
               targets: targets,
             })
+            me.ports.push(fcport);
             me.dapTable.appendChild(fcport.domNode);
           }
 
         });
 
+        me._submit = new Button({
+          label: "Save"
+        }, this.dapSubmit);
+
+        on(me._submit, 'click', lang.hitch(this, me.submit));
+
         this.inherited(arguments);
+
+      },
+      submit: function() {
+
+        var me = this;
+        var form = new Form({});
+
+        for(var i=0;i<me.ports.length;i++) {
+          var fcport = me.ports[i];
+          var port = new _Widget();
+          form.domNode.appendChild(port.domNode);
+          port.set('name', 'fcport-' + i + '-port');
+          port.set('value', fcport.name);
+
+          var target = new _Widget();
+          form.domNode.appendChild(target.domNode);
+          port.set('name', 'fcport-' + i + '-target');
+          port.set('value', fcport.target);
+
+        }
+
+        doSubmit({
+          url: '/services/fiberchanneltotarget/',
+          form: form
+        });
 
       }
     });
