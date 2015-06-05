@@ -2946,7 +2946,11 @@ class FCPortsResource(DojoResource):
         for e in doc.xpath("//frontend_type[text()='camtgt']"):
             tag_port = e.getparent()
             name = tag_port.xpath('./port_name')[0].text
-            port = re.search('\d+', name).group(0)
+            reg = re.search('\d+', name)
+            if reg:
+                port = reg.group(0)
+            else:
+                port = 0
             if name in fcportmap:
                 mode = 'TARGET'
                 target = fcportmap[name].id
