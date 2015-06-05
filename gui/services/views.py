@@ -39,6 +39,7 @@ from freenasUI.directoryservice.models import (
 from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
     servicesForm,
@@ -301,21 +302,32 @@ def services_cifs(request):
 
 def fiberchanneltotarget(request):
 
-    fc_port = request.POST.get('fc_port')
-    fc_target = request.POST.get('fc_target')
+    i = 0
+    while True:
 
-    qs = models.FiberChannelToTarget.objects.filter(fc_port=fc_port)
-    if qs.exists():
-        fctt = qs[0]
-    else:
-        fctt = models.FiberChannelToTarget()
-        fctt.fc_port = fc_port
-    if not fc_target:
-        if fctt.id:
-            fctt.delete()
-    else:
-        fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
-        fctt.save()
+        fc_port = request.POST.get('fcport-%d-port' % i)
+        fc_target = request.POST.get('fcport-%d-target' % i)
+
+        if fc_port is None:
+            break
+
+        qs = models.FiberChannelToTarget.objects.filter(fc_port=fc_port)
+        if qs.exists():
+            fctt = qs[0]
+        else:
+            fctt = models.FiberChannelToTarget()
+            fctt.fc_port = fc_port
+        if not fc_target:
+            if fctt.id:
+                fctt.delete()
+        else:
+            fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
+            fctt.save()
+
+        i += 1
+
+    if i > 0:
+        notifier().reload("iscsitarget")
 
     data = {}
     return HttpResponse(
