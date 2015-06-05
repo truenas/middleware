@@ -71,7 +71,7 @@ define([
             },
             handleAs: "json",
             data: {
-              fc_port: me.port,
+              fc_port: me.name,
               fc_target: val
             }
           }).then(function(data) {
