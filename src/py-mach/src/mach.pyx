@@ -435,6 +435,13 @@ cdef class PortDescriptor(MessageDescriptor):
         def __set__(self, Port value):
             self.port_desc.name = value.value()
 
+    property fd:
+        def __get__(self):
+            return self.port_desc.name
+
+        def __set__(self, value):
+            self.port_desc.name = value
+
     property disposition:
         def __get__(self):
             return self.port_desc.disposition
