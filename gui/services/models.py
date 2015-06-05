@@ -925,13 +925,16 @@ class iSCSITargetToExtent(Model):
     )
     iscsi_extent = models.ForeignKey(
         iSCSITargetExtent,
-        unique=True,
         verbose_name=_("Extent"),
     )
 
     class Meta:
         verbose_name = _("Target / Extent")
         verbose_name_plural = _("Targets / Extents")
+        unique_together = (
+            'iscsi_target',
+            'iscsi_extent',
+        )
 
     def __unicode__(self):
         return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
