@@ -2947,9 +2947,9 @@ class FCPortsResource(DojoResource):
             tag_port = e.getparent()
             name = tag_port.xpath('./port_name')[0].text
             port = re.search('\d+', name).group(0)
-            if port in fcportmap:
+            if name in fcportmap:
                 mode = 'TARGET'
-                target = fcportmap[port].id
+                target = fcportmap[name].id
             else:
                 mode = 'INITIATOR'
                 target = None
