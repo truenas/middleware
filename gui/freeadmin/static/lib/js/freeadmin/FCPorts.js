@@ -68,7 +68,7 @@ define([
           options: tgtoptions
         }, this.dapFCTarget);
 
-        on(me._target, 'change', me.modeChange);
+        on(me._target, 'change', lang.hitch(this, me.modeChange));
         me.modeChange();
 
         this.inherited(arguments);
