@@ -136,7 +136,7 @@ def list_cmd(mani, args):
     """
     quiet = False
 
-    def list_uasge():
+    def list_usage():
         usage("list [-q]:\n\t-q\tOnly print the name and version of the packages")
 
     try:
