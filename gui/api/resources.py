@@ -2980,7 +2980,7 @@ class FCPortsResource(DojoResource):
                 mode = 'DISABLED'
                 target = None
             results.append(FCPort(
-                port=tag_port.get('id'),
+                port=port,
                 name=name,
                 mode=mode,
                 target=target,
