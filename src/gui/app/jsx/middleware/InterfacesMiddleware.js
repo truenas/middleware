@@ -38,6 +38,24 @@ class InterfacesMiddleware extends AbstractBase {
               );
   }
 
+  static upInterface ( interfaceName ) {
+    MC.request( "task.submit"
+              , [ "network.interface.up", [ interfaceName ] ]
+              , function handleUpInterface ( taskID, interfaceName ) {
+                  IAC.receiveUpInterfaceTask( taskID, interfaceName );
+                }
+              );
+  }
+
+  static downInterface ( interfaceName ) {
+    MC.request( "task.submit"
+              , [ "network.interface.down", [ interfaceName ] ]
+              , function handleDownInterface ( taskID, interfaceName ) {
+                  IAC.receiveDownInterfaceTask( taskID, interfaceName );
+                }
+              );
+  }
+
 };
 
 export default InterfacesMiddleware;

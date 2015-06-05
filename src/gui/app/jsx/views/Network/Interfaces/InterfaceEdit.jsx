@@ -95,7 +95,7 @@ const InterfaceEdit = React.createClass({
     let valuesToSend = this.removeReadOnlyFields( locallyModifiedValues
                                                 , dataKeys
                                                 );
-    console.log( "valuesToSend", valuesToSend );
+
     if ( !_.isEmpty( valuesToSend ) ) {
       IM.configureInterface( this.props.item[ "name" ]
                            , valuesToSend

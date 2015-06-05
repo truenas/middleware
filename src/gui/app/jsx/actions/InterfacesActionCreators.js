@@ -25,6 +25,25 @@ class InterfacesActionCreators {
     );
   }
 
+
+  static receiveUpInterfaceTask ( taskID, interfaceName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_UP_INTERFACE_TASK
+      , taskID: taskID
+      , interfaceName: interfaceName
+      }
+    );
+  }
+
+  static receiveDownInterfaceTask ( taskID, interfaceName ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_DOWN_INTERFACE_TASK
+      , taskID: taskID
+      , interfaceName: interfaceName
+      }
+    );
+  }
+
 };
 
 export default InterfacesActionCreators;

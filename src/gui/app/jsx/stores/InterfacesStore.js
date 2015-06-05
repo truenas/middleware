@@ -153,6 +153,8 @@ InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload )
       InterfacesStore.emitChange();
       break;
 
+    case ActionTypes.RECEIVE_UP_INTERFACE_TASK:
+    case ActionTypes.RECEIVE_DOWN_INTERFACE_TASK:
     case ActionTypes.RECEIVE_INTERFACE_CONFIGURE_TASK:
       _localUpdatePending[ action.taskID ] = action.interfaceName;
       InterfacesStore.emitChange();

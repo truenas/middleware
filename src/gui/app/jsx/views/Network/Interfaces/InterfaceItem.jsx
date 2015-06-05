@@ -14,6 +14,7 @@ import clientStatus from "../../../components/mixins/clientStatus";
 import viewerUtil from "../../../components/Viewer/viewerUtil";
 
 import IS from "../../../stores/InterfacesStore";
+import IM from "../../../middleware/InterfacesMiddleware"
 
 import Icon from "../../../components/Icon";
 
@@ -24,8 +25,9 @@ const InterfaceView = React.createClass({
   propTypes: {
     item: React.PropTypes.object.isRequired
     , handleViewChange: React.PropTypes.func.isRequired
-    , toggleInterface: React.PropTypes.func.isRequired
     , viewData: React.PropTypes.object.isRequired
+    , upInterface: React.PropTypes.func
+    , downInterface: React.PropTypes.func
   }
 
   // Map an array of aliases into an array of ListGroupItems representing all
@@ -91,20 +93,31 @@ const InterfaceView = React.createClass({
 
   , render: function () {
 
-    let toggleInterfaceButton = (
-      <TWBS.Button
+    let downInterfaceButton =
+      ( <TWBS.Button
           className = "pull-right"
-          onClick = { this.props.toggleInterface }
+          onClick = { this.props.downInterface }
           bsStyle = "primary">
-          { this.props.item[ "status" ][ "enabled" ]
-            ? "Down Interface"
-            : "Up Interface" }
+          { "Down Interface" }
       </TWBS.Button>
     );
 
+    let upInterfaceButton =
+      ( <TWBS.Button
+          className = "pull-right"
+          onClick = { this.props.upInterface }
+          bsStyle = "primary">
+          { "Up Interface" }
+       </TWBS.Button>
+      );
+
     let configureButtons = (
       <TWBS.ButtonToolbar>
-        { toggleInterfaceButton }
+        { _.includes( this.props.item[ "status" ][ "flags" ]
+                    , "UP" )
+        ? downInterfaceButton
+        : upInterfaceButton
+        }
         <TWBS.Button
           className = "pull-right"
           onClick = { this.props.handleViewChange.bind( null, "edit" ) }
@@ -242,8 +255,13 @@ const InterfaceItem = React.createClass({
   , updateInterfaceInState: function () {
       this.setState({ targetInterface: this.getInterfaceFromStore() });
     }
-  , toggleInterface: function () {
 
+  , downInterface: function () {
+    IM.downInterface( this.state.targetInterface[ "name" ] );
+  }
+
+  , upInterface: function () {
+    IM.upInterface( this.state.targetInterface[ "name" ] );
   }
 
   , handleViewChange: function ( nextMode, event ) {
@@ -258,7 +276,8 @@ const InterfaceItem = React.createClass({
         handleViewChange: this.handleViewChange
         , item: this.state.targetInterface
         , viewData: this.props.viewData
-        , toggleInterface: this.toggleInterface
+        , upInterface: this.upInterface
+        , downInterface: this.downInterface
       };
 
       switch ( this.state.currentMode ) {
