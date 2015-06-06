@@ -83,9 +83,6 @@ class ADToolShell(cmd.Cmd):
             [ "kpwdhost", "Kerberos password change server hostname" ],
             [ "kpwdport", "Kerberos password change server port" ],
             [ "krb_realm", "Kerberos realm" ],
-            [ "krb_kdc", "Kerberos KDC" ],
-            [ "krb_admin_server", "Kerberos admin server" ],
-            [ "krb_kpasswd_server", "Kerberos password server" ],
             [ "keytab_name", "Kerberos keytab name" ],
             [ "keytab_principal", "Kerberos keytab principal" ],
             [ "keytab_file", "Kerberos keytab file" ],
@@ -189,9 +186,6 @@ Available options:
             "ad_kpwdhost",
             "ad_kpwdport",
             "ad_krb_realm",
-            "ad_krb_kdc",
-            "ad_krb_admin_server",
-            "ad_krb_kpasswd_server",
             "ad_keytab_name",
             "ad_keytab_principal",
             "ad_keytab_file",
@@ -428,28 +422,7 @@ Available options:
     def set_krb_realm(self, args):
         for arg in args:
             self.adc.krb_realm = arg 
-
-    def get_krb_kdc(self, args):
-        print >> sys.stdout, self.adc.krb_kdc
-
-    def set_krb_kdc(self, args):
-        for arg in args:
-            self.adc.krb_kdc = arg
-
-    def get_krb_admin_server(self, args):
-        print >> sys.stdout, self.adc.krb_admin_server
-
-    def set_krb_admin_server(self, args):
-        for arg in args:
-            self.adc.krb_admin_server = arg
-
-    def get_krb_kpasswd_server(self, args):
-        print >> sys.stdout, self.adc.krb_kpasswd_server
-
-    def set_krb_kpasswd_server(self, args):
-        for arg in args:
-            self.adc.krb_kpasswd_server = arg
-   
+  
     def get_keytab_name(self, args):
         print >> sys.stdout, self.adc.keytab_name
 

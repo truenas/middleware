@@ -20,7 +20,15 @@ cache.get_apps()
 
 from freenasUI.directoryservice.models import (
     KerberosRealm,
-    KerberosSettings
+    KerberosSettings,
+    ActiveDirectory,
+    LDAP
+)
+
+from freenasUI.common.freenasldap import (
+    FreeNAS_LDAP,
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
 )
 
 class KerberosConfigBinding(object):
@@ -411,7 +419,40 @@ class KerberosConfig(object):
         for section in self.sections:
             if len(section) > 0: 
                 self.generate_section(section, 0, stdout)
-  
+
+def get_kerberos_servers(kr, ad=None, ldap=None):
+    realm = krb_kdc = krb_admin_server = krb_kpasswd_server = None
+
+    if not kr:
+        return krb_kdc, krb_admin_server, krb_kpasswd_server
+
+    realm = kr.krb_realm
+
+    if ldap and ldap.krb_realm == realm:
+        if ldap.krb_kdc:
+            krb_kdc = ldap.krb_kdc
+        if ldap.krb_admin_server:
+            krb_admin_server = ldap.krb_admin_server
+        if ldap.krb_kpasswd_server:
+            krb_kpasswd_server = ldap.krb_kpasswd_server
+
+    if ad and ad.krb_realm == realm:
+        if ad.krbname:
+            krb_kdc = ad.krbname
+            krb_admin_server = ad.krbname
+        if ad.kpwdname:
+            krb_kpasswd_server = ad.kpwdname
+
+    if kr.krb_kdc:
+        krb_kdc = kr.krb_kdc
+                
+    if kr.krb_admin_server:
+        krb_admin_server = kr.krb_admin_server
+
+    if kr.krb_kpasswd_server:
+        krb_kpasswd_server = kr.krb_kpasswd_server
+
+    return krb_kdc, krb_admin_server, krb_kpasswd_server
 
 def main():
     realms = KerberosRealm.objects.all()
@@ -421,30 +462,45 @@ def main():
     except:
         settings = None
 
-
     kc = KerberosConfig(settings=settings)
     kc.create_default_config()
+
+    ad = ldap = None
+    ldap_objects = LDAP.objects.all()
+    if ldap_objects:
+        ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+
+    ad_objects = ActiveDirectory.objects.all()
+    if ad_objects:
+        ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
 
     for kr in realms:
         if not kr.krb_realm:
             continue 
 
-        bc = KerberosConfigBindingCollection(name=kr.krb_realm)
-        bc.append(
-            KerberosConfigBinding(
-                name="kdc", value=kr.krb_kdc
-            )
+        krb_kdc, krb_admin_server, krb_kpasswd_server = get_kerberos_servers(
+            kr, ad, ldap
         )
-        if kr.krb_admin_server: 
+
+        bc = KerberosConfigBindingCollection(name=kr.krb_realm)
+
+        if krb_kdc:
             bc.append(
                 KerberosConfigBinding(
-                    name="admin_server", value=kr.krb_admin_server
+                    name="kdc", value=krb_kdc
                 )
             )
-        if kr.krb_kpasswd_server:
+
+        if krb_admin_server: 
             bc.append(
                 KerberosConfigBinding(
-                    name="kpasswd_server", value=kr.krb_kpasswd_server
+                    name="admin_server", value=krb_admin_server
+                )
+            )
+        if krb_kpasswd_server:
+            bc.append(
+                KerberosConfigBinding(
+                    name="kpasswd_server", value=krb_kpasswd_server
                 )
             )
         bc.append(

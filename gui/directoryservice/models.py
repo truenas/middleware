@@ -604,7 +604,8 @@ class KerberosRealm(Model):
     krb_kdc = models.CharField(
         verbose_name=_("KDC"),
         max_length=120,
-        help_text=_("KDC for this realm.")
+        help_text=_("KDC for this realm."),
+        blank=True
     )
     krb_admin_server = models.CharField(
         verbose_name=_("Admin Server"),
@@ -944,11 +945,6 @@ class ActiveDirectory(DirectoryServiceBase):
                 else:
                     kr = KerberosRealm()
                     kr.krb_realm = self.ad_domainname.upper()
-                    if fad.krbname:
-                        kr.krb_kdc = fad.krbname
-                        kr.krb_admin_server = kr.krb_kdc
-                    if fad.kpwdname:
-                        kr.krb_kpasswd_server = fad.kpwdname
                     kr.save()
 
                 self.ad_kerberos_realm = kr
