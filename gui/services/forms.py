@@ -212,7 +212,7 @@ class CIFSForm(ModelForm):
 
         elif ldap_enabled():
             self.initial['cifs_srv_domain_logons'] = True
-            self.fields['cifs_srv_domain_logons'].widget.attrs['disabled'] = 'disabled'
+            self.fields['cifs_srv_domain_logons'].widget.attrs['readonly'] = True
 
     def __check_octet(self, v):
         try:
