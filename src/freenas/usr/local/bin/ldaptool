@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 
 import cmd
-import getopt
 import os
 import re
 import string
@@ -110,7 +109,12 @@ Available options:
     def do_get(self, arg):
         args = arg.split()
 
-        get_method = getattr(self, "get_%s" % args[0])
+        try:
+            get_method = getattr(self, "get_%s" % args[0])
+        except Exception as e:
+            print >> sys.stderr, "ERROR: %s" % e
+            get_method = None
+
         if get_method:
             get_method(args)
 
@@ -119,6 +123,7 @@ Available options:
 
     def do_connect(self, arg):
         pass
+
     def do_join(self, arg):
         pass
 
@@ -128,10 +133,11 @@ Available options:
 
     def do_exit(self, arg):
         sys.exit(0)
+
     def do_quit(self, arg):
         sys.exit(0)
 
-    def setbool(self, args):
+    def setbool(self, arg):
         val = None 
         if arg == '0':
             val = False 
@@ -367,7 +373,8 @@ Available options:
 
     def set_ssl(self, args):
         for arg in args:
-            self.lc.has_samba_schema = ssl
+            self.lc.has_samba_schema = arg
+
     def get_timeout(self, args):
         print >> sys.stdout, self.adc.timeout
 
@@ -407,6 +414,7 @@ Available options:
 
 
 def main():
+    ret = 0
     ldapts = LDAPToolShell()
 
     if len(sys.argv) == 1:
@@ -416,10 +424,10 @@ def main():
         ldapts.onecmd(string.join(sys.argv[1:], ' '))
 
     except Exception as e:
-        print "Exception: ", e 
+        print >> sys.stderr, "ERROR: %s" % e
         ret = 1
 
-    sys.exit(0)
+    sys.exit(ret)
 
 if __name__ == '__main__':
     main()
