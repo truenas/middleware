@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 
 import cmd
-import getopt
 import os
 import re
 import string
@@ -129,7 +128,12 @@ Available options:
     def do_get(self, arg):
         args = arg.split()
 
-        get_method = getattr(self, "get_%s" % args[0])
+        try:
+            get_method = getattr(self, "get_%s" % args[0])
+        except Exception as e:
+            print >> sys.stderr, "ERROR: %s" % e
+            get_method = None
+
         if get_method:
             get_method(args)
 
@@ -138,6 +142,7 @@ Available options:
 
     def do_connect(self, arg):
         pass
+
     def do_join(self, arg):
         pass
 
@@ -147,10 +152,11 @@ Available options:
 
     def do_exit(self, arg):
         sys.exit(0)
+
     def do_quit(self, arg):
         sys.exit(0)
 
-    def setbool(self, args):
+    def setbool(self, arg):
         val = None 
         if arg == '0':
             val = False 
@@ -540,11 +546,11 @@ Available options:
     
     def get_primary_domain_controllers(self, args):
         domain, site = self.domain_site_parse(args)
+        print 'domain = ', domain
         if not domain:
             domain = self.adc.domainname 
 
-        primary_domain_controllers = self.adc.get_primary_domain_controllers(
-            domain, site)
+        primary_domain_controllers = self.adc.get_primary_domain_controllers(domain)
         for primary_domain_controller in primary_domain_controllers:
             print >> sys.stdout, primary_domain_controller
 
@@ -607,7 +613,7 @@ Available options:
         if not domain:
             domain = self.adc.domainname 
 
-        kpasswd_servers = self.adc.get_kpasswd_servers(domain, site)
+        kpasswd_servers = self.adc.get_kpasswd_servers(domain)
         for kpasswd_server in kpasswd_servers:
             print >> sys.stdout, kpasswd_server
 
@@ -616,6 +622,7 @@ Available options:
 
 
 def main():
+    ret = 0
     adts = ADToolShell()
 
     if len(sys.argv) == 1:
@@ -625,9 +632,10 @@ def main():
         adts.onecmd(string.join(sys.argv[1:], ' '))
 
     except Exception as e:
+        print >> sys.stderr, "ERROR: %s" % e
         ret = 1
 
-    sys.exit(0)
+    sys.exit(ret)
 
 if __name__ == '__main__':
     main()
