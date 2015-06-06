@@ -461,11 +461,11 @@ def add_nt4_conf(smb4_conf):
     except Exception as e:
         dc_ip = nt4.nt4_dcname
 
-    with open("/usr/local/etc/lmhosts", "w") as f:
-        f.write("%s\t%s\n" % (dc_ip, nt4.nt4_workgroup.upper()))
-        f.close()
-
     nt4_workgroup = nt4.nt4_workgroup.upper()
+
+    with open("/usr/local/etc/lmhosts", "w") as f:
+        f.write("%s\t%s\n" % (dc_ip, nt4_workgroup.upper))
+        f.close()
 
     set_netbiosname(smb4_conf, nt4.nt4_netbiosname)
     confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
@@ -751,6 +751,7 @@ def generate_smb4_conf(smb4_conf, role):
     confset2(smb4_conf, "server string = %s", cifs.cifs_srv_description)
     confset1(smb4_conf, "ea support = yes")
     confset1(smb4_conf, "store dos attributes = yes")
+    confset1(smb4_conf, "lm announce = yes")
     confset2(smb4_conf, "hostname lookups = %s",
         "yes" if cifs.cifs_srv_hostlookup else False)
     confset2(smb4_conf, "unix extensions = %s",
