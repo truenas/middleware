@@ -206,7 +206,6 @@ class CIFSForm(ModelForm):
             self.fields['cifs_srv_timeserver'].widget.attrs['disabled'] = 'disabled'
             self.initial['cifs_srv_domain_logons'] = False
             self.fields['cifs_srv_domain_logons'].widget.attrs['disabled'] = 'disabled'
-            self.fields['cifs_srv_workgroup'].widget.attrs['disabled'] = 'disabled'
 
         elif ldap_enabled():
             self.initial['cifs_srv_domain_logons'] = True
