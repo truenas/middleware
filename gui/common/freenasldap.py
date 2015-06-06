@@ -1272,9 +1272,6 @@ class FreeNAS_ActiveDirectory_Base(object):
             'kpwdport',
             'kerberos_realm',
             'krb_realm',
-            'krb_kdc',
-            'krb_admin_server',   
-            'krb_kpasswd_server',
             'kerberos_keytab',
             'keytab_name',
             'keytab_principal',
@@ -1488,9 +1485,6 @@ class FreeNAS_ActiveDirectory_Base(object):
                     if kr:
                         kwargs['kerberos_realm'] = kr
                         kwargs['krb_realm'] = kr.krb_realm
-                        kwargs['krb_kdc'] = kr.krb_kdc
-                        kwargs['krb_admin_server'] = kr.krb_admin_server
-                        kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
                         #self.flags |= FLAGS_SASL_GSSAPI
 
                 elif newkey == 'kerberos_keytab_id':
