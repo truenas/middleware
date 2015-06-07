@@ -81,7 +81,6 @@ define([
         } else {
           domStyle.set(me._target.domNode, "display", "none");
           me.target = null;
-
         }
       }
     });
@@ -144,25 +143,32 @@ define([
       submit: function() {
 
         var me = this;
-        var form = new Form({});
+        if(me._form) me._form.destroyRecursive();
+        me._form = new Form({});
+        me.domNode.appendChild(me._form.domNode);
 
         for(var i=0;i<me.ports.length;i++) {
           var fcport = me.ports[i];
           var port = new _Widget();
-          form.domNode.appendChild(port.domNode);
+          me._form.domNode.appendChild(port.domNode);
           port.set('name', 'fcport-' + i + '-port');
           port.set('value', fcport.name);
 
           var target = new _Widget();
-          form.domNode.appendChild(target.domNode);
-          port.set('name', 'fcport-' + i + '-target');
-          port.set('value', fcport.target);
+          me._form.domNode.appendChild(target.domNode);
+          target.set('name', 'fcport-' + i + '-target');
+          target.set('value', fcport.target || '');
 
         }
 
+        me._submit.set('disabled', true);
+
         doSubmit({
           url: '/services/fiberchanneltotarget/',
-          form: form
+          form: me._form,
+          onComplete: function(data) {
+            me._submit.set('disabled', false);
+          }
         });
 
       }
