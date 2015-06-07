@@ -158,6 +158,8 @@ def RemoveFile(path):
         else:
             if debug: log.debug("RemoveFile(%s):  errno = %d" % (path, e[0]))
             return False
+    if os.path.exists(path):
+	raise Exception("After removal, %s still exists" % path)
     return True
 
 # Like the above, but for a directory.
@@ -332,6 +334,13 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
     # We also check for root and prefix ending in "/", but the root
     # checking is just for prettiness while debugging.
     global debug, verbose
+    TYPE_DIR = "dir"
+    TYPE_FILE = "file"
+    TYPE_SLNK = "slink"
+    TYPE_OTHER = "unknown"
+
+    orig_type = None
+    new_type = None
 
     fileName = entry.name
     if fileName.startswith("./"):
@@ -345,6 +354,20 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
     else:
         full_path = "%s%s" % ("" if fileName.startswith("/") else "/", fileName)
         root = ""
+    try:
+	import stat
+	m = os.lstat(full_path).st_mode
+	if stat.S_ISDIR(m):
+	    orig_type = TYPE_DIR
+	elif stat.S_ISREG(m):
+	    orig_type = TYPE_FILE
+	elif stat.S_ISLNK(m):
+	    orig_type = TYPE_SLNK
+	else:
+	    orig_type = TYPE_OTHER
+    except:
+	orig_type = None
+
     # After that, we've got a full_path, and so we get the directory it's in,
     # and the name of the file.
     dirname = os.path.dirname(full_path)
@@ -368,6 +391,30 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
     type = None
     hash = ""
     
+    if entry.isfile() or entry.islnk():
+	new_type = TYPE_FILE
+    elif entry.isdir():
+	new_type = TYPE_DIR
+    elif entry.issym():
+	new_type = TYPE_SLNK
+    else:
+	new_type = TYPE_OTHER
+
+    # If the type of the entry changed, but it didn't get removed,
+    # then bad things could happen.  Especially if it changed from
+    # a symlink to a file or directory.
+    if orig_type is not None and orig_type != new_type:
+	log.debug("Original type = %s, new type = %s, path = %s" % (orig_type, new_type, full_path))
+	log.debug("Removing original entry")
+	if os.path.islink(full_path) or os.path.isfile(full_path):
+	    RemoveFile(full_path)
+	elif os.path.isdir(full_path):
+	    import shutil
+	    try:
+		shutil.rmtree(full_path)
+	    except BaseException as e:
+		log.error("Couldn't remove old directory %s: %s" % (full_path, str(e)))
+		raise e
     # Process the entry.  We look for a file, directory,
     # symlink, or hard link.
     if entry.isfile():
@@ -642,7 +689,6 @@ def install_file(pkgfile, dest):
             # This is done in both the database and the filesystem.
             # If we can't remove a directory due to ENOTEMPTY, we don't care.
             for file in pkgDeletedFiles:
-                if verbose or debug:  log.debug("Deleting file %s, dest = %s" % (file, dest))
                 if dest:
                     full_path = dest + "/" + file
                 else:
