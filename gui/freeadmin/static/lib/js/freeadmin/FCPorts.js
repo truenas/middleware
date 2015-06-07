@@ -86,7 +86,7 @@ define([
     });
 
     var FCPorts = declare("freeadmin.FCPorts", [ _Widget, _Templated ], {
-      templateString: '<div data-dojo-attach-point="dapFCPorts"><table data-dojo-attach-point="dapTable"></table><div data-dojo-attach-point="dapSubmit"></div></div>',
+      templateString: '<div data-dojo-attach-point="dapFCPorts"><table data-dojo-attach-point="dapTable" style="padding-left: 0px;"></table><div data-dojo-attach-point="dapSubmit"></div></div>',
       ports: null,
       postCreate: function() {
 
