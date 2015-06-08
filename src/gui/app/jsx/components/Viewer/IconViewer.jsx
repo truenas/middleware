@@ -87,7 +87,7 @@ var IconViewer = React.createClass(
                   icoClass = "editor-close"
                   onClick  = { this.handleClickOut } />
               </span>
-              <RouteHandler
+              <RouteHandler { ...this.getRequiredProps() }
                 inputData = { this.props.inputData }
                 activeKey = { this.props.selectedKey } />
             </div>
@@ -108,7 +108,7 @@ var IconViewer = React.createClass(
           } else {
             return null;
           }
-        }.bind(this) );
+        }.bind( this ) );
       }
 
       if ( fd["remaining"].entries.length ) {

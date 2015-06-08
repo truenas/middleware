@@ -171,18 +171,6 @@ const DetailViewer = React.createClass(
       var remainingNavItems = null;
       var editorContent     = null;
 
-      const detailNavProps =
-        { handleItemSelect : this.props.handleItemSelect
-        , searchString     : this.props.searchString
-
-        , keyUnique        : this.props.keyUnique
-        , keyPrimary       : this.props.keyPrimary
-        , keySecondary     : this.props.keySecondary
-
-        , routeName        : this.props.routeName
-        , routeParam       : this.props.routeParam
-        };
-
       if ( FILTERED_DATA["grouped"] ) {
         groupedNavItems = FILTERED_DATA.groups.map( function ( group, index ) {
           let disclosureState;
@@ -197,7 +185,8 @@ const DetailViewer = React.createClass(
 
           if ( group.entries.length ) {
             return (
-              <DetailNavSection { ...detailNavProps }
+              <DetailNavSection { ...this.getRequiredProps() }
+                handleItemSelect  = { this.props.handleItemSelect }
                 key               = { index }
                 initialDisclosure = { disclosureState }
                 sectionName       = { group.name }
@@ -211,7 +200,8 @@ const DetailViewer = React.createClass(
 
       if ( FILTERED_DATA["remaining"].entries.length ) {
         remainingNavItems = (
-          <DetailNavSection { ...detailNavProps }
+          <DetailNavSection { ...this.getRequiredProps() }
+            handleItemSelect  = { this.props.handleItemSelect }
             initialDisclosure = "closed"
             sectionName       = { FILTERED_DATA["remaining"].name }
             entries           = { FILTERED_DATA["remaining"].entries } />
@@ -224,7 +214,7 @@ const DetailViewer = React.createClass(
         );
       } else if ( this.dynamicPathIsActive() ) {
         editorContent = (
-          <RouteHandler
+          <RouteHandler { ...this.getRequiredProps() }
             inputData = { this.props.inputData }
           />
         );

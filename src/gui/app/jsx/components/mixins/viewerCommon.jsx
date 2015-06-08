@@ -47,6 +47,24 @@ const ViewerCommon =
     , customIconNavItem   : React.PropTypes.func
     }
 
+  , getRequiredProps: function () {
+      return _.pick( this.props
+                   , [ "searchString"
+
+                     , "keyUnique"
+                     , "keyPrimary"
+                     , "keySecondary"
+
+                     , "routeName"
+                     , "routeParam"
+
+                     , "textNewItem"
+                     , "textRemaining"
+                     , "textUngrouped"
+                     ]
+                   )
+    }
+
   , addingEntity: function () {
       return _.endsWith( this.context.router.getCurrentPathname()
                        , this.props.routeAdd );

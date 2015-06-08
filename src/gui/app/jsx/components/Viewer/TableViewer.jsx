@@ -183,7 +183,7 @@ const TableViewer = React.createClass(
                   icoClass = "editor-close"
                   onClick  = { this.handleClickOut } />
               </span>
-              <RouteHandler
+              <RouteHandler { ...this.getRequiredProps() }
                 inputData = { this.props.inputData }
                 activeKey = { this.props.selectedKey } />
             </div>
