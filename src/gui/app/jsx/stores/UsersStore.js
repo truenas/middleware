@@ -19,6 +19,61 @@ var _updatedOnServer    = [];
 var _localUpdatePending = {};
 var _users              = {};
 
+const USER_SCHEMA =
+  { type: "object"
+  , properties:
+    { username:          { type: "string" }
+    , sshpubkey:         { type: [ "string", "null" ] }
+    , shell:             { type: "string" }
+    , locked:            { type: "boolean" }
+    , full_name:         { type: [ "string", "null" ] }
+    , home:              { type: "string" }
+    , group:             { type: "integer" }
+    , id:                { type: "number" }
+    , password_disabled: { type: "boolean" }
+    , unixhash:          { type: [ "string", "null" ] }
+    , sudo:              { type: "boolean" }
+    , smbhash:           { type: [ "string", "null" ] }
+    , email:             { type: [ "string", "null" ] }
+    , groups:
+      { items: { type: "integer" }
+      , type: "array"
+      }
+    , sessions:
+      { readOnly: true
+      , type: "array"
+      }
+    , builtin:
+      { readOnly: true
+      , type: "boolean"
+      }
+    , loggedin:
+      { readOnly: true
+      , type: "boolean"
+      }
+  }
+};
+
+const USER_LABELS =
+    { username          : "Username"
+    , sshpubkey         : "SSH Public Key"
+    , shell             : "Shell"
+    , locked            : "Locked Account"
+    , groups            : "Group Membership"
+    , sessions          : "Sessions"
+    , unixhash          : "UNIX Hash"
+    , sudo              : "sudo Access"
+    , smbhash           : "SMB Hash"
+    , email             : "email Address"
+    , builtin           : "Built-In User"
+    , loggedin          : "Online"
+    , full_name         : "Full Name"
+    , home              : "Home Directory"
+    , group             : "Primary Group"
+    , id                : "User ID"
+    , password_disabled : "Password Disabled"
+  };
+
 var UsersStore = _.assign( {}, EventEmitter.prototype, {
 
     emitChange: function () {
@@ -54,6 +109,14 @@ var UsersStore = _.assign( {}, EventEmitter.prototype, {
           predicate[key] = value;
 
       return _.find( _users, predicate );
+    }
+
+  , getUserSchema: function () {
+      return USER_SCHEMA;
+    }
+
+  , getUserLabels: function () {
+      return USER_LABELS;
     }
 
   , getUser: function( id ) {

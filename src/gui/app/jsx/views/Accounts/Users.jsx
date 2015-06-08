@@ -27,6 +27,9 @@ const VIEWER_DATA =
   , keyPrimary    : "username"
   , keySecondary  : "full_name"
 
+  , itemSchema    : US.getUserSchema()
+  , itemLabels    : US.getUserLabels()
+
   , routeName     : "users-editor"
   , routeParam    : "userID"
   , routeAdd      : "add-user"
@@ -52,26 +55,6 @@ const VIEWER_DATA =
                       , "full_name"
                       ]
                     )
-
-  , itemLabels:
-    { id                : "User ID"
-    , builtin           : "Built-in User"
-    , username          : "Username"
-    , full_name         : "Full Name"
-    , email             : "Email Address"
-    , locked            : "Locked Account"
-    , sudo              : "sudo Allowed"
-    , password_disabled : "Password Disabled"
-    , group             : "Primary Group"
-    , shell             : "Shell"
-    , home              : "Home Directory"
-    , unixhash          : "Unix Hash"
-    , smbhash           : "SMB Hash"
-    , sshpubkey         : "SSH Public Key"
-    , "logged-in"       : "Logged In"
-    , groups            : "Groups"
-    , sessions          : "Sessions"
-    }
 
   , groupBy:
     { current:
