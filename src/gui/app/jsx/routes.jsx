@@ -21,7 +21,7 @@ import Dashboard from "./views/Dashboard";
 import Accounts from "./views/Accounts";
 import Users from "./views/Accounts/Users";
 import UserItem from "./views/Accounts/Users/UserItem";
-import AddUser from "./views/Accounts/Users/AddUser";
+import UserAdd from "./views/Accounts/Users/UserAdd";
 
 import Groups from "./views/Accounts/Groups";
 import GroupItem from "./views/Accounts/Groups/GroupItem";
@@ -75,7 +75,7 @@ module.exports = (
         <Route
           name    = "add-user"
           path    = "add-user"
-          handler = { AddUser } />
+          handler = { UserAdd } />
         <Route
           name    = "users-editor"
           path    = ":userID"
