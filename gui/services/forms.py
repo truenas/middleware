@@ -1627,6 +1627,8 @@ class iSCSITargetForm(ModelForm):
 
     def clean_iscsi_target_alias(self):
         alias = self.cleaned_data['iscsi_target_alias']
+        if re.search(r'"', alias):
+            raise forms.ValidationError(_("Double quotes are not allowed."))
         qs = models.iSCSITarget.objects.filter(
             iscsi_target_alias=alias
         )
