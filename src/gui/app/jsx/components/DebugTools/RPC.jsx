@@ -11,6 +11,10 @@ import _ from "lodash";
 import MiddlewareClient from "../../middleware/MiddlewareClient";
 import MiddlewareStore from "../../stores/MiddlewareStore";
 
+// freeNASUtil
+import freeNASUtil
+  from "../../common/freeNASUtil";
+
 // Disclosure Triangles
 import DiscTri from "../common/DiscTri";
 
@@ -99,17 +103,20 @@ var RPC = React.createClass(
         val = this.state.methodValue
       }
       this.setState({ submissionPending: true });
-
-      MiddlewareClient.request( val
-                              , JSON.parse( this.state.argsValue )
-                              , function ( results ) {
-          this.setState({ submissionPending : false
-                        , results           : results
-                        });
-        }.bind( this )
-                              , this.handleRPCErrorCallback.bind( this )
-      );
-
+      try {
+        MiddlewareClient.request( val
+                                , JSON.parse( this.state.argsValue )
+                                , function ( results ) {
+            this.setState({ submissionPending : false
+                          , results           : results
+                          });
+          }.bind( this )
+                                , this.handleRPCErrorCallback
+        );
+      }
+      catch ( err ) {
+        this.handleRPCErrorCallback( freeNASUtil.getStackTrace( err ) );
+      }
     }
 
   , handleMethodClick: function ( rpcString ) {
@@ -190,11 +197,21 @@ var RPC = React.createClass(
       });
       let RPCAlert = "";
       if ( this.state.anErrorOccurred ) {
+        let errStack = ( <p> </p> );
+        if ( this.state.RPCTraceback.constructor === Array ) {
+          errStack = this.state.RPCTraceback.map(
+            function ( errval, index ) {
+              return ( <p key = { index }>{  errval }</p> )
+            }
+          );
+        } else {
+          errStack = ( <p>{this.state.RPCTraceback}</p> );
+        }
         RPCAlert = (
           <div className="overlay-error">
             <TWBS.Alert bsStyle='danger' onDismiss={this.handleAlertDismiss}>
               <h4>Oh snap! A very specific Error Occurred</h4>
-              <p>{ this.state.RPCTraceback }</p>
+              {errStack}
               <p>
                 <TWBS.Button onClick={this.handleAlertDismiss}>
                  Done
