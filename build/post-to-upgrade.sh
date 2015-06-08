@@ -9,14 +9,14 @@
 # It's possible these should be set via getopt.
 
 : ${NANO_LABEL:=FreeNAS}
-: ${UPDATE_HOST:=beta-update.freenas.org}
+: ${UPDATE_HOST:=update.freenas.org}
 : ${UPDATE_USER:=jkh}
 : ${UPDATE_DB:="${NANO_LABEL}-updates.db"}
 : ${UPDATE_DEST:=/tank/www/${NANO_LABEL}}
 : ${FREENAS_KEYFILE:=/dev/null}
 
 SSH=${UPDATE_USER}@${UPDATE_HOST}
-
+SSHOPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 prog=$(basename $0)
 usage() {
     echo "Usage: ${prog} <update_source>" 1>&2
@@ -40,9 +40,9 @@ do
 done
 
 set -e
-TEMP_DEST=$(ssh ${SSH} mktemp -d /tmp/update-${NANO_LABEL}-XXXXXXXXX < /dev/null)
+TEMP_DEST=$(ssh ${SSHOPTS} ${SSH} mktemp -d /tmp/update-${NANO_LABEL}-XXXXXXXXX < /dev/null)
 if [ -n "${CHANGELOG}" ]; then
-    TEMP_CHANGE=$(ssh ${SSH} mktemp /tmp/changelog-XXXXXX < /dev/null)
+    TEMP_CHANGE=$(ssh ${SSHOPTS} ${SSH} mktemp /tmp/changelog-XXXXXX < /dev/null)
 else
     TEMP_CHANGE=""
 fi
@@ -51,19 +51,19 @@ if [ $? -ne 0 -o -z "${TEMP_DEST}" ]; then
     echo Cannot create temporary directory 1>&2
     exit 1
 fi
-if scp -r "${SOURCE}/." ${SSH}:${TEMP_DEST} < /dev/null; then
+if scp ${SSHOPTS} -r "${SOURCE}/." ${SSH}:${TEMP_DEST} < /dev/null; then
     if [ -n "${CHANGELOG}" ]; then
 	if [ "${CHANGELOG}" = "-" ]; then
 	    echo "Enter changelog, control-d to end"
 	fi
-	cat ${CHANGELOG} | ssh ${SSH} "cat > ${TEMP_CHANGE}"
+	cat ${CHANGELOG} | ssh ${SSHOPTS} ${SSH} "cat > ${TEMP_CHANGE}"
 	MKREL="${MKREL} -C ${TEMP_CHANGE}"
     fi
-    ssh ${SSH} "${MKREL} add ${TEMP_DEST}"
+    ssh ${SSHOPTS} ${SSH} "${MKREL} add ${TEMP_DEST}"
 fi
-ssh ${SSH} "rm -rf ${TEMP_DEST}" < /dev/null
+ssh ${SSHOPTS} ${SSH} "rm -rf ${TEMP_DEST}" < /dev/null
 if [ -n "${TEMP_CHANGE}" ]; then
-    ssh ${SSH} "rm -f ${TEMP_CHANGE}" < /dev/null
+    ssh ${SSHOPTS} ${SSH} "rm -f ${TEMP_CHANGE}" < /dev/null
 fi
 set +e
 

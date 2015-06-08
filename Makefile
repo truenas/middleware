@@ -38,8 +38,8 @@ GIT_REPO_SETTING=.git-repo-setting
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 
-UPDATE_USER=sef		# For now, just use sef's account
-UPDATE_HOST=beta-update.freenas.org
+UPDATE_USER?=sef		# For now, just use sef's account
+UPDATE_HOST?=update.freenas.org
 
 ENV_SETUP=env _KEY=set
 
@@ -159,7 +159,7 @@ update-push:	release
 	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
 
 update-undo:
-	${ENV_SETUP} ssh ${UPDATE_USER}@update.freenas.org freenas-release --archive /tank/www/${NANO_LABEL} --project ${NANO_LABEL} -D \~${UPDATE_USER}/${NANO_LABEL}-updates.db rollback ${TRAIN}
+	${ENV_SETUP} ssh ${UPDATE_USER}@${UPDATE_HOST} freenas-release --archive /tank/www/${NANO_LABEL} --project ${NANO_LABEL} -D ${NANO_LABEL}-updates.db rollback ${TRAIN}
 
 archive:	release
 .if !defined(ARCHIVE)
