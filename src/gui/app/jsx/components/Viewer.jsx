@@ -27,7 +27,8 @@ const Viewer = React.createClass(
   // LIFECYCLE
   , getDefaultProps: function () {
       return (
-        { keyPrimary       : ""
+        { keyUnique        : ""
+        , keyPrimary       : ""
         , keySecondary     : ""
 
         , searchKeys       : new Set()
@@ -35,6 +36,14 @@ const Viewer = React.createClass(
         , itemData         : {}
         , itemSchema       : null
         , itemLabels       : null
+
+        , routeName        : ""
+        , routeParam       : ""
+        , routeNewItem     : ""
+
+        , textNewItem      : ""
+        , textRemaining    : ""
+        , textUngrouped    : ""
 
         , filtersInitial   : new Set()
         , filtersAllowed   : null
