@@ -1398,6 +1398,15 @@ class ISCSITargetGroupsResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetGroupsResourceMixin, self).dehydrate(bundle)
         bundle.data['iscsi_target'] = bundle.obj.iscsi_target.id
+        if bundle.obj.iscsi_target_initiatorgroup:
+            bundle.data['iscsi_target_initiatorgroup'] = (
+                bundle.obj.iscsi_target_initiatorgroup.id
+            )
+        else:
+            bundle.data['iscsi_target_initiatorgroup'] = None
+        bundle.data['iscsi_target_portalgroup'] = (
+            bundle.obj.iscsi_target_portalgroup.id
+        )
         return bundle
 
 
