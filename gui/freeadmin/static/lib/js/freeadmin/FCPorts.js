@@ -7,11 +7,13 @@ define([
   "dojo/request/xhr",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
+  "dijit/TooltipDialog",
   "dijit/registry",
   "dijit/form/Button",
   "dijit/form/Form",
   "dijit/form/RadioButton",
   "dijit/form/Select",
+  "dijit/popup",
   "dojo/text!freeadmin/templates/fcport.html",
   ], function(
   declare,
@@ -22,11 +24,13 @@ define([
   xhr,
   _Widget,
   _Templated,
+  TooltipDialog,
   registry,
   Button,
   Form,
   RadioButton,
   Select,
+  popup,
   template) {
 
     var FCPort = declare("freeadmin.FCPort", [ _Widget, _Templated ], {
@@ -82,6 +86,28 @@ define([
           domStyle.set(me._target.domNode, "display", "none");
           me.target = null;
         }
+      },
+      isValid: function() {
+        var me = this;
+        var valid = true;
+        if(me._mtgt.get('checked') === true) {
+          if(me._target.get('value') == '') {
+            valid = false;
+            var td = new TooltipDialog({
+              content: "This field is required.",
+              onMouseLeave: function() {
+                popup.close(td);
+                td.destroyRecursive();
+              }
+            });
+            popup.open({
+              popup: td,
+              around: me._target.domNode,
+              orient: ["above", "after", "below-alt"]
+            });
+          }
+        }
+        return valid;
       }
     });
 
@@ -140,7 +166,18 @@ define([
         this.inherited(arguments);
 
       },
+      isValid: function() {
+        var me = this;
+        var valid = true;
+        for(var i=0;i<me.ports.length;i++) {
+          valid = valid & me.ports[i].isValid();
+
+        }
+        return valid;
+      },
       submit: function() {
+
+        if(!this.isValid()) return;
 
         var me = this;
         if(me._form) me._form.destroyRecursive();
