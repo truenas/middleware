@@ -32,9 +32,7 @@ List resource
       Content-Type: application/json
 
         {
-                "iscsi_discoveryauthmethod": "None",
                 "iscsi_basename": "iqn.2011-03.org.example.istgt",
-                "iscsi_discoveryauthgroup": null,
                 "id": 1
         }
 
@@ -69,15 +67,11 @@ Update resource
       Content-Type: application/json
 
         {
-                "iscsi_discoveryauthmethod": "None",
                 "iscsi_basename": "iqn.2011-03.org.example.istgt",
-                "iscsi_discoveryauthgroup": null,
                 "id": 1
         }
 
    :json string iscsi_basename: base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for details)
-   :json string iscsi_discoveryauthmethod: None, Auto, CHAP, CHAP Mutual
-   :json string iscsi_discoveryauthgroup: id of auth group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
@@ -576,7 +570,7 @@ Delete resource
 
 
 Target
---------------------
+------
 
 The Target resource represents user credentials to access the iSCSI target.
 
@@ -940,6 +934,8 @@ List resource
         {
                 "iscsi_target_portal_tag": 1,
                 "id": 1,
+                "iscsi_target_portal_discoveryauthmethod": "None",
+                "iscsi_target_portal_discoveryauthgroup": null,
                 "iscsi_target_portal_ips": [
                         "0.0.0.0:3260"
                 ],
@@ -984,6 +980,8 @@ Create resource
         {
                 "iscsi_target_portal_tag": 1,
                 "id": 1,
+                "iscsi_target_portal_discoveryauthmethod": "None",
+                "iscsi_target_portal_discoveryauthgroup": null,
                 "iscsi_target_portal_ips": [
                         "0.0.0.0:3260"
                 ],
@@ -992,6 +990,8 @@ Create resource
 
    :json string iscsi_target_portal_comment: user description
    :json list(string) iscsi_target_portal_ips: IP:PORT to listen to
+   :json string iscsi_target_portal_discoveryauthmethod: None, Auto, CHAP, CHAP Mutual
+   :json string iscsi_target_portal_discoveryauthgroup: id of auth group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -1028,6 +1028,8 @@ Update resource
         {
                 "iscsi_target_portal_tag": 1,
                 "id": 1,
+                "iscsi_target_portal_discoveryauthmethod": "None",
+                "iscsi_target_portal_discoveryauthgroup": null,
                 "iscsi_target_portal_ips": [
                         "192.168.3.20:3260"
                 ],
@@ -1036,6 +1038,8 @@ Update resource
 
    :json string iscsi_target_portal_comment: user description
    :json list(string) iscsi_target_portal_ips: IP:PORT to listen to
+   :json string iscsi_target_portal_discoveryauthmethod: None, Auto, CHAP, CHAP Mutual
+   :json string iscsi_target_portal_discoveryauthgroup: id of auth group
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
