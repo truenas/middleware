@@ -24,8 +24,10 @@ def main(argv):
     if project == '':
         print '<project> cannot be blank'
         sys.exit(2)
+
+    bugs = 'https://bugs.freenas.org'
    
-    rm = Redmine('https://bugs.freenas.org', key=key) 
+    rm = Redmine(bugs, key=key) 
 
     statuses = rm.issue_status.all()
     for status in statuses:
@@ -43,6 +45,14 @@ def main(argv):
 
     for issue in reversed(issues):
         skip = False
+        try:
+            if str(issue.fixed_version) != "SU Candidate":
+                sys.stderr.write("WARNING: " + bugs + "/issues/" + str(issue.id) + " is set to " + str(issue.fixed_version) + " not SU Candidate\n") 
+                skip = True
+        except exceptions.ResourceAttrError:
+            sys.stderr.write("WARNING: " + bugs + "/issues/" + str(issue.id) + " target version is not set\n") 
+            skip = True
+
         if project.lower() == 'freenas' and str(issue.project).lower() == 'truenas':
             skip = True
         else:
