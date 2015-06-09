@@ -81,6 +81,7 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
         var CREATED   = _created[ taskArgs["id"] ]   || {};
         var WAITING   = _waiting[ taskArgs["id"] ]   || {};
         var EXECUTING = _executing[ taskArgs["id"] ] || {};
+        let perct = 0;
 
         switch ( action.eventData.args[ "name" ] ) {
           case "task.created":
@@ -159,7 +160,7 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
                 break;
 
               case "FAILED":
-                let perct = taskArgs[ "percentage" ] === 0 ? 50 :
+                perct = taskArgs[ "percentage" ] === 0 ? 50 :
                               taskArgs[ "percentage" ];
                 _failed[ taskArgs["id"] ] =
                   _.merge( CREATED
@@ -173,7 +174,7 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
                 break;
 
               case "ABORTED":
-                let perct = taskArgs[ "percentage" ] === 0 ? 50 :
+                perct = taskArgs[ "percentage" ] === 0 ? 50 :
                               taskArgs[ "percentage" ];
                 _aborted[ taskArgs["id"] ] =
                   _.merge( CREATED

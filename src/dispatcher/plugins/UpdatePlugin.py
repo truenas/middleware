@@ -48,8 +48,6 @@ t = gettext.translation('freenas-dispatcher', fallback=True)
 _ = t.ugettext
 
 update_cache = CacheStore()
-# Fix cache_dir with either this or "sys_dataset_path/update" path
-cache_dir = '/var/tmp/update'
 
 
 @description("Utility function to parse an available changelog")
@@ -207,9 +205,12 @@ class UpdateHandler(object):
         # TODO: add actual dispatcher event emit code
 
 
-def generate_update_cache(dispatcher, cache_dir):
+def generate_update_cache(dispatcher):
+    try:
+        cache_dir 
+    dispatcher.rpc.call_sync('system-dataset.request_directory',
+                             'freenas_update')
     # update_cache.put()
-    # TODO Add check to cached updates in cache_dir
     pass
 
 
@@ -413,4 +414,4 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("update.update", UpdateTask)
 
     # Get the Update Cache (if any) at system boot (and hence in init here)
-    generate_update_cache(dispatcher, cache_dir)
+    generate_update_cache(dispatcher)
