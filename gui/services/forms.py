@@ -1186,6 +1186,20 @@ class iSCSITargetExtentForm(ModelForm):
         self.fields.keyOrder.insert(1, 'iscsi_target_extent_type')
 
         if self.instance.id:
+
+            if self.instance.iscsi_target_extent_type == 'File':
+                self.fields['iscsi_target_extent_type'].initial = 'File'
+            else:
+                self.fields['iscsi_target_extent_type'].initial = 'Disk'
+            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
+            if self.instance.iscsi_target_extent_type in ('ZVOL', 'HAST'):
+                self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
+            else:
+                self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
+            self._path = self.instance.iscsi_target_extent_path
+            self._name = self.instance.iscsi_target_extent_name
+        else:
+
             try:
                 nic = list(choices.NICChoices(nolagg=True,
                                               novlan=True,
@@ -1203,18 +1217,6 @@ class iSCSITargetExtentForm(ModelForm):
             except:
                 self.fields['iscsi_target_extent_serial'].initial = "10000001"
 
-            if self.instance.iscsi_target_extent_type == 'File':
-                self.fields['iscsi_target_extent_type'].initial = 'File'
-            else:
-                self.fields['iscsi_target_extent_type'].initial = 'Disk'
-            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
-            if self.instance.iscsi_target_extent_type in ('ZVOL', 'HAST'):
-                self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
-            else:
-                self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
-            self._path = self.instance.iscsi_target_extent_path
-            self._name = self.instance.iscsi_target_extent_name
-        else:
             self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
         self.fields['iscsi_target_extent_path'].required = False
