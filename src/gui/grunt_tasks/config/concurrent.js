@@ -14,8 +14,20 @@ module.exports = function ( grunt ) {
                      ];
 
   this.options = { logConcurrentOutput : true
-                 , limit : 6
+                 , limit : 8 // Hope you have a quad i7!
                  };
+
+  // Run `npm install`
+  // Run `bower install`
+  // Sanity check development environment before proceeding
+  // Clean the build directory
+  // Check the code quality
+  this.initDevelop = [ "npm-install"
+                     , "bower:install"
+                     , "check-dev-env"
+                     , "clean:build"
+                     , "jscs:check-javascript-quality"
+                     ];
 
   // Initial build of app
   this.buildWorld = [ "babel"
