@@ -602,17 +602,8 @@ List resource
 
       [
         {
-                "iscsi_target_logical_blocksize": 512,
-                "iscsi_target_portalgroup": 1,
-                "iscsi_target_initialdigest": "Auto",
                 "iscsi_target_name": "target",
-                "iscsi_target_initiatorgroup": 1,
                 "iscsi_target_alias": null,
-                "iscsi_target_type": "Disk",
-                "iscsi_target_authgroup": null,
-                "iscsi_target_authtype": "Auto",
-                "iscsi_target_serial": "10000001",
-                "iscsi_target_flags": "rw",
                 "id": 1
         }
       ]
@@ -652,30 +643,13 @@ Create resource
       Content-Type: application/json
 
         {
-                "iscsi_target_logical_blocksize": 512,
-                "iscsi_target_portalgroup": 1,
-                "iscsi_target_initialdigest": "Auto",
                 "iscsi_target_name": "target",
-                "iscsi_target_initiatorgroup": 1,
                 "iscsi_target_alias": null,
-                "iscsi_target_type": "Disk",
-                "iscsi_target_authgroup": null,
-                "iscsi_target_authtype": "Auto",
-                "iscsi_target_serial": "10000001",
-                "iscsi_target_flags": "rw",
                 "id": 1
         }
 
    :json string iscsi_target_name: Base Name will be appended automatically when starting without "iqn.".
    :json string iscsi_target_alias: optional user-friendly string of the target
-   :json string iscsi_target_serial: serial number for the logical unit
-   :json string iscsi_target_flags: rw, ro
-   :json integer iscsi_target_portalgroup: id of a portal (from /services/iscsi/portal/ resource)
-   :json integer iscsi_target_initiatorgroup: id of an initiator (from /services/iscsi/authorizedinitiator/ resource)
-   :json string iscsi_target_authtype: None, Auto, CHAP, CHAP Mutual
-   :json integer iscsi_target_authgroup: Authentication Group ID
-   :json string iscsi_target_initialdigest: the method can be accepted by the target. Auto means both none and authentication
-   :json integer iscsi_target_logical_blocksize: yYou may specify logical block length (512 by default)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -708,30 +682,13 @@ Update resource
       Content-Type: application/json
 
         {
-                "iscsi_target_logical_blocksize": 512,
-                "iscsi_target_portalgroup": 1,
-                "iscsi_target_initialdigest": "Auto",
                 "iscsi_target_name": "target",
-                "iscsi_target_initiatorgroup": 1,
                 "iscsi_target_alias": "test",
-                "iscsi_target_type": "Disk",
-                "iscsi_target_authgroup": null,
-                "iscsi_target_authtype": "Auto",
-                "iscsi_target_serial": "10000001",
-                "iscsi_target_flags": "rw",
                 "id": 1
         }
 
    :json string iscsi_target_name: Base Name will be appended automatically when starting without "iqn.".
    :json string iscsi_target_alias: optional user-friendly string of the target
-   :json string iscsi_target_serial: serial number for the logical unit
-   :json string iscsi_target_flags: rw, ro
-   :json integer iscsi_target_portalgroup: id of a portal (from /services/iscsi/portal/ resource)
-   :json integer iscsi_target_initiatorgroup: id of an initiator (from /services/iscsi/authorizedinitiator/ resource)
-   :json string iscsi_target_authtype: None, Auto, CHAP, CHAP Mutual
-   :json integer iscsi_target_authgroup: Authentication Group ID
-   :json string iscsi_target_initialdigest: the method can be accepted by the target. Auto means both none and authentication
-   :json integer iscsi_target_logical_blocksize: yYou may specify logical block length (512 by default)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
