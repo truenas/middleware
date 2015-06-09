@@ -307,6 +307,9 @@ get_minimum_size() {
 	_size=$(diskinfo ${_disk} | awk ' { print $3; }')
 	_size=$(expr ${_size} - ${_m1})
 	if is_truenas; then
+	    if [ "${_size}" -lt ${_g16} ]; then
+		continue
+	    fi
 	    _size=$(expr ${_size} - ${_g16})
 	fi
 	if [ ${_round} -gt 0 ]; then
@@ -328,6 +331,11 @@ partition_disk() {
 	_disks=$*
 
 	_minsize=$(get_minimum_size ${_disks})
+	
+	if [ "${_minsize}" = "0k" ]; then
+	    echo "Disk is too small to install ${AVATAR_PROJECT}" 1>&2
+	    return 1
+	fi
 	
 	_disksparts=$(for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} > /dev/null 2>&1 || true
