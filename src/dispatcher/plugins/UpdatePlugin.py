@@ -115,7 +115,7 @@ class CheckUpdateHandler(object):
 @description("A handler for Downloading and Applying Updates calls")
 class UpdateHandler(object):
 
-    def __init__(self, apply_=None):
+    def __init__(self, dispatcher, update_progress=None, apply_=None):
         self.apply = apply_
         self.details = ''
         self.indeterminate = False
@@ -132,6 +132,8 @@ class UpdateHandler(object):
         self.numfilestotal = 0
         self.numfilesdone = 0
         self._baseprogress = 0
+        self.dispatcher = dispatcher
+        self.update_progress = update_progress
 
     def check_handler(self, index, pkg, pkgList):
         self.step = 1
@@ -202,16 +204,67 @@ class UpdateHandler(object):
         }
         if self.details:
             data['details'] = self.details
-        # TODO: add actual dispatcher event emit code
+        if self.update_progress is not None:
+            self.update_progress(self.progress)
+        self.dispatcher.dispatch_event('update.in_progress', {
+            'operation': 'progress',
+            'data': data,
+        })
 
 
-def generate_update_cache(dispatcher):
+
+@description("Utility function to just check for Updates")
+def check_updates(dispatcher, cache_dir=None):
+    update_cache.invalidate('updateAvailable')
+    update_cache.invalidate('updateOperations')
+    update_cache.invalidate('changelog')
+    conf = Configuration.Configuration()
+    update_ops = None
+    handler = CheckUpdateHandler()
+    train = dispatcher.configstore.get('update.train')
     try:
-        cache_dir 
-    dispatcher.rpc.call_sync('system-dataset.request_directory',
-                             'freenas_update')
-    # update_cache.put()
-    pass
+        update = CheckForUpdates(
+            handler=handler.call,
+            train=train,
+            cache_dir=cache_dir,
+        )
+    except UpdateManifestNotFound:
+        update_cache.put('updateAvailable', False)
+        update_cache.put('updateOperations', update_ops)
+        update_cache.put('changelog', '')
+        raise
+
+    if update:
+        update_ops = handler.output()
+        sys_mani = conf.SystemManifest()
+        if sys_mani:
+            sequence = sys_mani.Sequence()
+        else:
+            sequence = ''
+        changelog = get_changelog(train,
+                                  start=sequence,
+                                  end=update.Sequence())
+    else:
+        changelog = None
+    update_cache.put('updateAvailable', True if update else False)
+    update_cache.put('updateOperations', update_ops)
+    update_cache.put('changelog', changelog)
+
+
+def generate_update_cache(dispatcher, cache_dir=None):
+    if cache_dir is None:
+        try:
+            cache_dir = dispatcher.rpc.call_sync(
+                            'system-dataset.request_directory',
+                            'update')
+        except RpcException:
+            cache_dir = '/var/tmp/update'
+    update_cache.put('cache_dir', cache_dir)
+    try:
+        check_updates(dispatcher, cache_dir)
+    except UpdateManifestNotFound:
+        # What to do now?
+        pass
 
 
 @description("Provides System Updater Configuration")
@@ -320,41 +373,11 @@ class CheckUpdateTask(Task):
         return []
 
     def run(self):
-        update_cache.invalidate('updateAvailable')
-        update_cache.invalidate('updateOperations')
-        update_cache.invalidate('changelog')
-        conf = Configuration.Configuration()
-        update_ops = None
-        handler = CheckUpdateHandler()
-        # Fix get_current_train() with datastore object of user specified train
-        train = self.dispatcher.configstore.get('update.train')
         try:
-            update = CheckForUpdates(
-                handler=handler.call,
-                train=train,
-            )
+            check_updates(self.dispatcher)
         except UpdateManifestNotFound:
-            update_cache.put('updateAvailable', False)
-            update_cache.put('updateOperations', update_ops)
-            update_cache.put('changelog', '')
             TaskException(errno.ENETUNREACH,
                           'Update server could not be reached')
-
-        if update:
-            update_ops = handler.output()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                sequence = sys_mani.Sequence()
-            else:
-                sequence = ''
-            changelog = get_changelog(train,
-                                      start=sequence,
-                                      end=update.Sequence())
-        else:
-            changelog = None
-        update_cache.put('updateAvailable', True if update else False)
-        update_cache.put('updateOperations', update_ops)
-        update_cache.put('changelog', changelog)
 
 
 @description("Downloads Updates for the current system update train")
@@ -367,11 +390,28 @@ class DownloadUpdateTask(ProgressTask):
         # TODO: Fix this verify's resource allocation as unique task
         return []
 
+    def update_progress(self, progress):
+        self.set_progress(progress)
+
     def run(self):
-        self.progress = 0
         self.message = 'Downloading Updates...'
+        self.set_progress(0)
+        handler = UpdateHandler(self.dispatcher,
+                                update_progress=self.update_progress)
         train = self.dispatcher.configstore.get('update.train')
-        # To be continued ...
+        cache_dir = update_cache.get('cache_dir')
+        if cache_dir is None:
+            try:
+                cache_dir = self.dispatcher.rpc.call_sync(
+                                'system-dataset.request_directory',
+                                'update')
+            except RpcException:
+                cache_dir = '/var/tmp/update'
+        DownloadUpdate(train, cache_dir,
+                       get_handler=handler.get_handler,
+                       check_handler=handler.check_handler)
+        self.message = "Updates Finished Downloading"
+        self.set_progress(100)
 
 
 # Fix this when the fn10 freenas-pkg tools is updated by sef
