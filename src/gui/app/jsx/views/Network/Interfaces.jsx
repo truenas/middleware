@@ -14,8 +14,7 @@ import InterfacesMiddleware from "../../middleware/InterfacesMiddleware";
 import InterfacesStore from "../../stores/InterfacesStore";
 
 var viewData = {
-  format: require( "../../../data/middleware-keys/interfaces-display.json" )[0]
-  , routing: { route : "interfaces-editor"
+  routing: { route : "interfaces-editor"
              , param : "interfaceID"
              }
   , display: { filterCriteria:

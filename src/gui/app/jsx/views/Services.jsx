@@ -12,10 +12,9 @@ import ServicesMiddleware from "../middleware/ServicesMiddleware";
 import ServicesStore from "../stores/ServicesStore";
 
 var viewData = {
-  format    : require( "../../data/middleware-keys/services-display.json" )[0]
-  , routing : {
-    route     : "services-editor"
-    , param   : "serviceID"
+    routing : {
+      route : "services-editor"
+    , param : "serviceID"
   }
   , display: {
     filterCriteria: {

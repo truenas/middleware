@@ -33,68 +33,6 @@ module.exports = {
     return optionList;
   }
 
-  // Check if a given attribute is mutable according to the given data keys.
-  // This is a PITA because this information is buried in an object in an
-  // array in a prop, which cannot be helped.
-  , isMutable: function ( attribute, dataKeys ) {
-    return ( _.find( dataKeys
-                   , function ( dataKey ) {
-                     return ( dataKey.key === attribute );
-                   }
-                   , this
-                   ).mutable
-           );
-  }
-
-  // Returns an object containin the mutable fields from the item in nextProps.
-  // A malformed nextProps will result in an empty array.
-  , removeReadOnlyFields: function ( item, keys ) {
-    let outgoingItem = {};
-
-    _.forEach( item, function ( value, key ) {
-      let keyContent = _.find( keys
-                             , function findKey ( checkKey ) {
-                               return ( checkKey.key === key );
-                             }
-                             , this
-                             );
-
-      // TODO: If we want to accept arbitrary properies, we will need more
-      // sophisticated handling here.
-
-      // Do not include unknown propertie s.
-      if ( keyContent ) {
-        // Do not include read-only fields
-        if ( keyContent[ "mutable" ] ) {
-          outgoingItem[ key ] = value;
-        }
-      }
-    }
-    , this
-    );
-
-    return outgoingItem;
-  }
-
-  // Remote state is set at load time and reset upon successful changes. This
-  // is used to highlight and submit only genuinely changed values.
-  , setRemoteState: function ( incomingProps ) {
-    let dataKeys = incomingProps.viewData[ "format" ][ "dataKeys" ];
-    let nextRemoteState = this.removeReadOnlyFields( incomingProps.item
-                                                   , dataKeys
-                                                   );
-
-    if ( _.isEmpty( nextRemoteState ) ) {
-      console.warn( "Remote State could not be created!"
-                  + "Check the incoming props:" );
-      console.warn( incomingProps );
-    }
-
-    // TODO: What exactly should be returned if setting the remote state is
-    // going to fail?
-    return nextRemoteState;
-  }
-
   // Deals with input from different kinds of input fields.
   // TODO: Extend with other input fields and refine existing ones as necessary.
   , processFormInput: function ( event, value, dataKey ) {
@@ -193,15 +131,13 @@ module.exports = {
   }
 
   , submissionRedirect: function ( valuesToSend ) {
-    let routing = this.props.viewData.routing;
-    let format = this.props.viewData.format;
     let params = {};
     let newEntityPath;
 
-    if ( valuesToSend[ format[ "primaryKey" ] ] ) {
-      newEntityPath = valuesToSend[ format[ "primaryKey" ] ];
-      params[ routing[ "param" ] ] = newEntityPath;
-      this.context.router.transitionTo( routing[ "route" ]
+    if ( valuesToSend[ this.props.keyPrimary ] ) {
+      newEntityPath = valuesToSend[ this.props.keyPrimary ];
+      params[ this.props.routeParam ] = newEntityPath;
+      this.context.router.transitionTo( this.props.routeName
                                       , params
                                       );
     } else {

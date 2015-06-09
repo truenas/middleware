@@ -17,8 +17,7 @@ import UsersMiddleware from "../../middleware/UsersMiddleware";
 import UsersStore from "../../stores/UsersStore";
 
 var viewData = {
-    format    : require("../../../data/middleware-keys/groups-display.json")[0]
-  , addEntity : "Add Group"
+  addEntity : "Add Group"
   , routing   : {
       "route"     : "groups-editor"
     , "param"     : "groupID"
