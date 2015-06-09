@@ -1390,6 +1390,17 @@ class ISCSITargetResourceMixin(object):
         resource_name = 'services/iscsi/target'
 
 
+class ISCSITargetGroupsResourceMixin(object):
+
+    class Meta:
+        resource_name = 'services/iscsi/targetgroup'
+
+    def dehydrate(self, bundle):
+        bundle = super(ISCSITargetGroupsResourceMixin, self).dehydrate(bundle)
+        bundle.data['iscsi_target'] = bundle.obj.iscsi_target.id
+        return bundle
+
+
 class ISCSIPortalResourceMixin(object):
 
     class Meta:
