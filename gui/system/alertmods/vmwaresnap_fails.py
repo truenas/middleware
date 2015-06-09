@@ -3,7 +3,6 @@ import cPickle as pickle
 from django.utils.translation import ugettext as _
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
-from freenasUI.storage.models import Replication
 
 from lockfile import LockFile
 
@@ -22,13 +21,13 @@ class VMWareSnapFailAlert(BaseAlert):
 
         alerts = []
         for snapname, vms in fails.items():
-            alerts.append(Alert(
-                Alert.WARN,
-                _('VMWare snapshot %s failed for the following VMs: %s') % (
-                    snapname,
-                    ', '.join(vms),
-                )
-            ))
+            alerts.append(Alert(Alert.WARN, _(
+                'VMWare snapshot %(snap)s failed for the following VMs: '
+                '%(vms)s'
+            ) % {
+                'snap': snapname,
+                'vms': ', '.join(vms),
+            }))
         return alerts
 
 alertPlugins.register(VMWareSnapFailAlert)
