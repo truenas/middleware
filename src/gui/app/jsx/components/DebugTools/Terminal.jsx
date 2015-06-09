@@ -10,26 +10,24 @@ import ShellMiddleware from "../../middleware/ShellMiddleware";
 
 import Shell from "../common/Shell";
 
-var Terminal = React.createClass({
-
-    getInitialState: function () {
-      return {
-          currentShell : "/bin/sh"
-        , shells       : []
+var Terminal = React.createClass(
+  { getInitialState: function () {
+      return { currentShell : "/bin/sh"
+             , shells       : []
       };
     }
 
   , componentDidMount: function () {
-      ShellMiddleware.requestAvailableShells( function( shells ) {
+      ShellMiddleware.requestAvailableShells( function ( shells ) {
         this.setState({ shells: shells });
       }.bind( this ) );
     }
 
-  , handleShellSelect: function( shell ) {
+  , handleShellSelect: function ( shell ) {
       this.setState({ currentShell: shell });
     }
 
-  , createShellMenuItem: function( shell, index ) {
+  , createShellMenuItem: function ( shell, index ) {
       return (
         <TWBS.MenuItem
             onClick = { this.handleShellSelect.bind( null, shell ) }
@@ -45,7 +43,8 @@ var Terminal = React.createClass({
 
           <TWBS.Col xs={6} className="debug-column" >
 
-            <h5 className="debug-heading">{"FreeNAS Shell: " + this.state.currentShell }</h5>
+            <h5 className="debug-heading">{"FreeNAS Shell: "
+                          + this.state.currentShell }</h5>
             <Shell shellType={ this.state.currentShell } />
 
           </TWBS.Col>
@@ -56,7 +55,8 @@ var Terminal = React.createClass({
               <h5 className="debug-heading">Terminal Options</h5>
               <div>
                 <label style={{ marginRight: "10px" }}>Shell Type:</label>
-                <TWBS.DropdownButton bsStyle="default" title={ this.state.currentShell }>
+                <TWBS.DropdownButton bsStyle="default"
+                                     title={ this.state.currentShell }>
                   { this.state.shells.map( this.createShellMenuItem ) }
                 </TWBS.DropdownButton>
               </div>
