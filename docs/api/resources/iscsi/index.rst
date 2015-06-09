@@ -33,6 +33,8 @@ List resource
 
         {
                 "iscsi_basename": "iqn.2011-03.org.example.istgt",
+                "iscsi_isns_servers": "",
+                "iscsi_pool_avail_threshold": null,
                 "id": 1
         }
 
@@ -72,6 +74,8 @@ Update resource
         }
 
    :json string iscsi_basename: base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for details)
+   :json string iscsi_isns_servers: List of Internet Storage Name Service (iSNS) Servers
+   :json integer iscsi_pool_avail_threshold: pool capacity warning threshold when using zvol extents
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
@@ -79,7 +83,7 @@ Update resource
 
 
 Extent
-----------
+------
 
 The Extent resource represents extents for the iSCSI targets.
 
