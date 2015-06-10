@@ -163,10 +163,13 @@ class ByteCalc {
              ? "byte"
              : "bytes";
     } else {
-      // If we desire an abbreviated unit in IEC, our suffix needs an "i"
-      if ( IEC && exponent > 0 ) {
-        suffix = "iB";
-        units = UNITS[ exponent - 1 ];
+      suffix = "B";
+      if ( exponent > 0 ) {
+        units  = UNITS[ exponent - 1 ];
+        if ( IEC ) {
+          // If we desire an abbreviated unit in IEC, our suffix needs an "i"
+          suffix = "iB";
+        }
       }
     }
 
