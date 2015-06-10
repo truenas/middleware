@@ -5,6 +5,7 @@
 
 "use strict";
 
+import _ from "lodash";
 import DL from "../common/DebugLogger";
 
 import { EventEmitter } from "events";
@@ -63,7 +64,9 @@ class FluxBaseClass extends EventEmitter {
 
   static rekeyForClient ( targetObject, keyHash ) {
     // Clone target object with all properties, including those we won't keep
-    for ( let prop in targetObject ) {
+    let newObject = _.clone( targetObject );
+
+    for ( let prop in newObject ) {
       // Iterate over the enumerable properties of the target object
       if ( keyHash.hasOwnProperty( prop ) ) {
         // One of the desired properties exists on the object
@@ -72,15 +75,15 @@ class FluxBaseClass extends EventEmitter {
           continue;
         } else {
           // Reassign the value to the new key
-          targetObject[ keyHash[ prop ] ] = targetObject[ prop ];
+          newObject[ keyHash[ prop ] ] = newObject[ prop ];
         }
       }
       // Either the prop wasn't found in the hash, so it's implicitly ignored
       // OR
       // The key has changed, and we're deleting the old one
-      delete targetObject[ prop ];
+      delete newObject[ prop ];
     }
-    return targetObject;
+    return newObject;
   }
 
 };
