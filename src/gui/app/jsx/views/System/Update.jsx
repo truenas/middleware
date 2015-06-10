@@ -31,7 +31,6 @@ const Update = React.createClass({
     updateprops.bodyText = "Freenas will now Update"
     updateprops.callFunc  = this.handleupdatenowbutton;
 
-    console.log( this.props );
     return (
       <main>
         <h2>Update</h2>
