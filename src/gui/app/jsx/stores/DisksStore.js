@@ -53,6 +53,19 @@ const KEY_TRANSLATION =
   , schema          : "schema"
   };
 
+const DISK_LABELS =
+  { serial       : "Serial"
+  , byteSize     : "Total Capacity"
+  , online       : "Disk Online"
+  , path         : "Path"
+  , sectorSize   : "Sector Size"
+  , maxRpm       : "Maximum RPM"
+  , smartEnabled : "S.M.A.R.T. Enabled"
+  , smartStatus  : "S.M.A.R.T. Status"
+  , model        : "Disk Model"
+  , schema       : "Partition Format"
+  };
+
 var disks = {};
 
 class DisksStore extends FluxStore {
@@ -64,6 +77,8 @@ class DisksStore extends FluxStore {
       handlePayload.bind( this )
     );
     this.KEY_UNIQUE = "serial";
+    this.ITEM_SCHEMA = DISK_SCHEMA;
+    this.ITEM_LABELS = DISK_LABELS;
   }
 
   getDisksArray () {

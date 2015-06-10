@@ -14,14 +14,36 @@ class FluxBaseClass extends EventEmitter {
   constructor () {
     super();
     this.CHANGE_EVENT = "change";
-    this.KEY_UNIQUE   = "";
+    this.KEY_UNIQUE   = null;
+    this.ITEM_LABELS   = null;
+    this.ITEM_SCHEMA  = null;
   }
 
-  getUniqueKey () {
+  get uniqueKey () {
     if ( this.KEY_UNIQUE ) {
       return this.KEY_UNIQUE;
     } else {
-      throw new Error( "The KEY_UNIQUE for this Flux store has not been set:" );
+      throw new Error( "The KEY_UNIQUE for this Flux store was not set:" );
+      DL.dir( this );
+      return false;
+    }
+  }
+
+  get itemLabels () {
+    if ( this.ITEM_LABELS ) {
+      return this.ITEM_LABELS;
+    } else {
+      throw new Error( "The ITEM_LABELS for this Flux store were not set:" );
+      DL.dir( this );
+      return false;
+    }
+  }
+
+  get itemSchema () {
+    if ( this.ITEM_SCHEMA ) {
+      return this.ITEM_SCHEMA;
+    } else {
+      throw new Error( "The ITEM_SCHEMA for this Flux store was not defined:" );
       DL.dir( this );
       return false;
     }
