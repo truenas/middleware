@@ -255,14 +255,28 @@ class Advanced(Model):
             verbose_name=_("Show tracebacks in case of fatal errors"),
             default=True)
     adv_advancedmode = models.BooleanField(
-            verbose_name=_("Show advanced fields by default"),
-            default=False)
+        verbose_name=_("Show advanced fields by default"),
+        default=False,
+        help_text=_(
+            "By default only essential fields are shown. Fields considered "
+            "advanced can be displayed through the Advanced Mode button."
+        ),
+    )
     adv_autotune = models.BooleanField(
-            verbose_name=_("Enable autotune"),
-            default=False)
+        verbose_name=_("Enable autotune"),
+        default=False,
+        help_text=_(
+            "Attempt to automatically tune the network and ZFS system control "
+            "variables based on memory available."
+        ),
+    )
     adv_debugkernel = models.BooleanField(
-            verbose_name=_("Enable debug kernel"),
-            default=False)
+        verbose_name=_("Enable debug kernel"),
+        default=False,
+        help_text=_(
+            "The kernel built with debug symbols will be booted instead."
+        ),
+    )
     adv_uploadcrash = models.BooleanField(
         verbose_name=_("Enable automatic upload of kernel crash dumps and daily telemetry"),
         default=True,
