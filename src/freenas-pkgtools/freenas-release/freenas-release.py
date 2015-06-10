@@ -1977,14 +1977,35 @@ def ProcessRelease(source, archive,
         # Why would it ever be none?
         db.AddRelease(manifest)
 
-def Check(archive, db, project = "FreeNAS"):
+def Check(archive, db, project = "FreeNAS", args = []):
     """
     Given an archive location -- the target of ProcessRelease -- compare
     the database contents with the filesystem layout.  We're looking for
     missing files/directories, package files with mismatched checksums,
     and orphaned files/directories.
     """
+    def CheckUsage():
+        print >> sys.stderr, "Usage: %s check [-Q|--quick]" % sys.argv[0]
+        usage()
+
     global verbose, debug
+    quick = False
+
+    try:
+        short_options = "Q"
+        long_options = ["quick"]
+        opts, arguments = getopt.getopt(args, short_options, long_options)
+    except getopt.GetoptError as err:
+        print >> sys.stderr, str(err)
+        CheckUsage()
+
+    for o, a in opts:
+        if o in ("-Q", "--quick"):
+            quick = True
+        else:
+            print >> sys.stderr, "Unknown option %s" % o
+            CheckUsage()
+
     # First, let's get the list of trains.
     trains = db.Trains()
     # Now let's collect the set of sequences
@@ -1997,9 +2018,12 @@ def Check(archive, db, project = "FreeNAS"):
         s = db.RecentSequencesForTrain(t, 0)
         s.append("LATEST")
         sequences[t] = s
-        for note_file in os.listdir(os.path.join(archive, t, "Notes")):
-            found_notes[note_file] = True
-        
+        try:
+            for note_file in os.listdir(ndir):
+                found_notes[note_file] = True
+        except:
+            pass
+
     # First check is we make sure all of the sequence
     # files are there, as expected.  And that nothing
     # unexpected is there.
@@ -2040,10 +2064,13 @@ def Check(archive, db, project = "FreeNAS"):
     expected_notes = {}
     sequences_for_packages = {}
     for t in sequences.keys():
-        t_dir = "%s/%s" % (archive, t)
+        t_dir = os.path.join(archive, t)
         expected_contents = {}
         found_contents = {}
 
+        if not os.path.isdir(t_dir):
+            print >> sys.stderr, "Expected train directory %s does not exist" % t_dir
+            continue
         for entry in os.listdir(t_dir):
             if entry == "Notes":
                 # Don't complain about the notes directory
@@ -2111,17 +2138,18 @@ def Check(archive, db, project = "FreeNAS"):
                     sequences_for_packages[o_vers].append(sequence_file)
             if sequence_file != "LATEST":
                 notes_dict = temp_mani.Notes(raw = True)
-                for note in notes_dict:
-                    if note == "NOTICE":
-                        # Special case, not a file
-                        continue
-                    note_file = notes_dict[note]
-                    if note_file in expected_notes:
-                        print >> sys.stderr, "Note file %s already expected, this is confusing" % note_file
-                        if debug:
-                            print >> sys.stderr, "\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence())
-                    expected_notes[note_file] = True
-                    if debug:  print >> sys.stderr, "Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence())
+                if notes_dict:
+                    for note in notes_dict:
+                        if note == "NOTICE":
+                            # Special case, not a file
+                            continue
+                        note_file = notes_dict[note]
+                        if note_file in expected_notes:
+                            print >> sys.stderr, "Note file %s already expected, this is confusing" % note_file
+                            if debug:
+                                print >> sys.stderr, "\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence())
+                        expected_notes[note_file] = True
+                        if debug:  print >> sys.stderr, "Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence())
 
         # Now let's check the found_contents and expected_contents dictionaries
         if expected_contents != found_contents:
@@ -2146,14 +2174,18 @@ def Check(archive, db, project = "FreeNAS"):
         if not os.path.isfile(full_path):
             print >> sys.stderr, "Entry in Packages directory, %s, is not a file" % pkgEntry
             continue
-        cksum = ChecksumFile(full_path)
+        if quick:
+            cksum = "-"
+        else:
+            cksum = ChecksumFile(full_path)
         found_packages[pkgEntry] = cksum
 
-    if expected_packages != found_packages:
+    if (quick and expected_packages.keys() != found_packages.keys()) or \
+       (quick is False and expected_packages != found_packages):
         print >> sys.stderr, "Packages directory does not match expecations"
         for expected in expected_packages.keys():
             if expected in found_packages:
-                if expected_packages[expected] != found_packages[expected]:
+                if quick is False and expected_packages[expected] != found_packages[expected]:
                     print >> sys.stderr, "Package %s has a different checksum than expected" % expected
                     if debug or verbose:
                         print >> sys.stderr, "\t%s (expected)\n\t%s (found)" % (expected_packages[expected], found_packages[expected])
@@ -3258,7 +3290,7 @@ def main():
         for source in args:
             ProcessRelease(source, archive, db, project = project_name, key_data = key_data, changelog = changelog)
     elif cmd == "check":
-        Check(archive, db, project = project_name)
+        Check(archive, db, project = project_name, args = args)
     elif cmd == "rebuild":
         st = None
         if os.path.exists(Database):
