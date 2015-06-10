@@ -31,7 +31,7 @@ import re
 import gettext
 from cache import CacheStore
 from task import (Provider, Task, ProgressTask, TaskException, VerifyException)
-from dispatcher.rpc import (RpcException, description, accepts, TaskException,
+from dispatcher.rpc import (RpcException, description, accepts,
                             returns, SchemaHelper as h)
 from lib.system import system
 
@@ -212,7 +212,6 @@ class UpdateHandler(object):
         })
 
 
-
 @description("Utility function to just check for Updates")
 def check_updates(dispatcher, cache_dir=None):
     update_cache.invalidate('updateAvailable')
@@ -387,6 +386,12 @@ class DownloadUpdateTask(ProgressTask):
         return "Downloads the Updates and caches them to apply when needed"
 
     def verify(self):
+        if not update_cache.get('updateAvailable', timeout=1):
+            raise VerifyException(
+                errno.ENOENT,
+                'No updates currently available for download, try running ' +
+                'the `update.check` task')
+
         # TODO: Fix this verify's resource allocation as unique task
         return []
 
