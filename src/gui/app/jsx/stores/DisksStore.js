@@ -8,13 +8,56 @@
 
 import _ from "lodash";
 
+import DL from "../common/DebugLogger";
+
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 import FluxStore from "./FluxBase";
 
 import DisksMiddleware from "../middleware/DisksMiddleware";
 
-let disks = {};
+const CHANGE_EVENT = "change";
+
+const KEY_UNIQUE = "serial";
+
+const DISK_SCHEMA =
+  // Available from disks.query
+  { serial       : { type: "string" }
+  , byteSize     : { type: "number" }
+  , dateUpdated  : { type: "number" }
+  , dateCreated  : { type: "number" }
+  , online       : { type: "boolean" }
+  , path         : { type: "string" }
+  // Available from disks.get_disk_config
+  , sectorSize   : { type: "number" }
+  , description  : { type: "string" }
+  , maxRpm       : { type: "string" }
+  // , partitions   : ""
+  , smartEnabled : { type: "string" }
+  , smartStatus  : { type: "string" }
+  , model        : { type: "string" }
+  , schema       : { type: "string" }
+  };
+
+const KEY_TRANSLATION =
+  // Available from disks.query
+  { serial          : "serial"
+  , mediasize       : "byteSize"
+  , "updated-at"    : "dateUpdated"
+  , "created-at"    : "dateCreated"
+  , online          : "online"
+  , path            : "path"
+  // Available from disks.get_disk_config
+  , sectorsize      : "sectorSize"
+  , description     : "description"
+  , "max-rotation"  : "maxRpm"
+  , "smart-enabled" : "smartEnabled"
+  , "smart-status"  : "smartStatus"
+  , model           : "model"
+  , schema          : "schema"
+  };
+
+var disks = {};
 
 class DisksStore extends FluxStore {
 
@@ -26,11 +69,34 @@ class DisksStore extends FluxStore {
     );
   }
 
-  getAllDisks () {
+  getDisksArray () {
     return disks;
   }
 
 };
+
+const DISKS_STORE = new DisksStore();
+
+function rekeyForClient ( targetObject, keyHash ) {
+  // Clone target object with all properties, including those we won't keep
+  for ( let prop in targetObject ) {
+    // Iterate over the enumerable properties of the target object
+    if ( keyHash.hasOwnProperty( prop ) ) {
+      // One of the desired properties exists on the object
+      if ( prop === keyHash[ prop ] ) {
+        // The new key and old key are the same
+        continue;
+      } else {
+        // Reassign the value to the new key
+        targetObject[ keyHash[ prop ] ] = targetObject[ prop ];
+      }
+    }
+    // Either the prop wasn't found in the hash, in which case we don't need it,
+    // or the key has changed, and we're deleting the old one
+    delete targetObject[ prop ];
+  }
+  return targetObject;
+}
 
 function handlePayload ( payload ) {
   const ACTION = payload.action;
@@ -38,7 +104,30 @@ function handlePayload ( payload ) {
   switch ( ACTION.type ) {
 
     case ActionTypes.RECEIVE_DISKS_OVERVIEW:
-      ACTION.disksOverview.forEach( disk => disks[ disk.serial ] = disk );
+      let newDisks = {};
+
+      ACTION.disksOverview.forEach( disk =>
+                            newDisks[ disk[ KEY_UNIQUE ] ] =
+                              rekeyForClient( disk, KEY_TRANSLATION )
+                          )
+      _.merge( disks, newDisks );
+      DISKS_STORE.emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_DISK_DETAILS:
+      if ( disks.hasOwnProperty( ACTION.diskDetails[ KEY_UNIQUE ] ) ) {
+        // This disk has already been instantiated, and we should atttempt to
+        // patch new information on top of it
+        _.merge( disks[ KEY_UNIQUE ]
+               , rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION )
+               );
+      } else {
+        // There is no current record for a disk with this identifier, so this
+        // will be the initial data.
+        disks[ ACTION.diskDetails[ KEY_UNIQUE ] ] =
+          rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION );
+      }
+      DISKS_STORE.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
@@ -47,4 +136,4 @@ function handlePayload ( payload ) {
   }
 }
 
-export default new DisksStore();
+export default DISKS_STORE;

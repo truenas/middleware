@@ -13,7 +13,7 @@ import DS from "../../stores/DisksStore";
 import DM from "../../middleware/DisksMiddleware";
 
 function getDisksFromStore () {
-  return { disks: DS.getAllDisks() };
+  return { disks: DS.getDisksArray() };
 }
 
 const Disks = React.createClass(
