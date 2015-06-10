@@ -67,7 +67,12 @@ class DisksStore extends FluxStore {
   }
 
   getDisksArray () {
-    return disks;
+    return (
+      _.chain( disks )
+       .values()
+       .sortBy( "path" )
+       .value()
+    )
   }
 
 };
