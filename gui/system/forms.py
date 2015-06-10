@@ -1020,7 +1020,13 @@ class SettingsForm(ModelForm):
 
 class NTPForm(ModelForm):
 
-    force = forms.BooleanField(label=_("Force"), required=False)
+    force = forms.BooleanField(
+        label=_("Force"),
+        required=False,
+        help_text=_(
+            "Continue operation if the server could not be reached/validated."
+        ),
+    )
 
     class Meta:
         fields = '__all__'
