@@ -594,7 +594,7 @@ IPS6="$(warden_get_ipv6_aliases)"
 jFlags=""
 # Grab any additional jail flags
 if [ -e "${JMETADIR}/jail-flags" ] ; then
-  jFlags=`cat "${JMETADIR}/jail-flags"`
+  jFlags="$(cat "${JMETADIR}"/jail-flags|sed -E 's/,/ /g')"
 fi
 
 checkpbiscripts "${JAILDIR}"
