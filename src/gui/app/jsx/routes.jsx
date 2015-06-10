@@ -44,6 +44,8 @@ import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
 
 import System from "./views/System";
+import Update from "./views/System/Update";
+import Power from "./views/System/Power";
 
 import Settings from "./views/Settings";
 
@@ -171,7 +173,16 @@ module.exports = (
     <Route
       name    = "system"
       route   = "system"
-      handler = { System } />
+      handler = { System }>
+      <Route
+        name    = "update"
+        path   = "update"
+        handler = { Update } />
+      <Route
+        name    = "power"
+        path   = "power"
+        handler = { Power } />
+    </Route>
 
     {/* SETTINGS */}
     <Route

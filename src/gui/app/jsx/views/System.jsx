@@ -6,71 +6,32 @@
 
 import React from "react";
 
-import UpdateMiddleware from "../middleware/UpdateMiddleware";
+import { RouteHandler } from "react-router";
 
-import PowerMiddleware from "../middleware/PowerMiddleware";
+import routerShim from "../components/mixins/routerShim";
 
-import Icon from "../components/Icon";
+import SectionNav from "../components/SectionNav";
 
-import ConfDialog from "../components/common/ConfDialog";
+const sections = [ { route: "update"
+                   , display: "Update"
+                   , disabled: false
+                   }
+                 , { route: "power"
+                   , display: "Power"
+                   , disabled: false
+                   }
+                 ];
 
 const System = React.createClass({
-  handleupdatenowbutton: function () {
-      UpdateMiddleware.updatenow();
-  },
+  displayName: "System"
 
-  handlerebootbutton: function () {
-      PowerMiddleware.reboot();
-  },
+  , mixins: [ routerShim ]
 
-  handleshutdownbutton: function () {
-      PowerMiddleware.shutdown();
-  },
-
-  render: function () {
-    var updateText = (<div style = { {margin: "5px"
-                                    , cursor: "pointer"} }>
-                        <Icon glyph = "bomb"
-                              icoSize = "4em"
-                        />
-                        <br />
-                        Update Now!
-                      </div>);
-    var updateprops = {};
-    updateprops.dataText = updateText;
-    updateprops.title = "Confirm Update";
-    updateprops.bodyText = "Freenas will now Update"
-    updateprops.callFunc  = this.handleupdatenowbutton;
-
-    var rebootprops        = {};
-    rebootprops.dataText   = (<div style = { {margin: "5px"
-                                     , cursor: "pointer"} }>
-                                <Icon glyph = "refresh"
-                                     icoSize = "4em" />
-                                <br />
-                                Reboot
-                              </div>);
-    rebootprops.title      = "Confirm Reboot";
-    rebootprops.bodyText   = "Are you sure you wish to reboot?";
-    rebootprops.callFunc   = this.handlerebootbutton;
-    var shutdownprops      = {};
-    shutdownprops.dataText = (<div style = { {margin: "5px"
-                                    , cursor: "pointer"} }>
-                                <Icon glyph = "power-off"
-                                      icoSize = "4em" />
-                                <br />
-                                Shutdown
-                              </div>);
-    shutdownprops.title    = "Confirm Shutdown";
-    shutdownprops.bodyText = "Are you sure you wish to Shutdown?";
-    shutdownprops.callFunc = this.handleshutdownbutton;
-
+  , render: function () {
     return (
       <main>
-        <h2>System View</h2>
-        <ConfDialog {...updateprops}/>
-        <ConfDialog {...rebootprops}/>
-        <ConfDialog {...shutdownprops}/>
+        <SectionNav views = { sections } />
+        <RouteHandler />
       </main>
     );
   }
