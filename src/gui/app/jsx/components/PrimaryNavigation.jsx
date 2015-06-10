@@ -59,22 +59,16 @@ const paths =
     , status   : null
     , disabled : true
     }
-  , { path     : "system"
-    , icon     : "ambulance"
-    , label    : "System"
-    , status   : "warning"
-    , disabled : false
-    }
   , { path     : "control-panel"
     , icon     : "paragraph"
     , label    : "Control Panel"
     , status   : null
     , disabled : true
     }
-  , { path     : "power"
-    , icon     : "plug"
-    , label    : "Power"
-    , status   : null
+  , { path     : "system"
+    , icon     : "ambulance"
+    , label    : "System"
+    , status   : "warning"
     , disabled : false
     }
   ];
