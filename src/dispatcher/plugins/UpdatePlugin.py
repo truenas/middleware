@@ -269,7 +269,7 @@ class UpdateProvider(Provider):
 
     # TODO: Change to array of strings instead of one gigantic string
     @returns(str)
-    def get_changelog(self):
+    def obtain_changelog(self):
         temp_changelog = update_cache.get('changelog', timeout=1)
         if temp_changelog is not None:
             return temp_changelog
