@@ -47,8 +47,6 @@ import System from "./views/System";
 
 import Settings from "./views/Settings";
 
-import Power from "./views/Power";
-
 module.exports = (
   <Route
     path    = "/"
@@ -180,12 +178,6 @@ module.exports = (
       name    = "settings"
       route   = "settings"
       handler = { Settings } />
-
-    {/* POWER */}
-    <Route
-      name    = "power"
-      route   = "power"
-      handler = { Power } />
 
     <NotFoundRoute handler={ Dashboard } />
 
