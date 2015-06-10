@@ -16,10 +16,6 @@ import FluxStore from "./FluxBase";
 
 import DisksMiddleware from "../middleware/DisksMiddleware";
 
-const CHANGE_EVENT = "change";
-
-const KEY_UNIQUE = "serial";
-
 const DISK_SCHEMA =
   // Available from disks.query
   { serial       : { type: "string" }
@@ -67,6 +63,7 @@ class DisksStore extends FluxStore {
     this.dispatchToken = FreeNASDispatcher.register(
       handlePayload.bind( this )
     );
+    this.KEY_UNIQUE = "serial";
   }
 
   getDisksArray () {
@@ -107,7 +104,7 @@ function handlePayload ( payload ) {
       let newDisks = {};
 
       ACTION.disksOverview.forEach( disk =>
-                            newDisks[ disk[ KEY_UNIQUE ] ] =
+                            newDisks[ disk[ this.KEY_UNIQUE ] ] =
                               rekeyForClient( disk, KEY_TRANSLATION )
                           )
       _.merge( disks, newDisks );
@@ -115,16 +112,16 @@ function handlePayload ( payload ) {
       break;
 
     case ActionTypes.RECEIVE_DISK_DETAILS:
-      if ( disks.hasOwnProperty( ACTION.diskDetails[ KEY_UNIQUE ] ) ) {
+      if ( disks.hasOwnProperty( ACTION.diskDetails[ this.KEY_UNIQUE ] ) ) {
         // This disk has already been instantiated, and we should atttempt to
         // patch new information on top of it
-        _.merge( disks[ KEY_UNIQUE ]
+        _.merge( disks[ this.KEY_UNIQUE ]
                , rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION )
                );
       } else {
         // There is no current record for a disk with this identifier, so this
         // will be the initial data.
-        disks[ ACTION.diskDetails[ KEY_UNIQUE ] ] =
+        disks[ ACTION.diskDetails[ this.KEY_UNIQUE ] ] =
           rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION );
       }
       DISKS_STORE.emitChange();

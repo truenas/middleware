@@ -5,6 +5,8 @@
 
 "use strict";
 
+import DL from "../common/DebugLogger";
+
 import { EventEmitter } from "events";
 
 class FluxBaseClass extends EventEmitter {
@@ -12,6 +14,17 @@ class FluxBaseClass extends EventEmitter {
   constructor () {
     super();
     this.CHANGE_EVENT = "change";
+    this.KEY_UNIQUE   = "";
+  }
+
+  getUniqueKey () {
+    if ( this.KEY_UNIQUE ) {
+      return this.KEY_UNIQUE;
+    } else {
+      throw new Error( "The KEY_UNIQUE for this Flux store has not been set:" );
+      DL.dir( this );
+      return false;
+    }
   }
 
   emitChange ( changeMask ) {
