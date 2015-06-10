@@ -445,7 +445,7 @@ def _cache_check_ActiveDirectory(**kwargs):
                         print "%s: %s" % (val, ducache[val])
 
                 elif key == 'dg':
-                    if dgcache and dgache.has_key(val) and dgcache[val]:
+                    if dgcache and dgcache.has_key(val) and dgcache[val]:
                         print "%s: %s" % (val, dgcache[val])
 
 def _cache_check_NIS(**kwargs):
@@ -453,7 +453,7 @@ def _cache_check_NIS(**kwargs):
         return
 
     valid = {}
-    ad = FreeNAS_NIS(flags=FLAGS_DBINIT)
+    nis = FreeNAS_NIS(flags=FLAGS_DBINIT)
     domains = nis.get_domains()
     for d in domains:
         valid[d] = True
@@ -516,7 +516,7 @@ def _cache_check_NIS(**kwargs):
                         print "%s: %s" % (val, ducache[val])
 
                 elif key == 'dg':
-                    if dgcache and dgache.has_key(val) and dgcache[val]:
+                    if dgcache and dgcache.has_key(val) and dgcache[val]:
                         print "%s: %s" % (val, dgcache[val])
 
 def _cache_check_NT4(**kwargs):
