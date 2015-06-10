@@ -12,6 +12,46 @@ import Viewer from "../../components/Viewer";
 import DS from "../../stores/DisksStore";
 import DM from "../../middleware/DisksMiddleware";
 
+const VIEWER_DATA =
+  { keyUnique     : DS.uniqueKey
+  , keyPrimary    : "path"
+  , keySecondary  : "serial"
+
+  , itemSchema    : DS.itemSchema
+  , itemLabels    : DS.itemLabels
+
+  , routeName     : "disk-item-view"
+  , routeParam    : "diskSerial"
+
+  , textRemaining : "Other disks"
+  , textUngrouped : "All disks"
+
+  , columnsInitial : new Set(
+                      [ "serial"
+                      , "path"
+                      , "online"
+                      , "byteSize"
+                      ]
+                    )
+  , columnsAllowed : new Set(
+                      [ "serial"
+                      , "path"
+                      , "online"
+                      , "byteSize"
+                      ]
+                    )
+
+  , groupBy:
+    { online:
+       { name: "Currently Online"
+       , testProp: { online: true }
+       }
+    }
+
+  , groupsInitial : new Set( [ "online" ] )
+  , groupsAllowed : new Set( [ "online" ] )
+  };
+
 function getDisksFromStore () {
   return { disks: DS.getDisksArray() };
 }
@@ -19,9 +59,7 @@ function getDisksFromStore () {
 const Disks = React.createClass(
 
   { getInitialState: function () {
-      return { inputValue : ""
-             , disks      : getDisksFromStore()
-             };
+      return getDisksFromStore();
     }
 
   , componentDidMount: function () {
@@ -39,19 +77,12 @@ const Disks = React.createClass(
       this.setState( getDisksFromStore() );
     }
 
-  , handleInputChange: function ( event ) {
-      this.setState({ inputValue: event.target.value })
-    }
-
   , render: function () {
-      let output = ByteCalc.convertString( this.state.inputValue );
-
       return (
-        <div>
-          <input onChange = { this.handleInputChange }
-                 value    = { this.state.inputValue } />
-          <h1>{ ByteCalc.humanize( output, false, true ) }</h1>
-        </div>
+        <Viewer { ...VIEWER_DATA }
+          header   = "Disks"
+          itemData = { this.state.disks }
+        />
       );
     }
 

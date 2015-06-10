@@ -36,6 +36,7 @@ import NetworkConfig from "./views/Network/NetworkConfig";
 
 import Storage from "./views/Storage";
 import Disks from "./views/Storage/Disks";
+import DiskItem from "./views/Storage/Disks/DiskItem";
 
 import Sharing from "./views/Sharing";
 
@@ -139,7 +140,14 @@ module.exports = (
       <Route
         name    = "disks"
         route   = "disks"
-        handler = { Disks } />
+        handler = { Disks }
+      >
+        <Route
+          name    = "disk-item-view"
+          path    = ":diskSerial"
+          handler = { DiskItem }
+        />
+      </Route>
     </Route>
 
     {/* SHARING */}
