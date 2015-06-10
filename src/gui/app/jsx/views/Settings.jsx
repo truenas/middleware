@@ -1,4 +1,4 @@
-// Control Panel
+// Settings
 // ================
 // Consolidated view containing global options for all other parts of FreeNAS.
 
@@ -6,14 +6,14 @@
 
 import React from "react";
 
-const ControlPanel = React.createClass({
+const Settings = React.createClass({
   render: function () {
     return (
       <main>
-        <h1>Control Panel View</h1>
+        <h1>Settings View</h1>
       </main>
     );
   }
 });
 
-export default ControlPanel;
+export default Settings;

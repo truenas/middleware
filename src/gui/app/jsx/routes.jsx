@@ -45,7 +45,7 @@ import ServiceItem from "./views/Services/ServiceItem";
 
 import System from "./views/System";
 
-import ControlPanel from "./views/ControlPanel";
+import Settings from "./views/Settings";
 
 import Power from "./views/Power";
 
@@ -175,11 +175,11 @@ module.exports = (
       route   = "system"
       handler = { System } />
 
-    {/* CONTROL PANEL */}
+    {/* SETTINGS */}
     <Route
-      name    = "control-panel"
-      route   = "control-panel"
-      handler = { ControlPanel } />
+      name    = "settings"
+      route   = "settings"
+      handler = { Settings } />
 
     {/* POWER */}
     <Route

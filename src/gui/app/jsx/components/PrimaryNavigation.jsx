@@ -59,11 +59,11 @@ const paths =
     , status   : null
     , disabled : true
     }
-  , { path     : "control-panel"
+  , { path     : "settings"
     , icon     : "paragraph"
-    , label    : "Control Panel"
+    , label    : "Settings"
     , status   : null
-    , disabled : true
+    , disabled : true 
     }
   , { path     : "system"
     , icon     : "ambulance"
