@@ -174,6 +174,7 @@ module.exports = (
       name    = "system"
       route   = "system"
       handler = { System }>
+      <DefaultRoute handler={ Update } />
       <Route
         name    = "update"
         path   = "update"
