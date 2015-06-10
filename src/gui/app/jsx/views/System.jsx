@@ -1,4 +1,4 @@
-// System Tools
+// System
 // =======
 //
 
@@ -12,7 +12,7 @@ import Icon from "../components/Icon";
 
 import ConfDialog from "../components/common/ConfDialog";
 
-const SystemTools = React.createClass({
+const System = React.createClass({
   handleupdatenowbutton: function () {
       UpdateMiddleware.updatenow();
   },
@@ -33,11 +33,11 @@ const SystemTools = React.createClass({
     updateprops.callFunc  = this.handleupdatenowbutton;
     return (
       <main>
-        <h2>System Tools View</h2>
+        <h2>System View</h2>
         <ConfDialog {...updateprops}/>
       </main>
     );
   }
 });
 
-export default SystemTools;
+export default System;

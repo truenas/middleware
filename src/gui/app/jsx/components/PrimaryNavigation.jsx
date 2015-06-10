@@ -59,9 +59,9 @@ const paths =
     , status   : null
     , disabled : true
     }
-  , { path     : "system-tools"
+  , { path     : "system"
     , icon     : "ambulance"
-    , label    : "System Tools"
+    , label    : "System"
     , status   : "warning"
     , disabled : false
     }

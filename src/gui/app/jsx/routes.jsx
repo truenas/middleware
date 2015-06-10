@@ -42,7 +42,7 @@ import Sharing from "./views/Sharing";
 import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
 
-import SystemTools from "./views/SystemTools";
+import System from "./views/System";
 
 import ControlPanel from "./views/ControlPanel";
 
@@ -161,11 +161,11 @@ module.exports = (
     </Route>
 
 
-    {/* SYSTEM TOOLS */}
+    {/* SYSTEM */}
     <Route
-      name    = "system-tools"
-      route   = "system-tools"
-      handler = { SystemTools } />
+      name    = "system"
+      route   = "system"
+      handler = { System } />
 
     {/* CONTROL PANEL */}
     <Route
