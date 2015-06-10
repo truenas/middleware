@@ -28,7 +28,6 @@
 import errno
 import sys
 import re
-import gettext
 from cache import CacheStore
 from task import (Provider, Task, ProgressTask, TaskException, VerifyException)
 from dispatcher.rpc import (RpcException, description, accepts,
@@ -42,10 +41,6 @@ from freenasOS.Update import (
     ActivateClone, CheckForUpdates, DeleteClone, PendingUpdates,
     PendingUpdatesChanges, DownloadUpdate, ApplyUpdate
 )
-
-# TODO: Will the below translation func work?
-t = gettext.translation('freenas-dispatcher', fallback=True)
-_ = t.ugettext
 
 update_cache = CacheStore()
 
@@ -115,14 +110,12 @@ class CheckUpdateHandler(object):
 @description("A handler for Downloading and Applying Updates calls")
 class UpdateHandler(object):
 
-    def __init__(self, dispatcher, update_progress=None, apply_=None):
-        self.apply = apply_
-        self.details = ''
-        self.indeterminate = False
+    def __init__(self, dispatcher, update_progress=None):
         self.progress = 0
-        self.step = 1
+        self.details = ''
         self.finished = False
         self.error = False
+        self.indeterminate = False
         self.reboot = False
         self.pkgname = ''
         self.pkgversion = ''
@@ -136,12 +129,11 @@ class UpdateHandler(object):
         self.update_progress = update_progress
 
     def check_handler(self, index, pkg, pkgList):
-        self.step = 1
         self.pkgname = pkg.Name()
         self.pkgversion = pkg.Version()
-        self.operation = _('Downloading')
+        self.operation = 'Downloading'
         self.details = '%s %s' % (
-            _('Downloading'),
+            'Downloading',
             '%s-%s' % (self.pkgname, self.pkgversion),
         )
         stepprogress = int((1.0 / float(len(pkgList))) * 100)
@@ -149,9 +141,8 @@ class UpdateHandler(object):
         self.progress = (index - 1) * stepprogress
         self.emit_uptate_details()
 
-    def get_handler(
-        self, method, filename, size=None, progress=None, download_rate=None
-    ):
+    def get_handler(self, method, filename, size=None,
+                    progress=None, download_rate=None):
         filename = filename.rsplit('/', 1)[-1]
         if progress is not None:
             self.progress = (progress * self._baseprogress) / 100
@@ -168,18 +159,14 @@ class UpdateHandler(object):
         self.emit_uptate_details()
 
     def install_handler(self, index, name, packages):
-        if self.apply:
-            self.step = 2
-        else:
-            self.step = 1
         self.indeterminate = False
         total = len(packages)
         self.numfilesdone = index
         self.numfilesdone = total
         self.progress = int((float(index) / float(total)) * 100.0)
-        self.operation = _('Installing')
+        self.operation = 'Installing'
         self.details = '%s %s (%d/%d)' % (
-            _('Installing'),
+            'Installing',
             name,
             index,
             total,
@@ -187,13 +174,8 @@ class UpdateHandler(object):
 
     def emit_uptate_details(self):
         data = {
-            'apply': self.apply,
-            'error': self.error,
-            'operation': self.operation,
-            'finished': self.finished,
             'indeterminate': self.indeterminate,
             'percent': self.progress,
-            'step': self.step,
             'reboot': self.reboot,
             'pkgName': self.pkgname,
             'pkgVersion': self.pkgversion,
@@ -201,13 +183,15 @@ class UpdateHandler(object):
             'filesize': self.filesize,
             'numFilesDone': self.numfilesdone,
             'numFilesTotal': self.numfilestotal,
+            'error': self.error,
+            'finished': self.finished,
         }
         if self.details:
             data['details'] = self.details
         if self.update_progress is not None:
             self.update_progress(self.progress)
         self.dispatcher.dispatch_event('update.in_progress', {
-            'operation': 'progress',
+            'operation': self.operation,
             'data': data,
         })
 
@@ -227,7 +211,7 @@ def check_updates(dispatcher, cache_dir=None):
             train=train,
             cache_dir=cache_dir,
         )
-    except UpdateManifestNotFound:
+    except Exception:
         update_cache.put('updateAvailable', False)
         update_cache.put('updateOperations', update_ops)
         update_cache.put('changelog', '')
@@ -261,7 +245,7 @@ def generate_update_cache(dispatcher, cache_dir=None):
     update_cache.put('cache_dir', cache_dir)
     try:
         check_updates(dispatcher, cache_dir)
-    except UpdateManifestNotFound:
+    except Exception:
         # What to do now?
         pass
 
@@ -377,6 +361,9 @@ class CheckUpdateTask(Task):
         except UpdateManifestNotFound:
             TaskException(errno.ENETUNREACH,
                           'Update server could not be reached')
+        except Exception as e:
+            TaskException(errno.EAGAIN,
+                          '{0}'.format(str(e)))
 
 
 @description("Downloads Updates for the current system update train")
@@ -412,9 +399,24 @@ class DownloadUpdateTask(ProgressTask):
                                 'update')
             except RpcException:
                 cache_dir = '/var/tmp/update'
-        DownloadUpdate(train, cache_dir,
-                       get_handler=handler.get_handler,
-                       check_handler=handler.check_handler)
+        try:
+            download_successful = DownloadUpdate(
+                                  train, cache_dir,
+                                  get_handler=handler.get_handler,
+                                  check_handler=handler.check_handler)
+        except Exception as e:
+            raise TaskException(
+                      errno.EAGAIN,
+                      'Got exception {0} while trying to '.format(str(e)) +
+                      'prepare update cache')
+        if not download_successful:
+            handler.error = True
+            handler.emit_uptate_details()
+            raise TaskException(
+                      errno.EAGAIN,
+                      'Downloading Updates Failed for some reason, check logs')
+        handler.finished = True
+        handler.emit_uptate_details()
         self.message = "Updates Finished Downloading"
         self.set_progress(100)
 
