@@ -39,6 +39,28 @@ class FluxBaseClass extends EventEmitter {
     this.removeListener( this.CHANGE_EVENT, callback );
   }
 
+  static rekeyForClient ( targetObject, keyHash ) {
+    // Clone target object with all properties, including those we won't keep
+    for ( let prop in targetObject ) {
+      // Iterate over the enumerable properties of the target object
+      if ( keyHash.hasOwnProperty( prop ) ) {
+        // One of the desired properties exists on the object
+        if ( prop === keyHash[ prop ] ) {
+          // The new key and old key are the same
+          continue;
+        } else {
+          // Reassign the value to the new key
+          targetObject[ keyHash[ prop ] ] = targetObject[ prop ];
+        }
+      }
+      // Either the prop wasn't found in the hash, so it's implicitly ignored
+      // OR
+      // The key has changed, and we're deleting the old one
+      delete targetObject[ prop ];
+    }
+    return targetObject;
+  }
+
 };
 
 export default FluxBaseClass;

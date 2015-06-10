@@ -79,27 +79,6 @@ class DisksStore extends FluxStore {
 
 const DISKS_STORE = new DisksStore();
 
-function rekeyForClient ( targetObject, keyHash ) {
-  // Clone target object with all properties, including those we won't keep
-  for ( let prop in targetObject ) {
-    // Iterate over the enumerable properties of the target object
-    if ( keyHash.hasOwnProperty( prop ) ) {
-      // One of the desired properties exists on the object
-      if ( prop === keyHash[ prop ] ) {
-        // The new key and old key are the same
-        continue;
-      } else {
-        // Reassign the value to the new key
-        targetObject[ keyHash[ prop ] ] = targetObject[ prop ];
-      }
-    }
-    // Either the prop wasn't found in the hash, in which case we don't need it,
-    // or the key has changed, and we're deleting the old one
-    delete targetObject[ prop ];
-  }
-  return targetObject;
-}
-
 function handlePayload ( payload ) {
   const ACTION = payload.action;
 
@@ -110,7 +89,7 @@ function handlePayload ( payload ) {
 
       ACTION.disksOverview.forEach( disk =>
                             newDisks[ disk[ this.KEY_UNIQUE ] ] =
-                              rekeyForClient( disk, KEY_TRANSLATION )
+                              FluxStore.rekeyForClient( disk, KEY_TRANSLATION )
                           )
       _.merge( disks, newDisks );
       DISKS_STORE.emitChange();
@@ -121,13 +100,13 @@ function handlePayload ( payload ) {
         // This disk has already been instantiated, and we should atttempt to
         // patch new information on top of it
         _.merge( disks[ this.KEY_UNIQUE ]
-               , rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION )
+               , FluxStore.rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION )
                );
       } else {
         // There is no current record for a disk with this identifier, so this
         // will be the initial data.
         disks[ ACTION.diskDetails[ this.KEY_UNIQUE ] ] =
-          rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION );
+          FluxStore.rekeyForClient( ACTION.diskDetails, KEY_TRANSLATION );
       }
       DISKS_STORE.emitChange();
       break;
