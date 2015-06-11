@@ -44,7 +44,7 @@ setup(
     author_email='Herndon.MarcT@gmail.com',
     packages=['pySMART'],
     url='none',
-    license='GNU GPLv2.htm',
+    license='GNU LGPLv2.1.html',
     description='Wrapper for smartctl (smartmontools)',
     long_description=open('README.txt').read(),
 )

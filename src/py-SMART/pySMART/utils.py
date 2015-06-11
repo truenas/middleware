@@ -39,7 +39,7 @@ _min_smartctl_ver = {
     'FreeBSD': {
         'maj': 6,
         'min': 1
-         }
+        }
     }
 """
 (dict of dict of int): Outer dict contains operating system names as keys.

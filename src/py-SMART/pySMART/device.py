@@ -256,7 +256,7 @@ class Device(object):
         # If we looked only at the most recent test result we could be fooled
         # by two short tests run close together (within the same hour)
         # appearing identical. Comparing the length of the log adds some
-        # confidence untilit maxes, as above. Comparing the least-recent test
+        # confidence until it maxes, as above. Comparing the least-recent test
         # result greatly diminishes the chances that two sets of two tests each
         # were run within an hour of themselves, but with 16-17 other tests run
         # in between them.
@@ -446,7 +446,10 @@ class Device(object):
         self.tests = []
         for line in _stdout.split('\n'):
             if line.strip() == '':  # Blank line stops sub-captures
-                parse_self_tests = False
+                if parse_self_tests == True:
+                    parse_self_tests = False
+                    if len(self.tests) == 0:
+                        self.tests = None
                 if parse_ascq:
                     parse_ascq = False
                     self.messages.append(message)
@@ -525,11 +528,11 @@ class Device(object):
                         line_[5], line_[6], line_[7], line_[8], line_[9])
             if 'Description' in line and '(hours)' in line:
                 parse_self_tests = True  # Set flag to capture test entries
-            if 'No self-tests have been logged.' in line:
+            if 'No self-tests have been logged' in line:
                 self.tests = None
             # Everything from here on is parsing SCSI information that takes
             # the place of similar ATA SMART information
-            if 'SS Media used endurance' in line:
+            if 'used endurance' in line:
                 pct = int(line.split(':')[1].strip()[:-1])
                 self.diags['Life_Left'] = str(100 - pct) + '%'
             if 'Specified cycle count' in line:

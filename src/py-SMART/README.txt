@@ -1,7 +1,7 @@
 ===========
 pySMART
 ===========
-Copyright (C) 2014 Marc Herndon
+Copyright (C) 2015 Marc Herndon
 
 pySMART is a simple Python wrapper for the ``smartctl`` component of
 ``smartmontools``. It works under Linux and Windows, as long as smartctl is on
@@ -107,3 +107,15 @@ more miserable. :)
 Having recently migrated my script development from Batch to Python for Linux
 portabiity, I thought a simple wrapper for smartctl would save time in the
 development of future automated test tools.
+
+Final Note on Licensing
+=======================
+If you are reading this and thinking that you'd love to use pySMART if only
+it weren't "restricted" by GPL licensing, please contact me. I am very
+willing to make the code available privately under a more permissive
+license, including for some corporate or commercial uses. I'd just like for
+you to say hello first, and tell me a bit about your project and how pySMART
+could fit into it. Odds are I'd be happy to help.
+
+I've been contacted with similar requests a handful of times previously, so
+I decided to add this note in case there are others out there afraid to ask.
