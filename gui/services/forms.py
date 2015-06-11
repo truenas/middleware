@@ -767,8 +767,14 @@ class SNMPForm(ModelForm):
             )
         return contact
 
-    def clean_snmp_comunity(self):
-        community = self.cleaned_data['snmp_community']
+    def clean_snmp_community(self):
+        community = self.cleaned_data.get('snmp_community')
+        v3 = self.cleaned_data.get('snmp_v3')
+        if not community:
+            if not v3:
+                raise forms.ValidationError(_('This field is required.'))
+            else:
+                return community
         if not re.match(r'^[-_a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(
                 _(u"The community must contain only alphanumeric characters, "
