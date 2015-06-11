@@ -1,0 +1,4 @@
+Python wrapper for smartctl (smartmontools).
+Original author of pySMART is Marc Herndon.
+
+WWW: https://pypi.python.org/pypi/pySMART
