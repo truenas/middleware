@@ -98,6 +98,9 @@ main()
 	fi
 
 	cp -p ${AVATAR_ROOT}/build/files/install.sh ${INSTALLUFSDIR}/etc
+	if [ -f ${AVATAR_ROOT}/install.conf ]; then
+	    cp ${AVATAR_ROOT}/install.conf ${INSTALLUFSDIR}/etc/install.conf
+	fi
 	if is_truenas ; then
 		cp -p ${TRUENAS_COMPONENTS_ROOT}/build/files/install_sata_dom.sh \
 			${INSTALLUFSDIR}/etc

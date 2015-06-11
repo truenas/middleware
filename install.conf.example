@@ -1,0 +1,32 @@
+# Sample install.conf file
+# If in the build root, this will be placed into
+# the ISO, and used during the install.
+# Set the root password (not used for updates)
+password=foo
+# What to do when finished.
+# Values are reboot, wait, and halt
+# "wait" will pop up a dialog box.  Default is to
+# simply reboot.
+whenDone=wait
+# Specify the minimum and maximum disk sizes for
+# the target media.  Without this, it will use whatever
+# disks it finds.  Valid suffixes are B and C (for bytes),
+# K, M, G, and T.  I recommend making the minDiskSize value
+# about 1g smaller than what you really want, and maxDiskSize
+# about 1g larger, to handle media that reports slightly different
+# sizes.
+minDiskSize=16g
+maxDiskSize=64g
+# Whether or not to use a mirror.  Possible values are
+# yes/true, no/false, and force -- force means that it must
+# have at least two viable disks or it will fail.  The default
+# is no.
+mirror=yes
+# Specify the maximum number of disks to use.  This only
+# matters if mirror is set to true.
+diskCount=5
+# Specify the disks to use.  Otherwise it will use whatever
+# disks it finds.  This can be "disk=" or "disks=".
+disk=da0
+# Do an upgrade or not.  Fairly obvious and intuitive.
+upgrade=yes
