@@ -911,14 +911,14 @@ class iSCSITargetGroups(Model):
 
 
 class iSCSITargetToExtent(Model):
-    iscsi_lunid = models.IntegerField(
-        verbose_name=_('LUN ID'),
-        null=True,
-    )
     iscsi_target = models.ForeignKey(
         iSCSITarget,
         verbose_name=_("Target"),
         help_text=_("Target this extent belongs to"),
+    )
+    iscsi_lunid = models.IntegerField(
+        verbose_name=_('LUN ID'),
+        null=True,
     )
     iscsi_extent = models.ForeignKey(
         iSCSITargetExtent,
@@ -926,6 +926,7 @@ class iSCSITargetToExtent(Model):
     )
 
     class Meta:
+        ordering = ['iscsi_target', 'iscsi_lunid']
         verbose_name = _("Target / Extent")
         verbose_name_plural = _("Targets / Extents")
         unique_together = (
