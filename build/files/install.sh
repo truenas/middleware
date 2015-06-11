@@ -625,7 +625,7 @@ menu_install()
     local _msg
     local _satadom
     local _i
-    local _do_upgrade
+    local _do_upgrade=""
     local _menuheight
     local _msg
     local _dlv
@@ -633,7 +633,8 @@ menu_install()
     local os_part
     local data_part
     local upgrade_style
-
+    local whendone=""
+    
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
     local readonly NEED_UPDATE_SENTINEL="/data/need-update"
     # create a sentinel file for post-fresh-install boots
@@ -644,7 +645,27 @@ menu_install()
     TMPFILE=$_tmpfile
     REALDISKS="/tmp/realdisks"
 
-    if [ $# -gt 0 ]; then
+    while getopts "U:P:X:" opt; do
+	case "${opt}" in
+	    U)	if ${OPTARG}; then _do_upgrade=1 ; else _do_upgrade=0; fi
+		;;
+	    P)	_password="${OPTARG}"
+		;;
+	    X)	case "${OPTARG}" in
+		    reboot)	whendone=reboot ;;
+		    "wait")	whendone=wait ;;
+		    halt)	whendone=halt ;;
+		    *)		whendone="" ;;
+		esac
+		;;
+	    *)	echo "Unknown option ${opt}" 1>&2
+		;;
+	esac
+    done
+    shift $((OPTIND-1))
+    
+    if [ $# -gt 0 ]
+    then
 	_disks="$@"
 	INTERACTIVE=false
     else
@@ -705,8 +726,10 @@ menu_install()
         exit 1
     fi
 
-    _do_upgrade=0
     _action="installation"
+    if [ -z "${_do_upgrade}" ]; then
+	_do_upgrade=0
+    fi
     # This needs to be re-done.
     # If we're not interactive, then we have
     # to assume _disks is correct.
@@ -723,11 +746,12 @@ menu_install()
 	    if ask_upgrade ${_disk} ; then
 		_do_upgrade=1
 		_action="upgrade"
-            fi
+	    fi
 	else
-	    # Always doing an upgrade in this case
-	    _do_upgrade=1
-	    _action="upgrade"
+	    if [ -z "${_do_upgrade}" ]; then
+		_do_upgrade=1
+		_action="upgrade"
+	    fi
 	fi
 	if [ -c /dev/${_disk}s4 ]; then
 	    upgrade_style="old"
@@ -998,7 +1022,15 @@ menu_install()
     else
         _msg="${_msg}Please reboot and remove the installation media."
     fi
-    ${INTERACTIVE} && dialog --msgbox "$_msg" 6 74
+    if ${INTERACTIVE}; then
+	dialog --msgbox "$_msg" 6 74
+    elif [ -n "${whendone}" ]; then
+	case "${whendone}" in
+	    halt)	halt -p ;;
+	    "wait")	dialog --msgbox "$_msg" 6 74 ;;
+	esac
+	return 0
+    fi
 
     return 0
 }
@@ -1076,9 +1108,9 @@ main()
     local _number
     local _test_option=
 
-    if [ $# -eq 1 ]; then
+    if [ $# -gt 0 ]; then
 	# $1 will have the device name
-	menu_install "$1"
+	menu_install "$@"
 	exit $?
     fi
 
@@ -1114,6 +1146,171 @@ main()
 
 if is_truenas ; then
     . "$(dirname "$0")/install_sata_dom.sh"
+fi
+
+# Parse a config file.
+# We don't do much in the way of error checking.
+# Format is very simple:
+# <opt>=<value>
+# <value> may be a list (e.g., disk devices)
+# The output is suitable to be used as the arguments
+# to main(), which will directl ycall menu_install().
+
+yesno() {
+    # Output "true" or "false" depending on the argument
+    if [ $# -ne 1 ]; then
+	echo "false"
+	return 0
+    fi
+    case "$1" in
+	[yY][eE][sS] | [tT][rR][uU][eE])	echo true ;;
+	*)	echo false;;
+    esac
+    return 0
+}
+
+getsize() {
+    # Given a size specifier, convert it to bytes.
+    # No suffix, or a suffix of "[bBcC]", means bytes;
+    # [kK] is 1024, etc.
+    if [ $# -ne 1 ]; then
+	echo 0
+	return 0
+    fi
+    case "$1" in
+	*[bB][cC])	expr "$1" : "^\([0-9]*\)[bB][cC]" || echo 0;;
+	*[kK])	expr $(expr "$1" : "^\([0-9]*\)[kK]") \* 1024 || echo 0;;
+	*[mM])	expr $(expr "$1" : "^\([0-9]*\)[gG]") \* 1024 \* 1024 || echo 0;;
+	*[gG])	expr $(expr "$1" : "^\([0-9]*\)[gG]") \* 1024 \* 1024 \* 1024 || echo 0;;
+	*[tT])	expr $(expr "$1" : "^\([0-9]*\)[tT]") \* 1024 \* 1024 \* 1024 \* 1024 || echo 0;;
+	*) expr "$1" : "^\([0-9]*\)$" || echo 0;;
+    esac
+    return 0
+}
+	
+parse_config() {
+    local _conf="/etc/install.conf"
+    local _diskList=""
+    local _minSize=""
+    local _maxSize=""
+    local _mirror=false
+    local _forceMirror=false
+    local _upgrade=""
+    local _output=""
+    local _maxDisks=""
+    local _cmd
+    local _args
+    local _boot
+    local _disk
+    local _diskSize
+    local _diskCount=0
+    local password=""
+    local whenDone=""
+    
+    while read line
+    do
+	if expr "${line}" : "^#" > /dev/null
+	then
+	    continue
+	fi
+	if ! expr "${line}" : "^[a-zA-Z]*=" > /dev/null
+	then
+	    continue
+	fi
+	_cmd=$(expr "${line}" : "^\([^=]*\)=.*")
+	_args=$(expr "${line}" : "^[^=]*=\(.*\)$")
+	case "${_cmd}" in
+	    password)	password="${_args}" ;;
+	    whenDone)	case "${_args}" in
+			    reboot | wait | halt)	whenDone=${_args} ;;
+			    *)	whenDone="" ;;
+			esac
+			;;
+	    minDiskSize)	_minSize=$(getsize "${_args}") ;;
+	    maxDiskSize)	_maxSize=$(getsize "${_args}") ;;
+	    diskCount)		_maxDisks=${_args} ;;
+	    upgrade)	_upgrade=$(yesno "${_args}") ;;
+	    disk|disks)	_diskList="${_args}" ;;
+	    mirror)	case "${_args}" in
+			    [fF][oO][rR][cC][eE])	_mirror=true ; _forceMirror=true ;;
+			    *)	_mirror=$(yesno "${_args}") ;;
+			esac
+			;;
+	esac
+    done < ${_conf}
+    # Okay, done reading the config file
+    # Now to go through and handle the settings.
+    # Order is important here.
+    # But the first thing we want to do is determine our
+    # boot disk, so we can exclude it later.
+    # For the install, the mount situation is complex,
+    # but we want to look for a label of "INSTALL" and find
+    # out the device for that.
+    _boot=$(glabel status | awk ' /INSTALL/ { print $3;}')
+    if [ -n "${_upgrade}" ]; then
+	# Option to do an upgrade
+	_output="-U ${_upgrade}"
+    fi
+    if [ -n "${password}" ]; then
+	# Set the root password
+	_output="${_output} -P ${password}"
+    fi
+    if [ -n "${whenDone}" ]; then
+	# What to do when finished installing
+	_output="${_output} -X ${whenDone}"
+    fi
+    if [ -z "${_diskList}" ]; then
+	# No disks specified in the config file
+	# So just get the list from the kernel.
+	# We'll be filtering it below
+	_diskList=$(sysctl -n kern.disks)
+    fi
+    for _disk in ${_diskList}
+    do
+	if [ "${_disk}" = "${_boot}" ]; then
+	    continue
+	fi
+	_diskSize=$(diskinfo ${_disk} | awk ' { print $3; }')
+	if [ -n "${_minSize}" ] && [ "${_diskSize}" -lt "${_minSize}" ]; then
+	    continue
+	fi
+	if [ -n "${_maxSize}" ] && [ "${_diskSize}" -gt "${_maxSize}" ]; then
+	    continue
+	fi
+	_output="${_output} ${_disk}"
+	_diskCount=$(expr ${_diskCount} + 1)
+	if ! ${_mirror}; then
+	    break
+	fi
+	if [ -n "${_maxDisks}" ] && [ "${_diskCount}" -eq "${_maxDisks}" ]; then
+	    break;
+	fi
+    done
+    # Now we should have some disks.
+    if [ ${_diskCount} -eq 0 ]; then
+	echo "No disks available that match the criteria" 1>&2
+	return 1
+    fi
+    if ${_forceMirror} && [ ${_diskCount} -eq 1 ]; then
+	echo "Only one disk found, but mirror required for install" 1>&2
+	return 1
+    fi
+    echo ${_output}
+    return 0
+}
+
+if [ -f /etc/install.conf ]; then
+    CONFIG_OUTPUT=$(parse_config)
+    if [ $? -ne 0 ]; then
+	read -p "Config file parsing failed to find specified media " foo
+	echo "Dropping into a shell"
+	/bin/sh
+	exit 1
+    elif [ -n "${CONFIG_OUTPUT}" ]; then
+	set -- ${CONFIG_OUTPUT}
+	menu_install "$@"
+	menu_reboot
+    fi
 fi
 
 main "$@"
