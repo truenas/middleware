@@ -994,12 +994,6 @@ class SNMP(Model):
                     "person responsible for this system: "
                     "'admin@email.address'."),
     )
-    snmp_community = models.CharField(
-        max_length=120,
-        default='public',
-        verbose_name=_("Community"),
-        help_text=_("In most cases, 'public' is used here."),
-    )
     # FIXME: Implement trap
     snmp_traps = models.BooleanField(
         verbose_name=_("Send SNMP Traps"),
@@ -1010,15 +1004,47 @@ class SNMP(Model):
         verbose_name=_('SNMP v3 Support'),
         default=False,
     )
+    snmp_community = models.CharField(
+        max_length=120,
+        default='public',
+        verbose_name=_("Community"),
+        help_text=_("In most cases, 'public' is used here."),
+        blank=True,
+    )
     snmp_v3_username = models.CharField(
         blank=True,
         max_length=20,
         verbose_name=_('Username'),
     )
+    snmp_v3_authtype = models.CharField(
+        choices=(
+            ('MD5', _('MD5')),
+            ('SHA', _('SHA')),
+        ),
+        default='SHA',
+        max_length=3,
+        verbose_name=_('Authentication Type'),
+    )
     snmp_v3_password = models.CharField(
         blank=True,
         max_length=50,
         verbose_name=_('Password'),
+    )
+    snmp_v3_privproto = models.CharField(
+        blank=True,
+        choices=(
+            ('AES', _('AES')),
+            ('DES', _('DES')),
+        ),
+        max_length=3,
+        null=True,
+        verbose_name=_('Privacy Protocol'),
+    )
+    snmp_v3_privpassphrase = models.CharField(
+        blank=True,
+        max_length=100,
+        null=True,
+        verbose_name=_('Privacy Passphrase'),
     )
     snmp_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
