@@ -707,14 +707,14 @@ class SNMPForm(ModelForm):
     snmp_v3_password2 = forms.CharField(
         max_length=40,
         label=_("Confirm Password"),
-        widget=forms.widgets.PasswordInput(),
+        widget=forms.widgets.PasswordInput(render_value=True),
         required=False,
     )
 
     snmp_v3_privpassphrase2 = forms.CharField(
         max_length=40,
         label=_("Confirm Privacy Passphrase"),
-        widget=forms.widgets.PasswordInput(),
+        widget=forms.widgets.PasswordInput(render_value=True),
         required=False,
     )
 
@@ -722,9 +722,9 @@ class SNMPForm(ModelForm):
         fields = '__all__'
         model = models.SNMP
         widgets = {
-            'snmp_v3_password': forms.widgets.PasswordInput(render_value=False),
+            'snmp_v3_password': forms.widgets.PasswordInput(render_value=True),
             'snmp_v3_privpassphrase': forms.widgets.PasswordInput(
-                render_value=False
+                render_value=True
             ),
         }
 
@@ -755,6 +755,12 @@ class SNMPForm(ModelForm):
             self.fields['snmp_v3_privpassphrase'].widget.attrs['disabled'] = (
                 'disabled'
             )
+            self.fields['snmp_v3_privpassphrase2'].widget.attrs['disabled'] = (
+                'disabled'
+            )
+        if self.instance.id:
+            self.fields['snmp_v3_password2'].initial = self.instance.snmp_v3_password
+            self.fields['snmp_v3_privpassphrase2'].initial = self.instance.snmp_v3_privpassphrase
 
     def clean_snmp_contact(self):
         contact = self.cleaned_data['snmp_contact']
@@ -783,7 +789,10 @@ class SNMPForm(ModelForm):
         return community
 
     def clean_snmp_v3_password(self):
+        authtype = self.cleaned_data.get("snmp_v3_authtype")
         password = self.cleaned_data.get("snmp_v3_password")
+        if authtype and not password:
+            raise forms.ValidationError(_('This field is required.'))
         if password and len(password) < 8:
             raise forms.ValidationError(_(
                 'Password must contain at least 8 characters'
@@ -802,7 +811,10 @@ class SNMPForm(ModelForm):
         return password2
 
     def clean_snmp_v3_privpassphrase(self):
+        authtype = self.cleaned_data.get("snmp_v3_privproto")
         passphrase = self.cleaned_data.get("snmp_v3_privpassphrase")
+        if authtype and not passphrase:
+            raise forms.ValidationError(_('This field is required.'))
         if passphrase and len(passphrase) < 8:
             raise forms.ValidationError(_(
                 'Passphrase must contain at least 8 characters'
@@ -820,16 +832,6 @@ class SNMPForm(ModelForm):
             )
         return passphrase2
 
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("snmp_v3_password"):
-            cdata['snmp_v3_password'] = self.instance.snmp_v3_password
-        if not cdata.get("snmp_v3_privpassphrase"):
-            cdata['snmp_v3_privpassphrase'] = (
-                self.instance.snmp_v3_privpassphrase
-            )
-        return cdata
-
     def save(self):
         super(SNMPForm, self).save()
         started = notifier().restart("snmp")
@@ -842,7 +844,7 @@ class SNMPForm(ModelForm):
                 "snmp", _("The SNMP service failed to reload.")
             )
 SNMPForm.base_fields.keyOrder.remove('snmp_v3_password2')
-SNMPForm.base_fields.keyOrder.insert(6, 'snmp_v3_password2')
+SNMPForm.base_fields.keyOrder.insert(7, 'snmp_v3_password2')
 SNMPForm.base_fields.keyOrder.remove('snmp_v3_privpassphrase2')
 SNMPForm.base_fields.keyOrder.insert(10, 'snmp_v3_privpassphrase2')
 
