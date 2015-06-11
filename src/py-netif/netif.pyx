@@ -663,7 +663,7 @@ cdef class RoutingPacket(object):
             defs.if_indextoname(sdl.sdl_index, ifname)
             result.ifname = ifname
 
-        result.address = ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen+1:sdl.sdl_nlen+sdl.sdl_alen+1]])
+        result.address = ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen:sdl.sdl_nlen+sdl.sdl_alen]])
         return result
 
     cdef _parse_sockaddrs(self, int start_offset, int mask):
@@ -1236,7 +1236,7 @@ def list_interfaces(iname=None):
                 nic.type = InterfaceType(sdl.sdl_type)
                 addr.address = LinkAddress(
                     sdl.sdl_data[:sdl.sdl_nlen],
-                    ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen+1:sdl.sdl_nlen+sdl.sdl_alen+1]]))
+                    ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen:sdl.sdl_nlen+sdl.sdl_alen]]))
 
         nic.addresses.append(addr)
 
