@@ -1017,6 +1017,7 @@ class SNMP(Model):
         verbose_name=_('Username'),
     )
     snmp_v3_authtype = models.CharField(
+        blank=True,
         choices=(
             ('MD5', _('MD5')),
             ('SHA', _('SHA')),
