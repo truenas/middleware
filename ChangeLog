@@ -1,0 +1,44 @@
+#5158	Non-optimal default CIFS Service settings
+#6764   Performance Test - iozone failes
+#6971   Make Certificate Admin Datagrid View more Robust
+#8309   Use # delimiter for freedns.afraid.org hashes
+#9160   Include MFIP driver in FreeNAS
+#9229   Feature for LDAP authentication via SSH public keys
+#9353   Allow freenas-boot to be used as system dataset
+#9478   Grey out username field if SNMPv3 is not checked
+#9602   volumes that are encrypted show up in system dataset dropdown
+#9721   Fix rare panic on iSCSI connection start/close.
+#9737   ix-smartd Areca ARC-1880 fails
+#9745   Reload iSCSI when deleting a target.
+#9760	Fix backtrace if enclosure slot has passX device, but not daX.
+#9769	Stop System General Tab from tracingback on a bad Certificate
+#9771   Fixes an issue where a second upgrade to the same version may have failed.
+#9784   Make NUT UPS shutoff optional
+#9797   Fixes an issue where cloning a renamed boot environment would fail.
+#9815	iSCSI LUN IDs behavior inconsistent
+#9822   AFP should not be the default category for bugs submitted in FreeNAS
+#9837	HAReplication still shows as tab in Storage
+#9845	Fix running hactl enable on a single node to not traceback.
+#9860	Add alert to warn about access denied and version mismatch in HA
+#9862   Unable to create cron task running as root
+#9867   Allows .local hosts to be resolved.
+#9869   netperf netserver "unknown test number 97"
+#9913   Bootup error:  False Bad Number
+#9915   Use the already-existing port for nss-mdns
+#9931   Missing iSCSI information buttons
+#9932	System: Advanced: Missing info buttons
+#9933	Add NTP Server: Missing info button for Force
+#9937   Added information button for 'Force size' checkbox.
+#9948   Noise from a shell script while booting
+#9964   Unable to use root as maproot user
+#9983   Update Samba to 4.1.18
+#10013  Critical NetBIOS Workgroup Name Error in GUI for CIFS
+#10051	Speed up boot by eliminating an extraneous enclosure sync on an HA unit.
+#10059	Fix Task tabs appearance for some languages
+#10072	Errors in /usr/local/bin/adtool and /usr/local/bin/ldaptool
+#10073	Errors in /usr/local/bin/manifest_util
+#10076	Double quotes are not allowed in iSCSI target alias
+#10089	Fixes an issue where an upgrade might leave symbolic links around, resulting in a later verification failure.
+#10090	Use kerberos servers found at run-time (if not hard set in kerberos UI)
+#10138	Security fixes in FreeBSD-EN-15:06.file
+#10144	errors in /usr/local/www/freenasUI/tools/cachetool.py
