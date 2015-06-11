@@ -88,7 +88,7 @@ class BaseSharesNamespace(RpcBasedLoadMixin, TaskBasedSaveMixin, EntityNamespace
             descr='Target',
             name='target',
             get='target',
-            set=None,
+            set='target',
             list=True
         )
 
