@@ -1,1 +1,12 @@
-#9771	Bug	Important	Fixes an issue where a second upgrade to the same version may have failed.
+#5158	Bug	Important	Non-optimal default CIFS Service settings
+#9815	Bug	Expected	iSCSI LUN IDs behavior inconsistent
+#9932	Bug	Nice to have	System: Advanced: Missing info buttons
+#9933	Bug	Nice to have	Add NTP Server: Missing info button for Force
+#10059	Bug	No priority	Fix Task tabs appearance for some languages
+#10072	Bug	No priority	Errors in /usr/local/bin/adtool and /usr/local/bin/ldaptool
+#10073	Bug	Important	Errors in /usr/local/bin/manifest_util
+#10076	Bug	Important	Double quotes are not allowed in iSCSI target alias
+#10089	Bug	Important	Fixes an issue where an upgrade might leave symbolic links around, resulting in a later verification failure.
+#10090	Bug	No priority	Use kerberos servers found at run-time (if not hard set in kerberos UI)
+#10138	Bug	No priority	Security fixes in FreeBSD-EN-15:06.file
+#10144	Bug	No priority	errors in /usr/local/www/freenasUI/tools/cachetool.py
