@@ -14,7 +14,7 @@ snmp_config=/etc/local/snmpd.conf
 generate_snmpconf()
 {
 	local IFS="|"
-	local f="snmp_location snmp_contact snmp_community snmp_v3 snmp_v3_username snmp_v3_password"
+	local f="snmp_location snmp_contact snmp_community snmp_v3 snmp_v3_username snmp_v3_authtype snmp_v3_password snmp_v3_privproto snmp_v3_privpassphrase"
 	eval local $f
 	local sf=$(var_to_sf $f)
 
@@ -33,17 +33,23 @@ sysLocation ${snmp_location:-unknown}
 sysContact ${snmp_contact:-unknown@localhost}
 sysDescr Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
 
-rocommunity ${snmp_community} default
 pass .1.3.6.1.4.1.25359.1 /usr/local/bin/freenas-snmp/zfs-snmp
 EOF
 
 		if [ ${snmp_v3} -eq 1 ]; then
 
 			if [ "${snmp_v3_username}" != "" -a "${snmp_v3_password}" != "" ]; then
-				echo "createUser ${snmp_v3_username}	SHA \"${snmp_v3_password}\"" >> ${snmp_config}
+				echo -n "createUser ${snmp_v3_username}	${snmp_v3_authtype} \"${snmp_v3_password}\"" >> ${snmp_config}
+				if [ -n "${snmp_v3_privproto}" -a -n "${snmp_v3_privpassphrase}" ]; then
+					echo " ${snmp_v3_privproto} \"${snmp_v3_privpassphrase}\"" >> ${snmp_config}
+				else
+					echo >> ${snmp_config}
+				fi
 				echo "rwuser ${snmp_v3_username}" >> ${snmp_config}
 			fi
 
+		else
+			echo "rocommunity ${snmp_community} default" >> ${snmp_config}
 		fi
 
 	done
