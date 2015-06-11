@@ -714,18 +714,30 @@ class SNMPForm(ModelForm):
         required=False,
     )
 
+    snmp_v3_privpassphrase2 = forms.CharField(
+        max_length=40,
+        label=_("Confirm Privacy Passphrase"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
+
     class Meta:
         fields = '__all__'
         model = models.SNMP
         widgets = {
             'snmp_v3_password': forms.widgets.PasswordInput(render_value=False),
+            'snmp_v3_privpassphrase': forms.widgets.PasswordInput(
+                render_value=False
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super(SNMPForm, self).__init__(*args, **kwargs)
         self.fields['snmp_v3'].widget.attrs['onChange'] = (
             'toggleGeneric("id_snmp_v3", ["id_snmp_v3_password", '
-            '"id_snmp_v3_password2", "id_snmp_v3_username"], true);'
+            '"id_snmp_v3_password2", "id_snmp_v3_username", '
+            '"id_snmp_v3_authtype", "id_snmp_v3_privproto", '
+            '"id_snmp_v3_privpassphrase", "id_snmp_v3_privpassphrase2"],true);'
         )
         if self.instance.id and not self.instance.snmp_v3:
             self.fields['snmp_v3_password'].widget.attrs['disabled'] = (
@@ -734,7 +746,16 @@ class SNMPForm(ModelForm):
             self.fields['snmp_v3_password2'].widget.attrs['disabled'] = (
                 'disabled'
             )
+            self.fields['snmp_v3_authtype'].widget.attrs['disabled'] = (
+                'disabled'
+            )
             self.fields['snmp_v3_username'].widget.attrs['disabled'] = (
+                'disabled'
+            )
+            self.fields['snmp_v3_privproto'].widget.attrs['disabled'] = (
+                'disabled'
+            )
+            self.fields['snmp_v3_privpassphrase'].widget.attrs['disabled'] = (
                 'disabled'
             )
 
@@ -777,10 +798,33 @@ class SNMPForm(ModelForm):
             )
         return password2
 
+    def clean_snmp_v3_privpassphrase(self):
+        passphrase = self.cleaned_data.get("snmp_v3_privpassphrase")
+        if passphrase and len(passphrase) < 8:
+            raise forms.ValidationError(_(
+                'Passphrase must contain at least 8 characters'
+            ))
+        return passphrase
+
+    def clean_snmp_v3_privpassphrase2(self):
+        passphrase1 = self.cleaned_data.get("snmp_v3_privpassphrase")
+        passphrase2 = self.cleaned_data.get("snmp_v3_privpassphrase2")
+        if not passphrase1:
+            return passphrase2
+        if passphrase1 != passphrase2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return passphrase2
+
     def clean(self):
         cdata = self.cleaned_data
         if not cdata.get("snmp_v3_password"):
             cdata['snmp_v3_password'] = self.instance.snmp_v3_password
+        if not cdata.get("snmp_v3_privpassphrase"):
+            cdata['snmp_v3_privpassphrase'] = (
+                self.instance.snmp_v3_privpassphrase
+            )
         return cdata
 
     def save(self):
@@ -796,6 +840,8 @@ class SNMPForm(ModelForm):
             )
 SNMPForm.base_fields.keyOrder.remove('snmp_v3_password2')
 SNMPForm.base_fields.keyOrder.insert(6, 'snmp_v3_password2')
+SNMPForm.base_fields.keyOrder.remove('snmp_v3_privpassphrase2')
+SNMPForm.base_fields.keyOrder.insert(10, 'snmp_v3_privpassphrase2')
 
 
 class UPSForm(ModelForm):
