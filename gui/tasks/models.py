@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import ctypes
 import logging
 import os
 import pwd
@@ -188,9 +189,13 @@ class CronJob(Model):
                 except OSError:
                     pass
             try:
-                passwd = pwd.getpwnam(self.cron_user.encode('utf8'))
+                libc = ctypes.cdll.LoadLibrary("libc.so.7")
+                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
+                os.setsid()
                 os.umask(0)
                 os.setgid(passwd.pw_gid)
+                libc.setlogin(self.rsync_user.encode('utf8'))
+                libc.initgroups(self.rsync_user.encode('utf8'), passwd.pw_gid)
                 os.setuid(passwd.pw_uid)
                 try:
                     os.chdir(passwd.pw_dir)
@@ -571,9 +576,13 @@ class Rsync(Model):
                 except OSError:
                     pass
             try:
+                libc = ctypes.cdll.LoadLibrary("libc.so.7")
                 passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
+                os.setsid()
                 os.umask(0)
                 os.setgid(passwd.pw_gid)
+                libc.setlogin(self.rsync_user.encode('utf8'))
+                libc.initgroups(self.rsync_user.encode('utf8'), passwd.pw_gid)
                 os.setuid(passwd.pw_uid)
                 try:
                     os.chdir(passwd.pw_dir)
