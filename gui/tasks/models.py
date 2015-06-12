@@ -189,14 +189,31 @@ class CronJob(Model):
                 except OSError:
                     pass
             try:
-                libc = ctypes.cdll.LoadLibrary("libc.so.7")
-                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
                 os.setsid()
-                os.umask(0)
+
+                libc = ctypes.cdll.LoadLibrary("libc.so.7")
+                libutil = ctypes.cdll.LoadLibrary("libutil.so.9")
+                libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
+                pwnam = libc.getpwnam(self.rsync_user.encode('utf8'))
+                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
+
+                libutil.login_getpwclass.restype = ctypes.POINTER(
+                    ctypes.c_void_p
+                )
+                lc = libutil.login_getpwclass(pwnam)
+                if lc and lc[0]:
+                    libutil.setusercontext(
+                        lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)
+                    )
+
                 os.setgid(passwd.pw_gid)
                 libc.setlogin(self.rsync_user.encode('utf8'))
                 libc.initgroups(self.rsync_user.encode('utf8'), passwd.pw_gid)
                 os.setuid(passwd.pw_uid)
+
+                if lc and lc[0]:
+                    libutil.login_close(lc)
+
                 try:
                     os.chdir(passwd.pw_dir)
                 except:
@@ -576,14 +593,31 @@ class Rsync(Model):
                 except OSError:
                     pass
             try:
-                libc = ctypes.cdll.LoadLibrary("libc.so.7")
-                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
                 os.setsid()
-                os.umask(0)
+
+                libc = ctypes.cdll.LoadLibrary("libc.so.7")
+                libutil = ctypes.cdll.LoadLibrary("libutil.so.9")
+                libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
+                pwnam = libc.getpwnam(self.rsync_user.encode('utf8'))
+                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
+
+                libutil.login_getpwclass.restype = ctypes.POINTER(
+                    ctypes.c_void_p
+                )
+                lc = libutil.login_getpwclass(pwnam)
+                if lc and lc[0]:
+                    libutil.setusercontext(
+                        lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)
+                    )
+
                 os.setgid(passwd.pw_gid)
                 libc.setlogin(self.rsync_user.encode('utf8'))
                 libc.initgroups(self.rsync_user.encode('utf8'), passwd.pw_gid)
                 os.setuid(passwd.pw_uid)
+
+                if lc and lc[0]:
+                    libutil.login_close(lc)
+
                 try:
                     os.chdir(passwd.pw_dir)
                 except:
