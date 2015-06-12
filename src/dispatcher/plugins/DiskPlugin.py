@@ -29,15 +29,18 @@ import os
 import re
 import errno
 import gevent
+import gevent.monkey
 from collections import defaultdict
 from cache import CacheStore
 from lib import geom
-from pySMART import Device
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, accepts, returns, description
 from dispatcher.rpc import SchemaHelper as h
 
+# Note the following monkey patch is required for pySMART to work correctly
+gevent.monkey.patch_subprocess()
+from pySMART import Device
 
 diskinfo_cache = CacheStore()
 camcontrol_cache = CacheStore()
