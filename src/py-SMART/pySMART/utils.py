@@ -59,7 +59,8 @@ smartctl_type = {
     'sas': 'scsi',
     'sat': 'sat',
     'sata': 'ata',
-    'scsi': 'scsi'
+    'scsi': 'scsi',
+    'atacam': 'atacam'
 }
 """
 **(dict of str):** Contains actual interface types (ie: sas, csmi) as keys and
