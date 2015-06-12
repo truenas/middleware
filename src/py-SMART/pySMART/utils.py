@@ -122,13 +122,23 @@ def _warning_on_one_line(message, category, filename, lineno, file=None,
     return '%s:%s: %s: %s\n' % (filename, lineno, category.__name__, message)
 warnings.formatwarning = _warning_on_one_line
 
+
+def path_append():
+    """Appneds the path to smartctl (OS Specific)"""
+    if OS == 'FreeBSD':
+        os.environ["PATH"] += '/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:' +\
+                              '/usr/local/sbin:/usr/local/bin:/root/bin'
+
+
+path_append()
 # Verify smartctl is on the system path and meets the minimum required version
 cmd = Popen('smartctl --version', shell=True, stdout=PIPE, stderr=PIPE)
 _stdout, _stderr = cmd.communicate()
 if _stdout == '':
     raise Exception(
         "Required package 'smartmontools' is not installed, or 'smartctl'\n"
-        "component is not on the system path. Please install and try again.")
+        "component is not on the system path. Please install and try again."
+        "The current env path is: {0}".format(os.environ["PATH"]))
 else:
     for line in _stdout.split('\n'):
         if 'release' in line:
@@ -147,4 +157,5 @@ if not admin():
         "and may not detect all device types, or may parse device information "
         "incorrectly, if run without these permissions.")
 
-__all__ = ['admin', 'OS', 'pd_to_sd', 'rescan_device_busses', 'smartctl_type']
+__all__ = ['admin', 'OS', 'pd_to_sd', 'rescan_device_busses', 'smartctl_type',
+           'path_append']
