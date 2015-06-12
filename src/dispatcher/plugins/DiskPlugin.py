@@ -32,6 +32,7 @@ import gevent
 from collections import defaultdict
 from cache import CacheStore
 from lib import geom
+from pySMART import Device
 from lib.system import system, SubprocessException
 from task import Provider, Task, TaskStatus, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, accepts, returns, description
@@ -326,36 +327,22 @@ def info_from_device(devname):
                 "3ware,%d" % (twcli.get(info["channel"], -1), )
             ]
 
-    output, err = system("/usr/local/sbin/smartctl", "-a", *args)
-    search = re.finditer(r'Serial Number:\s+(?P<serial>.+)|' +
-                         r'Rotation Rate:\s+(?P<rate>.+)|' +
-                         r'SMART support is:\s+(?P<smartenabled>.+)|' +
-                         r'SMART overall-health self-assessment test result:\s+(?P<smartstatus>.+)|'
-                         + r'Model Family:\s+(?P<model>.+)|',
-                         output, re.I)
-    disk_info = {'serial': '', 'rate': '', 'smartenabled': '',
-                 'smartstatus': '', 'model': ''}
-    if search:
-        for x in search:
-            if x.group("serial"):
-                disk_info['serial'] = x.group("serial")
-                continue
-            if x.group("rate"):
-                disk_info['rate'] = x.group("rate")
-                continue
-            if x.group("smartenabled"):
-                disk_info['smartenabled'] = x.group("smartenabled")
-                continue
-            if x.group("smartstatus"):
-                disk_info['smartstatus'] = x.group("smartstatus")
-                continue
-            if x.group("model"):
-                disk_info['model'] = x.group("model")
-                continue
-        # serial = search.group("serial")
-        return disk_info
-
-    return None
+    disk_info = {'serial': '', 'max-rotation': None, 'smart-enabled': False,
+                 'smart-capable': False, 'smart-status': '', 'model': '',
+                 'is-ssd': False, 'interface': ''}
+    # TODO, fix this to deal with above generated args for interface
+    dev_smart_info = Device(os.path.join('/dev/'), devname)
+    disk_info['is-ssd'] = dev_smart_info.is_ssd
+    disk_info['smart-capable'] = dev_smart_info.smart_capable
+    if dev_smart_info.smart_capable:
+        disk_info['serial'] = dev_smart_info.serial
+        disk_info['model'] = dev_smart_info.model
+        disk_info['max-rotation'] = dev_smart_info.rotation_rate
+        disk_info['interface'] = dev_smart_info.interface
+        disk_info['smart-enabled'] = dev_smart_info.smart_enabled
+        if dev_smart_info.smart_enabled:
+            disk_info['smart-status'] = dev_smart_info.assessment
+    return disk_info
 
 
 def generate_disk_cache(dispatcher, path):
@@ -395,10 +382,6 @@ def generate_disk_cache(dispatcher, path):
 
     disk_info = info_from_device(path)
     serial = disk_info['serial']
-    rate = disk_info['rate']
-    smartenabled = disk_info['smartenabled']
-    smartstatus = disk_info['smartenabled']
-    model = disk_info['model']
     identifier = device_to_identifier(confxml, name, serial)
     data_partitions = filter(lambda x: x['type'] == 'freebsd-zfs', partitions)
     data_uuid = data_partitions[0].get('uuid') if len(data_partitions) > 0 else None
@@ -409,10 +392,13 @@ def generate_disk_cache(dispatcher, path):
         'description': provider.find("config/descr").text,
         'identifier': identifier,
         'serial': serial,
-        'max-rotation': rate,
-        'smart-enabled': smartenabled,
-        'smart-status': smartstatus,
-        'model': model,
+        'max-rotation': disk_info['max-rotation'],
+        'smart-capable': disk_info['smart-capable'],
+        'smart-enabled': disk_info['smart-enabled'],
+        'smart-status': disk_info['smart-status'],
+        'model': disk_info['model'],
+        'interface': disk_info['interface'],
+        'is-ssd': disk_info['is-ssd'],
         'id': identifier,
         'schema': gpart.find("config/scheme").text if gpart else None,
         'controller': camcontrol_cache.get(name),
@@ -505,8 +491,11 @@ def _init(dispatcher, plugin):
             'name': {'type': 'string'},
             'description': {'type': 'string'},
             'serial': {'type': 'string'},
-            'max-rotation': {'type': 'string'},
-            'smart-enabled': {'type': 'string'},
+            'max-rotation': {'type': 'integer'},
+            'smart-capable': {'type': 'boolean'},
+            'smart-enabled': {'type': 'boolean'},
+            'interface': {'type': 'string'},
+            'is-ssd': {'type': 'boolean'},
             'smart-status': {'type': 'string'},
             'model': {'type': 'string'},
             'mediasize': {'type': 'integer'},
