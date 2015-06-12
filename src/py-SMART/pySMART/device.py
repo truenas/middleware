@@ -76,7 +76,12 @@ class Device(object):
         """**(str):** Device's user capacity."""
         self.firmware = None
         """**(str):** Device's firmware version."""
-        self.supports_smart = False
+        self.smart_capable = False
+        """
+        **(bool):** True if the device has SMART Support Available.
+        False otherwise. This is useful for VMs amongst other things.
+        """
+        self.smart_enabled = False
         """
         **(bool):** True if the device supports SMART (or SCSI equivalent) and
         has the feature set enabled. False otherwise.
@@ -94,6 +99,11 @@ class Device(object):
         """
         **(bool):** True if this device is a Solid State Drive.
         False otherwise.
+        """
+        self.rotation_rate = None
+        """
+        **(int):** The Roatation Rate of the Drive if it is not a SSD.
+        The Metric is RPM.
         """
         self.attributes = [None] * 256
         """
@@ -497,14 +507,41 @@ class Device(object):
                 self.capacity = (
                     line.replace(']', '[').split('[')[1].lstrip().rstrip())
             if 'SMART support' in line:
-                self.supports_smart = 'Enabled' in line
+                # self.smart_capable = 'Available' in line
+                # self.smart_enabled = 'Enabled' in line
+                # Since this line repeats twice the above method is flawed
+                # Lets try the following instead, it is a bit redundant but
+                # more robust.
+                if (
+                    'Unavailable' in line or
+                    'device lacks SMART capability' in line
+                   ):
+                    self.smart_capable = False
+                    self.smart_enabled = False
+                elif 'Enabled' in line:
+                    self.smart_enabled = True
+                elif 'Disabled' in line:
+                    self.smart_enabled = False
+                elif (
+                      'Available' in line or
+                      'device has SMART capability' in line
+                     ):
+                    self.smart_capable = True
             if 'does not support SMART' in line:
-                self.supports_smart = False
+                self.smart_capable = False
+                self.smart_enabled = False
             if 'Rotation Rate' in line:
                 if 'Solid State Device' in line:
                     self.is_ssd = True
                 elif 'rpm' in line:
                     self.is_ssd = False
+                    try:
+                        self.rotation_rate = int(
+                            line.split(':')[1].lstrip().rstrip()[:-4])
+                    except ValueError:
+                        # Cannot parse the RPM? Assigning None instead
+                        self.rotation_rate = None
+
             if 'SMART overall-health self-assessment' in line:  # ATA devices
                 if line.split(':')[1].strip() == 'PASSED':
                     self.assessment = 'PASS'
