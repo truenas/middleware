@@ -334,7 +334,7 @@ def info_from_device(devname):
                  'smart-capable': False, 'smart-status': '', 'model': '',
                  'is-ssd': False, 'interface': ''}
     # TODO, fix this to deal with above generated args for interface
-    dev_smart_info = Device(os.path.join('/dev/'), devname)
+    dev_smart_info = Device(os.path.join('/dev/', devname))
     disk_info['is-ssd'] = dev_smart_info.is_ssd
     disk_info['smart-capable'] = dev_smart_info.smart_capable
     if dev_smart_info.smart_capable:
