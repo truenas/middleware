@@ -1366,6 +1366,11 @@ class RsyncResourceMixin(NestedMixin):
             bundle.data['_run_url'] = reverse('rsync_run', kwargs={
                 'oid': bundle.obj.id
             })
+            if bundle.obj.rsync_mode == 'module':
+                bundle.data['rsync_remoteport'] = '-'
+                bundle.data['rsync_remotepath'] = '-'
+            else:
+                bundle.data['rsync_remotemodule'] = '-'
         return bundle
 
 
