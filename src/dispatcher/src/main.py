@@ -120,6 +120,7 @@ class Plugin(object):
             self.module._init(self.dispatcher, self)
             self.state = self.LOADED
         except Exception, err:
+            self.dispatcher.logger.exception('Plugin %s exception', self.filename)
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
 
     def register_event_handler(self, name, handler):
@@ -375,7 +376,7 @@ class Dispatcher(object):
             try:
                 i.load(self)
             except RuntimeError, err:
-                self.logger.warning("Error initializing plugin {0}: {1}".format(i.filename, err.message))
+                self.logger.exception("Error initializing plugin %s: %s", i.filename, err.message)
 
     def reload_plugins(self):
         # Reload existing modules
@@ -476,7 +477,10 @@ class Dispatcher(object):
 
         if name in self.event_handlers:
             for h in self.event_handlers[name]:
-                h(args)
+                try:
+                    h(args)
+                except:
+                    self.logger.exception('Event handler for event %s failed', name)
 
         if 'nolog' in args and args['nolog']:
             return
