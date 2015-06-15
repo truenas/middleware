@@ -5185,6 +5185,13 @@ class notifier:
             )
 
         rv |= self._system_nolog(
+            '/usr/local/bin/ipmitool lan set %d vlan id %s' % (
+                channel,
+                data['vlanid'] if data.get('vlanid') else 'off',
+            )
+        )
+
+        rv |= self._system_nolog(
             '/usr/local/bin/ipmitool lan set %d access on' % channel
         )
         rv |= self._system_nolog(

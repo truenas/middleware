@@ -83,6 +83,9 @@ def ipmi(request):
                 'ipv4address': ipmi.get("IpAddress"),
                 'ipv4gw': ipmi.get("DefaultGatewayIp"),
                 'ipv4netmaskbit': str(cidr),
+                'vlanid': ipmi.get("8021qVlanId")
+                if ipmi.get("8021qVlanId") != 'Disabled'
+                else '',
             }
         except Exception:
             initial = {}
