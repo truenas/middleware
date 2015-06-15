@@ -337,6 +337,7 @@ class VolumesNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):
         super(VolumesNamespace, self).__init__(name, context)
 
         self.primary_key_name = 'name'
+        self.save_key_name = 'name'
         self.create_task = 'volume.create'
         self.update_task = 'volume.update'
         self.delete_task = 'volume.destroy'
