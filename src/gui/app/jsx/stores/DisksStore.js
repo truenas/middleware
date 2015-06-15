@@ -9,6 +9,7 @@
 import _ from "lodash";
 
 import DL from "../common/DebugLogger";
+import ByteCalc from "../common/ByteCalc";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
@@ -20,6 +21,7 @@ const DISK_SCHEMA =
   // Available from disks.query
   { serial       : { type: "string" }
   , byteSize     : { type: "number" }
+  , humanSize    : { type: "string" }
   , dateUpdated  : { type: "number" }
   , dateCreated  : { type: "number" }
   , online       : { type: "boolean" }
@@ -55,7 +57,7 @@ const KEY_TRANSLATION =
 
 const DISK_LABELS =
   { serial       : "Serial"
-  , byteSize     : "Total Capacity"
+  , humanSize    : "Capacity"
   , online       : "Disk Online"
   , path         : "Path"
   , sectorSize   : "Sector Size"
@@ -94,6 +96,18 @@ class DisksStore extends FluxStore {
 
 const DISKS_STORE = new DisksStore();
 
+function getCalculatedDiskProps ( disk ) {
+  let calculatedProps = {};
+
+  if ( disk.hasOwnProperty( "mediasize" ) ) {
+    calculatedProps["humanSize"] = ByteCalc.humanize( disk["mediasize"] );
+    // FIXME: TEMPORARY WORKAROUND
+    calculatedProps["driveName"] = calculatedProps["humanSize"] + " Drive";
+  }
+
+  return calculatedProps;
+}
+
 function handlePayload ( payload ) {
   const ACTION = payload.action;
 
@@ -102,10 +116,15 @@ function handlePayload ( payload ) {
     case ActionTypes.RECEIVE_DISKS_OVERVIEW:
       let newDisks = {};
 
-      ACTION.disksOverview.forEach( disk =>
-                            newDisks[ disk[ this.KEY_UNIQUE ] ] =
-                              FluxStore.rekeyForClient( disk, KEY_TRANSLATION )
-                          )
+      ACTION.disksOverview.forEach(
+        function iterateDisks ( disk ) {
+          newDisks[ disk[ this.KEY_UNIQUE ] ] =
+            _.merge( getCalculatedDiskProps( disk )
+                   , FluxStore.rekeyForClient( disk, KEY_TRANSLATION )
+                   );
+        }.bind( this )
+      );
+
       _.merge( disks, newDisks );
       DISKS_STORE.emitChange();
       break;
