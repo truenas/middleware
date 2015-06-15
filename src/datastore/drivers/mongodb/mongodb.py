@@ -31,6 +31,9 @@ import copy
 import uuid
 import dateutil.parser
 from pymongo import MongoClient
+import pymongo
+import pymongo.errors
+from datastore import DuplicateKeyException
 
 
 class MongodbDatastore(object):
@@ -226,7 +229,11 @@ class MongodbDatastore(object):
             obj['updated-at'] = t
             obj['created-at'] = t
 
-        self.db[collection].insert(obj)
+        try:
+            self.db[collection].insert(obj)
+        except pymongo.errors.DuplicateKeyError:
+            raise DuplicateKeyException('Document with given key already exists')
+
         return pkey
 
     def update(self, collection, pkey, obj, upsert=False, timestamp=True, config=False):
