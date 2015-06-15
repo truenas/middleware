@@ -301,6 +301,11 @@ class IPMIForm(Form):
         required=False,
         label=_("IPv4 Default Gateway"),
     )
+    vlanid = forms.IntegerField(
+        label=_("VLAN ID"),
+        required=False,
+        widget=forms.widgets.TextInput(),
+    )
 
     def __init__(self, *args, **kwargs):
         super(IPMIForm, self).__init__(*args, **kwargs)
