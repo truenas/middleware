@@ -165,6 +165,11 @@ LoadPlugin zfs_arc_v2
 <Plugin "zfs_arc">
 </Plugin>
 
+<Plugin "geom_stat">
+	Filter "^([a]?da|ciss|md|mfi|md|xbd|vtbd)[0123456789]+(p[0123456789]+)?(\.eli)?$"
+</Plugin>
+
+
 <Plugin "df">
 EOF
 

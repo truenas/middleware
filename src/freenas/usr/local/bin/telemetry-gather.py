@@ -11,6 +11,10 @@ import pprint
 import subprocess
 import os
 
+import traceback
+import struct
+import hashlib
+
 from time import gmtime, strftime
 from datetime import datetime
 from pyparsing import Word, alphas, Suppress, Combine, nums, string, Optional, Regex
@@ -72,6 +76,122 @@ class Parser(object):
             payload["pid"] = -1
         return payload
 
+
+
+def dmisha256_v1():
+    global data
+
+    keywords = [
+        'dmi-system-uuid',
+        'dmi-system-serial-number',
+        'dmi-baseboard-product-name',
+        'dmi-system-product-name',
+        'dmi-baseboard-serial-number',
+        'dmi-baseboard-manufacturer',
+        'dmi-baseboard-product-name',
+        'dmi-chassis-serial-number',
+        'dmi-processor-serial-number',
+        'dmi-memory-serial-number'
+    ]
+    hashStr = ''
+    s = struct.Struct('64s')
+    for kw in keywords:
+        if kw == 'dmi-memory-serial-number' and data[kw] == '__NOTSET__':
+            data[kw] = ''            
+        buffer = s.pack(str(data[kw]))
+        hashStr = hashStr + buffer
+    sha256 = hashlib.sha256(hashStr).hexdigest()
+    return sha256
+
+def parseDMILine(line):
+    global inBlock, whichBlock, data, skipTerms, goodBlocks, fieldsToCap
+    rePatField = re.compile('^.*: (.*)$')
+    
+    p = line.split()
+    try:
+        p[0]
+    except:
+        return
+    if inBlock:
+        if p[0] != "Handle":
+            for field in fieldsToCap[whichBlock].keys():
+                if p[0] == field:
+                    m = rePatField.match(line)
+                    dataLoc = fieldsToCap[whichBlock][field]
+                    if whichBlock == "Memory":
+                        if not m.group(1).rstrip("\r\n\x02 ").lstrip() == 'NO DIMM' and data[dataLoc] == '__NOTSET__':
+                            data[dataLoc] = m.group(1).rstrip("\r\n\x02 ").lstrip()
+                    else:
+                        if data[dataLoc] == '':
+                            data[dataLoc] = m.group(1).rstrip("\r\n\x02 ").lstrip()
+        else:
+            inBlock = 0
+    for t in skipTerms:
+        if p[0] == t:
+            return
+    for t in goodBlocks:
+        if p[0] == t:
+            inBlock = 1
+            whichBlock = t
+
+
+def parseDMI(dmioutput):
+    global inBlock, whichBlock, data, skipTerms, goodBlocks, fieldsToCap
+    OKS=0
+    ERRORS=0
+    skipTerms = [
+    '#',
+    'Handle',
+    'Table',        
+    ]    
+    goodBlocks = [
+    'System',
+    'Base',
+    'Chassis',
+    'Processor',
+    'Memory',
+    ]    
+    fieldsToCap = { }
+    fieldsToCap['System'] = { }
+    fieldsToCap['Base'] = { }
+    fieldsToCap['Chassis'] = { }
+    fieldsToCap['Processor'] = { }
+    fieldsToCap['Memory'] = { }
+    
+    fieldsToCap['System']['Product'] = 'dmi-system-product-name'
+    fieldsToCap['System']['UUID:'] = 'dmi-system-uuid'
+    fieldsToCap['System']['Serial'] = 'dmi-system-serial-number'
+    
+    fieldsToCap['Base']['Product'] = 'dmi-baseboard-product-name'
+    fieldsToCap['Base']['Serial'] = 'dmi-baseboard-serial-number'
+    fieldsToCap['Base']['Manufacturer:'] = 'dmi-baseboard-manufacturer'
+    
+    fieldsToCap['Chassis']['Serial'] = 'dmi-chassis-serial-number'
+    fieldsToCap['Processor']['Serial'] = 'dmi-processor-serial-number'
+    fieldsToCap['Memory']['Serial'] = 'dmi-memory-serial-number'
+    
+    inBlock = 0
+    whichBlock = ''
+
+    data = {}
+    data['dmi-system-uuid'] = ''
+    data['dmi-system-serial-number'] = ''
+    data['dmi-system-product-name'] = ''
+    data['dmi-baseboard-product-name'] = ''
+    data['dmi-baseboard-serial-number'] = ''
+    data['dmi-baseboard-manufacturer'] = ''
+    data['dmi-chassis-serial-number'] = ''
+    data['dmi-processor-serial-number'] = ''
+    data['dmi-memory-serial-number'] = '__NOTSET__'
+
+    for line in dmioutput.splitlines():
+        parseDMILine(line)
+    data['dmi-sha256'] = dmisha256_v1()
+    return data
+
+
+
+
 """ --------------------------------- """
 
 
@@ -100,8 +220,11 @@ def main():
         'dmidecode': ['/usr/local/sbin/dmidecode', ''],
         'kstat_zfs': [ '/sbin/sysctl', 'kstat.zfs' ],
         'uname': ['/usr/bin/uname', '-a'],
+        'ipmitoolsdr': ['/usr/local/bin/ipmitool', '-c' , 'sdr' ],
+        'ipmitoolsel': ['/usr/local/bin/ipmitool', '-c' , 'sel', 'elist' ],
         
     }
+
 
     filters = {
         'zfsd':
@@ -139,17 +262,35 @@ def main():
     parser = argparse.ArgumentParser(description='Gather and stage data for sending to ix Systems.')
 
     parser.add_argument('files', metavar='files', type=str, nargs='+', help='File to read, txt or gz, will auto-dectect')
+    parser.add_argument('--debug', action='store_true',  help="Debug/Verbose output")
 
     args = parser.parse_args()
     now = time.time()
 
 
     for cmdname in cmds_to_log:
+        if args.debug:
+            print "[DEBUG]: cmdname = " + cmdname
         try:
-            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname])
+            if args.debug:
+                print "[DEBUG]: running " + cmdname
+            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname], stderr=subprocess.STDOUT)
+            if cmdname == 'dmidecode':
+                if args.debug:
+                    print "[DEBUG]: running parseDMI " + cmdname
+                log['dmi'] = parseDMI(log['cmdout'][cmdname])
+                log['dmi']['dmi-sha256'] = dmisha256_v1()
+                if args.debug:
+                    print "[DEBUG]: writing dmisha " + cmdname
+                f = open("/tmp/dmisha.txt", "w")
+                f.write(log['dmi']['dmi-sha256'])
+                f.close()                
 #           log['cmdout'][cmdname] = ''
         except:
             log['cmdout'][cmdname] = 'Error Running Command'
+            if args.debug:
+                var = traceback.format_exc().splitlines()
+                print var
             continue
 
     for f in files_to_log:
