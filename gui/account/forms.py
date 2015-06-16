@@ -437,7 +437,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         ssh = re.sub(r'\n{2,}', '\n', ssh, re.M)
         old = ssh
         while True:
-            ssh = re.sub(r'(\S{10,})\n(\S{10,})', '\\1\\2', ssh, re.M)
+            ssh = re.sub(r'(\S{15,})\n(\S{15,})', '\\1\\2', ssh, re.M)
             if ssh == old:
                 break
             old = ssh
