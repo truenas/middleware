@@ -189,9 +189,9 @@ IPMI using the FreeNAS® GUI.
 
 **Figure 7.3a: IPMI Configuration**
 
-|ipmi.png|
+|ipmi1.png|
 
-.. |ipmi.png| image:: images/ipmi.png
+.. |ipmi1.png| image:: images/ipmi1.png
 
 **Table 7.3a: IPMI Options**
 
@@ -218,7 +218,10 @@ IPMI using the FreeNAS® GUI.
 | IPv4 Default Gateway | string         | default gateway associated with the IP address                              |
 |                      |                |                                                                             |
 +----------------------+----------------+-----------------------------------------------------------------------------+
-
+| VLAN ID              | string         | input the VLAN identifier if the IPMI out-of-band management interface is   |
+|                      |                | not on the same VLAN as management networking                               |
+|                      |                |                                                                             |
++----------------------+----------------+-----------------------------------------------------------------------------+
 
 Once configured, you can access the IPMI interface using a web browser and the IP address you specified in the configuration. The management interface will
 prompt for a username and the password that you configured. Refer to the documentation for the IPMI device to determine the default administrative username.
