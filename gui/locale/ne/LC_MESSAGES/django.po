@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-12-03 10:15+0000\n"
+"PO-Revision-Date: 2015-06-13 09:15+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ne\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1417601725.0\n"
+"X-POOTLE-MTIME: 1434186959.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10812,4 +10812,820 @@ msgstr ""
 #: templates/system/update.html:31
 #: templates/system/update_check.html:32
 msgid "Changelog"
+msgstr ""
+
+#: choices.py:237
+msgid "SSD"
+msgstr ""
+
+#: choices.py:238
+msgid "5400"
+msgstr ""
+
+#: choices.py:239
+msgid "7200"
+msgstr ""
+
+#: choices.py:240
+msgid "10000"
+msgstr ""
+
+#: choices.py:241
+msgid "15000"
+msgstr ""
+
+#: choices.py:811
+msgid "Sensitive"
+msgstr ""
+
+#: choices.py:812
+msgid "Insensitive"
+msgstr ""
+
+#: choices.py:813
+msgid "Mixed"
+msgstr ""
+
+#: account/models.py:160
+msgid "Microsoft Account"
+msgstr ""
+
+#: directoryservice/forms.py:223
+#: services/forms.py:237
+msgid "netbiosname: %s"
+msgstr ""
+
+#: directoryservice/forms.py:231
+#: services/forms.py:229
+msgid "workgroup: %s"
+msgstr ""
+
+#: directoryservice/models.py:657
+msgid "Appdefaults auxiliary parameters"
+msgstr ""
+
+#: directoryservice/models.py:661
+msgid "Libdefaults auxiliary parameters"
+msgstr ""
+
+#: directoryservice/models.py:666
+#: directoryservice/models.py:667
+#: directoryservice/nav.py:131
+#: templates/directoryservice/index.html:21
+msgid "Kerberos Settings"
+msgstr ""
+
+#: directoryservice/models.py:1140
+msgid "LDAP Schema type."
+msgstr ""
+
+#: freeadmin/navtree.py:249
+#: templates/menubar.html:73
+msgid "Guide"
+msgstr ""
+
+#: jails/admin.py:231
+#: templates/jails/restart.html:3
+msgid "Restart"
+msgstr ""
+
+#: jails/forms.py:219
+msgid "Jail name cannot have '.' or ' '"
+msgstr ""
+
+#: jails/forms.py:590
+msgid "Jail root does not exist!"
+msgstr ""
+
+#: jails/forms.py:1027
+msgid ""
+"Destination must begin with an alphanumeric character and may only contain "
+"\"-\", \"_\", \":\", \" \" and \".\"."
+msgstr ""
+
+#: jails/models.py:554
+msgid "mtree"
+msgstr ""
+
+#: jails/models.py:555
+msgid "The mtree file for the template"
+msgstr ""
+
+#: jails/models.py:562
+msgid ""
+"If this is a system template, it will not be visible in the UI and will only "
+"be used internally."
+msgstr ""
+
+#: jails/nav.py:73
+msgid "Add Jail"
+msgstr ""
+
+#: jails/views.py:192
+msgid "Jail successfully restarted."
+msgstr ""
+
+#: middleware/notifier.py:3791
+msgid "Failed to upload config, version newer than the current installed."
+msgstr ""
+
+#: services/forms.py:89
+msgid "You have %d pending active iSCSI connection(s)."
+msgstr ""
+
+#: services/forms.py:654
+#: services/forms.py:662
+msgid "Incorrect usage of the # delimiter."
+msgstr ""
+
+#: services/forms.py:666
+#: services/forms.py:676
+msgid "Invalid domain name."
+msgstr ""
+
+#: services/forms.py:672
+msgid "Invalid domain name or incorrect hash delimiter."
+msgstr ""
+
+#: services/forms.py:716
+msgid "Confirm Privacy Passphrase"
+msgstr ""
+
+#: services/forms.py:762
+msgid "Password must contain at least 8 characters"
+msgstr ""
+
+#: services/forms.py:820
+msgid "Passphrase must contain at least 8 characters"
+msgstr ""
+
+#: services/forms.py:976
+msgid "Secret must be between 12 and 16 characters."
+msgstr ""
+
+#: services/forms.py:983
+msgid "Peer secret must be between 12 and 16 characters."
+msgstr ""
+
+#: services/forms.py:1082
+msgid "LUN ID is already being used for this target."
+msgstr ""
+
+#: services/forms.py:1633
+msgid "Double quotes are not allowed."
+msgstr ""
+
+#: services/forms.py:1640
+msgid "Alias name must be unique."
+msgstr ""
+
+#: services/forms.py:1644
+msgid ""
+"target is a reserved word, please choose a different name for this alias."
+msgstr ""
+
+#: services/models.py:322
+msgid "Home share name"
+msgstr ""
+
+#: services/models.py:324
+msgid "When set overrides the default Home Share Name."
+msgstr ""
+
+#: services/models.py:366
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it. It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+
+#: services/models.py:378
+msgid "Require Kerberos for NFSv4"
+msgstr ""
+
+#: services/models.py:429
+msgid ""
+"The base name (e.g. iqn.2005-10.org.freenas.ctl, see RFC 3720 and 3721 for "
+"details) will append the target name that is not starting with 'iqn.', "
+"'eui.' or 'naa.'"
+msgstr ""
+
+#: services/models.py:437
+msgid "List of Internet Storage Name Service (iSNS) Servers"
+msgstr ""
+
+#: services/models.py:440
+msgid "Pool Available Space Threshold (%)"
+msgstr ""
+
+#: services/models.py:445
+msgid "Remaining ZFS pool capacity warning threshold when using zvol extents"
+msgstr ""
+
+#: services/models.py:504
+msgid "Disable Physical Block Size Reporting"
+msgstr ""
+
+#: services/models.py:506
+msgid ""
+"By default the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K, "
+"checking this disables reporting the physical blocksize."
+msgstr ""
+
+#: services/models.py:512
+msgid "Available Space Threshold (%)"
+msgstr ""
+
+#: services/models.py:516
+msgid "Remaining dataset/zvol capacity warning threshold"
+msgstr ""
+
+#: services/models.py:550
+msgid "LUN RPM"
+msgstr ""
+
+#: services/models.py:551
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare will give you the option to use SSD "
+"LUNs as swap devices, there is some value to picking a non-SSD RPM if your "
+"extent is indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+
+#: services/models.py:821
+msgid ""
+"Base Name will be appended automatically when starting without 'iqn.', "
+"'eui.' or 'naa.'."
+msgstr ""
+
+#: services/models.py:835
+msgid "Fiber Channel"
+msgstr ""
+
+#: services/models.py:836
+msgid "Both"
+msgstr ""
+
+#: services/models.py:840
+msgid "Target Mode"
+msgstr ""
+
+#: services/models.py:868
+msgid "Target this group belongs to"
+msgstr ""
+
+#: services/models.py:909
+#: services/models.py:910
+msgid "iSCSI Groups"
+msgstr ""
+
+#: services/models.py:960
+msgid "Fiber Channel Target"
+msgstr ""
+
+#: services/models.py:961
+msgid "Fiber Channel Targets"
+msgstr ""
+
+#: services/models.py:978
+msgid ""
+"The client IP is detected by calling 'url' from this 'ip_server_name:port /"
+".'. Leaving this field blank causes the service to use its built in default: "
+"checkip.dyndns.org:80 /."
+msgstr ""
+
+#: services/models.py:988
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names.  Some "
+"Dynamic DNS providers require a hash after the host name, for these "
+"providers use a # sign in the between the hostname and hash in the format "
+"hostname#hash.  You may also use multiple hostname and hash combinations in "
+"the format host1#hash1,host2#hash2."
+msgstr ""
+
+#: services/models.py:1062
+msgid "SNMP v3 Support"
+msgstr ""
+
+#: services/models.py:1075
+msgid "MD5"
+msgstr ""
+
+#: services/models.py:1076
+msgid "SHA"
+msgstr ""
+
+#: services/models.py:1080
+msgid "Authentication Type"
+msgstr ""
+
+#: services/models.py:1090
+msgid "AES"
+msgstr ""
+
+#: services/models.py:1091
+msgid "DES"
+msgstr ""
+
+#: services/models.py:1095
+msgid "Privacy Protocol"
+msgstr ""
+
+#: services/models.py:1101
+msgid "Privacy Passphrase"
+msgstr ""
+
+#: services/models.py:1195
+msgid "Power Off UPS"
+msgstr ""
+
+#: services/models.py:1196
+msgid "Signal the UPS to power off after FreeNAS shuts down."
+msgstr ""
+
+#: services/models.py:2027
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/views.py:334
+msgid "Fiber Channel Ports have been successfully changed."
+msgstr ""
+
+#: sharing/forms.py:291
+msgid "A share with this name already exists."
+msgstr ""
+
+#: sharing/forms.py:527
+msgid "Whitespace is not a valid character for NFS shares."
+msgstr ""
+
+#: storage/admin.py:510
+msgid "Online"
+msgstr ""
+
+#: storage/admin.py:636
+#: storage/forms.py:1851
+msgid "VMware Sync"
+msgstr ""
+
+#: storage/forms.py:732
+msgid ""
+"This is the disk with the non-zfs filesystem. It will be mounted, its data "
+"copied over to the path specified in the 'Destination' field below and then "
+"unmounted. Importing non-zfs disks permanently as a Volume is deprecated"
+msgstr ""
+
+#: storage/forms.py:746
+msgid "This must be a dataset/folder in an existing Volume"
+msgstr ""
+
+#: storage/forms.py:797
+msgid ""
+"The path %s does not exist.                    This must be a dataset/folder "
+"in an existing Volume"
+msgstr ""
+
+#: storage/forms.py:1439
+msgid "The path %s already exists."
+msgstr ""
+
+#: storage/forms.py:1553
+msgid "Allow the zvol to consume more then 80% of available space"
+msgstr ""
+
+#: storage/forms.py:2132
+msgid "This field will be empty if you have not setup a periodic snapshot task"
+msgstr ""
+
+#: storage/models.py:413
+#: tasks/models.py:122
+#: tasks/models.py:450
+msgid "Every {0} minute(s)"
+msgstr ""
+
+#: storage/models.py:421
+#: tasks/models.py:131
+#: tasks/models.py:459
+#: tasks/models.py:649
+msgid "Every {0} hour(s)"
+msgstr ""
+
+#: storage/models.py:429
+#: tasks/models.py:140
+#: tasks/models.py:468
+#: tasks/models.py:658
+msgid "Every {0} days"
+msgstr ""
+
+#: storage/models.py:1026
+msgid "Exclude System Dataset"
+msgstr ""
+
+#: storage/models.py:1027
+msgid ""
+"Do not snapshot the system dataset. This is useful when replicating the root "
+"of a pool to the root of a pool of another FreeNAS system."
+msgstr ""
+
+#: storage/models.py:1125
+msgid ""
+"Username on the above VMware host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: storage/models.py:1141
+msgid "The datastore on the VMware side that the filesystem corresponds to."
+msgstr ""
+
+#: storage/models.py:1147
+#: templates/storage/index.html:38
+msgid "VMware-Snapshot"
+msgstr ""
+
+#: storage/models.py:1148
+msgid "VMware-Snapshots"
+msgstr ""
+
+#: storage/views.py:787
+msgid "Disk online operation has been issued."
+msgstr ""
+
+#: support/forms.py:58
+msgid "This is not a valid license."
+msgstr ""
+
+#: support/models.py:40
+msgid "From Email"
+msgstr ""
+
+#: support/models.py:41
+msgid "The email address that the system will use to create this ticket"
+msgstr ""
+
+#: support/utils.py:57
+#: support/utils.py:102
+#: support/utils.py:127
+msgid "Connection failed: %s"
+msgstr ""
+
+#: support/utils.py:59
+#: support/utils.py:104
+#: support/utils.py:129
+msgid "Connection timed out: %s"
+msgstr ""
+
+#: support/utils.py:107
+msgid "Ticket creation failed, try again later."
+msgstr ""
+
+#: support/views.py:88
+msgid "License updated."
+msgstr ""
+
+#: system/forms.py:1027
+msgid "Continue operation if the server could not be reached/validated."
+msgstr ""
+
+#: system/forms.py:2215
+#: system/forms.py:2688
+msgid "A certificate with this name already exists."
+msgstr ""
+
+#: system/forms.py:2245
+#: system/forms.py:2678
+msgid "Passphrase confirmation does not match."
+msgstr ""
+
+#: system/forms.py:2981
+msgid "Hostname or IP address"
+msgstr ""
+
+#: system/forms.py:2985
+msgid "User name"
+msgstr ""
+
+#: system/forms.py:3001
+msgid "Remote directory"
+msgstr ""
+
+#: system/forms.py:3005
+msgid "Backup data"
+msgstr ""
+
+#: system/forms.py:3009
+msgid "Compress backup"
+msgstr ""
+
+#: system/forms.py:3013
+msgid "Use key authentication"
+msgstr ""
+
+#: system/models.py:261
+msgid ""
+"By default only essential fields are shown. Fields considered advanced can "
+"be displayed through the Advanced Mode button."
+msgstr ""
+
+#: system/models.py:267
+msgid "Enable automatic upload of kernel crash dumps and daily telemetry"
+msgstr ""
+
+#: system/models.py:269
+msgid ""
+"Attempt to automatically tune the network and ZFS system control variables "
+"based on memory available."
+msgstr ""
+
+#: system/models.py:292
+msgid "Periodic Notification User"
+msgstr ""
+
+#: system/models.py:277
+msgid "The kernel built with debug symbols will be booted instead."
+msgstr ""
+
+#: system/models.py:293
+msgid ""
+"If you wish periodic emails to be sent to a different email address than the "
+"alert emails are set to (root) set an email address for a user and select "
+"that user in the dropdown."
+msgstr ""
+
+#: system/models.py:923
+msgid "CA"
+msgstr ""
+
+#: system/models.py:952
+msgid "Finished"
+msgstr ""
+
+#: system/models.py:957
+msgid "Failed"
+msgstr ""
+
+#: system/models.py:962
+msgid "Acknowledged"
+msgstr ""
+
+#: system/models.py:966
+msgid "Backup worker PID"
+msgstr ""
+
+#: system/models.py:971
+msgid "Started at"
+msgstr ""
+
+#: system/models.py:975
+msgid "Finished at"
+msgstr ""
+
+#: system/models.py:995
+msgid "System Backup"
+msgstr ""
+
+#: system/views.py:303
+msgid "Interval must be an integer."
+msgstr ""
+
+#: system/views.py:318
+msgid "Scrub interval successfully changed."
+msgstr ""
+
+#: system/views.py:1212
+#: system/views.py:1314
+msgid "Update has been applied"
+msgstr ""
+
+#: system/alertmods/http_ssl.py:28
+msgid ""
+"The Certificate: %(cert_name)s is either malformed or invalid and cannot be "
+"used for any services. This Alert will remain here until the certificate is "
+"deleted"
+msgstr ""
+
+#: system/alertmods/http_ssl.py:38
+msgid ""
+"The Certificate Authority(CA): %(CA_name)s is either malformed or invalid "
+"and cannot be used for any services. This Alert will remain here until the "
+"CA is deleted"
+msgstr ""
+
+#: system/alertmods/license_expired.py:24
+msgid "Unable to decode %s license"
+msgstr ""
+
+#: system/alertmods/license_expired.py:31
+msgid "Your %s license has expired"
+msgstr ""
+
+#: system/alertmods/license_expired.py:36
+msgid "Your %(sw_name)s license is going to expire in %(date)s"
+msgstr ""
+
+#: system/alertmods/upgrade_failed.py:19
+msgid "Update failed. Check /data/update.failed for further details."
+msgstr ""
+
+#: system/alertmods/vmwaresnap_fails.py:25
+msgid "VMWare snapshot %(snap)s failed for the following VMs: %(vms)s"
+msgstr ""
+
+#: tasks/forms.py:116
+msgid "Validate Remote Path"
+msgstr ""
+
+#: tasks/forms.py:119
+msgid ""
+"This ensures Remote Path Validation. Uncheck this if the remote machine is "
+"currently offline or beyond network reach. And/Or you do not want validation "
+"to be done."
+msgstr ""
+
+#: tasks/forms.py:281
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or uncheck the<br>"
+"'rsync_validate_rpath' field.<br>**Note**: This could also happen if the "
+"remote path entered<br> exceeded 255 characters and was truncated, please "
+"restrict it to<br>255. Or it could also be that your SSH credentials (remote "
+"host,etc) are wrong."
+msgstr ""
+
+#: tasks/models.py:419
+msgid "Delay Updates"
+msgstr ""
+
+#: tasks/models.py:420
+msgid "Put all updated files into place at the end"
+msgstr ""
+
+#: templates/reporting/index.html:15
+msgid "ZFS"
+msgstr ""
+
+#: templates/services/iscsi.html:45
+msgid "Fiber Channel Ports"
+msgstr ""
+
+#: templates/sharing/index.html:27
+msgid "Block"
+msgstr ""
+
+#: templates/sharing/index.html:27
+msgid "FC"
+msgstr ""
+
+#: templates/storage/disk_online.html:3
+msgid "Are you sure you want to online?"
+msgstr ""
+
+#: templates/support/home.html:3
+msgid "License Information"
+msgstr ""
+
+#: templates/support/home.html:6
+#: templates/support/home.html.py:8
+msgid "Update License"
+msgstr ""
+
+#: templates/support/home.html:16
+msgid "Model"
+msgstr ""
+
+#: templates/support/home.html:18
+msgid "System Serial"
+msgstr ""
+
+#: templates/support/home.html:20
+msgid "Contract Type"
+msgstr ""
+
+#: templates/support/home.html:34
+msgid "Bronze"
+msgstr ""
+
+#: templates/support/home.html:35
+msgid "Silver"
+msgstr ""
+
+#: templates/support/home.html:36
+msgid "Gold"
+msgstr ""
+
+#: templates/support/home.html:37
+#: templates/support/home.html.py:38
+msgid "8x5 FreeNAS Support"
+msgstr ""
+
+#: templates/support/home.html:38
+msgid "Maximum of 6 incidents per year"
+msgstr ""
+
+#: templates/support/home.html:40
+msgid "Contract Date"
+msgstr ""
+
+#: templates/support/home.html:41
+msgid "Expired"
+msgstr ""
+
+#: templates/support/home.html:44
+msgid "Customer Name"
+msgstr ""
+
+#: templates/support/home.html:46
+msgid "Features"
+msgstr ""
+
+#: templates/support/home.html:55
+msgid "Additional Hardware"
+msgstr ""
+
+#: templates/support/home.html:58
+msgid "E16 Enclosure"
+msgstr ""
+
+#: templates/support/home.html:59
+msgid "E24 Enclosure"
+msgstr ""
+
+#: templates/support/home.html:60
+msgid "E60 Enclosure"
+msgstr ""
+
+#: templates/support/home.html:69
+msgid "License is not valid! Contact iXsystems support."
+msgstr ""
+
+#: templates/support/home.html:73
+msgid "License not found! Contact iXsystems support."
+msgstr ""
+
+#: templates/support/home.html:81
+msgid "Before filing a bug report or feature request, search"
+msgstr ""
+
+#: templates/support/home.html:81
+msgid ""
+"to ensure the issue has not already been reported. If it has, add a comment "
+"to the existing issue instead of creating a new one."
+msgstr ""
+
+#: templates/support/home.html:82
+msgid "For enterprise-grade storage solutions and support, please visit"
+msgstr ""
+
+#: templates/support/license_update.html:6
+msgid "Your license has expired, please place a new one."
+msgstr ""
+
+#: templates/system/backup.html:3
+msgid ""
+"Backup of encrypted volumes is not supported. If your system have any, they "
+"will be skipped during the backup."
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:86
+msgid "Automatic scrub interval (in days)"
+msgstr ""
+
+#: templates/system/config_upload.html:5
+msgid "The system will reboot to perform this operation!"
+msgstr ""
+
+#: templates/system/email_edit.html:21
+msgid ""
+"HINT: Test e-mails are sent to root user. To configure it use Account -> "
+"Users -> View Users -> root -> Change E-mail"
+msgstr ""
+
+#: templates/system/initialwizard_volume.html:79
+msgid "Disks to be formatted"
+msgstr ""
+
+#: templates/system/update.html:37
+msgid "The system will be rebooted after updates are applied."
+msgstr ""
+
+#: templates/system/update_check.html:42
+msgid "Update server could not be reached"
+msgstr ""
+
+#: tools/update_check.py:96
+msgid "Update Available"
+msgstr ""
+
+#: tools/update_check.py:98
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"
 msgstr ""
