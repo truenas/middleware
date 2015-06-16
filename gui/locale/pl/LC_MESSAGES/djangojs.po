@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-11-15 10:14+0000\n"
+"PO-Revision-Date: 2015-01-21 21:44+0000\n"
 "Last-Translator: mskowronski <mskowronski@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1416046464.0\n"
+"X-POOTLE-MTIME: 1421876670.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Raporty"
@@ -414,4 +414,133 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:260
+msgid "Restarting WebGUI"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1157
+msgid "Active Directory IDMAP change!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1162
+msgid ""
+"<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1163
+msgid ""
+"The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1164
+msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1165
+msgid ""
+"implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1166
+msgid "provided in advance by the administrator by adding the uidNumber<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1167
+msgid ""
+"attributes for users and gidNumber attributes for groups in the AD.<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1168
+msgid ""
+"Winbind will only map users that have a uidNumber and whose primary<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1169
+msgid ""
+"group have a gidNumber attribute set. It is however recommended that<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1170
+msgid ""
+"all groups in use have gidNumber attributes assigned, otherwise they<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1171
+msgid "are not working.<br /><br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1172
+msgid ""
+"<font color='red'>STOP</font>: If your Active Directory is not configured "
+"for this, it will not work.<br><br>"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:512
+msgid "Documentation"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
+msgid "Username"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
+msgid "If you do not have an account, please"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
+msgid "register"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
+msgid "Attach Debug Info"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
+msgid "Submit"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
+msgid "This field is required."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
+msgid "Uploading attachments to host"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
+msgid "Generating debug info"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
+msgid "Submitting ticket"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
+msgid "Uploading attachments from host to the ticket"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:86
+msgid "Train Descriptions"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:88
+msgid "Loading"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:89
+msgid "Automatically check for updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:90
+msgid "Current Train"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:91
+msgid "Update Server"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:92
+msgid "Pending Updates"
 msgstr ""

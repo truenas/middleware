@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-02-22 15:30+0000\n"
+"PO-Revision-Date: 2015-06-07 14:53+0000\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1393083046.0\n"
+"X-POOTLE-MTIME: 1433688782.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapoarte"
@@ -265,7 +265,7 @@ msgstr "Închide"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Configurare manuală"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 #, fuzzy
@@ -274,36 +274,32 @@ msgstr "Nume volum"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Confirmare"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
-#, fuzzy
 msgid "System"
-msgstr "Sistem de alertă"
+msgstr "Sistem"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Sarcini"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Setări reţea"
+msgstr "Reţea"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
-#, fuzzy
 msgid "Sharing"
-msgstr "Partajări"
+msgstr "Partajare"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Serviciu Directory"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Inițializare în siguranță"
+msgstr "Expert inițial"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
 #, fuzzy
@@ -315,43 +311,44 @@ msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
+"Acest câmp poate conține doar caractere alfanumerice și următoarele "
+"caractere speciale: \"_\", \"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Specificați mărimea folosind prefixurile B, K, M, G, T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Adăugare"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Ștergere"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Actualizare"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Proprietate"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Untilizator inexistent."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Grup inexistent."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Revenire"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
-#, fuzzy
 msgid "Wizard"
-msgstr "Inițializare în siguranță"
+msgstr "Expert"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
@@ -359,21 +356,23 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Atenţie!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Aceast opțiune DEZACTIVEAZĂ CRIPTAREA pentru sarcinile de replicare și "
+"trebuie utilizată DOAR în cazul unei REȚELE sigure!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Confirmați operațiunea?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Configurare manuală"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
@@ -381,51 +380,183 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Aplicare operații în așteptare"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Hostname-ul nu poate fi nul."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Numele de utilizator nu poate fi nul."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "Parola nu poate fi nulă."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Actualizare manuală"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Verifică acum"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Da"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Nu"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Se încarcă..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Nu s-a găsit nicio actualizare în așteptare."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Verificare instalare"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
+msgstr "Parolele nu coincid."
+
+#: freeadmin/static/lib/js/freeadmin.js:260
+msgid "Restarting WebGUI"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1157
+msgid "Active Directory IDMAP change!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1162
+msgid ""
+"<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1163
+msgid ""
+"The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1164
+msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1165
+msgid ""
+"implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1166
+msgid "provided in advance by the administrator by adding the uidNumber<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1167
+msgid ""
+"attributes for users and gidNumber attributes for groups in the AD.<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1168
+msgid ""
+"Winbind will only map users that have a uidNumber and whose primary<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1169
+msgid ""
+"group have a gidNumber attribute set. It is however recommended that<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1170
+msgid ""
+"all groups in use have gidNumber attributes assigned, otherwise they<br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1171
+msgid "are not working.<br /><br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1172
+msgid ""
+"<font color='red'>STOP</font>: If your Active Directory is not configured "
+"for this, it will not work.<br><br>"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:512
+msgid "Documentation"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
+msgid "Username"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
+msgid "If you do not have an account, please"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
+msgid "register"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
+msgid "Attach Debug Info"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
+msgid "Submit"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
+msgid "This field is required."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
+msgid "Uploading attachments to host"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
+msgid "Generating debug info"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
+msgid "Submitting ticket"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
+msgid "Uploading attachments from host to the ticket"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:86
+msgid "Train Descriptions"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:88
+#, fuzzy
+msgid "Loading"
+msgstr "Se încarcă..."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:89
+msgid "Automatically check for updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:90
+msgid "Current Train"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:91
+#, fuzzy
+msgid "Update Server"
+msgstr "Actualizare"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:92
+#, fuzzy
+msgid "Pending Updates"
+msgstr "Aplicare operații în așteptare"

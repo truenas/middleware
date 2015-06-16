@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-04-06 09:43+0000\n"
+"PO-Revision-Date: 2015-06-14 16:46+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1428313415.0\n"
+"X-POOTLE-MTIME: 1434300369.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1083,7 +1083,7 @@ msgstr "VLAN's"
 
 #: network/models.py:314
 msgid "Protocol Type"
-msgstr "Protocoltype"
+msgstr "Type protocol"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
@@ -2054,7 +2054,7 @@ msgstr "Tekenreeks-ID van de extent."
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr "Extenttype"
+msgstr "Type extent"
 
 #: services/models.py:402
 msgid "Type used as extent."
@@ -5972,7 +5972,7 @@ msgstr "Lidschijven"
 
 #: templates/storage/wizard.html:73
 msgid "Group type"
-msgstr "Groepstype"
+msgstr "Type groep"
 
 #~ msgid "ZFS Extra"
 #~ msgstr "ZFS Extra"
@@ -8781,7 +8781,7 @@ msgstr "De wachtwoordzinnen komen niet overeen"
 
 #: storage/models.py:64
 msgid "Encryption Type"
-msgstr "Versleutelingstype"
+msgstr "Type versleuteling"
 
 #: storage/models.py:807
 msgid ""
@@ -9113,8 +9113,8 @@ msgstr ""
 "Bij Samba 3.6 en lager werd de uitvoermachtiging in de ACL niet "
 "gecontroleerd, zodat een client een bestand ook kon uitvoeren als het geen "
 "uitvoerrechten op het bestand had. In Samba 4.0 is dit verholpen, zodat "
-"wanneer bv. deze parameter is ingesteld 'False', 'open for execution' nu "
-"standaard wordt geweigerd wanneer de uitvoermachtiging ontbreekt. Als deze "
+"wanneer bv. deze parameter is ingesteld op 'False', 'open for execution' nu "
+"standaard wordt geweigerd als de uitvoermachtiging ontbreekt. Als deze "
 "parameter is ingesteld op 'True', controleert Samba geen uitvoermachtiging "
 "bij 'open for execution', en wordt dus het gedrag van Samba 3.6 aangehouden "
 
@@ -9361,7 +9361,7 @@ msgstr ""
 
 #: storage/forms.py:1422
 msgid "Share type"
-msgstr "Sharetype"
+msgstr "Type share"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
@@ -9404,7 +9404,7 @@ msgstr "Geef de grootte op met IEC-achtervoegsels, bv. 10 GiB"
 
 #: storage/forms.py:1684
 msgid "Permission Type"
-msgstr "Machtigingstype"
+msgstr "Type machtiging"
 
 #: storage/forms.py:1817
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
@@ -10221,7 +10221,7 @@ msgstr "Automatisch"
 
 #: system/forms.py:1227
 msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
-msgstr "VMWare (RAID 10: goede betrouwbaarheid, goede prestaties)"
+msgstr "VMware (RAID 10: goede betrouwbaarheid, goede prestaties)"
 
 #: system/forms.py:1231
 msgid "Backups (RAID Z2: Best Reliability, Less Storage)"
@@ -11096,7 +11096,7 @@ msgstr ""
 
 #: system/forms.py:1889
 msgid "Trains"
-msgstr "Treinen"
+msgstr "Trains"
 
 #: storage/admin.py:375
 msgid "Edit zvol"
@@ -11273,11 +11273,11 @@ msgstr "De door het doel geaccepteerde authenticatiemethode."
 
 #: system/forms.py:1905
 msgid "Current Train"
-msgstr "Huidige trein"
+msgstr "Huidige train"
 
 #: system/forms.py:1930
 msgid "Train"
-msgstr "Trein"
+msgstr "Train"
 
 #: system/forms.py:1993
 #: system/forms.py:2378
@@ -11331,7 +11331,7 @@ msgstr "De volgende pakketten zullen worden gewijzigd:"
 
 #: templates/system/update_select.html:13
 msgid "Choose which train you would like to check for updates"
-msgstr "Kies voor welke trein u wilt controleren op updates"
+msgstr "Kies voor welke train u op updates wilt controleren"
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
@@ -11367,7 +11367,7 @@ msgstr "iSNS-servers"
 
 #: services/models.py:444
 msgid "Pool Available Size Threshold (%)"
-msgstr "Groottedrempel beschikbare pool (%)"
+msgstr "Drempel van beschikbare poolgrootte (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
@@ -11425,7 +11425,7 @@ msgstr "Blok (iSCSI)"
 #: storage/admin.py:629
 #: storage/forms.py:1741
 msgid "VMWare Sync"
-msgstr "VMWare-synchronisatie"
+msgstr "VMware Sync"
 
 #: storage/forms.py:1576
 msgid "Apply Owner (user)"
@@ -11450,7 +11450,7 @@ msgstr ""
 #: storage/models.py:1098
 #: templates/storage/index.html:38
 msgid "VMWare-Snapshot"
-msgstr "VMWare-momentopname"
+msgstr "VMware-momentopname"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
@@ -11515,8 +11515,8 @@ msgid ""
 "Username on the above VMWare host with enough privileges to snapshot virtual "
 "machines."
 msgstr ""
-"Gebruikersnaam op de bovenstaande VMWare-host met genoeg bevoegdheden voor "
-"het maken van momentopnamen van virtuele machines."
+"Gebruikersnaam op de bovenstaande VMware-host met voldoende bevoegdheden om "
+"momentopnamen van virtuele machines te maken."
 
 #: system/models.py:907
 msgid "ZFS Filesystem"
@@ -11529,13 +11529,13 @@ msgstr "Gegevensarchief"
 #: system/models.py:914
 msgid "The datastore on the VMWare side that the filesystem corresponds to."
 msgstr ""
-"Het gegevensarchief aan de VMWare-zijde waar het bestandssysteem mee "
+"Het gegevensarchief aan de VMware-zijde waarmee het bestandssysteem "
 "overeenkomt."
 
 #: system/models.py:920
 #: templates/system/index.html:33
 msgid "VMWare Plugin"
-msgstr "VMWare-plug-in"
+msgstr "VMware-plug-in"
 
 #: system/views.py:239
 msgid "Scrubbing the Boot Pool..."
@@ -11764,3 +11764,925 @@ msgstr "De status van volume %(volume)s is %(state)s: %(status)s"
 #: templates/system/update_check.html:32
 msgid "Changelog"
 msgstr "Changelog"
+
+#: choices.py:237
+msgid "SSD"
+msgstr "SSD"
+
+#: choices.py:238
+msgid "5400"
+msgstr "5400"
+
+#: choices.py:239
+msgid "7200"
+msgstr "7200"
+
+#: choices.py:240
+msgid "10000"
+msgstr "10000"
+
+#: choices.py:241
+msgid "15000"
+msgstr "15000"
+
+#: choices.py:811
+msgid "Sensitive"
+msgstr "Gevoelig"
+
+#: choices.py:812
+msgid "Insensitive"
+msgstr "Ongevoelig"
+
+#: choices.py:813
+msgid "Mixed"
+msgstr "Gemengd"
+
+#: account/models.py:160
+msgid "Microsoft Account"
+msgstr "Microsoft-account"
+
+#: directoryservice/forms.py:223
+#: services/forms.py:237
+msgid "netbiosname: %s"
+msgstr "NetBIOS-naam: %s"
+
+#: directoryservice/forms.py:231
+#: services/forms.py:229
+msgid "workgroup: %s"
+msgstr "werkgroep: %s"
+
+#: directoryservice/models.py:657
+msgid "Appdefaults auxiliary parameters"
+msgstr "Hulpparameters voor Appdefaults"
+
+#: directoryservice/models.py:661
+msgid "Libdefaults auxiliary parameters"
+msgstr "Hulpparameters voor Libdefaults"
+
+#: directoryservice/models.py:666
+#: directoryservice/models.py:667
+#: directoryservice/nav.py:131
+#: templates/directoryservice/index.html:21
+msgid "Kerberos Settings"
+msgstr "Kerberos-instellingen"
+
+#: directoryservice/models.py:1140
+msgid "LDAP Schema type."
+msgstr "Type LDAP-schema"
+
+#: freeadmin/navtree.py:249
+#: templates/menubar.html:73
+#, fuzzy
+msgid "Guide"
+msgstr "Gids"
+
+#: jails/admin.py:231
+#: templates/jails/restart.html:3
+msgid "Restart"
+msgstr "Opnieuw starten"
+
+#: jails/forms.py:219
+msgid "Jail name cannot have '.' or ' '"
+msgstr "Jailnaam kan geen '.' of ' ' bevatten"
+
+#: jails/forms.py:590
+msgid "Jail root does not exist!"
+msgstr "Jail-hoofdmap bestaat niet!"
+
+#: jails/forms.py:1027
+msgid ""
+"Destination must begin with an alphanumeric character and may only contain "
+"\"-\", \"_\", \":\", \" \" and \".\"."
+msgstr ""
+"Bestemming moet met een alfanumeriek teken beginnen en mag alleen '-', '_', "
+"':', ' ' en '.' bevatten."
+
+#: jails/models.py:554
+msgid "mtree"
+msgstr "mtree"
+
+#: jails/models.py:555
+msgid "The mtree file for the template"
+msgstr "Het mtree-bestand voor het sjabloon"
+
+#: jails/models.py:562
+msgid ""
+"If this is a system template, it will not be visible in the UI and will only "
+"be used internally."
+msgstr ""
+"Als dit een systeemsjabloon is, zal het niet in de UI zichtbaar zijn en "
+"alleen intern worden gebruikt."
+
+#: jails/nav.py:73
+msgid "Add Jail"
+msgstr "Jail toevoegen"
+
+#: jails/views.py:192
+msgid "Jail successfully restarted."
+msgstr "Jail met succes opnieuw gestart."
+
+#: middleware/notifier.py:3791
+msgid "Failed to upload config, version newer than the current installed."
+msgstr ""
+"Uploaden van configuratie mislukt, nieuwere versie dan de huidige "
+"geïnstalleerd."
+
+#: services/forms.py:89
+msgid "You have %d pending active iSCSI connection(s)."
+msgstr "U hebt %d wachtende actieve iSCSI-verbinding(en)."
+
+#: services/forms.py:654
+#: services/forms.py:662
+msgid "Incorrect usage of the # delimiter."
+msgstr "Onjuist gebruik van het scheidingsteken #."
+
+#: services/forms.py:666
+#: services/forms.py:676
+msgid "Invalid domain name."
+msgstr "Ongeldige domeinnaam."
+
+#: services/forms.py:672
+msgid "Invalid domain name or incorrect hash delimiter."
+msgstr "Ongeldige domeinnaam of onjuist hash-scheidingsteken."
+
+#: services/forms.py:716
+msgid "Confirm Privacy Passphrase"
+msgstr "Bevestig privacywachtwoordzin"
+
+#: services/forms.py:762
+msgid "Password must contain at least 8 characters"
+msgstr "Wachtwoord moet minstens 8 tekens bevatten"
+
+#: services/forms.py:820
+msgid "Passphrase must contain at least 8 characters"
+msgstr "Wachtwoordzin moet minstens 8 tekens bevatten"
+
+#: services/forms.py:976
+msgid "Secret must be between 12 and 16 characters."
+msgstr "Geheim moet tussen 12 en 16 tekens bevatten."
+
+#: services/forms.py:983
+msgid "Peer secret must be between 12 and 16 characters."
+msgstr "Peergeheim moet tussen 12 en 16 tekens bevatten."
+
+#: services/forms.py:1082
+msgid "LUN ID is already being used for this target."
+msgstr "LUN-ID wordt al gebruikt voor dit doel."
+
+#: services/forms.py:1633
+msgid "Double quotes are not allowed."
+msgstr "Dubbele aanhalingstekens zijn niet toegestaan."
+
+#: services/forms.py:1640
+msgid "Alias name must be unique."
+msgstr "Aliasnaam moet uniek zijn."
+
+#: services/forms.py:1644
+msgid ""
+"target is a reserved word, please choose a different name for this alias."
+msgstr "doel is een gereserveerd woord, kies een andere naam voor deze alias."
+
+#: services/models.py:322
+msgid "Home share name"
+msgstr "Naam van basis-share"
+
+#: services/models.py:324
+msgid "When set overrides the default Home Share Name."
+msgstr "Overschrijft de standaardnaam van basis-share wanneer ingesteld."
+
+#: services/models.py:366
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it. It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+"Staat het behandelen van niet-root-koppelingsaanvragen toe. Dit dient alleen "
+"te worden opgegeven als er clients zijn die het nodig hebben. Hierdoor wordt "
+"automatisch de vfs.nfsrv.nfs_privport sysctl-vlag gewist, die bepaalt of de "
+"kernel NFS-aanvragen alleen van gereserveerde poorten zal accepteren."
+
+#: services/models.py:378
+msgid "Require Kerberos for NFSv4"
+msgstr "Kerberos voor NFSv4 vereisen"
+
+#: services/models.py:429
+msgid ""
+"The base name (e.g. iqn.2005-10.org.freenas.ctl, see RFC 3720 and 3721 for "
+"details) will append the target name that is not starting with 'iqn.', "
+"'eui.' or 'naa.'"
+msgstr ""
+"De basisnaam (bv. iqn.2005-10.org.freenas.ctl, zie RFC 3720 en 3721 voor "
+"details) zal de doelnaam die niet met 'iqn.', 'eui.' of 'naa' begint "
+"toevoegen."
+
+#: services/models.py:437
+msgid "List of Internet Storage Name Service (iSNS) Servers"
+msgstr "Lijst met Internet Storage Name Service (iSNS)-servers"
+
+#: services/models.py:440
+msgid "Pool Available Space Threshold (%)"
+msgstr "Drempel van beschikbare poolruimte (%)"
+
+#: services/models.py:445
+msgid "Remaining ZFS pool capacity warning threshold when using zvol extents"
+msgstr ""
+"Waarschuwingsdrempel voor resterende ZFS-poolcapaciteit bij het gebruik van "
+"zvol-extents"
+
+#: services/models.py:504
+msgid "Disable Physical Block Size Reporting"
+msgstr "Rapportage van fysieke blokgrootte uitschakelen"
+
+#: services/models.py:506
+msgid ""
+"By default the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K, "
+"checking this disables reporting the physical blocksize."
+msgstr ""
+"Standaard wordt de fysieke blokgrootte gerapporteerd als de ZFS-blokgrootte, "
+"die tot 128K kan zijn. Sommige initiators werken niet met waarden boven 4K; "
+"aanvinken hiervan schakelt het rapporteren van de fysieke blokgrootte uit."
+
+#: services/models.py:512
+msgid "Available Space Threshold (%)"
+msgstr "Drempel voor beschikbare ruimte (%)"
+
+#: services/models.py:516
+msgid "Remaining dataset/zvol capacity warning threshold"
+msgstr "Waarschuwingsdrempel voor resterende gegevensseet-/zvol-capaciteit"
+
+#: services/models.py:550
+msgid "LUN RPM"
+msgstr "LUN-RPM"
+
+#: services/models.py:551
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare will give you the option to use SSD "
+"LUNs as swap devices, there is some value to picking a non-SSD RPM if your "
+"extent is indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+"Aan initiators gemelde RPM voor deze extent/LUN. De standaard is SSD, omdat "
+"Windows niet-SSD-apparaten zal proberen te defragmenteren. Dit is een "
+"pathologische worst-case-situatie voor ZFS. VMware biedt de optie voor het "
+"gebruik van SSD-LUN's als wisselapparaten; het heeft toegevoegde waarde om "
+"een niet-SSD-RPM te kiezen als uw extent inderdaad geen SSD is en de "
+"initiator VMware zal zijn."
+
+#: services/models.py:821
+msgid ""
+"Base Name will be appended automatically when starting without 'iqn.', "
+"'eui.' or 'naa.'."
+msgstr ""
+"Basisnaam zal automatisch worden toegevoegd wanneer deze zonder 'iqn.', "
+"'eui.' of 'naa.' begint."
+
+#: services/models.py:835
+msgid "Fiber Channel"
+msgstr "Fiber Channel"
+
+#: services/models.py:836
+msgid "Both"
+msgstr "Beide"
+
+#: services/models.py:840
+msgid "Target Mode"
+msgstr "Doelmodus"
+
+#: services/models.py:868
+msgid "Target this group belongs to"
+msgstr "Doel waartoe deze groep behoort"
+
+#: services/models.py:909
+#: services/models.py:910
+msgid "iSCSI Groups"
+msgstr "iSCSI-groepen"
+
+#: services/models.py:960
+msgid "Fiber Channel Target"
+msgstr "Doel van Fiber Channel"
+
+#: services/models.py:961
+msgid "Fiber Channel Targets"
+msgstr "Doelen van Fiber Channel"
+
+#: services/models.py:978
+msgid ""
+"The client IP is detected by calling 'url' from this 'ip_server_name:port /"
+".'. Leaving this field blank causes the service to use its built in default: "
+"checkip.dyndns.org:80 /."
+msgstr ""
+"Het client-IP-adres wordt herkend door 'url' vanaf deze 'ip_server_name:port "
+"/.' aan te roepen. Leeg laten van dit veld zorgt ervoor dat de service zijn "
+"ingebouwde standaardwaarde gebruikt: checkip.dyndns.org:80 /."
+
+#: services/models.py:988
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names.  Some "
+"Dynamic DNS providers require a hash after the host name, for these "
+"providers use a # sign in the between the hostname and hash in the format "
+"hostname#hash.  You may also use multiple hostname and hash combinations in "
+"the format host1#hash1,host2#hash2."
+msgstr ""
+"Een hostnaamalias. Deze optie kan meerdere malen voorkomen, voor elk domein "
+"dat hetzelfde IP-adres heeft. Gebruik een komma om meerdere aliasnamen te "
+"scheiden. Sommige 'Dynamische DNS'-providers vereisen een hash achter de "
+"hostnaam; gebruik voor deze providers een #-teken tussen de hostnaam en hash "
+"in de notatie hostnaam#hash. U kunt ook meerdere hostnamen en "
+"hashcombinaties in de notatie host1#hash1,host2#hash2 gebruiken."
+
+#: services/models.py:1062
+msgid "SNMP v3 Support"
+msgstr "SNMP v3-ondersteuning"
+
+#: services/models.py:1075
+msgid "MD5"
+msgstr "MD5"
+
+#: services/models.py:1076
+msgid "SHA"
+msgstr "SHA"
+
+#: services/models.py:1080
+msgid "Authentication Type"
+msgstr "Type authenticatie"
+
+#: services/models.py:1090
+msgid "AES"
+msgstr "AES"
+
+#: services/models.py:1091
+msgid "DES"
+msgstr "DES"
+
+#: services/models.py:1095
+msgid "Privacy Protocol"
+msgstr "Privacyprotocol"
+
+#: services/models.py:1101
+msgid "Privacy Passphrase"
+msgstr "Privacywachtwoordzin"
+
+#: services/models.py:1195
+msgid "Power Off UPS"
+msgstr "UPS uitschakelen"
+
+#: services/models.py:1196
+msgid "Signal the UPS to power off after FreeNAS shuts down."
+msgstr "De UPS laten uitschakelen nadat FreeNAS is afgesloten."
+
+#: services/models.py:2027
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+"Type HTTP-authenticatie voor WebDAV<br>Basisauth.: wachtwoord wordt als "
+"platte tekst over het netwerk verzonden (Vermijden als HTTPS is "
+"uitgeschakeld) <br>Digest-auth.: hash van het wachtwoord wordt over het "
+"netwerk verzonden (veiliger)"
+
+#: services/views.py:334
+msgid "Fiber Channel Ports have been successfully changed."
+msgstr "Fiber Channel-poorten zijn met succes gewijzigd."
+
+#: sharing/forms.py:291
+msgid "A share with this name already exists."
+msgstr "Er bestaat al een share met deze naam."
+
+#: sharing/forms.py:527
+msgid "Whitespace is not a valid character for NFS shares."
+msgstr "Witruimte is geen geldig teken voor NFS-shares."
+
+#: storage/admin.py:510
+msgid "Online"
+msgstr "Online"
+
+#: storage/admin.py:636
+#: storage/forms.py:1851
+msgid "VMware Sync"
+msgstr "VMware Sync"
+
+#: storage/forms.py:732
+msgid ""
+"This is the disk with the non-zfs filesystem. It will be mounted, its data "
+"copied over to the path specified in the 'Destination' field below and then "
+"unmounted. Importing non-zfs disks permanently as a Volume is deprecated"
+msgstr ""
+"Dit is de schijf met het niet-zfs-bestandssysteem. Het zal worden gekoppeld, "
+"gegevens ervan`naar het opgegeven pad in het veld 'Bestemming' hieronder "
+"worden gekopieerd en daarna worden ontkoppeld. Het blijvend importeren van "
+"niet-zfs-schijven als volume is afgeschaft"
+
+#: storage/forms.py:746
+msgid "This must be a dataset/folder in an existing Volume"
+msgstr "Dit moet een gegevensset/map in een bestaand volume zijn"
+
+#: storage/forms.py:797
+msgid ""
+"The path %s does not exist.                    This must be a dataset/folder "
+"in an existing Volume"
+msgstr ""
+"Het pad %s bestaat niet.                    Dit moet een gegevensset/map in "
+"een bestaand volume zijn"
+
+#: storage/forms.py:1439
+msgid "The path %s already exists."
+msgstr "Het pad %s bestaat al."
+
+#: storage/forms.py:1553
+msgid "Allow the zvol to consume more then 80% of available space"
+msgstr ""
+"Toestaan dat het zvol meer dan 80% van de beschikbare ruimte mag gebruiken"
+
+#: storage/forms.py:2132
+msgid "This field will be empty if you have not setup a periodic snapshot task"
+msgstr ""
+"Dit veld is leeg als u geen taak voor periodieke momentopnamen hebt ingesteld"
+
+#: storage/models.py:413
+#: tasks/models.py:122
+#: tasks/models.py:450
+msgid "Every {0} minute(s)"
+msgstr "Elke {0} minuten"
+
+#: storage/models.py:421
+#: tasks/models.py:131
+#: tasks/models.py:459
+#: tasks/models.py:649
+msgid "Every {0} hour(s)"
+msgstr "Elke {0} uur"
+
+#: storage/models.py:429
+#: tasks/models.py:140
+#: tasks/models.py:468
+#: tasks/models.py:658
+msgid "Every {0} days"
+msgstr "Elke {0} dagen"
+
+#: storage/models.py:1026
+msgid "Exclude System Dataset"
+msgstr "Systeemgegevensset uitsluiten"
+
+#: storage/models.py:1027
+msgid ""
+"Do not snapshot the system dataset. This is useful when replicating the root "
+"of a pool to the root of a pool of another FreeNAS system."
+msgstr ""
+"Maak geen momentopname van de systeemgegevensset. Dit is nuttig bij "
+"replicatie van de hoofdmap van een pool naar de hoofdmap van een pool van "
+"een ander FreeNAS-systeem."
+
+#: storage/models.py:1125
+msgid ""
+"Username on the above VMware host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+"Gebruikersnaam op de bovenstaande VMware-host met voldoende bevoegdheden om "
+"momentopnamen van virtuele machines te maken."
+
+#: storage/models.py:1141
+msgid "The datastore on the VMware side that the filesystem corresponds to."
+msgstr ""
+"Het gegevensarchief aan de VMware-zijde waarmee het bestandssysteem "
+"overeenkomt."
+
+#: storage/models.py:1147
+#: templates/storage/index.html:38
+msgid "VMware-Snapshot"
+msgstr "VMware-momentopname"
+
+#: storage/models.py:1148
+msgid "VMware-Snapshots"
+msgstr "VMware-momentopnamen"
+
+#: storage/views.py:787
+msgid "Disk online operation has been issued."
+msgstr "Schijf actief maken is gestart."
+
+#: support/forms.py:58
+msgid "This is not a valid license."
+msgstr "Dit is geen geldige licentie."
+
+#: support/models.py:40
+msgid "From Email"
+msgstr "Van-e-mailadres"
+
+#: support/models.py:41
+msgid "The email address that the system will use to create this ticket"
+msgstr ""
+"Het e-mailadres dat het systeem voor het aanmaken van dit ticket zal "
+"gebruiken"
+
+#: support/utils.py:57
+#: support/utils.py:102
+#: support/utils.py:127
+msgid "Connection failed: %s"
+msgstr "Verbinding mislukt: %s"
+
+#: support/utils.py:59
+#: support/utils.py:104
+#: support/utils.py:129
+msgid "Connection timed out: %s"
+msgstr "Time-out voor verbinding: %s"
+
+#: support/utils.py:107
+msgid "Ticket creation failed, try again later."
+msgstr "Maken van ticket mislukt, probeer het later opnieuw."
+
+#: support/views.py:88
+msgid "License updated."
+msgstr "Licentie bijgewerkt."
+
+#: system/forms.py:1027
+msgid "Continue operation if the server could not be reached/validated."
+msgstr ""
+"Doorgaan met bewerking als de server niet kon worden bereikt/gevalideerd."
+
+#: system/forms.py:2215
+#: system/forms.py:2688
+msgid "A certificate with this name already exists."
+msgstr "Er bestaat al een certificaat met deze naam."
+
+#: system/forms.py:2245
+#: system/forms.py:2678
+msgid "Passphrase confirmation does not match."
+msgstr "Bevestiging van wachtwoordzin komt niet overeen."
+
+#: system/forms.py:2981
+msgid "Hostname or IP address"
+msgstr "Hostnaam of IP-adres"
+
+#: system/forms.py:2985
+msgid "User name"
+msgstr "Gebruikersnaam"
+
+#: system/forms.py:3001
+msgid "Remote directory"
+msgstr "Externe map"
+
+#: system/forms.py:3005
+#, fuzzy
+msgid "Backup data"
+msgstr "Back-up van gegevens maken"
+
+#: system/forms.py:3009
+msgid "Compress backup"
+msgstr "Back-up comprimeren"
+
+#: system/forms.py:3013
+msgid "Use key authentication"
+msgstr "Sleutelauthenticatie gebruiken"
+
+#: system/models.py:261
+msgid ""
+"By default only essential fields are shown. Fields considered advanced can "
+"be displayed through the Advanced Mode button."
+msgstr ""
+"Standaard worden alleen essentiële velden getoond. Velden die als "
+"geavanceerd worden beschouwd kunnen via de knop Geavanceerde modus worden "
+"weergegeven."
+
+#: system/models.py:267
+msgid "Enable automatic upload of kernel crash dumps and daily telemetry"
+msgstr ""
+"Automatisch uploaden van kernelcrashdumps en dagelijkse telemetrie "
+"inschakelen"
+
+#: system/models.py:269
+msgid ""
+"Attempt to automatically tune the network and ZFS system control variables "
+"based on memory available."
+msgstr ""
+"Proberen de besturingsvariabelen van het netwerk en ZFS-systeem automatisch "
+"te optimaliseren op basis van beschikbaar geheugen."
+
+#: system/models.py:292
+msgid "Periodic Notification User"
+msgstr "Gebruiker voor periodieke meldingen"
+
+#: system/models.py:277
+msgid "The kernel built with debug symbols will be booted instead."
+msgstr "In plaats daarvan wordt de met debugsymbolen gebouwde kernel opgestart."
+
+#: system/models.py:293
+msgid ""
+"If you wish periodic emails to be sent to a different email address than the "
+"alert emails are set to (root) set an email address for a user and select "
+"that user in the dropdown."
+msgstr ""
+"Als u periodieke e-mails naar een ander e-mailadres dan het ingestelde adres "
+"voor waarschuwingen wilt laten verzenden (root), stel dan een e-mailadres in "
+"voor een gebruiker en selecteer die gebruiker in de vervolgkeuzelijst."
+
+#: system/models.py:923
+msgid "CA"
+msgstr "CA"
+
+#: system/models.py:952
+msgid "Finished"
+msgstr "Voltooid"
+
+#: system/models.py:957
+msgid "Failed"
+msgstr "Mislukt"
+
+#: system/models.py:962
+msgid "Acknowledged"
+msgstr "Bevestigd"
+
+#: system/models.py:966
+#, fuzzy
+msgid "Backup worker PID"
+msgstr "PID van backup worker"
+
+#: system/models.py:971
+#, fuzzy
+msgid "Started at"
+msgstr "Gestart op"
+
+#: system/models.py:975
+#, fuzzy
+msgid "Finished at"
+msgstr "Voltooid op"
+
+#: system/models.py:995
+msgid "System Backup"
+msgstr "Systeemback-up"
+
+#: system/views.py:303
+msgid "Interval must be an integer."
+msgstr "Interval moet een geheel getal zijn."
+
+#: system/views.py:318
+msgid "Scrub interval successfully changed."
+msgstr "Reinigingsinterval met succes gewijzigd."
+
+#: system/views.py:1212
+#: system/views.py:1314
+msgid "Update has been applied"
+msgstr "Update is toegepast"
+
+#: system/alertmods/http_ssl.py:28
+msgid ""
+"The Certificate: %(cert_name)s is either malformed or invalid and cannot be "
+"used for any services. This Alert will remain here until the certificate is "
+"deleted"
+msgstr ""
+"Het certificaat %(cert_name)s is onjuist ingedeeld of ongeldig en kan niet "
+"voor services worden gebruikt. Deze waarschuwing blijft aanwezig totdat het "
+"certificaat wordt verwijderd"
+
+#: system/alertmods/http_ssl.py:38
+msgid ""
+"The Certificate Authority(CA): %(CA_name)s is either malformed or invalid "
+"and cannot be used for any services. This Alert will remain here until the "
+"CA is deleted"
+msgstr ""
+"De certificaatautoriteit (CA) %(CA_name)s is onjuist ingedeeld of ongeldig "
+"en kan niet voor services worden gebruikt. Deze waarschuwing blijft aanwezig "
+"totdat de CA wordt verwijderd"
+
+#: system/alertmods/license_expired.py:24
+msgid "Unable to decode %s license"
+msgstr "Kan %s-licentie niet ontcijferen"
+
+#: system/alertmods/license_expired.py:31
+msgid "Your %s license has expired"
+msgstr "Uw %s-licentie is verlopen"
+
+#: system/alertmods/license_expired.py:36
+#, fuzzy
+msgid "Your %(sw_name)s license is going to expire in %(date)s"
+msgstr "Uw %(sw_name)s-licentie zal op %(date)s verlopen"
+
+#: system/alertmods/upgrade_failed.py:19
+msgid "Update failed. Check /data/update.failed for further details."
+msgstr "Update mislukt. Bekijk /data/update.failed voor meer details."
+
+#: system/alertmods/vmwaresnap_fails.py:25
+msgid "VMWare snapshot %(snap)s failed for the following VMs: %(vms)s"
+msgstr "VMware-momentopname %(snap)s mislukt voor de volgende VM's: %(vms)s"
+
+#: tasks/forms.py:116
+msgid "Validate Remote Path"
+msgstr "Extern pad valideren"
+
+#: tasks/forms.py:119
+msgid ""
+"This ensures Remote Path Validation. Uncheck this if the remote machine is "
+"currently offline or beyond network reach. And/Or you do not want validation "
+"to be done."
+msgstr ""
+"Dit verzekert extern-padvalidatie. Vink dit uit als de externe machine "
+"momenteel offline of buiten bereik van het netwerk is. En/of als u geen "
+"validatie wilt laten uitvoeren."
+
+#: tasks/forms.py:281
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or uncheck the<br>"
+"'rsync_validate_rpath' field.<br>**Note**: This could also happen if the "
+"remote path entered<br> exceeded 255 characters and was truncated, please "
+"restrict it to<br>255. Or it could also be that your SSH credentials (remote "
+"host,etc) are wrong."
+msgstr ""
+"Het externe pad dat u hebt opgegeven bestaat niet of is geen map.<br>Maak er "
+"zelf een aan op de externe machine, of vink het vakje<br>"
+"'rsync_validate_rpath' uit.<br>**Noot**: dit kan ook gebeuren als het "
+"ingevoerde externe pad<br>langer is dan 255 tekens en is afgekapt; beperk "
+"dit tot 255.<br>Het kan ook zo zijn dat uw SSH-referenties (externe host, "
+"etc.) onjuist zijn."
+
+#: tasks/models.py:419
+msgid "Delay Updates"
+msgstr "Updates vertragen"
+
+#: tasks/models.py:420
+#, fuzzy
+msgid "Put all updated files into place at the end"
+msgstr "Alle bijgewerkte bestanden aan het einde op hun plek zetten"
+
+#: templates/reporting/index.html:15
+msgid "ZFS"
+msgstr "ZFS"
+
+#: templates/services/iscsi.html:45
+msgid "Fiber Channel Ports"
+msgstr "Fiber Channel-poorten"
+
+#: templates/sharing/index.html:27
+#, fuzzy
+msgid "Block"
+msgstr "Blokkeren"
+
+#: templates/sharing/index.html:27
+msgid "FC"
+msgstr "FC"
+
+#: templates/storage/disk_online.html:3
+msgid "Are you sure you want to online?"
+msgstr "Weet u zeker dat u online wilt gaan?"
+
+#: templates/support/home.html:3
+msgid "License Information"
+msgstr "Licentiegegevens"
+
+#: templates/support/home.html:6
+#: templates/support/home.html.py:8
+msgid "Update License"
+msgstr "Licentie bijwerken"
+
+#: templates/support/home.html:16
+msgid "Model"
+msgstr "Model"
+
+#: templates/support/home.html:18
+#, fuzzy
+msgid "System Serial"
+msgstr "Serienummer van systeem"
+
+#: templates/support/home.html:20
+msgid "Contract Type"
+msgstr "Type contract"
+
+#: templates/support/home.html:34
+msgid "Bronze"
+msgstr "Brons"
+
+#: templates/support/home.html:35
+msgid "Silver"
+msgstr "Zilver"
+
+#: templates/support/home.html:36
+msgid "Gold"
+msgstr "Goud"
+
+#: templates/support/home.html:37
+#: templates/support/home.html.py:38
+msgid "8x5 FreeNAS Support"
+msgstr "8x5 FreeNAS-ondersteuning"
+
+#: templates/support/home.html:38
+msgid "Maximum of 6 incidents per year"
+msgstr "Maximum van 6 incidenten per jaar"
+
+#: templates/support/home.html:40
+msgid "Contract Date"
+msgstr "Contractdatum"
+
+#: templates/support/home.html:41
+msgid "Expired"
+msgstr "Verlopen"
+
+#: templates/support/home.html:44
+msgid "Customer Name"
+msgstr "Klantnaam"
+
+#: templates/support/home.html:46
+msgid "Features"
+msgstr "Functies"
+
+#: templates/support/home.html:55
+msgid "Additional Hardware"
+msgstr "Aanvullende hardware"
+
+#: templates/support/home.html:58
+#, fuzzy
+msgid "E16 Enclosure"
+msgstr "E16-insluiting"
+
+#: templates/support/home.html:59
+#, fuzzy
+msgid "E24 Enclosure"
+msgstr "E24-insluiting"
+
+#: templates/support/home.html:60
+#, fuzzy
+msgid "E60 Enclosure"
+msgstr "E60-insluiting"
+
+#: templates/support/home.html:69
+msgid "License is not valid! Contact iXsystems support."
+msgstr "Licentie is niet geldig! Neem contact op met iXsystems support."
+
+#: templates/support/home.html:73
+msgid "License not found! Contact iXsystems support."
+msgstr "Licentie niet gevonden! Neem contact op met iXsystems support."
+
+#: templates/support/home.html:81
+msgid "Before filing a bug report or feature request, search"
+msgstr "Doorzoek voordat u een bugrapport of functieverzoek indient"
+
+#: templates/support/home.html:81
+msgid ""
+"to ensure the issue has not already been reported. If it has, add a comment "
+"to the existing issue instead of creating a new one."
+msgstr ""
+"om te controleren of het probleem al is gemeld. Als dat zo is, voeg dan een "
+"opmerking aan het bestaande probleem toe in plaats van een nieuwe melding "
+"aan te maken."
+
+#: templates/support/home.html:82
+msgid "For enterprise-grade storage solutions and support, please visit"
+msgstr "Bezoek voor opslagoplossingen en ondersteuning voor ondernemingen"
+
+#: templates/support/license_update.html:6
+msgid "Your license has expired, please place a new one."
+msgstr "Uw licentie is verlopen, plaats een nieuwe."
+
+#: templates/system/backup.html:3
+msgid ""
+"Backup of encrypted volumes is not supported. If your system have any, they "
+"will be skipped during the backup."
+msgstr ""
+"Back-ups van versleutelde volumes worden niet ondersteund. Als uw systeem er "
+"enkele bevat, worden deze tijdens het maken van de back-up overgeslagen."
+
+#: templates/system/bootenv_datagrid.html:86
+msgid "Automatic scrub interval (in days)"
+msgstr "Interval voor automatische reinigingen (in dagen)"
+
+#: templates/system/config_upload.html:5
+msgid "The system will reboot to perform this operation!"
+msgstr "Het systeem wordt opnieuw opgestart om deze bewerking uit te voeren!"
+
+#: templates/system/email_edit.html:21
+msgid ""
+"HINT: Test e-mails are sent to root user. To configure it use Account -> "
+"Users -> View Users -> root -> Change E-mail"
+msgstr ""
+"HINT: test-e-mails worden naar de rootgebruiker verzonden. Gebruik Account ->"
+" Gebruikers -> Gebruikers weergeven -> root -> E-mailadres wijzigen om dit "
+"te configureren"
+
+#: templates/system/initialwizard_volume.html:79
+msgid "Disks to be formatted"
+msgstr "Te formatteren schijven"
+
+#: templates/system/update.html:37
+msgid "The system will be rebooted after updates are applied."
+msgstr "Het systeem zal opnieuw worden opgestart nadat updates zijn toegepast."
+
+#: templates/system/update_check.html:42
+msgid "Update server could not be reached"
+msgstr "Updateserver kon niet worden bereikt"
+
+#: tools/update_check.py:96
+msgid "Update Available"
+msgstr "Update beschikbaar"
+
+#: tools/update_check.py:98
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""
+"Er is een nieuwe update beschikbaar voor de train %(train)s.\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"
