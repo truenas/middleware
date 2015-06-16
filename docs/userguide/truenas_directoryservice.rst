@@ -563,9 +563,9 @@ shown in Figure 9.5a.
 
 **Figure 9.5a: Adding a Kerberos Realm**
 
-|realm1.png|
+|realm1a.png|
 
-.. |realm1.png| image:: images/realm1.png
+.. |realm1a.png| image:: images/realm1a.png
 
 Table 9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode"
 button or configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
@@ -579,7 +579,7 @@ button or configure the system to always display these settings by checking the 
 | Realm                  | string    | mandatory; name of the realm                                                                                     |
 |                        |           |                                                                                                                  |
 +------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
-| KDC                    | string    | name of the Key Distribution Center                                                                              |
+| KDC                    | string    | only available in "Advanced Mode"; name of the Key Distribution Center                                           |
 |                        |           |                                                                                                                  |
 +------------------------+-----------+------------------------------------------------------------------------------------------------------------------+
 | Admin Server           | string    | only available in "Advanced Mode"; server where all changes to the database are performed                        |
