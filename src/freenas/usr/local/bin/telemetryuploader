@@ -6,13 +6,20 @@ import uuid
 import time
 import sys
 import os
+import traceback
+import subprocess
 
 parser = argparse.ArgumentParser(description='send data to ix systems')
 parser.add_argument('files', metavar='files', type=str, nargs='+', help='files to upload')
 parser.add_argument('--jitter', action='store_true',  help='delay running based on hash of UUID.')
+parser.add_argument('--debug', action='store_true',  help="Debug/Verbose output")
+
 args = parser.parse_args()
 
 hostid = ''
+dmisha256 = ''
+sha256 = ''
+
 
 if os.path.isfile("/etc/hostid"):
     f = open("/etc/hostid")
@@ -20,6 +27,11 @@ if os.path.isfile("/etc/hostid"):
     f.close()
     u = uuid.UUID("{" + hostid + "}")
     m = u.int % 60
+
+if os.path.isfile("/tmp/dmisha.txt"):
+    f = open("/tmp/dmisha.txt")
+    dmisha256 = f.read().strip()
+    f.close()
 
 if args.jitter:
     # print "Sleeping for " + str(m) + " minutes \n"
@@ -32,9 +44,27 @@ else:
 
 
 for file in args.files:
-    files = {'docfile': open(file, 'rb')}
+    try:
+        if args.debug:
+            print " running sha256 "
+        sha256 = subprocess.check_output( [ "/sbin/sha256", "-q", file ]).strip()
+    except:
+        sha256 = ''
+        if args.debug:
+            var = traceback.format_exc().splitlines()
+            print var
+        
+    
+    files = {
+        'docfile': open(file, 'rb')
+    }
     data = {}
-    data = {'hostid': hostid}
-    # print data
-
+    data = { 'hostid': hostid, 'dmi-sha256': dmisha256, 'sha256': sha256 }
+    if args.debug:
+        print data
+    
     r = requests.post(url, data=data, files=files)
+    if args.debug:
+        print r
+        status_code = r.status_code
+        
