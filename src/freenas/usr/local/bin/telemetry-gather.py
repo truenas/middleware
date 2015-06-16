@@ -104,7 +104,7 @@ def dmisha256_v1():
     return sha256
 
 def parseDMILine(line):
-    global inBlock, whichBlock, data, skipTerms, goodBlocks, fieldsToCap
+    global inBlock, whichBlock, whichBlock2, data, skipTerms, goodBlocks, fieldsToCap
     rePatField = re.compile('^.*: (.*)$')
     
     p = line.split()
@@ -116,6 +116,8 @@ def parseDMILine(line):
         if p[0] != "Handle":
             for field in fieldsToCap[whichBlock].keys():
                 if p[0] == field:
+                    if whichBlock == "System" and whichBlock2 != 'Information':
+                        continue;
                     m = rePatField.match(line)
                     dataLoc = fieldsToCap[whichBlock][field]
                     if whichBlock == "Memory":
@@ -133,10 +135,11 @@ def parseDMILine(line):
         if p[0] == t:
             inBlock = 1
             whichBlock = t
+            whichBlock2 = p[1]
 
 
 def parseDMI(dmioutput):
-    global inBlock, whichBlock, data, skipTerms, goodBlocks, fieldsToCap
+    global inBlock, whichBlock, whichBlock2, data, skipTerms, goodBlocks, fieldsToCap
     OKS=0
     ERRORS=0
     skipTerms = [
@@ -172,6 +175,7 @@ def parseDMI(dmioutput):
     
     inBlock = 0
     whichBlock = ''
+    whichBlock2 = ''
 
     data = {}
     data['dmi-system-uuid'] = ''
