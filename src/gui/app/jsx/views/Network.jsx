@@ -14,7 +14,7 @@ import routerShim from "../components/mixins/routerShim";
 import SectionNav from "../components/SectionNav";
 
 var sections = [ { route: "network-config"
-                 , display: "Network Overview"
+                 , display: "Overview"
                  }
                , { route : "interfaces"
                  , display : "Interfaces"

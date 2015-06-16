@@ -1,49 +1,12 @@
-
-
 // Network Config
 .network-config {
-
-  .flex-display(flex);
-  .flex-flow(column);
-  .flex(1);
-
-  overflow: auto;
-
-  border-top  : 1px solid;
-  border-color: #e7e7e7;
+  border-top  : 1px solid #e7e7e7;
   margin-top  : 20px;
-
-  .panel-group {
-    width       : 90%;
-    margin-right: auto;
-    margin-left : auto;
-    margin-top  : 20px;
-
-    .flex-display(flex);
-    .flex-flow(row);
-    .flex(1);
-
-    .panel + .panel {
-      margin-top : 0px;
-      margin-left: 5px;
-    }
-  }
-
-  .panel {
-    .flex-display(flex);
-    .flex-flow(row);
-    .flex(1);
-  }
-
-  .network-attribute {
-
-  }
-
+  padding-top : 20px;
 }
 
 // Network Interface
 .network-interface {
-
   overflow: auto;
 
   .flex-display(flex);
@@ -58,7 +21,6 @@
 
   // This is only for the list of aliases for a given interface.
   .aliasDisplayList {
-
     .flex-display(flex);
     .flex-flow(row);
     .flex(1);
@@ -71,17 +33,12 @@
       .flex(1);
 
       .aliasItemIP {
-
         .flex(1 1 auto);
-
       }
 
       .aliasItemNetmask {
-
         .flex (1 1 auto);
-
       }
     }
   }
-
 }

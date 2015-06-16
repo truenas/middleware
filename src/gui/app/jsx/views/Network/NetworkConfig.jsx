@@ -14,6 +14,21 @@ import NetworkConfigStore from "../../stores/NetworkConfigStore";
 
 import Icon from "../../components/Icon";
 
+var NetworkAttribute = React.createClass({
+  render: function () {
+    return (
+      <div className="col-sm-6 row form-group">
+        <label className="col-sm-4">
+          {this.props.name}:
+        </label>
+        <div className="col-sm-8">
+          {this.props.value}
+        </div>
+      </div>
+    );
+  }
+});
+
 const NetworkConfig = React.createClass({
 
   getInitialState: function () {
@@ -40,62 +55,52 @@ const NetworkConfig = React.createClass({
   }
 
   , render: function () {
-    let dhcpGatewayIcon = "";
-    let dhcpDNSIcon = "";
-    let gatewayIPv4 = "";
-    let gatewayIPv6 = "";
+    var gateway = this.state.networkConfig.gateway || {};
 
-    if ( !_.isEmpty( this.state.networkConfig ) ) {
-      dhcpGatewayIcon = this.state.networkConfig.dhcp["assign_gateway"]
-                      ? "check text-primary"
-                      : "times text-muted";
+    var attributes =
+      [ { name: 'Hostname'
+        , value: 'FREENAS-MINI'
+        }
+      , { name: 'IPv4 Default Gateway'
+        , value: gateway.ipv4 || 'Not Used'
+        }
+      , { name: 'Domain'
+        , value: 'office.local'
+        }
+      , { name: 'IPv6 Default Gateway'
+        , value: gateway.ipv6 || 'Not Used'
+        }
+      , { name: 'Interfaces'
+        , value: '4'
+        }
+      , { name: 'Link Aggregation'
+        , value: '2'
+        }
+      , { name: 'Static Routes'
+        , value: '3'
+        }
+      , { name: 'VLANs'
+        , value: '1'
+        }
+      ];
 
-      dhcpDNSIcon = this.state.networkConfig.dhcp["assign_dns"]
-                  ? "check text-primary"
-                  : "times text-muted";
-
-      gatewayIPv4 = this.state.networkConfig.gateway.ipv4
-              ? this.state.gateway.ipv4
-              : "--";
-
-      gatewayIPv6 = this.state.networkConfig.gateway.ipv6
-              ? this.state.networkConfig.gateway.ipv6
-              : "--";
-    }
+    var attributeNodes = _.map(attributes, function (attribute) {
+      return (
+        <NetworkAttribute name={attribute.name} value={attribute.value} />
+      );
+    });
 
     return (
       <main>
         <div className = "network-config container-fluid">
-          <TWBS.PanelGroup>
-            <TWBS.Panel>
-              { "DHCP" }
-              <TWBS.ListGroup fill >
-                <TWBS.ListGroupItem className = "network-attribute">
-                  { "Assign DNS "}
-                  <Icon glyph = { dhcpDNSIcon } />
-                </TWBS.ListGroupItem>
-                <TWBS.ListGroupItem className = "network-attribute">
-                  { "Assign Gateway "}
-                  <Icon glyph = { dhcpGatewayIcon } />
-                </TWBS.ListGroupItem>
-              </TWBS.ListGroup>
-            </TWBS.Panel>
-            <TWBS.Panel>
-              { "Default Gateways" }
-              <TWBS.ListGroup fill >
-                <TWBS.ListGroupItem className = "network-attribute">
-                  { "IPv4 Default Gateway: "}
-                  { gatewayIPv4 }
-                </TWBS.ListGroupItem>
-                <TWBS.ListGroupItem className = "network-attribute">
-                  { "IPv6 Default Gateway: "}
-                  { gatewayIPv6 }
-                </TWBS.ListGroupItem>
-              </TWBS.ListGroup>
-            </TWBS.Panel>
-          </TWBS.PanelGroup>
+          <TWBS.Panel header='General'>
+            <div className="row">
+              {attributeNodes}
+            </div>
+          </TWBS.Panel>
         </div>
-      </main> )
+      </main>
+    );
   }
 
 });
