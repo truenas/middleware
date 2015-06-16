@@ -44,6 +44,7 @@ SIG_BLOCK = 1
 SIG_UNBLOCK = 2
 SIG_SETMASK = 3
 
+
 def unblock_sigchld():
     libc = ctypes.cdll.LoadLibrary("libc.so.7")
     mask = (ctypes.c_uint32 * 4)(0, 0, 0, 0)
@@ -53,18 +54,28 @@ def unblock_sigchld():
     libc.sigprocmask(SIG_SETMASK, pmask, None)
 
 
+def fastclose():
+    #FIXME: Take into account keep_fd and determine which fds from /dev/fd
+    # or fstat. See #10206
+    for fd in range(3, 1024):
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+
+
 def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
     if not quiet:
         logger.log(logging.NOTICE if important else logging.DEBUG,
             "Popen()ing: " + command)
     args = shlex_split(str(command))
 
-    preexec_fn = None
+    preexec_fn = fastclose
     if allowfork:
-        preexec_fn = unblock_sigchld
+        preexec_fn = lambda : (fastclose(), unblock_sigchld())
 
     return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        close_fds=True, preexec_fn=preexec_fn)
+        close_fds=False, preexec_fn=preexec_fn)
 
 
 def run(command, important=True, logger=log, allowfork=False, quiet=False, timeout=-1):
