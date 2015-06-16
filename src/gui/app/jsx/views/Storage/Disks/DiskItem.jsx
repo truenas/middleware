@@ -6,11 +6,27 @@
 
 import React from "react";
 
+import ByteCalc from "../../../common/ByteCalc";
+
 const DiskItem = React.createClass(
-  { render: function () {
-      console.log( this.props );
+  { getInitialState: function () {
+      return {
+        byteValue: ""
+      };
+    }
+
+  , handleByteChange: function ( event ) {
+      this.setState({
+        byteValue: event.target.value
+      });
+    }
+
+  , render: function () {
       return (
-        <h1>I AM A DISK YOLO</h1>
+        <div>
+          <input onChange = { this.handleByteChange } />
+          <h1>{ ByteCalc.humanize( this.state.byteValue ) }</h1>
+        </div>
       )
     }
   }

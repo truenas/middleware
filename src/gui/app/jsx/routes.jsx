@@ -138,16 +138,10 @@ module.exports = (
       route   = "storage"
       handler = { Storage } >
       <Route
-        name    = "disks"
-        route   = "disks"
-        handler = { Disks }
-      >
-        <Route
-          name    = "disk-item-view"
-          path    = ":diskSerial"
-          handler = { DiskItem }
-        />
-      </Route>
+        name    = "disk-item-view"
+        path    = "disks/:diskSerial"
+        handler = { DiskItem }
+      />
     </Route>
 
     {/* SHARING */}
