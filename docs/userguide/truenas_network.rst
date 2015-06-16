@@ -265,9 +265,9 @@ GUI.
 
 **Figure 7.4a: IPMI Configuration**
 
-|ipmi.png|
+|tn_ipmi.png|
 
-.. |ipmi.png| image:: images/ipmi.png
+.. |tn_ipmi.png| image:: images/tn_ipmi.png
 
 **Table 7.4a: IPMI Options**
 
