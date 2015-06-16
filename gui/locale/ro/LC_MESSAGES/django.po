@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-02-22 15:30+0000\n"
+"PO-Revision-Date: 2015-06-07 14:53+0000\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1393083046.0\n"
+"X-POOTLE-MTIME: 1433688782.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -107,7 +107,7 @@ msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Intotdeauna deschis"
+msgstr "Pornit mereu"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
@@ -278,7 +278,7 @@ msgstr "Dispozitiv"
 
 #: choices.py:209
 msgid "ZFS Volume"
-msgstr "Volum ZFS"
+msgstr "SMB3"
 
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
@@ -578,7 +578,7 @@ msgstr "Cele două câmpuri de parole nu se potrivesc."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /inexistent"
+msgstr "Directorul Home trebuie să înceapă cu /mnt/ sau să fie /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
@@ -690,7 +690,7 @@ msgstr "ID grup primar"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr "Folder Acasă"
+msgstr "Folderul Home"
 
 #: account/models.py:119
 msgid "Full Name"
@@ -1325,7 +1325,7 @@ msgstr "Acesta nu este o mască validă"
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
-"Acest câmp este obligatoriu pentru \"Activare parcurgere directoare Home\""
+"Acest câmp este obligatoriu pentru \"Activare navigare directoare Home\""
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
@@ -1355,7 +1355,7 @@ msgstr "Permisiuni fişier"
 
 #: services/forms.py:170
 msgid "Directory Permission"
-msgstr "Permisiuni director"
+msgstr "Permisiuni Directory"
 
 #: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
@@ -1452,7 +1452,7 @@ msgstr "Confirmă parolă Administrator"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr "Serviciul Director Activ a eșuat să se reîncarce."
+msgstr "Serviciul activedirectory nu a putut fi reâncărcat."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
@@ -1718,7 +1718,7 @@ msgstr ""
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
-msgstr "Mască director"
+msgstr "Mască Directory"
 
 #: services/models.py:129
 msgid ""
@@ -1757,7 +1757,7 @@ msgstr ""
 
 #: services/models.py:147
 msgid "Enable home directories"
-msgstr "Activare directoarele home"
+msgstr "Activare directoare home"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
@@ -1765,7 +1765,7 @@ msgstr "Activează/dezactivează directorul home pentru utilizatorul samba."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr "Activare parcurgere director home"
+msgstr "Activare navigare director home"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
@@ -1775,7 +1775,7 @@ msgstr ""
 
 #: services/models.py:156
 msgid "Home directories"
-msgstr "Director Acasă"
+msgstr "Directoare home"
 
 #: services/models.py:160
 msgid "Homes auxiliary parameters"
@@ -2675,7 +2675,7 @@ msgstr "FTP"
 
 #: services/models.py:1113
 msgid "Directory"
-msgstr "Director"
+msgstr "Directory"
 
 #: services/models.py:1114
 msgid ""
@@ -2932,7 +2932,7 @@ msgstr ""
 
 #: services/models.py:1341
 msgid "Encryption Mode"
-msgstr "Model criptare"
+msgstr "Mod criptare"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
@@ -3121,7 +3121,7 @@ msgstr "S.M.A.R.T."
 
 #: services/nav.py:15
 msgid "Control Services"
-msgstr "Servicii control"
+msgstr "Servicii de control"
 
 #~ msgid "Device Extents"
 #~ msgstr "Extensii dispozitiv"
@@ -4222,7 +4222,7 @@ msgstr "Sarcină periodică punct de restaurare"
 
 #: storage/models.py:786 templates/storage/index.html:14
 msgid "Periodic Snapshot Tasks"
-msgstr "Sarcini periodice puncte de restaurare"
+msgstr "Snapshot periodic"
 
 #: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
@@ -4974,11 +4974,11 @@ msgstr "Testul dumneavoastră de email a fost trimis!"
 
 #: templates/base.html:51
 msgid "expand all"
-msgstr "În detaliu"
+msgstr "Mod extins"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr "Pe ansamblu"
+msgstr "Mod restrâns"
 
 #: templates/menubar.html:36
 msgid "Log Out"
@@ -6753,7 +6753,7 @@ msgstr "Adresă invalidă: %s"
 #: jails/models.py:403
 #: templates/plugins/plugins.html:21
 msgid "Jail"
-msgstr "Zonă captivă (Jail)"
+msgstr "Jail"
 
 #: jails/admin.py:206
 msgid "Start"
@@ -6770,7 +6770,7 @@ msgstr "tip"
 
 #: jails/forms.py:171
 msgid "No jail root configured."
-msgstr "Rădăcina petru jail nu este configurată."
+msgstr "Niciun Jail root configurat."
 
 #: jails/forms.py:459
 msgid "autostart"
@@ -6782,7 +6782,7 @@ msgstr "Calea nu poate fi montată %(source)s: %(error)s"
 
 #: jails/models.py:73
 msgid "Jail Name"
-msgstr "Nume jail"
+msgstr "Nume Jail"
 
 #: jails/models.py:109
 msgid "IPv4 bridge netmask"
@@ -6802,19 +6802,19 @@ msgstr "MAC"
 
 #: jails/models.py:224
 msgid "This jail is required by %d plugin(s)"
-msgstr "Această zonă jail este cerută de pluginul/rile %d"
+msgstr "Zonă Jail cerută de plugin-ul/urile %d"
 
 #: jails/models.py:260
 msgid "Jail Root"
-msgstr "Root jail"
+msgstr "Jail Root"
 
 #: jails/models.py:261
 msgid "Path where to store jail data"
-msgstr "Calea de stocate a datelor pentru jail"
+msgstr "Calea de stocate a datelor pentru Jail"
 
 #: jails/models.py:266
 msgid "IPv4 network range for jails and plugins"
-msgstr "Domeniu rețea IPv4 pentru zone jail și plugin-uri"
+msgstr "Domeniu de adrese IPv4 pentru zone jail și plugin-uri"
 
 #: jails/models.py:271
 msgid "IPv4 network start address for jails and plugins"
@@ -6834,7 +6834,7 @@ msgstr "Adresa IPv6 finală"
 
 #: jails/models.py:291
 msgid "IPv6 network end address for jails and plugins"
-msgstr "Adresa IPv6 finală pentru zonele jail și plugin-uri"
+msgstr "Adresa IPv6 finală pentru zone jail și plugin-uri"
 
 #: jails/models.py:294
 msgid "Collection URL"
@@ -6855,7 +6855,7 @@ msgstr "Șablonul trebuie să aibă 0 instanțe!"
 #: jails/models.py:395
 #: jails/models.py:396
 msgid "Jail Templates"
-msgstr "Modele jail"
+msgstr " Șabloane Jail"
 
 #: jails/models.py:415
 msgid "Read-Only"
@@ -6863,11 +6863,11 @@ msgstr "Doar-citire"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
-msgstr "Adăugare model jail"
+msgstr "Adăugare șabloane Jail"
 
 #: jails/nav.py:100
 msgid "View Jails"
-msgstr "Vizualizare Jail"
+msgstr "Vizualizare zone Jail"
 
 #: jails/utils.py:640
 msgid "Failed to install plugin: %s"
@@ -6883,11 +6883,11 @@ msgstr "Jail editat cu scucces."
 
 #: jails/views.py:136
 msgid "Jail successfully started."
-msgstr "Jail pornit cu scucces."
+msgstr "Zonă Jail pornită cu scucces."
 
 #: jails/views.py:399
 msgid "Jail template successfully edited."
-msgstr "Șablon jail editat cu succes."
+msgstr "Șablon Jail editat cu succes."
 
 #: middleware/notifier.py:2877
 msgid "No RPC Token!"
@@ -6970,7 +6970,7 @@ msgstr "Plugin Jail"
 
 #: plugins/forms.py:106
 msgid "The plugin jail that the PBI is to be installed in."
-msgstr "Zona jail a plugin-urilor unde va fi instalat PBI."
+msgstr "Zona jail pentru plugin-uri unde va fi instalat PBI."
 
 #: plugins/forms.py:215
 msgid "Unable to set repository: %s"
@@ -7051,8 +7051,8 @@ msgid ""
 "For local users, only allow access to user home directory unless the user is "
 "a member of group wheel."
 msgstr ""
-"Pentru utilizatorii locali permite accesul doar la directorul home înafară "
-"de cazul în care aceștia fac parte din grupul wheel."
+"Pentru utilizatorii locali permite accesul doar la directorul home în afara "
+"cazului în care aceștia fac parte din grupul wheel."
 
 #: services/models.py:1194
 msgid "Enable TLS"
@@ -7428,7 +7428,7 @@ msgstr "Port WebGUI HTTP"
 
 #: system/models.py:108
 msgid "Directory Service"
-msgstr "Serviciu Directory"
+msgstr "Serviciul Directory"
 
 #: system/models.py:193
 msgid "Set this to match your serial port speed"
@@ -7697,7 +7697,7 @@ msgstr "Autostart"
 
 #: jails/admin.py:192
 msgid "Edit Jail"
-msgstr "Editare jail"
+msgstr "Editare Jail"
 
 #: jails/admin.py:195
 #: jails/nav.py:264
@@ -7724,7 +7724,7 @@ msgstr "vanilla"
 #: jails/forms.py:234
 #: jails/utils.py:623
 msgid "Unable to find template!"
-msgstr "Modelul nu poate fi găsit!"
+msgstr " Șablonul nu poate fi găsit!"
 
 #: jails/forms.py:460
 #: jails/models.py:158
@@ -7742,7 +7742,7 @@ msgstr "Creare director destinație dacă acesta nu există"
 
 #: jails/forms.py:694
 msgid "This shouldn't happen, but the jail could not be found"
-msgstr "N-ar trebui să se întîmple, dar zona jail nu a putut fi găsită"
+msgstr "Zona jail nu a putut fi găsită"
 
 #: jails/hook.py:13
 #: jails/models.py:252
@@ -7750,7 +7750,7 @@ msgstr "N-ar trebui să se întîmple, dar zona jail nu a putut fi găsită"
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr "Zone captive (Jail)"
+msgstr "Zone Jail"
 
 #: jails/models.py:83
 msgid "IPv4 address"
@@ -7822,7 +7822,7 @@ msgstr "Dispozitiv stocare adăugat cu succes."
 
 #: jails/views.py:157
 msgid "Jail successfully stopped."
-msgstr "Jail oprit cu scucces."
+msgstr "Zonă Jail oprită cu succes."
 
 #: middleware/zfs.py:633
 msgid "Completed"
@@ -8047,7 +8047,7 @@ msgstr "Server Catalog Global"
 
 #: services/models.py:1551
 msgid "Hostname of the kerberos password server to use."
-msgstr "Nmele serverului de parola kerberos utilizat."
+msgstr "Numele serverului de parole kerberos utilizat."
 
 #: services/models.py:1555
 msgid "AD timeout"
@@ -8559,19 +8559,19 @@ msgstr "Gateway IPv6 implicit "
 
 #: jails/models.py:281
 msgid "IPv6 network range for jails and plugins"
-msgstr "Interval de adrese IPv6 pentru zone jail și plugin-uri"
+msgstr "Domeniu de adrese IPv6 pentru zone jail și plugin-uri"
 
 #: jails/models.py:286
 msgid "IPv6 network start address for jails and plugins"
-msgstr "Adresa IPv6 de start pentu zonele jail și plugin-uri"
+msgstr "Adresa IPv6 de start pentu zone jail și plugin-uri"
 
 #: jails/nav.py:70
 msgid "Add Jails"
-msgstr "Adăugare jail"
+msgstr "Adăugare zone Jail"
 
 #: jails/nav.py:114
 msgid "View Jail Templates"
-msgstr "Vizualizare modele jail"
+msgstr "Vizualizare șabloane Jail"
 
 #: jails/utils.py:679
 msgid "You need to create a ZFS volume to proceed!"
@@ -8579,7 +8579,7 @@ msgstr "Va trebui să creați mai întîi un volum ZFS!"
 
 #: jails/views.py:178
 msgid "Jail successfully deleted."
-msgstr "Jail şters cu succes."
+msgstr "Zonă Jail ştearsă cu succes."
 
 #: services/models.py:216
 msgid ""
@@ -8852,80 +8852,76 @@ msgstr "Scanare"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (cel mai rapid)"
+msgstr "lz4 (cel mai rapid)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (mediu)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (cea mai bună compresie)"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Folder Acasă"
+msgstr "Creare folder Home în"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Ultimul punct de restaurare"
+msgstr "Snapshot invalid"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
-msgstr ""
+msgstr "Jail root trebuie să fie într-un volum sau dataset!"
 
 #: jails/models.py:178
 #, fuzzy
@@ -8933,9 +8929,8 @@ msgid "Comma delimited list of sysctl's"
 msgstr "Lista de servere NIS separate prin virgulă."
 
 #: jails/models.py:493
-#, fuzzy
 msgid "Jail root is not configured!"
-msgstr "Rădăcina petru jail nu este configurată."
+msgstr "Jail root neconfigurat!"
 
 #: jails/models.py:537
 #, fuzzy
@@ -8943,29 +8938,25 @@ msgid "Filesystem"
 msgstr "Tip sistem fişiere"
 
 #: jails/utils.py:695
-#, fuzzy
 msgid "You need to create a volume to proceed!"
-msgstr "Va trebui să creați mai întîi un volum ZFS!"
+msgstr "Trebuie să creați un volum ZFS mai întâi!"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "Eroare creare set date %(name)s: %(error)s"
+msgstr "Eroare creare folder %(name)s: %(error)s"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Acţiune"
+msgstr "Activ"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
 msgstr ""
 
 #: middleware/notifier.py:3822
-#, fuzzy
 msgid "Init"
-msgstr "Pre Init"
+msgstr "Init"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -8980,14 +8971,12 @@ msgid "Down"
 msgstr ""
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Stare"
+msgstr "Stare media"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Modificare"
+msgstr "Canal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
@@ -9013,9 +9002,8 @@ msgid "Install plugin"
 msgstr "Instalare plugin"
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Pagina nu a fost găsită"
+msgstr "Zona jail nu a fost găsită"
 
 #: services/forms.py:220
 #, fuzzy
@@ -9023,14 +9011,12 @@ msgid "This path does not exist."
 msgstr "Calea %s nu există"
 
 #: services/forms.py:222
-#, fuzzy
 msgid "This path is not a directory."
-msgstr "Calea nu este un folder."
+msgstr "Această cale nu este un folder."
 
 #: services/forms.py:754
-#, fuzzy
 msgid "Confirm Domain Account Password"
-msgstr "Confirmă parolă Administrator"
+msgstr "Confirmă parola Administratorului de Domeniu"
 
 #: services/forms.py:758
 #: services/models.py:1612
@@ -9039,9 +9025,8 @@ msgid "Kerberos keytab"
 msgstr "Fişier chei Kerberos"
 
 #: services/forms.py:1081
-#, fuzzy
 msgid "LUN ID already exists."
-msgstr "Acest IP există deja."
+msgstr "Acest ID LUN există deja."
 
 #: services/models.py:109
 msgid "Use syslog"
@@ -9064,9 +9049,8 @@ msgid "The highest protocol version that will be supported by the server"
 msgstr ""
 
 #: services/models.py:246
-#, fuzzy
 msgid "Allow execute always"
-msgstr "Comenzi GID repetate"
+msgstr "Permisiune permanentă execuție"
 
 #: services/models.py:248
 msgid ""
@@ -9105,22 +9089,18 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1595
-#, fuzzy
 msgid "Domain Account Name"
-msgstr "Nume domeniu"
+msgstr "Nume domeniu autentificare"
 
 #: services/models.py:1596
-#, fuzzy
 msgid "Domain account name to bind as"
-msgstr "Nume cont administrator domeniu."
+msgstr "Nume domeniu  conturi de utilizat"
 
 #: services/models.py:1600
-#, fuzzy
 msgid "Domain Account Password"
-msgstr "Parolă cont administrator domeniu."
+msgstr "Parola administratorului de domeniu"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "Domain Account password."
 msgstr "Parolă cont administrator domeniu."
 
@@ -9129,23 +9109,20 @@ msgid "Use keytab"
 msgstr ""
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
-msgstr "Fişier chei Kerberos"
+msgstr "Fişier keytab Kerberos"
 
 #: services/models.py:1850
-#, fuzzy
 msgid "Interface Description"
-msgstr "Descriere"
+msgstr "Descriere interfață"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
 msgstr ""
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "Țara"
+msgstr "Cod de țară"
 
 #: services/models.py:1858
 msgid ""
@@ -9171,15 +9148,13 @@ msgid "Realm Name, eg EXAMPLE.ORG"
 msgstr ""
 
 #: services/models.py:2064
-#, fuzzy
 msgid "Domain Name in old format, eg EXAMPLE"
-msgstr "Nume grup sau domeniu în formatul vechi, de ex. WORKGROUP"
+msgstr "Nume domeniu în formatul vechi, de ex. EXAMPLE"
 
 #: services/models.py:2068
 #: services/models.py:2069
-#, fuzzy
 msgid "Server Role"
-msgstr "Nume server"
+msgstr "Rol server"
 
 #: services/models.py:2075
 msgid "DNS Backend"
@@ -9259,19 +9234,16 @@ msgstr ""
 "Altfel, doar directorul cu cea mai mare ierarhie poate fi montat."
 
 #: storage/admin.py:130
-#, fuzzy
 msgid "Compression"
 msgstr "Compresie"
 
 #: storage/admin.py:136
-#, fuzzy
 msgid "Compression Ratio"
 msgstr "Nivel compresie"
 
 #: storage/admin.py:297
-#, fuzzy
 msgid "Lock Volume"
-msgstr "Volum"
+msgstr "Blocare volum"
 
 #: storage/admin.py:349
 msgid "Upgrade"
@@ -9331,7 +9303,6 @@ msgid "0=None; example: 1 GiB"
 msgstr "0=Nimic; de ex. 1g"
 
 #: storage/forms.py:1506
-#, fuzzy
 msgid ""
 "Dataset names must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
@@ -9340,12 +9311,10 @@ msgstr ""
 "conţine doar caracterele (-), (_), (:) şi (.)."
 
 #: storage/forms.py:1606
-#, fuzzy
 msgid "Example: 1 GiB"
-msgstr "Exemplu: 1g"
+msgstr "Exemplu: 1 GiB"
 
 #: storage/forms.py:1615
-#, fuzzy
 msgid ""
 "Creates a sparse volume with no reservation, also known as \"thin "
 "provisioning\". A \"sparse volume\" is a volume where the reservation is "
@@ -9362,24 +9331,20 @@ msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
 msgstr ""
 
 #: storage/forms.py:1684
-#, fuzzy
 msgid "Permission Type"
-msgstr "Permisiuni fişier"
+msgstr "Tip permisiune"
 
 #: storage/forms.py:1817
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
-msgstr "Doar [-a-zA-Z0-9_.] sunt permise în denumirea punctului de restaurare"
+msgstr "Doar caracterele [-a-zA-Z0-9_.] sunt permise în numele snapshot-ului"
 
 #: storage/forms.py:1860
-#, fuzzy
 msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
-msgstr "Doar [-a-zA-Z0-9_./] sunt permise în denumirea clonei"
+msgstr "Doar caracterele [-a-zA-Z0-9_./] sunt permise în numele clonei"
 
 #: storage/forms.py:2473
-#, fuzzy
 msgid "Root password"
-msgstr "Parolă legătură Root"
+msgstr "Parolă Root"
 
 #: storage/models.py:856
 #, fuzzy
@@ -9409,14 +9374,12 @@ msgid "Sending"
 msgstr ""
 
 #: storage/views.py:980
-#, fuzzy
 msgid "Volume locked"
-msgstr "Volum deblocat"
+msgstr "Volum blocat"
 
 #: storage/views.py:1151
-#, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "Următoarele discuri nu au putut fi atașate: %s"
+msgstr "Structura pool nu a putut fi upgradată: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
@@ -9430,29 +9393,24 @@ msgid "Run Now"
 msgstr ""
 
 #: system/forms.py:1018
-#, fuzzy
 msgid "This variable already exists"
-msgstr "Acest IP există deja."
+msgstr "Acest variabilă există deja"
 
 #: system/forms.py:1124
-#, fuzzy
 msgid "System dataset pool"
-msgstr "Set date nativ"
+msgstr "Structura pool set de date sistem"
 
 #: system/forms.py:1148
-#, fuzzy
 msgid "Unable to create system dataset!"
-msgstr "Modelul nu poate fi găsit!"
+msgstr "Setul de date sistem nu poate fi creat!"
 
 #: system/forms.py:1155
-#, fuzzy
 msgid "Unable to migrate system dataset!"
-msgstr "Modelul nu poate fi găsit!"
+msgstr "Setul de date sistem nu poate fi migrat!"
 
 #: system/models.py:80
-#, fuzzy
 msgid "WebGUI HTTP -> HTTPS Redirect"
-msgstr "Port WebGUI HTTP"
+msgstr "HTTP WebGUI -> Redirectare HTTPS"
 
 #: system/models.py:83
 msgid ""
@@ -9608,9 +9566,8 @@ msgid ""
 msgstr ""
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Sigur doriţi să scoateţi discul?"
+msgstr "Doriţi să editați?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9621,9 +9578,8 @@ msgid "Network connectivity will be interrupted"
 msgstr ""
 
 #: services/models.py:117
-#, fuzzy
 msgid "Domain logons"
-msgstr "Nume domeniu"
+msgstr "Autentificări domeniu"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
@@ -9646,29 +9602,27 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Parolele care conțin caracterul (?) nu pot fi utilizate în acest moment din "
+"cauza problemelor cu CIFS"
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Serviciul AFP a eșuat să se reîncarce"
+msgstr "NT4 nu a putut fi reâncărcat."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Serviciul Director Activ a eșuat să se reîncarce."
+msgstr "Serviciul Active Directory nu a putut fi reâncărcat."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Serviciul AFP a eșuat să se reîncarce"
+msgstr "LDAP nu a putut fi reâncărcat."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
-msgstr "Activat"
+msgstr "Activare"
 
 #: directoryservice/models.py:295
 #, fuzzy
@@ -9682,9 +9636,8 @@ msgstr "Parola admin"
 
 #: services/forms.py:753
 #: services/forms.py:896
-#, fuzzy
 msgid "Certificate"
-msgstr "Certificat SSL"
+msgstr "Certificat"
 
 #: services/forms.py:864
 #, fuzzy
@@ -9693,9 +9646,8 @@ msgstr "Parolă legătură Root"
 
 #: services/models.py:1623
 #: services/models.py:1835
-#, fuzzy
 msgid "Upload your certificate file here."
-msgstr "Aici se pune conţinutul certificatului auto-semnat."
+msgstr "Încărcați aici fișierul certificat."
 
 #: system/models.py:1148
 #, fuzzy
@@ -9710,9 +9662,8 @@ msgstr ""
 
 #: system/nav.py:45
 #: templates/system/index.html:3
-#, fuzzy
 msgid "Information"
-msgstr "Informal"
+msgstr "Informații"
 
 #: tasks/nav.py:4
 #: templates/menubar.html:13
@@ -9784,50 +9735,46 @@ msgstr ""
 #: templates/directoryservice/ldap_edit.html:8
 #: templates/directoryservice/nis_edit.html:8
 #: templates/directoryservice/nt4_edit.html:8
-#, fuzzy
 msgid "Rebuild Directory Service Cache"
-msgstr "Serviciu Directory"
+msgstr "Recreere cache serviciu Directory"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Citire"
+msgstr "adaugă"
 
 #: choices.py:788
-#, fuzzy
 msgid "autorid"
-msgstr "autostart"
+msgstr "autorid"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "hash"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "Vineri"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -9839,7 +9786,7 @@ msgstr ""
 #: directoryservice/models.py:444
 #: directoryservice/models.py:464
 msgid "Range Low"
-msgstr ""
+msgstr "Interval inferior"
 
 #: directoryservice/models.py:138
 #: directoryservice/models.py:178
@@ -9851,12 +9798,11 @@ msgstr ""
 #: directoryservice/models.py:448
 #: directoryservice/models.py:468
 msgid "Range High"
-msgstr ""
+msgstr "Interval superior"
 
 #: directoryservice/models.py:142
-#, fuzzy
 msgid "Schema Mode"
-msgstr "Mod acces"
+msgstr "Schema Mode"
 
 #: directoryservice/models.py:145
 msgid ""
@@ -9867,24 +9813,29 @@ msgid ""
 ". Please note that primary group membership is currently always calculated "
 "via the \"primaryGroupID\" LDAP attribute."
 msgstr ""
+"Definește schema utilizată de idmap_ad pentru interogarea Active Directory "
+"pentru informații despre utilizatori și grupuri de utilizatori. Schema "
+"utilizată poate fi RFC2307 utilizată în Windows 2003 R2 sau schema Service "
+"for Unix (SFU). Pentru SFU 3.0 sau 3.5 selectați \"sfu\" iar pentru SFU 2.0 "
+"selectați \"sfu20\". Apartenența la grupul primar va fi întotdeauna "
+"calculată pe baza atributului \"primaryGroupID\" LDAP."
 
 #: directoryservice/models.py:156
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Idmap"
 
 #: directoryservice/models.py:182
-#, fuzzy
 msgid "Range Size"
-msgstr "Dimensiune înregistrare"
+msgstr "Dimensiune domeniu"
 
 #: directoryservice/models.py:184
 msgid ""
@@ -9895,30 +9846,37 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
+"Definește numărul de uids/gids disponibile pentru domeniu. Valoarea minimă "
+"necesară este 2000. Valori SIDs cu RIDs mai mari ca această valoare vor fi "
+"mapate într-un interval extins dependent de numărul intervalelor "
+"disponibile. Dacă modulul autorid rulează înafara intervallelor disponibile "
+"maparea noilor domenii (sau noilor extensii pentru domeniile deja cunoscute) "
+"va fi ignorată și harta corespunzătoare va fi ștearsă."
 
 #: directoryservice/models.py:197
 msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
+"Trece în modul doar-citire. Nu va mai fi alocat niciun nou domeniu și nici "
+"nu vor mai fi create alte mapări în idmap pool."
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
-msgstr ""
+msgstr "Ignoră domeniu implicit"
 
 #: directoryservice/models.py:205
 msgid "Ignore any mapping requests for the BUILTIN domain."
-msgstr ""
+msgstr "Ignoră orice cerere de mapare pentru domeniul BUILTIN."
 
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
 msgid "AutoRID Idmap"
-msgstr ""
+msgstr "Idmap AutoRID"
 
 #: directoryservice/models.py:229
-#, fuzzy
 msgid "Name Map"
-msgstr "Nume"
+msgstr "Numa mapare"
 
 #: directoryservice/models.py:231
 msgid ""
@@ -9940,9 +9898,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:268
-#, fuzzy
 msgid "User DN"
-msgstr "ID utilizator"
+msgstr "DN utilizator"
 
 #: directoryservice/models.py:271
 msgid ""
@@ -9955,22 +9912,21 @@ msgstr ""
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
-msgstr ""
+msgstr "Specifică serverul LDAP de utilizat pentru înregistrările SID/uid/gid."
 
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr ""
+msgstr "LDAP Idmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "Server NTP"
+msgstr "Server LDAP"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -9980,11 +9936,11 @@ msgstr ""
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
-msgstr ""
+msgstr "de sine stătător"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
-msgstr ""
+msgstr "Calea utilizator"
 
 #: directoryservice/models.py:343
 msgid ""
@@ -10001,26 +9957,27 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:355
-#, fuzzy
 msgid "User CN"
-msgstr "Utilizator &"
+msgstr "CN utilizator"
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
 msgstr ""
+"Solicită atributul cn în loc de uid pentru numele utilizatorului în LDAP."
 
 #: directoryservice/models.py:362
 msgid "CN Realm"
-msgstr ""
+msgstr "Realm CN"
 
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
+"Adaugă @realm la cn pentru grupuri (și utilizatori dacă opțiunea user_cn "
+"este activă) în LDAP."
 
 #: directoryservice/models.py:369
-#, fuzzy
 msgid "LDAP Domain"
-msgstr "Domeniu"
+msgstr "Domeniu LDAP"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -10041,6 +9998,8 @@ msgid ""
 "When using a stand-alone LDAP server, this parameter specifies the ldap URL "
 "for accessing the LDAP server."
 msgstr ""
+"Cînd se utilizează un server LDAP de sine stătător acest parametru specifică "
+"url-ul pentru accesarea acestui server."
 
 #: directoryservice/models.py:391
 #, fuzzy
@@ -10053,10 +10012,13 @@ msgid ""
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
+"Definește valoarea DN utilizator de utilizat la autentificare. Secretul "
+"pentru autentificarea acestui utilizator trebuie stocat cu net idmap secret ("
+"vezi net(8)). Dacă nu este definită sistemul va stabili o legătură anonimă."
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
-msgstr ""
+msgstr "Realm LDAP"
 
 #: directoryservice/models.py:405
 msgid ""
@@ -10067,17 +10029,17 @@ msgstr ""
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
 msgid "RFC2307 Idmap"
-msgstr ""
+msgstr "Idmap RFC2307"
 
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr ""
+msgstr "Idmap RID"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
 msgid "TDB Idmap"
-msgstr ""
+msgstr "Idmap TDB"
 
 #: directoryservice/models.py:474
 msgid ""
@@ -10103,7 +10065,6 @@ msgstr "Parolă cont administrator domeniu."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
 msgstr "Utilizare domeniu implicit"
 
@@ -10130,19 +10091,16 @@ msgid "Failed to create group %s"
 msgstr "Eroare actualizare plugin"
 
 #: system/forms.py:256
-#, fuzzy
 msgid "Group does not exist: %s"
-msgstr "Zona jail nu există"
+msgstr "Grup inexistent: %s"
 
 #: system/forms.py:270
-#, fuzzy
 msgid "User does not exist: %s"
-msgstr "Zona jail nu există"
+msgstr "Utilizator inexistent: %s"
 
 #: system/forms.py:306
-#, fuzzy
 msgid "Failed to create ZFS: %s"
-msgstr "Eroare creare set date %(name)s: %(error)s"
+msgstr "Eroare creare ZFS: %s"
 
 #: system/forms.py:1136
 #, fuzzy
@@ -10242,14 +10200,12 @@ msgid "Estimated Total Size"
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
-msgstr "Iniţiator"
+msgstr "Asistent"
 
 #: services/forms.py:302
-#, fuzzy
 msgid "This field is required to enable NFSv4."
-msgstr "Acest câmp este necesar."
+msgstr "Acest câmp este necesar pentru activarea NFSv4."
 
 #: services/models.py:351
 #, fuzzy
@@ -10262,9 +10218,8 @@ msgid "NFSv4 Root Path"
 msgstr "Cale remote"
 
 #: system/forms.py:1468
-#, fuzzy
 msgid "A pool with this name already exists."
-msgstr "Un volum cu acest nume există deja."
+msgstr "O structură pool cu acest nume există deja."
 
 #: directoryservice/forms.py:341
 #: directoryservice/forms.py:448
@@ -10274,23 +10229,20 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
-msgstr "Fişier chei Kerberos"
+msgstr "Keytab Kerberos"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Este nevoie de un fișier"
+msgstr "Aveți nevoie de un keytab."
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Kerberos realm."
-msgstr "Server Kerberos"
+msgstr "realm Kerberos."
 
 #: directoryservice/models.py:552
 msgid "KDC"
-msgstr ""
+msgstr "KDC"
 
 #: directoryservice/models.py:554
 #, fuzzy
@@ -10307,11 +10259,12 @@ msgid ""
 "Specifies the admin server for this realm, where all the modifications to "
 "the database are performed."
 msgstr ""
+"Specifică serverul admin pentru acest realm unde sînt realizate toate "
+"modificările pentru baza de date."
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Serverul de parole kerberos"
+msgstr "Serverul de parole"
 
 #: directoryservice/models.py:568
 msgid ""
@@ -10325,18 +10278,17 @@ msgstr ""
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
-msgstr ""
+msgstr "Kerberos principal, ex: primary/instance@REALM"
 
 #: directoryservice/models.py:586
 msgid "Keytab"
-msgstr ""
+msgstr "Keytab"
 
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
 #: services/models.py:1662
-#, fuzzy
 msgid "Kerberos Realm"
-msgstr "Fişier chei Kerberos"
+msgstr "Kerberos Realm"
 
 #: services/views.py:269
 #, fuzzy
@@ -10348,16 +10300,14 @@ msgid "Security"
 msgstr ""
 
 #: storage/forms.py:2052
-#, fuzzy
 msgid ""
 "Enabling this may substantially increase transfer speed on high speed, "
 "secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
 "unsuitable for untrusted networks."
 msgstr ""
 "Activarea opțiunii poate crește viteza de transfer în cazul rețelelor locale "
-"de viteză înaltă/latență mică. Sistemul va utiliza un algoritm de criptare "
-"cu un grad mai scăzut de siguranță decît de obicei, caz mai puțin recomandat "
-"pentru rețelele nesigure."
+"de viteză înaltă/latență mică. Sistemul NU VA UTILIZA NICIUN ALGORITM DE "
+"CRIPTARE, caz de nerecomandat pentru rețelele nesigure."
 
 #: storage/models.py:819
 #, fuzzy
@@ -10385,19 +10335,16 @@ msgstr ""
 "pentru rețelele nesigure."
 
 #: templates/directoryservice/index.html:15
-#, fuzzy
 msgid "Kerberos"
-msgstr "Server Kerberos"
+msgstr "Kerberos"
 
 #: templates/directoryservice/index.html:15
-#, fuzzy
 msgid "Kerberos Realms"
-msgstr "Fişier chei Kerberos"
+msgstr "Kerberos Realms"
 
 #: templates/directoryservice/index.html:18
-#, fuzzy
 msgid "Kerberos Keytabs"
-msgstr "Fişier chei Kerberos"
+msgstr "Keytab-uri Kerberos"
 
 #: templates/system/initialwizard_shares.html:51
 #: templates/system/initialwizard_volume.html:92
@@ -10409,44 +10356,40 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Autentificare"
+msgstr "Autentificare de bază"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Autentificare"
+msgstr "Autentificare Digest"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Import certificat CA existent"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Creare certificat CA intern"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Creare certificat CA intermediar"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Import certificat existent"
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr "Certificat SSL"
+msgstr "Creare Certificat intern"
 
 #: choices.py:819
-#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "TLS fără solicitare certificat"
+msgstr "Creare cerere semnare certificat"
 
 #: choices.py:823
 msgid "512"
@@ -10466,73 +10409,65 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "Serviciul AFP a eșuat să se reîncarce"
+msgstr "NIS nu a putut fi reâncărcat."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Repornire"
+msgstr "La repornire"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
 msgid "ADEX Idmap"
-msgstr ""
+msgstr "ADEX Idmap"
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "Nu"
+msgstr "Acum"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Descriere"
+msgstr "Nume descriptiv."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "FQDN of the domain controller to use."
-msgstr "Numele controlerului de domeniu de utilizat."
+msgstr "Valoarea FQDN pentru controlerul de domeniu de utilizat."
 
 #: directoryservice/models.py:812
-#, fuzzy
 msgid "FQDN of the global catalog server to use."
-msgstr "Numele serverului pentru catalogul global utilizat."
+msgstr "Valoarea FQDN pentru catalogul global de utilizat."
 
 #: directoryservice/models.py:993
-#, fuzzy
 msgid "SUDO Suffix"
-msgstr "Terminaţie utilizator"
+msgstr "Sufix SUDO"
 
 #: directoryservice/models.py:996
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for the SUDO configuration "
 "in the LDAP directory, e.g. ou=SUDOers"
 msgstr ""
-"Acest parametru specifică terminaţia utilizată pentru utilizatorii atunci "
-"când sunt adăugaţi în registrul LDAP, de ex. ou=Utilizatori"
+"Acest parametru specifică terminaţia pentru configurația SUDO în directorul "
+"LDAP, de ex. ou=SUDOers"
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
@@ -10548,28 +10483,24 @@ msgid "Template"
 msgstr "Șabloane"
 
 #: jails/views.py:492
-#, fuzzy
 msgid "Jail Template successfully created."
-msgstr "Șablon jail editat cu succes."
+msgstr "Șablon jail creat cu succes."
 
 #: jails/views.py:512
-#, fuzzy
 msgid "Jail Template successfully edited."
 msgstr "Șablon jail editat cu succes."
 
 #: services/forms.py:1541
-#, fuzzy
 msgid "Confirm WebDAV Password"
-msgstr "Confirmare parolă"
+msgstr "Confirmare parolă WebDAV"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
 msgstr ""
 
 #: services/forms.py:1628
-#, fuzzy
 msgid "The WebDAV service failed to reload."
-msgstr "Serviciul AFP a eșuat să se reîncarce"
+msgstr "Serviciul WebDAV a eșuat să repornească."
 
 #: services/models.py:325
 #, fuzzy
@@ -10633,9 +10564,8 @@ msgid "WebDAV"
 msgstr ""
 
 #: sharing/models.py:335
-#, fuzzy
 msgid "Share Path Name"
-msgstr "Nume server"
+msgstr "Partajare nume cale"
 
 #: sharing/models.py:336
 msgid ""
@@ -10645,7 +10575,7 @@ msgstr ""
 
 #: sharing/models.py:357
 msgid "Change User & Group Ownership"
-msgstr ""
+msgstr "Modificare utilizator & grup proprietar"
 
 #: sharing/models.py:358
 msgid ""
@@ -10653,15 +10583,17 @@ msgid ""
 "(including all subdirectories)<br />If disabled, you will need to manually<"
 "br />add the 'webdav' user & group to the share."
 msgstr ""
+"Modifică utilizatorul& grupul folderului partajat în 'webdav:webdav' în mod "
+"recursiv (incluzînd toate subdirectoarele);br /:Daca este dezactivat va "
+"trebui să adăugați manual utilizatorul & grupul 'webdav' la partajare. "
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
-msgstr ""
+msgstr "Partajare WebDAV"
 
 #: sharing/models.py:375
-#, fuzzy
 msgid "WebDAV Shares"
-msgstr "Partajări active"
+msgstr "Partajări WebDAV"
 
 #: storage/admin.py:263
 #: storage/admin.py:361
@@ -10680,9 +10612,8 @@ msgid "Case Sensitivity"
 msgstr ""
 
 #: system/admin.py:49
-#, fuzzy
 msgid "Internal"
-msgstr "Interval"
+msgstr "Intern"
 
 #: system/admin.py:54
 #: system/admin.py:148
@@ -10692,9 +10623,8 @@ msgstr ""
 #: system/admin.py:59
 #: system/nav.py:91
 #: templates/system/index.html:27
-#, fuzzy
 msgid "Certificates"
-msgstr "Certificat SSL"
+msgstr "Certificate"
 
 #: system/admin.py:64
 #: system/admin.py:153
@@ -10913,14 +10843,12 @@ msgid "Boot Environment successfully renamed."
 msgstr "Volumul a fost adăugat cu succes."
 
 #: system/views.py:896
-#, fuzzy
 msgid "Certificate Authority successfully imported."
-msgstr "Jail importat cu scucces."
+msgstr "Certificat CA importat cu scucces."
 
 #: system/views.py:915
-#, fuzzy
 msgid "Internal Certificate Authority successfully created."
-msgstr "Șablon jail editat cu succes."
+msgstr "Certificat CA intern creat cu succes."
 
 #: system/views.py:934
 msgid "Intermediate Certificate Authority successfully created."
@@ -10937,14 +10865,12 @@ msgid "Certificate Authority successfully edited."
 msgstr "Setul de date a fost editat cu succes."
 
 #: system/views.py:1003
-#, fuzzy
 msgid "Certificate successfully imported."
-msgstr "Jail importat cu scucces."
+msgstr "Certificat importat cu scucces."
 
 #: system/views.py:1022
-#, fuzzy
 msgid "Internal Certificate successfully created."
-msgstr "Șablon jail editat cu succes."
+msgstr "Certificat intern creat cu succes."
 
 #: system/views.py:1041
 #, fuzzy
@@ -10952,9 +10878,8 @@ msgid "Certificate CSR successfully created."
 msgstr "Setul de date a fost editat cu succes."
 
 #: system/views.py:1062
-#, fuzzy
 msgid "Internal Certificate successfully edited."
-msgstr "Șablon jail editat cu succes."
+msgstr "Certificat intern editat cu succes."
 
 #: system/views.py:1083
 #, fuzzy
@@ -10967,9 +10892,8 @@ msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
 msgstr "Doriți să ștergeți \"%(name)s\"?"
 
 #: templates/services/core.html:170
-#, fuzzy
 msgid "WebDAV Settings"
-msgstr "Setări LDAP"
+msgstr "Setări WebDAV"
 
 #: templates/storage/index.html:24
 #, fuzzy
@@ -11075,9 +10999,8 @@ msgstr ""
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
 #: templates/storage/volume_datagrid.html:19
-#, fuzzy
 msgid "Import Disk"
-msgstr "Import"
+msgstr "Import disc"
 
 #: system/forms.py:1852
 #, fuzzy
@@ -11104,14 +11027,12 @@ msgid "Clone"
 msgstr ""
 
 #: directoryservice/models.py:804
-#, fuzzy
 msgid "Site Name"
-msgstr "Nume server"
+msgstr "Nume site"
 
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "Name of site to use."
-msgstr "Numele plugin-ului"
+msgstr "Numele siteului de utilizat."
 
 #: services/models.py:263
 msgid ""
@@ -11149,9 +11070,8 @@ msgid "Only one row for the vitual device of type %s is allowed."
 msgstr ""
 
 #: storage/views.py:494
-#, fuzzy
 msgid "Zvol successfully edited."
-msgstr "Jail editat cu scucces."
+msgstr "Zvol editat cu scucces."
 
 #: directoryservice/models.py:853
 msgid "Winbind NSS Info"
@@ -11178,11 +11098,12 @@ msgid ""
 "This will be used to access your WebDAV share.<br />For example http(s)://ip-"
 "of-freenas-machine:webdav_port/'Share Name'"
 msgstr ""
+"Utilizat pentru accesarea partajării WebDAV.<br />Spre examplu http(s)://ip-"
+"ul_sistemului-freenas:port_webdav/'Nume_partajare'"
 
 #: storage/views.py:203
-#, fuzzy
 msgid "WARNING!"
-msgstr "ATENȚIE"
+msgstr "ATENȚIE!"
 
 #: storage/views.py:205
 msgid ""
@@ -11205,17 +11126,15 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
-#, fuzzy
 msgid "Failed to create %(path)s: %(error)s"
-msgstr "Eroare creare set date %(name)s: %(error)s"
+msgstr "Eroare creare %(path)s: %(error)s"
 
 #: sharing/forms.py:389
-#, fuzzy
 msgid "Only AlphaNumeric characters are allowed."
-msgstr "Folosește caractere alfanumerice, \".\",\"-\" și \"_\"."
+msgstr "Sunt permise doar caractere alfanumerice."
 
 #: system/views.py:504
 msgid "You must provide a Root E-mail"
@@ -11230,9 +11149,8 @@ msgid "Use as home share"
 msgstr ""
 
 #: sharing/models.py:103
-#, fuzzy
 msgid "VFS Objects"
-msgstr "Subiect"
+msgstr "Obiecte VFS"
 
 #: storage/forms.py:2132
 msgid "I'm also aware the snapshots are currently on hold for replication"
@@ -11353,14 +11271,12 @@ msgid "Check For Update"
 msgstr ""
 
 #: common/system.py:301
-#, fuzzy
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
-msgstr "Eroare montare (%(retcode)s) -> %(output)s"
+msgstr "Eroare demontare (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
-#, fuzzy
 msgid "Jail name cannot have '.'"
-msgstr "Numele utilizatorilor nu poate conține spații"
+msgstr "Numele zonei Jail nu poate conține caracterul '.'"
 
 #: jails/forms.py:1070
 #, fuzzy
@@ -11373,9 +11289,8 @@ msgid "Unable to determine IPv6 for plugin"
 msgstr "Eroare determinare IPv4 pentru plugin"
 
 #: services/forms.py:1006
-#, fuzzy
 msgid "The following addresses are not valid: %s"
-msgstr "Următoarele căi multiple nu sînt optime: %s"
+msgstr "Următoarele adrese nu sunt valide: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
@@ -11420,18 +11335,16 @@ msgstr "Certificat SSL"
 
 #: sharing/forms.py:188
 #: sharing/forms.py:212
-#, fuzzy
 msgid "Invalid IP or Network."
-msgstr "Rețea incorectă: %s"
+msgstr "IP sau rețea invalide."
 
 #: sharing/models.py:223
 msgid "Allow only listed hosts and/or networks access to this volume"
 msgstr ""
 
 #: sharing/models.py:229
-#, fuzzy
 msgid "Deny listed hosts and/or networks access to this volume"
-msgstr "Șterge toate partajările relative la acest volum"
+msgstr "Refuză accesul sistemelor și/sau rețelelor din listă la acest volum"
 
 #: sharing/nav.py:43
 #: templates/sharing/index.html:27
@@ -11441,9 +11354,8 @@ msgstr "Dimensiune bloc"
 
 #: storage/admin.py:629
 #: storage/forms.py:1741
-#, fuzzy
 msgid "VMWare Sync"
-msgstr "Plugin-uri"
+msgstr "Sync VMWare"
 
 #: storage/forms.py:1576
 #, fuzzy
@@ -11468,9 +11380,8 @@ msgstr ""
 
 #: storage/models.py:1098
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMWare-Snapshot"
-msgstr "Punct de restaurare"
+msgstr "Snapshot VMWare"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
@@ -11645,19 +11556,16 @@ msgid "Start the Verification process now?"
 msgstr ""
 
 #: directoryservice/models.py:1099
-#, fuzzy
 msgid "LDAP timeout"
-msgstr "Timp de expirare AD"
+msgstr "Timp de expirare LDAP"
 
 #: directoryservice/models.py:1100
-#, fuzzy
 msgid "Timeout for LDAP related commands."
-msgstr "Timp expirare pentru comenzi AD."
+msgstr "Timp de expirare pentru comenzi LDAP."
 
 #: directoryservice/models.py:1105
-#, fuzzy
 msgid "Timeout for LDAP DNS queries."
-msgstr "Timp expirare pentru cereri AD DNS."
+msgstr "Timp de expirare pentru cereri LDAP DNS."
 
 #: directoryservice/models.py:1108
 #, fuzzy
@@ -11681,14 +11589,12 @@ msgid "Force size"
 msgstr "Dimensiune bloc"
 
 #: storage/views.py:351
-#, fuzzy
 msgid "Volume successfully Imported."
-msgstr "Volumul a fost adăugat cu succes."
+msgstr "Volumul a fost importat cu succes."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "Error Importing Volume"
-msgstr "Import automat volum"
+msgstr "Eroare import volum"
 
 #: system/admin.py:129
 #, fuzzy
@@ -11749,9 +11655,8 @@ msgstr "Sistemul repornește"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week)s săptămâni"
+msgstr "%(weeks)s săptămâni"
 
 #: system/views.py:419
 #, fuzzy
@@ -11773,3 +11678,921 @@ msgstr "Starea volumului %(volume)s este %(status)s: %(message)s"
 #, fuzzy
 msgid "Changelog"
 msgstr "Modificare"
+
+#: choices.py:237
+#, fuzzy
+msgid "SSD"
+msgstr "SSL"
+
+#: choices.py:238
+msgid "5400"
+msgstr ""
+
+#: choices.py:239
+msgid "7200"
+msgstr ""
+
+#: choices.py:240
+msgid "10000"
+msgstr ""
+
+#: choices.py:241
+msgid "15000"
+msgstr ""
+
+#: choices.py:811
+msgid "Sensitive"
+msgstr ""
+
+#: choices.py:812
+msgid "Insensitive"
+msgstr ""
+
+#: choices.py:813
+msgid "Mixed"
+msgstr ""
+
+#: account/models.py:160
+#, fuzzy
+msgid "Microsoft Account"
+msgstr "Cont vizitator"
+
+#: directoryservice/forms.py:223
+#: services/forms.py:237
+msgid "netbiosname: %s"
+msgstr ""
+
+#: directoryservice/forms.py:231
+#: services/forms.py:229
+#, fuzzy
+msgid "workgroup: %s"
+msgstr "Nume Workgroup"
+
+#: directoryservice/models.py:657
+#, fuzzy
+msgid "Appdefaults auxiliary parameters"
+msgstr "Acasă parametri auxiliari"
+
+#: directoryservice/models.py:661
+#, fuzzy
+msgid "Libdefaults auxiliary parameters"
+msgstr "Acasă parametri auxiliari"
+
+#: directoryservice/models.py:666
+#: directoryservice/models.py:667
+#: directoryservice/nav.py:131
+#: templates/directoryservice/index.html:21
+#, fuzzy
+msgid "Kerberos Settings"
+msgstr "Keytab-uri Kerberos"
+
+#: directoryservice/models.py:1140
+msgid "LDAP Schema type."
+msgstr ""
+
+#: freeadmin/navtree.py:249
+#: templates/menubar.html:73
+msgid "Guide"
+msgstr ""
+
+#: jails/admin.py:231
+#: templates/jails/restart.html:3
+#, fuzzy
+msgid "Restart"
+msgstr "Restartare..."
+
+#: jails/forms.py:219
+#, fuzzy
+msgid "Jail name cannot have '.' or ' '"
+msgstr "Numele zonei Jail nu poate conține caracterul '.'"
+
+#: jails/forms.py:590
+#, fuzzy
+msgid "Jail root does not exist!"
+msgstr "Zona jail nu există"
+
+#: jails/forms.py:1027
+#, fuzzy
+msgid ""
+"Destination must begin with an alphanumeric character and may only contain "
+"\"-\", \"_\", \":\", \" \" and \".\"."
+msgstr ""
+"Numele setului de date trebuie să înceapă cu caractere alfanumerice şi poate "
+"conţine doar caracterele (-), (_), (:) şi (.)."
+
+#: jails/models.py:554
+msgid "mtree"
+msgstr ""
+
+#: jails/models.py:555
+msgid "The mtree file for the template"
+msgstr ""
+
+#: jails/models.py:562
+msgid ""
+"If this is a system template, it will not be visible in the UI and will only "
+"be used internally."
+msgstr ""
+
+#: jails/nav.py:73
+#, fuzzy
+msgid "Add Jail"
+msgstr "Adăugare zone Jail"
+
+#: jails/views.py:192
+#, fuzzy
+msgid "Jail successfully restarted."
+msgstr "Zonă Jail pornită cu scucces."
+
+#: middleware/notifier.py:3791
+msgid "Failed to upload config, version newer than the current installed."
+msgstr ""
+
+#: services/forms.py:89
+msgid "You have %d pending active iSCSI connection(s)."
+msgstr ""
+
+#: services/forms.py:654
+#: services/forms.py:662
+msgid "Incorrect usage of the # delimiter."
+msgstr ""
+
+#: services/forms.py:666
+#: services/forms.py:676
+#, fuzzy
+msgid "Invalid domain name."
+msgstr "Nume domeniu NIS"
+
+#: services/forms.py:672
+msgid "Invalid domain name or incorrect hash delimiter."
+msgstr ""
+
+#: services/forms.py:716
+#, fuzzy
+msgid "Confirm Privacy Passphrase"
+msgstr "Confirmare frază de control"
+
+#: services/forms.py:762
+#, fuzzy
+msgid "Password must contain at least 8 characters"
+msgstr "Numele conţine caractere invalide (%s)."
+
+#: services/forms.py:820
+#, fuzzy
+msgid "Passphrase must contain at least 8 characters"
+msgstr "Numele conţine caractere invalide (%s)."
+
+#: services/forms.py:976
+#, fuzzy
+msgid "Secret must be between 12 and 16 characters."
+msgstr "Valaorea trebuie să fie cuprinsă între 0 şi 1000, inclusiv."
+
+#: services/forms.py:983
+msgid "Peer secret must be between 12 and 16 characters."
+msgstr ""
+
+#: services/forms.py:1082
+#, fuzzy
+msgid "LUN ID is already being used for this target."
+msgstr "LUN already exists in the same target."
+
+#: services/forms.py:1633
+#, fuzzy
+msgid "Double quotes are not allowed."
+msgstr "Ghilimelele nu sînt permise"
+
+#: services/forms.py:1640
+msgid "Alias name must be unique."
+msgstr ""
+
+#: services/forms.py:1644
+msgid ""
+"target is a reserved word, please choose a different name for this alias."
+msgstr ""
+
+#: services/models.py:322
+#, fuzzy
+msgid "Home share name"
+msgstr "Telefon domiciliu"
+
+#: services/models.py:324
+msgid "When set overrides the default Home Share Name."
+msgstr ""
+
+#: services/models.py:366
+#, fuzzy
+msgid ""
+"Allow non-root mount requests to be served. This should only be specified if "
+"there are clients that require it. It will automatically clear the "
+"vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
+"NFS requests from reserved ports only."
+msgstr ""
+"Permite montări non-root. Trebuie specificat doar dacă sînt clienți care "
+"necesită acest lucru. Va fi șters automat flag-ul vfs.nfsrv.nfs_privport "
+"sysctl care controlează modul în care kernel-ul va accepta cereri NFS doar "
+"pentru porturile rezervate."
+
+#: services/models.py:378
+#, fuzzy
+msgid "Require Kerberos for NFSv4"
+msgstr "Inversare DNS pentru IP necesară"
+
+#: services/models.py:429
+#, fuzzy
+msgid ""
+"The base name (e.g. iqn.2005-10.org.freenas.ctl, see RFC 3720 and 3721 for "
+"details) will append the target name that is not starting with 'iqn.', "
+"'eui.' or 'naa.'"
+msgstr ""
+"Numele bazei (ex. iqn.2007-09.jp.ne.peach.istgt, vezi RFC 3720 şi 3721 pt. "
+"detalii) va fi anexată numelui dispozitivului care nu începe cu 'iqn'."
+
+#: services/models.py:437
+msgid "List of Internet Storage Name Service (iSNS) Servers"
+msgstr ""
+
+#: services/models.py:440
+msgid "Pool Available Space Threshold (%)"
+msgstr ""
+
+#: services/models.py:445
+msgid "Remaining ZFS pool capacity warning threshold when using zvol extents"
+msgstr ""
+
+#: services/models.py:504
+msgid "Disable Physical Block Size Reporting"
+msgstr ""
+
+#: services/models.py:506
+msgid ""
+"By default the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K, "
+"checking this disables reporting the physical blocksize."
+msgstr ""
+
+#: services/models.py:512
+msgid "Available Space Threshold (%)"
+msgstr ""
+
+#: services/models.py:516
+msgid "Remaining dataset/zvol capacity warning threshold"
+msgstr ""
+
+#: services/models.py:550
+msgid "LUN RPM"
+msgstr ""
+
+#: services/models.py:551
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare will give you the option to use SSD "
+"LUNs as swap devices, there is some value to picking a non-SSD RPM if your "
+"extent is indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+
+#: services/models.py:821
+#, fuzzy
+msgid ""
+"Base Name will be appended automatically when starting without 'iqn.', "
+"'eui.' or 'naa.'."
+msgstr ""
+"Numele de bază va fi automat ataşat atunci cînd nu începe cu şirul 'iqn.'."
+
+#: services/models.py:835
+#, fuzzy
+msgid "Fiber Channel"
+msgstr "Canal"
+
+#: services/models.py:836
+msgid "Both"
+msgstr ""
+
+#: services/models.py:840
+#, fuzzy
+msgid "Target Mode"
+msgstr "Nume destinaţie"
+
+#: services/models.py:868
+#, fuzzy
+msgid "Target this group belongs to"
+msgstr "Volumul de care aparţine acest grup"
+
+#: services/models.py:909
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Groups"
+msgstr "Grupuri"
+
+#: services/models.py:960
+msgid "Fiber Channel Target"
+msgstr ""
+
+#: services/models.py:961
+msgid "Fiber Channel Targets"
+msgstr ""
+
+#: services/models.py:978
+msgid ""
+"The client IP is detected by calling 'url' from this 'ip_server_name:port /"
+".'. Leaving this field blank causes the service to use its built in default: "
+"checkip.dyndns.org:80 /."
+msgstr ""
+
+#: services/models.py:988
+msgid ""
+"A host name alias. This option can appear multiple times, for each domain "
+"that has the same IP. Use a comma to separate multiple alias names.  Some "
+"Dynamic DNS providers require a hash after the host name, for these "
+"providers use a # sign in the between the hostname and hash in the format "
+"hostname#hash.  You may also use multiple hostname and hash combinations in "
+"the format host1#hash1,host2#hash2."
+msgstr ""
+
+#: services/models.py:1062
+#, fuzzy
+msgid "SNMP v3 Support"
+msgstr "Suport EA"
+
+#: services/models.py:1075
+msgid "MD5"
+msgstr ""
+
+#: services/models.py:1076
+#, fuzzy
+msgid "SHA"
+msgstr "SHA1"
+
+#: services/models.py:1080
+#, fuzzy
+msgid "Authentication Type"
+msgstr "Autentificare"
+
+#: services/models.py:1090
+msgid "AES"
+msgstr ""
+
+#: services/models.py:1091
+msgid "DES"
+msgstr ""
+
+#: services/models.py:1095
+#, fuzzy
+msgid "Privacy Protocol"
+msgstr "Protocol"
+
+#: services/models.py:1101
+#, fuzzy
+msgid "Privacy Passphrase"
+msgstr "Cheie privată frază de control"
+
+#: services/models.py:1195
+msgid "Power Off UPS"
+msgstr ""
+
+#: services/models.py:1196
+msgid "Signal the UPS to power off after FreeNAS shuts down."
+msgstr ""
+
+#: services/models.py:2027
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: Hash "
+"of the password is sent over the network (more secure)"
+msgstr ""
+
+#: services/views.py:334
+#, fuzzy
+msgid "Fiber Channel Ports have been successfully changed."
+msgstr "Modificările dumneavoastră au fost aplicate cu succes!"
+
+#: sharing/forms.py:291
+#, fuzzy
+msgid "A share with this name already exists."
+msgstr "O destinație cu acest nume există deja."
+
+#: sharing/forms.py:527
+#, fuzzy
+msgid "Whitespace is not a valid character for NFS shares."
+msgstr "Acesta nu reprezintă o adresă de nameserver validă"
+
+#: storage/admin.py:510
+#, fuzzy
+msgid "Online"
+msgstr "Deconectat"
+
+#: storage/admin.py:636
+#: storage/forms.py:1851
+#, fuzzy
+msgid "VMware Sync"
+msgstr "Sync VMWare"
+
+#: storage/forms.py:732
+msgid ""
+"This is the disk with the non-zfs filesystem. It will be mounted, its data "
+"copied over to the path specified in the 'Destination' field below and then "
+"unmounted. Importing non-zfs disks permanently as a Volume is deprecated"
+msgstr ""
+
+#: storage/forms.py:746
+msgid "This must be a dataset/folder in an existing Volume"
+msgstr ""
+
+#: storage/forms.py:797
+msgid ""
+"The path %s does not exist.                    This must be a dataset/folder "
+"in an existing Volume"
+msgstr ""
+
+#: storage/forms.py:1439
+#, fuzzy
+msgid "The path %s already exists."
+msgstr "Calea %s există deja."
+
+#: storage/forms.py:1553
+msgid "Allow the zvol to consume more then 80% of available space"
+msgstr ""
+
+#: storage/forms.py:2132
+msgid "This field will be empty if you have not setup a periodic snapshot task"
+msgstr ""
+
+#: storage/models.py:413
+#: tasks/models.py:122
+#: tasks/models.py:450
+#, fuzzy
+msgid "Every {0} minute(s)"
+msgstr "La fiecare %s minute"
+
+#: storage/models.py:421
+#: tasks/models.py:131
+#: tasks/models.py:459
+#: tasks/models.py:649
+#, fuzzy
+msgid "Every {0} hour(s)"
+msgstr "La fiecare %s ore"
+
+#: storage/models.py:429
+#: tasks/models.py:140
+#: tasks/models.py:468
+#: tasks/models.py:658
+#, fuzzy
+msgid "Every {0} days"
+msgstr "La fiecare %s zile"
+
+#: storage/models.py:1026
+#, fuzzy
+msgid "Exclude System Dataset"
+msgstr "Modificare set date"
+
+#: storage/models.py:1027
+msgid ""
+"Do not snapshot the system dataset. This is useful when replicating the root "
+"of a pool to the root of a pool of another FreeNAS system."
+msgstr ""
+
+#: storage/models.py:1125
+msgid ""
+"Username on the above VMware host with enough privileges to snapshot virtual "
+"machines."
+msgstr ""
+
+#: storage/models.py:1141
+msgid "The datastore on the VMware side that the filesystem corresponds to."
+msgstr ""
+
+#: storage/models.py:1147
+#: templates/storage/index.html:38
+#, fuzzy
+msgid "VMware-Snapshot"
+msgstr "Snapshot VMWare"
+
+#: storage/models.py:1148
+#, fuzzy
+msgid "VMware-Snapshots"
+msgstr "Snapshot VMWare"
+
+#: storage/views.py:787
+#, fuzzy
+msgid "Disk online operation has been issued."
+msgstr "Operarea offline a discului a fost iniţiată."
+
+#: support/forms.py:58
+#, fuzzy
+msgid "This is not a valid license."
+msgstr "Acesta nu este o mască validă"
+
+#: support/models.py:40
+#, fuzzy
+msgid "From Email"
+msgstr "De la adresa"
+
+#: support/models.py:41
+msgid "The email address that the system will use to create this ticket"
+msgstr ""
+
+#: support/utils.py:57
+#: support/utils.py:102
+#: support/utils.py:127
+#, fuzzy
+msgid "Connection failed: %s"
+msgstr "Conexiuni"
+
+#: support/utils.py:59
+#: support/utils.py:104
+#: support/utils.py:129
+#, fuzzy
+msgid "Connection timed out: %s"
+msgstr "Conexiuni"
+
+#: support/utils.py:107
+msgid "Ticket creation failed, try again later."
+msgstr ""
+
+#: support/views.py:88
+#, fuzzy
+msgid "License updated."
+msgstr "%s actualizat cu succes."
+
+#: system/forms.py:1027
+#, fuzzy
+msgid "Continue operation if the server could not be reached/validated."
+msgstr "Serviciul nu poate fi pornit."
+
+#: system/forms.py:2215
+#: system/forms.py:2688
+#, fuzzy
+msgid "A certificate with this name already exists."
+msgstr "O destinație cu acest nume există deja."
+
+#: system/forms.py:2245
+#: system/forms.py:2678
+#, fuzzy
+msgid "Passphrase confirmation does not match."
+msgstr "Frazele nu coincid"
+
+#: system/forms.py:2981
+#, fuzzy
+msgid "Hostname or IP address"
+msgstr "Adresa IP controler"
+
+#: system/forms.py:2985
+#, fuzzy
+msgid "User name"
+msgstr "Nume utilizator"
+
+#: system/forms.py:3001
+#, fuzzy
+msgid "Remote directory"
+msgstr "Folderul Home"
+
+#: system/forms.py:3005
+#, fuzzy
+msgid "Backup data"
+msgstr "autorizare+date"
+
+#: system/forms.py:3009
+#, fuzzy
+msgid "Compress backup"
+msgstr "Compresie"
+
+#: system/forms.py:3013
+#, fuzzy
+msgid "Use key authentication"
+msgstr "Utilizare autentificare SMTP"
+
+#: system/models.py:261
+msgid ""
+"By default only essential fields are shown. Fields considered advanced can "
+"be displayed through the Advanced Mode button."
+msgstr ""
+
+#: system/models.py:267
+#, fuzzy
+msgid "Enable automatic upload of kernel crash dumps and daily telemetry"
+msgstr "Activare încărcare automată a erorilor kernelului"
+
+#: system/models.py:269
+msgid ""
+"Attempt to automatically tune the network and ZFS system control variables "
+"based on memory available."
+msgstr ""
+
+#: system/models.py:292
+#, fuzzy
+msgid "Periodic Notification User"
+msgstr "Păstrare timp modificare"
+
+#: system/models.py:277
+msgid "The kernel built with debug symbols will be booted instead."
+msgstr ""
+
+#: system/models.py:293
+msgid ""
+"If you wish periodic emails to be sent to a different email address than the "
+"alert emails are set to (root) set an email address for a user and select "
+"that user in the dropdown."
+msgstr ""
+
+#: system/models.py:923
+#, fuzzy
+msgid "CA"
+msgstr "CHAP"
+
+#: system/models.py:952
+msgid "Finished"
+msgstr ""
+
+#: system/models.py:957
+msgid "Failed"
+msgstr ""
+
+#: system/models.py:962
+msgid "Acknowledged"
+msgstr ""
+
+#: system/models.py:966
+msgid "Backup worker PID"
+msgstr ""
+
+#: system/models.py:971
+#, fuzzy
+msgid "Started at"
+msgstr "Start "
+
+#: system/models.py:975
+#, fuzzy
+msgid "Finished at"
+msgstr "Nume set de date"
+
+#: system/models.py:995
+#, fuzzy
+msgid "System Backup"
+msgstr "Sistem"
+
+#: system/views.py:303
+msgid "Interval must be an integer."
+msgstr ""
+
+#: system/views.py:318
+#, fuzzy
+msgid "Scrub interval successfully changed."
+msgstr "Dispozitiv stocare adăugat cu succes."
+
+#: system/views.py:1212
+#: system/views.py:1314
+#, fuzzy
+msgid "Update has been applied"
+msgstr "Fișier PBI să fie instalat"
+
+#: system/alertmods/http_ssl.py:28
+msgid ""
+"The Certificate: %(cert_name)s is either malformed or invalid and cannot be "
+"used for any services. This Alert will remain here until the certificate is "
+"deleted"
+msgstr ""
+
+#: system/alertmods/http_ssl.py:38
+msgid ""
+"The Certificate Authority(CA): %(CA_name)s is either malformed or invalid "
+"and cannot be used for any services. This Alert will remain here until the "
+"CA is deleted"
+msgstr ""
+
+#: system/alertmods/license_expired.py:24
+#, fuzzy
+msgid "Unable to decode %s license"
+msgstr "Incapabil de îndepărtat plugin-ul."
+
+#: system/alertmods/license_expired.py:31
+msgid "Your %s license has expired"
+msgstr ""
+
+#: system/alertmods/license_expired.py:36
+msgid "Your %(sw_name)s license is going to expire in %(date)s"
+msgstr ""
+
+#: system/alertmods/upgrade_failed.py:19
+msgid "Update failed. Check /data/update.failed for further details."
+msgstr ""
+
+#: system/alertmods/vmwaresnap_fails.py:25
+msgid "VMWare snapshot %(snap)s failed for the following VMs: %(vms)s"
+msgstr ""
+
+#: tasks/forms.py:116
+#, fuzzy
+msgid "Validate Remote Path"
+msgstr "Cale remote"
+
+#: tasks/forms.py:119
+msgid ""
+"This ensures Remote Path Validation. Uncheck this if the remote machine is "
+"currently offline or beyond network reach. And/Or you do not want validation "
+"to be done."
+msgstr ""
+
+#: tasks/forms.py:281
+msgid ""
+"The Remote Path you specified does not exist or is not a directory.<br>"
+"Either create one yourself on the remote machine or uncheck the<br>"
+"'rsync_validate_rpath' field.<br>**Note**: This could also happen if the "
+"remote path entered<br> exceeded 255 characters and was truncated, please "
+"restrict it to<br>255. Or it could also be that your SSH credentials (remote "
+"host,etc) are wrong."
+msgstr ""
+
+#: tasks/models.py:419
+#, fuzzy
+msgid "Delay Updates"
+msgstr "Aplicare actualizare"
+
+#: tasks/models.py:420
+msgid "Put all updated files into place at the end"
+msgstr ""
+
+#: templates/reporting/index.html:15
+#, fuzzy
+msgid "ZFS"
+msgstr "NFS"
+
+#: templates/services/iscsi.html:45
+msgid "Fiber Channel Ports"
+msgstr ""
+
+#: templates/sharing/index.html:27
+#, fuzzy
+msgid "Block"
+msgstr "Deblocare"
+
+#: templates/sharing/index.html:27
+msgid "FC"
+msgstr ""
+
+#: templates/storage/disk_online.html:3
+#, fuzzy
+msgid "Are you sure you want to online?"
+msgstr "Activaţi modul offline?"
+
+#: templates/support/home.html:3
+#, fuzzy
+msgid "License Information"
+msgstr "Informaţii sistem"
+
+#: templates/support/home.html:6
+#: templates/support/home.html.py:8
+#, fuzzy
+msgid "Update License"
+msgstr "Actualizare plugin"
+
+#: templates/support/home.html:16
+#, fuzzy
+msgid "Model"
+msgstr "Mod"
+
+#: templates/support/home.html:18
+#, fuzzy
+msgid "System Serial"
+msgstr "Oră sistem"
+
+#: templates/support/home.html:20
+#, fuzzy
+msgid "Contract Type"
+msgstr "Contact"
+
+#: templates/support/home.html:34
+msgid "Bronze"
+msgstr ""
+
+#: templates/support/home.html:35
+msgid "Silver"
+msgstr ""
+
+#: templates/support/home.html:36
+msgid "Gold"
+msgstr ""
+
+#: templates/support/home.html:37
+#: templates/support/home.html.py:38
+#, fuzzy
+msgid "8x5 FreeNAS Support"
+msgstr "Suport EA"
+
+#: templates/support/home.html:38
+msgid "Maximum of 6 incidents per year"
+msgstr ""
+
+#: templates/support/home.html:40
+#, fuzzy
+msgid "Contract Date"
+msgstr "Contact"
+
+#: templates/support/home.html:41
+#, fuzzy
+msgid "Expired"
+msgstr "Reparate"
+
+#: templates/support/home.html:44
+#, fuzzy
+msgid "Customer Name"
+msgstr "Nume comun"
+
+#: templates/support/home.html:46
+msgid "Features"
+msgstr ""
+
+#: templates/support/home.html:55
+msgid "Additional Hardware"
+msgstr ""
+
+#: templates/support/home.html:58
+msgid "E16 Enclosure"
+msgstr ""
+
+#: templates/support/home.html:59
+msgid "E24 Enclosure"
+msgstr ""
+
+#: templates/support/home.html:60
+msgid "E60 Enclosure"
+msgstr ""
+
+#: templates/support/home.html:69
+msgid "License is not valid! Contact iXsystems support."
+msgstr ""
+
+#: templates/support/home.html:73
+msgid "License not found! Contact iXsystems support."
+msgstr ""
+
+#: templates/support/home.html:81
+msgid "Before filing a bug report or feature request, search"
+msgstr ""
+
+#: templates/support/home.html:81
+msgid ""
+"to ensure the issue has not already been reported. If it has, add a comment "
+"to the existing issue instead of creating a new one."
+msgstr ""
+
+#: templates/support/home.html:82
+msgid "For enterprise-grade storage solutions and support, please visit"
+msgstr ""
+
+#: templates/support/license_update.html:6
+msgid "Your license has expired, please place a new one."
+msgstr ""
+
+#: templates/system/backup.html:3
+msgid ""
+"Backup of encrypted volumes is not supported. If your system have any, they "
+"will be skipped during the backup."
+msgstr ""
+
+#: templates/system/bootenv_datagrid.html:86
+msgid "Automatic scrub interval (in days)"
+msgstr ""
+
+#: templates/system/config_upload.html:5
+#, fuzzy
+msgid "The system will reboot to perform this operation!"
+msgstr "Sistemul repornește"
+
+#: templates/system/email_edit.html:21
+#, fuzzy
+msgid ""
+"HINT: Test e-mails are sent to root user. To configure it use Account -> "
+"Users -> View Users -> root -> Change E-mail"
+msgstr ""
+"SUGESTIE: Emailurile de test sînt trimise utilizatorului root. Pentru "
+"configurare folosiţi Utilizatori -> root -> Modificare email"
+
+#: templates/system/initialwizard_volume.html:79
+#, fuzzy
+msgid "Disks to be formatted"
+msgstr "Discul a fost eliminat."
+
+#: templates/system/update.html:37
+#, fuzzy
+msgid "The system will be rebooted after updates are applied."
+msgstr ""
+"Sistemul va folosi această locaţie pentru a salva fişierul firmware-ul "
+"înainte a fi aplicat/executat."
+
+#: templates/system/update_check.html:42
+#, fuzzy
+msgid "Update server could not be reached"
+msgstr "Serviciul nu poate fi pornit."
+
+#: tools/update_check.py:96
+#, fuzzy
+msgid "Update Available"
+msgstr "Nu există nicio replică ZFS disponibilă"
+
+#: tools/update_check.py:98
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""
