@@ -418,7 +418,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
-* The "SNMP v3 Support" checkbox and the "Username" and "Password" fields have been added to :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
+* The "SNMP v3 Support" checkbox, "Username", "Password", and "Privacy Passphrase" fields, and "Authentication Type" and "Privacy Protocol" drop-down menus have been added to
+  :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
 
 * The "Power Off UPS" checkbox had been added to :menuselection:`Services --> UPS`.
 

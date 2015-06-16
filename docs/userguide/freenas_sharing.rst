@@ -1518,9 +1518,9 @@ shown in Figure 10.5i. Use the drop-down menus to select the existing target and
 
 **Figure 10.5i: Associating a Target With an Extent**
 
-|target2.png|
+|target2a.png|
 
-.. |target2.png| image:: images/target2.png
+.. |target2a.png| image:: images/target2a.png
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1530,10 +1530,10 @@ Table 10.5g summarizes the settings that can be configured when associating targ
 | **Setting** | **Value**      | **Description**                                                                                        |
 |             |                |                                                                                                        |
 +=============+================+========================================================================================================+
-| LUN ID      | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
+| Target      | drop-down menu | select the pre-created target                                                                          |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
-| Target      | drop-down menu | select the pre-created target                                                                          |
+| LUN ID      | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
 | Extent      | drop-down menu | select the pre-created extent                                                                          |

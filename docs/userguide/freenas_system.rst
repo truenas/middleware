@@ -112,8 +112,8 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 | Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                    |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
-| Syslog server        | string         | IP address or hostname of remote syslog server to send logs to; once set, log entries will be written to                       |
-|                      |                | both the console and the remote server                                                                                         |
+| Syslog server        | string         | *IP address_or_hostname:optional_port_number* of remote syslog server to send logs to; once set, log entries will be written   |
+|                      |                | to both the console and the remote server                                                                                      |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 
