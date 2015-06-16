@@ -1102,38 +1102,53 @@ Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the c
 
 **Figure 11.12a: Configuring SNMP**
 
-|snmp2.png|
+|snmp2a.png|
 
-.. |snmp2.png| image:: images/snmp2.png
+.. |snmp2a.png| image:: images/snmp2a.png
 
 **Table 11.12a: SNMP Configuration Options**
 
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| **Setting**          | **Value**  | **Description**                                                                                  |
-|                      |            |                                                                                                  |
-+======================+============+==================================================================================================+
-| Location             | string     | optional description of system's location                                                        |
-|                      |            |                                                                                                  |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| Contact              | string     | optional email address of administrator                                                          |
-|                      |            |                                                                                                  |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| Community            | string     | password used on the SNMP network, default is *public* and                                       |
-|                      |            | **should be changed for security reasons**                                                       |
-|                      |            |                                                                                                  |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| SNMP v3 Support      | checkbox   | check this box to enable support for SNMP version 3                                              |
-|                      |            |                                                                                                  |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| Username             | string     | only applies if "SNMP v3 Support" is checked; specify the username to register with this service |
-|                      |            |                                                                                                  |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| Password             | string     | only applies if "SNMP v3 Support" is checked; specify and confirm a password of at least 8       |
-|                      |            | characters                                                                                       |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
-| Auxiliary Parameters | string     | additional options not covered in this screen, one per line                                      |
-|                      |            |                                                                                                  |
-+----------------------+------------+--------------------------------------------------------------------------------------------------+
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| **Setting**          | **Value**      | **Description**                                                                                  |
+|                      |                |                                                                                                  |
++======================+================+==================================================================================================+
+| Location             | string         | optional description of system's location                                                        |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Contact              | string         | optional email address of administrator                                                          |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| SNMP v3 Support      | checkbox       | check this box to enable support for SNMP version 3                                              |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Community            | string         | password used on the SNMP network, default is *public* and                                       |
+|                      |                | **should be changed for security reasons**; this value can be empty for SNMPv3 networks          |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Username             | string         | only applies if "SNMP v3 Support" is checked; specify the username to register with this service;|
+|                      |                | refer to `snmpd.conf(5) <http://net-snmp.sourceforge.net/docs/man/snmpd.conf.html>`_ for more    |
+|                      |                | information regarding the configuration of this setting as well as the "Authentication Type",    |
+|                      |                | "Password", "Privacy Protocol", and "Privacy Passphrase" fields                                  |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Authentication Type  | drop-down menu | only applies if "SNMP v3 Support" is checked; choices are *MD5* or                               |
+|                      |                | *SHA*                                                                                            |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Password             | string         | only applies if "SNMP v3 Support" is checked; specify and confirm a password of at least 8       |
+|                      |                | characters                                                                                       |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Privacy Protocol     | drop-down menu | only applies if "SNMP v3 Support" is checked; choices are *AES* or                               |
+|                      |                | *DES*                                                                                            |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Privacy Passphrase   | string         | if not specified, "Password" is used                                                             |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
+| Auxiliary Parameters | string         | additional `snmpd.conf(5) <http://net-snmp.sourceforge.net/docs/man/snmpd.conf.html>`_ options   |
+|                      |                | not covered in this screen, one per line                                                         |
+|                      |                |                                                                                                  |
++----------------------+----------------+--------------------------------------------------------------------------------------------------+
 
 
 .. index:: SSH, Secure Shell
