@@ -38,8 +38,6 @@ import Storage from "./views/Storage";
 import Disks from "./views/Storage/Disks";
 import DiskItem from "./views/Storage/Disks/DiskItem";
 
-import Sharing from "./views/Sharing";
-
 import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
 
@@ -143,12 +141,6 @@ module.exports = (
         handler = { DiskItem }
       />
     </Route>
-
-    {/* SHARING */}
-    <Route
-      name    = "sharing"
-      route   = "sharing"
-      handler = { Sharing } />
 
 
     {/* SERVICES */}
