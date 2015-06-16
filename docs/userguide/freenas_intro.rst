@@ -381,6 +381,8 @@ that have occurred since 9.3-RELEASE.
 * The "Rsync Create" checkbox has been renamed to "Validate Remote Path" and the "Delay Updates" checkbox has been added to
   :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
 
+* The "VLAN ID" field has been added to :menuselection:`Network --> IPMI`.
+
 * A reboot is no longer required when creating :ref:`Link Aggregations`.
 
 * The "Exclude System Dataset" checkbox has been added to :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`.
