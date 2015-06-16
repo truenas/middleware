@@ -298,7 +298,39 @@ const Viewer = React.createClass(
     }
 
   , render: function () {
-      var viewerModeNav = null;
+      var viewDropdown   = null;
+      var allowedFilters = this.props.displayData.allowedFilters;
+      // var allowedGroups  = this.props.displayData.allowedGroups;
+      var viewerModeNav  = null;
+
+      // Create View Menu
+      if ( allowedFilters ) {
+      // if ( allowedFilters || allowedGroups ) {
+        var menuSections = [];
+
+        // Don't show grouping toggle for hidden groups
+        // var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
+
+        if ( allowedFilters ) {
+          this.createDropdownSection( menuSections, null, allowedFilters.map( this.createFilterMenuOption ) );
+        }
+
+        // if ( visibleGroups ) {
+        //   this.createDropdownSection( menuSections, "Other Options", visibleGroups.map( this.createGroupMenuOption ) );
+        // }
+
+
+        viewDropdown = (
+          <TWBS.DropdownButton title="View">
+            { menuSections }
+          </TWBS.DropdownButton>
+        );
+      } else {
+        viewDropdown = (
+          <TWBS.DropdownButton title="View" disabled />
+        );
+      }
+
 
       // Create navigation mode icons
       if ( this.props.modesAllowed.size > 1 ) {
@@ -323,6 +355,12 @@ const Viewer = React.createClass(
               onChange       = { this.handleSearchChange }
               addonBefore    = { <Icon glyph ="search" /> }
             />
+
+            {/* Dropdown buttons (2) */}
+            <TWBS.Nav className="navbar-left">
+              {/* View Menu */}
+              { viewDropdown }
+            </TWBS.Nav>
 
             {/* Select view mode */}
             { viewerModeNav }
