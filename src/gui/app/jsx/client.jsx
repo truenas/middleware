@@ -16,11 +16,11 @@ import Routes from "./routes";
 // Middleware
 import MiddlewareClient from "./middleware/MiddlewareClient";
 
-let protocol = ( window.location.protocol === "https:" )
+let wsProtocol = ( window.location.protocol === "https:" )
   ? "wss://"
   : "ws://";
 
-MiddlewareClient.connect( protocol + document.domain + ":5000/socket" );
+MiddlewareClient.connect( wsProtocol + document.domain + ":5000/socket" );
 
 Router.run( Routes
           , HistoryLocation
