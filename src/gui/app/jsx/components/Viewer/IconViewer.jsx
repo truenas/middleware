@@ -35,6 +35,9 @@ var IconViewer = React.createClass(
   , createItem: function ( rawItem ) {
       const search    = this.props.searchString;
       const selection = rawItem[ this.props.keyUnique ];
+
+      let itemIcon = null;
+
       var params = {};
 
       params[ this.props.routeParam ] = selection;
@@ -51,23 +54,55 @@ var IconViewer = React.createClass(
                         );
       }
 
-      return (
-        <div
-          className     = { "viewer-icon-item" + ( selection === this.props.selectedItem ? " active" : "" ) }
-          onClick       = { this.handleItemClick.bind( null, null, selection ) }
-          onDoubleClick = { this.handleItemClick.bind( null, params, selection ) } >
-          <viewerUtil.ItemIcon primaryString  = { rawItem[ this.props.keySecondary ] }
-                               fallbackString = { rawItem[ this.props.keyPrimary ] }
-                               seedNumber     = { String( rawItem[ this.props.keyPrimary ] )
-                                                + String( rawItem[ this.props.keySecondary ] )
-                                                }
-                               fontSize       = { 1 } />
-          <div className="viewer-icon-item-text">
-            <h6 className="viewer-icon-item-primary">{ textPrimary }</h6>
-            <small className="viewer-icon-item-secondary">{ textSecondary }</small>
-          </div>
-        </div>
-      );
+      if ( this.props.itemIconTemplate ) {
+        itemIcon =
+          <div className = { "viewer-icon-item"
+                        + ( selection === this.props.selectedItem
+                                        ? " active"
+                                        : ""
+                          )
+                        }
+               onClick = { this.handleItemClick.bind( null
+                                                    , null
+                                                    , selection ) }
+               onDoubleClick = { this.handleItemClick.bind( null
+                                                          , params
+                                                          , selection ) } >
+            <this.props.itemIconTemplate { ...rawItem } />
+          </div>;
+      } else {
+        itemIcon =
+          <div
+            className = { "viewer-icon-item"
+                        + ( selection === this.props.selectedItem
+                                        ? " active"
+                                        : ""
+                          )
+                        }
+            onClick = { this.handleItemClick.bind( null
+                                                 , null
+                                                 , selection ) }
+            onDoubleClick = { this.handleItemClick.bind( null
+                                                       , params
+                                                       , selection ) } >
+              <viewerUtil.ItemIcon
+                primaryString  = { rawItem[ this.props.keySecondary ] }
+                fallbackString = { rawItem[ this.props.keyPrimary ] }
+                seedNumber = { String( rawItem[ this.props.keyPrimary ] )
+                             + String( rawItem[ this.props.keySecondary ] )
+                             }
+                fontSize = { 1 } />
+            <div className="viewer-icon-item-text">
+              <h6 className="viewer-icon-item-primary">{ textPrimary }</h6>
+              <small className="viewer-icon-item-secondary">
+                { textSecondary }
+              </small>
+            </div>
+        </div>;
+      }
+
+      return itemIcon;
+
     }
 
   , render: function () {
