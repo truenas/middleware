@@ -40,7 +40,7 @@ from freenasUI.tools.arc_summary import get_Kstat, get_arc_efficiency
 
 BASE_OID = '.1.3.6.1.4.1.25359.1'
 ARC = get_arc_efficiency(get_Kstat())
-ZILSOCK = '/var/run/zilstatd.sock'
+FREENASSNMPDSOCK = '/var/run/freenas-snmpd.sock'
 
 size_dict = {"K": 1024,
              "M": 1048576,
@@ -74,7 +74,7 @@ def zpool_iostat(name=None):
     output = zfsproc.communicate()[0].strip('\n')
 
     rv = {}
-    o1 = output.split('\n')[3:]
+    o1 = output.split('\n')[3:-1]
     for line in o1:
         data = line.split()
         attrs = {
@@ -159,18 +159,35 @@ def zfs_arc_cache_miss_ratio(oid):
 
 
 def zilstatd_ops(interval):
-    if os.path.exists(ZILSOCK):
+    if os.path.exists(FREENASSNMPDSOCK):
         try:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.connect(ZILSOCK)
-            s.send("get_"+str(interval)+"_second_interval")
+            s.connect(FREENASSNMPDSOCK)
+            s.send("get_zilstat_"+str(interval)+"_second_interval")
             data = json.loads(s.recv(1024))
             s.close()
             if data:
                 return long(float(data["ops"]))
         except socket.error:
             pass
-        return long(0)
+    return long(0)
+
+
+# Note: Currently only 1 second interval is supported
+# to add more make the appropriate worker in gui/tools/freenas-snmpd.py
+def zpoolio_interval(interval):
+    if os.path.exists(FREENASSNMPDSOCK):
+        try:
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.connect(FREENASSNMPDSOCK)
+            s.send("get_zpoolio_"+str(interval)+"_second_interval")
+            data = json.loads(s.recv(1024))
+            s.close()
+            if data:
+                return data
+        except socket.error:
+            pass
+    return {}
 
 
 def zfs_zilstat_ops1(oid):
@@ -304,8 +321,8 @@ result = [
 
 i = 1
 all_iostat = zpool_iostat()
+onesec_iostat = zpoolio_interval(1)
 for pool, health in zfs_pools():
-    iostat = all_iostat[pool]
     result.append((BASE_OID + '.1.1.' + str(i), ('string', pool)))
     result.append((BASE_OID + '.1.2.' + str(i),
                    lambda oid, fs=pool: zfs_avail(fs)))
@@ -322,16 +339,28 @@ for pool, health in zfs_pools():
                    lambda oid, fs=pool: zfs_size(fs, 1024)))
     result.append((BASE_OID + '.1.15.' + str(i),
                    lambda oid, fs=pool: ('counter64',
-                                         iostat['opread'])))
+                                         all_iostat[fs]['opread'])))
     result.append((BASE_OID + '.1.16.' + str(i),
                    lambda oid, fs=pool: ('counter64',
-                                         iostat['opwrite'])))
+                                         all_iostat[fs]['opwrite'])))
     result.append((BASE_OID + '.1.17.' + str(i),
                    lambda oid, fs=pool: ('counter64',
-                                         iostat['bwread'])))
+                                         all_iostat[fs]['bwread'])))
     result.append((BASE_OID + '.1.18.' + str(i),
                    lambda oid, fs=pool: ('counter64',
-                                         iostat['bwrite'])))
+                                         all_iostat[fs]['bwrite'])))
+    result.append((BASE_OID + '.1.19.' + str(i),
+                   lambda oid, fs=pool: ('counter64',
+                                         onesec_iostat[fs].get('opread', 0))))
+    result.append((BASE_OID + '.1.20.' + str(i),
+                   lambda oid, fs=pool: ('counter64',
+                                         onesec_iostat[fs].get('opwrite', 0))))
+    result.append((BASE_OID + '.1.21.' + str(i),
+                   lambda oid, fs=pool: ('counter64',
+                                         onesec_iostat[fs].get('bwread', 0))))
+    result.append((BASE_OID + '.1.22.' + str(i),
+                   lambda oid, fs=pool: ('counter64',
+                                         onesec_iostat[fs].get('bwrite', 0))))
     i += 1
 
 i = 1
