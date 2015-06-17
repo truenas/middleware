@@ -46,16 +46,16 @@ const Viewer = React.createClass(
         , textUngrouped    : ""
 
         , filtersInitial   : new Set()
-        , filtersAllowed   : null
+        , filtersAllowed   : new Set()
 
         , groupsInitial    : new Set()
-        , groupsAllowed    : null
+        , groupsAllowed    : new Set()
 
         , collapsedInitial : new Set()
-        , collapsedAllowed : null
+        , collapsedAllowed : new Set()
 
         , columnsInitial   : new Set()
-        , columnsAllowed   : null
+        , columnsAllowed   : new Set()
 
         , modesInitial     : "detail"
         , modesAllowed     : new Set( [ "detail", "icon", "table" ] )
@@ -203,33 +203,34 @@ const Viewer = React.createClass(
       this.processDisplayData({ searchString: event.target.value });
     }
 
-  , handleEnabledGroupsToggle: function ( targetGroup ) {
-      var tempEnabledArray = _.clone( this.state.enabledGroups );
-      var tempDisplayArray = this.props.viewData.display.allowedGroups;
-      var enabledIndex     = tempEnabledArray.indexOf( targetGroup );
+  , handleGroupsEnabledToggle: function ( targetGroup ) {
+      if ( this.props.groupsAllowed.has( targetGroup ) ) {
 
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetGroup );
-        // _.intersection will return array to the original defined order
-        tempEnabledArray = _.intersection( tempDisplayArray, tempEnabledArray );
+        let newGroups = new Set( this.state.groupsEnabled );
+
+        if ( newGroups.has( targetGroup ) ) {
+          newGroups.delete( targetGroup );
+        } else {
+          newGroups.add( targetGroup );
+        }
+
+        this.processDisplayData({ groupsEnabled: newGroups });
       }
-
-      this.processDisplayData({ enabledGroups: tempEnabledArray });
     }
 
-  , handleEnabledFiltersToggle: function ( targetFilter ) {
-      var tempEnabledArray = _.clone( this.state.enabledFilters );
-      var enabledIndex     = tempEnabledArray.indexOf( targetFilter );
+  , handleFiltersEnabledToggle: function ( targetFilter ) {
+      if ( this.props.groupsAllowed.has( targetFilter ) ) {
 
-      if ( enabledIndex !== -1 ) {
-        tempEnabledArray.splice( enabledIndex, 1 );
-      } else {
-        tempEnabledArray.push( targetFilter );
+        let newFilters = new Set( this.state.filtersEnabled );
+
+        if ( newFilters.has( targetFilter ) ) {
+          newFilters.delete( targetFilter );
+        } else {
+          newFilters.add( targetFilter );
+        }
+
+        this.processDisplayData({ filtersEnabled: newFilters });
       }
-
-      this.processDisplayData({ enabledFilters: tempEnabledArray });
     }
 
   , changeViewerMode: function ( targetMode ) {
@@ -270,11 +271,42 @@ const Viewer = React.createClass(
 
 
   // DISPLAY
+
+  , createGroupMenuOption: function ( group, index ) {
+      let toggleText = this.state.groupsEnabled.has( group )
+                     ? "Don't group by "
+                     : "Group by ";
+
+      return (
+        <TWBS.MenuItem
+          key     = { index }
+          onClick = { this.handleGroupsEnabledToggle.bind( null, group ) }
+        >
+          { toggleText + this.props.groupBy[ group ].name.toLowerCase() }
+        </TWBS.MenuItem>
+      );
+    }
+
+  , createFilterMenuOption: function ( filter, index ) {
+      let toggleText = this.state.filtersEnabled.has( filter )
+                     ? "Show "
+                     : "Hide ";
+
+      return (
+        <TWBS.MenuItem
+          key     = { index }
+          onClick = { this.handleFiltersEnabledToggle.bind( null, filter ) }
+        >
+          { toggleText + this.props.groupBy[ filter ].name.toLowerCase() }
+        </TWBS.MenuItem>
+      );
+    }
+
   , createModeNav: function ( mode, index ) {
-      var modeIcons = { detail: "th-list"
-                      , icon: "th"
-                      , table: "align-justify"
-                      , heir: "bell"
+      var modeIcons = { detail : "th-list"
+                      , icon   : "th"
+                      , table  : "align-justify"
+                      , heir   : "bell"
                       };
 
       return (
@@ -300,7 +332,7 @@ const Viewer = React.createClass(
         , selectedItem     : this.state.selectedItem
         , searchString     : this.state.searchString
         , filteredData     : this.state.filteredData
-        }
+        };
 
       switch ( this.state.modeActive ) {
 
@@ -327,36 +359,25 @@ const Viewer = React.createClass(
     }
 
   , render: function () {
-      var viewDropdown   = null;
-      var allowedFilters = this.props.displayData.allowedFilters;
-      // var allowedGroups  = this.props.displayData.allowedGroups;
-      var viewerModeNav  = null;
+      let showMenu      = null;
+      let groupMenu     = null;
+      let viewerModeNav = null;
 
-      // Create View Menu
-      if ( allowedFilters ) {
-      // if ( allowedFilters || allowedGroups ) {
-        var menuSections = [];
-
-        // Don't show grouping toggle for hidden groups
-        // var visibleGroups = _.difference( this.props.displayData.allowedGroups, this.state.enabledFilters );
-
-        if ( allowedFilters ) {
-          this.createDropdownSection( menuSections, null, allowedFilters.map( this.createFilterMenuOption ) );
-        }
-
-        // if ( visibleGroups ) {
-        //   this.createDropdownSection( menuSections, "Other Options", visibleGroups.map( this.createGroupMenuOption ) );
-        // }
-
-
-        viewDropdown = (
-          <TWBS.DropdownButton title="View">
-            { menuSections }
+      // Create "Show" Menu
+      if ( this.props.filtersAllowed.size > 0 ) {
+        showMenu = (
+          <TWBS.DropdownButton title="Show">
+            { [ ...this.props.filtersAllowed ].map( this.createFilterMenuOption ) }
           </TWBS.DropdownButton>
         );
-      } else {
-        viewDropdown = (
-          <TWBS.DropdownButton title="View" disabled />
+      }
+
+      // Create "Group By" Menu
+      if ( this.props.groupsAllowed.size > 0 ) {
+        groupMenu = (
+          <TWBS.DropdownButton title="Group">
+            { [ ...this.props.groupsAllowed ].map( this.createGroupMenuOption ) }
+          </TWBS.DropdownButton>
         );
       }
 
@@ -385,10 +406,10 @@ const Viewer = React.createClass(
               addonBefore    = { <Icon glyph ="search" /> }
             />
 
-            {/* Dropdown buttons (2) */}
+            {/* Dropdown menus for filters and groups */}
             <TWBS.Nav className="navbar-left">
-              {/* View Menu */}
-              { viewDropdown }
+              { showMenu }
+              { groupMenu }
             </TWBS.Nav>
 
             {/* Select view mode */}
