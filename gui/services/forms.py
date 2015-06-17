@@ -1121,6 +1121,12 @@ class iSCSITargetToExtentForm(ModelForm):
             required=False,
         )
 
+    def clean_iscsi_lunid(self):
+        lunid = self.cleaned_data.get('iscsi_lunid')
+        if not lunid:
+            return None
+        return lunid
+
     def clean(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
         target = self.cleaned_data.get('iscsi_target')
