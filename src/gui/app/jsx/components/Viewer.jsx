@@ -369,7 +369,9 @@ const Viewer = React.createClass(
       if ( this.props.filtersAllowed.size > 0 ) {
         showMenu = (
           <TWBS.DropdownButton title="Show">
-            { [ ...this.props.filtersAllowed ].map( this.createFilterMenuOption ) }
+            { [ ...this.props.filtersAllowed ]
+                .map( this.createFilterMenuOption )
+            }
           </TWBS.DropdownButton>
         );
       }
@@ -378,7 +380,9 @@ const Viewer = React.createClass(
       if ( this.props.groupsAllowed.size > 0 ) {
         groupMenu = (
           <TWBS.DropdownButton title="Group">
-            { [ ...this.props.groupsAllowed ].map( this.createGroupMenuOption ) }
+            { [ ...this.props.groupsAllowed ]
+                .map( this.createGroupMenuOption )
+            }
           </TWBS.DropdownButton>
         );
       }
