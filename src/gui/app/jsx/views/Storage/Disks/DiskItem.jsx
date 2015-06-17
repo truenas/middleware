@@ -27,7 +27,7 @@ const DiskItem = React.createClass(
           <input onChange = { this.handleByteChange } />
           <h1>{ ByteCalc.humanize( this.state.byteValue ) }</h1>
         </div>
-      )
+      );
     }
   }
 );
