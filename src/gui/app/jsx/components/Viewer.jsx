@@ -61,6 +61,8 @@ const Viewer = React.createClass(
         , modesAllowed     : new Set( [ "detail", "icon", "table" ] )
 
         , groupBy: {}
+
+        , itemIconTemplate: null
         }
       );
     }
