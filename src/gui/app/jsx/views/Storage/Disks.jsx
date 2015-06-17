@@ -49,7 +49,7 @@ const VIEWER_DATA =
     }
 
   , groupsInitial : new Set( [ "online" ] )
-  , groupsAllowed : new Set( [ "online" ] )
+  , groupsAllowed : new Set( )
   };
 
 function getDisksFromStore () {

@@ -39,7 +39,10 @@ const VIEWER_DATA =
   , textUngrouped : "all user accounts"
 
   , groupsInitial : new Set( [ "current", "userCreated", "builtIn" ] )
-  , groupsAllowed : new Set( [ "current", "userCreated", "builtIn" ] )
+  , groupsAllowed : new Set( [ "userCreated", "builtIn" ] )
+
+  , filtersInitial : new Set( )
+  , filtersAllowed : new Set( [ "builtIn" ] )
 
   , columnsInitial : new Set(
                       [ "id"
