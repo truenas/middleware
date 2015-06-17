@@ -57,7 +57,7 @@ const Viewer = React.createClass(
         , columnsInitial   : new Set()
         , columnsAllowed   : new Set()
 
-        , modesInitial     : "detail"
+        , modeInitial     : "detail"
         , modesAllowed     : new Set( [ "detail", "icon", "table" ] )
 
         , groupBy: {}
@@ -74,7 +74,7 @@ const Viewer = React.createClass(
       let selectedItem = currentParams[ this.props.routeParam ];
 
       return (
-        { modeActive: this.changeViewerMode( this.props.modesInitial )
+        { modeActive: this.changeViewerMode( this.props.modeInitial )
         , columnsEnabled: this.props.columnsInitial
         , groupsEnabled: this.props.groupsInitial
         , filtersEnabled: this.props.filtersInitial
@@ -240,7 +240,7 @@ const Viewer = React.createClass(
       if ( this.props.modesAllowed.has( targetMode ) ) {
         newMode = targetMode;
       } else {
-        newMode = this.props.modesInitial;
+        newMode = this.props.modeInitial;
       }
 
       // When changing viewer modes, close any previously open items.
