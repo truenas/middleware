@@ -3,7 +3,10 @@
 
 "use strict";
 
-require( "babel/polyfill" );
+// Babel Require hook - transform any ES6 after this point, including through
+// the require chain.
+// http://babeljs.io/docs/usage/require/
+require( "babel/register" );
 
 var fs   = require( "fs" );
 var path = require( "path" );
