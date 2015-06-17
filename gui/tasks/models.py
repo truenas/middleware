@@ -598,8 +598,8 @@ class Rsync(Model):
                 libc = ctypes.cdll.LoadLibrary("libc.so.7")
                 libutil = ctypes.cdll.LoadLibrary("libutil.so.9")
                 libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
-                pwnam = libc.getpwnam(self.rsync_user.encode('utf8'))
-                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
+                pwnam = libc.getpwnam(self.cron_user.encode('utf8'))
+                passwd = pwd.getpwnam(self.cron_user.encode('utf8'))
 
                 libutil.login_getpwclass.restype = ctypes.POINTER(
                     ctypes.c_void_p
@@ -611,8 +611,8 @@ class Rsync(Model):
                     )
 
                 os.setgid(passwd.pw_gid)
-                libc.setlogin(self.rsync_user.encode('utf8'))
-                libc.initgroups(self.rsync_user.encode('utf8'), passwd.pw_gid)
+                libc.setlogin(self.cron_user.encode('utf8'))
+                libc.initgroups(self.cron_user.encode('utf8'), passwd.pw_gid)
                 os.setuid(passwd.pw_uid)
 
                 if lc and lc[0]:
