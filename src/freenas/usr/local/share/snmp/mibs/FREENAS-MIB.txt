@@ -120,7 +120,7 @@ zfsFilesystemOpRead OBJECT-TYPE
         STATUS mandatory
         DESCRIPTION
                 "The number of read I/O operations sent to the pool or device,
-                including metadata requests."
+                including metadata requests (averaged since system booted)."
         ::= {fs 15}
 
 zfsFilesystemOpWrite OBJECT-TYPE
@@ -128,7 +128,8 @@ zfsFilesystemOpWrite OBJECT-TYPE
         ACCESS read-only
         STATUS mandatory
         DESCRIPTION
-                "The number of write I/O operations sent to the pool or device."
+                "The number of write I/O operations sent to the pool or device 
+                (averaged since system booted)."
         ::= {fs 16}
 
 zfsFilesystemBwRead OBJECT-TYPE
@@ -137,7 +138,7 @@ zfsFilesystemBwRead OBJECT-TYPE
         STATUS mandatory
         DESCRIPTION
                 "The bandwidth of all read operations (including metadata),
-                expressed as units per second"
+                expressed as units per second (averaged since system booted)"
         ::= {fs 17}
 
 zfsFilesystemBwWrite OBJECT-TYPE
@@ -145,8 +146,45 @@ zfsFilesystemBwWrite OBJECT-TYPE
         ACCESS read-only
         STATUS mandatory
         DESCRIPTION
-                "The bandwidth of all write operations, expressed as units per second."
+                "The bandwidth of all write operations, expressed as units per 
+                second (averaged since system booted)."
         ::= {fs 18}
+
+zfsFilesystemOpRead1sec OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of read I/O operations sent to the pool or device,
+                including metadata requests (over 1 second interval)."
+        ::= {fs 19}
+
+zfsFilesystemOpWrite1sec OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The number of write I/O operations sent to the pool or device 
+                (over 1 second interval)."
+        ::= {fs 20}
+
+zfsFilesystemBwRead1sec OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The bandwidth of all read operations (including metadata),
+                expressed as units per second (over 1 second interval)"
+        ::= {fs 21}
+
+zfsFilesystemBwWrite1sec OBJECT-TYPE
+        SYNTAX COUNTER64
+        ACCESS read-only
+        STATUS mandatory
+        DESCRIPTION
+                "The bandwidth of all write operations, expressed as units per 
+                second (over 1 second interval)."
+        ::= {fs 22}
 
 zfsArcSize OBJECT-TYPE
         SYNTAX GAUGE

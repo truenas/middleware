@@ -22,7 +22,7 @@ system_start()
 	fi
 	# start zilstatd daemon (needed by snmp for stats from zilstat)
 	/usr/local/bin/python \
-	/usr/local/www/freenasUI/tools/zilstatd.py >/dev/null 2>&1
+	/usr/local/www/freenasUI/tools/freenas-snmpd.py >/dev/null 2>&1
 }
 
 name="ix-system"
