@@ -20,7 +20,7 @@ const DiskItemIcon = React.createClass({
              , byteSize: React.PropTypes.number
              , humanSize: React.PropTypes.string
              , online: React.PropTypes.bool
-             , model: React.PropTypes.string.isRequired
+             , path: React.PropTypes.string.isRequired
              , size: React.PropTypes.number
              , fontSize: React.PropTypes.number
              , badgeFontSize: React.PropTypes.number
@@ -79,7 +79,7 @@ const DiskItemIcon = React.createClass({
         </i>
         <div className = "viewer-icon-item-text">
           <h6 className = "viewer-icon-item-primary">
-            { this.props.model }
+            { this.props.path }
           </h6>
         </div>
       </div>
