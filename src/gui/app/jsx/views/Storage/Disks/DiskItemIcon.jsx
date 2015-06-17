@@ -34,8 +34,8 @@ const DiskItemIcon = React.createClass({
              , online: null
              , model: ""
              , size: null
-             , fontSize: 3
-             , badgeFontSize: .4
+             , fontSize: 1.5
+             , badgeFontSize: .6
              , diskType: "HDD"
              }
            );
