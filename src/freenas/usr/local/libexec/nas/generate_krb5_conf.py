@@ -467,11 +467,11 @@ def main():
 
     ad = ldap = None
     ldap_objects = LDAP.objects.all()
-    if ldap_objects:
+    if ldap_objects and ldap_objects[0].ldap_enable:
         ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
 
     ad_objects = ActiveDirectory.objects.all()
-    if ad_objects:
+    if ad_objects and ad_objects[0].ad_enable:
         ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
 
     for kr in realms:
