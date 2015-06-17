@@ -16,7 +16,7 @@ var when = require( "when" );
 var React  = require( "react" );
 var Router = require( "react-router" );
 
-var routes = require( "./ssrjs/routes" );
+var routes = require( "./jsx/routes" );
 
 // Content
 var baseHTML = fs.readFileSync( __dirname + "/templates/mainlayout.html" )
@@ -40,8 +40,10 @@ function renderApp ( path ) {
       if ( baseHTML && innerHTML && output ) {
         resolve( output );
       } else {
-        reject( "Handler for " + path +
-                " did not return any HTML when rendered to string" );
+        reject( "Handler for "
+              + path
+              + " did not return any HTML when rendered to string"
+              );
       }
     });
   });

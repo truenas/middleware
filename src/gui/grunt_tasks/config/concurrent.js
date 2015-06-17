@@ -30,8 +30,7 @@ module.exports = function ( grunt ) {
                      ];
 
   // Initial build of app
-  this.buildWorld = [ "babel"
-                    , "copy:images"
+  this.buildWorld = [ "copy:images"
                     , "copy:favicons"
                     , "copy:openSans"
                     , "copy:fontawesome"

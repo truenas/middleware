@@ -11,13 +11,13 @@ module.exports = function ( grunt ) {
   var serverTasks = [ "freenas-config:silent"
                     , "rsync"
                     , "ssh-multi-exec:start-server"
-                    ]
+                    ];
 
   // BUILD WORLD
   // Rebuild Browserify bundle when source JS/JSX changes
   this.jsx = { files: [ "<%= dirTree.source.jsx %>/**" ]
+             // TODO: Optimize this: these could be done concurrently
              , tasks: [ "jscs:check-javascript-quality"
-                      , "babel"
                       , "browserify:app"
                       ].concat( serverTasks )
              };
@@ -40,11 +40,11 @@ module.exports = function ( grunt ) {
 
   // SERVER LIFECYCLE
   // Restarts GUI service on remote FreeNAS when server or app changes
-  this["freenasServer"] = { files: [ "<%= dirTree.server %>.js"
-                                   , "<%= dirTree.source.templates %>/**"
-                                   , "package.json"
-                                   , "bower_components/**"
-                                   ]
-                          , tasks: serverTasks
-                          };
+  this.freenasServer = { files: [ "<%= dirTree.server %>.js"
+                                , "<%= dirTree.source.templates %>/**"
+                                , "package.json"
+                                , "bower_components/**"
+                                ]
+                       , tasks: serverTasks
+                       };
 };
