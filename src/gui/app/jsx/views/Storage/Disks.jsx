@@ -58,7 +58,7 @@ const VIEWER_DATA =
   };
 
 function getDisksFromStore () {
-  return { disks: DS.getDisksArray() };
+  return { disks: DS.disksArray };
 }
 
 const Disks = React.createClass(
