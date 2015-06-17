@@ -57,7 +57,7 @@ const Viewer = React.createClass(
         , columnsInitial   : new Set()
         , columnsAllowed   : new Set()
 
-        , modeInitial     : "detail"
+        , modeInitial      : "detail"
         , modesAllowed     : new Set( [ "detail", "icon", "table" ] )
 
         , groupBy: {}
@@ -395,7 +395,11 @@ const Viewer = React.createClass(
 
       return (
         <div className="viewer">
-          <TWBS.Navbar fluid className="viewer-nav">
+          <TWBS.Navbar
+            fluid
+            className = "viewer-nav"
+            brand     = { this.props.header }
+          >
             {/* Searchbox for Viewer */}
             <TWBS.Input
               type           = "text"
