@@ -195,11 +195,8 @@ checkout_source()
 
     if [ ! -f "${AVATAR_ROOT}/FreeBSD/.kludged" ] && freenas_legacy_build
     then
-        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/Makefile.inc1
-        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/include/Makefile
-        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/usr.sbin/sysinstall/install.c
-        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/release/Makefile.sysinstall
-	
+        sed -i '' "s|mtree -deU|/usr/sbin/mtree-9 -deU|g" ${NANO_SRC}/Makefile.inc1
+        sed -i '' "s|mtree -deU|/usr/sbin/mtree-9 -deU|g" ${NANO_SRC}/include/Makefile
         touch "${AVATAR_ROOT}/FreeBSD/.kludged"
     fi
 
@@ -215,10 +212,10 @@ checkout_source()
             cp ${NANO_KLUDGES}/install-info /usr/bin/install-info
             chmod 755 /usr/bin/install-info
         fi
-        if [ ! -e "/usr/bin/mtree-9" ]
+        if [ ! -e "/usr/sbin/mtree-9" ]
         then
-            cp ${NANO_KLUDGES}/mtree /usr/bin/mtree-9
-            chmod 755 /usr/bin/mtree-9
+            cp ${NANO_KLUDGES}/mtree /usr/sbin/mtree-9
+            chmod 755 /usr/sbin/mtree-9
         fi
     fi
 }
