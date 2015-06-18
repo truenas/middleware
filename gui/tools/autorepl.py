@@ -296,7 +296,7 @@ Hello,
 Hello,
     The replication failed for the local ZFS %s because the command:
 %s
-    have returned an error code of %d
+    has returned an error code of %d
                         """ % (localfs, sshcmd, sshproc.returncode,), interval=datetime.timedelta(hours=2), channel='autorepl')
             results[replication.id] = 'SSH Failed'
             continue
