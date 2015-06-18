@@ -81,9 +81,6 @@ check_for_pylib_from_port()
 
 check_build_tools()
 {
-	local UNAME_RELEASE="$(/usr/bin/uname -r)"
-	local SYSTEM_RELEASE_MAJOR_VERSION="$(echo "${UNAME_RELEASE}"|cut -f1 -d.)"
-
 	check_for_command_from_port git devel/git
 	check_for_command_from_port pxz archivers/pxz
 	check_for_command_from_port xz archivers/xz
@@ -95,7 +92,7 @@ check_build_tools()
 	check_for_command_from_port sphinx-build textproc/py-sphinx
 	check_for_pylib_from_port sphinxcontrib/httpdomain textproc/py-sphinxcontrib-httpdomain
 
-	if [ "${FREEBSD_RELEASE_MAJOR_VERSION}" -lt "10" -a "${SYSTEM_RELEASE_MAJOR_VERSION}" -ge 11 ]
+	if freenas_legacy_build
 	then
 		pkg info misc/compat9x >/dev/null 2>&1
 		if [ "$?" != "0" ]
