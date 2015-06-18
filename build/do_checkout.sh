@@ -181,7 +181,6 @@ checkout_source()
         generic_checkout_git ${repo}
     done
 
-
     mkdir -p ${AVATAR_ROOT}/FreeBSD
     # Nuke newly created files to avoid build errors.
     git_status_ok="${AVATAR_ROOT}/FreeBSD/.git_status_ok"
@@ -193,6 +192,32 @@ checkout_source()
 
     # Mark git clone/pull as being done already.
     echo "$NANO_LABEL" > ${AVATAR_ROOT}/FreeBSD/.pulled
+
+    if [ ! -f "${AVATAR_ROOT}/FreeBSD/.kludged" ] && freenas_legacy_build
+    then
+        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/Makefile.inc1
+        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/include/Makefile
+        touch "${AVATAR_ROOT}/FreeBSD/.kludged"
+    fi
+
+    if freenas_legacy_build
+    then
+        if [ ! -e "/usr/bin/makeinfo" ]
+        then
+            cp ${NANO_KLUDGES}/makeinfo /usr/bin/makeinfo
+            chmod 755 /usr/bin/makeinfo
+        fi
+        if [ ! -e "/usr/bin/install-info" ]
+        then 
+            cp ${NANO_KLUDGES}/install-info /usr/bin/install-info
+            chmod 755 /usr/bin/install-info
+        fi
+        if [ ! -e "/usr/bin/mtree-9" ]
+        then
+            cp ${NANO_KLUDGES}/mtree /usr/bin/mtree-9
+            chmod 755 /usr/bin/mtree-9
+        fi
+    fi
 }
 
 main()
