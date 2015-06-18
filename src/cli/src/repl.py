@@ -155,6 +155,10 @@ class Context(object):
         self.keepalive_timer = None
         config.instance = self
 
+    @property
+    def is_interactive(self):
+        return os.isatty(sys.stdout.fileno())
+
     def start(self):
         self.discover_plugins()
         self.connect()
@@ -241,7 +245,7 @@ class Context(object):
                     self.connection.login_token(self.connection.token)
                     self.connection.subscribe_events(*EVENT_MASKS)
                 except RpcException:
-                    output_msg('Reauthentication using token failed (most likely token expired or server was restarted)')
+                    output_msg(_("Reauthentication using token failed (most likely token expired or server was restarted)"))
                     sys.exit(1)
                 break
             except Exception, e:
