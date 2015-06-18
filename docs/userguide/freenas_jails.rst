@@ -282,7 +282,7 @@ saved to the "Jail Root".
 Managing Jails
 ~~~~~~~~~~~~~~
 
-To view and configure the added jails, click "Jails". In the example shown in Figure 13.2b, the list entry for the jail named *freebsd1* has been clicked in
+To view and configure the added jails, click "Jails". In the example shown in Figure 13.2b, the list entry for the jail named *xdm_1* has been clicked in
 order to enable that jail's configuration options. The entry indicates the name of the jail, its IP address, whether or not it will start automatically at
 system boot, whether or not it is currently running, and the type of jail (e.g. *standard* indicates that it is a FreeBSD jail whereas
 *pluginjail* would indicate that it was installed using :ref:`Plugins`).
