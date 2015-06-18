@@ -48,7 +48,7 @@ done
 
 if [ "${VERBOSE}" != "YES" ] ; then
 # Prints a listing of the available jails
-  warden_printf "%-24s%-12s%-12s%-12s\n" ID AUTOSTART STATUS TYPE
+  warden_printf "%-24s %-12s %-12s %-12s\n" ID AUTOSTART STATUS TYPE
   warden_printf "%s\n" $(line "75")
 fi
 
@@ -242,7 +242,7 @@ __EOF__
     rm -f "${out}"
 
   else
-    warden_printf "%-24s%-12s%-12s%-12s\n" "${JAILNAME}" ${AUTO} ${STATUS} ${TYPE}
+    warden_printf "%-24s %-12s %-12s %-12s\n" "${JAILNAME}" ${AUTO} ${STATUS} ${TYPE}
   fi
 
 done
