@@ -204,9 +204,9 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|tn_be1.png|
+|tn_be1a.png|
 
-.. |tn_be1.png| image:: images/tn_be1.png
+.. |tn_be1a.png| image:: images/tn_be1a.png
 
 Each boot environment entry contains the following information:
 
@@ -220,11 +220,11 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Rename:** used to change the name of the boot environment.
 
-* **Clone:** used to create a copy of the highlighted boot environment.
-
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
   but won't be used on the next boot.
+
+* **Clone:** used to create a copy of the highlighted boot environment.
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
