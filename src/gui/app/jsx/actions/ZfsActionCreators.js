@@ -8,29 +8,29 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class ZfsActionCreators {
 
-  static receiveZfsPool ( zfsPool, zfsPoolName ) {
+  static receivePool ( poolData, poolName ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_ZFS_POOL_DATA
-      , zfsPool: zfsPool
-      , zfsPoolName: zfsPoolName
+      { type: ActionTypes.RECEIVE_POOL
+      , poolData
+      , poolName
       }
     );
   }
 
-  static receiveZfsBootPool ( zfsBootPool, zfsBootPoolArgument ) {
+  static receiveBootPool ( bootPool, poolName ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA
-      , zfsBootPool: zfsBootPool
-      , zfsBootPoolArgument: zfsBootPoolArgument
+      { type: ActionTypes.RECEIVE_BOOT_POOL
+      , bootPool
+      , poolName
       }
     );
   }
 
-  static receiveZfsPoolGetDisks ( zfsPoolGetDisks, zfsPoolGetDisksArgument ) {
+  static receivePoolDisks ( poolDisks, poolName ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA
-      , zfsPoolGetDisks: zfsPoolGetDisks
-      , zfsPoolGetDisksArgument: zfsPoolGetDisksArgument
+      { type: ActionTypes.RECEIVE_POOL_DISK_IDS
+      , poolDisks
+      , poolName
       }
     );
   }

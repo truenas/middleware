@@ -8,6 +8,7 @@ import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
+import DL from "../common/DebugLogger";
 import FluxStore from "./FluxBase";
 
 class ZfsStore extends FluxStore {
@@ -27,16 +28,12 @@ class ZfsStore extends FluxStore {
     this._poolDisks    = {};
   }
 
-  getZfsPool ( name ) {
-    return this._storagePools[ name ];
+  get bootPool () {
+    return this._bootPool;
   }
 
-  getZfsBootPool ( name ) {
-    return this._bootPool[ name ];
-  }
-
-  getZfsPoolGetDisks ( name ) {
-    return this._poolDisks[ name ];
+  getDisksInPool ( poolName ) {
+    return this._poolDisks[ poolName ];
   }
 
 }
@@ -47,18 +44,18 @@ function handlePayload ( payload ) {
 
   switch ( ACTION.type ) {
 
-    case ActionTypes.RECEIVE_ZFS_POOL_DATA:
-      this._storagePools[ ACTION.zfsPoolName ] = ACTION.zfsPool;
+    case ActionTypes.RECEIVE_POOL:
+      this._storagePools[ ACTION.poolName ] = ACTION.poolData;
       this.emitChange();
       break;
 
-    case ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA:
-      this._bootPool[ ACTION.zfsBootPoolArgument ] = ACTION.zfsBootPool;
+    case ActionTypes.RECEIVE_BOOT_POOL:
+      this._bootPool = ACTION.bootPool;
       this.emitChange();
       break;
 
-    case ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA:
-      this._poolDisks[ ACTION.zfsPoolGetDisksArgument ] = ACTION.zfsPoolGetDisks;
+    case ActionTypes.RECEIVE_POOL_DISK_IDS:
+      this._poolDisks[ ACTION.poolName ] = ACTION.poolDisks;
       this.emitChange();
       break;
 

@@ -9,29 +9,29 @@ import ZAC from "../actions/ZfsActionCreators";
 
 class ZfsMiddleware extends AbstractBase {
 
-  static requestZfsPool ( poolName ) {
+  static requestPool ( poolName ) {
     MC.request( "zfs.pool." + poolName
               , []
-              , function handleZfsPool ( response ) {
-                  ZAC.receiveZfsPool( response, poolName );
+              , function handlePool ( response ) {
+                  ZAC.receivePool( response, poolName );
                 }
               );
   }
 
-  static requestZfsBootPool ( bootPoolArg ) {
-    MC.request( "zfs.pool.get_disks"
-              , [ bootPoolArg ]
-              , function handleZfsBootPool ( response ) {
-                  ZAC.receiveZfsBootPool( response, bootPoolArg );
+  static requestBootPool () {
+    MC.request( "zfs.pool.get_boot_pool"
+              , []
+              , function handleBootPool ( response ) {
+                  ZAC.receiveBootPool( response );
                 }
               );
   }
 
-  static requestZfsPoolGetDisks ( zfsPoolArg ) {
+  static requestPoolDisks ( poolName ) {
     MC.request( "zfs.pool.get_disks"
-              , [ zfsPoolArg ]
-              , function handleZfsPoolDisks ( response ) {
-                  ZAC.receiveZfsPoolGetDisks( response, zfsPoolArg );
+              , [ poolName ]
+              , function handlePoolDisks ( response ) {
+                  ZAC.receivePoolDisks( response, poolName );
                 }
               );
   }
