@@ -197,6 +197,9 @@ checkout_source()
     then
         sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/Makefile.inc1
         sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/include/Makefile
+        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/usr.sbin/sysinstall/install.c
+        sed -i '' "s|mtree -deU|/usr/bin/mtree-9 -deU|g" ${NANO_SRC}/release/Makefile.sysinstall
+	
         touch "${AVATAR_ROOT}/FreeBSD/.kludged"
     fi
 
