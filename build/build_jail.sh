@@ -16,7 +16,7 @@ TOP="$(pwd)"
 
 if freenas_legacy_build
 then
-	MTREE_CMD="/usr/bin/mtree-9"
+	MTREE_CMD="/usr/sbin/mtree-9"
 	export MTREE_CMD
 fi
 

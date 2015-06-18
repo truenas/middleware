@@ -305,9 +305,9 @@ freenas_custom()
 
 	# Last second tweaks
 	chown -R root:wheel ${NANO_WORLDDIR}/root
-	chmod 0755 ${NANO_WORLDDIR}/root/*
-	chmod 0755 ${NANO_WORLDDIR}/*
-	chmod 0440 ${NANO_WORLDDIR}/usr/local/etc/sudoers
+	chmod -f 0755 ${NANO_WORLDDIR}/root/*
+	chmod -f 0755 ${NANO_WORLDDIR}/*
+	chmod -f 0440 ${NANO_WORLDDIR}/usr/local/etc/sudoers
 	chown -R root:wheel ${NANO_WORLDDIR}/etc
 	chown -R root:wheel ${NANO_WORLDDIR}/boot
 	chown root:wheel ${NANO_WORLDDIR}/
@@ -444,6 +444,11 @@ build_kernel2 ( ) (
 		kernconf=${_kernel}
 	fi
 
+	if [ -z "${MTREE_CMD}" ]
+	then
+		MTREE_CMD=mtree
+	fi
+
 	cd ${NANO_SRC};
 	# unset these just in case to avoid compiler complaints
 	# when cross-building
@@ -461,6 +466,7 @@ build_kernel2 ( ) (
 		MODULES_OVERRIDE="${NANO_MODULES}" \
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_BUILD} \
+		MTREE_CMD=${MTREE_CMD} \
 	) > ${_logfile} 2>&1
 )
 
@@ -487,6 +493,11 @@ install_kernel2 ( ) (
 		kernconf=${_kernel}
 	fi
 
+	if [ -z "${MTREE_CMD}" ]
+	then
+		MTREE_CMD=mtree
+	fi
+
 	cd ${NANO_SRC}
 	env \
 		TARGET=${NANO_ARCH%:*} \
@@ -501,6 +512,7 @@ install_kernel2 ( ) (
 		MODULES_OVERRIDE="${NANO_MODULES}"
 		SRCCONF=${SRCCONF} \
 		__MAKE_CONF=${NANO_MAKE_CONF_INSTALL} \
+		MTREE_CMD=${MTREE_CMD} \
 	) > ${_logfile} 2>&1
 )
 
