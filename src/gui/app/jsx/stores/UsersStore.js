@@ -117,41 +117,49 @@ class UsersStore extends FluxStore {
     return _updatedOnServer;
   }
 
-  get users() {
+  get users () {
     return _.values( _users );
   }
-}
 
-function isLocalTaskPending ( id ) {
-  return _.values( _localUpdatePending ).indexOf( id ) > -1;
-}
+  findUserByKeyValue ( key, value ) {
+    var predicate = {};
+    predicate[ key ] = value;
 
-function isUserUpdatePending ( id ) {
-  return _updatedOnServer.indexOf( id ) > -1;
-}
+    return _.find( _users, predicate );
+  }
 
-function findUserByKeyValue ( key, value ) {
-  var predicate = {};
-  predicate[ key ] = value;
+  isLocalTaskPending ( id ) {
+    return _.values( _localUpdatePending ).indexOf( id ) > -1;
+  }
 
-  return _.find( _users, predicate );
-}
+  isUserUpdatePending ( id ) {
+    return _updatedOnServer.indexOf( id ) > -1;
+  }
 
-function getUser ( id ) {
-  return _users[ id ];
-}
+  findUserByKeyValue ( key, value ) {
+    var predicate = {};
+    predicate[ key ] = value;
 
-// Returns an array of the complete objects for each user in
-// the requested group.
-function getUsersByGroup ( groupID ) {
-  var groupUsers = _.filter( _users, function ( currentUser ) {
-    if ( _.includes( currentUser.groups, groupID ) || currentUser.group === groupID ) {
-      return true;
-    } else {
-      return false;
-    }
-  });
-  return groupUsers;
+    return _.find( _users, predicate );
+  }
+
+  getUser ( id ) {
+    return _users[ id ];
+  }
+
+  // Returns an array of the complete objects for each user in
+  // the requested group.
+  getUsersByGroup ( groupID ) {
+    var groupUsers = _.filter( _users, function ( currentUser ) {
+      if ( _.includes( currentUser.groups, groupID )
+                    || currentUser.group === groupID ) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+    return groupUsers;
+  }
 }
 
 function handlePayload ( payload ) {
