@@ -14,8 +14,6 @@ import { Dispatcher } from "flux";
 import { PayloadSources } from "../constants/FreeNASConstants";
 
 var dispatchQueue;
-var FreeNASDispatcher;
-
 
 // WARNING: This is a dangerous way of handling dispatches. Because of the
 // way the FreeNAS webapp handles subscriptions, nested routes, and component
@@ -26,35 +24,47 @@ var FreeNASDispatcher;
 
 // See also: https://github.com/facebook/flux/issues/106
 
-dispatchQueue = async.queue( function ( payload, callback ) {
-  FreeNASDispatcher.dispatch( payload );
+class FreeNASDispatcher extends Dispatcher {
 
-  if ( _.isFunction( callback ) ) { callback(); }
-});
+  constructor () {
+    super();
 
-FreeNASDispatcher = _.assign( new Dispatcher(), {
+    this.dispatchQueue = async.queue(
+      function ( payload, callback ) {
+        // FIXME: There's a bad interaction between the Flux Dispatcher's
+        // dispatch function, the ES6 transform done by babelify, and core-js'
+        // support for Symbols. It's not clear what the solution is, but Safari
+        // isn't working right now.
+        this.dispatch( payload );
 
-    handleMiddlewareAction: function( action ) {
-      dispatchQueue.push({
-          source : PayloadSources["MIDDLEWARE_ACTION"]
-        , action : action
-      });
-    }
+        if ( _.isFunction( callback ) ) {
+          callback();
+        }
+      }.bind( this )
+    );
+  }
 
-  , handleMiddlewareLifecycle: function( action ) {
-      dispatchQueue.push({
-          source : PayloadSources["MIDDLEWARE_LIFECYCLE"]
-        , action : action
-      });
-    }
+  handleMiddlewareAction ( action ) {
+    this.dispatchQueue.push({
+        source : PayloadSources["MIDDLEWARE_ACTION"]
+      , action : action
+    });
+  }
 
-  , handleClientAction: function( action ) {
-      dispatchQueue.push({
-          source : PayloadSources["CLIENT_ACTION"]
-        , action : action
-      });
-    }
+  handleMiddlewareLifecycle ( action ) {
+    this.dispatchQueue.push({
+        source : PayloadSources["MIDDLEWARE_LIFECYCLE"]
+      , action : action
+    });
+  }
 
-});
+  handleClientAction ( action ) {
+    this.dispatchQueue.push({
+        source : PayloadSources["CLIENT_ACTION"]
+      , action : action
+    });
+  }
 
-module.exports = FreeNASDispatcher;
+}
+
+export default new FreeNASDispatcher();
