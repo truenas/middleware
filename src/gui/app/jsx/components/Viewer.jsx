@@ -369,7 +369,7 @@ const Viewer = React.createClass(
       if ( this.props.filtersAllowed.size > 0 ) {
         showMenu = (
           <TWBS.DropdownButton title="Show">
-            { [ ...this.props.filtersAllowed ]
+            { Array.from( this.props.filtersAllowed )
                 .map( this.createFilterMenuOption )
             }
           </TWBS.DropdownButton>
@@ -380,7 +380,7 @@ const Viewer = React.createClass(
       if ( this.props.groupsAllowed.size > 0 ) {
         groupMenu = (
           <TWBS.DropdownButton title="Group">
-            { [ ...this.props.groupsAllowed ]
+            { Array.from( this.props.groupsAllowed )
                 .map( this.createGroupMenuOption )
             }
           </TWBS.DropdownButton>
@@ -394,7 +394,7 @@ const Viewer = React.createClass(
           <TWBS.ButtonGroup
             className = "navbar-btn navbar-right"
             activeMode = { this.state.modeActive } >
-            { [ ...this.props.modesAllowed ].map( this.createModeNav ) }
+            { Array.from( this.props.modesAllowed ).map( this.createModeNav ) }
           </TWBS.ButtonGroup>
         );
       }
