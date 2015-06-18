@@ -908,6 +908,9 @@ class iSCSITargetGroups(Model):
     class Meta:
         verbose_name = _("iSCSI Groups")
         verbose_name_plural = _("iSCSI Groups")
+        unique_together = (
+            ('iscsi_target', 'iscsi_target_portalgroup'),
+        )
 
 
 class iSCSITargetToExtent(Model):
