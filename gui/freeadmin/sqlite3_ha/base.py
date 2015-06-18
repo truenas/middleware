@@ -269,6 +269,10 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 'COMMIT;'
             ]
         ))
+
+        with Journal() as j:
+            j.queries = []
+
         return True
 
 
