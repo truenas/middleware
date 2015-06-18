@@ -8,65 +8,61 @@ import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
+import FluxStore from "./FluxBase";
 
-var CHANGE_EVENT = "change";
+class ZfsStore extends FluxStore {
 
-var _zfsPoolData = {};
-var _zfsBootPoolData = {};
-var _zfsPoolGetDisksData = {};
+  constructor () {
+    super();
 
+    this.dispatchToken = FreeNASDispatcher.register(
+      handlePayload.bind( this )
+    );
+    // this.KEY_UNIQUE = "serial";
+    // this.ITEM_SCHEMA = DISK_SCHEMA;
+    // this.ITEM_LABELS = DISK_LABELS;
 
-var ZfsStore = _.assign( {}, EventEmitter.prototype, {
-
-    emitChange: function(changeType) {
-      this.emit( CHANGE_EVENT );
-    }
-
-  , addChangeListener: function( callback ) {
-      this.on( CHANGE_EVENT, callback );
-    }
-
-  , removeChangeListener: function( callback ) {
-      this.removeListener( CHANGE_EVENT, callback );
-    }
-
-  , getZfsPool: function(name) {
-      return _zfsPoolData[name];
-    }
-  , getZfsBootPool: function(name) {
-      return _zfsBootPoolData[name];
-  }
-  , getZfsPoolGetDisks: function(name) {
-      return _zfsPoolGetDisksData[name];
+    this._storagePools = {};
+    this._bootPool     = {};
+    this._poolDisks    = {};
   }
 
+  getZfsPool ( name ) {
+    return this._storagePools[ name ];
+  }
 
+  getZfsBootPool ( name ) {
+    return this._bootPool[ name ];
+  }
 
-});
+  getZfsPoolGetDisks ( name ) {
+    return this._poolDisks[ name ];
+  }
 
-ZfsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-  var action = payload.action;
+}
 
-  switch( action.type ) {
+// Handler for payloads from Flux Dispatcher
+function handlePayload ( payload ) {
+  const ACTION = payload.action;
+
+  switch ( ACTION.type ) {
 
     case ActionTypes.RECEIVE_ZFS_POOL_DATA:
-      _zfsPoolData[action.zfsPoolName] = action.zfsPool;
-      ZfsStore.emitChange();
+      this._storagePools[ ACTION.zfsPoolName ] = ACTION.zfsPool;
+      this.emitChange();
       break;
 
     case ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA:
-      _zfsBootPoolData[action.zfsBootPoolArgument] = action.zfsBootPool;
-      ZfsStore.emitChange();
+      this._bootPool[ ACTION.zfsBootPoolArgument ] = ACTION.zfsBootPool;
+      this.emitChange();
       break;
 
     case ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA:
-      _zfsPoolGetDisksData[action.zfsPoolGetDisksArgument] = action.zfsPoolGetDisks;
-      ZfsStore.emitChange();
+      this._poolDisks[ ACTION.zfsPoolGetDisksArgument ] = ACTION.zfsPoolGetDisks;
+      this.emitChange();
       break;
 
-    default:
-      // No action
   }
-});
+}
 
-module.exports = ZfsStore;
+export default new ZfsStore();
