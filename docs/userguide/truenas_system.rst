@@ -840,7 +840,7 @@ If you click the entry for a CA, the following buttons become available:
 Certificates
 ------------
 
-TrueNAS® can import existing existing certificates, create new certificates, and issue certificate signing requests so that created certificates can be
+TrueNAS® can import existing certificates, create new certificates, and issue certificate signing requests so that created certificates can be
 signed by the CA which was previously imported or created in :ref:`CAs`.
 
 Figure 5.10a shows the initial screen if you click :menuselection:`System --> Certificates`.
