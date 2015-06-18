@@ -57,11 +57,11 @@ var IconViewer = React.createClass(
       if ( this.props.itemIconTemplate ) {
         itemIcon =
           <div className = { "viewer-icon-item"
-                        + ( selection === this.props.selectedItem
-                                        ? " active"
-                                        : ""
-                          )
-                        }
+                         + ( selection === this.props.selectedItem
+                                         ? " active"
+                                         : ""
+                           )
+                         }
                onClick = { this.handleItemClick.bind( null
                                                     , null
                                                     , selection ) }
