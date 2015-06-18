@@ -14,6 +14,12 @@ TOP="$(pwd)"
 
 . build/nanobsd/nanobsd_funcs.sh
 
+if freenas_legacy_build
+then
+	MTREE_CMD="/usr/bin/mtree-9"
+	export MTREE_CMD
+fi
+
 setup_and_export_internal_variables
 
 # File descriptor 3 is used for logging output, see pprint
@@ -54,4 +60,7 @@ setup_nanobsd_etc
 install_kernel LOG=_.ikj
 
 mkdir -p ${NANO_WORLDDIR}/wrkdirs
-
+if freenas_legacy_build
+then
+	update_version_env "${FREEBSD_RELEASE_VERSION}"
+fi
