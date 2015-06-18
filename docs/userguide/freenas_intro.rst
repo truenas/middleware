@@ -314,8 +314,6 @@ The following fields have been added or deleted:
 
 * The "NIC" drop-down menu has been added to :menuselection:`Jails --> Add Jails` so that the interface to use for jail connections can be specified.
 
-* The "Upload Plugin" button has been removed from the "Jails" screen. To install a plugin, use "Plugins" instead.
-
 * The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
 
 .. _What's New Since 9.3-RELEASE:
