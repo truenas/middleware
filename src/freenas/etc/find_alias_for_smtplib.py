@@ -39,6 +39,9 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         # Strip away the comma based delimiters and whitespace.
         to_addrs = map(str.strip, em.get('To').split(','))
 
+    if not to_addrs or not to_addrs[0]:
+        to_addrs = ['root']
+
     if to_addrs:
         aliases = get_aliases()
         to_addrs_repl = []
