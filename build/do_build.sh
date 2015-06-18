@@ -25,6 +25,12 @@ main()
 {
 	local _nanobsd="${AVATAR_ROOT}/build/nanobsd/nanobsd.sh"
 
+	if freenas_legacy_build
+	then
+		MTREE_CMD=/usr/sbin/mtree-9
+		export MTREE_CMD
+	fi
+
 	local _cmd="${_nanobsd} -c ${NANO_CFG_BASE}/${AVATAR_COMPONENT} ${NANO_ARGS} -w -k -j ${MAKE_JOBS}"
 	echo ${_cmd}
 
