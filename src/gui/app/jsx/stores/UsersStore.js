@@ -173,7 +173,7 @@ function handlePayload ( payload ) {
         _users[ user [ PRIMARY_KEY ] ] = user;
       });
 
-      UsersStore.emitChange();
+      this.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
@@ -193,7 +193,7 @@ function handlePayload ( payload ) {
         } else {
           // TODO: Are there any other cases?
         }
-        UsersStore.emitChange();
+        this.emitChange();
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
       } else if ( args[ "name" ] === "task.updated" && args.args["state"] === "FINISHED" ) {
@@ -204,11 +204,11 @@ function handlePayload ( payload ) {
 
     case ActionTypes.RECEIVE_USER_UPDATE_TASK:
       _localUpdatePending[ action.taskID ] = action.userID;
-      UsersStore.emitChange();
+      this.emitChange();
       break;
 
     default:
-      // No action
+    // No action
   }
 };
 
