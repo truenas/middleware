@@ -29,9 +29,10 @@
 import errno
 import os
 import stat
-from dispatcher.rpc import RpcException, description, accepts, returns
+from dispatcher.rpc import RpcException, description, accepts, returns, pass_sender, private
 from dispatcher.rpc import SchemaHelper as h
-from task import Provider, Task
+from task import Provider, Task, TaskStatus
+from auth import FileToken
 
 
 @description("Provides informations filesystem structure")
@@ -73,22 +74,83 @@ class FilesystemProvider(Provider):
 
         return result
 
+    @pass_sender
+    @accepts(str)
+    @returns(str)
+    def download(self, path, sender):
+        try:
+            f = open(path, 'r')
+        except OSError, e:
+            raise RpcException(e.errno, e.message)
 
+        token = self.dispatcher.token_store.issue_token(FileToken(
+            user=sender.user,
+            lifetime=60,
+            direction='download',
+            file=f
+        ))
+
+        return token
+
+    @pass_sender
+    @accepts(str, long, str)
+    @returns(str)
+    def upload(self, dest_path, size, mode, sender):
+        try:
+            f = open(dest_path, 'w')
+        except OSError, e:
+            raise RpcException(e.errno, e.message)
+
+        token = self.dispatcher.token_store.issue_token(FileToken(
+            user=sender.user,
+            lifetime=60,
+            direction='upload',
+            file=f,
+            size=size
+        ))
+
+        return token
+
+
+@accepts(str)
+@private
 class DownloadFileTask(Task):
-    def verify(self, path):
-        pass
+    def verify(self, name, connection):
+        return []
 
-    def run(self, path):
-        pass
+    def run(self, connection):
+        self.connection = connection
+        self.connection.done.wait()
+
+    def get_status(self):
+        if not self.connection:
+            return TaskStatus(0)
+
+        percentage = (self.connection.bytes_done / self.connection.bytes_total) * 100
+        return TaskStatus(percentage)
 
 
+@accepts(str, long)
+@private
 class UploadFileTask(Task):
-    def verify(self, dest_path):
-        pass
+    def verify(self, name, connection):
+        return []
 
-    def run(self, dest_path):
-        pass
+    def run(self, connection):
+        self.connection = connection
+        self.connection.done.wait()
+
+    def get_status(self):
+        if not self.connection:
+            return TaskStatus(0)
+
+        percentage = (self.connection.bytes_done / self.connection.bytes_total) * 100
+        return TaskStatus(percentage)
 
 
 def _init(dispatcher, plugin):
     plugin.register_provider('filesystem', FilesystemProvider)
+
+    plugin.register_provider('filesystem', FilesystemProvider)
+    plugin.register_task_handler('file.download', DownloadFileTask)
+    plugin.register_task_handler('file.upload', UploadFileTask)

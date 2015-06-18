@@ -11,6 +11,8 @@
 /usr/local/lib/python2.7/site-packages/dispatcher/jsonenc.pyc
 /usr/local/lib/python2.7/site-packages/dispatcher/shell.py
 /usr/local/lib/python2.7/site-packages/dispatcher/shell.pyc
+/usr/local/lib/python2.7/site-packages/dispatcher/file.py
+/usr/local/lib/python2.7/site-packages/dispatcher/file.pyc
 /usr/local/lib/dispatcher/src/main.py
 /usr/local/lib/dispatcher/src/api/__init__.py
 /usr/local/lib/dispatcher/src/api/handler.py

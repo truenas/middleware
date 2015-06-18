@@ -1142,12 +1142,36 @@ class ShellConnection(WebSocketApplication, EventEmitter):
 
 
 class FileConnection(WebSocketApplication, EventEmitter):
+    BUFSIZE = 1024
+
     def __init__(self, ws, dispatcher):
         super(FileConnection, self).__init__(ws)
         self.dispatcher = dispatcher
         self.token = None
         self.authenticated = False
+        self.bytes_done = None
+        self.bytes_total = None
+        self.done = Event()
+        self.inq = Queue()
         self.logger = logging.getLogger('FileConnection')
+
+    def worker(self, file, direction, size=None):
+        def read_worker():
+            while True:
+                data = file.read(self.BUFSIZE)
+                if not data:
+                    return
+
+                self.ws.send(data)
+
+        def write_worker():
+            for i in self.inq:
+                file.write(i)
+
+        wr = gevent.spawn(write_worker)
+        rd = gevent.spawn(read_worker)
+        self.ws.close()
+        gevent.joinall([rd, wr])
 
     def on_open(self, *args, **kwargs):
         pass
@@ -1170,8 +1194,14 @@ class FileConnection(WebSocketApplication, EventEmitter):
 
             self.token = self.dispatcher.token_store.lookup_token(message['token'])
             self.authenticated = True
+
+            gevent.spawn(self.worker, self.token.file, self.token.direction, self.token.size)
+            self.dispatcher.balancer.submit('file.{0}'.format(self.token.direction), self.token.name, self)
             self.ws.send(dumps({'status': 'ok'}))
             return
+
+        for i in message:
+            self.inq.put(i)
 
 
 def run(d, args):

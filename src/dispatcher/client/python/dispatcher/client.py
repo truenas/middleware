@@ -25,13 +25,13 @@
 #
 #####################################################################
 
-import json
 import enum
 import uuid
 import errno
 from jsonenc import dumps, loads
 from dispatcher import rpc
 from ws4py.client.threadedclient import WebSocketClient
+from fnutils.query import matches
 
 
 class ClientError(enum.Enum):
@@ -107,6 +107,19 @@ class Client(object):
             self.error = None
             self.completed = get_event()
             self.callback = None
+
+    class SubscribedEvent(object):
+        def __init__(self, name, *filters):
+            self.name = name
+            self.refcount = 0
+            self.filters = filters
+
+        def match(self, name, args):
+            if self.name != name:
+                return False
+
+            if self.filters:
+                return match(args, *self.filters)
 
     def __init__(self, thread_type=ClientType.THREADED):
         self.pending_calls = {}
