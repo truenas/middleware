@@ -8,20 +8,22 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class SystemActionCreators {
 
-  static receiveSystemInfo ( systemInfo, systemInfoName ) {
+  static receiveSystemInfo ( systemInfo, systemInfoName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
-      , systemInfo: systemInfo
-      , systemInfoName: systemInfoName
+      , timestamp
+      , systemInfo
+      , systemInfoName
       }
     );
   }
 
-  static receiveSystemDevice ( systemDevice, systemDeviceArgument ) {
+  static receiveSystemDevice ( systemDevice, systemDeviceArgument, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
-      , systemDevice: systemDevice
-      , systemDeviceArgument: systemDeviceArgument
+      , timestamp
+      , systemDevice
+      , systemDeviceArgument
       }
     );
   }

@@ -10,66 +10,74 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class MiddleWareActionCreators {
 
-  static receiveAuthenticationChange ( currentUser, loggedIn ) {
+  static receiveAuthenticationChange ( currentUser, loggedIn, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UPDATE_AUTH_STATE
+      , timestamp
       , currentUser
       , loggedIn
       }
     );
   }
 
-  static updateSocketState ( sockState ) {
+  static updateSocketState ( sockState, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UPDATE_SOCKET_STATE
+      , timestamp
       , sockState
       }
     );
   }
 
-  static updateReconnectTime ( ETA ) {
+  static updateReconnectTime ( ETA, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UPDATE_RECONNECT_TIME
+      , timestamp
       , ETA
       }
     );
   }
 
-  static increaseSubscriptionCount ( mask ) {
+  static increaseSubscriptionCount ( mask, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.SUBSCRIBE_TO_MASK
+      , timestamp
       , mask
       }
     );
   }
 
-  static decreaseSubscriptionCount ( mask ) {
+  static decreaseSubscriptionCount ( mask, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UNSUBSCRIBE_FROM_MASK
+      , timestamp
       , mask
       }
     );
   }
 
-  static receiveEventData ( eventData ) {
+  static receiveEventData ( eventData, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.MIDDLEWARE_EVENT
+      , timestamp
       , eventData
       }
     );
   }
 
-  static receiveAvailableServices ( services ) {
+  static receiveAvailableServices ( services, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICES
+      , timestamp
       , services
       }
     );
   }
 
-  static receiveAvailableServiceMethods ( service, methods ) {
+  static receiveAvailableServiceMethods ( service, methods, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICE_METHODS
+      , timestamp
       , service
       , methods
       }

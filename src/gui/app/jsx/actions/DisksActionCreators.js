@@ -8,19 +8,21 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class DisksActionCreators {
 
-  static receiveDisksOverview ( disksOverview ) {
+  static receiveDisksOverview ( disksOverview, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_DISKS_OVERVIEW
-      , disksOverview: disksOverview
+      , timestamp
+      , disksOverview
       }
     );
   }
 
-  static receiveDiskDetails ( diskDetails ) {
+  static receiveDiskDetails ( diskDetails, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_DISK_DETAILS
+      , timestamp
+      , diskDetails
       , diskID: diskDetails[ "serial" ]
-      , diskDetails: diskDetails
       }
     );
   }
