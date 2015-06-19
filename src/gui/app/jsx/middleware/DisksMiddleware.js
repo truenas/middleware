@@ -23,9 +23,7 @@ class DisksMiddleware extends AbstractBase {
   static requestDisksOverview () {
     MC.request( "disks.query"
               , []
-              , function resolveDisksOverview ( rawDisksOverview ) {
-                  DAC.receiveDisksOverview( rawDisksOverview );
-                }
+              , DAC.receiveDisksOverview.bind( DAC )
               );
   }
 
@@ -33,9 +31,7 @@ class DisksMiddleware extends AbstractBase {
     if ( _.isString( diskPath ) ) {
       MC.request( "disks.get_disk_config"
                 , [ diskPath ]
-                , function resolveDiskDetails ( rawDiskDetails ) {
-                    DAC.receiveDiskDetails( rawDiskDetails );
-                  }
+                , DAC.receiveDiskDetails.bind( DAC )
                 );
     } else {
       throw new Error( "The argument for DisksMiddleware.requestDiskDetails "

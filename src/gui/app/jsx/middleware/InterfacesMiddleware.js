@@ -23,36 +23,28 @@ class InterfacesMiddleware extends AbstractBase {
   static requestInterfacesList () {
       MC.request( "network.interfaces.query"
                 , []
-                , function handleRequestInterfacesList ( rawInterfacesList ) {
-                    IAC.receiveInterfacesList( rawInterfacesList );
-                  }
+                , IAC.receiveInterfacesList.bind( IAC )
                 );
     }
 
   static configureInterface ( interfaceName, props ) {
     MC.request( "task.submit"
               , [ "network.interface.configure", [ interfaceName, props ] ]
-              , function handleConfigureInterface ( taskID, interfaceName ) {
-                  IAC.receiveInterfaceConfigureTask( taskID, interfaceName );
-                }
+              , IAC.receiveInterfaceConfigureTask.bind( IAC )
               );
   }
 
   static upInterface ( interfaceName ) {
     MC.request( "task.submit"
               , [ "network.interface.up", [ interfaceName ] ]
-              , function handleUpInterface ( taskID, interfaceName ) {
-                  IAC.receiveUpInterfaceTask( taskID, interfaceName );
-                }
+              , IAC.receiveUpInterfaceTask.bind( IAC )
               );
   }
 
   static downInterface ( interfaceName ) {
     MC.request( "task.submit"
               , [ "network.interface.down", [ interfaceName ] ]
-              , function handleDownInterface ( taskID, interfaceName ) {
-                  IAC.receiveDownInterfaceTask( taskID, interfaceName );
-                }
+              , IAC.receiveDownInterfaceTask.bind( IAC )
               );
   }
 

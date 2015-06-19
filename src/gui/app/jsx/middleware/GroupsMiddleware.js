@@ -24,36 +24,28 @@ class GroupsMiddleware extends AbstractBase {
   static requestGroupsList () {
     MC.request( "groups.query"
               , []
-              , function handleRequestGroupsList ( groupsList ) {
-                  GAC.receiveGroupsList( groupsList );
-                }
+              , GAC.receiveGroupsList.bind( GAC )
               );
   }
 
   static createGroup ( newGroupProps ) {
     MC.request( "task.submit"
               , [ "groups.create" , [ newGroupProps ] ]
-              , function handleCreateGroup ( taskID, groupID ) {
-                  GAC.receiveGroupUpdateTask( taskID, groupID );
-                }
+              , GAC.receiveGroupUpdateTask.bind( GAC )
               );
   }
 
   static updateGroup ( groupID, props ) {
     MC.request( "task.submit"
               , [ "groups.update", [ groupID, props ] ]
-              , function handleUpdateGroup ( taskID, GroupID ) {
-                  GAC.receiveGroupUpdateTask( taskID, groupID );
-                }
+              , GAC.receiveGroupUpdateTask.bind( GAC )
               );
   }
 
   static deleteGroup ( groupID ) {
     MC.request( "task.submit"
               , [ "groups.delete", [ groupID ] ]
-              , function handleDeleteGroup ( taskID, groupID ) {
-                  GAC.receiveGroupUpdateTask( taskID, groupID );
-                }
+              , GAC.receiveGroupUpdateTask.bind( GAC )
               );
   }
 
