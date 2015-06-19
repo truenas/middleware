@@ -84,14 +84,14 @@ const UserView = React.createClass(
           <TWBS.Row>
             <TWBS.Col xs={3}
                       className="text-center">
-              <viewerUtil.ItemIcon primaryString   = { this.props.item["full_name"] }
+              <viewerUtil.ItemIcon primaryString   = { this.props.item["fullname"] }
                                    fallbackString  = { this.props.item["username"] }
                                    iconImage       = { this.props.item["user_icon"] }
                                    seedNumber      = { this.props.item["id"] } />
             </TWBS.Col>
             <TWBS.Col xs={9}>
               <h3>{ this.props.item["username"] }</h3>
-              <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["full_name"], "\u200B" ) }</h4>
+              <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["fullname"], "\u200B" ) }</h4>
               <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["email"], "\u200B" ) }</h4>
               <hr />
             </TWBS.Col>
@@ -119,10 +119,10 @@ const UserView = React.createClass(
                                  entry  = { this.props.item["sudo"] ? this.props.item["sudo"]: false } />
             <viewerUtil.DataCell title  = { "Password Disabled" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["password_disabled"] ? this.props.item["password_disabled"]: false } />
+                                 entry  = { this.props.item["passwordDisabled"] ? this.props.item["password_disabled"]: false } />
             <viewerUtil.DataCell title  = { "Logged In" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["logged-in"] ? this.props.item["logged-in"]: false } />
+                                 entry  = { this.props.item["loggedIn"] ? this.props.item["loggedIn"]: false } />
             <viewerUtil.DataCell title  = { "Home Directory" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["home"] } />

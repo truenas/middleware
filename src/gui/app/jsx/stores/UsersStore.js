@@ -88,7 +88,7 @@ const KEY_TRANSLATION =
   , email             : "email"
   , builtin           : "builtIn"
   , loggedin          : "loggedIn"
-  , full_name         : "fullName"
+  , full_name         : "fullname"
   , home              : "home"
   , group             : "group"
   , id                : "id"
