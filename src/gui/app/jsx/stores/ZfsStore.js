@@ -1,5 +1,5 @@
-// Zfs Flux Store
-// ----------------
+// ZFS POOL AND VOLUME STORE
+// =========================
 
 "use strict";
 
@@ -23,6 +23,9 @@ class ZfsStore extends FluxStore {
     // this.ITEM_SCHEMA = DISK_SCHEMA;
     // this.ITEM_LABELS = DISK_LABELS;
 
+    // TODO: These need to reconcile better, and we need to drop the things that
+    // still rely on legacy ZFS namespace RPCs.
+    this._volumes      = {};
     this._storagePools = {};
     this._bootPool     = {};
     this._poolDisks    = {};
@@ -30,6 +33,17 @@ class ZfsStore extends FluxStore {
 
   get bootPool () {
     return this._bootPool;
+  }
+
+  listStoragePools ( sortKey ) {
+    if ( sortKey ) {
+      return _.chain( this._storagePools )
+              .values()
+              .sort( sortKey )
+              .value();
+    } else {
+      return _.values( this._storagePools );
+    }
   }
 
   getDisksInPool ( poolName ) {
@@ -43,6 +57,11 @@ function handlePayload ( payload ) {
   const ACTION = payload.action;
 
   switch ( ACTION.type ) {
+
+    case ActionTypes.RECEIVE_VOLUMES:
+      this._volumes = ACTION.volumes;
+      this.emitChange();
+      break;
 
     case ActionTypes.RECEIVE_POOL:
       this._storagePools[ ACTION.poolName ] = ACTION.poolData;

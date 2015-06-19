@@ -9,6 +9,28 @@ import ZAC from "../actions/ZfsActionCreators";
 
 class ZfsMiddleware extends AbstractBase {
 
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "entity-subscriber.volumes.changed" ]
+                , componentID
+                );
+  }
+
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "entity-subscriber.volumes.changed" ]
+                  , componentID
+                  );
+  }
+
+  static requestVolumes () {
+    MC.request( "volumes.query"
+              , []
+              , function handleVolumes ( response ) {
+                  ZAC.receiveVolumes( response );
+                }
+              );
+  }
+
+  // TODO: Deprecated, should be using volumes.* RPC namespaces now
   static requestPool ( poolName ) {
     MC.request( "zfs.pool." + poolName
               , []

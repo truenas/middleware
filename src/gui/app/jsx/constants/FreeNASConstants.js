@@ -60,6 +60,7 @@ const FREENAS_CONSTANTS =
     , RECEIVE_DOWN_INTERFACE_TASK: null
 
     // ZFS
+    , RECEIVE_VOLUMES: null
     , RECEIVE_POOL: null
     , RECEIVE_BOOT_POOL: null
     , RECEIVE_POOL_DISK_IDS: null

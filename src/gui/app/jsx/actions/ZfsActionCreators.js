@@ -8,9 +8,17 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class ZfsActionCreators {
 
+  static receiveVolumes ( volumes ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_VOLUMES
+      , volumes
+      }
+    );
+  }
+
   static receivePool ( poolData, poolName ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_POOL
+      { type: ActionTypes.RECEIVE_VOLUMES
       , poolData
       , poolName
       }
