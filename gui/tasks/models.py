@@ -182,57 +182,13 @@ class CronJob(Model):
         return line
 
     def run(self):
-        if os.fork() == 0:
-            for i in xrange(1, 1024):
-                try:
-                    os.close(i)
-                except OSError:
-                    pass
-            try:
-                os.setsid()
-
-                libc = ctypes.cdll.LoadLibrary("libc.so.7")
-                libutil = ctypes.cdll.LoadLibrary("libutil.so.9")
-                libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
-                pwnam = libc.getpwnam(self.cron_user.encode('utf8'))
-                passwd = pwd.getpwnam(self.cron_user.encode('utf8'))
-
-                libutil.login_getpwclass.restype = ctypes.POINTER(
-                    ctypes.c_void_p
-                )
-                lc = libutil.login_getpwclass(pwnam)
-                if lc and lc[0]:
-                    libutil.setusercontext(
-                        lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)
-                    )
-
-                os.setgid(passwd.pw_gid)
-                libc.setlogin(self.cron_user.encode('utf8'))
-                libc.initgroups(self.cron_user.encode('utf8'), passwd.pw_gid)
-                os.setuid(passwd.pw_uid)
-
-                if lc and lc[0]:
-                    libutil.login_close(lc)
-
-                try:
-                    os.chdir(passwd.pw_dir)
-                except:
-                    pass
-                proc = subprocess.Popen(
-                    '%s | logger -t cron' % self.commandline(),
-                    shell=True,
-                    env={
-                        'PATH': (
-                            '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
-                            '/usr/local/sbin:/root/bin'
-                        ),
-                    },
-                )
-                proc.communicate()
-            except Exception, e:
-                log.debug("Failed to run cron")
-                log_traceback(log=log)
-            os._exit(0)
+        proc = subprocess.Popen([
+            "/usr/local/bin/python2",
+            "/usr/local/www/freenasUI/tools/runnow.py",
+            "-t", "cronjob",
+            "-i", str(self.id),
+        ])
+        proc.communicate()
 
     def delete(self):
         super(CronJob, self).delete()
@@ -586,57 +542,13 @@ class Rsync(Model):
         return line
 
     def run(self):
-        if os.fork() == 0:
-            for i in xrange(1, 1024):
-                try:
-                    os.close(i)
-                except OSError:
-                    pass
-            try:
-                os.setsid()
-
-                libc = ctypes.cdll.LoadLibrary("libc.so.7")
-                libutil = ctypes.cdll.LoadLibrary("libutil.so.9")
-                libc.getpwnam.restype = ctypes.POINTER(ctypes.c_void_p)
-                pwnam = libc.getpwnam(self.rsync_user.encode('utf8'))
-                passwd = pwd.getpwnam(self.rsync_user.encode('utf8'))
-
-                libutil.login_getpwclass.restype = ctypes.POINTER(
-                    ctypes.c_void_p
-                )
-                lc = libutil.login_getpwclass(pwnam)
-                if lc and lc[0]:
-                    libutil.setusercontext(
-                        lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)
-                    )
-
-                os.setgid(passwd.pw_gid)
-                libc.setlogin(self.rsync_user.encode('utf8'))
-                libc.initgroups(self.rsync_user.encode('utf8'), passwd.pw_gid)
-                os.setuid(passwd.pw_uid)
-
-                if lc and lc[0]:
-                    libutil.login_close(lc)
-
-                try:
-                    os.chdir(passwd.pw_dir)
-                except:
-                    pass
-                proc = subprocess.Popen(
-                    '%s 2>&1 | logger -t rsync' % self.commandline(),
-                    shell=True,
-                    env={
-                        'PATH': (
-                            '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:'
-                            '/usr/local/sbin:/root/bin'
-                        ),
-                    },
-                )
-                proc.communicate()
-            except Exception:
-                log.debug("Failed to run rsync")
-                log_traceback(log=log)
-            os._exit(0)
+        proc = subprocess.Popen([
+            "/usr/local/bin/python2",
+            "/usr/local/www/freenasUI/tools/runnow.py",
+            "-t", "rsync",
+            "-i", str(self.id),
+        ])
+        proc.communicate()
 
     def delete(self):
         super(Rsync, self).delete()
