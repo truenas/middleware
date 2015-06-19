@@ -14,10 +14,21 @@ class FluxBaseClass extends EventEmitter {
 
   constructor () {
     super();
-    this.CHANGE_EVENT = "change";
-    this.KEY_UNIQUE   = null;
-    this.ITEM_LABELS   = null;
-    this.ITEM_SCHEMA  = null;
+
+    this.CHANGE_EVENT   = "change";
+    this.KEY_UNIQUE     = null;
+    this.ITEM_LABELS    = null;
+    this.ITEM_SCHEMA    = null;
+
+    this.lastFullUpdate = 0;
+  }
+
+  get isInitialized () {
+    return this.lastFullUpdate > 0;
+  }
+
+  set fullUpdate ( timestamp ) {
+    this.lastFullUpdate = timestamp;
   }
 
   get uniqueKey () {
