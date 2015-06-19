@@ -8,6 +8,7 @@
 
 import React from "react";
 
+import Pools from "./Storage/Pools";
 import Disks from "./Storage/Disks";
 
 const Storage = React.createClass(
@@ -16,6 +17,7 @@ const Storage = React.createClass(
   , render: function () {
       return (
         <main>
+          <Pools />
           <Disks />
         </main>
       );
