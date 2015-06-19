@@ -13,8 +13,8 @@ class MiddleWareActionCreators {
   static receiveAuthenticationChange ( currentUser, loggedIn ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UPDATE_AUTH_STATE
-      , currentUser: currentUser
-      , loggedIn: loggedIn
+      , currentUser
+      , loggedIn
       }
     );
   }
@@ -22,7 +22,7 @@ class MiddleWareActionCreators {
   static updateSocketState ( sockState ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UPDATE_SOCKET_STATE
-      , sockState: sockState
+      , sockState
       }
     );
   }
@@ -30,7 +30,7 @@ class MiddleWareActionCreators {
   static updateReconnectTime ( ETA ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UPDATE_RECONNECT_TIME
-      , ETA: ETA
+      , ETA
       }
     );
   }
@@ -38,7 +38,7 @@ class MiddleWareActionCreators {
   static increaseSubscriptionCount ( mask ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.SUBSCRIBE_TO_MASK
-      , mask: mask
+      , mask
       }
     );
   }
@@ -46,7 +46,7 @@ class MiddleWareActionCreators {
   static decreaseSubscriptionCount ( mask ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UNSUBSCRIBE_FROM_MASK
-      , mask: mask
+      , mask
       }
     );
   }
@@ -54,7 +54,7 @@ class MiddleWareActionCreators {
   static receiveEventData ( eventData ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.MIDDLEWARE_EVENT
-      , eventData: eventData
+      , eventData
       }
     );
   }
@@ -62,7 +62,7 @@ class MiddleWareActionCreators {
   static receiveAvailableServices ( services ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICES
-      , services: services
+      , services
       }
     );
   }
@@ -70,8 +70,8 @@ class MiddleWareActionCreators {
   static receiveAvailableServiceMethods ( service, methods ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICE_METHODS
-      , service: service
-      , methods: methods
+      , service
+      , methods
       }
     );
   }
