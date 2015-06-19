@@ -419,6 +419,19 @@ class NFS_ShareForm(ModelForm):
         dev = None
         valid = True
         ismp = False
+
+        qs = models.NFS_Share_Path.objects.all()
+        if self.instance.id:
+            qs = qs.exclude(share__id=self.instance.id)
+
+        devs = set()
+        for o in qs:
+            try:
+                dev = os.stat(o.path.encode('utf8')).st_dev
+            except OSError:
+                continue
+            devs.add(dev)
+
         for form in forms:
             if not hasattr(form, "cleaned_data"):
                 continue
@@ -446,6 +459,13 @@ class NFS_ShareForm(ModelForm):
                     ])
                     valid = False
                     break
+
+                if stat.st_dev in devs:
+                    form._errors['path'] = self.error_class([_(
+                        'A mountpoint with this path is already in use by '
+                        'another share.'
+                    )])
+                    valid = False
             except OSError:
                 pass
 
