@@ -13,37 +13,33 @@ import InterfacesMiddleware from "../../middleware/InterfacesMiddleware";
 
 import InterfacesStore from "../../stores/InterfacesStore";
 
-var viewData = {
-  routing: { route : "interfaces-editor"
-             , param : "interfaceID"
-             }
-  , display: { filterCriteria:
-               { connected:
-                 { name: "connected interfaces"
-                 , testProp: { link_state: "LINK_STATE_UP" }
-                 }
-               , disconnected:
-                 { name: "disconnected interfaces"
-                 , testprop: { link_state: "LINK_STATE_DOWN" }
-                }
-               , unknown:
-                 { name: "invalid or unknown interfaces"
-                 , testprop: { link_state: "LINK_STATE_UNKNOWN" }
-                 }
-               }
-             , remainingName: "other interfaces"
-             , ungroupedName: "all interfaces"
-             , allowedFilters: [ ]
-             , defaultFilters: [ ]
-             , allowedGroups: [ "connected"
-                              , "disconnected"
-                              , "unknown" ]
-             , defaultGroups: [ "connected"
-                              , "disconnected"
-                              , "unknown" ]
-             , defaultCollapsed: [ "unknown" ]
-            }
-};
+var viewData =  { routing:  { route : "interfaces-editor"
+                            , param : "interfaceID" }
+                , display:
+                  { filterCriteria:
+                    { connected:
+                      { name: "connected interfaces"
+                      , testProp: { link_state: "LINK_STATE_UP" } }
+                    , disconnected:
+                      { name: "disconnected interfaces"
+                      , testprop: { link_state: "LINK_STATE_DOWN" } }
+                    , unknown:
+                      { name: "invalid or unknown interfaces"
+                      , testprop: { link_state: "LINK_STATE_UNKNOWN" } }
+                    }
+                  , remainingName: "other interfaces"
+                  , ungroupedName: "all interfaces"
+                  , allowedFilters: [ ]
+                  , defaultFilters: [ ]
+                  , allowedGroups:  [ "connected"
+                                    , "disconnected"
+                                    , "unknown" ]
+                  , defaultGroups:  [ "connected"
+                                    , "disconnected"
+                                    , "unknown" ]
+                  , defaultCollapsed: [ "unknown" ]
+                  }
+                };
 
 function getInterfacesFromStore () {
   return { interfacesList: InterfacesStore.getAllInterfaces() };
@@ -71,11 +67,11 @@ const Interfaces = React.createClass({
   }
 
   , render: function () {
-      return <Viewer
-               header = { "Interfaces" }
-               inputData = { this.state.interfacesList }
-               viewData = { viewData } />;
-    }
+    return <Viewer
+              header = { "Interfaces" }
+              inputData = { this.state.interfacesList }
+              viewData = { viewData } />;
+  }
 
 });
 
