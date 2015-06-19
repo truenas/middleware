@@ -13,33 +13,53 @@ import InterfacesMiddleware from "../../middleware/InterfacesMiddleware";
 
 import InterfacesStore from "../../stores/InterfacesStore";
 
-var viewData =  { routing:  { route : "interfaces-editor"
-                            , param : "interfaceID" }
-                , display:
-                  { filterCriteria:
-                    { connected:
-                      { name: "connected interfaces"
-                      , testProp: { link_state: "LINK_STATE_UP" } }
-                    , disconnected:
-                      { name: "disconnected interfaces"
-                      , testprop: { link_state: "LINK_STATE_DOWN" } }
-                    , unknown:
-                      { name: "invalid or unknown interfaces"
-                      , testprop: { link_state: "LINK_STATE_UNKNOWN" } }
-                    }
-                  , remainingName: "other interfaces"
-                  , ungroupedName: "all interfaces"
-                  , allowedFilters: [ ]
-                  , defaultFilters: [ ]
-                  , allowedGroups:  [ "connected"
-                                    , "disconnected"
-                                    , "unknown" ]
-                  , defaultGroups:  [ "connected"
-                                    , "disconnected"
-                                    , "unknown" ]
-                  , defaultCollapsed: [ "unknown" ]
-                  }
-                };
+const VIEWER_DATA =
+  { keyUnique     : "id"
+  , keyPrimary    : "id"
+  , keySecondary  : "name"
+
+  , itemSchema    : InterfacesStore.getInterfaceSchema()
+  , itemLabels    : InterfacesStore.getInterfaceLabels()
+
+  , routeName     : "interfaces-editor"
+  , routeParam    : "interfaceID"
+
+  , textRemaining : "other interfaces"
+  , textUngrouped : "all interfaces"
+
+  , groupsInitial : new Set( [ "connected", "disconnected", "unknown" ] )
+  , groupsAllowed : new Set( [ "connected", "disconnected", "unknown" ] )
+
+  , columnsInitial : new Set(
+                      [ "id"
+                      , "name"
+                      , "type"
+                      , "dhcp"
+                      ]
+                    )
+  , columnsAllowed : new Set(
+                      [ "id"
+                      , "name"
+                      , "type"
+                      , "dhcp"
+                      ]
+                    )
+
+  , groupBy:
+    { connected:
+       { name: "connected interfaces"
+       , testProp: { "link-state": "LINK_STATE_UP" }
+       }
+    , disconnected:
+       { name: "disconnected interfaces"
+       , testProp: { "link-state": "LINK_STATE_DOWN" }
+       }
+    , unknown:
+       { name: "invalid or unknown interfaces"
+       , testProp: { "link-state": "LINK_STATE_UNKNOWN" }
+       }
+    }
+  };
 
 function getInterfacesFromStore () {
   return { interfacesList: InterfacesStore.getAllInterfaces() };
@@ -68,9 +88,9 @@ const Interfaces = React.createClass({
 
   , render: function () {
     return <Viewer
-              header = { "Interfaces" }
-              inputData = { this.state.interfacesList }
-              viewData = { viewData } />;
+              header    = { "Interfaces" }
+              itemData  = { this.state.interfacesList }
+              { ...VIEWER_DATA } />;
   }
 
 });

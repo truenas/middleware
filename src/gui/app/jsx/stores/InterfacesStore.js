@@ -16,7 +16,59 @@ const UPDATE_MASK  = "network.interface.changed";
 
 var _updatedOnServer    = [];
 var _localUpdatePending = {};
-var _interfaces           = [];
+var _interfaces         = [];
+
+const INTERFACE_SCHEMA =
+  { type: "object"
+  , properties:
+    { status:
+        { type: "object"
+        , properties:
+          { "link-state"    : { type: "string" }
+          , "link-address"  : { type: "string" }
+          , flags:
+            { enum:
+              [ "DRV_RUNNING"
+              , "UP"
+              , "BROADCAST"
+              , "SIMPLEX"
+              , "MULTICAST"
+              ]
+            , type: "string"
+            }
+          , name            : { type: "string" }
+          , aliases:
+            { items : { $ref: "network-interface-alias" }
+            , type  : "array"
+            }
+          }
+        }
+    , name    : { type: "string" }
+    , dhcp    : { type: "boolean" }
+    , enabled : { type: "boolean" }
+    , aliases:
+      { items : { $ref: "network-interface-alias" }
+      , type  : "array"
+      }
+    , type    : { type: "string" }
+    , id      : { type: "string" }
+    , mtu     : { type: [ "integer", "null" ] }
+    }
+  };
+
+const INTERFACE_LABELS =
+    { status              : "Status"
+    , "link-state"        : "Link State"
+    , "link-address"      : "Link Address"
+    , flags               : "Flags"
+    , name                : "Interface Name"
+    , aliases             : "Aliases"
+    , dhcp                : "DHCP"
+    , enabled             : "Enabled"
+    , type                : "Type"
+    , id                  : "Interface ID"
+    , mtu                 : "MTU"
+  };
 
 var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -57,6 +109,14 @@ var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
       return thisInterface[ key ] === value;
     });
   }
+
+  , getInterfaceSchema: function () {
+      return INTERFACE_SCHEMA;
+    }
+
+  , getInterfaceLabels: function () {
+      return INTERFACE_LABELS;
+    }
 
   , getInterface: function ( linkAddress ) {
     return _interfaces[ linkAddress ];
