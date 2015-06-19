@@ -888,6 +888,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                     "namespace": "rpc",
                     "name": "error",
                     "id": id,
+                    "timestamp": time.time(),
                     "args": {
                         "code": err.code,
                         "message": err.message,
@@ -899,6 +900,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                     "namespace": "rpc",
                     "name": "response",
                     "id": id,
+                    "timestamp": time.time(),
                     "args": result
                 })
 
