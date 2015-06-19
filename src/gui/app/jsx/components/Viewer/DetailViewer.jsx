@@ -210,7 +210,7 @@ const DetailViewer = React.createClass(
 
       if ( this.addingEntity() ) {
         editorContent = (
-          <RouteHandler />
+          <RouteHandler { ...this.props }/>
         );
       } else if ( this.dynamicPathIsActive() ) {
         editorContent = (

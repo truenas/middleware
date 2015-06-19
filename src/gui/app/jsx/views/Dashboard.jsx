@@ -550,6 +550,7 @@ const Dashboard = React.createClass({
         return (
               <DragDropGrid className = "widget-wrapper" >
 
+              {/*
                 <SystemInfo
                   stacked           = "true"
                   title             = "System Info"
@@ -562,6 +563,7 @@ const Dashboard = React.createClass({
                                         .SystemInfo.dimensions }
                   position          = { this.state.widgets.SystemInfo.position }
                   id                = { this.state.widgets.SystemInfo.id } />
+              */}
 
                 <MemoryUtil
                   title = "Memory Value"

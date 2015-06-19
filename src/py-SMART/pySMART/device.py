@@ -35,6 +35,8 @@ from .attribute import Attribute
 from .test_entry import Test_Entry
 from .utils import *
 
+# Calling path_append before executing anything else in the file
+path_append()
 
 class Device(object):
     """

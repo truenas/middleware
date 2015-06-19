@@ -4,9 +4,8 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
   this.options = { exclude: [ "app/source"
-                            , "app/jsx"
                             ]
                  , recursive : true
                  , delete    : true

@@ -9,19 +9,21 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class UsersActionCreators {
 
-  static receiveUsersList ( rawUsers ) {
+  static receiveUsersList ( rawUsers, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RAW_USERS
-      , rawUsers: rawUsers
+      , timestamp
+      , rawUsers
       }
     );
   }
 
-  static receiveUserUpdateTask ( taskID, userID ) {
+  static receiveUserUpdateTask ( taskID, userID, timestamp ) {
     FreeNASDispatcher.handleClientAction(
       { type: ActionTypes.RECEIVE_USER_UPDATE_TASK
-      , taskID: taskID
-      , userID: userID
+      , timestamp
+      , taskID
+      , userID
       }
     );
   }

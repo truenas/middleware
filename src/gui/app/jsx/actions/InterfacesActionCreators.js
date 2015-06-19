@@ -8,38 +8,42 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class InterfacesActionCreators {
 
-  static receiveInterfacesList ( rawInterfacesList ) {
+  static receiveInterfacesList ( rawInterfacesList, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_INTERFACES_LIST
-      , rawInterfacesList: rawInterfacesList
+      , timestamp
+      , rawInterfacesList
       }
     );
   }
 
-  static receiveInterfaceConfigureTask ( taskID, interfaceName ) {
+  static receiveInterfaceConfigureTask ( taskID, interfaceName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes. RECEIVE_INTERFACE_CONFIGURE_TASK
-      , taskID: taskID
-      , interfaceName: interfaceName
+      , timestamp
+      , taskID
+      , interfaceName
       }
     );
   }
 
 
-  static receiveUpInterfaceTask ( taskID, interfaceName ) {
+  static receiveUpInterfaceTask ( taskID, interfaceName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_UP_INTERFACE_TASK
-      , taskID: taskID
-      , interfaceName: interfaceName
+      , timestamp
+      , taskID
+      , interfaceName
       }
     );
   }
 
-  static receiveDownInterfaceTask ( taskID, interfaceName ) {
+  static receiveDownInterfaceTask ( taskID, interfaceName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_DOWN_INTERFACE_TASK
-      , taskID: taskID
-      , interfaceName: interfaceName
+      , timestamp
+      , taskID
+      , interfaceName
       }
     );
   }

@@ -63,3 +63,4 @@ cdef extern from "camlib.h":
         int fd
 
     cdef cam_device* cam_open_device(char* path, int flags)
+    cdef void cam_close_device(cam_device* dev)

@@ -12,18 +12,14 @@ class SystemMiddleware extends AbstractBase {
   static requestSystemInfo ( namespace ) {
     MC.request( "system.info." + namespace
               , []
-              , function handleSystemInfo ( systemInfo ) {
-                  SAC.receiveSystemInfo( systemInfo, namespace );
-                }
+              , SAC.receiveSystemInfo.bind( SAC )
               );
   }
 
   static requestSystemDevice ( arg ) {
     MC.request( "system.device.get_devices"
               , [ arg ]
-              , function handleSystemDevice ( systemDevice ) {
-                  SAC.receiveSystemDevice( systemDevice, arg );
-                }
+              , SAC.receiveSystemDevice.bind( SAC )
               );
   }
 

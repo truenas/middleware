@@ -24,18 +24,14 @@ class NetworkConfigMiddleware {
   static requestNetworkConfig () {
     MC.request( "network.config.get_global_config"
               , []
-              , function handleRequestNetworkConfig ( networkConfig ) {
-                  NCAC.receiveNetworkConfig( networkConfig );
-                }
+              , NCAC.receiveNetworkConfig.bind( NCAC )
               );
   }
 
   static updateNetworkConfig ( newNetworkConfig ) {
     MC.request( "task.submit"
               , [ "network.configure" ]
-              , function handleUpdateConfig ( taskID ) {
-                  NCAC.receiveNetworkUpdateTask( taskID );
-                }
+              , NCAC.receiveNetworkUpdateTask.bind( NCAC )
               );
   }
 

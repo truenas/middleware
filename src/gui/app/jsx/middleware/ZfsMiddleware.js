@@ -9,30 +9,44 @@ import ZAC from "../actions/ZfsActionCreators";
 
 class ZfsMiddleware extends AbstractBase {
 
-  static requestZfsPool ( poolName ) {
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "entity-subscriber.volumes.changed" ]
+                , componentID
+                );
+  }
+
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "entity-subscriber.volumes.changed" ]
+                  , componentID
+                  );
+  }
+
+  static requestVolumes () {
+    MC.request( "volumes.query"
+              , []
+              , ZAC.receiveVolumes.bind( ZAC )
+              );
+  }
+
+  // TODO: Deprecated, should be using volumes.* RPC namespaces now
+  static requestPool ( poolName ) {
     MC.request( "zfs.pool." + poolName
               , []
-              , function handleZfsPool ( response ) {
-                  ZAC.receiveZfsPool( response, poolName );
-                }
+              , ZAC.receivePool.bind( ZAC )
               );
   }
 
-  static requestZfsBootPool ( bootPoolArg ) {
-    MC.request( "zfs.pool.get_disks"
-              , [ bootPoolArg ]
-              , function handleZfsBootPool ( response ) {
-                  ZAC.receiveZfsBootPool( response, bootPoolArg );
-                }
+  static requestBootPool () {
+    MC.request( "zfs.pool.get_boot_pool"
+              , []
+              , ZAC.receiveBootPool.bind( ZAC )
               );
   }
 
-  static requestZfsPoolGetDisks ( zfsPoolArg ) {
+  static requestPoolDisks ( poolName ) {
     MC.request( "zfs.pool.get_disks"
-              , [ zfsPoolArg ]
-              , function handleZfsPoolDisks ( response ) {
-                  ZAC.receiveZfsPoolGetDisks( response, zfsPoolArg );
-                }
+              , [ poolName ]
+              , ZAC.receivePoolDisks.bind( ZAC )
               );
   }
 

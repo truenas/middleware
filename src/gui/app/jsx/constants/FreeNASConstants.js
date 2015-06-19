@@ -5,9 +5,8 @@
 
 import keyMirror from "keymirror";
 
-export default {
-
-  ActionTypes: keyMirror(
+const FREENAS_CONSTANTS =
+  { ActionTypes: keyMirror(
     // Authentication, Socket State and other SID stuff
     { UPDATE_AUTH_STATE: null
     , UPDATE_SOCKET_STATE: null
@@ -61,18 +60,21 @@ export default {
     , RECEIVE_DOWN_INTERFACE_TASK: null
 
     // ZFS
-    , RECEIVE_ZFS_POOL_GET_DISKS_DATA: null
+    , RECEIVE_VOLUMES: null
+    , RECEIVE_POOL: null
+    , RECEIVE_BOOT_POOL: null
+    , RECEIVE_POOL_DISK_IDS: null
 
     // Disks
     , RECEIVE_DISKS_OVERVIEW: null
     , RECEIVE_DISK_DETAILS: null
-    }
-  )
+    })
 
   , PayloadSources: keyMirror(
     { MIDDLEWARE_ACTION: null
     , MIDDLEWARE_LIFECYCLE: null
     , CLIENT_ACTION: null
-    }
-  )
-};
+    })
+  };
+
+export default FREENAS_CONSTANTS;

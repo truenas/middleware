@@ -137,7 +137,7 @@ class ByteCalc {
   // rendering the biggest possible unit with two decimal places. This function
   // can be instructed to output metric or IEC (default is metric). The
   // `verbose` option will output "megabytes" instead of "MB"
-  static humanize ( bytes, IEC, verbose ) {
+  static humanize ( bytes, IEC = false, verbose = false ) {
     const base = IEC
                ? 1024
                : 1000;
@@ -163,10 +163,13 @@ class ByteCalc {
              ? "byte"
              : "bytes";
     } else {
-      // If we desire an abbreviated unit in IEC, our suffix needs an "i"
-      if ( IEC && exponent > 0 ) {
-        suffix = "iB";
-        units = UNITS[ exponent - 1 ];
+      suffix = "B";
+      if ( exponent > 0 ) {
+        units  = UNITS[ exponent - 1 ];
+        if ( IEC ) {
+          // If we desire an abbreviated unit in IEC, our suffix needs an "i"
+          suffix = "iB";
+        }
       }
     }
 

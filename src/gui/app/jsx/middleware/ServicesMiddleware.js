@@ -21,27 +21,21 @@ class ServicesMiddleware extends AbstractBase {
   static updateService ( serviceName, action ) {
     MC.request( "task.submit"
               , [ "service.manage", [ serviceName, action ] ]
-              , function handleUpdateService ( taskID ) {
-                  SAC.receiveServiceUpdateTask( taskID, serviceName );
-                }
+              , SAC.receiveServiceUpdateTask.bind( SAC )
               );
   }
 
   static configureService ( serviceName, configArray ) {
     MC.request( "task.submit"
               , [ "service.configure", [ serviceName, configArray ] ]
-              , function handleUpdateService ( taskID ) {
-                  SAC.receiveServiceUpdateTask( taskID, serviceName );
-                }
+              , SAC.receiveServiceUpdateTask.bind( SAC )
               );
   }
 
   static requestServicesList () {
     MC.request( "services.query"
               , []
-              , function ( rawServicesList ) {
-                  SAC.receiveServicesList( rawServicesList );
-                }
+              , SAC.receiveServicesList.bind( SAC )
               );
   }
 

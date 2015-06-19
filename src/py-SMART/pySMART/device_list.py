@@ -29,7 +29,10 @@ from subprocess import Popen, PIPE
 
 # pySMART module imports
 from .device import Device
-from .utils import OS, rescan_device_busses
+from .utils import OS, rescan_device_busses, path_append
+
+# Calling path_append before executing anything else in the file
+path_append()
 
 
 class DeviceList(object):

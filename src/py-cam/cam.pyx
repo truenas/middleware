@@ -39,7 +39,7 @@ cdef class CamDevice(object):
 
     def __dealloc__(self):
         if self.dev != NULL:
-            free(self.dev)
+            defs.cam_close_device(self.dev)
 
     def __getstate__(self):
         return {

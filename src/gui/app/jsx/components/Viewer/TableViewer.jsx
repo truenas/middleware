@@ -22,7 +22,7 @@ const TableViewer = React.createClass(
 
   , getInitialState: function () {
       // TODO: User preferences will rescue this
-      const columnArray = [ ...this.props.columnsInitial ];
+      const columnArray = Array.from( this.props.columnsInitial );
 
       return (
         { columnWidths : this.getInitialColWidths( columnArray )

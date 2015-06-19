@@ -125,6 +125,15 @@ class ShellToken(Token):
         self.shell = kwargs.pop('shell')
 
 
+class FileToken(Token):
+    def __init__(self, *args, **kwargs):
+        super(FileToken, self).__init__(*args, **kwargs)
+        self.direction = kwargs.pop('direction')
+        self.file = kwargs.pop('file')
+        self.name = kwargs.pop('name')
+        self.size = kwargs.pop('size', None)
+
+
 class TokenStore(object):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher

@@ -71,7 +71,6 @@ module.exports = function ( grunt ) {
                     , css: "app/build/css"
                     , font: "app/build/font"
                     , dist: "app/build/js"
-                    , ssrjs: "app/ssrjs"
                     };
 
 
@@ -80,7 +79,7 @@ module.exports = function ( grunt ) {
     // Use npm manifest as a list of available packages
     { pkg: grunt.file.readJSON( "package.json" )
     , dirTree: { root: "./"
-               , client: "app/client"
+               , client: "app/browser"
                , server: "app/server"
                , routes: "app/server-js/routes"
                , data: "app/data"

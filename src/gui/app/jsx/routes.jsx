@@ -38,8 +38,6 @@ import Storage from "./views/Storage";
 import Disks from "./views/Storage/Disks";
 import DiskItem from "./views/Storage/Disks/DiskItem";
 
-import Sharing from "./views/Sharing";
-
 import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
 
@@ -138,23 +136,11 @@ module.exports = (
       route   = "storage"
       handler = { Storage } >
       <Route
-        name    = "disks"
-        route   = "disks"
-        handler = { Disks }
-      >
-        <Route
-          name    = "disk-item-view"
-          path    = ":diskSerial"
-          handler = { DiskItem }
-        />
-      </Route>
+        name    = "disk-item-view"
+        path    = "disks/:diskSerial"
+        handler = { DiskItem }
+      />
     </Route>
-
-    {/* SHARING */}
-    <Route
-      name    = "sharing"
-      route   = "sharing"
-      handler = { Sharing } />
 
 
     {/* SERVICES */}

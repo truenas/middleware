@@ -34,6 +34,9 @@ dictate the steps we work through as we create the new Viewer instance.
 
    A high level data flow diagram for FreeNAS 10's UI
 
+.. warning:: Just about everything here is now wrong. Until this message is
+   removed, treat the source code as the documentation.
+
 A New Viewer
 ------------
 

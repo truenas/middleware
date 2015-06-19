@@ -28,8 +28,12 @@
 import os
 import re
 import errno
+import logging
 import gevent
+import gevent.monkey
 from collections import defaultdict
+from fnutils import first_or_default
+from cam import CamDevice
 from cache import CacheStore
 from lib import geom
 from lib.system import system, SubprocessException
@@ -37,9 +41,13 @@ from task import Provider, Task, TaskStatus, TaskException, VerifyException, que
 from dispatcher.rpc import RpcException, accepts, returns, description
 from dispatcher.rpc import SchemaHelper as h
 
+# Note the following monkey patch is required for pySMART to work correctly
+gevent.monkey.patch_subprocess()
+from pySMART import Device
+
 
 diskinfo_cache = CacheStore()
-camcontrol_cache = CacheStore()
+logger = logging.getLogger('DiskPlugin')
 
 
 class DiskProvider(Provider):
@@ -47,8 +55,8 @@ class DiskProvider(Provider):
     def query(self, filter=None, params=None):
         def extend(disk):
             disk['online'] = self.is_online(disk['path'])
-            disk['label-path'] = ''
-            disk['uuid-path'] = ''
+            disk['status'] = diskinfo_cache.get(disk['path'])
+
             return disk
 
         return self.datastore.query('disks', *(filter or []), callback=extend, **(params or {}))
@@ -61,6 +69,10 @@ class DiskProvider(Provider):
     @accepts(str)
     @returns(str)
     def partition_to_disk(self, part_name):
+        # Is it disk name?
+        if diskinfo_cache.exists(part_name):
+            return part_name
+
         part = self.get_partition_config(part_name)
         return part['disk']
 
@@ -108,7 +120,7 @@ class DiskGPTFormatTask(Task):
             params = {}
 
         blocksize = params.pop('blocksize', 4096)
-        swapsize = params.pop('swapsize', '2048M')
+        swapsize = params.pop('swapsize', 2048)
         bootcode = params.pop('bootcode', '/boot/pmbr-datadisk')
 
         try:
@@ -120,7 +132,7 @@ class DiskGPTFormatTask(Task):
         try:
             system('/sbin/gpart', 'create', '-s', 'gpt', disk)
             if swapsize > 0:
-                system('/sbin/gpart', 'add', '-a', str(blocksize), '-b', '128', '-s', swapsize, '-t', 'freebsd-swap', disk)
+                system('/sbin/gpart', 'add', '-a', str(blocksize), '-b', '128', '-s', '{0}M'.format(swapsize), '-t', 'freebsd-swap', disk)
                 system('/sbin/gpart', 'add', '-a', str(blocksize), '-t', fstype, disk)
             else:
                 system('/sbin/gpart', 'add', '-a', str(blocksize), '-b', '128', '-t', fstype, disk)
@@ -199,58 +211,6 @@ class DiskDeleteTask(Task):
         pass
 
 
-def generate_camcontrol_cache():
-    """
-    Parse camcontrol devlist -v output to gather
-    controller id, channel no and driver from a device
-    Returns:
-        dict(devname) = dict(drv, controller, channel)
-
-    Hacky workaround
-    It is known that at least some HPT controller have a bug in the
-    camcontrol devlist output with multiple controllers, all controllers
-    will be presented with the same driver with index 0
-    e.g. two hpt27xx0 instead of hpt27xx0 and hpt27xx1
-    What we do here is increase the controller id by its order of
-    appearance in the camcontrol output
-    """
-    hptctlr = defaultdict(int)
-
-    re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S | re.M)
-    re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
-    drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
-
-    out, err = system('camcontrol', 'devlist', '-v')
-    for line in out.splitlines():
-        if not line.startswith('<'):
-            reg = re_drv_cid.search(line)
-            if not reg:
-                continue
-            drv = reg.group("drv")
-            if drv.startswith("hpt"):
-                cid = hptctlr[drv]
-                hptctlr[drv] += 1
-            else:
-                cid = reg.group("cid")
-        else:
-            reg = re_tgt.search(line)
-            if not reg:
-                continue
-            tgt = reg.group("tgt")
-            lun = reg.group("lun")
-            dev = reg.group("dv1")
-            devtmp = reg.group("dv2")
-            if dev.startswith("pass"):
-                dev = devtmp
-
-            camcontrol_cache.put(os.path.join('/dev', dev), {
-                'drv': drv,
-                'controller': int(cid),
-                'channel': int(tgt),
-                'lun': int(lun)
-            })
-
-
 def get_twcli(controller):
     re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
     output, err = system("/usr/local/sbin/tw_cli", "/c{0}".format(controller), "show")
@@ -286,76 +246,23 @@ def device_to_identifier(doc, name, serial=None):
 
 
 def info_from_device(devname):
-    args = [devname]
-    info = camcontrol_cache.get(devname)
-    if info is not None:
-        if info.get("drv") == "rr274x_3x":
-            channel = info["channel"] + 1
-            if channel > 16:
-                channel -= 16
-            elif channel > 8:
-                channel -= 8
-            args = [
-                "/dev/%s" % info["drv"],
-                "-d",
-                "hpt,%d/%d" % (info["controller"] + 1, channel)
-            ]
-        elif info.get("drv").startswith("arcmsr"):
-            args = [
-                "/dev/%s%d" % (info["drv"], info["controller"]),
-                "-d",
-                "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
-            ]
-        elif info.get("drv").startswith("hpt"):
-            args = [
-                "/dev/%s" % info["drv"],
-                "-d",
-                "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
-            ]
-        elif info.get("drv") == "ciss":
-            args = [
-                "/dev/%s%d" % (info["drv"], info["controller"]),
-                "-d",
-                "cciss,%d" % (info["channel"], )
-            ]
-        elif info.get("drv") == "twa":
-            twcli = get_twcli(info["controller"])
-            args = [
-                "/dev/%s%d" % (info["drv"], info["controller"]),
-                "-d",
-                "3ware,%d" % (twcli.get(info["channel"], -1), )
-            ]
+    disk_info = {'serial': '', 'max-rotation': None, 'smart-enabled': False,
+                 'smart-capable': False, 'smart-status': '', 'model': '',
+                 'is-ssd': False, 'interface': ''}
+    # TODO, fix this to deal with above generated args for interface
+    dev_smart_info = Device(os.path.join('/dev/', devname))
+    disk_info['is-ssd'] = dev_smart_info.is_ssd
+    disk_info['smart-capable'] = dev_smart_info.smart_capable
+    if dev_smart_info.smart_capable:
+        disk_info['serial'] = dev_smart_info.serial
+        disk_info['model'] = dev_smart_info.model
+        disk_info['max-rotation'] = dev_smart_info.rotation_rate
+        disk_info['interface'] = dev_smart_info.interface
+        disk_info['smart-enabled'] = dev_smart_info.smart_enabled
+        if dev_smart_info.smart_enabled:
+            disk_info['smart-status'] = dev_smart_info.assessment
 
-    output, err = system("/usr/local/sbin/smartctl", "-a", *args)
-    search = re.finditer(r'Serial Number:\s+(?P<serial>.+)|' +
-                         r'Rotation Rate:\s+(?P<rate>.+)|' +
-                         r'SMART support is:\s+(?P<smartenabled>.+)|' +
-                         r'SMART overall-health self-assessment test result:\s+(?P<smartstatus>.+)|'
-                         + r'Model Family:\s+(?P<model>.+)|',
-                         output, re.I)
-    disk_info = {'serial': '', 'rate': '', 'smartenabled': '',
-                 'smartstatus': '', 'model': ''}
-    if search:
-        for x in search:
-            if x.group("serial"):
-                disk_info['serial'] = x.group("serial")
-                continue
-            if x.group("rate"):
-                disk_info['rate'] = x.group("rate")
-                continue
-            if x.group("smartenabled"):
-                disk_info['smartenabled'] = x.group("smartenabled")
-                continue
-            if x.group("smartstatus"):
-                disk_info['smartstatus'] = x.group("smartstatus")
-                continue
-            if x.group("model"):
-                disk_info['model'] = x.group("model")
-                continue
-        # serial = search.group("serial")
-        return disk_info
-
-    return None
+    return disk_info
 
 
 def generate_disk_cache(dispatcher, path):
@@ -395,13 +302,12 @@ def generate_disk_cache(dispatcher, path):
 
     disk_info = info_from_device(path)
     serial = disk_info['serial']
-    rate = disk_info['rate']
-    smartenabled = disk_info['smartenabled']
-    smartstatus = disk_info['smartenabled']
-    model = disk_info['model']
     identifier = device_to_identifier(confxml, name, serial)
-    data_partitions = filter(lambda x: x['type'] == 'freebsd-zfs', partitions)
-    data_uuid = data_partitions[0].get('uuid') if len(data_partitions) > 0 else None
+    data_part = first_or_default(lambda x: x['type'] == 'freebsd-zfs', partitions)
+    data_uuid = data_part["uuid"] if data_part else None
+    swap_part = first_or_default(lambda x: x['type'] == 'freebsd-swap', partitions)
+    swap_uuid = swap_part["uuid"] if swap_part else None
+    camdev = CamDevice(name)
 
     disk = {
         'mediasize': int(provider.find("mediasize").text),
@@ -409,16 +315,21 @@ def generate_disk_cache(dispatcher, path):
         'description': provider.find("config/descr").text,
         'identifier': identifier,
         'serial': serial,
-        'max-rotation': rate,
-        'smart-enabled': smartenabled,
-        'smart-status': smartstatus,
-        'model': model,
+        'max-rotation': disk_info['max-rotation'],
+        'smart-capable': disk_info['smart-capable'],
+        'smart-enabled': disk_info['smart-enabled'],
+        'smart-status': disk_info['smart-status'],
+        'model': disk_info['model'],
+        'interface': disk_info['interface'],
+        'is-ssd': disk_info['is-ssd'],
         'id': identifier,
         'schema': gpart.find("config/scheme").text if gpart else None,
-        'controller': camcontrol_cache.get(name),
+        'controller': camdev.__getstate__(),
         'partitions': partitions,
         'data-partition-uuid': data_uuid,
-        'data-partition-path': os.path.join("/dev/gptid", data_uuid) if data_uuid else None
+        'data-partition-path': os.path.join("/dev/gptid", data_uuid) if data_uuid else None,
+        'swap-partition-uuid': swap_uuid,
+        'swap-partition-path': os.path.join("/dev/gptid", swap_uuid) if swap_uuid else None
     }
 
     diskinfo_cache.put(path, disk)
@@ -443,6 +354,8 @@ def generate_disk_cache(dispatcher, path):
 
             dispatcher.datastore.update('disks', oldid, ds_disk)
 
+    logger.info('Added %s to disk cache', name)
+
 
 def purge_disk_cache(path):
     diskinfo_cache.remove(path)
@@ -458,8 +371,7 @@ def _init(dispatcher, plugin):
         if not re.match(r'^/dev/(da|ad|ada)[0-9]+$', path):
             return
 
-        # Regenerate camcontrol and disk cache
-        generate_camcontrol_cache()
+        # Regenerate disk cache
         generate_disk_cache(dispatcher, path)
 
         # Push higher tier event
@@ -486,7 +398,6 @@ def _init(dispatcher, plugin):
 
     def on_device_mediachange(args):
         # Regenerate caches
-        generate_camcontrol_cache()
         generate_disk_cache(dispatcher, args['path'])
 
         # Disk may be detached in the meantime
@@ -505,8 +416,11 @@ def _init(dispatcher, plugin):
             'name': {'type': 'string'},
             'description': {'type': 'string'},
             'serial': {'type': 'string'},
-            'max-rotation': {'type': 'string'},
-            'smart-enabled': {'type': 'string'},
+            'max-rotation': {'type': 'integer'},
+            'smart-capable': {'type': 'boolean'},
+            'smart-enabled': {'type': 'boolean'},
+            'interface': {'type': 'string'},
+            'is-ssd': {'type': 'boolean'},
             'smart-status': {'type': 'string'},
             'model': {'type': 'string'},
             'mediasize': {'type': 'integer'},

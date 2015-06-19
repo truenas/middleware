@@ -4,6 +4,9 @@
 .. index:: Viewer
 .. _Viewer:
 
+.. warning:: Everything here is now wrong. Until this message is removed, treat
+   the source code as the documentation.
+
 The Viewer
 ==========
 

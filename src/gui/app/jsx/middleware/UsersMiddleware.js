@@ -27,36 +27,28 @@ class UsersMiddleware extends AbstractBase {
                 ? [[[ "id", "in", ids ]]]
                 : []
                 )
-              , function handleUsersList ( rawUsersList ) {
-                  UAC.receiveUsersList( rawUsersList );
-                }
+              , UAC.receiveUsersList.bind( UAC )
               );
   }
 
   static createUser ( newUserProps ) {
     MC.request( "task.submit"
               , [ "users.create" , [ newUserProps ] ]
-              , function handleCreateUser ( taskID, userID ) {
-                  UAC.receiveUserUpdateTask( taskID, userID );
-                }
+              , UAC.receiveUserUpdateTask.bind( UAC )
               );
   }
 
   static updateUser ( userID, changedProps ) {
     MC.request( "task.submit"
               , [ "users.update", [ userID, changedProps ] ]
-              , function handleUpdateUser ( taskID ) {
-                  UAC.receiveUserUpdateTask( taskID, userID );
-                }
+              , UAC.receiveUserUpdateTask.bind( UAC )
               );
   }
 
   static deleteUser ( userID ) {
     MC.request( "task.submit"
               , [ "users.delete", [ userID ] ]
-              , function handleDeleteUser ( taskID, userID ) {
-                  UAC.receiveUserUpdateTask( taskID, userID );
-                }
+              , UAC.receiveUserUpdateTask.bind( UAC )
               );
   }
 

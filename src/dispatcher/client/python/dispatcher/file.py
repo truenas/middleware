@@ -33,10 +33,10 @@ from rpc import RpcException
 from ws4py.client.threadedclient import WebSocketClient
 
 
-class ShellClient(object):
-    class ShellWebsocketHandler(WebSocketClient):
+class FileClient(object):
+    class FileWebsocketHandler(WebSocketClient):
         def __init__(self, uri, parent):
-            super(ShellClient.ShellWebsocketHandler, self).__init__(uri)
+            super(FileClient.FileWebsocketHandler, self).__init__(uri)
             self.parent = parent
 
         def opened(self):
@@ -73,7 +73,7 @@ class ShellClient(object):
         self.close_callback = None
 
     def open(self):
-        self.connection = self.ShellWebsocketHandler('ws://{0}:{1}/shell'.format(self.hostname, self.port), self)
+        self.connection = self.FileWebsocketHandler('ws://{0}:{1}/file'.format(self.hostname, self.port), self)
         self.connection.connect()
         self.connection.send(dumps({'token': self.token}))
         self.authenticated.wait()

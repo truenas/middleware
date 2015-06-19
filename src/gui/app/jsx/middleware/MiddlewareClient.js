@@ -119,7 +119,12 @@ class MiddlewareClient extends WebSocketClient {
   // message's namespace.
   handleMessage ( message ) {
     super.handleMessage();
+
     let data;
+    // TODO: The timestamp should come from the server, so we can use it for
+    // reconciliation and patches.
+    let timestamp = message.timeStamp;
+
     try {
       data = JSON.parse( message.data );
     } catch ( error ) {
@@ -138,18 +143,26 @@ class MiddlewareClient extends WebSocketClient {
         if ( MCD.reports( "messages" ) ) {
           MCD.log( "Message contained event data" );
         }
-        MiddlewareActionCreators.receiveEventData( data );
+        MiddlewareActionCreators.receiveEventData( data, timestamp );
         break;
 
       // An RPC call is returning a response
       case "rpc":
         switch ( data.name ) {
           case "response":
-            this.resolvePendingRequest( data.id, data.args, "success" );
+            this.resolvePendingRequest( data.id
+                                      , data.args
+                                      , timestamp
+                                      , "success"
+                                      );
             break;
 
           case "error":
-            this.resolvePendingRequest( data.id, data.args, "error" );
+            this.resolvePendingRequest( data.id
+                                      , data.args
+                                      , timestamp
+                                      , "error"
+                                      );
             break;
 
           default:
@@ -201,7 +214,7 @@ class MiddlewareClient extends WebSocketClient {
               );
     }
 
-    this.resolvePendingRequest( reqID, null, "timeout" );
+    this.resolvePendingRequest( reqID, null, null, "timeout" );
   };
 
   // DATA AND REQUEST HANDLING
@@ -332,7 +345,7 @@ class MiddlewareClient extends WebSocketClient {
   // Resolve a middleware request by clearing its timeout, and optionally
   // calling its callback. Callbacks should not be called if the function timed
   // out before a response was received.
-  resolvePendingRequest ( reqID, args, outcome ) {
+  resolvePendingRequest ( reqID, args, timestamp, outcome ) {
 
     // The server side dispatcher will send a None in the reqID when returing
     // error (code 22): 'Request is not valid JSON'
@@ -345,7 +358,7 @@ class MiddlewareClient extends WebSocketClient {
         if ( MCD.reports( "messages" ) ) {
           MCD.info( `SUCCESS: Resolving request %c'${ reqID }'`, [ "uuid" ] );
         }
-        this.executeRequestSuccessCallback( reqID, args );
+        this.executeRequestSuccessCallback( reqID, args, timestamp );
         break;
 
       case "error":
@@ -393,9 +406,9 @@ class MiddlewareClient extends WebSocketClient {
   // server, and the status is successful in one way or another. Calling this
   // function when the server returns an error could cause strange results.
   // Use the errorCallback for that case.
-  executeRequestSuccessCallback ( reqID, args ) {
+  executeRequestSuccessCallback ( reqID, args, timestamp ) {
     if ( _.isFunction( this.pendingRequests[ reqID ].successCallback ) ) {
-      this.pendingRequests[ reqID ].successCallback( args );
+      this.pendingRequests[ reqID ].successCallback( args, timestamp );
     }
   }
 

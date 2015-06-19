@@ -46,21 +46,23 @@ const Viewer = React.createClass(
         , textUngrouped    : ""
 
         , filtersInitial   : new Set()
-        , filtersAllowed   : null
+        , filtersAllowed   : new Set()
 
         , groupsInitial    : new Set()
-        , groupsAllowed    : null
+        , groupsAllowed    : new Set()
 
         , collapsedInitial : new Set()
-        , collapsedAllowed : null
+        , collapsedAllowed : new Set()
 
         , columnsInitial   : new Set()
-        , columnsAllowed   : null
+        , columnsAllowed   : new Set()
 
-        , modesInitial     : "detail"
+        , modeInitial      : "detail"
         , modesAllowed     : new Set( [ "detail", "icon", "table" ] )
 
         , groupBy: {}
+
+        , itemIconTemplate: null
         }
       );
     }
@@ -74,7 +76,7 @@ const Viewer = React.createClass(
       let selectedItem = currentParams[ this.props.routeParam ];
 
       return (
-        { modeActive: this.changeViewerMode( this.props.modesInitial )
+        { modeActive: this.changeViewerMode( this.props.modeInitial )
         , columnsEnabled: this.props.columnsInitial
         , groupsEnabled: this.props.groupsInitial
         , filtersEnabled: this.props.filtersInitial
@@ -203,6 +205,36 @@ const Viewer = React.createClass(
       this.processDisplayData({ searchString: event.target.value });
     }
 
+  , handleGroupsEnabledToggle: function ( targetGroup ) {
+      if ( this.props.groupsAllowed.has( targetGroup ) ) {
+
+        let newGroups = new Set( this.state.groupsEnabled );
+
+        if ( newGroups.has( targetGroup ) ) {
+          newGroups.delete( targetGroup );
+        } else {
+          newGroups.add( targetGroup );
+        }
+
+        this.processDisplayData({ groupsEnabled: newGroups });
+      }
+    }
+
+  , handleFiltersEnabledToggle: function ( targetFilter ) {
+      if ( this.props.groupsAllowed.has( targetFilter ) ) {
+
+        let newFilters = new Set( this.state.filtersEnabled );
+
+        if ( newFilters.has( targetFilter ) ) {
+          newFilters.delete( targetFilter );
+        } else {
+          newFilters.add( targetFilter );
+        }
+
+        this.processDisplayData({ filtersEnabled: newFilters });
+      }
+    }
+
   , changeViewerMode: function ( targetMode ) {
       let newMode;
 
@@ -210,7 +242,7 @@ const Viewer = React.createClass(
       if ( this.props.modesAllowed.has( targetMode ) ) {
         newMode = targetMode;
       } else {
-        newMode = this.props.modesInitial;
+        newMode = this.props.modeInitial;
       }
 
       // When changing viewer modes, close any previously open items.
@@ -241,11 +273,42 @@ const Viewer = React.createClass(
 
 
   // DISPLAY
+
+  , createGroupMenuOption: function ( group, index ) {
+      let toggleText = this.state.groupsEnabled.has( group )
+                     ? "Don't group by "
+                     : "Group by ";
+
+      return (
+        <TWBS.MenuItem
+          key     = { index }
+          onClick = { this.handleGroupsEnabledToggle.bind( null, group ) }
+        >
+          { toggleText + this.props.groupBy[ group ].name.toLowerCase() }
+        </TWBS.MenuItem>
+      );
+    }
+
+  , createFilterMenuOption: function ( filter, index ) {
+      let toggleText = this.state.filtersEnabled.has( filter )
+                     ? "Show "
+                     : "Hide ";
+
+      return (
+        <TWBS.MenuItem
+          key     = { index }
+          onClick = { this.handleFiltersEnabledToggle.bind( null, filter ) }
+        >
+          { toggleText + this.props.groupBy[ filter ].name.toLowerCase() }
+        </TWBS.MenuItem>
+      );
+    }
+
   , createModeNav: function ( mode, index ) {
-      var modeIcons = { detail: "th-list"
-                      , icon: "th"
-                      , table: "align-justify"
-                      , heir: "bell"
+      var modeIcons = { detail : "th-list"
+                      , icon   : "th"
+                      , table  : "align-justify"
+                      , heir   : "bell"
                       };
 
       return (
@@ -271,7 +334,7 @@ const Viewer = React.createClass(
         , selectedItem     : this.state.selectedItem
         , searchString     : this.state.searchString
         , filteredData     : this.state.filteredData
-        }
+        };
 
       switch ( this.state.modeActive ) {
 
@@ -298,7 +361,32 @@ const Viewer = React.createClass(
     }
 
   , render: function () {
-      var viewerModeNav = null;
+      let showMenu      = null;
+      let groupMenu     = null;
+      let viewerModeNav = null;
+
+      // Create "Show" Menu
+      if ( this.props.filtersAllowed.size > 0 ) {
+        showMenu = (
+          <TWBS.DropdownButton title="Show">
+            { Array.from( this.props.filtersAllowed )
+                .map( this.createFilterMenuOption )
+            }
+          </TWBS.DropdownButton>
+        );
+      }
+
+      // Create "Group By" Menu
+      if ( this.props.groupsAllowed.size > 0 ) {
+        groupMenu = (
+          <TWBS.DropdownButton title="Group">
+            { Array.from( this.props.groupsAllowed )
+                .map( this.createGroupMenuOption )
+            }
+          </TWBS.DropdownButton>
+        );
+      }
+
 
       // Create navigation mode icons
       if ( this.props.modesAllowed.size > 1 ) {
@@ -306,14 +394,18 @@ const Viewer = React.createClass(
           <TWBS.ButtonGroup
             className = "navbar-btn navbar-right"
             activeMode = { this.state.modeActive } >
-            { [ ...this.props.modesAllowed ].map( this.createModeNav ) }
+            { Array.from( this.props.modesAllowed ).map( this.createModeNav ) }
           </TWBS.ButtonGroup>
         );
       }
 
       return (
         <div className="viewer">
-          <TWBS.Navbar fluid className="viewer-nav">
+          <TWBS.Navbar
+            fluid
+            className = "viewer-nav"
+            brand     = { this.props.header }
+          >
             {/* Searchbox for Viewer */}
             <TWBS.Input
               type           = "text"
@@ -323,6 +415,12 @@ const Viewer = React.createClass(
               onChange       = { this.handleSearchChange }
               addonBefore    = { <Icon glyph ="search" /> }
             />
+
+            {/* Dropdown menus for filters and groups */}
+            <TWBS.Nav className="navbar-left">
+              { showMenu }
+              { groupMenu }
+            </TWBS.Nav>
 
             {/* Select view mode */}
             { viewerModeNav }

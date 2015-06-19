@@ -1,5 +1,5 @@
-// Zfs Flux Store
-// ----------------
+// ZFS POOL AND VOLUME STORE
+// =========================
 
 "use strict";
 
@@ -8,65 +8,77 @@ import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
+import DL from "../common/DebugLogger";
+import FluxStore from "./FluxBase";
 
-var CHANGE_EVENT = "change";
+class ZfsStore extends FluxStore {
 
-var _zfsPoolData = {};
-var _zfsBootPoolData = {};
-var _zfsPoolGetDisksData = {};
+  constructor () {
+    super();
 
+    this.dispatchToken = FreeNASDispatcher.register(
+      handlePayload.bind( this )
+    );
+    // this.KEY_UNIQUE = "serial";
+    // this.ITEM_SCHEMA = DISK_SCHEMA;
+    // this.ITEM_LABELS = DISK_LABELS;
 
-var ZfsStore = _.assign( {}, EventEmitter.prototype, {
-
-    emitChange: function(changeType) {
-      this.emit( CHANGE_EVENT );
-    }
-
-  , addChangeListener: function( callback ) {
-      this.on( CHANGE_EVENT, callback );
-    }
-
-  , removeChangeListener: function( callback ) {
-      this.removeListener( CHANGE_EVENT, callback );
-    }
-
-  , getZfsPool: function(name) {
-      return _zfsPoolData[name];
-    }
-  , getZfsBootPool: function(name) {
-      return _zfsBootPoolData[name];
-  }
-  , getZfsPoolGetDisks: function(name) {
-      return _zfsPoolGetDisksData[name];
+    // TODO: These need to reconcile better, and we need to drop the things that
+    // still rely on legacy ZFS namespace RPCs.
+    this._volumes      = {};
+    this._storagePools = {};
+    this._bootPool     = {};
+    this._poolDisks    = {};
   }
 
-
-
-});
-
-ZfsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-  var action = payload.action;
-
-  switch( action.type ) {
-
-    case ActionTypes.RECEIVE_ZFS_POOL_DATA:
-      _zfsPoolData[action.zfsPoolName] = action.zfsPool;
-      ZfsStore.emitChange();
-      break;
-
-    case ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA:
-      _zfsBootPoolData[action.zfsBootPoolArgument] = action.zfsBootPool;
-      ZfsStore.emitChange();
-      break;
-
-    case ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA:
-      _zfsPoolGetDisksData[action.zfsPoolGetDisksArgument] = action.zfsPoolGetDisks;
-      ZfsStore.emitChange();
-      break;
-
-    default:
-      // No action
+  get bootPool () {
+    return this._bootPool;
   }
-});
 
-module.exports = ZfsStore;
+  listStoragePools ( sortKey ) {
+    if ( sortKey ) {
+      return _.chain( this._storagePools )
+              .values()
+              .sort( sortKey )
+              .value();
+    } else {
+      return _.values( this._storagePools );
+    }
+  }
+
+  getDisksInPool ( poolName ) {
+    return this._poolDisks[ poolName ];
+  }
+
+}
+
+// Handler for payloads from Flux Dispatcher
+function handlePayload ( payload ) {
+  const ACTION = payload.action;
+
+  switch ( ACTION.type ) {
+
+    case ActionTypes.RECEIVE_VOLUMES:
+      this._volumes = ACTION.volumes;
+      this.emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_POOL:
+      this._storagePools[ ACTION.poolName ] = ACTION.poolData;
+      this.emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_BOOT_POOL:
+      this._bootPool = ACTION.bootPool;
+      this.emitChange();
+      break;
+
+    case ActionTypes.RECEIVE_POOL_DISK_IDS:
+      this._poolDisks[ ACTION.poolName ] = ACTION.poolDisks;
+      this.emitChange();
+      break;
+
+  }
+}
+
+export default new ZfsStore();

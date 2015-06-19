@@ -12,6 +12,8 @@ import Viewer from "../../components/Viewer";
 import DS from "../../stores/DisksStore";
 import DM from "../../middleware/DisksMiddleware";
 
+import DII from "./Disks/DiskItemIcon"
+
 const VIEWER_DATA =
   { keyUnique     : DS.uniqueKey
   , keyPrimary    : "path"
@@ -49,11 +51,14 @@ const VIEWER_DATA =
     }
 
   , groupsInitial : new Set( [ "online" ] )
-  , groupsAllowed : new Set( [ "online" ] )
+  , groupsAllowed : new Set( )
+
+  , itemIconTemplate: DII
+
   };
 
 function getDisksFromStore () {
-  return { disks: DS.getDisksArray() };
+  return { disks: DS.disksArray };
 }
 
 const Disks = React.createClass(
@@ -78,13 +83,14 @@ const Disks = React.createClass(
     }
 
   , render: function () {
-      return (
-        <Viewer { ...VIEWER_DATA }
-          header   = "Disks"
-          itemData = { this.state.disks }
-        />
-      );
-    }
+
+    return (
+      <Viewer { ...VIEWER_DATA }
+        header   = "Disks"
+        itemData = { this.state.disks }
+      />
+    );
+  }
 
   }
 

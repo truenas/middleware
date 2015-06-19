@@ -35,12 +35,6 @@ const paths =
     , status   : null
     , disabled : false
     }
-  , { path     : "sharing"
-    , icon     : "cut"
-    , label    : "Sharing"
-    , status   : null
-    , disabled : true
-    }
   , { path     : "services"
     , icon     : "bitcoin"
     , label    : "Services"
@@ -63,7 +57,7 @@ const paths =
     , icon     : "paragraph"
     , label    : "Settings"
     , status   : null
-    , disabled : true 
+    , disabled : true
     }
   , { path     : "system"
     , icon     : "ambulance"
