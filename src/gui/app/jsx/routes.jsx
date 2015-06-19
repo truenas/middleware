@@ -108,24 +108,24 @@ module.exports = (
 
     {/* NETWORK */}
     <Route
-      name = "network"
-      path = "network"
+      name    = "network"
+      path    = "network"
       handler = { Network } >
 
       {/* GLOBAL NETWORK CONFIGURATION */}
       <Route
-        name = "network-config"
-        path = "network-config"
+        name    = "network-config"
+        path    = "network-config"
         handler = { NetworkConfig } />
 
       {/* NETWORK INTERFACES */}
       <Route
-        name = "interfaces"
-        path = "interfaces"
+        name    = "interfaces"
+        path    = "interfaces"
         handler = { Interfaces } >
         <Route
-          name = "interfaces-editor"
-          path = ":interfaceID"
+          name    = "interfaces-editor"
+          path    = ":interfaceName"
           handler = { InterfaceItem } />
       </Route>
 
