@@ -34,21 +34,21 @@ class UsersMiddleware extends AbstractBase {
   static createUser ( newUserProps ) {
     MC.request( "task.submit"
               , [ "users.create" , [ newUserProps ] ]
-              , UAC.receiveUserUpdateTask.bind( UAC )
+              , UAC.receiveUserUpdateTask
               );
   }
 
   static updateUser ( userID, changedProps ) {
     MC.request( "task.submit"
               , [ "users.update", [ userID, changedProps ] ]
-              , UAC.receiveUserUpdateTask.bind( UAC )
+              , UAC.receiveUserUpdateTask.bind( UAC, userID )
               );
   }
 
   static deleteUser ( userID ) {
     MC.request( "task.submit"
               , [ "users.delete", [ userID ] ]
-              , UAC.receiveUserUpdateTask.bind( UAC )
+              , UAC.receiveUserUpdateTask.bind( UAC, userID )
               );
   }
 

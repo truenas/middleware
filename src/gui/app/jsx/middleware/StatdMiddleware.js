@@ -30,7 +30,7 @@ class StatdMiddleware extends AbstractBase {
                   , frequency: freq
                   }
                 ]
-              , SAC.receiveWidgetData.bind( SAC )
+              , SAC.receiveWidgetData.bind( SAC, sourceName )
               );
   }
 
