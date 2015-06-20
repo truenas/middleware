@@ -313,11 +313,12 @@ const GroupItem = React.createClass({
           }
 
           // DISPLAY COMPONENT
-          var childProps = {
-              handleViewChange : this.handleViewChange
+          var childProps =
+            { handleViewChange : this.handleViewChange
             , item             : this.state.targetGroup
-            , viewData         : this.props.viewData
-          };
+            , itemSchema: this.props.itemSchema
+            , itemLabels: this.props.itemLabels
+            };
 
           switch( this.state.currentMode ) {
             default:
