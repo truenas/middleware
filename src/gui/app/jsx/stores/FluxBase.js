@@ -27,7 +27,7 @@ class FluxBaseClass extends EventEmitter {
     return this.lastFullUpdate > 0;
   }
 
-  set fullUpdate ( timestamp ) {
+  set fullUpdateAt ( timestamp ) {
     this.lastFullUpdate = timestamp;
   }
 

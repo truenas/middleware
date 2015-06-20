@@ -5,7 +5,7 @@
 import React from "react";
 
 import ZfsMiddleware from "../../middleware/ZfsMiddleware";
-import ZfsStore from "../../stores/ZfsStore";
+import PoolStore from "../../stores/PoolStore";
 
 import chartHandler from "./mixins/chartHandler";
 
@@ -17,7 +17,7 @@ var DiskUsage = React.createClass({
 
   , getInitialState: function () {
     return {
-      pool:              ZfsStore.getDisksInPool( "freenas-boot" )
+      pool:              PoolStore.getDisksInBootPool()
       , statdResources:    []
       , chartTypes:        [  {   type: "line"
                                 , primary: this.primaryChart( "line" )
@@ -30,17 +30,17 @@ var DiskUsage = React.createClass({
   }
 
   , componentDidMount: function () {
-    ZfsStore.addChangeListener( this.handleChange );
+    PoolStore.addChangeListener( this.handleChange );
     ZfsMiddleware.requestPoolDisks( "freenas-boot" );
   }
 
   , componentWillUnmount: function () {
-    ZfsStore.removeChangeListener( this.handleChange );
+    PoolStore.removeChangeListener( this.handleChange );
   }
 
   , handleChange: function () {
     var newState = {};
-    newState.pool = ZfsStore.getDisksInPool( "freenas-boot" );
+    newState.pool = PoolStore.getDisksInBootPool();
 
     if ( newState.pool ) {
       var systemPoolPath = newState.pool[0].split( "/" ) ;

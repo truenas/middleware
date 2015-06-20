@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import Pools from "./Storage/Pools";
+import ZFS from "./Storage/ZFS";
 import Disks from "./Storage/Disks";
 
 const Storage = React.createClass(
@@ -17,7 +17,7 @@ const Storage = React.createClass(
   , render: function () {
       return (
         <main>
-          <Pools />
+          <ZFS />
           <Disks />
         </main>
       );
