@@ -8,90 +8,108 @@ import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
+import FluxBase from "./FluxBase";
 
-import GroupsMiddleware from "../middleware/GroupsMiddleware";
+import GM from "../middleware/GroupsMiddleware";
 
 var CHANGE_EVENT = "change";
 var UPDATE_MASK  = "groups.changed";
-var PRIMARY_KEY  = "id";
+var PRIMARY_KEY  = "groupID";
 
 var _localUpdatePending = {};
 var _updatedOnServer    = [];
 var _groups = {};
 
-var GroupsStore = _.assign( {}, EventEmitter.prototype, {
-
-  emitChange: function () {
-      this.emit( CHANGE_EVENT );
+const GROUP_SCHEMA =
+  { type: "object"
+  , properties:
+    { groupName: { type: "string" }
+    , groupID: { type: "number" }
+    , builtIn: { type: [ "boolean", "null" ] }
     }
+  };
 
-  , addChangeListener: function ( callback ) {
-      this.on( CHANGE_EVENT, callback );
+const GROUP_LABELS =
+  { type: "object"
+  , properties:
+    { groupName: "Group Name"
+    , groupID: "Group ID"
+    , builtIn: "Built-in System Group"
     }
+  };
 
-  , removeChangeListener: function ( callback ) {
-      this.removeListener( CHANGE_EVENT, callback );
-    }
+const KEY_TRANSLATION =
+  { name: "groupName"
+  , id: "groupID"
+  , builtin: "builtIn"
+  };
 
-  , getUpdateMask: function () {
-      return UPDATE_MASK;
-    }
+class GroupsStore extends FluxBase {
 
-  , getPendingUpdateIDs: function () {
-      return _updatedOnServer;
-    }
+  constructor () {
+    super();
 
-  , isLocalTaskPending: function ( id ) {
-      return _.values( _localUpdatePending ).indexOf( id ) > -1;
-    }
+    this.dispatchToken = FreeNASDispatcher.register(
+      handlePayload.bind( this )
+    );
 
-  , isGroupUpdatePending: function ( id ) {
-      return _updatedOnServer.indexOf( id ) > -1;
-    }
+    this.KEY_UNIQUE = "groupName";
+    this.ITEM_SCHEMA = GROUP_SCHEMA;
+    this.ITEM_LABELS = GROUP_LABELS;
+  }
 
-  , findGroupByKeyValue: function ( key, value ) {
-      return _.find( _groups, function ( group ) {
-        return group[ key ] === value;
-      });
-    }
+  get updateMask () {
+    return UPDATE_MASK;
+  }
 
-  , getGroup: function ( id ) {
-      return _groups[ id ];
-    }
+  get pendingUpdateIDs () {
+    return _updatedOnServer;
+  }
 
-  , getAllGroups: function () {
-      return _.values( _groups );
-    }
+  get groups () {
+    return _.values( _groups );
+  }
 
-});
+  getGroup ( groupID ) {
+    return _groups[ groupID ];
+  }
 
-GroupsStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
-  var action = payload.action;
+  isLocalTaskPending ( groupID ) {
+    return _.values( _localUpdatePending ).indexOf( groupID ) > -1;
+  }
+  isGroupUpdatePending ( groupID ) {
+    return _updatedOnServer.indexOf( groupID ) > -1;
+  }
 
-  switch ( action.type ) {
+  findGroupByKeyValue ( key, value ) {
+    return _.find( _groups, function ( group ) {
+      return group[ key ] === value;
+    });
+  }
+
+}
+
+function handlePayload ( payload ) {
+  const ACTION = payload.action;
+
+  switch ( ACTION.type ) {
 
     case ActionTypes.RECEIVE_GROUPS_LIST:
 
-      var updatedGroupIDs = _.pluck( action.groupsList, PRIMARY_KEY );
+      ACTION.groupsList.forEach(
+        function convertGroups ( group ) {
+          _groups[ group[ this.KEY_UNIQUE ] ] =
+            FluxBase.rekeyForClient( group, KEY_TRANSLATION );
+        }
+        , this
+      );
 
-      // When receiving new data, we can comfortably resolve anything that may
-      // have had an outstanding update indicated by the Middleware.
-      if ( _updatedOnServer.length > 0 ) {
-        _updatedOnServer = _.difference( _updatedOnServer, updatedGroupIDs );
-      }
-
-      // Updated groups come from the middleware as an array, but we store the
-      // data as an object keyed by the PRIMARY_KEY. Here, we map the changed
-      // groups into the object.
-      action.groupsList.map( function ( group ) {
-        _groups[ group [ PRIMARY_KEY ] ] = group;
-      });
-      GroupsStore.emitChange();
+      this.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
-      var args = action.eventData.args;
-      var updateData = args[ "args" ];
+      let args = ACTION.eventData.args;
+      let updateData = args[ "args" ];
 
       if ( args[ "name" ] === UPDATE_MASK ) {
         if ( updateData[ "operation" ] === "delete" ) {
@@ -99,9 +117,9 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
         } else if ( updateData[ "operation" ] === "create"
                   || updateData[ "operation" ] === "update" ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          GroupsMiddleware.requestGroupsList( _updatedOnServer );
+          GM.requestGroupsList( _updatedOnServer );
         }
-        GroupsStore.emitChange();
+        this.emitChange();
 
       } else if ( args[ "name" ] === "task.updated"
                 && updateData["state"] === "FINISHED" ) {
@@ -110,14 +128,14 @@ GroupsStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
       break;
 
     case ActionTypes.RECEIVE_GROUP_UPDATE_TASK:
-      _localUpdatePending[ action.taskID ] = action.groupID;
-      GroupsStore.emitChange();
+      _localUpdatePending[ ACTION.taskID ] = ACTION.groupID;
+      this.emitChange();
       break;
 
     default:
     // Do Nothing
   }
 
-});
+};
 
-module.exports = GroupsStore;
+export default new GroupsStore ();
