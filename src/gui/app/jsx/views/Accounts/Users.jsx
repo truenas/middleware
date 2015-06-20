@@ -80,7 +80,7 @@ function getUsersStoreData () {
 }
 
 function getGroupsFromStore () {
-  return { groupsList: GS.getAllGroups() };
+  return { groupsList: GS.groups };
 }
 
 const Users = React.createClass(

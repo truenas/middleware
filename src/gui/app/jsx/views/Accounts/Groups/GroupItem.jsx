@@ -61,7 +61,7 @@ const GroupView = React.createClass({
       var builtInGroupAlert = null;
       var editButtons = null;
 
-      if ( this.props.item["builtin"] ) {
+      if ( this.props.item["builtIn"] ) {
         builtInGroupAlert = (
           <TWBS.Alert bsStyle   = "info"
                       className = "text-center">
@@ -73,7 +73,7 @@ const GroupView = React.createClass({
       editButtons = (
         <TWBS.ButtonToolbar>
           <TWBS.Button className = "pull-left"
-                       disabled  = { this.props.item["builtin"] }
+                       disabled  = { this.props.item["builtIn"] }
                        onClick   = { this.deleteGroup }
                        bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
           <TWBS.Button className = "pull-right"
@@ -90,12 +90,12 @@ const GroupView = React.createClass({
         <TWBS.Row>
           <TWBS.Col xs={3}
                     className="text-center">
-            <viewerUtil.ItemIcon primaryString  = { this.props.item["name"] }
-                                 fallbackString = { this.props.item["id"] }
-                                 seedNumber     = { this.props.item["id"] } />
+            <viewerUtil.ItemIcon primaryString  = { this.props.item["groupName"] }
+                                 fallbackString = { this.props.item["groupID"] }
+                                 seedNumber     = { this.props.item["groupID"] } />
           </TWBS.Col>
           <TWBS.Col xs={9}>
-            <h3>{ this.props.item["name"] }</h3>
+            <h3>{ this.props.item["groupName"] }</h3>
             <hr />
           </TWBS.Col>
         </TWBS.Row>
@@ -111,7 +111,7 @@ const GroupView = React.createClass({
 	            <h4 className = "text-muted" >{ "Group ID" }</h4>
 	  </TWBS.Col>
           <TWBS.Col xs = {10}>
-		    <h3>{this.props.item["id"]}</h3>
+		    <h3>{this.props.item["groupID"]}</h3>
 	  </TWBS.Col>
         </TWBS.Row>
 	<TWBS.Row>
@@ -119,7 +119,7 @@ const GroupView = React.createClass({
 	            className = "text-muted" >
 	            <h4 className = "text-muted" >{ "Users" }</h4>
                        <TWBS.ListGroup>
-                          { this.createUserDisplayList( this.props.item["id"] ) }
+                          { this.createUserDisplayList( this.props.item["groupID"] ) }
 		       </TWBS.ListGroup>
           </TWBS.Col>
         </TWBS.Row>
@@ -306,9 +306,9 @@ const GroupItem = React.createClass({
         if ( this.state.SESSION_AUTHENTICATED && this.state.targetGroup ) {
 
           // PROCESSING OVERLAY
-          if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["id"] ) ) {
+          if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["groupID"] ) ) {
             processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
-          } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "id"] ) ) {
+          } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "groupID"] ) ) {
             processingText = "Group '" + this.state.targetGroup[ this.props.keyPrimary ] + "' was updated remotely.";
           }
 
