@@ -80,6 +80,104 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import CIFS_Share
 from freenasUI.storage.models import Task
 
+def debug_SID(str):
+    if str:
+        print >> sys.stderr, "XXX: %s" % str
+    p = pipeopen("/usr/local/bin/net getlocalsid")
+    out = p.communicate()
+    if out and out[0]:
+        time.sleep(1)
+        print >> sys.stderr, "XXX: %s" % out[0] 
+
+
+def smb4_get_system_SID():
+    SID = None
+
+    p = pipeopen("/usr/local/bin/net getlocalsid")
+    net_out = p.communicate()
+    if p.returncode != 0:
+        return None
+    if not net_out:
+        return None
+
+    net_out = net_out[0]
+
+    parts = net_out.split()
+    try:
+        SID = parts[5]
+    except:
+        SID = None
+
+    return SID
+
+
+def smb4_get_database_SID():
+    SID = None
+
+    try:
+        cifs = CIFS.objects.all()[0]
+        if cifs:
+            SID = cifs.cifs_SID
+    except:
+        SID = None
+
+    return SID
+
+
+def smb4_set_system_SID(SID):
+    if not SID:
+        return False
+
+    p = pipeopen("/usr/local/bin/net setlocalsid %s" % SID)
+    net_out = p.communicate()
+    if p.returncode != 0:
+        return False
+    if not net_out:
+        return False
+
+    return True
+
+
+def smb4_set_database_SID(SID):
+    ret = False
+    if not SID:
+        return ret
+
+    try:
+        cifs = CIFS.objects.all()[0]
+        cifs.cifs_SID = SID
+        cifs.save()
+        ret = True
+
+    except:
+        ret = False
+
+    return ret
+
+
+def smb4_set_SID():
+    database_SID = smb4_get_database_SID()
+    system_SID = smb4_get_system_SID()
+
+    if database_SID:
+        if not system_SID:
+            if not smb4_set_system_SID(database_SID):
+                print >> sys.stderr, "Unable to set SID to %s" % database_SID
+        else:
+            if database_SID != system_SID:
+                if not smb4_set_system_SID(database_SID):
+                    print >> sys.stderr, "Unable to set SID to %s" % database_SID
+
+    else:
+        if not system_SID: 
+            print >> sys.stderr, "Unable to figure out SID, things are seriously jacked!"
+
+        if not smb4_set_system_SID(system_SID):
+            print >> sys.stderr, "Unable to set SID to %s" % system_SID
+        else:
+            smb4_set_database_SID(system_SID)
+
+
 def smb4_ldap_enabled():
     ret = False
 
@@ -1042,14 +1140,18 @@ def smb4_setup():
         if os.path.exists(statedir):
             olddir = "%s.%s" % (statedir, time.strftime("%Y%m%d%H%M%S"))
             try:
+                print >> sys.stderr, "XXX: [before] os.rename(%s, %s)" % (statedir, olddir)
                 os.rename(statedir, olddir)
+                print >> sys.stderr, "XXX: [after] os.rename(%s, %s)" % (statedir, olddir)
             except Exception as e:
                 print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
                     statedir, olddir, e)
                 sys.exit(1)
 
         try:
+            print >> sys.stderr, "XXX: [before] os.symlink(%s, %s)"  % (basename_realpath, statedir)
             os.symlink(basename_realpath, statedir)
+            print >> sys.stderr, "XXX: [after] os.symlink(%s, %s)" % (basename_realpath, statedir)
         except Exception as e:
             print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
                 basename_realpath, statedir, e)
@@ -1063,6 +1165,7 @@ def smb4_setup():
     os.chmod("/var/db/samba4/private", 0700)
 
     os.chmod(statedir, 0755)
+    smb4_set_SID()
 
 
 def get_old_samba4_datasets():
@@ -1262,6 +1365,8 @@ def main():
             f.write(line + '\n')
         f.close()
 
+    smb4_set_SID()
+
     if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
 
@@ -1271,12 +1376,7 @@ def main():
     os.close(fd)
 
     if role != 'dc':
-        exportfile = '/var/etc/private/passdb.tdb'
-        try:
-            os.unlink(exportfile)
-        except:
-            pass
-
+        smb4_unlink("/var/etc/private/passdb.tdb")
         smb4_import_users(smb_conf_path, tmpfile,
             "tdbsam:%s" % exportfile)
         smb4_map_groups()
