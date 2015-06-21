@@ -9,7 +9,6 @@ import Widget from "../Widget";
 import SystemMiddleware from "../../middleware/SystemMiddleware";
 import SystemStore from "../../stores/SystemStore";
 
-import UpdateMiddleware from "../../middleware/UpdateMiddleware";
 import UpdateStore from "../../stores/UpdateStore";
 
 import round from "round";
@@ -18,7 +17,7 @@ var SystemInfo = React.createClass({
 
   getInitialState: function () {
     return {
-        hardware   :   ""
+      hardware   :   ""
       , version    :   ""
       , updates    :   ""
       , train      :   ""
@@ -26,48 +25,54 @@ var SystemInfo = React.createClass({
   }
 
   , componentDidMount: function () {
-      SystemStore.addChangeListener( this.handleSystemChange );
-      //*Temp. Removed* UpdateStore.addChangeListener( this.handleUpdateChange );
+    SystemStore.addChangeListener( this.handleSystemChange );
+    // *Temp. Removed*
+    // UpdateStore.addChangeListener( this.handleUpdateChange );
 
-      SystemMiddleware.requestSystemInfo( "hardware" );
-      SystemMiddleware.requestSystemInfo( "version" );
-      // TODO: This causes a traceback (#8620)
-      //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "check_now_for_updates" );
-      //*Temp. Removed* UpdateMiddleware.requestUpdateInfo( "get_current_train" );
-   }
+    SystemMiddleware.requestSystemInfo( "hardware" );
+    SystemMiddleware.requestSystemInfo( "version" );
+  }
 
   , componentWillUnmount: function () {
-      SystemStore.removeChangeListener( this.handleSystemChange );
-      //*Temp. Removed* UpdateStore.removeChangeListener( this.handleUpdateChange );
-    }
+    SystemStore.removeChangeListener( this.handleSystemChange );
+    // *Temp. Removed*
+    // UpdateStore.removeChangeListener( this.handleUpdateChange );
+  }
 
   , handleSystemChange: function () {
       this.setState({
-          hardware : SystemStore.getSystemInfo( "hardware" )
+        hardware : SystemStore.getSystemInfo( "hardware" )
         , version  : SystemStore.getSystemInfo( "version" )
       });
     }
 
   , handleUpdateChange: function () {
       this.setState({
-          train    : UpdateStore.getUpdate( "get_current_train" )
+        train    : UpdateStore.getUpdate( "get_current_train" )
         // TODO: Yet to add
-        //, updates  : UpdateStore.getUpdate( "check_now_for_updates" )
+        // , updates  : UpdateStore.getUpdate( "check_now_for_updates" )
       });
     }
 
   , render: function () {
-    var memSize = round( ( this.state.hardware["memory-size"] / 1024 ) / 1024, 1 );
+    var memSize = round( ( this.state.hardware["memory-size"] / 1024 ) / 1024
+                           , 1 );
     return (
       <Widget
-        dimensions  =  {this.props.dimensions}
-        position  =  {this.props.position}
-        title      =  {this.props.title}
-        size       =  {this.props.size} >
+        dimensions  =  { this.props.dimensions }
+        position  =  { this.props.position }
+        title      =  { this.props.title }
+        size       =  { this.props.size }
+        onMouseDownHolder = { this.props.onMouseDownHolder }
+        inMotion = { this.props.inMotion }
+        changeSize = { this.props.changeSize }
+        refHolder = {this.props.refHolder} >
+
         <div className="wd-section wd-cpu-model">
           <span className="wd-title">CPU Model:</span>
           <span className="wd-value">{this.state.hardware["cpu-model"]}</span>
-          <span className="wd-value">{"with " + this.state.hardware["cpu-cores"] + " cores."}</span>
+          <span className="wd-value">{"with " + this.state.hardware["cpu-cores"]
+                                      + " cores."}</span>
         </div>
         <div className="wd-section wd-memory-size">
           <span className="wd-title">Memory Size:</span>

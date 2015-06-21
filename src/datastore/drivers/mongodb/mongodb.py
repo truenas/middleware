@@ -31,6 +31,9 @@ import copy
 import uuid
 import dateutil.parser
 from pymongo import MongoClient
+import pymongo
+import pymongo.errors
+from datastore import DuplicateKeyException
 
 
 class MongodbDatastore(object):
@@ -169,7 +172,9 @@ class MongodbDatastore(object):
 
         for i in cur:
             i['id'] = i.pop('_id')
-            result.append(postprocess(i) if postprocess else i)
+            r = postprocess(i) if postprocess else i
+            if r is not None:
+                result.append(r)
 
         return result
 
@@ -198,10 +203,10 @@ class MongodbDatastore(object):
     def exists(self, collection, *args, **kwargs):
         return self.get_one(collection, *args, **kwargs) is not None
 
-    def insert(self, collection, obj, pkey=None, timestamp=True):
+    def insert(self, collection, obj, pkey=None, timestamp=True, config=False):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
-        elif type(obj) is not dict:
+        elif type(obj) is not dict or config:
             obj = {'value': obj}
         else:
             obj = copy.copy(obj)
@@ -224,13 +229,17 @@ class MongodbDatastore(object):
             obj['updated-at'] = t
             obj['created-at'] = t
 
-        self.db[collection].insert(obj)
+        try:
+            self.db[collection].insert(obj)
+        except pymongo.errors.DuplicateKeyError:
+            raise DuplicateKeyException('Document with given key already exists')
+
         return pkey
 
-    def update(self, collection, pkey, obj, upsert=False, timestamp=True):
+    def update(self, collection, pkey, obj, upsert=False, timestamp=True, config=False):
         if hasattr(obj, '__getstate__'):
             obj = obj.__getstate__()
-        elif type(obj) is not dict:
+        elif type(obj) is not dict or config:
             obj = {'value': obj}
         else:
             obj = copy.deepcopy(obj)
@@ -252,8 +261,8 @@ class MongodbDatastore(object):
 
         self.db[collection].update({'_id': pkey}, obj, upsert=upsert)
 
-    def upsert(self, collection, pkey, obj):
-        return self.update(collection, pkey, obj, upsert=True)
+    def upsert(self, collection, pkey, obj, config=False):
+        return self.update(collection, pkey, obj, upsert=True, config=config)
 
     def delete(self, collection, pkey):
         self.db[collection].remove(pkey)

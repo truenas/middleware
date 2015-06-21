@@ -9,30 +9,25 @@
 import _ from "lodash";
 import React from "react";
 
-module.exports = {
+const RouterShim =
 
-    contextTypes: {
-      router: React.PropTypes.func
+  { contextTypes: { router: React.PropTypes.func }
+
+  , routeEndsWith: function ( route ) {
+      return _.endsWith( this.context.router.getCurrentPathname()
+                       , route
+                       );
     }
 
-  , routeEndsWith: function( route ) {
-      var rc = this.context.router;
-
-      return _.endsWith( rc.getCurrentPathname(), route );
+  , routeIs: function ( route ) {
+      return this.context.router.getCurrentPathname() === route;
     }
 
-  , routeIs: function( route ) {
-      var rc = this.context.router;
-
-      return rc.getCurrentPathname() === route;
-    }
-
-  , calculateDefaultRoute: function( testRoute, target, testType ) {
-      var rc         = this.context.router;
+  , calculateDefaultRoute: function ( testRoute, target, testType ) {
       var testString = testType.toLowerCase();
       var shouldRedirect;
 
-      switch( testString ) {
+      switch ( testString ) {
         case "routeis":
         case "is":
           shouldRedirect = this.routeIs( testRoute );
@@ -49,14 +44,14 @@ module.exports = {
       }
 
       if ( shouldRedirect ) {
-        rc.replaceWith( target );
+        this.context.router.replaceWith( target );
       }
     }
 
   , getDynamicRoute: function () {
-      var rc = this.context.router;
-
-      return rc.getCurrentParams()[ this.props.viewData.routing["param"] ];
+      return this.context.router.getCurrentParams()[ this.props.routeParam ];
     }
 
 };
+
+export default RouterShim;

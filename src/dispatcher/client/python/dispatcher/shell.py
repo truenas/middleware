@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #+
 # Copyright 2015 iXsystems, Inc.
 # All rights reserved
@@ -28,7 +27,6 @@
 
 
 import errno
-import threading
 from dispatcher import AsyncResult
 from jsonenc import loads, dumps
 from rpc import RpcException

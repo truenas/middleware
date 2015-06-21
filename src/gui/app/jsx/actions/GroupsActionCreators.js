@@ -9,23 +9,25 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class GroupsActionCreators {
 
-  receiveGroupsList ( groupsList ) {
+  static receiveGroupsList ( groupsList, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_GROUPS_LIST
-      , groupsList: groupsList
+      , timestamp
+      , groupsList
       }
     );
   }
 
-  receiveGroupUpdateTask ( taskID, groupID ) {
+  static receiveGroupUpdateTask ( groupID, taskID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_GROUP_UPDATE_TASK
-      , taskID: taskID
-      , groupID: groupID
+      , timestamp
+      , taskID
+      , groupID
       }
     );
   }
 
 };
 
-export default new GroupsActionCreators();
+export default GroupsActionCreators;

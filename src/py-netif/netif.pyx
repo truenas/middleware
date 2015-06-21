@@ -471,7 +471,7 @@ cdef class NetworkInterface(object):
                 raise OSError(errno, strerror(errno))
 
             self.addresses.append(address)
-        elif address.af == AddressFamily.AF_INET6:
+        elif address.af == AddressFamily.INET6:
             self.ioctl(cmd, <void*>&req)
             self.addresses.append(address)
         else:
@@ -663,7 +663,7 @@ cdef class RoutingPacket(object):
             defs.if_indextoname(sdl.sdl_index, ifname)
             result.ifname = ifname
 
-        result.address = ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen+1:sdl.sdl_nlen+sdl.sdl_alen+1]])
+        result.address = ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen:sdl.sdl_nlen+sdl.sdl_alen]])
         return result
 
     cdef _parse_sockaddrs(self, int start_offset, int mask):
@@ -1175,7 +1175,7 @@ class RoutingSocket(object):
         os.write(self.socket.fileno(), buf)
 
 
-def list_interfaces(name=None):
+def list_interfaces(iname=None):
     cdef defs.ifaddrs* ifa
     cdef defs.ifaddrs* orig
     cdef defs.sockaddr_in* sin
@@ -1236,7 +1236,7 @@ def list_interfaces(name=None):
                 nic.type = InterfaceType(sdl.sdl_type)
                 addr.address = LinkAddress(
                     sdl.sdl_data[:sdl.sdl_nlen],
-                    ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen+1:sdl.sdl_nlen+sdl.sdl_alen+1]]))
+                    ':'.join(['{0:02x}'.format(ord(x)) for x in sdl.sdl_data[sdl.sdl_nlen:sdl.sdl_nlen+sdl.sdl_alen]]))
 
         nic.addresses.append(addr)
 
@@ -1246,6 +1246,8 @@ def list_interfaces(name=None):
             break
 
     defs.freeifaddrs(orig)
+    if iname:
+        return result[iname]
     return result
 
 
@@ -1272,7 +1274,7 @@ def set_to_bitmask(value):
 
 
 def get_interface(name):
-    return list_interfaces(name)[name]
+    return list_interfaces(name)
 
 
 def create_interface(name):

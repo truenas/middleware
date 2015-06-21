@@ -160,10 +160,10 @@ class QueryList(list):
 
         if len(rules) == 0:
             result = list(self)
-
-        for i in self:
-            if matches(i, *rules):
-                result.append(i)
+        else:
+            for i in self:
+                if matches(i, *rules):
+                    result.append(i)
 
         if sort:
             result.sort(key=lambda x: x[sort], reverse=True if dir == 'desc' else False)

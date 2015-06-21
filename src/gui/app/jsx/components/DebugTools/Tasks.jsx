@@ -3,12 +3,16 @@
 
 "use strict";
 
-var componentLongName = "Debug Tools - Tasks Tab";
+const componentLongName = "Debug Tools - Tasks Tab";
 
 import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
 import moment from "moment";
+
+// freeNASUtil
+import freeNASUtil
+  from "../../common/freeNASUtil";
 
 // Middleware
 import MiddlewareClient from "../../middleware/MiddlewareClient";
@@ -16,24 +20,25 @@ import TasksStore from "../../stores/TasksStore";
 import TasksMiddleware from "../../middleware/TasksMiddleware";
 
 
-var TasksSection = React.createClass({
+var TasksSection = React.createClass(
 
-    propTypes: {
-        tasks        : React.PropTypes.object.isRequired
-      , showProgress : React.PropTypes.bool
-      , canCancel    : React.PropTypes.bool
+  { propTypes: { tasks        : React.PropTypes.object.isRequired
+               , showProgress : React.PropTypes.bool
+               , canCancel    : React.PropTypes.bool
     }
 
-  , createTask: function( taskID, index ) {
-      var taskData  = this.props.tasks[ taskID ];
-      var taskName  = null;
-      var progress  = null;
-      var cancelBtn = null;
-      var started   = taskData["started_at"] ? moment.unix( taskData["started_at"] ).format("YYYY-MM-DD HH:mm:ss") : "--";
-      var finished  = taskData["finished_at"] ? moment.unix( taskData["finished_at"] ).format("YYYY-MM-DD HH:mm:ss") : "--";
-      var abortable = false;
+  , createTask: function ( taskID, index ) {
+      let taskData  = this.props.tasks[ taskID ];
+      let taskName  = null;
+      let progress  = null;
+      let cancelBtn = null;
+      let started   = taskData["started_at"] ? moment.unix(taskData["started_at"] ).format( "YYYY-MM-DD HH:mm:ss" ) : "--";
+      let finished  = taskData["finished_at"] ? moment.unix( taskData["finished_at"] ).format( "YYYY-MM-DD HH:mm:ss" ) : "--";
+      let abortable = false;
+      let message   = "";
 
-      if ( typeof this.props.canCancel === "undefined" && taskData["abortable"] ) {
+      if ( typeof this.props.canCancel === "undefined" &&
+           taskData["abortable"] ) {
         abortable = true;
       }
 
@@ -42,7 +47,7 @@ var TasksSection = React.createClass({
       }
 
       if ( this.props.showProgress ) {
-        var progressprops     = {};
+        let progressprops     = {};
         progressprops.now     = taskData["percentage"];
         progressprops.bsStyle = "info";
         progressprops.label   = "%(percent)s%";
@@ -80,16 +85,22 @@ var TasksSection = React.createClass({
                       onClick   = { this.callAbort }>Abort Task</TWBS.Button>;
       }
 
+      if ( taskData["message"] ) {
+        message = "Message: " + taskData["message"];
+      }
+
       return (
         <div
           className = "debug-task-item"
           key       = { index }>
           <div className="debug-task-id">{ taskID }</div>
           <div className="debug-task-details">
-            { taskName }
+            { taskName } { message }
             <div className="clearfix">
-              <h6 className="debug-task-timestamp">{"Task Started: " + started }</h6>
-              <h6 className="debug-task-timestamp">{"Task Finished: " + finished }</h6>
+              <h6 className="debug-task-timestamp">
+                {"Task Started: " + started }</h6>
+              <h6 className="debug-task-timestamp">
+                {"Task Finished: " + finished }</h6>
             </div>
             <hr />
             <div className = "clearfix">
@@ -101,8 +112,8 @@ var TasksSection = React.createClass({
       );
     }
   , render: function () {
-      var taskIDs = _.sortBy( _.keys( this.props.tasks ), ["id"] ).reverse();
-      return(
+      var taskIDs = _.sortBy( _.keys( this.props.tasks ), [ "id" ] ).reverse();
+      return (
         <div className="debug-column-content">
           { taskIDs.map( this.createTask ) }
         </div>
@@ -111,22 +122,22 @@ var TasksSection = React.createClass({
 
 });
 
-var Tasks = React.createClass({
-
-    getInitialState: function () {
-      return {
-          tasks           : _.assign( {}, TasksStore.getAllTasks() )
-        , taskMethodValue : ""
-        , argsValue       : "[]"
+var Tasks = React.createClass(
+  { getInitialState: function () {
+      return { tasks           : _.assign( {}, TasksStore.getAllTasks() )
+             , taskMethodValue : ""
+             , argsValue       : "[[]]"
+             , anErrorOccurred : false
+             , taskTraceback   : ""
       };
     }
 
-  , init: function( tasks ) {
+  , init: function ( tasks ) {
       var histFinished    = {};
       var histFailed      = {};
       var histAborted     = {};
 
-      tasks.forEach( function( task ){
+      tasks.forEach( function ( task ) {
         switch ( task["state"] ) {
           case "FINISHED":
             histFinished[ task["id"] ] = task;
@@ -134,25 +145,26 @@ var Tasks = React.createClass({
             break;
           case "FAILED":
             histFailed[ task["id"] ] = task;
-            histFailed[ task["id"] ]["percentage"] = task["percentage"] ? task["percentage"] : 50;
+            histFailed[ task["id"] ]["percentage"] = task["percentage"] ?
+                                                       task["percentage"] : 50;
             break;
           case "ABORTED":
             histAborted[ task["id"] ] = task;
-            histAborted[ task["id"] ]["percentage"] = task["percentage"] ? task["percentage"] : 50;
+            histAborted[ task["id"] ]["percentage"] = task["percentage"] ?
+                                                        task["percentage"] : 50;
             break;
         }
       });
 
-      this.setState({
-          tasks : _.merge( {}, { "FINISHED": histFinished },
-                               { "FAILED": histFailed },
-                               { "ABORTED": histAborted }, TasksStore.getAllTasks() )
+      this.setState({ tasks : _.merge( {}, { FINISHED: histFinished }
+                    , { FAILED: histFailed }
+                    , { ABORTED: histAborted }, TasksStore.getAllTasks() )
       });
     }
 
   , componentDidMount: function () {
       TasksStore.addChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.subscribe( ["task.*"], componentLongName );
+      MiddlewareClient.subscribe( [ "task.*" ], componentLongName );
 
       var totalLength = 0;
 
@@ -165,38 +177,88 @@ var Tasks = React.createClass({
 
   , componentWillUnmount: function () {
       TasksStore.removeChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.unsubscribe( ["task.*"], componentLongName );
+      MiddlewareClient.unsubscribe( [ "task.*" ], componentLongName );
     }
 
   , handleMiddlewareChange: function () {
-      this.setState({
-          tasks : _.merge( {}, { "FINISHED": this.state.tasks["FINISHED"] },
-                       { "FAILED": this.state.tasks["FAILED"] },
-                       { "ABORTED": this.state.tasks["ABORTED"] },
-                       TasksStore.getAllTasks() )
-      });
+      this.setState(
+        { tasks : _.merge( {}
+        , { FINISHED: this.state.tasks["FINISHED"] }
+        , { FAILED: this.state.tasks["FAILED"] }
+        , { ABORTED: this.state.tasks["ABORTED"] }
+        , TasksStore.getAllTasks() )
+        }
+      );
     }
 
-  , handleMethodInputChange: function( event ) {
-      this.setState({
-          taskMethodValue : event.target.value
-      });
+  , handleMethodInputChange: function ( event ) {
+      this.setState(
+        { taskMethodValue: event.target.value }
+      );
     }
 
-  , handleArgsInputChange: function( event ) {
-      this.setState({
-          argsValue : event.target.value
-      });
+  , handleArgsInputChange: function ( event ) {
+      this.setState(
+        { argsValue: event.target.value }
+      );
+    }
+
+  , handleTaskErrorCallback: function ( args ) {
+      this.setState(
+        { anErrorOccurred : true
+        , taskTraceback   : args
+        }
+      )
+    }
+
+  , handleAlertDismiss: function () {
+      this.setState(
+        { anErrorOccurred: false })
     }
 
   , handleTaskSubmit: function () {
-      var taskAgg = [String(this.state.taskMethodValue)].concat( JSON.parse( this.state.argsValue ) );
-      MiddlewareClient.request( "task.submit", taskAgg );
+      try {
+        var taskAgg = [ String( this.state.taskMethodValue ) ].concat(
+          JSON.parse( this.state.argsValue ) );
+        MiddlewareClient.request( "task.submit"
+                                , taskAgg
+                                , null
+                                , this.handleTaskErrorCallback );
+      }
+      catch ( err ) {
+        this.handleTaskErrorCallback( freeNASUtil.getStackTrace( err ) );
+      }
     }
 
   , render: function () {
+      let taskAlert = "";
+      if ( this.state.anErrorOccurred ) {
+        let errStack = ( <p> </p> );
+        if ( this.state.taskTraceback.constructor === Array ) {
+          errStack = this.state.taskTraceback.map(
+            function ( errval, index ) {
+              return ( <p key = { index }>{  errval }</p> )
+            }
+          );
+        } else {
+          errStack = ( <p>{this.state.taskTraceback}</p> );
+        }
+        taskAlert = (
+          <div className="overlay-error">
+            <TWBS.Alert bsStyle='danger' onDismiss={this.handleAlertDismiss}>
+              <h4>Oh snap! A very specific Error Occurred</h4>
+              {errStack}
+              <p>
+                <TWBS.Button onClick={this.handleAlertDismiss}>
+                 Done
+                </TWBS.Button>
+              </p>
+             </TWBS.Alert>
+           </div> )
+      }
       return (
         <div className="debug-content-flex-wrapper">
+          {taskAlert}
 
           <TWBS.Col xs={6} className="debug-column" >
 
@@ -212,7 +274,8 @@ var Tasks = React.createClass({
             <TWBS.Row>
               <TWBS.Col xs={5}>
                 <TWBS.Input type        = "textarea"
-                            style       = {{ resize: "vertical", height: "100px" }}
+                            style       = {{ resize: "vertical"
+                                           , height: "100px" }}
                             placeholder = "Arguments (JSON Array)"
                             onChange    = { this.handleArgsInputChange }
                             value       = { this.state.argsValue } />
@@ -231,29 +294,43 @@ var Tasks = React.createClass({
           </TWBS.Col>
 
           <TWBS.Col xs={6} className="debug-column" >
-            <h5 className="debug-heading">{  "Created Tasks (" + _.keys( this.state.tasks["CREATED"] ).length + ")" }</h5>
+            <h5 className="debug-heading">
+              {  "Created Tasks ("
+                 + _.keys( this.state.tasks["CREATED"] ).length
+                 + ")" }
+            </h5>
             <TasksSection
               tasks = { this.state.tasks["CREATED"] } canCancel />
 
-            <h5 className="debug-heading">{  "Waiting Tasks (" + _.keys( this.state.tasks["WAITING"] ).length + ")" }</h5>
+            <h5 className="debug-heading">
+              {  "Waiting Tasks ("
+                 + _.keys( this.state.tasks["WAITING"] ).length
+                 + ")" }
+            </h5>
             <TasksSection
               tasks = { this.state.tasks["WAITING"] } showProgress canCancel />
 
-            <h5 className="debug-heading">{  "Executing Tasks (" + _.keys( this.state.tasks["EXECUTING"] ).length + ")" }</h5>
+            <h5 className="debug-heading">
+              {  "Executing Tasks ("
+                 + _.keys( this.state.tasks["EXECUTING"] ).length
+                 + ")" }
+            </h5>
             <TasksSection
               tasks = { this.state.tasks["EXECUTING"] } showProgress />
           </TWBS.Col>
 
           <TWBS.Col xs={6} className="debug-column" >
             <h5 className="debug-heading">{  "Finished Task History" }</h5>
-            <TasksSection
-              tasks = { this.state.tasks["FINISHED"] } showProgress canCancel = {false} />
+            <TasksSection tasks = { this.state.tasks["FINISHED"] }
+                          showProgress canCancel = {false} />
             <h5 className="debug-heading">{  "Failed Task History" }</h5>
             <TasksSection
-              tasks = { this.state.tasks["FAILED"] } showProgress canCancel = {false} />
+              tasks = { this.state.tasks["FAILED"] }
+                      showProgress canCancel = {false} />
             <h5 className="debug-heading">{  "Aborted Task History" }</h5>
             <TasksSection
-              tasks = { this.state.tasks["ABORTED"] } showProgress canCancel = {false} />
+              tasks = { this.state.tasks["ABORTED"] }
+                      showProgress canCancel = {false} />
           </TWBS.Col>
 
         </div>

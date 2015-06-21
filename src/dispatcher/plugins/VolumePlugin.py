@@ -27,13 +27,16 @@
 
 import errno
 import os
+from gevent.lock import RLock
 from task import Provider, Task, ProgressTask, TaskException, VerifyException, query
 from dispatcher.rpc import RpcException, description, accepts, returns
 from dispatcher.rpc import SchemaHelper as h
 from utils import first_or_default
+from datastore import DuplicateKeyException
 
 
 VOLUMES_ROOT = '/volumes'
+volumes_lock = RLock()
 
 
 def flatten_datasets(root):
@@ -183,27 +186,29 @@ class VolumeCreateTask(ProgressTask):
         if type != 'zfs':
             raise TaskException(errno.EINVAL, 'Invalid volume type')
 
-        for dname, dgroup in self.__get_disks(volume['topology']):
+        for dname, dgroup in get_disks(volume['topology']):
             subtasks.append(self.run_subtask('disk.format.gpt', dname, 'freebsd-zfs', {
                 'blocksize': params.get('blocksize', 4096),
-                'swapsize': params.get('swapsize') if dgroup == 'data' else 0
+                'swapsize': params.get('swapsize', 2048) if dgroup == 'data' else 0
             }))
 
         self.set_progress(10)
         self.join_subtasks(*subtasks)
         self.set_progress(40)
-        self.join_subtasks(self.run_subtask('zfs.pool.create', name, convert_topology_to_gptids(self.dispatcher, volume['topology'])))
-        self.set_progress(60)
-        self.join_subtasks(self.run_subtask('zfs.mount', name))
-        self.set_progress(80)
 
-        pool = self.dispatcher.call_sync('zfs.pool.query', [('name', '=', name)]).pop()
-        id = self.datastore.insert('volumes', {
-            'id': str(pool['guid']),
-            'name': name,
-            'type': type,
-            'mountpoint': mountpoint
-        })
+        with volumes_lock:
+            self.join_subtasks(self.run_subtask('zfs.pool.create', name, convert_topology_to_gptids(self.dispatcher, volume['topology'])))
+            self.set_progress(60)
+            self.join_subtasks(self.run_subtask('zfs.mount', name))
+            self.set_progress(80)
+
+            pool = self.dispatcher.call_sync('zfs.pool.query', [('name', '=', name)]).pop()
+            id = self.datastore.insert('volumes', {
+                'id': str(pool['guid']),
+                'name': name,
+                'type': type,
+                'mountpoint': mountpoint
+            })
 
         self.set_progress(90)
         self.dispatcher.dispatch_event('volumes.changed', {
@@ -219,7 +224,7 @@ class VolumeAutoCreateTask(Task):
         if self.datastore.exists('volumes', ('name', '=', name)):
             raise VerifyException(errno.EEXIST, 'Volume with same name already exists')
 
-        return ['disk:{0}'.format(i) for i in disks]
+        return ['disk:{0}'.format(os.path.join('/dev', i)) for i in disks]
 
     def run(self, name, type, disks, params=None):
         vdevs = []
@@ -263,6 +268,8 @@ class VolumeDestroyTask(Task):
         vol = self.datastore.get_one('volumes', ('name', '=', name))
         config = self.dispatcher.call_sync('volumes.get_config', name)
 
+        self.dispatcher.run_hook('volumes.pre-destroy', {'name': name})
+
         if config:
             self.join_subtasks(self.run_subtask('zfs.umount', name))
             self.join_subtasks(self.run_subtask('zfs.pool.destroy', name))
@@ -302,7 +309,7 @@ class VolumeUpdateTask(Task):
                 if vdev['type'] == 'disk':
                     subtasks.append(self.run_subtask('disk.format.gpt', vdev['path'], 'freebsd-zfs', {
                         'blocksize': params.get('blocksize', 4096),
-                        'swapsize': params.get('swapsize') if group == 'data' else 0
+                        'swapsize': params.get('swapsize', 2048) if group == 'data' else 0
                     }))
 
             self.join_subtasks(*subtasks)
@@ -442,6 +449,20 @@ def _init(dispatcher, plugin):
             for i in args['ids']:
                 dispatcher.datastore.delete('volumes', i)
 
+        if args['operation'] == 'create':
+            for i in args['ids']:
+                pool = dispatcher.call_sync('zfs.pool.query', [('guid', '=', i)], {'single': True})
+                with volumes_lock:
+                    try:
+                        dispatcher.datastore.insert('volumes', {
+                            'id': i,
+                            'name': pool['name'],
+                            'type': 'zfs'
+                        })
+                    except DuplicateKeyException:
+                        # already inserted by task
+                        pass
+
         dispatcher.dispatch_event('volumes.changed', {
             'operation': args['operation'],
             'ids': ids
@@ -471,10 +492,10 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler('volume.dataset.delete', DatasetDeleteTask)
     plugin.register_task_handler('volume.dataset.update', DatasetConfigureTask)
 
-    plugin.register_hook('volume.pre-destroy')
-    plugin.register_hook('volume.pre-detach')
-    plugin.register_hook('volume.pre-create')
-    plugin.register_hook('volume.pre-attach')
+    plugin.register_hook('volumes.pre-destroy')
+    plugin.register_hook('volumes.pre-detach')
+    plugin.register_hook('volumes.pre-create')
+    plugin.register_hook('volumes.pre-attach')
 
     plugin.register_event_handler('zfs.pool.changed', on_pool_change)
     plugin.register_event_type('volumes.changed')

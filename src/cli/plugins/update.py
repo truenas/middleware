@@ -42,7 +42,7 @@ class CurrentTrainCommand(Command):
 @description("Checks for New Updates")
 class CheckNowCommand(Command):
     def run(self, context, args, kwargs, opargs):
-        output_msg(context.connection.call_sync('update.check_now_for_updates'))
+        output_msg(context.connection.call_sync('update.check'))
 
 
 @description("Updates the system and reboot it")

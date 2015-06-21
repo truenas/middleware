@@ -237,41 +237,19 @@ class RoutingSocketEventSource(threading.Thread):
                 addr.netmask = message.netmask
                 addr.broadcast = message.dest_address
 
-                addresses = get_addresses(entity)
+                if message.type == netif.RoutingMessageType.NEWADDR:
+                    self.context.logger.warn('New alias added to interface {0} externally: {1}/{2}'.format(
+                        message.interface,
+                        message.address,
+                        message.netmask
+                    ))
 
-                # Ignore aliases added by dhclient
-                if not entity.get('dhcp') and not self.context.configstore.get('network.autoconfigure'):
-                    if message.type == netif.RoutingMessageType.NEWADDR:
-                        if addr.address in addresses:
-                            continue
-
-                        self.context.logger.warn('New alias added to interface {0} externally: {1}/{2}'.format(
-                            message.interface,
-                            message.address,
-                            message.netmask
-                        ))
-
-                        if 'aliases' not in entity:
-                            entity['aliases'] = []
-
-                        entity['aliases'].append({
-                            'type': addr.af.name,
-                            'address': str(message.address),
-                            'netmask': str(message.netmask),
-                            'broadcast': str(message.dest_address)
-                        })
-
-                        self.context.datastore.update('network.interfaces', entity['id'], entity)
-
-                    if message.type == netif.RoutingMessageType.DELADDR:
-                        if addr.address not in addresses:
-                            continue
-
-                        self.context.logger.warn('Alias removed from interface {0} externally: {1}/{2}'.format(
-                            message.interface,
-                            message.address,
-                            message.netmask
-                        ))
+                if message.type == netif.RoutingMessageType.DELADDR:
+                    self.context.logger.warn('Alias removed from interface {0} externally: {1}/{2}'.format(
+                        message.interface,
+                        message.address,
+                        message.netmask
+                    ))
 
                 self.client.emit_event('network.interface.changed', {
                     'operation': 'update',
@@ -501,8 +479,17 @@ class ConfigurationService(RpcService):
 
         # Remove all IP addresses from interface
         for addr in iface.addresses:
-            iface.delete_address(addr)
+            if addr.af == netif.AddressFamily.LINK:
+                continue
 
+            try:
+                iface.remove_address(addr)
+            except:
+                raise RpcException(errno.ENXIO,
+                                   "Interface {0} could not be downed because\
+                                   address {1} could not be removed".format(
+                                        name, addr)
+                                   )
         iface.down()
 
 

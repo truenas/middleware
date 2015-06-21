@@ -3,21 +3,26 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
-import SystemActionCreators from "../actions/SystemActionCreators";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
+import SAC from "../actions/SystemActionCreators";
 
-module.exports = {
+class SystemMiddleware extends AbstractBase {
 
-   requestSystemInfo: function(systemInfoName) {
-      MiddlewareClient.request( "system.info." + systemInfoName,  [], function ( systemInfo ) {
-        SystemActionCreators.receiveSystemInfo( systemInfo, systemInfoName );
-      });
+  static requestSystemInfo ( namespace ) {
+    MC.request( "system.info." + namespace
+              , []
+              , SAC.receiveSystemInfo.bind( SAC, namespace )
+              );
   }
 
- , requestSystemDevice: function(systemDeviceArgument) {
-      MiddlewareClient.request( "system.device.get_devices",  [systemDeviceArgument], function ( systemDevice ) {
-        SystemActionCreators.receiveSystemDevice( systemDevice, systemDeviceArgument );
-      });
+  static requestSystemDevice ( arg ) {
+    MC.request( "system.device.get_devices"
+              , [ arg ]
+              , SAC.receiveSystemDevice.bind( SAC, arg )
+              );
   }
 
 };
+
+export default SystemMiddleware;

@@ -12,7 +12,7 @@ import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
 import freenasOS.Package as Package
-from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException, UpdateBootEnvironmentException
+from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException, UpdateBootEnvironmentException, UpdatePackageException
 
 from freenasOS.Exceptions import ManifestInvalidSignature, UpdateManifestNotFound
 
@@ -21,6 +21,112 @@ log = logging.getLogger('freenasOS.Update')
 debug = False
 
 REQUIRE_REBOOT = True
+
+# Not sure if these should go into their own file
+
+SERVICES = {
+    "gui" : {
+        "Name" : "gui",
+        "ServiceName": "gui",
+        "Description": "Restart Web UI (forces a logout)",
+        "CheckStatus" : False,
+    },
+    "SMB" : {
+        "Name" : "CIFS",
+        "ServiceName" : "cifs",
+        "Description" : "Restart CIFS sharing",
+        "CheckStatus" : True,
+    },
+    "AFP" : {
+        "Name" : "AFP",
+        "ServiceName" : "afp",
+        "Description" : "Restart AFP sharing",
+        "CheckStatus" : True,
+    },
+    "NFS" : {
+        "Name" : "NFS",
+        "ServiceName" : "nfs",
+        "Description" : "Restart NFS sharing",
+        "CheckStatus" : True,
+    },
+    "iSCSI" : {
+        "Name" : "iSCSI",
+        "ServiceName" : "iscsitarget",
+        "Description" : "Restart iSCSI services",
+        "CheckStatus" : True,
+    },
+    "FTP" : {
+        "Name" : "FTP",
+        "ServiceName" : "ftp",
+        "Description" : "Restart FTP services",
+        "CheckStatus" : True,
+    },
+    "WebDAV" : {
+        "Name": "WebDAV",
+        "ServiceName" : "webdav",
+        "Description" : "Restart WebDAV services",
+        "CheckStatus" : True,
+    },
+# Not sure what DirectoryServices would be
+#    "DirectoryServices" : {
+#        "Name" : "Restart directory services",
+}
+
+def GetServiceDescription(svc):
+    if not svc in SERVICES:
+        return None
+    return SERVICES[svc]["Description"]
+
+def VerifyServices(svc_names):
+    """
+    Verify whether the requested services are known or not.
+    This is a trivial wrapper for now.
+    """
+    for name in svc_names:
+        if not name in SERVICES:
+            return False
+    return True
+
+def StopServices(svc_list):
+    """
+    Stop a set of services.  Returns the list of those that
+    were stopped.
+    """
+    retval = []
+    # Hm, this doesn't handle any particular ordering.
+    # May need to fix this.
+    # TODO: Uncomment the below when freenas10 is ready for rebootless updates
+    # But also fix it for being appropriate to freenas10
+    # for svc in svc_list:
+    #     if not svc in SERVICES:
+    #         raise ValueError("%s is not a known service" % svc)
+    #     s = SERVICES[svc]
+    #     svc_name = s["ServiceName"]
+    #     log.debug("StopServices:  svc %s maps to %s" % (svc, svc_name))
+    #     if (not s["CheckStatus"]) or n.started(svc_name):
+    #         retval.append(svc)
+    #         n.stop(svc_name)
+    #     else:
+    #         log.debug("svc %s is not started" % svc)
+    return retval
+
+
+def StartServices(svc_list):
+    """
+    Start a set of services.  THis is the output
+    from StopServices
+    """
+    # Hm, this doesn't handle any particular ordering.
+    # May need to fix this.
+    # TODO: Uncomment the below when freenas10 is ready for rebootless updates
+    # But also fix it for being appropriate to freenas10
+    # for svc in svc_list:
+    #     if not svc in SERVICES:
+    #         raise ValueError("%s is not a known service" % svc)
+    #     svc_name = SERVICES[svc]["ServiceName"]
+    #     n.start(svc_name)
+    return
+
 
 # Used by the clone functions below
 beadm = "/usr/local/sbin/beadm"
@@ -112,12 +218,31 @@ def ListClones():
         if len(fields) > 5 and fields[5] != "-":
             name = fields[5]
         rv.append({
+            'realname' : fields[0],
             'name': name,
             'active': fields[1],
             'mountpoint': fields[2],
             'space': fields[3],
             'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
         })
+    return rv
+
+def FindClone(name):
+    """
+    Find a BE with the given name.  We look for nickname first,
+    and then realname.  In order to do this, we first have to
+    get the list of clones.
+    Returns None if it can't be found, otherwise returns a
+    dictionary.
+    """
+    rv = None
+    clones = ListClones()
+    for clone in clones:
+        if clone["name"] == name:
+            rv = clone
+            break
+        if clone["realname"] == name and rv is None:
+            rv = clone
     return rv
 
 """
@@ -156,7 +281,14 @@ def CreateClone(name, snap_grub=True, bename=None, rename=None):
     # and return an error.
     args = ["create"]
     if bename:
-        args.extend(["-e", bename])
+        # Due to how beadm works, if we are given a starting name,
+        # we need to find the real name.
+        cl = FindClone(bename)
+        if cl is None:
+            log.error("CreateClone:  Cannot find starting clone %s" % bename)
+            return False
+        log.debug("FindClone returned %s" % cl)
+        args.extend(["-e", cl["realname"]])
     if rename:
         import random
         temp_name = "Pre-%s-%d" % (name, random.SystemRandom().randint(0, 1024 * 1024))
@@ -326,6 +458,95 @@ def DeleteClone(name, delete_grub = False):
 
     return rv
 
+def GetUpdateChanges(old_manifest, new_manifest, cache_dir = None):
+    """
+    This is used by both PendingUpdatesChanges() and CheckForUpdates().
+    The difference between the two is that the latter doesn't necessarily
+    have a cache directory, so if cache_dir is none, we have to assume the
+    update package exists.
+    This returns a dictionary that will have at least "Reboot" as a key.
+    """
+    def MergeServiceList(base_list, new_list):
+        """
+        Merge new_list into base_list.
+        For each service in new_list (which is a dictionary),
+        if the value is True, add it to base_list.
+        If new_list is an array, simply add each item to
+        base_list; if it's a dict, we check the value.
+        """
+        if new_list is None:
+            return base_list
+        if isinstance(new_list, list):
+            for svc in new_list:
+                if not svc in base_list:
+                    base_list.append(svc)
+        elif isinstance(new_list, dict):
+            for svc, val in new_list.iteritems():
+                if val:
+                    if not svc in base_list:
+                        base_list.append(svc)
+        return base_list
+    
+    svcs = []
+    diffs = Manifest.DiffManifests(old_manifest, new_manifest)
+    if len(diffs) == 0:
+        return None
+
+    reboot = False
+    if REQUIRE_REBOOT:
+        reboot = True
+        
+    if "Packages" in diffs:
+        # Look through the install/upgrade packages
+        for pkg, op, old in diffs["Packages"]:
+            if op == "delete":
+                continue
+            if op == "install":
+                if pkg.RequiresReboot() == True:
+                    reboot = True
+                else:
+                    pkg_services = pkg.RestartServices()
+                    if pkg_services:
+                        svcs = MergeServiceList(svcs, pkg_services)
+            elif op == "upgrade":
+                # A bit trickier.
+                # If there is a list of services to restart, the update
+                # path wants to look at that rather than the requires reboot.
+                # However, one service could be to reboot (this is handled
+                # below).
+                upd = pkg.Update(old.Version())
+                if cache_dir:
+                    update_fname = os.path.join(cache_dir, pkg.FileName(old.Version()))
+                else:
+                    update_fname = None
+
+                if upd and (update_fname is None or os.path.exists(update_fname)):
+                    pkg_services = upd.RestartServices()
+                    if pkg_services:
+                        svcs = MergeServiceList(svcs, pkg_services)
+                    else:
+                        if upd.RequiresReboot() == True:
+                            reboot = True
+                else:
+                    # Have to assume the full package exists
+                    if pkg.RequiresReboot() == True:
+                        reboot = True
+                    else:
+                        pkg_services = pkg.RestartServices()
+                        if pkg_services:
+                            svcs = MergeServiceList(svcs, pkg_services)
+    else:
+        reboot = False
+    if len(diffs) == 0:
+        return None
+    if not reboot and svcs:
+        if not VerifyServices(svcs):
+            reboot = True
+        else:
+            diffs["Restart"] = svcs
+    diffs["Reboot"] = reboot
+    return diffs
+
 def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler = None):
     """
     Check for an updated manifest.  If cache_dir is none, then we try
@@ -372,34 +593,14 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler
         log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
         return None
 
-    diffs = Manifest.DiffManifests(conf.SystemManifest(), new_manifest)
+    diffs = GetUpdateChanges(conf.SystemManifest(), new_manifest)
     if diffs is None or len(diffs) == 0:
         return None
     log.debug("CheckForUpdate:  diffs = %s" % diffs)
-    reboot = False
-    if REQUIRE_REBOOT:
-        reboot = True
-        
     if "Packages" in diffs:
         for (pkg, op, old) in diffs["Packages"]:
             if handler:
                 handler(op, pkg, old)
-            # We attempt to see if the update requires a reboot.
-            # This is only tentative -- if we can't download a delta package,
-            # and that's what allows the update to avoid a reboot, a reboot
-            # is going to be required.
-            if op == "install":
-                if pkg.RequiresReboot() == True:
-                    reboot = True
-            elif op == "upgrade":
-                upd = pkg.Update(old.Version())
-                if upd:
-                    if upd.RequiresReboot():
-                        reboot = True
-                elif pkg.RequiresReboot():
-                    reboot = True
-                
-    diffs["Reboot"] = reboot
     if diff_handler:
         diff_handler(diffs)
         
@@ -586,38 +787,55 @@ def PendingUpdatesChanges(directory):
         # updates if that's what got downloaded.
         # By definition, if there are no Packages differences, a reboot
         # isn't required.
-        diffs = Manifest.DiffManifests(conf.SystemManifest(), new_manifest)
-        if len(diffs) == 0:
-            return None
-        if "Packages" in diffs:
-            reboot = False
-            # Look through the install/upgrade packages
-            for pkg, op, old in diffs["Packages"]:
-                if op == "delete":
-                    continue
-                if op == "install":
-                    if pkg.RequiresReboot() == True:
-                        reboot = True
-                if op == "upgrade":
-                    # A bit trickier.
-                    upd = pkg.Update(old.Version())
-                    update_fname = os.path.join(directory, pkg.FileName(old.Version()))
-                    if upd and os.path.exists(update_fname):
-                        if upd.RequiresReboot() == True:
-                            reboot = True
-                    else:
-                        # Have to assume the full package exists
-                        if pkg.RequiresReboot() == True:
-                            reboot = True
-        else:
-            reboot = False
-        if len(diffs) == 0:
-            return None
-        diffs["Reboot"] = reboot
+        diffs = GetUpdateChanges(conf.SystemManifest(), new_manifest, cache_dir = directory)
         return diffs
     else:
         return None
 
+def ServiceRestarts(directory):
+    """
+    Return a list of services to be stopped and started.  The paramter
+    directory is the cache location; if it's not a valid cache directory,
+    we return None.  (This is different from returning an empty set,
+    which will be an array with no items.)  If a reboot is required,
+    it returns an empty array.
+    """
+    changes = PendingUpdatesChanges(directory)
+    if changes is None:
+        return None
+    retval = []
+    if changes["Reboot"] is False:
+        # Only look if we don't need to reboot
+        if "Packages" in changes:
+            # All service changes are package-specific
+            for (pkg, op, old) in changes["Packages"]:
+                svcs = None
+                if op in ("install", "delete"):
+                    # Either the service is added or removed,
+                    # either way we add it to the list.
+                    svcs = pkg.RestartServices()
+                elif op == "upgrade":
+                    # We need to see if we have the delta package
+                    # file or not.
+                    delta_pkg_file = os.path.join(directory, pkg.FileName(old.Version()))
+                    if os.path.exists(delta_pkg_file):
+                        # Okay, we're doing an update
+                        upd = pkg.Update(old.Version())
+                        if not upd:
+                            # How can this happen?
+                            raise Exception("I am confused")
+                        svcs = upd.RestartServices()
+                    else:
+                        # Only need to the services listed at the outer level
+                        svcs = pkg.RestartServices()
+
+                if svcs:
+                    for svc in svcs:
+                        if not svc in retval:
+                            retval.append(svc)
+                                
+    return retval
+                    
 def ApplyUpdate(directory, install_handler = None, force_reboot = False):
     """
     Apply the update in <directory>.  As with PendingUpdates(), it will
@@ -658,6 +876,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
         log.debug("ApplyUupdate:  changes only has Reboot key")
         return None
 
+    service_list = None
     deleted_packages = []
     updated_packages = []
     if "Packages" in changes:
@@ -696,19 +915,27 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                     for c in clones:
                         if c["name"] == new_boot_name:
                             found = True
-                            if c["mountpoint"] != "/":
-                                if c["mountpoint"] != "-":
-                                    mount_point = c["mountpoint"]
-                        else:
-                            s = "Cannot create boot-environment with same name as current boot-environment (%s)" % new_boot_name
-                        break
+                            if c["mountpoint"] == "/":
+                                s = "Cannot create boot-environment with same name as current boot-environment (%s)" % new_boot_name
+                                break
+                            else:
+                                # We'll have to destroy it.
+                                # I'd like to rename it, but that gets tricky, due
+                                # to nicknames.
+                                if DeleteClone(new_boot_name) == False:
+                                    s = "Cannot destroy BE %s which is necessary for upgrade" % new_boot_name
+                                    log.debug(s)
+                                elif CreateClone(new_boot_name) is False:
+                                    s = "Cannot create new BE %s even after a second attempt" % new_boot_name
+                                    log.debug(s)
+                            break
                     if found is False:
                         s = "Unable to create boot-environment %s" % new_boot_name
                 else:    
                     log.debug("Unable to list clones after creation failure")
                     s = "Unable to create boot-environment %s" % new_boot_name
-                    if s:
-                        log.error(s)
+                if s:
+                    log.error(s)
                     raise UpdateBootEnvironmentException(s)
             if mount_point is None:
                 mount_point = MountClone(new_boot_name)
@@ -774,7 +1001,9 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
             RunCommand(cmd, args)
             
             raise UpdateBootEnvironmentException("Unable to create new boot environment %s" % new_boot_nam)
-        
+        if "Restart" in changes:
+            service_list = StopServices(changes["Restart"])
+            
     # Now we start doing the update!
     # If we have to reboot, then we need to
     # make a new boot environment, with the appropriate name.
@@ -786,9 +1015,9 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
     try:
         # Remove any deleted packages
         for pkg in deleted_packages:
-            log.debug("About to delete package %s" % pkg.Name())
-            if conf.PackageDB(mount_point).RemovePackageContents(pkg) == False:
-                s = "Unable to remove contents for packate %s" % pkg.Name()
+            log.debug("About to delete package %s from %s" % (pkg.Name(), mount_point))
+            if conf.PackageDB(mount_point).RemovePackageContents(pkg.Name()) == False:
+                s = "Unable to remove contents for package %s" % pkg.Name()
                 if mount_point:
                     UnmountClone(new_boot_name, mount_point)
                     mount_point = None
@@ -820,6 +1049,11 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                     log.error(s)
                     raise UpdateBootEnvironmentException(s)
             if not reboot:
+                # Try to restart services before cleaning up.
+                # Although maybe that's not the right way to go
+                if service_list:
+                    StartServices(service_list)
+                    service_list = None
                 # Clean up the emergency holographic snapshot
                 cmd = "/sbin/zfs"
                 args = ["destroy", "-r", snapshot_name ]
@@ -861,6 +1095,8 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                     rv = RunCommand(cmd, args)
                     if rv is False:
                         log.error("Unable to destroy snapshot %s" % snapshot_name)
+            if service_list:
+                StartServices(service_list)
         raise e
 
     return reboot

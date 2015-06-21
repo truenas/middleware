@@ -10,9 +10,22 @@
 module.exports = function ( grunt ) {
 
   // WEBAPP
-  this.app = { src  : [ "<%= dirTree.build.ssrjs %>/client.js" ]
-             , dest : "<%= dirTree.build.app %>/app.js"
-             };
+  this.app =
+    { options:
+      { browserifyOptions :
+        { transform  : [ [ "babelify"
+                         , { loose      : "all"
+                           , sourceMaps : "inline"
+                           }
+                         ]
+                       ]
+        , debug      : true
+        , extensions : [ ".js", ".es", ".es6", ".jsx" ]
+        }
+      }
+    , src  : "<%= dirTree.source.jsx %>/browser.jsx"
+    , dest : "<%= dirTree.build.app %>/app.js"
+    };
 
   // EXTERNAL LIBRARIES
   this.libs = { src: [ "<%= dirTree.bower.velocity %>/velocity.min.js"

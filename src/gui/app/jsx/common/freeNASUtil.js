@@ -11,12 +11,27 @@ var freeNASUtil = exports;
 // Generates a unique UUID which a client includes with each call (generally
 // within the `pack` function). This ID may then be used to verify either the
 // original client or for the client to verify the middleware's response.
-freeNASUtil.generateUUID = function() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace( /[xy]/g, function (c) {
+freeNASUtil.generateUUID = function ( ) {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace( /[xy]/g
+                                                       , function ( c ) {
       var r = Math.random() * 16 | 0;
       var v = ( c === "x" ) ? r : ( r & 0x3 | 0x8 );
 
-      return v.toString(16);
+      return v.toString( 16 );
     }
   );
+};
+
+freeNASUtil.getStackTrace = function ( e ) {
+  let callstack = [];
+  if ( e.toString() ) { callstack.push( e.toString() ) }
+  if ( e.stack ) {
+    let lines = e.stack.split( "\n" );
+    for ( let i = 0, len = lines.length; i < len; i++ ) {
+      callstack.push( lines[i] );
+    }
+    // Remove call to getStackTrace()
+    callstack.shift();
+  }
+  return callstack;
 };

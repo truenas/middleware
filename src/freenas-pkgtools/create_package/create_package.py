@@ -179,6 +179,32 @@ def LoadTemplate(path):
 	    else:
 		rv["scripts"][opt] = val
 
+    # Look for a list of services (and ones to restart)
+    if cfp.has_section("Services"):
+        service_list = []
+        if cfp.has_option("Services", "services"):
+            # Great, so it's a comma-seperated list
+            service_str = cfp.get("Services", "services")
+            for svc in service_str.split(","):
+                service_list.append(svc.strip())
+        if len(service_list) > 0:
+            # Look for services to restart
+            restart_list = {}
+            if cfp.has_option("Services", "restart"):
+                restart_str = cfp.get("Services", "restart")
+                if restart_str == "all":
+                    for svc in service_list:
+                        restart_list[svc] = True
+                else:
+                    for svc in cfp.get("Services", "restart").split(","):
+                        if not svc in service_list:
+                            print >> sys.stderr, "Restart service %s not in service list" % svc
+                        else:
+                            restart_list[svc] = True
+            sdict = { "Services" : service_list }
+            if len(restart_list) > 0:
+                sdict["Restart"] = restart_list
+            rv["ix-package-services"] = sdict
     return rv
 
 def main():
@@ -240,6 +266,7 @@ def main():
         if tdict is not None:
             for k in tdict.keys():
                 manifest[k] = tdict[k]
+        print >> sys.stderr, "manifest = %s" % manifest
         filters = TemplateFiles(arg_template)
         if filters is not None:
             if debug > 1:  print >> sys.stderr, "Filter list = %s" % filters

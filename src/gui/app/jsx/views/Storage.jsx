@@ -8,11 +8,17 @@
 
 import React from "react";
 
+import ZFS from "./Storage/ZFS";
+import Disks from "./Storage/Disks";
+
 const Storage = React.createClass(
-  { render: function () {
+  { displayName: "Storage"
+
+  , render: function () {
       return (
         <main>
-          <h2>Storage View</h2>
+          <ZFS />
+          <Disks />
         </main>
       );
     }

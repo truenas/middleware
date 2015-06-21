@@ -101,7 +101,7 @@ class ConfigStore(object):
         return ret['value'] if ret is not None else default
 
     def set(self, key, value):
-        self.__datastore.upsert('config', key, value)
+        self.__datastore.upsert('config', key, value, config=True)
 
     def list_children(self, key=None):
         if key is None:

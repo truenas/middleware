@@ -32,9 +32,15 @@ import termios
 import sys
 import select
 import sandbox
+import gettext
 from namespace import Command, CommandException, description
-from output import Column, output_value, output_dict, format_value, output_msg
+from output import (
+    Column, output_value, output_dict, format_value, output_msg, output_list
+)
 from dispatcher.shell import ShellClient
+
+t = gettext.translation('freenas-cli', fallback=True)
+_ = t.ugettext
 
 
 @description("Sets variable value")
@@ -51,7 +57,7 @@ class SetenvCommand(Command):
         context.variables.set(args[0], args[1])
 
     def complete(self, context, tokens):
-        return [k for k, _ in context.variables.get_all()]
+        return [k for k, foo in context.variables.get_all()]
 
 
 @description("Evaluates Python code")
@@ -133,7 +139,7 @@ class ShutdownCommand(Command):
     Usage: shutdown
     """
     def run(self, context, args, kwargs, opargs):
-        output_msg("System going for a shutdown...")
+        output_msg(_("System going for a shutdown..."))
         context.submit_task('system.shutdown')
 
 
@@ -143,8 +149,45 @@ class RebootCommand(Command):
     Usage: reboot
     """
     def run(self, context, args, kwargs, opargs):
-        output_msg("System going for a reboot...")
+        output_msg(_("System going for a reboot..."))
         context.submit_task('system.reboot')
+
+
+@description("Displays the active ips from all configured network interface")
+class ShowIpsCommand(Command):
+    """
+    Usage: showips
+    """
+    def run(self, context, args, kwargs, opargs):
+        output_msg(_("These are the active ips from all the configured"
+                     " network interfaces"))
+        output_list(context.connection.call_sync('network.config.get_my_ips'),
+                    _("IP Addresses"))
+
+
+@description("Displays the URLs to access the web GUI from")
+class ShowUrlsCommand(Command):
+    """
+    Usage: showips
+    """
+    def run(self, context, args, kwargs, opargs):
+        output_msg(_("You may try the following URLs to access"
+                     " the web user interface:"))
+        my_ips = context.connection.call_sync('network.config.get_my_ips')
+        my_protocols = context.connection.call_sync(
+            'system.ui.get_config')
+        urls = []
+        for proto in my_protocols['webui-procotol']:
+            proto_port = my_protocols['webui-{0}-port'.format(proto.lower())]
+            if proto_port is not None:
+                if proto_port in [80, 443]:
+                    for x in my_ips:
+                        urls.append('{0}://{1}'.format(proto.lower(), x))
+                else:
+                    for x in my_ips:
+                        urls.append('{0}://{1}:{2}'.format(proto.lower(), x,
+                                                           proto_port))
+        output_list(urls, label=_('URLs'))
 
 
 @description("Exits the CLI, enter \"^D\" (ctrl+D)")
@@ -161,8 +204,9 @@ class HelpCommand(Command):
     """
     Usage: help [command command ...]
 
-    Provides usage information on particular command. If command can't be reached
-    directly in current namespace, may be specified as chain, eg: "account users show".
+    Provides usage information on particular command. If command can't be
+    reached directly in current namespace, may be specified as chain,
+    eg: "account users show".
 
     Examples:
         help
@@ -174,4 +218,3 @@ class HelpCommand(Command):
 
         if obj.__doc__:
             output_msg(inspect.getdoc(obj))
-

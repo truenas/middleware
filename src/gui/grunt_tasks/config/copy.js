@@ -5,7 +5,7 @@
 
 "use strict";
 
-module.exports = function( grunt ) {
+module.exports = function ( grunt ) {
   this.favicons = { files: [
                       { src     : "<%= dirTree.source.favicons %>/**"
                       , dest    : "<%= dirTree.build.root %>"
@@ -55,9 +55,9 @@ module.exports = function( grunt ) {
     };
 
   // NOTE: FontAwesome is NOT A PERMANENT ADDITION. It's going to be removed.
-  // Don't get used to it, don't decide you like it, don't convince others of its
-  // merits. FreeNAS is going to roll its OWN icon font to match our own visual
-  // style. This should be considered extremely temporary.
+  // Don't get used to it, don't decide you like it, don't convince others of
+  // its merits. FreeNAS is going to roll its OWN icon font to match our own
+  // visual style. This should be considered EXTREMELY temporary.
   this.fontawesome = { files: [
                          { src     : "<%= dirTree.bower.fontawesome.fonts %>/**"
                          , dest    : "<%= dirTree.build.font %>"
@@ -73,7 +73,6 @@ module.exports = function( grunt ) {
                              , "<%= dirTree.source.jsx %>/**"
                              , "<%= dirTree.source.templates %>/**"
                              , "<%= dirTree.server %>.js"
-                             , "<%= dirTree.build.ssrjs %>/**"
                              , "<%= dirTree.data %>/**"
                              , "bower_components/**"
                              , "package.json"

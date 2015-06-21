@@ -47,3 +47,4 @@ etc/launchd.d/dispatcher.json
 .cshrc
 .profile
 .shrc
+@exec mkdir -p /data/zfs

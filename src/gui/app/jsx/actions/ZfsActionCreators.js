@@ -8,33 +8,45 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class ZfsActionCreators {
 
-  receiveZfsPool ( zfsPool, zfsPoolName ) {
+  static receiveVolumes ( volumes, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_ZFS_POOL_DATA
-      , zfsPool: zfsPool
-      , zfsPoolName: zfsPoolName
+      { type: ActionTypes.RECEIVE_VOLUMES
+      , timestamp
+      , volumes
       }
     );
   }
 
-  receiveZfsBootPool ( zfsBootPool, zfsBootPoolArgument ) {
+  static receivePool ( poolData, poolName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_ZFS_BOOT_POOL_DATA
-      , zfsBootPool: zfsBootPool
-      , zfsBootPoolArgument: zfsBootPoolArgument
+      { type: ActionTypes.RECEIVE_VOLUMES
+      , timestamp
+      , poolData
+      , poolName
       }
     );
   }
 
-  receiveZfsPoolGetDisks ( zfsPoolGetDisks, zfsPoolGetDisksArgument ) {
+  static receiveBootPool ( bootPool, poolName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
-      { type: ActionTypes.RECEIVE_ZFS_POOL_GET_DISKS_DATA
-      , zfsPoolGetDisks: zfsPoolGetDisks
-      , zfsPoolGetDisksArgument: zfsPoolGetDisksArgument
+      { type: ActionTypes.RECEIVE_BOOT_POOL
+      , timestamp
+      , bootPool
+      , poolName
+      }
+    );
+  }
+
+  static receivePoolDisks ( poolName, poolDisks, timestamp ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_POOL_DISK_IDS
+      , timestamp
+      , poolDisks
+      , poolName
       }
     );
   }
 
 };
 
-export default new ZfsActionCreators();
+export default ZfsActionCreators;

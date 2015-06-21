@@ -17,18 +17,6 @@ import Widget from "../../Widget";
 
 var i = 0;
 
-var svgStyle = {
-    width   : "calc(100% - 36px)"
-  , height  : "100%"
-  , "float" : "left"
-};
-
-var divStyle = {
-    width   : "36px"
-  , height  : "100%"
-  , "float" : "right"
-};
-
 module.exports = {
     mixins: [ componentWidthMixin ]
 
@@ -44,6 +32,16 @@ module.exports = {
         , errorMode       : false
         , statdData       : initialStatdData
         , statdDataLoaded : false
+        , svgStyle        : {
+                                width   : "calc(100% - 36px)"
+                              , height  : ( this.props.dimensions[1] - 16 )
+                              , "float" : "left"
+                            }
+        , divStyle        : {
+                                width   : "36px"
+                              , height  : "100%"
+                              , "float" : "right"
+                            }
       };
     }
 
@@ -120,14 +118,17 @@ module.exports = {
     }
 
   , shouldComponentUpdate: function ( nextProps, nextState ) {
-      return nextState.statdResources   !==  this.state.statdResources    ||
-             nextState.chartTypes       !==  this.state.chartTypes        ||
-             nextState.statdDataLoaded  !==  this.state.statdDataLoaded   ||
-             nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
-             nextState.graphType        !==  this.state.graphType         ||
-             nextState.componentWidth   !==  this.state.componentWidth;
-	}
-
+    return nextState.statdResources   !==  this.state.statdResources    ||
+           nextState.chartTypes       !==  this.state.chartTypes        ||
+           nextState.statdDataLoaded  !==  this.state.statdDataLoaded   ||
+           nextState.stagedUpdate     !==  this.state.stagedUpdate      ||
+           nextState.graphType        !==  this.state.graphType         ||
+           nextState.componentWidth   !==  this.state.componentWidth    ||
+           nextProps.position         !==  this.props.position          ||
+           nextProps.dimensions       !==  this.props.dimensions        ||
+           nextProps.inMotion         !==  this.props.inMotion          ||
+           nextProps.size             !==  this.props.size;
+  }
   , componentWillUnmount: function () {
       StatdStore.removeChangeListener( this.handleStatdChange );
       StatdMiddleware.unsubscribeFromPulse(
@@ -181,7 +182,7 @@ module.exports = {
             newState.statdData = {};
 
             _.forEach( stagedUpdate, function ( data, key ) {
-              var newData = this.state.statdData[ key ].concat( data );
+              var newData = this.state.statdData[ key ] ? this.state.statdData[ key ].concat( data ) : [];
               newState.statdData[ key ] = _.takeRight( newData, 100 );
             }.bind( this ) );
             stagedUpdate = {};
@@ -454,10 +455,13 @@ module.exports = {
     if ( this.state.errorMode ) {
       return (
         <Widget
-          dimensions  =  {this.props.dimensions}
-          position    =  {this.props.position}
+          dimensions  =  { this.props.dimensions }
+          position    =  { this.props.position }
           title       = { this.props.title }
-          size        = { this.props.size } >
+          size        = { this.props.size }
+          inMotion = { this.props.inMotion }
+          onMouseDownHolder = { this.props.onMouseDownHolder }
+          changeSize = { this.props.changeSize } >
 
           <div className="widget-error-panel">
               <h4>Something went sideways.</h4>
@@ -466,17 +470,21 @@ module.exports = {
 
       </Widget>
         );
-    } else if ( this.state.statdDataLoaded && this.state.chartTypes.length > 0 ) {
+    } else if ( this.state.statdDataLoaded &&
+                this.state.chartTypes.length > 0 ) {
       return (
         <Widget
-          dimensions  =  {this.props.dimensions}
-          position    =  {this.props.position}
+          dimensions  =  { this.props.dimensions }
+          position    =  { this.props.position }
           title     = { this.props.title }
-          size      = { this.props.size } >
+          size      = { this.props.size }
+          inMotion = { this.props.inMotion }
+          onMouseDownHolder = { this.props.onMouseDownHolder }
+          changeSize = { this.props.changeSize } >
 
           <div className="widget-content">
-            <svg ref="svg" style={svgStyle}></svg>
-              <div ref="controls" style={divStyle}>
+            <svg ref="svg" style={this.state.svgStyle}></svg>
+              <div ref="controls" style={this.state.divStyle}>
                 { this.state.chartTypes.map( this.returnGraphOptions ) }
               </div>
           </div>
@@ -486,10 +494,13 @@ module.exports = {
     } else {
       return (
         <Widget
-          dimensions  =  {this.props.dimensions}
-          position    =  {this.props.position}
+          dimensions  =  { this.props.dimensions }
+          position    =  { this.props.position }
           title     = { this.props.title }
-          size      = { this.props.size } >
+          size      = { this.props.size }
+          inMotion = { this.props.inMotion }
+          onMouseDownHolder = { this.props.onMouseDownHolder }
+          changeSize = { this.props.changeSize } >
 
           <div className="widget-error-panel">
               <h4>Loading...</h4>

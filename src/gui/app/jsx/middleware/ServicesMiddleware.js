@@ -3,30 +3,42 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import ServicesActionCreators from "../actions/ServicesActionCreators";
+import SAC from "../actions/ServicesActionCreators";
 
-module.exports = {
+class ServicesMiddleware extends AbstractBase {
 
-    subscribeToTask: function( componentID ) {
-      MiddlewareClient.subscribe( ["task.*"], componentID );
-    }
+  static subscribeToTask ( componentID ) {
+    MC.subscribe( [ "task.*" ], componentID );
+  }
 
-  , unsubscribeFromTask: function( componentID ) {
-      MiddlewareClient.unsubscribe( ["task.*"], componentID );
-    }
+  static unsubscribeFromTask ( componentID ) {
+    MC.unsubscribe( [ "task.*" ], componentID );
+  }
 
-  , updateService: function( serviceName, action ) {
-      MiddlewareClient.request( "task.submit", ["service.manage", [ serviceName, action ] ], function ( taskID ) {
-        ServicesActionCreators.receiveServiceUpdateTask( taskID, serviceName );
-      });
-    }
+  static updateService ( serviceName, action ) {
+    MC.request( "task.submit"
+              , [ "service.manage", [ serviceName, action ] ]
+              , SAC.receiveServiceUpdateTask.bind( SAC, serviceName )
+              );
+  }
 
-  , requestServicesList: function () {
-      MiddlewareClient.request( "services.query", [], function ( rawServicesList ) {
-        ServicesActionCreators.receiveServicesList( rawServicesList );
-      });
+  static configureService ( serviceName, configArray ) {
+    MC.request( "task.submit"
+              , [ "service.configure", [ serviceName, configArray ] ]
+              , SAC.receiveServiceUpdateTask.bind( SAC, serviceName )
+              );
+  }
+
+  static requestServicesList () {
+    MC.request( "services.query"
+              , []
+              , SAC.receiveServicesList
+              );
   }
 
 };
+
+export default ServicesMiddleware;

@@ -10,31 +10,34 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class SubscriptionsActionCreators {
 
-  recordNewSubscriptions ( masks, componentID ) {
+  static recordNewSubscriptions ( masks, componentID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS
-      , masks: masks
-      , componentID: componentID
+      , timestamp
+      , masks
+      , componentID
       }
     );
   }
 
-  deleteCurrentSubscriptions ( masks, componentID ) {
+  static deleteCurrentSubscriptions ( masks, componentID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS
-      , masks: masks
-      , componentID: componentID
+      , timestamp
+      , masks
+      , componentID
       }
     );
   }
 
-  deleteAllSubscriptions () {
+  static deleteAllSubscriptions ( timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.UNSUBSCRIBE_ALL
+      , timestamp
       }
     );
   }
 
 };
 
-export default new SubscriptionsActionCreators();
+export default SubscriptionsActionCreators;

@@ -180,8 +180,8 @@ def _init(dispatcher, plugin):
         logger.info('New system dataset ID: {0}'.format(dsid))
 
     plugin.register_event_handler('volumes.changed', on_volumes_changed)
-    plugin.attach_hook('volume.pre-destroy', volume_pre_destroy)
-    plugin.attach_hook('volume.pre-detach', volume_pre_destroy)
+    plugin.attach_hook('volumes.pre-destroy', volume_pre_destroy)
+    plugin.attach_hook('volumes.pre-detach', volume_pre_destroy)
     plugin.register_provider('system-dataset', SystemDatasetProvider)
     plugin.register_task_handler('system-dataset.configure', SystemDatasetConfigure)
 

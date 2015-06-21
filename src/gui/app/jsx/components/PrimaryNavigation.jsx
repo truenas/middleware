@@ -27,19 +27,13 @@ const paths =
     , icon     : "magic"
     , label    : "Storage"
     , status   : null
-    , disabled : true
+    , disabled : false
     }
   , { path     : "network"
     , icon     : "moon-o"
     , label    : "Network"
     , status   : null
     , disabled : false
-    }
-  , { path     : "sharing"
-    , icon     : "cut"
-    , label    : "Sharing"
-    , status   : null
-    , disabled : true
     }
   , { path     : "services"
     , icon     : "bitcoin"
@@ -59,22 +53,16 @@ const paths =
     , status   : null
     , disabled : true
     }
-  , { path     : "system-tools"
-    , icon     : "ambulance"
-    , label    : "System Tools"
-    , status   : "warning"
-    , disabled : false
-    }
-  , { path     : "control-panel"
+  , { path     : "settings"
     , icon     : "paragraph"
-    , label    : "Control Panel"
+    , label    : "Settings"
     , status   : null
     , disabled : true
     }
-  , { path     : "power"
-    , icon     : "plug"
-    , label    : "Power"
-    , status   : null
+  , { path     : "system"
+    , icon     : "ambulance"
+    , label    : "System"
+    , status   : "warning"
     , disabled : false
     }
   ];
@@ -202,7 +190,7 @@ const PrimaryNavigation = React.createClass(
 
           <button
             className="btn btn-info primary-nav-debug-button"
-            onClick={ EventBus.emitToggle.bind( this ) }>
+            onClick={ EventBus.emitToggle.bind( EventBus ) }>
             Toggle Debug Tools
           </button>
 

@@ -210,7 +210,7 @@ cdef class ZFS(object):
     def make_vdev_tree(self, topology):
         root = ZFSVdev(self)
         root.type = 'root'
-        root.children = topology['data']
+        root.children = topology.get('data', [])
 
         if 'cache' in topology:
             for i in topology['cache']:
@@ -436,6 +436,9 @@ cdef class ZFSVdev(object):
         }
 
     def add_child_vdev(self, vdev):
+        if 'children' not in self.nvlist:
+            self.nvlist.set('children', [], nvpair.NVType.DATA_TYPE_NVLIST_ARRAY)
+
         self.nvlist['children'].append(vdev)
 
     property type:

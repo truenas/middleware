@@ -9,6 +9,7 @@ var chalk = require( "chalk" );
 module.exports = function ( grunt ) {
 
   grunt.registerTask( "begin-livedev", function () {
+
     grunt.log.writeln(
       chalk.green( "Beginning live development session for FreeNAS 10" )
     );

@@ -501,14 +501,14 @@
 
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
-
-			"mail.server": "",
-			"mail.port": 25,
-			"mail.encryption": "PLAIN",
-			"mail.auth": false,
-			"mail.user": "",
-			"mail.pass": "",
-
+            "update.train": "FreeNAS-10-Nightlies",
+            "update.check_auto": true,
+    	    "mail.server": "",
+    	    "mail.port": 25,
+    	    "mail.encryption": "PLAIN",
+    	    "mail.auth": false,
+    	    "mail.user": "",
+    	    "mail.pass": "",
             "network.autoconfigure": true,
             "network.gateway.ipv4": null,
             "network.gateway.ipv6": null,
@@ -542,7 +542,12 @@
             "service.ftp.port": 21,
 
 			"service.snmp.enable": true,
-			"service.collectd.enable": true
+            "service.collectd.enable": true,
+            "service.syslog.enable": true,
+            "service.devd.enable": true,
+            "service.nfs.enable": false,
+            "service.afp.enable": false,
+            "service.nullmailer.enable": false
         }
     },
     {
@@ -718,7 +723,7 @@
                 "pidfile": "/var/run/syslog.pid",
                 "builtin": true,
 				"rcng": {
-					"rc-scripts": "syslog-ng"
+					"rc-scripts": "syslogd"
 				}
             },
             "DFC8C5C9-6825-43B3-BDFA-45466D0F77D1": {
@@ -732,38 +737,32 @@
 					"Label": "org.nginx.nginx",
 					"Program": "/usr/local/sbin/nginx"
 				},
-                "settings": [
-                    "service.nginx.*"
-                ]
             },
             "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
                 "name": "nfs",
                 "etcd-group": "nfs",
+                "builtin": false,
                 "rcng": {
                     "rc-scripts": [
                         "nfsd",
 						"mountd"
                     ]
-                },
-                "settings": [
-                    "service.nfs.*"
-                ]
+                }
             },
             "0A7FF372-9808-411B-B3AA-59A6F3F9A7B2": {
                 "name": "ftp",
                 "etcd-group": "ftpd",
                 "pidfile": "/var/run/proftpd.pid",
+                "builtin": false,
 				"rcng": {
 					"rc-scripts": "proftpd"
-				},
-                "settings": [
-                    "service.ftp.*"
-                ]
+				}
             },
             "702DD24D-BF1A-4D36-B69B-C96971B37A9D": {
                 "name": "snmp",
                 "etcd-group": "snmpd",
                 "pidfile": "/var/run/net_snmpd.pid",
+                "builtin": false,
 				"rcng": {
 					"rc-scripts": "snmpd"
 				},
@@ -774,10 +773,7 @@
 						"-f"
 					],
 					"KeepAlive": true
-				},
-                "settings": [
-                    "service.snmp.*"
-                ]
+				}
             },
 			"7498B5D8-457F-442B-BF48-ED29D8DB5FC5": {
 				"name": "collectd",
@@ -801,7 +797,7 @@
 			"858EFB54-F5DC-4207-ACB6-8BA793984794": {
 				"name": "afp",
 				"etcd-group": "afp",
-				"builtin": true,
+				"builtin": false,
 				"rcng": {
 					"rc-scripts": "netatalk"
 				},
@@ -816,7 +812,7 @@
 			"8117202A-ED32-430E-A6AF-88B168B1601A": {
 				"name": "nullmailer",
 				"etcd-group": "mail",
-				"builtin": true,
+				"builtin": false,
 				"launchd": {
 					"Label": "org.untroubled.nullmailer",
 					"ProgramArguments": [

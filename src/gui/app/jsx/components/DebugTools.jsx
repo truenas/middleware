@@ -25,41 +25,40 @@ var initialPanelHeight;
 var initialY;
 
 
-var DebugTools = React.createClass({
+var DebugTools = React.createClass(
 
-    getInitialState: function () {
-      return {
-          isVisible   : false
-        , panelHeight : 350
+  { getInitialState: function () {
+      return { isVisible   : false
+             , panelHeight : 350
       };
     }
 
-  , handleResizeStart: function( event ) {
+  , handleResizeStart: function ( event ) {
       event.stopPropagation();
       event.preventDefault();
 
       initialPanelHeight = this.state.panelHeight;
       initialY           = event.nativeEvent.clientY;
 
-      window.addEventListener("mouseup", this.handleResizeStop);
-      window.addEventListener("mousemove", this.handleResizeProgress );
+      window.addEventListener( "mouseup", this.handleResizeStop );
+      window.addEventListener( "mousemove", this.handleResizeProgress );
     }
 
-  , handleResizeProgress: function( event, foo ) {
+  , handleResizeProgress: function ( event, foo ) {
       this.setState({
         panelHeight: initialPanelHeight - ( event.clientY - initialY )
       });
     }
 
-  , handleResizeStop: function( event ) {
+  , handleResizeStop: function ( event ) {
       event.stopPropagation();
       event.preventDefault();
 
-      window.removeEventListener("mouseup", this.handleResizeStop);
-      window.removeEventListener("mousemove", this.handleResizeProgress);
+      window.removeEventListener( "mouseup", this.handleResizeStop );
+      window.removeEventListener( "mousemove", this.handleResizeProgress );
     }
 
-  , handleKeypress: function( event ) {
+  , handleKeypress: function ( event ) {
       if ( event.which === 192 && event.ctrlKey && event.shiftKey ) {
         this.toggleVisibility();
       }
@@ -71,68 +70,68 @@ var DebugTools = React.createClass({
       } else {
         this.setState({ isVisible: true });
       }
-  }
+    }
 
   , componentDidMount: function () {
       EventBus.addListener( this.toggleVisibility );
-      window.addEventListener("keyup", this.handleKeypress );
+      window.addEventListener( "keyup", this.handleKeypress );
     }
 
   , componentWillUnmount: function () {
       EventBus.removeListener( this.toggleVisibility );
-      window.removeEventListener("keyup", this.handleKeypress );
+      window.removeEventListener( "keyup", this.handleKeypress );
     }
 
   , render: function () {
-    var content = null;
+      var content = null;
 
-    if ( this.state.isVisible ) {
-      content = (
-        <div className = "debug-panel"
-             style     = {{ height: this.state.panelHeight + "px" }} >
+      if ( this.state.isVisible ) {
+        content = (
+          <div className = "debug-panel"
+               style     = {{ height: this.state.panelHeight + "px" }} >
 
-          <TWBS.TabbedArea className   = "debug-nav"
-                           onMouseDown = { this.handleResizeStart } >
+            <TWBS.TabbedArea className   = "debug-nav"
+                             onMouseDown = { this.handleResizeStart } >
 
-            {/* RPC Interface */}
-            <TWBS.TabPane eventKey={1} tab="RPC">
-              <RPC />
-            </TWBS.TabPane>
+              {/* RPC Interface */}
+              <TWBS.TabPane eventKey={1} tab="RPC">
+                <RPC />
+              </TWBS.TabPane>
 
-            {/* Event Log */}
-            <TWBS.TabPane eventKey={2} tab="Events">
-              <Events />
-            </TWBS.TabPane>
+              {/* Event Log */}
+              <TWBS.TabPane eventKey={2} tab="Events">
+                <Events />
+              </TWBS.TabPane>
 
-            {/* Subscriptions List */}
-            <TWBS.TabPane eventKey={3} tab="Subscriptions">
-              <Subscriptions />
-            </TWBS.TabPane>
+              {/* Subscriptions List */}
+              <TWBS.TabPane eventKey={3} tab="Subscriptions">
+                <Subscriptions />
+              </TWBS.TabPane>
 
-            {/* Task Log and Queue */}
-            <TWBS.TabPane eventKey={4} tab="Tasks">
-              <Tasks />
-            </TWBS.TabPane>
+              {/* Task Log and Queue */}
+              <TWBS.TabPane eventKey={4} tab="Tasks">
+                <Tasks />
+              </TWBS.TabPane>
 
-            {/* Debugging Options */}
-            <TWBS.TabPane eventKey={6} tab="Options">
-              <Options />
-            </TWBS.TabPane>
+              {/* Debugging Options */}
+              <TWBS.TabPane eventKey={6} tab="Options">
+                <Options />
+              </TWBS.TabPane>
 
-            {/* Web Console */}
-            <TWBS.TabPane eventKey={7} tab="Terminal">
-              <Terminal />
-            </TWBS.TabPane>
+              {/* Web Console */}
+              <TWBS.TabPane eventKey={7} tab="Terminal">
+                <Terminal />
+              </TWBS.TabPane>
 
-          </TWBS.TabbedArea>
+            </TWBS.TabbedArea>
 
-        </div>
-      );
+          </div>
+        );
+      }
+
+      return content;
     }
-
-    return content;
   }
-
-});
+);
 
 module.exports = DebugTools;

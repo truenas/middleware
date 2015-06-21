@@ -10,14 +10,15 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class TasksActionCreators {
 
-  receiveTaskHistory ( tasks ) {
+  static receiveTaskHistory ( tasks, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_TASK_HISTORY
-      , tasks: tasks
+      , timestamp
+      , tasks
       }
     );
   }
 
 };
 
-export default new TasksActionCreators();
+export default TasksActionCreators;

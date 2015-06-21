@@ -7,20 +7,20 @@
 import _ from "lodash";
 import { EventEmitter } from "events";
 
-var EventBus = _.assign( {}, EventEmitter.prototype, {
+var EventBus = _.assign( {}, EventEmitter.prototype
+  , { emitToggle: function () {
+        this.emit( "toggle" );
+      }
 
-    emitToggle: function () {
-      this.emit( "toggle" );
+    , addListener: function ( callback ) {
+        this.on( "toggle", callback );
+      }
+
+    , removeListener: function ( callback ) {
+        this.removeListener( "toggle", callback );
+      }
+
     }
+);
 
-  , addListener: function( callback ) {
-      this.on( "toggle", callback );
-    }
-
-  , removeListener: function( callback ) {
-      this.removeListener( "toggle", callback );
-    }
-
-});
-
-module.exports = EventBus;
+export default EventBus;

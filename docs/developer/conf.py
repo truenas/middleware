@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'FreeNAS Developer Guide'
-copyright = u'2015, Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman'
+copyright = u'2015, FreeNAS Team & iXsystems Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -198,7 +198,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'FreeNASDeveloperGuide.tex', u'FreeNAS Developer Guide Documentation',
-   u'Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman', 'manual'),
+   'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -228,7 +228,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'freenasdeveloperguide', u'FreeNAS Developer Guide Documentation',
-     [u'Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman'], 1)
+     1)
 ]
 
 # If true, show URL addresses after external links.
@@ -242,7 +242,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'FreeNASDeveloperGuide', u'FreeNAS Developer Guide Documentation',
-   u'Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman', 'FreeNASDeveloperGuide', 'One line description of project.',
+    'FreeNASDeveloperGuide', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -263,9 +263,9 @@ texinfo_documents = [
 
 # Bibliographic Dublin Core info.
 epub_title = u'FreeNAS Developer Guide'
-epub_author = u'Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman'
-epub_publisher = u'Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman'
-epub_copyright = u'2015, Corey Vixie, Jordan Hubbard, Jakub Klama, Ben Milman'
+epub_author = u'FreeNAS Team & iXsystems Inc.'
+epub_publisher = u'FreeNAS Team & iXsystems Inc.'
+epub_copyright = u'2015, FreeNAS Team & iXsystems Inc.'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'FreeNAS Developer Guide'

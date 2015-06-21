@@ -57,6 +57,9 @@ However, the primary View is a good touchstone for understanding the
 rest of the Flux architecture, since this is where user input is
 entered, and where server output is finally rendered.
 
+.. warning:: All the examples shown here are now wrong. Until this message is
+   removed, treat the source code as the documentation.
+
 React View
 ~~~~~~~~~~
 

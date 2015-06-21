@@ -3,28 +3,53 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
-import ZfsActionCreators from "../actions/ZfsActionCreators";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
+import ZAC from "../actions/ZfsActionCreators";
 
-module.exports = {
+class ZfsMiddleware extends AbstractBase {
 
-   requestZfsPool: function(zfsPoolName) {
-      MiddlewareClient.request( "zfs.pool." + zfsPoolName,  [], function ( zfsPool ) {
-        ZfsActionCreators.receiveZfsPool( zfsPool, zfsPoolName );
-      });
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "entity-subscriber.volumes.changed" ]
+                , componentID
+                );
   }
 
- , requestZfsBootPool: function(zfsBootPoolArgument) {
-      MiddlewareClient.request( "zfs.pool.get_disks" ,  [zfsBootPoolArgument], function ( zfsBootPool ) {
-        ZfsActionCreators.receiveZfsBootPool( zfsBootPool, zfsBootPoolArgument );
-      });
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "entity-subscriber.volumes.changed" ]
+                  , componentID
+                  );
   }
 
- , requestZfsPoolGetDisks: function(zfsPoolGetDisksArgument) {
-      MiddlewareClient.request( "zfs.pool.get_disks" ,  [zfsPoolGetDisksArgument], function ( zfsPoolGetDisks ) {
-        ZfsActionCreators.receiveZfsPoolGetDisks( zfsPoolGetDisks, zfsPoolGetDisksArgument );
-      });
+  static requestVolumes () {
+    MC.request( "volumes.query"
+              , []
+              , ZAC.receiveVolumes
+              );
   }
 
+  // TODO: Deprecated, should be using volumes.* RPC namespaces now
+  static requestPool ( poolName ) {
+    MC.request( "zfs.pool." + poolName
+              , []
+              , ZAC.receivePool
+              );
+  }
+
+  static requestBootPool () {
+    MC.request( "zfs.pool.get_boot_pool"
+              , []
+              , ZAC.receiveBootPool
+              );
+  }
+
+  static requestPoolDisks ( poolName ) {
+    MC.request( "zfs.pool.get_disks"
+              , [ poolName ]
+              , ZAC.receivePoolDisks.bind( ZAC, poolName )
+              );
+  }
 
 };
+
+export default ZfsMiddleware;

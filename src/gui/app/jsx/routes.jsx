@@ -21,7 +21,7 @@ import Dashboard from "./views/Dashboard";
 import Accounts from "./views/Accounts";
 import Users from "./views/Accounts/Users";
 import UserItem from "./views/Accounts/Users/UserItem";
-import AddUser from "./views/Accounts/Users/AddUser";
+import UserAdd from "./views/Accounts/Users/UserAdd";
 
 import Groups from "./views/Accounts/Groups";
 import GroupItem from "./views/Accounts/Groups/GroupItem";
@@ -35,17 +35,17 @@ import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
 import NetworkConfig from "./views/Network/NetworkConfig";
 
 import Storage from "./views/Storage";
-
-import Sharing from "./views/Sharing";
+import Disks from "./views/Storage/Disks";
+import DiskItem from "./views/Storage/Disks/DiskItem";
 
 import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
 
-import SystemTools from "./views/SystemTools";
+import System from "./views/System";
+import Update from "./views/System/Update";
+import Power from "./views/System/Power";
 
-import ControlPanel from "./views/ControlPanel";
-
-import Power from "./views/Power";
+import Settings from "./views/Settings";
 
 module.exports = (
   <Route
@@ -74,7 +74,7 @@ module.exports = (
         <Route
           name    = "add-user"
           path    = "add-user"
-          handler = { AddUser } />
+          handler = { UserAdd } />
         <Route
           name    = "users-editor"
           path    = ":userID"
@@ -134,13 +134,13 @@ module.exports = (
     <Route
       name    = "storage"
       route   = "storage"
-      handler = { Storage } />
-
-    {/* SHARING */}
-    <Route
-      name    = "sharing"
-      route   = "sharing"
-      handler = { Sharing } />
+      handler = { Storage } >
+      <Route
+        name    = "disk-item-view"
+        path    = "disks/:diskSerial"
+        handler = { DiskItem }
+      />
+    </Route>
 
 
     {/* SERVICES */}
@@ -155,23 +155,27 @@ module.exports = (
     </Route>
 
 
-    {/* SYSTEM TOOLS */}
+    {/* SYSTEM */}
     <Route
-      name    = "system-tools"
-      route   = "system-tools"
-      handler = { SystemTools } />
+      name    = "system"
+      route   = "system"
+      handler = { System }>
+      <DefaultRoute handler={ Update } />
+      <Route
+        name    = "update"
+        path   = "update"
+        handler = { Update } />
+      <Route
+        name    = "power"
+        path   = "power"
+        handler = { Power } />
+    </Route>
 
-    {/* CONTROL PANEL */}
+    {/* SETTINGS */}
     <Route
-      name    = "control-panel"
-      route   = "control-panel"
-      handler = { ControlPanel } />
-
-    {/* POWER */}
-    <Route
-      name    = "power"
-      route   = "power"
-      handler = { Power } />
+      name    = "settings"
+      route   = "settings"
+      handler = { Settings } />
 
     <NotFoundRoute handler={ Dashboard } />
 

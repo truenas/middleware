@@ -39,6 +39,11 @@
   .absolute-center();
 }
 
+.overlay-error {
+  .overlay-dark();
+  z-index   : 3000;
+}
+
 .overlay-modal {
     border     : 1px solid #F5F5F5;
     box-shadow : 2px 2px 8px 0 rgba(0, 0, 0, 0.035);
@@ -202,4 +207,15 @@
      -moz-align-self: @align;
       -ms-align-self: @align;
           align-self: @align;
+}
+
+// Disallow selection
+// DANGEROUS: Does not work cross-browser.
+.noselect {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }

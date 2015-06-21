@@ -27,6 +27,9 @@ SYSTEM_MANIFEST_FILE = "/data/manifest"
 # SWITCH_KEY:  A string, identifying the train that should be used instead.
 # 	This will cause Configuraiton.FindLatestManifest() to use that value instead, so
 #	it should only be used when a particular train is end-of-life'd.
+# REBOOT_KEY:  A boolean, indicaating whether a reboot should be done or not.
+#	This should RARELY be used, as it will over-ride the Package settings,
+#	which are a better way to determine rebootability.
 
 SEQUENCE_KEY = "Sequence"
 PACKAGES_KEY = "Packages"
@@ -38,6 +41,7 @@ TIMESTAMP_KEY = "BuildTime"
 SCHEME_KEY = "Scheme"
 NOTICE_KEY = "Notice"
 SWITCH_KEY = "NewTrainName"
+REBOOT_KEY = "Reboot"
 
 # SCHEME_V1 is the first scheme for packaging and manifests.
 # Manifest is at <location>/FreeNAS/<train_name>/LATEST,
@@ -261,6 +265,8 @@ class Manifest(object):
 
     def SetNotice(self, n):
         self._dict[NOTICE_KEY] = n
+        if n is None:
+            self._dict.pop(NOTICE_KEY)
         return
 
     def Scheme(self):
@@ -287,24 +293,26 @@ class Manifest(object):
             location = location[len(location):]
         self._dict[NOTES_KEY][name] = location
 
-    def Notes(self):
+    def Notes(self, raw = False):
         if NOTES_KEY in self._dict:
             rv = {}
             for name in self._dict[NOTES_KEY].keys():
                 loc = self._dict[NOTES_KEY][name]
-                if not loc.startswith(self._config.UpdateServerURL()):
+                if raw is False and not loc.startswith(self._config.UpdateServerURL()):
                     loc = "%s/%s/Notes/%s" % (self._config.UpdateServerURL(), self.Train(), loc)
                 rv[name] = loc
             return rv
         return None
 
     def SetNotes(self, notes):
-        self._notes = {}
-        for name in notes.keys():
-            loc = notes[name]
-            if loc.startswith(self._config.UpdateServerURL()):
-                loc = loc[len(self._config.UpdateServerURL()):]
-            self._notes[name] = os.path.basename(loc)
+        self._dict[NOTES_KEY] = {}
+        if notes is None:
+            self._dict.pop(NOTES_KEY)
+        else:
+            for name, loc in notes.iteritems():
+                if loc.startswith(self._config.UpdateServerURL()):
+                    loc = loc[len(self._config.UpdateServerURL()):]
+                self._dict[NOTES_KEY][name] = os.path.basename(loc)
         return
 
     def Note(self, name):
@@ -479,3 +487,12 @@ class Manifest(object):
         else:
             return None
 
+    def SetReboot(self, reboot):
+        self._dict[REBOOT_KEY] = reboot
+        if reboot is None:
+            self._dict.pop(REBOOT_KEY)
+
+    def Reboot(self):
+        if REBOOT_KEY in self._dict:
+            return self._dict[REBOOT_KEY]
+        return None

@@ -13,31 +13,31 @@ import round from "round";
 
 var statdResources = [
     {
-        variable    : "wiredData"
+      variable      : "wiredData"
       , dataSource  : "localhost.memory.memory-wired.value"
       , name        : "Wired Memory"
       , color       : "#f39400"
     }
   , {
-        variable    : "cacheData"
+      variable      : "cacheData"
       , dataSource  : "localhost.memory.memory-cache.value"
       , name        : "Cached Memory"
       , color       : "#8ac007"
     }
   , {
-        variable    : "activeData"
+      variable      : "activeData"
       , dataSource  : "localhost.memory.memory-active.value"
       , name        : "Active Memory"
       , color       : "#c9d200"
     }
   , {
-        variable    : "freeData"
+      variable      : "freeData"
       , dataSource  : "localhost.memory.memory-free.value"
       , name        : "Free Memory"
       , color       : "#5186ab"
     }
   , {
-        variable    : "inactiveData"
+      variable      : "inactiveData"
       , dataSource  : "localhost.memory.memory-inactive.value"
       , name        : "Inactive Memory"
       , color       : "#b6d5e9"
@@ -70,7 +70,7 @@ var MemoryUtil = React.createClass({
   , primaryChart: function ( type ) {
       if ( this.props.primary === undefined && type === "line" ) {
         return true;
-      } else if ( type === this.props.primary) {
+      } else if ( type === this.props.primary ) {
         return true;
       } else {
         return false;
@@ -85,19 +85,22 @@ var MemoryUtil = React.createClass({
 
         newState.chartTypes = [
                                 {
-                                    type    : "stacked"
+                                  type    : "stacked"
                                   , primary : this.primaryChart( "stacked" )
-                                  , y: function ( d ) { return round( ( d[1] / 1024 ) / 1024, 0.01 ); }
+                                  , y: function ( d ) {
+                                    return round( ( d[1] / 1024 ) / 1024, .01 );
+                                  }
                                 }
                               , {
-                                    type    : "line"
+                                  type    : "line"
                                   , primary : this.primaryChart( "line" )
                                   , forceY  : [ 0, 100 ]
                                   , yUnit   : "%"
-                                  , y: function ( d ) { return round( ( ( d[1] / newState.hardware["memory-size"] ) * 100 ), 0.01 ); }.bind( this )
+                                  , y: function ( d ) {
+                                    return round( ( ( d[1] / newState.hardware["memory-size"] ) * 100 ), 0.01 ); }.bind( this )
                                 }
                               , {
-                                    type   : "pie"
+                                  type   : "pie"
                                   , primary: this.primaryChart( "pie" )
                                 }
                             ];

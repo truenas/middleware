@@ -8,6 +8,8 @@
 import _ from "lodash";
 import React from "react";
 
+import freeNASUtil from "../common/freeNASUtil";
+
 import ServicesMiddleware from "../middleware/ServicesMiddleware";
 import ServicesStore from "../stores/ServicesStore";
 
@@ -17,16 +19,6 @@ import SystemInfo from "../components/Widgets/SystemInfo";
 import SystemLoad from "../components/Widgets/SystemLoad";
 import NetworkUsage from "../components/Widgets/NetworkUsage";
 import DiskUsage from "../components/Widgets/DiskUsage";
-
-var generateUUID = function () {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace( /[xy]/g, function ( c ) {
-      var r = Math.random() * 16 | 0;
-      var v = ( c === "x" ) ? r : ( r & 0x3 | 0x8 );
-
-      return v.toString( 16 );
-    }
-  );
-};
 
 const widgetSizes =
   {   "xs-square" : [ 75, 75 ]
@@ -42,129 +34,107 @@ const widgetSizes =
     , "xl-rect"   : [ 705, 525 ]
   };
 
+const DragDropGrid = React.createClass({
 
-const Dashboard = React.createClass({
 
-    getDefaultProps: function() {
-      return {
-        // The size of each grid unit in pixels.
-          gridSize   : 15
-        // The amount of padding in grid units that should be in between any
-        // two adjacent widgets.
-        , gridGutter : 1
-      };
-    }
+  getDefaultProps: function () {
+    return {
+      // The size of each grid unit in pixels.
+      gridSize   : 15
+      // The amount of padding in grid units that should be in between any
+      // two adjacent widgets.
+      , gridGutter : 1
+    };
+  }
 
   , getInitialState: function () {
-      return {
-          servicesList: ServicesStore.getAllServices()
-        , movementMode: false
-        , widgets    : {
-                        "SystemInfo"  : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "MemoryUtil"  : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "CpuUtil"     : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "SystemLoad"  : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["m-rect"]
-                                        }
-                      , "NetworkUsage": {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["l-rect"]
-                                        }
-                      , "DiskUsage"   : {
-                                            id           : generateUUID()
-                                          , dimensions   : widgetSizes["l-rect"]
-                                        }
-                       }
-      };
-    }
+    return { movementMode: false }
+  }
 
-  , componentDidMount: function () {
-      ServicesMiddleware.requestServicesList();
-      ServicesStore.addChangeListener( this.handleServicesChange );
+  ,  componentDidMount: function () {
       window.addEventListener( "mouseup", this.exitMovementMode );
-      this.initializeWidgets();
+      window.addEventListener( "resize", this.handleWindowResize );
       this.setState({
         gridWidth: this.calculateGridWidth()
       });
-      console.log( this.state.widgets );
+      this.initializeWidgets();
     }
 
   , componentWillUnmount: function () {
-      ServicesStore.removeChangeListener( this.handleServicesChange );
       window.removeEventListener( "mouseup", this.exitMovementMode );
+      window.removeEventListener( "resize", this.handleWindowResize );
     }
 
-  , handleServicesChange: function () {
-      this.setState({
-        servicesList: ServicesStore.getAllServices()
-      });
+  , componentWillReceiveProps: function ( nextProps ) {
+    this.initializeWidgets( nextProps.children );
+  }
+
+  , handleWindowResize: function () {
+    this.setState({
+      gridWidth : this.calculateGridWidth()
+    });
+    this.initializeWidgets();
+
+  }
+
+  // Calculate how many grid units will fit in the window.
+  ,  calculateGridWidth: function () {
+      return this.toGridUnits( React.findDOMNode( this.refs.thePlayground )
+                                    .offsetWidth );
     }
 
-    // Calculate how many grid units will fit in the window.
-  , calculateGridWidth: function() {
-      return this.toGridUnits( this.getDOMNode("thePlayground").offsetWidth );
+  // Converts pixels to grid units. Rounds down.
+  , toGridUnits: function ( pixels ) {
+      return Math.round( parseInt( pixels ) / this.props.gridSize );
     }
 
-    // Converts pixels to grid units. Rounds down.
-  , toGridUnits: function( pixels ) {
-      return Math.round( parseInt( pixels )/this.props.gridSize );
-    }
-
-    // Converts grid units to pixels.
-  , toPixels: function( gridUnits ) {
+  // Converts grid units to pixels.
+  , toPixels: function ( gridUnits ) {
       return gridUnits * this.props.gridSize;
     }
 
-    // Begin moving a widget around. Records the id of the moving widget
-    // and its starting location.
-  , enterMovementMode: function( id, event ) {
+  // Begin moving a widget around. Records the id of the moving widget
+  // and its starting location.
+
+  , enterMovementMode: function ( id, event ) {
       this.setState({
-          movementMode   : true
+        movementMode   : true
         , widgetInMotion : {
-              id     : id
-            , origin : [ event.nativeEvent.clientX, event.nativeEvent.clientY ]
-          }
+          id     : id
+          , origin : [ event.nativeEvent.clientX, event.nativeEvent.clientY ]
+        }
       });
     }
 
-  , calculateMovement: function( event ) {
+  , calculateMovement: function ( event ) {
       if ( this.state.movementMode ) {
         var newPos = [];
         var wim    = this.state.widgetInMotion;
 
-        newPos[1] =
-          this.toPixels(
-            this.state.widgetMeta[ wim.id ].pos[1] +
+        newPos[1] = this.toPixels(
+            this.state.widgetMeta[ wim.id ].position[1] +
             this.toGridUnits( event.nativeEvent.clientY - wim.origin[1] )
-          ) + "px";
-        newPos[0] =
-          this.toPixels(
-            this.state.widgetMeta[ wim.id ].pos[0] +
-            this.toGridUnits( event.nativeEvent.clientX - wim.origin[0] )
-          ) + "px";
+            ) + "px";
 
-        this.moveWidget( this.refs[ "widget-" + wim["id"] ].getDOMNode(), newPos );
+        newPos[0] = this.toPixels(
+            this.state.widgetMeta[ wim.id ].position[0] +
+            this.toGridUnits( event.nativeEvent.clientX - wim.origin[0] )
+            ) + "px";
+
+        this.moveWidget( this.refs[ "widget-" + wim.id ].getDOMNode(), newPos );
       }
     }
 
-    // When a widget is released from movement, change its location and move any
-    // overlapping widgets out of the way.
-  , exitMovementMode: function() {
-      var movedWidget = document.querySelector(".widget.in-motion");
+  // When a widget is released from movement, change its location and move any
+  // overlapping widgets out of the way.
+  , exitMovementMode: function () {
+      var movedWidget = document.querySelector( ".widget.in-motion" );
       var newState    = {};
 
       if ( movedWidget ) {
-        var newPosition   = [ this.toGridUnits( movedWidget.style.left ), this.toGridUnits( movedWidget.style.top ) ];
+        var newPosition   = [ this.toGridUnits( movedWidget.style.left )
+                            , this.toGridUnits( movedWidget.style.top )
+                            ];
         var displayMatrix = _.clone( this.state.displayMatrix );
         var widgetMeta    = this.state.widgetMeta;
         var intersections;
@@ -172,7 +142,7 @@ const Dashboard = React.createClass({
         // Fill the moved widget's old spot with zeroes
         this.createMatrixFootprint(
             displayMatrix
-          , widgetMeta[ this.state.widgetInMotion["id"] ]["pos"]
+          , widgetMeta[ this.state.widgetInMotion["id"] ]["position"]
           , widgetMeta[ this.state.widgetInMotion["id"] ]["size"]
           , 0
         );
@@ -187,14 +157,14 @@ const Dashboard = React.createClass({
         for ( var i = 0; i < intersections.length; i++ ) {
           this.createMatrixFootprint(
               displayMatrix
-            , widgetMeta[ intersections[i] ]["pos"]
+            , widgetMeta[ intersections[i] ]["position"]
             , widgetMeta[ intersections[i] ]["size"]
             , 0
           );
         }
 
         // Identify and assign the new widget position
-        widgetMeta[ this.state.widgetInMotion["id"] ]["pos"] = newPosition;
+        widgetMeta[ this.state.widgetInMotion["id"] ]["position"] = newPosition;
         this.createMatrixFootprint(
             displayMatrix
           , newPosition
@@ -209,16 +179,17 @@ const Dashboard = React.createClass({
             , widgetMeta[ intersections[i] ]["size"]
           );
 
-          widgetMeta[ intersections[i] ]["pos"] = newPos;
+          widgetMeta[ intersections[i] ]["position"] = newPos;
 
           this.moveWidget(
               this.refs[ "widget-" + intersections[i] ].getDOMNode()
-            , [ this.toPixels( newPos[0] ) + "px", this.toPixels( newPos[1] ) + "px" ]
+            , [ this.toPixels( newPos[0] ) + "px"
+              , this.toPixels( newPos[1] ) + "px" ]
             , 350
           );
           this.createMatrixFootprint(
               displayMatrix
-            , widgetMeta[ intersections[i] ]["pos"]
+            , widgetMeta[ intersections[i] ]["position"]
             , widgetMeta[ intersections[i] ]["size"]
             , intersections[i]
           );
@@ -234,32 +205,32 @@ const Dashboard = React.createClass({
       this.setState( newState );
     }
 
-    // Animation for widget movement.
-  , moveWidget: function( widgetElement, newPos, duration ) {
+  // Animation for widget movement.
+  , moveWidget: function ( widgetElement, newPos, duration ) {
       Velocity(
           widgetElement
         , {
-            left : newPos[0]
+          left   : newPos[0]
           , top  : newPos[1]
         }
         , {
-            easing   : [ 0, 0.77, 0.47, 0.99 ]
+          easing     : [ 0, 0.77, 0.47, 0.99 ]
           , duration : duration ? duration : 50
           , queue    : false
         });
     }
 
-    // Add more space to the bottom of the grid. Used when a widget doesn't fit.
-  , addEmptyRows: function( displayMatrix, rows ) {
+  // Add more space to the bottom of the grid. Used when a widget doesn't fit.
+  , addEmptyRows: function ( displayMatrix, rows ) {
       for ( var i = 0; i < rows; i++ ) {
         displayMatrix.push( _.fill( Array( displayMatrix[0].length ), 0 ) );
       }
     }
 
-    // Finds the first [x, y] position in the widget grid large enough to fit
-    // a widget of the submitted size. Check is performed from left to right and
-    // top to bottom.
-  , findEmptySpace: function( displayMatrix, dimensions ) {
+  // Finds the first [x, y] position in the widget grid large enough to fit
+  // a widget of the submitted size. Check is performed from left to right and
+  // top to bottom.
+  , findEmptySpace: function ( displayMatrix, dimensions ) {
       var newPos;
       var candidatePositions = [];
 
@@ -274,8 +245,13 @@ const Dashboard = React.createClass({
         for ( var j = 0; j < displayMatrix[i].length; j++ ) {
           if (
             displayMatrix[i][j] === 0 &&
-            typeof displayMatrix[i][ j + dimensions[0] + this.props.gridGutter ] !== "undefined" &&
-            _.every( displayMatrix[i].slice( j, j + dimensions[0] + this.props.gridGutter ), function( val ) { return val === 0; } )
+            typeof displayMatrix[i][ j +
+                                     dimensions[0] +
+                                     this.props.gridGutter ] !== "undefined" &&
+            _.every( displayMatrix[i]
+             .slice( j
+                    , j + dimensions[0] + this.props.gridGutter )
+                    , function ( val ) { return val === 0; } )
           ) {
             // If all the condtions are met, push this index as a candidate.
             candidateIndexes.push( j );
@@ -299,13 +275,19 @@ const Dashboard = React.createClass({
       for ( var k = 0; k < candidatePositions.length; k++ ) {
         // Only check for shared candidate x indicies within the height needed
         // for the widget.
-        var candidateRange = candidatePositions.slice( k, k + dimensions[1] + this.props.gridGutter );
+        var candidateRange = candidatePositions
+                            .slice( k
+                                    , k + dimensions[1]
+                                        + this.props.gridGutter );
         var winners;
 
         // Make sure there are any candidate x indicies in this row to test.
         if ( _.isArray( candidatePositions[k] ) ) {
-          // Only check for qualifying rows if there are no null rows in the range
-          if ( _.every( candidateRange, function( entry ) { return _.isArray( entry ); } ) ) {
+          // Only check for qualifying rows
+          // if there are no null rows in the range
+          if ( _.every( candidateRange, function ( entry ) {
+            return _.isArray( entry );
+          } ) ) {
             // If there's only one row with qualifiying indicies, you must be at
             // the bottom of the grid. Identify the first qualifiying x-index on
             // the bottom row as the winner. Extra vertical space is created
@@ -330,7 +312,11 @@ const Dashboard = React.createClass({
           if ( winners.length ) {
             // It's possible for a winner to be too close to the bottom of the
             // grid to fit. In this case, add extra space.
-            this.addEmptyRows( displayMatrix, Math.max( 0, dimensions[1] + this.props.gridGutter - candidateRange.length ) );
+            this.addEmptyRows( displayMatrix
+                               , Math.max( 0
+                                           , dimensions[1]
+                                             + this.props.gridGutter
+                                             - candidateRange.length ) );
             // Identify the actual new position as the first x-index in the
             // array of vertical intersections and leave the loop.
             newPos = [ winners[0], k ];
@@ -346,10 +332,12 @@ const Dashboard = React.createClass({
         // rows to the grid to fit the entire widget and give the top left
         // coordinate of the new space as the new position.
         } else if ( candidatePositions.length - 1 === k ) {
-          this.addEmptyRows( displayMatrix, dimensions[1] + this.props.gridGutter );
+          this.addEmptyRows( displayMatrix
+                             , dimensions[1] + this.props.gridGutter );
           newPos = [ 0, candidatePositions.length ];
           break;
-        // If the row is empty but not past the end of the grid, try another row.
+        // If the row is empty but not past the end of the grid,
+        // try another row.
         } else {
           continue;
         }
@@ -358,162 +346,274 @@ const Dashboard = React.createClass({
       return newPos;
     }
 
-    // Find the positions where a widget of the specified position and
-    // dimensions would intersect with another widget or its gutter.
-  , findIntersections: function( displayMatrix, position, dimensions ) {
+  // Find the positions where a widget of the specified position and
+  // dimensions would intersect with another widget or its gutter.
+  , findIntersections: function ( displayMatrix, position, dimensions ) {
       var intersections = [];
 
-      for ( var i = position[1]; i < position[1] + dimensions[1] + this.props.gridGutter; i++ ) {
-        intersections.push( displayMatrix[i].slice( position[0], position[0] + dimensions[0] + this.props.gridGutter ) );
+      for ( var i = position[1];
+            i < position[1] + dimensions[1] + this.props.gridGutter;
+            i++ ) {
+        intersections.push( displayMatrix[i]
+                            .slice( position[0]
+                                    , position[0]
+                                      + dimensions[0]
+                                      + this.props.gridGutter ) );
       }
 
       return _.without( _.uniq( _.flattenDeep( intersections ) ), 0 );
     }
 
-  , createMatrixFootprint: function( displayMatrix, position, dimensions, fillEntry ) {
-      for ( var i = position[1]; i < position[1] + dimensions[1] + this.props.gridGutter; i++ ) {
-        _.fill( displayMatrix[i], fillEntry, position[0], position[0] + dimensions[0] + this.props.gridGutter );
-      }
+  , createMatrixFootprint: function ( displayMatrix
+                                      , position
+                                      , dimensions
+                                      , fillEntry ) {
+    for ( var i = position[1];
+          i < position[1] + dimensions[1] + this.props.gridGutter;
+          i++ ) {
+      _.fill( displayMatrix[i]
+              , fillEntry
+              , position[0]
+              , position[0] + dimensions[0] + this.props.gridGutter );
     }
+  }
 
-    // Used when a new set of widgets is requested to create random widgets and
-    // distribute them around the page as necessary.
-  , initializeWidgets: function () {
-      var widgets               = this.state.widgets;
-      var toGridUnits           = this.toGridUnits;
-      var toPixels              = this.toPixels;
-      var findEmptySpace        = this.findEmptySpace;
-      var createMatrixFootprint = this.createMatrixFootprint;
+  // Used when a new set of widgets is requested to create random widgets and
+  // distribute them around the page as necessary.
+  , initializeWidgets: function ( chldrn ) {
+      var children = chldrn || this.props.children;
+      var widgetMeta = {};
       // The displayMatrix is a two-dimensional array in which empty positions
       // are represented as zeros and occupied ones are set to the UUID of the
       // widget occupying that space.
       var displayMatrix = [ _.fill( Array( this.calculateGridWidth() ), 0 ) ];
 
-      _.forEach( widgets, function ( widget ) {
-        var dimensions = [   toGridUnits( widget.dimensions[0] )
-                           , toGridUnits( widget.dimensions[1] )
+      React.Children.map( children, function ( Widget ) {
+        var dimensions = [ this.toGridUnits( Widget.props.dimensions[0] )
+                           , this.toGridUnits( Widget.props.dimensions[1] )
                          ];
-        var position   = findEmptySpace( displayMatrix, dimensions );
+        var position   = this.findEmptySpace( displayMatrix
+                                              , dimensions );
 
-        createMatrixFootprint( displayMatrix, position, dimensions, widget.id );
+        this.createMatrixFootprint( displayMatrix
+                                    , position
+                                    , dimensions
+                                    , Widget.props.id );
 
-        widget.position    = [];
-        widget.position[0] = toPixels( position[0] );
-        widget.position[1] = toPixels( position[1] );
-      });
+        var widgetPosition  = [];
+        widgetPosition[0]   = position[0];
+        widgetPosition[1]   = position[1];
 
-      console.log( widgets );
+        widgetMeta[Widget.props.id] = {};
+        widgetMeta[Widget.props.id].position = widgetPosition;
+        widgetMeta[Widget.props.id].size = dimensions;
+      }.bind( this ) )
+
+
       this.setState({
-          widgets       : widgets
-        , displayMatrix : displayMatrix
-       });
+        displayMatrix : displayMatrix
+        , widgetMeta  : widgetMeta
+      });
     }
 
-  , renderWidgets: function () {
-      console.log( this.state.widgets );
-      var mapka = _.map( this.state.widgets, function ( data, id ) {
-        var inMotion = this.state.movementMode &&
-                       this.state.widgetInMotion &&
-                       this.state.widgetInMotion.id === data.id;
-
-        return (
-          data.reactElement
-        );
-      }, this );
-      console.log( mapka );
-      console.log( "poklad" )
-      return mapka;
+  , renderChildren: function () {
+      if ( this.state.displayMatrix ) {
+        return React.Children.map( this.props.children, function ( Widget ) {
+          return React.cloneElement( Widget, {
+            position: [
+                        this.toPixels(
+                            this.state.widgetMeta[Widget.props.id].position[0] )
+                        , this.toPixels(
+                            this.state.widgetMeta[Widget.props.id].position[1] )
+                      ]
+            , ref: "widget-" + Widget.props.id
+            , onMouseDownHolder: this.enterMovementMode
+                                 .bind( null, Widget.props.id )
+            , inMotion: ( ( this.state.widgetInMotion &&
+                            this.state.widgetInMotion.id ===
+                            Widget.props.id )
+                                                        ? true
+                                                        : false )
+          })
+        }.bind( this ) )
+      } else {
+        return ( <div></div> )
+      }
 
     }
+
+  , render: function () {
+    return (
+      <main
+        ref         = "thePlayground"
+        onMouseMove = { this.calculateMovement }
+        className   = { this.props.className + " playground grid-on" } >
+          { this.renderChildren() }
+      </main>
+    );
+  }
+
+}
+);
+
+const Dashboard = React.createClass({
+
+  getInitialState: function () {
+      return {
+        servicesList: ServicesStore.getAllServices()
+        , sizeArr      : [ "s", "m", "l" ]
+        , widgets      : {
+          SystemInfo   : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , MemoryUtil  : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , CpuUtil     : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , SystemLoad  : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["m-rect"]
+            , size       : "m-rect"
+            , count      : 0
+          }
+          , NetworkUsage: {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["l-rect"]
+            , size       : "l-rect"
+            , count      : 0
+          }
+          , DiskUsage   : {
+            id           : freeNASUtil.generateUUID()
+            , dimensions : widgetSizes["l-rect"]
+            , size       : "l-rect"
+            , count      : 0
+          }
+        }
+      };
+    }
+
+  , componentDidMount: function () {
+      ServicesMiddleware.requestServicesList();
+      ServicesStore.addChangeListener( this.handleServicesChange );
+    }
+
+  , componentWillUnmount: function () {
+      ServicesStore.removeChangeListener( this.handleServicesChange );
+    }
+
+  , handleServicesChange: function () {
+      this.setState({
+        servicesList: ServicesStore.getAllServices()
+      });
+    }
+
+  , changeSize: function ( widgtName ) {
+    var newWidgetsState = this.state.widgets;
+    var i = ( this.state.widgets[ widgtName ].count
+              < this.state.sizeArr.length
+              ? this.state.widgets[ widgtName ].count
+              : 0 );
+    i++;
+    newWidgetsState[ widgtName ].count = i;
+    newWidgetsState[ widgtName ].size = this.state.sizeArr[ i - 1 ]
+                                 + this.state.widgets[ widgtName ].size
+                                   .substring( 1
+                                               , this.state.widgets[ widgtName ]
+                                                       .size
+                                                       .length );
+    newWidgetsState[ widgtName ].dimensions =
+    widgetSizes[ newWidgetsState[ widgtName ].size ];
+
+    this.setState( { widgets: newWidgetsState } );
+  }
 
   // TODO:
   // Maybe this should be moved into some kind of utility class, and generalized
   , isServiceRunning: function ( service ) {
-      return ( _.findIndex( this.state.servicesList, { name: service, state: "running" } ) > -1 );
-    }
-
-  , renderX: function() {
-      var playgroundClasses = ["playground"];
-      var bodyClasses;
-
-      // Enable the grid display by appending its class to the body
-      if ( document ) {
-        bodyClasses = document.body.className.split(/\s+/);
-        var gridIndex = bodyClasses.indexOf("grid-on");
-
-        if ( this.state.movementMode && gridIndex === -1 ) {
-          bodyClasses.push("grid-on");
-        } else if ( !this.state.movementMode && gridIndex > -1 ) {
-          bodyClasses.splice( gridIndex, 1 );
-        }
-
-        document.body.className = bodyClasses.join(" ");
-      }
-
-      return (
-        <div>
-          <button onClick={ this.initializeWidgets.bind( null ) }>New widgets</button>
-          <div
-            ref         = "thePlayground"
-            onMouseMove = { this.calculateMovement }
-            className   = { playgroundClasses.join(" ") } >
-            { this.renderWidgets() }
-          </div>
-        </div>
-      );
+      return ( _.findIndex( this.state.servicesList
+                            , { name: service, state: "running" } ) > -1 );
     }
 
   , render: function () {
       if ( this.isServiceRunning( "collectd" ) === true ) {
         return (
-            <main
-              ref         = "thePlayground"
-              onMouseMove = { this.calculateMovement }
-              className   = { "playground grid-on" } >
-              <div ref="widgetAreaRef" className="widget-wrapper">
+              <DragDropGrid className = "widget-wrapper" >
+
+              {/*
                 <SystemInfo
-                  stacked     = "true"
-                  title       = "System Info"
-                  size        = "m-rect"
-                  dimensions  = { this.state.widgets.SystemInfo.dimensions }
-                  position    = { this.state.widgets.SystemInfo.position }
-                  id          = { this.state.widgets.SystemInfo.id }  />
+                  stacked           = "true"
+                  title             = "System Info"
+                  size              = { this.state.widgets.SystemInfo.size }
+                  changeSize        = { this.changeSize
+                                        .bind( this, "SystemInfo" )}
+                  ref               = { "widget-"
+                                        + this.state.widgets.SystemInfo.id }
+                  dimensions        = { this.state.widgets
+                                        .SystemInfo.dimensions }
+                  position          = { this.state.widgets.SystemInfo.position }
+                  id                = { this.state.widgets.SystemInfo.id } />
+              */}
+
                 <MemoryUtil
                   title = "Memory Value"
-                  size  = "m-rect"
+                  size  = { this.state.widgets.MemoryUtil.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "MemoryUtil" )}
                   dimensions  = { this.state.widgets.MemoryUtil.dimensions }
                   position    = { this.state.widgets.MemoryUtil.position }
                   id          = { this.state.widgets.MemoryUtil.id }  />
+
                 <CpuUtil
                   primary = "pie"
                   title = "CPU utilization"
-                  size  = "m-rect"
+                  size  = { this.state.widgets.CpuUtil.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "CpuUtil" )}
                   dimensions  = { this.state.widgets.CpuUtil.dimensions }
                   position    = { this.state.widgets.CpuUtil.position }
                   id          = { this.state.widgets.CpuUtil.id }  />
+
                 <SystemLoad
                   primary   = "stacked"
                   title     = "System Load"
-                  size      = "m-rect"
+                  size      = { this.state.widgets.SystemLoad.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "SystemLoad" )}
                   dimensions  = { this.state.widgets.SystemLoad.dimensions }
                   position    = { this.state.widgets.SystemLoad.position }
                   id          = { this.state.widgets.SystemLoad.id }  />
+
                 <NetworkUsage
                   title = "Network Usage"
-                  size  = "l-rect"
+                  size  = { this.state.widgets.NetworkUsage.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "NetworkUsage" )}
                   graphType = "line"
                   dimensions  = { this.state.widgets.NetworkUsage.dimensions }
                   position    = { this.state.widgets.NetworkUsage.position }
                   id          = { this.state.widgets.NetworkUsage.id }  />
+
                 <DiskUsage
                   title = "Disk Usage"
-                  size  = "l-rect"
+                  size  = { this.state.widgets.DiskUsage.size }
+                  changeSize = { this.changeSize
+                                 .bind( this, "DiskUsage" )}
                   graphType = "line"
                   dimensions  = { this.state.widgets.DiskUsage.dimensions }
                   position    = { this.state.widgets.DiskUsage.position }
                   id          = { this.state.widgets.DiskUsage.id }  />
-              </div>
-          </main>
+              </DragDropGrid>
         );
       } else {
         return (

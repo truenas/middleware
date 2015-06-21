@@ -12,22 +12,21 @@ import ServicesMiddleware from "../middleware/ServicesMiddleware";
 import ServicesStore from "../stores/ServicesStore";
 
 var viewData = {
-    format  : require("../../data/middleware-keys/services-display.json")[0]
-  , routing : {
-      "route" : "services-editor"
-    , "param" : "serviceID"
+    routing : {
+      route : "services-editor"
+    , param : "serviceID"
   }
   , display: {
-      filterCriteria: {
-          running: {
-              name     : "active services"
-            , testProp : { "state": "running" }
+    filterCriteria: {
+      running: {
+            name        : "active services"
+            , testProp  : { state: "running" }
           }
-        , stopped: {
-              name     : "stopped services"
-            , testProp : { "state": "stopped" }
-          }
+      , stopped: {
+        name        : "stopped services"
+        , testProp  : { state: "stopped" }
       }
+    }
     , remainingName    : "other services"
     , ungroupedName    : "all services"
     , allowedFilters   : [ ]
@@ -39,27 +38,27 @@ var viewData = {
   }
 };
 
-function getServicesFromStore() {
+function getServicesFromStore () {
   return {
     servicesList: ServicesStore.getAllServices()
   };
 }
 
-function handleToggle( serviceObj, toggled ) {
+function handleToggle ( serviceObj, toggled ) {
       var serviceName   = serviceObj.name;
       var serviceState  = serviceObj.state;
 
-      var action = (serviceState === "running" ? "stop" : "start");
+      var action = ( serviceState === "running" ? "stop" : "start" );
 
-      ServicesMiddleware.updateService(serviceName, action);
+      ServicesMiddleware.updateService( serviceName, action );
 
-      //TODO: Select the service with changing state.
+      // TODO: Select the service with changing state.
     }
 
 
 const Services = React.createClass({
 
-    getInitialState: function () {
+  getInitialState: function () {
       return getServicesFromStore();
     }
 

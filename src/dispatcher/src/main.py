@@ -120,6 +120,7 @@ class Plugin(object):
             self.module._init(self.dispatcher, self)
             self.state = self.LOADED
         except Exception, err:
+            self.dispatcher.logger.exception('Plugin %s exception', self.filename)
             raise RuntimeError('Cannot load plugin {0}: {1}'.format(self.filename, str(err)))
 
     def register_event_handler(self, name, handler):
@@ -375,7 +376,7 @@ class Dispatcher(object):
             try:
                 i.load(self)
             except RuntimeError, err:
-                self.logger.warning("Error initializing plugin {0}: {1}".format(i.filename, err.message))
+                self.logger.exception("Error initializing plugin %s: %s", i.filename, err.message)
 
     def reload_plugins(self):
         # Reload existing modules
@@ -455,7 +456,7 @@ class Dispatcher(object):
         self.dispatch_event("server.plugin.loaded", {"name": os.path.basename(path)})
 
     def __on_service_started(self, args):
-        if args['name'] == 'syslog-ng':
+        if args['name'] == 'syslog':
             try:
                 self.__init_syslog()
                 self.unregister_event_handler('service.started', self.__on_service_started)
@@ -476,7 +477,10 @@ class Dispatcher(object):
 
         if name in self.event_handlers:
             for h in self.event_handlers[name]:
-                h(args)
+                try:
+                    h(args)
+                except:
+                    self.logger.exception('Event handler for event %s failed', name)
 
         if 'nolog' in args and args['nolog']:
             return
@@ -571,6 +575,16 @@ class Dispatcher(object):
 
     def detach_hook(self, name, func):
         self.hooks[name].remove(func)
+
+    def run_hook(self, name, args):
+        for h in self.hooks[name]:
+            try:
+                if not h(args):
+                    return False
+            except:
+                return False
+
+        return True
 
     def die(self):
         self.logger.warning('Exiting from "die" command')
@@ -884,6 +898,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                     "namespace": "rpc",
                     "name": "error",
                     "id": id,
+                    "timestamp": time.time(),
                     "args": {
                         "code": err.code,
                         "message": err.message,
@@ -895,6 +910,7 @@ class ServerConnection(WebSocketApplication, EventEmitter):
                     "namespace": "rpc",
                     "name": "response",
                     "id": id,
+                    "timestamp": time.time(),
                     "args": result
                 })
 
@@ -1138,12 +1154,36 @@ class ShellConnection(WebSocketApplication, EventEmitter):
 
 
 class FileConnection(WebSocketApplication, EventEmitter):
+    BUFSIZE = 1024
+
     def __init__(self, ws, dispatcher):
         super(FileConnection, self).__init__(ws)
         self.dispatcher = dispatcher
         self.token = None
         self.authenticated = False
+        self.bytes_done = None
+        self.bytes_total = None
+        self.done = Event()
+        self.inq = Queue()
         self.logger = logging.getLogger('FileConnection')
+
+    def worker(self, file, direction, size=None):
+        def read_worker():
+            while True:
+                data = file.read(self.BUFSIZE)
+                if not data:
+                    return
+
+                self.ws.send(data)
+
+        def write_worker():
+            for i in self.inq:
+                file.write(i)
+
+        wr = gevent.spawn(write_worker)
+        rd = gevent.spawn(read_worker)
+        self.ws.close()
+        gevent.joinall([rd, wr])
 
     def on_open(self, *args, **kwargs):
         pass
@@ -1166,8 +1206,14 @@ class FileConnection(WebSocketApplication, EventEmitter):
 
             self.token = self.dispatcher.token_store.lookup_token(message['token'])
             self.authenticated = True
+
+            gevent.spawn(self.worker, self.token.file, self.token.direction, self.token.size)
+            self.dispatcher.balancer.submit('file.{0}'.format(self.token.direction), self.token.name, self)
             self.ws.send(dumps({'status': 'ok'}))
             return
+
+        for i in message:
+            self.inq.put(i)
 
 
 def run(d, args):

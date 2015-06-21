@@ -33,6 +33,8 @@ from task import Task, Provider, TaskException, VerifyException, query
 from resources import Resource
 from dispatcher.rpc import RpcException, description, accepts, private
 from dispatcher.rpc import SchemaHelper as h
+from datastore.config import ConfigNode
+from lib.system import system, SubprocessException
 from fnutils import template
 
 
@@ -87,12 +89,8 @@ class ServiceInfoProvider(Provider):
         if not svc:
             raise RpcException(errno.EINVAL, 'Invalid service name')
 
-        result = {}
-
-        for i in svc['settings']:
-            result.update(self.dispatcher.configstore.list_children(i))
-
-        return result
+        node = ConfigNode('service.{0}'.format(service), self.configstore)
+        return node
 
     @private
     @accepts(str)
@@ -173,22 +171,29 @@ class UpdateServiceConfigTask(Task):
         return "Updating configuration for service {0}".format(service)
 
     def verify(self, service, updated_fields):
+        if not self.datastore.exists('service_definitions',
+                                     ('name', '=', service)):
+            raise VerifyException(
+                errno.ENOENT,
+                'Service {0} not found'.format(service))
+        for x in updated_fields:
+            if not self.dispatcher.configstore.exists(
+                    'service.{0}.{1}'.format(service, x)):
+                raise VerifyException(
+                    errno.ENOENT,
+                    'Service {0} does not have the following key: {1}'.format(
+                        service, x))
         return ['system']
 
     def run(self, service, updated_fields):
-        service_def = self.datastore.get_one('service-definitions', ('name', '=', service))
-        for k, v in updated_fields.items():
-            if k not in service_def['settings'].keys():
-                raise TaskException(errno.EINVAL, 'Invalid setting {0}'.format(k))
-
-            self.configstore.set(k, v)
+        service_def = self.datastore.get_one('service_definitions', ('name', '=', service))
+        node = ConfigNode('service.{0}'.format(service), self.dispatcher.configstore)
+        node.update(updated_fields)
 
         self.dispatcher.dispatch_event('service.changed', {
             'operation': 'update',
             'ids': [service_def['id']]
         })
-
-        self.chain('service.manage', service, 'reload')
 
 
 def spawn_gettys(dispatcher):

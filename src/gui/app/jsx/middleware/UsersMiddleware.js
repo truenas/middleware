@@ -4,52 +4,54 @@
 
 "use strict";
 
-import MiddlewareClient from "../middleware/MiddlewareClient";
+import MC from "./MiddlewareClient";
+import AbstractBase from "./MiddlewareAbstract";
 
-import UsersActionCreators from "../actions/UsersActionCreators";
+import UAC from "../actions/UsersActionCreators";
 
-module.exports = {
+class UsersMiddleware extends AbstractBase {
 
-  subscribe: function ( componentID ) {
-      MiddlewareClient.subscribe( [ "users.changed" ], componentID );
-      MiddlewareClient.subscribe( [ "task.*" ], componentID );
-    }
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "users.changed" ], componentID );
+    MC.subscribe( [ "task.*" ], componentID );
+  }
 
-  , unsubscribe: function ( componentID ) {
-      MiddlewareClient.unsubscribe( [ "users.changed" ], componentID );
-      MiddlewareClient.unsubscribe( [ "task.*" ], componentID );
-    }
+  static unsubscribe ( componentID ) {
+    MC.unsubscribe( [ "users.changed" ], componentID );
+    MC.unsubscribe( [ "task.*" ], componentID );
+  }
 
-  , requestUsersList: function ( ids ) {
-      MiddlewareClient.request( "users.query"
-                              , ( ids ? [[[ "id", "in", ids ]]] : [] )
-                              , function ( rawUsersList ) {
-        UsersActionCreators.receiveUsersList( rawUsersList );
-      });
-    }
+  static requestUsersList ( ids ) {
+    MC.request( "users.query"
+              , ( ids
+                ? [[[ "id", "in", ids ]]]
+                : []
+                )
+              , UAC.receiveUsersList.bind( UAC )
+              );
+  }
 
-  , createUser: function ( newUserProps ) {
-      MiddlewareClient.request( "task.submit"
-                              , [ "users.create" , [ newUserProps ] ]
-                              , function ( taskID, userID ) {
-        UsersActionCreators.receiveUserUpdateTask( taskID, userID );
-      });
-    }
+  static createUser ( newUserProps ) {
+    MC.request( "task.submit"
+              , [ "users.create" , [ newUserProps ] ]
+              , UAC.receiveUserUpdateTask
+              );
+  }
 
-  , updateUser: function ( userID, changedProps ) {
-      MiddlewareClient.request( "task.submit"
-                              , [ "users.update", [ userID, changedProps ] ]
-                              , function ( taskID ) {
-        UsersActionCreators.receiveUserUpdateTask( taskID, userID );
-      });
-    }
+  static updateUser ( userID, changedProps ) {
+    MC.request( "task.submit"
+              , [ "users.update", [ userID, changedProps ] ]
+              , UAC.receiveUserUpdateTask.bind( UAC, userID )
+              );
+  }
 
-  , deleteUser: function ( userID ) {
-      MiddlewareClient.request( "task.submit"
-                              , [ "users.delete", [ userID ] ]
-                              , function ( taskID, userID ) {
-        UsersActionCreators.receiveUserUpdateTask( taskID, userID );
-      });
-    }
+  static deleteUser ( userID ) {
+    MC.request( "task.submit"
+              , [ "users.delete", [ userID ] ]
+              , UAC.receiveUserUpdateTask.bind( UAC, userID )
+              );
+  }
 
 };
+
+export default UsersMiddleware;

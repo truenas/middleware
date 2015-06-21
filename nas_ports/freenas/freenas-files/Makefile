@@ -117,5 +117,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/datastore.json ${STAGEDIR}${PREFIX}/etc/launchd.d/datastore.json
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/dispatcher.json ${STAGEDIR}${PREFIX}/etc/launchd.d/dispatcher.json
 
+	mkdir -p ${STAGEDIR}/${PREFIX}/data/zfs
+
 
 .include <bsd.port.mk>

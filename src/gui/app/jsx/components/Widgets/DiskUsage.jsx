@@ -5,7 +5,7 @@
 import React from "react";
 
 import ZfsMiddleware from "../../middleware/ZfsMiddleware";
-import ZfsStore from "../../stores/ZfsStore";
+import PoolStore from "../../stores/PoolStore";
 
 import chartHandler from "./mixins/chartHandler";
 
@@ -15,45 +15,51 @@ var DiskUsage = React.createClass({
 
   mixins: [ chartHandler ]
 
-, getInitialState: function () {
+  , getInitialState: function () {
     return {
-        pool:              ZfsStore.getZfsPoolGetDisks( "freenas-boot" )
+      pool:              PoolStore.getDisksInBootPool()
       , statdResources:    []
       , chartTypes:        [  {   type: "line"
                                 , primary: this.primaryChart( "line" )
-                                , y: function ( d ) { return ( round( d[1] / 1024, 0.01 ) ); }
+                                , y: function ( d ) {
+                                  return ( round( d[1] / 1024, 0.01 ) ); }
                               }
                            ]
       , widgetIdentifier : "DiskUsage"
     };
   }
 
-, componentDidMount: function () {
-    ZfsStore.addChangeListener( this.handleChange );
-    ZfsMiddleware.requestZfsPoolGetDisks( "freenas-boot" );
+  , componentDidMount: function () {
+    PoolStore.addChangeListener( this.handleChange );
+    ZfsMiddleware.requestPoolDisks( "freenas-boot" );
   }
 
-, componentWillUnmount: function () {
-    ZfsStore.removeChangeListener( this.handleChange );
+  , componentWillUnmount: function () {
+    PoolStore.removeChangeListener( this.handleChange );
   }
 
-, handleChange: function () {
+  , handleChange: function () {
     var newState = {};
-    newState.pool = ZfsStore.getZfsPoolGetDisks( "freenas-boot" );
+    newState.pool = PoolStore.getDisksInBootPool();
 
     if ( newState.pool ) {
       var systemPoolPath = newState.pool[0].split( "/" ) ;
       var systemPoolName = systemPoolPath[systemPoolPath.length - 1]
-                            .slice( 0, systemPoolPath[systemPoolPath.length - 1].indexOf( "p" ) );
+                            .slice( 0, systemPoolPath[systemPoolPath.length - 1]
+                            .indexOf( "p" ) );
 
       newState.statdResources = [
                                     {   variable: "write"
-                                      , dataSource: "localhost.disk-" + systemPoolName + ".disk_octets.write"
+                                      , dataSource: "localhost.disk-"
+                                        + systemPoolName
+                                        + ".disk_octets.write"
                                       , name: systemPoolName + " Write"
                                       , color: "#9ecc3c"
                                     }
                                   , {   variable: "read"
-                                      , dataSource: "localhost.disk-" + systemPoolName + ".disk_octets.read"
+                                      , dataSource: "localhost.disk-"
+                                        + systemPoolName
+                                        + ".disk_octets.read"
                                       , name: systemPoolName + " Read"
                                       , color: "#77c5d5"
                                     }
@@ -64,7 +70,7 @@ var DiskUsage = React.createClass({
 
   }
 
-, primaryChart: function ( type ) {
+  , primaryChart: function ( type ) {
     if ( this.props.primary === undefined && type === "line" ) {
       return true;
     } else if ( type === this.props.primary ) {

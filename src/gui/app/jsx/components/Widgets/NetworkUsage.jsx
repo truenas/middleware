@@ -15,75 +15,85 @@ var NetworkUsage = React.createClass({
 
   mixins: [ chartHandler ]
 
-, getInitialState: function () {
+  , getInitialState: function () {
    return {
-              network        : SystemStore.getSystemDevice( "network" )
-            , statdResources : []
-            , chartTypes     : [
+     network            : SystemStore.getSystemDevice( "network" )
+     , statdResources   : []
+     , chartTypes       : [
                                   {   type: "stacked"
                                     , primary: false
-                                    , y: function ( d ) { return ( round( d[1] / 1024, 0.01 ) ); }
+                                    , y: function ( d ) {
+                                      return ( round( d[1] / 1024, 0.01 ) ); }
                                   }
                                 , {   type: "line"
                                     , primary: true
-                                    , y: function ( d ) { return ( round( d[1] / 1024, 0.01 ) ); }
+                                    , y: function ( d ) {
+                                      return ( round( d[1] / 1024, 0.01 ) ); }
                                     , yUnit : ""
                                   }
                                 ]
-            , widgetIdentifier : "NetworkUsage"
+     , widgetIdentifier : "NetworkUsage"
    };
  }
-, componentDidMount: function () {
+  , componentDidMount: function () {
     SystemStore.addChangeListener( this.handleChange );
     SystemMiddleware.requestSystemDevice( "network" );
   }
 
-, componentWillUnmount: function () {
+  , componentWillUnmount: function () {
     SystemStore.removeChangeListener( this.handleChange );
   }
 
-, handleChange: function () {
+  , handleChange: function () {
     var newState = {};
     newState.network  = SystemStore.getSystemDevice( "network" );
 
     if ( newState.network ) {
       var iface = newState.network[0]["name"];
       newState.statdResources = [
-                                  {   variable: "octetsRx"
-                                    , dataSource: "localhost.interface-" + iface + ".if_octets.rx"
+                                  {
+                                    variable: "octetsRx"
+                                    , dataSource: "localhost.interface-"
+                                                  + iface + ".if_octets.rx"
                                     , name: "Data Receive (kB/s)"
                                     , color: "#3C696E"
                                     , area: true
                                   }
-                                , {   variable: "octetsTx"
-                                    , dataSource: "localhost.interface-" + iface + ".if_octets.tx"
+                                , {
+                                    variable: "octetsTx"
+                                    , dataSource: "localhost.interface-"
+                                                  + iface + ".if_octets.tx"
                                     , name: "Data Transmit  (kB/s)"
                                     , color: "#368D97"
                                     , area: true
                                   }
                                 , {
-                                      variable: "packetsRx"
-                                    , dataSource: "localhost.interface-" + iface + ".if_packets.rx"
+                                    variable: "packetsRx"
+                                    , dataSource: "localhost.interface-"
+                                                  + iface + ".if_packets.rx"
                                     , name: "Packets Receive"
                                     , color: "#A8E077"
                                     , area: true
                                   }
                                 , {
-                                      variable: "packetsTx"
-                                    , dataSource: "localhost.interface-" + iface + ".if_packets.tx"
+                                    variable: "packetsTx"
+                                    , dataSource: "localhost.interface-"
+                                                  + iface + ".if_packets.tx"
                                     , name: "Packets Transmit"
                                     , color: "#D9E35D"
                                     , area: true
                                   }
                                 , {
-                                      variable: "errorsTx"
-                                    , dataSource: "localhost.interface-" + iface + ".if_errors.rx"
+                                    variable: "errorsTx"
+                                    , dataSource: "localhost.interface-"
+                                                  + iface + ".if_errors.rx"
                                     , name: "Errors Receive"
                                     , color: "#C9653A"
                                   }
                                 , {
-                                      variable: "errorsRx"
-                                    , dataSource: "localhost.interface-" + iface + ".if_errors.tx"
+                                    variable: "errorsRx"
+                                    , dataSource: "localhost.interface-"
+                                                  + iface + ".if_errors.tx"
                                     , name: "Errors Transmit"
                                     , color: "#BE6F6F"
                                   }

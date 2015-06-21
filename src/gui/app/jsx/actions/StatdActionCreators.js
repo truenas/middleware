@@ -8,15 +8,16 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class StatdActionCreators {
 
-  receiveWidgetData ( rawWidgetData, dataSourceName ) {
+  static receiveWidgetData ( dataSourceName, rawWidgetData, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RAW_WIDGET_DATA
-      , rawWidgetData: rawWidgetData
-      , dataSourceName: dataSourceName
+      , dataSourceName
+      , rawWidgetData
+      , timestamp
       }
     );
   }
 
 };
 
-export default new StatdActionCreators();
+export default StatdActionCreators;

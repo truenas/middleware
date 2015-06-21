@@ -45,19 +45,30 @@ class NetworkProvider(Provider):
 
     @returns(h.array(str))
     def get_my_ips(self):
-        ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
-        for i in ifaces:
-            if i['type'] == 'LOOP':
+        ips = []
+        ifaces = self.dispatcher.call_sync(
+                     'networkd.configuration.query_interfaces')
+        for i, v in ifaces.iteritems():
+            if 'LOOPBACK' in v['flags']:
                 continue
+            for aliases in v['aliases']:
+                if aliases['address'] and aliases['family'] != 'LINK':
+                    ips.append(aliases['address'])
+        return ips
 
 
 class InterfaceProvider(Provider):
     @query('network-interface')
     def query(self, filter=None, params=None):
-        ifaces = self.dispatcher.call_sync('networkd.configuration.query_interfaces')
+        ifaces = self.dispatcher.call_sync(
+                     'networkd.configuration.query_interfaces')
 
         def extend(i):
-            i['status'] = ifaces[i['name']]
+            try:
+                i['status'] = ifaces[i['name']]
+            except KeyError:
+                # The given interface is either removed or disconnected
+                return None
             return i
 
         return self.datastore.query('network.interfaces', *(filter or []), callback=extend, **(params or {}))
@@ -207,8 +218,8 @@ class InterfaceDownTask(Task):
     def run(self, name):
         try:
             self.dispatcher.call_sync('networkd.configuration.down_interface', name)
-        except RpcException:
-            raise TaskException(errno.ENXIO, 'Cannot reconfigure interface, networkd service is offline')
+        except RpcException, err:
+            raise TaskException(err.code, err.message, err.extra)
 
         self.dispatcher.dispatch_event('network.interface.changed', {
             'operation': 'update',
@@ -356,6 +367,10 @@ def _init(dispatcher, plugin):
             'enabled': {'type': 'boolean'},
             'dhcp': {'type': 'boolean'},
             'mtu': {'type': ['integer', 'null']},
+            'aliases': {
+                'type': 'array',
+                'items': {'$ref': 'network-interface-alias'}
+            },
             'status': {
                 'type': 'object',
                 'properties': {
