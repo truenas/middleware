@@ -736,7 +736,7 @@
 				"launchd": {
 					"Label": "org.nginx.nginx",
 					"Program": "/usr/local/sbin/nginx"
-				},
+				}
             },
             "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
                 "name": "nfs",
