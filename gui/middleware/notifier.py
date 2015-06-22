@@ -1004,6 +1004,9 @@ class notifier:
 
     def _stop_snmp(self):
         self._system("/usr/sbin/service snmpd quietstop")
+        # The following is required in addition to just `snmpd`
+        # to kill the `freenas-snmpd.py` daemon
+        self._system("/usr/sbin/service ix-snmpd quietstop")
 
     def _restart_snmp(self):
         self._system("/usr/sbin/service ix-snmpd quietstart")
