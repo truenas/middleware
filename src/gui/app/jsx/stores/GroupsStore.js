@@ -98,8 +98,9 @@ function handlePayload ( payload ) {
 
       ACTION.groupsList.forEach(
         function convertGroups ( group ) {
-          _groups[ group[ "id" ] ] =
-            FluxBase.rekeyForClient( group, KEY_TRANSLATION );
+          _groups[ group[ "id" ] ] = FluxBase.rekeyForClient( group
+                                                            , KEY_TRANSLATION
+                                                            );
         }
         , this
       );
