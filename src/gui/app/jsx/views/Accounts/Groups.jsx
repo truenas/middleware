@@ -4,7 +4,7 @@
 
 "use strict";
 
-var componentLongName = "Groups";
+const componentLongName = "Groups";
 
 import React from "react";
 
@@ -108,11 +108,11 @@ const Groups = React.createClass({
   }
 
   , render: function () {
-      return <Viewer
-               header = { "Groups" }
-               itemData = { this.state.groupsList }
-               { ...VIEWER_DATA } />;
-    }
+    return <Viewer
+             header = { "Groups" }
+             itemData = { this.state.groupsList }
+             { ...VIEWER_DATA } />;
+  }
 });
 
 export default Groups;
