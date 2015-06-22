@@ -25,6 +25,8 @@ import groupMixins from "../../../components/mixins/groupMixins";
 import inputHelpers from "../../../components/mixins/inputHelpers";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 
+import GroupEdit from "./GroupEdit";
+
 const GroupView = React.createClass({
 
     mixins: [   groupMixins
@@ -131,124 +133,6 @@ const GroupView = React.createClass({
       );
   }
 });
-
-// EDITOR PANE
-const GroupEdit = React.createClass({
-
-    mixins: [  inputHelpers
-              , groupMixins
-              , viewerCommon ]
-
-  , contextTypes: {
-        router: React.PropTypes.func
-    }
-
-  , propTypes: {
-      item: React.PropTypes.object.isRequired
-    }
-
-  , getInitialState: function () {
-      return {
-          locallyModifiedValues  : {}
-        , mixedValues            : this.props.item
-        , lastSentValues         : {}
-        , dataKeys               : this.props.viewData["format"]["dataKeys"]
-      };
-    }
-
-  , submitGroupUpdate: function () {
-      var valuesToSend = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
-
-      // Only bother to submit an update if there is anything to update.
-      if ( !_.isEmpty( valuesToSend ) ){
-        GroupsMiddleware.updateGroup( this.props.item["id"], valuesToSend, this.submissionRedirect( valuesToSend ) );
-        // Save a record of the last changes we sent.
-        this.setState({
-            lastSentValues : valuesToSend
-        });
-      } else {
-          console.warn( "Attempted to send a Group update with no valid fields." );
-      }
-    }
-
-  , render: function () {
-      var builtInGroupAlert = null;
-      var editButtons       = null;
-      var inputForm         = null;
-
-      if ( this.props.item["builtin"] ) {
-        builtInGroupAlert = (
-          <TWBS.Alert bsStyle   = "warning"
-                      className = "text-center">
-            <b>{"You should only edit a system group if you know exactly what you are doing."}</b>
-          </TWBS.Alert>
-        );
-      }
-
-      editButtons =
-        <TWBS.ButtonToolbar>
-            <TWBS.Button className = "pull-left"
-                         disabled  = { this.props.item["builtin"] }
-                         onClick   = { this.deleteGroup }
-                         bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
-            <TWBS.Button className = "pull-right"
-                         onClick   = { this.props.handleViewChange.bind(null, "view") }
-                         bsStyle   = "default" >{"Cancel"}</TWBS.Button>
-            <TWBS.Button className = "pull-right"
-                         disabled  = { _.isEmpty( this.state.locallyModifiedValues ) ? true : false }
-                         onClick   = { this.submitGroupUpdate }
-                         bsStyle   = "info" >{"Save Changes"}</TWBS.Button>
-        </TWBS.ButtonToolbar>;
-
-      inputForm =
-        <form className="form-horizontal">
-          <TWBS.Grid fluid>
-            <TWBS.Row>
-              <TWBS.Col xs = {12}>
-                {/*Group id*/}
-                <TWBS.Input type             = "text"
-                            label            = { "Group ID" }
-                            value            = { this.state.mixedValues["id"] ? this.state.mixedValues["id"] : "" }
-                            onChange         = { this.editHandleValueChange.bind( null, "id" ) }
-                            ref              = { "id" }
-                            key              = { "id" }
-                            groupClassName   = { _.has(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : "" }
-                            labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            disabled         />
-                {/* name */}
-                <TWBS.Input type             = "text"
-                            label            = { "Group Name" }
-                            value            = { this.state.mixedValues["name"] ? this.state.mixedValues["name"] : "" }
-                            onChange         = { this.editHandleValueChange.bind( null, "name" ) }
-                            ref              = { "name" }
-                            key              = { "name" }
-                            groupClassName   = { _.has(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : "" }
-                            labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                />
-              </TWBS.Col>
-            </TWBS.Row>
-          </TWBS.Grid>
-        </form>;
-
-      return (
-        <TWBS.Grid fluid>
-          {/* Save and Cancel Buttons - Top */}
-          { editButtons }
-
-          {/* Shows a warning if the group is built in */}
-          { builtInGroupAlert }
-
-          {inputForm}
-
-          {/* Save and Cancel Buttons - Bottom */}
-          { editButtons }
-        </TWBS.Grid>
-      );
-    }
-});
-
 
 // CONTROLLER-VIEW
 const GroupItem = React.createClass({
