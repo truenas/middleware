@@ -47,13 +47,13 @@ define([
         this.dapFCName.innerHTML = this.name + " (#" + this.port + ")";
 
         me._mini = new RadioButton({
-          name: "mode",
+          name: "mode-" + me.name,
           value: "INITIATOR",
           checked: (me.mode == 'INITIATOR') ? true : false
         }, this.dapFCModeIni);
 
         me._mtgt = new RadioButton({
-          name: "mode",
+          name: "mode-" + me.name,
           value: "TARGET",
           checked: (me.mode == 'TARGET') ? true : false
         }, this.dapFCModeTgt);
@@ -82,6 +82,7 @@ define([
         var me = this;
         if(me._mtgt.get('checked') == true) {
           domStyle.set(me._target.domNode, "display", "");
+          me.target = me._target.get('value');
         } else {
           domStyle.set(me._target.domNode, "display", "none");
           me.target = null;
