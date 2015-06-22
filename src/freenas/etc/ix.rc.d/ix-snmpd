@@ -54,10 +54,21 @@ EOF
 
 	done
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${snmp_config}
+	# start freenas-snmpd.py daemon
+	# (needed by snmp for stats from zfs,zilstat,etc )
+	/usr/local/bin/python \
+	/usr/local/www/freenasUI/tools/freenas-snmpd.py >/dev/null 2>&1
+}
+
+
+kill_freenas_snmpd()
+{
+	 kill -TERM  $(cat /var/run/freenas-snmpd.pid) >/dev/null 2>&1
 }
 
 name="ix-snmpd"
 start_cmd='generate_snmpconf'
+stop_precmd='kill_freenas_snmpd'
 stop_cmd=':'
 
 load_rc_config $name
