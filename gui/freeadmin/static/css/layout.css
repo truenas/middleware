@@ -18,7 +18,7 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
     background: #464C53 url("../images/headerbg.png") repeat-x;
 }
 #footer {
-    height:80px;
+    height:45px;
     background: #464C53 url("../images/footerbg.png") repeat-x;
 }
 
@@ -85,13 +85,13 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
 #footerPane {
     color:#ccc;
     margin-left:10px;
-    margin-top:35px;
+    margin-top:16px;
     width:225px;
     overflow:hidden;
 }
 
 #footerLayout {
-    height:80px;
+    height:45px;
     width:100%;
     padding-bottom:0px;
 }
@@ -103,6 +103,7 @@ body, html { overflow:hidden; width:100%; height:100%; margin:0; padding:0; }
 
 #footerLogo img {
     padding-right:10px;
+    padding-top: 10px;
 }
 
 #footerMessages {

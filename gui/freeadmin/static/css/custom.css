@@ -137,9 +137,9 @@ pre.message {
     background-color:#000;
     min-width:600px;
     border:1px solid #222;
-    height:77px;
+    height:42px;
     white-space:pre-wrap;
-    max-height:77px;
+    max-height:42px;
     opacity:0.6;
     filter:alpha(opacity=18);
 }
