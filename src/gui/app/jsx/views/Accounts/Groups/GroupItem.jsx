@@ -126,9 +126,6 @@ const GroupView = React.createClass({
           </TWBS.Col>
         </TWBS.Row>
 
-          {/* "Edit Group" Button - Bottom */}
-          { editButtons }
-
         </TWBS.Grid>
       );
   }
