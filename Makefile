@@ -6,7 +6,7 @@ NANO_LABEL?=TrueNAS
 VERSION?=9.3-STABLE
 TRAIN?=${NANO_LABEL}-${VERSION}
 
-.if PRODUCTION == "yes"
+.if defined(PRODUCTION) && ${PRODUCTION} == "yes"
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
 .if !defined(_KEY)
 KEY_PASSWORD!= build/read-password.sh
@@ -38,7 +38,7 @@ GIT_REPO_SETTING=.git-repo-setting
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 
-.if PRODUCTION == "yes"
+.if defined(PRODUCTION) && ${PRODUCTION} == "yes"
 UPDATE_USER=sef
 UPDATE_HOST=update.ixsystems.com
 .else
