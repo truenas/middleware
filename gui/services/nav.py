@@ -3,6 +3,7 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.support.utils import fc_enabled
 
 log = logging.getLogger('services.nav')
 
@@ -16,6 +17,15 @@ BLACKLIST = [
     'CIFS',
 ]
 ORDER = 40
+
+
+class ISCSINameMixin(object):
+
+    @property
+    def rename(self):
+        if fc_enabled():
+            return u'%s (%s)' % (self.name, _('iSCSI'))
+        return self.name
 
 
 class EnDisServices(TreeNode):
@@ -36,6 +46,12 @@ class CIFSView(TreeNode):
     icon = u'CIFSIcon'
 
 
+class ISCSITargetAuthorizedInitiator(TreeNode, ISCSINameMixin):
+
+    gname = 'iSCSITargetAuthorizedInitiator'
+    append_to = 'sharing.ISCSI'
+
+
 class ISCSITargetAuthorizedInitiatorView(TreeNode):
 
     gname = 'View'
@@ -43,11 +59,23 @@ class ISCSITargetAuthorizedInitiatorView(TreeNode):
     append_to = 'sharing.ISCSI.iSCSITargetAuthorizedInitiator'
 
 
+class ISCSITargetAuthCredential(TreeNode, ISCSINameMixin):
+
+    gname = 'iSCSITargetAuthCredential'
+    append_to = 'sharing.ISCSI'
+
+
 class ISCSITargetAuthCredentialView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
     append_to = 'sharing.ISCSI.iSCSITargetAuthCredential'
+
+
+class ISCSITargetPortal(TreeNode, ISCSINameMixin):
+
+    gname = 'iSCSITargetPortal'
+    append_to = 'sharing.ISCSI'
 
 
 class ISCSITargetPortalView(TreeNode):
