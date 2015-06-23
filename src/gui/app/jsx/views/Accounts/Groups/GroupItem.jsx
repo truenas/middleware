@@ -1,8 +1,8 @@
 // Group Item Template
 // ==================
-// Handles the viewing and editing of individual group items. Shows a non-editable
-// overview of the group, and mode-switches to a more standard editor panel.
-// Group is set by providing a route parameter.
+// Handles the modes for viewing and editing a group. Controls props and which
+// mode is active.
+
 
 "use strict";
 
@@ -13,7 +13,6 @@ import TWBS from "react-bootstrap";
 import routerShim from "../../../components/mixins/routerShim";
 import clientStatus from "../../../components/mixins/clientStatus";
 
-import viewerUtil from "../../../components/Viewer/viewerUtil";
 import editorUtil from "../../../components/Viewer/Editor/editorUtil";
 
 import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
