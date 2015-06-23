@@ -74,50 +74,50 @@ const GroupItem = React.createClass({
   , handleViewChange: function ( nextMode, event ) {
     this.setState({ currentMode: nextMode });
   }
+
+  , render: function () {
+    var DisplayComponent = null;
+    var processingText = "";
+
+    if ( this.state.SESSION_AUTHENTICATED && this.state.targetGroup ) {
+
+      // PROCESSING OVERLAY
+      if ( GroupsStore.isLocalTaskPending( this.state.targetGroup[ "groupID" ] ) ) {
+        processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
+      } else if ( GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "groupID" ] ) ) {
+        processingText = "Group '" + this.state.targetGroup[ this.props.keyPrimary ] + "' was updated remotely.";
       }
 
-    , render: function () {
-        var DisplayComponent = null;
-        var processingText = "";
+      // DISPLAY COMPONENT
+      let childProps = { handleViewChange : this.handleViewChange
+                       , item             : this.state.targetGroup
+                       };
 
-        if ( this.state.SESSION_AUTHENTICATED && this.state.targetGroup ) {
-
-          // PROCESSING OVERLAY
-          if ( GroupsStore.isLocalTaskPending( this.state.targetGroup["groupID"] ) ) {
-            processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
-          } else if (GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "groupID"] ) ) {
-            processingText = "Group '" + this.state.targetGroup[ this.props.keyPrimary ] + "' was updated remotely.";
-          }
-
-          // DISPLAY COMPONENT
-          let childProps = { handleViewChange : this.handleViewChange
-                           , item             : this.state.targetGroup
-                           };
-
-          switch( this.state.currentMode ) {
-            default:
-            case "view":
-              DisplayComponent = <GroupView { ...childProps }
-                                            { ...this.getRequiredProps() } />;
-              break;
-            case "edit":
-              DisplayComponent = <GroupEdit { ...childProps }
-                                            { ...this.getRequiredProps() } />;
-              break;
-          }
-        }
-
-        return (
-          <div className="viewer-item-info">
-
-            {/* Overlay to block interaction while tasks or updates are processing */}
-            <editorUtil.updateOverlay updateString={ processingText } />
-
-            { DisplayComponent }
-
-          </div>
-        );
+      switch ( this.state.currentMode ) {
+        default:
+        case "view":
+          DisplayComponent = <GroupView { ...childProps }
+                                        { ...this.getRequiredProps() } />;
+          break;
+        case "edit":
+          DisplayComponent = <GroupEdit { ...childProps }
+                                        { ...this.getRequiredProps() } />;
+          break;
       }
+    }
+
+    return (
+      <div className="viewer-item-info">
+
+        { /* Overlay to block interaction
+          /*while tasks or updates are processing */ }
+        <editorUtil.updateOverlay updateString={ processingText } />
+
+        { DisplayComponent }
+
+      </div>
+    );
+  }
 });
 
 export default GroupItem;
