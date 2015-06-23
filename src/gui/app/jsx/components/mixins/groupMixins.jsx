@@ -22,7 +22,7 @@ module.exports = {
     }
 
   , updateGroupsListInState: function (){
-      var groupsList = GroupsStore.getAllGroups();
+      var groupsList = GroupsStore.groups;
       this.setState({ groupsList: groupsList});
     }
 

@@ -54,7 +54,7 @@ FreeNAS 10 M4
     ix-relevant apps
   * user contibuted apps will be scraped from github and have no signing
 
-- Proactive Remidiation
+- Proactive Remediation
 
   * As an expansion to the telemetry, add the ability for iX to respond to
     automatically reported issues before customers file support tickets. TrueNAS

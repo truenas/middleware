@@ -17,7 +17,7 @@ class ServicesActionCreators {
     );
   }
 
-  static receiveServiceUpdateTask ( taskID, serviceName, timestamp ) {
+  static receiveServiceUpdateTask ( serviceName, taskID, timestamp ) {
     FreeNASDispatcher.handleClientAction(
       { type: ActionTypes.RECEIVE_SERVICE_UPDATE_TASK
       , timestamp

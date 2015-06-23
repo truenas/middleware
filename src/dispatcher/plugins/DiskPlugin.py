@@ -368,7 +368,7 @@ def _depends():
 def _init(dispatcher, plugin):
     def on_device_attached(args):
         path = args['path']
-        if not re.match(r'^/dev/(da|ad|ada)[0-9]+$', path):
+        if not re.match(r'^/dev/(da|ada)[0-9]+$', path):
             return
 
         # Regenerate disk cache
@@ -384,7 +384,7 @@ def _init(dispatcher, plugin):
     def on_device_detached(args):
         path = args['path']
 
-        if re.match(r'^/dev/(da|ad|ada)[0-9]+$', path):
+        if re.match(r'^/dev/(da|ada)[0-9]+$', path):
             purge_disk_cache(path)
             disk = dispatcher.datastore.get_one('disks', ('path', '=', path))
             dispatcher.datastore.delete('disks', disk['id'])

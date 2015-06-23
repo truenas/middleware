@@ -18,7 +18,7 @@ class GroupsActionCreators {
     );
   }
 
-  static receiveGroupUpdateTask ( taskID, groupID, timestamp ) {
+  static receiveGroupUpdateTask ( groupID, taskID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_GROUP_UPDATE_TASK
       , timestamp

@@ -17,7 +17,7 @@ class InterfacesActionCreators {
     );
   }
 
-  static receiveInterfaceConfigureTask ( taskID, interfaceName, timestamp ) {
+  static receiveInterfaceConfigureTask ( interfaceName, taskID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes. RECEIVE_INTERFACE_CONFIGURE_TASK
       , timestamp
@@ -28,7 +28,7 @@ class InterfacesActionCreators {
   }
 
 
-  static receiveUpInterfaceTask ( taskID, interfaceName, timestamp ) {
+  static receiveUpInterfaceTask ( interfaceName, taskID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_UP_INTERFACE_TASK
       , timestamp
@@ -38,7 +38,7 @@ class InterfacesActionCreators {
     );
   }
 
-  static receiveDownInterfaceTask ( taskID, interfaceName, timestamp ) {
+  static receiveDownInterfaceTask ( interfaceName, taskID, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_DOWN_INTERFACE_TASK
       , timestamp

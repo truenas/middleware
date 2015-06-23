@@ -4,95 +4,115 @@
 
 "use strict";
 
-var componentLongName = "Groups";
+const componentLongName = "Groups";
 
 import React from "react";
 
 import Viewer from "../../components/Viewer";
 
-import GroupsMiddleware from "../../middleware/GroupsMiddleware";
-import GroupsStore from "../../stores/GroupsStore";
+import GM from "../../middleware/GroupsMiddleware";
+import GS from "../../stores/GroupsStore";
 
-import UsersMiddleware from "../../middleware/UsersMiddleware";
-import UsersStore from "../../stores/UsersStore";
+import UM from "../../middleware/UsersMiddleware";
+import US from "../../stores/UsersStore";
 
-var viewData = {
-  addEntity : "Add Group"
-  , routing   : {
-      "route"     : "groups-editor"
-    , "param"     : "groupID"
-    , "addentity" : "add-group"
-  }
-  , display   : {
-      filterCriteria   : {
-        userCreated : {
-            name     : "local groups"
-          , testProp : { "builtin": false }
-        }
-      , builtIn     : {
-            name     : "built-in system groups"
-          , testProp : { "builtin": true }
-        }
-      }
-    , remainingName    : "other groups"
-    , ungroupedName    : "all other groups"
-    , allowedFilters   : [ ]
-    , defaultFilters   : [ ]
-    , allowedGroups    : [ "userCreated", "builtIn" ]
-    , defaultGroups    : [ "userCreated", "builtIn" ]
-    , defaultCollapsed : [ ] // TODO: Revert this to "builtin" once we have more "userCreated"
-  }
-};
+const VIEWER_DATA =
+  { keyUnique     : GS.uniqueKey
+  , keyPrimary    : "groupName"
+  , keySecondary  : "groupID"
 
-function getGroupsFromStore() {
+  , itemSchema    : GS.itemSchema
+  , itemLabels    : GS.itemLabels
+
+  , routeName     : "groups-editor"
+  , routeParam    : "groupID"
+  , routeAdd      : "add-group"
+
+  , textNewItem   : "Add Group"
+  , textRemaining : "other groups"
+  , textUngrouped : "all groups"
+
+  , groupsInitial : new Set( [ "userCreated", "builtIn" ] )
+  , groupsAllowed : new Set( [ "userCreated", "builtIn" ] )
+
+  , filtersInitial : new Set( )
+  , filtersAllowed : new Set( [ "builtIn" ] )
+
+  , columnsInitial : new Set(
+                      [ "groupID"
+                      , "groupName"
+                      , "builtIn"
+                      ]
+                    )
+  , columnsAllowed : new Set(
+                      [ "groupID"
+                      , "groupName"
+                      , "builtIn"
+                      ]
+                    )
+
+  , groupBy:
+    { userCreated:
+       { name: "local groups"
+       , testProp: { builtIn: false }
+       }
+    , builtIn:
+       { name: "built-in system groups"
+       , testProp: { builtIn: true }
+       }
+    }
+  };
+
+function getGroupsFromStore () {
   return {
-    groupsList : GroupsStore.getAllGroups()
+    groupsList: GS.groups
   };
 }
 
-function getUsersStoreData() {
+function getUsersStoreData () {
   return {
-      usersList  : UsersStore.getAllUsers()
+    usersList: US.users
   };
 }
 
 const Groups = React.createClass({
 
-    getInitialState: function () {
-      return getGroupsFromStore();
-    }
+  getInitialState: function () {
+    return getGroupsFromStore();
+  }
 
   , componentDidMount: function () {
-      GroupsStore.addChangeListener( this.handleGroupsChange );
-      GroupsMiddleware.requestGroupsList();
-      GroupsMiddleware.subscribe( componentLongName );
+    GS.addChangeListener( this.handleGroupsChange );
+    GM.requestGroupsList();
+    GM.subscribe( componentLongName );
 
-      UsersStore.addChangeListener( this.handleUsersChange );
-      UsersMiddleware.requestUsersList();
-      UsersMiddleware.subscribe( componentLongName );
-    }
+    US.addChangeListener( this.handleUsersChange );
+    UM.requestUsersList();
+    UM.subscribe( componentLongName );
+  }
 
   , componentWillUnmount: function () {
-      GroupsStore.removeChangeListener( this.handleGroupsChange );
-      GroupsMiddleware.unsubscribe( componentLongName );
+    GS.removeChangeListener( this.handleGroupsChange );
+    GM.unsubscribe( componentLongName );
 
-      UsersStore.removeChangeListener( this.handleUsersChange );
-      UsersMiddleware.unsubscribe( componentLongName );
-    }
+    US.removeChangeListener( this.handleUsersChange );
+    UM.unsubscribe( componentLongName );
+  }
 
   , handleGroupsChange: function () {
-      this.setState( getGroupsFromStore() );
-    }
+    this.setState( getGroupsFromStore() );
+  }
 
   , handleUsersChange: function () {
-      this.setState( getUsersStoreData() );
-    }
+    this.setState( getUsersStoreData() );
+  }
 
   , render: function () {
-      return <Viewer header     = { "Groups" }
-                     inputData  = { this.state.groupsList }
-                     viewData   = { viewData } />;
-    }
+    return <Viewer
+             header = { "Groups" }
+             itemData = { this.state.groupsList }
+             { ...VIEWER_DATA } />;
+  }
 });
 
 export default Groups;

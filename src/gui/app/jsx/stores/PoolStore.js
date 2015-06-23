@@ -1,5 +1,5 @@
-// ZFS POOL AND VOLUME STORE
-// =========================
+// ZFS POOL STORE
+// ==============
 
 "use strict";
 
@@ -11,7 +11,10 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 import DL from "../common/DebugLogger";
 import FluxStore from "./FluxBase";
 
-class ZfsStore extends FluxStore {
+var _storagePools = {};
+var _bootPool     = {};
+
+class PoolStore extends FluxStore {
 
   constructor () {
     super();
@@ -22,32 +25,37 @@ class ZfsStore extends FluxStore {
     // this.KEY_UNIQUE = "serial";
     // this.ITEM_SCHEMA = DISK_SCHEMA;
     // this.ITEM_LABELS = DISK_LABELS;
-
-    // TODO: These need to reconcile better, and we need to drop the things that
-    // still rely on legacy ZFS namespace RPCs.
-    this._volumes      = {};
-    this._storagePools = {};
-    this._bootPool     = {};
-    this._poolDisks    = {};
   }
 
   get bootPool () {
-    return this._bootPool;
+    return _bootPool;
   }
 
   listStoragePools ( sortKey ) {
     if ( sortKey ) {
-      return _.chain( this._storagePools )
+      return _.chain( _storagePools )
               .values()
               .sort( sortKey )
               .value();
     } else {
-      return _.values( this._storagePools );
+      return _.values( _storagePools );
     }
   }
 
   getDisksInPool ( poolName ) {
-    return this._poolDisks[ poolName ];
+    if ( _.has( _storagePools, `[ ${ poolName } ].memberDisks` ) ) {
+      return _storagePools[ poolName ].memberDisks;
+    } else {
+      return [];
+    }
+  }
+
+  getDisksInBootPool () {
+    if ( _.has( _bootPool, "memberDisks" ) ) {
+      return _bootPool.memberDisks;
+    } else {
+      return [];
+    }
   }
 
 }
@@ -58,27 +66,24 @@ function handlePayload ( payload ) {
 
   switch ( ACTION.type ) {
 
-    case ActionTypes.RECEIVE_VOLUMES:
-      this._volumes = ACTION.volumes;
-      this.emitChange();
-      break;
-
     case ActionTypes.RECEIVE_POOL:
-      this._storagePools[ ACTION.poolName ] = ACTION.poolData;
+      _storagePools[ ACTION.poolName ] = ACTION.poolData;
       this.emitChange();
       break;
 
     case ActionTypes.RECEIVE_BOOT_POOL:
-      this._bootPool = ACTION.bootPool;
+      _bootPool = ACTION.bootPool;
       this.emitChange();
       break;
 
     case ActionTypes.RECEIVE_POOL_DISK_IDS:
-      this._poolDisks[ ACTION.poolName ] = ACTION.poolDisks;
+      _.merge( _storagePools
+             , { [ ACTION.poolName ]: { memberDisks: ACTION.poolDisks } }
+             );
       this.emitChange();
       break;
 
   }
 }
 
-export default new ZfsStore();
+export default new PoolStore();

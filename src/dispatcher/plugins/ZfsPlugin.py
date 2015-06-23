@@ -253,8 +253,6 @@ class ZpoolCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        zpool_create_resources(self.dispatcher, pool)
-
 
 class ZpoolBaseTask(Task):
     def verify(self, *args, **kwargs):
@@ -293,7 +291,7 @@ class ZpoolDestroyTask(ZpoolBaseTask):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        self.dispatcher.unregister_resource('zpool:{0}'.format(name))
+        #self.dispatcher.unregister_resource('zpool:{0}'.format(name))
 
 
 @accepts(str, h.ref('zfs-topology'), h.object())
@@ -394,7 +392,7 @@ class ZfsDatasetCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+        #self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
 
 
 @accepts(str, str, int, h.object())
@@ -410,7 +408,7 @@ class ZfsVolumeCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+        #self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
 
 
 class ZfsSnapshotCreateTask(Task):
@@ -425,7 +423,7 @@ class ZfsSnapshotCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+        #self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
 
 
 class ZfsConfigureTask(ZfsBaseTask):
@@ -451,7 +449,7 @@ class ZfsDestroyTask(ZfsBaseTask):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        self.dispatcher.unregister_resource('zfs:{0}'.format(path))
+        #self.dispatcher.unregister_resource('zfs:{0}'.format(path))
 
 
 class ZfsRenameTask(ZfsBaseTask):
@@ -531,10 +529,16 @@ def _depends():
 def _init(dispatcher, plugin):
     def on_pool_create(args):
         guid = args['guid']
+        name = args['pool']
+
         dispatcher.dispatch_event('zfs.pool.changed', {
             'operation': 'create',
             'ids': [guid]
         })
+
+        # Register resources for pool and root dataset
+        dispatcher.register_resource(Resource('zpool:{0}'.format(name)), parents=[])
+        dispatcher.register_resource(Resource('zfs:{0}'.format(name)), parents=['zpool:{0}'.format(name)])
 
     def on_pool_destroy(args):
         guid = args['guid']
@@ -543,9 +547,11 @@ def _init(dispatcher, plugin):
             'ids': [guid]
         })
 
+        dispatcher.unregister_resource('zpool:{0}'.format(args['pool']))
+
     def on_dataset_create(args):
         guid = args['guid']
-        plugin.register_resource(Resource('zfs:{0}'.format(args['ds'])), parents=[])
+        plugin.register_resource(Resource('zfs:{0}'.format(args['ds'])), parents=['zpool:{0}'.format(args['pool'])])
         dispatcher.dispatch_event('zfs.pool.changed', {
             'operation': 'create',
             'ids': [guid]

@@ -8,7 +8,7 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 
 class SystemActionCreators {
 
-  static receiveSystemInfo ( systemInfo, systemInfoName, timestamp ) {
+  static receiveSystemInfo ( systemInfoName, systemInfo, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_SYSTEM_INFO_DATA
       , timestamp
@@ -18,7 +18,7 @@ class SystemActionCreators {
     );
   }
 
-  static receiveSystemDevice ( systemDevice, systemDeviceArgument, timestamp ) {
+  static receiveSystemDevice ( systemDeviceArgument, systemDevice, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_SYSTEM_DEVICE_DATA
       , timestamp

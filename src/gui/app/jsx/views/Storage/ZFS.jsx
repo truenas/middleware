@@ -8,49 +8,64 @@
 "use strict";
 
 import React from "react";
+import TWBS from "react-bootstrap";
 
-import ZS from "../../stores/ZfsStore";
+import VS from "../../stores/VolumeStore";
 import ZM from "../../middleware/ZfsMiddleware";
 import PoolItem from "./Pools/PoolItem";
 
-const Pools = React.createClass(
+const ZFS = React.createClass(
 
-  { displayName: "Pools"
+  { displayName: "ZFS"
 
   , getInitialState () {
-      return {
-        pools: ZS.listStoragePools()
-      };
+      return { volumes : VS.listVolumes()
+             };
     }
 
   , componentDidMount () {
-      ZS.addChangeListener( this.handlePoolsChange );
+      VS.addChangeListener( this.handleVolumesChange );
+
       ZM.requestVolumes();
       ZM.subscribe( this.constructor.displayName );
     }
 
   , componentWillUnmount () {
-    ZS.removeChangeListener( this.handlePoolsChange );
+    VS.removeChangeListener( this.handleVolumesChange );
+
     ZM.unsubscribe( this.constructor.displayName );
   }
 
-  , handlePoolsChange () {
+  , handleVolumesChange () {
       this.setState({
-        pools: ZS.listStoragePools()
+        volumes: VS.listVolumes()
       });
     }
 
   , createPoolItems () {
       return (
-        this.state.pools.map( pool => <PoolItem /> )
+        this.state.volumes.map( pool => <PoolItem /> )
       );
     }
 
   , render () {
+      let loadingVolumes = null;
+      let noPoolsMessage = null;
+
+      if ( VS.isInitialized ) {
+        if ( this.state.volumes.length === 0 ) {
+          noPoolsMessage = <h3>Bro, you could use a pool</h3>;
+        }
+      } else {
+        loadingVolumes = <h3>Looking for ZFS pools...</h3>;
+      }
+
       return (
         <section>
-          <h1>Pools Section Placeholder</h1>
+          <h1>ZFS Section Placeholder</h1>
           { this.createPoolItems() }
+          { loadingVolumes }
+          { noPoolsMessage }
         </section>
       );
     }
@@ -58,4 +73,4 @@ const Pools = React.createClass(
   }
 );
 
-export default Pools;
+export default ZFS;

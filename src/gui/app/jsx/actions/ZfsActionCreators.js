@@ -17,6 +17,15 @@ class ZfsActionCreators {
     );
   }
 
+  static receiveAvailableDisks ( disks, timestamp ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_AVAILABLE_DISKS
+      , timestamp
+      , disks
+      }
+    );
+  }
+
   static receivePool ( poolData, poolName, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_VOLUMES
@@ -37,7 +46,7 @@ class ZfsActionCreators {
     );
   }
 
-  static receivePoolDisks ( poolDisks, poolName, timestamp ) {
+  static receivePoolDisks ( poolName, poolDisks, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_POOL_DISK_IDS
       , timestamp

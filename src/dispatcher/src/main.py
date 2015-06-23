@@ -576,6 +576,16 @@ class Dispatcher(object):
     def detach_hook(self, name, func):
         self.hooks[name].remove(func)
 
+    def run_hook(self, name, args):
+        for h in self.hooks[name]:
+            try:
+                if not h(args):
+                    return False
+            except:
+                return False
+
+        return True
+
     def die(self):
         self.logger.warning('Exiting from "die" command')
 

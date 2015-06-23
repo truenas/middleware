@@ -24,7 +24,14 @@ class ZfsMiddleware extends AbstractBase {
   static requestVolumes () {
     MC.request( "volumes.query"
               , []
-              , ZAC.receiveVolumes.bind( ZAC )
+              , ZAC.receiveVolumes
+              );
+  }
+
+  static requestAvailableDisks () {
+    MC.request( "volumes.get_available_disks"
+              , []
+              , ZAC.receiveAvailableDisks
               );
   }
 
@@ -32,21 +39,21 @@ class ZfsMiddleware extends AbstractBase {
   static requestPool ( poolName ) {
     MC.request( "zfs.pool." + poolName
               , []
-              , ZAC.receivePool.bind( ZAC )
+              , ZAC.receivePool
               );
   }
 
   static requestBootPool () {
     MC.request( "zfs.pool.get_boot_pool"
               , []
-              , ZAC.receiveBootPool.bind( ZAC )
+              , ZAC.receiveBootPool
               );
   }
 
   static requestPoolDisks ( poolName ) {
     MC.request( "zfs.pool.get_disks"
               , [ poolName ]
-              , ZAC.receivePoolDisks.bind( ZAC )
+              , ZAC.receivePoolDisks.bind( ZAC, poolName )
               );
   }
 
