@@ -602,6 +602,8 @@ def set_ldap_password():
         out = p.communicate()
         if out and out[1]:
             for line in out[1].split('\n'):
+                if not line: 
+                    continue
                 print line
 
 
@@ -755,10 +757,29 @@ def add_domaincontroller_conf(smb4_conf):
             f.write("%s\t%s\n" % (ipv4, dc.dc_domain.upper()))
         f.close()
 
+
+def get_smb4_users():
+    return bsdUsers.objects.filter(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$')
+
+
+def get_disabled_users():
+    disabled_users = []
+    try:
+        users = bsdUsers.objects.filter(Q(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$')&\
+            (Q(bsdusr_locked=1)|Q(bsdusr_password_disabled=1))
+        )
+        for u in users:
+            disabled_users.append(u)
+
+    except:
+        disabled_users = []
+
+    return disabled_users
+
+
 def generate_smb4_tdb(smb4_tdb):
     try:
-        users = bsdUsers.objects.filter(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$',
-            bsdusr_locked=0, bsdusr_password_disabled=0)
+        users = get_smb4_users()
         for u in users:
             smb4_tdb.append(u.bsdusr_smbhash)
     except:
@@ -1206,22 +1227,56 @@ def do_migration(old_samba4_datasets):
     return True
 
 
-def smb4_import_users(smb_conf_path, importfile, exportfile=None):
+def smb4_import_users(smb_conf_path, smb4_tdb, exportfile=None):
+    (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
+    for line in smb4_tdb:
+        os.write(fd, line + '\n')
+    os.close(fd)
+
     args = [
         "/usr/local/bin/pdbedit",
         "-d 0",
-        "-i smbpasswd:%s" % importfile,
+        "-i smbpasswd:%s" % tmpfile,
         "-s %s" % smb_conf_path
     ]
 
     if exportfile != None:
-        args.append("-e %s" % exportfile)
+        #smb4_unlink(exportfile)
+        args.append("-e tdbsam:%s" % exportfile)
 
     p = pipeopen(string.join(args, ' '))
     pdbedit_out = p.communicate()
     if pdbedit_out and pdbedit_out[0]:
         for line in pdbedit_out[0].split('\n'):
+            line = line.strip()
+            if not line:
+                continue
             print line
+
+    os.unlink(tmpfile)
+    smb4_users = get_smb4_users()
+    for u in smb4_users:
+        smbhash = u.bsdusr_smbhash
+        parts = smbhash.split(':')
+        user = parts[0]
+
+        flags = "-e"
+        if u.bsdusr_locked or u.bsdusr_password_disabled:
+            flags = "-d"
+         
+        p = pipeopen("/usr/local/bin/smbpasswd %s '%s'" % (flags, user))
+        smbpasswd_out = p.communicate()
+
+        if p.returncode != 0:
+            print >> sys.stderr, "Failed to disable %s" % user
+            continue
+
+        if smbpasswd_out and smbpasswd_out[0]:
+            for line in smbpasswd_out[0].split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                print line
 
 
 def smb4_grant_user_rights(user):
@@ -1248,6 +1303,8 @@ def smb4_grant_user_rights(user):
     net_out = p.communicate()
     if net_out and net_out[0]:
         for line in net_out[0].split('\n'):
+            if not line:
+                continue
             print line 
 
     if p.returncode != 0:
@@ -1370,20 +1427,11 @@ def main():
     if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
 
-    (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
-    for line in smb4_tdb:
-        os.write(fd, line + '\n')
-    os.close(fd)
-
     if role != 'dc':
-        exportfile = "/var/etc/private/passdb.tdb"
-        smb4_unlink(exportfile)
-        smb4_import_users(smb_conf_path, tmpfile,
-            "tdbsam:%s" % exportfile)
+        smb4_import_users(smb_conf_path, smb4_tdb,
+            "/var/etc/private/passdb.tdb")
         smb4_map_groups()
         smb4_grant_rights()
-
-    os.unlink(tmpfile)
 
 
 if __name__ == '__main__':
