@@ -29,7 +29,7 @@ import os
 import re
 import logging
 from task import Provider
-from lib.system import system
+from lib.system import system, SubprocessException
 from lib.geom import confxml
 
 
@@ -87,7 +87,11 @@ def clear_swap(dispatcher):
     logger.info('Clearing all swap mirrors in system')
     for swap in get_swap_info(dispatcher).values():
         logger.debug('Clearing swap mirror %s', swap['name'])
-        system('/sbin/swapoff', os.path.join('/dev/mirror', swap['name']))
+        try:
+            system('/sbin/swapoff', os.path.join('/dev/mirror', swap['name']))
+        except SubprocessException:
+            pass
+        
         system('/sbin/gmirror', 'destroy', swap['name'])
 
 
