@@ -1,5 +1,7 @@
-from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
+
+from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.support.utils import fc_enabled
 
 NAME = _('Sharing')
 BLACKLIST = ['NFS_Share_Path']
@@ -28,8 +30,9 @@ class ViewWin(TreeNode):
     append_app = False
     append_to = 'sharing.CIFS_Share'
 
+
 class ViewWebDAV(TreeNode):
-    
+
     gname = 'View'
     type = 'opensharing'
     append_app = False
@@ -40,6 +43,13 @@ class ISCSI(TreeNode):
 
     order = 40
     gname = 'ISCSI'
-    name = _(u'Block (iSCSI)')
     type = u'iscsi'
     icon = u'iSCSIIcon'
+
+    @property
+    def rename(self):
+        return u'%s (%s%s)' % (
+            _('Block'),
+            _('iSCSI'),
+            u'/' + unicode(_('FC')) if fc_enabled() else '',
+        )
