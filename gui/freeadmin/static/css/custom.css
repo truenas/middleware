@@ -332,6 +332,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.FiberIcon {
+    background-image:url('/static/images/ui/tree/eye.png');
+    width:16px;
+    height:16px;
+}
 .EmailIcon {
     background-image:url('/static/images/ui/tree/email.png');
     width:16px;
