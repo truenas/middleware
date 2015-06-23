@@ -1,87 +1,57 @@
-
-
-// Network Config
-.network-config {
-
-  .flex-display(flex);
-  .flex-flow(column);
-  .flex(1);
-
-  overflow: auto;
-
-  border-top  : 1px solid;
-  border-color: #e7e7e7;
+/**
+ * Network Overview page.
+ */
+.network-overview {
+  border-top  : 1px solid #e7e7e7;
   margin-top  : 20px;
+  padding-top : 20px;
 
-  .panel-group {
-    width       : 90%;
-    margin-right: auto;
-    margin-left : auto;
-    margin-top  : 20px;
+  .interface-node-container {
+    position: relative;
 
-    .flex-display(flex);
-    .flex-flow(row);
-    .flex(1);
-
-    .panel + .panel {
-      margin-top : 0px;
-      margin-left: 5px;
+    .show-all {
+      position: absolute;
+      bottom: 0;
+      right: 0;
     }
   }
 
-  .panel {
-    .flex-display(flex);
-    .flex-flow(row);
-    .flex(1);
+  .interface-node {
+    min-width : 200px;
+    padding   : 10px;
+    border    : 1px solid #e7e7e7;
+
+    .interface-header {
+      position    : relative;
+      font-size   : 16px;
+      line-height : 22px;
+
+      i {
+        position    : absolute;
+        left        : 0;
+        line-height : 22px;
+      }
+
+      .interface-type {
+        position  : absolute;
+        right     : 0;
+        font-size : 80%;
+      }
+    }
+
+    .interface-address {
+      .list-group {
+        margin-bottom: 0;
+      }
+    }
   }
-
-  .network-attribute {
-
-  }
-
 }
 
-// Network Interface
-.network-interface {
-
-  overflow: auto;
-
-  .flex-display(flex);
-  .flex-flow(column);
-  .flex(1);
-
-  .panel {
-    .flex-display(flex);
-    .flex-flow(row);
-    .flex(1);
+/**
+ * Network Settings page.
+ */
+.network-settings {
+  .btn-toolbar {
+    margin-bottom: 15px;
   }
-
-  // This is only for the list of aliases for a given interface.
-  .aliasDisplayList {
-
-    .flex-display(flex);
-    .flex-flow(row);
-    .flex(1);
-
-    .aliasDisplayItem {
-      width: 100%;
-
-      .flex-display(flex);
-      .flex-flow(row);
-      .flex(1);
-
-      .aliasItemIP {
-
-        .flex(1 1 auto);
-
-      }
-
-      .aliasItemNetmask {
-
-        .flex (1 1 auto);
-
-      }
-    }
-  }
-
 }

@@ -16,7 +16,59 @@ const UPDATE_MASK  = "network.interface.changed";
 
 var _updatedOnServer    = [];
 var _localUpdatePending = {};
-var _interfaces           = [];
+var _interfaces         = {};
+
+const INTERFACE_SCHEMA =
+  { type: "object"
+  , properties:
+    { status:
+        { type: "object"
+        , properties:
+          { "link-state"    : { type: "string" }
+          , "link-address"  : { type: "string" }
+          , flags:
+            { enum:
+              [ "DRV_RUNNING"
+              , "UP"
+              , "BROADCAST"
+              , "SIMPLEX"
+              , "MULTICAST"
+              ]
+            , type: "string"
+            }
+          , name            : { type: "string" }
+          , aliases:
+            { items : { $ref: "network-interface-alias" }
+            , type  : "array"
+            }
+          }
+        }
+    , name    : { type: "string" }
+    , dhcp    : { type: "boolean" }
+    , enabled : { type: "boolean" }
+    , aliases:
+      { items : { $ref: "network-interface-alias" }
+      , type  : "array"
+      }
+    , type    : { type: "string" }
+    , id      : { type: "string" }
+    , mtu     : { type: [ "integer", "null" ] }
+    }
+  };
+
+const INTERFACE_LABELS =
+    { status              : "Status"
+    , "link-state"        : "Link State"
+    , "link-address"      : "Link Address"
+    , flags               : "Flags"
+    , name                : "Interface Name"
+    , aliases             : "Aliases"
+    , dhcp                : "DHCP"
+    , enabled             : "Enabled"
+    , type                : "Type"
+    , id                  : "Interface ID"
+    , mtu                 : "MTU"
+  };
 
 var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
 
@@ -40,117 +92,83 @@ var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
     return _updatedOnServer;
   }
 
-  // Returns true if the selected interface is in the
-  // list of interfaces with pending updates.
-  , isLocalTaskPending: function ( interfaceName ) {
-      return _.values( _localUpdatePending ).indexof( interfaceName ) > -1;
+  /**
+   * Check if the selected interface is in the list of interfaces with pending updates.
+   * @param  {String} name The interface name.
+   * @return {Boolean}
+   */
+  , isLocalTaskPending: function ( name ) {
+      return _.values( _localUpdatePending ).indexof( name ) > -1;
     }
 
-  // Returns true if selected interface is in the list of updated interfaces.
-  , isInterfaceUpdatePending: function ( linkAddress ) {
-      return _updatedOnServer.indexof( linkAddress ) > -1;
+  /**
+   * Check if the selected interface is in the list of updated interfaces.
+   * @param  {String} name The interface name.
+   * @return {Boolean}
+   */
+  , isInterfaceUpdatePending: function ( name ) {
+      return _updatedOnServer.indexof( name ) > -1;
     }
 
   , findInterfaceByKeyValue: function ( key, value ) {
-    // 'interface' is a reserved word. arg renamed 'thisInterface'.
-    return _.find( _interfaces, function ( thisInterface ) {
-      return thisInterface[ key ] === value;
-    });
+    var predicate = {};
+    predicate[key] = value;
+    return _.find( _interfaces, predicate );
   }
 
-  , getInterface: function ( linkAddress ) {
-    return _interfaces[ linkAddress ];
+  , getInterfaceSchema: function () {
+      return INTERFACE_SCHEMA;
+    }
+
+  , getInterfaceLabels: function () {
+      return INTERFACE_LABELS;
+    }
+
+  , getInterface: function ( name ) {
+    return _interfaces[ name ];
   }
 
   , getAllInterfaces: function () {
-    return _interfaces;
+    return _.values( _interfaces );
   }
 
 });
 
 InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
-  let action = payload.action;
+  var action = payload.action;
 
   switch ( action.type ) {
 
     case ActionTypes.RECEIVE_INTERFACES_LIST:
+      var updatedInterfaceNames = _.pluck( action.rawInterfacesList, 'name' );
 
-      // Re-map the complex interface objects into flat ones.
-      // TODO: Account for multiple aliases and static configurations.
-      let mapInterface = function ( currentInterface ) {
+      if ( _updatedOnServer.length ) {
+        _updatedOnServer = _.difference( _updatedOnServer, updatedInterfaceNames );
+      }
 
-        let newInterface = {};
-
-        // Make the block below less absurdly wide.
-        let status  = currentInterface.status;
-
-        // Initialize desired fields with existing ones.
-        newInterface[ "name" ] = currentInterface[ "name" ]
-                               ? currentInterface[ "name" ]
-                               : null;
-        // Gotta do it like this even though enabled is already a boolean
-        // because sometimes it's not in the object. Undefined is no fun.
-        newInterface[ "enabled" ] = currentInterface[ "enabled" ]
-                                  ? true
-                                  : false;
-        newInterface[ "dhcp" ] = currentInterface[ "dhcp" ]
-                               ? true
-                               : false;
-        newInterface[ "status" ] = status;
-        newInterface[ "mtu" ] = currentInterface[ "mtu" ]
-                              ? currentInterface[ "mtu" ]
-                              : null;
-
-        // Figure out interface type. Only knows about Ethernet right now.
-        // TODO: There are tons more types that could show up. See:
-        // http://fxr.watson.org/fxr/source/net/if_types.h?v=FREEBSD10
-        // ETHER and FIBRECHANNEL will definitely have different logos.
-        // Many of the others, such as LAPD and CARP will be discarded and only
-        // used by other parts of the UI. The vast majority of that list doesn'
-        // matter.
-        newInterface[ "type"] = currentInterface[ "type" ] === "ETHER"
-                              ? "Ethernet"
-                              : "Unknown";
-
-        // Map the interface type and/or status to an appropriate icon.
-        // TODO: This also needs to handle other interface types.
-        switch ( newInterface[ "type" ] ) {
-
-          // Ethernet gets the FontAwesome "exchange" icon for now.
-          // TODO: Other conditions, such as different icons for connected and
-          // disconnected interfaces of different types.
-          case "Ethernet":
-            newInterface[ "font_icon" ] = "exchange";
-            break;
-
-          default:
-            newInterface[ "icon" ] = null;
-            break;
-        }
-
-        return newInterface;
-      };
-
-      _interfaces = action.rawInterfacesList.map( mapInterface );
+      action.rawInterfacesList.map( function ( _interface ) {
+        _interfaces[ _interface.name ] = _interface;
+      })
 
       InterfacesStore.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
-      let args = action.eventData.args;
+      var args = action.eventData.args;
+      var updateData = args['args'];
 
       if ( args["name"] === UPDATE_MASK ) {
-        let updateData = args["args"];
+        /*let updateData = args["args"];
 
         if ( updateData ["operation"] === "update" ) {
 
           // Not reall sure this is doing something useful.
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           InterfacesMiddleware.requestInterfacesList( );
-        }
+        }*/
       }
 
-      InterfacesStore.emitChange();
+      //InterfacesStore.emitChange();
       break;
 
     case ActionTypes.RECEIVE_UP_INTERFACE_TASK:
