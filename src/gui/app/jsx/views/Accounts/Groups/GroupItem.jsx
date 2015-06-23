@@ -84,50 +84,62 @@ const GroupView = React.createClass({
         </TWBS.ButtonToolbar>
       );
 
-      return (
-        <TWBS.Grid fluid>
+    return (
+      <TWBS.Grid fluid>
         {/* "Edit Group" Button - Top */}
         { editButtons }
 
         <TWBS.Row>
-          <TWBS.Col xs={3}
-                    className="text-center">
-            <viewerUtil.ItemIcon primaryString  = { this.props.item["groupName"] }
-                                 fallbackString = { this.props.item["groupID"] }
-                                 seedNumber     = { this.props.item["groupID"] } />
+          <TWBS.Col
+            xs={3}
+            className="text-center">
+            <viewerUtil.ItemIcon
+              primaryString  = { this.props.item[ "groupName" ] }
+              fallbackString = { this.props.item[ "groupID" ] }
+              seedNumber     = { this.props.item[ "groupID" ] } />
           </TWBS.Col>
           <TWBS.Col xs={9}>
-            <h3>{ this.props.item["groupName"] }</h3>
+            <h3>
+              { this.props.item[ "groupName" ] }
+            </h3>
             <hr />
           </TWBS.Col>
         </TWBS.Row>
 
-          {/* Shows a warning if the group account is built in */}
-          { builtInGroupAlert }
+        {/* Shows a warning if the group account is built in */}
+        { builtInGroupAlert }
 
-          {/* Primary group data overview */}
+        {/* Primary group data overview */}
 
         <TWBS.Row>
-	  <TWBS.Col xs      = {2}
-	            className = "text-muted" >
-	            <h4 className = "text-muted" >{ "Group ID" }</h4>
-	  </TWBS.Col>
+          <TWBS.Col
+            xs      = {2}
+            className = "text-muted" >
+            <h4 className = "text-muted" >
+              { this.props.itemLabels[ "groupID "] }
+            </h4>
+          </TWBS.Col>
           <TWBS.Col xs = {10}>
-		    <h3>{this.props.item["groupID"]}</h3>
-	  </TWBS.Col>
+            <h3>
+              { this.props.item[ "groupID" ] }
+            </h3>
+          </TWBS.Col>
         </TWBS.Row>
-	<TWBS.Row>
-	  <TWBS.Col xs      = {12}
-	            className = "text-muted" >
-	            <h4 className = "text-muted" >{ "Users" }</h4>
-                       <TWBS.ListGroup>
-                          { this.createUserDisplayList( this.props.item["groupID"] ) }
-		       </TWBS.ListGroup>
+        <TWBS.Row>
+          <TWBS.Col
+            xs      = {12}
+            className = "text-muted" >
+            <h4 className = "text-muted" >
+              { "Users" }
+            </h4>
+            <TWBS.ListGroup>
+              { this.createUserDisplayList( this.props.item[ "groupID" ] ) }
+            </TWBS.ListGroup>
           </TWBS.Col>
         </TWBS.Row>
 
-        </TWBS.Grid>
-      );
+      </TWBS.Grid>
+    );
   }
 });
 
