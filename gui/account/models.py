@@ -147,6 +147,9 @@ class bsdUsers(Model):
     bsdusr_password_disabled = models.BooleanField(
         verbose_name=_("Disable password login"),
         default=False,
+        help_text=_(
+            'This disables all forms of password login, including for sharing.'
+        ),
     )
     bsdusr_locked = models.BooleanField(
         verbose_name=_("Lock user"),
