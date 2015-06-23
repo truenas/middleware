@@ -416,9 +416,6 @@ class NFS_ShareForm(ModelForm):
         return cdata
 
     def cleanformset_nfs_share_path(self, formset, forms):
-        dev = None
-        valid = True
-        ismp = False
 
         qs = models.NFS_Share_Path.objects.all()
         if self.instance.id:
@@ -432,6 +429,9 @@ class NFS_ShareForm(ModelForm):
                 continue
             devs.add(dev)
 
+        dev = None
+        valid = True
+        ismp = False
         for form in forms:
             if not hasattr(form, "cleaned_data"):
                 continue
