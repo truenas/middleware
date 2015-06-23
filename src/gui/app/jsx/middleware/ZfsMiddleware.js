@@ -28,6 +28,13 @@ class ZfsMiddleware extends AbstractBase {
               );
   }
 
+  static requestAvailableDisks () {
+    MC.request( "volumes.get_available_disks"
+              , []
+              , ZAC.receiveAvailableDisks
+              );
+  }
+
   // TODO: Deprecated, should be using volumes.* RPC namespaces now
   static requestPool ( poolName ) {
     MC.request( "zfs.pool." + poolName
