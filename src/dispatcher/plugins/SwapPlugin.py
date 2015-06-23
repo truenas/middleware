@@ -107,7 +107,7 @@ def remove_swap(dispatcher, disks):
 def create_swap(dispatcher, disks):
     disks = filter(lambda x: x is not None, map(lambda x: get_swap_partition(dispatcher, x), disks))
     for idx, pair in enumerate(zip(*[iter(disks)] * 2)):
-        name = 'swap{0}'.format(idx)q
+        name = 'swap{0}'.format(idx)
         disk_a, disk_b = pair
         logger.info('Creating swap partition %s from disks: %s, %s', name, disk_a, disk_b)
         system('/sbin/gmirror', 'label', '-b', 'prefer', name, disk_a, disk_b)
