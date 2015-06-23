@@ -35,61 +35,104 @@ const GroupEdit = React.createClass(
     let groupIDDisplay = null;
     let groupNameField = null;
     let editForm = null;
+    let buttonToolbar = null;
     let resetButton = null;
     let submitButton = null;
+    let cancelButton = null;
+    let deletebutton = null;
 
     if ( this.props.item[ "builtIn" ] ) {
       builtInWarning =
-        <TWBS.Row>
-          <TWBS.Col xs = { 12 } >
-            <TWBS.Alert
-              bsStyle = { "warning" }
-              className = { "text-center" } >
-              { "This is a built-in system group. Only edit this group if you "
-              + "know exactly what you are doing." }
-            </TWBS.Alert>
-          </TWBS.Col>
-        </TWBS.Row>;
+        <TWBS.Alert
+          bsStyle = { "warning" }
+          className = { "text-center" } >
+          { "This is a built-in system group. Only edit this group if you "
+          + "know exactly what you are doing." }
+        </TWBS.Alert>;
     }
 
     groupNameField =
       <TWBS.Input
-        type = { "text" }
-        ref = { "groupName" } >
+        type = "text"
+        label = "Group Name" >
       </TWBS.Input>;
 
     resetButton =
       <TWBS.Button
-        bsStyle = "warning" > { "Reset" }
+        className = "pull-right"
+        bsStyle = "warning" >
+        { "Reset Changes" }
       </TWBS.Button>;
 
     submitButton =
-      <TWBS.ButtonInput
+      <TWBS.Button
+        className = "pull-right"
         bsStyle = "success" >
-        { "Submit" }
-      </TWBS.ButtonInput>;
+        { "Submit Changes" }
+      </TWBS.Button>;
+
+    cancelButton =
+      <TWBS.Button
+        className = "pull-left"
+        bsStyle = "default" >
+        { "Cancel Edit" }
+      </TWBS.Button>;
+
+    deletebutton =
+      <TWBS.Button
+        className = "pull-left"
+        bsStyle = "danger"
+        disabled = { this.props.item[ "builtIn" ] } >
+        { "Delete Group" }
+      </TWBS.Button>;
+
+    buttonToolbar =
+      <TWBS.ButtonToolbar
+        className = "editor-button-toolbar" >
+        { cancelButton }
+        { deletebutton }
+        { resetButton }
+        { submitButton }
+      </TWBS.ButtonToolbar>;
 
     editForm =
-      <TWBS.Col
-        xs = { 12 }
-        sm = { 6 } >
-          { groupNameField }
-      </TWBS.Col>;
+      <div>
+        { groupNameField }
+      </div>;
 
     groupIDDisplay =
-      <TWBS.Col
-        xs = { 12 }
-        sm = { 6 } >
-        { "Group ID: " }
+      <div>
+        <strong>
+          { "Group ID: " }
+        </strong>
         { this.props.item[ "groupID" ] }
-      </TWBS.Col>;
+      </div>;
 
     return (
       <TWBS.Grid fluid >
-        { builtInWarning }
         <TWBS.Row>
-          { editForm }
-          { groupIDDisplay }
+          <TWBS.Col
+            xs = { 12 } >
+            { buttonToolbar }
+          </TWBS.Col>
+        </TWBS.Row>
+        <TWBS.Row>
+          <TWBS.Col
+            xs = { 12 } >
+            { builtInWarning }
+          </TWBS.Col>
+        </TWBS.Row>
+        <TWBS.Row>
+          <TWBS.Col
+            xs = { 12 }
+            sm = { 6 } >
+            { editForm }
+          </TWBS.Col>
+          <TWBS.Col
+            xs = { 12 }
+            sm = { 6 } >
+            { groupIDDisplay }
+          </TWBS.Col>
         </TWBS.Row>
       </TWBS.Grid>
     );
