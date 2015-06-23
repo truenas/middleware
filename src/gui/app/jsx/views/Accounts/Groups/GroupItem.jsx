@@ -31,27 +31,27 @@ import GroupEdit from "./GroupEdit";
 // CONTROLLER-VIEW
 const GroupItem = React.createClass({
 
-      mixins: [ routerShim, clientStatus, viewerCommon ]
+  mixins: [ routerShim, clientStatus, viewerCommon ]
 
-    , getInitialState: function () {
-        return {
-            targetGroup : this.getGroupFromStore()
-          , currentMode : "view"
-          , activeRoute : this.getDynamicRoute()
-        };
-      }
+  , getInitialState: function () {
+    return { targetGroup : this.getGroupFromStore()
+           , currentMode : "view"
+           , activeRoute : this.getDynamicRoute()
+           };
+  }
 
-    , componentDidUpdate: function( prevProps, prevState ) {
-        var activeRoute = this.getDynamicRoute();
+  , componentDidUpdate: function ( prevProps, prevState ) {
+    var activeRoute = this.getDynamicRoute();
 
-        if ( activeRoute !== prevState.activeRoute ) {
-          this.setState({
-              targetGroup  : this.getGroupFromStore()
-            , currentMode : "view"
-            , activeRoute : activeRoute
-          });
+    if ( activeRoute !== prevState.activeRoute ) {
+      this.setState(
+        { targetGroup  : this.getGroupFromStore()
+        , currentMode : "view"
+        , activeRoute : activeRoute
         }
-      }
+      );
+    }
+  }
 
     , componentDidMount: function () {
         GroupsStore.addChangeListener( this.updateGroupInState );
