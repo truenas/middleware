@@ -440,7 +440,10 @@ class MiddlewareClient extends WebSocketClient {
       // middleware response. The token value is stored in the Cookie.
       sessionCookies.add( "auth", response[0], response[1] );
       MiddlewareActionCreators.receiveAuthenticationChange( response[2], true );
-    };
+
+      // Actions to be performed on every successful login event
+      this.getSchemas();
+    }.bind( this );
 
     const onError = function ( args ) {
       // TODO: Make LoginBox aware of a failed user/pass error.
@@ -628,18 +631,25 @@ class MiddlewareClient extends WebSocketClient {
   // return a list of services supported by your connection to the middleware,
   // and methods supported by each service.
 
+  getSchemas () {
+    this.request( "discovery.get_schema"
+                , []
+                , MiddlewareActionCreators.receiveSchemas
+                );
+  };
+
   getServices () {
-    this.request( "discovery.get_services", [], function ( services ) {
-      MiddlewareActionCreators.receiveAvailableServices( services );
-    });
+    this.request( "discovery.get_services"
+                , []
+                , MiddlewareActionCreators.receiveServices
+                );
   };
 
   getMethods ( service ) {
-    this.request( "discovery.get_methods", [ service ], function ( methods ) {
-      MiddlewareActionCreators.receiveAvailableServiceMethods( service
-                                                             , methods
-                                                             );
-    });
+    this.request( "discovery.get_methods"
+                , [ service ]
+                , MiddlewareActionCreators.receiveMethods.bind( service )
+                );
   };
 
 }

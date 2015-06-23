@@ -65,7 +65,16 @@ class MiddleWareActionCreators {
     );
   }
 
-  static receiveAvailableServices ( services, timestamp ) {
+  static receiveSchemas ( schemas, timestamp ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_MIDDLEWARE_SCHEMAS
+      , schemas
+      , timestamp
+      }
+    );
+  }
+
+  static receiveServices ( services, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICES
       , timestamp
@@ -74,7 +83,7 @@ class MiddleWareActionCreators {
     );
   }
 
-  static receiveAvailableServiceMethods ( service, methods, timestamp ) {
+  static receiveMethods ( methods, service, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICE_METHODS
       , timestamp
