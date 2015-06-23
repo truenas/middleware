@@ -23,18 +23,18 @@ import GroupEdit from "./GroupEdit";
 
 const GroupView = React.createClass({
 
-    mixins: [   groupMixins
-              , viewerCommon ]
+  mixins: [ groupMixins
+          , viewerCommon ]
 
   , contextTypes: {
-      router: React.PropTypes.func
+    router: React.PropTypes.func
   }
 
   , propTypes: {
       item: React.PropTypes.object.isRequired
     }
 
-  , getMembers: function( groupid ) {
+  , getMembers: function ( groupid ) {
     if ( UsersStore.getUsersByGroup( groupid ) ) {
       return UsersStore.getUsersByGroup( groupid );
     } else {
