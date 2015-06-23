@@ -119,6 +119,7 @@ class FiberChannelPorts(TreeNode):
     gname = 'FCPorts'
     name = _('Fiber Channel Ports')
     type = u'iscsi'
+    icon = u'FiberIcon'
     append_to = 'sharing.ISCSI'
     order = 100
 
