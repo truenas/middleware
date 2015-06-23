@@ -53,24 +53,27 @@ const GroupItem = React.createClass({
     }
   }
 
-    , componentDidMount: function () {
-        GroupsStore.addChangeListener( this.updateGroupInState );
-      }
+  , componentDidMount: function () {
+    GroupsStore.addChangeListener( this.updateGroupInState );
+  }
 
-    , componentWillUnmount: function () {
-        GroupsStore.removeChangeListener( this.updateGroupInState );
-      }
+  , componentWillUnmount: function () {
+    GroupsStore.removeChangeListener( this.updateGroupInState );
+  }
 
-    , getGroupFromStore: function () {
-        return GroupsStore.findGroupByKeyValue( this.props.keyUnique, this.getDynamicRoute() );
-      }
+  , getGroupFromStore: function () {
+    return GroupsStore.findGroupByKeyValue( this.props.keyUnique
+                                          , this.getDynamicRoute()
+                                          );
+  }
 
-    , updateGroupInState: function () {
-        this.setState({ targetGroup: this.getGroupFromStore() });
-      }
+  , updateGroupInState: function () {
+    this.setState({ targetGroup: this.getGroupFromStore() });
+  }
 
-    , handleViewChange: function( nextMode, event ) {
-        this.setState({ currentMode: nextMode });
+  , handleViewChange: function ( nextMode, event ) {
+    this.setState({ currentMode: nextMode });
+  }
       }
 
     , render: function () {
