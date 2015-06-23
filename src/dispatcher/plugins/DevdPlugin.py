@@ -161,7 +161,9 @@ class DevdEventSource(EventSource):
     def __process_system(self, args):
         if args["subsystem"] == "HOSTNAME":
             if args["type"] == "CHANGE":
-                self.emit_event("system.hostname.change", exclude(args, "system", "subsystem", "type"))
+                params = exclude(args, "system", "subsystem", "type")
+                params["description"] = "System hostname changed"
+                self.emit_event("system.hostname.change", **params)
 
     def __process_zfs(self, args):
         event_mapping = {
