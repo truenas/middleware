@@ -1,3 +1,9 @@
+// Group View Component
+// ====================
+// Handles viewing the properties of a group. Provides no direct editing
+// capabilities other than deleting a group completely.
+
+
 "use strict";
 
 import _ from "lodash";
@@ -8,10 +14,6 @@ import routerShim from "../../../components/mixins/routerShim";
 import clientStatus from "../../../components/mixins/clientStatus";
 
 import viewerUtil from "../../../components/Viewer/viewerUtil";
-import editorUtil from "../../../components/Viewer/Editor/editorUtil";
-
-import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
-import GroupsStore from "../../../stores/GroupsStore";
 
 import UsersStore from "../../../stores/UsersStore";
 
@@ -19,7 +21,6 @@ import groupMixins from "../../../components/mixins/groupMixins";
 import inputHelpers from "../../../components/mixins/inputHelpers";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 
-import GroupEdit from "./GroupEdit";
 
 const GroupView = React.createClass({
 
