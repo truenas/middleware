@@ -6,7 +6,7 @@ NANO_LABEL?=TrueNAS
 VERSION?=9.3-STABLE
 TRAIN?=${NANO_LABEL}-${VERSION}
 
-.ifdef PRODUCTION
+.if PRODUCTION == "yes"
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
 .if !defined(_KEY)
 KEY_PASSWORD!= build/read-password.sh
@@ -38,12 +38,12 @@ GIT_REPO_SETTING=.git-repo-setting
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 
-.ifdef INTERNAL_TESTING
-UPDATE_USER=jkh
-UPDATE_HOST=update-int.ixsystems.com
+.if PRODUCTION == "yes"
+UPDATE_USER=sef
+UPDATE_HOST=update.ixsystems.com
 .else
-UPDATE_USER?=sef		# For now, just use sef's account
-UPDATE_HOST?=update.freenas.org
+UPDATE_USER?=jkh		# For now, just use sef's account
+UPDATE_HOST?=update-int.freenas.org
 .endif
 
 ENV_SETUP=env _KEY=set
