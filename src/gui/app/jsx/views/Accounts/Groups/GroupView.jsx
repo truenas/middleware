@@ -46,8 +46,12 @@ const GroupView = React.createClass({
     var listUserItemArray = [];
     var users = this.getMembers( groupid );
 
-    for (var i = 0; i < users.length; i++) {
-       listUserItemArray.push(<TWBS.ListGroupItem>{ users[i].username }</TWBS.ListGroupItem>);
+    for ( var i = 0; i < users.length; i++ ) {
+      listUserItemArray.push(
+        <TWBS.ListGroupItem>
+          { users[i].username }
+        </TWBS.ListGroupItem>
+      );
     }
 
     return listUserItemArray;
