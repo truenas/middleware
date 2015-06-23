@@ -147,6 +147,8 @@ class NavTree(object):
                     parent.remove_child(find)
                     opt.attrFrom(find)
                     parent.append_child(opt)
+                    for child in find:
+                        opt.append_child(child)
                     break
 
             """
