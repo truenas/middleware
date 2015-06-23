@@ -137,11 +137,7 @@ const GroupView = React.createClass({
 // CONTROLLER-VIEW
 const GroupItem = React.createClass({
 
-      propTypes: {
-        viewData : React.PropTypes.object.isRequired
-      }
-
-    , mixins: [ routerShim, clientStatus ]
+      mixins: [ routerShim, clientStatus, viewerCommon ]
 
     , getInitialState: function () {
         return {
@@ -197,20 +193,19 @@ const GroupItem = React.createClass({
           }
 
           // DISPLAY COMPONENT
-          var childProps =
-            { handleViewChange : this.handleViewChange
-            , item             : this.state.targetGroup
-            , itemSchema: this.props.itemSchema
-            , itemLabels: this.props.itemLabels
-            };
+          let childProps = { handleViewChange : this.handleViewChange
+                           , item             : this.state.targetGroup
+                           };
 
           switch( this.state.currentMode ) {
             default:
             case "view":
-              DisplayComponent = <GroupView { ...childProps } />;
+              DisplayComponent = <GroupView { ...childProps }
+                                            { ...this.getRequiredProps() } />;
               break;
             case "edit":
-              DisplayComponent = <GroupEdit { ...childProps } />;
+              DisplayComponent = <GroupEdit { ...childProps }
+                                            { ...this.getRequiredProps() } />;
               break;
           }
         }
