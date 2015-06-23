@@ -38,8 +38,13 @@ GIT_REPO_SETTING=.git-repo-setting
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 
+.ifdef INTERNAL_TESTING
+UPDATE_USER=jkh
+UPDATE_HOST=update-int.ixsystems.com
+.else
 UPDATE_USER?=sef		# For now, just use sef's account
 UPDATE_HOST?=update.freenas.org
+.endif
 
 ENV_SETUP=env _KEY=set
 
