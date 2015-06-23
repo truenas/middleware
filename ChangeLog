@@ -1,4 +1,0 @@
-#9779	Bug	Important	User password changes not persistent across reboot
-#10196	Bug	Important	Account Unknown(SID) showing in Windows Security tab
-#10308	Bug	Nice to have	Add help text for "Disable password login" field
-#10321	Bug	Critical	NFS Shares being over restrictive about mountpoints
