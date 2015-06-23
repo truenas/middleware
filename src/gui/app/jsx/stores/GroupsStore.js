@@ -82,9 +82,11 @@ class GroupsStore extends FluxBase {
   }
 
   findGroupByKeyValue ( key, value ) {
-    return _.find( _groups, function ( group ) {
-      return group[ key ] === value;
-    });
+    return _.find( _groups
+                 , function ( group ) {
+                   return group[ key ] === value;
+                 }
+                 );
   }
 
 }
