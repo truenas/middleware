@@ -1,6 +1,4 @@
-#6809	Bug	Nice to have	Add additional fields to freenas zfs snmp stats.
-#9752	Bug	Nice to have	Running cron manual from GUI raises zombie process
-#10027	Bug	Nice to have	Bad English in replication failed message
-#10159	Bug	Important	Jails that have long names fail to autostart
-#10249	Bug	Important	NFS complain about bad exports file syntax.
-#10269	Bug	Important	Fibre Channel port down is not reliable/safe
+#9779	Bug	Important	User password changes not persistent across reboot
+#10196	Bug	Important	Account Unknown(SID) showing in Windows Security tab
+#10308	Bug	Nice to have	Add help text for "Disable password login" field
+#10321	Bug	Critical	NFS Shares being over restrictive about mountpoints
