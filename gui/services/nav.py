@@ -114,6 +114,15 @@ class ISCSI(TreeNode):
     icon = u'iSCSIIcon'
 
 
+class FiberChannelPorts(TreeNode):
+
+    gname = 'FCPorts'
+    name = _('Fiber Channel Ports')
+    type = u'iscsi'
+    append_to = 'sharing.ISCSI'
+    order = 100
+
+
 class Rsync(TreeNode):
 
     gname = 'Rsync'
