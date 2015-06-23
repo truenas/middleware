@@ -2352,6 +2352,7 @@ class notifier:
         Returns:
             bool
         """
+        self._system('/usr/local/bin/smbpasswd -x "%s"' % (username))
         pipe = self._pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
         err = pipe.communicate()[1]
         if pipe.returncode != 0:
