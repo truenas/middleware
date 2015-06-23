@@ -58,6 +58,13 @@ const InterfaceView = React.createClass(
             aliasDisplayItems.push( this.createAliasDisplayItem( alias ) );
           }
       }, this);
+      if ( !aliasDisplayItems.length ) {
+        aliasDisplayItems.push(
+          <TWBS.ListGroupItem>
+            <em>No alias configured.</em>
+          </TWBS.ListGroupItem>
+        );
+      }
       return aliasDisplayItems;
     }
 
@@ -113,12 +120,12 @@ const InterfaceView = React.createClass(
 
       return (
         <TWBS.Grid fluid>
-          <TWBS.Row>
+          <TWBS.Row className="form-group">
             <TWBS.Col xs={12}>
               { configButtons }
             </TWBS.Col>
           </TWBS.Row>
-          <TWBS.Row>
+          <TWBS.Row className="form-group">
             <TWBS.Col xs={6}>
               <label>Interface Name</label>
               <div>{ this.props.item.name }</div>
@@ -128,7 +135,7 @@ const InterfaceView = React.createClass(
               <div>{ this.props.item.status['link-address'] }</div>
             </TWBS.Col>
           </TWBS.Row>
-          <TWBS.Row>
+          <TWBS.Row className="form-group">
             <TWBS.Col xs={6}>
               <label>DHCP Configured</label>
               <div>
@@ -141,7 +148,7 @@ const InterfaceView = React.createClass(
               <div>{ this.props.item.type }</div>
             </TWBS.Col>
           </TWBS.Row>
-          <TWBS.Row>
+          <TWBS.Row className="form-group">
             <TWBS.Col xs={6}>
               <TWBS.Panel header='IPv4 Aliases'>
                 <TWBS.ListGroup fill className='alias-display-list'>
