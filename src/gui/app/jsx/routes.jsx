@@ -30,9 +30,9 @@ import AddGroup from "./views/Accounts/Groups/AddGroup";
 import Tasks from "./views/Tasks";
 
 import Network from "./views/Network";
+import NetworkOverview from "./views/Network/NetworkOverview";
 import Interfaces from "./views/Network/Interfaces"
 import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
-import NetworkConfig from "./views/Network/NetworkConfig";
 
 import Storage from "./views/Storage";
 import Disks from "./views/Storage/Disks";
@@ -110,11 +110,11 @@ module.exports = (
       path    = "network"
       handler = { Network } >
 
-      {/* GLOBAL NETWORK CONFIGURATION */}
+      {/* GLOBAL NETWORK OVERVIEW */}
       <Route
-        name    = "network-config"
-        path    = "network-config"
-        handler = { NetworkConfig } />
+        name    = "overview"
+        path    = "overview"
+        handler = { NetworkOverview } />
 
       {/* NETWORK INTERFACES */}
       <Route

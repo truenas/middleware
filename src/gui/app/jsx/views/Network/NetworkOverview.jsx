@@ -3,7 +3,7 @@
 
 "use strict";
 
-var componentLongName = "NetworkConfig"
+var componentLongName = "NetworkOverview"
 
 import React from "react";
 import TWBS from "react-bootstrap"
@@ -127,7 +127,7 @@ var InterfaceNode = React.createClass({
     }
 });
 
-const NetworkConfig = React.createClass({
+const NetworkOverview = React.createClass({
 
   getInitialState: function () {
     return this.getNetworkConfigFromStore();
@@ -206,7 +206,7 @@ const NetworkConfig = React.createClass({
 
     return (
       <main>
-        <div className = "network-config container-fluid">
+        <div className="network-overview container-fluid">
           <TWBS.Panel header='General'>
             <div className="row">
               {attributeNodes}
@@ -225,4 +225,4 @@ const NetworkConfig = React.createClass({
 
 });
 
-export default NetworkConfig;
+export default NetworkOverview;

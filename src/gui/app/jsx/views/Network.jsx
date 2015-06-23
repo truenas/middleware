@@ -13,7 +13,7 @@ import routerShim from "../components/mixins/routerShim";
 
 import SectionNav from "../components/SectionNav";
 
-var sections = [ { route: "network-config"
+var sections = [ { route: "overview"
                  , display: "Overview"
                  }
                , { route : "interfaces"
@@ -31,11 +31,11 @@ const Network = React.createClass({
   , mixins: [ routerShim ]
 
   , componentDidMount: function () {
-    this.calculateDefaultRoute( "network", "network-config", "endsWith" );
+    this.calculateDefaultRoute( "network", "overview", "endsWith" );
   }
 
   , componentWillUpdate: function ( prevProps, prevState ) {
-    this.calculateDefaultRoute( "network", "network-config", "endsWith" );
+    this.calculateDefaultRoute( "network", "overview", "endsWith" );
   }
 
   , render: function () {
