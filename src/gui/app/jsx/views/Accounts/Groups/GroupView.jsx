@@ -42,41 +42,47 @@ const GroupView = React.createClass({
     }
   }
 
-  , createUserDisplayList: function( groupid ) {
-      var listUserItemArray = [];
-      var users = this.getMembers( groupid );
+  , createUserDisplayList: function ( groupid ) {
+    var listUserItemArray = [];
+    var users = this.getMembers( groupid );
 
-      for (var i = 0; i < users.length; i++) {
-         listUserItemArray.push(<TWBS.ListGroupItem>{ users[i].username }</TWBS.ListGroupItem>);
-      }
+    for (var i = 0; i < users.length; i++) {
+       listUserItemArray.push(<TWBS.ListGroupItem>{ users[i].username }</TWBS.ListGroupItem>);
+    }
 
-      return listUserItemArray;
+    return listUserItemArray;
   }
 
   , render: function () {
-      var builtInGroupAlert = null;
-      var editButtons = null;
+    var builtInGroupAlert = null;
+    var editButtons = null;
 
-      if ( this.props.item["builtIn"] ) {
-        builtInGroupAlert = (
-          <TWBS.Alert bsStyle   = "info"
-                      className = "text-center">
-            <b>{"This is a built-in FreeNAS group."}</b>
-          </TWBS.Alert>
-        );
-      }
-
-      editButtons = (
-        <TWBS.ButtonToolbar>
-          <TWBS.Button className = "pull-left"
-                       disabled  = { this.props.item["builtIn"] }
-                       onClick   = { this.deleteGroup }
-                       bsStyle   = "danger" >{"Delete Group"}</TWBS.Button>
-          <TWBS.Button className = "pull-right"
-                       onClick   = { this.props.handleViewChange.bind(null, "edit") }
-                       bsStyle   = "info" >{"Edit Group"}</TWBS.Button>
-        </TWBS.ButtonToolbar>
+    if ( this.props.item["builtIn"] ) {
+      builtInGroupAlert = (
+        <TWBS.Alert bsStyle   = "info"
+                    className = "text-center">
+          <b>{"This is a built-in FreeNAS group."}</b>
+        </TWBS.Alert>
       );
+    }
+
+    editButtons = (
+      <TWBS.ButtonToolbar>
+        <TWBS.Button
+          className = "pull-left"
+          disabled  = { this.props.item[ "builtIn" ] }
+          onClick   = { this.deleteGroup }
+          bsStyle   = "danger" >
+            {"Delete Group"}
+        </TWBS.Button>
+        <TWBS.Button
+          className = "pull-right"
+          onClick   = { this.props.handleViewChange.bind( null, "edit" ) }
+          bsStyle   = "info" >
+          {"Edit Group"}
+        </TWBS.Button>
+      </TWBS.ButtonToolbar>
+    );
 
     return (
       <TWBS.Grid fluid>
