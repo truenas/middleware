@@ -121,7 +121,7 @@ const GroupView = React.createClass({
             xs      = {2}
             className = "text-muted" >
             <h4 className = "text-muted" >
-              { this.props.itemLabels[ "groupID "] }
+              { this.props.itemLabels.properties[ "groupID" ] }
             </h4>
           </TWBS.Col>
           <TWBS.Col xs = {10}>

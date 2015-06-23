@@ -103,7 +103,7 @@ const GroupEdit = React.createClass(
     groupIDDisplay =
       <div>
         <strong>
-          { "Group ID: " }
+          { this.props.itemLabels.properties[ "groupID" ] + ": " }
         </strong>
         { this.props.item[ "groupID" ] }
       </div>;
