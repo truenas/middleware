@@ -1376,7 +1376,8 @@ def main():
     os.close(fd)
 
     if role != 'dc':
-        smb4_unlink("/var/etc/private/passdb.tdb")
+        exportfile = "/var/etc/private/passdb.tdb"
+        smb4_unlink(exportfile)
         smb4_import_users(smb_conf_path, tmpfile,
             "tdbsam:%s" % exportfile)
         smb4_map_groups()
