@@ -1117,7 +1117,7 @@ def update_index(request):
 
     return render(request, 'system/update_index.html', {
         'update': update,
-        'updateserver': ', '.join(Configuration.SEARCH_LOCATIONS),
+        'updateserver': Configuration.Configuration().UpdateServerURL(),
     })
 
 
