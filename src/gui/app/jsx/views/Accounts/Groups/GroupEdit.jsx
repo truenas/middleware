@@ -32,14 +32,6 @@ const GroupEdit = React.createClass(
 
   , render: function () {
     let builtInWarning = null;
-    let groupIDDisplay = null;
-    let groupNameField = null;
-    let editForm = null;
-    let buttonToolbar = null;
-    let resetButton = null;
-    let submitButton = null;
-    let cancelButton = null;
-    let deletebutton = null;
 
     if ( this.props.item[ "builtIn" ] ) {
       builtInWarning =
@@ -51,34 +43,34 @@ const GroupEdit = React.createClass(
         </TWBS.Alert>;
     }
 
-    groupNameField =
+    let groupNameField =
       <TWBS.Input
         type = "text"
         label = "Group Name" >
       </TWBS.Input>;
 
-    resetButton =
+    let resetButton =
       <TWBS.Button
         className = "pull-right"
         bsStyle = "warning" >
         { "Reset Changes" }
       </TWBS.Button>;
 
-    submitButton =
+    let submitButton =
       <TWBS.Button
         className = "pull-right"
         bsStyle = "success" >
         { "Submit Changes" }
       </TWBS.Button>;
 
-    cancelButton =
+    let cancelButton =
       <TWBS.Button
         className = "pull-left"
         bsStyle = "default" >
         { "Cancel Edit" }
       </TWBS.Button>;
 
-    deletebutton =
+    let deletebutton =
       <TWBS.Button
         className = "pull-left"
         bsStyle = "danger"
@@ -86,7 +78,7 @@ const GroupEdit = React.createClass(
         { "Delete Group" }
       </TWBS.Button>;
 
-    buttonToolbar =
+    let buttonToolbar =
       <TWBS.ButtonToolbar
         className = "editor-button-toolbar" >
         { cancelButton }
@@ -95,12 +87,12 @@ const GroupEdit = React.createClass(
         { submitButton }
       </TWBS.ButtonToolbar>;
 
-    editForm =
+    let editForm =
       <div>
         { groupNameField }
       </div>;
 
-    groupIDDisplay =
+    let groupIDDisplay =
       <div>
         <strong>
           { this.props.itemLabels.properties[ "groupID" ] + ": " }
