@@ -121,6 +121,8 @@ def move_system_dataset(dispatcher, src_pool, dst_pool):
 class SystemDatasetProvider(Provider):
     @private
     @description("Initializes the .system dataset")
+    @accepts()
+    @returns()
     def init(self):
         pool = self.configstore.get('system.dataset.pool')
         create_system_dataset(self.dispatcher, pool)
