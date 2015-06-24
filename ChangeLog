@@ -63,5 +63,8 @@
 #10208	ssh authorized_keys gets corrupted when adding ed25519 keys
 #10249	NFS complain about bad exports file syntax.
 #10269	Fibre Channel port down is not reliable/safe
+#10287	Adds a "--no-delta" option to freenas-update CLI.
 #10308	Add help text for "Disable password login" field
+#10314	Field length of "Directory Service --> LDAP -->Bind DN"
 #10321	NFS Shares being over restrictive about mountpoints
+#10337	Displays the update server in use.
