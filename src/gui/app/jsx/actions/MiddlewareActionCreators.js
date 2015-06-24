@@ -83,7 +83,7 @@ class MiddleWareActionCreators {
     );
   }
 
-  static receiveMethods ( methods, service, timestamp ) {
+  static receiveMethods ( service, methods, timestamp ) {
     FreeNASDispatcher.handleMiddlewareAction(
       { type: ActionTypes.RECEIVE_RPC_SERVICE_METHODS
       , timestamp

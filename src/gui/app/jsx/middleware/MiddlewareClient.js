@@ -648,7 +648,7 @@ class MiddlewareClient extends WebSocketClient {
   getMethods ( service ) {
     this.request( "discovery.get_methods"
                 , [ service ]
-                , MiddlewareActionCreators.receiveMethods.bind( service )
+                , MiddlewareActionCreators.receiveMethods.bind( null, service )
                 );
   };
 
