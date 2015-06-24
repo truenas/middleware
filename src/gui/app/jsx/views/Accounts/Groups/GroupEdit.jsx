@@ -37,7 +37,7 @@ const GroupEdit = React.createClass(
       builtInWarning =
         <TWBS.Alert
           bsStyle = { "warning" }
-          className = { "text-center" } >
+          className = { "text-center built-in-warning" } >
           { "This is a built-in system group. Only edit this group if you "
           + "know exactly what you are doing." }
         </TWBS.Alert>;
@@ -79,8 +79,7 @@ const GroupEdit = React.createClass(
       </TWBS.Button>;
 
     let buttonToolbar =
-      <TWBS.ButtonToolbar
-        className = "editor-button-toolbar" >
+      <TWBS.ButtonToolbar >
         { cancelButton }
         { deletebutton }
         { resetButton }
