@@ -30,6 +30,10 @@ const GroupEdit = React.createClass(
            };
   }
 
+  , resetChanges: function () {
+    this.setState( { modifiedValues: {} } );
+  }
+
   , handleChange: function ( field, event ) {
     let newModifiedValues = this.state.modifiedValues;
     newModifiedValues[ field ] = event.target.value;
@@ -67,7 +71,8 @@ const GroupEdit = React.createClass(
     let resetButton =
       <TWBS.Button
         className = "pull-right"
-        bsStyle = "warning" >
+        bsStyle = "warning"
+        onClick = { this.resetChanges } >
         { "Reset Changes" }
       </TWBS.Button>;
 
