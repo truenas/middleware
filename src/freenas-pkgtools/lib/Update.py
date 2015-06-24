@@ -22,6 +22,17 @@ debug = False
 
 REQUIRE_REBOOT = False
 
+# Types of package files to download.
+# The options are PkgFileAny (aka None),
+# which means to download whatever you can (delta
+# being preferred), PkgFileDeltaOnly , which means to
+# download only a delta file (and fail if we can't),
+# and PkgFileFullOnly, which means to only download the
+# full package file
+PkgFileAny = None
+PkgFileDeltaOnly = "delta-only"
+PkgFileFullOnly = "full-only"
+
 # Not sure if these should go into their own file
 from django.utils.translation import ugettext_lazy as _
 
@@ -625,7 +636,7 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler
         
     return new_manifest
 
-def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
+def DownloadUpdate(train, directory, get_handler = None, check_handler = None, pkg_type = None):
     """
     Download, if necessary, the LATEST update for train; download
     delta packages if possible.  Checks to see if the existing content
@@ -731,7 +742,7 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None):
         # To do that, we may need to know which update was downloaded.
         if check_handler:
             check_handler(indx + 1,  pkg = pkg, pkgList = download_packages)
-        pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler)
+        pkg_file = conf.FindPackageFile(pkg, save_dir = directory, handler = get_handler, pkg_type = pkg_type)
         if pkg_file is None:
             log.error("Could not download package file for %s" % pkg.Name())
             RemoveUpdate(directory)

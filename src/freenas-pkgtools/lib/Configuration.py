@@ -944,7 +944,8 @@ class Configuration(object):
             )
         return file
     
-    def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None):
+    def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None, pkg_type = None):
+        from Update import PkgFileAny, PkgFileDeltaOnly, PkgFileFullOnly
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
         # object for the package file.
@@ -968,33 +969,35 @@ class Configuration(object):
         # to look for.
         # The first file is the full package.
         package_files = []
-        package_files.append({ "Filename" : package.FileName(), "Checksum" : package.Checksum()})
+        if pkg_type is not PkgFileDeltaOnly:
+            package_files.append({ "Filename" : package.FileName(), "Checksum" : package.Checksum()})
         # The next one is the delta package, if it exists.
         # For that, we look through package.Updates(), looking for one that
         # has the same version as what is currently installed.
         # So first we have to get the current version.
-        try:
-            pkgdb = self.PackageDB(create = False)
-            if pkgdb:
-                pkgInfo = pkgdb.FindPackage(package.Name())
-                if pkgInfo:
-                    curVers = pkgInfo[package.Name()]
-                    if curVers and curVers != package.Version():
-                        upgrade = package.Update(curVers)
-                        if upgrade:
-                            tdict = { "Filename" : package.FileName(curVers),
-                                      "Checksum" : None,
-                                      "Reboot"   : upgrade.RequiresReboot(),
-                                      "Delta"    : True,
-                            }
-                            if upgrade.Checksum():
-                                tdict[Package.CHECKSUM_KEY] = upgrade.Checksum()
-                            if upgrade.Size():
-                                tdict[Package.SIZE_KEY] = upgrade.Size()    
-                            package_files.append(tdict)
-        except:
-            # No update packge that matches.
-            pass
+        if pkg_type is not PkgFileFullOnly:
+            try:
+                pkgdb = self.PackageDB(create = False)
+                if pkgdb:
+                    pkgInfo = pkgdb.FindPackage(package.Name())
+                    if pkgInfo:
+                        curVers = pkgInfo[package.Name()]
+                        if curVers and curVers != package.Version():
+                            upgrade = package.Update(curVers)
+                            if upgrade:
+                                tdict = { "Filename" : package.FileName(curVers),
+                                          "Checksum" : None,
+                                          "Reboot"   : upgrade.RequiresReboot(),
+                                          "Delta"    : True,
+                                      }
+                                if upgrade.Checksum():
+                                    tdict[Package.CHECKSUM_KEY] = upgrade.Checksum()
+                                if upgrade.Size():
+                                    tdict[Package.SIZE_KEY] = upgrade.Size()    
+                                package_files.append(tdict)
+            except:
+                # No update packge that matches.
+                pass
 
         # At this point, package_files now has at least one element.
         # We want to search in this order:

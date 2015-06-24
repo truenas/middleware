@@ -40,37 +40,6 @@ def PrintDifferences(diffs):
 
 def main():
     global log
-    def usage():
-        print >> sys.stderr, """Usage: %s [-C cache_dir] [-d] [-T train] [-v] <cmd>, where cmd is one of:
-        check\tCheck for updates
-        update\tDo an update""" % sys.argv[0]
-        sys.exit(1)
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "C:dT:v")
-    except getopt.GetoptError as err:
-        print str(err)
-        usage()
-
-    verbose = False
-    debug = 0
-    config = None
-    cache_dir = None
-    train = None
-
-    for o, a in opts:
-        if o == "-v":
-            verbose = True
-        elif o == "-d":
-            debug += 1
-        elif o == '-C':
-            cache_dir = a
-        elif o == "-T":
-            train = a
-        elif o == '-c':
-            cachedir = a
-        else:
-            assert False, "unhandled option %s" % o
 
     logging.config.dictConfig({
         'version': 1,
@@ -104,6 +73,46 @@ def main():
     import freenasOS.Manifest as Manifest
     import freenasOS.Update as Update
 
+    def usage():
+        print >> sys.stderr, """Usage: %s [-C cache_dir] [-d] [-T train] [--no-delta] [-v] <cmd>, where cmd is one of:
+        check\tCheck for updates
+        update\tDo an update""" % sys.argv[0]
+        sys.exit(1)
+
+    try:
+        short_opts = "C:dT:v"
+        long_opts = [ "cache=",
+                      "debug",
+                      "train=",
+                      "verbose",
+                      "no-delta"
+                      ]
+        opts, args = getopt.getopt(sys.argv[1:], short_opts, long_opts)
+    except getopt.GetoptError as err:
+        print str(err)
+        usage()
+
+    verbose = False
+    debug = 0
+    config = None
+    cache_dir = None
+    train = None
+    pkg_type = None
+    
+    for o, a in opts:
+        if o in ("-v", "--verbose"):
+            verbose = True
+        elif o in ("-d", "--debug"):
+            debug += 1
+        elif o in ('-C', "--cache"):
+            cache_dir = a
+        elif o in ("-T", "--train"):
+            train = a
+        elif o in ("--no-delta"):
+            pkg_type = Update.PkgFileFullOnly
+        else:
+            assert False, "unhandled option %s" % o
+
     config = Configuration.Configuration()
     if train is None:
         train = config.SystemManifest().Train()
@@ -126,7 +135,7 @@ def main():
         else:
             download_dir = cache_dir
 
-        rv = Update.DownloadUpdate(train, download_dir)
+        rv = Update.DownloadUpdate(train, download_dir, pkg_type = pkg_type)
         if rv is False:
             if verbose:
                 print "No updates available"
@@ -169,7 +178,7 @@ def main():
             if download_dir is None:
                 print >> sys.stderr, "Unable to create temporary directory"
                 sys.exit(1)
-            rv = Update.DownloadUpdate(train, download_dir)
+            rv = Update.DownloadUpdate(train, download_dir, pkg_type = pkg_type)
             if rv is False:
                 if verbose or debug:
                     print >> sys.stderr, "DownloadUpdate returned False"
