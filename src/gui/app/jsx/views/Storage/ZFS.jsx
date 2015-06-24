@@ -7,9 +7,11 @@
 
 "use strict";
 
+import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
 
+import SS from "../../stores/SchemaStore";
 import VS from "../../stores/VolumeStore";
 import ZM from "../../middleware/ZfsMiddleware";
 import PoolItem from "./Pools/PoolItem";
@@ -19,14 +21,17 @@ const ZFS = React.createClass(
   { displayName: "ZFS"
 
   , getInitialState () {
-      return { volumes : VS.listVolumes()
+      return { volumes        : VS.listVolumes()
+             , availableDisks : VS.availableDisks
+             , selectedDisks  : new Set()
              };
     }
 
   , componentDidMount () {
-      VS.addChangeListener( this.handleVolumesChange );
+      VS.addChangeListener( this.handleStoreChange );
 
       ZM.requestVolumes();
+      ZM.requestAvailableDisks();
       ZM.subscribe( this.constructor.displayName );
     }
 
@@ -36,36 +41,64 @@ const ZFS = React.createClass(
     ZM.unsubscribe( this.constructor.displayName );
   }
 
-  , handleVolumesChange () {
-      this.setState({
-        volumes: VS.listVolumes()
+  , handleStoreChange ( eventMask ) {
+    this.setState(
+      { volumes        : VS.listVolumes()
+      , availableDisks : VS.availableDisks
+      }
+    );
+  }
+
+  , handleDiskSelection ( event ) {
+    console.log( event );
+  }
+
+  , createPoolItems ( loading, noPools ) {
+    const poolItemCommon =
+      { handleDiskAdd: this.handleDiskSelection
+      , availableDisks: _.without( this.state.availableDisks
+                                 , Array.from( this.state.selectedDisks )
+                                 )
+      };
+
+    let existingPools =
+      this.state.volumes.map( function ( pool, index ) {
+        // The index of the "new pool" PoolItem will always be zero, so we start
+        // iterating here at "1"
+        return <PoolItem { ...poolItemCommon } key={ index + 1 } />;
       });
+
+    let newPool = null;
+
+    if ( noPools ) {
+      newPool = <PoolItem { ...poolItemCommon } key={ 0 } />;
+    } else {
+      newPool = <PoolItem { ...poolItemCommon } key={ 0 } />;
     }
 
-  , createPoolItems () {
-      return (
-        this.state.volumes.map( pool => <PoolItem /> )
-      );
-    }
+    return existingPools.concat( newPool );
+  }
 
   , render () {
-      let loadingVolumes = null;
-      let noPoolsMessage = null;
+      let loading = false;
+      let noPools = false;
+
+      let statusMessage = null;
 
       if ( VS.isInitialized ) {
         if ( this.state.volumes.length === 0 ) {
-          noPoolsMessage = <h3>Bro, you could use a pool</h3>;
+          noPools = true;
+          statusMessage = <h3>Bro, you could use a pool</h3>;
         }
       } else {
-        loadingVolumes = <h3>Looking for ZFS pools...</h3>;
+        loading = true;
+        statusMessage = <h3>Looking for ZFS pools...</h3>;
       }
 
       return (
         <section>
-          <h1>ZFS Section Placeholder</h1>
-          { this.createPoolItems() }
-          { loadingVolumes }
-          { noPoolsMessage }
+          { statusMessage }
+          { this.createPoolItems( loading, noPools ) }
         </section>
       );
     }
