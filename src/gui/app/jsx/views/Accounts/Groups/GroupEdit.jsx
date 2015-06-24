@@ -30,6 +30,12 @@ const GroupEdit = React.createClass(
            };
   }
 
+  , handleChange: function ( field, event ) {
+    let newModifiedValues = this.state.modifiedValues;
+    newModifiedValues[ field ] = event.target.value;
+    this.setState( { modifiedValues: newModifiedValues } );
+  }
+
   , render: function () {
     let builtInWarning = null;
 
@@ -43,11 +49,20 @@ const GroupEdit = React.createClass(
         </TWBS.Alert>;
     }
 
+    let groupNameValue = this.state.modifiedValues[ "groupName" ]
+                      || this.state.remoteValues[ "groupName" ];
+
+    let groupNameClass = this.state.modifiedValues[ "groupName" ]
+                       ? "editor-was-modified"
+                       : "";
+
     let groupNameField =
       <TWBS.Input
+        className = { groupNameClass }
         type = "text"
-        label = "Group Name" >
-      </TWBS.Input>;
+        label = "Group Name"
+        value = { groupNameValue }
+        onChange = { this.handleChange.bind( null, "groupName" ) } />;
 
     let resetButton =
       <TWBS.Button
