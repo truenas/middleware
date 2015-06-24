@@ -12,7 +12,8 @@ import { ActionTypes } from "../constants/FreeNASConstants";
 import DL from "../common/DebugLogger";
 import FluxStore from "./FluxBase";
 
-var _volumes = {};
+var _volumes        = {};
+var _availableDisks = new Set();
 
 class VolumeStore extends FluxStore {
 
@@ -24,11 +25,15 @@ class VolumeStore extends FluxStore {
     );
   }
 
+  get availableDisks() {
+    return _.sortBy( Array.from( _availableDisks ) );
+  }
+
   listVolumes ( sortKey ) {
     if ( sortKey ) {
       return _.chain( _volumes )
               .values()
-              .sort( sortKey )
+              .sortBy( sortKey )
               .value();
     } else {
       return _.values( _volumes );
@@ -44,9 +49,14 @@ function handlePayload ( payload ) {
   switch ( ACTION.type ) {
 
     case ActionTypes.RECEIVE_VOLUMES:
-      this._volumes = ACTION.volumes;
+      _volumes = ACTION.volumes;
       this.fullUpdateAt = ACTION.timestamp;
-      this.emitChange();
+      this.emitChange( "volumes" );
+      break;
+
+    case ActionTypes.RECEIVE_AVAILABLE_DISKS:
+      _availableDisks = new Set( ACTION.disks );
+      this.emitChange( "availableDisks" );
       break;
 
   }

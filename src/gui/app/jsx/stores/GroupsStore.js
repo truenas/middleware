@@ -82,9 +82,11 @@ class GroupsStore extends FluxBase {
   }
 
   findGroupByKeyValue ( key, value ) {
-    return _.find( _groups, function ( group ) {
-      return group[ key ] === value;
-    });
+    return _.find( _groups
+                 , function ( group ) {
+                   return group[ key ] === value;
+                 }
+                 );
   }
 
 }
@@ -98,8 +100,9 @@ function handlePayload ( payload ) {
 
       ACTION.groupsList.forEach(
         function convertGroups ( group ) {
-          _groups[ group[ this.KEY_UNIQUE ] ] =
-            FluxBase.rekeyForClient( group, KEY_TRANSLATION );
+          _groups[ group[ "id" ] ] = FluxBase.rekeyForClient( group
+                                                            , KEY_TRANSLATION
+                                                            );
         }
         , this
       );

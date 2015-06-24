@@ -577,6 +577,7 @@ def main():
                         default='127.0.0.1')
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE)
     parser.add_argument('-e', metavar='COMMANDS')
+    parser.add_argument('-f', metavar='INPUT')
     parser.add_argument('-l', metavar='LOGIN')
     parser.add_argument('-p', metavar='PASSWORD')
     parser.add_argument('-D', metavar='DEFINE', action='append')
@@ -601,6 +602,19 @@ def main():
 
     if args.e:
         ml.process(args.e)
+        return
+
+    if args.f:
+        try:
+            f = sys.stdin if args.f == '-' else open(args.f)
+            for line in f:
+                ml.process(line)
+
+            f.close()
+        except EnvironmentError, e:
+            sys.stderr.write('Cannot open input file: {0}'.format(str(e)))
+            sys.exit(1)
+
         return
 
     ml.repl()

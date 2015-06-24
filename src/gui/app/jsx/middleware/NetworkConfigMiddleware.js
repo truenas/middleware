@@ -28,9 +28,9 @@ class NetworkConfigMiddleware {
               );
   }
 
-  static updateNetworkConfig ( newNetworkConfig ) {
+  static updateNetworkConfig ( settings ) {
     MC.request( "task.submit"
-              , [ "network.configure" ]
+              , [ "network.configure", [ settings ] ]
               , NCAC.receiveNetworkUpdateTask
               );
   }

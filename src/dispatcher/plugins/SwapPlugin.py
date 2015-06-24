@@ -29,16 +29,20 @@ import os
 import re
 import logging
 from task import Provider
-from lib.system import system
+from lib.system import system, SubprocessException
 from lib.geom import confxml
-
+from dispatcher.rpc import accepts, returns, description
+from dispatcher.rpc import SchemaHelper as h
 
 logger = logging.getLogger('SwapPlugin')
 
 
 class SwapProvider(Provider):
+    @accepts()
+    @returns(h.array(h.ref('swap-mirror')))
+    @description("Returns information about swap mirrors present in the system")
     def info(self):
-        return get_swap_info(self.dispatcher)
+        return get_swap_info(self.dispatcher).values()
 
 
 def get_available_disks(dispatcher):
@@ -87,7 +91,11 @@ def clear_swap(dispatcher):
     logger.info('Clearing all swap mirrors in system')
     for swap in get_swap_info(dispatcher).values():
         logger.debug('Clearing swap mirror %s', swap['name'])
-        system('/sbin/swapoff', os.path.join('/dev/mirror', swap['name']))
+        try:
+            system('/sbin/swapoff', os.path.join('/dev/mirror', swap['name']))
+        except SubprocessException:
+            pass
+
         system('/sbin/gmirror', 'destroy', swap['name'])
 
 
@@ -107,7 +115,7 @@ def remove_swap(dispatcher, disks):
 def create_swap(dispatcher, disks):
     disks = filter(lambda x: x is not None, map(lambda x: get_swap_partition(dispatcher, x), disks))
     for idx, pair in enumerate(zip(*[iter(disks)] * 2)):
-        name = 'swap{0}'.format(idx)q
+        name = 'swap{0}'.format(idx)
         disk_a, disk_b = pair
         logger.info('Creating swap partition %s from disks: %s, %s', name, disk_a, disk_b)
         system('/sbin/gmirror', 'label', '-b', 'prefer', name, disk_a, disk_b)
@@ -139,6 +147,17 @@ def _init(dispatcher, plugin):
 
     def on_volumes_change(args):
         rearrange_swap(dispatcher)
+
+    plugin.register_schema_definition('swap-mirror', {
+        'type': 'object',
+        'properties': {
+            'name': 'string',
+            'disks': {
+                'type': 'array',
+                'items': {'type': 'string'}
+            }
+        }
+    })
 
     plugin.register_provider('swap', SwapProvider)
     plugin.register_event_handler('volumes.changed', on_volumes_change)

@@ -30,9 +30,10 @@ import AddGroup from "./views/Accounts/Groups/AddGroup";
 import Tasks from "./views/Tasks";
 
 import Network from "./views/Network";
+import NetworkOverview from "./views/Network/NetworkOverview";
 import Interfaces from "./views/Network/Interfaces"
 import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
-import NetworkConfig from "./views/Network/NetworkConfig";
+import NetworkSettings from "./views/Network/NetworkSettings";
 
 import Storage from "./views/Storage";
 import Disks from "./views/Storage/Disks";
@@ -106,26 +107,32 @@ module.exports = (
 
     {/* NETWORK */}
     <Route
-      name = "network"
-      path = "network"
+      name    = "network"
+      path    = "network"
       handler = { Network } >
 
-      {/* GLOBAL NETWORK CONFIGURATION */}
+      {/* GLOBAL NETWORK OVERVIEW */}
       <Route
-        name = "network-config"
-        path = "network-config"
-        handler = { NetworkConfig } />
+        name    = "overview"
+        path    = "overview"
+        handler = { NetworkOverview } />
 
       {/* NETWORK INTERFACES */}
       <Route
-        name = "interfaces"
-        path = "interfaces"
+        name    = "interfaces"
+        path    = "interfaces"
         handler = { Interfaces } >
         <Route
-          name = "interfaces-editor"
-          path = ":interfaceID"
+          name    = "interfaces-editor"
+          path    = ":interfaceName"
           handler = { InterfaceItem } />
       </Route>
+
+      {/* NETWORK SETTINGS */}
+      <Route
+        name    = "network-settings"
+        path    = "settings"
+        handler = { NetworkSettings } />
 
     </Route>
 

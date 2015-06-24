@@ -32,8 +32,8 @@ const ViewerCommon =
                               , React.PropTypes.array
                               ]
                             )
-    , itemSchema          : React.PropTypes.object
-    , itemLabels          : React.PropTypes.object
+    , itemSchema          : React.PropTypes.object.isRequired
+    , itemLabels          : React.PropTypes.object.isRequired
 
     , routeName           : React.PropTypes.string.isRequired
     , routeParam          : React.PropTypes.string.isRequired
@@ -54,6 +54,9 @@ const ViewerCommon =
                      , "keyUnique"
                      , "keyPrimary"
                      , "keySecondary"
+
+                     , "itemSchema"
+                     , "itemLabels"
 
                      , "routeName"
                      , "routeParam"

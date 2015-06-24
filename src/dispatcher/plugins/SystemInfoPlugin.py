@@ -29,6 +29,7 @@ import os
 import psutil
 import re
 import time
+import netif
 
 from datetime import datetime
 from dateutil import tz
@@ -76,20 +77,13 @@ class SystemInfoProvider(Provider):
 
 @description("Provides informations about general system settings")
 class SystemGeneralProvider(Provider):
-
     @returns(h.ref('system-general'))
     def get_config(self):
-
         return {
-            'language': self.dispatcher.configstore.get(
-                'system.language',
-            ),
-            'timezone': self.dispatcher.configstore.get(
-                'system.timezone',
-            ),
-            'console-keymap': self.dispatcher.configstore.get(
-                'system.console.keymap',
-            ),
+            'hostname': self.dispatcher.configstore.get('system.hostname'),
+            'language': self.dispatcher.configstore.get('system.language'),
+            'timezone': self.dispatcher.configstore.get('system.timezone'),
+            'console-keymap': self.dispatcher.configstore.get('system.console.keymap')
         }
 
     def keymaps(self):
@@ -154,18 +148,26 @@ class SystemGeneralConfigureTask(Task):
         return ['system']
 
     def run(self, props):
-        self.dispatcher.configstore.set(
-            'system.language',
-            props.get('language'),
-        )
-        self.dispatcher.configstore.set(
-            'system.timezone',
-            props.get('timezone'),
-        )
-        self.dispatcher.configstore.set(
-            'system.console.keymap',
-            props.get('console-keymap'),
-        )
+        if 'hostname' in props:
+            netif.set_hostname(props['hostname'])
+
+        if 'language' in props:
+            self.dispatcher.configstore.set(
+                'system.language',
+                props['language'],
+            )
+
+        if 'timezone' in props:
+            self.dispatcher.configstore.set(
+                'system.timezone',
+                props['timezone'],
+            )
+
+        if 'console-keymap' in props:
+            self.dispatcher.configstore.set(
+                'system.console.keymap',
+                props['console-keymap'],
+            )
 
         try:
             self.dispatcher.call_sync(
@@ -179,7 +181,6 @@ class SystemGeneralConfigureTask(Task):
 
         self.dispatcher.dispatch_event('system.general.changed', {
             'operation': 'update',
-            'ids': ['system.general'],
         })
 
 
@@ -264,11 +265,20 @@ class SystemHaltTask(Task):
 
 
 def _init(dispatcher, plugin):
+    def on_hostname_change(args):
+        if 'hostname' not in args:
+            return
+
+        dispatcher.configstore.set('system.hostname', args['hostname'])
+        dispatcher.dispatch_event('system.general.changed', {
+            'operation': 'update',
+        })
 
     # Register schemas
     plugin.register_schema_definition('system-general', {
         'type': 'object',
         'properties': {
+            'hostname': {'type': 'string'},
             'language': {'type': 'string'},
             'timezone': {'type': 'string'},
             'console-keymap': {'type': 'string'},
@@ -294,15 +304,16 @@ def _init(dispatcher, plugin):
         },
     })
 
+    # Register event handler
+    plugin.register_event_handler('system.hostname.change', on_hostname_change)
+
     # Register providers
     plugin.register_provider("system.general", SystemGeneralProvider)
     plugin.register_provider("system.info", SystemInfoProvider)
     plugin.register_provider("system.ui", SystemUIProvider)
 
     # Register task handlers
-    plugin.register_task_handler("system.general.configure",
-                           SystemGeneralConfigureTask)
-    plugin.register_task_handler("system.ui.configure",
-                           SystemUIConfigureTask)
+    plugin.register_task_handler("system.general.configure", SystemGeneralConfigureTask)
+    plugin.register_task_handler("system.ui.configure", SystemUIConfigureTask)
     plugin.register_task_handler("system.shutdown", SystemHaltTask)
     plugin.register_task_handler("system.reboot", SystemRebootTask)

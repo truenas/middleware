@@ -17,46 +17,61 @@ const Update = React.createClass({
   getInitialState: function () {
     return { editSettings: false
            , currentTrain: ""
-           , updateAutoCheck: false };
+           , updateCheckAuto: false
+           , isUpdateAvailable: false };
   }
 
   , getInitialConfig: function ( config ) {
     this.setState({ currentTrain: config[ "train" ]
-                  , updateAutoCheck: config[ "updateCheckAuto" ] });
+                  , updateCheckAuto: config[ "updateCheckAuto" ] });
   }
 
   , handleEditModeButton: function ( event ) {
     this.setState({ editSettings: !this.state.editSettings });
   }
 
-  , handleupdatenowbutton: function () {
+  , handleUpdateNowButton: function () {
     UpdaterMiddleware.updatenow();
   }
 
+  , handleUpdateCheckButton: function () {
+    UpdaterMiddleware.checkForUpdate();
+  }
+
   , componentDidMount: function () {
-      UpdaterMiddleware.getConfig( this.getInitialConfig );
-    }
+    UpdaterMiddleware.getConfig( this.getInitialConfig );
+  }
 
   , render: function () {
-    var updateText = (  <div style = { {margin: "5px"
+    var checkForUpdateText = (  <div style = { {margin: "5px"
+                                    , cursor: "pointer"} }>
+                                  <a onClick={ this.handleUpdateCheckButton }>
+                                  <Icon glyph = "check-circle"
+                                    icoSize = "4em" />
+                                  <br />
+                                    Check for Updates Now
+                                  </a>
+                               </div> );
+
+    var updateButtonText = (  <div style = { {margin: "5px"
                                     , cursor: "pointer"} }>
                             <Icon glyph = "bomb"
                              icoSize = "4em" />
                             <br />
-                            Update
+                            Download and Install
                           </div> );
-    var updateprops = {};
-    updateprops.dataText = updateText;
-    updateprops.title = "Confirm Update";
-    updateprops.bodyText = "Freenas will now Update"
-    updateprops.callFunc  = this.handleupdatenowbutton;
+    var updateButtonProps = {};
+    updateButtonProps.dataText = updateButtonText;
+    updateButtonProps.title = "Confirm Update";
+    updateButtonProps.bodyText = "Freenas will now Update"
+    updateButtonProps.callFunc  = this.handleUpdateNowButton;
 
     var updateServer = "some update server";
     var updatePeriod = "millenia";
     var updateSignature = "some signature";
     var updateTrain = this.state.currentTrain;
     var updateAutoText = "";
-    if ( this.state.updateAutoCheck ) {
+    if ( this.state.updateCheckAuto ) {
       updateAutoText = "Updates are automatically fetched every \""
         + updatePeriod + "\"";
     } else {
@@ -80,7 +95,7 @@ const Update = React.createClass({
            { updateAutoText } {" and update signature is \""
            + updateSignature + "\""} </p>
           <span style={{float: "right"}}>
-            <a onClick={this.handleEditModeButton}>Change update settings</a>
+            <a onClick={ this.handleEditModeButton }>Change update settings</a>
           </span>
       </div> );
     }
@@ -93,7 +108,8 @@ const Update = React.createClass({
             { settingsContent }
           </TWBS.Panel>
 	</TWBS.PanelGroup>
-        <ConfDialog {...updateprops}/>
+        { checkForUpdateText }
+        <ConfDialog {...updateButtonProps}/>
       </main>
     );
   }

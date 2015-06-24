@@ -16,6 +16,9 @@ import Routes from "./routes";
 // Middleware
 import MiddlewareClient from "./middleware/MiddlewareClient";
 
+// Initialize Global Stores
+import SchemaStore from "./stores/SchemaStore";
+
 let wsProtocol = ( window.location.protocol === "https:" )
   ? "wss://"
   : "ws://";

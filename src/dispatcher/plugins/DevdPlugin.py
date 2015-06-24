@@ -37,7 +37,7 @@ from dispatcher.rpc import SchemaHelper as h
 from gevent import socket
 from lib import geom
 from lib.freebsd import get_sysctl
-from lxml import etree
+from fnutils import exclude
 
 
 @description("Provides information about devices installed in the system")
@@ -158,6 +158,13 @@ class DevdEventSource(EventSource):
             "interface": args["subsystem"]
         }
 
+    def __process_system(self, args):
+        if args["subsystem"] == "HOSTNAME":
+            if args["type"] == "CHANGE":
+                params = exclude(args, "system", "subsystem", "type")
+                params["description"] = "System hostname changed"
+                self.emit_event("system.hostname.change", **params)
+
     def __process_zfs(self, args):
         event_mapping = {
             "misc.fs.zfs.scrub_start": ("fs.zfs.scrub.started", "Scrub on volume {0} started"),
@@ -214,10 +221,14 @@ class DevdEventSource(EventSource):
 
                     if args["system"] == "ZFS":
                         self.__process_zfs(args)
+
+                    if args["system"] == "SYSTEM":
+                        self.__process_system(args)
+
             except socket.error:
                 # sleep for a half a second and retry
                 self.dispatcher.logger.debug(
-                    '/var/run/devd.pipe timedout/was not available retrying in 0.5 seconds')
+                    '/var/run/devd.pipe timedout/was not available, retrying in 0.5 seconds')
                 time.sleep(0.5)
 
 

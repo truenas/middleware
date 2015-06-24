@@ -29,7 +29,7 @@ const AddGroup = React.createClass({
 
   , getInitialState: function () {
 
-      var groupsList = GroupsStore.getAllGroups();
+      var groupsList = GroupsStore.groups;
 
       return {
           locallyModifiedValues : {}

@@ -15,11 +15,16 @@ class UpdaterMiddleware extends AbstractBase {
   static updatenow () {
     MC.request( "task.submit", [ "update.update", "" ] );
   }
+
   static getConfig ( callback ) {
     MC.request( "update.get_config"
               , []
               , callback
               );
+  }
+
+  static checkForUpdate () {
+    MC.request( "task.submit", [ "update.check", [] ] );
   }
 };
 

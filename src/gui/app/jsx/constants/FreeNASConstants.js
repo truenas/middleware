@@ -36,6 +36,7 @@ const FREENAS_CONSTANTS =
     , RECEIVE_GROUP_UPDATE_TASK: null
 
     // Services
+    , RECEIVE_MIDDLEWARE_SCHEMAS: null
     , RECEIVE_RAW_SERVICES: null
     , RECEIVE_SERVICE_UPDATE_TASK: null
 
@@ -61,6 +62,7 @@ const FREENAS_CONSTANTS =
 
     // ZFS
     , RECEIVE_VOLUMES: null
+    , RECEIVE_AVAILABLE_DISKS: null
     , RECEIVE_POOL: null
     , RECEIVE_BOOT_POOL: null
     , RECEIVE_POOL_DISK_IDS: null

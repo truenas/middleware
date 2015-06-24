@@ -174,7 +174,7 @@ const UserEdit = React.createClass(
                   groupClassName   = { _.has( this.state.locallyModifiedValues["group"] ) ? "editor-was-modified" : "" }
                   labelClassName   = "col-xs-4"
                   wrapperClassName = "col-xs-8" >
-                  { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
+                  { this.generateOptionsList( GroupsStore.groups, "id", "name" ) }
                 </TWBS.Input>
                 {/* sshpubkey */}
                 <TWBS.Input
@@ -201,7 +201,7 @@ const UserEdit = React.createClass(
                   labelClassName   = "col-xs-4"
                   wrapperClassName = "col-xs-8"
                             multiple >
-                            { this.generateOptionsList( GroupsStore.getAllGroups(), "id", "name" ) }
+                            { this.generateOptionsList( GroupsStore.groups, "id", "name" ) }
                 </TWBS.Input>
               </TWBS.Col>
               <TWBS.Col xs = {4}>

@@ -1,4 +1,4 @@
-<mockup version="1.0" skin="wireframe" fontFace="Balsamiq Sans" measuredW="1743" measuredH="826" mockupW="1637" mockupH="806">
+<mockup version="1.0" skin="wireframe" fontFace="Balsamiq Sans" measuredW="1106" measuredH="820" mockupW="1000" mockupH="800">
   <controls>
     <control controlID="0" controlTypeID="com.balsamiq.mockups::BrowserWindow" x="106" y="20" w="1000" h="800" measuredW="450" measuredH="400" zOrder="0" locked="true" isInGroup="-1">
       <controlProperties>
@@ -134,118 +134,7 @@
         <text>Update</text>
       </controlProperties>
     </control>
-    <control controlID="607" controlTypeID="__group__" x="243" y="271" w="560" h="141" measuredW="560" measuredH="141" zOrder="19" locked="false" isInGroup="-1">
-      <groupChildrenDescriptors>
-        <control controlID="0" controlTypeID="__group__" x="0" y="50" w="384" h="48" measuredW="384" measuredH="48" zOrder="0" locked="false" isInGroup="607">
-          <groupChildrenDescriptors>
-            <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="0" y="0" w="384" h="48" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="0">
-              <controlProperties>
-                <borderStyle>roundedSolid</borderStyle>
-                <color>11982760</color>
-              </controlProperties>
-            </control>
-            <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="34" y="14" w="-1" h="-1" measuredW="209" measuredH="21" zOrder="1" locked="false" isInGroup="0">
-              <controlProperties>
-                <text>Update%20available.%20Version%202e4hjbh4.</text>
-              </controlProperties>
-            </control>
-            <control controlID="3" controlTypeID="com.balsamiq.mockups::Icon" x="270" y="12" w="-1" h="-1" measuredW="24" measuredH="24" zOrder="2" locked="false" isInGroup="0">
-              <controlProperties>
-                <color>2848996</color>
-                <icon>EyeIcon%7Csmall</icon>
-              </controlProperties>
-            </control>
-            <control controlID="5" controlTypeID="com.balsamiq.mockups::Label" x="297" y="14" w="-1" h="-1" measuredW="72" measuredH="21" zOrder="3" locked="false" isInGroup="0">
-              <controlProperties>
-                <color>2848996</color>
-                <text>Show%20more...</text>
-              </controlProperties>
-            </control>
-          </groupChildrenDescriptors>
-        </control>
-        <control controlID="1" controlTypeID="com.balsamiq.mockups::Button" x="150" y="117" w="-1" h="-1" measuredW="162" measuredH="24" zOrder="1" locked="false" isInGroup="607">
-          <controlProperties>
-            <color>9684093</color>
-            <menuIcon>true</menuIcon>
-            <text>Download%20and%20install</text>
-          </controlProperties>
-        </control>
-        <control controlID="2" controlTypeID="com.balsamiq.mockups::Button" x="0" y="117" w="-1" h="-1" measuredW="103" measuredH="24" zOrder="2" locked="false" isInGroup="607">
-          <controlProperties>
-            <text>Check%20update</text>
-          </controlProperties>
-        </control>
-        <control controlID="3" controlTypeID="__group__" x="0" y="0" w="560" h="41" measuredW="560" measuredH="41" zOrder="3" locked="false" isInGroup="607">
-          <groupChildrenDescriptors>
-            <control controlID="0" controlTypeID="com.balsamiq.mockups::Label" x="0" y="0" w="-1" h="-1" measuredW="491" measuredH="21" zOrder="0" locked="false" isInGroup="3">
-              <controlProperties>
-                <text>You%20are%20now%20on%20%22FreeNAS%2010%20nightly%22%20update%20train%20from%20%22iX%20systems%22%20update%20server.%20</text>
-              </controlProperties>
-            </control>
-            <control controlID="6" controlTypeID="com.balsamiq.mockups::Label" x="0" y="20" w="-1" h="-1" measuredW="420" measuredH="21" zOrder="1" locked="false" isInGroup="3">
-              <controlProperties>
-                <text>Updates%20are%20fetched%20every%20%22week%22%20and%20update%20signature%20is%20%22requested%22</text>
-              </controlProperties>
-            </control>
-            <control controlID="7" controlTypeID="com.balsamiq.mockups::Label" x="500" y="20" w="-1" h="-1" measuredW="60" measuredH="21" zOrder="2" locked="false" isInGroup="3">
-              <controlProperties>
-                <color>3355443</color>
-                <text>Change%20it.</text>
-                <underline>true</underline>
-              </controlProperties>
-            </control>
-          </groupChildrenDescriptors>
-        </control>
-      </groupChildrenDescriptors>
-    </control>
-    <control controlID="608" controlTypeID="__group__" x="1183" y="21" w="560" h="132" measuredW="560" measuredH="132" zOrder="20" locked="false" isInGroup="-1">
-      <groupChildrenDescriptors>
-        <control controlID="0" controlTypeID="__group__" x="0" y="41" w="384" h="48" measuredW="384" measuredH="48" zOrder="0" locked="false" isInGroup="608">
-          <groupChildrenDescriptors>
-            <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="0" y="0" w="384" h="48" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="0">
-              <controlProperties>
-                <borderStyle>roundedSolid</borderStyle>
-                <color>15658734</color>
-              </controlProperties>
-            </control>
-            <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="34" y="14" w="-1" h="-1" measuredW="184" measuredH="21" zOrder="1" locked="false" isInGroup="0">
-              <controlProperties>
-                <text>No%20update%20available%20at%20this%20time</text>
-              </controlProperties>
-            </control>
-          </groupChildrenDescriptors>
-        </control>
-        <control controlID="1" controlTypeID="com.balsamiq.mockups::Button" x="150" y="108" w="-1" h="-1" measuredW="162" measuredH="24" zOrder="1" locked="false" isInGroup="608">
-          <controlProperties>
-            <color>15658734</color>
-            <menuIcon>true</menuIcon>
-            <text>Download%20and%20install</text>
-          </controlProperties>
-        </control>
-        <control controlID="2" controlTypeID="com.balsamiq.mockups::Button" x="0" y="108" w="-1" h="-1" measuredW="103" measuredH="24" zOrder="2" locked="false" isInGroup="608">
-          <controlProperties>
-            <text>Check%20update</text>
-          </controlProperties>
-        </control>
-        <control controlID="3" controlTypeID="__group__" x="0" y="0" w="560" h="21" measuredW="560" measuredH="21" zOrder="3" locked="false" isInGroup="608">
-          <groupChildrenDescriptors>
-            <control controlID="0" controlTypeID="com.balsamiq.mockups::Label" x="0" y="0" w="-1" h="-1" measuredW="491" measuredH="21" zOrder="0" locked="false" isInGroup="3">
-              <controlProperties>
-                <text>You%20are%20now%20on%20%22FreeNAS%2010%20nightly%22%20update%20train%20from%20%22iX%20systems%22%20update%20server.%20</text>
-              </controlProperties>
-            </control>
-            <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="500" y="0" w="-1" h="-1" measuredW="60" measuredH="21" zOrder="1" locked="false" isInGroup="3">
-              <controlProperties>
-                <color>3355443</color>
-                <text>Change%20it.</text>
-                <underline>true</underline>
-              </controlProperties>
-            </control>
-          </groupChildrenDescriptors>
-        </control>
-      </groupChildrenDescriptors>
-    </control>
-    <control controlID="609" controlTypeID="__group__" x="1181" y="246" w="386" h="206" measuredW="386" measuredH="206" zOrder="21" locked="false" isInGroup="-1">
+    <control controlID="609" controlTypeID="__group__" x="243" y="270" w="386" h="206" measuredW="386" measuredH="206" zOrder="19" locked="false" isInGroup="-1">
       <groupChildrenDescriptors>
         <control controlID="0" controlTypeID="__group__" x="2" y="115" w="384" h="48" measuredW="384" measuredH="48" zOrder="0" locked="false" isInGroup="609">
           <groupChildrenDescriptors>
@@ -327,71 +216,11 @@
         </control>
       </groupChildrenDescriptors>
     </control>
-    <control controlID="610" controlTypeID="__group__" x="1183" y="574" w="560" h="252" measuredW="560" measuredH="252" zOrder="22" locked="false" isInGroup="-1">
-      <groupChildrenDescriptors>
-        <control controlID="0" controlTypeID="__group__" x="0" y="41" w="550" h="173" measuredW="550" measuredH="173" zOrder="0" locked="false" isInGroup="610">
-          <groupChildrenDescriptors>
-            <control controlID="0" controlTypeID="com.balsamiq.mockups::Canvas" x="0" y="0" w="550" h="173" measuredW="100" measuredH="70" zOrder="0" locked="false" isInGroup="0">
-              <controlProperties>
-                <borderStyle>roundedSolid</borderStyle>
-                <color>11982760</color>
-              </controlProperties>
-            </control>
-            <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="19" y="7" w="-1" h="-1" measuredW="225" measuredH="22" zOrder="1" locked="false" isInGroup="0">
-              <controlProperties>
-                <size>14</size>
-                <text>Update%20available.%20Version%202e4hjbh4.</text>
-              </controlProperties>
-            </control>
-            <control controlID="3" controlTypeID="com.balsamiq.mockups::Icon" x="449" y="9" w="-1" h="-1" measuredW="16" measuredH="16" zOrder="2" locked="false" isInGroup="0">
-              <controlProperties>
-                <color>2848996</color>
-                <icon>CircledXIcon%7Cxsmall</icon>
-              </controlProperties>
-            </control>
-            <control controlID="5" controlTypeID="com.balsamiq.mockups::Label" x="468" y="6" w="-1" h="-1" measuredW="70" measuredH="21" zOrder="3" locked="false" isInGroup="0">
-              <controlProperties>
-                <color>2848996</color>
-                <text>Hide%20details</text>
-              </controlProperties>
-            </control>
-            <control controlID="7" controlTypeID="com.balsamiq.mockups::Paragraph" x="19" y="35" w="516" h="131" measuredW="275" measuredH="80" zOrder="4" locked="false" isInGroup="0">
-              <controlProperties>
-                <size>12</size>
-                <text>But%20I%20must%20explain%20to%20you%20how%20all%20this%20mistaken%20idea%20of%20denouncing%20pleasure%20and%20praising%20pain%20was%20born%20and%20I%20will%20give%20you%20a%20complete%20account%20of%20the%20system%2C%20and%20expound%20the%20actual%20teachings%20of%20the%20great%20explorer%20of%20the%20truth%2C%20the%20master-builder%20of%20human%20happiness.%20No%20one%20rejects%2C%20dislikes%2C%20or%20avoids%20pleasure%20itself%2C%20because%20it%20is%20pleasure%2C%20but%20because%20those%20who%20do%20not%20know%20how%20to%20pursue%20pleasure%20rationally%20encounter%20consequences%20that%20are%20extremely%20painful.%20Nor%20again%20is%20there%20anyone%20who%20loves%20or%20pursues%20or%20desires%20to%20obtain%20pain%20of%20itself%2C%20because%20it%20is%20pain%2C%20but%20because%20occasionally</text>
-              </controlProperties>
-            </control>
-          </groupChildrenDescriptors>
-        </control>
-        <control controlID="1" controlTypeID="com.balsamiq.mockups::Button" x="150" y="228" w="-1" h="-1" measuredW="162" measuredH="24" zOrder="1" locked="false" isInGroup="610">
-          <controlProperties>
-            <color>9684093</color>
-            <menuIcon>true</menuIcon>
-            <text>Download%20and%20install</text>
-          </controlProperties>
-        </control>
-        <control controlID="2" controlTypeID="com.balsamiq.mockups::Button" x="0" y="228" w="-1" h="-1" measuredW="103" measuredH="24" zOrder="2" locked="false" isInGroup="610">
-          <controlProperties>
-            <text>Check%20update</text>
-          </controlProperties>
-        </control>
-        <control controlID="3" controlTypeID="__group__" x="0" y="0" w="560" h="21" measuredW="560" measuredH="21" zOrder="3" locked="false" isInGroup="610">
-          <groupChildrenDescriptors>
-            <control controlID="0" controlTypeID="com.balsamiq.mockups::Label" x="0" y="0" w="-1" h="-1" measuredW="491" measuredH="21" zOrder="0" locked="false" isInGroup="3">
-              <controlProperties>
-                <text>You%20are%20now%20on%20%22FreeNAS%2010%20nightly%22%20update%20train%20from%20%22iX%20systems%22%20update%20server.%20</text>
-              </controlProperties>
-            </control>
-            <control controlID="1" controlTypeID="com.balsamiq.mockups::Label" x="500" y="0" w="-1" h="-1" measuredW="60" measuredH="21" zOrder="1" locked="false" isInGroup="3">
-              <controlProperties>
-                <color>3355443</color>
-                <text>Change%20it.</text>
-                <underline>true</underline>
-              </controlProperties>
-            </control>
-          </groupChildrenDescriptors>
-        </control>
-      </groupChildrenDescriptors>
+    <control controlID="610" controlTypeID="com.balsamiq.mockups::Title" x="195" y="225" w="-1" h="-1" measuredW="162" measuredH="15" zOrder="20" locked="false" isInGroup="-1">
+      <controlProperties>
+        <size>12</size>
+        <text>System%20settings%20%20%3E%3E%20%20Update</text>
+      </controlProperties>
     </control>
   </controls>
 </mockup>

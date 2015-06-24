@@ -67,6 +67,7 @@
 /usr/local/lib/dispatcher/plugins/ShareAFPPlugin.py
 /usr/local/lib/dispatcher/plugins/SharingPlugin.py
 /usr/local/lib/dispatcher/plugins/SystemDatasetPlugin.py
+/usr/local/lib/dispatcher/plugins/SwapPlugin.py
 /usr/local/lib/dispatcher/plugins/UpdatePlugin.py
 /usr/local/libexec/dispatcher/notify-pam
 /usr/local/sbin/dispatcherd
