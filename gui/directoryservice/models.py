@@ -1015,7 +1015,7 @@ class LDAP(DirectoryServiceBase):
     )
     ldap_binddn = models.CharField(
         verbose_name=_("Bind DN"),
-        max_length=120,
+        max_length=256,
         help_text=_(
             "The distinguished name with which to bind to the "
             "directory server, e.g. cn=admin,dc=test,dc=org"),
