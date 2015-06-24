@@ -72,15 +72,20 @@ const menuTiming = 600;
 const PrimaryNavigation = React.createClass(
 
   { getInitialState: function () {
-      return { expanded: true };
+      return { expanded    : true
+             , docLocation : "#"
+      };
     }
 
   , componentDidMount: function () {
       // After the component has a real DOM representation, store the auto width
       // value of the navbar
-      this.setState({
-        fullNavWidth: this.refs.navRoot.getDOMNode().offsetWidth + "px"
-      });
+      this.setState(
+        { fullNavWidth: this.refs.navRoot.getDOMNode().offsetWidth + "px"
+        , docLocation : document.location.protocol + "//" + document.domain
+                        + ":8180/apidoc"
+         }
+      );
     }
 
   , handleMenuToggle: function ( event ) {
@@ -131,6 +136,23 @@ const PrimaryNavigation = React.createClass(
         ];
 
       Velocity.RunSequence( collapseSequence );
+    }
+
+  , apidoc ( ) {
+      return (
+        <li
+          role = "presentation"
+          className = "nav-item"
+          key = { 1010 } >
+          <a href = { this.state.docLocation } target="_blank" >
+            <Icon
+              glyph = { "crosshairs" }
+              badgeContent = { "" }
+              badgeStyle = { "warning" } />
+            <span className = "nav-item-label" >{ "API Docs" }</span>
+          </a>
+        </li>
+        );
     }
 
   , createNavItem ( rawItem, index ) {
@@ -187,6 +209,8 @@ const PrimaryNavigation = React.createClass(
           </div>
 
           { paths.map( this.createNavItem ) }
+
+          { this.apidoc() }
 
           <button
             className="btn btn-info primary-nav-debug-button"
