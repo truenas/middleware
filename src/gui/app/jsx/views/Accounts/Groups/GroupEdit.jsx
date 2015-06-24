@@ -86,7 +86,8 @@ const GroupEdit = React.createClass(
     let cancelButton =
       <TWBS.Button
         className = "pull-left"
-        bsStyle = "default" >
+        bsStyle = "default"
+        onClick = { this.props.handleViewChange.bind( null, "view" ) } >
         { "Cancel Edit" }
       </TWBS.Button>;
 
