@@ -42,7 +42,7 @@ var DiskUsage = React.createClass({
     var newState = {};
     newState.pool = PoolStore.getDisksInBootPool();
 
-    if ( newState.pool ) {
+    if ( newState.pool && newState.pool.length > 0 ) {
       var systemPoolPath = newState.pool[0].split( "/" ) ;
       var systemPoolName = systemPoolPath[systemPoolPath.length - 1]
                             .slice( 0, systemPoolPath[systemPoolPath.length - 1]
