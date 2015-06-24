@@ -6,7 +6,7 @@ NANO_LABEL?=FreeNAS
 VERSION?=9.3-MASTER
 TRAIN?=${NANO_LABEL}-${VERSION}
 
-.ifdef PRODUCTION
+.if defined(PRODUCTION) && ${PRODUCION} == "yes"
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
 .if !defined(_KEY)
 KEY_PASSWORD!= build/read-password.sh
