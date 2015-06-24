@@ -38,13 +38,8 @@ GIT_REPO_SETTING=.git-repo-setting
 GIT_LOCATION!=cat ${GIT_REPO_SETTING}
 .endif
 
-.if defined(PRODUCTION) && ${PRODUCTION} == "yes"
 UPDATE_USER?=sef		# For now, just use sef's account
 UPDATE_HOST?=update.freenas.org
-.else
-UPDATE_USER?=jkh		# For now, just use sef's account
-UPDATE_HOST?=update-int.freenas.org
-.endif
 
 ENV_SETUP=env _KEY=set
 
