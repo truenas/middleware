@@ -25,7 +25,7 @@ import UserAdd from "./views/Accounts/Users/UserAdd";
 
 import Groups from "./views/Accounts/Groups";
 import GroupItem from "./views/Accounts/Groups/GroupItem";
-import AddGroup from "./views/Accounts/Groups/AddGroup";
+import GroupAdd from "./views/Accounts/Groups/GroupAdd";
 
 import Tasks from "./views/Tasks";
 
@@ -90,7 +90,7 @@ module.exports = (
         <Route
           name    = "add-group"
           path    = "add-group"
-          handler = { AddGroup } />
+          handler = { GroupAdd } />
         <Route
           name    = "groups-editor"
           path    = ":groupID"
