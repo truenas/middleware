@@ -43,7 +43,7 @@ UPDATE_USER=sef
 UPDATE_HOST=update.ixsystems.com
 .else
 UPDATE_USER?=jkh		# For now, just use sef's account
-UPDATE_HOST?=update-int.freenas.org
+UPDATE_HOST?=update-int.ixsystems.com
 .endif
 
 ENV_SETUP=env _KEY=set
