@@ -11,122 +11,120 @@ import TWBS from "react-bootstrap";
 import GroupsStore from "../../../stores/GroupsStore";
 import GroupsMiddleware from "../../../middleware/GroupsMiddleware";
 
-import inputHelpers from "../../../components/mixins/inputHelpers";
-import groupMixins from "../../../components/mixins/groupMixins";
 
 const AddGroup = React.createClass({
 
-    mixins: [   inputHelpers
-              , groupMixins ]
-
-  , contextTypes: {
+  contextTypes: {
       router: React.PropTypes.func
     }
 
-  , propTypes: {
-      viewData: React.PropTypes.object.isRequired
+  , propTypes:
+    { itemSchema: React.PropTypes.object.isRequired
+    , itemLabels: React.PropTypes.object.isRequired
     }
 
   , getInitialState: function () {
+    return { newGroup: {} };
+  }
 
-      var groupsList = GroupsStore.groups;
-
-      return {
-          locallyModifiedValues : {}
-        , dataKeys   : this.props.viewData.format.dataKeys
-        , groupsList : groupsList
-      };
-    }
-
-  , handleValueChange: function( key, event ) {
-      var value = this.refs[key].getValue();
-      var newLocallyModified = this.state.locallyModifiedValues;
-
-      var dataKey = _.find(this.state.dataKeys, function( dataKey ) {
-        return (dataKey.key === key);
-      });
-
-      newLocallyModified[ key ] = this.processFormInput( event, value, dataKey );
-
-      this.setState( { locallyModifiedValues: newLocallyModified } );
-    }
+  , handleChange: function ( field, event ) {
+    let newGroup = this.state.newGroup;
+    newGroup[ field ] = event.target.value;
+    this.setState( { newGroup: newGroup } );
+  }
 
   , submitNewGroup: function () {
-      var routing = this.props.viewData.routing;
-      var newGroupValues = {};
-      var params         = {};
 
-      // Stage values for submission. Read-only values are not allowed.
-      newGroupValues = this.removeReadOnlyFields( this.state.locallyModifiedValues, this.state.dataKeys );
+  }
 
-      // Set up to forward the view to the created group.
-      params[ routing[ "param" ] ] = newGroupValues[ "name" ];
-
-      // Submit the new group and redirect the view to it.
-      // TODO: Does this need additional input validation?
-      // TODO: Only redirect if the group was actually created.
-      GroupsMiddleware.createGroup( newGroupValues, this.context.router.transitionTo( routing[ "route" ], params) );
-
-    }
-
-    // TODO: There is probably room to genericize this into a mixin.
   , cancel: function () {
-      this.context.router.transitionTo( "groups" );
-    }
+    this.context.router.transitionTo( "groups" );
+  }
+
+  , reset: function () {
+    this.setState( { newGroup: {} } );
+  }
 
   , render: function () {
-      var addButtons =
-        <TWBS.ButtonToolbar>
-          <TWBS.Button className = "pull-right"
-                       onClick   = { this.cancel }
-                       bsStyle   = "default">{"Cancel"}</TWBS.Button>
-          <TWBS.Button className = "pull-right"
-                       disabled  = { _.isEmpty( this.state.locallyModifiedValues ) }
-                       onClick   = { this.submitNewGroup}
-                       bsStyle   = "info">{"Save New Group"}</TWBS.Button>
-        </TWBS.ButtonToolbar>;
 
-      var inputFields =
-        <form className = "form-horizontal">
-          <TWBS.Grid fluid>
-            <TWBS.Row>
-              <TWBS.Col xs = {4}>
-                {/* Group id */}
-                <TWBS.Input type             = "text"
-                            label            = "Group ID"
-                            ref              = "id"
-                            value            = { this.state.locallyModifiedValues["id"]? this.state.locallyModifiedValues["id"]: this.getNextGID() }
-                            onChange         = { this.handleValueChange.bind( null, "id" ) }
-                            groupClassName   = { _.has(this.state.locallyModifiedValues, "id") && !_.isEmpty(this.state.locallyModifiedValues["id"]) ? "editor-was-modified" : ""  }
-                            labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8" />
-              </TWBS.Col>
-              <TWBS.Col xs = {8}>
-                {/* username */}
-                <TWBS.Input type             = "text"
-                            label            = "Group Name"
-                            ref              = "name"
-                            value            = { this.state.locallyModifiedValues["name"]? this.state.locallyModifiedValues["name"]: null }
-                            onChange         = { this.handleValueChange.bind( null, "name" ) }
-                            groupClassName   = { _.has(this.state.locallyModifiedValues, "name") && !_.isEmpty(this.state.locallyModifiedValues["name"]) ? "editor-was-modified" : ""  }
-                            labelClassName   = "col-xs-4"
-                            wrapperClassName = "col-xs-8"
-                            required />
-              </TWBS.Col>
-            </TWBS.Row>
-          </TWBS.Grid>
-        </form>;
+    let cancelButton =
+      <TWBS.Button
+        className = "pull-left"
+        onClick   = { this.cancel }
+        bsStyle   = "default" >
+        { "Cancel" }
+      </TWBS.Button>;
+
+    let resetButton =
+      <TWBS.Button
+        className = "pull-left"
+        bsStyle = "warning"
+        onClick = { this.reset } >
+        { "Reset Changes" }
+      </TWBS.Button>;
+
+    let submitGroupButton =
+      <TWBS.Button
+        className = "pull-right"
+        disabled  = { _.isEmpty( this.state.newGroup ) }
+        onClick   = { this.submitNewGroup }
+        bsStyle   = "info" >
+        { "Create New Group" }
+      </TWBS.Button>;
+
+    let buttonToolbar =
+      <TWBS.ButtonToolbar>
+        { cancelButton }
+        { resetButton }
+        { submitGroupButton }
+      </TWBS.ButtonToolbar>;
+
+    let inputFields =
+      <TWBS.Row>
+        <TWBS.Col xs = {4}>
+          {/* Group id */}
+          <TWBS.Input
+            type             = "text"
+            label            = { this.props.itemLabels.properties[ "groupID" ] }
+            value            = { this.state.newGroup[ "groupID" ]
+                               ? this.state.newGroup[ "groupID" ]
+                               : null }
+            onChange         = { this.handleChange.bind( null, "groupID" ) }
+            className   = { _.has( this.state.newGroup, "groupID" )
+                              && !_.isEmpty( this.state.newGroup[ "id" ] )
+                               ? "editor-was-modified"
+                               : ""  } />
+        </TWBS.Col>
+        <TWBS.Col xs = {8}>
+          {/* username */}
+          <TWBS.Input
+            type             = "text"
+            label            = { this.props.itemLabels.properties[ "groupName" ] }
+            value            = { this.state.newGroup[ "groupName" ]
+                               ? this.state.newGroup[ "groupName" ]
+                               : null }
+            onChange         = { this.handleChange.bind( null, "groupName" ) }
+            className   = { _.has( this.state.newGroup, "groupName" )
+                              && !_.isEmpty( this.state.newGroup[ "groupName" ] )
+                               ? "editor-was-modified"
+                               : ""  } />
+        </TWBS.Col>
+      </TWBS.Row>;
 
 
-      return (
-        <div className="viewer-item-info">
-          <TWBS.Grid fluid>
-            { addButtons }
-            { inputFields }
-          </TWBS.Grid>
-        </div>
-      );
-    }
+    return (
+      <div className="viewer-item-info">
+        <TWBS.Grid fluid>
+          <TWBS.Row>
+            <TWBS.Col xs = {12}>
+              { buttonToolbar }
+            </TWBS.Col>
+          </TWBS.Row>
+          { inputFields }
+        </TWBS.Grid>
+      </div>
+    );
+  }
 });
 
 export default AddGroup;
