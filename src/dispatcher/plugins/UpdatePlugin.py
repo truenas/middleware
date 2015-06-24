@@ -254,7 +254,7 @@ def generate_update_cache(dispatcher, cache_dir=None):
 class UpdateProvider(Provider):
 
     @returns(str)
-    def is_update_availabe(self):
+    def is_update_available(self):
         temp_updateAvailable = update_cache.get('updateAvailable',
                                                 timeout=1)
         if temp_updateAvailable is not None:
