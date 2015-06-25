@@ -400,9 +400,10 @@ If you are new to LDAP terminology, skim through the
 |                         |                | *TLS* and a "Certificate" must be selected in order for authentication to work                                 |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Certificate             | drop-down menu | only available in "Advanced Mode"; select the certificate of the LDAP server if                                |
-|                         |                | SSL or TLS connections are used (required if authentication is used); if you do not have a certificate, first  |
-|                         |                | create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                                      |
+| Certificate             | drop-down menu | only available in "Advanced Mode"; select the certificate of the LDAP server or the CA that signed that        |
+|                         |                | certificate (required if authentication is used); iIf your LDAP server does not already have a certificate,    |
+|                         |                | create a CA using :ref:`CAs`, then the certificate using :ref:`Certificates` and install the certificate on    |
+|                         |                | the LDAP server                                                                                                |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | LDAP timeout            | integer        | increase this value (in seconds) if obtaining a Kerberos ticket times out                                      |
