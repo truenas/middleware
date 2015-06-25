@@ -228,7 +228,7 @@ class EventType(object):
         self.name = name
         self.source = source
         self.schema = schema
-        if self.schema:
+        if self.schema and not isinstance(self.schema, dict):
             self.schema = map(convert_schema, self.schema)
         self.refcount = 0
         self.logger = logging.getLogger('EventType:{0}'.format(name))

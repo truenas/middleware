@@ -290,9 +290,10 @@ class SchemaHelper(object):
 
     @staticmethod
     def object(*args, **kwargs):
-        return {
-            'type': 'object'
-        }
+        result = {'type': 'object'}
+        if 'properties' in kwargs:
+            result['properties'] = {n: convert_schema(x) for n, x in kwargs['properties'].items()}
+        return result
 
     @staticmethod
     def tuple(*args):

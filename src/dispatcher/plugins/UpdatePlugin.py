@@ -187,9 +187,8 @@ class UpdateHandler(object):
             'numFilesTotal': self.numfilestotal,
             'error': self.error,
             'finished': self.finished,
+            'details': self.details,
         }
-        if self.details:
-            data['details'] = self.details
         if self.update_progress is not None:
             self.update_progress(self.progress, self.details)
         self.dispatcher.dispatch_event('update.in_progress', {
@@ -341,7 +340,6 @@ class UpdateConfigureTask(Task):
         )
         self.dispatcher.dispatch_event('update.changed', {
             'operation': 'update',
-            'ids': ['update'],
         })
 
 
@@ -455,6 +453,24 @@ def _init(dispatcher, plugin):
             'updateCheckAuto': {'type': 'boolean'},
         },
     })
+    update_in_progress_schema = h.object(properties={
+            'operation': h.enum(str, ['Downloading', 'Installing']),
+            'details': str,
+            'indeterminate': bool,
+            'percent': int,
+            'reboot': bool,
+            'pkgName': str,
+            'pkgVersion': str,
+            'filename': str,
+            'filesize': int,
+            'numFilesDone': int,
+            'numFilesTotal': int,
+            'error': bool,
+            'finished': bool,
+        })
+    plugin.register_schema_definition('update.in_progress',
+                                      update_in_progress_schema)
+
     # Register providers
     plugin.register_provider("update", UpdateProvider)
 
@@ -463,6 +479,11 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("update.check", CheckUpdateTask)
     plugin.register_task_handler("update.download", DownloadUpdateTask)
     plugin.register_task_handler("update.update", UpdateTask)
+
+    # Register Event Types
+    plugin.register_event_type('update.in_progress', None,
+                               update_in_progress_schema)
+    plugin.register_event_type('update.changed')
 
     # Get the Update Cache (if any) at system boot (and hence in init here)
     generate_update_cache(dispatcher)
