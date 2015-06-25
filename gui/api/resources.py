@@ -226,6 +226,11 @@ class PermissionResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE', 'application/json'),
         )
+        deserialized.update({
+            'mp_group_en': deserialized.get('mp_group_en', True),
+            'mp_mode_en': deserialized.get('mp_mode_en', True),
+            'mp_user_en': deserialized.get('mp_user_en', True),
+        })
         form = MountPointAccessForm(data=deserialized)
         if not form.is_valid():
             raise ImmediateHttpResponse(
