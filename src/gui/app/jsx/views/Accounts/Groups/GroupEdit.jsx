@@ -67,7 +67,7 @@ const GroupEdit = React.createClass(
       <TWBS.Input
         className = { groupNameClass }
         type = "text"
-        label = "Group Name"
+        label = { this.props.itemLabels.properties[ "groupName" ] }
         value = { groupNameValue }
         onChange = { this.handleChange.bind( null, "groupName" ) } />;
 
