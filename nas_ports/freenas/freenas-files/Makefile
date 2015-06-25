@@ -87,10 +87,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/share/perftests-nas/tests/* ${STAGEDIR}${PREFIX}/usr/local/share/perftests-nas/tests/
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/www/data
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.subr ${STAGEDIR}/${PREFIX}/etc/rc.subr
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/cleanvar ${STAGEDIR}/${PREFIX}/etc/rc.d/cleanvar
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-bootstrap ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-bootstrap
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-etc ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-etc
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/rc.d/ix-network ${STAGEDIR}/${PREFIX}/etc/rc.d/ix-network
 
 	ln -s /usr/local/etc ${STAGEDIR}${PREFIX}/etc/local
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/boot/loader.conf ${STAGEDIR}${PREFIX}/boot/loader.conf
@@ -114,6 +110,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.shrc ${STAGEDIR}${PREFIX}/.shrc
 
 	mkdir -p ${STAGEDIR}${PREFIX}/etc/launchd.d/
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/bootstrap ${STAGEDIR}${PREFIX}/etc/bootstrap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/datastore.json ${STAGEDIR}${PREFIX}/etc/launchd.d/datastore.json
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/dispatcher.json ${STAGEDIR}${PREFIX}/etc/launchd.d/dispatcher.json
 

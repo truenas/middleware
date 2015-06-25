@@ -37,10 +37,7 @@ etc/rc.conf
 etc/sysctl.conf
 etc/ttys
 etc/mail/mailer.conf
-etc/rc.d/cleanvar
-etc/rc.d/ix-bootstrap
-etc/rc.d/ix-etc
-etc/rc.d/ix-network
+etc/bootstrap
 etc/launchd.d/datastore.json
 etc/launchd.d/dispatcher.json
 .bashrc

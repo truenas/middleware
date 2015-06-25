@@ -1,0 +1,7 @@
+#!/bin/sh
+/sbin/zfs mount -a
+/sbin/mount -uw /
+/sbin/ifconfig lo0 inet 127.0.0.1 netmask 255.0.0.0 up
+/sbin/mount -t tmpfs tmpfs /tmp
+/sbin/mount -t tmpfs tmpfs /var/tmp
+/sbin/mount -t tmpfs tmpfs /var/run
