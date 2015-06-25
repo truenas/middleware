@@ -205,6 +205,14 @@ class RpcService(object):
 
         return methods
 
+    def populate_event_data(self, evt):
+        result = {'refCount': evt.refcount}
+        if evt.source:
+            result['source'] = type(evt.source).__name__
+        if evt.schema:
+            result['eventSchema'] = evt.schema
+        return result
+
 
 class RpcException(Exception):
     def __init__(self, code, message, extra=None):
@@ -235,6 +243,9 @@ class DiscoveryService(RpcService):
             raise RpcException(errno.ENOENT, "Service not found")
 
         return list(self.__context.instances[service].enumerate_methods())
+
+    def get_event_types(self):
+        return {n: self.populate_event_data(x) for n, x in self.__context.dispatcher.event_types.items() }
 
     def get_schema(self):
         return {
