@@ -35,7 +35,12 @@ const AddGroup = React.createClass({
   }
 
   , submitNewGroup: function () {
+    let newGroup = GS.reverseKeyTranslation( this.state.newGroup );
+    if ( !newGroup[ "groupID" ] ) {
+      newGroup[ "groupID" ] = this.state.nextGID;
+    }
 
+    GM.createGroup( newGroup );
   }
 
   , cancel: function () {
