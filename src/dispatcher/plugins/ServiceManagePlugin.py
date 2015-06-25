@@ -31,7 +31,7 @@ from gevent import Timeout
 from watchdog import events
 from task import Task, Provider, TaskException, VerifyException, query
 from resources import Resource
-from dispatcher.rpc import RpcException, description, accepts, private
+from dispatcher.rpc import RpcException, description, accepts, private, returns
 from dispatcher.rpc import SchemaHelper as h
 from datastore.config import ConfigNode
 from lib.system import system, SubprocessException
@@ -90,6 +90,8 @@ class ServiceInfoProvider(Provider):
 
         return self.datastore.query('service_definitions', *(filter or []), callback=extend, **(params or {}))
 
+    @accepts(str)
+    @returns(h.object())
     def get_service_config(self, service):
         svc = self.datastore.get_one('service_definitions', ('name', '=', service))
         if not svc:
@@ -100,6 +102,7 @@ class ServiceInfoProvider(Provider):
 
     @private
     @accepts(str)
+    @returns()
     def ensure_started(self, service):
         # XXX launchd!
         svc = self.datastore.get_one('service_definitions', ('name', '=', service))
@@ -189,6 +192,8 @@ class ServiceManageTask(Task):
             raise TaskException(errno.EBUSY, e.err)
 
 
+@description("Updates configuration for services")
+@accepts(str,h.object())
 class UpdateServiceConfigTask(Task):
     def describe(self, service, updated_fields):
         return "Updating configuration for service {0}".format(service)
