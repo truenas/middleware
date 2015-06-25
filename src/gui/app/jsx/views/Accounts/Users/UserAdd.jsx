@@ -99,7 +99,7 @@ const UserAdd = React.createClass({
 
       // If the user requests a new group, make one with the next available GID and the username.
       if (this.state.pleaseCreatePrimaryGroup) {
-        var newGID = this.getNextGID();
+        var newGID = GroupsStore.nextGID;
         GroupsMiddleware.createGroup( {   id   : newGID
                                         , name : newUserValues[ "username" ] } );
         newUserValues[ "group" ] = newGID;
