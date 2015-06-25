@@ -282,8 +282,8 @@ If the system will not join the active directory domain, try running the followi
 traceback, create a bug report at `bugs.freenas.org <http://bugs.freenas.org>`_ that includes the commands in the order which they were run and the exact
 wording of the error message or traceback.
 
-Start with these commands, where the :command:`echo` commands should return a value of *0* and the :command:`klist` command should show a Kerberos
-ticket::
+Start with these commands, where the :command:`echo` commands should return a value of *0* and the :command:`klist` command should show a Kerberos ticket::
+
  sqlite3 /data/freenas-v1.db "update directoryservice_activedirectory set ad_enable=1;"
  echo $?
  service ix-kerberos start
@@ -298,8 +298,8 @@ Next, only run these two commands **if** the "Unix extensions" box is checked in
  service ix-sssd start
  service sssd start
 
-Finally, run these commands. Again, the :command:`echo` command should return a *0*:
-::
+Finally, run these commands. Again, the :command:`echo` command should return a *0*::
+
  python /usr/local/www/freenasUI/middleware/notifier.py start cifs
  service ix-activedirectory start
  service ix-activedirectory status
@@ -397,9 +397,10 @@ If you are new to LDAP terminology, skim through the
 |                         |                | *TLS* and a "Certificate" must be selected in order for authentication to work                                 |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Certificate             | drop-down menu | only available in "Advanced Mode"; select the certificate of the LDAP server if                                |
-|                         |                | SSL or TLS connections are used (required if authentication is used); if you do not have a certificate, first  |
-|                         |                | create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                                      |
+| Certificate             | drop-down menu | only available in "Advanced Mode"; select the certificate of the LDAP server or the CA that signed that        |
+|                         |                | certificate (required if authentication is used); iIf your LDAP server does not already have a certificate,    |
+|                         |                | create a CA using :ref:`CAs`, then the certificate using :ref:`Certificates` and install the certificate on    |
+|                         |                | the LDAP server                                                                                                |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | LDAP timeout            | integer        | increase this value (in seconds) if obtaining a Kerberos ticket times out                                      |
