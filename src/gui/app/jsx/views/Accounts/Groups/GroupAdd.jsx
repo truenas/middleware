@@ -35,10 +35,16 @@ const AddGroup = React.createClass({
   }
 
   , submitNewGroup: function () {
-    let newGroup = GS.reverseKeyTranslation( this.state.newGroup );
-    if ( !newGroup[ "groupID" ] ) {
+
+    let newGroup = this.state.newGroup;
+
+    if ( _.has( newGroup, "groupID" ) ) {
+      newGroup[ "groupID" ] = _.parseInt( newGroup[ "groupID" ] );
+    } else {
       newGroup[ "groupID" ] = this.state.nextGID;
     }
+
+    newGroup = GS.reverseKeyTranslation( newGroup );
 
     GM.createGroup( newGroup );
   }
@@ -91,13 +97,14 @@ const AddGroup = React.createClass({
           {/* Group id */}
           <TWBS.Input
             type             = "text"
+            min              = { 1000 }
             label            = { this.props.itemLabels.properties[ "groupID" ] }
             value            = { this.state.newGroup[ "groupID" ]
                                ? this.state.newGroup[ "groupID" ]
                                : this.state.nextGID }
             onChange         = { this.handleChange.bind( null, "groupID" ) }
-            className   = { _.has( this.state.newGroup, "groupID" )
-                              && !_.isEmpty( this.state.newGroup[ "id" ] )
+            className        = { _.has( this.state.newGroup, "groupID" )
+                              && !_.isEmpty( this.state.newGroup[ "groupID" ] )
                                ? "editor-was-modified"
                                : "" } />
         </TWBS.Col>

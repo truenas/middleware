@@ -40,8 +40,8 @@ class EventSource(object):
     def disable(self, event):
         pass
 
-    def register_event_type(self, name):
-        self.dispatcher.register_event_type(name, None)
+    def register_event_type(self, name, source=None, schema=None):
+        self.dispatcher.register_event_type(name, source, schema)
 
     def emit_event(self, type, **kwargs):
         self.dispatcher.dispatch_event(type, kwargs)

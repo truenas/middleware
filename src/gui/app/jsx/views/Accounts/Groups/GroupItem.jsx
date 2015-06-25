@@ -80,13 +80,6 @@ const GroupItem = React.createClass({
 
     if ( this.state.SESSION_AUTHENTICATED && this.state.targetGroup ) {
 
-      // PROCESSING OVERLAY
-      if ( GroupsStore.isLocalTaskPending( this.state.targetGroup[ "groupID" ] ) ) {
-        processingText = "Saving changes to '" + this.state.targetGroup[ this.props.viewData.format["primaryKey" ] ] + "'";
-      } else if ( GroupsStore.isGroupUpdatePending( this.state.targetGroup[ "groupID" ] ) ) {
-        processingText = "Group '" + this.state.targetGroup[ this.props.keyPrimary ] + "' was updated remotely.";
-      }
-
       // DISPLAY COMPONENT
       let childProps = { handleViewChange : this.handleViewChange
                        , item             : this.state.targetGroup

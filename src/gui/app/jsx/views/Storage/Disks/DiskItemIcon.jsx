@@ -12,7 +12,7 @@ import React from "react";
 const GLYPH_MAP = { HDD: "key"
                   , SSD: "globe"
                   , tapeDrive: "house"
-                   };
+                  };
 
 const DiskItemIcon = React.createClass({
 
@@ -34,7 +34,7 @@ const DiskItemIcon = React.createClass({
              , online: null
              , model: ""
              , size: null
-             , fontSize: 1.5
+             , fontSize: 2
              , badgeFontSize: .6
              , diskType: "HDD"
              }
@@ -50,6 +50,10 @@ const DiskItemIcon = React.createClass({
     let iconStyle = {};
     let iconClassName = null;
 
+    // Override an annoying style. TODO: Fix with an actual class. Sorry,
+    // future me or whoever has to do this.
+    iconStyle.borderRadius = "0%";
+
     if ( this.props.size ) {
       iconStyle.height = this.props.size;
       iconStyle.width = this.props.size;
@@ -63,6 +67,8 @@ const DiskItemIcon = React.createClass({
                   </span>;
     }
 
+    // Keeping this as a _.without because I expect to add back in nullable
+    // values, such as option error styles.
     iconClassName = _.without(
                       [ "fa"
                       , ( "fa-" + GLYPH_MAP[ this.props.diskType ] )
@@ -71,14 +77,16 @@ const DiskItemIcon = React.createClass({
                     , null ).join( " " ) ;
 
     return (
-      <div className = "icon"
-           { ...iconStyle } >
-        <i className = { iconClassName }
-           style = { {fontSize: this.props.fontSize + "em" } } >
-          { iconBadge }
-        </i>
-        <div className = "viewer-icon-item-text">
-          <h6 className = "viewer-icon-item-primary">
+      <div>
+        <div className = "icon"
+          { ...iconStyle } >
+          <i className = { iconClassName }
+            style = { {fontSize: this.props.fontSize + "em" } } >
+            { iconBadge }
+          </i>
+        </div>
+        <div className = "disks-viewer-icon-text">
+          <h6 className = "primary-text">
             { this.props.path }
           </h6>
         </div>

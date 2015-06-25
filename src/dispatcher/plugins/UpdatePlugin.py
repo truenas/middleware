@@ -126,6 +126,8 @@ class UpdateHandler(object):
         self.numfilesdone = 0
         self._baseprogress = 0
         self.dispatcher = dispatcher
+        # Below is the function handle passed to this by the Task so that
+        # its status and progress can be updated accordingly
         self.update_progress = update_progress
 
     def check_handler(self, index, pkg, pkgList):
@@ -139,7 +141,7 @@ class UpdateHandler(object):
         stepprogress = int((1.0 / float(len(pkgList))) * 100)
         self._baseprogress = index * stepprogress
         self.progress = (index - 1) * stepprogress
-        self.emit_uptate_details()
+        self.emit_update_details()
 
     def get_handler(self, method, filename, size=None,
                     progress=None, download_rate=None):
@@ -156,7 +158,7 @@ class UpdateHandler(object):
                 '  %s/s' % download_rate
                 if download_rate else '',
             )
-        self.emit_uptate_details()
+        self.emit_update_details()
 
     def install_handler(self, index, name, packages):
         self.indeterminate = False
@@ -172,7 +174,7 @@ class UpdateHandler(object):
             total,
         )
 
-    def emit_uptate_details(self):
+    def emit_update_details(self):
         data = {
             'indeterminate': self.indeterminate,
             'percent': self.progress,
@@ -185,11 +187,10 @@ class UpdateHandler(object):
             'numFilesTotal': self.numfilestotal,
             'error': self.error,
             'finished': self.finished,
+            'details': self.details,
         }
-        if self.details:
-            data['details'] = self.details
         if self.update_progress is not None:
-            self.update_progress(self.progress)
+            self.update_progress(self.progress, self.details)
         self.dispatcher.dispatch_event('update.in_progress', {
             'operation': self.operation,
             'data': data,
@@ -339,7 +340,6 @@ class UpdateConfigureTask(Task):
         )
         self.dispatcher.dispatch_event('update.changed', {
             'operation': 'update',
-            'ids': ['update'],
         })
 
 
@@ -382,7 +382,9 @@ class DownloadUpdateTask(ProgressTask):
         # TODO: Fix this verify's resource allocation as unique task
         return []
 
-    def update_progress(self, progress):
+    def update_progress(self, progress, message):
+        if message:
+            self.message = message
         self.set_progress(progress)
 
     def run(self):
@@ -411,12 +413,12 @@ class DownloadUpdateTask(ProgressTask):
                       'prepare update cache')
         if not download_successful:
             handler.error = True
-            handler.emit_uptate_details()
+            handler.emit_update_details()
             raise TaskException(
                       errno.EAGAIN,
                       'Downloading Updates Failed for some reason, check logs')
         handler.finished = True
-        handler.emit_uptate_details()
+        handler.emit_update_details()
         self.message = "Updates Finished Downloading"
         self.set_progress(100)
 
@@ -451,6 +453,24 @@ def _init(dispatcher, plugin):
             'updateCheckAuto': {'type': 'boolean'},
         },
     })
+    update_in_progress_schema = h.object(properties={
+            'operation': h.enum(str, ['Downloading', 'Installing']),
+            'details': str,
+            'indeterminate': bool,
+            'percent': int,
+            'reboot': bool,
+            'pkgName': str,
+            'pkgVersion': str,
+            'filename': str,
+            'filesize': int,
+            'numFilesDone': int,
+            'numFilesTotal': int,
+            'error': bool,
+            'finished': bool,
+        })
+    plugin.register_schema_definition('update.in_progress',
+                                      update_in_progress_schema)
+
     # Register providers
     plugin.register_provider("update", UpdateProvider)
 
@@ -459,6 +479,11 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("update.check", CheckUpdateTask)
     plugin.register_task_handler("update.download", DownloadUpdateTask)
     plugin.register_task_handler("update.update", UpdateTask)
+
+    # Register Event Types
+    plugin.register_event_type('update.in_progress', None,
+                               update_in_progress_schema)
+    plugin.register_event_type('update.changed')
 
     # Get the Update Cache (if any) at system boot (and hence in init here)
     generate_update_cache(dispatcher)

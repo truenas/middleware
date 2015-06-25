@@ -88,6 +88,7 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
             _created[ taskArgs[ "id" ] ] = taskArgs;
             break;
 
+          case "task.progress":
           case "task.updated":
             switch ( taskArgs[ "state" ] ) {
 
@@ -123,46 +124,9 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
                 break;
 
               case "ABORTED":
-                _aborted[ taskArgs["id"] ] =
-                  _.merge( CREATED
-                         , WAITING
-                         , EXECUTING
-                         , taskArgs
-                         , { percentage: taskArgs[ "percentage" ] } );
-                delete _created[ taskArgs["id"] ];
-                delete _waiting[ taskArgs["id"] ];
-                delete _executing[ taskArgs["id"] ];
-                break;
-
-              case "FAILED":
-                _failed[ taskArgs["id"] ] =
-                  _.merge( CREATED
-                         , WAITING
-                         , EXECUTING
-                         , taskArgs
-                         , { percentage: taskArgs[ "percentage" ] } );
-                delete _created[ taskArgs["id"] ];
-                delete _waiting[ taskArgs["id"] ];
-                delete _executing[ taskArgs["id"] ];
-                break;
-            }
-
-            break;
-
-          case "task.progress":
-            switch ( taskArgs[ "state" ] ){
-              case "WAITING":
-                _waiting[ taskArgs[ "id" ] ] = _.merge( WAITING, taskArgs );
-                break;
-
-              case "EXECUTING":
-                _executing[ taskArgs[ "id" ] ] = _.merge( EXECUTING, taskArgs );
-                break;
-
-              case "FAILED":
                 perct = taskArgs[ "percentage" ] === 0 ? 50 :
                               taskArgs[ "percentage" ];
-                _failed[ taskArgs["id"] ] =
+                _aborted[ taskArgs["id"] ] =
                   _.merge( CREATED
                          , WAITING
                          , EXECUTING
@@ -173,10 +137,10 @@ TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
                 delete _executing[ taskArgs["id"] ];
                 break;
 
-              case "ABORTED":
+              case "FAILED":
                 perct = taskArgs[ "percentage" ] === 0 ? 50 :
                               taskArgs[ "percentage" ];
-                _aborted[ taskArgs["id"] ] =
+                _failed[ taskArgs["id"] ] =
                   _.merge( CREATED
                          , WAITING
                          , EXECUTING

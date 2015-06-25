@@ -59,7 +59,7 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from datastore import get_datastore
 from datastore.config import ConfigStore
 from dispatcher.jsonenc import loads, dumps
-from dispatcher.rpc import RpcContext, RpcException
+from dispatcher.rpc import RpcContext, RpcException, convert_schema
 from resources import ResourceGraph
 from services import ManagementService, EventService, TaskService, PluginService, ShellService
 from api.handler import ApiHandler
@@ -137,8 +137,8 @@ class Plugin(object):
         self.dispatcher.register_event_source(name, clazz)
         self.registers['event_sources'].append(name)
 
-    def register_event_type(self, name, source=None):
-        self.dispatcher.register_event_type(name, source)
+    def register_event_type(self, name, source=None, schema=None):
+        self.dispatcher.register_event_type(name, source, schema)
         self.registers['event_types'].append(name)
 
     def unregister_event_type(self, name):
@@ -224,10 +224,12 @@ class Plugin(object):
 
 
 class EventType(object):
-    def __init__(self, name, source, schema=None):
+    def __init__(self, name, source=None, schema=None):
         self.name = name
         self.source = source
         self.schema = schema
+        if self.schema and not isinstance(self.schema, dict):
+            self.schema = map(convert_schema, self.schema)
         self.refcount = 0
         self.logger = logging.getLogger('EventType:{0}'.format(name))
 
@@ -520,8 +522,8 @@ class Dispatcher(object):
             greenlet = gevent.spawn(source.run)
             self.threads.append(greenlet)
 
-    def register_event_type(self, name, source=None):
-        self.event_types[name] = EventType(name, source)
+    def register_event_type(self, name, source=None, schema=None):
+        self.event_types[name] = EventType(name, source, schema)
 
     def unregister_event_type(self, name):
         del self.event_types[name]

@@ -13,6 +13,7 @@ import GS from "../../../stores/GroupsStore";
 
 import US from "../../../stores/UsersStore";
 
+import groupMixins from "../../../components/mixins/groupMixins";
 
 const GroupEdit = React.createClass(
 
@@ -21,6 +22,8 @@ const GroupEdit = React.createClass(
     , itemLabels: React.PropTypes.object.isRequired
     , item: React.PropTypes.object.isRequired
     }
+
+  , mixins: [ groupMixins ]
 
   , contextTypes: { router: React.PropTypes.func }
 
@@ -38,6 +41,15 @@ const GroupEdit = React.createClass(
     let newModifiedValues = this.state.modifiedValues;
     newModifiedValues[ field ] = event.target.value;
     this.setState( { modifiedValues: newModifiedValues } );
+  }
+
+  , submitChanges: function () {
+
+    let newGroupProps = this.state.modifiedValues;
+
+    newGroupProps = GS.reverseKeyTranslation( newGroupProps );
+
+    GM.updateGroup( this.props.item[ "groupID" ], newGroupProps );
   }
 
   , render: function () {
@@ -64,7 +76,7 @@ const GroupEdit = React.createClass(
       <TWBS.Input
         className = { groupNameClass }
         type = "text"
-        label = "Group Name"
+        label = { this.props.itemLabels.properties[ "groupName" ] }
         value = { groupNameValue }
         onChange = { this.handleChange.bind( null, "groupName" ) } />;
 
@@ -79,7 +91,8 @@ const GroupEdit = React.createClass(
     let submitButton =
       <TWBS.Button
         className = "pull-right"
-        bsStyle = "success" >
+        bsStyle = "success"
+        onClick = { this.submitChanges } >
         { "Submit Changes" }
       </TWBS.Button>;
 
@@ -95,6 +108,7 @@ const GroupEdit = React.createClass(
       <TWBS.Button
         className = "pull-left"
         bsStyle = "danger"
+        onClick = { this.deleteGroup }
         disabled = { this.props.item[ "builtIn" ] } >
         { "Delete Group" }
       </TWBS.Button>;
