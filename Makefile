@@ -154,7 +154,9 @@ release-push: release
 	if [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
 		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
 		(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest); \
-		${ENV_SETUP} ${MAKE} save-build-env; \
+		if [ "${PRODUCTION}" == "yes" ]; then \
+			${ENV_SETUP} ${MAKE} save-build-env; \
+		fi \
 	fi
 
 update-push:	release
