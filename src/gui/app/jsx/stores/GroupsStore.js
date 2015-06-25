@@ -89,6 +89,17 @@ class GroupsStore extends FluxBase {
                  );
   }
 
+  // Converts a group back into a middleware-compatible mode.
+  // TODO: Put this into FluxBase if we keep the current method of key
+  // translation.
+  reverseKeyTranslation ( group ) {
+    let reverseKeys = _.invert( KEY_TRANSLATION );
+
+    let newGroup = FluxBase.rekeyForClient( group, reverseKeys );
+
+    return newGroup;
+  }
+
   // Will return the first available GID above 1000 (to be used as a default).
   // TODO: Replace this with a middleware call to determine the next available
   // gid.
