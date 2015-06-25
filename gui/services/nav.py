@@ -123,6 +123,10 @@ class FiberChannelPorts(TreeNode):
     append_to = 'sharing.ISCSI'
     order = 100
 
+    def pre_build_options(self):
+        if not fc_enabled():
+            raise ValueError
+
 
 class Rsync(TreeNode):
 
