@@ -24,7 +24,8 @@ const AddGroup = React.createClass({
     }
 
   , getInitialState: function () {
-    return { newGroup: {} };
+    return { nextGID: GS.nextGID
+           , newGroup: {} };
   }
 
   , handleChange: function ( field, event ) {
@@ -88,7 +89,7 @@ const AddGroup = React.createClass({
             label            = { this.props.itemLabels.properties[ "groupID" ] }
             value            = { this.state.newGroup[ "groupID" ]
                                ? this.state.newGroup[ "groupID" ]
-                               : null }
+                               : this.state.nextGID }
             onChange         = { this.handleChange.bind( null, "groupID" ) }
             className   = { _.has( this.state.newGroup, "groupID" )
                               && !_.isEmpty( this.state.newGroup[ "id" ] )
