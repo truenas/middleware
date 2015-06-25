@@ -43,6 +43,15 @@ const GroupEdit = React.createClass(
     this.setState( { modifiedValues: newModifiedValues } );
   }
 
+  , submitChanges: function () {
+
+    let newGroupProps = this.state.modifiedValues;
+
+    newGroupProps = GS.reverseKeyTranslation( newGroupProps );
+
+    GM.updateGroup( this.props.item[ "groupID" ], newGroupProps );
+  }
+
   , render: function () {
     let builtInWarning = null;
 
@@ -82,7 +91,8 @@ const GroupEdit = React.createClass(
     let submitButton =
       <TWBS.Button
         className = "pull-right"
-        bsStyle = "success" >
+        bsStyle = "success"
+        onClick = { this.submitChanges } >
         { "Submit Changes" }
       </TWBS.Button>;
 
