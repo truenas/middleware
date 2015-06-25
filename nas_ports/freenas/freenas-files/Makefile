@@ -110,7 +110,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/root/.shrc ${STAGEDIR}${PREFIX}/.shrc
 
 	mkdir -p ${STAGEDIR}${PREFIX}/etc/launchd.d/
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/bootstrap ${STAGEDIR}${PREFIX}/etc/bootstrap
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/bootstrap ${STAGEDIR}${PREFIX}/etc/bootstrap
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/datastore.json ${STAGEDIR}${PREFIX}/etc/launchd.d/datastore.json
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/dispatcher.json ${STAGEDIR}${PREFIX}/etc/launchd.d/dispatcher.json
 
