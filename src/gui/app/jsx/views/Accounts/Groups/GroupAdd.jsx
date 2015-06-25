@@ -93,7 +93,7 @@ const AddGroup = React.createClass({
             className   = { _.has( this.state.newGroup, "groupID" )
                               && !_.isEmpty( this.state.newGroup[ "id" ] )
                                ? "editor-was-modified"
-                               : ""  } />
+                               : "" } />
         </TWBS.Col>
         <TWBS.Col xs = {8}>
           {/* username */}
@@ -107,7 +107,7 @@ const AddGroup = React.createClass({
             className   = { _.has( this.state.newGroup, "groupName" )
                               && !_.isEmpty( this.state.newGroup[ "groupName" ] )
                                ? "editor-was-modified"
-                               : ""  } />
+                               : "" } />
         </TWBS.Col>
       </TWBS.Row>;
 
