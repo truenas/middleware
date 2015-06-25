@@ -13,6 +13,7 @@ import GS from "../../../stores/GroupsStore";
 
 import US from "../../../stores/UsersStore";
 
+import groupMixins from "../../../components/mixins/groupMixins";
 
 const GroupEdit = React.createClass(
 
@@ -21,6 +22,8 @@ const GroupEdit = React.createClass(
     , itemLabels: React.PropTypes.object.isRequired
     , item: React.PropTypes.object.isRequired
     }
+
+  , mixins: [ groupMixins ]
 
   , contextTypes: { router: React.PropTypes.func }
 
@@ -95,6 +98,7 @@ const GroupEdit = React.createClass(
       <TWBS.Button
         className = "pull-left"
         bsStyle = "danger"
+        onClick = { this.deleteGroup }
         disabled = { this.props.item[ "builtIn" ] } >
         { "Delete Group" }
       </TWBS.Button>;

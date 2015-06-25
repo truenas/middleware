@@ -26,7 +26,8 @@ module.exports = {
       this.setState({ groupsList: groupsList});
     }
 
-  , deleteGroup: function (){
-      GroupsMiddleware.deleteGroup(this.props.item["id"], this.returnToViewerRoot() );
+  , deleteGroup: function () {
+      GroupsMiddleware.deleteGroup( this.props.item[ "groupID" ]
+                                  , this.returnToViewerRoot() );
     }
 };
