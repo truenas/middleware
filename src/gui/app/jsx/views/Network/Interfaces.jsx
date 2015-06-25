@@ -36,19 +36,19 @@ const VIEWER_DATA =
     { connected:
         { name: "connected interfaces"
         , testProp: function ( _interface ) {
-            return _interface.status['link-state'] === 'LINK_STATE_UP';
+            return _interface.status["link-state"] === "LINK_STATE_UP";
           }
         }
     , disconnected:
         { name: "disconnected interfaces"
         , testProp: function ( _interface ) {
-            return _interface.status['link-state'] === 'LINK_STATE_DOWN';
+            return _interface.status["link-state"] === "LINK_STATE_DOWN";
           }
         }
     , unknown:
         { name: "invalid or unknown interfaces"
         , testProp: function ( _interface ) {
-            return _interface.status['link-state'] === 'LINK_STATE_UNKNOWN';
+            return _interface.status["link-state"] === "LINK_STATE_UNKNOWN";
           }
         }
     }

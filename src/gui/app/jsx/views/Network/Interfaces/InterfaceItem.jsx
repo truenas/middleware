@@ -84,10 +84,12 @@ const InterfaceItem = React.createClass(
       switch ( this.state.currentMode ) {
         default:
         case "view":
-          DisplayComponent = <InterfaceView { ...this.getRequiredProps() } {...childProps} />;
+          DisplayComponent =
+            <InterfaceView { ...this.getRequiredProps() } {...childProps} />;
           break;
         case "edit":
-          DisplayComponent = <InterfaceEdit { ...this.getRequiredProps() } {...childProps} />;
+          DisplayComponent =
+            <InterfaceEdit { ...this.getRequiredProps() } {...childProps} />;
           break;
       }
     }

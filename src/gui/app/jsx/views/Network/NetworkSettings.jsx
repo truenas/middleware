@@ -3,7 +3,7 @@
 
 "use strict";
 
-var componentLongName = "NetworkSettings"
+var componentLongName = "NetworkSettings";
 
 import React from "react";
 import TWBS from "react-bootstrap"
@@ -41,10 +41,10 @@ const NetworkSettings = React.createClass({
     }
 
     var remoteState = {
-      ipv4: gateway.ipv4 || '',
-      ipv6: gateway.ipv6 || '',
-      ns1: addresses[0] || '',
-      ns2: addresses[1] || ''
+      ipv4  : gateway.ipv4 || ""
+      , ipv6: gateway.ipv6 || ""
+      , ns1 : addresses[0] || ""
+      , ns2 : addresses[1] || ""
     };
 
     return {
@@ -82,7 +82,7 @@ const NetworkSettings = React.createClass({
         settings.dns.addresses.push( this.state.locallyModifiedValues.ns2 );
       }
 
-      NM.updateNetworkConfig(settings);
+      NM.updateNetworkConfig( settings );
     }
   }
 
@@ -131,7 +131,9 @@ const NetworkSettings = React.createClass({
                     label            = "Hostname"
                     key              = { "hostname" }
                     ref              = "hostname"
-                    groupClassName   = { _.has( this.state.locallyModifiedValues["hostname"] ) ? "editor-was-modified" : "" }
+                    groupClassName   =
+                      { _.has( this.state.locallyModifiedValues["hostname"] )
+                      ? "editor-was-modified" : "" }
                     labelClassName   = "col-xs-4"
                     wrapperClassName = "col-xs-8"
                   />
@@ -142,7 +144,9 @@ const NetworkSettings = React.createClass({
                     label            = "Domain"
                     key              = { "domain" }
                     ref              = "domain"
-                    groupClassName   = { _.has( this.state.locallyModifiedValues["domain"] ) ? "editor-was-modified" : "" }
+                    groupClassName   =
+                      { _.has( this.state.locallyModifiedValues["domain"] )
+                      ? "editor-was-modified" : "" }
                     labelClassName   = "col-xs-4"
                     wrapperClassName = "col-xs-8"
                   />
@@ -153,11 +157,14 @@ const NetworkSettings = React.createClass({
                   <TWBS.Input
                     type             = "text"
                     label            = "IPv4 Default Gateway"
-                    defaultValue     = { gateway.ipv4 || '' }
-                    onChange         = { this.editHandleValueChange.bind( null, "ipv4" ) }
+                    defaultValue     = { gateway.ipv4 || "" }
+                    onChange         =
+                      { this.editHandleValueChange.bind( null, "ipv4" ) }
                     key              = { "ipv4" }
                     ref              = "ipv4"
-                    groupClassName   = { _.has( this.state.locallyModifiedValues["ipv4"] ) ? "editor-was-modified" : "" }
+                    groupClassName   =
+                      { _.has( this.state.locallyModifiedValues["ipv4"] )
+                      ? "editor-was-modified" : "" }
                     labelClassName   = "col-xs-4"
                     wrapperClassName = "col-xs-8"
                   />
@@ -166,11 +173,14 @@ const NetworkSettings = React.createClass({
                   <TWBS.Input
                     type             = "text"
                     label            = "IPv6 Default Gateway"
-                    defaultValue     = { gateway.ipv6 || '' }
-                    onChange         = { this.editHandleValueChange.bind( null, "ipv6" ) }
+                    defaultValue     = { gateway.ipv6 || "" }
+                    onChange         =
+                      { this.editHandleValueChange.bind( null, "ipv6" ) }
                     key              = { "ipv6" }
                     ref              = "ipv6"
-                    groupClassName   = { _.has( this.state.locallyModifiedValues["ipv6"] ) ? "editor-was-modified" : "" }
+                    groupClassName   =
+                      { _.has( this.state.locallyModifiedValues["ipv6"] )
+                      ? "editor-was-modified" : "" }
                     labelClassName   = "col-xs-4"
                     wrapperClassName = "col-xs-8"
                   />
@@ -181,11 +191,14 @@ const NetworkSettings = React.createClass({
                   <TWBS.Input
                     type             = "text"
                     label            = "Nameserver 1"
-                    defaultValue     = { addresses[0] || '' }
-                    onChange         = { this.editHandleValueChange.bind( null, "ns1" ) }
+                    defaultValue     = { addresses[0] || "" }
+                    onChange         =
+                      { this.editHandleValueChange.bind( null, "ns1" ) }
                     key              = { "ns1" }
                     ref              = "ns1"
-                    groupClassName   = { _.has( this.state.locallyModifiedValues["ns1"] ) ? "editor-was-modified" : "" }
+                    groupClassName   =
+                      { _.has( this.state.locallyModifiedValues["ns1"] )
+                      ? "editor-was-modified" : "" }
                     labelClassName   = "col-xs-4"
                     wrapperClassName = "col-xs-8"
                   />
@@ -194,11 +207,14 @@ const NetworkSettings = React.createClass({
                   <TWBS.Input
                     type             = "text"
                     label            = "Nameserver 2"
-                    defaultValue     = { addresses[1] || '' }
-                    onChange         = { this.editHandleValueChange.bind( null, "ns2" ) }
+                    defaultValue     = { addresses[1] || "" }
+                    onChange         =
+                      { this.editHandleValueChange.bind( null, "ns2" ) }
                     key              = { "ns2" }
                     ref              = "ns2"
-                    groupClassName   = { _.has( this.state.locallyModifiedValues["ns2"] ) ? "editor-was-modified" : "" }
+                    groupClassName   =
+                      { _.has( this.state.locallyModifiedValues["ns2"] )
+                      ? "editor-was-modified" : "" }
                     labelClassName   = "col-xs-4"
                     wrapperClassName = "col-xs-8"
                   />

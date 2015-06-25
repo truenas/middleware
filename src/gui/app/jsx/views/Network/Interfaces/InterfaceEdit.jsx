@@ -47,7 +47,7 @@ const InterfaceEdit = React.createClass(
       <TWBS.ButtonToolbar>
         <TWBS.Button
           className = 'pull-right'
-          onClick   = { this.props.handleViewChange.bind( null, 'view' ) }
+          onClick   = { this.props.handleViewChange.bind( null, "view" ) }
           bsStyle   = 'default' >
           Cancel
         </TWBS.Button>
@@ -76,25 +76,26 @@ const InterfaceEdit = React.createClass(
                 key       = { "dhcp" }
                 groupClassName =
                   { _.has( this.state.locallyModifiedValues[ "dhcp" ] )
-                      ? 'editor-was-modified' : '' }
+                      ? "editor-was-modified" : "" }
                 labelClassName    = "col-xs-3"
                 wrapperClassName  = "col-xs-9" />
               <TWBS.Input
                 type      = "checkbox"
                 label     = "Interface Enabled"
                 checked   = { this.state.mixedValues.enabled }
-                onChange  = { this.editHandleValueChange.bind( null, "enabled" ) }
+                onChange  =
+                  { this.editHandleValueChange.bind( null, "enabled" ) }
                 ref       = { "enabled" }
                 key       = { "enabled" }
                 groupClassName =
                   { _.has( this.state.locallyModifiedValues[ "enabled" ] )
-                    ? 'editor-was-modified' : '' }
+                    ? "editor-was-modified" : "" }
                 labelClassName    = "col-xs-3"
                 wrapperClassName  = "col-xs-9" />
             </TWBS.Col>
           </TWBS.Row>
         </TWBS.Grid>
-      </form>
+      </form>;
 
     return (
       <TWBS.Grid fluid>

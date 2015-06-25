@@ -39,25 +39,25 @@ const InterfaceView = React.createClass(
 
       var aliasDisplayItems = [];
       _.each( this.props.item.status.aliases , function ( alias ) {
-          // If no family was specified or the family was unrecognized, create
-          // a list item for every alias. This item is different because
-          // we can't make certain assumptions.
-          if ( _.isUndefined(family)
-            || ( family !== 'INET' && family !== 'INET6' ) ) {
-            aliasDisplayItems.push(
-              <TWBS.ListGroupItem>
-                { "Link Type: " + family }
-                <br/>
-                <br/>
-                { "Address:  " }
-                <br/>
-                <strong>{ alias.address }</strong>
-              </TWBS.ListGroupItem>
-            );
-          } else if ( family === alias.family ) {
-            aliasDisplayItems.push( this.createAliasDisplayItem( alias ) );
-          }
-      }, this);
+        // If no family was specified or the family was unrecognized, create
+        // a list item for every alias. This item is different because
+        // we can't make certain assumptions.
+        if ( _.isUndefined( family )
+          || ( family !== "INET" && family !== "INET6" ) ) {
+          aliasDisplayItems.push(
+            <TWBS.ListGroupItem>
+              { "Link Type: " + family }
+              <br/>
+              <br/>
+              { "Address:  " }
+              <br/>
+              <strong>{ alias.address }</strong>
+            </TWBS.ListGroupItem>
+          );
+        } else if ( family === alias.family ) {
+          aliasDisplayItems.push( this.createAliasDisplayItem( alias ) );
+        }
+      }, this );
       if ( !aliasDisplayItems.length ) {
         aliasDisplayItems.push(
           <TWBS.ListGroupItem>
@@ -92,7 +92,7 @@ const InterfaceView = React.createClass(
           className = 'pull-right'
           onClick   = { this.props.downInterface }
           bsStyle   = 'primary'>
-          { 'Down Interface' }
+          { "Down Interface" }
         </TWBS.Button>
       );
 
@@ -101,17 +101,17 @@ const InterfaceView = React.createClass(
           className = 'pull-right'
           onClick   = { this.props.upInterface }
           bsStyle   = 'primary'>
-          { 'Up Interface' }
+          { "Up Interface" }
         </TWBS.Button>
       );
 
       var configButtons = (
         <TWBS.ButtonToolbar>
-          { _.includes( this.props.item.status.flags, 'UP' )
+          { _.includes( this.props.item.status.flags, "UP" )
             ? downButton : upButton }
           <TWBS.Button
             className = 'pull-right'
-            onClick   = { this.props.handleViewChange.bind( null, 'edit' ) }
+            onClick   = { this.props.handleViewChange.bind( null, "edit" ) }
             bsStyle   = 'primary'>
             { "Configure Interface" }
           </TWBS.Button>
@@ -132,7 +132,7 @@ const InterfaceView = React.createClass(
             </TWBS.Col>
             <TWBS.Col xs={6}>
               <label>MAC Address</label>
-              <div>{ this.props.item.status['link-address'] }</div>
+              <div>{ this.props.item.status["link-address"] }</div>
             </TWBS.Col>
           </TWBS.Row>
           <TWBS.Row className="form-group">
@@ -140,7 +140,7 @@ const InterfaceView = React.createClass(
               <label>DHCP Configured</label>
               <div>
                 <Icon glyph={ this.props.item.dhcp
-                            ? 'check text-primary' : 'times text-muted' } />
+                            ? "check text-primary" : "times text-muted" } />
               </div>
             </TWBS.Col>
             <TWBS.Col xs={6}>
@@ -152,14 +152,14 @@ const InterfaceView = React.createClass(
             <TWBS.Col xs={6}>
               <TWBS.Panel header='IPv4 Aliases'>
                 <TWBS.ListGroup fill className='alias-display-list'>
-                  { this.createAliasDisplayList( 'INET' ) }
+                  { this.createAliasDisplayList( "INET" ) }
                 </TWBS.ListGroup>
               </TWBS.Panel>
             </TWBS.Col>
             <TWBS.Col xs={6}>
               <TWBS.Panel header='IPv6 Aliases'>
                 <TWBS.ListGroup fill className='alias-display-list'>
-                  { this.createAliasDisplayList( 'INET6' ) }
+                  { this.createAliasDisplayList( "INET6" ) }
                 </TWBS.ListGroup>
               </TWBS.Panel>
             </TWBS.Col>

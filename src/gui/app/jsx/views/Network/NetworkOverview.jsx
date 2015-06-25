@@ -3,7 +3,7 @@
 
 "use strict";
 
-var componentLongName = "NetworkOverview"
+var componentLongName = "NetworkOverview";
 
 import React from "react";
 import TWBS from "react-bootstrap"
@@ -51,10 +51,10 @@ var InterfaceNode = React.createClass({
 
       var aliasDisplayItems = [];
       _.each( interfaceData.status.aliases , function ( alias ) {
-          if ( family === alias.family ) {
-            aliasDisplayItems.push( this.createAliasDisplayItem( alias ) );
-          }
-      }, this);
+        if ( family === alias.family ) {
+          aliasDisplayItems.push( this.createAliasDisplayItem( alias ) );
+        }
+      }, this );
       return aliasDisplayItems;
     }
 
@@ -77,10 +77,12 @@ var InterfaceNode = React.createClass({
     }
 
   , render: function () {
-      var ipv4Aliases = this.createAliasDisplayList( this.props.interfaceData, 'INET' );
-      var ipv6Aliases = this.createAliasDisplayList( this.props.interfaceData, 'INET6' );
+      var ipv4Aliases = this.createAliasDisplayList( this.props.interfaceData
+                                                    , "INET" );
+      var ipv6Aliases = this.createAliasDisplayList( this.props.interfaceData
+                                                    , "INET6" );
 
-      var ipv4Section = '';
+      var ipv4Section = "";
       if ( ipv4Aliases.length ) {
         ipv4Section =
           <div className="interface-address">
@@ -91,7 +93,7 @@ var InterfaceNode = React.createClass({
           </div>;
       }
 
-      var ipv6Section = '';
+      var ipv6Section = "";
       if ( ipv6Aliases.length ) {
         ipv6Section =
           <div className="interface-address">
@@ -106,7 +108,7 @@ var InterfaceNode = React.createClass({
         <div className="pull-left interface-node">
           <div className="interface-header text-center">
             <Icon glyph={ this.props.interfaceData.dhcp
-                      ? 'check text-primary' : 'times text-muted' } />
+                      ? "check text-primary" : "times text-muted" } />
             { this.props.interfaceData.name }
             <span className="interface-type">
               { this.props.interfaceData.type }
@@ -115,10 +117,13 @@ var InterfaceNode = React.createClass({
           { ipv4Section }
           { ipv6Section }
           <div className="interface-address">
-            <strong>MAC:</strong> { this.props.interfaceData.status['link-address'] }
+            <strong>MAC:</strong>
+            { this.props.interfaceData.status["link-address"] }
           </div>
           <div className="text-right">
-            <Link to="interfaces-editor" params={{ interfaceName: this.props.interfaceData.name }}>
+            <Link
+              to="interfaces-editor"
+              params={{ interfaceName: this.props.interfaceData.name }}>
               <Icon glyph='eye' />
             </Link>
           </div>
@@ -166,43 +171,46 @@ const NetworkOverview = React.createClass({
     var gateway = this.state.networkConfig.gateway || {};
 
     var attributes =
-      [ { name: 'Hostname'
-        , value: 'FREENAS-MINI'
+      [ { name: "Hostname"
+        , value: "FREENAS-MINI"
         }
-      , { name: 'IPv4 Default Gateway'
-        , value: gateway.ipv4 || 'Not Used'
+      , { name: "IPv4 Default Gateway"
+        , value: gateway.ipv4 || "Not Used"
         }
-      , { name: 'Domain'
-        , value: 'office.local'
+      , { name: "Domain"
+        , value: "office.local"
         }
-      , { name: 'IPv6 Default Gateway'
-        , value: gateway.ipv6 || 'Not Used'
+      , { name: "IPv6 Default Gateway"
+        , value: gateway.ipv6 || "Not Used"
         }
-      , { name: 'Interfaces'
+      , { name: "Interfaces"
         , value: this.state.interfacesList.length
         }
-      , { name: 'Link Aggregation'
-        , value: '2'
+      , { name: "Link Aggregation"
+        , value: "2"
         }
-      , { name: 'Static Routes'
-        , value: '3'
+      , { name: "Static Routes"
+        , value: "3"
         }
-      , { name: 'VLANs'
-        , value: '1'
+      , { name: "VLANs"
+        , value: "1"
         }
       ];
 
-    var attributeNodes = _.map(attributes, function (attribute) {
+    var attributeNodes = _.map( attributes, function ( attribute ) {
       return (
         <NetworkAttribute name={attribute.name} value={attribute.value} />
       );
     });
 
-    var interfaceNodes = _.map(this.state.interfacesList, function (_interface) {
-      return (
-        <InterfaceNode interfaceData={_interface} />
+    var interfaceNodes = _.map(
+      this.state.interfacesList
+      , function ( _interface ) {
+          return (
+            <InterfaceNode interfaceData={_interface} />
+          );
+        }
       );
-    });
 
     return (
       <main>
