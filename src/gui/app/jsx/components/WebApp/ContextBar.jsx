@@ -39,7 +39,6 @@ const ContextBar = React.createClass({
 
     let popoutButton = null;
     let displaySection = null;
-    let DisplayComponent = null;
     let asideClass = "app-sidebar";
 
     // Temporary hard-coded button, only visible while working in the Storage.
@@ -54,10 +53,9 @@ const ContextBar = React.createClass({
     }
 
     if ( this.state.activeComponent ) {
-      DisplayComponent = this.state.activeComponent;
       asideClass = asideClass + " context-bar-active";
       displaySection = (
-        <DisplayComponent />
+        <this.state.activeComponent />
       );
     } else {
       asideClass = asideClass + " context-bar-inactive";
