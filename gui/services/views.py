@@ -317,7 +317,10 @@ def fiberchanneltotarget(request):
         else:
             fctt = models.FiberChannelToTarget()
             fctt.fc_port = fc_port
-        if not fc_target:
+        if fc_target in ('false', False):
+            fctt.fc_target = None
+            fctt.save()
+        elif fc_target is None:
             if fctt.id:
                 fctt.delete()
         else:

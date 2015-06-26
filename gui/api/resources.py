@@ -2982,10 +2982,15 @@ class FCPortsResource(DojoResource):
             else:
                 port = 0
             if name in fcportmap:
-                mode = 'TARGET'
-                target = fcportmap[name].id
+                targetobj = fcportmap[name]
+                if targetobj is not None:
+                    mode = 'TARGET'
+                    target = fcportmap[name].id
+                else:
+                    mode = 'INITIATOR'
+                    target = None
             else:
-                mode = 'INITIATOR'
+                mode = 'DISABLED'
                 target = None
             results.append(FCPort(
                 port=port,

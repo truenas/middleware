@@ -958,6 +958,7 @@ class FiberChannelToTarget(Model):
         iSCSITarget,
         verbose_name=_("Target"),
         help_text=_("Target this extent belongs to"),
+        null=True,
     )
 
     class Meta:
