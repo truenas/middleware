@@ -28,6 +28,7 @@
 import errno
 import sys
 import re
+import logging
 from cache import CacheStore
 from task import (Provider, Task, ProgressTask, TaskException, VerifyException)
 from dispatcher.rpc import (RpcException, description, accepts,
@@ -42,6 +43,9 @@ from freenasOS.Update import (
     PendingUpdatesChanges, DownloadUpdate, ApplyUpdate
 )
 
+# Keep this even if currently unused as it helps when there is a
+# need for debugging
+logger = logging.getLogger('UpdatePlugin')
 update_cache = CacheStore()
 
 
@@ -64,14 +68,13 @@ def parse_changelog(changelog, start='', end=''):
             changelog += changes.strip('\n') + '\n'
         if seq == end:
             break
-
     return changelog
 
 
 @description("Utility to get and eventually parse a changelog if available")
-def get_changelog(train, start='', end=''):
+def get_changelog(train, cache_dir='/var/tmp/update', start='', end=''):
     conf = Configuration.Configuration()
-    changelog = conf.GetChangeLog(train=train)
+    changelog = conf.GetChangeLog(train=train, save_dir=cache_dir)
     if not changelog:
         return None
 
@@ -105,6 +108,45 @@ class CheckUpdateHandler(object):
             }
             output.append(opdict)
         return output
+
+
+@description("Utility function to just check for Updates")
+def check_updates(dispatcher, cache_dir=None, check_now=False):
+    update_cache.invalidate('updateAvailable')
+    update_cache.invalidate('updateOperations')
+    update_cache.invalidate('changelog')
+    conf = Configuration.Configuration()
+    update_ops = None
+    handler = CheckUpdateHandler()
+    train = dispatcher.configstore.get('update.train')
+    try:
+        update = CheckForUpdates(
+            handler=handler.call,
+            train=train,
+            cache_dir=None if check_now else cache_dir,
+        )
+    except Exception:
+        update_cache.put('updateAvailable', False)
+        update_cache.put('updateOperations', update_ops)
+        update_cache.put('changelog', '')
+        raise
+
+    if update:
+        update_ops = handler.output()
+        sys_mani = conf.SystemManifest()
+        if sys_mani:
+            sequence = sys_mani.Sequence()
+        else:
+            sequence = ''
+        changelog = get_changelog(train,
+                                  cache_dir=cache_dir,
+                                  start=sequence,
+                                  end=update.Sequence())
+    else:
+        changelog = None
+    update_cache.put('updateAvailable', True if update else False)
+    update_cache.put('updateOperations', update_ops)
+    update_cache.put('changelog', changelog)
 
 
 @description("A handler for Downloading and Applying Updates calls")
@@ -197,44 +239,6 @@ class UpdateHandler(object):
         })
 
 
-@description("Utility function to just check for Updates")
-def check_updates(dispatcher, cache_dir=None):
-    update_cache.invalidate('updateAvailable')
-    update_cache.invalidate('updateOperations')
-    update_cache.invalidate('changelog')
-    conf = Configuration.Configuration()
-    update_ops = None
-    handler = CheckUpdateHandler()
-    train = dispatcher.configstore.get('update.train')
-    try:
-        update = CheckForUpdates(
-            handler=handler.call,
-            train=train,
-            cache_dir=cache_dir,
-        )
-    except Exception:
-        update_cache.put('updateAvailable', False)
-        update_cache.put('updateOperations', update_ops)
-        update_cache.put('changelog', '')
-        raise
-
-    if update:
-        update_ops = handler.output()
-        sys_mani = conf.SystemManifest()
-        if sys_mani:
-            sequence = sys_mani.Sequence()
-        else:
-            sequence = ''
-        changelog = get_changelog(train,
-                                  start=sequence,
-                                  end=update.Sequence())
-    else:
-        changelog = None
-    update_cache.put('updateAvailable', True if update else False)
-    update_cache.put('updateOperations', update_ops)
-    update_cache.put('changelog', changelog)
-
-
 def generate_update_cache(dispatcher, cache_dir=None):
     if cache_dir is None:
         try:
@@ -245,8 +249,8 @@ def generate_update_cache(dispatcher, cache_dir=None):
             cache_dir = '/var/tmp/update'
     update_cache.put('cache_dir', cache_dir)
     try:
-        check_updates(dispatcher, cache_dir)
-    except Exception:
+        check_updates(dispatcher, cache_dir=cache_dir)
+    except Exception as e:
         # What to do now?
         pass
 
@@ -357,7 +361,9 @@ class CheckUpdateTask(Task):
 
     def run(self):
         try:
-            check_updates(self.dispatcher)
+            check_updates(self.dispatcher,
+                          cache_dir=update_cache.get('cache_dir', timeout=1),
+                          check_now=True)
         except UpdateManifestNotFound:
             TaskException(errno.ENETUNREACH,
                           'Update server could not be reached')
@@ -442,6 +448,10 @@ class UpdateTask(Task):
         except Exception as e:
             raise TaskException(errno.EAGAIN,
                                 'Update Process Failed! Reason: %s' % e)
+
+
+def _depends():
+    return ['SystemDatasetPlugin']
 
 
 def _init(dispatcher, plugin):
