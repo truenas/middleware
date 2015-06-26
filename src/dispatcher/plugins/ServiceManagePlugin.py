@@ -35,7 +35,7 @@ from dispatcher.rpc import RpcException, description, accepts, private
 from dispatcher.rpc import SchemaHelper as h
 from datastore.config import ConfigNode
 from lib.system import system, SubprocessException
-from fnutils import template
+from fnutils import template, first_or_default
 
 
 GETTY_TEMPLATE = {
@@ -225,12 +225,28 @@ def _init(dispatcher, plugin):
     plugin.register_provider("services", ServiceInfoProvider)
 
     ld = launchd.Launchd()
-    for svc in dispatcher.datastore.query('service-definitions'):
+    services = dispatcher.datastore.query('service-definitions')
+
+    # Start etcd first
+    etcd = first_or_default(services, lambda s: s['name'] == 'etcd')
+    ld.load(etcd['launchd'])
+    ld.start(etcd['launchd']['Label'])
+    services.remove(etcd)
+
+    # Wait for it to be available
+    dispatcher.call_sync('plugin.wait_for_service', 'etcd.generation')
+
+    # Now start all other services
+    for svc in services:
         if 'launchd' not in svc:
             continue
 
         plist = svc['launchd']
         label = plist['Label']
+
+        # Does it need to have any config files generated?
+        if svc.get('etcd-group'):
+            dispatcher.call_sync('etc.generation.generate_group', svc['etcd-group'])
 
         # Prepare sockets specification based on 'service.%s.listen' config value
         if svc.get('socket-server'):
