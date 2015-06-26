@@ -63,8 +63,8 @@ const Update = React.createClass({
     var updateButtonProps = {};
     updateButtonProps.dataText = updateButtonText;
     updateButtonProps.title = "Confirm Update";
-    updateButtonProps.bodyText = "Freenas will now Update"
-    updateButtonProps.callFunc  = this.handleUpdateNowButton;
+    updateButtonProps.bodyText = "Freenas will now Update";
+    updateButtonProps.callFunc = this.handleUpdateNowButton;
 
     var updateServer = "some update server";
     var updatePeriod = "millenia";
