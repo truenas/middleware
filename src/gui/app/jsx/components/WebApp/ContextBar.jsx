@@ -11,6 +11,8 @@ import React from "react";
 import _ from "lodash";
 import TWBS from "react-bootstrap";
 
+// Temporary import of ContextDisks for testing. Ultimately, components will be
+// submitted by function calls from the appropriate context.
 import ContextDisks from "../../context/ContextDisks";
 
 
@@ -24,6 +26,8 @@ const ContextBar = React.createClass({
   }
 
   , popout: function () {
+    // Temporarily hard-coded to use the ContextDisks component for
+    // testing.
     if ( this.state.activeComponent ) {
       this.setState( { activeComponent: null } );
     } else {
@@ -38,6 +42,7 @@ const ContextBar = React.createClass({
     let DisplayComponent = null;
     let asideClass = "app-sidebar";
 
+    // Temporary hard-coded button, only visible while working in the Storage.
     if ( _.endsWith( this.context.router.getCurrentPathname()
                    , "storage" ) ) {
       popoutButton = (
