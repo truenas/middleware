@@ -1935,9 +1935,11 @@ class DomainController(Model):
 
         if not self.dc_kerberos_realm:
             try:
-                from freenasUI.common.system import get_dc_hostname
+                from freenasUI.common.system import get_hostname
 
-                dc_hostname = get_dc_hostname()
+                hostname = get_hostname()
+                dc_hostname = "%s.%s" % (hostname, self.dc_realm.lower())
+
                 kr = KerberosRealm()
                 kr.krb_realm = self.dc_realm.upper()
                 kr.krb_kdc = dc_hostname
