@@ -200,11 +200,11 @@ def main():
                         pass
         addline("lun \"%s\" {\n" % extent.iscsi_target_extent_name)
         size = extent.iscsi_target_extent_filesize
-        addline("\tpath %s\n" % path)
+        addline("\tpath \"%s\"\n" % path)
         addline("\tblocksize %s\n" % extent.iscsi_target_extent_blocksize)
         if extent.iscsi_target_extent_pblocksize:
             addline("\toption pblocksize 0\n")
-        addline("\tserial %s\n" % (extent.iscsi_target_extent_serial, ))
+        addline("\tserial \"%s\"\n" % (extent.iscsi_target_extent_serial, ))
         padded_serial = extent.iscsi_target_extent_serial
         if not extent.iscsi_target_extent_xen:
             for i in xrange(31-len(extent.iscsi_target_extent_serial)):
@@ -267,6 +267,7 @@ def main():
                 grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
                 'ag' + agname if agname else 'no-authentication',
             ))
+        addline("\n")
         used_lunids = [
             o.iscsi_lunid
             for o in target.iscsitargettoextent_set.all().exclude(
@@ -278,7 +279,6 @@ def main():
             'null_first': 'iscsi_lunid IS NULL',
         }).order_by('null_first', 'iscsi_lunid'):
 
-            addline("\t\t\n")
             if t2e.iscsi_lunid is None:
                 while cur_lunid in used_lunids:
                     cur_lunid += 1
