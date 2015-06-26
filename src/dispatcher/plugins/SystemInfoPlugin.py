@@ -317,3 +317,6 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("system.ui.configure", SystemUIConfigureTask)
     plugin.register_task_handler("system.shutdown", SystemHaltTask)
     plugin.register_task_handler("system.reboot", SystemRebootTask)
+
+    # Set initial hostname
+    netif.set_hostname(dispatcher.configstore.set('system.hostname'))
