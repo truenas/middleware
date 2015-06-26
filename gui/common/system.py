@@ -658,6 +658,29 @@ def get_dc_hostname():
     return hostname
 
 
+def get_hostname():
+    from freenasUI.network.models import GlobalConfiguration
+    from freenasUI.common.pipesubr import pipeopen
+
+    hostname = None
+    try:
+        gc = GlobalConfiguration.objects.all()[0]
+        hostname = gc.gc_hostname
+
+    except:
+        pass
+
+    if not hostname:
+        p = pipeopen("/bin/hostname", allowfork=True)
+        out = p.communicate()
+        if p.returncode == 0:
+            buf = out[0].strip()
+            parts = buf.split('.')
+            hostname = parts[0]
+
+    return hostname
+
+
 def validate_netbios_name(netbiosname):
     regex = re.compile(r"^[a-zA-Z0-9\.\-_!@#\$%^&\(\)'\{\}~]{1,15}$")
 
