@@ -10,6 +10,7 @@ const componentLongName = "ContextDisks";
 
 import React from "react";
 import _ from "lodash";
+import TWBS from "react-bootstrap";
 
 import SS from "../stores/SchemaStore"
 import DS from "../stores/DisksStore";
@@ -62,12 +63,44 @@ const ContextDisks = React.createClass({
     this.setState( { availableDisks: VS.availableDisks } );
   }
 
+  , createDisksDisplay () {
+
+  }
+
   , render () {
 
+    let filterControls = null;
+    let disksDisplay = null;
+
+    if ( this.state.availableDisks.length === 0 ) {
+      disksDisplay = (
+        <div>
+          { "You don't have any available disks" }
+        </div>
+      );
+    } else {
+      disksDisplay = this.createDisksDisplay();
+    }
+
     return (
-      <h4>
-        { "Available Disks" }
-      </h4>
+      <TWBS.Grid fluid>
+        <TWBS.Row>
+          <TWBS.Col xs = { 4 } >
+            <h4>
+              { "Available Disks: " + this.state.availableDisks.length }
+            </h4>
+          </TWBS.Col>
+          <TWBS.Col xs = { 8 } >
+            { filterControls }
+          </TWBS.Col>
+        </TWBS.Row>
+        <TWBS.Row>
+          <TWBS.Col>
+            { disksDisplay }
+          </TWBS.Col>
+        </TWBS.Row>
+      </TWBS.Grid>
+
     );
   }
 
