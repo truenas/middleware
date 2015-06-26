@@ -319,4 +319,4 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("system.reboot", SystemRebootTask)
 
     # Set initial hostname
-    netif.set_hostname(dispatcher.configstore.set('system.hostname'))
+    netif.set_hostname(dispatcher.configstore.get('system.hostname'))
