@@ -89,6 +89,7 @@ parse_devlist()
 		esac
 	done
 
+	local IFS=" "
 	if ! /usr/local/sbin/smartctl -i ${propdev} | egrep -i "^.*SMART.*abled" > /dev/null 2>&1; then
 		propdev=/dev/$disk
 	fi
