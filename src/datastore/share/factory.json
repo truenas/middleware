@@ -699,6 +699,35 @@
 					"RunAtLoad": true
 				}
             },
+            "13BBFFBE-CC3A-4BD2-898A-28EB04A0F514": {
+                "name": "dbus",
+                "launchd": {
+                    "Label": "org.freedesktop.dbus",
+                    "ProgramArguments": [
+                        "/usr/local/bin/dbus-daemon",
+                        "--system"
+                    ]
+                }
+            },
+            "23DA6A08-3D8D-4349-8184-E3ECD41DEE89": {
+                "name": "watchdogd",
+                "launchd": {
+                    "Label": "org.freebsd.watchdogd",
+                    "ProgramArguments": [
+                        "/usr/sbin/watchdogd",
+                        "-d"
+                    ]
+                }
+            },
+            "246C7C31-2BF6-4E8C-B775-1CD2266338E7": {
+                "name": "org.freebsd.ntpd",
+                "ProgramArguments": [
+                    "/usr/sbin/ntpd",
+                    "-g",
+                    "-c", "/etc/ntp.conf",
+                    "-f". "/var/db/ntpd.drift"
+                ]
+            },
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
 				"name": "sshd",
 				"socket-server": true,
