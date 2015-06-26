@@ -1,4 +1,4 @@
-// Information Bar
+// Context Bar
 // ===============
 // Part of the main webapp's window chrome. Positioned on the right side of the
 // page, this bar shows user-customizable content including graphs, logged in
@@ -9,14 +9,14 @@
 import React from "react";
 
 
-var InformationBar = React.createClass({
-    render: function () {
-      return (
-        <aside className="app-sidebar information-bar">
+const ContextBar = React.createClass({
+  render: function () {
+    return (
+      <aside className="app-sidebar context-bar">
 
-        </aside>
-      );
-    }
+      </aside>
+    );
+  }
 });
 
-module.exports = InformationBar;
+export default ContextBar;
