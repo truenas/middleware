@@ -2,6 +2,12 @@
 /sbin/zfs mount -a
 /sbin/mount -uw /
 /sbin/ifconfig lo0 inet 127.0.0.1 netmask 255.0.0.0 up
+/bin/ln -fs /var/run/log /var/run/logpriv
+
+# All kinds of temps will use tmpfs
 /sbin/mount -t tmpfs tmpfs /tmp
 /sbin/mount -t tmpfs tmpfs /var/tmp
 /sbin/mount -t tmpfs tmpfs /var/run
+
+# Hack to make nginx work
+mkdir -p /var/tmp/nginx
