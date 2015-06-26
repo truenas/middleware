@@ -725,7 +725,7 @@
                     "/usr/sbin/ntpd",
                     "-g",
                     "-c", "/etc/ntp.conf",
-                    "-f". "/var/db/ntpd.drift"
+                    "-f", "/var/db/ntpd.drift"
                 ]
             },
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
