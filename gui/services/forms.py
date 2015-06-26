@@ -1349,6 +1349,8 @@ class iSCSITargetExtentForm(ModelForm):
         name = self.cleaned_data.get('iscsi_target_extent_name')
         if not name:
             return name
+        if re.search(r'"', name):
+            raise forms.ValidationError(_("Double quotes are not allowed."))
         qs = models.iSCSITargetExtent.objects.filter(
             iscsi_target_extent_name=name
         )
@@ -1357,6 +1359,14 @@ class iSCSITargetExtentForm(ModelForm):
         if qs.exists():
             raise forms.ValidationError(_('Extent name must be unique.'))
         return name
+
+    def clean_iscsi_target_extent_serial(self):
+        serial = self.cleaned_data.get('iscsi_target_extent_serial')
+        if not serial:
+            return serial
+        if re.search(r'"', serial):
+            raise forms.ValidationError(_("Double quotes are not allowed."))
+        return serial
 
     def clean_iscsi_target_extent_disk(self):
         _type = self.cleaned_data.get('iscsi_target_extent_type')
