@@ -41,7 +41,8 @@ def main():
 
             domain = dc.dc_realm 
             if cifs.cifs_srv_bindip:
-                nameservers = cifs.cifs_srv_bindip.split(',') 
+                for ip in cifs.cifs_srv_bindip: 
+                    nameservers.append(ip)
             else: 
                 nameservers.append("127.0.0.1")
 
