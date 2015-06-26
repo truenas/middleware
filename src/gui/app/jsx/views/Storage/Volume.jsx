@@ -39,6 +39,17 @@ const PoolItem = React.createClass(
            };
   }
 
+  , returnInitialStateValues: function () {
+    return { storageVisible  : false
+           , topologyVisible : false
+           , editing         : false
+           , data            : this.props.data
+           , logs            : this.props.logs
+           , cache           : this.props.cache
+           , spare           : this.props.spare
+           };
+  }
+
   // The editing reconciliation model for PoolItem relies on the difference
   // between state and props. As with a simple form, the intial values are set
   // by props. Subsequent modifications to these occur in state, until an
@@ -51,14 +62,14 @@ const PoolItem = React.createClass(
   // unequal, we can choose instead to display a warning, indicate that another
   // user has modified that field, etc. As always, the last change "wins".
   , getInitialState: function () {
-    return { storageVisible  : false
-           , topologyVisible : false
-           , editing         : false
-           , data            : this.props.data
-           , logs            : this.props.logs
-           , cache           : this.props.cache
-           , spare           : this.props.spare
-           };
+    return this.returnInitialStateValues();
+  }
+
+  // A shorthand method used to "cancel" creation or editing of a volume.
+  // TODO: This should probably be gated so that it isn't triggered without a
+  // warning to the user.
+  , resetToInitialState: function () {
+    this.setState( this.returnInitialStateValues() );
   }
 
   , componentDidUpdate: function ( prevProps, prevState ) {
