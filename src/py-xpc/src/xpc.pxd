@@ -195,4 +195,3 @@ cdef extern from "xpc/xpc.h":
     cdef void* xpc_connection_get_context(xpc_connection_t connection)
 #    cdef void xpc_connection_set_finalizer_f(xpc_connection_t connection, xpc_finalizer_t finalizer)
     cdef xpc_endpoint_t xpc_endpoint_create(xpc_connection_t connection)
-

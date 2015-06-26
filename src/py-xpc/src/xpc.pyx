@@ -108,7 +108,7 @@ cdef class XPCObject(object):
                 return uuid.UUID(bytes=xpc.xpc_uuid_get_bytes(self.obj))
 
             if self.type == XPCType.CONNECTION:
-                return XPCConnection(ptr=self.obj)
+                return XPCConnection(ptr=<uintptr_t>self.obj)
 
         def __set__(self, value):
             if value is None:
@@ -146,7 +146,7 @@ cdef class XPCObject(object):
             obj = xpc.xpc_array_get_value(self.obj, item)
             return XPCObject(ptr=<uintptr_t>obj)
 
-        if self.type == XPCType.DICTIONARY:
+        if self.type in (XPCType.DICTIONARY, XPCType.ERROR):
             obj = xpc.xpc_dictionary_get_value(self.obj, item)
             return XPCObject(ptr=<uintptr_t>obj)
 
@@ -195,18 +195,32 @@ cdef class XPCObject(object):
 
 cdef class XPCConnection(object):
     cdef xpc.xpc_connection_t conn
+    cdef readonly children
+    cdef readonly listener
     cdef public object on_event
 
-    def __init__(self, name=None, flags=0, ptr=0):
+    def __init__(self, name=None, listener=False, ptr=0):
+        if ptr:
+            self.conn = <xpc.xpc_connection_t><uintptr_t>ptr
+        else:
+            flags = XPCConnectionFlags.MACH_SERVICE_LISTENER if listener else 0
+            self.conn = xpc.xpc_connection_create_mach_service(name, <dispatch_queue_t>NULL, flags)
 
-        self.conn = xpc.xpc_connection_create_mach_service(name, <dispatch_queue_t>NULL, 0)
+        self.listener = listener
+        self.on_event = None
+        self.children = []
         xpc.xpc_connection_set_event_handler_f(self.conn, self.event_handler, <void*>self)
 
     @staticmethod
-    cdef void event_handler(xpc.xpc_object_t obj, void *context) with gil:
-        print 'event_handler: obj={0}, context=0x{1:x}'.format(repr(XPCObject(ptr=<uintptr_t>obj)), <uintptr_t>context)
+    cdef void event_handler(xpc.xpc_object_t obj, void* context) with gil:
         self = <object>context
-        self.on_event(XPCObject(ptr=<uintptr_t>obj))
+        if self.listener:
+            conn = XPCConnection(ptr=<uintptr_t>obj)
+            self.children.append(conn)
+            self.on_event(self, conn)
+        else:
+            msg = XPCObject(ptr=<uintptr_t>obj)
+            self.on_event(self, msg)
 
     property remote_uid:
         def __get__(self):
@@ -227,6 +241,12 @@ cdef class XPCConnection(object):
         xpc.xpc_connection_resume(self.conn)
 
     def send(self, obj):
+        if not isinstance(obj, XPCObject):
+            raise ValueError('Only XPCObject instances can be sent')
+
+        if obj.type != XPCType.DICTIONARY:
+            raise ValueError('Only XPCObjects of type DICTIONARY can be sent')
+
         xpc.xpc_connection_send_message(self.conn, <xpc_object_t><uintptr_t>obj.ptr)
 
     def send_with_reply(self, obj, callback):

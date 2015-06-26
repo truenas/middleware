@@ -30,7 +30,7 @@ from Cython.Build import cythonize
 
 
 extensions = [
-    Extension("xpc", ["src/xpc.pyx"], extra_compile_args=["-g"], extra_link_args=["src/blocks_wrapper.o"])
+    Extension("xpc", ["src/xpc.pyx", "src/blocks_wrapper.c"], extra_compile_args=["-g"])
 ]
 
 
