@@ -28,9 +28,7 @@ const GroupEdit = React.createClass(
   , contextTypes: { router: React.PropTypes.func }
 
   , getInitialState: function () {
-    return { modifiedValues: {}
-           , remoteValues: this.props.item
-           };
+    return { modifiedValues: {} };
   }
 
   , resetChanges: function () {
@@ -66,7 +64,7 @@ const GroupEdit = React.createClass(
     }
 
     let groupNameValue = this.state.modifiedValues[ "groupName" ]
-                      || this.state.remoteValues[ "groupName" ];
+                      || this.props.item[ "groupName" ];
 
     let groupNameClass = this.state.modifiedValues[ "groupName" ]
                        ? "editor-was-modified"
