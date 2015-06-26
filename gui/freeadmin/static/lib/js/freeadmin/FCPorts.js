@@ -58,6 +58,12 @@ define([
           checked: (me.mode == 'TARGET') ? true : false
         }, this.dapFCModeTgt);
 
+        me._mdis = new RadioButton({
+          name: "mode-" + me.name,
+          value: "DISABLED",
+          checked: (me.mode == 'DISABLED') ? true : false
+        }, this.dapFCModeDis);
+
         on(me._mini, 'change', lang.hitch(me, me.modeChange));
 
         var tgtoptions = [{label: '------', value: ''}];
@@ -83,9 +89,12 @@ define([
         if(me._mtgt.get('checked') == true) {
           domStyle.set(me._target.domNode, "display", "");
           me.target = me._target.get('value');
-        } else {
+        } else if(me._mdis.get('checked') == true) {
           domStyle.set(me._target.domNode, "display", "none");
           me.target = null;
+        } else {
+          domStyle.set(me._target.domNode, "display", "none");
+          me.target = false;
         }
       },
       isValid: function() {
@@ -195,7 +204,7 @@ define([
           var target = new _Widget();
           me._form.domNode.appendChild(target.domNode);
           target.set('name', 'fcport-' + i + '-target');
-          target.set('value', fcport.target || '');
+          target.set('value', fcport.target);
 
         }
 
