@@ -9,10 +9,10 @@
 import React from "react";
 import TWBS from "react-bootstrap";
 
-import Icon from "../../../components/Icon";
-import PoolBreakdown from "./PoolBreakdown";
-import StorageDrawer from "./StorageDrawer";
-import TopologyDrawer from "./TopologyDrawer";
+import Icon from "../../components/Icon";
+import BreakdownChart from "./Volumes/BreakdownChart";
+import PoolDatasets from "./Volumes/PoolDatasets";
+import PoolTopology from "./Volumes/PoolTopology";
 
 const SLIDE_DURATION = 500;
 
@@ -131,15 +131,15 @@ const PoolItem = React.createClass(
   }
 
   , render: function () {
-    let storageDrawer  = null;
-    let infoBarContent = null;
-    let topologyDrawer = null;
+    let datasets  = null;
+    let infoBar = null;
+    let topology = null;
 
     if ( this.props.existsOnServer || this.state.editing ) {
       // TODO: Conditional logic based on presence of datasets
-      storageDrawer = <StorageDrawer ref="Storage" />;
+      datasets = <PoolDatasets ref="Storage" />;
 
-      infoBarContent = (
+      infoBar = (
         <TWBS.Row>
           <TWBS.Col xs={ 3 }>
             <h3>{ this.props.name }</h3>
@@ -148,7 +148,7 @@ const PoolItem = React.createClass(
             <h3>{ this.props.size }</h3>
           </TWBS.Col>
           <TWBS.Col xs={ 4 }>
-            <PoolBreakdown
+            <BreakdownChart
               free   = { 50 }
               used   = { 15 }
               parity = { 35 }
@@ -174,8 +174,8 @@ const PoolItem = React.createClass(
         </TWBS.Row>
       );
 
-      topologyDrawer = (
-        <TopologyDrawer
+      topology = (
+        <PoolTopology
           ref            = "Topology"
           availableDisks = { this.props.availableDisks }
           availableSSDs  = { this.props.availableSSDs }
@@ -190,7 +190,7 @@ const PoolItem = React.createClass(
       // We can reason that this is a new pool, so it should exist in an
       // "uninitialized state", waiting for the user to interact with the
       // component.
-      infoBarContent = (
+      infoBar = (
         <TWBS.Row
           className = "text-center text-muted"
           onClick   = { this.enterEditMode }
@@ -203,11 +203,11 @@ const PoolItem = React.createClass(
     return (
       <TWBS.Panel>
 
-        { storageDrawer }
+        { datasets }
 
-        { infoBarContent }
+        { infoBar }
 
-        { topologyDrawer }
+        { topology }
 
       </TWBS.Panel>
     );

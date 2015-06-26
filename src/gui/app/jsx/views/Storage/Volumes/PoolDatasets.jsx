@@ -1,5 +1,5 @@
-// STORAGE DRAWER
-// ==============
+// POOL/VOLUME DATASETS
+// ====================
 // A section of the Pool/Volume UI that shows the available storage devices,
 // datasets, ZVOLs, etc.
 
@@ -8,7 +8,7 @@
 import React from "react";
 import TWBS from "react-bootstrap";
 
-var StorageDrawer = React.createClass({
+var PoolDatasets = React.createClass({
 
   render: function () {
     return (
@@ -22,4 +22,4 @@ var StorageDrawer = React.createClass({
 
 });
 
-export default StorageDrawer;
+export default PoolDatasets;
