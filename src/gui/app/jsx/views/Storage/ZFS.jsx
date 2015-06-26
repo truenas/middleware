@@ -36,48 +36,70 @@ const ZFS = React.createClass(
     }
 
   , componentWillUnmount () {
-    VS.removeChangeListener( this.handleVolumesChange );
+      VS.removeChangeListener( this.handleVolumesChange );
 
-    ZM.unsubscribe( this.constructor.displayName );
-  }
+      ZM.unsubscribe( this.constructor.displayName );
+    }
 
   , handleStoreChange ( eventMask ) {
-    this.setState(
-      { volumes        : VS.listVolumes()
-      , availableDisks : VS.availableDisks
-      }
-    );
+      this.setState(
+        { volumes        : VS.listVolumes()
+        , availableDisks : VS.availableDisks
+        }
+      );
+    }
+
+  , handleDiskAdd ( event ) {
+    console.log( event );
   }
 
-  , handleDiskSelection ( event ) {
+  , handleDiskRemove ( event ) {
     console.log( event );
   }
 
   , createPoolItems ( loading, noPools ) {
-    const poolItemCommon =
-      { handleDiskAdd: this.handleDiskSelection
-      , availableDisks: _.without( this.state.availableDisks
-                                 , Array.from( this.state.selectedDisks )
-                                 )
-      };
+      const poolItemCommon =
+        { handleDiskAdd: this.handleDiskAdd
+        , availableDisks: _.without( this.state.availableDisks
+                                   , Array.from( this.state.selectedDisks )
+                                   )
+        , availableSSDs: [] // FIXME
+        };
 
-    let existingPools =
-      this.state.volumes.map( function ( pool, index ) {
-        // The index of the "new pool" PoolItem will always be zero, so we start
-        // iterating here at "1"
-        return <PoolItem { ...poolItemCommon } key={ index + 1 } />;
-      });
+      let existingPools =
+        this.state.volumes.map( function ( volume, index ) {
+          // The index of the "new pool" PoolItem will always be zero, so we
+          // start keying here at "1"
+          return (
+            <PoolItem
+              { ...poolItemCommon }
+              { ...volume.topology }
+              existsOnServer
+              datasets = { volume.datasets }
+              name     = { volume.name }
+              key      = { index + 1 }
+            />
+          );
+        });
 
-    let newPool = null;
+      let newPool = null;
 
-    if ( noPools ) {
-      newPool = <PoolItem { ...poolItemCommon } key={ 0 } />;
-    } else {
-      newPool = <PoolItem { ...poolItemCommon } key={ 0 } />;
+      if ( noPools ) {
+        newPool =
+          <PoolItem { ...poolItemCommon }
+            key = { 0 }
+            newPoolMessage = { "Create your first ZFS pool" }
+          />;
+      } else {
+        newPool =
+          <PoolItem { ...poolItemCommon }
+            key = { 0 }
+            newPoolMessage = { "Create a new ZFS pool" }
+          />;
+      }
+
+      return existingPools.concat( newPool );
     }
-
-    return existingPools.concat( newPool );
-  }
 
   , render () {
       let loading = false;

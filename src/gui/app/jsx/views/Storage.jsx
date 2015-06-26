@@ -18,7 +18,6 @@ const Storage = React.createClass(
       return (
         <main>
           <ZFS />
-          <Disks />
         </main>
       );
     }
