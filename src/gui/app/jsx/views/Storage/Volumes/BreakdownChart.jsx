@@ -32,19 +32,14 @@ const BreakdownChart = React.createClass(
       stackedBar = (
         <TWBS.ProgressBar>
           <TWBS.ProgressBar
-            bsStyle = "primary"
-            now     = { this.calcPercent( "used" ) }
-            key     = { 1 }
-          />
-          <TWBS.ProgressBar
-            bsStyle = "success"
-            now     = { this.calcPercent( "free" ) }
-            key     = { 2 }
-          />
-          <TWBS.ProgressBar
             bsStyle = "warning"
             now     = { this.calcPercent( "parity" ) }
             key     = { 3 }
+          />
+          <TWBS.ProgressBar
+            bsStyle = "primary"
+            now     = { this.calcPercent( "used" ) }
+            key     = { 1 }
           />
         </TWBS.ProgressBar>
       );

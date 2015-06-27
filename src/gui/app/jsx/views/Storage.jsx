@@ -68,16 +68,25 @@ const Storage = React.createClass(
 
       let existingPools =
         this.state.volumes.map( function ( volume, index ) {
+          let { data, logs, cache, spare } = volume.topology;
+          let { free, allocated, size }    = volume.properties;
+
           // The index of the "new pool" Volume will always be zero, so we
           // start keying here at "1"
           return (
             <Volume
               { ...volumeCommon }
-              { ...volume.topology }
               existsOnServer
-              datasets = { volume.datasets }
-              name     = { volume.name }
-              key      = { index + 1 }
+              data      = { data }
+              logs      = { logs }
+              cache     = { cache }
+              spare     = { spare }
+              free      = { free.value }
+              allocated = { allocated.value }
+              size      = { size.value }
+              datasets  = { volume.datasets }
+              name      = { volume.name }
+              key       = { index + 1 }
             />
           );
         });

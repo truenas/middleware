@@ -9,6 +9,7 @@
 import React from "react";
 import TWBS from "react-bootstrap";
 
+import ByteCalc from "../../common/ByteCalc";
 import Icon from "../../components/Icon";
 import BreakdownChart from "./Volumes/BreakdownChart";
 import PoolDatasets from "./Volumes/PoolDatasets";
@@ -28,6 +29,21 @@ const PoolItem = React.createClass(
     , logs           : React.PropTypes.array
     , cache          : React.PropTypes.array
     , spare          : React.PropTypes.array
+    , free: React.PropTypes.oneOfType(
+        [ React.PropTypes.string
+        , React.PropTypes.number
+        ]
+      )
+    , allocated: React.PropTypes.oneOfType(
+        [ React.PropTypes.string
+        , React.PropTypes.number
+        ]
+      )
+    , size: React.PropTypes.oneOfType(
+        [ React.PropTypes.string
+        , React.PropTypes.number
+        ]
+      )
     }
 
   , getDefaultProps: function () {
@@ -36,6 +52,9 @@ const PoolItem = React.createClass(
            , logs           : []
            , cache          : []
            , spare          : []
+           , free           : 0
+           , allocated      : 0
+           , size           : 0
            };
   }
 
@@ -47,6 +66,9 @@ const PoolItem = React.createClass(
            , logs            : this.props.logs
            , cache           : this.props.cache
            , spare           : this.props.spare
+           , free            : this.props.free
+           , allocated       : this.props.allocated
+           , size            : this.props.size
            };
   }
 
@@ -147,6 +169,11 @@ const PoolItem = React.createClass(
     let topology = null;
 
     if ( this.props.existsOnServer || this.state.editing ) {
+      let freeSize      = ByteCalc.convertString( this.props.free );
+      let allocatedSize = ByteCalc.convertString( this.props.allocated );
+      let totalSize     = ByteCalc.convertString( this.props.size );
+
+      console.log( freeSize, allocatedSize, totalSize );
       // TODO: Conditional logic based on presence of datasets
       datasets = <PoolDatasets ref="Storage" />;
 
@@ -156,14 +183,14 @@ const PoolItem = React.createClass(
             <h3>{ this.props.name }</h3>
           </TWBS.Col>
           <TWBS.Col xs={ 3 }>
-            <h3>{ this.props.size }</h3>
+            <h3>{ ByteCalc.humanize( totalSize ) }</h3>
           </TWBS.Col>
           <TWBS.Col xs={ 4 }>
             <BreakdownChart
-              free   = { 50 }
-              used   = { 15 }
-              parity = { 35 }
-              total  = { 100 }
+              free   = { freeSize }
+              used   = { allocatedSize }
+              parity = { totalSize / 4 /* FIXME */ }
+              total  = { totalSize }
             />
           </TWBS.Col>
           <TWBS.Col xs={ 2 }>
