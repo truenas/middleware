@@ -28,22 +28,35 @@ class ByteCalc {
 
   // Convert a string that looks like "10KB" or "117 kibibytes" into a Number
   // equal to the equivalent number of bytes. This is a counterpart to the
-  // humanize() method. The unit suffix (if provided) is
+  // humanize() method.
   static convertString ( size ) {
+    let output;
 
-    let parsedSize = size.replace( /[^a-z0-9.]/gi, "" )
-                         .split( /([a-z]+)/gi, 2 );
+    if ( typeof size === "string" ) {
+      let parsedSize = size.replace( /[^a-z0-9.]/gi, "" )
+                           .split( /([a-z]+)/gi, 2 );
 
-    let quantity = Array.isArray( parsedSize )
-                   && parsedSize[0]
-                 ? Number( parsedSize[0] )
-                 : null;
-    let units = Array.isArray( parsedSize )
-                && parsedSize[1]
-              ? String( parsedSize[1] )
-              : null;
+      let quantity = Array.isArray( parsedSize )
+                     && parsedSize[0]
+                   ? Number( parsedSize[0] )
+                   : null;
 
-    return this.toBytes.call( this, quantity, units );
+      let units = Array.isArray( parsedSize )
+                  && parsedSize[1]
+                ? String( parsedSize[1] )
+                : null;
+
+      output = this.toBytes.call( this, quantity, units );
+    } else if ( typeof size === "number" ) {
+      output = size;
+    } else {
+      console.warn( "Provided size \"" + size
+                  + "\" must be a number or a string"
+                  );
+      output = 0;
+    }
+
+    return output;
   }
 
   // Converts between an abbreviation like "KiB" and the long form name
