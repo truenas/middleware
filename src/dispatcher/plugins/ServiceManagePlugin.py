@@ -228,7 +228,7 @@ def _init(dispatcher, plugin):
     services = dispatcher.datastore.query('service-definitions')
 
     # Start etcd first
-    etcd = first_or_default(services, lambda s: s['name'] == 'etcd')
+    etcd = first_or_default(lambda s: s['name'] == 'etcd', services)
     ld.load(etcd['launchd'])
     ld.start(etcd['launchd']['Label'])
     services.remove(etcd)
