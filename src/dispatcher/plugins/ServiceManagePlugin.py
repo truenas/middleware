@@ -235,6 +235,7 @@ def _init(dispatcher, plugin):
 
     # Wait for it to be available
     dispatcher.call_sync('plugin.wait_for_service', 'etcd.generation')
+    dispatcher.call_sync('etcd.generation.generate_all')
 
     # Now start all other services
     for svc in services:
@@ -246,7 +247,7 @@ def _init(dispatcher, plugin):
 
         # Does it need to have any config files generated?
         if svc.get('etcd-group'):
-            dispatcher.call_sync('etc.generation.generate_group', svc['etcd-group'])
+            dispatcher.call_sync('etcd.generation.generate_group', svc['etcd-group'])
 
         # Prepare sockets specification based on 'service.%s.listen' config value
         if svc.get('socket-server'):

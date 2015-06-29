@@ -759,6 +759,7 @@
                 "name": "nginx",
                 "pidfile": "/var/run/nginx.pid",
                 "builtin": true,
+                "etcd-group": "nginx",
 				"rcng": {
 					"rc-scripts": "nginx"
 				},
@@ -789,7 +790,6 @@
             },
             "702DD24D-BF1A-4D36-B69B-C96971B37A9D": {
                 "name": "snmp",
-                "etcd-group": "snmpd",
                 "pidfile": "/var/run/net_snmpd.pid",
                 "builtin": false,
 				"rcng": {
