@@ -46,6 +46,7 @@ const FREENAS_CONSTANTS =
     // System Data
     , RECEIVE_SYSTEM_INFO_DATA: null
     , RECEIVE_SYSTEM_DEVICE_DATA: null
+    , RECEIVE_SYSTEM_GENERAL_CONFIG_DATA: null
 
     // Update Data
     , RECEIVE_UPDATE_DATA: null

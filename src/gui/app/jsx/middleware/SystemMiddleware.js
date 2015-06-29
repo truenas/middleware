@@ -23,6 +23,12 @@ class SystemMiddleware extends AbstractBase {
               );
   }
 
+  static requestSystemGeneralConfig () {
+    MC.request( "system.general.get_config"
+              , []
+              , SAC.receiveSystemGeneralConfig );
+  }
+
 };
 
 export default SystemMiddleware;

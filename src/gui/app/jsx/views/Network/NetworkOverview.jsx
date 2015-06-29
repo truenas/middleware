@@ -18,6 +18,9 @@ import NS from "../../stores/NetworkConfigStore";
 import IM from "../../middleware/InterfacesMiddleware";
 import IS from "../../stores/InterfacesStore";
 
+import SM from "../../middleware/SystemMiddleware";
+import SS from "../../stores/SystemStore";
+
 import Icon from "../../components/Icon";
 
 var NetworkAttribute = React.createClass({
@@ -146,6 +149,9 @@ const NetworkOverview = React.createClass({
     IS.addChangeListener( this.handleConfigChange );
     IM.requestInterfacesList();
     IM.subscribe( componentLongName );
+
+    SS.addChangeListener( this.handleConfigChange );
+    SM.requestSystemGeneralConfig();
   }
 
   , componentWillUnmount: function () {
@@ -154,12 +160,16 @@ const NetworkOverview = React.createClass({
 
     IS.removeChangeListener( this.handleConfigChange );
     IM.unsubscribe( componentLongName );
+
+    SS.removeChangeListener( this.handleConfigChange );
+    SM.unsubscribe( componentLongName );
   }
 
   , getNetworkConfigFromStore: function () {
     return {
-      networkConfig     : NS.getNetworkConfig()
-      , interfacesList  : IS.getAllInterfaces()
+      networkConfig         : NS.getNetworkConfig()
+      , interfacesList      : IS.getAllInterfaces()
+      , systemGeneralConfig : SS.getSystemGeneralConfig()
     };
   }
 
@@ -172,28 +182,13 @@ const NetworkOverview = React.createClass({
 
     var attributes =
       [ { name: "Hostname"
-        , value: "FREENAS-MINI"
+        , value: this.state.systemGeneralConfig.hostname
         }
       , { name: "IPv4 Default Gateway"
         , value: gateway.ipv4 || "Not Used"
         }
-      , { name: "Domain"
-        , value: "office.local"
-        }
       , { name: "IPv6 Default Gateway"
         , value: gateway.ipv6 || "Not Used"
-        }
-      , { name: "Interfaces"
-        , value: this.state.interfacesList.length
-        }
-      , { name: "Link Aggregation"
-        , value: "2"
-        }
-      , { name: "Static Routes"
-        , value: "3"
-        }
-      , { name: "VLANs"
-        , value: "1"
         }
       ];
 
