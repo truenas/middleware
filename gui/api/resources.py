@@ -841,6 +841,7 @@ class VolumeResourceMixin(NestedMixin):
                 recursive=True,
                 props=['compression', 'compressratio'],
             )
+        self._uid = Uid(100)
         return super(VolumeResourceMixin, self).dispatch_list(
             request, **kwargs
         )
@@ -939,7 +940,10 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle.data['mountpoint'] = mp.mp_path
 
-        uid = Uid(bundle.obj.id * 100)
+        try:
+            uid = self._uid
+        except:
+            uid = Uid(bundle.obj.id * 1000)
 
         bundle.data['children'] = self._get_children(
             bundle,
