@@ -38,7 +38,10 @@ from lib.system import system
 
 sys.path.append('/usr/local/lib')
 from freenasOS import Configuration
-from freenasOS.Exceptions import UpdateManifestNotFound
+from freenasOS.Exceptions import (UpdateManifestNotFound,
+                                  ManifestInvalidSignature,
+                                  UpdateBootEnvironmentException,
+                                  UpdatePackageException)
 from freenasOS.Update import (
     ActivateClone, CheckForUpdates, DeleteClone, PendingUpdates,
     PendingUpdatesChanges, DownloadUpdate, ApplyUpdate
@@ -447,7 +450,7 @@ class DownloadUpdateTask(ProgressTask):
             raise TaskException(
                       errno.EAGAIN,
                       'Got exception {0} while trying to '.format(str(e)) +
-                      'prepare update cache')
+                      ' Download Updates')
         if not download_successful:
             handler.error = True
             handler.emit_update_details()
@@ -462,10 +465,10 @@ class DownloadUpdateTask(ProgressTask):
 
 # Fix this when the fn10 freenas-pkg tools is updated by sef
 @accepts()
-@description("Runs a ghetto `freenas-update update`")
-class UpdateTask(Task):
+@description("Applies cached updates")
+class UpdateApplyTask(ProgressTask):
     def describe(self):
-        return "FreeNAS Update"
+        return "Applies cached updates to the system and reboots if necessary"
 
     def verify(self):
         block = self.dispatcher.resource_graph.get_resource(
@@ -478,16 +481,51 @@ class UpdateTask(Task):
 
         return ['root', update_resource_string]
 
+    def update_progress(self, progress, message):
+        if message:
+            self.message = message
+        self.set_progress(progress)
+
     def run(self):
+        self.message = 'Applying Updates...'
+        self.set_progress(0)
+        handler = UpdateHandler(self.dispatcher,
+                                update_progress=self.update_progress)
+        cache_dir = update_cache.get('cache_dir')
+        if cache_dir is None:
+            try:
+                cache_dir = self.dispatcher.rpc.call_sync(
+                                'system-dataset.request_directory',
+                                'update')
+            except RpcException:
+                cache_dir = '/var/tmp/update'
+        # Note: for now we force reboots always, TODO: Fix in M3-M4
         try:
-            self.dispatcher.dispatch_event('update.changed', {
-                'operation': 'started',
-            })
-            system('/usr/local/bin/freenas-update', 'update')
-            self.run_subtask('system.reboot')
+            ApplyUpdate(cache_dir, install_handler=handler.install_handler,
+                        force_reboot=True)
+        except ManifestInvalidSignature as e:
+            logger.debug('UpdateApplyTask Error: Cached manifest has ' +
+                         'invalid signature: {0}'.format(str(e)))
+            TaskException(
+                errno.EINVAL,
+                'Cached manifest has invalid signature: {0}'.format(str(e)))
+        except UpdateBootEnvironmentException as e:
+            logger.debug(
+                'UpdateApplyTask Boot Environment Error: {0}'.format(str(e)))
+            TaskException(errno.EAGAIN, str(e))
+        except UpdatePackageException as e:
+            logger.debug('UpdateApplyTask Package Error: {0}'.format(str(e)))
+            TaskException(errno.EAGAIN, str(e))
         except Exception as e:
-            raise TaskException(errno.EAGAIN,
-                                'Update Process Failed! Reason: %s' % e)
+            raise TaskException(
+                      errno.EAGAIN,
+                      'Got exception {0} while trying to '.format(str(e)) +
+                      ' Apply Updates')
+        handler.finished = True
+        handler.emit_update_details()
+        self.run_subtask('system.reboot')
+        self.message = "Updates Finished Installing Successfully"
+        self.set_progress(100)
 
 
 def _depends():
@@ -542,12 +580,11 @@ def _init(dispatcher, plugin):
     plugin.register_task_handler("update.configure", UpdateConfigureTask)
     plugin.register_task_handler("update.check", CheckUpdateTask)
     plugin.register_task_handler("update.download", DownloadUpdateTask)
-    plugin.register_task_handler("update.update", UpdateTask)
+    plugin.register_task_handler("update.update", UpdateApplyTask)
 
     # Register Event Types
     plugin.register_event_type('update.in_progress', None,
                                update_in_progress_schema)
-    plugin.register_event_type('update.changed')
 
     # Register reources
     plugin.register_resource(Resource(update_resource_string), ['system'])
