@@ -49,8 +49,8 @@ logger = logging.getLogger('UpdatePlugin')
 update_cache = CacheStore()
 
 
-@description("Utility function to parse an available changelog")
 def parse_changelog(changelog, start='', end=''):
+    "Utility function to parse an available changelog"
     regexp = r'### START (\S+)(.+?)### END \1'
     reg = re.findall(regexp, changelog, re.S | re.M)
 
@@ -63,16 +63,16 @@ def parse_changelog(changelog, start='', end=''):
             continue
         if seq == start:
             # Once we found the right one, we start accumulating
-            changelog = ''
+            changelog = []
         elif changelog is not None:
-            changelog += changes.strip('\n') + '\n'
+            changelog.append(changes.strip('\n'))
         if seq == end:
             break
     return changelog
 
 
-@description("Utility to get and eventually parse a changelog if available")
 def get_changelog(train, cache_dir='/var/tmp/update', start='', end=''):
+    "Utility to get and eventually parse a changelog if available"
     conf = Configuration.Configuration()
     changelog = conf.GetChangeLog(train=train, save_dir=cache_dir)
     if not changelog:
@@ -83,8 +83,8 @@ def get_changelog(train, cache_dir='/var/tmp/update', start='', end=''):
 
 # The handler(s) below is/are taken from the freenas 9.3 code
 # specifically from gui/system/utils.py
-@description("A handler for the CheckUpdate call")
 class CheckUpdateHandler(object):
+    "A handler for the CheckUpdate call"
 
     def __init__(self):
         self.changes = []
@@ -110,8 +110,8 @@ class CheckUpdateHandler(object):
         return output
 
 
-@description("Utility function to just check for Updates")
 def check_updates(dispatcher, cache_dir=None, check_now=False):
+    "Utility function to just check for Updates"
     update_cache.invalidate('updateAvailable')
     update_cache.invalidate('updateOperations')
     update_cache.invalidate('changelog')
@@ -252,12 +252,14 @@ def generate_update_cache(dispatcher, cache_dir=None):
         check_updates(dispatcher, cache_dir=cache_dir)
     except Exception as e:
         # What to do now?
-        pass
+        logger.debug('generate_update_cache (UpdatePlugin) falied' +
+                     'because of: {0}'.format(str(e)))
 
 
 @description("Provides System Updater Configuration")
 class UpdateProvider(Provider):
 
+    @accepts()
     @returns(str)
     def is_update_available(self):
         temp_updateAvailable = update_cache.get('updateAvailable',
@@ -272,8 +274,8 @@ class UpdateProvider(Provider):
                 'Update Availability flag is invalidated, an Update Check' +
                 ' might be underway. Try again in some time.')
 
-    # TODO: Change to array of strings instead of one gigantic string
-    @returns(str)
+    @accepts()
+    @returns(h.array(str))
     def obtain_changelog(self):
         temp_changelog = update_cache.get('changelog', timeout=1)
         if temp_changelog is not None:
@@ -286,7 +288,8 @@ class UpdateProvider(Provider):
                 'Changelog list is invalidated, an Update Check' +
                 ' might be underway. Try again in some time.')
 
-    # TODO: dont be lazy and write the schema for this
+    @accepts()
+    @returns(h.array(h.ref('update.ops')))
     def get_update_ops(self):
         temp_updateOperations = update_cache.get('updateOperations', timeout=1)
         if temp_updateOperations is not None:
@@ -299,10 +302,12 @@ class UpdateProvider(Provider):
                 'Update Operations Dict is invalidated, an Update Check' +
                 ' might be underway. Try again in some time.')
 
+    @accepts()
     @returns(str)
     def get_current_train(self):
         return self.dispatcher.configstore.get('update.train')
 
+    @accepts()
     @returns(h.ref('update'))
     def get_config(self):
         return {
@@ -430,6 +435,7 @@ class DownloadUpdateTask(ProgressTask):
 
 
 # Fix this when the fn10 freenas-pkg tools is updated by sef
+@accepts()
 @description("Runs a ghetto `freenas-update update`")
 class UpdateTask(Task):
     def describe(self):
@@ -480,6 +486,20 @@ def _init(dispatcher, plugin):
         })
     plugin.register_schema_definition('update.in_progress',
                                       update_in_progress_schema)
+
+    plugin.register_schema_definition('update.ops', {
+        'type': 'object',
+        'properties': {
+            'newName': {'type': 'string'},
+            'prevVer': {'type': 'string'},
+            'operation': {
+                'type': 'string',
+                'enum': ['upgrade', 'install']
+            },
+            'newVer': {'type': 'string'},
+            'prevName': {'type': 'string'},
+        }
+    })
 
     # Register providers
     plugin.register_provider("update", UpdateProvider)
