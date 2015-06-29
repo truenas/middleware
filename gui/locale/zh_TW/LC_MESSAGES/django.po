@@ -12749,3 +12749,17 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+
+#: account/models.py:151
+msgid "This disables all forms of password login, including for sharing."
+msgstr ""
+
+#: network/forms.py:305
+#, fuzzy
+msgid "VLAN ID"
+msgstr "VLAN 虛擬區網"
+
+#: sharing/forms.py:465
+#, fuzzy
+msgid "A mountpoint with this path is already in use by another share."
+msgstr "群組的 gid 已經存在！"

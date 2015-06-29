@@ -11723,3 +11723,15 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+
+#: account/models.py:151
+msgid "This disables all forms of password login, including for sharing."
+msgstr ""
+
+#: network/forms.py:305
+msgid "VLAN ID"
+msgstr ""
+
+#: sharing/forms.py:465
+msgid "A mountpoint with this path is already in use by another share."
+msgstr ""
