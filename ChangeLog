@@ -1,0 +1,6 @@
+#10195	Bug	Important	Conflicting volume operations for multiple volumes with more than 100 datasets
+#10277	Bug	Important	Unable to set mountpoint permissions using the API
+#10287	Bug	Important	Adds a "--no-delta" option to freenas-update CLI.
+#10314	Bug	Important	Field length of "Directory Service --> LDAP -->Bind DN"
+#10337	Bug	Nice to have	Displays the update server in use.
+#10380	Bug	Important	Allow same mountpoint to be share over distinct networks
