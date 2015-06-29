@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-06-13 09:15+0000\n"
+"PO-Revision-Date: 2015-06-24 09:18+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hi\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1434186948.0\n"
+"X-POOTLE-MTIME: 1435137491.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11628,4 +11628,16 @@ msgid ""
 "\n"
 "Changelog:\n"
 "%(changelog)s\n"
+msgstr ""
+
+#: account/models.py:151
+msgid "This disables all forms of password login, including for sharing."
+msgstr ""
+
+#: network/forms.py:305
+msgid "VLAN ID"
+msgstr ""
+
+#: sharing/forms.py:465
+msgid "A mountpoint with this path is already in use by another share."
 msgstr ""
