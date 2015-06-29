@@ -39,12 +39,11 @@ class TemplateFunctions:
 class MakoTemplateRenderer(object):
     def __init__(self, context):
         self.context = context
-        self.config = context.configstore
 
     def get_template_context(self):
         return {
             "disclaimer": TemplateFunctions.disclaimer,
-            "config": self.config,
+            "config": self.context.configstore,
             "dispatcher": self.context.client,
             "ds": self.context.datastore
         }

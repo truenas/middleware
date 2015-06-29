@@ -221,9 +221,9 @@ class Main:
         self.root = args.mountpoint
         self.parse_config(args.c)
         self.scan_plugins()
+        self.init_renderers()
         self.init_datastore()
         self.init_dispatcher()
-        self.init_renderers()
         self.client.wait_forever()
 
 if __name__ == '__main__':
