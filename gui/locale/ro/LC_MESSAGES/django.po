@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2015-06-07 14:53+0000\n"
+"PO-Revision-Date: 2015-06-28 17:48+0000\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1433688782.0\n"
+"X-POOTLE-MTIME: 1435513729.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8952,7 +8952,7 @@ msgstr "Activ"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Backup"
 
 #: middleware/notifier.py:3822
 msgid "Init"
@@ -8960,15 +8960,15 @@ msgstr "Init"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "Lipsă conexiune"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr ""
+msgstr "Degradat"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Oprit"
 
 #: network/admin.py:39
 msgid "Media Status"
@@ -8980,7 +8980,7 @@ msgstr "Canal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "Proxy HTTP"
 
 #: network/nav.py:17
 #: templates/network/index.html:14
@@ -9034,19 +9034,19 @@ msgstr ""
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Protocol minim server"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "Versiunea minimă a protocolului suportată de server"
 
 #: services/models.py:240
 msgid "Server maximum protocol"
-msgstr ""
+msgstr "Protocol maxim server"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "Versiunea maximă a protocolului suportat de server"
 
 #: services/models.py:246
 msgid "Allow execute always"
@@ -9067,7 +9067,7 @@ msgstr ""
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
-msgstr ""
+msgstr "Deservire clienți UDP NFS"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
@@ -9571,7 +9571,7 @@ msgstr "Doriţi să editați?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
-msgstr ""
+msgstr "Această modificare va genera o eroare. Continuați?"
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
@@ -9583,7 +9583,7 @@ msgstr "Autentificări domeniu"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr ""
+msgstr "Conexiunea la rețea va fi întreruptă. Continuați?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
@@ -9710,7 +9710,7 @@ msgstr "Ştergeţi discul?"
 
 #: services/models.py:256
 msgid "Obey pam restrictions"
-msgstr ""
+msgstr "Respectare restricții pam"
 
 #: services/models.py:258
 msgid ""
@@ -9884,11 +9884,14 @@ msgid ""
 "API. Entries in the file are of the form \"unix name = qualified domain "
 "name\". Mapping of both user and group names is supported."
 msgstr ""
+"Specifică calea absolută către fișierul de mapare utilizat de nss_info API. "
+"Înregistrările din fișier sânt de forma \"unix name = qualified domain name\""
+". Sânt suportate și numele de utilizatori și cele de grupuri."
 
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
 msgid "Hash Idmap"
-msgstr ""
+msgstr "Hash Idmap"
 
 #: directoryservice/models.py:261
 msgid ""
@@ -9896,6 +9899,9 @@ msgid ""
 "not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
 "option from smb.conf."
 msgstr ""
+"Definește sufixul de bază pentru directoare utilizat pentru înregistrările "
+"SID/uid/gid. Dacă nu este definit, idmap_ldap va utiliza implicit opțiunea \""
+"ldap idmap suffix\" din smb.conf."
 
 #: directoryservice/models.py:268
 msgid "User DN"
@@ -10002,9 +10008,8 @@ msgstr ""
 "url-ul pentru accesarea acestui server."
 
 #: directoryservice/models.py:391
-#, fuzzy
 msgid "LDAP User DN"
-msgstr "ID utilizator"
+msgstr "DN utilizator LDAP"
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10051,7 +10056,7 @@ msgstr ""
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
 msgid "TDB2 Idmap"
-msgstr ""
+msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
 #, fuzzy
@@ -10072,13 +10077,13 @@ msgstr "Utilizare domeniu implicit"
 #: directoryservice/models.py:702
 #: directoryservice/models.py:867
 msgid "Idmap backend"
-msgstr ""
+msgstr "Backend Idmap"
 
 #: directoryservice/models.py:566
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
 msgid "Idmap backend for winbind."
-msgstr ""
+msgstr "Backend Idmap pentru winbind."
 
 #: freeadmin/navtree.py:256
 #, fuzzy
@@ -10271,10 +10276,12 @@ msgid ""
 "Points to the server where all the password changes are performed.  If there "
 "is no such entry, the kpasswd port on the admin_server host will be tried."
 msgstr ""
+"Definește serverul unde au loc modifcările de parolă.  Dacă serverul nu este "
+"specificat se va verifica portul kpasswd din serverul admin_server."
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Principal"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
@@ -10471,11 +10478,11 @@ msgstr ""
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
-msgstr ""
+msgstr "Backend Idmap"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
-msgstr ""
+msgstr "Schema Samba"
 
 #: jails/forms.py:92
 #, fuzzy
@@ -10496,7 +10503,7 @@ msgstr "Confirmare parolă WebDAV"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
-msgstr ""
+msgstr "Porturile pentru HTTP și HTTPS nu pot fi identice!"
 
 #: services/forms.py:1628
 msgid "The WebDAV service failed to reload."
@@ -11039,12 +11046,16 @@ msgid ""
 "This parameter controls whether or not Samba should obey PAM's account and "
 "session management directives"
 msgstr ""
+"Acest parametru stabilește dacă Samba va respecta sau nu directivele PAM "
+"pentru conturi și managementul sesiunilor"
 
 #: services/models.py:268
 msgid ""
 "IP address(es) to bind to. If none specified, all available interfaces that "
 "are up will be listened on."
 msgstr ""
+"Adresa IP de atașat. Dacă nu este nimic specificat vor fi utilizate toate "
+"interfețele disponibile."
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
@@ -11075,13 +11086,16 @@ msgstr "Zvol editat cu scucces."
 
 #: directoryservice/models.py:853
 msgid "Winbind NSS Info"
-msgstr ""
+msgstr "Info NSS Winbind"
 
 #: directoryservice/models.py:854
 msgid ""
 "This parameter is designed to control how Winbind retrieves Name Service "
 "Information to construct a user's home directory and login"
 msgstr ""
+"Acest parametru stabilește cum servicul Winbind va accesa informațiile din "
+"Serviciul de Nume pentru a genera directorul home și informațiile de "
+"autentificare."
 
 #: jails/models.py:359
 #, fuzzy
@@ -11183,7 +11197,7 @@ msgstr ""
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
-msgstr ""
+msgstr "Împachetare SASL"
 
 #: directoryservice/models.py:860
 msgid ""
@@ -11200,6 +11214,8 @@ msgid ""
 "IP address(es) to advertise and listens to. If none specified, advertise the "
 "first IP address of the system, but to listen for any incoming request."
 msgstr ""
+"Adresa(ele) IP anunțate și utilizate. Dacă nu se specifică nimic va fi pusă "
+"la dispoziție prima adresă a sistemului, însă doar pentru cereri de intrare."
 
 #: services/models.py:744
 #, fuzzy
@@ -11574,7 +11590,7 @@ msgstr "Aceşti parametrii sunt adăugaţi fişierului ldap.conf."
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
-msgstr ""
+msgstr "Mod compatibil inițiator Xen"
 
 #: services/models.py:515
 msgid ""
@@ -11680,42 +11696,40 @@ msgid "Changelog"
 msgstr "Modificare"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "Senzitiv"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "Insenzitiv"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Combinat"
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Cont vizitator"
+msgstr "Cont Microsoft"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -11810,7 +11824,7 @@ msgstr ""
 
 #: services/forms.py:89
 msgid "You have %d pending active iSCSI connection(s)."
-msgstr ""
+msgstr "%d conexiuni iSCSI în așteptare."
 
 #: services/forms.py:654
 #: services/forms.py:662
@@ -11869,6 +11883,7 @@ msgstr ""
 msgid ""
 "target is a reserved word, please choose a different name for this alias."
 msgstr ""
+"cuvântul target este un cuvânt rezervat, folosăți un alt cuvânt pentru alias."
 
 #: services/models.py:322
 #, fuzzy
@@ -12596,3 +12611,19 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+
+#: account/models.py:151
+msgid "This disables all forms of password login, including for sharing."
+msgstr ""
+"Se dezactivează toate formele de autentificare cu parolă, inclusiv pentru "
+"partajări."
+
+#: network/forms.py:305
+#, fuzzy
+msgid "VLAN ID"
+msgstr "VLAN"
+
+#: sharing/forms.py:465
+#, fuzzy
+msgid "A mountpoint with this path is already in use by another share."
+msgstr "Rețeaua %s este deja utilizată de altă cartelă de rețea."

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-01-06 18:05+0000\n"
+"PO-Revision-Date: 2015-06-27 19:06+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1420567553.0\n"
+"X-POOTLE-MTIME: 1435432001.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -65,7 +65,7 @@ msgstr "Vyskytla se chyba"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr "Čekejte prosím..."
+msgstr "Čekejte…"
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -73,7 +73,7 @@ msgstr "Vyskytla se chyba!"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "Každý vybraný"
+msgstr "Každé vybrané"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
@@ -122,7 +122,7 @@ msgstr "Sdílení"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:212
 msgid "Jails"
-msgstr "Omezená prostředí (jail)"
+msgstr "Vyhrazená prostředí (jail)"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:398
 msgid "Support"
@@ -150,7 +150,7 @@ msgstr "žádné další jednotky"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
 msgid "Disk size mismatch"
-msgstr "Neodpovídající velikost disku"
+msgstr "Neodpovídající si velikost disku"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
 msgid ""
@@ -226,7 +226,7 @@ msgstr "Odhadovaná kapacita"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Add Extra Device"
-msgstr "Přidat zařízení navíc"
+msgstr "Přidat další zařízení"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
 msgid "Cancel"
@@ -305,8 +305,8 @@ msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
-"Toto pole může obsahovat pouze písmena a číslice a dále ještě znaky: \"_\", "
-"\"-\" a \".\"."
+"Toto pole může obsahovat pouze písmena a číslice a dále ještě znaky: „_“, „-“"
+" a „.“."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
@@ -378,15 +378,15 @@ msgstr "Nainstalovat čekající aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr "Název systému musí být vyplněn."
+msgstr "Je třeba vyplnit název systému."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr "Uživatelské jméno musí být vyplněno."
+msgstr "Je třeba vyplnit uživatelské jméno."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr "Heslo musí být vyplněno."
+msgstr "Je třeba vyplnit heslo."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
@@ -408,7 +408,7 @@ msgstr "Ne"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr "Načítání..."
+msgstr "Načítání…"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
@@ -425,132 +425,144 @@ msgstr "Zadání hesla se neshodují."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "Restartování WebGUI"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
-msgstr ""
+msgstr "Změna Active Directory IDMAP!"
 
 #: freeadmin/static/lib/js/freeadmin.js:1162
 msgid ""
 "<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
-msgstr ""
+msgstr "<font color='red'>STOP</font>: Opravdu víte, co děláte?<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1163
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
 msgstr ""
+"Zásuvný modul idmap_ad umožňuje komponentě Winbind číst mapování "
+"identifikátorů z<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1164
 msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
 msgstr ""
+"Server služby Active Directory, který používá rozšíření schématu dle normy "
+"RFC2307/SFU. Tento modul<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1165
 msgid ""
 "implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
 msgstr ""
+"implementuje pouze aplikační programové rozhraní „idmap“ a je POUZE PRO "
+"ČTENÍ. Je třeba, aby mapování byla<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1166
 msgid "provided in advance by the administrator by adding the uidNumber<br />"
-msgstr ""
+msgstr "poskytnuta předem správcem, prostřednictvím přidání uidNumber<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1167
 msgid ""
 "attributes for users and gidNumber attributes for groups in the AD.<br />"
 msgstr ""
+"atributů pro uživatele a gidNumber atributů pro skupiny v Active Directory.<"
+"br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1168
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
 msgstr ""
+"Komponenta Winbind pouze mapuje ty uživatele, kteří mají uidNumber a jejichž "
+"hlavní<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
 msgid ""
 "group have a gidNumber attribute set. It is however recommended that<br />"
 msgstr ""
+"skupina má nastaven atribut gidNumber. Nicméně, je doporučeno, aby<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1170
 msgid ""
 "all groups in use have gidNumber attributes assigned, otherwise they<br />"
 msgstr ""
+"všechny skupiny, které jsou používány, měly přiřazeny atributy gidNumber, "
+"jinak<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1171
 msgid "are not working.<br /><br />"
-msgstr ""
+msgstr "nefungují.<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1172
 msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
+"<font color='red'>STOP</font>: Pokud tato instalace Active Directory není "
+"pro toto nastavena, nebude to fungovat.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentace"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Uživatelské jméno"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "V případě, že ještě nemáte účet,"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"
-msgstr ""
+msgstr "zaregistrujte se"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr ""
+msgstr "Připojit ladící informace"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Odeslat"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Vyplnění tohoto políčka je vyžadováno."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr ""
+msgstr "Nahrávání příloh na hostitele"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
-msgstr ""
+msgstr "Vytváření ladicích informací"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
-msgstr ""
+msgstr "Odesílání hlášení…"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr ""
+msgstr "Odesílání příloh k hlášení ze systému"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Train Descriptions"
-msgstr ""
+msgstr "Popis této řady"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
-#, fuzzy
 msgid "Loading"
 msgstr "Načítání..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"
-msgstr ""
+msgstr "Automaticky kontrolovat aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
-msgstr ""
+msgstr "Současná řada"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
-#, fuzzy
 msgid "Update Server"
-msgstr "Aktualizovat"
+msgstr "Aktualizační server"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
-#, fuzzy
 msgid "Pending Updates"
-msgstr "Nainstalovat čekající aktualizace"
+msgstr "Čekající aktualizace"

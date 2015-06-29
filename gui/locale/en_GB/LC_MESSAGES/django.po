@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2015-03-19 13:32+0000\n"
+"PO-Revision-Date: 2015-06-25 12:51+0000\n"
 "Last-Translator: Andi <andi@gowling.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1426771923.0\n"
+"X-POOTLE-MTIME: 1435236688.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -41,7 +41,6 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
-#, fuzzy
 msgid "Auto"
 msgstr "Auto"
 
@@ -10047,12 +10046,10 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
 msgstr "Authentication Model"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
 msgstr "Require IDENT Authentication"
 
@@ -12256,3 +12253,17 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+
+#: account/models.py:151
+msgid "This disables all forms of password login, including for sharing."
+msgstr ""
+
+#: network/forms.py:305
+#, fuzzy
+msgid "VLAN ID"
+msgstr "VLAN"
+
+#: sharing/forms.py:465
+#, fuzzy
+msgid "A mountpoint with this path is already in use by another share."
+msgstr "A group with this gid already exists"
