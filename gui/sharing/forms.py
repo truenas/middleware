@@ -416,19 +416,6 @@ class NFS_ShareForm(ModelForm):
         return cdata
 
     def cleanformset_nfs_share_path(self, formset, forms):
-
-        qs = models.NFS_Share_Path.objects.all()
-        if self.instance.id:
-            qs = qs.exclude(share__id=self.instance.id)
-
-        devs = set()
-        for o in qs:
-            try:
-                dev = os.stat(o.path.encode('utf8')).st_dev
-            except OSError:
-                continue
-            devs.add(dev)
-
         dev = None
         valid = True
         ismp = False
@@ -460,16 +447,15 @@ class NFS_ShareForm(ModelForm):
                     valid = False
                     break
 
-                if stat.st_dev in devs:
-                    form._errors['path'] = self.error_class([_(
-                        'A mountpoint with this path is already in use by '
-                        'another share.'
-                    )])
-                    valid = False
             except OSError:
                 pass
 
-        networks = self.cleaned_data.get("nfs_network", "").split(" ")
+        networks = self.cleaned_data.get("nfs_network", "")
+        if not networks:
+            networks = ['0.0.0.0/0']
+        else:
+            networks = networks.split(" ")
+
         qs = models.NFS_Share.objects.all()
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
@@ -484,6 +470,8 @@ class NFS_ShareForm(ModelForm):
                 used_networks.extend(
                     map(lambda y: (y, stdev), share.nfs_network.split(" "))
                 )
+            else:
+                used_networks.append(('0.0.0.0/0', stdev))
             if (self.cleaned_data.get("nfs_alldirs") and share.nfs_alldirs
                     and stdev == dev):
                 self._errors['nfs_alldirs'] = self.error_class([
