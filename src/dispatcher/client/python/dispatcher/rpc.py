@@ -221,11 +221,11 @@ def populate_event_data(evt):
     """
     Helper Method to populate event schemas, source info and refcounts
     """
-    result = {'refCount': evt.refcount}
+    result = {'refcount': evt.refcount}
     if evt.source:
         result['source'] = type(evt.source).__name__
     if evt.schema:
-        result['eventSchema'] = evt.schema
+        result['event_schema'] = evt.schema
     return result
 
 

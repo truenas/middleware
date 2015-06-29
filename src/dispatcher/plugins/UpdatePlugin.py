@@ -29,6 +29,7 @@ import errno
 import sys
 import re
 import logging
+from resources import Resource
 from cache import CacheStore
 from task import (Provider, Task, ProgressTask, TaskException, VerifyException)
 from dispatcher.rpc import (RpcException, description, accepts,
@@ -47,6 +48,7 @@ from freenasOS.Update import (
 # need for debugging
 logger = logging.getLogger('UpdatePlugin')
 update_cache = CacheStore()
+update_resource_string = 'update:operations'
 
 
 def parse_changelog(changelog, start='', end=''):
@@ -101,10 +103,10 @@ class CheckUpdateHandler(object):
         for c in self.changes:
             opdict = {
                 'operation': c['operation'],
-                'prevName': c['old'].Name(),
-                'prevVer': c['old'].Version(),
-                'newName': c['new'].Name(),
-                'newVer': c['new'].Version()
+                'previous_name': c['old'].Name(),
+                'previous_version': c['old'].Version(),
+                'new_name': c['new'].Name(),
+                'new_version': c['new'].Version()
             }
             output.append(opdict)
         return output
@@ -149,8 +151,8 @@ def check_updates(dispatcher, cache_dir=None, check_now=False):
     update_cache.put('changelog', changelog)
 
 
-@description("A handler for Downloading and Applying Updates calls")
 class UpdateHandler(object):
+    "A handler for Downloading and Applying Updates calls"
 
     def __init__(self, dispatcher, update_progress=None):
         self.progress = 0
@@ -221,12 +223,12 @@ class UpdateHandler(object):
             'indeterminate': self.indeterminate,
             'percent': self.progress,
             'reboot': self.reboot,
-            'pkgName': self.pkgname,
-            'pkgVersion': self.pkgversion,
+            'pkg_name': self.pkgname,
+            'pkg_version': self.pkgversion,
             'filename': self.filename,
             'filesize': self.filesize,
-            'numFilesDone': self.numfilesdone,
-            'numFilesTotal': self.numfilestotal,
+            'num_files_one': self.numfilesdone,
+            'num_files_total': self.numfilestotal,
             'error': self.error,
             'finished': self.finished,
             'details': self.details,
@@ -312,7 +314,7 @@ class UpdateProvider(Provider):
     def get_config(self):
         return {
             'train': self.dispatcher.configstore.get('update.train'),
-            'updateCheckAuto': self.dispatcher.configstore.get(
+            'check_auto': self.dispatcher.configstore.get(
                 'update.check_auto'),
         }
 
@@ -336,16 +338,25 @@ class UpdateConfigureTask(Task):
             raise VerifyException(
                 errno.ENOENT,
                 '{0} is not a valid train'.format(train_to_set))
-        return []
+        block = self.dispatcher.resource_graph.get_resource(
+                    update_resource_string)
+        if block is not None and block.busy:
+            raise VerifyException(
+                errno.EBUSY,
+                'An Update Operation (Configuration/ Download/ Applying ' +
+                'the Updates) is already in the queue, please retry later')
+
+        return [update_resource_string]
 
     def run(self, props):
+
         self.dispatcher.configstore.set(
             'update.train',
             props.get('train'),
         )
         self.dispatcher.configstore.set(
             'update.check_auto',
-            props.get('updateCheckAuto'),
+            props.get('check_auto'),
         )
         self.dispatcher.dispatch_event('update.changed', {
             'operation': 'update',
@@ -362,7 +373,15 @@ class CheckUpdateTask(Task):
 
     def verify(self):
         # TODO: Fix this verify's resource allocation as unique task
-        return []
+        block = self.dispatcher.resource_graph.get_resource(
+                    update_resource_string)
+        if block is not None and block.busy:
+            raise VerifyException(
+                errno.EBUSY,
+                'An Update Operation (Configuration/ Download/ Applying' +
+                'the Updates) is already in the queue, please retry later')
+
+        return [update_resource_string]
 
     def run(self):
         try:
@@ -390,8 +409,15 @@ class DownloadUpdateTask(ProgressTask):
                 'No updates currently available for download, try running ' +
                 'the `update.check` task')
 
-        # TODO: Fix this verify's resource allocation as unique task
-        return []
+        block = self.dispatcher.resource_graph.get_resource(
+                    update_resource_string)
+        if block is not None and block.busy:
+            raise VerifyException(
+                errno.EBUSY,
+                'An Update Operation (Configuration/ Download/ Applying' +
+                'the Updates) is already in the queue, please retry later')
+
+        return [update_resource_string]
 
     def update_progress(self, progress, message):
         if message:
@@ -442,7 +468,15 @@ class UpdateTask(Task):
         return "FreeNAS Update"
 
     def verify(self):
-        return ['root']
+        block = self.dispatcher.resource_graph.get_resource(
+                    update_resource_string)
+        if block is not None and block.busy:
+            raise VerifyException(
+                errno.EBUSY,
+                'An Update Operation (Configuration/ Download/ Applying' +
+                'the Updates) is already in the queue, please retry later')
+
+        return ['root', update_resource_string]
 
     def run(self):
         try:
@@ -466,7 +500,7 @@ def _init(dispatcher, plugin):
         'type': 'object',
         'properties': {
             'train': {'type': 'string'},
-            'updateCheckAuto': {'type': 'boolean'},
+            'check_auto': {'type': 'boolean'},
         },
     })
     update_in_progress_schema = h.object(properties={
@@ -475,12 +509,12 @@ def _init(dispatcher, plugin):
             'indeterminate': bool,
             'percent': int,
             'reboot': bool,
-            'pkgName': str,
-            'pkgVersion': str,
+            'pkg_name': str,
+            'pkg_version': str,
             'filename': str,
             'filesize': int,
-            'numFilesDone': int,
-            'numFilesTotal': int,
+            'num_files_done': int,
+            'num_files_total': int,
             'error': bool,
             'finished': bool,
         })
@@ -490,14 +524,14 @@ def _init(dispatcher, plugin):
     plugin.register_schema_definition('update.ops', {
         'type': 'object',
         'properties': {
-            'newName': {'type': 'string'},
-            'prevVer': {'type': 'string'},
+            'new_name': {'type': 'string'},
+            'previous_version': {'type': 'string'},
             'operation': {
                 'type': 'string',
                 'enum': ['upgrade', 'install']
             },
-            'newVer': {'type': 'string'},
-            'prevName': {'type': 'string'},
+            'new_version': {'type': 'string'},
+            'previous_name': {'type': 'string'},
         }
     })
 
@@ -514,6 +548,9 @@ def _init(dispatcher, plugin):
     plugin.register_event_type('update.in_progress', None,
                                update_in_progress_schema)
     plugin.register_event_type('update.changed')
+
+    # Register reources
+    plugin.register_resource(Resource(update_resource_string), ['system'])
 
     # Get the Update Cache (if any) at system boot (and hence in init here)
     generate_update_cache(dispatcher)
