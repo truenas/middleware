@@ -23,21 +23,6 @@ import SS from "../../stores/SystemStore";
 
 import Icon from "../../components/Icon";
 
-var NetworkAttribute = React.createClass({
-  render: function () {
-    return (
-      <div className="col-sm-6 row form-group">
-        <label className="col-sm-4">
-          { this.props.name }:
-        </label>
-        <div className="col-sm-8">
-          { this.props.value }
-        </div>
-      </div>
-    );
-  }
-});
-
 var InterfaceNode = React.createClass({
   /**
    * Map an array of aliases into an array of ListGroupItems representing all
@@ -179,24 +164,28 @@ const NetworkOverview = React.createClass({
 
   , render: function () {
     var gateway = this.state.networkConfig.gateway || {};
+    var dnsServers = [];
+    if ( !_.isUndefined( this.state.networkConfig.dns ) ) {
+      dnsServers = this.state.networkConfig.dns.servers || [];
+    }
 
-    var attributes =
-      [ { name: "Hostname"
-        , value: this.state.systemGeneralConfig.hostname
-        }
-      , { name: "IPv4 Default Gateway"
-        , value: gateway.ipv4 || "Not Used"
-        }
-      , { name: "IPv6 Default Gateway"
-        , value: gateway.ipv6 || "Not Used"
-        }
-      ];
-
-    var attributeNodes = _.map( attributes, function ( attribute ) {
-      return (
-        <NetworkAttribute name={attribute.name} value={attribute.value} />
-      );
-    });
+    var dnsServersNode;
+    if ( !dnsServers.length ) {
+      dnsServersNode =
+        <span>
+          No DNS servers configured.
+        </span>;
+    } else {
+      var items = _.map( dnsServers, function ( server ) {
+        return (
+          <li>{ server }</li>
+        );
+      });
+      dnsServersNode =
+        <ul className="dns-server-list">
+          { items }
+        </ul>;
+    }
 
     var interfaceNodes = _.map(
       this.state.interfacesList
@@ -211,8 +200,39 @@ const NetworkOverview = React.createClass({
       <main>
         <div className="network-overview container-fluid">
           <TWBS.Panel header='General'>
-            <div className="row">
-              {attributeNodes}
+            <div className="form-group">
+              <label className="overview-label">
+                Hostname:
+              </label>
+              <div className="overview-value">
+                { this.state.systemGeneralConfig.hostname }
+              </div>
+            </div>
+            <div className="form-group row">
+              <div className="col-sm-6">
+                <label className="overview-label">
+                  IPv4 Default Gateway:
+                </label>
+                <div className="overview-value">
+                  { gateway.ipv4 || "Not Used" }
+                </div>
+              </div>
+              <div className="col-sm-6">
+                <label className="overview-label">
+                  IPv6 Default Gateway:
+                </label>
+                <div className="overview-value">
+                  { gateway.ipv6 || "Not Used" }
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="overview-label">
+                DNS Servers:
+              </label>
+              <div className="overview-value">
+                { dnsServersNode }
+              </div>
             </div>
           </TWBS.Panel>
           <TWBS.Panel header='Interfaces'>
