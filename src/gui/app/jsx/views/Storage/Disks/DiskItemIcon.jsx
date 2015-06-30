@@ -73,14 +73,14 @@ const DiskItemIcon = React.createClass({
 
     return (
       <div>
-        <div className { ...iconStyle } >
+        <div { ...iconStyle } >
           <i className = { iconClassName }
             style = { { fontSize: this.props.fontSize + "em" } } >
             { iconBadge }
           </i>
         </div>
         <div>
-          <h6 className>
+          <h6>
             { this.props.path }
           </h6>
         </div>
