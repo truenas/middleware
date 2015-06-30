@@ -10,9 +10,7 @@ Figure 13a shows the first wizard configuration screen.
 
 **Figure 13a: Configuration Wizard**
 
-|wizard.png|
-
-.. |wizard.png| image:: images/wizard.png
+.. image:: images/wizard.png
 
 Note that you can exit the wizard at any time by clicking the "Exit" button. However, exiting the wizard will not save any selections.
 
@@ -25,9 +23,7 @@ Figure 13b shows the configuration screen that appears when unformatted disks ar
 
 **Figure 13b: Volume Creation Wizard**
 
-|wizard1.png|
-
-.. |wizard1.png| image:: images/wizard1.png
+.. image:: images/wizard1.png
 
 .. note:: the wizard will not recognize an **encrypted** ZFS pool. If your ZFS pool is GELI-encrypted, cancel the wizard and use the instructions in
           :ref:`Importing an Encrypted Pool` to import the encrypted volume. You can then rerun the wizard and it will recognize that the volume has been
@@ -60,9 +56,7 @@ Figure 13c.
 
 **Figure 13c: Volume Import Screen**
 
-|wizard2.png|
-
-.. |wizard2.png| image:: images/wizard2.png
+.. image:: images/wizard2.png
 
 Select the existing volume from the drop-down menu and click "Next" to continue.
 
@@ -70,9 +64,7 @@ The next screen in the wizard is shown in Figure 13d.
 
 **Figure 13d: Directory Service Selection**
 
-|wizard3.png|
-
-.. |wizard3.png| image:: images/wizard3.png
+.. image:: images/wizard3.png
 
 If the TrueNAS® system is on a network that does not contain an Active Directory, LDAP, NIS, or NT4 server, click "Next" to skip to the next screen.
 
@@ -170,9 +162,7 @@ The next configuration screen, shown in Figure 13e, can be used to create the ne
 
 **Figure 13e: Share Creation**
 
-|wizard4.png|
-
-.. |wizard4.png| image:: images/wizard4.png
+.. image:: images/wizard4.png
 
 TrueNAS® supports several types of shares for providing storage data to the clients in a network. The initial wizard can be used to quickly make shares using
 default permissions which should "just work" for common scenarios. If you wish to configure more complex scenarios, refer to the section on :ref:`Sharing`.
@@ -196,9 +186,7 @@ After selecting the "Purpose", click the "Ownership" button to see the screen sh
 
 **Figure 13f: Share Permissions**
 
-|wizard5.png|
-
-.. |wizard5.png| image:: images/wizard5.png
+.. image:: images/wizard5.png
 
 The default permissions for the share will be displayed. To create a user or group, input the desired name, then check the "Create User" box, to create that
 user, and the "Create Group" box, to create that group. Check or uncheck the boxes in the "Mode" section to set the initial access permissions for the share.
@@ -212,9 +200,7 @@ When you are finished making shares, click the "Next" button to advance to the s
 
 **Figure 13g: Miscellaneous Settings**
 
-|wizard6.png|
-
-.. |wizard6.png| image:: images/wizard6.png
+.. image:: images/wizard6.png
 
 This screen can be used to configure the following settings:
 

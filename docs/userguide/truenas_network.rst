@@ -61,9 +61,7 @@ options.
 
 **Figure 7.1a: Adding a CARP**
 
-|carp.png|
-
-.. |carp.png| image:: images/carp.png
+.. image:: images/carp.png
 
 **Table 7.1a: CARP Configuration Options**
 
@@ -121,9 +119,7 @@ TrueNAS® system in the "Host name database" field.
 
 **Figure 7.2a: Global Configuration Screen**
 
-|tn_network1.png|
-
-.. |tn_network1.png| image:: images/tn_network1.png
+.. image:: images/tn_network1.png
 
 **Table 7.2a: Global Configuration Settings**
 
@@ -195,9 +191,7 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 
 **Figure 7.3a: Adding or Editing an Interface**
 
-|interface.png|
-
-.. |interface.png| image:: images/interface.png
+.. image:: images/interface.png
 
 **Table 7.3a: Interface Configuration Settings**
 
@@ -265,9 +259,7 @@ GUI.
 
 **Figure 7.4a: IPMI Configuration**
 
-|tn_ipmi.png|
-
-.. |tn_ipmi.png| image:: images/tn_ipmi.png
+.. image:: images/tn_ipmi.png
 
 **Table 7.4a: IPMI Options**
 
@@ -366,7 +358,7 @@ data over all available links. When configuring MPIO, make sure that the IP addr
 non-overlapping netmasks or configure static routes to do point-to-point communication. Otherwise, all packets will pass through one interface.
 
 LACP and other forms of link aggregation generally do not work well with virtualization solutions. In a virtualized environment, consider the use of iSCSI
-MPIO through the creation of an `iSCSI Portal`_. This allows an iSCSI initiator to recognize multiple links to a target, utilizing them for increased
+MPIO through the creation of iSCSI :ref:`Portals`. This allows an iSCSI initiator to recognize multiple links to a target, utilizing them for increased
 bandwidth or redundancy. This
 `how-to <http://fojta.wordpress.com/2010/04/13/iscsi-and-esxi-multipathing-and-jumbo-frames/>`_
 contains instructions for configuring MPIO on ESXi.
@@ -385,9 +377,7 @@ Figure 7.5a shows the configuration options when adding a lagg interface using `
 
 **Figure 7.5a: Creating a lagg Interface**
 
-|lagg.png|
-
-.. |lagg.png| image:: images/lagg.png
+.. image:: images/lagg.png
 
 Select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
@@ -472,7 +462,7 @@ If you click the "Edit Members" button, click the entry for a member, then click
    have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing the interface. For instance, the
    MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
 
-To see if the link aggregation is load balancing properly, run the following command from `Shell`_::
+To see if the link aggregation is load balancing properly, run the following command from :ref:`Shell`::
 
  systat -ifstat
 
@@ -501,9 +491,7 @@ By default, no static routes are defined on the TrueNAS® system. Should you nee
 
 **Figure 7.7a: Adding a Static Route**
 
-|static.png|
-
-.. |static.png| image:: images/static.png
+.. image:: images/static.png
 
 The available options are summarized in Table 7.7a.
 
@@ -545,9 +533,7 @@ tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen sho
 
 **Figure 7.8a: Adding a VLAN**
 
-|vlan.png|
-
-.. |vlan.png| image:: images/vlan.png
+.. image:: images/vlan.png
 
 Table 7.8a summarizes the configurable fields.
 

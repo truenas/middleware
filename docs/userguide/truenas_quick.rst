@@ -33,51 +33,35 @@ Check that your shipment includes the following items:
 
 * TrueNAS® Storage Appliance
 
-|truenas_appliance.png|
-
-.. |truenas_appliance.png| image:: images/truenas_appliance.png
+.. image:: images/truenas_appliance.png
 
 * Up to 16 Populated 3.5" drive trays
 
-|tn_drive_trays.jpg|
-
-.. |tn_drive_trays.jpg| image:: images/tn_drive_trays.jpg
+.. image:: images/tn_drive_trays.jpg
 
 * One pair of outer rails, left and right
 
-|tn_rails.jpg|
-
-.. |tn_rails.jpg| image:: images/tn_rails.jpg
+.. image:: images/tn_rails.jpg
 
 * Eight thumbscrews
 
-|tn_thumbscrews.png|
-
-.. |tn_thumbscrews.png| image:: images/tn_thumbscrews.png
+.. image:: images/tn_thumbscrews.png
 
 * Two screws 
 
-|tn_screws.jpg|
-
-.. |tn_screws.jpg| image:: images/tn_screws.jpg
+.. image:: images/tn_screws.jpg
 
 * Two power cables
 
-|tn_power_cable.jpg|
-
-.. |tn_power_cable.jpg| image:: images/tn_power_cable.jpg
+.. image:: images/tn_power_cable.jpg
 
 * One serial to 3.5mm cable
 
-|tn_serial_to_3.5mm_cable.png|
-
-.. |tn_serial_to_3.5mm_cable.png| image:: images/tn_serial_to_3.5mm_cable.png
+.. image:: images/tn_serial_to_3.5mm_cable.png
 
 * One bezel
 
-|tn_bezel.png|
-
-.. |tn_bezel.png| image:: images/tn_bezel.png
+.. image:: images/tn_bezel.png
 
 * One printed guide
 
@@ -89,9 +73,7 @@ The layout of the storage controller will vary by configuration. Figure 3.1a pro
 
 **Figure 3.1a: Front View**
 
-|tn_appliance_front_view.jpg|
-
-.. |tn_appliance_front_view.jpg| image:: images/tn_appliance_front_view.jpg
+.. image:: images/tn_appliance_front_view.jpg
 
 Note the two control panels on either side of the front of the appliance. The one on the left controls the primary storage controller, and the one on the
 right controls the secondary storage controller in High Availability models.
@@ -100,26 +82,20 @@ Figure 3.1b shows the layout of the front panel buttons and indicators.
 
 **Figure 3.1b: Front Panel Buttons and Indicators**
 
-|tn_appliance_front_panel.jpg|
-
-.. |tn_appliance_front_panel.jpg| image:: images/tn_appliance_front_panel.jpg
+.. image:: images/tn_appliance_front_panel.jpg
 
 Figure 3.1c shows the rear view of the appliance. If the TrueNAS® Storage Appliance is configured for High Availability, both storage controller slots will
 be populated. In a single-controller model, the bottom controller slot will contain a controller slot cover panel.
 
 **Figure 3.1c: Rear View**
 
-|tn_appliance_rear_view.jpg|
-
-.. |tn_appliance_rear_view.jpg| image:: images/tn_appliance_rear_view.jpg
+.. image:: images/tn_appliance_rear_view.jpg
 
 Figure 3.1d shows a drive tray and the meanings for the LED colors.
 
 **Figure 3.1d: 3.5" Drive Tray**
 
-|tn_drive_tray.jpg|
-
-.. |tn_drive_tray.jpg| image:: images/tn_drive_tray.jpg
+.. image:: images/tn_drive_tray.jpg
 
 .. index:: Hardware Setup
 
@@ -134,9 +110,7 @@ circular hole style is the one with a flat surface and screw holes.
 
 **Figure 3.2a: Rotate Rackmount Bracket**
 
-|tn_rotate_bracket.png|
-
-.. |tn_rotate_bracket.png| image:: images/tn_rotate_bracket.png
+.. image:: images/tn_rotate_bracket.png
 
 .. index:: Install TrueNAS Outer Rail in Rack
 
@@ -148,18 +122,14 @@ the end labeled "Front" toward the front of the rack. Refer to Figure 3.2b for a
 
 **Figure 3.2b: Installing Rails in Racks with Square Holes**
 
-|tn_rack_square_holes.png|
-
-.. |tn_rack_square_holes.png| image:: images/tn_rack_square_holes.png
+.. image:: images/tn_rack_square_holes.png
 
 For racks with round holes, secure the rails into the rack at the desired position using the eight thumbscrews included with the rails. Make sure to install
 the rails with the end labeled "Front" toward the front of the rack. Refer to Figure 3.2c for a detailed view.
 
 **Figure 3.2c: Installing Rails in Racks with Round Holes**
 
-|tn_rack_round_holes.png|
-
-.. |tn_rack_round_holes.png| image:: images/tn_rack_round_holes.png
+.. image:: images/tn_rack_round_holes.png
 
 .. index:: Install Appliance into Rack
 
@@ -173,9 +143,7 @@ view.
 
 **Figure 3.2d: Push Appliance into Rack and Release pin-lock Latches.**
 
-|tn_rack_and_release_locks.png|
-
-.. |tn_rack_and_release_locks.png| image:: images/tn_rack_and_release_locks.png
+.. image:: images/tn_rack_and_release_locks.png
 
 .. index:: Install Drive Trays into a TrueNAS Appliance
 
@@ -185,18 +153,14 @@ Next, install all of the populated drive trays into the front of the appliance. 
 
 **Figure 3.2e: Drive Installation Instructions**
 
-|tn_install_drive_tray.jpg|
-
-.. |tn_install_drive_tray.jpg| image:: images/tn_install_drive_tray.jpg
+.. image:: images/tn_install_drive_tray.jpg
 
 TrueNAS® drive bays are numbered as shown in Figure 3.2f. If your TrueNAS® Storage Appliance includes ZIL (Write Cache) or L2ARC (Read Cache) devices,
 install all ZIL devices starting from slot 0, followed by all L2ARC devices, followed by any remaining drives.
 
 **Figure 3.2f: Drive Bay Ordering**
 
-|tn_drive_mapping.jpg|
-
-.. |tn_drive_mapping.jpg| image:: images/tn_drive_mapping.jpg
+.. image:: images/tn_drive_mapping.jpg
 
 Both network and storage cabling should be connected **before** turning on the TrueNAS® Storage Appliance for the first time.
 
@@ -208,9 +172,7 @@ Refer to Figure 3.2g or the sticker on the storage controller handle for the loc
 
 **Figure 3.2g: TrueNAS® Back Panel Layout**
 
-|tn_appliance_back_panel_left.jpg|
-
-.. |tn_appliance_back_panel_left.jpg| image:: images/tn_appliance_back_panel_left.jpg
+.. image:: images/tn_appliance_back_panel_left.jpg
 
 For storage cabling instructions, refer to the instructions in :ref:`E16 Expansion Shelf` or :ref:`E24 Expansion Shelf`, depending upon the TrueNAS®
 expansion shelf.
@@ -252,45 +214,31 @@ condition, immediately take pictures and contact iXsystems support.
 
 * TrueNAS® E16 expansion shelf
 
-|tn_e16shelf.jpg|
-
-.. |tn_e16shelf.jpg| image:: images/tn_e16shelf.jpg
+.. image:: images/tn_e16shelf.jpg
 
 * Up to 16 populated 3.5" drive trays
 
-|tn_drive_trays.jpg|
-
-.. |tn_drive_trays.jpg| image:: images/tn_drive_trays.jpg
+.. image:: images/tn_drive_trays.jpg
 
 * Two power cables
 
-|tn_power_cable.jpg|
-
-.. |tn_power_cable.jpg| image:: images/tn_power_cable.jpg
+.. image:: images/tn_power_cable.jpg
 
 * Two host expansion cables (SAS 8088)
 
-|tn_host_expansion_cable.jpg|
-
-.. |tn_host_expansion_cable.jpg| image:: images/tn_host_expansion_cable.jpg
+.. image:: images/tn_host_expansion_cable.jpg
 
 * Inner and outer rails, left and right
 
-|tn_rails.jpg|
-
-.. |tn_rails.jpg| image:: /images/tn_rails.jpg
+.. image:: /images/tn_rails.jpg
 
 * Two sets of screws
 
-|tn_screws.jpg|
-
-.. |tn_screws.jpg| image:: images/tn_screws.jpg
+.. image:: images/tn_screws.jpg
 
 * One printed guide
 
-|tn_e16_guide.png|
-
-.. |tn_e16_guide.png| image:: images/tn_e16_guide.png
+.. image:: images/tn_e16_guide.png
 
 Unused drive bays will be populated with drive tray blanks to maintain proper airflow.
 
@@ -300,23 +248,17 @@ Figure 3.3a shows the front view and Figure 3.3b shows the rear view of the True
 
 **Figure 3.3a: Front View**
 
-|tn_e16_front_view.jpg|
-
-.. |tn_e16_front_view.jpg| image:: images/tn_e16_front_view.jpg
+.. image:: images/tn_e16_front_view.jpg
 
 **Figure 3.3b: Rear View**
 
-|tn_e16_rear_view.jpg|
-
-.. |tn_e16_rear_view.jpg| image:: images/tn_e16_rear_view.jpg
+.. image:: images/tn_e16_rear_view.jpg
 
 Figure 3.3c provides a detailed view of a drive tray and the possible statuses for the LED.
 
 **Figure 3.3c: 3.5" Drive Tray**
 
-|tn_drive_tray.jpg|
-
-.. |tn_drive_tray.jpg| image:: images/tn_drive_tray.jpg
+.. image:: images/tn_drive_tray.jpg
 
 .. index:: Attach E16 Expansion Shelf Inner Rail to Chassis
 
@@ -325,25 +267,19 @@ pin-lock latch outward to allow the rails to separate completely, as shown in Fi
 
 **Figure 3.3d: Separate Inner and Outer Rails**
 
-|tn_separate_rails.jpg|
-
-.. |tn_separate_rails.jpg| image:: images/tn_separate_rails.jpg
+.. image:: images/tn_separate_rails.jpg
 
 Align the inner rail keyholes to the two hooks near the front of the chassis, then slide the rails forward into place as shown in Figure 3.3e.
 
 **Figure 3.3e: Attach Inner Rail to Chassis**
 
-|tn_attach_inner_rail.jpg|
-
-.. |tn_attach_inner_rail.jpg| image:: images/tn_attach_inner_rail.jpg
+.. image:: images/tn_attach_inner_rail.jpg
 
 Secure the inner rail in place with a small screw from the rail kit. Refer to Figure 3.3f for a detailed view.
 
 **Figure 3.3f: Secure inner rail in place**
 
-|tn_secure_inner_rail.jpg|
-
-.. |tn_secure_inner_rail.jpg| image:: images/tn_secure_inner_rail.jpg
+.. image:: images/tn_secure_inner_rail.jpg
 
 The TrueNAS® E16 expansion shelf slide rails support racks with both square and circular hole types. Set the mounting brackets into the correct position for
 your rack type by pressing the button on the mounting bracket and rotating them in place, as shown in Figure 3.3g. The square rack style brackets are the
@@ -351,9 +287,7 @@ default. The circular hole style is the one with a flat surface and screw holes.
 
 **Figure 3.3g: Rotate Rackmount Bracket**
 
-|tn_rotate_bracket.png|
-
-.. |tn_rotate_bracket.png| image:: images/tn_rotate_bracket.png
+.. image:: images/tn_rotate_bracket.png
 
 Before installing, confirm that the rails included with the TrueNAS® E16 expansion shelf are long enough for your rack. Examine each rail to find the sides
 labeled "Front" and "Rear". 
@@ -363,18 +297,14 @@ the end labeled "Front" toward the front of the rack. Refer to Figure 3.3h for a
 
 **Figure 3.3h: Installing Rails in Racks with Square Holes**
 
-|tn_rack_square_holes.png|
-
-.. |tn_rack_square_holes.png| image:: images/tn_rack_square_holes.png
+.. image:: images/tn_rack_square_holes.png
 
 For racks with round holes, secure the rails into the rack at the desired position using the eight thumbscrews included with the rails. Make sure to install
 the rails with the end labeled "Front" toward the front of the rack. Refer to Figure 3.3i for a detailed view.
 
 **Figure 3.3i: Installing Rails in Racks with Round Holes**
 
-|tn_rack_round_holes.png|
-
-.. |tn_rack_round_holes.png| image:: images/tn_rack_round_holes.png
+.. image:: images/tn_rack_round_holes.png
 
 You are now ready to install the E16 expansion shelf into the rack.
 
@@ -386,9 +316,7 @@ detailed view.
 
 **Figure 3.3j: Push Expansion Shelf into Rack and Release pin-lock Latches.**
 
-|tn_rack_and_release_locks.png|
-
-.. |tn_rack_and_release_locks.png| image:: images/tn_rack_and_release_locks.png
+.. image:: images/tn_rack_and_release_locks.png
 
 Next, install all populated drive trays into the front of the expansion shelf as shown in Figure 3.3k.
 
@@ -396,17 +324,13 @@ Next, install all populated drive trays into the front of the expansion shelf as
 
 **Figure 3.3k: Drive Installation Instructions**
 
-|tn_install_drive_tray.jpg|
-
-.. |tn_install_drive_tray.jpg| image:: images/tn_install_drive_tray.jpg
+.. image:: images/tn_install_drive_tray.jpg
 
 TrueNAS® drive bays are numbered for your convenience. Intall them in the order indicated in Figure 3.3l.
 
 **Figure 3.3l: Drive Bay Ordering**
 
-|tn_drive_mapping.jpg|
-
-.. |tn_drive_mapping.jpg| image:: images/tn_drive_mapping.jpg
+.. image:: images/tn_drive_mapping.jpg
 
 .. index:: Connect E16 Expansion Shelf to TrueNAS Appliance
 
@@ -417,9 +341,7 @@ with the same letter on the secondary storage controller. Refer to Figure 3.3m f
 
 **Example 3.3m: Connecting an E16 Expansion Shelf to a TrueNAS® Storage Appliance**
 
-|tn_e16_connect_storage.png|
-
-.. |tn_e16_connect_storage.png| image:: images/tn_e16_connect_storage.png
+.. image:: images/tn_e16_connect_storage.png
 
 .. index:: Plug in and Power on E16 Expansion Shelf
 
@@ -446,39 +368,27 @@ condition, immediately take pictures and contact iXsystems support.
 
 * TrueNAS® E24 expansion shelf
 
-|tn_e24shelf.jpg|
-
-.. |tn_e24shelf.jpg| image:: images/tn_e24shelf.jpg
+.. image:: images/tn_e24shelf.jpg
 
 * Up to 24 populated drive trays
 
-|tn_drive_trays.jpg|
-
-.. |tn_drive_trays.jpg| image:: images/tn_drive_trays.jpg
+.. image:: images/tn_drive_trays.jpg
 
 * Two power cables
 
-|tn_power_cable.jpg|
-
-.. |tn_power_cable.jpg| image:: images/tn_power_cable.jpg
+.. image:: images/tn_power_cable.jpg
 
 * Two host expansion cables (SAS 8088)
 
-|tn_host_expansion_cable.jpg|
-
-.. |tn_host_expansion_cable.jpg| image:: images/tn_host_expansion_cable.jpg
+.. image:: images/tn_host_expansion_cable.jpg
 
 * One rail kit
 
-|tn_e24_rail_kit.jpg|
-
-.. |tn_e24_rail_kit.jpg| image:: images/tn_e24_rail_kit.jpg
+.. image:: images/tn_e24_rail_kit.jpg
 
 * One printed guide
 
-|tn_e24_guide.png|
-
-.. |tn_e24_guide.png| image:: images/tn_e24_guide.png
+.. image:: images/tn_e24_guide.png
 
 Unused drive bays will be populated with drive tray blanks to maintain proper airflow.
 
@@ -488,23 +398,17 @@ Figures 3.4a and 3.4b show the front and rear views of the TrueNAS® E24 expansi
 
 **Figure 3.4a: Front View**
 
-|tn_e24_front_view.png|
-
-.. |tn_e24_front_view.png| image:: images/tn_e24_front_view.png
+.. image:: images/tn_e24_front_view.png
 
 **Figure 3.4b: Rear View**
 
-|tn_e24_rear_view.jpg|
-
-.. |tn_e24_rear_view.jpg| image:: images/tn_e24_rear_view.jpg
+.. image:: images/tn_e24_rear_view.jpg
 
 Figure 3.4c provides a detailed view of a drive tray.
 
 **Figure 3.4c: 3.5" Drive Tray**
 
-|tn_e24_drive_tray.png|
-
-.. |tn_e24_drive_tray.png| image:: images/tn_e24_drive_tray.png
+.. image:: images/tn_e24_drive_tray.png
 
 .. index:: Install E24 Expansion Shelf Rails
 
@@ -515,15 +419,11 @@ Figures 3.4d and 3.4e depict the front left and rear right attachments for an L-
 
 **Figure 3.4d: Front Left rail**
 
-|tn_e24_front_left_rail.png|
-
-.. |tn_e24_front_left_rail.png| image:: images/tn_e24_front_left_rail.png
+.. image:: images/tn_e24_front_left_rail.png
 
 **Figure 3.4e: Rear Right rail**
 
-|tn_e24_right_rear_rail.png|
-
-.. |tn_e24_right_rear_rail.png| image:: images/tn_e24_right_rear_rail.png
+.. image:: images/tn_e24_right_rear_rail.png
 
 .. index:: Install E24 Expansion Shelf into Rack
 
@@ -538,9 +438,7 @@ Secure the expansion shelf to the rack by pushing down and tightening the two bu
 
 **Figure 3.4f: Secure E24 Expansion Shelf to the Rack.**
 
-|tn_attach_e24_expansion_shelf.png|
-
-.. |tn_attach_e24_expansion_shelf.png| image:: images/tn_attach_e24_expansion_shelf.png
+.. image:: images/tn_attach_e24_expansion_shelf.png
 
 .. index:: Install Drives into the E24 Expansion Shelf
 
@@ -550,9 +448,7 @@ drive carriers are numbered for your convenience. Use the layout depicted in Fig
 
 **Figure 3.4g: E24 Expansion Shelf Drive Layout**
 
-|tn_e24_drive_layout.png|
-
-.. |tn_e24_drive_layout.png| image:: images/tn_e24_drive_layout.png
+.. image:: images/tn_e24_drive_layout.png
 
 .. index:: Connect E24 Expansion Shelf to TrueNAS Appliance
 
@@ -564,9 +460,7 @@ Figure 3.4h for a detailed view.
 
 **Figure 3.4h: Example connection between E24 Expansion Shelf and TrueNAS® Storage Appliance**
 
-|tn_e24_connect_storage.jpg|
-
-.. |tn_e24_connect_storage.jpg| image:: images/tn_e24_connect_storage.jpg
+.. image:: images/tn_e24_connect_storage.jpg
 
 .. note:: if you only have one storage controller, retain your second SAS cable. If you later upgrade TrueNAS® with a second storage controller, you will
    need it to connect to the E24 expansion shelf.
@@ -579,9 +473,7 @@ locks.
 
 **Figure 3.4i: E24 Power Supply**
 
-|tn_e24_power_supply.jpg|
-
-.. |tn_e24_power_supply.jpg| image:: images/tn_e24_power_supply.jpg
+.. image:: images/tn_e24_power_supply.jpg
 
 Once all the power and storage connections are set up, turn on the expansion shelf by moving the power switches on both power supplies to the On (line)
 position.
@@ -609,51 +501,39 @@ To access the system BIOS, press "F2" at the splash screen when booting the True
 
 **Figure 3.5a: Initial BIOS Screen**
 
-|tn_BIOS1.png|
-
-.. |tn_BIOS1.png| image:: images/tn_BIOS1.png
+.. image:: images/tn_BIOS1.png
    
 Navigate to the "Server Mgmt" menu and then "BMC LAN Configuration", as shown in Figure 3.5b.
 
 **Figure 3.5b: Navigate to BMC LAN Configuration**
 
-|tn_BIOS2.png|
-
-.. |tn_BIOS2.png| image:: images/tn_BIOS2.png
+.. image:: images/tn_BIOS2.png
    
 If you will be using DCHP to assign the out-of-band management IP address, leave the "Configuration Source" set to "Dynamic" in the screen shown in Figure
 3.5c. If an IP has been assigned by DHCP, it will be displayed.
 
 **Figure 3.5c: Configuring a Dynamic IP Address**
 
-|tn_BIOS3.png|
-
-.. |tn_BIOS3.png| image:: images/tn_BIOS3.png
+.. image:: images/tn_BIOS3.png
 
 To instead assign a static IP address for out-of-band management, set the "Configuration Source" to "Static", as seen in the example shown in Figure 3.5d.
 Enter the desired IP Address into the "IP Address" setting, filling out all four octets completely.
 
 **Figure 3.5d: Configuring a Static IP Address**
 
-|tn_BIOS4.png|
-
-.. |tn_BIOS4.png| image:: images/tn_BIOS4.png
+.. image:: images/tn_BIOS4.png
    
 Next, enter the "Subnet Mask" of the subnet within which you wish to have access to out-of-band management. An example is seen in Figure 3.5e.
 
 **Figure 3.5e: Entering the Subnet Mask**
 
-|tn_BIOS5.png|
-
-.. |tn_BIOS5.png| image:: images/tn_BIOS5.png
+.. image:: images/tn_BIOS5.png
 
 Finally, set the "Default Gateway Address" for the network to which the out-of-band management port is connected. An example is seen in Figure 3.5f.
 
 **Figure 3.5f: Entering the Default Gateway Address**
 
-|tn_BIOS6.png|
-
-.. |tn_BIOS6.png| image:: images/tn_BIOS6.png
+.. image:: images/tn_BIOS6.png
 
 Save the changes you have made, exit the BIOS, and allow the system to boot.
 
@@ -662,9 +542,7 @@ is either within the same network or which is directly wired to the appliance. A
 
 **Figure 3.5g: Connecting to the IPMI Graphical Interface**
 
-|tn_IPMIlogin.png|
-
-.. |tn_IPMIlogin.png| image:: images/tn_IPMIlogin.png
+.. image:: images/tn_IPMIlogin.png
 
 Login using the default "Username" of *admin* and the default "Password" of
 *password*.
@@ -676,34 +554,26 @@ button shown in Figure 3.5h.
 
 **Figure 3.5h: Launching the Java KVM Client**
 
-|tn_IPMIdownload.png|
-
-.. |tn_IPMIdownload.png| image:: images/tn_IPMIdownload.png
+.. image:: images/tn_IPMIdownload.png
 
 When prompted for a program to open the file with, select the Java Web Start Launcher shown in Figure 3.5i.
 
 **Figure 3.5i: Configure the Launch Program**
 
-|tn_IPMIjava.png|
-
-.. |tn_IPMIjava.png| image:: images/tn_IPMIjava.png
+.. image:: images/tn_IPMIjava.png
 
 When asked if you want to run a program by an unknown publisher, check the box indicating that you understand the risks and press "Run". An example is seen in
 Figure 3.5j.
 
 **Figure 3.5j: Respond to Warning**
 
-|tn_IPMIaccept.png|
-
-.. |tn_IPMIaccept.png| image:: images/tn_IPMIaccept.png
+.. image:: images/tn_IPMIaccept.png
 
 When prompted that the connection is untrusted, as seen in Figure 3.5k, press "Continue".
 
 **Figure 3.5k: Continue Through this Screen**
 
-|tn_IPMIcontinue.png|
-
-.. |tn_IPMIcontinue.png| image:: images/tn_IPMIcontinue.png
+.. image:: images/tn_IPMIcontinue.png
 
 Once the out-of-band console opens, you can control the TrueNAS® Storage Appliance as if you were using a directly-connected keyboard and monitor.
 
@@ -722,9 +592,7 @@ the system should the administrative GUI become inaccessible.
 
 **Figure 3.6a: TrueNAS® Console Setup Menu**
 
-|console1a.png|
-
-.. |console1a.png| image:: images/console1a.png
+.. image:: images/console1a.png
 
 This menu provides the following options:
 
@@ -814,9 +682,7 @@ system. You should be prompted to input the password for the *root* user, as see
 
 **Figure 3.6b: Input the Root Password**
 
-|tn_login.png|
-
-.. |tn_login.png| image:: images/tn_login.png
+.. image:: images/tn_login.png
 
 Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3.6c.
 
@@ -826,9 +692,7 @@ Enter the default password of *abcd1234*. You should then see the administrative
 
 **Figure 3.6c: TrueNAS® Graphical Configuration Menu**
 
-|tn_initial.png|
-
-.. |tn_initial.png| image:: images/tn_initial.png
+.. image:: images/tn_initial.png
 
 If you are unable to access the IP address from a browser, check the following:
 

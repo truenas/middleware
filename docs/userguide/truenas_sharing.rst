@@ -73,9 +73,7 @@ the configuration options shown in Figure 10.1a.
 
 **Figure 10.1a: Creating an AFP Share**
 
-|afp2.png|
-
-.. |afp2.png| image:: images/afp2.png
+.. image:: images/afp2.png
 
 .. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
           share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
@@ -180,9 +178,7 @@ fields in this screen:
 
 **Figure 10.1b: Creating a Guest AFP Share**
 
-|afp6.png|
-
-.. |afp6.png| image:: images/afp6.png
+.. image:: images/afp6.png
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
 correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
@@ -196,9 +192,7 @@ frame and the contents of any data that has been saved in the share will be disp
 
 **Figure 10.1c: Connect to Server Dialogue**
 
-|afp3.png|
-
-.. |afp3.png| image:: images/afp3.png
+.. image:: images/afp3.png
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
@@ -238,15 +232,11 @@ entries to :menuselection:`Sharing --> Apple (AFP)`.
 
 **Figure 10.1d: Creating a Time Machine Share**
 
-|afp7.png|
-
-.. |afp7.png| image:: images/afp7.png
+.. image:: images/afp7.png
 
 **Figure 10.1e: Creating an Authenticated User**
 
-|afp8.png|
-
-.. |afp8.png| image:: images/afp8.png
+.. image:: images/afp8.png
 
 At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
 TrueNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
@@ -260,9 +250,7 @@ field then click "Edit Dataset" to save the change. In this example, the Time Ma
 
 **Figure 10.1f: Setting a Quota**
 
-|afp9.png|
-
-.. |afp9.png| image:: images/afp9.png
+.. image:: images/afp9.png
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the TrueNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
@@ -271,9 +259,7 @@ this example, the password that was set for the *user1* account.
 
 **Figure 10.1g: Configuring Time Machine on Mac OS X Lion**
 
-|afp5.png|
-
-.. |afp5.png| image:: images/afp5.png
+.. image:: images/afp5.png
 
 If you receive a "Time Machine could not complete the backup. The backup disk image could not be created (error 45)" error when backing up to the TrueNAS®
 system, you will need to create a sparsebundle image using
@@ -303,18 +289,14 @@ the permissions of the mounted share.
 
 **Figure 10.2a: NFS Share Wizard**
 
-|nfs6.png|
-
-.. |nfs6.png| image:: images/nfs6.png
+.. image:: images/nfs6.png
 
 To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
 Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
 
 **Figure 10.2b: NFS Share Settings**
 
-|nfs2.png|
-
-.. |nfs2.png| image:: images/nfs2.png
+.. image:: images/nfs2.png
 
 Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
 
@@ -523,9 +505,7 @@ example :file:`/mnt/data` share of the TrueNAS® system at
 
 **Figure 10.2c: Using the Nekodrive NFSClient from Windows 7 Home Edition**
 
-|nfs5.jpg|
-
-.. |nfs5.jpg| image:: images/nfs5.jpg
+.. image:: images/nfs5.jpg
 
 .. _From Mac OS X:
 
@@ -542,15 +522,11 @@ user can now copy files to and from the share.
 
 **Figure 10.2d: Mounting the NFS Share from Mac OS X**
 
-|nfs3.png|
-
-.. |nfs3.png| image:: images/nfs3.png
+.. image:: images/nfs3.png
 
 **Figure 10.2e: Viewing the NFS Share in Finder**
 
-|nfs4.png|
-
-.. |nfs4.png| image:: images/nfs4.png
+.. image:: images/nfs4.png
 
 .. _Troubleshooting NFS:
 
@@ -616,9 +592,7 @@ To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Ad
 
 **Figure 10.3a: Adding a WebDAV Share**
 
-|webdav.png|
-
-.. |webdav.png| image:: images/webdav.png
+.. image:: images/webdav.png
 
 Table 10.3a summarizes the available options.
 
@@ -670,9 +644,7 @@ Figure 10.4a shows the configuration screen that appears when you click :menusel
 
 **Figure 10.4a: Adding a CIFS Share**
 
-|cifs2.png|
-
-.. |cifs2.png| image:: images/cifs2.png
+.. image:: images/cifs2.png
 
 Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
 scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
@@ -902,9 +874,7 @@ following fields in this screen:
 
 **Figure 10.4b: Creating an Unauthenticated CIFS Share**
 
-|cifs7.png|
-
-.. |cifs7.png| image:: images/cifs7.png
+.. image:: images/cifs7.png
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
@@ -1053,9 +1023,7 @@ one of the previous versions, which will overwrite the existing file on the Wind
 
 **Figure 10.4e: Viewing Previous Versions within Explorer**
 
-|cifs6.png|
-
-.. |cifs6.png| image:: images/cifs6.png
+.. image:: images/cifs6.png
 
 .. index:: iSCSI, Internet Small Computer System Interface
 .. _Block (iSCSI):
@@ -1151,9 +1119,7 @@ Target Global Configuration
 
 **Figure 10.5a: iSCSI Target Global Configuration Variables**
 
-|global1.png|
-
-.. |global1.png| image:: images/global1.png
+.. image:: images/global1.png
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1201,9 +1167,7 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 
 **Figure 10.5b: Adding an iSCSI Portal**
 
-|portal.png|
-
-.. |portal.png| image:: images/portal.png
+.. image:: images/portal.png
 
 **Table 10.5b: Portal Configuration Settings**
 
@@ -1255,9 +1219,7 @@ which systems can connect, use :menuselection:`Sharing --> Block (iSCSI) --> Ini
 
 **Figure 10.5c: Adding an iSCSI Initiator**
 
-|initiator1.png|
-
-.. |initiator1.png| image:: images/initiator1.png
+.. image:: images/initiator1.png
 
 Table 10.5c summarizes the settings that can be configured when adding an initiator.
 
@@ -1287,9 +1249,7 @@ from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to 
 
 **Figure 10.5d: Sample iSCSI Initiator Configuration**
 
-|initiator2.png|
-
-.. |initiator2.png| image:: images/initiator2.png
+.. image:: images/initiator2.png
 
 .. _Authorized Accesses:
 
@@ -1303,9 +1263,7 @@ If you will be using CHAP or mutual CHAP to provide authentication, you must cre
 
 **Figure 10.5e: Adding an iSCSI Authorized Access**
 
-|authorized1.png|
-
-.. |authorized1.png| image:: images/authorized1.png
+.. image:: images/authorized1.png
 
 Table 10.5d summarizes the settings that can be configured when adding an authorized access:
 
@@ -1345,9 +1303,7 @@ entry to display its "Edit" and "Delete" buttons.
 
 **Figure 10.5f: Viewing Authorized Accesses**
 
-|authorized2.png|
-
-.. |authorized2.png| image:: images/authorized2.png
+.. image:: images/authorized2.png
 
 .. _Targets:
 
@@ -1365,9 +1321,7 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 
 **Figure 10.5g: Adding an iSCSI Target**
 
-|target1.png|
-
-.. |target1.png| image:: images/target1.png
+.. image:: images/target1.png
 
 **Table 10.5e: Target Settings**
 
@@ -1432,9 +1386,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-|extent2a.png|
-
-.. |extent2a.png| image:: images/extent2a.png
+.. image:: images/extent2a.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1502,9 +1454,7 @@ shown in Figure 10.5i. Use the drop-down menus to select the existing target and
 
 **Figure 10.5i: Associating a Target With an Extent**
 
-|target2a.png|
-
-.. |target2a.png| image:: images/target2a.png
+.. image:: images/target2a.png
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1596,9 +1546,7 @@ the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is
 
 **Figure 10.5j: Editing an Existing Zvol**
 
-|tn_grow.png|
-
-.. |tn_grow.png| image:: images/tn_grow.png
+.. image:: images/tn_grow.png
 
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.
