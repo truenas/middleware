@@ -33,7 +33,7 @@ import dateutil.parser
 from pymongo import MongoClient
 import pymongo
 import pymongo.errors
-from datastore import DuplicateKeyException
+from datastore import DuplicateKeyException, ConnectionException
 
 
 class MongodbDatastore(object):
@@ -95,8 +95,11 @@ class MongodbDatastore(object):
         return {'$and': result} if len(result) > 0 else {}
 
     def connect(self, dsn, database='freenas'):
-        self.conn = MongoClient(dsn)
-        self.db = self.conn[database]
+        try:
+            self.conn = MongoClient(dsn)
+            self.db = self.conn[database]
+        except pymongo.errors.ConnectionFailure:
+            raise ConnectionException()
 
     def collection_create(self, name, pkey_type='uuid', attributes=None):
         attributes = attributes or {}

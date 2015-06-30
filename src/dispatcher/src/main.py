@@ -56,7 +56,7 @@ from gevent.event import AsyncResult, Event
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
-from datastore import get_datastore
+from datastore import get_datastore, ConnectionException
 from datastore.config import ConfigStore
 from dispatcher.jsonenc import loads, dumps
 from dispatcher.rpc import RpcContext, RpcException
@@ -276,10 +276,16 @@ class Dispatcher(object):
         self.port = 0
 
     def init(self):
-        self.datastore = get_datastore(
-            self.config['datastore']['driver'],
-            self.config['datastore']['dsn']
-        )
+        # Poll if datastore is not ready yet
+        while True:
+            try:
+                self.datastore = get_datastore(
+                    self.config['datastore']['driver'],
+                    self.config['datastore']['dsn']
+                )
+                break
+            except ConnectionException:
+                gevent.sleep(1)
 
         self.configstore = ConfigStore(self.datastore)
         self.logger.info('Connected to datastore')

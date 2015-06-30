@@ -35,6 +35,10 @@ class DatastoreException(Exception):
     pass
 
 
+class ConnectionException(DatastoreException):
+    pass
+
+
 class DuplicateKeyException(DatastoreException):
     pass
 
