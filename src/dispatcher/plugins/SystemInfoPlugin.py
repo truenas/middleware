@@ -48,27 +48,41 @@ ZONEINFO_DIR = "/usr/share/zoneinfo"
 @description("Provides informations about the running system")
 class SystemInfoProvider(Provider):
 
+    @accepts()
     @returns(str)
     def uname_full(self):
         out, _ = system('uname', '-a')
         return out
 
+    @accepts()
     @returns(str)
     def version(self):
         with open('/etc/version') as fd:
             return fd.read().strip()
 
+    @accepts()
+    @returns(h.object(properties={
+                'cpu_model': str,
+                'cpu_cores': int,
+                'memory_size': long,
+                }))
     def hardware(self):
         return {
-            'cpu-model': get_sysctl("hw.model"),
-            'cpu-cores': get_sysctl("hw.ncpu"),
-            'memory-size': get_sysctl("hw.physmem")
+            'cpu_model': get_sysctl("hw.model"),
+            'cpu_cores': get_sysctl("hw.ncpu"),
+            'memory_size': get_sysctl("hw.physmem")
         }
 
+    @accepts()
+    @returns(h.object(properties={
+            'system_time': str,
+            'boot_time': str,
+            'timezone': str,
+        }))
     def time(self):
         return {
-            'system-time': datetime.now(tz=tz.tzlocal()),
-            'boot-time': datetime.fromtimestamp(
+            'system_time': datetime.now(tz=tz.tzlocal()),
+            'boot_time': datetime.fromtimestamp(
                 psutil.BOOT_TIME, tz=tz.tzlocal()
             ).isoformat(),
             'timezone': time.tzname[time.daylight],
@@ -77,15 +91,19 @@ class SystemInfoProvider(Provider):
 
 @description("Provides informations about general system settings")
 class SystemGeneralProvider(Provider):
+
+    @accepts()
     @returns(h.ref('system-general'))
     def get_config(self):
         return {
             'hostname': self.dispatcher.configstore.get('system.hostname'),
             'language': self.dispatcher.configstore.get('system.language'),
             'timezone': self.dispatcher.configstore.get('system.timezone'),
-            'console-keymap': self.dispatcher.configstore.get('system.console.keymap')
+            'console_keymap': self.dispatcher.configstore.get('system.console.keymap')
         }
 
+    @accepts()
+    @returns(h.array(h.array(str)))
     def keymaps(self):
         if not os.path.exists(KEYMAPS_INDEX):
             return []
@@ -98,6 +116,8 @@ class SystemGeneralProvider(Provider):
             rv.append((name, desc))
         return rv
 
+    @accepts()
+    @returns(h.array(str))
     def timezones(self):
         result = []
         for root, _, files in os.walk(ZONEINFO_DIR):
@@ -115,6 +135,7 @@ class SystemGeneralProvider(Provider):
 @description("Provides informations about UI system settings")
 class SystemUIProvider(Provider):
 
+    @accepts()
     @returns(h.ref('system-ui'))
     def get_config(self):
 
@@ -125,14 +146,14 @@ class SystemUIProvider(Provider):
             protocol.append('HTTPS')
 
         return {
-            'webui-procotol': protocol,
-            'webui-listen': self.dispatcher.configstore.get(
+            'webui_procotol': protocol,
+            'webui_listen': self.dispatcher.configstore.get(
                 'service.nginx.listen',
             ),
-            'webui-http-port': self.dispatcher.configstore.get(
+            'webui_http_port': self.dispatcher.configstore.get(
                 'service.nginx.http.port',
             ),
-            'webui-https-port': self.dispatcher.configstore.get(
+            'webui_https_port': self.dispatcher.configstore.get(
                 'service.nginx.https.port',
             ),
         }
@@ -163,10 +184,10 @@ class SystemGeneralConfigureTask(Task):
                 props['timezone'],
             )
 
-        if 'console-keymap' in props:
+        if 'console_keymap' in props:
             self.dispatcher.configstore.set(
                 'system.console.keymap',
-                props['console-keymap'],
+                props['console_keymap'],
             )
 
         try:
@@ -196,23 +217,23 @@ class SystemUIConfigureTask(Task):
     def run(self, props):
         self.dispatcher.configstore.set(
             'service.nginx.http.enable',
-            True if 'HTTP' in props.get('webui-protocol') else False,
+            True if 'HTTP' in props.get('webui_protocol') else False,
         )
         self.dispatcher.configstore.set(
             'service.nginx.https.enable',
-            True if 'HTTPS' in props.get('webui-protocol') else False,
+            True if 'HTTPS' in props.get('webui_protocol') else False,
         )
         self.dispatcher.configstore.set(
             'service.nginx.listen',
-            props.get('webui-listen'),
+            props.get('webui_listen'),
         )
         self.dispatcher.configstore.set(
             'service.nginx.http.port',
-            props.get('webui-http-port'),
+            props.get('webui_http_port'),
         )
         self.dispatcher.configstore.set(
             'service.nginx.https.port',
-            props.get('webui-https-port'),
+            props.get('webui_https_port'),
         )
 
         try:
@@ -283,26 +304,26 @@ def _init(dispatcher, plugin):
             'hostname': {'type': 'string'},
             'language': {'type': 'string'},
             'timezone': {'type': 'string'},
-            'console-keymap': {'type': 'string'},
+            'console_keymap': {'type': 'string'},
         },
     })
 
     plugin.register_schema_definition('system-ui', {
         'type': 'object',
         'properties': {
-            'webui-protocol': {
+            'webui_protocol': {
                 'type': ['array'],
                 'items': {
                     'type': 'string',
                     'enum': ['HTTP', 'HTTPS'],
                 },
             },
-            'webui-listen': {
+            'webui_listen': {
                 'type': ['array'],
                 'items': {'type': 'string'},
             },
-            'webui-http-port': {'type': 'integer'},
-            'webui-https-port': {'type': 'integer'},
+            'webui-http_port': {'type': 'integer'},
+            'webui_https_port': {'type': 'integer'},
         },
     })
 
