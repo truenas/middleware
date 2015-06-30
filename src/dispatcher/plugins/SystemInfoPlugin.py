@@ -232,6 +232,7 @@ class SystemUIConfigureTask(Task):
         })
 
 
+@accepts()
 @description("Reboots the System after a delay of 10 seconds")
 class SystemRebootTask(Task):
     def describe(self):
@@ -248,6 +249,7 @@ class SystemRebootTask(Task):
                   shell=True)
 
 
+@accepts()
 @description("Shuts the system down after a delay of 10 seconds")
 class SystemHaltTask(Task):
     def describe(self):

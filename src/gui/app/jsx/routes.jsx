@@ -25,7 +25,7 @@ import UserAdd from "./views/Accounts/Users/UserAdd";
 
 import Groups from "./views/Accounts/Groups";
 import GroupItem from "./views/Accounts/Groups/GroupItem";
-import AddGroup from "./views/Accounts/Groups/AddGroup";
+import GroupAdd from "./views/Accounts/Groups/GroupAdd";
 
 import Tasks from "./views/Tasks";
 
@@ -36,8 +36,6 @@ import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
 import NetworkSettings from "./views/Network/NetworkSettings";
 
 import Storage from "./views/Storage";
-import Disks from "./views/Storage/Disks";
-import DiskItem from "./views/Storage/Disks/DiskItem";
 
 import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
@@ -90,7 +88,7 @@ module.exports = (
         <Route
           name    = "add-group"
           path    = "add-group"
-          handler = { AddGroup } />
+          handler = { GroupAdd } />
         <Route
           name    = "groups-editor"
           path    = ":groupID"
@@ -141,13 +139,7 @@ module.exports = (
     <Route
       name    = "storage"
       route   = "storage"
-      handler = { Storage } >
-      <Route
-        name    = "disk-item-view"
-        path    = "disks/:diskSerial"
-        handler = { DiskItem }
-      />
-    </Route>
+      handler = { Storage } />
 
 
     {/* SERVICES */}

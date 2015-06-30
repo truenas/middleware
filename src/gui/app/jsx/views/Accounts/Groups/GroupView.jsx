@@ -78,13 +78,13 @@ const GroupView = React.createClass({
           disabled  = { this.props.item[ "builtIn" ] }
           onClick   = { this.deleteGroup }
           bsStyle   = "danger" >
-            {"Delete Group"}
+          { "Delete Group" }
         </TWBS.Button>
         <TWBS.Button
           className = "pull-right"
           onClick   = { this.props.handleViewChange.bind( null, "edit" ) }
           bsStyle   = "info" >
-          {"Edit Group"}
+          { "Edit Group" }
         </TWBS.Button>
       </TWBS.ButtonToolbar>
     );

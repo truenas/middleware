@@ -474,7 +474,10 @@ def _init(dispatcher, plugin):
         'properties': {
             'id': {'type': 'string'},
             'name': {'type': 'string'},
-            'type': {'type': 'string'},
+            'type': {
+                'type': 'string',
+                'enum': ['zfs']
+            },
             'topology': {'$ref': 'zfs-topology'},
             'params': {'type': 'object'}
         }

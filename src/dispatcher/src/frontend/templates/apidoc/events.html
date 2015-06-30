@@ -1,8 +1,21 @@
 {% extends "bootstrap/base.html" %}
 {% import "apidoc/nav.html" as nav %}
+{% block scripts -%}
+    {{ super() }}
+    <script type="text/javascript" src="/static/jquery.jsonview.js"></script>
+    <script>
+        $( document ).ready( function () {
+            $( ".json" ).each( function () {
+                $( this ).JSONView( $( this ).text(), { "collapsed": true });
+                $( this ).JSONView( 'expand', 1 );
+            });
+        });
+    </script>
+{% endblock %}
 {% block styles -%}
     {{ super() }}
     <link href="/static/main.css" rel="stylesheet"/>
+    <link href="/static/jquery.jsonview.css" rel="stylesheet"/>
 {% endblock styles %}
 
 {% block content %}
@@ -19,6 +32,20 @@
     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
         {% for name, evt in events.items() | sort %}
             <h3><a name="{{ name }}">&nbsp;</a>{{ name }}</h3>
+            {% set mid = name | replace(".", "-") %}
+            <div class="method">
+                {% if evt.source %}
+                    <p>Source: {{ evt.source }}</p>
+                {% endif %}
+                {% if evt.schema %}
+                    <h5 class="disclosure">
+                        <a class="collapsed" data-toggle="collapse" data-target="#{{ mid }}-event-schema">Event schema:</a>
+                    </h5>
+                    <div id="{{ mid }}-event-schema" class="json collapse">
+                        {{ evt.schema | json }}
+                    </div>
+                {% endif %}
+            </div>
         {% endfor %}
     </div>
 </div>

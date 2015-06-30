@@ -13,7 +13,7 @@ import routerShim from "../components/mixins/routerShim";
 // WebApp Components
 import BusyBox from "../components/BusyBox";
 import NotificationBar from "../components/WebApp/NotificationBar";
-import InformationBar from "../components/WebApp/InformationBar";
+import ContextBar from "../components/WebApp/ContextBar";
 import PrimaryNavigation from "../components/PrimaryNavigation";
 import DebugTools from "../components/DebugTools";
 
@@ -51,7 +51,7 @@ const FreeNASWebApp = React.createClass({
             <RouteHandler />
 
             {/* User-customizable component showing system events */}
-            <InformationBar />
+            <ContextBar />
           </div>
 
           <footer className="app-footer">

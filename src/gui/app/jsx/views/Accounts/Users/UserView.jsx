@@ -41,7 +41,8 @@ const UserView = React.createClass(
         var group = GroupsStore.getGroup( groupID );
 
         if ( group ) {
-          displayItem = <TWBS.ListGroupItem>{ group.name }</TWBS.ListGroupItem>;
+          displayItem = <TWBS.ListGroupItem>{ group["groupName"] }
+            </TWBS.ListGroupItem>;
         }
 
         return displayItem;
@@ -52,6 +53,7 @@ const UserView = React.createClass(
 
   , render: function () {
       var builtInUserAlert = null;
+      var loggedInUserAlert = null;
       var editButtons      = null;
 
       if ( this.props.item["builtin"] ) {
@@ -63,6 +65,15 @@ const UserView = React.createClass(
         );
       }
 
+      if (this.props.item["logged-in"] ) {
+        loggedInUserAlert = (
+          <TWBS.Alert bsStyle   = "info"
+                      className = "text-center">
+            <b>{"This user is currently logged in."}</b>
+          </TWBS.Alert>
+        );
+      }
+
       editButtons = (
         <TWBS.ButtonToolbar>
             <TWBS.Button className = "pull-left"
@@ -70,7 +81,7 @@ const UserView = React.createClass(
                          onClick   = { this.deleteUser }
                          bsStyle   = "danger" >{"Delete User"}</TWBS.Button>
             <TWBS.Button className = "pull-right"
-                         onClick   = { this.props.handleViewChange.bind(null, "edit") }
+                         onClick   = { this.props.handleViewChange.bind( null, "edit" ) }
                          bsStyle   = "info" >{"Edit User"}</TWBS.Button>
         </TWBS.ButtonToolbar>
       );
@@ -84,14 +95,14 @@ const UserView = React.createClass(
           <TWBS.Row>
             <TWBS.Col xs={3}
                       className="text-center">
-              <viewerUtil.ItemIcon primaryString   = { this.props.item["fullname"] }
+              <viewerUtil.ItemIcon primaryString   = { this.props.item["full_name"] }
                                    fallbackString  = { this.props.item["username"] }
                                    iconImage       = { this.props.item["user_icon"] }
                                    seedNumber      = { this.props.item["id"] } />
             </TWBS.Col>
             <TWBS.Col xs={9}>
               <h3>{ this.props.item["username"] }</h3>
-              <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["fullname"], "\u200B" ) }</h4>
+              <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["full_name"], "\u200B" ) }</h4>
               <h4 className="text-muted">{ viewerUtil.writeString( this.props.item["email"], "\u200B" ) }</h4>
               <hr />
             </TWBS.Col>
@@ -119,10 +130,7 @@ const UserView = React.createClass(
                                  entry  = { this.props.item["sudo"] ? this.props.item["sudo"]: false } />
             <viewerUtil.DataCell title  = { "Password Disabled" }
                                  colNum = { 3 }
-                                 entry  = { this.props.item["passwordDisabled"] ? this.props.item["password_disabled"]: false } />
-            <viewerUtil.DataCell title  = { "Logged In" }
-                                 colNum = { 3 }
-                                 entry  = { this.props.item["loggedIn"] ? this.props.item["loggedIn"]: false } />
+                                 entry  = { this.props.item["password_disabled"] ? this.props.item["password_disabled"]: false } />
             <viewerUtil.DataCell title  = { "Home Directory" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["home"] } />
@@ -138,8 +146,7 @@ const UserView = React.createClass(
             </TWBS.Col>
           </TWBS.Row>
 
-          {/* "Edit User" Button - Bottom */}
-          { editButtons }
+          { loggedInUserAlert }
 
         </TWBS.Grid>
       );

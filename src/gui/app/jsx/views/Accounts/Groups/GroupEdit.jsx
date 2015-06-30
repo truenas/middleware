@@ -13,6 +13,7 @@ import GS from "../../../stores/GroupsStore";
 
 import US from "../../../stores/UsersStore";
 
+import groupMixins from "../../../components/mixins/groupMixins";
 
 const GroupEdit = React.createClass(
 
@@ -22,12 +23,12 @@ const GroupEdit = React.createClass(
     , item: React.PropTypes.object.isRequired
     }
 
+  , mixins: [ groupMixins ]
+
   , contextTypes: { router: React.PropTypes.func }
 
   , getInitialState: function () {
-    return { modifiedValues: {}
-           , remoteValues: this.props.item
-           };
+    return { modifiedValues: {} };
   }
 
   , resetChanges: function () {
@@ -38,6 +39,15 @@ const GroupEdit = React.createClass(
     let newModifiedValues = this.state.modifiedValues;
     newModifiedValues[ field ] = event.target.value;
     this.setState( { modifiedValues: newModifiedValues } );
+  }
+
+  , submitChanges: function () {
+
+    let newGroupProps = this.state.modifiedValues;
+
+    newGroupProps = GS.reverseKeyTranslation( newGroupProps );
+
+    GM.updateGroup( this.props.item[ "groupID" ], newGroupProps );
   }
 
   , render: function () {
@@ -54,7 +64,7 @@ const GroupEdit = React.createClass(
     }
 
     let groupNameValue = this.state.modifiedValues[ "groupName" ]
-                      || this.state.remoteValues[ "groupName" ];
+                      || this.props.item[ "groupName" ];
 
     let groupNameClass = this.state.modifiedValues[ "groupName" ]
                        ? "editor-was-modified"
@@ -64,7 +74,7 @@ const GroupEdit = React.createClass(
       <TWBS.Input
         className = { groupNameClass }
         type = "text"
-        label = "Group Name"
+        label = { this.props.itemLabels.properties[ "groupName" ] }
         value = { groupNameValue }
         onChange = { this.handleChange.bind( null, "groupName" ) } />;
 
@@ -79,14 +89,16 @@ const GroupEdit = React.createClass(
     let submitButton =
       <TWBS.Button
         className = "pull-right"
-        bsStyle = "success" >
+        bsStyle = "success"
+        onClick = { this.submitChanges } >
         { "Submit Changes" }
       </TWBS.Button>;
 
     let cancelButton =
       <TWBS.Button
         className = "pull-left"
-        bsStyle = "default" >
+        bsStyle = "default"
+        onClick = { this.props.handleViewChange.bind( null, "view" ) } >
         { "Cancel Edit" }
       </TWBS.Button>;
 
@@ -94,6 +106,7 @@ const GroupEdit = React.createClass(
       <TWBS.Button
         className = "pull-left"
         bsStyle = "danger"
+        onClick = { this.deleteGroup }
         disabled = { this.props.item[ "builtIn" ] } >
         { "Delete Group" }
       </TWBS.Button>;

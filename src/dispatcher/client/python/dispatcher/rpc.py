@@ -217,6 +217,18 @@ class RpcException(Exception):
         return "{}: {}".format(errno.errorcode[self.code], self.message)
 
 
+def populate_event_data(evt):
+    """
+    Helper Method to populate event schemas, source info and refcounts
+    """
+    result = {'refcount': evt.refcount}
+    if evt.source:
+        result['source'] = type(evt.source).__name__
+    if evt.schema:
+        result['event_schema'] = evt.schema
+    return result
+
+
 class DiscoveryService(RpcService):
     def __init__(self):
         self.__context = None
@@ -235,6 +247,9 @@ class DiscoveryService(RpcService):
             raise RpcException(errno.ENOENT, "Service not found")
 
         return list(self.__context.instances[service].enumerate_methods())
+
+    def get_event_types(self):
+        return {n: populate_event_data(x) for n, x in self.__context.dispatcher.event_types.items() }
 
     def get_schema(self):
         return {
@@ -279,9 +294,10 @@ class SchemaHelper(object):
 
     @staticmethod
     def object(*args, **kwargs):
-        return {
-            'type': 'object'
-        }
+        result = {'type': 'object'}
+        if 'properties' in kwargs:
+            result['properties'] = {n: convert_schema(x) for n, x in kwargs['properties'].items()}
+        return result
 
     @staticmethod
     def tuple(*args):

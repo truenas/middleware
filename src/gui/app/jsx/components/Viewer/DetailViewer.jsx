@@ -41,7 +41,9 @@ const DetailNavSection = React.createClass(
       }
 
   , getDefaultProps: function () {
-      return { disclosureThreshold: 1 };
+      return { disclosureThreshold: 1
+             , itemIconTemplate : null
+             };
     }
 
   , getInitialState: function () {
@@ -53,6 +55,9 @@ const DetailNavSection = React.createClass(
     }
 
   , createItem: function ( rawItem, index ) {
+
+      let itemIcon = null;
+
       const searchString   = this.props.searchString;
       const selectionValue = rawItem[ this.props.keyUnique ];
       var params = {};
@@ -64,6 +69,32 @@ const DetailNavSection = React.createClass(
       if ( searchString.length ) {
         primaryText   = viewerUtil.markSearch( primaryText, searchString );
         secondaryText = viewerUtil.markSearch( secondaryText, searchString );
+      }
+
+      if ( this.props.itemIconTemplate ) {
+        itemIcon =
+          <div className="viewer-detail-nav-item-text">
+            <this.props.itemIconTemplate { ...rawItem } />
+          </div>;
+      } else {
+
+        itemIcon = <div>
+          <viewerUtil.ItemIcon
+            primaryString  = { rawItem[ this.props.keySecondary ] }
+            fallbackString = { rawItem[ this.props.keyPrimary ] }
+            seedNumber     = { String( rawItem[ this.props.keyPrimary ] )
+                             + String( rawItem[ this.props.keySecondary ] )
+                             }
+            fontSize       = { 1 } />
+          <div className="viewer-detail-nav-item-text">
+            <strong className="primary-text">
+              { primaryText }
+            </strong>
+            <small className="secondary-text">
+              { secondaryText }
+            </small>
+          </div>
+        </div>;
       }
 
       return (
@@ -79,17 +110,7 @@ const DetailNavSection = React.createClass(
                                   .bind( null, selectionValue )
                       }
           >
-            <viewerUtil.ItemIcon
-              primaryString  = { rawItem[ this.props.keySecondary ] }
-              fallbackString = { rawItem[ this.props.keyPrimary ] }
-              seedNumber     = { String( rawItem[ this.props.keyPrimary ] )
-                               + String( rawItem[ this.props.keySecondary ] )
-                               }
-              fontSize       = { 1 } />
-            <div className="viewer-detail-nav-item-text">
-              <strong className="primary-text">{ primaryText }</strong>
-              <small className="secondary-text">{ secondaryText }</small>
-            </div>
+            { itemIcon }
           </Link>
         </li>
       );
@@ -190,7 +211,8 @@ const DetailViewer = React.createClass(
                 key               = { index }
                 initialDisclosure = { disclosureState }
                 sectionName       = { group.name }
-                entries           = { group.entries } />
+                entries           = { group.entries }
+                itemIconTemplate = { this.props.itemIconTemplate } />
             );
           } else {
             return null;

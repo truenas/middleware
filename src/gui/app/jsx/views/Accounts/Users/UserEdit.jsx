@@ -13,275 +13,313 @@ import inputHelpers from "../../../components/mixins/inputHelpers";
 import userMixins from "../../../components/mixins/userMixins";
 import viewerCommon from "../../../components/mixins/viewerCommon";
 
-import UsersMiddleware from "../../../middleware/UsersMiddleware";
+import UM from "../../../middleware/UsersMiddleware";
+import US from "../../../stores/UsersStore";
 
-import GroupsStore from "../../../stores/GroupsStore";
+import GS from "../../../stores/GroupsStore";
 
 const UserEdit = React.createClass(
   { mixins: [ inputHelpers, userMixins, viewerCommon ]
 
-  , propTypes: { item: React.PropTypes.object.isRequired }
+  , propTypes: { item: React.PropTypes.object.isRequired
+               , itemSchema: React.PropTypes.object.isRequired
+               , itemLabels: React.PropTypes.object.isRequired
+               }
 
   , getInitialState: function () {
-      return { locallyModifiedValues : {}
-             , mixedValues : this.props.item
-             , lastSentValues : {}
-             };
+      return { modifiedValues: {} };
     }
 
-    // TODO: Validate that input values are legitimate for their field. For example,
-    // id should be a number.
-  , submitUserUpdate: function () {
-      // Make sure nothing read-only made it in somehow.
-      var valuesToSend = this.state.locallyModifiedValues;
+  , contextTypes: { router: React.PropTypes.func }
 
-      // Convert the array of strings provided by the form to an array of integers.
-      if ( !_.isEmpty( valuesToSend[ "groups" ] ) ) {
-        valuesToSend[ "groups" ] = this.parseGroupsArray( valuesToSend[ "groups" ] );
+  , resetChanges: function () {
+    this.setState( { modifiedValues: {} } );
+  }
+
+  , handleChange: function ( field, event ) {
+    let newModifiedValues = this.state.modifiedValues;
+
+    if ( event.target.type == "checkbox" ) {
+      newModifiedValues[ field ] = event.target.checked;
+    } else {
+      // TODO: using refs is bad, try to find a better way to get the
+      // input out of a multi select if it exists
+      switch ( this.props.itemSchema.properties[ field ].type ) {
+        case "array": 
+          newModifiedValues[ field ] = this.refs[ field ].getValue();
+          break;
+        case "integer":
+        case "number":
+          newModifiedValues[ field ] = _.parseInt( event.target.value );
+          break;
+        default:
+          newModifiedValues[ field ] = event.target.value;
       }
+    }
+    this.setState( { modifiedValues: newModifiedValues } );
+  }
 
-      // Only bother to submit an update if there is anything to update.
-      if ( !_.isEmpty( valuesToSend ) ) {
-        UsersMiddleware.updateUser( this.props.item[ "id" ], valuesToSend, this.submissionRedirect( valuesToSend ) );
+  , submitChanges: function () {
 
-        // Save a record of the last changes we sent.
-        this.setState({ lastSentValues: valuesToSend });
-      } else {
-        console.warn( "Attempted to send a User update with no valid fields." );
-      }
+    let newUserProps = this.state.modifiedValues;
 
+    // Convert the array of strings provided by the form to an array of integers.
+    if ( !_.isEmpty( newUserProps[ "groups" ] ) ) {
+      newUserProps[ "groups" ] = this.parseGroupsArray( newUserProps[ "groups" ] );
     }
 
-    // TODO: Currently this section just arbitrarily handles every property the
-    // middleware sends in the order the browser sends it. This should be updated
-    // to have a deliberate design.
-    // TODO: Add alerts when a remote administrator has changed items that the
-    // local administrator is also working on.
+    UM.updateUser( this.props.item[ "id" ], newUserProps );
+  }
+
   , render: function () {
-      var builtInUserAlert  = null;
-      var editButtons       = null;
-      var inputForm         = null;
+    let builtInWarning  = null;
+    let loggedInUserAlert = null;
 
-      if ( this.props.item["builtin"] ) {
-        builtInUserAlert = (
-          <TWBS.Alert
-            bsStyle   = "warning"
-            className = "text-center"
-          >
-            <b>{"You should only edit a system user account if you know exactly what you're doing."}</b>
-          </TWBS.Alert>
-        );
-      }
+    if ( this.props.item[ "builtin" ] ) {
+      builtInWarning =
+        <TWBS.Alert
+          bsStyle   = { "warning" }
+          className = { "text-center built-in-warning" } >
+          {"This is a built in user account.  Only edit this account if you"
+          + "know exactly what you're doing."}
+        </TWBS.Alert>;
+    }
 
-      editButtons =
-        <TWBS.ButtonToolbar>
-            <TWBS.Button
-              className = "pull-left"
-              disabled  = { this.props.item["builtin"] }
-              onClick   = { this.deleteUser }
-              bsStyle   = "danger" >
-              {"Delete User"}
-            </TWBS.Button>
-            <TWBS.Button
-              className = "pull-right"
-              onClick   = { this.props.handleViewChange.bind( null, "view" ) }
-              bsStyle   = "default" >
-              {"Cancel"}
-            </TWBS.Button>
-            <TWBS.Button
-              className = "pull-right"
-              disabled  = { _.isEmpty( this.state.locallyModifiedValues ) }
-              onClick   = { this.submitUserUpdate }
-              bsStyle   = "info" >
-              {"Save Changes"}
-            </TWBS.Button>
-        </TWBS.ButtonToolbar>;
-
-      inputForm =
-        <form className = "form-horizontal">
-          <TWBS.Grid fluid>
-            <TWBS.Row>
-              <TWBS.Col xs = {8}>
-                {/* User id */}
-                <TWBS.Input
-                  type             = "text"
-                  label            = { "User ID" }
-                  defaultValue     = { this.props.item[ "id" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "id" ) }
-                  key              = { "id" }
-                  ref              = "id"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["id"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* username */}
-                <TWBS.Input
-                  type             = "text"
-                  label            = { "User Name" }
-                  defaultValue     = { this.props.item[ "username" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "username" ) }
-                  key              = { "username" }
-                  ref              = "username"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["username"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* full_name*/}
-                <TWBS.Input
-                  type             = "text"
-                  label            = { "Full Name" }
-                  defaultValue     = { this.props.item[ "full_name" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "full_name" ) }
-                  key              = { "full_name" }
-                  ref              = "full_name"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["full_name"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* email */}
-                <TWBS.Input
-                  type             = "text"
-                  label            = { "email" }
-                  defaultValue     = { this.props.item[ "email" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "email" ) }
-                  key              = { "email" }
-                  ref              = "email"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["email"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* shell */}
-                <TWBS.Input
-                  type             = "select"
-                  label            = { "Shell" }
-                  defaultValue     = { this.props.item[ "shell" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "shell" ) }
-                  key              = { "shell" }
-                  ref              = "shell"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["shell"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8" >
-                            { this.generateOptionsList( this.state.shells, "name" ) }
-                </TWBS.Input>
-                {/* primary group */}
-                <TWBS.Input
-                  type             = "select"
-                  label            = { "Primary Group" }
-                  defaultValue     = { this.props.item[ "group" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "group" ) }
-                  key              = { "group" }
-                  ref              = "group"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["group"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8" >
-                  { this.generateOptionsList( GroupsStore.groups, "id", "name" ) }
-                </TWBS.Input>
-                {/* sshpubkey */}
-                <TWBS.Input
-                  type             = "textarea"
-                  label            = { "Public Key" }
-                  defaultValue     = { this.props.item[ "sshpubkey" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "sshpubkey" ) }
-                  key              = { "sshpubkey" }
-                  ref              = "sshpubkey"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["sshpubkey"] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                            rows             = "10" >
-                </TWBS.Input>
-                {/* Other Groups */}
-                <TWBS.Input
-                  type             = "select"
-                  label            = "Other Groups"
-                  defaultValue     = { this.props.item[ "groups" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "groups" ) }
-                  key              = "groups"
-                  ref              = "groups"
-                  groupClassName   = { _.has( this.state.locallyModifiedValues[ "groups" ] ) ? "editor-was-modified" : "" }
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                            multiple >
-                            { this.generateOptionsList( GroupsStore.groups, "id", "name" ) }
-                </TWBS.Input>
-              </TWBS.Col>
-              <TWBS.Col xs = {4}>
-                {/* locked */}
-                <TWBS.Input
-                  type             = "checkbox"
-                  checked          = { this.state.mixedValues["locked"] }
-                  label            = { "Locked" }
-                  value            = { this.state.mixedValues["locked"] ? this.state.mixedValues["locked"] : "" }
-                  defaultValue     = { this.props.item[ "locked" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "locked" ) }
-                  key              = { "locked" }
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["locked"] ) ? "editor-was-modified" : "" }
-                  ref              = "locked"
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* sudo */}
-                <TWBS.Input
-                  type             = "checkbox"
-                  checked          = { this.state.mixedValues["sudo"] }
-                  label            = { "sudo" }
-                  value            = { this.state.mixedValues["sudo"] ? this.state.mixedValues["sudo"] : "" }
-                  defaultValue     = { this.props.item[ "sudo" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "sudo" ) }
-                  key              = { "sudo" }
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["sudo"] ) ? "editor-was-modified" : "" }
-                  ref              = "sudo"
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* password_disabled */}
-                <TWBS.Input
-                  type             = "checkbox"
-                  label            = { "password_disabled" }
-                  checked          = { this.state.mixedValues["password_disabled"] }
-                  value            = { this.state.mixedValues["password_disabled"] ? this.state.mixedValues["password_disabled"] : "" }
-                  defaultValue     = { this.props.item[ "password_disabled" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "password_disabled" ) }
-                  key              = { "password_disabled" }
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["password_disabled"] ) ? "editor-was-modified" : "" }
-                  ref              = "password_disabled"
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-                {/* logged-in */}
-                <TWBS.Input
-                  type             = "checkbox"
-                  checked          = { this.state.mixedValues["logged-in"] }
-                  label            = { "logged-in" }
-                  value            = { this.state.mixedValues["logged-in"] ? this.state.mixedValues["logged-in"] : "" }
-                  defaultValue     = { this.props.item[ "logged-in" ] }
-                  onChange         = { this.editHandleValueChange.bind( null, "logged-in" ) }
-                  key              = { "logged-in" }
-                  groupClassName   = { _.has( this.state.locallyModifiedValues["logged-in"] ) ? "editor-was-modified" : "" }
-                  ref              = "logged-in"
-                  labelClassName   = "col-xs-4"
-                  wrapperClassName = "col-xs-8"
-                />
-              </TWBS.Col>
-            </TWBS.Row>
-          </TWBS.Grid>
-        </form>;
-
-      return (
-        <TWBS.Grid fluid>
-          {/* Save and Cancel Buttons - Top */}
-          { editButtons }
-
-          {/* Shows a warning if the user account is built in */}
-          { builtInUserAlert }
-
-          { inputForm }
-
-          {/* Save and Cancel Buttons - Bottom */}
-          { editButtons }
-        </TWBS.Grid>
+    if ( this.props.item["logged-in"] ) {
+      loggedInUserAlert = (
+        <TWBS.Alert bsStyle   = "info"
+                    className = "text-center">
+          <b>{"This user is currently logged in."}</b>
+        </TWBS.Alert>
       );
     }
+
+    let resetButton =
+      <TWBS.Button
+        className = "pull-right"
+        bsStyle = "warning"
+        onClick = { this.resetChanges } >
+        { "Reset Changes" }
+      </TWBS.Button>;
+
+    let submitButton =
+      <TWBS.Button
+        className = "pull-right"
+        bsStyle = "success"
+        onClick = { this.submitChanges } >
+        { "Submit Changes" }
+      </TWBS.Button>;
+
+    let cancelButton =
+      <TWBS.Button
+        className = "pull-left"
+        bsStyle = "default"
+        onClick = { this.props.handleViewChange.bind( null, "view" ) } >
+        { "Cancel Edit" }
+      </TWBS.Button>;
+
+    let deletebutton =
+      <TWBS.Button
+        className = "pull-left"
+        bsStyle = "danger"
+        onClick = { this.deleteUser }
+        disabled = { this.props.item[ "builtin" ] } >
+        { "Delete User" }
+      </TWBS.Button>;
+
+    let buttonToolbar =
+        <TWBS.ButtonToolbar>
+          { cancelButton }
+          { deletebutton }
+          { resetButton }
+          { submitButton }
+        </TWBS.ButtonToolbar>;
+
+    let userIdField =
+      <TWBS.Input
+        type             = "text"
+        label            = { "User ID" }
+        value            = { this.state.modifiedValues[ "id" ]
+          || this.props.item[ "id" ] }
+        onChange         = { this.handleChange.bind( null, "id" ) }
+        key              = { "id" }
+        ref              = "id"
+        groupClassName   = { _.has( this.state.modifiedValues["id"] )
+          ? "editor-was-modified" : "" } />;
+
+    let userNameField =
+      <TWBS.Input
+        type             = "text"
+        label            = { "User Name" }
+        value            = { this.state.modifiedValues[ "username" ]
+          || this.props.item[ "username" ] }
+        onChange         = { this.handleChange.bind( null, "username" ) }
+        key              = { "username" }
+        ref              = "username"
+        groupClassName   = { _.has( this.state.modifiedValues["username"] )
+          ? "editor-was-modified" : "" } />;
+
+    let userFullNameField =
+      <TWBS.Input
+        type             = "text"
+        label            = { "Full Name" }
+        value            = { this.state.modifiedValues[ "full_name" ]
+          || this.props.item[ "full_name" ] }
+        onChange         = { this.handleChange.bind( null, "full_name" ) }
+        key              = { "full_name" }
+        ref              = "full_name"
+        groupClassName   = { _.has( this.state.modifiedValues["full_name"] )
+          ? "editor-was-modified" : "" } />;
+
+    let userEmailField =
+      <TWBS.Input
+        type             = "text"
+        label            = { "eMail" }
+        value            = { this.state.modifiedValues[ "email" ]
+          || this.props.item[ "email" ] }
+        onChange         = { this.handleChange.bind( null, "email" ) }
+        key              = { "email" }
+        ref              = "email"
+        groupClassName   = { _.has( this.state.modifiedValues["email"] )
+          ? "editor-was-modified" : "" } />;
+
+    let userShellField =
+      <TWBS.Input
+        type             = "select"
+        label            = { "Shell" }
+        value     = { this.state.modifiedValues[ "shell" ]
+          || this.props.item[ "shell" ] }
+        onChange         = { this.handleChange.bind( null, "shell" ) }
+        key              = { "shell" }
+        ref              = "shell"
+        groupClassName   = { _.has( this.state.modifiedValues["shell"] )
+          ? "editor-was-modified" : "" } >
+        { this.generateOptionsList( this.state.shells, "name" ) }
+      </TWBS.Input>;
+
+    let userPrimaryGroupField =
+      <TWBS.Input
+        type             = "select"
+        label            = { "Primary Group" }
+        value            = { this.state.modifiedValues[ "group" ]
+          || this.props.item[ "group" ] }
+        onChange         = { this.handleChange.bind( null, "group" ) }
+        key              = { "group" }
+        ref              = "group"
+        groupClassName   = { _.has( this.state.modifiedValues["group"] )
+          ? "editor-was-modified" : "" } >
+        { this.generateOptionsList( GS.groups, "groupID", "groupName" ) }
+      </TWBS.Input>;
+
+    let userSshPubKeyField =
+      <TWBS.Input
+        type             = "textarea"
+        label            = { "Public Key" }
+        value            = { this.state.modifiedValues["sshpubkey" ]
+          || this.props.item[ "sshpubkey" ] }
+        onChange         = { this.handleChange.bind( null, "sshpubkey" ) }
+        key              = { "sshpubkey" }
+        ref              = "sshpubkey"
+        groupClassName   = { _.has( this.state.modifiedValues["sshpubkey"] )
+          ? "editor-was-modified" : "" }
+        rows             = "10" />;
+
+    let userGroupsField =
+      <TWBS.Input
+        type             = "select"
+        label            = "Other Groups"
+        value            = { this.state.modifiedValues[ "groups" ]
+          || this.props.item[ "groups" ] }
+        onChange         = { this.handleChange.bind( null, "groups" ) }
+        key              = { "groups" }
+        ref              = "groups"
+        groupClassName   = { _.has( this.state.modifiedValues[ "groups" ] )
+          ? "editor-was-modified" : "" }
+        multiple >
+        this.state.modifiedValues[ "groups" ] = [];
+        { this.generateOptionsList( GS.groups, "groupID", "groupName" ) }
+      </TWBS.Input>;
+
+    let userLockedField =
+      <TWBS.Input
+        type             = "checkbox"
+        checked          = { this.state.modifiedValues[ "locked" ]
+          || this.props.item["locked"] }
+        label            = { "Locked" }
+        defaultValue     = { this.props.item[ "locked" ] }
+        onChange         = { this.handleChange.bind( null, "locked" ) }
+        key              = { "locked" }
+        ref              = "locked"
+        groupClassName   = { _.has( this.state.modifiedValues["locked"] )
+          ? "editor-was-modified" : "" } />;
+
+    let userSudoField =
+      <TWBS.Input
+        type             = "checkbox"
+        checked          = { this.state.modifiedValues[ "sudo" ]
+          || this.props.item["sudo"] }
+        label            = { "sudo" }
+        onChange         = { this.handleChange.bind( null, "sudo" ) }
+        key              = { "sudo" }
+        ref              = "sudo"
+        groupClassName   = { _.has( this.state.modifiedValues[ "sudo" ] )
+          ? "editor-was-modified" : "" } />;
+
+    let userPasswordDisabledField =
+      <TWBS.Input
+        type             = "checkbox"
+        label            = { "Password Disabled" }
+        checked          = { this.state.modifiedValues[ "password_disabled" ]
+          || this.props.item[ "password_disabled" ] }
+        onChange = { this.handleChange.bind( null, "password_disabled" ) }
+        key              = { "password_disabled" }
+        ref              = "password_disabled"
+        groupClassName = {
+          _.has( this.state.modifiedValues[ "password_disabled" ] )
+          ? "editor-was-modified" : "" } />;
+
+    let textEditForm =
+      <div>
+        { userIdField }
+        { userNameField }
+        { userFullNameField }
+        { userEmailField }
+        { userShellField }
+        { userPrimaryGroupField }
+        { userSshPubKeyField }
+        { userGroupsField }
+      </div>;
+
+    let checkboxEditForm =
+      <div>
+        { userLockedField }
+        { userSudoField }
+        { userPasswordDisabledField }
+      </div>;
+
+    return (
+      <TWBS.Grid fluid>
+        <TWBS.Row>
+          <TWBS.Col xs = {12} >
+            { buttonToolbar }
+          </TWBS.Col>
+        </TWBS.Row>
+        <TWBS.Row>
+          <TWBS.Col xs = {12} >
+            { builtInWarning }
+            { loggedInUserAlert }
+          </TWBS.Col>
+          <TWBS.Col xs = {8} >
+            { textEditForm }
+          </TWBS.Col>
+          <TWBS.Col xs = {4} >
+            { checkboxEditForm }
+          </TWBS.Col>
+        </TWBS.Row>
+      </TWBS.Grid>
+    );
   }
-);
+
+});
 
 export default UserEdit;
