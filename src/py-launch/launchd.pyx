@@ -154,6 +154,9 @@ cdef class Item(object):
             if self.type == ItemType.MACHPORT:
                 return defs.launch_data_get_machport(self._value)
 
+            if self.type == ItemType.ERRNO:
+                return defs.launch_data_get_errno(self._value)
+
             if self.type == ItemType.ARRAY:
                 return list(self)
 
