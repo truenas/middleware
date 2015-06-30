@@ -44,9 +44,7 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-|system1a.png|
-
-.. |system1a.png| image:: images/system1a.png
+.. image:: images/system1a.png
 
 .. _General:
 
@@ -57,9 +55,7 @@ General
 
 **Figure 5.2a: General Screen**
 
-|system2a.png|
-
-.. |system2a.png| image:: images/system2a.png
+.. image:: images/system2a.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -148,9 +144,7 @@ explains these options in more detail.
 
 **Figure 5.2b: Add a NTP Server**
 
-|ntp1.png|
-
-.. |ntp1.png| image:: images/ntp1.png
+.. image:: images/ntp1.png
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -207,9 +201,7 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|be1e.png|
-
-.. |be1e.png| image:: images/be1e.png
+.. image:: images/be1e.png
 
 Each boot environment entry contains the following information:
 
@@ -246,9 +238,7 @@ The buttons above the boot entries can be used to:
 
 **Figure 5.3b: Viewing the Status of the Boot Device**
 
-|be2.png|
-
-.. |be2.png| image:: images/be2.png
+.. image:: images/be2.png
 
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
@@ -257,9 +247,7 @@ Figure 5.3c shows a sample boot menu containing entries for the default, initial
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-|be3a.png|
-
-.. |be3a.png| image:: images/be3a.png
+.. image:: images/be3a.png
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
@@ -282,18 +270,14 @@ click "Attach Disk".
 
 **Figure 5.3d: Mirroring a Boot Device**
 
-|mirror1.png|
-
-.. |mirror1.png| image:: images/mirror1.png
+.. image:: images/mirror1.png
 
 Once the mirror is created, the "Status" screen will indicate that it is now a *mirror* and the number of devices in the mirror will be shown, as seen in the
 example in Figure 5.3e.
 
 **Figure 5.3e: Viewing the Status of a Mirrored Boot Device**
 
-|mirror2.png|
-
-.. |mirror2.png| image:: images/mirror2.png
+.. image:: images/mirror2.png
 
 .. _Advanced:
 
@@ -304,9 +288,7 @@ Advanced
 
 **Figure 5.4a: Advanced Screen**
 
-|system3a.png|
-
-.. |system3a.png| image:: images/system3a.png
+.. image:: images/system3a.png
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -390,9 +372,7 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 **Figure 5.4b: Backup Configuration Screen**
 
-|backup1.png|
-
-.. |backup1.png| image:: images/backup1.png
+.. image:: images/backup1.png
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -467,9 +447,7 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|system4b.png|
-
-.. |system4b.png| image:: images/system4b.png
+.. image:: images/system4b.png
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -519,9 +497,7 @@ a Domain Controller, all of the domain controller state is stored there as well,
 
 **Figure 5.6a: System Dataset Screen**
 
-|system5a.png|
-
-.. |system5a.png| image:: images/system5a.png
+.. image:: images/system5a.png
 
 .. note:: encrypted volumes will not be displayed in the "System dataset pool" drop-down menu.
 
@@ -571,9 +547,7 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 
 **Figure 5.7a: Adding a Tunable**
 
-|tunable.png|
-
-.. |tunable.png| image:: images/tunable.png
+.. image:: images/tunable.png
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -680,9 +654,7 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-|update1a.png|
-
-.. |update1a.png| image:: images/update1a.png
+.. image:: images/update1a.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -712,9 +684,7 @@ of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9
 
 **Figure 5.8b: Reviewing Updates**
 
-|update2.png|
-
-.. |update2.png| image:: images/update2.png
+.. image:: images/update2.png
 
 To apply the updates now, make sure that there aren't any clients currently connected to the FreeNAS® system and that a scrub is not running. Click the "OK"
 button to download and apply the updates. Note that some updates will automatically reboot the system once they are applied.
@@ -747,18 +717,14 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 **Figure 5.9a: Initial CA Screen**
 
-|ca1a.png|
-
-.. |ca1a.png| image:: images/ca1a.png
+.. image:: images/ca1a.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
 **Figure 5.9b: Importing a CA**
 
-|ca2a.png|
-
-.. |ca2a.png| image:: images/ca2a.png
+.. image:: images/ca2a.png
 
 **Table 5.9a: Importing a CA Options**
 
@@ -790,9 +756,7 @@ To create a CA for internal use only, click the "Create Internal CA" button whic
 
 **Figure 5.9c: Creating an Internal CA**
 
-|ca3.png|
-
-.. |ca3.png| image:: images/ca3.png
+.. image:: images/ca3.png
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
@@ -865,18 +829,14 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> Ce
 
 **Figure 5.10a: Initial Certificates Screen**
 
-|cert1a.png|
-
-.. |cert1a.png| image:: images/cert1a.png
+.. image:: images/cert1a.png
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
 summarized in Table 5.10a.
 
 **Figure 5.10b: Importing a Certificate**
 
-|cert2a.png|
-
-.. |cert2a.png| image:: images/cert2a.png
+.. image:: images/cert2a.png
 
 **Table 5.10a: Certificate Import Options**
 
@@ -904,9 +864,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 
 **Figure 5.10c: Creating a New Certificate**
 
-|cert3a.png|
-
-.. |cert3a.png| image:: images/cert3a.png
+.. image:: images/cert3a.png
 
 **Table 5.10b: Certificate Creation Options**
 
@@ -960,9 +918,7 @@ connections.
 
 **Figure 5.10d: Managing Certificates**
 
-|cert4.png|
-
-.. |cert4.png| image:: images/cert4.png
+.. image:: images/cert4.png
 
 If you click an entry, it will activate the following configuration buttons:
 
@@ -987,9 +943,7 @@ The FreeNAS® "Support" tab, shown in Figure 5.11a, provides a built-in ticketin
 
 **Figure 5.11a: Support Tab**
 
-|support1a.png|
-
-.. |support1a.png| image:: images/support1a.png
+.. image:: images/support1a.png
 
 This screen provides a built-in interface to the FreeNAS® bug tracker located at `bugs.freenas.org <https://bugs.freenas.org>`_. If you have not yet used the
 FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a

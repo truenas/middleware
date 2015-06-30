@@ -9,9 +9,7 @@ that you have selected an option that will negatively impact users of the FreeNA
 
 **Figure 19a: Shutdown Warning Message**
 
-|shutdown.png|
-
-.. |shutdown.png| image:: images/shutdown.png
+.. image:: images/shutdown.png
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the shutdown request and to periodically run :command:`zpool status` from :ref:`Shell` until it is verified that the scrub or

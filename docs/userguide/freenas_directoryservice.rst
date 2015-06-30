@@ -58,9 +58,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 
 **Figure 9.1a: Configuring Active Directory**
 
-|ad1.png|
-
-.. |ad1.png| image:: images/ad1.png
+.. image:: images/ad1.png
 
 **Table 9.1a: Active Directory Configuration Options**
 
@@ -330,9 +328,7 @@ Figure 9.2a shows the LDAP Configuration screen that is seen when you click :men
 
 **Figure 9.2a: Configuring LDAP**
 
-|ldap1.png|
-
-.. |ldap1.png| image:: images/ldap1.png
+.. image:: images/ldap1.png
 
 Table 9.2a summarizes the available configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -456,9 +452,7 @@ options.
 
 **Figure 9.3a: NIS Configuration**
 
-|nis1.png|
-
-.. |nis1.png| image:: images/nis1.png
+.. image:: images/nis1.png
 
 **Table 9.3a: NIS Configuration Options**
 
@@ -503,9 +497,7 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 
 **Figure 9.4a: NT4 Configuration Options**
 
-|nt1.png|
-
-.. |nt1.png| image:: images/nt1.png
+.. image:: images/nt1.png
 
 **Table 9.4a: NT4 Configuration Options**
 
@@ -555,9 +547,7 @@ shown in Figure 9.5a.
 
 **Figure 9.5a: Adding a Kerberos Realm**
 
-|realm1a.png|
-
-.. |realm1a.png| image:: images/realm1a.png
+.. image:: images/realm1a.png
 
 Table 9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode"
 button or configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
@@ -633,6 +623,4 @@ To configure additional Kerberos parameters, use :menuselection:`Directory Servi
 
 **Figure 9.7a: Additional Kerberos Settings**
 
-|kerberos1.png|
-
-.. |kerberos1.png| image:: images/kerberos1.png
+.. image:: images/kerberos1.png

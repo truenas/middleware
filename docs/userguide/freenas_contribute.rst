@@ -31,9 +31,7 @@ To see the status of a localization, open `pootle.freenas.org <http://pootle.fre
 
 **Figure 25.1a: FreeNAS® Localization System**
 
-|translate.png|
-
-.. |translate.png| image:: images/translate.png
+.. image:: images/translate.png
 
 The localizations FreeNAS® users have requested are listed alphabetically on the left. If your language is missing and you would like to help in its
 translation, send an email to the
@@ -56,9 +54,7 @@ menu screens has been assigned a string number. If you click the number, an edit
 
 **Figure 25.1b: Using the Pootle Interface to Edit a Translation String**
 
-|translate2.png|
-
-.. |translate2.png| image:: images/translate2.png
+.. image:: images/translate2.png
 
 Simply type in the translated text and click the "Submit" button to save your change.
 

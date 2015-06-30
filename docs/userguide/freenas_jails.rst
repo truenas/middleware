@@ -58,9 +58,7 @@ named *jail1*, it will be installed into its own dataset named :file:`/mnt/volum
 
 **Figure 13.1a: Global Jail Configuration**
 
-|jails1.png|
-
-.. |jails1.png| image:: images/jails1.png
+.. image:: images/jails1.png
 
 .. warning:: if you have already installed any :ref:`Plugins`, the "Jail Root", "IPv4 Network", "IPv4 Network Start Address", and "IPv4 Network End Address"
    will automatically be filled in. You should double-check that the pre-configured IP addressing values are appropriate for your jails and will not conflict
@@ -153,9 +151,7 @@ To create a jail, click :menuselection:`Jails --> Add Jail` to access the screen
 
 **Figure 13.2a: Creating a Jail**
 
-|jails3a.png|
-
-.. |jails3a.png| image:: images/jails3a.png
+.. image:: images/jails3a.png
 
 By default, the only required value to create a jail is to give it a name. The default is to create a FreeBSD jail.
 
@@ -289,9 +285,7 @@ system boot, whether or not it is currently running, and the type of jail (e.g. 
 
 **Figure 13.2b: Viewing Added Jails**
 
-|jails4a.png|
-
-.. |jails4a.png| image:: images/jails4a.png
+.. image:: images/jails4a.png
 
 In order, from left to right, the following configuration icons are available:
 
@@ -372,9 +366,7 @@ expanding the jail's name in the tree view and clicking :menuselection:`Storage 
 
 **Figure 13.2c: Adding Storage to a Jail**
 
-|jails5.png|
-
-.. |jails5.png| image:: images/jails5.png
+.. image:: images/jails5.png
 
 Browse to the "Source" and "Destination", where:
 
@@ -426,9 +418,7 @@ it was created as the "Create directory" box was left as checked. The resulting 
 
 **Figure 13.2d: Example Storage**
 
-|jails6.png|
-
-.. |jails6.png| image:: images/jails6.png
+.. image:: images/jails6.png
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -538,9 +528,7 @@ for audiotag.
 
 **Figure 13.2e: Configuration Options for Audiotag**
 
-|ports1.png|
-
-.. |ports1.png| image:: images/ports1.png
+.. image:: images/ports1.png
 
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
@@ -570,9 +558,7 @@ Since this port has configurable options, the first time this command is run the
 
 **Figure 13.2f: Configuration Options for Audiotag Port**
 
-|ports2.png|
-
-.. |ports2.png| image:: images/ports2.png
+.. image:: images/ports2.png
 
 To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:`spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.
@@ -676,18 +662,14 @@ the "OK" button to begin the installation.
 
 **Figure 13.3a: Creating a phpVirtualBox Instance**
 
-|jails7.png|
-
-.. |jails7.png| image:: images/jails7.png
+.. image:: images/jails7.png
 
 Once installed, input the IP address of the VirtualBox jail into a web browser and enter the username and password of *admin* into the login screen. Once
 authenticated, the screen shown in Figure 13.3b will appear in the web browser.
 
 **Figure 13.3b: The phpVirtualBox Interface**
 
-|jails8.png|
-
-.. |jails8.png| image:: images/jails8.png
+.. image:: images/jails8.png
 
 Click the "New" button to create virtual machines. You can then install the desired operating systems and software into the created virtual machines.
 
@@ -706,9 +688,7 @@ listing showing the default template is seen in Figure 13.4a.
 
 **Figure 13.4a: Listing of Default Jail Templates**
 
-|jails9.png|
-
-.. |jails9.png| image:: images/jails9.png
+.. image:: images/jails9.png
 
 The listing contains the following columns:
 
@@ -739,9 +719,7 @@ To add the template, click :menuselection:`Jails --> Templates --> Add Jail Temp
 
 **Figure 13.4b: Adding A Custom Jail Template**
 
-|jails11a.png|
-
-.. |jails11a.png| image:: images/jails11a.png
+.. image:: images/jails11a.png
 
 Table 13.4a summarizes the fields in this screen.
 
@@ -781,9 +759,7 @@ it will open the configuration screen shown in the Figure 13.4c.
 
 **Figure 13.4c: Editing a Template's Options**
 
-|jails10a.png|
-
-.. |jails10a.png| image:: images/jails10a.png
+.. image:: images/jails10a.png
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.

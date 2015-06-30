@@ -10,9 +10,7 @@ degraded the state of the pool.
 
 **Figure 22a: Example Alert Message**
 
-|alert2.png|
-
-.. |alert2.png| image:: images/alert2.png
+.. image:: images/alert2.png
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that

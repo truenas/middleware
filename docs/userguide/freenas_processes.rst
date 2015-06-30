@@ -8,9 +8,7 @@ If you click "Display System Processes", a screen will open showing the output o
 
 **Figure 15a: System Processes Running on FreeNAS®**
 
-|process.png|
-
-.. |process.png| image:: images/process.png
+.. image:: images/process.png
 
 The display will automatically refresh itself. Simply click the "X" in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
