@@ -125,7 +125,10 @@ const NetworkOverview = React.createClass({
   getInitialState: function () {
     return _.assign( this.getNetworkConfigFromStore()
                     , this.getSystemGeneralConfigFromStore()
-                    , this.getInterfaceListFromStore() );
+                    , this.getInterfaceListFromStore()
+                    , {
+                      newDnsServer: ""
+                    } );
   }
 
   , componentDidMount: function () {
@@ -260,6 +263,12 @@ const NetworkOverview = React.createClass({
           networkConfig: networkConfig
         });
         break;
+
+      case "newDnsServer":
+        this.setState({
+          newDnsServer: evt.target.value
+        });
+        break;
     }
   }
 
@@ -271,7 +280,80 @@ const NetworkOverview = React.createClass({
     SM.updateSystemGeneralConfig( this.state.systemGeneralConfig );
   }
 
+  /**
+   * Add a new DNS server.
+   */
+  , addNewDnsServer: function () {
+    if ( this.state.newDnsServer === "" ) {
+      // No need to add an empty server.
+      return;
+    }
+
+    var networkConfig = this.state.networkConfig;
+    if ( _.includes( networkConfig.dns.servers, this.state.newDnsServer ) ) {
+      // No need to add a duplicate entry.
+      return;
+    }
+
+    // Append a new DNS server to the list.
+    networkConfig.dns.servers.push( this.state.newDnsServer );
+
+    // Reset the input value.
+    this.setState({
+      networkConfig: networkConfig
+      , newDnsServer: ""
+    });
+  }
+
+  /**
+   * Delete a DNS server.
+   * @param  {int} index The index of server to delete in the dns.servers array.
+   */
+  , deleteDnsServer: function ( index ) {
+    var networkConfig = this.state.networkConfig;
+    networkConfig.dns.servers.splice( index, 1 );
+    this.setState({
+      networkConfig: networkConfig
+    });
+  }
+
   , render: function () {
+    // Compile the DNS server list.
+    var dnsNodes;
+    if ( !this.state.networkConfig.dns.servers.length ) {
+      dnsNodes =
+        <li>
+          <div className="dns-server">
+            <em>No DNS servers configured</em>
+          </div>
+        </li>;
+    } else {
+      var that = this;
+      dnsNodes = _.map(
+        this.state.networkConfig.dns.servers
+        , function ( server, index ) {
+          return (
+            <li>
+              <div className="dns-server">
+                {server}
+              </div>
+              <TWBS.Button
+                onClick = { that.deleteDnsServer.bind( null, index ) }
+                bsStyle = "danger"
+                bsSize  = "small">
+                Delete
+              </TWBS.Button>
+            </li>
+          );
+        }
+      );
+    }
+
+    dnsNodes =
+      <ul className="dns-server-list">
+        {dnsNodes}
+      </ul>;
+
     var interfaceNodes = _.map(
       this.state.interfacesList
       , function ( _interface ) {
@@ -332,6 +414,32 @@ const NetworkOverview = React.createClass({
                         onChange    =
                           {this.handleChange.bind( this, "ipv6" )}
                         placeholder = "IPv6 Default Gateway" />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-sm-6">
+                  <div className="form-group">
+                    <label className="col-xs-3">DNS Server</label>
+                    <div className="col-xs-9">
+                      {dnsNodes}
+                      <div className="row">
+                        <div className="col-sm-9">
+                          <TWBS.Input
+                            type        = "text"
+                            value       = {this.state.newDnsServer}
+                            onChange    =
+                              {this.handleChange.bind( this, "newDnsServer" )}
+                            placeholder = "Enter the new DNS server" />
+                        </div>
+                        <div className="col-sm-3 text-right">
+                          <TWBS.Button
+                            onClick = { this.addNewDnsServer }
+                            bsStyle = "primary"
+                            bsSize  = "small">
+                            Add New Server
+                          </TWBS.Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
