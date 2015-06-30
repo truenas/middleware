@@ -1161,18 +1161,14 @@ def smb4_setup():
         if os.path.exists(statedir):
             olddir = "%s.%s" % (statedir, time.strftime("%Y%m%d%H%M%S"))
             try:
-                print >> sys.stderr, "XXX: [before] os.rename(%s, %s)" % (statedir, olddir)
                 os.rename(statedir, olddir)
-                print >> sys.stderr, "XXX: [after] os.rename(%s, %s)" % (statedir, olddir)
             except Exception as e:
                 print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
                     statedir, olddir, e)
                 sys.exit(1)
 
         try:
-            print >> sys.stderr, "XXX: [before] os.symlink(%s, %s)"  % (basename_realpath, statedir)
             os.symlink(basename_realpath, statedir)
-            print >> sys.stderr, "XXX: [after] os.symlink(%s, %s)" % (basename_realpath, statedir)
         except Exception as e:
             print >> sys.stderr, "Unable to create symlink '%s' -> '%s' (%s)" % (
                 basename_realpath, statedir, e)
