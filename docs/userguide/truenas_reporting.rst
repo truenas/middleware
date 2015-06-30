@@ -9,9 +9,7 @@ Reporting displays several graphs, as seen in the example in Figure 12a. Click t
 
 **Figure 12a: Reporting Graphs**
 
-|reporting.png|
-
-.. |reporting.png| image:: images/reporting.png
+.. image:: images/reporting.png
 
 TrueNAS® uses
 `collectd <https://collectd.org/>`_

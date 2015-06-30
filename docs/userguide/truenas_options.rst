@@ -17,9 +17,7 @@ If you click Display System Processes, a screen will open showing the output of
 
 **Figure 14.1a: System Processes Running on TrueNAS®**
 
-|process.png|
-
-.. |process.png| image:: images/process.png
+.. image:: images/process.png
 
 The display will automatically refresh itself. Simply click the X in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
@@ -36,9 +34,7 @@ fourth entry from the bottom of the menu tree. In Figure 14.2a, the link has bee
 
 **Figure 14.2a: Web Shell**
 
-|shell.png|
-
-.. |shell.png| image:: images/shell.png
+.. image:: images/shell.png
 
 The prompt indicates that the current user is *root*, the hostname is
 *truenas*, and the current working directory is :file:`~`
@@ -81,9 +77,7 @@ an option that will negatively impact users of the TrueNAS® system.
 
 **Figure 14.4a: Reboot Warning Message**
 
-|reboot.png|
-
-.. |reboot.png| image:: images/reboot.png
+.. image:: images/reboot.png
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -107,9 +101,7 @@ selected an option that will negatively impact users of the TrueNAS® system.
 
 **Figure 14.5a: Shutdown Warning Message**
 
-|shutdown.png|
-
-.. |shutdown.png| image:: images/shutdown.png
+.. image:: images/shutdown.png
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the shutdown request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -151,9 +143,7 @@ degraded the state of the pool.
 
 **Figure 14.8a: Example Alert Message**
 
-|alert1.png|
-
-.. |alert1.png| image:: images/alert1.png
+.. image:: images/alert1.png
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that

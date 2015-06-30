@@ -46,9 +46,7 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-|tn_system1.png|
-
-.. |tn_system1.png| image:: images/tn_system1.png
+.. image:: images/tn_system1.png
 
 .. _General:
 
@@ -59,9 +57,7 @@ General
 
 **Figure 5.2a: General Screen**
 
-|tn_system2.png|
-
-.. |tn_system2.png| image:: images/tn_system2.png
+.. image:: images/tn_system2.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -144,9 +140,7 @@ explains these options in more detail.
 
 **Figure 5.2b: Add a NTP Server**
 
-|ntp1.png|
-
-.. |ntp1.png| image:: images/ntp1.png
+.. image:: images/ntp1.png
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -204,9 +198,7 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-|tn_be1a.png|
-
-.. |tn_be1a.png| image:: images/tn_be1a.png
+.. image:: images/tn_be1a.png
 
 Each boot environment entry contains the following information:
 
@@ -243,9 +235,7 @@ The buttons above the boot entries can be used to:
 
 **Figure 5.3b: Viewing the Status of the Boot Device**
 
-|tn_be2.png|
-
-.. |tn_be2.png| image:: images/tn_be2.png
+.. image:: images/tn_be2.png
 
 If one of the boot devices has a "Status" of *OFFLINE*, click the device that needs to be replaced, click its "Replace" button, select the new replacement
 device, and click "Replace Disk" to rebuild the boot mirror.
@@ -254,9 +244,7 @@ Figure 5.3c shows a sample boot menu containing entries for the default and init
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-|tn_be3.png|
-
-.. |tn_be3.png| image:: images/tn_be3.png
+.. image:: images/tn_be3.png
 
 .. _Advanced:
 
@@ -267,9 +255,7 @@ Advanced
 
 **Figure 5.4a: Advanced Screen**
 
-|tn_system3.png|
-
-.. |tn_system3.png| image:: images/tn_system3.png
+.. image:: images/tn_system3.png
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -348,9 +334,7 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 **Figure 5.4b: Backup Configuration Screen**
 
-|backup1.png|
-
-.. |backup1.png| image:: images/backup1.png
+.. image:: images/backup1.png
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -424,9 +408,7 @@ that can be configured using the Email tab.
 
 **Figure 5.5a: Email Screen**
 
-|tn_system4.png|
-
-.. |tn_system4.png| image:: images/tn_system4.png
+.. image:: images/tn_system4.png
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -478,9 +460,7 @@ a Domain Controller, all of the domain controller state is stored there as well,
 
 **Figure 5.6a: System Dataset Screen**
 
-|tn_system5.png|
-
-.. |tn_system5.png| image:: images/tn_system5.png
+.. image:: images/tn_system5.png
 
 .. note:: encrypted volumes will not be displayed in the "System dataset pool" drop-down menu.
 
@@ -529,9 +509,7 @@ To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tun
 
 **Figure 5.7a: Adding a Tunable**
 
-|tunable.png|
-
-.. |tunable.png| image:: images/tunable.png
+.. image:: images/tunable.png
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -647,9 +625,7 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-|tn_update1.png|
-
-.. |tn_update1.png| image:: images/tn_update1.png
+.. image:: images/tn_update1.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -729,18 +705,14 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 **Figure 5.9a: Initial CA Screen**
 
-|tn_ca1.png|
-
-.. |tn_ca1.png| image:: images/tn_ca1.png
+.. image:: images/tn_ca1.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
 
 **Figure 5.9b: Importing a CA**
 
-|ca2a.png|
-
-.. |ca2a.png| image:: images/ca2a.png
+.. image:: images/ca2a.png
 
 **Table 5.9a: Importing a CA Options**
 
@@ -772,9 +744,7 @@ To create a CA for internal use only, click the "Create Internal CA" button whic
 
 **Figure 5.9c: Creating an Internal CA**
 
-|ca3.png|
-
-.. |ca3.png| image:: images/ca3.png
+.. image:: images/ca3.png
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
@@ -847,18 +817,14 @@ Figure 5.10a shows the initial screen if you click :menuselection:`System --> Ce
 
 **Figure 5.10a: Initial Certificates Screen**
 
-|tn_cert.png|
-
-.. |tn_cert.png| image:: images/tn_cert.png
+.. image:: images/tn_cert.png
 
 To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
 summarized in Table 5.10a.
 
 **Figure 5.10b: Importing a Certificate**
 
-|cert2a.png|
-
-.. |cert2a.png| image:: images/cert2a.png
+.. image:: images/cert2a.png
 
 **Table 5.10a: Certificate Import Options**
 
@@ -886,9 +852,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 
 **Figure 5.10c: Creating a New Certificate**
 
-|cert3a.png|
-
-.. |cert3a.png| image:: images/cert3a.png
+.. image:: images/cert3a.png
 
 **Table 5.10b: Certificate Creation Options**
 
@@ -942,9 +906,7 @@ connections.
 
 **Figure 5.10d: Managing Certificates**
 
-|cert4.png|
-
-.. |cert4.png| image:: images/cert4.png
+.. image:: images/cert4.png
 
 If you click an entry, it will activate the following configuration buttons:
 
@@ -970,9 +932,7 @@ requests.
 
 **Figure 5.11a: Support Tab**
 
-|tn_support1.png|
-
-.. |tn_support1.png| image:: images/tn_support1.png
+.. image:: images/tn_support1.png
 
 In this example, the system has a valid license which indicates the hardware model, system serial number, support contract type, licensed period, customer name,
 licensed features, and additional supported hardware.
@@ -1031,9 +991,7 @@ The options available in :menuselection:`System --> Failovers --> Create Failove
 
 **Figure 5.11a: Creating a Failover**
 
-|failover1a.png|
-
-.. |failover1a.png| image:: images/failover1a.png
+.. image:: images/failover1a.png
 
 **Table 5.11a: Options When Creating a Failover**
 

@@ -14,9 +14,7 @@ As seen in Figure 15.1a, an online version of the API is available at `api.freen
 
 **Figure 15.1a: FreeNAS® API Documentation**
 
-|api.png|
-
-.. |api.png| image:: images/api.png
+.. image:: images/api.png
 
 The rest of this section walks through some code examples to get you started using the APIs.
 
