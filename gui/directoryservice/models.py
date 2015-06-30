@@ -361,12 +361,38 @@ class idmap_ldap(idmap_base):
             "SID/uid/gid map entries."
         )
     )
+    idmap_ldap_ssl = models.CharField(
+        verbose_name=_("Encryption Mode"),
+        max_length=120,
+        help_text=_(
+            "This parameter specifies whether to use SSL/TLS, e.g."
+            " on/off/start_tls"
+        ),
+        choices=choices.LDAP_SSL_CHOICES,
+        default='off'
+    )
+    idmap_ldap_certificate = models.ForeignKey(
+        CertificateAuthority, 
+        verbose_name=_("Certificate"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     def __init__(self, *args, **kwargs):
         super(idmap_ldap, self).__init__(*args, **kwargs)
 
         self.idmap_backend_type = IDMAP_TYPE_LDAP
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    def get_url(self):
+        return self.idmap_ldap_ldap_url
+
+    def get_ssl(self):
+        return self.idmap_ldap_ssl
+
+    def get_certificate(self):
+        return self.idmap_ldap_certificate
 
     class Meta:
         verbose_name = _("LDAP Idmap")
@@ -499,12 +525,38 @@ class idmap_rfc2307(idmap_base):
         ),
         blank=True
     )
+    idmap_rfc2307_ssl = models.CharField(
+        verbose_name=_("Encryption Mode"),
+        max_length=120,
+        help_text=_(
+            "This parameter specifies whether to use SSL/TLS, e.g."
+            " on/off/start_tls"
+        ),
+        choices=choices.LDAP_SSL_CHOICES,
+        default='off'
+    )
+    idmap_rfc2307_certificate = models.ForeignKey(
+        CertificateAuthority, 
+        verbose_name=_("Certificate"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
 
     def __init__(self, *args, **kwargs):
         super(idmap_rfc2307, self).__init__(*args, **kwargs)
 
         self.idmap_backend_type = IDMAP_TYPE_RFC2307
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    def get_url(self):
+        return self.idmap_rfc2307_ldap_url
+
+    def get_ssl(self):
+        return self.idmap_rfc2307_ssl
+
+    def get_certificate(self):
+        return self.idmap_rfc2307_certificate
 
     class Meta:
         verbose_name = _("RFC2307 Idmap")
