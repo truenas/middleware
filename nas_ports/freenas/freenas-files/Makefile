@@ -111,8 +111,8 @@ do-install:
 
 	mkdir -p ${STAGEDIR}${PREFIX}/etc/launchd.d/
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/bootstrap ${STAGEDIR}${PREFIX}/etc/bootstrap
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/datastore.json ${STAGEDIR}${PREFIX}/etc/launchd.d/datastore.json
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/dispatcher.json ${STAGEDIR}${PREFIX}/etc/launchd.d/dispatcher.json
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/org.freenas.middleware.datastore.json ${STAGEDIR}${PREFIX}/etc/launchd.d/org.freenas.middleware.datastore.json
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/launchd.d/org.freenas.middleware.dispatcher.json ${STAGEDIR}${PREFIX}/etc/launchd.d/org.freenas.middleware.dispatcher.json
 
 	mkdir -p ${STAGEDIR}/${PREFIX}/data/zfs
 

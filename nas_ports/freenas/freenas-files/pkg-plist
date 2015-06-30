@@ -38,8 +38,8 @@ etc/sysctl.conf
 etc/ttys
 etc/mail/mailer.conf
 etc/bootstrap
-etc/launchd.d/datastore.json
-etc/launchd.d/dispatcher.json
+etc/launchd.d/org.freenas.middleware.datastore.json
+etc/launchd.d/org.freenas.middleware.dispatcher.json
 .bashrc
 .cshrc
 .profile
