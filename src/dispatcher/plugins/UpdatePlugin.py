@@ -172,6 +172,7 @@ class UpdateHandler(object):
         self.numfilestotal = 0
         self.numfilesdone = 0
         self._baseprogress = 0
+        self.master_progress = 0
         self.dispatcher = dispatcher
         # Below is the function handle passed to this by the Task so that
         # its status and progress can be updated accordingly
@@ -222,9 +223,13 @@ class UpdateHandler(object):
         )
 
     def emit_update_details(self):
+        # Doing the drill below as there is a small window when
+        # step*progress logic does not catch up with the new value of step
+        if self.progress >= self.master_progress:
+            self.master_progress = self.progress
         data = {
             'indeterminate': self.indeterminate,
-            'percent': self.progress,
+            'percent': self.master_progress,
             'reboot': self.reboot,
             'pkg_name': self.pkgname,
             'pkg_version': self.pkgversion,
@@ -237,7 +242,7 @@ class UpdateHandler(object):
             'details': self.details,
         }
         if self.update_progress is not None:
-            self.update_progress(self.progress, self.details)
+            self.update_progress(self.master_progress, self.details)
         self.dispatcher.dispatch_event('update.in_progress', {
             'operation': self.operation,
             'data': data,
