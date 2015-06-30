@@ -36,6 +36,15 @@ class SystemActionCreators {
     );
   }
 
+  static receiveSystemGeneralConfigUpdateTask ( taskID, timestamp ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_GENERAL_CONFIG_UPDATE
+      , timestamp
+      , taskID
+      }
+    );
+  }
+
 };
 
 export default SystemActionCreators;

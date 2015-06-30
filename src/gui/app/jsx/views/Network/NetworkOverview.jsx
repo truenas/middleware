@@ -5,7 +5,7 @@
 
 var componentLongName = "NetworkOverview";
 
-import React from "react";
+import React from "react/addons";
 import TWBS from "react-bootstrap"
 import _ from "lodash";
 
@@ -122,18 +122,18 @@ var InterfaceNode = React.createClass({
 
 const NetworkOverview = React.createClass({
 
-  getInitialState: function () {
+  mixins: [ React.addons.LinkedStateMixin ]
+
+  , getInitialState: function () {
     return this.getNetworkConfigFromStore();
   }
 
   , componentDidMount: function () {
     NS.addChangeListener( this.handleConfigChange );
     NM.requestNetworkConfig();
-    NM.subscribe( componentLongName );
 
     IS.addChangeListener( this.handleConfigChange );
     IM.requestInterfacesList();
-    IM.subscribe( componentLongName );
 
     SS.addChangeListener( this.handleConfigChange );
     SM.requestSystemGeneralConfig();
@@ -141,20 +141,22 @@ const NetworkOverview = React.createClass({
 
   , componentWillUnmount: function () {
     NS.removeChangeListener( this.handleConfigChange );
-    NM.unsubscribe( componentLongName );
 
     IS.removeChangeListener( this.handleConfigChange );
-    IM.unsubscribe( componentLongName );
 
     SS.removeChangeListener( this.handleConfigChange );
-    SM.unsubscribe( componentLongName );
   }
 
   , getNetworkConfigFromStore: function () {
+    var networkConfig = NS.getNetworkConfig();
+    var systemGeneralConfig = SS.getSystemGeneralConfig();
+    var gateway = networkConfig.gateway || {};
+
     return {
-      networkConfig         : NS.getNetworkConfig()
-      , interfacesList      : IS.getAllInterfaces()
-      , systemGeneralConfig : SS.getSystemGeneralConfig()
+      interfacesList      : IS.getAllInterfaces()
+      , hostname  : systemGeneralConfig.hostname || ""
+      , ipv4      : gateway.ipv4 || ""
+      , ipv6      : gateway.ipv6 || ""
     };
   }
 
@@ -162,31 +164,23 @@ const NetworkOverview = React.createClass({
     this.setState( this.getNetworkConfigFromStore() );
   }
 
+  , saveGeneralConfig: function () {
+    var networkConfig = {
+      gateway: {
+        ipv4    : this.state.ipv4
+        , ipv6  : this.state.ipv6
+      }
+    };
+
+    var systemGeneralConfig = {
+      hostname: this.state.hostname
+    };
+
+    NM.updateNetworkConfig( networkConfig );
+    SM.updateSystemGeneralConfig( systemGeneralConfig );
+  }
+
   , render: function () {
-    var gateway = this.state.networkConfig.gateway || {};
-    var dnsServers = [];
-    if ( !_.isUndefined( this.state.networkConfig.dns ) ) {
-      dnsServers = this.state.networkConfig.dns.servers || [];
-    }
-
-    var dnsServersNode;
-    if ( !dnsServers.length ) {
-      dnsServersNode =
-        <span>
-          No DNS servers configured.
-        </span>;
-    } else {
-      var items = _.map( dnsServers, function ( server ) {
-        return (
-          <li>{ server }</li>
-        );
-      });
-      dnsServersNode =
-        <ul className="dns-server-list">
-          { items }
-        </ul>;
-    }
-
     var interfaceNodes = _.map(
       this.state.interfacesList
       , function ( _interface ) {
@@ -199,46 +193,57 @@ const NetworkOverview = React.createClass({
     return (
       <main>
         <div className="network-overview container-fluid">
-          <TWBS.Panel header='General'>
-            <div className="form-group">
-              <label className="overview-label">
-                Hostname:
-              </label>
-              <div className="overview-value">
-                { this.state.systemGeneralConfig.hostname }
+          <div className="section">
+            <div className="section-header">
+              <div className="header-text">
+                <Icon glyph="chevron-down" />
+                General
+              </div>
+              <div className="header-buttons">
+                <TWBS.Button
+                  onClick   = { this.saveGeneralConfig }
+                  bsStyle   = "primary">
+                  Save
+                </TWBS.Button>
               </div>
             </div>
-            <div className="form-group row">
-              <div className="col-sm-6">
-                <label className="overview-label">
-                  IPv4 Default Gateway:
-                </label>
-                <div className="overview-value">
-                  { gateway.ipv4 || "Not Used" }
+            <div className="section-body">
+              <div className="row">
+                <div className="col-sm-6">
+                  <div className="form-group">
+                    <label className="col-xs-3">Hostname</label>
+                    <div className="col-xs-9">
+                      <TWBS.Input
+                        type        = "text"
+                        valueLink   = {this.linkState( "hostname" )}
+                        placeholder = "Hostname" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="col-xs-3">IPv4 Default Gateway</label>
+                    <div className="col-xs-9">
+                      <TWBS.Input
+                        type        = "text"
+                        valueLink   = {this.linkState( "ipv4" )}
+                        placeholder = "IPv4 Default Gateway" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label className="col-xs-3">IPv6 Default Gateway</label>
+                    <div className="col-xs-9">
+                      <TWBS.Input
+                        type        = "text"
+                        valueLink   = {this.linkState( "ipv6" )}
+                        placeholder = "IPv6 Default Gateway" />
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="col-sm-6">
-                <label className="overview-label">
-                  IPv6 Default Gateway:
-                </label>
-                <div className="overview-value">
-                  { gateway.ipv6 || "Not Used" }
-                </div>
-              </div>
             </div>
-            <div>
-              <label className="overview-label">
-                DNS Servers:
-              </label>
-              <div className="overview-value">
-                { dnsServersNode }
-              </div>
-            </div>
-          </TWBS.Panel>
+          </div>
           <TWBS.Panel header='Interfaces'>
             <div className="interface-node-container clearfix">
               {interfaceNodes}
-              <Link to="interfaces" className="show-all">Show interfaces</Link>
             </div>
           </TWBS.Panel>
         </div>

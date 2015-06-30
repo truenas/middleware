@@ -22,9 +22,6 @@ var sections = [ { route: "overview"
                , { display: "LAGGs" }
                , { display: "Routes" }
                , { display: "VLANs" }
-               , { route   : "network-settings"
-                 , display : "Settings"
-                 }
                ];
 
 const Network = React.createClass({

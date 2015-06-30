@@ -33,7 +33,6 @@ import Network from "./views/Network";
 import NetworkOverview from "./views/Network/NetworkOverview";
 import Interfaces from "./views/Network/Interfaces"
 import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
-import NetworkSettings from "./views/Network/NetworkSettings";
 
 import Storage from "./views/Storage";
 import Disks from "./views/Storage/Disks";
@@ -127,12 +126,6 @@ module.exports = (
           path    = ":interfaceName"
           handler = { InterfaceItem } />
       </Route>
-
-      {/* NETWORK SETTINGS */}
-      <Route
-        name    = "network-settings"
-        path    = "settings"
-        handler = { NetworkSettings } />
 
     </Route>
 

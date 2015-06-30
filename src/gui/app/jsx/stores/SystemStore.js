@@ -60,6 +60,9 @@ SystemStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
       _systemGeneralConfig = action.config;
       SystemStore.emitChange();
       break;
+    case ActionTypes.RECEIVE_SYSTEM_GENERAL_CONFIG_UPDATE:
+      SystemStore.emitChange();
+      break;
 
     default:
       // No action

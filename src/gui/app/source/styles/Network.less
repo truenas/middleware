@@ -1,17 +1,60 @@
 /**
  * Network Overview page.
  */
+
+@network-border-color: #e7e7e7;
+
 .network-overview {
-  border-top  : 1px solid #e7e7e7;
+  border-top  : 1px solid @network-border-color;
   margin-top  : 20px;
   padding-top : 20px;
 
-  .overview-label {
-    width: 200px;
-  }
+  .section {
+    margin-bottom: 10px;
+    border: 1px solid @network-border-color;
+    border-radius: @border-radius-base;
 
-  .overview-value {
-    display: inline;
+    .section-header {
+      padding: 5px 15px;
+      background-color: #f5f5f5;
+      line-height: 34px;
+      border-bottom: 1px solid @network-border-color;
+      border-top-left-radius: @border-radius-base;
+      border-top-right-radius: @border-radius-base;
+      cursor: default;
+      .clearfix();
+
+      .header-text {
+        float: left;
+        font-size: 16px;
+
+        i {
+          margin-right: 10px;
+        }
+      }
+
+      .header-buttons {
+        float: right;
+      }
+    }
+
+    .section-body {
+      padding: 15px;
+
+      .form-group {
+        .clearfix();
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        label {
+          margin-bottom: 0;
+          padding-top: 7px;
+          text-align: right;
+        }
+      }
+    }
   }
 
   .dns-server-list {
@@ -34,7 +77,7 @@
   .interface-node {
     min-width : 200px;
     padding   : 10px;
-    border    : 1px solid #e7e7e7;
+    border    : 1px solid @network-border-color;
 
     .interface-header {
       position    : relative;

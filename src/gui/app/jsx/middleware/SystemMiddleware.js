@@ -29,6 +29,13 @@ class SystemMiddleware extends AbstractBase {
               , SAC.receiveSystemGeneralConfig );
   }
 
+  static updateSystemGeneralConfig ( settings ) {
+    MC.request( "task.submit"
+              , [ "system.general.configure", [ settings ] ]
+              , SAC.receiveSystemGeneralConfigUpdateTask
+              );
+  }
+
 };
 
 export default SystemMiddleware;
