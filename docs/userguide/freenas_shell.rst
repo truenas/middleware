@@ -9,9 +9,7 @@ The link to Shell is the fourth entry from the bottom of the menu tree. In Figur
 
 **Figure 16a: Web Shell**
 
-|shell.png|
-
-.. |shell.png| image:: images/shell.png
+.. image:: images/shell.png
 
 The prompt indicates that the current user is *root*, the hostname is
 *freenas*, and the current working directory is :file:`~`

@@ -39,9 +39,7 @@ To install a plugin, click "Plugins". As seen in Figure 12.1a, the list of avail
 
 **Figure 12.1a: Viewing the List of Available Plugins**
 
-|plugins1.png|
-
-.. |plugins1.png| image:: images/plugins1.png
+.. image:: images/plugins1.png
 
 .. note:: if the list of available plugins is not displayed, open :ref:`Shell` and verify that the FreeNAS® system can :command:`ping` an address on the
    Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in :menuselection:`Network --> Global Configuration`.
@@ -51,9 +49,7 @@ installation.
 
 **Figure 12.1b: Installing a Plugin**
 
-|plugins2.png|
-
-.. |plugins2.png| image:: images/plugins2.png
+.. image:: images/plugins2.png
 
 The installation will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the
 plugin and add it to the "Installed" tab as shown in Figure 12.1c.
@@ -63,9 +59,7 @@ plugin and add it to the "Installed" tab as shown in Figure 12.1c.
 
 **Figure 12.1c: Viewing Installed PBIs**
 
-|plugins3.png|
-
-.. |plugins3.png| image:: images/plugins3.png
+.. image:: images/plugins3.png
 
 As seen in the example shown in Figure 12.1c, entries for the installed PBI will appear in the following locations:
 
@@ -107,9 +101,7 @@ In the example shown in Figure 12.2a, a newer version of Transmission is availab
 
 **Figure 12.2a: Updating an Installed Plugin**
 
-|plugins4.png|
-
-.. |plugins4.png| image:: images/plugins4.png
+.. image:: images/plugins4.png
 
 Click the "OK" button to start the download and installation of the latest version of the plugin. Once the update is complete, the entry for the plugin will
 be refreshed to show the new version number and the "Update" button will disappear.
@@ -128,9 +120,7 @@ downloaded file. Once selected, click the "Upload" button to begin the installat
 
 **Figure 12.3a: Installing a Previously Downloaded *.pbi File**
 
-|plugins5.png|
-
-.. |plugins5.png| image:: images/plugins5.png
+.. image:: images/plugins5.png
 
 When the installation is complete, an entry for the plugin will be added to the "Installed" tab and its associated jail will be listed under "Jails". However,
 if it is not a FreeNAS® plugin, it will not be added to "Plugins" in the tree. In this case, if the application requires any configuration, you will have to
@@ -150,9 +140,7 @@ that they want to delete. **This is the one and only warning.** If the user clic
 
 **Figure 12.4a: Deleting an Installed Plugin**
 
-|plugins6.png|
-
-.. |plugins6.png| image:: images/plugins6.png
+.. image:: images/plugins6.png
 
 .. _Available Plugins:
 

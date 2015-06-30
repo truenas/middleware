@@ -33,9 +33,7 @@ Figure 6.1a shows the screen that opens when you click :menuselection:`Tasks -->
 
 **Figure 6.1a: Creating a Cron Job**
 
-|cron.png|
-
-.. |cron.png| image:: images/cron.png
+.. image:: images/cron.png
 
 Table 6.1a summarizes the configurable options when creating a cron job.
 
@@ -102,9 +100,7 @@ When scheduling a script, make sure that the script is executable and has been f
 
 **Figure 6.2a: Add an Init/Shutdown Script**
 
-|init.png|
-
-.. |init.png| image:: images/init.png
+.. image:: images/init.png
 
 **Table 6.2a: Options When Adding an Init/Shutdown Script**
 
@@ -167,9 +163,7 @@ can be configured when creating an rsync task.
 
 **Figure 6.3a: Adding an Rsync Task**
 
-|rsync1a.png|
-
-.. |rsync1a.png| image:: images/rsync1a.png
+.. image:: images/rsync1a.png
 
 **Table 6.3a: Rsync Configuration Options**
 
@@ -401,9 +395,7 @@ breaks.
 
 **Figure 6.3b: Pasting the User's SSH Public Key**
 
-|rsync2.png|
-
-.. |rsync2.png| image:: images/rsync2.png
+.. image:: images/rsync2.png
 
 While on *PULL*, verify that the SSH service is running in :menuselection:`Services --> Control Services` and start it if it is not.
 
@@ -463,9 +455,7 @@ created any volumes.
 
 **Figure 6.4a: Adding a S.M.A.R.T. Test**
 
-|smart1.png|
-
-.. |smart1.png| image:: images/smart1.png
+.. image:: images/smart1.png
 
 Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 

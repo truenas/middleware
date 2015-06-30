@@ -31,9 +31,7 @@ Global Configuration
 
 **Figure 7.1a: Global Configuration**
 
-|network1.png|
-
-.. |network1.png| image:: images/network1.png
+.. image:: images/network1.png
 
 Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
 Figure 7.1a, but can be changed to meet the local network's requirements.
@@ -111,9 +109,7 @@ applied. Click "Yes" to proceed with the network restart or "No" to cancel the o
 
 **Figure 7.2a: Adding or Editing an Interface**
 
-|interface.png|
-
-.. |interface.png| image:: images/interface.png
+.. image:: images/interface.png
 
 **Table 7.2a: Interface Configuration Settings**
 
@@ -189,9 +185,7 @@ IPMI using the FreeNAS® GUI.
 
 **Figure 7.3a: IPMI Configuration**
 
-|ipmi1.png|
-
-.. |ipmi1.png| image:: images/ipmi1.png
+.. image:: images/ipmi1.png
 
 **Table 7.3a: IPMI Options**
 
@@ -315,9 +309,7 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
 
 **Figure 7.4a: Creating a lagg Interface**
 
-|lagg1.png|
-
-.. |lagg1.png| image:: images/lagg1.png
+.. image:: images/lagg1.png
 
 .. note:: if interfaces are installed but do not appear in the "Physical NICs" list, check that a FreeBSD driver for the interface exists
    `here <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_.
@@ -335,9 +327,7 @@ interface.
 
 **Figure 7.4b: Editing a lagg**
 
-|lagg2.png|
-
-.. |lagg2.png| image:: images/lagg2.png
+.. image:: images/lagg2.png
 
 **Table 7.4a: Configurable Options for a lagg**
 
@@ -385,9 +375,7 @@ The configurable options are summarized in Table 7.4b.
 
 **Figure 7.4c: Editing a Member Interface**
 
-|lagg3.png|
-
-.. |lagg3.png| image:: images/lagg3.png
+.. image:: images/lagg3.png
 
 **Table 7.4b: Configuring a Member Interface**
 
@@ -446,9 +434,7 @@ By default, no static routes are defined on the FreeNAS® system. Should you nee
 
 **Figure 7.6a: Adding a Static Route**
 
-|static.png|
-
-.. |static.png| image:: images/static.png
+.. image:: images/static.png
 
 The available options are summarized in Table 7.6a.
 
@@ -494,9 +480,7 @@ If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the s
 
 **Figure 7.7a: Adding a VLAN**
 
-|vlan.png|
-
-.. |vlan.png| image:: images/vlan.png
+.. image:: images/vlan.png
 
 Table 7.7a summarizes the configurable fields.
 

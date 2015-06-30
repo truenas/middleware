@@ -8,9 +8,7 @@ Reporting displays several graphs, as seen in the example in Figure 14a. Click t
 
 **Figure 14a: Reporting Graphs**
 
-|reporting.png|
-
-.. |reporting.png| image:: images/reporting.png
+.. image:: images/reporting.png
 
 FreeNAS® uses
 `collectd <https://collectd.org/>`_
