@@ -242,19 +242,27 @@ cdef class Launchd(object):
 
     def load(self, plist):
         msg = Item({"SubmitJob": plist})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def unload(self, label):
         msg = Item({"RemoveJob": label})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def start(self, label):
         msg = Item({"StartJob": label})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def stop(self, label):
         msg = Item({"StopJob": label})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def checkin(self):
         msg = Item("CheckIn")
