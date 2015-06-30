@@ -33,7 +33,6 @@ import sys
 import pwd
 import string
 import subprocess
-import launchd
 import json
 
 
@@ -113,6 +112,7 @@ def main():
         sys.exit(1)
 
     try:
+        import launchd
         ld = launchd.Launchd()
         ld.load(plist)
         ld.start(plist['Label'])
