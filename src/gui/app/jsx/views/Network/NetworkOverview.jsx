@@ -5,7 +5,7 @@
 
 var componentLongName = "NetworkOverview";
 
-import React from "react/addons";
+import React from "react";
 import TWBS from "react-bootstrap"
 import _ from "lodash";
 
@@ -122,62 +122,153 @@ var InterfaceNode = React.createClass({
 
 const NetworkOverview = React.createClass({
 
-  mixins: [ React.addons.LinkedStateMixin ]
-
-  , getInitialState: function () {
-    return this.getNetworkConfigFromStore();
+  getInitialState: function () {
+    return _.assign( this.getNetworkConfigFromStore()
+                    , this.getSystemGeneralConfigFromStore()
+                    , this.getInterfaceListFromStore() );
   }
 
   , componentDidMount: function () {
-    NS.addChangeListener( this.handleConfigChange );
+    NS.addChangeListener( this.onNetworkConfigChange );
     NM.requestNetworkConfig();
 
-    IS.addChangeListener( this.handleConfigChange );
+    IS.addChangeListener( this.onInterfaceListChange );
     IM.requestInterfacesList();
 
-    SS.addChangeListener( this.handleConfigChange );
+    SS.addChangeListener( this.onSystemGeneralConfigChange );
     SM.requestSystemGeneralConfig();
   }
 
   , componentWillUnmount: function () {
-    NS.removeChangeListener( this.handleConfigChange );
+    NS.removeChangeListener( this.onNetworkConfigChange );
 
-    IS.removeChangeListener( this.handleConfigChange );
+    IS.removeChangeListener( this.onInterfaceListChange );
 
-    SS.removeChangeListener( this.handleConfigChange );
+    SS.removeChangeListener( this.onSystemGeneralConfigChange );
   }
 
+  /**
+   * Retrieve the network config values.
+   * @return {Object}
+   */
   , getNetworkConfigFromStore: function () {
-    var networkConfig = NS.getNetworkConfig();
-    var systemGeneralConfig = SS.getSystemGeneralConfig();
-    var gateway = networkConfig.gateway || {};
-
-    return {
-      interfacesList      : IS.getAllInterfaces()
-      , hostname  : systemGeneralConfig.hostname || ""
-      , ipv4      : gateway.ipv4 || ""
-      , ipv6      : gateway.ipv6 || ""
-    };
-  }
-
-  , handleConfigChange: function () {
-    this.setState( this.getNetworkConfigFromStore() );
-  }
-
-  , saveGeneralConfig: function () {
-    var networkConfig = {
-      gateway: {
-        ipv4    : this.state.ipv4
-        , ipv6  : this.state.ipv6
+    // Default network config values.
+    var defaultNetworkConfig = {
+      dhcp: {
+        assign_gateway: false
+        , assign_dns: false
+      }
+      , http_proxy: null
+      , autoconfigure: false
+      , dns: {
+        search: []
+        , servers: []
+      }
+      , gateway: {
+        ipv4: ""
+        , ipv6: ""
       }
     };
 
-    var systemGeneralConfig = {
-      hostname: this.state.hostname
+    var networkConfig = _.defaults( NS.getNetworkConfig()
+                                  , defaultNetworkConfig );
+
+    return {
+      networkConfig : networkConfig
+    };
+  }
+
+  /**
+   * Retrieve the system general config values.
+   * @return {Object}
+   */
+  , getSystemGeneralConfigFromStore: function () {
+    // Default system general config values.
+    var defaultSystemGenernalConfig = {
+      timezone: ""
+      , hostname: ""
+      , language: ""
+      , console_keymap: ""
     };
 
-    NM.updateNetworkConfig( networkConfig );
-    SM.updateSystemGeneralConfig( systemGeneralConfig );
+    var systemGeneralConfig = _.defaults( SS.getSystemGeneralConfig()
+                                  , defaultSystemGenernalConfig );
+
+    return {
+      systemGeneralConfig : systemGeneralConfig
+    };
+  }
+
+  /**
+   * Retrive the list of interfaces.
+   * @return {Object}
+   */
+  , getInterfaceListFromStore: function () {
+    return {
+      interfacesList : IS.getAllInterfaces()
+    };
+  }
+
+  /**
+   * The change event listener for network config values.
+   */
+  , onNetworkConfigChange: function () {
+    this.setState( this.getNetworkConfigFromStore() );
+  }
+
+  /**
+   * The change event listener for system general config values.
+   */
+  , onSystemGeneralConfigChange: function () {
+    this.setState( this.getSystemGeneralConfigFromStore() );
+  }
+
+  /**
+   * The change event listener for interface list
+   */
+  , onInterfaceListChange: function () {
+    this.setState( this.getInterfaceListFromStore() );
+  }
+
+  /**
+   * Handle updates on the UI inputs.
+   * @param  {String} key The key of the field updated.
+   * @param  {Object} evt
+   */
+  , handleChange: function ( key, evt ) {
+    switch ( key ) {
+      case "hostname":
+        var systemGeneralConfig = this.state.systemGeneralConfig;
+        systemGeneralConfig.hostname = evt.target.value;
+        this.setState({
+          systemGeneralConfig: systemGeneralConfig
+        });
+        break;
+
+      case "ipv4":
+        var networkConfig = this.state.networkConfig;
+        networkConfig.gateway.ipv4 = evt.target.value;
+        this.setState({
+          networkConfig: networkConfig
+        });
+        break;
+
+      case "ipv6":
+        var networkConfig = this.state.networkConfig;
+        networkConfig.gateway.ipv6 = evt.target.value;
+        this.setState({
+          networkConfig: networkConfig
+        });
+        break;
+    }
+  }
+
+  /**
+   * Save the changes on the General section.
+   */
+  , saveGeneralConfig: function () {
+    NM.updateNetworkConfig( this.state.networkConfig );
+    SM.updateSystemGeneralConfig( this.state.systemGeneralConfig );
   }
 
   , render: function () {
@@ -215,7 +306,9 @@ const NetworkOverview = React.createClass({
                     <div className="col-xs-9">
                       <TWBS.Input
                         type        = "text"
-                        valueLink   = {this.linkState( "hostname" )}
+                        value       = {this.state.systemGeneralConfig.hostname}
+                        onChange    =
+                          {this.handleChange.bind( this, "hostname" )}
                         placeholder = "Hostname" />
                     </div>
                   </div>
@@ -224,7 +317,9 @@ const NetworkOverview = React.createClass({
                     <div className="col-xs-9">
                       <TWBS.Input
                         type        = "text"
-                        valueLink   = {this.linkState( "ipv4" )}
+                        value       = {this.state.networkConfig.gateway.ipv4}
+                        onChange    =
+                          {this.handleChange.bind( this, "ipv4" )}
                         placeholder = "IPv4 Default Gateway" />
                     </div>
                   </div>
@@ -233,7 +328,9 @@ const NetworkOverview = React.createClass({
                     <div className="col-xs-9">
                       <TWBS.Input
                         type        = "text"
-                        valueLink   = {this.linkState( "ipv6" )}
+                        value       = {this.state.networkConfig.gateway.ipv6}
+                        onChange    =
+                          {this.handleChange.bind( this, "ipv6" )}
                         placeholder = "IPv6 Default Gateway" />
                     </div>
                   </div>
