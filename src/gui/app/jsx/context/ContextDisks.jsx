@@ -80,8 +80,37 @@ const ContextDisks = React.createClass({
     this.setState( newDisksInformation );
   }
 
-  , createDisksDisplay () {
+  // Produce a TWBS Row displaying all the disks where the filterKey matches the
+  // filterValue.
+  , createDisksDisplaySection ( filterKey, filterValue ) {
 
+    let displayArray =
+    _.filter( this.state.availableDisks
+      , function filterDisks ( disk ) {
+        return ( !_.has( disk, filterKey, this )
+              || disk[ filterKey ] === filterValue
+               );
+      }
+      , this
+      );
+
+    let diskItems =
+      _.map( displayArray
+           , function addDiskItem ( disk ) {
+             return (
+              <TWBS.Col
+                xs = {6} >
+                <DiskItemIcon { ...disk } />
+              </TWBS.Col> );
+           }
+           , this
+           );
+
+    return (
+        <TWBS.Row>
+          { diskItems }
+        </TWBS.Row>
+    );
   }
 
   , render () {
@@ -96,7 +125,7 @@ const ContextDisks = React.createClass({
         </div>
       );
     } else {
-      disksDisplay = this.createDisksDisplay();
+      disksDisplay = this.createDisksDisplaySection( "is-ssd", false );
     }
 
     return (
@@ -111,11 +140,7 @@ const ContextDisks = React.createClass({
             { filterControls }
           </TWBS.Col>
         </TWBS.Row>
-        <TWBS.Row>
-          <TWBS.Col>
-            { disksDisplay }
-          </TWBS.Col>
-        </TWBS.Row>
+        { disksDisplay }
       </TWBS.Grid>
 
     );
