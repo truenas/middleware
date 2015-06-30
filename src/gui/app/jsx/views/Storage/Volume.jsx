@@ -21,14 +21,15 @@ const PoolItem = React.createClass(
   { displayName: "PoolItem"
 
   , propTypes:
-    { handleDiskAdd  : React.PropTypes.func.isRequired
-    , availableDisks : React.PropTypes.array.isRequired
-    , availableSSDs  : React.PropTypes.array.isRequired
-    , existsOnServer : React.PropTypes.bool
-    , data           : React.PropTypes.array
-    , logs           : React.PropTypes.array
-    , cache          : React.PropTypes.array
-    , spare          : React.PropTypes.array
+    { handleDiskAdd    : React.PropTypes.func.isRequired
+    , handleDiskRemove : React.PropTypes.func.isRequired
+    , availableDisks   : React.PropTypes.array.isRequired
+    , availableSSDs    : React.PropTypes.array.isRequired
+    , existsOnServer   : React.PropTypes.bool
+    , data             : React.PropTypes.array
+    , logs             : React.PropTypes.array
+    , cache            : React.PropTypes.array
+    , spare            : React.PropTypes.array
     , free: React.PropTypes.oneOfType(
         [ React.PropTypes.string
         , React.PropTypes.number
@@ -173,7 +174,6 @@ const PoolItem = React.createClass(
       let allocatedSize = ByteCalc.convertString( this.props.allocated );
       let totalSize     = ByteCalc.convertString( this.props.size );
 
-      console.log( freeSize, allocatedSize, totalSize );
       // TODO: Conditional logic based on presence of datasets
       datasets = <PoolDatasets ref="Storage" />;
 
@@ -214,14 +214,15 @@ const PoolItem = React.createClass(
 
       topology = (
         <PoolTopology
-          ref            = "Topology"
-          availableDisks = { this.props.availableDisks }
-          availableSSDs  = { this.props.availableSSDs }
-          handleDiskAdd  = { this.props.handleDiskAdd }
-          data           = { this.state.data }
-          logs           = { this.state.logs }
-          cache          = { this.state.cache }
-          spare          = { this.state.spare }
+          ref              = "Topology"
+          availableDisks   = { this.props.availableDisks }
+          availableSSDs    = { this.props.availableSSDs }
+          handleDiskAdd    = { this.props.handleDiskAdd }
+          handleDiskRemove = { this.props.handleDiskRemove }
+          data             = { this.state.data }
+          logs             = { this.state.logs }
+          cache            = { this.state.cache }
+          spare            = { this.state.spare }
         />
       );
     } else {

@@ -59,7 +59,8 @@ const Storage = React.createClass(
 
   , createVolumes ( loading, noVolumes ) {
       const volumeCommon =
-        { handleDiskAdd: this.handleDiskAdd
+        { handleDiskAdd    : this.handleDiskAdd
+        , handleDiskRemove : this.handleDiskRemove
         , availableDisks: _.without( this.state.availableDisks
                                    , Array.from( this.state.selectedDisks )
                                    )
