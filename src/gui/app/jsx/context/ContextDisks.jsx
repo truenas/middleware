@@ -23,19 +23,20 @@ import DiskItemIcon from "../views/Storage/Disks/DiskItemIcon";
 const ContextDisks = React.createClass({
 
   getInitialState () {
-    return ( { disks: DS.disksArray
-             , availableDisks: VS.availableDisks
-             , diskSchema: SS.getDef( "disk" )
-             }
-           );
+
+    let initialState = this.populateDisks();
+
+    _.assign( initialState, { diskSchema: SS.getDef( "disk" ) } );
+
+    return initialState;
   }
 
   , componentDidMount () {
-    DS.addChangeListener( this.handleDisksChange );
+    DS.addChangeListener( this.handleChange );
     DM.subscribe( componentLongName );
     DM.requestDisksOverview();
 
-    VS.addChangeListener( this.handleVolumeChange );
+    VS.addChangeListener( this.handleChange );
 
     ZM.subscribe( componentLongName );
 
@@ -44,23 +45,39 @@ const ContextDisks = React.createClass({
   }
 
   , componentWillUnmount () {
-    DS.removeChangeListener( this.handleDisksChange );
+    DS.removeChangeListener( this.handleChange );
     DM.unsubscribe( componentLongName );
 
-    VS.removeChangeListener( this.handleVolumeChange );
+    VS.removeChangeListener( this.handleChange );
 
     ZM.unsubscribe( componentLongName );
   }
 
-  , handleDisksChange () {
-    this.setState( { disks: DS.disksArray
-                   , availableDisks: VS.availableDisks
-                   }
-                 );
+  , populateDisks () {
+
+    var disks = DS.disksArray;
+
+    let availableDisks = _.map( VS.availableDisks
+                              , function mapAvailableDisks ( diskPath ) {
+                                return ( _.find( disks
+                                               , { path: diskPath }
+                                               , this
+                                               )
+                                       );
+                              }
+                          , this
+                          );
+
+    return { disks: disks
+           , availableDisks: availableDisks
+           };
   }
 
-  , handleVolumeChange () {
-    this.setState( { availableDisks: VS.availableDisks } );
+  , handleChange () {
+
+    let newDisksInformation = this.populateDisks();
+
+    this.setState( newDisksInformation );
   }
 
   , createDisksDisplay () {
