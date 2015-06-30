@@ -100,16 +100,10 @@ def failover_secret():
 
 
 class Failover(Model):
-    volume = models.ForeignKey(
-        Volume,
-        limit_choices_to={'vol_fstype__exact': 'ZFS'},
-        verbose_name=_("Volume"),
+    ipaddress = IPAddressField(
+        verbose_name=_("IP Address"),
+        blank=True,
     )
-    carp = models.ForeignKey(
-        CARP,
-        verbose_name=_("CARP"),
-    )
-    ipaddress = IPAddressField(verbose_name=_("IP Address"))
     disabled = models.BooleanField(
         default=False,
         blank=True,
@@ -121,11 +115,6 @@ class Failover(Model):
     timeout = models.IntegerField(
         default=0
     )
-    secret = models.CharField(
-        max_length=64,
-        editable=False,
-        default=failover_secret,
-    )
 
     def __unicode__(self):
         return u"%s[%s]" % (self.volume, self.carp)
@@ -134,6 +123,6 @@ class Failover(Model):
         db_table = 'system_failover'
         verbose_name = _("Failover")
         verbose_name_plural = _("Failovers")
-        unique_together = (
-            ('volume', 'carp'),
-        )
+
+    class FreeAdmin:
+        deletable = False
