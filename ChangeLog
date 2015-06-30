@@ -58,13 +58,16 @@
 #10187	Enclosure alerts should also log the raw data for HW debugging purposes
 #10188	App FreeBSD SA-15:10.openssl
 #10189	App FreeBSD SA-15:10.openssl
+#10195	Conflicting volume operations for multiple volumes with more than 100 datasets
 #10196	Account Unknown(SID) showing in Windows Security tab
 #10206	Optimize pipesubr.pipeopen()
 #10208	ssh authorized_keys gets corrupted when adding ed25519 keys
 #10249	NFS complain about bad exports file syntax.
 #10269	Fibre Channel port down is not reliable/safe
+#10277	Unable to set mountpoint permissions using the API
 #10287	Adds a "--no-delta" option to freenas-update CLI.
 #10308	Add help text for "Disable password login" field
 #10314	Field length of "Directory Service --> LDAP -->Bind DN"
 #10321	NFS Shares being over restrictive about mountpoints
 #10337	Displays the update server in use.
+#10380	Allow same mountpoint to be share over distinct networks
