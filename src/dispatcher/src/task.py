@@ -142,7 +142,8 @@ def query(result_type):
                     'sort-order': {'type': 'string', 'enum': ['asc', 'desc']},
                     'limit': {'type': 'integer'},
                     'offset': {'type': 'integer'},
-                    'single': {'type': 'boolean'}
+                    'single': {'type': 'boolean'},
+                    'count': {'type': 'boolean'}
                 }
             }
         ]
