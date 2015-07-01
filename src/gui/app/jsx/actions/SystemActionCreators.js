@@ -28,6 +28,23 @@ class SystemActionCreators {
     );
   }
 
+  static receiveSystemGeneralConfig ( config, timestamp ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_GENERAL_CONFIG_DATA
+      , timestamp
+      , config }
+    );
+  }
+
+  static receiveSystemGeneralConfigUpdateTask ( taskID, timestamp ) {
+    FreeNASDispatcher.handleMiddlewareAction(
+      { type: ActionTypes.RECEIVE_SYSTEM_GENERAL_CONFIG_UPDATE
+      , timestamp
+      , taskID
+      }
+    );
+  }
+
 };
 
 export default SystemActionCreators;

@@ -9,6 +9,10 @@ import SAC from "../actions/SystemActionCreators";
 
 class SystemMiddleware extends AbstractBase {
 
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "task.updated" ], componentID );
+  }
+
   static requestSystemInfo ( namespace ) {
     MC.request( "system.info." + namespace
               , []
@@ -20,6 +24,19 @@ class SystemMiddleware extends AbstractBase {
     MC.request( "system.device.get_devices"
               , [ arg ]
               , SAC.receiveSystemDevice.bind( SAC, arg )
+              );
+  }
+
+  static requestSystemGeneralConfig () {
+    MC.request( "system.general.get_config"
+              , []
+              , SAC.receiveSystemGeneralConfig );
+  }
+
+  static updateSystemGeneralConfig ( settings ) {
+    MC.request( "task.submit"
+              , [ "system.general.configure", [ settings ] ]
+              , SAC.receiveSystemGeneralConfigUpdateTask
               );
   }
 

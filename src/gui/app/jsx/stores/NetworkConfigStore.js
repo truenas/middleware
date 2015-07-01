@@ -14,7 +14,7 @@ import NetworkConfigMiddleware from "../middleware/GroupsMiddleware";
 const CHANGE_EVENT = "change";
 const UPDATE_MASK = "network.changed";
 
-var _localUpdatePending = false;
+var _localUpdatePending = [];
 var _networkConfig = {};
 
 
@@ -36,8 +36,12 @@ var NetworkConfigStore = _.assign( {}, EventEmitter.prototype, {
       return UPDATE_MASK;
     }
 
-  , isLocalUpdatePending: function () {
-      return _localUpdatePending;
+  /**
+   * Check if there are any pending update tasks.
+   * @return {Boolean}
+   */
+  , isUpdating: function () {
+      return _localUpdatePending.length > 0;
     }
 
   , getNetworkConfig: function () {
@@ -51,33 +55,23 @@ NetworkConfigStore.dispatchToken = FreeNASDispatcher.register(
     var action = payload.action;
 
     switch ( action.type ) {
-
       case ActionTypes.RECEIVE_NETWORK_CONFIG:
-
         _networkConfig = action.networkConfig;
         NetworkConfigStore.emitChange();
         break;
 
       case ActionTypes.MIDDLEWARE_EVENT:
-
         let args = action.eventData.args;
-        let updateData = args.args;
-
-        // The second check here should never fail, but I'm putting it
-        // here out of an overabundance of caution.
-        let validUpdate = args[ "name" ] === UPDATE_MASK
-                        && updateData[ "operation" ] === "update";
-
-        if ( validUpdate ) {
-          _localUpdatePending = false;
+        if ( args.name === "task.updated"
+            && args.args.name === "network.configure"
+            && args.args.state === "FINISHED" ) {
+          _localUpdatePending = _.without( _localUpdatePending, args.args.id );
           NetworkConfigStore.emitChange();
         }
-
         break;
 
-      case ActionTypes.RECEIVE_NETWORK_UPDATE_TASK:
-
-        _localUpdatePending = true;
+      case ActionTypes.RECEIVE_NETWORK_CONFIG_UPDATE:
+        _localUpdatePending.push( action.taskID );
         NetworkConfigStore.emitChange();
         break;
     }

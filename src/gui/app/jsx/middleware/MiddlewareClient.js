@@ -252,7 +252,7 @@ class MiddlewareClient extends WebSocketClient {
           MCD.info( `Logging and sending request %c'${ id }'`
                   , [ "uuid" ]
                   );
-          MCD.dir( action )
+          MCD.dir( action );
         }
 
         this.logPendingRequest( id, onSuccess, onError, action, timeout );
