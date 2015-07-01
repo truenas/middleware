@@ -69,6 +69,10 @@ const Storage = React.createClass(
                   , children: []
                   };
 
+    if ( !newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ] ) {
+      newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ] = [];
+    }
+
     newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ].push( newVdev );
 
     this.setState( { volumes: newVolumes } );
@@ -132,8 +136,10 @@ const Storage = React.createClass(
 
       let pools =
         this.state.volumes.map( function ( volume, index ) {
-          let { data, logs, cache, spare } = volume.topology;
+          let { data, logs, cache } = volume.topology;
           let { free, allocated, size }    = volume.properties;
+
+          let spares = volume.topology[ "spares" ] || [];
 
           // existsOnServer: a new volume will have an equal or higher index
           // than the number of volumes known to the server.

@@ -41,6 +41,7 @@ var TopologyDrawer = React.createClass(
     let cols;
     let newVdevAllowed = false;
     let newVdev = null;
+    let vdevs = [];
 
     switch ( purpose ) {
       case "logs":
@@ -62,7 +63,7 @@ var TopologyDrawer = React.createClass(
         break;
     }
 
-    let vdevs = this.props[ purpose ].map(
+    vdevs = this.props[ purpose ].map(
       function ( vdev, index ) {
         // Destructure vdev to avoid passing in props which will not be used.
         let { children, status, type, path } = vdev;
