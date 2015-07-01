@@ -31,7 +31,7 @@ from dispatcher.rpc import RpcException, description, accepts, returns
 from dispatcher.rpc import SchemaHelper as h
 from datastore.config import ConfigNode
 from task import Provider, Task, TaskException, VerifyException, query
-from fnutils import wrap
+from fnutils.query import wrap
 
 
 def calculate_broadcast(address, netmask):
