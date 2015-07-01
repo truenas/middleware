@@ -63,6 +63,16 @@ const Storage = React.createClass(
   }
 
   , handleVdevAdd ( event, volumeKey, vdevPurpose ) {
+    let newVolumes = this.state[ "volumes" ];
+
+    let newVdev = { type: vdevPurpose
+                  , children: []
+                  };
+
+    newVolumes[ volumekey ][ "topology" ][ vdevPurpose ].push( newVdev );
+
+    this.setState( { volumes: newVolumes } );
+
     console.log( "handleVdevAdd", event, volumeKey, vdevPurpose );
   }
 
