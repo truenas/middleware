@@ -94,11 +94,15 @@ const Storage = React.createClass(
   }
 
   , generateFreshVolume () {
-    return ( { topology : { data  : []
-                          , logs  : []
-                          , cache : []
-                          , spare : []
-                          }
+    return ( { topology   : { data  : []
+                            , logs  : []
+                            , cache : []
+                            , spare : []
+                            }
+             , properties : { free      : 0
+                            , allocated : 0
+                            , size      : 0
+                            }
              , type: "zfs" // This will never change for a ZFS volume
              , name: ""
              }
