@@ -10,7 +10,6 @@ import TWBS from "react-bootstrap"
 import _ from "lodash";
 
 import Router from "react-router";
-const Link = Router.Link;
 
 import NM from "../../middleware/NetworkConfigMiddleware";
 import NS from "../../stores/NetworkConfigStore";
@@ -24,96 +23,221 @@ import SS from "../../stores/SystemStore";
 import Icon from "../../components/Icon";
 
 var InterfaceNode = React.createClass({
-  /**
-   * Map an array of aliases into an array of ListGroupItems representing all
-   * aliases of 'family' (i.e. INET, INET6).
-   * @param  {Object} interfaceData
-   * @param  {String} family
-   * @return {Array}
-   */
-  createAliasDisplayList: function ( interfaceData, family ) {
-      // Only do anything if there are any aliases.
-      if ( _.isEmpty( interfaceData.status ) ) {
-        return [];
-      }
 
-      var aliasDisplayItems = [];
-      _.each( interfaceData.status.aliases , function ( alias ) {
-        if ( family === alias.family ) {
-          aliasDisplayItems.push( this.createAliasDisplayItem( alias ) );
+  getInitialState: function () {
+    // Default interface data.
+    var defaultInterface = {
+      name: ""
+      , dhcp: false
+      , status: {
+        flags: []
+        , aliases: []
+      }
+    };
+
+    var interfaceData =
+      _.defaults( this.props.interfaceData, defaultInterface );
+
+    return {
+      isCollapsed     : true
+      , interfaceData : interfaceData
+      , editData      : _.cloneDeep( interfaceData )
+    };
+  }
+  /**
+   * Retrieve the list of aliases of a specific family.
+   * @param  {String} family "LINK" for MAC, "INET" for IPv4, "INET6" for IPv6.
+   * @return {Array} An array of aliases(String).
+   */
+  , getAliases: function ( family ) {
+      var aliases = [];
+      _.each( this.state.interfaceData.status.aliases, function ( alias ) {
+        if ( alias.family === family ) {
+          aliases.push(
+            alias.address
+            + ( !_.isUndefined( alias.netmask ) ? "/" + alias.netmask : "" )
+            + ( !_.isUndefined( alias.broadcast )
+              ? " (" + alias.broadcast +  ")" : "" )
+          );
         }
-      }, this );
-      return aliasDisplayItems;
+      });
+      return aliases;
     }
 
   /**
-   * Create the individual item for createAliasDisplayList.
-   * @param  {Object} alias
-   * @return {TWBS.ListGroupItem}
+   * Update the interface status (Up or down the interface).
    */
-  , createAliasDisplayItem: function ( alias ) {
-      return (
-        <TWBS.ListGroupItem className = "alias-display-item">
-          <span className = "alias-item-ip">
-            <strong>{ alias.address }</strong>
-          </span>
-          <span className = "alias-item-netmask">
-            <em>{ "/" + alias.netmask + " (" + alias.broadcast + ")" }</em>
-          </span>
-        </TWBS.ListGroupItem>
+  , updateStatus: function () {
+      var isUp = _.includes( this.state.interfaceData.status.flags, "UP" );
+      if ( isUp ) {
+        IM.downInterface( this.state.interfaceData.name );
+      } else {
+        IM.upInterface( this.state.interfaceData.name );
+      }
+    }
+
+  /**
+   * Expand the edit view.
+   */
+  , expandEdit: function () {
+      this.setState({
+        isCollapsed: false
+        , editData: _.cloneDeep( this.state.interfaceData )
+      });
+    }
+
+  /**
+   * Collapse the edit view.
+   */
+  , cancelEdit: function () {
+      this.setState({
+        isCollapsed: true
+      });
+    }
+
+  /**
+   * Save the changes.
+   */
+  , saveInterface: function () {
+      IM.configureInterface(
+        this.state.interfaceData.name
+        , {
+          dhcp: this.state.editData.dhcp
+        }
       );
     }
 
-  , render: function () {
-      var ipv4Aliases = this.createAliasDisplayList( this.props.interfaceData
-                                                    , "INET" );
-      var ipv6Aliases = this.createAliasDisplayList( this.props.interfaceData
-                                                    , "INET6" );
+  /**
+   * Handle updates on the UI inputs.
+   * @param  {String} key The key of the field updated.
+   * @param  {Object} evt
+   */
+  , handleChange: function ( key, evt ) {
+      switch ( key ) {
+        case "dhcp":
+          var editData = this.state.editData;
+          editData.dhcp = evt.target.checked;
+          this.setState({
+            editData: editData
+          });
+          break;
+      }
+    }
 
-      var ipv4Section = "";
-      if ( ipv4Aliases.length ) {
-        ipv4Section =
+  , render: function () {
+      var _interface = this.state.interfaceData;
+
+      var widgetClass = ( this.state.isCollapsed ? "collapsed " : "" )
+                        + "interface-widget";
+
+      // Get the interface status.
+      var isUp = _.includes( _interface.status.flags, "UP" );
+      var statusClass = ( isUp ? "status-up" : "status-down" )
+                        + " interface-status";
+      var statusTitle = isUp ? "The interface is up."
+                        : "The interface is down.";
+
+      // Get the interface aliases.
+      var macAddresses = this.getAliases( "LINK" );
+      var macPart = "";
+      if ( macAddresses.length ) {
+        macPart =
           <div className="interface-address">
-            <strong>IPv4:</strong>
-            <TWBS.ListGroup fill>
-              { ipv4Aliases }
-            </TWBS.ListGroup>
+            <label>MAC Address</label>
+            <span>{ macAddresses.join( "<br/>" ) }</span>
           </div>;
       }
 
-      var ipv6Section = "";
-      if ( ipv6Aliases.length ) {
-        ipv6Section =
+      var ipv4Addresses = this.getAliases( "INET" );
+      var ipv4Part = "";
+      if ( ipv4Addresses.length ) {
+        ipv4Part =
           <div className="interface-address">
-            <strong>IPv6:</strong>
-            <TWBS.ListGroup fill>
-              { ipv6Aliases }
-            </TWBS.ListGroup>
+            <label>IPv4 Address</label>
+            <span>{ ipv4Addresses.join( "<br/>" ) }</span>
+          </div>;
+      }
+
+      var ipv6Addresses = this.getAliases( "INET6" );
+      var ipv6Part = "";
+      if ( ipv6Addresses.length ) {
+        ipv6Part =
+          <div className="interface-address">
+            <label>IPv6 Address</label>
+            <span>{ ipv6Addresses.join( "<br/>" ) }</span>
           </div>;
       }
 
       return (
-        <div className="pull-left interface-node">
-          <div className="interface-header text-center">
-            <Icon glyph={ this.props.interfaceData.dhcp
-                      ? "check text-primary" : "times text-muted" } />
-            { this.props.interfaceData.name }
-            <span className="interface-type">
-              { this.props.interfaceData.type }
-            </span>
+        <div className={ widgetClass }>
+          <div className="widget-header">
+            <div className="upper-section">
+              <div className={ statusClass } title={ statusTitle }>
+              </div>
+              <div className="interface-name">
+                { _interface.name }
+              </div>
+              <div
+                className="interface-dhcp"
+                title={ _interface.dhcp
+                      ? "DHCP enabled" : "DHCP disabled" }>
+                <Icon glyph={ _interface.dhcp
+                            ? "check text-primary" : "times text-muted" } />
+              </div>
+              <div className="interface-type">
+                <small>{ _interface.type }</small>
+              </div>
+            </div>
+            { macPart }
+            { ipv4Part }
+            { ipv6Part }
+            <div className="bottom-section">
+              <TWBS.Button
+                onClick   = { this.updateStatus }
+                className = "pull-left"
+                bsStyle   = "danger"
+                bsSize    = "small">
+                { isUp ? "Down Interface" : "Up Interface" }
+              </TWBS.Button>
+              <TWBS.Button
+                onClick   = { this.expandEdit }
+                className =
+                  { ( this.state.isCollapsed ? "" : "hidden " ) + "pull-right" }
+                bsStyle   = "primary"
+                bsSize    = "small">
+                Edit
+              </TWBS.Button>
+            </div>
           </div>
-          { ipv4Section }
-          { ipv6Section }
-          <div className="interface-address">
-            <strong>MAC:</strong>
-            { this.props.interfaceData.status["link-address"] }
-          </div>
-          <div className="text-right">
-            <Link
-              to="interfaces-editor"
-              params={{ interfaceName: this.props.interfaceData.name }}>
-              <Icon glyph='eye' />
-            </Link>
+          <div className="widget-body">
+            <div className="row">
+              <div className="col-sm-3">
+                <label>DHCP</label>
+              </div>
+              <div className="col-sm-9">
+                <TWBS.Input
+                  type      = "checkbox"
+                  label     = "Enabled"
+                  checked   = { this.state.editData.dhcp }
+                  onChange  = { this.handleChange.bind( this, "dhcp" ) } />
+              </div>
+            </div>
+            <div className="bottom-section">
+              <TWBS.Button
+                onClick   = { this.cancelEdit }
+                className = "pull-left"
+                bsStyle   = "info"
+                bsSize    = "small">
+                Cancel
+              </TWBS.Button>
+              <TWBS.Button
+                onClick   = { this.saveInterface }
+                className = "pull-right"
+                bsStyle   = "primary"
+                bsSize    = "small">
+                Save
+              </TWBS.Button>
+            </div>
           </div>
         </div>
       );
@@ -354,14 +478,23 @@ const NetworkOverview = React.createClass({
         {dnsNodes}
       </ul>;
 
-    var interfaceNodes = _.map(
-      this.state.interfacesList
-      , function ( _interface ) {
-          return (
-            <InterfaceNode interfaceData={_interface} />
-          );
-        }
-      );
+    var interfaceNodes =
+      <div className="text-center">
+        No interfaces found.
+      </div>;
+
+    if ( this.state.interfacesList.length ) {
+      interfaceNodes = _.map(
+        this.state.interfacesList
+        , function ( _interface ) {
+            return (
+              <div className="col-sm-3">
+                <InterfaceNode interfaceData={_interface} />
+              </div>
+            );
+          }
+        );
+    }
 
     return (
       <main>
@@ -446,11 +579,25 @@ const NetworkOverview = React.createClass({
               </div>
             </div>
           </div>
-          <TWBS.Panel header='Interfaces'>
-            <div className="interface-node-container clearfix">
-              {interfaceNodes}
+          <div className="section">
+            <div className="section-header">
+              <div className="header-text">
+                <Icon glyph="chevron-down" />
+                Interfaces
+              </div>
+              <div className="header-buttons">
+                <TWBS.Button
+                  bsStyle   = "primary">
+                  Save
+                </TWBS.Button>
+              </div>
             </div>
-          </TWBS.Panel>
+            <div className="section-body">
+              <div className="row">
+                { interfaceNodes }
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     );

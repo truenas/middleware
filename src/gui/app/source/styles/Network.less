@@ -3,6 +3,7 @@
  */
 
 @network-border-color: #e7e7e7;
+@network-bg-color: #f5f5f5;
 
 .network-overview {
   border-top  : 1px solid @network-border-color;
@@ -16,7 +17,7 @@
 
     .section-header {
       padding: 5px 15px;
-      background-color: #f5f5f5;
+      background-color: @network-bg-color;
       line-height: 34px;
       border-bottom: 1px solid @network-border-color;
       border-top-left-radius: @border-radius-base;
@@ -80,52 +81,100 @@
     }
   }
 
-  .interface-node-container {
-    position: relative;
+  .interface-widget {
+    border: 1px solid @network-border-color;
+    border-radius: @border-radius-base;
 
-    .show-all {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-    }
-  }
+    .widget-header {
+      padding: 10px 15px;
+      background-color: @network-bg-color;
+      border-top-left-radius: @border-radius-base;
+      border-top-right-radius: @border-radius-base;
+      cursor: default;
+      .clearfix();
 
-  .interface-node {
-    min-width : 200px;
-    padding   : 10px;
-    border    : 1px solid @network-border-color;
+      .upper-section {
+        border-bottom: 1px solid @network-border-color;
+        padding-bottom: 10px;
+        .clearfix();
+      }
 
-    .interface-header {
-      position    : relative;
-      font-size   : 16px;
-      line-height : 22px;
+      .interface-status {
+        float: left;
+        width: 16px;
+        height: 16px;
+        margin-top: 3px;
+        margin-right: 10px;
+        border-radius: 50%;
 
-      i {
-        position    : absolute;
-        left        : 0;
-        line-height : 22px;
+        &.status-up {
+          background-color: #66ff66;
+        }
+
+        &.status-down {
+          background-color: #ff6666;
+        }
+      }
+
+      .interface-name {
+        float: left;
+        font-weight: bold;
+      }
+
+      .interface-dhcp {
+        float: right;
       }
 
       .interface-type {
-        position  : absolute;
-        right     : 0;
-        font-size : 80%;
+        float: right;
+        margin-right: 10px;
+      }
+
+      .interface-address {
+        margin-top: 10px;
+
+        label {
+          width: 100px;
+        }
+      }
+
+      .bottom-section {
+        border-top: 1px solid @network-border-color;
+        padding-top: 10px;
+        .clearfix();
       }
     }
 
-    .interface-address {
-      .list-group {
-        margin-bottom: 0;
+    .widget-body {
+      padding: 15px;
+      border-top: 1px solid @network-border-color;
+      border-bottom-left-radius: @border-radius-base;
+      border-bottom-right-radius: @border-radius-base;
+
+      .checkbox {
+        margin-top: 0;
+
+        label {
+          padding-top: 0;
+        }
+      }
+
+      .bottom-section {
+        border-top: 1px solid @network-border-color;
+        padding-top: 10px;
+        .clearfix();
       }
     }
-  }
-}
 
-/**
- * Network Settings page.
- */
-.network-settings {
-  .btn-toolbar {
-    margin-bottom: 15px;
+    &.collapsed {
+      .widget-header {
+        border-bottom-left-radius: @border-radius-base;
+        border-bottom-right-radius: @border-radius-base;
+      }
+
+      .widget-body {
+        display: none;
+      }
+    }
   }
 }
