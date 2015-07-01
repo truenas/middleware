@@ -49,18 +49,43 @@ const Storage = React.createClass(
       );
     }
 
-  , handleDiskAdd ( event ) {
-    console.log( event );
+  , handleDiskAdd ( event, volumeKey, vdevKey, availableDiskKey ) {
+    console.log( "handleDiskAdd", event, volumeKey, vdevKey, availableDiskKey );
   }
 
-  , handleDiskRemove ( event ) {
-    console.log( event );
+  , handleDiskRemove ( event, volumeKey, vdevKey, diskKey ) {
+    console.log( "handleDiskRemove", event, volumeKey, vdevKey, diskKey );
+  }
+
+  , handleVdevAdd ( event, volumeKey, vdevPurpose ) {
+    console.log( "handleVdevAdd", event, volumeKey, vdevPurpose );
+  }
+
+  , handleVdevRemove ( event, volumeKey, vdevKey ) {
+    console.log( "handleVdevRemove", event, volumekey, vdevKey );
+  }
+
+  , handleVdevTypeChange ( event, volumeKey, vdevKey, newVdevType ) {
+    console.log( "handleVdevTypeChange", event, volumeKey, vdevKey, newVdevType );
+  }
+
+  , handleVolumeAdd ( event ) {
+    console.log( "handleVolumeAdd", event );
+  }
+
+  , handleVolumeReset ( event, volumeKey ) {
+    console.log( "handleVolumeReset", event, volumeKey );
   }
 
   , createVolumes ( loading, noVolumes ) {
       const volumeCommon =
-        { handleDiskAdd    : this.handleDiskAdd
-        , handleDiskRemove : this.handleDiskRemove
+        { handleDiskAdd        : this.handleDiskAdd
+        , handleDiskRemove     : this.handleDiskRemove
+        , handleVdevAdd        : this.handleVdevAdd
+        , handleVdevRemove     : this.handleDiskRemove
+        , handleVdevTypeChange : this.handleVdevTypeChange
+        , handleVolumeAdd      : this.handleVolumeAdd
+        , handleVolumeReset    : this.handleVolumeReset
         , availableDisks: _.without( this.state.availableDisks
                                    , Array.from( this.state.selectedDisks )
                                    )

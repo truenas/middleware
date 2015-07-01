@@ -21,15 +21,20 @@ const PoolItem = React.createClass(
   { displayName: "PoolItem"
 
   , propTypes:
-    { handleDiskAdd    : React.PropTypes.func.isRequired
-    , handleDiskRemove : React.PropTypes.func.isRequired
-    , availableDisks   : React.PropTypes.array.isRequired
-    , availableSSDs    : React.PropTypes.array.isRequired
-    , existsOnServer   : React.PropTypes.bool
-    , data             : React.PropTypes.array
-    , logs             : React.PropTypes.array
-    , cache            : React.PropTypes.array
-    , spare            : React.PropTypes.array
+    { handleDiskAdd        : React.PropTypes.func.isRequired
+    , handleDiskRemove     : React.PropTypes.func.isRequired
+    , handleVdevAdd        : React.PropTypes.func.isRequired
+    , handleVdevRemove     : React.PropTypes.func.isRequired
+    , handleVdevTypeChange : React.PropTypes.func.isRequired
+    , handleVolumeAdd      : React.PropTypes.func.isRequired
+    , handleVolumeReset    : React.PropTypes.func.isRequired
+    , availableDisks       : React.PropTypes.array.isRequired
+    , availableSSDs        : React.PropTypes.array.isRequired
+    , existsOnServer       : React.PropTypes.bool
+    , data                 : React.PropTypes.array
+    , logs                 : React.PropTypes.array
+    , cache                : React.PropTypes.array
+    , spare                : React.PropTypes.array
     , free: React.PropTypes.oneOfType(
         [ React.PropTypes.string
         , React.PropTypes.number
@@ -214,15 +219,18 @@ const PoolItem = React.createClass(
 
       topology = (
         <PoolTopology
-          ref              = "Topology"
-          availableDisks   = { this.props.availableDisks }
-          availableSSDs    = { this.props.availableSSDs }
-          handleDiskAdd    = { this.props.handleDiskAdd }
-          handleDiskRemove = { this.props.handleDiskRemove }
-          data             = { this.state.data }
-          logs             = { this.state.logs }
-          cache            = { this.state.cache }
-          spare            = { this.state.spare }
+          ref                  = "Topology"
+          availableDisks       = { this.props.availableDisks }
+          availableSSDs        = { this.props.availableSSDs }
+          handleDiskAdd        = { this.props.handleDiskAdd }
+          handleDiskRemove     = { this.props.handleDiskRemove }
+          handleVdevAdd        = { this.props.handleVdevAdd }
+          handleVdevRemove     = { this.props.handleVdevRemove }
+          handleVdevTypeChange = { this.props.handleVdevTypeChange }
+          data                 = { this.state.data }
+          logs                 = { this.state.logs }
+          cache                = { this.state.cache }
+          spare                = { this.state.spare }
         />
       );
     } else {

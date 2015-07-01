@@ -13,20 +13,26 @@ import VDEV from "./VDEV";
 var TopologyDrawer = React.createClass(
 
   { propTypes:
-    { handleDiskAdd    : React.PropTypes.func.isRequired
-    , handleDiskRemove : React.PropTypes.func.isRequired
-    , availableDisks   : React.PropTypes.array.isRequired
-    , availableSSDs    : React.PropTypes.array.isRequired
-    , data             : React.PropTypes.array.isRequired
-    , logs             : React.PropTypes.array.isRequired
-    , cache            : React.PropTypes.array.isRequired
-    , spare            : React.PropTypes.array.isRequired
+    { handleDiskAdd        : React.PropTypes.func.isRequired
+    , handleDiskRemove     : React.PropTypes.func.isRequired
+    , handleVdevAdd        : React.PropTypes.func.isRequired
+    , handleVdevRemove     : React.PropTypes.func.isRequired
+    , handleVdevTypeChange : React.PropTypes.func.isRequired
+    , availableDisks       : React.PropTypes.array.isRequired
+    , availableSSDs        : React.PropTypes.array.isRequired
+    , data                 : React.PropTypes.array.isRequired
+    , logs                 : React.PropTypes.array.isRequired
+    , cache                : React.PropTypes.array.isRequired
+    , spare                : React.PropTypes.array.isRequired
     }
 
   , createVdevs: function ( purpose ) {
     const commonProps =
-      { handleDiskAdd    : this.props.handleDiskAdd
-      , handleDiskRemove : this.props.handleDiskRemove
+      { handleDiskAdd        : this.props.handleDiskAdd
+      , handleDiskRemove     : this.props.handleDiskRemove
+      , handleVdevAdd        : this.props.handleVdevAdd
+      , handleVdevRemove     : this.props.handleVdevRemove
+      , handleVdevTypeChange : this.props.handleVdevTypeChange
       };
     let availableDisks;
     let cols;

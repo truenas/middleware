@@ -12,13 +12,16 @@ import VDEVDisk from "./VDEVDisk";
 
 const VDEV = React.createClass(
   { propTypes:
-    { handleDiskAdd    : React.PropTypes.func.isRequired
-    , handleDiskRemove : React.PropTypes.func.isRequired
-    , availableDisks   : React.PropTypes.array.isRequired
-    , cols             : React.PropTypes.number
-    , children         : React.PropTypes.array
-    , status           : React.PropTypes.string
-    , path             : React.PropTypes.string
+    { handleDiskAdd        : React.PropTypes.func.isRequired
+    , handleDiskRemove     : React.PropTypes.func.isRequired
+    , handleVdevAdd        : React.PropTypes.func.isRequired
+    , handleVdevRemove     : React.PropTypes.func.isRequired
+    , handleVdevTypeChange : React.PropTypes.func.isRequired
+    , availableDisks       : React.PropTypes.array.isRequired
+    , cols                 : React.PropTypes.number
+    , children             : React.PropTypes.array
+    , status               : React.PropTypes.string
+    , path                 : React.PropTypes.string
     , purpose: React.PropTypes.oneOf(
         [ "data"
         , "logs"
