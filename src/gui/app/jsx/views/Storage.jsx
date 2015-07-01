@@ -23,15 +23,14 @@ const Storage = React.createClass(
   { displayName: "Storage"
 
   , getInitialState () {
-
-      return { volumes         : VS.listVolumes()
-               // These are initially the same so that we keep track of what is
-               // on the server and which volumes are in the creation process
-             , volumesOnServer : VS.listVolumes()
-             , availableDisks  : VS.availableDisks
-             , selectedDisks   : new Set()
-             };
-    }
+    return { volumes         : VS.listVolumes()
+             // These are initially the same so that we keep track of what is
+             // on the server and which volumes are in the creation process
+           , volumesOnServer : VS.listVolumes()
+           , availableDisks  : VS.availableDisks
+           , selectedDisks   : new Set()
+           };
+  }
 
   , componentDidMount () {
       VS.addChangeListener( this.handleStoreChange );
