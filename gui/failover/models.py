@@ -4,10 +4,6 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-import hashlib
-import time
-import uuid
-
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
@@ -15,7 +11,6 @@ from freenasUI.contrib.IPAddressField import IPAddressField
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import Interfaces, VLAN
-from freenasUI.storage.models import Volume
 
 
 class CARP(Model):
@@ -91,12 +86,6 @@ class CARP(Model):
                     int_v4netmaskbit='32',
                 )
             return super(CARP, self).save(*args, **kwargs)
-
-
-def failover_secret():
-    return hashlib.sha256(
-        '%s-%s' % (str(uuid.uuid4()), str(time.time()))
-    ).hexdigest()
 
 
 class Failover(Model):
