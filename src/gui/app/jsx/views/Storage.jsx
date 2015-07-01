@@ -11,6 +11,8 @@ import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
 
+import Icon from "../components/Icon";
+
 import SS from "../stores/SchemaStore";
 import VS from "../stores/VolumeStore";
 import ZM from "../middleware/ZfsMiddleware";
@@ -116,7 +118,6 @@ const Storage = React.createClass(
         , handleVdevAdd        : this.handleVdevAdd
         , handleVdevRemove     : this.handleDiskRemove
         , handleVdevTypeChange : this.handleVdevTypeChange
-        , handleVolumeAdd      : this.handleVolumeAdd
         , handleVolumeReset    : this.handleVolumeReset
         , availableDisks: _.without( this.state.availableDisks
                                    , Array.from( this.state.selectedDisks )
@@ -124,7 +125,7 @@ const Storage = React.createClass(
         , availableSSDs: [] // FIXME
         };
 
-      let existingPools =
+      let pools =
         this.state.volumes.map( function ( volume, index ) {
           let { data, logs, cache, spare } = volume.topology;
           let { free, allocated, size }    = volume.properties;
@@ -151,24 +152,7 @@ const Storage = React.createClass(
           );
         }.bind( this ) );
 
-      let newPool = null;
-
-      if ( this.state[ "volumes" ].length === 0
-        && VS.isInitialized ) {
-        newPool =
-          <Volume { ...volumeCommon }
-            key = { 0 }
-            newPoolMessage = { "Create your first ZFS pool" }
-          />;
-      } else if ( VS.isInitialized ) {
-        newPool =
-          <Volume { ...volumeCommon }
-            key = { 0 }
-            newPoolMessage = { "Create a new ZFS pool" }
-          />;
-      }
-
-      return existingPools.concat( newPool );
+      return pools;
     }
 
   , render () {
@@ -176,10 +160,26 @@ const Storage = React.createClass(
 
       let statusMessage = null;
 
+      let newPool = null;
+
+      let newPoolMessage = "";
+
       if ( VS.isInitialized ) {
         if ( this.state.volumes.length === 0 ) {
           statusMessage = <h3>Bro, you could use a pool</h3>;
+          newPoolMessage = "Create your first ZFS pool";
+        } else {
+          newPoolMessage = "Create a new ZFS pool";
         }
+        newPool = (
+        <TWBS.Panel>
+          <TWBS.Row
+            className = "text-center text-muted"
+            onClick   = { this.handleVolumeAdd } >
+            <h3><Icon glyph="plus" />{ "  " + newPoolMessage }</h3>
+          </TWBS.Row>
+        </TWBS.Panel>
+      );
       } else {
         loading = true;
         statusMessage = <h3>Looking for ZFS pools...</h3>;
@@ -188,7 +188,10 @@ const Storage = React.createClass(
       return (
         <main>
           { statusMessage }
+
           { this.createVolumes( loading ) }
+
+          { newPool }
         </main>
       );
     }

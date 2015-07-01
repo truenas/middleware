@@ -10,7 +10,6 @@ import React from "react";
 import TWBS from "react-bootstrap";
 
 import ByteCalc from "../../common/ByteCalc";
-import Icon from "../../components/Icon";
 import BreakdownChart from "./Volumes/BreakdownChart";
 import PoolDatasets from "./Volumes/PoolDatasets";
 import PoolTopology from "./Volumes/PoolTopology";
@@ -26,7 +25,6 @@ const PoolItem = React.createClass(
     , handleVdevAdd        : React.PropTypes.func.isRequired
     , handleVdevRemove     : React.PropTypes.func.isRequired
     , handleVdevTypeChange : React.PropTypes.func.isRequired
-    , handleVolumeAdd      : React.PropTypes.func.isRequired
     , handleVolumeReset    : React.PropTypes.func.isRequired
     , availableDisks       : React.PropTypes.array.isRequired
     , availableSSDs        : React.PropTypes.array.isRequired
@@ -97,6 +95,16 @@ const PoolItem = React.createClass(
   // warning to the user.
   , resetToInitialState: function () {
     this.setState( this.returnInitialStateValues() );
+  }
+
+  , componentDidMount: function () {
+    // When the volume doesn't exist on the server, topology should start open.
+    if ( !this.props.existsOnServer ) {
+      Velocity( React.findDOMNode( this.refs.Topology )
+                , "slideDown"
+                , SLIDE_DURATION
+                );
+    }
   }
 
   , componentDidUpdate: function ( prevProps, prevState ) {
@@ -231,18 +239,6 @@ const PoolItem = React.createClass(
           cache                = { this.state.cache }
           spare                = { this.state.spare }
         />
-      );
-    } else {
-      // We can reason that this is a new pool, so it should exist in an
-      // "uninitialized state", waiting for the user to interact with the
-      // component.
-      infoBar = (
-        <TWBS.Row
-          className = "text-center text-muted"
-          onClick   = { this.enterEditMode }
-        >
-          <h3><Icon glyph="plus" />{ "  " + this.props.newPoolMessage }</h3>
-        </TWBS.Row>
       );
     }
 
