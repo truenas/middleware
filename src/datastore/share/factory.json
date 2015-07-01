@@ -687,10 +687,11 @@
 				"launchd": {
 					"Label": "org.freenas.gui",
 					"KeepAlive": true,
-					"ProgramArguments": [
+                    "StandardOutPath": "/var/log/gui.log",
+                    "StandardErrorPath": "/var/log/gui.log",
+                    "ProgramArguments": [
                         "/usr/local/bin/node",
-                        "/usr/local/www/gui/app/server.js",
-                        ">", "/var/log/gui.log", "2>&1"
+                        "/usr/local/www/gui/app/server.js"
                     ]
 				}
 			},
