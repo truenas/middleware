@@ -8,6 +8,7 @@ import React from "react";
 import TWBS from "react-bootstrap";
 
 import Icon from "../../../components/Icon";
+import VDEVDisk from "./VDEVDisk";
 
 const VDEV = React.createClass(
   { propTypes:
