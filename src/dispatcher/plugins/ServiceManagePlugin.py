@@ -69,8 +69,15 @@ class ServiceInfoProvider(Provider):
                 }
 
             label = jlist['Label']
-            job = ld.jobs[label]
-            state = 'RUNNING' if 'PID' in job else 'STOPPED'
+            if not self.dispatcher.configstore.get('service.{0}.enable'.format(i['name'])):
+                job = None
+                state = 'DISABLED'
+            elif label not in ld.jobs:
+                job = None
+                state = 'UNKNOWN'
+            else:
+                job = ld.jobs[label]
+                state = 'RUNNING' if 'PID' in job else 'STOPPED'
 
             entry = {
                 'id': i['id'],
@@ -79,7 +86,7 @@ class ServiceInfoProvider(Provider):
                 'state': state,
             }
 
-            if 'PID' in job:
+            if job and 'PID' in job:
                 entry['pid'] = job['PID']
 
             return entry
