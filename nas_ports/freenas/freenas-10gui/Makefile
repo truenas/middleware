@@ -24,8 +24,6 @@ WRKDEPLOY=	/usr/freenas_gui
 
 NO_BUILD = yes
 
-PLIST=		${WRKDEPLOY}/gui-plist
-
 MAKE_JOBS_UNSAFE=yes
 
 ALL_TARGET=obj all
@@ -39,8 +37,6 @@ pre-install:
 	true
 
 do-install:
-	install ${WRKSRC}/etc/gui ${STAGEDIR}${PREFIX}/etc/rc.d/
-	install ${WRKSRC}/sbin/gui ${STAGEDIR}${PREFIX}/sbin/
 	cp -a ${WRKDEPLOY}/ ${STAGEDIR}${PREFIX}/www/gui/
 
 .include <bsd.port.mk>

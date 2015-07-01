@@ -447,7 +447,7 @@ const DragDropGrid = React.createClass({
       <main
         ref         = "thePlayground"
         onMouseMove = { this.calculateMovement }
-        className   = { this.props.className + " playground grid-on" } >
+        className   = { this.props.className + " playground" } >
           { this.renderChildren() }
       </main>
     );

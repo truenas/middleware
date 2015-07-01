@@ -31,6 +31,7 @@ from dispatcher.rpc import RpcException, description, accepts, returns
 from dispatcher.rpc import SchemaHelper as h
 from datastore.config import ConfigNode
 from task import Provider, Task, TaskException, VerifyException, query
+from fnutils import wrap
 
 
 def calculate_broadcast(address, netmask):
@@ -46,14 +47,16 @@ class NetworkProvider(Provider):
     @returns(h.array(str))
     def get_my_ips(self):
         ips = []
-        ifaces = self.dispatcher.call_sync(
-                     'networkd.configuration.query_interfaces')
-        for i, v in ifaces.iteritems():
+        ifaces = wrap(self.dispatcher.call_sync('networkd.configuration.query_interfaces'))
+
+        for v in ifaces.values():
             if 'LOOPBACK' in v['flags']:
                 continue
-            for aliases in v['aliases']:
-                if aliases['address'] and aliases['family'] != 'LINK':
-                    ips.append(aliases['address'])
+
+            for alias in v['status.aliases']:
+                if alias['address'] and alias['family'] != 'LINK':
+                    ips.append(alias['address'])
+
         return ips
 
 

@@ -1,18 +1,15 @@
 .notification-bar {
   background-color    : @freenas-dark-gray;
-  background-image    : url("../img/freenas-logo.png");
-  background-repeat   : no-repeat;
-  background-position : 15px 7px;
 
   .user-info {
     float        : right;
-    height       : 70px;
+    height       : @app-header-height;
     margin-right : 10px;
     color        : @almost-white;
-    line-height  : 70px;
+    line-height  : @app-header-height;
 
     .fa {
-      font-size : 2em;
+      font-size : 1.75em;
       margin    : 0 8px;
     }
 
@@ -21,11 +18,56 @@
       padding: 0 5px;
     }
   }
+
+  .btn-group {
+    height         : 100%;
+    vertical-align : top;
+
+    &:hover {
+      background: darken( @freenas-dark-gray, 10% );
+    }
+  }
+
+  .btn {
+    color           : inherit;
+    background      : none;
+    border          : none;
+    height          : inherit;
+    text-decoration : none;
+  }
+
+  .user {
+    margin       : 0 10px 0 30px;
+    padding-left : 2em;
+
+    &:before {
+      content       : "";
+      position      : absolute;
+      top           : 50%;
+      left          : 1em;
+      display       : inline-block;
+      height        : 1em;
+      width         : 1em;
+      margin-top    : -0.5em;
+      border        : 1px solid rgba(0, 0, 0, 0.7);
+      border-radius : 50%;
+      .transition( ease-in-out 0.25s );
+    }
+
+    &.online:before {
+      background: @brand-success;
+    }
+
+    &.offline:before {
+      background: @brand-warning;
+    }
+  }
 }
 
 .notification-bar-icon {
   position : relative;
   display  : inline-block;
+  margin   : 0 4px;
 }
 
 
@@ -49,16 +91,11 @@
     border-width        : 20px;
     border-bottom-color : #e7e7e7;
   }
-  .notification-box-header{
+
+  .notification-box-header {
     background: #eaedf2;
     padding: 15px;
     line-height: 130%;
-
-
-      .right{
-        float: right;
-      }
-
   }
 
   &.notification-warning { background-color: lighten(@brand-warning,20%); }
@@ -83,6 +120,4 @@
         clear:right;
       }
   }
-
-
 }

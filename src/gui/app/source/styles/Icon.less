@@ -9,31 +9,45 @@
   }
 
   &.badge-primary .badge {
-    #gradient > .directional( @brand-primary, darken( @brand-primary, 25% ), @golden-angle )
+    #gradient > .directional( fadeout( @brand-primary, 25% )
+                            , fadeout( darken( @brand-primary, 25% ), 25% )
+                            , @golden-angle )
   }
   &.badge-success .badge {
-    #gradient > .directional( @brand-success, darken( @brand-success, 25% ), @golden-angle )
+    #gradient > .directional( fadeout( @brand-success, 25% )
+                            , fadeout( darken( @brand-success, 25% ), 25% )
+                            , @golden-angle )
   }
   &.badge-warning .badge {
-    #gradient > .directional( @brand-warning, darken( @brand-warning, 25% ), @golden-angle )
+    #gradient > .directional( fadeout( @brand-warning, 25% )
+                            , fadeout( darken( @brand-warning, 25% ), 25% )
+                            , @golden-angle )
   }
   &.badge-info .badge {
-    #gradient > .directional( @brand-info, darken( @brand-info, 25% ), @golden-angle )
+    #gradient > .directional( fadeout( @brand-info, 25% )
+                            , fadeout( darken( @brand-info, 25% ), 25% )
+                            , @golden-angle )
   }
   &.badge-danger .badge {
-    #gradient > .directional( @brand-danger, darken( @brand-danger, 25% ), @golden-angle )
+    #gradient > .directional( fadeout( @brand-danger, 25% )
+                            , fadeout( darken( @brand-danger, 25% ), 25% )
+                            , @golden-angle )
   }
 }
 
 .icon-badge() {
   min-height    : 0.5em;
+  height        : 1.65em;
+  width         : 1.65em;
+  display       : inline-block;
+  margin        : 0;
+  padding       : 0;
+  line-height   : 1.75em;
+  font-size     : 0.5em;
   position      : absolute;
-  left          : 60%;
-  bottom        : 0;
-  padding       : 0 0.3em;
-  font-size     : 0.6em;
-  font-weight   : 700;
+  left          : 55%;
+  bottom        : -15%;
+  font-weight   : 100;
   text-align    : center;
-  border-radius : 4px;
-  box-shadow    : 0px 0px 7px rgba(0, 0, 0, 0.75);
+  border-radius : 50%;
 }

@@ -20,7 +20,7 @@ const paths =
   [ { path     : "dashboard"
     , icon     : "dashboard"
     , label    : "Dashboard"
-    , status   : "danger"
+    , status   : null
     , disabled : false
     }
   , { path     : "storage"
@@ -62,7 +62,7 @@ const paths =
   , { path     : "system"
     , icon     : "ambulance"
     , label    : "System"
-    , status   : "warning"
+    , status   : null
     , disabled : false
     }
   ];

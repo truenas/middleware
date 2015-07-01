@@ -28,6 +28,7 @@
 import os
 import errno
 import signal
+import logging
 import launchd
 from task import Task, Provider, TaskException, VerifyException, query
 from resources import Resource
@@ -38,6 +39,7 @@ from lib.system import system, SubprocessException
 from fnutils import template, first_or_default
 
 
+logger = logging.getLogger('ServiceManagePlugin')
 GETTY_TEMPLATE = {
     'Label': 'org.freebsd.getty.{vt}',
     'RunAtLoad': True,
@@ -170,7 +172,7 @@ class ServiceManageTask(Task):
 
 
 @description("Updates configuration for services")
-@accepts(str,h.object())
+@accepts(str, h.object())
 class UpdateServiceConfigTask(Task):
     def describe(self, service, updated_fields):
         return "Updating configuration for service {0}".format(service)
@@ -178,9 +180,8 @@ class UpdateServiceConfigTask(Task):
     def verify(self, service, updated_fields):
         if not self.datastore.exists('service_definitions',
                                      ('name', '=', service)):
-            raise VerifyException(
-                errno.ENOENT,
-                'Service {0} not found'.format(service))
+            raise VerifyException(errno.ENOENT, 'Service {0} not found'.format(service))
+
         for x in updated_fields:
             if not self.dispatcher.configstore.exists(
                     'service.{0}.{1}'.format(service, x)):
@@ -188,17 +189,67 @@ class UpdateServiceConfigTask(Task):
                     errno.ENOENT,
                     'Service {0} does not have the following key: {1}'.format(
                         service, x))
+
         return ['system']
 
     def run(self, service, updated_fields):
         service_def = self.datastore.get_one('service_definitions', ('name', '=', service))
         node = ConfigNode('service.{0}'.format(service), self.dispatcher.configstore)
+        previously_enabled = node['enable']
         node.update(updated_fields)
+        load_service(self.dispatcher, service_def)
+
+        if 'enable' in updated_fields:
+            if previously_enabled and not updated_fields['enable']:
+                unload_service(self.dispatcher, service_def)
+
+            if not previously_enabled and updated_fields['enable']:
+                unload_service(self.dispatcher, service_def)
 
         self.dispatcher.dispatch_event('service.changed', {
             'operation': 'update',
             'ids': [service_def['id']]
         })
+
+
+def unload_service(dispatcher, svc):
+    ld = launchd.Launchd()
+    plist = svc['launchd']
+    label = plist['Label']
+    if label in ld.jobs:
+        ld.unload(label)
+
+
+def load_service(dispatcher, svc):
+    ld = launchd.Launchd()
+    plist = svc['launchd']
+    label = plist['Label']
+
+    # Does it need to have any config files generated?
+    if svc.get('etcd-group'):
+        dispatcher.call_sync('etcd.generation.generate_group', svc['etcd-group'])
+
+    # Prepare sockets specification based on 'service.%s.listen' config value
+    if svc.get('socket-server'):
+        sockets = []
+        listen = dispatcher.configstore.get('service.{0}.listen'.format(svc['name']))
+        for i in listen:
+            sockets.append({
+                'SockType': 'stream',
+                'SockFamily': i['protocol'],
+                'SockNodeName': i['address'],
+                'SockServiceName': i['port']
+            })
+
+        plist['Sockets'] = {'Listeners': sockets}
+
+    try:
+        if label in ld.jobs:
+            ld.unload(label)
+
+        ld.load(plist)
+    except OSError:
+        logger.exception('Cannot start service %s', label)
 
 
 def spawn_gettys(dispatcher):
@@ -247,35 +298,11 @@ def _init(dispatcher, plugin):
         if 'launchd' not in svc:
             continue
 
-        plist = svc['launchd']
-        label = plist['Label']
+        if not dispatcher.configstore.get('service.{0}.enable'.format(svc['name'])) and \
+           not svc.get('builtin'):
+            continue
 
-        # Does it need to have any config files generated?
-        if svc.get('etcd-group'):
-            dispatcher.call_sync('etcd.generation.generate_group', svc['etcd-group'])
-
-        # Prepare sockets specification based on 'service.%s.listen' config value
-        if svc.get('socket-server'):
-            sockets = []
-            listen = dispatcher.configstore.get('service.{0}.listen'.format(svc['name']))
-            for i in listen:
-                sockets.append({
-                    'SockType': 'stream',
-                    'SockFamily': i['protocol'],
-                    'SockNodeName': i['address'],
-                    'SockServiceName': i['port']
-                })
-
-            plist['Sockets'] = {'Listeners': sockets}
-
-        try:
-            ld.load(plist)
-        except:
-            pass
-
-        if dispatcher.configstore.get('service.{0}.enable'.format(svc['name'])):
-            ld.start(label)
-
+        load_service(dispatcher, svc)
         plugin.register_resource(Resource('service:{0}'.format(svc['name'])), parents=['system'])
 
     spawn_gettys(dispatcher)

@@ -5,21 +5,24 @@ nav.primary-nav {
   overflow-x       : hidden;
   overflow-y       : auto;
   position         : relative;
+  .flex( 0 0 auto );
 
   .fa {
-    font-size  : 1.3em;
-    width      : 2em;
-    text-align : center;
-    position   : relative;
+    font-size      : 1.3em;
+    width          : 2em;
+    text-align     : center;
+    position       : relative;
+    vertical-align : inherit;
   }
 
   li {
     & > a {
-      padding      : 0.75em 0.5em;
-      white-space  : nowrap;
-      font-size    : 1.2em;
-      font-weight  : 400;
-      line-height  : 1.25;
+      padding        : 0.75em 0.5em;
+      white-space    : nowrap;
+      font-size      : 1.1em;
+      font-weight    : 400;
+      line-height    : 1.25;
+      vertical-align : middle;
     }
 
     &:not(.disabled) {
@@ -39,7 +42,8 @@ nav.primary-nav {
   }
 
   .nav-item-label {
-    padding-right: 0.75em;
+    padding-right  : 0.75em;
+    vertical-align : inherit;
   }
 }
 
