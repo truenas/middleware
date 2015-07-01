@@ -33,7 +33,7 @@ const Storage = React.createClass(
   }
 
   , componentDidMount () {
-    VS.addChangeListener( this.handleStoreChange );
+    VS.addChangeListener( this.handleVolumesChange );
 
     ZM.requestVolumes();
     ZM.requestAvailableDisks();
@@ -46,7 +46,7 @@ const Storage = React.createClass(
     ZM.unsubscribe( this.constructor.displayName );
   }
 
-  , handleStoreChange ( eventMask ) {
+  , handleVolumesChange ( eventMask ) {
     this.setState(
       { volumes        : VS.listVolumes()
       , availableDisks : VS.availableDisks
