@@ -697,22 +697,6 @@
                     "RunAtLoad": true
 				}
 			},
-            "721F2D5E-8395-4477-A01A-D23330A37752": {
-                "name": "devd",
-                "pidfile": "/var/run/devd.pid",
-                "builtin": true,
-				"rcng": {
-					"rc-scripts": "devd"
-				},
-				"launchd": {
-					"Label": "org.freebsd.devd",
-					"ProgramArguments": [
-						"/sbin/devd",
-						"-d"
-					],
-					"RunAtLoad": true
-				}
-            },
             "13BBFFBE-CC3A-4BD2-898A-28EB04A0F514": {
                 "name": "dbus",
                 "launchd": {
