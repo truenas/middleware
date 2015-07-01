@@ -74,13 +74,6 @@ const UserItem = React.createClass(
 
       if ( this.state.SESSION_AUTHENTICATED && this.state.targetUser ) {
 
-        // PROCESSING OVERLAY
-        if ( UsersStore.isLocalTaskPending( this.state.targetUser["id"] ) ) {
-          processingText = "Saving changes to '" + this.state.targetUser[ this.props.keyPrimary ] + "'";
-        } else if ( UsersStore.isUserUpdatePending( this.state.targetUser["id"] ) ) {
-          processingText = "User '" + this.state.targetUser[ this.props.keyPrimary ] + "' was updated remotely.";
-        }
-
         // DISPLAY COMPONENT
         var childProps = {
             handleViewChange : this.handleViewChange
