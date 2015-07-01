@@ -30,9 +30,6 @@ import GroupAdd from "./views/Accounts/Groups/GroupAdd";
 import Tasks from "./views/Tasks";
 
 import Network from "./views/Network";
-import NetworkOverview from "./views/Network/NetworkOverview";
-import Interfaces from "./views/Network/Interfaces"
-import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
 
 import Storage from "./views/Storage";
 
@@ -106,26 +103,7 @@ module.exports = (
     <Route
       name    = "network"
       path    = "network"
-      handler = { Network } >
-
-      {/* GLOBAL NETWORK OVERVIEW */}
-      <Route
-        name    = "overview"
-        path    = "overview"
-        handler = { NetworkOverview } />
-
-      {/* NETWORK INTERFACES */}
-      <Route
-        name    = "interfaces"
-        path    = "interfaces"
-        handler = { Interfaces } >
-        <Route
-          name    = "interfaces-editor"
-          path    = ":interfaceName"
-          handler = { InterfaceItem } />
-      </Route>
-
-    </Route>
+      handler = { Network } />
 
 
     {/* STORAGE */}
