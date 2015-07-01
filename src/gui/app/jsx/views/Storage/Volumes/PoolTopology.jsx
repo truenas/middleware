@@ -8,6 +8,8 @@
 import React from "react";
 import TWBS from "react-bootstrap";
 
+import Icon from "../../../components/Icon";
+
 import VDEV from "./VDEV";
 
 var TopologyDrawer = React.createClass(
@@ -31,19 +33,19 @@ var TopologyDrawer = React.createClass(
     const commonProps =
       { handleDiskAdd        : this.props.handleDiskAdd
       , handleDiskRemove     : this.props.handleDiskRemove
-      , handleVdevAdd        : this.props.handleVdevAdd
       , handleVdevRemove     : this.props.handleVdevRemove
       , handleVdevTypeChange : this.props.handleVdevTypeChange
       , volumeKey            : this.props.volumeKey
       };
-    let availableDisks;
+    let availableDevices;
     let cols;
     let newVdevAllowed = false;
+    let newVdev = null;
 
     switch ( purpose ) {
       case "logs":
       case "cache":
-        availableDisks = this.props.availableSSDs;
+        availableDevices = this.props.availableSSDs;
         cols           = 12;
         // Log and Cache currently only allow a single VDEV.
         if ( this.props[ purpose ].length < 1 ) {
@@ -54,7 +56,7 @@ var TopologyDrawer = React.createClass(
       case "spare":
       case "data":
       default:
-        availableDisks = this.props.availableDisks;
+        availableDevices = this.props.availableDisks;
         cols           = 4;    // TODO: More intricate logic for this
         newVdevAllowed = true; // TODO: There should be cases where we don't
         break;
@@ -67,31 +69,52 @@ var TopologyDrawer = React.createClass(
 
         return (
           <VDEV { ...commonProps }
-            children       = { children }
-            status         = { status }
-            type           = { type }
-            path           = { path }
-            purpose        = { purpose }
-            cols           = { cols }
-            availableDisks = { availableDisks }
-            volumeKey      = { this.props.volumeKey }
-            vdevKey        = { index }
+            children          = { children }
+            status            = { status }
+            type              = { type }
+            path              = { path }
+            purpose           = { purpose }
+            cols              = { cols }
+            availableDevices  = { availableDevices }
+            volumeKey         = { this.props.volumeKey }
+            vdevKey           = { index }
           />
         );
       }.bind( this )
     );
 
-    if ( newVdevAllowed ) {
-      vdevs.push(
-        <VDEV { ...commonProps }
-          purpose        = { purpose }
-          cols           = { cols }
-          availableDisks = { availableDisks }
-          volumeKey      = { this.props.volumeKey }
-          vdevKey        = { 0 }
-        />
+    if ( !newVdevAllowed ) {
+      newVdev =
+        <TWBS.Col xs = { cols } >
+          <h4 className="text-center text-muted">
+            { "No more " + purpose + " may be added." }
+          </h4>
+        </TWBS.Col>;
+    } else if ( availableDevices.length ) {
+      newVdev = (
+        <TWBS.Col xs = { cols } >
+          <span
+            className = "text-center"
+            onClick   = { this.props.handleVdevAdd.bind( null
+                                                       , this.props.volumeKey
+                                                       , purpose
+                                                       ) } >
+            <h3><Icon glyph="plus" /></h3>
+            <h3>{ "Add " + purpose }</h3>
+          </span>
+        </TWBS.Col>
+      );
+    } else {
+      newVdev = (
+        <TWBS.Col xs = { cols } >
+          <h4 className="text-center text-muted">
+            { "No available " + purpose + " devices." }
+          </h4>
+        </TWBS.Col>
       );
     }
+
+    vdevs.push( newVdev );
 
     return vdevs;
   }
