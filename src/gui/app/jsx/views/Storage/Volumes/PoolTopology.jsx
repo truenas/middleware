@@ -51,6 +51,8 @@ var TopologyDrawer = React.createClass(
         }
         break;
 
+      case "spare":
+      case "data":
       default:
         availableDisks = this.props.availableDisks;
         cols           = 4;    // TODO: More intricate logic for this
