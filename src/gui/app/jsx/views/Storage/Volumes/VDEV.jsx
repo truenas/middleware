@@ -41,19 +41,14 @@ const VDEV = React.createClass(
       )
     // index of the volume of which this vdev is a member
     , volumeKey: React.PropTypes.number.isRequired
+    // index of this vdev in the array of vdevs of the same purpose
+    , vdevKey: React.PropTypes.number.isRequired
     }
 
   , getDefaultProps: function () {
     return { purpose : "data"
            , cols    : 4
            , type    : "unassigned"
-           };
-  }
-
-  , getInitialState: function () {
-    return { children : this.props.children
-           , path     : this.props.path
-           , type     : this.props.type
            };
   }
 
@@ -84,7 +79,7 @@ const VDEV = React.createClass(
     // to the discretion of the Topology wrapper. "Log" and "Cache", for
     // instance, may only ever display one VDEV.
 
-    if ( this.state.type === "unassigned" ) {
+    if ( this.props.type === "unassigned" ) {
       if ( this.props.availableDisks.length ) {
         // TODO: This layout is a crime against nature
         message = (
@@ -113,7 +108,7 @@ const VDEV = React.createClass(
         );
       }
 
-      switch ( this.state.type ) {
+      switch ( this.props.type ) {
 
         case "unassigned":
           break;
@@ -125,7 +120,7 @@ const VDEV = React.createClass(
 
         case "disk":
           memberDisks = (
-            <h4>{ this.state.path }</h4>
+            <h4>{ this.props.path }</h4>
           );
           break;
 
@@ -133,7 +128,7 @@ const VDEV = React.createClass(
         case "raidz1":
         case "raidz2":
         case "raidz3":
-          memberDisks = this.state.children.map(
+          memberDisks = this.props.children.map(
             function ( diskVdev, index ) {
               return <h4 key={ index }>{ diskVdev.path }</h4>;
             }

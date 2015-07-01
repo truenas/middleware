@@ -63,8 +63,6 @@ var TopologyDrawer = React.createClass(
         // Destructure vdev to avoid passing in props which will not be used.
         let { children, status, type, path } = vdev;
 
-        // The index of the new VDEV item will always be zero, so we start
-        // keying here at "1"
         return (
           <VDEV { ...commonProps }
             children       = { children }
@@ -74,11 +72,11 @@ var TopologyDrawer = React.createClass(
             purpose        = { purpose }
             cols           = { cols }
             availableDisks = { availableDisks }
-            key            = { index + 1 }
             volumeKey      = { this.props.volumeKey }
+            vdevKey        = { index }
           />
         );
-      }
+      }.bind( this )
     );
 
     if ( newVdevAllowed ) {
@@ -87,8 +85,8 @@ var TopologyDrawer = React.createClass(
           purpose        = { purpose }
           cols           = { cols }
           availableDisks = { availableDisks }
-          key            = { 0 }
           volumeKey      = { this.props.volumeKey }
+          vdevKey        = { 0 }
         />
       );
     }
