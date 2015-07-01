@@ -25,7 +25,7 @@ var TopologyDrawer = React.createClass(
     , data                 : React.PropTypes.array.isRequired
     , logs                 : React.PropTypes.array.isRequired
     , cache                : React.PropTypes.array.isRequired
-    , spare                : React.PropTypes.array.isRequired
+    , spares               : React.PropTypes.array.isRequired
     , volumeKey            : React.PropTypes.number.isRequired
     }
 
@@ -53,7 +53,7 @@ var TopologyDrawer = React.createClass(
         }
         break;
 
-      case "spare":
+      case "spares":
       case "data":
       default:
         availableDevices = this.props.availableDisks;
@@ -146,7 +146,7 @@ var TopologyDrawer = React.createClass(
           {/* SPARE VDEVS */}
           <TWBS.Col xs={ 12 }>
             <h4>Spares</h4>
-            { this.createVdevs( "spare" ) }
+            { this.createVdevs( "spares" ) }
           </TWBS.Col>
         </TWBS.Row>
 

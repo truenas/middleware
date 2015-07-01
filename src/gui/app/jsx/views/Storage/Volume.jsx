@@ -32,7 +32,7 @@ const PoolItem = React.createClass(
     , data                 : React.PropTypes.array
     , logs                 : React.PropTypes.array
     , cache                : React.PropTypes.array
-    , spare                : React.PropTypes.array
+    , spares               : React.PropTypes.array
     , free: React.PropTypes.oneOfType(
         [ React.PropTypes.string
         , React.PropTypes.number
@@ -57,7 +57,7 @@ const PoolItem = React.createClass(
     return { data           : []
            , logs           : []
            , cache          : []
-           , spare          : []
+           , spares         : []
            , free           : 0
            , allocated      : 0
            , size           : 0
@@ -71,7 +71,7 @@ const PoolItem = React.createClass(
            , data            : this.props.data
            , logs            : this.props.logs
            , cache           : this.props.cache
-           , spare           : this.props.spare
+           , spares          : this.props.spares
            , free            : this.props.free
            , allocated       : this.props.allocated
            , size            : this.props.size
@@ -240,7 +240,7 @@ const PoolItem = React.createClass(
           data                 = { this.state.data }
           logs                 = { this.state.logs }
           cache                = { this.state.cache }
-          spare                = { this.state.spare }
+          spares               = { this.state.spares }
           volumeKey            = { this.props.volumeKey }
         />
       );

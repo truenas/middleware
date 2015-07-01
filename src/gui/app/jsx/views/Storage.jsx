@@ -104,7 +104,7 @@ const Storage = React.createClass(
     return ( { topology   : { data  : []
                             , logs  : []
                             , cache : []
-                            , spare : []
+                            , spares : []
                             }
              , properties : { free      : 0
                             , allocated : 0
@@ -146,7 +146,7 @@ const Storage = React.createClass(
               data      = { data }
               logs      = { logs }
               cache     = { cache }
-              spare     = { spare }
+              spares    = { spares }
               free      = { free.value }
               allocated = { allocated.value }
               size      = { size.value }

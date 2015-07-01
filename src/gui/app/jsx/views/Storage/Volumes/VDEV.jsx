@@ -26,7 +26,7 @@ const VDEV = React.createClass(
         [ "data"
         , "logs"
         , "cache"
-        , "spare"
+        , "spares"
         ]
       )
     , type: React.PropTypes.oneOf(
