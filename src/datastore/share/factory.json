@@ -656,6 +656,7 @@
 				"launchd": {
 					"Label": "org.freenas.middleware.etcd",
 					"KeepAlive": true,
+                    "RunAtLoad": true,
 					"ProgramArguments": [
 						"/usr/local/sbin/etcd",
 						"/etc"
@@ -668,6 +669,7 @@
 				"launchd": {
 					"Label": "org.freenas.middleware.networkd",
 					"KeepAlive": true,
+                    "RunAtLoad": true,
 					"Program": "/usr/local/sbin/networkd"
 				}
 			},
@@ -677,12 +679,12 @@
 				"launchd": {
 					"Label": "org.freenas.middleware.statd",
 					"KeepAlive": true,
+                    "RunAtLoad": true,
 					"Program": "/usr/local/sbin/fnstatd"
 				}
 			},
 			"1D79DFF2-DBDD-4A97-B42E-417A31927A01": {
 				"name": "gui",
-                "socket-server": true,
 				"builtin": true,
 				"launchd": {
 					"Label": "org.freenas.gui",
@@ -691,7 +693,8 @@
                     "ProgramArguments": [
                         "/usr/local/bin/node",
                         "/usr/local/www/gui/app/server.js"
-                    ]
+                    ],
+                    "RunAtLoad": true
 				}
 			},
             "721F2D5E-8395-4477-A01A-D23330A37752": {
@@ -714,6 +717,7 @@
                 "name": "dbus",
                 "launchd": {
                     "Label": "org.freedesktop.dbus",
+                    "RunAtLoad": true,
                     "ProgramArguments": [
                         "/usr/local/bin/dbus-daemon",
                         "--system"
@@ -724,6 +728,7 @@
                 "name": "watchdogd",
                 "launchd": {
                     "Label": "org.freebsd.watchdogd",
+                    "RunAtLoad": true,
                     "ProgramArguments": [
                         "/usr/sbin/watchdogd",
                         "-d"
@@ -731,13 +736,18 @@
                 }
             },
             "246C7C31-2BF6-4E8C-B775-1CD2266338E7": {
-                "name": "org.freebsd.ntpd",
-                "ProgramArguments": [
-                    "/usr/sbin/ntpd",
-                    "-g",
-                    "-c", "/etc/ntp.conf",
-                    "-f", "/var/db/ntpd.drift"
-                ]
+                "name": "ntpd",
+                "launchd": {
+                    "Label": "org.freebsd.ntpd",
+                    "RunAtLoad": true,
+                    "ProgramArguments": [
+                        "/usr/sbin/ntpd",
+                        "-g",
+                        "-c", "/etc/ntp.conf",
+                        "-f", "/var/db/ntpd.drift"
+                    ]
+                }
+
             },
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
 				"name": "sshd",
@@ -754,8 +764,7 @@
 					],
 					"inetdCompatibility": {
 						"Wait": false
-					},
-					"RunAtLoad": true
+					}
 				}
 			},
             "77C31BDA-A90A-495A-8D58-0063981EEC67": {
@@ -776,7 +785,8 @@
 				},
 				"launchd": {
 					"Label": "org.nginx.nginx",
-					"Program": "/usr/local/sbin/nginx"
+					"Program": "/usr/local/sbin/nginx",
+                    "RunAtLoad": true
 				}
             },
             "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
@@ -812,7 +822,8 @@
 						"/usr/local/sbin/snmpd",
 						"-f"
 					],
-					"KeepAlive": true
+					"KeepAlive": true,
+                    "RunAtLoad": true
 				}
             },
 			"7498B5D8-457F-442B-BF48-ED29D8DB5FC5": {
@@ -831,7 +842,7 @@
 						"-C",
 						"/usr/local/etc/collectd.conf"
 					],
-					"KeepAlive": true
+                    "RunAtLoad": true
 				}
 			},
 			"858EFB54-F5DC-4207-ACB6-8BA793984794": {
@@ -843,6 +854,7 @@
 				},
 				"launchd": {
 					"Label": "net.sourceforge.netatalk.afpd",
+                    "RunAtLoad": true,
 					"ProgramArguments": [
 						"/usr/local/bin/afpd",
 						"-d"
@@ -855,6 +867,7 @@
 				"builtin": false,
 				"launchd": {
 					"Label": "org.untroubled.nullmailer",
+                    "RunAtLoad": true,
 					"ProgramArguments": [
 						"/usr/local/sbin/nullmailer-send"
 					]
