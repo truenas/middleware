@@ -307,6 +307,8 @@ var InterfaceWidget = React.createClass({
 const Network = React.createClass({
 
   displayName: "Network"
+  , previousSSUpdateStatus: false
+  , previousNSUpdateStatus: false
 
   , getInitialState: function () {
     return _.assign( this.getNetworkConfigFromStore()
@@ -320,20 +322,24 @@ const Network = React.createClass({
   , componentDidMount: function () {
     NS.addChangeListener( this.onNetworkConfigChange );
     NM.requestNetworkConfig();
+    NM.subscribe( componentLongName );
 
     IS.addChangeListener( this.onInterfaceListChange );
     IM.requestInterfacesList();
 
     SS.addChangeListener( this.onSystemGeneralConfigChange );
     SM.requestSystemGeneralConfig();
+    SM.subscribe( componentLongName );
   }
 
   , componentWillUnmount: function () {
     NS.removeChangeListener( this.onNetworkConfigChange );
+    NM.unsubscribe( componentLongName );
 
     IS.removeChangeListener( this.onInterfaceListChange );
 
     SS.removeChangeListener( this.onSystemGeneralConfigChange );
+    SM.unsubscribe( componentLongName );
   }
 
   /**
@@ -578,11 +584,34 @@ const Network = React.createClass({
         );
     }
 
+    // Show the save status message.
+    var alert = "";
+    var currentSSUpdateStatus = SS.isUpdating();
+    var currentNSUpdateStatus = NS.isUpdating();
+    if ( currentSSUpdateStatus || currentNSUpdateStatus ) {
+      alert =
+        <div className="text-center">
+          <TWBS.Alert bsStyle="info">
+            Saving changes...
+          </TWBS.Alert>
+        </div>;
+    } else if ( this.previousSSUpdateStatus || this.previousNSUpdateStatus ) {
+      alert =
+        <div className="text-center">
+          <TWBS.Alert bsStyle="success">
+            Saved successfully.
+          </TWBS.Alert>
+        </div>;
+    }
+    this.previousSSUpdateStatus = currentSSUpdateStatus;
+    this.previousNSUpdateStatus = currentNSUpdateStatus;
+
     return (
       <main>
         <div className="network-overview container-fluid">
           <NetworkSection header="General" onSave={ this.saveGeneralConfig }>
             <div className="row">
+              { alert }
               <div className="col-sm-6">
                 <div className="form-group">
                   <label className="col-xs-3">Hostname</label>

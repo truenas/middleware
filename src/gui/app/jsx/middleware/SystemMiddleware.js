@@ -9,6 +9,10 @@ import SAC from "../actions/SystemActionCreators";
 
 class SystemMiddleware extends AbstractBase {
 
+  static subscribe ( componentID ) {
+    MC.subscribe( [ "task.updated" ], componentID );
+  }
+
   static requestSystemInfo ( namespace ) {
     MC.request( "system.info." + namespace
               , []
