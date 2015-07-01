@@ -130,10 +130,10 @@ const Storage = React.createClass(
           let { data, logs, cache, spare } = volume.topology;
           let { free, allocated, size }    = volume.properties;
 
-          // The index of the "new pool" Volume will always be zero, so we
-          // start keying here at "1"
           // existsOnServer: a new volume will have an equal or higher index
           // than the number of volumes known to the server.
+          // volumeKey: Used to note which volume in the array is being
+          // modified, so it is simply the index of that volume in the array.
           return (
             <Volume
               { ...volumeCommon }
@@ -147,7 +147,7 @@ const Storage = React.createClass(
               size      = { size.value }
               datasets  = { volume.datasets }
               name      = { volume.name }
-              key       = { index + 1 }
+              volumeKey = { index }
             />
           );
         }.bind( this ) );

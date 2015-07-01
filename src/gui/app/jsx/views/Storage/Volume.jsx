@@ -48,6 +48,7 @@ const PoolItem = React.createClass(
         , React.PropTypes.number
         ]
       )
+    , volumeKey : React.PropTypes.number.isRequired
     }
 
   , getDefaultProps: function () {
@@ -238,6 +239,7 @@ const PoolItem = React.createClass(
           logs                 = { this.state.logs }
           cache                = { this.state.cache }
           spare                = { this.state.spare }
+          volumeKey            = { this.props.volumeKey }
         />
       );
     }

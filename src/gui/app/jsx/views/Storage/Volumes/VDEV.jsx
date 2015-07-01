@@ -39,6 +39,8 @@ const VDEV = React.createClass(
         , "unassigned" // This can only be assigned by "getDefaultProps"
         ]
       )
+    // index of the volume of which this vdev is a member
+    , volumeKey: React.PropTypes.number.isRequired
     }
 
   , getDefaultProps: function () {

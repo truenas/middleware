@@ -24,6 +24,7 @@ var TopologyDrawer = React.createClass(
     , logs                 : React.PropTypes.array.isRequired
     , cache                : React.PropTypes.array.isRequired
     , spare                : React.PropTypes.array.isRequired
+    , volumeKey            : React.PropTypes.number.isRequired
     }
 
   , createVdevs: function ( purpose ) {
@@ -33,6 +34,7 @@ var TopologyDrawer = React.createClass(
       , handleVdevAdd        : this.props.handleVdevAdd
       , handleVdevRemove     : this.props.handleVdevRemove
       , handleVdevTypeChange : this.props.handleVdevTypeChange
+      , volumeKey            : this.props.volumeKey
       };
     let availableDisks;
     let cols;
@@ -73,6 +75,7 @@ var TopologyDrawer = React.createClass(
             cols           = { cols }
             availableDisks = { availableDisks }
             key            = { index + 1 }
+            volumeKey      = { this.props.volumeKey }
           />
         );
       }
@@ -85,6 +88,7 @@ var TopologyDrawer = React.createClass(
           cols           = { cols }
           availableDisks = { availableDisks }
           key            = { 0 }
+          volumeKey      = { this.props.volumeKey }
         />
       );
     }
