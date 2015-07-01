@@ -19,8 +19,6 @@ var Router = require( "react-router" );
 var routes = require( "./jsx/routes" );
 
 // Content
-var baseHTML = fs.readFileSync( __dirname + "/templates/mainlayout.html" )
-                 .toString();
 var jsBundle = fs.readFileSync( __dirname + "/build/js/app.js" );
 
 var app = mach.stack();
@@ -28,21 +26,15 @@ var app = mach.stack();
 
 // Mach server helpers
 function renderApp ( path ) {
-  var bodyRegex = /¡HTML!/;
-  var dataRegex = /¡DATA!/;
-
   return new when.Promise( function ( resolve, reject ) {
     Router.run( routes, path, function ( Handler ) {
-      var innerHTML = React.renderToString( React.createElement( Handler ) );
-      var output = baseHTML.replace( bodyRegex, innerHTML )
-                           .replace( dataRegex, "{}" );
+      var pageHTML = React.renderToString( React.createElement( Handler ) );
 
-      if ( baseHTML && innerHTML && output ) {
-        resolve( output );
+      if ( pageHTML ) {
+        resolve( "<!DOCTYPE html>" + pageHTML );
       } else {
-        reject( "Handler for "
-              + path
-              + " did not return any HTML when rendered to string"
+        reject( "Handler for " + path + " did not return any HTML when "
+              + "rendered to string"
               );
       }
     });
