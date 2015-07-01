@@ -106,11 +106,16 @@ var NotificationBar = React.createClass(
     return (
       <header className="app-header notification-bar">
         <img
-          style     = {{ margin: "15px 0 0 20px" }}
+          style = {{ margin: "15px 0 0 20px"
+                   , height: "40px"
+                   }}
           src       = "/img/freenas-icon.png"
         />
         <img
-          style     = {{ margin: "15px 0 0 10px" }}
+          style = {{ margin: "15px 0 0 10px"
+                   , height: "23px"
+                   }
+                  }
           src       = "/img/freenas-logotype.png"
         />
         <div className="user-info">
