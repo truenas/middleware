@@ -22,7 +22,66 @@ import SS from "../stores/SystemStore";
 
 import Icon from "../components/Icon";
 
-var InterfaceNode = React.createClass({
+/**
+ * The collapsible section.
+ */
+var NetworkSection = React.createClass({
+
+  getInitialState: function () {
+    return {
+      isCollapsed: false
+    };
+  }
+
+  /**
+   * Toggle section.
+   */
+  , toggleSection: function () {
+    this.setState({
+      isCollapsed: !this.state.isCollapsed
+    });
+  }
+
+  , render: function () {
+
+    var sectionClass =
+      ( this.state.isCollapsed ? "collapsed " : "" ) + "section";
+
+    var iconType = this.state.isCollapsed ? "chevron-right" : "chevron-down";
+
+    var headerButtons = "";
+    if ( !_.isUndefined( this.props.onSave ) ) {
+      headerButtons =
+        <div className="header-buttons">
+          <TWBS.Button
+            onClick   = { this.props.onSave }
+            bsStyle   = "primary">
+            Save
+          </TWBS.Button>
+        </div>;
+    }
+
+    return (
+      <div className={ sectionClass }>
+        <div className="section-header" onClick={ this.toggleSection }>
+          <div className="header-text">
+            <Icon glyph={ iconType } />
+            { this.props.header }
+          </div>
+          { headerButtons }
+        </div>
+        <div className="section-body">
+          { this.props.children }
+        </div>
+      </div>
+    );
+  }
+});
+
+/**
+ * The individual interface widget.
+ */
+var InterfaceWidget = React.createClass({
 
   getInitialState: function () {
     // Default interface data.
@@ -401,7 +460,8 @@ const Network = React.createClass({
   /**
    * Save the changes on the General section.
    */
-  , saveGeneralConfig: function () {
+  , saveGeneralConfig: function ( evt ) {
+    evt.stopPropagation();
     NM.updateNetworkConfig( this.state.networkConfig );
     SM.updateSystemGeneralConfig( this.state.systemGeneralConfig );
   }
@@ -445,15 +505,14 @@ const Network = React.createClass({
 
   , render: function () {
     // Compile the DNS server list.
-    var dnsNodes;
-    if ( !this.state.networkConfig.dns.servers.length ) {
-      dnsNodes =
-        <li>
-          <div className="dns-server">
-            <em>No DNS servers configured</em>
-          </div>
-        </li>;
-    } else {
+    var dnsNodes =
+      <li>
+        <div className="dns-server">
+          <em>No DNS servers configured</em>
+        </div>
+      </li>;
+
+    if ( this.state.networkConfig.dns.servers.length ) {
       var that = this;
       dnsNodes = _.map(
         this.state.networkConfig.dns.servers
@@ -480,18 +539,18 @@ const Network = React.createClass({
         {dnsNodes}
       </ul>;
 
-    var interfaceNodes =
+    var interfaceWidgets =
       <div className="text-center">
-        No interfaces found.
+        <em>No interfaces found.</em>
       </div>;
 
     if ( this.state.interfacesList.length ) {
-      interfaceNodes = _.map(
+      interfaceWidgets = _.map(
         this.state.interfacesList
         , function ( _interface ) {
             return (
               <div className="col-sm-3">
-                <InterfaceNode interfaceData={_interface} />
+                <InterfaceWidget interfaceData={_interface} />
               </div>
             );
           }
@@ -501,105 +560,76 @@ const Network = React.createClass({
     return (
       <main>
         <div className="network-overview container-fluid">
-          <div className="section">
-            <div className="section-header">
-              <div className="header-text">
-                <Icon glyph="chevron-down" />
-                General
-              </div>
-              <div className="header-buttons">
-                <TWBS.Button
-                  onClick   = { this.saveGeneralConfig }
-                  bsStyle   = "primary">
-                  Save
-                </TWBS.Button>
-              </div>
-            </div>
-            <div className="section-body">
-              <div className="row">
-                <div className="col-sm-6">
-                  <div className="form-group">
-                    <label className="col-xs-3">Hostname</label>
-                    <div className="col-xs-9">
-                      <TWBS.Input
-                        type        = "text"
-                        value       = {this.state.systemGeneralConfig.hostname}
-                        onChange    =
-                          {this.handleChange.bind( this, "hostname" )}
-                        placeholder = "Hostname" />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="col-xs-3">IPv4 Default Gateway</label>
-                    <div className="col-xs-9">
-                      <TWBS.Input
-                        type        = "text"
-                        value       = {this.state.networkConfig.gateway.ipv4}
-                        onChange    =
-                          {this.handleChange.bind( this, "ipv4" )}
-                        placeholder = "IPv4 Default Gateway" />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="col-xs-3">IPv6 Default Gateway</label>
-                    <div className="col-xs-9">
-                      <TWBS.Input
-                        type        = "text"
-                        value       = {this.state.networkConfig.gateway.ipv6}
-                        onChange    =
-                          {this.handleChange.bind( this, "ipv6" )}
-                        placeholder = "IPv6 Default Gateway" />
-                    </div>
+          <NetworkSection header="General" onSave={ this.saveGeneralConfig }>
+            <div className="row">
+              <div className="col-sm-6">
+                <div className="form-group">
+                  <label className="col-xs-3">Hostname</label>
+                  <div className="col-xs-9">
+                    <TWBS.Input
+                      type        = "text"
+                      value       = {this.state.systemGeneralConfig.hostname}
+                      onChange    =
+                        {this.handleChange.bind( this, "hostname" )}
+                      placeholder = "Hostname" />
                   </div>
                 </div>
-                <div className="col-sm-6">
-                  <div className="form-group">
-                    <label className="col-xs-3">DNS Server</label>
-                    <div className="col-xs-9">
-                      {dnsNodes}
-                      <div className="row">
-                        <div className="col-sm-9">
-                          <TWBS.Input
-                            type        = "text"
-                            value       = {this.state.newDnsServer}
-                            onChange    =
-                              {this.handleChange.bind( this, "newDnsServer" )}
-                            placeholder = "Enter the new DNS server" />
-                        </div>
-                        <div className="col-sm-3 text-right">
-                          <TWBS.Button
-                            onClick = { this.addNewDnsServer }
-                            bsStyle = "primary"
-                            bsSize  = "small">
-                            Add New Server
-                          </TWBS.Button>
-                        </div>
+                <div className="form-group">
+                  <label className="col-xs-3">IPv4 Default Gateway</label>
+                  <div className="col-xs-9">
+                    <TWBS.Input
+                      type        = "text"
+                      value       = {this.state.networkConfig.gateway.ipv4}
+                      onChange    =
+                        {this.handleChange.bind( this, "ipv4" )}
+                      placeholder = "IPv4 Default Gateway" />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="col-xs-3">IPv6 Default Gateway</label>
+                  <div className="col-xs-9">
+                    <TWBS.Input
+                      type        = "text"
+                      value       = {this.state.networkConfig.gateway.ipv6}
+                      onChange    =
+                        {this.handleChange.bind( this, "ipv6" )}
+                      placeholder = "IPv6 Default Gateway" />
+                  </div>
+                </div>
+              </div>
+              <div className="col-sm-6">
+                <div className="form-group">
+                  <label className="col-xs-3">DNS Server</label>
+                  <div className="col-xs-9">
+                    {dnsNodes}
+                    <div className="row">
+                      <div className="col-sm-9">
+                        <TWBS.Input
+                          type        = "text"
+                          value       = {this.state.newDnsServer}
+                          onChange    =
+                            {this.handleChange.bind( this, "newDnsServer" )}
+                          placeholder = "Enter the new DNS server" />
+                      </div>
+                      <div className="col-sm-3 text-right">
+                        <TWBS.Button
+                          onClick = { this.addNewDnsServer }
+                          bsStyle = "primary"
+                          bsSize  = "small">
+                          Add New Server
+                        </TWBS.Button>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="section">
-            <div className="section-header">
-              <div className="header-text">
-                <Icon glyph="chevron-down" />
-                Interfaces
-              </div>
-              <div className="header-buttons">
-                <TWBS.Button
-                  bsStyle   = "primary">
-                  Save
-                </TWBS.Button>
-              </div>
+          </NetworkSection>
+          <NetworkSection header="Interfaces">
+            <div className="row">
+              { interfaceWidgets }
             </div>
-            <div className="section-body">
-              <div className="row">
-                { interfaceNodes }
-              </div>
-            </div>
-          </div>
+          </NetworkSection>
         </div>
       </main>
     );
