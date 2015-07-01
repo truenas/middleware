@@ -24,7 +24,7 @@ const UserView = React.createClass(
       var group = GroupsStore.getGroup( groupID );
 
       if ( group ) {
-        return group.name;
+        return group[ "groupName" ];
       } else {
         // TODO: Have a policy to deal with a user assigned to a
         // nonexistant group.
