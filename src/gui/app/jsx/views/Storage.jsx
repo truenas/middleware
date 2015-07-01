@@ -33,26 +33,26 @@ const Storage = React.createClass(
   }
 
   , componentDidMount () {
-      VS.addChangeListener( this.handleStoreChange );
+    VS.addChangeListener( this.handleStoreChange );
 
-      ZM.requestVolumes();
-      ZM.requestAvailableDisks();
-      ZM.subscribe( this.constructor.displayName );
-    }
+    ZM.requestVolumes();
+    ZM.requestAvailableDisks();
+    ZM.subscribe( this.constructor.displayName );
+  }
 
   , componentWillUnmount () {
-      VS.removeChangeListener( this.handleVolumesChange );
+    VS.removeChangeListener( this.handleVolumesChange );
 
-      ZM.unsubscribe( this.constructor.displayName );
-    }
+    ZM.unsubscribe( this.constructor.displayName );
+  }
 
   , handleStoreChange ( eventMask ) {
-      this.setState(
-        { volumes        : VS.listVolumes()
-        , availableDisks : VS.availableDisks
-        }
-      );
-    }
+    this.setState(
+      { volumes        : VS.listVolumes()
+      , availableDisks : VS.availableDisks
+      }
+    );
+  }
 
   , handleDiskAdd ( event, volumeKey, vdevKey, availableDiskKey ) {
     console.log( "handleDiskAdd", event, volumeKey, vdevKey, availableDiskKey );
@@ -121,93 +121,92 @@ const Storage = React.createClass(
   }
 
   , createVolumes ( loading ) {
-      const volumeCommon =
-        { handleDiskAdd        : this.handleDiskAdd
-        , handleDiskRemove     : this.handleDiskRemove
-        , handleVdevAdd        : this.handleVdevAdd
-        , handleVdevRemove     : this.handleDiskRemove
-        , handleVdevTypeChange : this.handleVdevTypeChange
-        , handleVolumeReset    : this.handleVolumeReset
-        , availableDisks: _.without( this.state.availableDisks
-                                   , Array.from( this.state.selectedDisks )
-                                   )
-        , availableSSDs: [] // FIXME
-        };
+    const volumeCommon =
+      { handleDiskAdd        : this.handleDiskAdd
+      , handleDiskRemove     : this.handleDiskRemove
+      , handleVdevAdd        : this.handleVdevAdd
+      , handleVdevRemove     : this.handleDiskRemove
+      , handleVdevTypeChange : this.handleVdevTypeChange
+      , handleVolumeReset    : this.handleVolumeReset
+      , availableDisks: _.without( this.state.availableDisks
+                                 , Array.from( this.state.selectedDisks )
+                                 )
+      , availableSSDs: [] // FIXME
+      };
 
-      let pools =
-        this.state.volumes.map( function ( volume, index ) {
-          let { data, logs, cache } = volume.topology;
-          let { free, allocated, size }    = volume.properties;
+    let pools =
+      this.state.volumes.map( function ( volume, index ) {
+        let { data, logs, cache } = volume.topology;
+        let { free, allocated, size }    = volume.properties;
 
-          let spares = volume.topology[ "spares" ] || [];
+        let spares = volume.topology[ "spares" ] || [];
 
-          // existsOnServer: a new volume will have an equal or higher index
-          // than the number of volumes known to the server.
-          // volumeKey: Used to note which volume in the array is being
-          // modified, so it is simply the index of that volume in the array.
-          return (
-            <Volume
-              { ...volumeCommon }
-              existsOnServer = { index < this.state.volumesOnServer.length }
-              data      = { data }
-              logs      = { logs }
-              cache     = { cache }
-              spares    = { spares }
-              free      = { free.value }
-              allocated = { allocated.value }
-              size      = { size.value }
-              datasets  = { volume.datasets }
-              name      = { volume.name }
-              volumeKey = { index }
-            />
-          );
-        }.bind( this ) );
+        // existsOnServer: a new volume will have an equal or higher index
+        // than the number of volumes known to the server.
+        // volumeKey: Used to note which volume in the array is being
+        // modified, so it is simply the index of that volume in the array.
+        return (
+          <Volume
+            { ...volumeCommon }
+            existsOnServer = { index < this.state.volumesOnServer.length }
+            data      = { data }
+            logs      = { logs }
+            cache     = { cache }
+            spares    = { spares }
+            free      = { free.value }
+            allocated = { allocated.value }
+            size      = { size.value }
+            datasets  = { volume.datasets }
+            name      = { volume.name }
+            volumeKey = { index }
+          />
+        );
+      }.bind( this ) );
 
-      return pools;
-    }
+    return pools;
+  }
 
   , render () {
-      let loading = false;
+    let loading = false;
 
-      let statusMessage = null;
+    let statusMessage = null;
 
-      let newPool = null;
+    let newPool = null;
 
-      let newPoolMessage = "";
+    let newPoolMessage = "";
 
-      if ( VS.isInitialized ) {
-        if ( this.state.volumes.length === 0 ) {
-          statusMessage = <h3>Bro, you could use a pool</h3>;
-          newPoolMessage = "Create your first ZFS pool";
-        } else {
-          newPoolMessage = "Create a new ZFS pool";
-        }
-        newPool = (
-        <TWBS.Panel>
-          <TWBS.Row
-            className = "text-center text-muted"
-            onClick   = { this.handleVolumeAdd } >
-            <h3><Icon glyph="plus" />{ "  " + newPoolMessage }</h3>
-          </TWBS.Row>
-        </TWBS.Panel>
-      );
+    if ( VS.isInitialized ) {
+      if ( this.state.volumes.length === 0 ) {
+        statusMessage = <h3>Bro, you could use a pool</h3>;
+        newPoolMessage = "Create your first ZFS pool";
       } else {
-        loading = true;
-        statusMessage = <h3>Looking for ZFS pools...</h3>;
+        newPoolMessage = "Create a new ZFS pool";
       }
-
-      return (
-        <main>
-          { statusMessage }
-
-          { this.createVolumes( loading ) }
-
-          { newPool }
-        </main>
-      );
+      newPool = (
+      <TWBS.Panel>
+        <TWBS.Row
+          className = "text-center text-muted"
+          onClick   = { this.handleVolumeAdd } >
+          <h3><Icon glyph="plus" />{ "  " + newPoolMessage }</h3>
+        </TWBS.Row>
+      </TWBS.Panel>
+    );
+    } else {
+      loading = true;
+      statusMessage = <h3>Looking for ZFS pools...</h3>;
     }
 
+    return (
+      <main>
+        { statusMessage }
+
+        { this.createVolumes( loading ) }
+
+        { newPool }
+      </main>
+    );
   }
-);
+
+});
 
 export default Storage;
