@@ -6,12 +6,18 @@
 
 import React from "react";
 import TWBS from "react-bootstrap"
-
-import UpdaterMiddleware from "../../middleware/UpdaterMiddleware";
-
 import Icon from "../../components/Icon";
-
 import ConfDialog from "../../components/common/ConfDialog";
+
+// Middlewares
+import UpdaterMiddleware from "../../middleware/UpdaterMiddleware";
+import TasksMiddleware from "../../middleware/TasksMiddleware";
+
+// Stores
+import TasksStore from "../../stores/TasksStore";
+import UpdaterStore from "../../stores/UpdaterStore";
+
+const componentLongName = "Update View - System:Update Tab";
 
 const Update = React.createClass({
   getInitialState: function () {
@@ -43,7 +49,7 @@ const Update = React.createClass({
   }
 
   , render: function () {
-    var checkForUpdateText = (  <div style = { {margin: "5px"
+    let checkForUpdateText = (  <div style = { {margin: "5px"
                                     , cursor: "pointer"} }>
                                   <a onClick={ this.handleUpdateCheckButton }>
                                   <Icon glyph = "check-circle"
@@ -53,24 +59,24 @@ const Update = React.createClass({
                                   </a>
                                </div> );
 
-    var updateButtonText = (  <div style = { {margin: "5px"
+    let updateButtonText = (  <div style = { {margin: "5px"
                                     , cursor: "pointer"} }>
                             <Icon glyph = "bomb"
                              icoSize = "4em" />
                             <br />
                             Download and Install
                           </div> );
-    var updateButtonProps = {};
+    let updateButtonProps = {};
     updateButtonProps.dataText = updateButtonText;
     updateButtonProps.title = "Confirm Update";
     updateButtonProps.bodyText = "Freenas will now Update";
     updateButtonProps.callFunc = this.handleUpdateNowButton;
 
-    var updateServer = "some update server";
-    var updatePeriod = "millenia";
-    var updateSignature = "some signature";
-    var updateTrain = this.state.currentTrain;
-    var updateAutoText = "";
+    let updateServer = "some update server";
+    let updatePeriod = "millenia";
+    let updateSignature = "some signature";
+    let updateTrain = this.state.currentTrain;
+    let updateAutoText = "";
     if ( this.state.updateCheckAuto ) {
       updateAutoText = "Updates are automatically fetched every \""
         + updatePeriod + "\"";
@@ -107,7 +113,7 @@ const Update = React.createClass({
           <TWBS.Panel>
             { settingsContent }
           </TWBS.Panel>
-	</TWBS.PanelGroup>
+        </TWBS.PanelGroup>
         { checkForUpdateText }
         <ConfDialog {...updateButtonProps}/>
       </main>
