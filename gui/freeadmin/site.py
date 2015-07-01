@@ -249,8 +249,12 @@ class FreeAdminSite(object):
             final = navtree.dijitTree(request.user)
             data = json.dumps(final)
         except Exception, e:
-            log.debug("Fatal error while generating the tree json: %s", e)
-            data = ""
+            log.debug(
+                "Fatal error while generating the tree json: %s",
+                e,
+                exc_info=True,
+            )
+            dat = ""
 
         return HttpResponse(data, content_type="application/json")
 
