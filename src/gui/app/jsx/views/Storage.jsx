@@ -70,11 +70,35 @@ const Storage = React.createClass(
   }
 
   , handleVolumeAdd ( event ) {
+    let newVolumes = this.state[ "volumes" ];
+
+    newVolumes.push( this.generateFreshVolume() );
+
+    this.setState( { volumes: newVolumes } );
+
     console.log( "handleVolumeAdd", event );
   }
 
   , handleVolumeReset ( event, volumeKey ) {
+    let newVolumes = this.state[ "volumes" ];
+
+    newVolumes[ volumeKey ] = this.generateFreshVolume();
+
+    this.setState( { volumes: newVolumes } );
+
     console.log( "handleVolumeReset", event, volumeKey );
+  }
+
+  , generateFreshVolume () {
+    return ( { topology : { data  : []
+                          , logs  : []
+                          , cache : []
+                          , spare : []
+                          }
+             , type: "zfs" // This will never change for a ZFS volume
+             , name: ""
+             }
+           );
   }
 
   , createVolumes ( loading ) {
