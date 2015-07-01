@@ -56,7 +56,7 @@ var NetworkSection = React.createClass({
           <TWBS.Button
             onClick   = { this.props.onSave }
             bsStyle   = "primary">
-            Save
+            <Icon glyph="check" /> Save
           </TWBS.Button>
         </div>;
     }
@@ -256,6 +256,7 @@ var InterfaceWidget = React.createClass({
                 className = "pull-left"
                 bsStyle   = "danger"
                 bsSize    = "small">
+                <Icon glyph="power-off" />&nbsp;
                 { isUp ? "Down Interface" : "Up Interface" }
               </TWBS.Button>
               <TWBS.Button
@@ -264,7 +265,7 @@ var InterfaceWidget = React.createClass({
                   { ( this.state.isCollapsed ? "" : "hidden " ) + "pull-right" }
                 bsStyle   = "primary"
                 bsSize    = "small">
-                Edit
+                <Icon glyph="pencil-square-o" /> Edit
               </TWBS.Button>
             </div>
           </div>
@@ -287,14 +288,14 @@ var InterfaceWidget = React.createClass({
                 className = "pull-left"
                 bsStyle   = "info"
                 bsSize    = "small">
-                Cancel
+                <Icon glyph="times" /> Cancel
               </TWBS.Button>
               <TWBS.Button
                 onClick   = { this.saveInterface }
                 className = "pull-right"
                 bsStyle   = "primary"
                 bsSize    = "small">
-                Save
+                <Icon glyph="check" /> Save
               </TWBS.Button>
             </div>
           </div>
@@ -362,7 +363,8 @@ const Network = React.createClass({
                                   , defaultNetworkConfig );
 
     return {
-      networkConfig : networkConfig
+      networkConfig       : networkConfig
+      , oldNetworkConfig  : _.cloneDeep( networkConfig )
     };
   }
 
@@ -383,7 +385,8 @@ const Network = React.createClass({
                                   , defaultSystemGenernalConfig );
 
     return {
-      systemGeneralConfig : systemGeneralConfig
+      systemGeneralConfig       : systemGeneralConfig
+      , oldSystemGeneralConfig  : _.cloneDeep( systemGeneralConfig )
     };
   }
 
@@ -462,8 +465,25 @@ const Network = React.createClass({
    */
   , saveGeneralConfig: function ( evt ) {
     evt.stopPropagation();
-    NM.updateNetworkConfig( this.state.networkConfig );
-    SM.updateSystemGeneralConfig( this.state.systemGeneralConfig );
+
+    // No need to call the API if there are no changes.
+    if ( !_.isEqual( this.state.systemGeneralConfig
+                    , this.state.oldSystemGeneralConfig ) ) {
+      SM.updateSystemGeneralConfig( this.state.systemGeneralConfig );
+
+      this.setState({
+        oldSystemGeneralConfig: _.cloneDeep( this.state.systemGeneralConfig )
+      });
+    }
+
+    if ( !_.isEqual( this.state.networkConfig
+                    , this.state.oldNetworkConfig ) ) {
+      NM.updateNetworkConfig( this.state.networkConfig );
+
+      this.setState({
+        oldNetworkConfig: _.cloneDeep( this.state.networkConfig )
+      });
+    }
   }
 
   /**
@@ -518,15 +538,16 @@ const Network = React.createClass({
         this.state.networkConfig.dns.servers
         , function ( server, index ) {
           return (
-            <li>
+            <li key={ index }>
               <div className="dns-server">
                 {server}
               </div>
               <TWBS.Button
                 onClick = { that.deleteDnsServer.bind( null, index ) }
                 bsStyle = "danger"
-                bsSize  = "small">
-                Delete
+                bsSize  = "small"
+                title   = "Delete Server">
+                <Icon glyph="times" />
               </TWBS.Button>
             </li>
           );
@@ -547,9 +568,9 @@ const Network = React.createClass({
     if ( this.state.interfacesList.length ) {
       interfaceWidgets = _.map(
         this.state.interfacesList
-        , function ( _interface ) {
+        , function ( _interface, index ) {
             return (
-              <div className="col-sm-3">
+              <div className="col-sm-3" key={ index }>
                 <InterfaceWidget interfaceData={_interface} />
               </div>
             );
@@ -615,8 +636,9 @@ const Network = React.createClass({
                         <TWBS.Button
                           onClick = { this.addNewDnsServer }
                           bsStyle = "primary"
-                          bsSize  = "small">
-                          Add New Server
+                          bsSize  = "small"
+                          title   = "Add New DNS Server">
+                          <Icon glyph="plus" />
                         </TWBS.Button>
                       </div>
                     </div>
