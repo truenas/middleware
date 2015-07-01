@@ -64,9 +64,9 @@ const PoolItem = React.createClass(
   }
 
   , returnInitialStateValues: function () {
-    return { storageVisible  : false
-           , topologyVisible : false
-           , editing         : false
+    return { storageVisible  : this.props.existsOnServer
+           , topologyVisible : !this.props.existsOnServer
+           , editing         : !this.props.existsOnServer
            , data            : this.props.data
            , logs            : this.props.logs
            , cache           : this.props.cache
