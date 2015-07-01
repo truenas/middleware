@@ -133,14 +133,14 @@ class RunSQLRemote(threading.Thread):
         from freenasUI.middleware.notifier import notifier
         from freenasUI.common.log import log_traceback
         # FIXME: cache value
-        ip, secret = notifier().failover_getpeer()
+        ip = notifier().failover_getpeer()
         s = notifier().failover_rpc(ip=ip)
         try:
             with Journal() as f:
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    s.run_sql(secret, self._sql, self._params)
+                    s.run_sql(self._sql, self._params)
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
@@ -202,7 +202,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
         # everything goes as planned.
         with Journal() as j:
             try:
-                sync = s.sync_to(failover.secret, script)
+                sync = s.sync_to(script)
                 if sync:
                     j.queries = []
                 return sync
