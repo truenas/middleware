@@ -686,8 +686,7 @@
 				"builtin": true,
 				"launchd": {
 					"Label": "org.freenas.gui",
-					"KeepAlive": true,
-                    "StandardOutPath": "/var/log/gui.log",
+					"StandardOutPath": "/var/log/gui.log",
                     "StandardErrorPath": "/var/log/gui.log",
                     "ProgramArguments": [
                         "/usr/local/bin/node",
