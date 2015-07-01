@@ -13,7 +13,7 @@ import FluxStore from "./FluxBase";
 import UpdaterMiddleware from "../middleware/UpdaterMiddleware";
 
 
-const UPDATE_MASK = [ "update.in_progress" ];
+const UPDATE_MASK = [ "update.in_progress", "update.changed" ];
 const UPDATE_TASK_MASK = [ "update.configure"
                          , "update.check"
                          , "update.download"

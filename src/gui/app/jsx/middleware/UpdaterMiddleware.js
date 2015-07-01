@@ -13,11 +13,11 @@ import AbstractBase from "./MiddlewareAbstract";
 class UpdaterMiddleware extends AbstractBase {
 
   static subscribe ( componentID ) {
-    MC.subscribe( [ "update.in_progress" ], componentID );
+    MC.subscribe( [ "update.in_progress", "update.changed" ], componentID );
   }
 
   static unsubscribe ( componentID ) {
-    MC.unsubscribe( [ "update.in_progress" ], componentID );
+    MC.unsubscribe( [ "update.in_progress", "update.changed" ], componentID );
   }
 
   static updatenow ( ) {
