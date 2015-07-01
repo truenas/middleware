@@ -10,8 +10,8 @@ import React from "react";
 import TWBS from "react-bootstrap";
 
 import MiddlewareClient from "../../middleware/MiddlewareClient";
+import SS from "../../stores/SessionStore";
 
-import Icon from "../Icon";
 import LogQueue from "./NotificationBar/LogQueue";
 
 
@@ -19,6 +19,8 @@ var NotificationBar = React.createClass(
   { getInitialState: function () {
     return (
       { visibleLog: ""
+
+      , currentUser: SS.getCurrentUser()
 
       // TODO: Replace dummy data with Middleware data in a Flux store
       , active:
@@ -78,11 +80,17 @@ var NotificationBar = React.createClass(
 
   // TODO: These should use EventBus
   , componentDidMount: function () {
+    SS.addChangeListener( this.updateCurrentUser );
     window.addEventListener( "click", this.makeAllInvisible );
   }
 
   , componentWillUnmount: function () {
+    SS.addChangeListener( this.updateCurrentUser );
     window.removeEventListener( "click", this.makeAllInvisible );
+  }
+
+  , updateCurrentUser: function ( event ) {
+    this.setState({ currentUser: SS.getCurrentUser() });
   }
 
   , makeAllInvisible: function ( event ) {
@@ -144,9 +152,7 @@ var NotificationBar = React.createClass(
                     active            = { this.state.active.actions }
                     log               = { this.state.log.actions } />
 
-          <Icon glyph = "user" icoSize = "2x" />
-
-           <TWBS.SplitButton title="Kevin Spacey" pullRight>
+           <TWBS.DropdownButton title={ this.state.currentUser } pullRight>
             <TWBS.MenuItem key="1">Camera!</TWBS.MenuItem>
             <TWBS.MenuItem key="2">Action!</TWBS.MenuItem>
             <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
@@ -157,7 +163,7 @@ var NotificationBar = React.createClass(
             >
               {"Logout"}
             </TWBS.MenuItem>
-          </TWBS.SplitButton>
+          </TWBS.DropdownButton>
 
         </div>
       </header>
