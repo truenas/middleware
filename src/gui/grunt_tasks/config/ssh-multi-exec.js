@@ -237,7 +237,8 @@ module.exports = function ( grunt ) {
               done();
             }
           }
-        , { input: "/usr/sbin/service gui restart"
+        , { input: "/bin/launchctl stop org.freenas.gui " +
+                   "&& /bin/launchctl start org.freenas.gui"
           , success: function ( data, context, done ) {
               logSshMsg( "Issuing service restart command", "cyan" );
               printServerAddress( "starting" );
