@@ -538,6 +538,12 @@
             "service.sshd.allow_password_auth": true,
             "service.sshd.allow_pubkey_auth": true,
 
+            "service.gui.enable": true,
+            "service.gui.listen": [
+                {"address": "0.0.0.0", "port": 3000, "protocol": "IPv4"},
+                {"address": "::", "port": 3000, "protocol": "IPv6"}
+            ],
+
             "service.ftp.enable": true,
             "service.ftp.port": 21,
 
@@ -676,11 +682,16 @@
 			},
 			"1D79DFF2-DBDD-4A97-B42E-417A31927A01": {
 				"name": "gui",
+                "socket-server": true,
 				"builtin": true,
 				"launchd": {
 					"Label": "org.freenas.gui",
 					"KeepAlive": true,
-					"Program": "/usr/local/sbin/gui"
+					"ProgramArguments": [
+                        "/usr/local/bin/node",
+                        "/usr/local/www/gui/app/server.js",
+                        ">", "/var/log/gui.log", "2>&1"
+                    ]
 				}
 			},
             "721F2D5E-8395-4477-A01A-D23330A37752": {
