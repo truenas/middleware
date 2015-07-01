@@ -891,7 +891,7 @@ def generate_smb4_conf(smb4_conf, role):
     if (cifs.cifs_srv_localmaster and not nt4_enabled()
             and not activedirectory_enabled()):
         confset2(smb4_conf, "local master = %s",
-                 "yes" if cifs.cifs_srv_localmaster else False)
+                 "yes" if cifs.cifs_srv_localmaster else "no")
 
     idmap = get_idmap_object(DS_TYPE_CIFS, cifs.id, 'tdb')
     configure_idmap_backend(smb4_conf, idmap, None)
