@@ -490,23 +490,25 @@
             "system.motd": "FreeBSD ?.?.?  (UNKNOWN)\n\nFreeNAS (c) 2009-2014, The FreeNAS Development Team\nAll rights reserved.\nFreeNAS is released under the modified BSD license.\nFor more information, documentation, help or support, go here:\nhttp://freenas.org",
             "system.shells": ["/bin/sh", "/bin/csh", "/usr/local/bin/zsh", "/usr/local/bin/bash", "/usr/local/bin/cli"],
 			"system.boot_pool_name": "freenas-boot",
+			"system.vt_count": 10,
 			"system.dataset.pool": "freenas-boot",
 			"system.dataset.id": null,
 			"system.dataset.services": ["syslog", "fnstatd"],
 			"system.language": "English",
 			"system.timezone": "America/Los_Angeles",
-			"system.console.keymap": null,
+			"system.console.keymap": "us.iso",
 			"server.token_lifetime": 600,
+
             "accounts.local_uid_range": [1000, 65000],
             "accounts.local_gid_range": [1000, 65000],
             "update.train": "FreeNAS-10-Nightlies",
             "update.check_auto": true,
-	    "mail.server": "",
-	    "mail.port": 25,
-	    "mail.encryption": "PLAIN",
-	    "mail.auth": false,
-	    "mail.user": "",
-	    "mail.pass": "",
+    	    "mail.server": "",
+    	    "mail.port": 25,
+    	    "mail.encryption": "PLAIN",
+    	    "mail.auth": false,
+    	    "mail.user": "",
+    	    "mail.pass": "",
             "network.autoconfigure": true,
             "network.gateway.ipv4": null,
             "network.gateway.ipv6": null,
@@ -515,12 +517,19 @@
             "network.http_proxy": null,
 			"network.dhcp.assign_gateway": true,
 			"network.dhcp.assign_dns": true,
+
             "service.nginx.enable": true,
-            "service.nginx.listen": ["0.0.0.0", "[::]"],
+            "service.nginx.listen": [
+				{"address": "0.0.0.0", "port": 80, "protocol": "IPv4"},
+				{"address": "::", "port": 80, "protocol": "IPv6"}
+			],
             "service.nginx.http.enable": true,
-            "service.nginx.http.port": 80,
+
             "service.sshd.enable": true,
-            "service.sshd.port": 22,
+            "service.sshd.listen": [
+				{"address": "0.0.0.0", "port": 22, "protocol": "IPv4"},
+				{"address": "::", "port": 22, "protocol": "IPv6"}
+			],
             "service.sshd.sftp_log_level": "ERROR",
             "service.sshd.sftp_log_facility": "AUTH",
             "service.sshd.permit_root_login": true,
@@ -528,8 +537,10 @@
             "service.sshd.compression": false,
             "service.sshd.allow_password_auth": true,
             "service.sshd.allow_pubkey_auth": true,
+
             "service.ftp.enable": true,
             "service.ftp.port": 21,
+
 			"service.snmp.enable": true,
             "service.collectd.enable": true,
             "service.syslog.enable": true,
@@ -626,13 +637,52 @@
         "metadata": {
             "last-id": null,
             "pkey-type": "uuid",
-            "name": "service_definitions",
+            "name": "service-definitions",
 			"migration": "replace",
             "attributes": {
                 "type": "persistent"
             }
         },
         "data": {
+			"03E16710-C1EA-4BEE-BAF0-C3CAFFE6B308": {
+				"name": "etcd",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.middleware.etcd",
+					"KeepAlive": true,
+					"ProgramArguments": [
+						"/usr/local/sbin/etcd",
+						"/etc"
+					]
+				}
+			},
+			"BABF90D2-4764-4739-9164-F48FF5D6A109": {
+				"name": "networkd",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.middleware.networkd",
+					"KeepAlive": true,
+					"Program": "/usr/local/sbin/networkd"
+				}
+			},
+			"CDE643AF-542E-4031-94ED-6E3295242698": {
+				"name": "fnstatd",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.middleware.statd",
+					"KeepAlive": true,
+					"Program": "/usr/local/sbin/fnstatd"
+				}
+			},
+			"1D79DFF2-DBDD-4A97-B42E-417A31927A01": {
+				"name": "gui",
+				"builtin": true,
+				"launchd": {
+					"Label": "org.freenas.gui",
+					"KeepAlive": true,
+					"Program": "/usr/local/sbin/gui"
+				}
+			},
             "721F2D5E-8395-4477-A01A-D23330A37752": {
                 "name": "devd",
                 "pidfile": "/var/run/devd.pid",
@@ -643,15 +693,45 @@
 				"launchd": {
 					"Label": "org.freebsd.devd",
 					"ProgramArguments": [
-						"/usr/sbin/devd",
+						"/sbin/devd",
 						"-d"
 					],
 					"RunAtLoad": true
 				}
             },
+            "13BBFFBE-CC3A-4BD2-898A-28EB04A0F514": {
+                "name": "dbus",
+                "launchd": {
+                    "Label": "org.freedesktop.dbus",
+                    "ProgramArguments": [
+                        "/usr/local/bin/dbus-daemon",
+                        "--system"
+                    ]
+                }
+            },
+            "23DA6A08-3D8D-4349-8184-E3ECD41DEE89": {
+                "name": "watchdogd",
+                "launchd": {
+                    "Label": "org.freebsd.watchdogd",
+                    "ProgramArguments": [
+                        "/usr/sbin/watchdogd",
+                        "-d"
+                    ]
+                }
+            },
+            "246C7C31-2BF6-4E8C-B775-1CD2266338E7": {
+                "name": "org.freebsd.ntpd",
+                "ProgramArguments": [
+                    "/usr/sbin/ntpd",
+                    "-g",
+                    "-c", "/etc/ntp.conf",
+                    "-f", "/var/db/ntpd.drift"
+                ]
+            },
 			"F742ECCC-F912-4B9C-8ED5-90F6AA1ED74E": {
 				"name": "sshd",
-				"builtin": false,
+				"socket-server": true,
+				"builtin": true,
 				"rcng": {
 					"rc-scripts": "sshd"
 				},
@@ -659,8 +739,11 @@
 					"Label": "com.openssh.sshd",
 					"ProgramArguments": [
 						"/usr/sbin/sshd",
-						"-D"
+						"-i"
 					],
+					"inetdCompatibility": {
+						"Wait": false
+					},
 					"RunAtLoad": true
 				}
 			},
@@ -676,8 +759,13 @@
                 "name": "nginx",
                 "pidfile": "/var/run/nginx.pid",
                 "builtin": true,
+                "etcd-group": "nginx",
 				"rcng": {
 					"rc-scripts": "nginx"
+				},
+				"launchd": {
+					"Label": "org.nginx.nginx",
+					"Program": "/usr/local/sbin/nginx"
 				}
             },
             "77C47B78-9BF3-4BA7-AA76-8CB99A8DA4A3": {
@@ -702,11 +790,18 @@
             },
             "702DD24D-BF1A-4D36-B69B-C96971B37A9D": {
                 "name": "snmp",
-                "etcd-group": "snmpd",
                 "pidfile": "/var/run/net_snmpd.pid",
                 "builtin": false,
 				"rcng": {
 					"rc-scripts": "snmpd"
+				},
+				"launchd": {
+					"Label": "org.net-snmp.snmpd",
+					"ProgramArguments": [
+						"/usr/local/sbin/snmpd",
+						"-f"
+					],
+					"KeepAlive": true
 				}
             },
 			"7498B5D8-457F-442B-BF48-ED29D8DB5FC5": {
@@ -716,6 +811,16 @@
 				"builtin": true,
 				"rcng": {
 					"rc-scripts": "collectd"
+				},
+				"launchd": {
+					"Label": "org.collectd.collectd",
+					"ProgramArguments": [
+						"/usr/local/sbin/collectd",
+						"-f",
+						"-C",
+						"/usr/local/etc/collectd.conf"
+					],
+					"KeepAlive": true
 				}
 			},
 			"858EFB54-F5DC-4207-ACB6-8BA793984794": {
@@ -724,6 +829,13 @@
 				"builtin": false,
 				"rcng": {
 					"rc-scripts": "netatalk"
+				},
+				"launchd": {
+					"Label": "net.sourceforge.netatalk.afpd",
+					"ProgramArguments": [
+						"/usr/local/bin/afpd",
+						"-d"
+					]
 				}
 			},
 			"8117202A-ED32-430E-A6AF-88B168B1601A": {
@@ -734,8 +846,7 @@
 					"Label": "org.untroubled.nullmailer",
 					"ProgramArguments": [
 						"/usr/local/sbin/nullmailer-send"
-					],
-					"RunAtLoad": true
+					]
 				},
 				"rcng": {
 					"rc-scripts": "nullmailer"

@@ -47,10 +47,13 @@ class ZpoolProvider(Provider):
         zfs = libzfs.ZFS()
         return wrap(zfs).query(*(filter or []), **(params or {}))
 
+    @accepts()
+    @returns(h.array(h.ref('zfs-pool')))
     def find(self):
         zfs = libzfs.ZFS()
         return list(map(lambda p: p.__getstate__(), zfs.find_import()))
 
+    @accepts()
     @returns(h.ref('zfs-pool'))
     def get_boot_pool(self):
         name = self.configstore.get('system.boot_pool_name')
@@ -93,7 +96,8 @@ class ZpoolProvider(Provider):
             },
             'vdev-groups': {
                 'data': {
-                    'allowed-vdevs': ['disk', 'file', 'mirror', 'raidz1', 'raidz2', 'raidz3', 'spare']
+                    'allowed-vdevs': ['disk', 'file', 'mirror',
+                                      'raidz1', 'raidz2', 'raidz3', 'spare']
                 },
                 'log': {
                     'allowed-vdevs': ['disk', 'mirror']
@@ -134,8 +138,10 @@ class ZpoolScrubTask(Task):
 
     def run(self, pool):
         self.pool = pool
-        self.dispatcher.register_event_handler("fs.zfs.scrub.finish", self.__scrub_finished)
-        self.dispatcher.register_event_handler("fs.zfs.scrub.abort", self.__scrub_aborted)
+        self.dispatcher.register_event_handler("fs.zfs.scrub.finish",
+                                               self.__scrub_finished)
+        self.dispatcher.register_event_handler("fs.zfs.scrub.abort",
+                                               self.__scrub_aborted)
         self.finish_event.clear()
 
         try:
@@ -148,7 +154,8 @@ class ZpoolScrubTask(Task):
 
         self.finish_event.wait()
         if self.abort_flag:
-            raise TaskAbortException(errno.EINTR, str("User invoked Task.abort()"))
+            raise TaskAbortException(errno.EINTR,
+                                     str("User invoked Task.abort()"))
 
     def abort(self):
         try:
@@ -216,7 +223,8 @@ class ZpoolCreateTask(Task):
     def verify(self, name, topology, params=None):
         zfs = libzfs.ZFS()
         if name in zfs.pools:
-            raise VerifyException(errno.EEXIST, 'Pool with same name already exists')
+            raise VerifyException(errno.EEXIST,
+                                  'Pool with same name already exists')
 
         return self.__get_disks(topology)
 
@@ -261,7 +269,8 @@ class ZpoolBaseTask(Task):
             zfs = libzfs.ZFS()
             pool = zfs.get(name)
         except libzfs.ZFSException:
-            raise VerifyException(errno.ENOENT, "Pool {0} not found".format(name))
+            raise VerifyException(errno.ENOENT,
+                                  "Pool {0} not found".format(name))
 
         return get_disk_names(self.dispatcher, pool)
 
@@ -291,7 +300,7 @@ class ZpoolDestroyTask(ZpoolBaseTask):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        #self.dispatcher.unregister_resource('zpool:{0}'.format(name))
+        # self.dispatcher.unregister_resource('zpool:{0}'.format(name))
 
 
 @accepts(str, h.ref('zfs-topology'), h.object())
@@ -310,9 +319,11 @@ class ZpoolExtendTask(ZpoolBaseTask):
 class ZpoolImportTask(Task):
     def verify(self, guid, name=None, properties=None):
         zfs = libzfs.ZFS()
-        pool = first_or_default(lambda p: str(p.guid) == guid, zfs.find_import())
+        pool = first_or_default(
+                   lambda p: str(p.guid) == guid, zfs.find_import())
         if not pool:
-            raise VerifyException(errno.ENOENT, 'Pool with GUID {0} not found'.format(guid))
+            raise VerifyException(errno.ENOENT,
+                                  'Pool with GUID {0} not found'.format(guid))
 
         return get_disk_names(self.dispatcher, pool)
 
@@ -320,7 +331,8 @@ class ZpoolImportTask(Task):
         zfs = libzfs.ZFS()
         opts = nvpair.NVList(otherdict=(properties or {}))
         try:
-            pool = first_or_default(lambda p: str(p.guid) == guid, zfs.find_import())
+            pool = first_or_default(
+                       lambda p: str(p.guid) == guid, zfs.find_import())
             zfs.import_pool(pool, name, opts)
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
@@ -347,7 +359,8 @@ class ZfsBaseTask(Task):
             zfs = libzfs.ZFS()
             dataset = zfs.get_dataset(path)
             if not dataset:
-                raise VerifyException(errno.ENOENT, 'Dataset {0} not found'.format(path))
+                raise VerifyException(errno.ENOENT,
+                                      'Dataset {0} not found'.format(path))
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
@@ -392,7 +405,9 @@ class ZfsDatasetCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        #self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+        # self.dispatcher.register_resource(
+        #     Resource('zfs:{0}'.format(path)),
+        #     parents=['zpool:{0}'.format(pool_name)])
 
 
 @accepts(str, str, int, h.object())
@@ -408,7 +423,9 @@ class ZfsVolumeCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        #self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+        # self.dispatcher.register_resource(
+        #     Resource('zfs:{0}'.format(path)),
+        #     parents=['zpool:{0}'.format(pool_name)])
 
 
 class ZfsSnapshotCreateTask(Task):
@@ -423,7 +440,9 @@ class ZfsSnapshotCreateTask(Task):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        #self.dispatcher.register_resource(Resource('zfs:{0}'.format(path)), parents=['zpool:{0}'.format(pool_name)])
+        # self.dispatcher.register_resource(
+        #     Resource('zfs:{0}'.format(path)),
+        #     parents=['zpool:{0}'.format(pool_name)])
 
 
 class ZfsConfigureTask(ZfsBaseTask):
@@ -449,7 +468,7 @@ class ZfsDestroyTask(ZfsBaseTask):
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
-        #self.dispatcher.unregister_resource('zfs:{0}'.format(path))
+        # self.dispatcher.unregister_resource('zfs:{0}'.format(path))
 
 
 class ZfsRenameTask(ZfsBaseTask):
@@ -526,6 +545,45 @@ def _depends():
     return ['DevdPlugin', 'DiskPlugin']
 
 
+def zfsprop_schema_creator(**kwargs):
+    """
+    A little helper function to programmatically create zfs property type
+    schmeas. It returns a schema dict with top level 'type' being an object.
+
+    Note: If nothing is specified then it defaults to a source='string'
+    and value='string'.
+
+    Usage: zfsprop_schema_creator(propety_name=schema_type_as_str)
+    Examples:
+        Call: zfsprop_schema_creator(value='long')
+        Returns: {
+            type: 'object',
+            properties: {
+                'source': {'type': 'string'},
+                'value': {'type': 'long'},
+            }
+        }
+        zfsprop_schema_creator(source='string', value='integer')
+        Returns: {
+            type: 'object',
+            properties: {
+                'source': {'type': 'string'},
+                'value': {'type': 'integer'},
+            }
+        }
+    """
+    result = {
+        'type': 'object',
+        'properties': {
+            'source': 'string',
+            'value': 'string',
+        }
+    }
+    for key, value in kwargs.iteritems():
+        result['properties'][key] = {'type': value}
+    return result
+
+
 def _init(dispatcher, plugin):
     def on_pool_create(args):
         guid = args['guid']
@@ -537,8 +595,10 @@ def _init(dispatcher, plugin):
         })
 
         # Register resources for pool and root dataset
-        dispatcher.register_resource(Resource('zpool:{0}'.format(name)), parents=[])
-        dispatcher.register_resource(Resource('zfs:{0}'.format(name)), parents=['zpool:{0}'.format(name)])
+        dispatcher.register_resource(Resource('zpool:{0}'.format(name)),
+                                     parents=[])
+        dispatcher.register_resource(Resource('zfs:{0}'.format(name)),
+                                     parents=['zpool:{0}'.format(name)])
 
     def on_pool_destroy(args):
         guid = args['guid']
@@ -551,7 +611,9 @@ def _init(dispatcher, plugin):
 
     def on_dataset_create(args):
         guid = args['guid']
-        plugin.register_resource(Resource('zfs:{0}'.format(args['ds'])), parents=['zpool:{0}'.format(args['pool'])])
+        plugin.register_resource(
+            Resource('zfs:{0}'.format(args['ds'])),
+            parents=['zpool:{0}'.format(args['pool'])])
         dispatcher.dispatch_event('zfs.pool.changed', {
             'operation': 'create',
             'ids': [guid]
@@ -578,7 +640,8 @@ def _init(dispatcher, plugin):
             'path': {'type': 'string'},
             'type': {
                 'type': 'string',
-                'enum': ['disk', 'file', 'mirror', 'raidz1', 'raidz2', 'raidz3']
+                'enum': ['disk', 'file', 'mirror',
+                         'raidz1', 'raidz2', 'raidz3']
             },
             'children': {
                 'type': 'array',
@@ -586,6 +649,8 @@ def _init(dispatcher, plugin):
             }
         }
     })
+
+    # Plugin Schema definitions
 
     plugin.register_schema_definition('zfs-topology', {
         'type': 'object',
@@ -609,13 +674,195 @@ def _init(dispatcher, plugin):
         }
     })
 
+    # TODO: Add ENUM to the 'state' property below
+    plugin.register_schema_definition('zfs-scan', {
+        'type': 'object',
+        'properties': {
+            'errors': {'type': 'integer'},
+            'start_time': {'type': 'string'},
+            'bytes_to_process': {'type': 'long'},
+            'state': {'type': 'string'},
+            'end_time': {'type': 'string'},
+            'func': {'type': 'integer'},
+            'bytes_processed': {'type': 'long'},
+            'percentage': {'type': 'float'},
+        }
+    })
+
+    # A dict containing the zfs property name: dict of their properties
+    # (optional if empty the zfsprop_schema_creator defaults kickin)
+    # for example 'comment': [{'source': string, 'value': 'boolean'}]
+    zfsprops_dict = {
+        'comment': {},
+        'freeing': {},
+        'listsnapshots': {},
+        'leaked': {},
+        'version': {},
+        'free': {},
+        'delegation': {},
+        'dedupditto': {},
+        'failmode': {},
+        'autoexpand': {},
+        'allocated': {},
+        'guid': {},
+        'altroot': {},
+        'size': {},
+        'fragmentation': {},
+        'capacity': {},
+        'name': {},
+        'maxblocksize': {},
+        'cachefile': {},
+        'bootfs': {},
+        'autoreplace': {},
+        'readonly': {},
+        'dedupratio': {},
+        'health': {},
+        'expandsize': {},
+    }
+
+    zfsproperty_schema = {'type': 'object', 'properties': {}}
+
+    for key, value in zfsprops_dict.iteritems():
+        zfsproperty_schema['properties'][key] = zfsprop_schema_creator(**value)
+
+    plugin.register_schema_definition('zfs-properties', zfsproperty_schema)
+
+    # A dict containing the zfs dataset property name: dict of their properties
+    # (optional if empty the zfsprop_schema_creator defaults kickin)
+    # for example 'comment': [{'source': string, 'value': 'boolean'}]
+    zfs_datasetprops_dict = {
+        'origin': {},
+        'referenced': {},
+        'numclones': {},
+        'primarycache': {},
+        'logbias': {},
+        'inconsistent': {},
+        'reservation': {},
+        'casesensitivity': {},
+        'guid': {},
+        'usedbysnapshots': {},
+        'stmf_sbd_lu': {},
+        'mounted': {},
+        'compression': {},
+        'snapdir': {},
+        'copies': {},
+        'aclinherit': {},
+        'compressratio': {},
+        'recordsize': {},
+        'mlslabel': {},
+        'jailed': {},
+        'snapshot_count': {},
+        'volsize': {},
+        'clones': {},
+        'atime': {},
+        'usedbychildren': {},
+        'volblocksize': {},
+        'objsetid': {},
+        'name': {},
+        'defer_destroy': {},
+        'type': {},
+        'devices': {},
+        'useraccounting': {},
+        'iscsioptions': {},
+        'setuid': {},
+        'usedbyrefreservation': {},
+        'logicalused': {},
+        'userrefs': {},
+        'creation': {},
+        'sync': {},
+        'volmode': {},
+        'sharenfs': {},
+        'sharesmb': {},
+        'createtxg': {},
+        'mountpoint': {},
+        'xattr': {},
+        'utf8only': {},
+        'aclmode': {},
+        'exec': {},
+        'dedup': {},
+        'snapshot_limit': {},
+        'readonly': {},
+        'version': {},
+        'filesystem_limit': {},
+        'secondarycache': {},
+        'prevsnap': {},
+        'available': {},
+        'used': {},
+        'written': {},
+        'refquota': {},
+        'refcompressratio': {},
+        'quota': {},
+        'vscan': {},
+        'canmount': {},
+        'normalization': {},
+        'usedbydataset': {},
+        'unique': {},
+        'checksum': {},
+        'redundant_metadata': {},
+        'filesystem_count': {},
+        'refreservation': {},
+        'logicalreferenced': {},
+        'nbmand': {},
+    }
+
+    zfs_datasetproperty_schema = {'type': 'object', 'properties': {}}
+
+    for key, value in zfs_datasetprops_dict.iteritems():
+        zfs_datasetproperty_schema['properties'][key] = zfsprop_schema_creator(**value)
+
+    plugin.register_schema_definition('zfs-datasetproperties',
+                                      zfs_datasetproperty_schema)
+
+    plugin.register_schema_definition('zfs-dataset', {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'properties': {'$ref': 'zfs-datasetproperties'},
+            'children': {
+                'type': 'array',
+                'items': {'$ref': 'zfs-dataset'},
+            },
+        }
+    })
+    # TODO: Fix zfs-pools.groups.(cache and logs items' schema)
+    plugin.register_schema_definition('zfs-pool', {
+        'type': 'object',
+        'properties': {
+            'status': {
+                'type': 'string',
+                'enum': ['ONLINE', 'OFFLINE', 'DEGRADED', 'FAULTED',
+                         'REMOVED', 'UNAVAIL']
+            },
+            'name': {'type': 'string'},
+            'scan': {'$ref': 'zfs-scan'},
+            'hostname': {'type': 'string'},
+            'root_dataset': {'$ref': 'zfs-dataset'},
+            'groups': {
+                'type': 'object',
+                'properties': {
+                    'cache': {'type': 'array'},
+                    'data': {'$ref': 'zfs-vdev'},
+                    'log': {'type': 'array'},
+                }
+            },
+            'guid': {'type': 'long'},
+            'properties': {'$ref': 'zfs-properties'},
+        }
+    })
+
+    # Register Event Types
+    plugin.register_event_type('zfs.pool.changed')
+
     plugin.register_event_handler('fs.zfs.pool.created', on_pool_create)
     plugin.register_event_handler('fs.zfs.pool.destroyed', on_pool_destroy)
     plugin.register_event_handler('fs.zfs.dataset.created', on_dataset_create)
     plugin.register_event_handler('fs.zfs.dataset.deleted', on_dataset_delete)
     plugin.register_event_handler('fs.zfs.dataset.renamed', on_dataset_rename)
 
+    # Register Providers
     plugin.register_provider('zfs.pool', ZpoolProvider)
+
+    # Register Task Handlers
     plugin.register_task_handler('zfs.pool.create', ZpoolCreateTask)
     plugin.register_task_handler('zfs.pool.configure', ZpoolConfigureTask)
     plugin.register_task_handler('zfs.pool.extend', ZpoolExtendTask)

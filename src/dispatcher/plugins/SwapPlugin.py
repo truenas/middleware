@@ -37,6 +37,7 @@ from dispatcher.rpc import SchemaHelper as h
 logger = logging.getLogger('SwapPlugin')
 
 
+@description("Provides informations about system swap")
 class SwapProvider(Provider):
     @accepts()
     @returns(h.array(h.ref('swap-mirror')))

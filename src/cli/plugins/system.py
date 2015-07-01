@@ -55,8 +55,8 @@ class VersionCommand(Command):
     """
     def run(self, context, args, kwargs, opargs):
         output_object(
-            ('FreeNAS version', 'freenas-version', context.call_sync('system.info.version')),
-            ('System version', 'system-version', context.call_sync('system.info.uname_full'))
+            ('FreeNAS version', 'freenas_version', context.call_sync('system.info.version')),
+            ('System version', 'system_version', context.call_sync('system.info.uname_full'))
         )
 
     def complete(self, context, tokens):
@@ -111,14 +111,14 @@ class TimeNamespace(ConfigNamespace):
         self.add_property(
             descr='System time',
             name='system_time',
-            get='system-time',
+            get='system_time',
             list=True
         )
 
         self.add_property(
             descr='Bootup time',
             name='boot_time',
-            get='boot-time',
+            get='boot_time',
             set=None,
             list=True
         )

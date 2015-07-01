@@ -34,7 +34,7 @@ from utils import fail
 def server(port):
     try:
         msg = port.receive()
-    except mach.ReceiveMessageException, e:
+    except mach.MessageReceiveException, e:
         fail('Cannot receive message: {0}'.format(e))
 
     contents, = struct.unpack('256p', msg.body)
@@ -60,7 +60,8 @@ def main():
     except mach.MachException, e:
         fail('Cannot create receive port: {0}'.format(e))
 
-    threading.Thread(target=server, args=(receive,)).start()
+    t = threading.Thread(target=server, args=(receive,))
+    t.start()
 
     msg = mach.Message()
     msg.bits = mach.make_msg_bits(mach.MessageType.MACH_MSG_TYPE_COPY_SEND, mach.MessageType.MACH_MSG_TYPE_MAKE_SEND)

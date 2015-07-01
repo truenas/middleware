@@ -890,9 +890,9 @@ menu_install()
 	rm /tmp/data/dev/urandom
 	ln -s /dev/random /tmp/data/dev/urandom
 	# Set the root password
-	chroot /tmp/data /usr/sbin/service datastore start
+	chroot /tmp/data /usr/local/sbin/dsinit --start-forked
 	chroot /tmp/data /usr/local/sbin/dspasswd root ${_password}
-	chroot /tmp/data /usr/sbin/service datastore stop
+	chroot /tmp/data /usr/local/sbin/dsinit --stop-forked
     fi
     # Finally, before we unmount, start a srub.
     zpool scrub freenas-boot || true

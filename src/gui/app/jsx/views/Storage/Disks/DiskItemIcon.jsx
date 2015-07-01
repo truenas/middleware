@@ -50,10 +50,6 @@ const DiskItemIcon = React.createClass({
     let iconStyle = {};
     let iconClassName = null;
 
-    // Override an annoying style. TODO: Fix with an actual class. Sorry,
-    // future me or whoever has to do this.
-    iconStyle.borderRadius = "0%";
-
     if ( this.props.size ) {
       iconStyle.height = this.props.size;
       iconStyle.width = this.props.size;
@@ -61,7 +57,6 @@ const DiskItemIcon = React.createClass({
 
     if ( this.props.humanSize !== "" ) {
       iconBadge = <span
-                    className = "badge"
                     style = { { fontSize: this.props.badgeFontSize + "em" } }>
                     { this.props.humanSize }
                   </span>;
@@ -78,15 +73,14 @@ const DiskItemIcon = React.createClass({
 
     return (
       <div>
-        <div className = "icon"
-          { ...iconStyle } >
+        <div { ...iconStyle } >
           <i className = { iconClassName }
-            style = { {fontSize: this.props.fontSize + "em" } } >
+            style = { { fontSize: this.props.fontSize + "em" } } >
             { iconBadge }
           </i>
         </div>
-        <div className = "disks-viewer-icon-text">
-          <h6 className = "primary-text">
+        <div>
+          <h6>
             { this.props.path }
           </h6>
         </div>

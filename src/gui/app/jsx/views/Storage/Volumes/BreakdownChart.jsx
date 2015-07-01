@@ -1,12 +1,13 @@
-// POOL USAGE STACKED GRAPH
-// ========================
+// VOLUME USAGE STACKED GRAPH
+// ==========================
+// Shows the usage of resources in a pool, including parity information.
 
 "use strict";
 
 import React from "react";
 import TWBS from "react-bootstrap";
 
-const PoolBreakdown = React.createClass(
+const BreakdownChart = React.createClass(
 
   { getDefaultProps: function () {
     return { used   : 0
@@ -31,19 +32,14 @@ const PoolBreakdown = React.createClass(
       stackedBar = (
         <TWBS.ProgressBar>
           <TWBS.ProgressBar
-            bsStyle = "primary"
-            now     = { this.calcPercent( "used" ) }
-            key     = { 1 }
-          />
-          <TWBS.ProgressBar
-            bsStyle = "success"
-            now     = { this.calcPercent( "free" ) }
-            key     = { 2 }
-          />
-          <TWBS.ProgressBar
             bsStyle = "warning"
             now     = { this.calcPercent( "parity" ) }
             key     = { 3 }
+          />
+          <TWBS.ProgressBar
+            bsStyle = "primary"
+            now     = { this.calcPercent( "used" ) }
+            key     = { 1 }
           />
         </TWBS.ProgressBar>
       );
@@ -57,4 +53,4 @@ const PoolBreakdown = React.createClass(
   }
 );
 
-export default PoolBreakdown;
+export default BreakdownChart;

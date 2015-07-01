@@ -28,6 +28,6 @@ MiddlewareClient.connect( wsProtocol + document.domain + ":5000/socket" );
 Router.run( Routes
           , HistoryLocation
           , function ( Handler, state ) {
-              React.render( <Handler />, document.body );
+              React.render( <Handler />, document );
             }
           );

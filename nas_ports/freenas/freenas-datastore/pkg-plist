@@ -4,13 +4,13 @@
 /usr/local/lib/datastore/drivers/mongodb/control
 /usr/local/lib/datastore/drivers/mongodb/mongodb.py
 /usr/local/lib/datastore/drivers/mongodb/mongod.conf
+/usr/local/lib/datastore/drivers/mongodb/mongodb.json
 /usr/local/share/datastore/factory.json
 /usr/local/lib/python2.7/site-packages/datastore/__init__.py
 /usr/local/lib/python2.7/site-packages/datastore/__init__.pyc
 /usr/local/lib/python2.7/site-packages/datastore/config.py
 /usr/local/lib/python2.7/site-packages/datastore/config.pyc
 /usr/local/lib/python2.7/site-packages/datastore-10.0-py2.7.egg-info
-/usr/local/etc/rc.d/datastore
 /usr/local/sbin/dsutil
 /usr/local/sbin/dsdump
 /usr/local/sbin/dsrestore

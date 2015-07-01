@@ -27,6 +27,7 @@
 
 import enum
 import os
+import socket
 from libc.errno cimport errno
 from libc.stdint cimport uintptr_t
 cimport defs
@@ -56,15 +57,26 @@ cdef class Item(object):
 
         if ptr:
             self._value = <defs.launch_data_t>ptr
-            return
+
+        if typ is not None and value is None:
+            self._value = defs.launch_data_alloc(typ.value)
 
         if value is not None:
             if type(value) is Item:
                 self._value = defs.launch_data_copy(<defs.launch_data_t><uintptr_t>value.ptr)
-                return
 
             if type(value) is int or type(value) is long:
-                self._value = defs.launch_data_new_integer(value)
+                if typ:
+                    if typ == ItemType.INTEGER:
+                        self._value = defs.launch_data_new_integer(value)
+
+                    if typ == ItemType.FD:
+                        self._value = defs.launch_data_new_fd(value)
+
+                    if typ == ItemType.MACHPORT:
+                        self._value = defs.launch_data_new_machport(value)
+                else:
+                    self._value = defs.launch_data_new_integer(value)
 
             if type(value) is bool:
                 self._value = defs.launch_data_new_bool(value)
@@ -84,6 +96,10 @@ cdef class Item(object):
                 self._value = defs.launch_data_alloc(defs.LAUNCH_DATA_DICTIONARY)
                 self.update(value)
 
+        if self._value == NULL:
+            raise NotImplementedError(
+                'Value {0} of type {1} cannot be converted to launch data item'.format(value, type(value)))
+
     def __int__(self):
         return int(self.value)
 
@@ -92,6 +108,15 @@ cdef class Item(object):
 
     def __repr__(self):
         return "<item '{0}', type {1}>".format(self.value, self.type.name)
+
+    def __contains__(self, item):
+        cdef uintptr_t ptr
+
+        if self.type == ItemType.DICTIONARY:
+            ptr=<uintptr_t>defs.launch_data_dict_lookup(self._value, item)
+            return ptr != 0
+
+        raise NotImplementedError('Primitive types doesn\'t support indexing')
 
     def __getitem__(self, item):
         cdef uintptr_t ptr
@@ -104,14 +129,14 @@ cdef class Item(object):
             if ptr == 0:
                 raise KeyError(item)
 
-            return Item(ptr=ptr).value
+            return Item(ptr=ptr)
 
         if self.type == ItemType.DICTIONARY:
             ptr=<uintptr_t>defs.launch_data_dict_lookup(self._value, item)
             if ptr == 0:
                 raise KeyError(item)
 
-            return Item(ptr=ptr).value
+            return Item(ptr=ptr)
 
         raise NotImplementedError('Primitive types doesn\'t support indexing')
 
@@ -129,6 +154,15 @@ cdef class Item(object):
             return
 
         raise NotImplementedError('Primitive types doesn\'t support indexing')
+
+    def __iadd__(self, other):
+        if self.type == ItemType.ARRAY:
+            for i in other:
+                self.append(i)
+
+            return self
+
+        raise NotImplementedError('Not supported for this type')
 
     property ptr:
         def __get__(self):
@@ -151,8 +185,14 @@ cdef class Item(object):
             if self.type == ItemType.OPAQUE:
                 return (<char*>defs.launch_data_get_opaque(self._value))[defs.launch_data_get_opaque_size(self._value):]
 
+            if self.type == ItemType.FD:
+                return defs.launch_data_get_fd(self._value)
+
             if self.type == ItemType.MACHPORT:
                 return defs.launch_data_get_machport(self._value)
+
+            if self.type == ItemType.ERRNO:
+                return defs.launch_data_get_errno(self._value)
 
             if self.type == ItemType.ARRAY:
                 return list(self)
@@ -165,6 +205,12 @@ cdef class Item(object):
 
             if t == defs.LAUNCH_DATA_INTEGER:
                 defs.launch_data_set_integer(self._value, value)
+
+            if t == defs.LAUNCH_DATA_FD:
+                defs.launch_data_set_fd(self._value, value)
+
+            if t == defs.LAUNCH_DATA_MACHPORT:
+                defs.launch_data_set_machport(self._value, value)
 
             if t == defs.LAUNCH_DATA_BOOL:
                 defs.launch_data_set_bool(self._value, value)
@@ -190,6 +236,21 @@ cdef class Item(object):
 
         for i in self.keys():
             yield (i, self[i])
+
+    def get(self, indice, default=None):
+        if isinstance(indice, basestring) and self.type == ItemType.DICTIONARY:
+            if indice in self:
+                return self[indice].value
+
+            return default
+
+        if isinstance(indice, (int, long)) and self.type == ItemType.ARRAY:
+            if indice in self:
+                return self[indice].value
+
+            return default
+
+        raise NotImplementedError('Unsupported for that item type')
 
     def append(self, value):
         if self.type != ItemType.ARRAY:
@@ -222,7 +283,8 @@ cdef class Launchd(object):
 
     def message(self, Item data):
         cdef uintptr_t resp
-        resp = <uintptr_t>defs.launch_msg(data._value)
+        with nogil:
+            resp = <uintptr_t>defs.launch_msg(data._value)
 
         if resp == 0:
             if errno != 0:
@@ -232,26 +294,118 @@ cdef class Launchd(object):
 
         return Item(ptr=resp)
 
+    def create_sockets(self, plist):
+        passive = plist.get('SockPassive', True)
+        pathname = plist.get('SockPathName', None)
+        st_str = plist.get('SockType', '').lower()
+        st = socket.SOCK_STREAM
+        family = socket.AF_INET
+        proto = socket.IPPROTO_TCP
+
+        if st_str == 'stream':
+            st = socket.SOCK_STREAM
+        elif st_str == 'dgram':
+            st = socket.SOCK_DGRAM
+        elif st_str == 'seqpacket':
+            st = socket.SOCK_SEQPACKET
+
+        if pathname:
+            sock = socket.socket(socket.AF_UNIX, st)
+
+            if passive:
+                try:
+                    os.remove(pathname)
+                except OSError:
+                    pass
+
+                sock.bind(pathname)
+                yield sock
+        else:
+            if plist.get('SockProtocol') == 'TCP':
+                proto = socket.IPPROTO_TCP
+            elif plist.get('SockProtocol') == 'UDP':
+                proto = socket.IPPROTO_UDP
+
+            if plist.get('SockFamily') == 'IPv4':
+                family = socket.AF_INET
+            elif plist.get('SockFamily') == 'IPv6':
+                family = socket.AF_INET6
+
+            ai_ret = socket.getaddrinfo(
+                plist.get('SockNodeName'),
+                plist.get('SockServiceName'),
+                family,
+                st,
+                proto)
+
+            for ai in ai_ret:
+                ai_family, ai_socktype, ai_proto, ai_canon, ai_addr = ai
+                sock = socket.socket(ai_family, ai_socktype, ai_proto)
+
+                if passive:
+                    sock.bind(ai_addr)
+
+                    if ai_socktype in (socket.SOCK_STREAM, socket.SOCK_SEQPACKET):
+                        sock.listen(-1)
+                else:
+                    sock.connect(ai_addr)
+
+                yield sock
+
+    def convert_sockets(self, plist):
+        sockets = []
+        result = Item(typ=ItemType.DICTIONARY)
+        for k, v in plist.items():
+            arr = Item(typ=ItemType.ARRAY)
+            if v.type == ItemType.ARRAY:
+                for i in v:
+                    s = list(self.create_sockets(i))
+                    sockets += s
+                    arr += map(lambda x: Item(value=x.fileno(), typ=ItemType.FD), s)
+
+            if v.type == ItemType.DICTIONARY:
+                    s = list(self.create_sockets(v))
+                    sockets += s
+                    arr += map(lambda x: Item(value=x.fileno(), typ=ItemType.FD), s)
+
+            result[k] = arr
+
+        return sockets, result
+
     property jobs:
         def __get__(self):
             msg = Item("GetJobs")
             return self.message(msg)
 
     def load(self, plist):
+        sockets = []
+        plist = Item(plist)
+        if 'Sockets' in plist:
+            sockets, result = self.convert_sockets(plist['Sockets'])
+            plist['Sockets'] = result
+
         msg = Item({"SubmitJob": plist})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def unload(self, label):
         msg = Item({"RemoveJob": label})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def start(self, label):
         msg = Item({"StartJob": label})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def stop(self, label):
         msg = Item({"StopJob": label})
-        return self.message(msg)
+        reply = self.message(msg)
+        if reply.value != 0:
+            raise OSError(reply.value, os.strerror(reply.value))
 
     def checkin(self):
         msg = Item("CheckIn")

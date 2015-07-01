@@ -1,4 +1,3 @@
 /usr/local/lib/fnstatd/src/main.py
 /usr/local/lib/fnstatd/src/ringbuffer.py
-/usr/local/etc/rc.d/fnstatd
 /usr/local/sbin/fnstatd

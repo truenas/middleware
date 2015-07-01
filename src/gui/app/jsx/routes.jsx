@@ -35,8 +35,6 @@ import Interfaces from "./views/Network/Interfaces"
 import InterfaceItem from "./views/Network/Interfaces/InterfaceItem";
 
 import Storage from "./views/Storage";
-import Disks from "./views/Storage/Disks";
-import DiskItem from "./views/Storage/Disks/DiskItem";
 
 import Services from "./views/Services";
 import ServiceItem from "./views/Services/ServiceItem";
@@ -134,13 +132,7 @@ module.exports = (
     <Route
       name    = "storage"
       route   = "storage"
-      handler = { Storage } >
-      <Route
-        name    = "disk-item-view"
-        path    = "disks/:diskSerial"
-        handler = { DiskItem }
-      />
-    </Route>
+      handler = { Storage } />
 
 
     {/* SERVICES */}

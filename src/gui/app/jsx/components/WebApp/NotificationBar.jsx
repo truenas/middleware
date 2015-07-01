@@ -199,7 +199,7 @@ var NotificationBar = React.createClass({
 
   , render: function () {
     return (
-      <header className="notification-bar">
+      <header className="app-header notification-bar">
         <div className="user-info">
 
           {/* System Events */}

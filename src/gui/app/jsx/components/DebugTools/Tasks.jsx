@@ -163,8 +163,8 @@ var Tasks = React.createClass(
     }
 
   , componentDidMount: function () {
+      TasksMiddleware.subscribe( componentLongName );
       TasksStore.addChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.subscribe( [ "task.*" ], componentLongName );
 
       var totalLength = 0;
 
@@ -177,7 +177,7 @@ var Tasks = React.createClass(
 
   , componentWillUnmount: function () {
       TasksStore.removeChangeListener( this.handleMiddlewareChange );
-      MiddlewareClient.unsubscribe( [ "task.*" ], componentLongName );
+      TasksMiddleware.unsubscribe( componentLongName );
     }
 
   , handleMiddlewareChange: function () {

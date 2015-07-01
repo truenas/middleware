@@ -65,7 +65,15 @@ var TasksStore = _.assign( {}, EventEmitter.prototype
     , getAbortedTasks: function () {
         return _aborted;
       }
-    }
+
+    , getTaskByID: function ( ID ) {
+        let allTasks = [ _created, _waiting, _executing, _finished, _failed
+                       , _aborted ];
+        return _.find( function ( task ) {
+          return task[ "id" ] === ID;
+        });
+      }
+  }
 );
 
 TasksStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {

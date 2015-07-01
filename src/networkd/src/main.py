@@ -591,8 +591,15 @@ class Main:
         self.init_dispatcher()
         self.scan_interfaces()
         self.init_routing_socket()
-        self.client.register_service('networkd.configuration', ConfigurationService(self))
+
+        # Register service
+        svc = ConfigurationService(self)
+        self.client.register_service('networkd.configuration', svc)
         self.logger.info('Started')
+
+        # Do initial network configuration
+        svc.configure_network()
+
         self.client.wait_forever()
 
 if __name__ == '__main__':

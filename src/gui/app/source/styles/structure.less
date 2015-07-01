@@ -3,44 +3,40 @@
 @freenas-dark-gray : #1f1f1f;
 
 // Single-page setup
-html, body { height: 100%; width: 100%; }
-
-@left-menu-width           : 230px;
-@collapsed-left-menu-width : 44px;
-
-.app-wrapper {
-  .flex-display(flex);
-  .flex-flow(column nowrap);
-  .all-positions-zero();
-  position   : absolute;
-  overflow-y : auto;
-  overflow-x : hidden;
+html, body {
+  margin : 0;
+  height : 100vh;
+  width  : 100vw;
+  .flex-display( flex );
+  .flex-flow( column nowrap );
 }
 
 .app-content {
-  .flex(1);
-  .flex-display(flex);
-  .flex-flow(row nowrap);
-  .align-items(stretch);
+  .flex( 1 0 0px );
+  .flex-display( flex );
+  .flex-flow( row nowrap );
+  min-height: 0px;
 
   & > main {
-    .flex(1);
-    .flex-display(flex);
-    .flex-flow(column nowrap);
+    .flex( auto );
+    overflow : auto;
     position : relative;
   }
 }
 
 .app-sidebar {
   .flex-display(flex);
+  .flex( 0 0 50px );
   height     : inherit;
   overflow-x : hidden;
   overflow-y : auto;
 }
 
-.app-footer {
-  height           : 20px;
-  background-color : @freenas-dark-gray;
+.app-header {
+  .flex( 0 0 70px );
 }
 
-
+.app-footer {
+  .flex( 0 0 20px );
+  background-color : @freenas-dark-gray;
+}

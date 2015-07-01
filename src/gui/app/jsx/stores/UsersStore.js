@@ -8,7 +8,7 @@ import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
-import FluxStore from "./FluxBase";
+import FluxBase from "./FluxBase";
 
 import UsersMiddleware from "../middleware/UsersMiddleware";
 
@@ -95,7 +95,7 @@ const KEY_TRANSLATION =
   , password_disabled : "passwordDisabled"
   };
 
-class UsersStore extends FluxStore {
+class UsersStore extends FluxBase {
 
   constructor () {
     super();
@@ -194,10 +194,10 @@ function handlePayload ( payload ) {
         if ( updateData[ "operation" ] === "delete" ) {
           // FIXME: Will this cause an issue if the delete is unsuccessful?
           // This will no doubt be overriden in the new patch-based world anyway.
-          _users = _.omit(_users, updateData[ "ids" ] );
+          _users = _.omit (_users, updateData[ "ids" ] );
         } else if ( updateData[ "operation" ] === "update" || updateData[ "operation" ] === "create" ) {
-            Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-            UsersMiddleware.requestUsersList( _updatedOnServer );
+          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+          UsersMiddleware.requestUsersList( _updatedOnServer );
         } else {
           // TODO: Are there any other cases?
         }
@@ -205,7 +205,7 @@ function handlePayload ( payload ) {
 
       // TODO: Make this more generic, triage it earlier, create ActionTypes for it
       } else if ( args[ "name" ] === "task.updated" && args.args["state"] === "FINISHED" ) {
-          delete _localUpdatePending[ args.args["id"] ];
+        delete _localUpdatePending[ args.args["id"] ];
       }
 
       break;

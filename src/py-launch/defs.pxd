@@ -86,4 +86,4 @@ cdef extern from "launch.h":
     int launch_data_get_errno(const launch_data_t)
 
     int launch_get_fd()
-    launch_data_t launch_msg(const launch_data_t)
+    launch_data_t launch_msg(const launch_data_t) nogil

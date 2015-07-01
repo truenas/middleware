@@ -32,7 +32,7 @@ module.exports = {
     }
 
   , updateUsersInState: function () {
-      var usersList = UsersStore.getAllUsers();
+      var usersList = UsersStore.users;
       this.setState( { usersList : usersList } );
     }
 
