@@ -80,8 +80,6 @@ const Storage = React.createClass(
     newVolumes.push( this.generateFreshVolume() );
 
     this.setState( { volumes: newVolumes } );
-
-    console.log( "handleVolumeAdd", event );
   }
 
   , handleVolumeReset ( event, volumeKey ) {
