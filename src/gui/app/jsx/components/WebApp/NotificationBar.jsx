@@ -112,24 +112,20 @@ var NotificationBar = React.createClass(
 
   , render: function () {
     return (
-      <header className="app-header notification-bar">
+      <header className = "app-header notification-bar" >
         <img
-          style = {{ margin: "15px 0 0 20px"
-                   , height: "40px"
-                   }}
-          src       = "/img/freenas-icon.png"
+          style = {{ margin: "7px 0 0 15px", height: "32px" }}
+          src   = "/img/freenas-icon.png"
         />
         <img
-          style = {{ margin: "15px 0 0 10px"
-                   , height: "23px"
-                   }
-                  }
-          src       = "/img/freenas-logotype.png"
+          style = {{ margin: "8px 0 0 10px", height: "20px" }}
+          src   = "/img/freenas-logotype.png"
         />
+
         <div className="user-info">
 
           {/* System Events */}
-          <LogQueue glyph             = "info-circle"
+          <LogQueue glyph             = "flag"
                     className         = "notification-info"
                     requestVisibility = { this.makeEventsVisible }
                     visible           = { this.state.visibleLog === "events" }
@@ -152,13 +148,14 @@ var NotificationBar = React.createClass(
                     active            = { this.state.active.actions }
                     log               = { this.state.log.actions } />
 
-           <TWBS.DropdownButton title={ this.state.currentUser } pullRight>
-            <TWBS.MenuItem key="1">Camera!</TWBS.MenuItem>
-            <TWBS.MenuItem key="2">Action!</TWBS.MenuItem>
-            <TWBS.MenuItem key="3">Cut!</TWBS.MenuItem>
-            <TWBS.MenuItem divider />
+          <TWBS.DropdownButton
+            pullRight
+            title     = { this.state.currentUser }
+            bsStyle   = "link"
+            className = "user online"
+          >
             <TWBS.MenuItem
-              key     = "4"
+              key     = { 0 }
               onClick = { MiddlewareClient.logout.bind( MiddlewareClient ) }
             >
               {"Logout"}
