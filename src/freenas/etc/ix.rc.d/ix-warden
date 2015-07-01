@@ -123,6 +123,8 @@ migrate_warden_templates()
 		local template
 		local ta
 		local tv
+		local pool
+		local altroot
 
 		template="${jc_path}/.warden-template-${t}"
 		if [ ! -d "${template}" ]
@@ -152,6 +154,12 @@ migrate_warden_templates()
 			newmp="${jc_path}/.warden-template-${t}-${tv}-${ta}-${timestr}"
 		fi
 
+		pool="$(echo "${jc_dataset}"|cut -f1 -d '/')"
+		if [ -n "${pool}" ]
+		then
+			altroot="$(zpool get -H altroot "${pool}"|awk '{ print $3 }')"
+		fi
+
 		_w zfs set mountpoint='none' "${template}"
 		if [ "$?" != "0" ]
 		then
@@ -168,6 +176,11 @@ migrate_warden_templates()
 		if [ "$?" != "0" ]
 		then
 			continue
+		fi
+
+		if [ -n "${altroot}" ]
+		then
+			newmp="${newmp##${altroot}}"
 		fi
 
 		_w zfs set mountpoint="${newmp}" "${newt}"
@@ -191,8 +204,7 @@ get_tv()
 	fi
 
 	sysctl_path="${path}/sbin/sysctl"
-
-	version="$(file -b "${sysctl_path}"|cut -d ',' -f 5|awk '{ print $3 }')"
+	version="$(file -b "${sysctl_path}"|cut -d ',' -f 6|awk '{ print $3 }')"
 	if [ -n "${version}" ]
 	then
 		echo "${version}"
