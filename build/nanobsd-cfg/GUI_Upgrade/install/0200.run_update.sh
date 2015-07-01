@@ -74,12 +74,20 @@ standard_upgrade()
 	    ${grub_clone} && zfs destroy freenas-boot/boot/grub@Pre-Upgrade-${NEW_VERSION}
 	    upgrade_fail "Could not mount new boot environment"
 	fi
-	mount -t nullfs /boot/grub ${dest}/boot/grub
+	# We need to unmount /boot/grub and mount it in the new environment.
+	# Also need a devfs and tmpfs.  This duplicates code in lib/Update.py
+	mount -t devfs devfs ${dest}/dev
+	mount -t tmpfs tmpfs ${dest}/var/tmp
+	umount -f /boot/grub
+	mount -t zfs freenas-boot/grub ${dest}/boot/grub
 	/usr/local/bin/freenas-install -M ${UPGRADE_DIR}/${OS}-MANIFEST \
 	    -P ${UPGRADE_DIR}/Packages ${dest}
 	rv=$?
-	umount ${dest}/boot/grub
-	beadm unmount ${NEW_VERSION}
+	umount -f ${dest}/boot/grub
+	mount -t zfs freenas-boot/grub /boot/grub
+	umount -f ${dest}/dev
+	umount -f ${dest}/var/tmp
+	beadm unmount -f ${NEW_VERSION}
 	if [ $rv -ne 0 ]; then
 	    beadm destroy -F ${NEW_VERSION}
 	    upgrade_fail "Could not install new version"
