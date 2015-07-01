@@ -48,6 +48,8 @@ const PoolItem = React.createClass(
         , React.PropTypes.number
         ]
       )
+    , datasets  : React.PropTypes.array
+    , name      : React.PropTypes.string
     , volumeKey : React.PropTypes.number.isRequired
     }
 
