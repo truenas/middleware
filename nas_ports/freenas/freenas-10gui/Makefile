@@ -24,6 +24,8 @@ WRKDEPLOY=	/usr/freenas_gui
 
 NO_BUILD = yes
 
+PLIST=         ${WRKDEPLOY}/gui-plist
+
 MAKE_JOBS_UNSAFE=yes
 
 ALL_TARGET=obj all
