@@ -131,10 +131,12 @@ const Storage = React.createClass(
 
           // The index of the "new pool" Volume will always be zero, so we
           // start keying here at "1"
+          // existsOnServer: a new volume will always have a higher index than
+          // the number of volumes known to the server.
           return (
             <Volume
               { ...volumeCommon }
-              existsOnServer
+              existsOnServer = { index <= this.state.volumesOnServer.length }
               data      = { data }
               logs      = { logs }
               cache     = { cache }
@@ -147,7 +149,7 @@ const Storage = React.createClass(
               key       = { index + 1 }
             />
           );
-        });
+        }.bind( this ) );
 
       let newPool = null;
 

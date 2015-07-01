@@ -53,8 +53,7 @@ const PoolItem = React.createClass(
     }
 
   , getDefaultProps: function () {
-    return { existsOnServer : false
-           , data           : []
+    return { data           : []
            , logs           : []
            , cache          : []
            , spare          : []
