@@ -77,7 +77,7 @@ const Storage = React.createClass(
     console.log( "handleVolumeReset", event, volumeKey );
   }
 
-  , createVolumes ( loading, noVolumes ) {
+  , createVolumes ( loading ) {
       const volumeCommon =
         { handleDiskAdd        : this.handleDiskAdd
         , handleDiskRemove     : this.handleDiskRemove
@@ -119,13 +119,14 @@ const Storage = React.createClass(
 
       let newPool = null;
 
-      if ( noVolumes ) {
+      if ( this.state[ "volumes" ].length === 0
+        && VS.isInitialized ) {
         newPool =
           <Volume { ...volumeCommon }
             key = { 0 }
             newPoolMessage = { "Create your first ZFS pool" }
           />;
-      } else {
+      } else if ( VS.isInitialized ) {
         newPool =
           <Volume { ...volumeCommon }
             key = { 0 }
@@ -138,13 +139,11 @@ const Storage = React.createClass(
 
   , render () {
       let loading = false;
-      let noVolumes = false;
 
       let statusMessage = null;
 
       if ( VS.isInitialized ) {
         if ( this.state.volumes.length === 0 ) {
-          noVolumes = true;
           statusMessage = <h3>Bro, you could use a pool</h3>;
         }
       } else {
@@ -155,7 +154,7 @@ const Storage = React.createClass(
       return (
         <main>
           { statusMessage }
-          { this.createVolumes( loading, noVolumes ) }
+          { this.createVolumes( loading ) }
         </main>
       );
     }
