@@ -177,8 +177,8 @@ class ShowUrlsCommand(Command):
         my_protocols = context.connection.call_sync(
             'system.ui.get_config')
         urls = []
-        for proto in my_protocols['webui-procotol']:
-            proto_port = my_protocols['webui-{0}-port'.format(proto.lower())]
+        for proto in my_protocols['webui_procotol']:
+            proto_port = my_protocols['webui_{0}_port'.format(proto.lower())]
             if proto_port is not None:
                 if proto_port in [80, 443]:
                     for x in my_ips:
