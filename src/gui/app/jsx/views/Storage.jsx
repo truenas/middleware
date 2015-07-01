@@ -62,22 +62,20 @@ const Storage = React.createClass(
     console.log( "handleDiskRemove", event, volumeKey, vdevKey, diskKey );
   }
 
-  , handleVdevAdd ( event, volumeKey, vdevPurpose ) {
+  , handleVdevAdd ( volumeKey, vdevPurpose ) {
     let newVolumes = this.state[ "volumes" ];
 
     let newVdev = { type: vdevPurpose
                   , children: []
                   };
 
-    newVolumes[ volumekey ][ "topology" ][ vdevPurpose ].push( newVdev );
+    newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ].push( newVdev );
 
     this.setState( { volumes: newVolumes } );
-
-    console.log( "handleVdevAdd", event, volumeKey, vdevPurpose );
   }
 
   , handleVdevRemove ( event, volumeKey, vdevKey ) {
-    console.log( "handleVdevRemove", event, volumekey, vdevKey );
+    console.log( "handleVdevRemove", event, volumeKey, vdevKey );
   }
 
   , handleVdevTypeChange ( event, volumeKey, vdevKey, newVdevType ) {
