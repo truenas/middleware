@@ -49,7 +49,7 @@ editorUtil.updateOverlay = React.createClass({
       // XOR), we know that we're going from nothing to soemthing, so we fadein.
       // The same holds true in the opposite case, causing a fadeout.
       if ( newBool ) {
-        Velocity( this.refs["update-overlay"].getDOMNode()
+        Velocity( React.findDOMNode( this.refs["update-overlay"] )
                 , "fadeIn"
                 , {
                       duration : this.props.animDuration
@@ -57,7 +57,7 @@ editorUtil.updateOverlay = React.createClass({
                   }
                 );
       } else {
-        Velocity( this.refs["update-overlay"].getDOMNode()
+        Velocity( React.findDOMNode( this.refs["update-overlay"] )
                 , "fadeOut"
                 , {
                       duration : this.props.animDuration
