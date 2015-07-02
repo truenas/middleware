@@ -62,6 +62,7 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).__init__(*args, **kwargs)
 
         if SW_NAME.lower() != 'truenas':
+            del self.fields['int_vip']
             del self.fields['int_vhid']
             del self.fields['int_pass']
             del self.fields['int_skew']

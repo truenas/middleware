@@ -34,6 +34,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
         'int_v4netmaskbit',
         'int_ipv6address',
         'int_v6netmaskbit',
+        'int_vip',
         'int_vhid',
         'int_pass',
         'int_skew',

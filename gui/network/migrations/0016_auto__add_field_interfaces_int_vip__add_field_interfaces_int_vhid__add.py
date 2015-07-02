@@ -8,14 +8,19 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding field 'Interfaces.int_vip'
+        db.add_column(u'network_interfaces', 'int_vip',
+                      self.gf('freenasUI.contrib.IPAddressField.IPAddressField')(null=True, blank=True),
+                      keep_default=False)
+
         # Adding field 'Interfaces.int_vhid'
         db.add_column(u'network_interfaces', 'int_vhid',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(null=True),
+                      self.gf('django.db.models.fields.PositiveIntegerField')(null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Interfaces.int_pass'
         db.add_column(u'network_interfaces', 'int_pass',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=100),
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=100, blank=True),
                       keep_default=False)
 
         # Adding field 'Interfaces.int_skew'
@@ -35,6 +40,9 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Deleting field 'Interfaces.int_vip'
+        db.delete_column(u'network_interfaces', 'int_vip')
+
         # Deleting field 'Interfaces.int_vhid'
         db.delete_column(u'network_interfaces', 'int_vhid')
 
@@ -88,11 +96,12 @@ class Migration(SchemaMigration):
             'int_ipv6auto': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'int_name': ('django.db.models.fields.CharField', [], {'max_length': "'120'"}),
             'int_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'int_pass': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'int_pass': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'}),
             'int_skew': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'null': 'True', 'blank': 'True'}),
             'int_v4netmaskbit': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '3', 'blank': 'True'}),
             'int_v6netmaskbit': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '4', 'blank': 'True'}),
-            'int_vhid': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True'})
+            'int_vhid': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'int_vip': ('freenasUI.contrib.IPAddressField.IPAddressField', [], {'null': 'True', 'blank': 'True'})
         },
         u'network.lagginterface': {
             'Meta': {'ordering': "['lagg_interface']", 'object_name': 'LAGGInterface'},
