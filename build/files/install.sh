@@ -149,7 +149,16 @@ get_raid_present()
 
 get_physical_disks_list()
 {
-    VAL=`sysctl -n kern.disks`
+    local _boot=$(glabel status | awk ' /INSTALL/ { print $3;}')
+    local _disk
+
+    for _disk in $(sysctl -n kern.disks)
+    do
+	if [ "${_disk}" = "${_boot}" ]; then
+	    continue
+	fi
+	VAL="${VAL} ${_disk}"
+    done
 
     get_raid_present
     if [ $? -ne 0 ] ; then
