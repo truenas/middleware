@@ -62,11 +62,17 @@ const Storage = React.createClass(
     console.log( "handleDiskRemove", event, volumeKey, vdevKey, diskKey );
   }
 
+    // This is exclusively for adding a new, empty vdev at the top level of a
+    // volume topology. Adding new disks is handled by 'handleDiskAdd' and
+    // 'createNewDisk'.
   , handleVdevAdd ( volumeKey, vdevPurpose ) {
     let newVolumes = this.state[ "volumes" ];
 
     // This will be more sophisticated in the future.
-    let newVdev = {};
+    let newVdev = { children : []
+                  , path     : null
+                  , type     : ""
+                  };
 
     if ( !newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ] ) {
       newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ] = [];
