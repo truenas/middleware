@@ -460,7 +460,7 @@ const Dashboard = React.createClass({
 
   getInitialState: function () {
       return {
-        servicesList: ServicesStore.getAllServices()
+        servicesList: ServicesStore.services
         , sizeArr      : [ "s", "m", "l" ]
         , widgets      : {
           SystemInfo   : {
@@ -514,7 +514,7 @@ const Dashboard = React.createClass({
 
   , handleServicesChange: function () {
       this.setState({
-        servicesList: ServicesStore.getAllServices()
+        servicesList: ServicesStore.services
       });
     }
 

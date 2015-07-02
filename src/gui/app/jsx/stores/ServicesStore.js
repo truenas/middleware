@@ -8,53 +8,74 @@ import { EventEmitter } from "events";
 
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
+import FluxBase from "./FluxBase";
 
 import ServicesMiddleware from "../middleware/ServicesMiddleware";
 
 var CHANGE_EVENT = "change";
+var UPDATE_MASK = "services.changed";
+var PRIMARY_KEY = "name";
 
 var _services = [];
 var _scheduledForStateUpdate = {};
-var ServicesStore = _.assign( {}, EventEmitter.prototype, {
 
-  emitChange: function () {
-      this.emit( CHANGE_EVENT );
+const SERVICES_SCHEMA =
+  { type: "object"
+  , properties:
+    { state:    { enum: [ "running", "stopped", "unknown" ] }
+    , pid:      { type: "integer" }
+    , id:       { type: "string" }
+    , name:     { type: "string" }
     }
+  };
 
-  , addChangeListener: function ( callback ) {
-      this.on( CHANGE_EVENT, callback );
-    }
+const SERVICES_LABELS =
+  { state       : "State"
+  , pid         : "PID"
+  , id          : "Service ID"
+  , name        : "Service Name"
+  };
 
-  , removeChangeListener: function ( callback ) {
-      this.removeListener( CHANGE_EVENT, callback );
-    }
+class ServicesStore extends FluxBase {
 
-  , findServiceByKeyValue: function ( key, value ) {
-      var predicate = {};
-      predicate[key] = value;
+  constructor () {
+    super();
 
-      return _.find( _services, predicate );
-    }
+    this.dispatchToken = FreeNASDispatcher.register(
+      handlePayload.bind( this )
+    );
 
-  , getAllServices: function () {
-      return _services;
-    }
+    this.KEY_UNIQUE = "name";
+    this.ITEM_SCHEMA = SERVICES_SCHEMA;
+    this.ITEM_LABELS = SERVICES_LABELS;
+  }
 
-});
+  findServiceByKeyValue ( key, value ) {
+    var predicate = {};
+    predicate[key] = value;
 
-ServicesStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
-  var action = payload.action;
+    return _.find( _services, predicate );
+  }
+
+  get services () {
+    return _services;
+  }
+
+}
+
+function handlePayload ( payload ) {
+  const action = payload.action;
 
   switch ( action.type ) {
 
     case ActionTypes.RECEIVE_RAW_SERVICES:
       _services = action.rawServices;
-      ServicesStore.emitChange();
+      this.emitChange();
       break;
 
     case ActionTypes.RECEIVE_SERVICE_UPDATE_TASK:
       _scheduledForStateUpdate[ action.taskID ] = action.serviceName;
-      ServicesStore.emitChange();
+      this.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
@@ -71,6 +92,6 @@ ServicesStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
     default:
     // No action
   }
-});
+}
 
-module.exports = ServicesStore;
+export default new ServicesStore;

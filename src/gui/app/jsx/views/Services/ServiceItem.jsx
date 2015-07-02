@@ -6,14 +6,15 @@
 import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
+import Icon from "../../components/Icon";
 
 import routerShim from "../../components/mixins/routerShim";
 import clientStatus from "../../components/mixins/clientStatus";
 
 import viewerUtil from "../../components/Viewer/viewerUtil";
 
-import ServicesMiddleware from "../../middleware/ServicesMiddleware";
-import ServicesStore from "../../stores/ServicesStore";
+import SM from "../../middleware/ServicesMiddleware";
+import SS from "../../stores/ServicesStore";
 
 import ToggleSwitch from "../../components/common/ToggleSwitch";
 
@@ -23,30 +24,20 @@ const ServiceView = React.createClass({
     item: React.PropTypes.object.isRequired
   }
 
-  , getInitialState: function () {
-      return { serviceState: ( this.props.item.state === "running"
-                                                      ? true
-                                                      : false ) };
-    }
-
   , configureService: function ( action, command ) {
 
     switch ( action ) {
       // Start stop
       case 1:
-        ServicesMiddleware.configureService( this.props.item.name
+        SM.configureService( this.props.item["name"]
                                            , { enable: command } );
       break;
 
       // Start stop once
       case 2:
-        ServicesMiddleware.updateService( this.props.item.name
+        SM.updateService( this.props.item["name"]
                                            , command );
       break;
-
-
-
-      ServicesMiddleware.updateService( serviceName, action );
     }
   }
 
@@ -58,9 +49,28 @@ const ServiceView = React.createClass({
          && typeof this.props.item["pid"]
          === "number" ) {
       pid = <h4 className="text-muted">
-              { viewerUtil.writeString( "PID: " + this.props.item["pid"]
-                                        , "\u200B" ) }
+              { "PID: " + this.props.item["pid"] }
             </h4>;
+    }
+
+    let startStopButton;
+
+    switch ( this.props.item["state"].toLowerCase() ) {
+      case "running":
+        startStopButton = (
+          <a onClick={ SM.updateService.bind( null
+                                            , this.props.item["name"]
+                                            , "STOP" ) }>
+          <Icon glyph = "stop" icoSize = "3em" /></a> );
+      break;
+      case "unknown":
+      case "stopped":
+        startStopButton = (
+          <a onClick={ SM.updateService.bind( null
+                                            , this.props.item["name"]
+                                            , "START" ) }>
+          <Icon glyph = "play" icoSize = "3em" /></a> );
+      break;
     }
 
     return (
@@ -72,17 +82,26 @@ const ServiceView = React.createClass({
           <TWBS.Col xs={3}
                     className="text-center">
             <viewerUtil.ItemIcon primaryString  = { this.props.item["name"] }
-                                 fallbackString = { this.props.item["name"] } />
+                                 fallbackString = { this.props.item["name"] }
+                                 seedNumber = { this.props.item["name"].length }
+                                 />
           </TWBS.Col>
-          <TWBS.Col xs={9}>
+          <TWBS.Col xs={6}>
             <h3>{ this.props.item["name"] }</h3>
             <h4 className="text-muted">
-              { viewerUtil.writeString( this.props.item["state"], "\u200B" ) }
+              { this.props.item["state"] }
             </h4>
 
             { pid }
 
             <hr />
+          </TWBS.Col>
+          <TWBS.Col xs={3}>
+            { startStopButton }
+          </TWBS.Col>
+        </TWBS.Row>
+        <TWBS.Row>
+          <TWBS.Col xs={12}>
             <TWBS.ButtonToolbar>
               <TWBS.SplitButton title   = { "Enable" }
                                 bsStyle = { "success" }
@@ -91,7 +110,7 @@ const ServiceView = React.createClass({
                                             , true ) } >
                 <TWBS.MenuItem eventKey="1"
                                onClick = { this.configureService
-                                           .bind( null, 2, "start" ) }>
+                                           .bind( null, 2, "START" ) }>
                   { "Enable once" }
                 </TWBS.MenuItem>
                 <TWBS.MenuItem eventKey="2">
@@ -105,7 +124,7 @@ const ServiceView = React.createClass({
                                             .bind( null, 1, false ) } >
                 <TWBS.MenuItem eventKey="1"
                                onClick = { this.configureService
-                                           .bind( null, 2, "stop" ) }>
+                                           .bind( null, 2, "STOP" ) }>
                   { "Disable once" }
                 </TWBS.MenuItem>
                 <TWBS.MenuItem eventKey="2">
@@ -129,11 +148,7 @@ const ServiceView = React.createClass({
 
 const ServiceItem = React.createClass({
 
-  propTypes: {
-    viewData : React.PropTypes.object.isRequired
-  }
-
-  , mixins: [ routerShim, clientStatus ]
+  mixins: [ routerShim, clientStatus ]
 
   , getInitialState: function () {
       return {
@@ -156,16 +171,16 @@ const ServiceItem = React.createClass({
     }
 
   , componentDidMount: function () {
-      ServicesStore.addChangeListener( this.updateServiceTarget );
+      SS.addChangeListener( this.updateServiceTarget );
     }
 
   , componentWillUnmount: function () {
-      ServicesStore.removeChangeListener( this.updateServiceTarget );
+      SS.removeChangeListener( this.updateServiceTarget );
     }
 
   , getServiceFromStore: function () {
-      return ServicesStore
-             .findServiceByKeyValue( this.props.viewData.format["selectionKey"]
+      return SS
+             .findServiceByKeyValue( this.props.keyUnique
                                      , this.getDynamicRoute() );
     }
 
@@ -182,7 +197,6 @@ const ServiceItem = React.createClass({
         var childProps = {
           handleViewChange : this.handleViewChange
           , item             : this.state.targetService
-          , viewData         : this.props.viewData
         };
 
         switch ( this.state.currentMode ) {

@@ -4,57 +4,63 @@
 
 "use strict";
 
+var componentLongName = "Services";
+
 import React from "react";
 
 import Viewer from "../components/Viewer";
 
-import ServicesMiddleware from "../middleware/ServicesMiddleware";
-import ServicesStore from "../stores/ServicesStore";
+import SM from "../middleware/ServicesMiddleware";
+import SS from "../stores/ServicesStore";
 
-var viewData = {
-    routing : {
-      route : "services-editor"
-    , param : "serviceID"
-  }
-  , display: {
-    filterCriteria: {
-      running: {
-            name        : "active services"
-            , testProp  : { state: "running" }
-          }
-      , stopped: {
-        name        : "stopped services"
-        , testProp  : { state: "stopped" }
-      }
+var VIEWER_DATA =
+  { keyUnique     : SS.uniqueKey
+  , keyPrimary    : "name"
+//  , keySecondary  : "id"
+
+  , itemSchema    : SS.itemSchema
+  , itemLabels    : SS.itemLabels
+
+  , routeName     : "services-editor"
+  , routeParam    : "serviceID"
+
+  , textRemaining : "other services"
+  , textUngrouped : "all services"
+
+  , groupsInitial : new Set( [ "running", "stopped" ] )
+  , groupsAllowed : new Set( [ "running", "stopped" ] )
+
+  , filtersInitial :  new Set ( )
+  , filtersAllowed : new Set ( [ "running", "stopped" ] )
+
+  , columnsInitial : new Set (
+                       [ "name"
+                       , "pid"
+                       , "state"
+                       ]
+                      )
+  , columnsAllowed : new Set (
+                       [ "name"
+                       , "pid"
+                       , "state"
+                       ]
+                      )
+  , groupBy:
+  { running:
+    { name: "active services"
+    , testProp: { state: "running" }
     }
-    , remainingName    : "other services"
-    , ungroupedName    : "all services"
-    , allowedFilters   : [ ]
-    , defaultFilters   : [ ]
-    , allowedGroups    : [ "running", "stopped" ]
-    , defaultGroups    : [ "running", "stopped" ]
-    , showToggleSwitch : true
-    , handleToggle     : handleToggle
+  , stopped:
+    { name        : "stopped services"
+    , testProp  : { state: "stopped" }
+    }
   }
 };
 
+
 function getServicesFromStore () {
-  return {
-    servicesList: ServicesStore.getAllServices()
-  };
+  return { servicesList: SS.services };
 }
-
-function handleToggle ( serviceObj, toggled ) {
-      var serviceName   = serviceObj.name;
-      var serviceState  = serviceObj.state;
-
-      var action = ( serviceState === "running" ? "stop" : "start" );
-
-      ServicesMiddleware.updateService( serviceName, action );
-
-      // TODO: Select the service with changing state.
-    }
-
 
 const Services = React.createClass({
 
@@ -63,15 +69,15 @@ const Services = React.createClass({
     }
 
   , componentDidMount: function () {
-      ServicesMiddleware.requestServicesList();
-      ServicesMiddleware.subscribeToTask( "Services Viewer" );
+      SM.requestServicesList();
+      SM.subscribeToTask( componentLongName );
 
-      ServicesStore.addChangeListener( this.handleServicesChange );
+      SS.addChangeListener( this.handleServicesChange );
     }
 
   , componentWillUnmount: function () {
-      ServicesMiddleware.unsubscribeFromTask( "Services Viewer" );
-      ServicesStore.removeChangeListener( this.handleServicesChange );
+      SM.unsubscribeFromTask( componentLongName );
+      SS.removeChangeListener( this.handleServicesChange );
     }
 
   , handleServicesChange: function () {
@@ -83,8 +89,8 @@ const Services = React.createClass({
       <main>
         <h2>Services</h2>
         <Viewer header      = { "Services" }
-                inputData   = { this.state.servicesList }
-                viewData    = { viewData } />
+                itemData   = { this.state.servicesList }
+                { ...VIEWER_DATA } />
       </main>
     );
   }
