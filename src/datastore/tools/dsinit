@@ -54,10 +54,32 @@ def read_config(filename):
         print("Cannot initialize datastore: configuration not found", file=sys.stderr)
         sys.exit(1)
 
+    return conf
+
+
+def do_init(control, db_dir):
+    return subprocess.call([control, db_dir, 'init'])
+
+
+def do_start_forked(control, db_dir, port):
+    args = [control, db_dir, 'start']
+    if port:
+        args += [str(port)]
+
+    return subprocess.call(args)
+
+
+def do_stop_forked(control, db_dir):
+    return subprocess.call([control, db_dir, 'stop'])
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
+    parser.add_argument('--init', action='store_true', help='Initialize datastore directory')
+    parser.add_argument('--port', help='TCP port number to be used by database server')
+    parser.add_argument('--start-forked', action='store_true')
+    parser.add_argument('--stop-forked', action='store_true')
     args = parser.parse_args()
     config = read_config(args.c)
 
@@ -65,29 +87,16 @@ def main():
     db_dir = ds['dbdir']
     driver_name = ds['drier']
     driver_dir = os.path.join('/usr/local/lib/datastore/drivers', ds['driver'])
+    control = os.path.join(driver_dir, 'control')
 
-    with open(os.path.join(driver_dir, driver_name + '.json'), 'r') as f:
-        plist = f.read()
+    if args.init:
+        sys.exit(do_init(control, db_dir))
 
-    vars = {
-        'dbdir': db_dir,
-        'driverdir': driver_dir
-    }
+    if args.start_forked:
+        sys.exit(do_start_forked(control, db_dir, args.port))
 
-    template = string.Template(plist)
-    plist = template.safe_substitute(**vars)
-
-    try:
-        plist = json.loads(plist)
-    except ValueError:
-        print("Cannot load driver plist generated from: {0}".format(driver_name + '.json'), file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        launchd.load(plist)
-    except OSError, e:
-        print("Cannot load datastore job: {0}".format(e))
-        sys.exit(1)
+    if args.stop_forked:
+        sys.exit(do_stop_forked(control, db_dir))
 
 
 if __name__ == '__main__':
