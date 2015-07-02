@@ -16,13 +16,13 @@ contrast, using "Jails" allows users to create as many jails as needed and to cu
 In FreeNAS® 9.3, two types of jails are supported:
 
 #. By default, a
-   `FreeBSD jail <http://en.wikipedia.org/wiki/Freebsd_jail>`_ is created. This provides a very light-weight, operating system-level virtualization. Consider
+   `FreeBSD jail <https://en.wikipedia.org/wiki/Freebsd_jail>`_ is created. This provides a very light-weight, operating system-level virtualization. Consider
    it as another independent instance of FreeBSD running on the same hardware, without all of the overhead usually associated with virtualization.  The jail
    will install the FreeBSD software management utilities so that you can compile FreeBSD ports and install FreeBSD packages from the command line of the jail.
 
 #. A Virtualbox template is also provided. This template will install an instance of
    `phpVirtualBox <http://sourceforge.net/projects/phpvirtualbox/>`_, which provides a web-based front-end to
-   `VirtualBox <.https://www.virtualbox.org/>`_ This can then be used to install any operating system and to use the software management tools provided by
+   `VirtualBox <https://www.virtualbox.org/>`_ This can then be used to install any operating system and to use the software management tools provided by
    that operating system.
 
 It is important to understand that any users, groups, installed software, and configurations within a jail are isolated from both the FreeNAS® operating
@@ -442,8 +442,7 @@ The quickest and easiest way to install software inside the jail is to install a
 all the binaries and dependencies required for the software to run on a FreeBSD system.
 
 A lot of software has been ported to FreeBSD (currently over 24,000 applications) and most of that software is available as a package. One way to find FreeBSD
-software is to use the searchbar at
-`FreshPorts.org <http://freshports.org/>`_.
+software is to use the searchbar at `FreshPorts.org <http://www.freshports.org/>`_.
 
 Once you have located the name of the package you would like to install, use the :command:`pkg install` command to install it. For example, to install the
 audiotag package, use this command::
@@ -532,7 +531,7 @@ for audiotag.
 
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
-`bsd.port.mk <http://www.freebsd.org/cgi/cvsweb.cgi/ports/Mk/bsd.port.mk?rev=1.708;content-type=text%2Fplain>`_.
+`bsd.port.mk <https://svnweb.freebsd.org/ports/head/Mk/bsd.port.mk?view=log>`_.
 
 If the port has any configurable compile options, they will be listed at FreshPorts in the port's "Configuration Options". This port contains five
 configurable options (DOCS, FLAC, ID3, MP4, and VORBIS) and each option is enabled (on) by default.
