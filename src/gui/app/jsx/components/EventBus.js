@@ -14,6 +14,8 @@ class EventBus extends EventEmitter {
 
   constructor () {
     super();
+
+    console.log( this );
   }
 
   emitToggle () {

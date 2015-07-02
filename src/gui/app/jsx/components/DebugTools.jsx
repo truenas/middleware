@@ -10,7 +10,7 @@ import React from "react";
 import TWBS from "react-bootstrap";
 
 // Events
-import EventBus from "./DebugTools/EventBus";
+import EventBus from "./EventBus";
 
 // Tabs
 import RPC from "./DebugTools/RPC";

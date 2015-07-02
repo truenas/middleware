@@ -12,7 +12,7 @@ import { Link } from "react-router";
 import TWBS from "react-bootstrap";
 import Icon from "./Icon";
 
-import EventBus from "./DebugTools/EventBus";
+import EventBus from "./EventBus";
 
 // Path definitions
 // TODO: Convert to Flux or other external file
