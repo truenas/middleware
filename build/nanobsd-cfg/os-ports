@@ -344,6 +344,7 @@ add_port misc/xtail
 add_port security/pam_google_authenticator
 add_port benchmarks/fio
 add_port sysutils/htop
+add_port games/cowsay
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port editors/vim-lite
