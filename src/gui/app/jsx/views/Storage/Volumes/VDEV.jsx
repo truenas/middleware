@@ -56,9 +56,7 @@ const VDEV = React.createClass(
       <option
         key   = { index }
         value = { device }
-      >
-        { device }
-      </option>
+        label = { device } />
     );
   }
 
