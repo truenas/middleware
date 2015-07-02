@@ -194,6 +194,11 @@ class Interfaces(Model):
             verbose_name=_("IPv6 Prefix Length"),
             help_text=""
             )
+    int_vip = IPAddressField(
+        verbose_name=_("Virtual IP"),
+        blank=True,
+        null=True,
+    )
     int_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
         null=True,
