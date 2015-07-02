@@ -1,26 +1,33 @@
-// DEBUG TOOLS EVENT BUS
+// GLOBAL EVENT BUS
 // =====================
-// Small event bus to assist with showing and hiding the Debug Tools pane.
+// Small event bus to assist with propagating events across the entire app, and
+// between components which have no parent-child relationship.
 
 "use strict";
 
 import _ from "lodash";
 import { EventEmitter } from "events";
 
-var EventBus = _.assign( {}, EventEmitter.prototype
-  , { emitToggle: function () {
-        this.emit( "toggle" );
-      }
+let activeNamespaces = new Set();
 
-    , addListener: function ( callback ) {
-        this.on( "toggle", callback );
-      }
+class EventBus extends EventEmitter {
 
-    , removeListener: function ( callback ) {
-        this.removeListener( "toggle", callback );
-      }
+  constructor () {
+    super();
+  }
 
-    }
-);
+  emitToggle () {
+    this.emit( "toggle" );
+  }
 
-export default EventBus;
+  addListener ( callback ) {
+    this.on( "toggle", callback );
+  }
+
+  removeListener ( callback ) {
+    this.removeListener( "toggle", callback );
+  }
+
+}
+
+export default new EventBus();
