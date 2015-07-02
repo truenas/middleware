@@ -57,6 +57,13 @@ class ZfsMiddleware extends AbstractBase {
               );
   }
 
+  static submitVolume ( volumeProps ) {
+    MC.request( "task.submit"
+              , [ "volume.create", volumeProps ]
+              , ZAC.receiveVolumes
+              );
+  }
+
 };
 
 export default ZfsMiddleware;
