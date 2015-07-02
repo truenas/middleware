@@ -14,14 +14,12 @@ Copyright © 2011-2015
 This Guide covers the installation and use of FreeNAS® 9.3.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
-read the instructions in the `README 
-<https://github.com/freenas/freenas/blob/master/docs/userguide/README>`_. If you use IRC Freenode, you are welcome to join the #freenas channel where you will
-find other FreeNAS® users.
+read the instructions in the `README <https://github.com/freenas/freenas/blob/master/docs/userguide/README>`_. If you use IRC Freenode, you are welcome to join
+the #freenas channel where you will find other FreeNAS® users.
 
 The FreeNAS® Users Guide is freely available for sharing and redistribution under the terms of the
-`Creative Commons Attribution License
-<http://creativecommons.org/licenses/by/3.0/>`_. This means that you have permission to copy, distribute, translate, and adapt the work as long as you
-attribute iXsystems as the original source of the Guide.
+`Creative Commons Attribution License <http://creativecommons.org/licenses/by/3.0/>`_. This means that you have permission to copy, distribute, translate, and adapt the
+work as long as you attribute iXsystems as the original source of the Guide.
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
@@ -125,7 +123,7 @@ issued since FreeBSD 9.3 RELEASE.
 
 * NFSv4 support, which includes Kerberized NFS support, has been added.
 
-* The system logger has been replaced by `syslog-ng <http://www.balabit.com/network-security/syslog-ng>`_.
+* The system logger has been replaced by `syslog-ng <https://www.balabit.com/network-security/syslog-ng>`_.
 
 * A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
   and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
@@ -464,9 +462,9 @@ amd64) processors.
 
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started.
 You can also skim through the
-`FreeNAS® Hardware Forum <http://forums.freenas.org/forumdisplay.php?18-Hardware>`_ for performance tips from other FreeNAS® users or to post questions
+`FreeNAS® Hardware Forum <https://forums.freenas.org/index.php?forums/hardware.18/>`_ for performance tips from other FreeNAS® users or to post questions
 regarding the hardware best suited to meet your requirements. This
-`forum post <http://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`__
+`forum post <https://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`_
 provides some specific recommendations if you are planning on purchasing hardware. Refer to
 `Building, Burn-In, and Testing your FreeNAS system <https://forums.freenas.org/index.php?threads/building-burn-in-and-testing-your-freenas-system.17750/>`_ for
 detailed instructions on how to test new hardware.
@@ -477,8 +475,7 @@ RAM
 ~~~
 
 The best way to get the most out of your FreeNAS® system is to install as much RAM as possible. The recommended minimum is 8 GB of RAM. The more RAM, the
-better the performance, and the
-`FreeNAS® Forums <http://forums.freenas.org/>`_
+better the performance, and the `FreeNAS® Forums <https://forums.freenas.org/index.php>`_
 provide anecdotal evidence from users on how much performance is gained by adding more RAM.
 
 Depending upon your use case, your system may require more RAM. Here are some general rules of thumb:
@@ -548,10 +545,10 @@ FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHC
 
 If you need reliable disk alerting and immediate reporting of a failed drive, use an HBA such as a LSI
 MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
-`forum post <http://forums.freenas.org/showthread.php?11901-Confused-about-that-LSI-card-Join-the-crowd>`__.
+`forum post <https://forums.freenas.org/index.php?threads/confused-about-that-lsi-card-join-the-crowd.11901/>`_.
 
 Suggestions for testing disks before adding them to a RAID array can be found in this
-`forum post <http://forums.freenas.org/showthread.php?12082-Checking-new-HDD-s-in-RAID>`__.
+`forum post <https://forums.freenas.org/index.php?threads/checking-new-hdds-in-raid.12082/>`_.
 
 `This article <http://technutz.com/purpose-built-nas-hard-drives/>`_
 provides a good overview of hard drives which are well suited for a NAS.
@@ -572,7 +569,7 @@ Fusion-I/O card can also be used as a cache device when your ZFS dataset size is
 cards typically use multiple 10 GigE network interfaces.
 
 If you will be using ZFS,
-`Disk Space Requirements for ZFS Storage Pools <http://download.oracle.com/docs/cd/E19253-01/819-5461/6n7ht6r12/index.html>`_
+`Disk Space Requirements for ZFS Storage Pools <http://docs.oracle.com/cd/E19253-01/819-5461/6n7ht6r12/index.html>`_
 recommends a minimum of 16 GB of disk space. Due to the way that ZFS creates swap, **you can not format less than 3 GB of space with ZFS**. However, on a
 drive that is below the minimum recommended size you lose a fair amount of storage space to swap: for example, on a 4 GB drive, 2 GB will be reserved for
 swap.
@@ -601,13 +598,13 @@ need to support LACP which means you will need a more expensive managed switch.
 
 If network performance is a requirement and you have some money to spend, use 10 GigE interfaces and a managed switch. If you are purchasing a managed switch,
 consider one that supports LACP and jumbo frames as both can be used to increase network throughput. Refer to the
-`10 Gig Networking Primer <http://forums.freenas.org/index.php?threads/10-gig-networking-primer.25749/>`_ for more information.
+`10 Gig Networking Primer <https://forums.freenas.org/index.php?threads/10-gig-networking-primer.25749/>`_ for more information.
 
 .. note:: at this time the following are not supported: InfiniBand, FibreChannel over Ethernet, or wireless interfaces.
 
 If network speed is a requirement, consider both your hardware and the type of shares that you create. On the same hardware, CIFS will be slower than FTP or
 NFS as Samba is
-`single-threaded <http://www.samba.org/samba/docs/man/Samba-Developers-Guide/architecture.html>`_. If you will be using CIFS, use a fast CPU.
+`single-threaded <https://www.samba.org/samba/docs/man/Samba-Developers-Guide/architecture.html>`_. If you will be using CIFS, use a fast CPU.
 
 Wake on LAN (WOL) support is dependent upon the FreeBSD driver for the interface. If the driver supports WOL, it can be enabled using
 `ifconfig(8) <http://www.freebsd.org/cgi/man.cgi?query=ifconfig>`_. To determine if WOL is supported on a particular interface, specify the interface name to

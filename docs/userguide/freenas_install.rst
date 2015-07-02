@@ -52,9 +52,7 @@ checksum varies by operating system:
 * on a Mac system use the command :command:`shasum -a 256 name_of_file`
 
 * on a Windows or Mac system, you can also install a utility such as
-  `HashCalc <http://www.slavasoft.com/hashcalc/>`_
-  or
-  `HashTab <http://implbits.com/HashTab.aspx>`_
+  `HashCalc <http://www.slavasoft.com/hashcalc/>`_ or `HashTab <http://implbits.com/products/hashtab/>`_
 
 The value produced by running the command should match the value of the :file:`sha256.txt` file.
 
@@ -499,9 +497,9 @@ Virtualization
 
 FreeNAS® can be run inside a virtual environment for development, experimentation, and educational purposes. Please note that running FreeNAS® in production
 as a virtual machine is
-`not recommended <http://forums.freenas.org/showthread.php?12484-Please-do-not-run-FreeNAS-in-production-as-a-Virtual-Machine%21>`_.
+`not recommended <https://forums.freenas.org/index.php?threads/please-do-not-run-freenas-in-production-as-a-virtual-machine.12484/>`_.
 If you decide to use FreeNAS® within a virtual environment,
-`read this post first <http://forums.freenas.org/showthread.php?12714-quot-Absolutely-must-virtualize-FreeNAS%21-quot-a-guide-to-not-completely-losing-your-data>`_
+`read this post first <https://forums.freenas.org/index.php?threads/absolutely-must-virtualize-freenas-a-guide-to-not-completely-losing-your-data.12714/>`_
 as it contains useful guidelines for minimizing the risk of losing your data.
 
 In order to install or run FreeNAS® within a virtual environment, you will need to create a virtual machine that meets the following minimum requirements:
@@ -521,7 +519,7 @@ This section demonstrates how to create and access a virtual machine within the 
 VirtualBox
 ~~~~~~~~~~
 
-`VirtualBox <http://www.virtualbox.org/>`__ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
+`VirtualBox <https://www.virtualbox.org/>`_ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
 Linux, Macintosh, and OpenSolaris. It can be configured to use a downloaded FreeNAS® :file:`.iso` file, and makes a good testing environment for practicing
 configurations or learning how to use the features provided by FreeNAS®.
 
@@ -625,12 +623,12 @@ VMware ESXi
 ~~~~~~~~~~~
 
 If you are considering using ESXi, read
-`this post <http://forums.freenas.org/threads/sync-writes-or-why-is-my-esxi-nfs-so-slow-and-why-is-iscsi-faster.12506/>`_
+`this post <https://forums.freenas.org/index.php?threads/sync-writes-or-why-is-my-esxi-nfs-so-slow-and-why-is-iscsi-faster.12506/>`_
 for an explanation of why iSCSI will be faster than NFS.
 
 ESXi is is a bare-metal hypervisor architecture created by VMware Inc. Commercial and free versions of the VMware vSphere Hypervisor operating system (ESXi)
 are available from the
-`VMware website <http://www.vmware.com/products/vsphere/esxi-and-esx/>`_. Once the operating system is installed on supported hardware, use a web browser to
+`VMware website <http://www.vmware.com/products/esxi-and-esx/overview>`_. Once the operating system is installed on supported hardware, use a web browser to
 connect to its IP address. The welcome screen will provide a link to download the VMware vSphere client which is used to create and manage virtual machines.
 
 Once the VMware vSphere client is installed, use it to connect to the ESXi server. To create a new virtual machine, click :menuselection:`File --> New -->
