@@ -38,6 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
+from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
@@ -47,6 +48,7 @@ from ipaddr import (
 )
 
 log = logging.getLogger('network.forms')
+SW_NAME = get_sw_name()
 
 
 class InterfacesForm(ModelForm):
@@ -58,6 +60,14 @@ class InterfacesForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
+
+        if SW_NAME.lower() != 'truenas':
+            del self.fields['int_vhid']
+            del self.fields['int_pass']
+            del self.fields['int_skew']
+            del self.fields['int_critical']
+            del self.fields['int_group']
+
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", '

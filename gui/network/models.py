@@ -197,10 +197,11 @@ class Interfaces(Model):
     int_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
         null=True,
+        blank=True,
     )
     int_pass = models.CharField(
         max_length=100,
-        blank=False,
+        blank=True,
         verbose_name=_("Password")
     )
     int_skew = models.PositiveIntegerField(
