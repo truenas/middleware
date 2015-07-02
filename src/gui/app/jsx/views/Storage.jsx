@@ -109,6 +109,12 @@ const Storage = React.createClass(
     console.log( "handleVolumeReset", event, volumeKey );
   }
 
+  , submitVolume ( volumeKey, event ) {
+
+    ZM.submitVolume( this.state.volumes[ volumeKey ] );
+
+  }
+
   , generateFreshVolume () {
     return ( { topology   : { data  : []
                             , logs  : []
