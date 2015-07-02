@@ -194,6 +194,31 @@ class Interfaces(Model):
             verbose_name=_("IPv6 Prefix Length"),
             help_text=""
             )
+    int_vhid = models.PositiveIntegerField(
+        verbose_name=_("Virtual Host ID"),
+        null=True,
+    )
+    int_pass = models.CharField(
+        max_length=100,
+        blank=False,
+        verbose_name=_("Password")
+    )
+    int_skew = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("Advertisements Skew"),
+        blank=True,
+        null=True,
+    )
+    int_critical = models.BooleanField(
+        default=False,
+        verbose_name=_("Critical for Failover"),
+    )
+    int_group = models.IntegerField(
+        verbose_name=_('Group'),
+        choices=[(i, i) for i in range(1, 33)],
+        null=True,
+        blank=True,
+    )
     int_options = models.CharField(
             max_length=120,
             verbose_name=_("Options"),
