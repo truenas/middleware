@@ -1,11 +1,12 @@
 .typeahead-list {
-  .flex( 1 );
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  color: inherit;
-  font-size: 1em;
-  background: transparent;
+  position   : relative;
+  padding    : 0;
+  margin     : 0;
+  font       : inherit;
+  color      : inherit;
+  font-size  : 1em;
+  background : transparent;
+  z-index    : 0;
 
   .form-group {
     margin-bottom: 0px;
@@ -13,24 +14,33 @@
 }
 
 .typeahead-list__container {
-  padding: 0;
-  margin: 0;
-  box-shadow: 10px 10px 5px #888888;
-  list-style-type: none;
+  position         : absolute;
+  top              : 100%;
+  left             : 0;
+  right            : 0;
+  padding          : @border-radius-base 0 0 0;
+  list-style-type  : none;
+  background-color : white;
+  margin           : -@border-radius-base 0 0 0;
+  border-radius    : 0 0 @border-radius-base @border-radius-base;
+  border           : 1px solid @input-border-focus;
+  outline          : 0;
+  z-index          : -1;
+  @color-rgba: fadeout( @input-border-focus, 40%);
+  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+  .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px @{color-rgba}");
 }
+
 
 .typeahead-list__item {
-  margin: 0;
-  padding: 0;
-  border-style: none none solid none;
-  border-width: thin;
-  border-color: #909090;
-  font-size: 15px;
+  padding: 0.35em 1em;
+  &:hover {
+    background: lighten( @brand-primary, 30% );
+  }
 }
 
-.typeahead-text-input {
-  width: 100%;
-  font-size: 15px;
+.typeahead-option:hover {
+  text-decoration : none;
 }
 
 .typeahead-active {
