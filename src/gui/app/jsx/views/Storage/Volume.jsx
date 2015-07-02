@@ -20,19 +20,21 @@ const PoolItem = React.createClass(
   { displayName: "PoolItem"
 
   , propTypes:
-    { handleDiskAdd        : React.PropTypes.func.isRequired
-    , handleDiskRemove     : React.PropTypes.func.isRequired
-    , handleVdevAdd        : React.PropTypes.func.isRequired
-    , handleVdevRemove     : React.PropTypes.func.isRequired
-    , handleVdevTypeChange : React.PropTypes.func.isRequired
-    , handleVolumeReset    : React.PropTypes.func.isRequired
-    , availableDisks       : React.PropTypes.array.isRequired
-    , availableSSDs        : React.PropTypes.array.isRequired
-    , existsOnServer       : React.PropTypes.bool
-    , data                 : React.PropTypes.array
-    , logs                 : React.PropTypes.array
-    , cache                : React.PropTypes.array
-    , spares               : React.PropTypes.array
+    { handleDiskAdd          : React.PropTypes.func.isRequired
+    , handleDiskRemove       : React.PropTypes.func.isRequired
+    , handleVdevAdd          : React.PropTypes.func.isRequired
+    , handleVdevRemove       : React.PropTypes.func.isRequired
+    , handleVdevTypeChange   : React.PropTypes.func.isRequired
+    , handleVolumeReset      : React.PropTypes.func.isRequired
+    , handleVolumeNameChange : React.PropTypes.func.isRequired
+    , submitVolume           : React.PropTypes.func.isRequired
+    , availableDisks         : React.PropTypes.array.isRequired
+    , availableSSDs          : React.PropTypes.array.isRequired
+    , existsOnServer         : React.PropTypes.bool
+    , data                   : React.PropTypes.array
+    , logs                   : React.PropTypes.array
+    , cache                  : React.PropTypes.array
+    , spares                 : React.PropTypes.array
     , free: React.PropTypes.oneOfType(
         [ React.PropTypes.string
         , React.PropTypes.number

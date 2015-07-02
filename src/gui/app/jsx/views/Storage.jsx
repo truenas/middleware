@@ -142,12 +142,14 @@ const Storage = React.createClass(
 
   , createVolumes ( loading ) {
     const volumeCommon =
-      { handleDiskAdd        : this.handleDiskAdd
-      , handleDiskRemove     : this.handleDiskRemove
-      , handleVdevAdd        : this.handleVdevAdd
-      , handleVdevRemove     : this.handleDiskRemove
-      , handleVdevTypeChange : this.handleVdevTypeChange
-      , handleVolumeReset    : this.handleVolumeReset
+      { handleDiskAdd          : this.handleDiskAdd
+      , handleDiskRemove       : this.handleDiskRemove
+      , handleVdevAdd          : this.handleVdevAdd
+      , handleVdevRemove       : this.handleDiskRemove
+      , handleVdevTypeChange   : this.handleVdevTypeChange
+      , handleVolumeReset      : this.handleVolumeReset
+      , handleVolumeNameChange : this.handleVolumeNameChange
+      , submitVolume           : this.submitVolume
       , availableDisks: _.without( this.state.availableDisks
                                  , ...Array.from( this.state.selectedDisks )
                                  )
