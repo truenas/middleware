@@ -74,8 +74,9 @@
 
 .debug-column-content {
   .flex( 1 );
-  overflow : auto;
-  margin   : 0;
+  overflow-y : auto;
+  overflow-x : hidden;
+  margin     : 0;
 }
 
 .debug-monospace-content {
@@ -106,18 +107,18 @@
   position   : relative;
 
   & > label {
-    height         : 0;
-    width          : 16px;
+    width          : 14px;
+    padding        : 0 2px;
     position       : absolute;
-    top            : 0;
-    left           : -11px;
-    transform      : rotate(90deg);
-    padding        : 8px;
+    top            : 5px;
+    text-align     : center;
+    left           : -16px;
     color          : white;
     text-transform : uppercase;
-    letter-spacing : 5px;
     font-weight    : 100;
     font-size      : 10px;
+    word-break     : break-all;
+    letter-spacing : 0;
   }
 }
 
