@@ -25,7 +25,7 @@ var Events = React.createClass({
     getInitialState: function () {
       return {
           events           : MiddlewareStore.getEventLog()
-        , timeFormat       : "absolute"
+        , timeFormat       : "human"
         , predicate        : defaultPredicate["Object"]
         , predicateType    : "Object"
         , appliedPredicate : null
