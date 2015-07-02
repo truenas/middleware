@@ -109,6 +109,15 @@ const Storage = React.createClass(
     console.log( "handleVolumeReset", event, volumeKey );
   }
 
+  , handleVolumeNameChange ( volumeKey, event ) {
+    let newVolumes = this.state[ "volumes" ];
+
+    newVolumes[ volumeKey ][ "name" ] = event.target.value;
+
+    this.setState( { volumes: newVolumes } );
+
+  }
+
   , submitVolume ( volumeKey, event ) {
 
     ZM.submitVolume( this.state.volumes[ volumeKey ] );
