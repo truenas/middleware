@@ -119,8 +119,7 @@ If you are unable to access the IP address from a browser, check the following:
 
 * If the user interface loads but is unresponsive or seems to be missing menu items, try using a different web browser. IE9 has known issues and will not
   display the graphical administrative interface correctly if compatibility mode is turned on. If you can't access the GUI using Internet Explorer, use
-  `Firefox <http://www.mozilla.com/en-US/firefox/all.html>`_
-  instead.
+  `Firefox <https://www.mozilla.org/en-US/firefox/all/>`_ instead.
 
 * If you receive "An error occurred!" messages when attempting to configure an item in the GUI, make sure that the browser is set to allow cookies from
   the FreeNAS® system.

@@ -5,8 +5,8 @@ Plugins
 =======
 
 FreeNAS® 8.2.0 introduced the ability to extend the built-in NAS services by providing a mechanism for installing additional software. This mechanism was known
-as the Plugins architecture and is based on `FreeBSD jails <http://en.wikipedia.org/wiki/Freebsd_jail>`_ and `PC-BSD PBIs
-<http://wiki.pcbsd.org/index.php/AppCafe%C2%AE/9.2>`_. This allowed users to install and configure additional applications once they had created and configured
+as the Plugins architecture and is based on `FreeBSD jails <https://en.wikipedia.org/wiki/Freebsd_jail>`_ and `PC-BSD 9.x PBIs
+`<http://wiki.pcbsd.org/index.php/AppCafe%C2%AE/9.2>`_. This allowed users to install and configure additional applications once they had created and configured
 a plugins jail.
 
 FreeNAS® 9.x simplifies this procedure by providing two methods for software installation. The Plugins method, described in this section, is meant for users
@@ -151,7 +151,7 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `bacula-sd (storage daemon) <http://bacula.org/>`_
 
-* `BTSync <http://www.bittorrent.com/sync>`_
+* `BTSync <https://www.getsync.com/>`_
 
 * `CouchPotato <https://couchpota.to/>`_
 
@@ -173,9 +173,9 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `Mylar <https://github.com/evilhero/mylar>`_
 
-* `owncloud <http://owncloud.org/>`_
+* `owncloud <https://owncloud.org/>`_
 
-* `plexmediaserver <http://www.plexapp.com/>`_
+* `plexmediaserver <https://plex.tv/>`_
 
 * `s3cmd <http://s3tools.org/s3cmd>`_
 
@@ -187,9 +187,9 @@ The following plugins are available for FreeNAS® 9.3:
 
 * `Sonarr <https://sonarr.tv/>`_
 
-* `Subsonic <http://subsonic.org/>`_
+* `Subsonic <http://www.subsonic.org/pages/index.jsp>`_
 
-* `Syncthing <http://syncthing.net/>`_
+* `Syncthing <https://syncthing.net/>`_
 
 * `transmission <http://www.transmissionbt.com/>`_
 
