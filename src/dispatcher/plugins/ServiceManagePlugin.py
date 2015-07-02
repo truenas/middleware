@@ -185,7 +185,7 @@ class UpdateServiceConfigTask(Task):
         return "Updating configuration for service {0}".format(service)
 
     def verify(self, service, updated_fields):
-        if not self.datastore.exists('service_definitions',
+        if not self.datastore.exists('service-definitions',
                                      ('name', '=', service)):
             raise VerifyException(errno.ENOENT, 'Service {0} not found'.format(service))
 
@@ -200,7 +200,7 @@ class UpdateServiceConfigTask(Task):
         return ['system']
 
     def run(self, service, updated_fields):
-        service_def = self.datastore.get_one('service_definitions', ('name', '=', service))
+        service_def = self.datastore.get_one('service-definitions', ('name', '=', service))
         node = ConfigNode('service.{0}'.format(service), self.dispatcher.configstore)
         previously_enabled = node['enable']
         node.update(updated_fields)
