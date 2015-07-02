@@ -37,7 +37,7 @@ DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 ds = None
 
 
-def init_datastore(filename):
+def init_datastore(filename, alt):
     global ds
 
     try:
@@ -56,7 +56,8 @@ def init_datastore(filename):
         sys.exit(1)
 
     try:
-        ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore']['dsn'])
+        dsn = 'dsn-alt' if alt else 'dsn'
+        ds = datastore.get_datastore(conf['datastore']['driver'], conf['datastore'][dsn])
     except datastore.DatastoreException, err:
         print("Cannot initialize datastore: {0}".format(str(err)), file=sys.stderr)
         sys.exit(1)
@@ -94,9 +95,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', metavar='CONFIG', default=DEFAULT_CONFIGFILE, help='Config file name')
     parser.add_argument('-f', metavar='FILE', help='Input file name')
+    parser.add_argument('--alt', action='store_true', help='Use alternate DSN')
 
     args = parser.parse_args()
-    init_datastore(args.c)
+    init_datastore(args.c, args.alt)
 
     try:
         fd = open(args.f, 'r') if args.f else sys.stdin

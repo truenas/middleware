@@ -14,7 +14,12 @@ case ${cmd} in
         ;;
 
     start)
-        ${mongod} --config ${driverdir}/mongod.conf --fork --logpath ${dbdir}/mongod.log --quiet --dbpath ${dbdir}
+        ${mongod} --config ${driverdir}/mongod.conf \
+            --fork \
+            --logpath ${dbdir}/mongod.log \
+            --quiet \
+            --dbpath ${dbdir} \
+            --port ${3:-27017}
         ;;
 
     stop)
