@@ -128,7 +128,7 @@ const Storage = React.createClass(
       , handleVdevTypeChange : this.handleVdevTypeChange
       , handleVolumeReset    : this.handleVolumeReset
       , availableDisks: _.without( this.state.availableDisks
-                                 , Array.from( this.state.selectedDisks )
+                                 , ...Array.from( this.state.selectedDisks )
                                  )
       , availableSSDs: [] // FIXME
       };
