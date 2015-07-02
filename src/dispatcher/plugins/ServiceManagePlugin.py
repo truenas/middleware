@@ -147,7 +147,7 @@ class ServiceManageTask(Task):
 
     def run(self, name, action):
         ld = launchd.Launchd()
-        service = self.datastore.get_one('services', ('name', '=', name))
+        service = self.datastore.get_one('service-definitions', ('name', '=', name))
         label = service['launchd.Label']
         job = ld.jobs[label]
 
