@@ -24,7 +24,7 @@ Active Directory
 
 Active Directory (AD) is a service for sharing resources in a Windows network. AD can be configured on a Windows server that is running Windows Server 2000 or
 higher or on a Unix-like operating system that is running
-`Samba version 4 <http://wiki.samba.org/index.php/Samba4/HOWTO#Step_4:_Provision_Samba4>`_. Since AD provides authentication and authorization services for
+`Samba version 4 <https://wiki.samba.org/index.php/Samba4/HOWTO#Provisioning_The_Samba_Active_Directory>`_. Since AD provides authentication and authorization services for
 the users in a network, you do not have to recreate these user accounts on the FreeNAS® system. Instead, configure the Active Directory service so that it
 can import the account information and imported users can be authorized to access the CIFS shares on the FreeNAS® system.
 
@@ -62,95 +62,95 @@ display these settings by checking the box "Show advanced fields by default" in 
 
 **Table 9.1a: Active Directory Configuration Options**
 
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| **Setting**              | **Value**     | **Description**                                                                                                                            |
-|                          |               |                                                                                                                                            |
-+==========================+===============+============================================================================================================================================+
-| Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                 |
-|                          |               | *sales.example.com*); this setting is mandatory and the GUI will refuse to save the settings if the domain controller for the specified    |
-|                          |               | domain can not be found                                                                                                                    |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can not   |
-|                          |               | connect to the domain controller using this account name                                                                                   |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account Password  | string        | password for the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can  |
-|                          |               | not connect to the domain controller using this password                                                                                   |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**     |
-|                          |               | as setting an                                                                                                                              |
-|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Encryption Mode          | drop-down     | only available in "Advanced Mode"; choices are *Off*,                                                                                      |
-|                          | menu          | *SSL*, or                                                                                                                                  |
-|                          |               | *TLS*                                                                                                                                      |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Certificate              | drop-down menu| only available in "Advanced Mode"; select the certificate of the LDAP server if  SSL connections                                           |
-|                          |               | are used; if you do not have a certificate, first create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                |                                                                                                                                    
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                     |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| UNIX extensions          | checkbox      | only available in "Advanced Mode"; **only** check this box if the AD server has been explicitly configured to map                          |
-|                          |               | permissions for UNIX users; checking this box provides persistent UIDs and GUIDs, otherwise, users/groups get                              |
-|                          |               | mapped to the UID/GUID range configured in Samba                                                                                           |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Allow Trusted Domains    | checkbox      | only available in "Advanced Mode"; should only be enabled if network has active                                                            |
-|                          |               | `domain/forest trusts <http://technet.microsoft.com/en-us/library/cc757352%28WS.10%29.aspx>`_                                              |
-|                          |               | and you need to manage files on multiple domains; use with caution as it will generate more winbindd traffic,                              |
-|                          |               | slowing down the ability to filter through user/group information                                                                          |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Use Default Domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
-|                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                           |
-|                          |               | collisions                                                                                                                                 |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                  |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Controller        | string        | only available in "Advanced Mode"; if the hostname of the domain controller to use is specified, make sure it is resolvable                |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Global Catalog Server    | string        | only available in "Advanced Mode"; if the hostname of the global catalog server to use is specified, make sure it is resolvable            |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos Realm           | drop-down     | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`                              |
-|                          | menu          |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos keytab          | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
-|                          | menu          |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-|AD timeout                | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
-|                          |               | domain                                                                                                                                     |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| DNS timeout              | integer       | only available in "Advanced Mode"; in seconds, increase if AD DNS queries timeout                                                          |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Idmap backend            | drop-down     | only available in "Advanced Mode"; select the backend to use to map Windows security identifiers (SIDs) to UNIX UIDs and GIDs; see Table   |
-|                          | menu and Edit | 9.1b for a summary of the available backends; click the "Edit" link to configure that backend's editable options                           |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Windbind NSS Info        | drop-down     | only available in "Advanced Mode" and defines the schema to use when querying AD for user/group info; *rfc2307* uses the RFC2307 schema    |
-|                          | menu          | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                      |
-|                          |               | *sfu* is for Services For Unix 2.0                                                                                                         |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| SASL wrapping            | drop-down     | only available in "Advanced Mode" and defines how LDAP traffic is transmitted; choices are *plain* (plain text),                           |
-|                          | menu          | *sign* (signed only),                                                                                                                      |
-|                          |               | or *seal* (signed and encrypted); Windows 2000 SP3 and higher can be configured to enforce signed LDAP connections                         |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Enable                   | checkbox      | uncheck to disable the configuration without deleting it                                                                                   |
-|                          |               |                                                                                                                                            |
-+--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Setting**              | **Value**     | **Description**                                                                                                                                       |
+|                          |               |                                                                                                                                                       |
++==========================+===============+=======================================================================================================================================================+
+| Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                            |
+|                          |               | *sales.example.com*); this setting is mandatory and the GUI will refuse to save the settings if the domain controller for the specified               |
+|                          |               | domain can not be found                                                                                                                               |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can not              |
+|                          |               | connect to the domain controller using this account name                                                                                              |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Domain Account Password  | string        | password for the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can             |
+|                          |               | not connect to the domain controller using this password                                                                                              |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**                |
+|                          |               | as setting an                                                                                                                                         |
+|                          |               | `incorrect value can corrupt an AD installation <https://forums.freenas.org/index.php?threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Encryption Mode          | drop-down     | only available in "Advanced Mode"; choices are *Off*,                                                                                                 |
+|                          | menu          | *SSL*, or                                                                                                                                             |
+|                          |               | *TLS*                                                                                                                                                 |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Certificate              | drop-down menu| only available in "Advanced Mode"; select the certificate of the LDAP server if  SSL connections                                                      |
+|                          |               | are used; if you do not have a certificate, first create a CA (in :ref:`CAs`) then the certificate (in :ref:`Certificates`)                           |                                                                                                                                    
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Verbose logging          | checkbox      | only available in "Advanced Mode"; if checked, logs attempts to join the domain to */var/log/messages*                                                |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| UNIX extensions          | checkbox      | only available in "Advanced Mode"; **only** check this box if the AD server has been explicitly configured to map                                     |
+|                          |               | permissions for UNIX users; checking this box provides persistent UIDs and GUIDs, otherwise, users/groups get                                         |
+|                          |               | mapped to the UID/GUID range configured in Samba                                                                                                      |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Allow Trusted Domains    | checkbox      | only available in "Advanced Mode"; should only be enabled if network has active                                                                       |
+|                          |               | `domain/forest trusts <https://technet.microsoft.com/en-us/library/cc757352(WS.10).aspx>`_                                                            |
+|                          |               | and you need to manage files on multiple domains; use with caution as it will generate more winbindd traffic,                                         |
+|                          |               | slowing down the ability to filter through user/group information                                                                                     |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Use Default Domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                                   |
+|                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                                      |
+|                          |               | collisions                                                                                                                                            |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                             |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Domain Controller        | string        | only available in "Advanced Mode"; if the hostname of the domain controller to use is specified, make sure it is resolvable                           |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Global Catalog Server    | string        | only available in "Advanced Mode"; if the hostname of the global catalog server to use is specified, make sure it is resolvable                       |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Kerberos Realm           | drop-down     | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`                                         |
+|                          | menu          |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Kerberos keytab          | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`                     |
+|                          | menu          |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+|AD timeout                | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                                      |
+|                          |               | domain                                                                                                                                                |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| DNS timeout              | integer       | only available in "Advanced Mode"; in seconds, increase if AD DNS queries timeout                                                                     |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Idmap backend            | drop-down     | only available in "Advanced Mode"; select the backend to use to map Windows security identifiers (SIDs) to UNIX UIDs and GIDs; see Table              |
+|                          | menu and Edit | 9.1b for a summary of the available backends; click the "Edit" link to configure that backend's editable options                                      |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Windbind NSS Info        | drop-down     | only available in "Advanced Mode" and defines the schema to use when querying AD for user/group info; *rfc2307* uses the RFC2307 schema               |
+|                          | menu          | support included in Windows 2003 R2, *sfu20* is for Services For Unix 3.0 or 3.5, and                                                                 |
+|                          |               | *sfu* is for Services For Unix 2.0                                                                                                                    |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| SASL wrapping            | drop-down     | only available in "Advanced Mode" and defines how LDAP traffic is transmitted; choices are *plain* (plain text),                                      |
+|                          | menu          | *sign* (signed only),                                                                                                                                 |
+|                          |               | or *seal* (signed and encrypted); Windows 2000 SP3 and higher can be configured to enforce signed LDAP connections                                    |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Enable                   | checkbox      | uncheck to disable the configuration without deleting it                                                                                              |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 Table 9.1b summarizes the backends which are available in the "Idmap backend" drop-down menu. Each backend has its own
 `man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details. Since selecting the
@@ -204,8 +204,7 @@ Click the "Rebuild Directory Service Cache" button if you add a user to Active D
 automatically once a day as a cron job.
 
 .. note:: Active Directory places restrictions on which characters are allowed in Domain and NetBIOS names. If you are having problems connecting to the
-   realm,
-   `verify <http://support.microsoft.com/kb/909264>`_
+   realm, `verify <https://support.microsoft.com/en-us/kb/909264>`_
    that your settings do not include any disallowed characters. Also, the Administrator Password cannot contain the *$* character. If a
    *$* exists in the domain administrator's password, :command:`kinit` will report a "Password Incorrect" error and :command:`ldap_bind` will report an
    "Invalid credentials (49)" error.
@@ -245,15 +244,13 @@ taking longer then the default 10 seconds for the FreeNAS® system to join Activ
 Troubleshooting Tips
 ~~~~~~~~~~~~~~~~~~~~
 
-If you are running AD in a 2003/2008 mixed domain, see this
-`forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
+If you are running AD in a 2003/2008 mixed domain, see this `https://forums.freenas.org/index.php?threads/2008r2-2003-mixed-domain.1931/>`_
 for instructions on how to prevent the secure channel key from becoming corrupt.
 
 Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
 :command:`host -t srv _ldap._tcp.domainname.com` command to determine the network's SRV records and, if necessary, change the weight and/or priority of the
 SRV record to reflect the fastest server. More information about SRV records can be found in the Technet article
-`How DNS  <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
-`Support for Active Directory Works <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_.
+`How DNS Support for Active Directory Works <https://technet.microsoft.com/en-us/library/cc759550(WS.10).aspx>`_.
 
 The realm that is used depends upon the priority in the SRV DNS record, meaning that DNS can override your Active Directory settings. If you are unable to
 connect to the correct realm, check the SRV records on the DNS server.
@@ -277,7 +274,7 @@ If the System Will not Join the Domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the system will not join the active directory domain, try running the following commands in the order listed. If any of the commands fail or result in a
-traceback, create a bug report at `bugs.freenas.org <http://bugs.freenas.org>`_ that includes the commands in the order which they were run and the exact
+traceback, create a bug report at `bugs.freenas.org <https://bugs.freenas.org/>`_ that includes the commands in the order which they were run and the exact
 wording of the error message or traceback.
 
 Start with these commands, where the :command:`echo` commands should return a value of *0* and the :command:`klist` command should show a Kerberos ticket::

@@ -13,8 +13,6 @@ This section demonstrates how you can:
 
 * :ref:`Localize`
 
-* :ref:`Beta Test`
-
 .. index:: Localize, Translate
 .. _Localize:
 
@@ -22,7 +20,7 @@ Localize
 ---------
 
 FreeNAS® uses
-`Pootle <http://en.wikipedia.org/wiki/Pootle>`_, an open source application, for managing the localization of the menu screens used by the FreeNAS® graphical
+`Pootle <https://en.wikipedia.org/wiki/Pootle>`_, an open source application, for managing the localization of the menu screens used by the FreeNAS® graphical
 administrative interface. Pootle makes it easy to find out the localization status of your native language and to translate the text for any menus that have
 not been localized yet. By providing a web editor and commenting system, Pootle allows translators to spend their time making and reviewing translations
 rather than learning how to use a translation submission tool.
@@ -57,23 +55,5 @@ menu screens has been assigned a string number. If you click the number, an edit
 .. image:: images/translate2.png
 
 Simply type in the translated text and click the "Submit" button to save your change.
-
-.. _Beta Test:
-
-Beta Test
----------
-
-The FreeNAS® download page has a
-`nightly directory <http://download.freenas.org/nightly/>`_. Once a day, the build server automatically uploads a new testing image for those users who wish
-to assist in testing. Nightly images should **never** be installed on a production system as they are intended for testing purposes only.
-
-.. note:: expert users who prefer to build a customized image should refer to the instructions in this
-   `README <https://github.com/freenas/freenas>`_.
-
-Additionally, prior to any release, BETA and RELEASE CANDIDATES are announced on the FreeNAS® Forums as they become available. These testing images are meant
-to provide users an opportunity to test the upcoming release in order to provide feedback on any encountered bugs so that they can be fixed prior to release.
-
-Testers can provide feedback by searching to see if the bug has already been reported, and if not, to submit a bug report using the instructions in
-:ref:`Support`.
 
 

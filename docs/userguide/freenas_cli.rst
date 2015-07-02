@@ -377,8 +377,7 @@ Alternatively, consider temporarily disabling compression on the ZFS pool or dat
 arcstat
 -------
 
-Arcstat is a script that prints out ZFS
-`ARC <http://en.wikipedia.org/wiki/Adaptive_replacement_cache>`_
+Arcstat is a script that prints out ZFS `ARC <https://en.wikipedia.org/wiki/Adaptive_replacement_cache>`_
 statistics. Originally it was a perl script created by Sun. That perl script was ported to FreeBSD and was then ported as a Python script for use on
 FreeNAS®.
 
@@ -390,7 +389,7 @@ Like all cache systems, the ARC takes time to fill with data. This means that it
 there continues to be lots of misses and high disk I/O on cached reads, there is cause to investigate further and tune the system.
 
 The
-`FreeBSD ZFS Tuning Guide <http://wiki.freebsd.org/ZFSTuningGuide>`_
+`FreeBSD ZFS Tuning Guide <https://wiki.FreeBSD.org/ZFSTuningGuide>`_
 provides some suggestions for commonly tuned :command:`sysctl` values. It should be noted that performance tuning is more of an art than a science and that
 any changes you make will probably require several iterations of tune and test. Be aware that what needs to be tuned will vary depending upon the type of
 workload and that what works for one person's network may not benefit yours.
@@ -410,8 +409,7 @@ FreeNAS® provides two command line scripts which an be manually run from Shell:
 The advantage of these scripts is that they can be used to provide real time (right now) information, whereas the current GUI reporting mechanism is designed
 to only provide graphs charted over time.
 
-This
-`forum post <http://forums.freenas.org/threads/benchmarking-zfs.7928/>`__
+This `forum post <https://forums.freenas.org/index.php?threads/benchmarking-zfs.7928/>`_
 demonstrates some examples of using these scripts with hints on how to interpret the results.
 
 To view the help for arcstat.py::
@@ -911,8 +909,7 @@ If you add some disks to the array and they are not showing up in the GUI, try r
 Use the drives to create units and export them to the operating system. When finished, run :command:`camcontrol rescan all` and they should now be available
 in the FreeNAS® GUI.
 
-This
-`forum post <http://forums.freenas.org/threads/3ware-drive-monitoring.13835/>`__
+This `forum post <https://forums.freenas.org/index.php?threads/3ware-drive-monitoring.13835/>`_
 contains a handy wrapper script that will notify you of errors.
 
 .. index:: MegaCli
@@ -925,11 +922,8 @@ MegaCli
 `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
 utility which can be used to configure and manage connected storage devices.
 
-The :command:`MegaCli` command is quite complex with several dozen options. While it is fully documented in this 442 page
-`PDF <http://www.lsi.com/downloads/Public/MegaRAID%20Common%20Files/SASUG_51530-00_RevG.pdf>`_
-, the commands demonstrated in the
-`Emergency Cheat Sheet <http://tools.rapidsoft.de/perc/perc-cheat-sheet.html>`_
-can get you started.
+The :command:`MegaCli` command is quite complex with several dozen options. The commands demonstrated in the
+`Emergency Cheat Sheet <http://tools.rapidsoft.de/perc/perc-cheat-sheet.html>`_ can get you started.
 
 .. index:: freenas-debug
 .. _freenas-debug:
@@ -996,7 +990,7 @@ screen. This line shows information on the current session and is used to enter 
 
 To create a second window, press :kbd:`Ctrl+b` then :kbd:`"`. To close a window, type :command:`exit` within the window.
 
-`tmux(1) <http://www.openbsd.org/cgi-bin/man.cgi?query=tmux>`_
+`tmux(1) <http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/./man1/tmux.1?query=tmux>`_
 lists all of the key bindings and commands for interacting with :command:`tmux` windows and sessions.
 
 If you close :ref:`Shell` while :command:`tmux` is running, it will detach its session. The next time you open Shell, run :command:`tmux attach` to return to
@@ -1005,7 +999,7 @@ the previous session. To leave the :command:`tmux` session entirely, type :comma
 
 These resources provide more information about using :command:`tmux`:
 
-* `A tmux Crash Course <http://robots.thoughtbot.com/a-tmux-crash-course>`_
+* `A tmux Crash Course <https://robots.thoughtbot.com/a-tmux-crash-course>`_
 
 * `TMUX - The Terminal Multiplexer <http://blog.hawkhost.com/2010/06/28/tmux-the-terminal-multiplexer/>`_
 
