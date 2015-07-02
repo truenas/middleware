@@ -54,8 +54,56 @@ const Storage = React.createClass(
     );
   }
 
-  , handleDiskAdd ( event, volumeKey, vdevKey, availableDiskKey ) {
-    console.log( "handleDiskAdd", event, volumeKey, vdevKey, availableDiskKey );
+  , createNewDisk ( path ) {
+    return ( { path: path
+             , type: "disk"
+             , children: []
+             }
+    );
+  }
+
+  , handleDiskAdd ( volumeKey, vdevPurpose, vdevKey, event ) {
+
+    let newVolumes = this.state[ "volumes" ];
+    let newVdev = this.state[ "volumes" ]
+                            [ volumeKey ]
+                            [ "topology" ]
+                            [ vdevPurpose ]
+                            [ vdevKey ];
+
+    switch ( newVdev.type ) {
+      // All non-disk vdevs will just need the new disk added to their children.
+      case "raidz3" :
+      case "raidz2" :
+      case "raidz1" :
+      case "mirror" :
+        newVdev.children.push( this.createNewDisk( event.target.value ) );
+        break;
+
+      case "disk" :
+        newVdev.type = "mirror";
+        newVdev.children = [ this.createNewDisk( newVdev.path )
+                           , this.createNewDisk( event.target.value )
+                           ];
+        newVdev.path = null;
+        break;
+
+      // Fresh Vdev with no type becomes a disk and obtains the target as its
+      // path.
+      default:
+        newVdev = this.createNewDisk( event.target.value );
+        break;
+    }
+
+    newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ][ vdevKey ] = newVdev;
+
+    let newSelectedDisks = this.state.selectedDisks.add( event.target.value );
+
+    this.setState( { volumes: newVolumes
+                   , selectedDisks: newSelectedDisks
+                   }
+                 );
+
   }
 
   , handleDiskRemove ( event, volumeKey, vdevKey, diskKey ) {

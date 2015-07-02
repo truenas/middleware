@@ -91,7 +91,12 @@ const VDEV = React.createClass(
 
     if ( this.props.availableDevices ) {
       addNewDisks =
-        <select onChange={ this.props.handleDiskAdd }>
+        <select onChange= { this.props.handleDiskAdd.bind( null
+                                                         , this.props.volumeKey
+                                                         , this.props.purpose
+                                                         , this.props.vdevKey
+                                                         )
+                          } >
           <option>{ "-- SELECT --" }</option>
           { this.props.availableDevices.map( this.createNewDeviceOptions ) }
         </select>;
