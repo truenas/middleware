@@ -1,3 +1,10 @@
+IMPORTANT NOTE:  This is the master branch of freenas, which is used only
+for the creation and testing of 9.3-Nightlies builds.  If you are building or
+developing for:
+
+FreeNAS 10:	Use the freenas10/development branch (and see the README there)
+9.3-STABLE:	Use the 9.3-STABLE branch
+
 # Building FreeNAS
 
 To build the system (experts only):
