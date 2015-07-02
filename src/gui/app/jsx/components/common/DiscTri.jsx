@@ -20,13 +20,11 @@ var DiscTri = React.createClass(
                , defaultExpanded : React.PropTypes.bool
     }
 
-  , getDefaultProps : function ( ) {
+  , getDefaultProps : function () {
       return { headerShow   : "Hide"
              , headerHide   : "Show"
-             , DiscShowImg  : ( <Icon glyph = "toggle-down"
-                                    icoSize = "1em" /> )
-             , DiscHideImg  : ( <Icon glyph = "toggle-right"
-                                    icoSize = "1em" /> )
+             , DiscShowImg  : ( <Icon glyph="caret-down" /> )
+             , DiscHideImg  : ( <Icon glyph="caret-right" /> )
       };
     }
 

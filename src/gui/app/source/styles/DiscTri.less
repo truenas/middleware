@@ -1,10 +1,13 @@
 .disclosure-triangle {
   .disc-title {
-    cursor: pointer;
+    cursor: default;
+    .no-select();
 
-    & > i {
-      padding: 2px;
-      font-size: 1em;
+    .fa {
+      padding      : 0;
+      margin-right : 0.5em;
+      width        : 0.5em;
+      text-align   : center;
     }
   }
 
@@ -13,7 +16,7 @@
   }
 
   .disc-hide {
-    display: none;
-    overflow: hidden;
+    display  : none;
+    overflow : hidden;
   }
 }
