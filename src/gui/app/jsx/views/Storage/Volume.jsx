@@ -184,6 +184,9 @@ const PoolItem = React.createClass(
   , render: function () {
     let datasets  = null;
     let infoBar = null;
+    let volumeNameField = null;
+    let volumeSubmitLabel = "";
+    let volumeSubmitButton = null;
     let topology = null;
 
     if ( this.props.existsOnServer || this.state.editing ) {
@@ -229,6 +232,33 @@ const PoolItem = React.createClass(
         </TWBS.Row>
       );
 
+      volumeNameField = (
+        <TWBS.Input
+          type = "text"
+          onChange = { this.props.handleVolumeNameChange.bind( null
+                                                             , this.props.volumeKey
+                                                             )
+                     }
+          placeholder = "Volume Name"
+        />
+      );
+
+      volumeSubmitLabel = this.props.existsOnServer
+                        ? "Submit Volume Changes"
+                        : "Submit New Volume";
+
+      volumeSubmitButton = (
+        <TWBS.Button
+          bsStyle = "default"
+          onClick = { this.props.submitVolume.bind( null
+                                                  , this.props.volumeKey
+                                                  )
+                    }
+        >
+          { volumeSubmitLabel }
+        </TWBS.Button>
+      );
+
       topology = (
         <PoolTopology
           ref                  = "Topology"
@@ -254,6 +284,10 @@ const PoolItem = React.createClass(
         { datasets }
 
         { infoBar }
+
+        { volumeNameField }
+
+        { volumeSubmitButton }
 
         { topology }
 
