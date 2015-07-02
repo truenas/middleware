@@ -17,10 +17,10 @@ import TasksMiddleware from "../../middleware/TasksMiddleware";
 import TasksStore from "../../stores/TasksStore";
 import UpdaterStore from "../../stores/UpdaterStore";
 
-const componentLongName = "Update View - System:Update Tab";
+const Update = React.createClass(
+  { displayName: "Update View - System:Update Tab"
 
-const Update = React.createClass({
-  getInitialState: function () {
+  , getInitialState: function () {
     return { editSettings: false
            , currentTrain: ""
            , updateCheckAuto: false

@@ -6,8 +6,6 @@
 
 "use strict";
 
-const componentLongName = "ContextDisks";
-
 import React from "react";
 import _ from "lodash";
 import TWBS from "react-bootstrap";
@@ -20,9 +18,11 @@ import ZM from "../middleware/ZfsMiddleware";
 
 import DiskItemIcon from "../views/Storage/Disks/DiskItemIcon";
 
-const ContextDisks = React.createClass({
+const ContextDisks = React.createClass(
 
-  getInitialState () {
+  { displayName: "Contextual Disks Drawer"
+
+  , getInitialState () {
 
     let initialState = this.populateDisks();
 
@@ -33,12 +33,12 @@ const ContextDisks = React.createClass({
 
   , componentDidMount () {
     DS.addChangeListener( this.handleChange );
-    DM.subscribe( componentLongName );
+    DM.subscribe( this.displayName );
     DM.requestDisksOverview();
 
     VS.addChangeListener( this.handleChange );
 
-    ZM.subscribe( componentLongName );
+    ZM.subscribe( this.displayName );
 
     ZM.requestVolumes();
     ZM.requestAvailableDisks();
@@ -46,11 +46,11 @@ const ContextDisks = React.createClass({
 
   , componentWillUnmount () {
     DS.removeChangeListener( this.handleChange );
-    DM.unsubscribe( componentLongName );
+    DM.unsubscribe( this.displayName );
 
     VS.removeChangeListener( this.handleChange );
 
-    ZM.unsubscribe( componentLongName );
+    ZM.unsubscribe( this.displayName );
   }
 
   , populateDisks () {

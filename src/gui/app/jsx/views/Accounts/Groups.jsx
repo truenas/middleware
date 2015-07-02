@@ -4,8 +4,6 @@
 
 "use strict";
 
-const componentLongName = "Groups";
-
 import React from "react";
 
 import Viewer from "../../components/Viewer";
@@ -75,28 +73,30 @@ function getUsersStoreData () {
   };
 }
 
-const Groups = React.createClass({
+const Groups = React.createClass(
 
-  getInitialState: function () {
+  { displayName: "Groups Viewer"
+
+  , getInitialState: function () {
     return getGroupsFromStore();
   }
 
   , componentDidMount: function () {
     GS.addChangeListener( this.handleGroupsChange );
     GM.requestGroupsList();
-    GM.subscribe( componentLongName );
+    GM.subscribe( this.displayName );
 
     US.addChangeListener( this.handleUsersChange );
     UM.requestUsersList();
-    UM.subscribe( componentLongName );
+    UM.subscribe( this.displayName );
   }
 
   , componentWillUnmount: function () {
     GS.removeChangeListener( this.handleGroupsChange );
-    GM.unsubscribe( componentLongName );
+    GM.unsubscribe( this.displayName );
 
     US.removeChangeListener( this.handleUsersChange );
-    UM.unsubscribe( componentLongName );
+    UM.unsubscribe( this.displayName );
   }
 
   , handleGroupsChange: function () {

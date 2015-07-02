@@ -4,8 +4,6 @@
 
 "use strict";
 
-var componentLongName = "BusyBox";
-
 import React from "react";
 
 // Middleware
@@ -31,7 +29,9 @@ import TWBS from "react-bootstrap";
 
 var BusyBox = React.createClass(
 
-  { propTypes: { animDuration : React.PropTypes.number
+  { displayName: "BusyBox"
+
+  , propTypes: { animDuration : React.PropTypes.number
                , animDelay    : React.PropTypes.number
     }
 
@@ -58,7 +58,7 @@ var BusyBox = React.createClass(
       SessionStore.addChangeListener( this.handleSessionChange );
       PowerStore.addChangeListener( this.handlePowerChange );
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
-      PowerMiddleware.subscribe( componentLongName );
+      PowerMiddleware.subscribe( this.displayName );
       // this.updateBoxVisibility();
       // TODO: do we need the above?
     }
@@ -67,7 +67,7 @@ var BusyBox = React.createClass(
       PowerStore.removeChangeListener( this.handlePowerChange );
       SessionStore.removeChangeListener( this.handleSessionChange );
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
-      PowerMiddleware.unsubscribe( componentLongName );
+      PowerMiddleware.unsubscribe( this.displayName );
     }
 
   , componentDidUpdate: function ( prevProps, prevState ) {

@@ -3,8 +3,6 @@
 
 "use strict";
 
-var componentLongName = "Networks";
-
 import React from "react";
 import TWBS from "react-bootstrap"
 import _ from "lodash";
@@ -25,9 +23,10 @@ import Icon from "../components/Icon";
 /**
  * The collapsible section.
  */
-var NetworkSection = React.createClass({
+var NetworkSection = React.createClass(
+  { displayName: "Networks"
 
-  getInitialState: function () {
+  , getInitialState: function () {
     return {
       isCollapsed: false
     };
@@ -322,24 +321,24 @@ const Network = React.createClass({
   , componentDidMount: function () {
     NS.addChangeListener( this.onNetworkConfigChange );
     NM.requestNetworkConfig();
-    NM.subscribe( componentLongName );
+    NM.subscribe( this.displayName );
 
     IS.addChangeListener( this.onInterfaceListChange );
     IM.requestInterfacesList();
 
     SS.addChangeListener( this.onSystemGeneralConfigChange );
     SM.requestSystemGeneralConfig();
-    SM.subscribe( componentLongName );
+    SM.subscribe( this.displayName );
   }
 
   , componentWillUnmount: function () {
     NS.removeChangeListener( this.onNetworkConfigChange );
-    NM.unsubscribe( componentLongName );
+    NM.unsubscribe( this.displayName );
 
     IS.removeChangeListener( this.onInterfaceListChange );
 
     SS.removeChangeListener( this.onSystemGeneralConfigChange );
-    SM.unsubscribe( componentLongName );
+    SM.unsubscribe( this.displayName );
   }
 
   /**

@@ -3,8 +3,6 @@
 
 "use strict";
 
-const componentLongName = "Debug Tools - Tasks Tab";
-
 import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
@@ -22,7 +20,9 @@ import TasksMiddleware from "../../middleware/TasksMiddleware";
 
 var TasksSection = React.createClass(
 
-  { propTypes: { tasks        : React.PropTypes.object.isRequired
+  { displayName: "Debug Tools - Tasks Tab"
+
+  , propTypes: { tasks        : React.PropTypes.object.isRequired
                , showProgress : React.PropTypes.bool
                , canCancel    : React.PropTypes.bool
     }
@@ -163,7 +163,7 @@ var Tasks = React.createClass(
     }
 
   , componentDidMount: function () {
-      TasksMiddleware.subscribe( componentLongName );
+      TasksMiddleware.subscribe( this.displayName );
       TasksStore.addChangeListener( this.handleMiddlewareChange );
 
       var totalLength = 0;
@@ -177,7 +177,7 @@ var Tasks = React.createClass(
 
   , componentWillUnmount: function () {
       TasksStore.removeChangeListener( this.handleMiddlewareChange );
-      TasksMiddleware.unsubscribe( componentLongName );
+      TasksMiddleware.unsubscribe( this.displayName );
     }
 
   , handleMiddlewareChange: function () {

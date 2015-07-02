@@ -7,8 +7,6 @@ import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
 
-var componentLongName = "Debug Tools - Subscriptions Tab";
-
 // Disclosure Triangles
 import DiscTri from "../common/DiscTri";
 
@@ -17,9 +15,11 @@ import SubscriptionsStore from "../../stores/SubscriptionsStore";
 import MiddlewareClient from "../../middleware/MiddlewareClient";
 
 
-var Subscriptions = React.createClass({
+var Subscriptions = React.createClass(
 
-    getInitialState: function () {
+  { displayName: "Debug Tools - Subscriptions Tab"
+
+  , getInitialState: function () {
       return {
           subscriptions : SubscriptionsStore.getAllSubscriptions()
         , subsMasks     : ""
@@ -47,7 +47,7 @@ var Subscriptions = React.createClass({
     }
 
   , handleSubsSubmit: function () {
-      MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), componentLongName);
+      MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), this.displayName);
     }
 
   , createList: function( item, index ) {
