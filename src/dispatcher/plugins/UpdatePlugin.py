@@ -590,7 +590,7 @@ def _init(dispatcher, plugin):
     # Register Event Types
     plugin.register_event_type('update.in_progress', None,
                                update_in_progress_schema)
-    plugin.register.register_event_type('update.changed')
+    plugin.register_event_type('update.changed')
 
     # Register reources
     plugin.register_resource(Resource(update_resource_string), ['system'])
