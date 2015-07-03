@@ -3,74 +3,16 @@
 
 "use strict";
 
-var _     = require( "lodash" );
-var chalk = require( "chalk" );
+var _          = require( "lodash" );
+var chalk      = require( "chalk" );
+var SshHelpers = require( "../common/ssh-helpers" );
 
 module.exports = function ( grunt ) {
 
   var conditionalCommands = {};
   var actionsNeeded       = [];
 
-  // SSH HELPERS
-  // Test that a response was issued, and that it contains the provided string
-  function logSshMsg ( string, chalkClass ) {
-    grunt.log.writeln( "Status: " +
-                         chalkClass
-                       ? chalk[ chalkClass ]( string )
-                       : string
-    );
-  }
-
-  // Simple truth test to determine if a given stdout response contains the
-  // specified word or phrase
-  function responseContains ( response, testString ) {
-    if ( typeof response === "string" &&
-         response.indexOf( testString ) !== -1 ) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  // Output the server's address, neatly formatted
-  function printServerAddress ( state ) {
-    var whitespace = "  ";
-    var yAxis      = "//";
-    var xAxis;
-
-    var hostAddress = whitespace +
-                      grunt.config( [ "freeNASConfig" ] )["remoteHost"] +
-                      whitespace;
-    var failMessage = whitespace + "Server did not start!" + whitespace;
-
-
-    var repChar = function ( character, times ) {
-      return new Array( times + 1 ).join( character );
-    };
-
-    if ( state === "starting" ) {
-      xAxis = repChar( "/", hostAddress.length + ( yAxis.length * 2 ) );
-
-      grunt.log.writeln( "\n\nThe FreeNAS GUI webserver service is being " +
-                         "restarted\nIt should soon be available at this " +
-                         "address:\n" );
-
-      grunt.log.writeln( chalk.bgGreen( xAxis ) );
-      grunt.log.writeln( chalk.bgGreen( yAxis ) + hostAddress +
-                         chalk.bgGreen( yAxis ) );
-      grunt.log.writeln( chalk.bgGreen( xAxis ) );
-    } else {
-      xAxis = repChar( "/", failMessage.length + ( yAxis.length * 2 ) );
-
-      grunt.log.writeln( chalk.bgRed( xAxis ) );
-      grunt.log.writeln( chalk.bgRed( yAxis ) + failMessage +
-                         chalk.bgRed( yAxis ) );
-      grunt.log.writeln( chalk.bgRed( xAxis ) );
-
-      grunt.fatal( "An error occurred when trying to `start` or `restart` " +
-                   "`/usr/sbin/service gui`" );
-    }
-  }
+  var ssh = new SshHelpers( grunt );
 
 
   // SSH-MULTI-EXEC COMMAND CONSTRUCTORS
@@ -90,7 +32,7 @@ module.exports = function ( grunt ) {
       // Check if pkg(8) is enabled
       , { input: "cat /usr/local/etc/pkg/repos/FreeBSD.conf"
         , success: function ( data, context, done ) {
-            if ( responseContains( data, "enabled: no" ) ) {
+            if ( ssh.responseContains( data, "enabled: no" ) ) {
               actionsNeeded.push( "pkg(8) needs to be enabled" );
 
               conditionalCommands["enablePkg"] =
@@ -103,7 +45,7 @@ module.exports = function ( grunt ) {
       // Check if gmake is installed
       , { input: "which gmake"
         , success: function ( data, context, done ) {
-            if ( responseContains( data, "Command not found" ) ) {
+            if ( ssh.responseContains( data, "Command not found" ) ) {
               actionsNeeded.push( "gmake needs to be installed" );
 
               conditionalCommands["installGmake"] =
@@ -117,7 +59,7 @@ module.exports = function ( grunt ) {
       , { input: "which g++"
           , success: function ( data, context, done ) {
 
-            if ( responseContains( data, "Command not found" ) ) {
+            if ( ssh.responseContains( data, "Command not found" ) ) {
               actionsNeeded.push( "g++ needs to be installed" );
 
               conditionalCommands["installGplusplus"] =
@@ -138,7 +80,7 @@ module.exports = function ( grunt ) {
       , { input: "which npm"
           , success: function ( data, context, done ) {
 
-            if ( responseContains( data, "Command not found" ) ) {
+            if ( ssh.responseContains( data, "Command not found" ) ) {
               actionsNeeded.push( "npm needs to be installed" );
 
               conditionalCommands["installNpm"] =
@@ -223,13 +165,13 @@ module.exports = function ( grunt ) {
         { input: "cd <%= guiDirectory %> && npm install --production"
         , force: true
           , success: function ( data, context, done ) {
-              logSshMsg( "Finished verifying and updating npm modlues"
+              ssh.logSshMsg( "Finished verifying and updating npm modlues"
                        , "green"
                        );
               done();
             }
           , error: function ( error, context, done ) {
-              logSshMsg( "Finished verifying and updating npm modlues, with " +
+              ssh.logSshMsg( "Finished verifying and updating npm modlues, with " +
                          "warnings"
                        , "yellow"
                        );
@@ -240,12 +182,12 @@ module.exports = function ( grunt ) {
         , { input: "/bin/launchctl stop org.freenas.gui " +
                    "&& sleep 3 && /bin/launchctl start org.freenas.gui"
           , success: function ( data, context, done ) {
-              logSshMsg( "Issuing service restart command", "cyan" );
-              printServerAddress( "starting" );
+              ssh.logSshMsg( "Issuing service restart command", "cyan" );
+              ssh.printServerAddress( "starting" );
               done();
             }
           , error: function ( error, context, done ) {
-              printServerAddress( "YOU WERE THE CHOSEN ONE" );
+              ssh.printServerAddress( "YOU WERE THE CHOSEN ONE" );
               done();
             }
           }
