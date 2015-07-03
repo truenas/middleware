@@ -37,6 +37,7 @@ from dispatcher.rpc import SchemaHelper as h
 from datastore.config import ConfigNode
 from lib.system import system, SubprocessException
 from fnutils import template, first_or_default
+from fnutils.query import wrap
 
 
 logger = logging.getLogger('ServiceManagePlugin')
@@ -147,7 +148,7 @@ class ServiceManageTask(Task):
 
     def run(self, name, action):
         ld = launchd.Launchd()
-        service = self.datastore.get_one('service-definitions', ('name', '=', name))
+        service = wrap(self.datastore.get_one('service-definitions', ('name', '=', name)))
         label = service['launchd.Label']
         job = ld.jobs[label]
 
