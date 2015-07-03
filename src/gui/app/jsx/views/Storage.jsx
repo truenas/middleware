@@ -103,15 +103,85 @@ const Storage = React.createClass(
 
     let newSelectedDisks = this.state.selectedDisks.add( event.target.value );
 
+    // Last-second bailout if the disk path is invalid
+    if ( _.has( VS.availableDisks, event.target.value ) ) {
+      this.setState( { volumes: newVolumes
+                     , selectedDisks: newSelectedDisks
+                     }
+                   );
+    }
+
+  }
+
+  , handleDiskRemove ( volumeKey, vdevPurpose, vdevKey, diskPath ) {
+
+    let newVolumes = this.state[ "volumes" ];
+    let newVdev = this.state[ "volumes" ]
+                            [ volumeKey ]
+                            [ "topology" ]
+                            [ vdevPurpose ]
+                            [ vdevKey ];
+
+    switch ( newVdev.type ) {
+
+      case "raidz3" :
+        if ( newVdev.children.length === 5 ) {
+          _.pull( newVdev.children, diskPath );
+          newVdev.type = "raidz2";
+        } else {
+          _.pull( newVdev.children, diskPath );
+        }
+        break;
+
+      case "raidz2" :
+        if ( newVdev.children.length === 4 ) {
+          _.pull( newVdev.children, diskPath );
+          newVdev.type = "raidz1";
+        } else {
+          _.pull( newVdev.children, diskPath );
+        }
+        break;
+
+      case "raidz1" :
+
+        if ( newVdev.children.length === 3 ) {
+          _.pull( newVdev.children, diskPath );
+          newVdev.type = "mirror";
+        } else {
+          _.pull( newVdev.children, diskPath );
+        }
+        break;
+
+      case "mirror" :
+        if ( newVdev.children.length === 2 ) {
+          newVdev.children = [];
+          newVdev.path = diskPath;
+          newVdev.type = "disk";
+        } else {
+          _.pull( newVdev.children, diskPath );
+        }
+        break;
+
+      case "disk" :
+        newVdev.type = null;
+        newVdev.path = null;
+        break;
+
+      default:
+        break;
+    }
+
+    newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ][ vdevKey ] = newVdev;
+
+    let newSelectedDisks = this.state.selectedDisks;
+
+    newSelectedDisks.delete( diskPath );
+
     this.setState( { volumes: newVolumes
                    , selectedDisks: newSelectedDisks
                    }
                  );
 
-  }
-
-  , handleDiskRemove ( event, volumeKey, vdevKey, diskKey ) {
-    console.log( "handleDiskRemove", event, volumeKey, vdevKey, diskKey );
   }
 
     // This is exclusively for adding a new, empty vdev at the top level of a
