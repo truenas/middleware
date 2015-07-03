@@ -241,6 +241,7 @@ const PoolItem = React.createClass(
                                                              )
                      }
           placeholder = "Volume Name"
+          value = { this.props.name }
         />
       );
 
