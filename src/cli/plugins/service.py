@@ -69,10 +69,10 @@ class ServicesNamespace(RpcBasedLoadMixin, EntityNamespace):
         self.allow_edit = False
         self.allow_creation = False
         self.entity_commands = lambda this: {
-            'start': ServiceManageCommand(this, 'start'),
-            'stop': ServiceManageCommand(this, 'stop'),
-            'restart': ServiceManageCommand(this, 'restart'),
-            'reload': ServiceManageCommand(this, 'reload')
+            'start': ServiceManageCommand(this, 'START'),
+            'stop': ServiceManageCommand(this, 'STOP'),
+            'restart': ServiceManageCommand(this, 'RESTART'),
+            'reload': ServiceManageCommand(this, 'RELOAD')
         }
 
 
