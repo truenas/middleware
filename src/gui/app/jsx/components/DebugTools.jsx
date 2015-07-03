@@ -59,7 +59,7 @@ var DebugTools = React.createClass(
     }
 
   , handleKeypress: function ( event ) {
-      if ( event.which === 192 && event.ctrlKey && event.shiftKey ) {
+      if ( event.ctrlKey && event.shiftKey && event.which === 192 ) {
         this.toggleVisibility();
       }
     }
@@ -73,12 +73,12 @@ var DebugTools = React.createClass(
     }
 
   , componentDidMount: function () {
-      EventBus.addListener( this.toggleVisibility );
+      EventBus.on( "toggleDebugTools", this.toggleVisibility );
       window.addEventListener( "keyup", this.handleKeypress );
     }
 
   , componentWillUnmount: function () {
-      EventBus.removeListener( this.toggleVisibility );
+      EventBus.removeListener( "toggleDebugTools", this.toggleVisibility );
       window.removeEventListener( "keyup", this.handleKeypress );
     }
 

@@ -155,6 +155,10 @@ const PrimaryNavigation = React.createClass(
         );
     }
 
+  , toggleDebugTools: function () {
+    EventBus.emit( "toggleDebugTools" );
+  }
+
   , createNavItem ( rawItem, index ) {
       if ( rawItem["disabled"] ) {
         return (
@@ -214,7 +218,7 @@ const PrimaryNavigation = React.createClass(
 
           <button
             className="btn btn-info primary-nav-debug-button"
-            onClick={ EventBus.emitToggle.bind( EventBus ) }>
+            onClick={ this.toggleDebugTools }>
             Toggle Debug Tools
           </button>
 

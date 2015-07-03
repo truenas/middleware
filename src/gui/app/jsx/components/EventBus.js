@@ -8,26 +8,14 @@
 import _ from "lodash";
 import { EventEmitter } from "events";
 
-let activeNamespaces = new Set();
-
 class EventBus extends EventEmitter {
 
   constructor () {
     super();
-
-    console.log( this );
   }
 
-  emitToggle () {
-    this.emit( "toggle" );
-  }
-
-  addListener ( callback ) {
-    this.on( "toggle", callback );
-  }
-
-  removeListener ( callback ) {
-    this.removeListener( "toggle", callback );
+  get registeredEvents () {
+    return _.keys( this._events );
   }
 
 }
