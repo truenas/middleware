@@ -440,7 +440,7 @@ class VdevFormSet(BaseFormSet):
                         errors.append(_(
                             "You are trying to add a virtual device consisting"
                             " of %(addnum)s device(s) in a pool that has a "
-                            "virtual device consisted of %(vdevnum)s device(s)"
+                            "virtual device consisting of %(vdevnum)s device(s)"
                             ) % {
                             'addnum': len(disks),
                             'vdevnum': len(list(iter(vdev))),
