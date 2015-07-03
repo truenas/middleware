@@ -27,13 +27,11 @@ const Storage = React.createClass(
   { displayName: "Storage"
 
   , getInitialState () {
-    return { volumes         : VS.listVolumes()
-             // These are initially the same so that we keep track of what is
-             // on the server and which volumes are in the creation process
-           , volumesOnServer : VS.listVolumes()
-           , availableDisks  : VS.availableDisks
-           , selectedDisks   : new Set()
-           };
+
+    return ( { volumes         : VS.listVolumes()
+             , selectedDisks   : new Set()
+             }
+           );
   }
 
   , componentDidMount () {
@@ -56,9 +54,7 @@ const Storage = React.createClass(
 
   , handleVolumesChange ( eventMask ) {
     this.setState(
-      { volumes        : VS.listVolumes()
-      , availableDisks : VS.availableDisks
-      }
+      { volumes: VS.listVolumes() }
     );
   }
 
@@ -206,10 +202,14 @@ const Storage = React.createClass(
       , handleVolumeReset      : this.handleVolumeReset
       , handleVolumeNameChange : this.handleVolumeNameChange
       , submitVolume           : this.submitVolume
-      , availableDisks: _.without( this.state.availableDisks
+      , availableDisks: _.without( VS.availableDisks
                                  , ...Array.from( this.state.selectedDisks )
                                  )
       , availableSSDs: [] // FIXME
+      // This must be submitted in full because it is also necessary to know
+      // which vdevs of an existing volume were added in editing and which
+      // already existed and thus may not be deleted.
+      , volumesOnServer: VS.listVolumes()
       };
 
     let pools =
@@ -226,7 +226,7 @@ const Storage = React.createClass(
         return (
           <Volume
             { ...volumeCommon }
-            existsOnServer = { index < this.state.volumesOnServer.length }
+            existsOnServer = { index < VS.listVolumes().length }
             data      = { data }
             logs      = { logs }
             cache     = { cache }

@@ -27,6 +27,7 @@ var TopologyDrawer = React.createClass(
     , cache                : React.PropTypes.array.isRequired
     , spares               : React.PropTypes.array.isRequired
     , volumeKey            : React.PropTypes.number.isRequired
+    , volumesOnServer      : React.PropTypes.array.isRequired
     }
 
   , createVdevs: function ( purpose ) {
