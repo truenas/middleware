@@ -17,10 +17,53 @@ const VDEVDisk = React.createClass(
              , fontSize: React.PropTypes.number
              , badgeFontSize: React.PropTypes.number
              , diskType: React.PropTypes.string
+             , volumeKey: React.PropTypes.number
+             , vdevKey: React.PropTypes.number
+             , vdevPurpose: React.PropTypes.oneOf(
+                [ "data"
+                , "logs"
+                , "cache"
+                , "spares"
+                ]
+              )
+             , handleDiskRemove : React.PropTypes.func
+             , existsOnServer   : React.PropTypes.bool
              }
 
   , render: function () {
-    return null;
+
+    let deleteButton = null;
+
+    if ( this.props.handleDiskRemove
+      && this.props.volumeKey > -1
+      && this.props.vdevKey > -1
+      && !this.props.existsOnServer
+       ) {
+      deleteButton =
+        <TWBS.Button
+          bsStyle = "warning"
+          onClick = { this.props.handleDiskRemove.bind( null
+                                                      , this.props.volumeKey
+                                                      , this.props.vdevPurpose
+                                                      , this.props.vdevKey
+                                                      , this.props.path
+                                                      )
+                    }
+        >
+          { "Remove Disk "}
+        </TWBS.Button>;
+    }
+
+    return (
+      <div>
+        <TWBS.Label
+          bsStyle = "default"
+        >
+          { this.props.path }
+        </TWBS.Label>
+        { deleteButton }
+      </div>
+    );
   }
 
 });

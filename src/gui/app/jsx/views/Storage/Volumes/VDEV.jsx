@@ -76,7 +76,15 @@ const VDEV = React.createClass(
 
       case "disk":
         memberDisks = (
-          <h4>{ this.props.path }</h4>
+          <VDEVDisk
+            path             = { this.props.path }
+            volumeKey        = { this.props.volumeKey }
+            vdevKey          = { this.props.vdevKey }
+            vdevPurpose      = { this.props.purpose }
+            handleDiskRemove = { this.props.handleDiskRemove }
+            existsOnServer   = { this.props.existsOnServer }
+            key              = { 0 }
+          />
         );
         break;
 
@@ -86,13 +94,23 @@ const VDEV = React.createClass(
       case "raidz3":
         memberDisks = this.props.children.map(
           function ( diskVdev, index ) {
-            return <h4 key={ index }>{ diskVdev.path }</h4>;
-          }
+            return (
+              <VDEVDisk
+                path             = { diskVdev.path }
+                volumeKey        = { this.props.volumeKey }
+                vdevKey          = { this.props.vdevKey }
+                vdevPurpose      = { this.props.purpose }
+                handleDiskRemove = { this.props.handleDiskRemove }
+                existsOnServer   = { this.props.existsOnServer }
+                key              = { index }
+              />
+            );
+          }.bind( this )
         );
         break;
     }
 
-    if ( this.props.availableDevices ) {
+    if ( this.props.availableDevices && !this.props.existsOnServer ) {
       addNewDisks =
         <select onChange= { this.props.handleDiskAdd.bind( null
                                                          , this.props.volumeKey
