@@ -206,13 +206,13 @@ git-verify: builder-verify
 	@echo "NOTICE: You are building from the ${GIT_LOCATION} git repo."
 
 git-internal:
-	@git config --global commit.template .gitcommit.txt
+	@git config --local commit.template .gitcommit.txt
 	@echo "INTERNAL" > ${GIT_REPO_SETTING}
 	@echo "You are set up for internal (${COMPANY}) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
 
 git-external:
-	@git config --global commit.template .gitcommit.txt
+	@git config --local commit.template .gitcommit.txt
 	@echo "EXTERNAL" > ${GIT_REPO_SETTING}
 	@echo "You are set up for external (github) development.  You can use"
 	@echo "the standard make targets (e.g. build or release) now."
