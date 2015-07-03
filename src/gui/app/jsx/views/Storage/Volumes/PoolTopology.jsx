@@ -92,12 +92,15 @@ var TopologyDrawer = React.createClass(
             availableDevices  = { availableDevices }
             volumeKey         = { this.props.volumeKey }
             vdevKey           = { index }
+            key               = { index }
             existsOnServer    = { existsOnServer }
           />
         );
       }.bind( this )
     );
 
+    // This condition is used only for policy limiting the number of vdevs of
+    // some purpose, for example limiting log and cache vdevs to one.
     if ( !newVdevAllowed ) {
       newVdev =
         <TWBS.Col xs = { cols } >
@@ -114,7 +117,7 @@ var TopologyDrawer = React.createClass(
                                                        , this.props.volumeKey
                                                        , purpose
                                                        ) } >
-            <h3><Icon glyph="plus" /></h3>
+            <h3><Icon glyph = "plus" /></h3>
             <h3>{ "Add " + purpose }</h3>
           </span>
         </TWBS.Col>

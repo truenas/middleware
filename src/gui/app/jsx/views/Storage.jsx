@@ -237,13 +237,13 @@ const Storage = React.createClass(
     newVolumes[ volumeKey ][ "name" ] = event.target.value;
 
     this.setState( { volumes: newVolumes } );
-
   }
 
+    // TODO: Validate against the actual schema
+    // TODO: Remove read-only fields and anything that should not be submitted
+    // with a new volume. These are not necessarily listed in the schema yet.
   , submitVolume ( volumeKey, event ) {
-
     ZM.submitVolume( this.state.volumes[ volumeKey ] );
-
   }
 
   , generateFreshVolume () {
@@ -307,6 +307,7 @@ const Storage = React.createClass(
             datasets  = { volume.datasets }
             name      = { volume.name }
             volumeKey = { index }
+            key       = { index }
           />
         );
       }.bind( this ) );
