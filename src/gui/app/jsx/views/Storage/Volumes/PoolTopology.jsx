@@ -69,6 +69,18 @@ var TopologyDrawer = React.createClass(
         // Destructure vdev to avoid passing in props which will not be used.
         let { children, status, type, path } = vdev;
 
+        // A vdev exists on the server if the volume it's in does and the
+        // volume has a vdev of that purpose and index. This only applies to
+        // "data" vdevs.
+        let existsOnServer = this.props.volumesOnServer.length
+                           < this.props.volumeKey
+                          && this.props.volumesOnServer[ this.props.volumeKey ]
+                                                       [ "topology" ]
+                                                       [ purpose ]
+                                                       .length
+                           < this.props.vdevKey
+                          && this.props.purpose === "data";
+
         return (
           <VDEV { ...commonProps }
             children          = { children }
@@ -80,6 +92,7 @@ var TopologyDrawer = React.createClass(
             availableDevices  = { availableDevices }
             volumeKey         = { this.props.volumeKey }
             vdevKey           = { index }
+            existsOnServer    = { existsOnServer }
           />
         );
       }.bind( this )

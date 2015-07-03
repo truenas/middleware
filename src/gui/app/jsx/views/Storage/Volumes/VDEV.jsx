@@ -42,6 +42,9 @@ const VDEV = React.createClass(
     , volumeKey: React.PropTypes.number.isRequired
     // index of this vdev in the array of vdevs of the same purpose
     , vdevKey: React.PropTypes.number.isRequired
+    // used to check if this vdev is already known to the server and thus make
+    // it immutable.
+    , existsOnServer: React.PropTypes.bool
     }
 
   , getDefaultProps: function () {
