@@ -71,7 +71,6 @@ module.exports = function ( grunt ) {
   this.deployment = { files: [
                       { src: [ "<%= dirTree.build.root %>/**"
                              , "<%= dirTree.source.jsx %>/**"
-                             , "<%= dirTree.source.templates %>/**"
                              , "<%= dirTree.server %>.js"
                              , "<%= dirTree.data %>/**"
                              , "bower_components/**"

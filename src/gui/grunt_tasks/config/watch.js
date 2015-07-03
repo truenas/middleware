@@ -41,7 +41,6 @@ module.exports = function ( grunt ) {
   // SERVER LIFECYCLE
   // Restarts GUI service on remote FreeNAS when server or app changes
   this.freenasServer = { files: [ "<%= dirTree.server %>.js"
-                                , "<%= dirTree.source.templates %>/**"
                                 , "package.json"
                                 , "bower_components/**"
                                 ]

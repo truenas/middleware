@@ -62,7 +62,6 @@ module.exports = function ( grunt ) {
                      , favicons: "app/source/favicons"
                      , jsx: "app/jsx"
                      , styles: "app/source/styles"
-                     , templates: "app/templates"
                      };
 
   var buildConfig = { root: "app/build/"
