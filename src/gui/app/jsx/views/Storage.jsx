@@ -11,11 +11,15 @@ import _ from "lodash";
 import React from "react";
 import TWBS from "react-bootstrap";
 
+import EventBus from "../components/EventBus";
 import Icon from "../components/Icon";
+
+import ContextDisks from "../context/ContextDisks";
 
 import SS from "../stores/SchemaStore";
 import VS from "../stores/VolumeStore";
 import ZM from "../middleware/ZfsMiddleware";
+
 import Volume from "./Storage/Volume";
 
 const Storage = React.createClass(
@@ -38,12 +42,16 @@ const Storage = React.createClass(
     ZM.requestVolumes();
     ZM.requestAvailableDisks();
     ZM.subscribe( this.constructor.displayName );
+
+    EventBus.emit( "showContextPanel", ContextDisks );
   }
 
   , componentWillUnmount () {
     VS.removeChangeListener( this.handleVolumesChange );
 
     ZM.unsubscribe( this.constructor.displayName );
+
+    EventBus.emit( "hideContextPanel", ContextDisks );
   }
 
   , handleVolumesChange ( eventMask ) {

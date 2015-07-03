@@ -6,75 +6,71 @@
 
 "use strict";
 
-
-import React from "react";
 import _ from "lodash";
+import React from "react";
 import TWBS from "react-bootstrap";
 
-// Temporary import of ContextDisks for testing. Ultimately, components will be
-// submitted by function calls from the appropriate context.
-import ContextDisks from "../../context/ContextDisks";
+import EventBus from "../EventBus";
 
+const ContextBar = React.createClass(
 
-const ContextBar = React.createClass({
+  { displayName: "Context Sidebar"
 
-  contextTypes: { router: React.PropTypes.func }
-
-  , getInitialState: function () {
-    return ( { activeComponent: null
-             , lastComponent: null } );
+  , componentWillMount: function () {
+    EventBus.on( "showContextPanel", this.showContext );
+    EventBus.on( "hideContextPanel", this.hideContext );
   }
 
-  , popout: function () {
-    // Temporarily hard-coded to use the ContextDisks component for
-    // testing.
-    if ( this.state.activeComponent ) {
-      this.setState( { activeComponent: null } );
+  , componentWillUnmount: function () {
+    EventBus.removeListener( "showContextPanel", this.showContext );
+    EventBus.removeListener( "hideContextPanel", this.hideContext );
+  }
+
+  , getInitialState: function () {
+    return { activeComponent : null
+           , lastComponent   : null
+           };
+  }
+
+  , showContext: function ( reactElement ) {
+    if ( reactElement.displayName ) {
+      this.setState(
+        { activeComponent : reactElement
+        , lastComponent   : this.state.activeComponent
+        }
+      );
     } else {
-      this.setState( { activeComponent: ContextDisks } );
+      console.warn( "Invalid React element passed to " + this.displayName );
+      console.dir( reactElement );
+    }
+  }
+
+  , hideContext: function ( reactElement ) {
+
+    if ( this.state.activeComponent.displayName === reactElement.displayName ) {
+      this.setState(
+        { activeComponent : this.state.lastComponent
+        , lastComponent   : null
+        }
+      );
     }
   }
 
   , render: function () {
-
-    let popoutButton = null;
-    let displaySection = null;
-    let asideClass = "app-sidebar";
-
-    // Temporary hard-coded button, only visible while working in the Storage.
-    if ( _.endsWith( this.context.router.getCurrentPathname()
-                   , "storage" ) ) {
-      popoutButton = (
-      <TWBS.Button
-        onClick = { this.popout } >
-        { "Show Disks" }
-      </TWBS.Button>
-      );
-    }
+    let activeComponent = null;
 
     if ( this.state.activeComponent ) {
-      asideClass = asideClass + " context-bar-active";
-      displaySection = (
-        <this.state.activeComponent />
-      );
-    } else {
-      asideClass = asideClass + " context-bar-inactive";
+      activeComponent = <this.state.activeComponent />;
     }
 
     return (
-      <aside className = { asideClass } >
-        <TWBS.Grid>
-          <TWBS.Row>
-            <TWBS.Col xs = { 12 } >
-              { popoutButton }
-            </TWBS.Col>
-          </TWBS.Row>
-          <TWBS.Row>
-            <TWBS.Col xs = { 12 } >
-              { displaySection }
-            </TWBS.Col>
-          </TWBS.Row>
-        </TWBS.Grid>
+      <aside
+        className = { "app-sidebar" + this.state.activeComponent
+                                    ? " context-bar-active"
+                                    : " context-bar-inactive"
+                    }
+      >
+        { activeComponent }
       </aside>
     );
   }
