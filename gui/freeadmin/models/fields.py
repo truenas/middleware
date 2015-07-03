@@ -161,7 +161,10 @@ class MultiSelectField(models.Field):
             for choice in value:
                 if choice not in valid_choices:
                     raise ValidationError(
-                        self.error_messages['invalid_choice'] % choice)
+                        self.error_messages['invalid_choice'] % {
+                            'value': choice
+                        }
+                    )
 
     def contribute_to_class(self, cls, name):
         super(MultiSelectField, self).contribute_to_class(cls, name)
