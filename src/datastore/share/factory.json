@@ -690,6 +690,9 @@
 					"Label": "org.freenas.gui",
 					"StandardOutPath": "/var/log/gui.log",
                     "StandardErrorPath": "/var/log/gui.log",
+                    "EnvironmentVariables": {
+                        "NODE_PATH": "/usr/local/www/gui/node_modules"
+                    },
                     "ProgramArguments": [
                         "/usr/local/bin/node",
                         "/usr/local/www/gui/app/server.js"
