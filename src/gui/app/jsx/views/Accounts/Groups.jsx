@@ -84,19 +84,19 @@ const Groups = React.createClass(
   , componentDidMount: function () {
     GS.addChangeListener( this.handleGroupsChange );
     GM.requestGroupsList();
-    GM.subscribe( this.displayName );
+    GM.subscribe( this.constructor.displayName );
 
     US.addChangeListener( this.handleUsersChange );
     UM.requestUsersList();
-    UM.subscribe( this.displayName );
+    UM.subscribe( tthis.constructor.displayName );
   }
 
   , componentWillUnmount: function () {
     GS.removeChangeListener( this.handleGroupsChange );
-    GM.unsubscribe( this.displayName );
+    GM.unsubscribe( this.constructor.displayName );
 
     US.removeChangeListener( this.handleUsersChange );
-    UM.unsubscribe( this.displayName );
+    UM.unsubscribe( this.constructor.displayName );
   }
 
   , handleGroupsChange: function () {

@@ -35,36 +35,44 @@ var Subscriptions = React.createClass(
     }
 
   , handleMiddlewareChange: function () {
-      this.setState({
+      this.setState(
+        {
           subscriptions : SubscriptionsStore.getAllSubscriptions()
-      });
+        }
+      );
     }
 
-  , handleMaskInputChange: function( event ) {
-      this.setState({
+  , handleMaskInputChange: function ( event ) {
+      this.setState(
+        {
           subsMasks : event.target.value
-      });
+        }
+      );
     }
 
   , handleSubsSubmit: function () {
-      MiddlewareClient.subscribe( this.state.subsMasks.replace(/\s/g,"").split(","), this.displayName);
+      MiddlewareClient.subscribe
+        (  this.state.subsMasks.replace( /\s/g,"" ).split( "," )
+        , this.constructor.displayName );
     }
 
-  , createList: function( item, index ) {
+  , createList: function ( item, index ) {
       return (
         <li key={ index }>{ item }</li>
       );
     }
 
-  , createRow: function( namespace, index ) {
+  , createRow: function ( namespace, index ) {
       var listItems = [];
-      _.forEach( this.state.subscriptions[ namespace ], function ( value, key ) {
-        listItems.push(String(key).concat(" : ", value));
-      });
+      _.forEach( this.state.subscriptions[ namespace ]
+               , function ( value, key ) {
+                   listItems.push( String( key ).concat( " : ", value ) );
+                 }
+      );
       return (
         <tr key={ index }>
           <td>{ namespace }</td>
-          <td>{ _.sum(this.state.subscriptions[ namespace ]) }</td>
+          <td>{ _.sum( this.state.subscriptions[ namespace ] ) }</td>
           <td>
             <DiscTri key={ index } defaultExpanded={false}>
               <ul>{ listItems.map( this.createList ) }</ul>
@@ -84,7 +92,7 @@ var Subscriptions = React.createClass(
         var subscriptionKeys = _.sortBy(
           _.keys( this.state.subscriptions ), function ( key ) {
             return this.state.subscriptions[ key ];
-          }.bind(this)
+          }.bind( this )
         );
 
         subscriptionsContent = (
@@ -121,7 +129,8 @@ var Subscriptions = React.createClass(
             <TWBS.Row>
               <TWBS.Col xs={5}>
                 <TWBS.Input type        = "textarea"
-                            style       = {{ resize: "vertical", height: "34px" }}
+                            style       = {{ resize: "vertical"
+                                           , height: "34px" }}
                             placeholder = "Subscription Mask(s)"
                             onChange    = { this.handleMaskInputChange }
                             value       = { this.state.subsMasks } />

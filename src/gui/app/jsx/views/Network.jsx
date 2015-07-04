@@ -321,24 +321,24 @@ const Network = React.createClass({
   , componentDidMount: function () {
     NS.addChangeListener( this.onNetworkConfigChange );
     NM.requestNetworkConfig();
-    NM.subscribe( this.displayName );
+    NM.subscribe( this.constructor.displayName );
 
     IS.addChangeListener( this.onInterfaceListChange );
     IM.requestInterfacesList();
 
     SS.addChangeListener( this.onSystemGeneralConfigChange );
     SM.requestSystemGeneralConfig();
-    SM.subscribe( this.displayName );
+    SM.subscribe( this.constructor.displayName );
   }
 
   , componentWillUnmount: function () {
     NS.removeChangeListener( this.onNetworkConfigChange );
-    NM.unsubscribe( this.displayName );
+    NM.unsubscribe( this.constructor.displayName );
 
     IS.removeChangeListener( this.onInterfaceListChange );
 
     SS.removeChangeListener( this.onSystemGeneralConfigChange );
-    SM.unsubscribe( this.displayName );
+    SM.unsubscribe( this.constructor.displayName );
   }
 
   /**

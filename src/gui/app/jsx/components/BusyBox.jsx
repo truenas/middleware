@@ -58,7 +58,7 @@ var BusyBox = React.createClass(
       SessionStore.addChangeListener( this.handleSessionChange );
       PowerStore.addChangeListener( this.handlePowerChange );
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
-      PowerMiddleware.subscribe( this.displayName );
+      PowerMiddleware.subscribe( this.constructor.displayName );
       // this.updateBoxVisibility();
       // TODO: do we need the above?
     }

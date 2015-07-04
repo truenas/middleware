@@ -33,12 +33,12 @@ const ContextDisks = React.createClass(
 
   , componentDidMount () {
     DS.addChangeListener( this.handleChange );
-    DM.subscribe( this.displayName );
+    DM.subscribe( this.constructor.displayName );
     DM.requestDisksOverview();
 
     VS.addChangeListener( this.handleChange );
 
-    ZM.subscribe( this.displayName );
+    ZM.subscribe( this.constructor.displayName );
 
     ZM.requestVolumes();
     ZM.requestAvailableDisks();
@@ -46,11 +46,11 @@ const ContextDisks = React.createClass(
 
   , componentWillUnmount () {
     DS.removeChangeListener( this.handleChange );
-    DM.unsubscribe( this.displayName );
+    DM.unsubscribe( this.constructor.displayName );
 
     VS.removeChangeListener( this.handleChange );
 
-    ZM.unsubscribe( this.displayName );
+    ZM.unsubscribe( this.constructor.displayName );
   }
 
   , populateDisks () {

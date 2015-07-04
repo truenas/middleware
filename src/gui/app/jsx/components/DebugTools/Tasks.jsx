@@ -163,7 +163,7 @@ var Tasks = React.createClass(
     }
 
   , componentDidMount: function () {
-      TasksMiddleware.subscribe( this.displayName );
+      TasksMiddleware.subscribe( this.constructor.displayName );
       TasksStore.addChangeListener( this.handleMiddlewareChange );
 
       var totalLength = 0;
@@ -177,7 +177,7 @@ var Tasks = React.createClass(
 
   , componentWillUnmount: function () {
       TasksStore.removeChangeListener( this.handleMiddlewareChange );
-      TasksMiddleware.unsubscribe( this.displayName );
+      TasksMiddleware.unsubscribe( this.constructor.displayName );
     }
 
   , handleMiddlewareChange: function () {
