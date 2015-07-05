@@ -35,14 +35,14 @@ const Events = React.createClass(
   , componentDidMount: function () {
       MiddlewareStore.addChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.subscribe( [ "task.*", "system.*" ]
-                                , this.displayName
+                                , this.constructor.displayName
                                 );
     }
 
   , componentWillUnmount: function () {
       MiddlewareStore.removeChangeListener( this.handleMiddlewareChange );
       MiddlewareClient.unsubscribe( [ "task.*", "system.*" ]
-                                  , this.displayName
+                                  , this.constructor.displayName
                                   );
     }
 
