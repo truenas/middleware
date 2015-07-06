@@ -564,39 +564,39 @@ are described in Table 8.1f.
 
 **Table 8.1f: Disk Options**
 
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| **Setting**                                            | **Value**      | **Description**                                                                                                      |
-|                                                        |                |                                                                                                                      |
-+========================================================+================+======================================================================================================================+
-| Name                                                   | string         | read-only value showing FreeBSD device name for disk                                                                 |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Serial                                                 | string         | read-only value showing the disk's serial number                                                                     |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Description                                            | string         | optional                                                                                                             |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| HDD Standby                                            | drop-down menu | indicates the time of inactivity (in minutes) before the drive enters standby mode in order to conserve energy; this |
-|                                                        |                | `forum post <http://forums.freenas.org/showthread.php?2068-How-to-find-out-if-a-drive-is-spinning-down-properly>`__  |
-|                                                        |                | demonstrates how to determine if a drive has spun down                                                               |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Advanced Power Management                              | drop-down menu | default is *Disabled*, can select a power management profile from the menu                                           |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Acoustic Level                                         | drop-down menu | default is *Disabled*; can be modified for disks that understand                                                     |
-|                                                        |                | `AAM <http://en.wikipedia.org/wiki/Automatic_acoustic_management>`_                                                  |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Enable S.M.A.R.T.                                      | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured                  |
-|                                                        |                | :ref:`S.M.A.R.T. Tests` for the disk                                                                                 |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| S.M.A.R.T. extra options                               | string         | additional `smartctl(8) <http://smartmontools.sourceforge.net/man/smartctl.8.html>`_                                 |
-|                                                        |                | options                                                                                                              |
-|                                                        |                |                                                                                                                      |
-+--------------------------------------------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| **Setting**                                            | **Value**      | **Description**                                                                                                         |
+|                                                        |                |                                                                                                                         |
++========================================================+================+=========================================================================================================================+
+| Name                                                   | string         | read-only value showing FreeBSD device name for disk                                                                    |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| Serial                                                 | string         | read-only value showing the disk's serial number                                                                        |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| Description                                            | string         | optional                                                                                                                |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| HDD Standby                                            | drop-down menu | indicates the time of inactivity (in minutes) before the drive enters standby mode in order to conserve energy; this    |
+|                                                        |                | `forum post <https://forums.freenas.org/index.php?threads/how-to-find-out-if-a-drive-is-spinning-down-properly.2068/>`_ |
+|                                                        |                | demonstrates how to determine if a drive has spun down                                                                  |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| Advanced Power Management                              | drop-down menu | default is *Disabled*, can select a power management profile from the menu                                              |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| Acoustic Level                                         | drop-down menu | default is *Disabled*; can be modified for disks that understand                                                        |
+|                                                        |                | `AAM <https://en.wikipedia.org/wiki/Automatic_acoustic_management>`_                                                    |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| Enable S.M.A.R.T.                                      | checkbox       | enabled by default if the disk supports S.M.A.R.T.; unchecking this box will disable any configured                     |
+|                                                        |                | :ref:`S.M.A.R.T. Tests` for the disk                                                                                    |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
+| S.M.A.R.T. extra options                               | string         | additional `smartctl(8) <http://linux.die.net/man/8/smartctl>`_                                                         |
+|                                                        |                | options                                                                                                                 |
+|                                                        |                |                                                                                                                         |
++--------------------------------------------------------+----------------+-------------------------------------------------------------------------------------------------------------------------+
 
 Clicking a disk's entry will also display its "Identify", "Reset LED", and "Wipe" buttons. The "Wipe" button can be used to blank a disk while providing a
 progress bar of the wipe's status. Use this option before discarding a disk.
@@ -731,9 +731,7 @@ View Multipaths
 ~~~~~~~~~~~~~~~
 
 TrueNAS® uses
-`gmultipath(8) <http://www.freebsd.org/cgi/man.cgi?query=gmultipath>`_
-to provide
-`multipath I/O <http://en.wikipedia.org/wiki/Multipath_I/O>`_
+`gmultipath(8) <http://www.freebsd.org/cgi/man.cgi?query=gmultipath>`_ to provide `multipath I/O <https://en.wikipedia.org/wiki/Multipath_I/O>`_
 support on systems containing hardware that is capable of multipath. An example would be a dual SAS expander backplane in the chassis or an external JBOD.
 
 Multipath hardware adds fault tolerance to a NAS as the data is still available even if one disk I/O path has a failure.

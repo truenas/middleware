@@ -6,7 +6,7 @@ ZFS Primer
 ZFS is an advanced, modern filesystem that was specifically designed to provide features not available in traditional UNIX filesystems. It was originally
 developed at Sun with the intent to open source the filesystem so that it could be ported to other operating systems. After the Oracle acquisition of Sun,
 some of the original ZFS engineers founded
-`OpenZFS <http://open-zfs.org>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
+`OpenZFS <http://open-zfs.org/wiki/Main_Page>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
 version numbers, OpenZFS uses feature flags. Feature flags are used to tag features with unique names in order to provide portability between OpenZFS
 implementations running on different platforms, as long as all of the feature flags enabled on the ZFS pool are supported by both platforms. TrueNAS® uses
 OpenZFS and each new version of TrueNAS® keeps up-to-date with the latest feature flags and OpenZFS bug fixes.
@@ -19,7 +19,7 @@ block(s) and all changes are made to the copy rather than to the original block(
 new copy. This means that ZFS always writes to free space and most writes will be sequential. When ZFS has direct access to disks, it will bundle multiple
 read and write requests into transactions; most filesystems can not do this as they only have access to disk blocks. A transaction either completes or fails,
 meaning there will never be a
-`write-hole <http://blogs.oracle.com/bonwick/entry/raid_z>`_  and a filesystem checker utility is not necessary. Because of the transactional design, as
+`write-hole <https://blogs.oracle.com/bonwick/entry/raid_z>`_  and a filesystem checker utility is not necessary. Because of the transactional design, as
 additional storage capacity is added it becomes immediately available for writes; to rebalance the data, one can copy it to re-write the existing data across
 all available disks. As a 128-bit filesystem, the maximum filesystem or file size is 16 exabytes.
   
@@ -60,11 +60,11 @@ configuration change fail, simply reboot and select the previous boot environmen
 system that did not include the new configuration changes.
 
 **ZFS provides a write cache** in RAM as well as a
-`ZFS Intent Log <http://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_ (ZIL). The ZIL is a temporary storage area for **synchronous** writes until they
+`ZFS Intent Log <https://blogs.oracle.com/realneel/entry/the_zfs_intent_log>`_ (ZIL). The ZIL is a temporary storage area for **synchronous** writes until they
 are written asynchronously to the ZFS pool. If the system has many synchronous writes where the integrity of the write matters, such as from a database server
 or when using NFS over ESXi, performance can be increased by adding a
 dedicated log device, or slog, using :ref:`Volume Manager`.  More detailed explanations can be found in this
-`forum post <http://forums.freenas.org/threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_ and in this
+`forum post <https://forums.freenas.org/index.php?threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_ and in this
 `blog post <http://nex7.blogspot.com/2013/04/zfs-intent-log.html>`_. A dedicated log device will have no effect on CIFS, AFP, or iSCSI as these protocols
 rarely use synchronous writes. When creating a dedicated log device, it is recommended to use a fast SSD with a supercapacitor or a bank of capacitors that
 can handle writing the contents of the SSD's RAM to the SSD. The :command:`zilstat` utility can be run from Shell to help determine if the system would

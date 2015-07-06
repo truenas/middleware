@@ -224,20 +224,20 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |              | :menuselection:`System --> Advanced --> Enable Console Menu`                                                         |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
-| csh          | `C shell <http://en.wikipedia.org/wiki/C_shell>`_                                                                    |
+| csh          | `C shell <https://en.wikipedia.org/wiki/C_shell>`_                                                                   |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
-| sh           | `Bourne shell <http://en.wikipedia.org/wiki/Bourne_shell>`_                                                          |
+| sh           | `Bourne shell <https://en.wikipedia.org/wiki/Bourne_shell>`_                                                         |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
-| tcsh         | `Enhanced C shell <http://en.wikipedia.org/wiki/Tcsh>`_                                                              |
+| tcsh         | `Enhanced C shell <https://en.wikipedia.org/wiki/Tcsh>`_                                                             |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
 | nologin      | use when creating a system account or to create a user account that can authenticate with shares but which cannot    |
 |              | login to the FreeNAS system using :command:`ssh`                                                                     |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
-| bash         | `Bourne Again shell <http://en.wikipedia.org/wiki/Bash_%28Unix_shell%29>`_                                           |
+| bash         | `Bourne Again shell <https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29>`_                                          |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
 | ksh93        | `Korn shell <http://www.kornshell.com/>`_                                                                            |

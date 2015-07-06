@@ -433,7 +433,7 @@ that can be configured using the Email tab.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Use                  | checkbox             | enables/disables                                                                                |
-| SMTP                 |                      | `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                                 |
+| SMTP                 |                      | `SMTP AUTH <https://en.wikipedia.org/wiki/SMTP_Authentication>`_                                |
 | Authentication       |                      | using PLAIN SASL; if checked, input the required "Username" and "Password"                      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
@@ -503,7 +503,7 @@ Tunables
 
 Since sysctl, loader, and rc.conf values are specific to the kernel parameter to be tuned, the driver to be loaded, or the service to configure, descriptions
 and suggested values can be found in the man page for the specific driver and in many sections of the
-`FreeBSD Handbook <http://www.freebsd.org/handbook>`_.
+`FreeBSD Handbook <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/>`_.
 
 To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
 
