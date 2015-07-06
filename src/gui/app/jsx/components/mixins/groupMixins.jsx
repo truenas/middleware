@@ -14,20 +14,21 @@ import GroupsMiddleware from "../../middleware/GroupsMiddleware";
 module.exports = {
 
   componentDidMount: function () {
-      GroupsStore.addChangeListener( this.updateGroupsListInState );
-    }
+    GroupsStore.addChangeListener( this.updateGroupsListInState );
+  }
 
   , componentWillUnMount: function () {
-      GroupsStore.removeChangeListener( this.updateGroupsListInState );
-    }
+    GroupsStore.removeChangeListener( this.updateGroupsListInState );
+  }
 
   , updateGroupsListInState: function () {
-      var groupsList = GroupsStore.groups;
-      this.setState({ groupsList: groupsList});
-    }
+    var groupsList = GroupsStore.groups;
+    this.setState({ groupsList: groupsList});
+  }
 
   , deleteGroup: function () {
-      GroupsMiddleware.deleteGroup( this.props.item[ "groupID" ]
-                                  , this.returnToViewerRoot() );
-    }
+    GroupsMiddleware.deleteGroup(
+      this.props.item[ "groupID" ]
+    , this.returnToViewerRoot() );
+  }
 };
