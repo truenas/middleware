@@ -1050,7 +1050,7 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
             args = ["set", "beadm:nickname=%s" % root_env["name"]]
             RunCommand(cmd, args)
             
-            raise UpdateBootEnvironmentException("Unable to create new boot environment %s" % new_boot_nam)
+            raise UpdateBootEnvironmentException("Unable to create new boot environment %s" % new_boot_name)
         if "Restart" in changes:
             service_list = StopServices(changes["Restart"])
             
