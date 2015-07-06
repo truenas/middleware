@@ -96,9 +96,9 @@ const Events = React.createClass(
       let timestamp = null;
 
       if ( this.state.timeFormat === "human" ) {
-        timestamp = moment.unix( eventObj.args["timestamp"] ).fromNow();
+        timestamp = moment.unix( eventObj["timestamp"] ).fromNow();
       } else {
-        timestamp = moment.unix( eventObj.args["timestamp"] )
+        timestamp = moment.unix( eventObj["timestamp"] )
                           .format( "YYYY-MM-DD HH:mm:ss" );
       }
 
