@@ -8,6 +8,11 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding field 'Interfaces.int_ipv4address_b'
+        db.add_column(u'network_interfaces', 'int_ipv4address_b',
+                      self.gf('freenasUI.contrib.IPAddressField.IPAddressField')(default='', blank=True),
+                      keep_default=False)
+
         # Adding field 'Interfaces.int_vip'
         db.add_column(u'network_interfaces', 'int_vip',
                       self.gf('freenasUI.contrib.IPAddressField.IPAddressField')(null=True, blank=True),
@@ -40,6 +45,9 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Deleting field 'Interfaces.int_ipv4address_b'
+        db.delete_column(u'network_interfaces', 'int_ipv4address_b')
+
         # Deleting field 'Interfaces.int_vip'
         db.delete_column(u'network_interfaces', 'int_vip')
 
@@ -92,6 +100,7 @@ class Migration(SchemaMigration):
             'int_group': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'int_interface': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
             'int_ipv4address': ('freenasUI.contrib.IPAddressField.IPAddressField', [], {'default': "''", 'blank': 'True'}),
+            'int_ipv4address_b': ('freenasUI.contrib.IPAddressField.IPAddressField', [], {'default': "''", 'blank': 'True'}),
             'int_ipv6address': ('freenasUI.contrib.IPAddressField.IPAddressField', [], {'default': "''", 'blank': 'True'}),
             'int_ipv6auto': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'int_name': ('django.db.models.fields.CharField', [], {'max_length': "'120'"}),
