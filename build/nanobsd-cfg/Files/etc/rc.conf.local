@@ -143,8 +143,11 @@ _interface_config()
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask options; do
+		if [ "$(ha_node)" = "B" ]; then
+			ipv4addr=${ipv4addr_b}
+		fi
 		echo -n ifconfig_${interface}=\"
 		if [ "${dodhcp}" = "1" ]; then
 			echo -n "DHCP"
