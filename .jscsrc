@@ -22,7 +22,7 @@
     "disallowTrailingComma": true,
     "disallowTrailingWhitespace": true,
     "maximumLineLength": 80,
-    "requireCamelCaseOrUpperCaseIdentifiers": true,
+    "requireCamelCaseOrUpperCaseIdentifiers": "ignoreProperties",
     "requireCapitalizedConstructors": true,
     "requireCurlyBraces": [
         "if",
