@@ -245,8 +245,6 @@ _interface_config()
 			fi
 		done
 
-		echo $counter
-
 		# OLD code unused for now
 		if false; then
 			# CARP
