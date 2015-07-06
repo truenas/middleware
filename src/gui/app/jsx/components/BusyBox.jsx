@@ -127,7 +127,7 @@ var BusyBox = React.createClass(
       let retcode = MiddlewareStore.getSockState();
       this.setState({ sockState     : retcode[0]
                     , reconnetTime  : Math.round( retcode[1] / 1000 )
-      })
+      });
     }
 
   , handleUserChange: function ( event ) {
@@ -171,7 +171,10 @@ var BusyBox = React.createClass(
                 </h2>
                 <TWBS.Button block bsStyle="info"
                              onClick = {
-                               MiddlewareClient.reconnectHandle.reconnectNow.bind( MiddlewareClient.reconnectHandle ) }>
+                               MiddlewareClient
+                                .reconnectHandle
+                                .reconnectNow
+                                .bind( MiddlewareClient.reconnectHandle ) }>
                   {"Reconnect Now"}
                 </TWBS.Button>
                 <br />

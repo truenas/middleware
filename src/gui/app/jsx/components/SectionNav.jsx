@@ -26,7 +26,7 @@ const SectionNav = React.createClass(
             role = "button"
             href = "#">
             { item.display }
-          </a>
+          </a>;
       } else {
         navItem =
           <Link

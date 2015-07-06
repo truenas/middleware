@@ -23,7 +23,8 @@ class MiddlewareClientDebug extends DebugLogger {
     if ( !_.isString( namespace ) ) {
       validPack = false;
       this.warn( "packing"
-                           , prefix + `Provided namespace was not a string for request ` +
+                           , prefix +
+                           `Provided namespace was not a string for request ` +
                              `%c'${ id }'%c`
                            , [ this.DEBUGCSS.uuid, this.DEBUGCSS.normal ]
       );
@@ -140,7 +141,12 @@ class MiddlewareClientDebug extends DebugLogger {
   }
 
   logPythonTraceback ( requestID, args, originalRequest ) {
-    console.groupCollapsed( `%cRequest %c'${ requestID }'%c caused a Python traceback`, this.DEBUGCSS.error, this.DEBUGCSS.uuid, this.DEBUGCSS.error );
+    console.groupCollapsed(
+      `%cRequest %c'${ requestID }'%c caused a Python traceback`
+      , this.DEBUGCSS.error
+      , this.DEBUGCSS.uuid
+      , this.DEBUGCSS.error
+    );
     if ( originalRequest ) {
       console.groupCollapsed( "Original request" );
       console.log( originalRequest );
@@ -154,7 +160,14 @@ class MiddlewareClientDebug extends DebugLogger {
   }
 
   logErrorWithCode ( requestID, args, originalRequest ) {
-    console.groupCollapsed( "%cERROR %s: Request %c'%s'%c returned: %s", this.DEBUGCSS.error, args.code, this.DEBUGCSS.uuid, requestID, this.DEBUGCSS.error, args.message );
+    console.groupCollapsed(
+      "%cERROR %s: Request %c'%s'%c returned: %s"
+      , this.DEBUGCSS.error
+      , args.code
+      , this.DEBUGCSS.uuid
+      , requestID
+      , this.DEBUGCSS.error
+      , args.message );
     if ( originalRequest ) {
       console.groupCollapsed( "Original request" );
       console.log( originalRequest );
@@ -165,7 +178,11 @@ class MiddlewareClientDebug extends DebugLogger {
   }
 
   logErrorResponse ( requestID, args, originalRequest ) {
-    console.groupCollapsed( `%cERROR: Request %c'${ requestID }'%c returned with an error status`, this.DEBUGCSS.error, this.DEBUGCSS.uuid, this.DEBUGCSS.error );
+    console.groupCollapsed(
+      `%cERROR: Request %c'${ requestID }'%c returned with an error status`
+      , this.DEBUGCSS.error
+      , this.DEBUGCSS.uuid
+      , this.DEBUGCSS.error );
     if ( originalRequest ) {
       console.groupCollapsed( "Original request" );
       console.log( originalRequest );

@@ -56,7 +56,7 @@ class DebugLogger {
 
       } else if ( _.isString( css ) && this.DEBUGCSS[ css ] ) {
 
-        output.push( this.DEBUGCSS[ css ] )
+        output.push( this.DEBUGCSS[ css ] );
 
       }
     }
@@ -86,25 +86,25 @@ class DebugLogger {
 
   // Shortcut methods aliasing write(). Reduces clutter in calls.
   dir () {
-    this.write( "dir", ...arguments )
+    this.write( "dir", ...arguments );
   }
   error () {
-    this.write( "error", ...arguments )
+    this.write( "error", ...arguments );
   }
   info () {
-    this.write( "info", ...arguments )
+    this.write( "info", ...arguments );
   }
   log () {
-    this.write( "log", ...arguments )
+    this.write( "log", ...arguments );
   }
   table () {
-    this.write( "table", ...arguments )
+    this.write( "table", ...arguments );
   }
   trace () {
-    this.write( "trace", ...arguments )
+    this.write( "trace", ...arguments );
   }
   warn () {
-    this.write( "warn", ...arguments )
+    this.write( "warn", ...arguments );
   }
 
   group ( type, flag, heading, contents, css ) {

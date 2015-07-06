@@ -83,7 +83,7 @@ function ReconnectTimer ( doAfter, delay ) {
   };
 
   this.isRunning = function ( ) {
-    if ( remaining === 0 ) { running = false };
+    if ( remaining === 0 ) { running = false; };
     return running;
   };
 

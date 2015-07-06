@@ -11,7 +11,7 @@
 class MiddlewareAbstract {
   constructor () {
     throw Error( "Middleware Utility Classes should not be constructed by "
-               + "`new`. Call the static methods of this class instead." )
+               + "`new`. Call the static methods of this class instead." );
   }
 }
 

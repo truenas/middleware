@@ -139,7 +139,7 @@ const Viewer = React.createClass(
                       let searchTarget = "";
 
                       for ( let key of this.props.searchKeys ) {
-                        searchTarget += Boolean( item[ key ] )
+                        searchTarget += Boolean( item[ key ] );
                       }
 
                       return (

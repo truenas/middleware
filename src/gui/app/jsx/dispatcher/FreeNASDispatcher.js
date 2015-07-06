@@ -45,24 +45,27 @@ class FreeNASDispatcher extends Dispatcher {
   }
 
   handleMiddlewareAction ( action ) {
-    this.dispatchQueue.push({
-        source : PayloadSources["MIDDLEWARE_ACTION"]
+    this.dispatchQueue.push(
+      { source : PayloadSources["MIDDLEWARE_ACTION"]
       , action : action
-    });
+      }
+    );
   }
 
   handleMiddlewareLifecycle ( action ) {
-    this.dispatchQueue.push({
-        source : PayloadSources["MIDDLEWARE_LIFECYCLE"]
+    this.dispatchQueue.push(
+      { source : PayloadSources["MIDDLEWARE_LIFECYCLE"]
       , action : action
-    });
+      }
+    );
   }
 
   handleClientAction ( action ) {
-    this.dispatchQueue.push({
-        source : PayloadSources["CLIENT_ACTION"]
+    this.dispatchQueue.push(
+      { source : PayloadSources["CLIENT_ACTION"]
       , action : action
-    });
+      }
+    );
   }
 
 }

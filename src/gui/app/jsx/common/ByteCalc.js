@@ -135,13 +135,13 @@ class ByteCalc {
     if ( format === "METRIC" ) {
       base = 1000;
     } else if ( format === "IEC" ) {
-      base = 1024
+      base = 1024;
     }
 
     if ( exponent > 0 ) {
       return Number( quantity ) * Math.pow( base, exponent );
     } else {
-      return Number( quantity )
+      return Number( quantity );
     }
   }
 

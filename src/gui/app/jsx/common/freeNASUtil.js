@@ -24,7 +24,7 @@ freeNASUtil.generateUUID = function ( ) {
 
 freeNASUtil.getStackTrace = function ( e ) {
   let callstack = [];
-  if ( e.toString() ) { callstack.push( e.toString() ) }
+  if ( e.toString() ) { callstack.push( e.toString() ); }
   if ( e.stack ) {
     let lines = e.stack.split( "\n" );
     for ( let i = 0, len = lines.length; i < len; i++ ) {
