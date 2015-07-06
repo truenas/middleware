@@ -48,7 +48,7 @@ const DragDropGrid = React.createClass({
   }
 
   , getInitialState: function () {
-    return { movementMode: false }
+    return { movementMode: false };
   }
 
   ,  componentDidMount: function () {
@@ -407,7 +407,7 @@ const DragDropGrid = React.createClass({
         widgetMeta[Widget.props.id] = {};
         widgetMeta[Widget.props.id].position = widgetPosition;
         widgetMeta[Widget.props.id].size = dimensions;
-      }.bind( this ) )
+      }.bind( this ) );
 
 
       this.setState({
@@ -434,10 +434,10 @@ const DragDropGrid = React.createClass({
                             Widget.props.id )
                                                         ? true
                                                         : false )
-          })
-        }.bind( this ) )
+          });
+        }.bind( this ) );
       } else {
-        return ( <div></div> )
+        return ( <div></div> );
       }
 
     }
