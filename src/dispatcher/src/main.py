@@ -979,15 +979,19 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         return event
 
     def logout(self, reason):
+        args = {
+            "reason": reason,
+        }
         self.send_json({
             "namespace": "events",
             "name": "logout",
+            "timestamp": time.time(),
             "id": None,
-            "args": {
-                "reason": reason
-            }
+            "args": args
         })
-
+        # Delete the token at logout since otherwise
+        # the reconnect will just log the session back in
+        self.dispatcher.token_store.revoke_token(self.token)
         self.ws.close()
 
     def call_client_sync(self, method, *args, **kwargs):
