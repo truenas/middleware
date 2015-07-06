@@ -26,7 +26,9 @@
 #####################################################################
 
 
-from namespace import Namespace, EntityNamespace, RpcBasedLoadMixin, Command, description
+import copy
+from namespace import ConfigNamespace, EntityNamespace, RpcBasedLoadMixin, Command, description
+from output import ValueType
 
 
 class ServiceManageCommand(Command):
@@ -68,6 +70,9 @@ class ServicesNamespace(RpcBasedLoadMixin, EntityNamespace):
         self.primary_key = self.get_mapping('name')
         self.allow_edit = False
         self.allow_creation = False
+        self.entity_namespaces = lambda this: [
+            ServiceConfigNamespace('config', context, this)
+        ]
         self.entity_commands = lambda this: {
             'start': ServiceManageCommand(this, 'START'),
             'stop': ServiceManageCommand(this, 'STOP'),
@@ -76,9 +81,25 @@ class ServicesNamespace(RpcBasedLoadMixin, EntityNamespace):
         }
 
 
-class ServiceConfigNamespace(Namespace):
-    pass
+class ServiceConfigNamespace(ConfigNamespace):
+    def __init__(self, name, context, parent):
+        super(ServiceConfigNamespace, self).__init__(name, context)
+        self.parent = parent
 
+        self.add_property(
+            descr='Enabled',
+            name='enable',
+            get='enable',
+            list=True,
+            type=ValueType.BOOLEAN
+        )
+
+    def load(self):
+        self.entity = self.context.call_sync('services.get_service_config', self.parent.entity['name'])
+        self.orig_entity = copy.deepcopy(self.entity)
+
+    def save(self):
+        return self.context.submit_task('service.configure', self.parent.entity['name'], self.get_diff())
 
 def _init(context):
     context.attach_namespace('/', ServicesNamespace('services', context))
