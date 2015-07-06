@@ -29,15 +29,9 @@ NO_SYNC_MAP = {
         'fields': ['ad_netbiosname'],
     },
     'network_alias': {},
-    'network_carp': {
-        'fields': ['carp_skew'],
-    },
     'network_globalconfiguration': {
         'fields': ['gc_hostname'],
     },
-    'network_interfaces': {},
-    'network_lagginterface': {},
-    'network_lagginterfacemembers': {},
     'services_ssh': {
         'fields': [
             'ssh_host_dsa_key',
