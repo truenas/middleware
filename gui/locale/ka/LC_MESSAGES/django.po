@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-06-24 09:18+0000\n"
+"PO-Revision-Date: 2015-07-03 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ka\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1435137495.0\n"
+"X-POOTLE-MTIME: 1435915003.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11638,4 +11638,10 @@ msgstr ""
 
 #: sharing/forms.py:465
 msgid "A mountpoint with this path is already in use by another share."
+msgstr ""
+
+#: storage/forms.py:441
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
