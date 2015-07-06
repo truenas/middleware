@@ -12020,3 +12020,9 @@ msgstr "VLAN"
 #, fuzzy
 msgid "A mountpoint with this path is already in use by another share."
 msgstr "شبکه %s درحال استفاده بر روی کارت شبکه دیگیری است"
+
+#: storage/forms.py:441
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisting of %(vdevnum)s device(s)"
+msgstr ""

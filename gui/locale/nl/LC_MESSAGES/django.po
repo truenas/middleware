@@ -12698,3 +12698,13 @@ msgstr "VLAN-ID"
 #: sharing/forms.py:465
 msgid "A mountpoint with this path is already in use by another share."
 msgstr "Er wordt al een koppelpunt met dit pad door een andere share gebruikt."
+
+#: storage/forms.py:441
+#, fuzzy
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisting of %(vdevnum)s device(s)"
+msgstr ""
+"U probeert een virtueel apparaat dat uit %(addnum)s apparaten bestaat toe te "
+"voegen in een pool die een virtueel apparaat bevat dat uit %(vdevnum)s "
+"apparaten bestond"
