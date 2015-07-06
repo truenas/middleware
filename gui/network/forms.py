@@ -68,11 +68,20 @@ class InterfacesForm(ModelForm):
             del self.fields['int_skew']
             del self.fields['int_critical']
             del self.fields['int_group']
+            del self.fields['int_ipv4address_b']
+
+        self._node = None
+        if hasattr(notifier, 'failover_status'):
+            self._node = notifier().failover_node()
+            if self._node == 'A':
+                del self.fields['int_ipv4address_b']
+            elif self._node == 'B':
+                del self.fields['int_ipv4address']
 
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", '
-            '"id_int_v4netmaskbit"]);')
+            '"id_int_ipv4address_b", "id_int_v4netmaskbit"]);')
         self.fields['int_ipv6auto'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_ipv6auto", '
             '["id_int_ipv6address", "id_int_v6netmaskbit"]);')
@@ -89,8 +98,12 @@ class InterfacesForm(ModelForm):
             if self.instance.int_ipv6auto:
                 ipv6auto = True
         if dhcp:
-            self.fields['int_ipv4address'].widget.attrs['disabled'] = (
-                'disabled')
+            if 'int_ipv4address' in self.fields:
+                self.fields['int_ipv4address'].widget.attrs['disabled'] = (
+                    'disabled')
+            if 'int_ipv4address_b' in self.fields:
+                self.fields['int_ipv4address_b'].widget.attrs['disabled'] = (
+                    'disabled')
             self.fields['int_v4netmaskbit'].widget.attrs['disabled'] = (
                 'disabled')
         if ipv6auto:
@@ -139,10 +152,10 @@ class InterfacesForm(ModelForm):
             return self.instance.int_interface
         return self.cleaned_data.get('int_interface')
 
-    def clean_int_ipv4address(self):
-        ip = self.cleaned_data.get("int_ipv4address")
+    def _common_clean_ipv4address(self, fname):
+        ip = self.cleaned_data.get(fname)
         if ip:
-            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
+            qs = models.Interfaces.objects.filter(**{fname: ip})
             qs2 = models.Alias.objects.filter(alias_v4address=ip)
             if self.instance.id:
                 qs = qs.exclude(id=self.instance.id)
@@ -151,6 +164,12 @@ class InterfacesForm(ModelForm):
                     _("You cannot configure multiple interfaces with the same "
                         "IP address (%s)") % ip)
         return ip
+
+    def clean_int_ipv4address(self):
+        return self._common_clean_ipv4address('int_ipv4address')
+
+    def clean_int_ipv4address_b(self):
+        return self._common_clean_ipv4address('int_ipv4address_b')
 
     def clean_int_dhcp(self):
         dhcp = self.cleaned_data.get("int_dhcp")
@@ -179,7 +198,10 @@ class InterfacesForm(ModelForm):
         return ipv6auto
 
     def clean_int_v4netmaskbit(self):
-        ip = self.cleaned_data.get("int_ipv4address")
+        if self._node == 'B':
+            ip = self.cleaned_data.get("int_ipv4address_b")
+        else:
+            ip = self.cleaned_data.get("int_ipv4address")
         nw = self.cleaned_data.get("int_v4netmaskbit")
         if not nw or not ip:
             return nw
@@ -234,7 +256,12 @@ class InterfacesForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
 
-        ipv4addr = cdata.get("int_ipv4address")
+        if self._node == 'B':
+            ipv4key = 'int_ipv4address_b'
+            ipv4addr = cdata.get(ipv4key)
+        else:
+            ipv4key = 'int_ipv4address'
+            ipv4addr = cdata.get(ipv4key)
         ipv4net = cdata.get("int_v4netmaskbit")
         ipv6addr = cdata.get("int_ipv6address")
         ipv6net = cdata.get("int_v6netmaskbit")
@@ -243,8 +270,8 @@ class InterfacesForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr and not self._errors.get('int_ipv4address'):
-                self._errors['int_ipv4address'] = self.error_class([
+            if not ipv4addr and not self._errors.get(ipv4key):
+                self._errors[ipv4key] = self.error_class([
                     _("You have to specify IPv4 address as well"),
                 ])
             if not ipv4net and 'int_v4netmaskbit' not in self._errors:

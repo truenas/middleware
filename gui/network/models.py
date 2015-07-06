@@ -169,7 +169,6 @@ class Interfaces(Model):
         verbose_name=_("IPv4 Address"),
         blank=True,
         default='',
-        editable=False,
     )
     int_v4netmaskbit = models.CharField(
             max_length=3,
