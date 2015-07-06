@@ -29,6 +29,52 @@
 
 . /etc/rc.freenas
 
+HA_MODE_FILE="/tmp/.ha_mode"
+
+
+ha_mode()
+{
+	local encstat node
+
+	if [ -f ${HA_MODE_FILE} ]; then
+		cat ${HA_MODE_FILE}
+	fi
+
+	#encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
+
+	# Temporary workaround for VirtualBOX
+	encstat=$(dmidecode -s system-uuid)
+	if [ ${encstat} = "B9E1B270-1B0C-48C7-99C8-BFB965D71584" ]; then
+		encstat="Encl-A"
+	else
+		encstat="Encl-B"
+	fi
+
+	if [ $? -eq 0 ]; then
+		node=$(echo ${encstat}|awk -F "-" '{print $NF}')
+		echo "AUTOMATIC:${node}" > ${HA_MODE_FILE}
+	else
+		echo "MANUAL" > ${HA_MODE_FILE}
+	fi
+
+	cat ${HA_MODE_FILE}
+
+	return 0
+}
+
+ha_node()
+{
+
+	if ! cat ${HA_MODE_FILE} | grep -q "AUTOMATIC:"; then
+		return 1
+	fi
+
+	cat ${HA_MODE_FILE} | cut -d ":" -f 2
+
+	return 0
+
+}
+
 
 http_ssl_enabled()
 {
@@ -154,18 +200,67 @@ _interface_config()
 	done
 
 	if ! is_freenas; then
-	# CARP
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT carp_number, carp_vhid, carp_pass, int_ipv4address, carp_skew FROM network_carp a JOIN network_interfaces b ON 'carp' || a.carp_number = b.int_interface ORDER BY a.carp_number" | \
-	while read -r carp_number carp_vhid carp_pass carp_v4address carp_skew; do
-			if [ -n "${carp_pass}" ]; then
-				carp_passopt=" pass ${carp_pass}"
+
+		local node
+		local carp1_addr="169.254.0.1/32" carp2_addr="169.254.0.2/32"
+		local carp1_skew carp2_skew
+
+		if [ $(ha_mode) == "MANUAL" ]; then
+			# TODO: get from database if we are not echostream
+		else
+			node=$(ha_node)
+		fi
+
+		if [ ${node} = "A" ]; then
+			carp1_skew="20"
+			carp2_skew="80"
+		elif [ ${node} = "B" ]; then
+			carp1_skew="80"
+			carp2_skew="20"
+		else
+			echo "# Could not determine system node"
+		fi
+
+		if [ -n "${carp1_skew}" ]; then
+
+			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
+			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
+		fi
+
+		local counter=0
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_vip, int_vhid, int_pass, int_skew FROM network_interfaces WHERE int_vip IS NOT NULL AND int_vip != '' ORDER BY id" | \
+		while read int_vip int_vhid int_pass int_skew; do
+			if [ -n "${int_pass}" ]; then
+				int_passopt=" pass ${int_pass}"
 			else
-				carp_passopt=""
+				int_passopt=""
 			fi
-			echo "ifconfig_carp${carp_number}=\"vhid ${carp_vhid} advskew ${carp_skew}${carp_passopt} ${carp_v4address}/32\""
-			echo "cloned_interfaces=\"\${cloned_interfaces} carp${carp_number}\""
-	done
-	fi
+			echo "ifconfig_carp${counter}=\"vhid ${int_vhid} advskew ${int_skew}${int_passopt} ${int_vip}/32\""
+			echo "cloned_interfaces=\"\${cloned_interfaces} carp${counter}\""
+			if [ ${counter} -eq 0 ]; then
+				counter=3
+			else
+				counter=$((counter+1))
+			fi
+		done
+
+		echo $counter
+
+		# OLD code unused for now
+		if false; then
+			# CARP
+			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT carp_number, carp_vhid, carp_pass, int_ipv4address, carp_skew FROM network_carp a JOIN network_interfaces b ON 'carp' || a.carp_number = b.int_interface ORDER BY a.carp_number" | \
+			while read -r carp_number carp_vhid carp_pass carp_v4address carp_skew; do
+					if [ -n "${carp_pass}" ]; then
+						carp_passopt=" pass ${carp_pass}"
+					else
+						carp_passopt=""
+					fi
+					echo "ifconfig_carp${carp_number}=\"vhid ${carp_vhid} advskew ${carp_skew}${carp_passopt} ${carp_v4address}/32\""
+					echo "cloned_interfaces=\"\${cloned_interfaces} carp${carp_number}\""
+			done
+			fi
+		fi
 
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
