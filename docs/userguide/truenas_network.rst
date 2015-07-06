@@ -359,8 +359,7 @@ non-overlapping netmasks or configure static routes to do point-to-point communi
 
 LACP and other forms of link aggregation generally do not work well with virtualization solutions. In a virtualized environment, consider the use of iSCSI
 MPIO through the creation of iSCSI :ref:`Portals`. This allows an iSCSI initiator to recognize multiple links to a target, utilizing them for increased
-bandwidth or redundancy. This
-`how-to <http://fojta.wordpress.com/2010/04/13/iscsi-and-esxi-multipathing-and-jumbo-frames/>`_
+bandwidth or redundancy. This `how-to <https://fojta.wordpress.com/2010/04/13/iscsi-and-esxi-multipathing-and-jumbo-frames//>`_
 contains instructions for configuring MPIO on ESXi.
 
 NFS does not understand MPIO. Therefore, you will need one fast interface since creating an iSCSI portal will not improve bandwidth when using NFS. LACP does

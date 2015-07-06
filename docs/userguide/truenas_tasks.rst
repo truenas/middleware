@@ -129,7 +129,7 @@ When scheduling a script, make sure that the script is executable and has been f
 Rsync Tasks
 -----------
 
-`Rsync <http://www.samba.org/ftp/rsync/rsync.html>`_
+`Rsync <https://www.samba.org/ftp/rsync/rsync.html>`_
 is a utility that automatically copies specified data from one system to another over a network. Once the initial data is copied, rsync reduces the amount of
 data sent over the network by sending only the differences between the source and destination files. Rsync can be used for backups, mirroring data on multiple
 systems, or for copying files between systems.
@@ -148,8 +148,7 @@ TrueNAS® supports two modes of rsync operation:
 
 * **rsync module mode:** exports a directory tree, and its configured settings, as a symbolic name over an unencrypted connection. This mode requires that
   at least one module be defined on the rsync server. It can be defined in the TrueNAS® GUI under :menuselection:`Services --> Rsync --> Rsync Modules`. In
-  other operating systems, the module is defined in
-  `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_.
+  other operating systems, the module is defined in `rsyncd.conf(5) <https://www.samba.org/ftp/rsync/rsyncd.conf.html>`_.
 
 * **rsync over SSH:** synchronizes over an encrypted connection. Requires the configuration of SSH user and host public keys.
 
@@ -194,7 +193,7 @@ can be configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Remote Module Name               | string                      | only appears when using *Rsync module* mode, at least one module must be defined in       |
-|                                  |                             | `rsyncd.conf(5) <http://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                       |
+|                                  |                             | `rsyncd.conf(5) <https://www.samba.org/ftp/rsync/rsyncd.conf.html>`_                      |
 |                                  |                             | of rsync server or in the "Rsync Modules" of another                                      |
 |                                  |                             | system                                                                                    |
 |                                  |                             |                                                                                           |
@@ -256,7 +255,7 @@ can be configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Preserve extended attributes     | checkbox                    | both systems must support                                                                 |
-|                                  |                             | `extended attributes <http://en.wikipedia.org/wiki/Xattr>`_                               |
+|                                  |                             | `extended attributes <https://en.wikipedia.org/wiki/Xattr>`_                              |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Delay Updates                    | checkbox                    | when checked, the temporary file from each updated file is saved to a holding directory   |
@@ -440,7 +439,7 @@ If the message indicates a *\n* (newline character) in the key, remove the space
 S.M.A.R.T. Tests
 ----------------
 
-`S.M.A.R.T. <http://en.wikipedia.org/wiki/S.M.A.R.T.>`_
+`S.M.A.R.T. <https://en.wikipedia.org/wiki/S.M.A.R.T.>`_
 (Self-Monitoring, Analysis and Reporting Technology) is a monitoring system for computer hard disk drives to detect and report on various indicators of
 reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE, and SCSI-3 hard drives support S.M.A.R.T.--refer
 to your drive's documentation if you are unsure.
@@ -469,8 +468,7 @@ Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 | Disks             | list                      | highlight disk(s) to monitor                                                                               |
 |                   |                           |                                                                                                            |
 +-------------------+---------------------------+------------------------------------------------------------------------------------------------------------+
-| Type              | drop-down menu            | select type of test to run; see                                                                            |
-|                   |                           | `smartctl(8) <http://smartmontools.sourceforge.net/man/smartctl.8.html>`_                                  |
+| Type              | drop-down menu            | select type of test to run; see `smartctl(8) <http://linux.die.net/man/8/smartctl>`_                       |
 |                   |                           | for a description of each type of test (note that some test types will degrade performance or take disk(s) |
 |                   |                           | offline)                                                                                                   |
 |                   |                           |                                                                                                            |

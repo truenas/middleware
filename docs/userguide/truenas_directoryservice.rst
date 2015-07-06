@@ -26,7 +26,7 @@ Active Directory
 
 Active Directory (AD) is a service for sharing resources in a Windows network. AD can be configured on a Windows server that is running Windows Server 2000 or
 higher or on a Unix-like operating system that is running
-`Samba version 4 <http://wiki.samba.org/index.php/Samba4/HOWTO#Step_4:_Provision_Samba4>`_. Since AD provides authentication and authorization services for
+`Samba version 4 <https://wiki.samba.org/index.php/Samba4/HOWTO#Provisioning_The_Samba_Active_Directory>`_. Since AD provides authentication and authorization services for
 the users in a network, you do not have to recreate these user accounts on the TrueNAS® system. Instead, configure the Active Directory service so that it
 can import the account information and imported users can be authorized to access the CIFS shares on the TrueNAS® system.
 
@@ -82,8 +82,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**     |
-|                          |               | as setting an                                                                                                                              |
-|                          |               | `incorrect value can corrupt an AD installation <http://forums.freenas.org/threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
+|                          |               | as setting an incorrect value                                                                                                              |
+|                          |               | `can corrupt an AD installation <https://forums.freenas.org/index.php?threads/before-you-setup-ad-authentication-please-read.2447/>`_      |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Encryption Mode          | drop-down     | only available in "Advanced Mode"; choices are *Off*,                                                                                      |
@@ -104,7 +104,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Allow Trusted Domains    | checkbox      | only available in "Advanced Mode"; should only be enabled if network has active                                                            |
-|                          |               | `domain/forest trusts <http://technet.microsoft.com/en-us/library/cc757352%28WS.10%29.aspx>`_                                              |
+|                          |               | `domain/forest trusts <https://technet.microsoft.com/en-us/library/cc757352(WS.10).aspx>`_                                                 |
 |                          |               | and you need to manage files on multiple domains; use with caution as it will generate more winbindd traffic,                              |
 |                          |               | slowing down the ability to filter through user/group information                                                                          |
 |                          |               |                                                                                                                                            |
@@ -248,14 +248,13 @@ Troubleshooting Tips
 ~~~~~~~~~~~~~~~~~~~~
 
 If you are running AD in a 2003/2008 mixed domain, see this
-`forum post <http://forums.freenas.org/showthread.php?1931-2008R2-2003-mixed-domain>`_
+`forum post <https://forums.freenas.org/index.php?threads/2008r2-2003-mixed-domain.1931/>`_
 for instructions on how to prevent the secure channel key from becoming corrupt.
 
 Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
 :command:`host -t srv _ldap._tcp.domainname.com` command to determine the network's SRV records and, if necessary, change the weight and/or priority of the
 SRV record to reflect the fastest server. More information about SRV records can be found in the Technet article
-`How DNS  <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_
-`Support for Active Directory Works <http://technet.microsoft.com/en-us/library/cc759550%28WS.10%29.aspx>`_.
+`How DNS Support for Active Directory Works <https://technet.microsoft.com/en-us/library/cc759550(WS.10).aspx>`_.
 
 The realm that is used depends upon the priority in the SRV DNS record, meaning that DNS can override your Active Directory settings. If you are unable to
 connect to the correct realm, check the SRV records on the DNS server.

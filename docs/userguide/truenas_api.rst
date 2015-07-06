@@ -4,7 +4,7 @@
 Using the FreeNAS® API
 =======================
 
-FreeNAS® provides a `REST <http://en.wikipedia.org/wiki/Representational_state_transfer>`_ API which can be used as an alternate mechanism for remotely
+FreeNAS® provides a `REST <https://en.wikipedia.org/wiki/Representational_state_transfer>`_ API which can be used as an alternate mechanism for remotely
 controlling a TrueNAS® system.
 
 REST provides an easy-to-read, HTTP implementation of functions, known as resources, which are available beneath a specified base URL. Each resource is
