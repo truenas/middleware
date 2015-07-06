@@ -1,7 +1,8 @@
 // Middleware Flux Store
 // =====================
 // Maintain consistent information about the general state of the middleware
-// client, including which channels are connected, pending calls, and blocked operations.
+// client, including which channels are connected,
+// pending calls, and blocked operations.
 
 "use strict";
 
@@ -31,17 +32,17 @@ var _subscribed = {};
 //     <component names> : <subscribed instances>
 
 
-var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, {
+var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, (
 
-    emitChange: function () {
+  { emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
-  , addChangeListener: function( callback ) {
+  , addChangeListener: function ( callback ) {
       this.on( CHANGE_EVENT, callback );
     }
 
-  , removeChangeListener: function( callback ) {
+  , removeChangeListener: function ( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
@@ -50,15 +51,15 @@ var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, {
       return _subscribed;
     }
 
-  , getSubscriptionsByMask: function( mask ) {
+  , getSubscriptionsByMask: function ( mask ) {
       return _subscribed[ mask ];
     }
 
-  , getNumberOfSubscriptionsForMask: function( mask ) {
+  , getNumberOfSubscriptionsForMask: function ( mask ) {
       var numberSubscribed = 0;
 
       if ( _.isObject( _subscribed[ mask ] ) ) {
-        _.forEach( _subscribed[ mask ], function( subscribedData ) {
+        _.forEach( _subscribed[ mask ], function ( subscribedData ) {
           if ( typeof subscribedData === "number" ) {
             numberSubscribed += subscribedData;
           }
@@ -68,70 +69,78 @@ var SubscriptionsStore = _.assign( {}, EventEmitter.prototype, {
         return 0;
       }
     }
+  }
+) );
 
-});
+SubscriptionsStore.dispatchToken = FreeNASDispatcher.register(
+  function ( payload ) {
+    var action = payload.action;
+    var newSubscriptions = {};
 
-SubscriptionsStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
-  var action = payload.action;
-  var newSubscriptions = {};
+    switch ( action.type ) {
 
-  switch( action.type ) {
+      // Subscriptions
+      case ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS:
+        newSubscriptions = _.cloneDeep( _subscribed );
 
-    // Subscriptions
-    case ActionTypes.SUBSCRIBE_COMPONENT_TO_MASKS:
-      newSubscriptions = _.cloneDeep( _subscribed );
-
-      _.forEach( action.masks, function( mask ) {
-        if ( _.isObject( newSubscriptions[ mask ] ) ) {
-          if ( _.isNumber( newSubscriptions[ mask ][ action.componentID ] ) ) {
-            newSubscriptions[ mask ][ action.componentID ]++;
+        _.forEach( action.masks, function ( mask ) {
+          if ( _.isObject( newSubscriptions[ mask ] ) ) {
+            if ( _.isNumber(
+              newSubscriptions[ mask ][ action.componentID ] )
+            ) {
+              newSubscriptions[ mask ][ action.componentID ]++;
+            } else {
+              newSubscriptions[ mask ][ action.componentID ] = 1;
+            }
           } else {
+            newSubscriptions[ mask ] = {};
             newSubscriptions[ mask ][ action.componentID ] = 1;
           }
-        } else {
-          newSubscriptions[ mask ] = {};
-          newSubscriptions[ mask ][ action.componentID ] = 1;
-        }
-      });
+        });
 
-      _subscribed = newSubscriptions;
+        _subscribed = newSubscriptions;
 
-      SubscriptionsStore.emitChange();
-      break;
+        SubscriptionsStore.emitChange();
+        break;
 
-    case ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS:
-      newSubscriptions = _.cloneDeep( _subscribed );
+      case ActionTypes.UNSUBSCRIBE_COMPONENT_FROM_MASKS:
+        newSubscriptions = _.cloneDeep( _subscribed );
 
-      _.forEach( action.masks, function( mask ) {
-        if ( _.isObject( newSubscriptions[ mask ] ) ) {
-          if ( newSubscriptions[ mask ][ action.componentID ] <= 1 ) {
-            delete newSubscriptions[ mask ][ action.componentID ];
+        _.forEach( action.masks, function ( mask ) {
+          if ( _.isObject( newSubscriptions[ mask ] ) ) {
+            if ( newSubscriptions[ mask ][ action.componentID ] <= 1 ) {
+              delete newSubscriptions[ mask ][ action.componentID ];
+            } else {
+              newSubscriptions[ mask ][ action.componentID ]--;
+            }
           } else {
-            newSubscriptions[ mask ][ action.componentID ]--;
+            console.warn(
+              "Tried to unsubscribe from '"
+              + mask
+              + "', but Flux store shows no active subscriptions."
+            );
           }
-        } else {
-          console.warn( "Tried to unsubscribe from '" + mask + "', but Flux store shows no active subscriptions.");
-        }
 
-        if ( _.isEmpty( newSubscriptions[ mask ] ) ) {
-          delete newSubscriptions[ mask ];
-        }
-      });
+          if ( _.isEmpty( newSubscriptions[ mask ] ) ) {
+            delete newSubscriptions[ mask ];
+          }
+        });
 
-      _subscribed = newSubscriptions;
+        _subscribed = newSubscriptions;
 
-      SubscriptionsStore.emitChange();
-      break;
+        SubscriptionsStore.emitChange();
+        break;
 
-    case ActionTypes.UNSUBSCRIBE_ALL:
-      // TODO: Should this be the default?
-      _subscribed = newSubscriptions;
-      SubscriptionsStore.emitChange();
-      break;
+      case ActionTypes.UNSUBSCRIBE_ALL:
+        // TODO: Should this be the default?
+        _subscribed = newSubscriptions;
+        SubscriptionsStore.emitChange();
+        break;
 
-    default:
+      default:
       // No action
+    }
   }
-});
+);
 
 module.exports = SubscriptionsStore;

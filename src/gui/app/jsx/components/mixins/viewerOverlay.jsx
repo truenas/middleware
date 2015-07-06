@@ -2,7 +2,7 @@
 // ==================
 // Mixin for displaying the modal overlay in certain Viewer modes
 
-"use strict"
+"use strict";
 
 const ViewerModal =
   { componentDidMount: function () {

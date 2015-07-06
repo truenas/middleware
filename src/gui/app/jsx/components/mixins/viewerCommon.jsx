@@ -65,7 +65,7 @@ const ViewerCommon =
                      , "textRemaining"
                      , "textUngrouped"
                      ]
-                   )
+                   );
     }
 
   , addingEntity: function () {
@@ -88,7 +88,9 @@ const ViewerCommon =
           return _.contains( routeData["paramNames"], this.props.routeParam );
         }, this );
 
-        this.context.router.transitionTo( currentRoutes[ currentIndex - 1 ]["path"] );
+        this.context.router.transitionTo(
+          currentRoutes[ currentIndex - 1 ]["path"]
+        );
       }
     }
 

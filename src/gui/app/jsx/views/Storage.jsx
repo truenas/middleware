@@ -210,7 +210,13 @@ const Storage = React.createClass(
   }
 
   , handleVdevTypeChange ( event, volumeKey, vdevKey, newVdevType ) {
-    console.log( "handleVdevTypeChange", event, volumeKey, vdevKey, newVdevType );
+    console.log(
+      "handleVdevTypeChange"
+      , event
+      , volumeKey
+      , vdevKey
+      , newVdevType
+    );
   }
 
   , handleVolumeAdd ( event ) {

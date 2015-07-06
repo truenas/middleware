@@ -15,16 +15,16 @@ var editorUtil = exports;
 
 editorUtil.updateOverlay = React.createClass({
 
-    propTypes: {
-        updateString  : React.PropTypes.string
-      , throbberStyle : React.PropTypes.string
-      , animDuration  : React.PropTypes.number
-      , animDelay     : React.PropTypes.number
-    }
+  propTypes: {
+    updateString  : React.PropTypes.string
+    , throbberStyle : React.PropTypes.string
+    , animDuration  : React.PropTypes.number
+    , animDelay     : React.PropTypes.number
+  }
 
   , getDefaultProps: function () {
       return {
-          animDuration : 250
+        animDuration : 250
         , animDelay    : 600
       };
     }
@@ -33,7 +33,7 @@ editorUtil.updateOverlay = React.createClass({
       return { animating: false };
     }
 
-  , componentDidUpdate: function( prevProps, prevState ) {
+  , componentDidUpdate: function ( prevProps, prevState ) {
       // Using !! performs boolean type coercion
       var oldBool = !!prevProps.updateString;
       var newBool = !!this.props.updateString;
@@ -44,7 +44,7 @@ editorUtil.updateOverlay = React.createClass({
       }
     }
 
-  , updateOverlayVisibility: function( newBool ) {
+  , updateOverlayVisibility: function ( newBool ) {
       // If the new property had length, and the old one didn't (determined by
       // XOR), we know that we're going from nothing to soemthing, so we fadein.
       // The same holds true in the opposite case, causing a fadeout.
@@ -52,25 +52,25 @@ editorUtil.updateOverlay = React.createClass({
         Velocity( React.findDOMNode( this.refs["update-overlay"] )
                 , "fadeIn"
                 , {
-                      duration : this.props.animDuration
-                    , display  : "flex"
-                  }
-                );
+                  duration : this.props.animDuration
+                  , display  : "flex"
+                }
+        );
       } else {
         Velocity( React.findDOMNode( this.refs["update-overlay"] )
                 , "fadeOut"
                 , {
-                      duration : this.props.animDuration
-                    , delay    : this.props.animDelay
-                  }
-                );
+                  duration : this.props.animDuration
+                  , delay    : this.props.animDelay
+                }
+        );
       }
 
       this.setState({ animating: true });
 
-      this.animTimeout = setTimeout( function() {
+      this.animTimeout = setTimeout( function () {
           this.setState({ animating: false });
-        }.bind(this)
+        }.bind( this )
         , this.props.animDuration + this.props.animDelay + 250
       );
     }
