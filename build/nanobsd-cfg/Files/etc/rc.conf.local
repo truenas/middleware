@@ -225,6 +225,7 @@ _interface_config()
 
 			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
 			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
+			echo "cloned_interfaces=\"\${cloned_interfaces} carp1 carp2\""
 		fi
 
 		local counter=0
