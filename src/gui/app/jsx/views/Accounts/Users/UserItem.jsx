@@ -76,7 +76,7 @@ const UserItem = React.createClass(
 
         // DISPLAY COMPONENT
         var childProps = {
-            handleViewChange : this.handleViewChange
+          handleViewChange : this.handleViewChange
           , item             : this.state.targetUser
         };
 

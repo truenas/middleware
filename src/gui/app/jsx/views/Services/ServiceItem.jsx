@@ -31,13 +31,13 @@ const ServiceView = React.createClass({
       case 1:
         SM.configureService( this.props.item["name"]
                                            , { enable: command } );
-      break;
+        break;
 
-      // Start stop once
+        // Start stop once
       case 2:
         SM.updateService( this.props.item["name"]
                                            , command );
-      break;
+        break;
     }
   }
 
@@ -62,7 +62,7 @@ const ServiceView = React.createClass({
                                             , this.props.item["name"]
                                             , "STOP" ) }>
           <Icon glyph = "stop" icoSize = "3em" /></a> );
-      break;
+        break;
       case "unknown":
       case "stopped":
         startStopButton = (
@@ -70,7 +70,7 @@ const ServiceView = React.createClass({
                                             , this.props.item["name"]
                                             , "START" ) }>
           <Icon glyph = "play" icoSize = "3em" /></a> );
-      break;
+        break;
     }
 
     return (
@@ -203,11 +203,11 @@ const ServiceItem = React.createClass({
           default:
           case "view":
             DisplayComponent = <ServiceView { ...childProps } />;
-          break;
+            break;
 
           case "edit":
             // TODO
-          break;
+            break;
         }
 
       }

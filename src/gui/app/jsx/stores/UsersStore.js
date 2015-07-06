@@ -193,18 +193,29 @@ function handlePayload ( payload ) {
       if ( args[ "name" ] === UPDATE_MASK ) {
         if ( updateData[ "operation" ] === "delete" ) {
           // FIXME: Will this cause an issue if the delete is unsuccessful?
-          // This will no doubt be overriden in the new patch-based world anyway.
-          _users = _.omit (_users, updateData[ "ids" ] );
-        } else if ( updateData[ "operation" ] === "update" || updateData[ "operation" ] === "create" ) {
+          // This will no doubt be overriden
+          // in the new patch-based world anyway.
+          _users = _.omit( _users, updateData[ "ids" ] );
+        } else if (
+          updateData[ "operation" ] === "update"
+          || updateData[ "operation" ] === "create"
+        ) {
           Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
           UsersMiddleware.requestUsersList( _updatedOnServer );
-        } else {
-          // TODO: Are there any other cases?
         }
+        /*
+        // TODO: Are there any other cases?
+        else {
+        }
+        */
         this.emitChange();
 
-      // TODO: Make this more generic, triage it earlier, create ActionTypes for it
-      } else if ( args[ "name" ] === "task.updated" && args.args["state"] === "FINISHED" ) {
+      // TODO: Make this more generic,
+      // triage it earlier, create ActionTypes for it
+      } else if (
+        args[ "name" ] === "task.updated"
+        && args.args["state"] === "FINISHED"
+      ) {
         delete _localUpdatePending[ args.args["id"] ];
       }
 

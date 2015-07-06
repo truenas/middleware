@@ -65,7 +65,7 @@ const UserView = React.createClass(
         );
       }
 
-      if (this.props.item["logged-in"] ) {
+      if ( this.props.item["logged-in"] ) {
         loggedInUserAlert = (
           <TWBS.Alert bsStyle   = "info"
                       className = "text-center">
@@ -118,7 +118,7 @@ const UserView = React.createClass(
                                  entry  = { this.props.item["id"] } />
             <viewerUtil.DataCell title  = { "Primary Group" }
                                  colNum = { 3 }
-                                 entry  = { this.getGroupName(this.props.item["group"]) } />
+                                 entry  = { this.getGroupName( this.props.item["group"] ) } />
             <viewerUtil.DataCell title  = { "Shell" }
                                  colNum = { 3 }
                                  entry  = { this.props.item["shell"] } />

@@ -13,15 +13,15 @@ import GroupsMiddleware from "../../middleware/GroupsMiddleware";
 
 module.exports = {
 
-    componentDidMount: function (){
-      GroupsStore.addChangeListener(this.updateGroupsListInState);
+  componentDidMount: function () {
+      GroupsStore.addChangeListener( this.updateGroupsListInState );
     }
 
   , componentWillUnMount: function () {
-      GroupsStore.removeChangeListener(this.updateGroupsListInState);
+      GroupsStore.removeChangeListener( this.updateGroupsListInState );
     }
 
-  , updateGroupsListInState: function (){
+  , updateGroupsListInState: function () {
       var groupsList = GroupsStore.groups;
       this.setState({ groupsList: groupsList});
     }

@@ -21,7 +21,7 @@ var Subscriptions = React.createClass(
 
   , getInitialState: function () {
       return {
-          subscriptions : SubscriptionsStore.getAllSubscriptions()
+        subscriptions : SubscriptionsStore.getAllSubscriptions()
         , subsMasks     : ""
       };
     }
@@ -52,7 +52,7 @@ var Subscriptions = React.createClass(
 
   , handleSubsSubmit: function () {
       MiddlewareClient.subscribe
-        (  this.state.subsMasks.replace( /\s/g,"" ).split( "," )
+        (  this.state.subsMasks.replace( /\s/g, "" ).split( "," )
         , this.constructor.displayName );
     }
 

@@ -15,29 +15,29 @@ var _updateData = {};
 
 var UpdateStore = _.assign( {}, EventEmitter.prototype, {
 
-    emitChange: function(changeType) {
+  emitChange: function ( changeType ) {
       this.emit( CHANGE_EVENT );
     }
 
-  , addChangeListener: function( callback ) {
+  , addChangeListener: function ( callback ) {
       this.on( CHANGE_EVENT, callback );
     }
 
-  , removeChangeListener: function( callback ) {
+  , removeChangeListener: function ( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
-  , getUpdate: function(name) {
+  , getUpdate: function ( name ) {
       return _updateData[name];
     }
 
 
 });
 
-UpdateStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+UpdateStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
   var action = payload.action;
 
-  switch( action.type ) {
+  switch ( action.type ) {
 
     case ActionTypes.RECEIVE_UPDATE_DATA:
       _updateData[action.updateInfoName] = action.updateInfo;
@@ -45,7 +45,7 @@ UpdateStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       break;
 
     default:
-      // No action
+    // No action
   }
 });
 

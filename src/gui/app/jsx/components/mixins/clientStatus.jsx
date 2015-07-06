@@ -10,7 +10,7 @@ import SessionStore from "../../stores/SessionStore";
 
 module.exports = {
 
-    getInitialState: function () {
+  getInitialState: function () {
         return {
           SESSION_AUTHENTICATED: SessionStore.getLoginStatus()
         };
