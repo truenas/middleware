@@ -40,7 +40,7 @@ Users are welcome to network on the FreeNAS® social media sites:
 
 * `Facebook <https://www.facebook.com/freenascommunity>`_
 
-* `Twitter <http://twitter.com/freenasteam>`_
+* `Twitter <https://twitter.com/freenasteam>`_
 
 
 .. index:: Forums
@@ -55,72 +55,71 @@ category to browse through the threads that exist for that topic.
 
 The following categories are available under **Forum Information:**
 
-* `Forum Guidelines <http://forums.freenas.org/forums/forum-guidelines-read-before-posting.26/>`_: read this first before creating a forum post.
+* `Forum Guidelines <https://forums.freenas.org/index.php?forums/forum-guidelines-read-before-posting.26/>`_: read this first before creating a forum post.
 
-* `Announcements <http://forums.freenas.org/forums/announcements.27/>`_: subscribe to this forum if you wish to receive announcements about new FreeNAS®
+* `Announcements <https://forums.freenas.org/index.php?forums/announcements.27/>`_: subscribe to this forum if you wish to receive announcements about new FreeNAS®
   versions and features.
 
 The following categories are available under **Help and Support:**
 
-* `New to FreeNAS? <http://forums.freenas.org/forumdisplay.php?5-FreeNAS-4-N00bs>`_: post here if you are new to FreeNAS® and are unsure which category best
+* `New to FreeNAS? <https://forums.freenas.org/index.php?forums/new-to-freenas.5/>`_: post here if you are new to FreeNAS® and are unsure which category best
   matches your question.
 
-* `Feature Requests <http://forums.freenas.org/forumdisplay.php?6-Feature-Requests>`_: for the discussion of upcoming features.
+* `Feature Requests <https://forums.freenas.org/index.php?forums/feature-requests.6/>`_: for the discussion of upcoming features.
 
-* `Bug Reporting <http://forums.freenas.org/forumdisplay.php?7-Bug-Reporting>`_: use this forum if you think you have found a bug in FreeNAS® and want to
+* `Bug Reporting <https://forums.freenas.org/index.php?forums/bug-reporting.7/>`_: use this forum if you think you have found a bug in FreeNAS® and want to
   discuss it before creating a support ticket.
 
-* `Hardware <http://forums.freenas.org/forumdisplay.php?18-Hardware>`__: for the discussion of hardware and tips for getting the most out of your hardware.
+* `Hardware <https://forums.freenas.org/index.php?forums/hardware.18/>`_: for the discussion of hardware and tips for getting the most out of your hardware.
 
-* `User Authentication <http://forums.freenas.org/forumdisplay.php?19-User-Authentication>`_: LDAP and Active Directory.
+* `User Authentication <https://forums.freenas.org/index.php?forums/user-authentication.19/>`_: LDAP and Active Directory.
 
-* `Sharing <http://forums.freenas.org/forumdisplay.php?20-Sharing>`_: AFP, CIFS, NFS, and iSCSI.
+* `Sharing <https://forums.freenas.org/index.php?forums/sharing.20/>`_: AFP, CIFS, NFS, and iSCSI.
 
-* `Storage <http://forums.freenas.org/forumdisplay.php?21-Storage>`_: replication, snapshots, volumes, and ZFS.
+* `Storage <https://forums.freenas.org/index.php?forums/storage.21/>`_: replication, snapshots, volumes, and ZFS.
 
-* `Networking <http://forums.freenas.org/forumdisplay.php?22-Networking>`_: networking hardware, performance, link aggregation, VLANs, DDNS, FTP, SNMP, SSH,
+* `Networking <https://forums.freenas.org/index.php?forums/networking.22/>`_: networking hardware, performance, link aggregation, VLANs, DDNS, FTP, SNMP, SSH,
   and TFTP.
 
-* `Installation <http://forums.freenas.org/forumdisplay.php?32-Installation>`__: installing help or advice before performing the installation.
+* `Installation <https://forums.freenas.org/index.php?forums/installation.32/>`_: installing help or advice before performing the installation.
 
-* `Plugins <http://forums.freenas.org/forumdisplay.php?34-Plugins>`_: provides a discussion area for creating and troubleshooting PBIs.
+* `Plugins <https://forums.freenas.org/index.php?forums/plugins.34/>`_: provides a discussion area for creating and troubleshooting PBIs.
 
 The following categories are available under **Development:**
 
-* `FreeNAS <http://forums.freenas.org/forumdisplay.php?9-FreeNAS>`_: general development discussion.
+* `FreeNAS <https://forums.freenas.org/index.php?forums/freenas.9/>`_: general development discussion.
 
-* `nanobsd <http://forums.freenas.org/forumdisplay.php?10-nanobsd>`_: the embedded operating system FreeNAS® is based upon.
+* `nanobsd <https://forums.freenas.org/index.php?forums/nanobsd.10/>`_: the embedded operating system FreeNAS® is based upon.
 
-* `Django <http://forums.freenas.org/forumdisplay.php?11-Django>`_: the web framework used by the FreeNAS® graphical administrative interface.
+* `Django <https://forums.freenas.org/index.php?forums/django.11/>`_: the web framework used by the FreeNAS® graphical administrative interface.
 
-* `Dojo Toolkit <http://forums.freenas.org/forumdisplay.php?12-Dojo-Toolkit>`_: the javascript toolkit used to create widgets and handle client side
+* `Dojo Toolkit <https://forums.freenas.org/index.php?forums/dojo-toolkit.12/>`_: the javascript toolkit used to create widgets and handle client side
   processing.
 
 The following categories are available under **How-To Guides:**
 
-* `Hacking <http://forums.freenas.org/forumdisplay.php?14-Hacking>`_: undocumented tricks for getting the most out of your FreeNAS® system.
+* `Hacking <https://forums.freenas.org/index.php?forums/hacking.14/>`_: undocumented tricks for getting the most out of your FreeNAS® system.
 
-* `Installation <http://forums.freenas.org/forumdisplay.php?15-Installation>`__: specific installation scenarios (hardware and/or software).
+* `Installation <https://forums.freenas.org/index.php?forums/installation.15/>`_: specific installation scenarios (hardware and/or software).
 
-* `Configuration <http://forums.freenas.org/forumdisplay.php?16-Configuration>`_: specific configuration scenarios (e.g. software or client configuration).
+* `Configuration <https://forums.freenas.org/index.php?forums/configuration.16/>`_: specific configuration scenarios (e.g. software or client configuration).
 
-* `Hardware <http://forums.freenas.org/forumdisplay.php?17-Hardware>`__: instructions for setting up specific hardware.
+* `Hardware <https://forums.freenas.org/index.php?forums/hardware.17/>`_: instructions for setting up specific hardware.
 
-* `Useful Scripts <http://forums.freenas.org/index.php?forums/useful-scripts.47/>`_: user-contributed scripts.
+* `Useful Scripts <https://forums.freenas.org/index.php?forums/useful-scripts.47/>`_: user-contributed scripts.
 
 If you are looking for tips on how to test and increase the performance of your system, check out the
-`Performance <http://forums.freenas.org/forumdisplay.php?37-Performance>`_
-forum.
+`Performance <https://forums.freenas.org/index.php?forums/performance.37/>`_ forum.
 
 The following categories are available under **Community Forum:**
 
-* `Off-topic <http://forums.freenas.org/forumdisplay.php?23-Off-topic>`_: want to discuss something of interest to FreeNAS® users but which is not
+* `Off-topic <https://forums.freenas.org/index.php?forums/off-topic.23/>`_: want to discuss something of interest to FreeNAS® users but which is not
   necessarily related to FreeNAS®? This is your place.
 
-* `Resources <http://forums.freenas.org/forumdisplay.php?24-Resources>`_: blogs, reviews, and other sources of FreeNAS® information not listed at
-  `freenas.org <http://freenas.org/>`_.
+* `Resources <https://forums.freenas.org/index.php?forums/resources.24/>`_: blogs, reviews, and other sources of FreeNAS® information not listed at
+  `freenas.org <http://www.freenas.org/>`_.
 
-* `Introductions <http://forums.freenas.org/forumdisplay.php?25-Introductions>`_: FreeNAS® Community meet 'n greet - introduce yourself and let us know who
+* `Introductions <https://forums.freenas.org/index.php?forums/introductions.25/>`_: FreeNAS® Community meet 'n greet - introduce yourself and let us know who
   we are chatting with.
 
 The following language-specific categories are available under **International**, allowing FreeNAS® users to interact with each other in their native

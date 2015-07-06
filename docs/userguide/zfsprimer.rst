@@ -6,7 +6,7 @@ ZFS Primer
 ZFS is an advanced, modern filesystem that was specifically designed to provide features not available in traditional UNIX filesystems. It was originally
 developed at Sun with the intent to open source the filesystem so that it could be ported to other operating systems. After the Oracle acquisition of Sun,
 some of the original ZFS engineers founded
-`OpenZFS < http://open-zfs.org/wiki/Main_Page>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
+`OpenZFS <http://open-zfs.org/wiki/Main_Page>`_ in order to provided continued, collaborative development of the open source version. To differentiate itself from Oracle ZFS
 version numbers, OpenZFS uses feature flags. Feature flags are used to tag features with unique names in order to provide portability between OpenZFS
 implementations running on different platforms, as long as all of the feature flags enabled on the ZFS pool are supported by both platforms. FreeNAS® uses
 OpenZFS and each new version of FreeNAS® keeps up-to-date with the latest feature flags and OpenZFS bug fixes.

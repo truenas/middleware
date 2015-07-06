@@ -27,7 +27,7 @@ The following types of shares and services are available:
   it may require the installation or configuration of client software on the desktop.
   
 * :ref:`WebDAV Shares`: this type of share is accessible using an authenticated web browser (read-only) or
-  `WebDAV client <http://en.wikipedia.org/wiki/WebDAV#Clients>`_ running on any operating system.
+  `WebDAV client <https://en.wikipedia.org/wiki/WebDAV#Clients>`_ running on any operating system.
 
 * :ref:`Windows (CIFS) Shares`: the Common Internet File System (CIFS) type of share is accessible by Windows, Mac OS X, Linux, and BSD computers, but it is
   slower than an NFS share due to the single-threaded design of Samba. It provides more configuration options than NFS and is a good choice on a network
@@ -38,11 +38,10 @@ The following types of shares and services are available:
   as VMware.
 
 If you are looking for a solution that allows fast access from any operating system, consider configuring the :ref:`FTP` service instead of a share and use a
-cross-platform FTP and file manager client application such as
-`Filezilla <http://filezilla-project.org/>`_. Secure FTP can be configured if the data needs to be encrypted.
+cross-platform FTP and file manager client application such as `Filezilla <https://filezilla-project.org/>`_. Secure FTP can be configured if the data needs to be encrypted.
 
 If data security is a concern and your network's users are familiar with SSH command line utilities or
-`WinSCP <http://winscp.net/>`_, consider configuring the :ref:`SSH` service instead of a share. It will be slower than unencrypted FTP due to the overhead of
+`WinSCP <http://winscp.net/eng/index.php>`_, consider configuring the :ref:`SSH` service instead of a share. It will be slower than unencrypted FTP due to the overhead of
 encryption, but the data passing through the network will be encrypted.
 
 .. note:: while the GUI will let you do it, it is a bad idea to share the same volume or dataset using multiple types of access methods. Different types of
@@ -487,9 +486,6 @@ From Microsoft
 Windows systems can connect to NFS shares using Services for NFS (refer to the documentation for your version of Windows for instructions on how to find,
 activate, and use this service) or a third-party NFS client.
 
-Instructions for connecting from an Enterprise version of Windows 7 can be found at
-`Mount Linux NFS Share on Windows 7 <http://www.hackourlife.com/mount-linux-nfs-share-on-windows-7/>`_.
-
 `Nekodrive <http://code.google.com/p/nekodrive/downloads/list>`_
 provides an open source graphical NFS client. To use this client, you will need to install the following on the Windows system:
 
@@ -498,7 +494,7 @@ provides an open source graphical NFS client. To use this client, you will need 
 
 * NFSClient and NFSLibrary from the Nekodrive download page; once downloaded, extract these files using 7zip
 
-* `.NET Framework 4.0 <http://www.microsoft.com/download/en/details.aspx?id=17851>`_
+* `.NET Framework 4.0 <http://www.microsoft.com/en-us/download/details.aspx?id=17851>`_
 
 Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2c, the user has connected to the
 example :file:`/mnt/data` share of the FreeNAS® system at
@@ -633,7 +629,7 @@ to access the share. These settings are described in :ref:`WebDAV`.
 Windows (CIFS) Shares
 ---------------------
 
-FreeNAS® uses `Samba <http://samba.org/>`_ to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems
+FreeNAS® uses `Samba <https://www.samba.org/>`_ to share volumes using Microsoft's CIFS protocol. CIFS is built into the Windows and Mac OS X operating systems
 and most Linux and BSD systems pre-install the Samba client in order to provide support for CIFS. If your distro did not, install the Samba client using your
 distro's software repository.
 
@@ -977,10 +973,10 @@ The next time you access a share using Explorer, you should be prompted to authe
 Configuring Shadow Copies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`Shadow Copies <http://en.wikipedia.org/wiki/Shadow_copy>`_, also known as the Volume Shadow Copy Service (VSS) or Previous Versions, is a Microsoft service
+`Shadow Copies <https://en.wikipedia.org/wiki/Shadow_copy>`_, also known as the Volume Shadow Copy Service (VSS) or Previous Versions, is a Microsoft service
 for creating volume snapshots. Shadow copies allow you to easily restore previous versions of files from within Windows Explorer. Shadow Copy support is built
 into Vista and Windows 7. Windows XP or 2000 users need to install the
-`Shadow Copy client <http://www.microsoft.com/download/en/details.aspx?displaylang=en&id=16220>`_.
+`Shadow Copy client <http://www.microsoft.com/en-us/download/details.aspx?displaylang=en&id=16220>`_.
 
 When you create a periodic snapshot task on a ZFS volume that is configured as a CIFS share in FreeNAS®, it is automatically configured to support shadow
 copies.
@@ -1501,24 +1497,19 @@ Connecting to iSCSI
 In order to access the iSCSI target, clients will need to use iSCSI initiator software.
 
 An iSCSI Initiator client is pre-installed with Windows 7. A detailed how-to for this client can be found
-`here <http://www.windowsnetworking.com/articles_tutorials/Connecting-Windows-7-iSCSI-SAN.html>`__. A client for Windows 2000, XP, and 2003 can be found
-`here <http://www.microsoft.com/downloads/en/details.aspx?FamilyID=12cb3c1a-15d6-4585-b385-befd1319f825>`__. This
-`how-to <http://www.trainsignal.com/blog/freenas-8-iscsi-target-windows-7>`_
+`here <http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`_. A client for Windows 2000, XP, and 2003 can be found
+`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`_. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`_
 shows how to create an iSCSI target for a Windows 7 system.
 
 Mac OS X does not include an initiator.
-`globalSAN <http://www.studionetworksolutions.com/products/product_detail.php?pi=11>`_
+`globalSAN <http://www.studionetworksolutions.com/globalsan-iscsi-initiator/>`_
 is a commercial, easy-to-use Mac initiator.
 
 BSD systems provide command line initiators:
-`iscontrol(8) <http://www.freebsd.org/cgi/man.cgi?query=iscontrol>`_
-comes with FreeBSD versions 9.x and lower,
-`iscsictl(8) <https://www.freebsd.org/cgi/man.cgi?query=iscsictl>`_
-comes with FreeBSD versions 10.0 and higher,
-`iscsi-initiator(8) <http://netbsd.gw.com/cgi-bin/man-cgi?iscsi-initiator++NetBSD-current>`_
-comes with NetBSD, and
-`iscsid(8) <http://www.openbsd.org/cgi-bin/man.cgi?query=iscsid>`_
-comes with OpenBSD.
+`iscontrol(8) <http://www.freebsd.org/cgi/man.cgi?query=iscontrol>`_ comes with FreeBSD versions 9.x and lower,
+`iscsictl(8) <https://www.freebsd.org/cgi/man.cgi?query=iscsictl>`_ comes with FreeBSD versions 10.0 and higher,
+`iscsi-initiator(8) <http://netbsd.gw.com/cgi-bin/man-cgi?iscsi-initiator++NetBSD-current>`_ comes with NetBSD, and
+`iscsid(8) <http://www.openbsd.org/cgi-bin/man.cgi/OpenBSD-current/./man8/iscsid.8?query=iscsid>`_ comes with OpenBSD.
 
 Some Linux distros provide the command line utility :command:`iscsiadm` from
 `Open-iSCSI <http://www.open-iscsi.org/>`_. Use a web search to see if a package exists for your distribution should the command not exist on your Linux

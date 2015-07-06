@@ -244,7 +244,7 @@ taking longer then the default 10 seconds for the FreeNAS® system to join Activ
 Troubleshooting Tips
 ~~~~~~~~~~~~~~~~~~~~
 
-If you are running AD in a 2003/2008 mixed domain, see this `https://forums.freenas.org/index.php?threads/2008r2-2003-mixed-domain.1931/>`_
+If you are running AD in a 2003/2008 mixed domain, `refer to <https://forums.freenas.org/index.php?threads/2008r2-2003-mixed-domain.1931/>`_
 for instructions on how to prevent the secure channel key from becoming corrupt.
 
 Active Directory uses DNS to determine the location of the domain controllers and global catalog servers in the network. Use the
