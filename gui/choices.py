@@ -479,7 +479,7 @@ class IPChoices(NICChoices):
         from freenasUI.middleware.notifier import notifier
         if hasattr(notifier, 'failover_status'):
             try:
-                if notifier().failover_status() != 'SINGLE':
+                if notifier().failover_status() not in ('SINGLE', 'ERROR'):
                     self._NIClist = filter(
                         lambda y: re.search(r'^carp[0,3-9]|carp\d\d+$', y),
                         self._NIClist,
