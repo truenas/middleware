@@ -99,7 +99,14 @@ class ServiceConfigNamespace(ConfigNamespace):
         self.orig_entity = copy.deepcopy(self.entity)
 
     def save(self):
-        return self.context.submit_task('service.configure', self.parent.entity['name'], self.get_diff())
+        def post_save():
+            self.modified = False
+            
+        return self.context.submit_task(
+            'service.configure',
+            self.parent.entity['name'],
+            self.get_diff(),
+            callback=lambda s: post_save())
 
 def _init(context):
     context.attach_namespace('/', ServicesNamespace('services', context))
