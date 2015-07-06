@@ -43,7 +43,7 @@ ha_mode()
 	#encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
 
 	# Temporary workaround for VirtualBOX
-	encstat=$(dmidecode -s system-uuid)
+	encstat=$(/usr/local/sbin/dmidecode -s system-uuid)
 	if [ ${encstat} = "B9E1B270-1B0C-48C7-99C8-BFB965D71584" ]; then
 		encstat="Encl-A"
 	else
@@ -202,8 +202,9 @@ _interface_config()
 	if ! is_freenas; then
 
 		local node
-		local carp1_addr="169.254.0.1/32" carp2_addr="169.254.0.2/32"
+		local carp1_addr="169.254.10.1/32" carp2_addr="169.254.10.2/32"
 		local carp1_skew carp2_skew
+		local internal_ip
 
 		if [ $(ha_mode) == "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
@@ -214,15 +215,19 @@ _interface_config()
 		if [ ${node} = "A" ]; then
 			carp1_skew="20"
 			carp2_skew="80"
+			internal_ip="169.254.10.20"
 		elif [ ${node} = "B" ]; then
 			carp1_skew="80"
 			carp2_skew="20"
+			internal_ip="169.254.10.80"
 		else
 			echo "# Could not determine system node"
 		fi
 
 		if [ -n "${carp1_skew}" ]; then
 
+			#FIXME: corrrect interface name
+			echo "ifconfig_em1=\"inet ${internal_ip}/24\""
 			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
 			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
 			echo "cloned_interfaces=\"\${cloned_interfaces} carp1 carp2\""
