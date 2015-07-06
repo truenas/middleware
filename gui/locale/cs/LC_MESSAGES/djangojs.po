@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-06-27 19:06+0000\n"
+"PO-Revision-Date: 2015-07-05 21:24+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1435432001.0\n"
+"X-POOTLE-MTIME: 1436131467.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -73,11 +73,11 @@ msgstr "Vyskytla se chyba!"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "Každé vybrané"
+msgstr "Vždy ve vybran."
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
-msgstr "Každý Ntý"
+msgstr "Vždy N."
 
 msgid "Plugins"
 msgstr "Zásuvné moduly"
@@ -106,11 +106,11 @@ msgstr "Výstražný systém"
 
 #: freeadmin/static/lib/js/freeadmin.js:239
 msgid "Enable service"
-msgstr "Povolit službu"
+msgstr "Zapnout službu"
 
 #: freeadmin/static/lib/js/freeadmin.js:994
 msgid "The cache is being rebuilt."
-msgstr "Mezipaměť je znovu vytvářena."
+msgstr "Mezipaměť je znovu vytvářena…"
 
 #: freeadmin/static/lib/js/freeadmin.js:996
 msgid "The cache could not be rebuilt: "
@@ -210,7 +210,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
-msgstr "Šifrování"
+msgstr "Šifrovat"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Initialize Safely"
@@ -226,11 +226,11 @@ msgstr "Odhadovaná kapacita"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Add Extra Device"
-msgstr "Přidat další zařízení"
+msgstr "Přidat zvlášť zařízení"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1204
 msgid "Cancel"
-msgstr "Zrušit"
+msgstr "Storno"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
@@ -239,7 +239,7 @@ msgstr "Příkazový řádek"
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
 msgid "Paste"
-msgstr "Vložit"
+msgstr "Vložit ze schránky"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
@@ -305,8 +305,8 @@ msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
-"Toto pole může obsahovat pouze písmena a číslice a dále ještě znaky: „_“, „-“"
-" a „.“."
+"Tato kolonka může obsahovat pouze písmena a číslice a dále ještě znaky: „_“ "
+"(podtržítko), „-“ (rozdělovník) a „.“ (tečka)."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
@@ -378,7 +378,7 @@ msgstr "Nainstalovat čekající aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr "Je třeba vyplnit název systému."
+msgstr "Je třeba vyplnit název stroje."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
@@ -421,11 +421,13 @@ msgstr "Ověřit neporušenost instalace"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr "Zadání hesla se neshodují."
+msgstr ""
+"Do každé z kolonek pro heslo bylo zadáno něco jiného – vyplňte je znovu a "
+"tentokrát stejně."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr "Restartování WebGUI"
+msgstr "Restartování webového správního rozhraní…"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
@@ -440,9 +442,9 @@ msgstr "<font color='red'>STOP</font>: Opravdu víte, co děláte?<br /><br />"
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
 msgstr ""
-"Zásuvný modul idmap_ad umožňuje komponentě Winbind číst mapování "
-"identifikátorů z<br />"
+"Zásuvný modul idmap_ad umožňuje komponentě Winbind číst mapování z<br />"
 
+# "identifikátorů z<br />"
 #: freeadmin/static/lib/js/freeadmin.js:1164
 msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
 msgstr ""
@@ -471,7 +473,7 @@ msgstr ""
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
 msgstr ""
-"Komponenta Winbind pouze mapuje ty uživatele, kteří mají uidNumber a jejichž "
+"Komponenta Winbind mapuje pouze ty uživatele, kteří mají uidNumber a jejichž "
 "hlavní<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
@@ -517,7 +519,7 @@ msgstr "zaregistrujte se"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr "Připojit ladící informace"
+msgstr "Připojit ladicí informace"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
@@ -525,11 +527,11 @@ msgstr "Odeslat"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr "Vyplnění tohoto políčka je vyžadováno."
+msgstr "Tuto kolonku je nutné vyplnit."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr "Nahrávání příloh na hostitele"
+msgstr "Nahrávání příloh na počítač…"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
@@ -541,15 +543,15 @@ msgstr "Odesílání hlášení…"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr "Odesílání příloh k hlášení ze systému"
+msgstr "Odesílání příloh k hlášení z počítače"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Train Descriptions"
-msgstr "Popis této řady"
+msgstr "Popis jednotlivých řad"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 msgid "Loading"
-msgstr "Načítání..."
+msgstr "Načítání…"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"

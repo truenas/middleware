@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2014-12-18 00:30+0000\n"
-"Last-Translator: Julien <j.four@live.fr>\n"
+"PO-Revision-Date: 2015-06-30 20:34+0000\n"
+"Last-Translator: bleuse <raphael@bleuse.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418862625.0\n"
+"X-POOTLE-MTIME: 1435696449.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12019,7 +12019,7 @@ msgstr "SSL"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
@@ -12356,7 +12356,7 @@ msgstr "Support des attributs étendus"
 
 #: services/models.py:1075
 msgid "MD5"
-msgstr ""
+msgstr "MD5"
 
 #: services/models.py:1076
 #, fuzzy
@@ -12952,3 +12952,12 @@ msgstr "VLAN"
 #, fuzzy
 msgid "A mountpoint with this path is already in use by another share."
 msgstr "Le réseau %s est déjà utilisé par une autre interface réseau."
+
+#: storage/forms.py:441
+#, fuzzy
+msgid ""
+"You are trying to add a virtual device consisting of %(addnum)s device(s) in "
+"a pool that has a virtual device consisting of %(vdevnum)s device(s)"
+msgstr ""
+"Vous tentez d'ajouter un dispositif virtuel (vdev) constitué de %(addnum)s "
+"dispositif(s) dans un pool constitué de %(vdevnum)s dispositif(s)"
