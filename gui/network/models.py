@@ -161,10 +161,16 @@ class Interfaces(Model):
             " as default router, etc.")
     )
     int_ipv4address = IPAddressField(
-            verbose_name=_("IPv4 Address"),
-            blank=True,
-            default='',
-            )
+        verbose_name=_("IPv4 Address"),
+        blank=True,
+        default='',
+    )
+    int_ipv4address_b = IPAddressField(
+        verbose_name=_("IPv4 Address"),
+        blank=True,
+        default='',
+        editable=False,
+    )
     int_v4netmaskbit = models.CharField(
             max_length=3,
             choices=choices.v4NetmaskBitList,
