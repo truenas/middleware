@@ -212,7 +212,7 @@ class UpdateServiceConfigTask(Task):
                 unload_service(self.dispatcher, service_def)
 
             if not previously_enabled and updated_fields['enable']:
-                unload_service(self.dispatcher, service_def)
+                load_service(self.dispatcher, service_def)
 
         self.dispatcher.dispatch_event('service.changed', {
             'operation': 'update',
