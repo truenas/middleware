@@ -16,9 +16,9 @@ var UPDATE_MASK  = [ "power.changed", "update.changed" ];
 var ongoingEvents = {};
 
 
-var PowerStore = _.assign( {}, EventEmitter.prototype, {
+var PowerStore = _.assign( {}, EventEmitter.prototype, (
 
-    emitChange: function () {
+  { emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
@@ -62,7 +62,8 @@ var PowerStore = _.assign( {}, EventEmitter.prototype, {
     return false;
   }
 
-});
+  }
+) );
 
 PowerStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
   var action = payload.action;

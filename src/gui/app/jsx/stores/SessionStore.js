@@ -10,37 +10,36 @@ import { EventEmitter } from "events";
 import FreeNASDispatcher from "../dispatcher/FreeNASDispatcher";
 import { ActionTypes } from "../constants/FreeNASConstants";
 
-var CHANGE_EVENT ="change";
+var CHANGE_EVENT = "change";
 
 var _currentUser     = "";
 var _loggedIn        = false;
 
-var SessionStore = _.assign( {}, EventEmitter.prototype, {
+var SessionStore = _.assign( {}, EventEmitter.prototype, (
 
-    emitChange: function () {
+  { emitChange: function () {
       this.emit( CHANGE_EVENT );
     }
 
-  , addChangeListener: function( callback ) {
+  , addChangeListener: function ( callback ) {
       this.on( CHANGE_EVENT, callback );
     }
 
-  , removeChangeListener: function( callback ) {
+  , removeChangeListener: function ( callback ) {
       this.removeListener( CHANGE_EVENT, callback );
     }
 
   , getCurrentUser: function () {
-      return _currentUser;
+    return _currentUser;
   }
 
   , getLoginStatus: function () {
-      return _loggedIn;
+    return _loggedIn;
   }
+  }
+) );
 
-
-});
-
-SessionStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
+SessionStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
   var action = payload.action;
 
   switch ( action.type ) {
@@ -52,8 +51,7 @@ SessionStore.dispatchToken = FreeNASDispatcher.register( function( payload ) {
       break;
 
     default:
-      //No action
-
+    // No action
 
   }
 

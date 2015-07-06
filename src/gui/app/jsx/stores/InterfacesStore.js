@@ -93,7 +93,8 @@ var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
   }
 
   /**
-   * Check if the selected interface is in the list of interfaces with pending updates.
+   * Check if the selected interface is
+   * in the list of interfaces with pending updates.
    * @param  {String} name The interface name.
    * @return {Boolean}
    */
@@ -134,53 +135,60 @@ var InterfacesStore = _.assign( {}, EventEmitter.prototype, {
 
 });
 
-InterfacesStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
-  var action = payload.action;
+InterfacesStore.dispatchToken = FreeNASDispatcher.register(
+  function ( payload ) {
+    var action = payload.action;
 
-  switch ( action.type ) {
+    switch ( action.type ) {
 
-    case ActionTypes.RECEIVE_INTERFACES_LIST:
-      var updatedInterfaceNames = _.pluck( action.rawInterfacesList, 'name' );
+      case ActionTypes.RECEIVE_INTERFACES_LIST:
+        var updatedInterfaceNames = _.pluck( action.rawInterfacesList, "name" );
 
-      if ( _updatedOnServer.length ) {
-        _updatedOnServer = _.difference( _updatedOnServer, updatedInterfaceNames );
-      }
+        if ( _updatedOnServer.length ) {
+          _updatedOnServer = _.difference(
+            _updatedOnServer
+            , updatedInterfaceNames
+          );
+        }
 
-      action.rawInterfacesList.map( function ( _interface ) {
-        _interfaces[ _interface.name ] = _interface;
-      })
+        action.rawInterfacesList.map( function ( _interface ) {
+          _interfaces[ _interface.name ] = _interface;
+        });
 
-      InterfacesStore.emitChange();
-      break;
+        InterfacesStore.emitChange();
+        break;
 
-    case ActionTypes.MIDDLEWARE_EVENT:
-      var args = action.eventData.args;
-      var updateData = args['args'];
+      case ActionTypes.MIDDLEWARE_EVENT:
+        var args = action.eventData.args;
+        var updateData = args["args"];
 
-      if ( args["name"] === UPDATE_MASK ) {
-        /*let updateData = args["args"];
+        /*
+        if ( args["name"] === UPDATE_MASK ) {
+          let updateData = args["args"];
 
-        if ( updateData ["operation"] === "update" ) {
+          if ( updateData ["operation"] === "update" ) {
 
-          // Not reall sure this is doing something useful.
-          Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
-          InterfacesMiddleware.requestInterfacesList( );
-        }*/
-      }
+            // Not reall sure this is doing something useful.
+            Array.prototype.push.apply( _updatedOnServer, updateData["ids"] );
+            InterfacesMiddleware.requestInterfacesList( );
+          }
+        }
+        */
 
-      //InterfacesStore.emitChange();
-      break;
+        // InterfacesStore.emitChange();
+        break;
 
-    case ActionTypes.RECEIVE_UP_INTERFACE_TASK:
-    case ActionTypes.RECEIVE_DOWN_INTERFACE_TASK:
-    case ActionTypes.RECEIVE_INTERFACE_CONFIGURE_TASK:
-      _localUpdatePending[ action.taskID ] = action.interfaceName;
-      InterfacesStore.emitChange();
-      break;
+      case ActionTypes.RECEIVE_UP_INTERFACE_TASK:
+      case ActionTypes.RECEIVE_DOWN_INTERFACE_TASK:
+      case ActionTypes.RECEIVE_INTERFACE_CONFIGURE_TASK:
+        _localUpdatePending[ action.taskID ] = action.interfaceName;
+        InterfacesStore.emitChange();
+        break;
 
-    default:
-    // Do nothing
+      default:
+      // Do nothing
+    }
   }
-});
+);
 
 module.exports = InterfacesStore;

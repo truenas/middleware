@@ -15,9 +15,9 @@ var _widgetData = {};
 var _dataUpdate = [];
 
 
-var StatdStore = _.assign( {}, EventEmitter.prototype, {
+var StatdStore = _.assign( {}, EventEmitter.prototype, (
 
-    emitChange: function ( changeType ) {
+  { emitChange: function ( changeType ) {
       this.emit( CHANGE_EVENT );
     }
 
@@ -37,7 +37,8 @@ var StatdStore = _.assign( {}, EventEmitter.prototype, {
       return _dataUpdate;
     }
 
-});
+  }
+) );
 
 StatdStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
   var action = payload.action;
@@ -48,20 +49,26 @@ StatdStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
       if ( action.rawWidgetData.data !== undefined ) {
         _widgetData[action.dataSourceName] = action.rawWidgetData.data;
       } else {
-        _widgetData[action.dataSourceName] = {error: true, msg: action.rawWidgetData.message};
+        _widgetData[action.dataSourceName] = (
+          { error: true
+          , msg: action.rawWidgetData.message
+          }
+        );
       }
       StatdStore.emitChange();
       break;
 
     case ActionTypes.MIDDLEWARE_EVENT:
-      if ( action.eventData.args && _.startsWith( action.eventData.args["name"], "statd." ) ) {
+      if ( action.eventData.args && _.startsWith(
+        action.eventData.args["name"], "statd." )
+      ) {
         _dataUpdate = action.eventData.args;
         StatdStore.emitChange();
       }
       break;
 
     default:
-      // No action
+    // No action
   }
 });
 
