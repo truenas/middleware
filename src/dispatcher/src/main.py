@@ -54,7 +54,8 @@ from gevent.lock import RLock
 from gevent.subprocess import Popen
 from gevent.event import AsyncResult, Event
 from gevent.wsgi import WSGIServer
-from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
+from geventwebsocket import (WebSocketServer, WebSocketApplication, Resource,
+                             WebSocketError)
 
 from datastore import get_datastore
 from datastore.config import ConfigStore
@@ -975,17 +976,25 @@ class ServerConnection(WebSocketApplication, EventEmitter):
         args = {
             "reason": reason,
         }
-        self.send_json({
-            "namespace": "events",
-            "name": "logout",
-            "timestamp": time.time(),
-            "id": None,
-            "args": args
-        })
-        # Delete the token at logout since otherwise
-        # the reconnect will just log the session back in
-        self.dispatcher.token_store.revoke_token(self.token)
-        self.ws.close()
+        try:
+            self.send_json({
+                "namespace": "events",
+                "name": "logout",
+                "timestamp": time.time(),
+                "id": None,
+                "args": args
+            })
+            # Delete the token at logout since otherwise
+            # the reconnect will just log the session back in
+            self.dispatcher.token_store.revoke_token(self.token)
+            self.ws.close()
+        except WebSocketError as werr:
+            # This error usually implies that the socket is dead
+            # so just log it and move on
+            self.dispatcher.logger.debug(
+                'Tried to logout Websocket Connection and the ' +
+                'following error occured {0}'.format(str(werr)))
+
 
     def call_client_sync(self, method, *args, **kwargs):
         timeout = kwargs.pop('timeout', None)
