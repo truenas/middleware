@@ -112,11 +112,13 @@ class WebSocketClient {
     this.socket = null;
 
     // Publically accessible reconectHandle
-    this.reconnectHandle = new ReconnectTimer ( function ( ) {
-      var protocol = ( window.location.protocol === "https:" ?
-                         "wss://" : "ws://" );
-      this.connect( protocol + document.domain + ":5000/socket" );
-    }.bind( this ) );
+    if ( typeof WebSocket !== "undefined" ) {
+      this.reconnectHandle = new ReconnectTimer ( function ( ) {
+        var protocol = ( window.location.protocol === "https:" ?
+                           "wss://" : "ws://" );
+        this.connect( protocol + document.domain + ":5000/socket" );
+      }.bind( this ) );
+    }
   }
 
 
@@ -124,7 +126,7 @@ class WebSocketClient {
   // for some reason, the existing connection should be ignored and overridden,
   // supply `true` as the `force` parameter.
   connect ( url, force ) {
-    if ( window.WebSocket ) {
+    if ( typeof WebSocket !== "undefined" ) {
       if ( !this.socket || force ) {
 
         if ( DL.reports( "connection" ) ) {
@@ -153,7 +155,7 @@ class WebSocketClient {
       }
     } else {
       // TODO: Visual error for legacy browsers with links to download others
-      DL.error( "This browser doesn't support WebSockets." );
+      DL.error( "This environment doesn't support WebSockets." );
     }
   };
 
