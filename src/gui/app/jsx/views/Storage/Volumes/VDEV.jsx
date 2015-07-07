@@ -75,7 +75,6 @@ const VDEV = React.createClass(
       // and "path" will be defined at the top level. Much of the complexity
       // in this component has to do with transitioning back and forth from
       // "disk" to other layouts.
-
       case "disk":
         memberDisks = (
           <VDEVDisk

@@ -193,7 +193,7 @@ const Storage = React.createClass(
     // This will be more sophisticated in the future.
     let newVdev = { children : []
                   , path     : null
-                  , type     : ""
+                  , type     : null
                   };
 
     if ( !newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ] ) {
