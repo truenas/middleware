@@ -166,7 +166,7 @@ class Interfaces(Model):
         default='',
     )
     int_ipv4address_b = IPAddressField(
-        verbose_name=_("IPv4 Address"),
+        verbose_name=_("IPv4 Address (Node B)"),
         blank=True,
         default='',
     )
