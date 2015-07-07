@@ -246,8 +246,6 @@ const Storage = React.createClass(
     newVolumes[ volumeKey ] = this.generateFreshVolume();
 
     this.setState( { volumes: newVolumes } );
-
-    console.log( "handleVolumeReset", event, volumeKey );
   }
 
   , handleVolumeNameChange ( volumeKey, event ) {
