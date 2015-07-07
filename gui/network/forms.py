@@ -73,10 +73,6 @@ class InterfacesForm(ModelForm):
         self._node = None
         if hasattr(notifier, 'failover_status'):
             self._node = notifier().failover_node()
-            if self._node == 'A':
-                del self.fields['int_ipv4address_b']
-            elif self._node == 'B':
-                del self.fields['int_ipv4address']
 
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
@@ -198,16 +194,11 @@ class InterfacesForm(ModelForm):
         return ipv6auto
 
     def clean_int_v4netmaskbit(self):
-        if self._node == 'B':
-            ip = self.cleaned_data.get("int_ipv4address_b")
-        else:
-            ip = self.cleaned_data.get("int_ipv4address")
+        ip = self.cleaned_data.get("int_ipv4address")
         nw = self.cleaned_data.get("int_v4netmaskbit")
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
-        if self.instance.id and self.instance.int_interface.startswith('carp'):
-            return nw
         used_networks = []
         qs = models.Interfaces.objects.all().exclude(
             int_interface__startswith='carp'
@@ -256,12 +247,8 @@ class InterfacesForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
 
-        if self._node == 'B':
-            ipv4key = 'int_ipv4address_b'
-            ipv4addr = cdata.get(ipv4key)
-        else:
-            ipv4key = 'int_ipv4address'
-            ipv4addr = cdata.get(ipv4key)
+        ipv4key = 'int_ipv4address'
+        ipv4addr = cdata.get(ipv4key)
         ipv4net = cdata.get("int_v4netmaskbit")
         ipv6addr = cdata.get("int_ipv6address")
         ipv6net = cdata.get("int_v6netmaskbit")
