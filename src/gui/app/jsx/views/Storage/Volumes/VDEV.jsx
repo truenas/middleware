@@ -113,12 +113,17 @@ const VDEV = React.createClass(
 
     if ( this.props.availableDevices && !this.props.existsOnServer ) {
       addNewDisks =
-        <select onChange= { this.props.handleDiskAdd.bind( null
-                                                         , this.props.volumeKey
-                                                         , this.props.purpose
-                                                         , this.props.vdevKey
-                                                         )
-                          } >
+        <select
+          // Reset the field to nothing selected every time so that it doesn't
+          // move to a valid option and make it impossible to select that one
+          // next.
+          value = "-- SELECT --"
+          onChange= { this.props.handleDiskAdd.bind( null
+                                                   , this.props.volumeKey
+                                                   , this.props.purpose
+                                                   , this.props.vdevKey
+                                                   )
+                    } >
           <option>{ "-- SELECT --" }</option>
           { this.props.availableDevices.map( this.createNewDeviceOptions ) }
         </select>;
