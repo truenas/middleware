@@ -117,6 +117,15 @@ class Token(object):
         self.user = kwargs.pop('user')
         self.session_id = kwargs.pop('session_id', None)
         self.lifetime = kwargs.pop('lifetime')
+        self.revocation_function = None
+        # The below is a function handler that can be passed to the Token
+        # to be executed whilst revocation of the token. Token is revoked
+        # at the end of its lifetime. It takes only one argument as of now,
+        # it being the reason for revocation. This fucntion is optional and
+        # if not speficied then defaults to this class's "revoke_token" method.
+        if 'revocation_function' in kwargs:
+            self.revocation_function = kwargs.pop('revocation_function')
+        self.revocation_reason = 'Logged out due to inactivity period'
 
 
 class ShellToken(Token):
@@ -147,7 +156,14 @@ class TokenStore(object):
         self.tokens[token_id] = token
 
         if token.lifetime:
-            token.timer = gevent.spawn_later(token.lifetime, self.revoke_token, token_id)
+            if token.revocation_function is not None:
+                token.timer = gevent.spawn_later(token.lifetime,
+                                                 token.revocation_function,
+                                                 token.revocation_reason)
+            else:
+                token.timer = gevent.spawn_later(token.lifetime,
+                                                 self.revoke_token,
+                                                 token_id)
 
         return token_id
 
@@ -158,7 +174,14 @@ class TokenStore(object):
 
         if token.lifetime:
             gevent.kill(token.timer)
-            token.timer = gevent.spawn_later(token.lifetime, self.revoke_token, token_id)
+            if token.revocation_function is not None:
+                token.timer = gevent.spawn_later(token.lifetime,
+                                                 token.revocation_function,
+                                                 token.revocation_reason)
+            else:
+                token.timer = gevent.spawn_later(token.lifetime,
+                                                 self.revoke_token,
+                                                 token_id)
 
     def lookup_token(self, token_id):
         return self.tokens.get(token_id)
