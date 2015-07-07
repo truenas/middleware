@@ -68,6 +68,7 @@ const Storage = React.createClass(
 
   , handleDiskAdd ( volumeKey, vdevPurpose, vdevKey, event ) {
 
+    let newSelectedDisks = null;
     let newVolumes = this.state[ "volumes" ];
     let newVdev = this.state[ "volumes" ]
                             [ volumeKey ]
@@ -101,10 +102,17 @@ const Storage = React.createClass(
 
     newVolumes[ volumeKey ][ "topology" ][ vdevPurpose ][ vdevKey ] = newVdev;
 
-    let newSelectedDisks = this.state.selectedDisks.add( event.target.value );
-
     // Last-second bailout if the disk path is invalid
-    if ( _.has( VS.availableDisks, event.target.value ) ) {
+    if ( _.any( VS.availableDisks
+              , function checkAvailableDisks ( disk ) {
+                return ( disk === event.target.value );
+              }
+              , this
+              )
+       ) {
+
+      newSelectedDisks = this.state.selectedDisks.add( event.target.value );
+
       this.setState( { volumes: newVolumes
                      , selectedDisks: newSelectedDisks
                      }
