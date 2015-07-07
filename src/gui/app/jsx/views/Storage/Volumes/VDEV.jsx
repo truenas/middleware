@@ -111,7 +111,9 @@ const VDEV = React.createClass(
         break;
     }
 
-    if ( this.props.availableDevices && !this.props.existsOnServer ) {
+    // Only make a list of new disks to add if there are any available devices
+    // and the vdev is modifiable (doesn't exist on the server already)
+    if ( this.props.availableDevices.length && !this.props.existsOnServer ) {
       addNewDisks =
         <select
           // Reset the field to nothing selected every time so that it doesn't
