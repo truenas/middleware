@@ -108,6 +108,13 @@ class Failover(Model):
     def __unicode__(self):
         return u"%s[%s]" % (self.volume, self.carp)
 
+    @property
+    def ipaddress(self):
+        if notifier().failover_node() == 'A':
+            return '169.254.10.80'
+        else:
+            return '169.254.10.20'
+
     class Meta:
         db_table = 'system_failover'
         verbose_name = _("Failover")
