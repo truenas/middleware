@@ -28,16 +28,18 @@ const VDEV = React.createClass(
         , "cache"
         , "spares"
         ]
-      )
+      ).isRequired
     , type: React.PropTypes.oneOf(
-        [ "disk"
+        [ null // Used for new vdevs. Such a vdev should have a falsy path, no
+               // children, and a falsy existsOnServer.
+        , "disk"
         // , "file" // FIXME: This will probably never be used.
         , "mirror"
         , "raidz1"
         , "raidz2"
         , "raidz3"
         ]
-      )
+      ).isRequired
     // index of the volume of which this vdev is a member
     , volumeKey: React.PropTypes.number.isRequired
     // index of this vdev in the array of vdevs of the same purpose
