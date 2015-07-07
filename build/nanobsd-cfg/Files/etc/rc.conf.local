@@ -38,6 +38,7 @@ ha_mode()
 
 	if [ -f ${HA_MODE_FILE} ]; then
 		cat ${HA_MODE_FILE}
+		return 0
 	fi
 
 	#encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
@@ -65,11 +66,11 @@ ha_mode()
 ha_node()
 {
 
-	if ! cat ${HA_MODE_FILE} | grep -q "AUTOMATIC:"; then
+	if ! ha_mode | grep -q "AUTOMATIC:"; then
 		return 1
 	fi
 
-	cat ${HA_MODE_FILE} | cut -d ":" -f 2
+	ha_mode | cut -d ":" -f 2
 
 	return 0
 
