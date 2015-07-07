@@ -111,9 +111,9 @@ class Failover(Model):
     @property
     def ipaddress(self):
         if notifier().failover_node() == 'A':
-            return '169.254.10.80'
+            return '169.254.10.2'
         else:
-            return '169.254.10.20'
+            return '169.254.10.1'
 
     class Meta:
         db_table = 'system_failover'
