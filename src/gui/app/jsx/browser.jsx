@@ -13,21 +13,24 @@ import React from "react";
 import Router, { HistoryLocation } from "react-router";
 import Routes from "./routes";
 
-// Middleware
 import MiddlewareClient from "./middleware/MiddlewareClient";
 
 // Initialize Global Stores
 import SchemaStore from "./stores/SchemaStore";
 
-let wsProtocol = ( window.location.protocol === "https:" )
-  ? "wss://"
-  : "ws://";
+if ( typeof window !== "undefined" ) {
+  window.onload = function () {
+    let wsProtocol = ( window.location.protocol === "https:" )
+                   ? "wss://"
+                   : "ws://";
 
-MiddlewareClient.connect( wsProtocol + document.domain + ":5000/socket" );
+    MiddlewareClient.connect( wsProtocol + document.domain + ":5000/socket" );
 
-Router.run( Routes
-          , HistoryLocation
-          , function ( Handler, state ) {
-              React.render( <Handler />, document );
-            }
-          );
+    Router.run( Routes
+              , HistoryLocation
+              , function ( Handler, state ) {
+                  React.render( <Handler />, document );
+                }
+              );
+  };
+}
