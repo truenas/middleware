@@ -41,14 +41,17 @@ ha_mode()
 		return 0
 	fi
 
-	#encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
-
 	# Temporary workaround for VirtualBOX
-	encstat=$(/usr/local/sbin/dmidecode -s system-uuid)
-	if [ ${encstat} = "B9E1B270-1B0C-48C7-99C8-BFB965D71584" ]; then
-		encstat="Encl-A"
+	if [ "$(/usr/local/sbin/dmidecode -s bios-version)" = "VirtualBox" ]; then
+
+		encstat=$(/usr/local/sbin/dmidecode -s system-uuid)
+		if [ ${encstat} = "B9E1B270-1B0C-48C7-99C8-BFB965D71584" ]; then
+			encstat="Encl-A"
+		else
+			encstat="Encl-B"
+		fi
 	else
-		encstat="Encl-B"
+		encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
 	fi
 
 	if [ $? -eq 0 ]; then
