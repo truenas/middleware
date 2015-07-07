@@ -209,7 +209,7 @@ _interface_config()
 	if ! is_freenas; then
 
 		local node
-		local carp1_addr="169.254.10.1/32" carp2_addr="169.254.10.2/32"
+		local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
 		local carp1_skew carp2_skew
 		local internal_ip
 
@@ -222,11 +222,11 @@ _interface_config()
 		if [ ${node} = "A" ]; then
 			carp1_skew="20"
 			carp2_skew="80"
-			internal_ip="169.254.10.20"
+			internal_ip="169.254.10.1"
 		elif [ ${node} = "B" ]; then
 			carp1_skew="80"
 			carp2_skew="20"
-			internal_ip="169.254.10.80"
+			internal_ip="169.254.10.2"
 		else
 			echo "# Could not determine system node"
 		fi
