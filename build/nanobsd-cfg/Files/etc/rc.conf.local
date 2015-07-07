@@ -55,7 +55,7 @@ ha_mode()
 	fi
 
 	if [ $? -eq 0 ]; then
-		node=$(echo ${encstat}|awk -F "-" '{print $NF}')
+		node=$(echo ${encstat}|awk -F "-" '{print $NF}'|sed "s/'//g")
 		echo "AUTOMATIC:${node}" > ${HA_MODE_FILE}
 	else
 		echo "MANUAL" > ${HA_MODE_FILE}
@@ -211,7 +211,7 @@ _interface_config()
 		local node
 		local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
 		local carp1_skew carp2_skew
-		local internal_ip
+		local internal_ip internal_iface
 
 		if [ $(ha_mode) == "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
@@ -233,8 +233,8 @@ _interface_config()
 
 		if [ -n "${carp1_skew}" ]; then
 
-			#FIXME: corrrect interface name
-			echo "ifconfig_em1=\"inet ${internal_ip}/24\""
+			internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
+			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
 			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
 			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
 			echo "cloned_interfaces=\"\${cloned_interfaces} carp1 carp2\""
