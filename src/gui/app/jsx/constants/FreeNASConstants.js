@@ -11,6 +11,7 @@ const FREENAS_CONSTANTS =
     { UPDATE_AUTH_STATE: null
     , UPDATE_SOCKET_STATE: null
     , UPDATE_RECONNECT_TIME : null
+    , FORCE_LOGOUT : null
 
     // Subscriptions
     , SUBSCRIBE_COMPONENT_TO_MASKS: null

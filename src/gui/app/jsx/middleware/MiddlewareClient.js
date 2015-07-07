@@ -33,6 +33,8 @@ import SessionStore
 import sessionCookies
   from "./cookies";
 
+import SAC
+  from "../actions/SessionActionCreators";
 
 const defaultTimeoutDelay = 10000;
 
@@ -143,7 +145,13 @@ class MiddlewareClient extends WebSocketClient {
         if ( MCD.reports( "messages" ) ) {
           MCD.log( "Message contained event data" );
         }
-        MiddlewareActionCreators.receiveEventData( data, timestamp );
+        if ( data.name !== undefined && data.name === "logout" ) {
+          SAC.forceLogout( data.args, timestamp );
+          this.instantReconnet = true;
+          sessionCookies.delete( "auth" );
+        } else {
+          MiddlewareActionCreators.receiveEventData( data, timestamp );
+        }
         break;
 
       // An RPC call is returning a response
@@ -482,6 +490,7 @@ class MiddlewareClient extends WebSocketClient {
     // For socket close codes (and why 1000 is used here) see the RFC:
     // https://tools.ietf.org/html/rfc6455#page-64
     sessionCookies.delete( "auth" );
+    this.instantReconnet = true;
     this.disconnect( 1000, "User logged out" );
   }
 

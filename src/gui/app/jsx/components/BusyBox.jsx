@@ -48,6 +48,7 @@ var BusyBox = React.createClass(
              , busyText      : "Busy"
              , kickin        : false
              , loggedIn      : SessionStore.getLoginStatus()
+             , logoutReason  : SessionStore.getLogoutReason()
              , operation     : "Connect you to FreeNAS"
              , reconnetTime  : 0
              , sockState     : false
@@ -113,21 +114,27 @@ var BusyBox = React.createClass(
     }
 
   , handleSessionChange: function () {
-      this.setState({ loggedIn: SessionStore.getLoginStatus() });
+      let sessionState = SessionStore.getSessionState();
+      this.setState({ loggedIn     : sessionState.loggedIn
+                    , logoutReason : sessionState.logoutReason
+                    }
+      );
     }
 
   , handlePowerChange: function () {
       let retcode = PowerStore.isEventPending();
       this.setState({ kickin    : retcode[0]
                     , operation : retcode[1]
-      });
+                    }
+      );
     }
 
   , handleMiddlewareChange: function () {
       let retcode = MiddlewareStore.getSockState();
       this.setState({ sockState     : retcode[0]
                     , reconnetTime  : Math.round( retcode[1] / 1000 )
-      });
+                    }
+      );
     }
 
   , handleUserChange: function ( event ) {
@@ -153,6 +160,13 @@ var BusyBox = React.createClass(
 
   , render: function () {
       var busyBody = ( <div ref="Busy"  style={{ opacity: 0 }}/> );
+
+      let logoutDisp = "";
+      if ( this.state.logoutReason ) {
+        logoutDisp = (
+          <h6>{ "Logged Out: " + this.state.logoutReason }</h6>
+        );
+      }
 
       if ( this.state.boxIsVisible ) {
         if ( !this.state.sockState || this.state.kickin ) {
@@ -201,6 +215,7 @@ var BusyBox = React.createClass(
                 <h3>{"Welcome to FreeNAS 10"}</h3>
                 <hr />
 
+                { logoutDisp }
                 <div className="form-group">
                   <input className   = "form-control"
                          type        = "text"

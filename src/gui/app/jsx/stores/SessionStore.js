@@ -14,6 +14,8 @@ var CHANGE_EVENT = "change";
 
 var _currentUser     = "";
 var _loggedIn        = false;
+var _logoutReason     = "";
+
 
 var SessionStore = _.assign( {}, EventEmitter.prototype, (
 
@@ -30,12 +32,23 @@ var SessionStore = _.assign( {}, EventEmitter.prototype, (
     }
 
   , getCurrentUser: function () {
-    return _currentUser;
-  }
+      return _currentUser;
+    }
 
   , getLoginStatus: function () {
-    return _loggedIn;
-  }
+      return _loggedIn;
+    }
+
+  , getLogoutReason: function () {
+      return _logoutReason;
+    }
+
+  , getSessionState: function () {
+      return { currentUser  : _currentUser
+             , loggedIn     : _loggedIn
+             , logoutReason : _logoutReason
+             };
+    }
   }
 ) );
 
@@ -47,6 +60,16 @@ SessionStore.dispatchToken = FreeNASDispatcher.register( function ( payload ) {
     case ActionTypes.UPDATE_AUTH_STATE:
       _currentUser = action.currentUser;
       _loggedIn = action.loggedIn;
+      SessionStore.emitChange();
+      if ( _loggedIn ) {
+        _logoutReason = "";
+      }
+      break;
+
+    case ActionTypes.FORCE_LOGOUT:
+      _currentUser = "";
+      _loggedIn    = false;
+      _logoutReason = action.message.reason;
       SessionStore.emitChange();
       break;
 
