@@ -505,6 +505,8 @@ class IPChoices(NICChoices):
         return self._IPlist.remove(addr)
 
     def __iter__(self):
+        if not self._IPlist:
+            return iter([('0.0.0.0', '0.0.0.0')])
         return iter((i, i) for i in self._IPlist)
 
 
