@@ -66,6 +66,11 @@ const Storage = React.createClass(
     );
   }
 
+    // TODO: Accept different types of events, allowing for multiple disks, a
+    // variety of disk types and various means of adding disks (drag and drop,
+    // multiselect, etc.)
+    // TODO: Reasonable recommendations (both initial and changed as needed) for
+    // Different numbers of disks.
   , handleDiskAdd ( volumeKey, vdevPurpose, vdevKey, event ) {
 
     let newSelectedDisks = null;
