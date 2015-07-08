@@ -183,8 +183,7 @@ Available commands are:
                 if rv:
                     os.unlink('/tmp/.failover_needop')
                     passphrase = escrowctl.getkey()
-                    ip, secret = notifier().failover_getpeer()
-                    s = notifier().failover_rpc(ip=ip)
+                    s = notifier().failover_rpc()
                     try:
                         s.enc_setkey(secret, passphrase)
                     except:
@@ -202,14 +201,12 @@ Available commands are:
         if cmd == 'synctopeer':
             passphrase = escrowctl.getkey()
             if passphrase:
-                ip, secret = notifier().failover_getpeer()
-                s = notifier().failover_rpc(ip=ip)
+                s = notifier().failover_rpc()
                 rv = s.enc_setkey(secret, passphrase)
             else:
                 print "ERROR: passphrase unavailable."
         elif cmd == 'syncfrompeer':
-            ip, secret = notifier().failover_getpeer()
-            s = notifier().failover_rpc(ip=ip)
+            s = notifier().failover_rpc()
             passphrase = s.enc_getkey(secret)
             rv = escrowctl.setkey(passphrase)
         if not rv:
