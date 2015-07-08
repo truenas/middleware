@@ -1,11 +1,24 @@
 #!/bin/sh
 
-BLOCKSIZE="1024"
+blocksize=1024
+dataset="$(/sbin/zfs list -H "${PWD}" | /usr/bin/awk '{ print $1 }')"
 
-USED="$(/sbin/zfs get -o value -Hp used "${PWD}")"
-AVAIL="$(/sbin/zfs get -o value -Hp avail "${PWD}")"
+csv="available,usedbysnapshots,usedbydataset,usedbychildren,usedbyrefreservation"
+properties="$(/sbin/zfs get -o value -Hp "${csv}" "${dataset}" | /usr/bin/xargs)"
 
-TOTAL="$(((USED+AVAIL)/BLOCKSIZE))"
-AVAIL="$((AVAIL/BLOCKSIZE))"
+available="$(echo "${properties}" | /usr/bin/awk '{ print $1 }')"
+usedbysnapshots="$(echo "${properties}" | /usr/bin/awk '{ print $2 }')"
+usedbydataset="$(echo "${properties}" | /usr/bin/awk '{ print $3 }')"
+usedbychildren="$(echo "${properties}" | /usr/bin/awk '{ print $4 }')"
+usedbyrefreservation="$(echo "${properties}" | /usr/bin/awk '{ print $5 }')"
 
-/bin/echo "${TOTAL}" "${AVAIL}" "${BLOCKSIZE}"
+real_used="$((usedbysnapshots+usedbydataset+usedbychildren))"
+if [ "${usedbyrefreservation}" -gt "0" ]
+then
+	real_used="$((real_used+usebyrefreservation))"
+fi
+
+total="$(((real_used+available)/blocksize))"
+available="$((available/blocksize))"
+
+/bin/echo "${total}" "${available}" "${blocksize}"
