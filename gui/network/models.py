@@ -212,13 +212,8 @@ class Interfaces(Model):
     int_pass = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name=_("Password")
-    )
-    int_skew = models.PositiveIntegerField(
-        default=0,
-        verbose_name=_("Advertisements Skew"),
-        blank=True,
-        null=True,
+        verbose_name=_("Password"),
+        editable=False,
     )
     int_critical = models.BooleanField(
         default=False,
