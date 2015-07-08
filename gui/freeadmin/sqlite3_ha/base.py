@@ -155,7 +155,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
-    def dump_send(self, failover=None):
+    def dump_send(self):
         """
         Method responsible for dumping the database into SQL,
         excluding the tables that should not be synced between nodes.
@@ -187,7 +187,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             for row in cur.fetchall():
                 script.append(row[0])
 
-        s = notifier().failover_rpc(ip=failover.ipaddress)
+        s = notifier().failover_rpc()
         # If we are syncing then we need to clear the Journal in case
         # everything goes as planned.
         with Journal() as j:
@@ -197,7 +197,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                     j.queries = []
                 return sync
             except (xmlrpclib.Fault, socket.error) as e:
-                log.error('Failed sync_to %s: %s', failover.ipaddress, e)
+                log.error('Failed sync_to: %s', e)
                 return False
 
     def dump_recv(self, script):
