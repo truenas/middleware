@@ -50,9 +50,6 @@ NO_SYNC_MAP = {
             'ssh_host_rsa_key_cert_pub',
         ],
     },
-    'system_failover': {
-        'fields': ['ipaddress'],
-    },
     'system_systemdataset': {
         'fields': ['sys_uuid'],
     },
