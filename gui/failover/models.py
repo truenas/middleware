@@ -89,10 +89,6 @@ class CARP(Model):
 
 
 class Failover(Model):
-    ipaddress = IPAddressField(
-        verbose_name=_("IP Address"),
-        blank=True,
-    )
     disabled = models.BooleanField(
         default=False,
         blank=True,
@@ -110,10 +106,7 @@ class Failover(Model):
 
     @property
     def ipaddress(self):
-        if notifier().failover_node() == 'A':
-            return '169.254.10.2'
-        else:
-            return '169.254.10.1'
+        return notifier().failover_pair_ip()
 
     class Meta:
         db_table = 'system_failover'
