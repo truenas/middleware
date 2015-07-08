@@ -126,9 +126,8 @@ class RunSQLRemote(threading.Thread):
     def run(self):
         from freenasUI.middleware.notifier import notifier
         from freenasUI.common.log import log_traceback
-        # FIXME: cache value
-        ip = notifier().failover_getpeer()
-        s = notifier().failover_rpc(ip=ip)
+        # FIXME: cache IP value
+        s = notifier().failover_rpc()
         try:
             with Journal() as f:
                 if f.queries:
