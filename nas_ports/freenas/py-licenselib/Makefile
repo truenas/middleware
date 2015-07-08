@@ -17,7 +17,7 @@ USES=		python
 USE_PYTHON=	autoplist distutils
 
 EXTRACT_ONLY=
-WRKSRC?=/usr/nas_source/licenselib
+WRKSRC?=/usr/freenas_src/licenselib
 
 # no checksum, we just used git!
  #extract:
