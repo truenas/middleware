@@ -69,6 +69,7 @@
 /usr/local/lib/dispatcher/plugins/SystemDatasetPlugin.py
 /usr/local/lib/dispatcher/plugins/SwapPlugin.py
 /usr/local/lib/dispatcher/plugins/UpdatePlugin.py
+/usr/local/lib/dispatcher/plugins/AlertPlugin.py
 /usr/local/libexec/dispatcher/notify-pam
 /usr/local/etc/rc.d/dispatcher
 /usr/local/sbin/dispatcherd
