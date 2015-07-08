@@ -28,11 +28,6 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(default='', max_length=100, blank=True),
                       keep_default=False)
 
-        # Adding field 'Interfaces.int_skew'
-        db.add_column(u'network_interfaces', 'int_skew',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0, null=True, blank=True),
-                      keep_default=False)
-
         # Adding field 'Interfaces.int_critical'
         db.add_column(u'network_interfaces', 'int_critical',
                       self.gf('django.db.models.fields.BooleanField')(default=False),
@@ -56,9 +51,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Interfaces.int_pass'
         db.delete_column(u'network_interfaces', 'int_pass')
-
-        # Deleting field 'Interfaces.int_skew'
-        db.delete_column(u'network_interfaces', 'int_skew')
 
         # Deleting field 'Interfaces.int_critical'
         db.delete_column(u'network_interfaces', 'int_critical')
@@ -106,7 +98,6 @@ class Migration(SchemaMigration):
             'int_name': ('django.db.models.fields.CharField', [], {'max_length': "'120'"}),
             'int_options': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'int_pass': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'}),
-            'int_skew': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0', 'null': 'True', 'blank': 'True'}),
             'int_v4netmaskbit': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '3', 'blank': 'True'}),
             'int_v6netmaskbit': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '4', 'blank': 'True'}),
             'int_vhid': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'blank': 'True'}),
