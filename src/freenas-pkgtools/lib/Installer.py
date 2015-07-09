@@ -1,19 +1,13 @@
 import os
 import sys
 import errno
-import subprocess
 import stat
 import json
 import tarfile
 import hashlib
 import logging
 
-import getopt
-
 # And now freenas modules
-import Exceptions
-import Manifest
-import Package
 import Configuration
 
 debug = 0
@@ -167,19 +161,19 @@ def RemoveDirectory(path):
     st = None
     try:
         st = os.lstat(path)
-    except os.error as e:
+    except os.error:
         return False
     try:
         os.lchflags(path, 0)
-    except os.error as e:
+    except os.error:
         pass
     try:
         os.rmdir(path)
-    except os.error as e:
+    except os.error:
         if st.st_flags:
             try:
                 os.lchflags(path, st.st_flags)
-            except os.error as e:
+            except os.error:
                 pass
         return False
     return True
@@ -371,7 +365,6 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
     # After that, we've got a full_path, and so we get the directory it's in,
     # and the name of the file.
     dirname = os.path.dirname(full_path)
-    fname = os.path.basename(full_path)
     # Debugging stuff
     if debug > 0 or verbose: log.debug("%s:  will be extracted as %s" % (entry.name, full_path))
     if debug > 2: log.debug("entry = %s" % (entry))
@@ -571,7 +564,6 @@ def install_file(pkgfile, dest):
     prefix = None
     # We explicitly want to use the pkgdb from the destination
     pkgdb = Configuration.PackageDB(dest)
-    amroot = (os.geteuid() == 0)
     pkgScripts = None
     upgrade_aware = False
 
