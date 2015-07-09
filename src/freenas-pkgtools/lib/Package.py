@@ -1,9 +1,3 @@
-import os
-import sys
-
-import Exceptions
-
-
 NAME_KEY = "Name"
 VERSION_KEY = "Version"
 CHECKSUM_KEY = "Checksum"
@@ -109,10 +103,6 @@ class Package(object):
     def dict(self):
         return self._dict
 
-        if self._size is not None:
-            rv[SIZE_KEY] = self._size
-        return rv
-
     def Size(self):
         if SIZE_KEY in self._dict:
             return self._dict[SIZE_KEY]
@@ -152,7 +142,7 @@ class Package(object):
             for upd in updates:
                 size = None
                 if SIZE_KEY in upd:
-                    size = up[SIZE_KEY]
+                    size = upd[SIZE_KEY]
                 self.AddUpdate(upd[VERSION_KEY], upd[CHECKSUM_KEY], size)
         return
 
