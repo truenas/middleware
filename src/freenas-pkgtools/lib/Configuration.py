@@ -648,7 +648,7 @@ class Configuration(object):
                 if new_man:
                     if new_man.Sequence() != train.LastSequence():
                         # We have an update
-                        train.SetLastSequence(new_main.Sequence())
+                        train.SetLastSequence(new_man.Sequence())
                         train.SetLastCheckedTime()
                         train.SetNotes(new_man.Notes())
                         train.SetNotice(new_man.Notice())
@@ -779,12 +779,6 @@ class Configuration(object):
         I decide it should be called.
         """
         rv = {}
-        sys_mani = self.SystemManifest()
-        if sys_mani is None:
-            current_version = "unknown"
-        else:
-            current_version = str(sys_mani.Sequence())
-
         fileref = self.TryGetNetworkFile(file = TRAIN_FILE, reason = "FetchTrains")
 
         if fileref is None:
@@ -872,7 +866,6 @@ class Configuration(object):
         sys_mani = self.SystemManifest()
         if sys_mani is None:
             raise Exceptions.ConfigurationInvalidException
-        current_version = str(sys_mani.Sequence())
         if train is None:
             train = sys_mani.Train()
         if sequence is None:
@@ -891,10 +884,7 @@ class Configuration(object):
         # Gets <UPDATE_SERVER>/<train>/LATEST
         # Returns a manifest, or None.
         rv = None
-        current_version = None
         temp_mani = self.SystemManifest()
-        if temp_mani:
-            current_version = temp_mani.Sequence()
 
         if train is None:
             if temp_mani is None:
@@ -945,7 +935,7 @@ class Configuration(object):
         return file
     
     def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None, pkg_type = None):
-        from Update import PkgFileAny, PkgFileDeltaOnly, PkgFileFullOnly
+        from Update import PkgFileDeltaOnly, PkgFileFullOnly
         # Given a package, and optionally a version to upgrade from, find
         # the package file for it.  Returns a file-like
         # object for the package file.
@@ -959,11 +949,6 @@ class Configuration(object):
         # the manifest file, so we won't do the checksum verification --
         # we'll only go by name.
         # If it can't find one, it returns None
-        rv = None
-        mani = self.SystemManifest()
-        sequence = "unknown"
-        if mani:
-            sequence = mani.Sequence()
 
         # We have at least one, and at most two, files
         # to look for.

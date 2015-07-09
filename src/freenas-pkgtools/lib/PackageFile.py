@@ -1,4 +1,4 @@
-import os, sys
+import sys
 import tarfile
 import json
 import StringIO
@@ -69,7 +69,7 @@ def GetManifest(path = None, file = None):
     Get the +MANIFEST entry from the named file.
     """
     if path and file:
-        raise ValueEerror("Cannot have both path and file")
+        raise ValueError("Cannot have both path and file")
     if not path and not file:
         raise ValueError("Neither path nor file are set")
     if path:
@@ -104,8 +104,6 @@ def CompareManifests(m1, m2):
     m2_files = {}
     m1_dirs = {}
     m2_dirs = {}
-    m1_services = {}
-    m2_services = {}
     
     if debug:
         f1 = open("/tmp/file1.txt", "w")
@@ -127,7 +125,6 @@ def CompareManifests(m1, m2):
     if kPkgDirsKey in m2:
         m2_dirs = m2[kPkgDirsKey].copy()
 
-    retval = {}
     removed_files = []
     removed_dirs = []
     modified_files = {}

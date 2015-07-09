@@ -2,7 +2,6 @@ from datetime import datetime
 import ctypes
 import logging
 import os
-import re
 import signal
 import subprocess
 import sys
@@ -11,8 +10,7 @@ from . import Avatar
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
-import freenasOS.Package as Package
-from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException, UpdateBootEnvironmentException, UpdatePackageException
+from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException, UpdateBootEnvironmentException, UpdatePackageException, UpdateSnapshotException
 
 from freenasOS.Exceptions import ManifestInvalidSignature, UpdateManifestNotFound
 
@@ -32,9 +30,6 @@ REQUIRE_REBOOT = False
 PkgFileAny = None
 PkgFileDeltaOnly = "delta-only"
 PkgFileFullOnly = "full-only"
-
-# Not sure if these should go into their own file
-from django.utils.translation import ugettext_lazy as _
 
 SERVICES = {
     "WebUI" : {
@@ -672,7 +667,6 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None, p
     has happened.  This will remove the existing content if it decides
     it has to redownload for any reason.
     """
-    import shutil
     import fcntl
 
     conf = Configuration.Configuration()
@@ -1240,7 +1234,6 @@ def VerifyUpdate(directory):
             if op == "upgrade":
                 # Package being updated, so we can look for the delta package.
                 cur_vers = old.Version()
-            new_vers = pkg.Version()
             # This is slightly redundant -- if cur_vers is None, it'll check
             # the same filename twice.
             if not os.path.exists(directory + "/" + pkg.FileName())  and \
