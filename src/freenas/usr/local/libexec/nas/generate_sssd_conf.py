@@ -701,7 +701,7 @@ def add_ldap_section(sc):
         aux_sc = SSSDConf(path=path, cookie=sc.cookie)
         os.unlink(path)
 
-    sc.merge_config(aux_sc)
+        sc.merge_config(aux_sc)
 
 
 def add_activedirectory_section(sc):
