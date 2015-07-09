@@ -287,9 +287,9 @@ class InterfacesForm(ModelForm):
     def done(self, *args, **kwargs):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
-        super(InterfacesForm, self).done(*args, **kwargs)
         notifier().start("network")
         notifier().reload("networkgeneral")
+        super(InterfacesForm, self).done(*args, **kwargs)
 
 
 class IPMIForm(Form):

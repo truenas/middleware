@@ -13,6 +13,11 @@ class Migration(SchemaMigration):
                       self.gf('freenasUI.contrib.IPAddressField.IPAddressField')(default='', blank=True),
                       keep_default=False)
 
+        # Adding field 'Interfaces.int_carp'
+        db.add_column(u'network_interfaces', 'int_carp',
+                      self.gf('django.db.models.fields.IntegerField')(null=True),
+                      keep_default=False)
+
         # Adding field 'Interfaces.int_vip'
         db.add_column(u'network_interfaces', 'int_vip',
                       self.gf('freenasUI.contrib.IPAddressField.IPAddressField')(null=True, blank=True),
@@ -42,6 +47,9 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
         # Deleting field 'Interfaces.int_ipv4address_b'
         db.delete_column(u'network_interfaces', 'int_ipv4address_b')
+
+        # Deleting field 'Interfaces.int_carp'
+        db.delete_column(u'network_interfaces', 'int_carp')
 
         # Deleting field 'Interfaces.int_vip'
         db.delete_column(u'network_interfaces', 'int_vip')
@@ -87,6 +95,7 @@ class Migration(SchemaMigration):
         u'network.interfaces': {
             'Meta': {'ordering': "['int_interface']", 'object_name': 'Interfaces'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'int_carp': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
             'int_critical': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'int_dhcp': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'int_group': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
