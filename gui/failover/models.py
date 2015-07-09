@@ -101,9 +101,6 @@ class Failover(Model):
         default=0
     )
 
-    def __unicode__(self):
-        return u"%s[%s]" % (self.volume, self.carp)
-
     @property
     def ipaddress(self):
         return notifier().failover_pair_ip()
