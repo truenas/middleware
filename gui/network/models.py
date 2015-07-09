@@ -199,6 +199,10 @@ class Interfaces(Model):
             verbose_name=_("IPv6 Prefix Length"),
             help_text=""
             )
+    int_carp = models.IntegerField(
+        editable=False,
+        null=True,
+    )
     int_vip = IPAddressField(
         verbose_name=_("Virtual IP"),
         blank=True,
@@ -250,6 +254,20 @@ class Interfaces(Model):
         notifier().start("network")
 
     def save(self, *args, **kwargs):
+        if not self.int_vip:
+            self.int_carp = None
+        elif not self.int_carp:
+            used = [i[0] for i in Interfaces.objects.values_list('int_carp')]
+            # More than 50 CARPs? I dont think so, but lets be safe
+            # and avoid counting how many interfaces we have got.
+            # FIXME: concurrency? Two CARP with same number
+            for i in xrange(50):
+                if i in (1, 2):
+                    continue
+                if i in used:
+                    continue
+                self.int_carp = i
+                break
         super(Interfaces, self).save(*args, **kwargs)
         if self._original_int_options != self.int_options and \
                 re.search(r'mtu \d+', self._original_int_options) and \
