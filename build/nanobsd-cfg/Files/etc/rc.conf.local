@@ -240,21 +240,15 @@ _interface_config()
 			echo "cloned_interfaces=\"\${cloned_interfaces} carp1 carp2\""
 		fi
 
-		local counter=0
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_vip, int_vhid, int_pass, int_skew FROM network_interfaces WHERE int_vip IS NOT NULL AND int_vip != '' ORDER BY id" | \
-		while read int_vip int_vhid int_pass int_skew; do
+		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT int_carp int_vip, int_vhid, int_pass, int_skew FROM network_interfaces WHERE int_vip IS NOT NULL AND int_vip != '' ORDER BY id" | \
+		while read int_carp int_vip int_vhid int_pass int_skew; do
 			if [ -n "${int_pass}" ]; then
 				int_passopt=" pass ${int_pass}"
 			else
 				int_passopt=""
 			fi
-			echo "ifconfig_carp${counter}=\"vhid ${int_vhid} advskew ${int_skew}${int_passopt} ${int_vip}/32\""
-			echo "cloned_interfaces=\"\${cloned_interfaces} carp${counter}\""
-			if [ ${counter} -eq 0 ]; then
-				counter=3
-			else
-				counter=$((counter+1))
-			fi
+			echo "ifconfig_carp${int_carp}=\"vhid ${int_vhid} advskew ${int_skew}${int_passopt} ${int_vip}/32\""
+			echo "cloned_interfaces=\"\${cloned_interfaces} carp${int_carp}\""
 		done
 
 		# OLD code unused for now
