@@ -487,7 +487,7 @@ class SSSDConf(SSSDBase):
 
         section = None
 
-        if not nsections:
+        if nsections:
             self.add_sssd_section()
 
             cookie = 'domain/%s' % self.cookie
