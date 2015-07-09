@@ -31,13 +31,14 @@ class InterfacesFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'int_ipv4address',
+        'int_ipv4address_b',
         'int_v4netmaskbit',
         'int_ipv6address',
         'int_v6netmaskbit',
+        'int_carp',
         'int_vip',
         'int_vhid',
         'int_pass',
-        'int_skew',
         'int_critical',
         'int_group',
     )

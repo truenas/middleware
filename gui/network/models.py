@@ -289,6 +289,11 @@ class Interfaces(Model):
                 str(self.int_ipv4address),
                 str(self.int_v4netmaskbit),
                 ))
+        if self.int_ipv4address_b:
+            ips.append("%s/%s" % (
+                str(self.int_ipv4address_b),
+                str(self.int_v4netmaskbit),
+            ))
         for alias in self.alias_set.exclude(alias_v4address=''):
             ips.append("%s/%s" % (
                 str(alias.alias_v4address),
