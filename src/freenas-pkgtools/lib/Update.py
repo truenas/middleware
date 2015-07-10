@@ -34,7 +34,6 @@ PkgFileDeltaOnly = "delta-only"
 PkgFileFullOnly = "full-only"
 
 # Not sure if these should go into their own file
-from django.utils.translation import ugettext_lazy as _
 
 SERVICES = {
     "WebUI" : {
