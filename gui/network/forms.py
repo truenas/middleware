@@ -83,6 +83,10 @@ class InterfacesForm(ModelForm):
         self.fields['int_ipv6auto'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_ipv6auto", '
             '["id_int_ipv6address", "id_int_v6netmaskbit"]);')
+        if 'int_critical' in self.fields:
+            self.fields['int_critical'].widget.attrs['onChange'] = (
+                'javascript:toggleGeneric("id_int_critical", '
+                '["id_int_group"], true);')
         dhcp = False
         ipv6auto = False
         if self.data:
@@ -111,13 +115,10 @@ class InterfacesForm(ModelForm):
                 'disabled')
 
         if self.instance.id:
-            if self.instance.int_interface.startswith('carp'):
-                self.fields['int_v4netmaskbit'].widget.attrs['readonly'] = True
-                self.fields['int_v4netmaskbit'].widget.attrs['class'] = (
-                    'dijitDisabled dijitSelectDisabled'
+            if 'int_group' in self.fields and not self.instance.int_critical:
+                self.fields['int_group'].widget.attrs['disabled'] = (
+                    'disabled'
                 )
-                self.fields['int_v4netmaskbit'].initial = '32'
-                self.instance.int_v4netmaskbit = '32'
             self.fields['int_interface'] = \
                 forms.CharField(
                     label=self.fields['int_interface'].label,
@@ -238,6 +239,14 @@ class InterfacesForm(ModelForm):
         if vip and not vhid:
             raise forms.ValidationError(_('This field is required'))
         return vhid
+
+    def clean_int_group(self):
+        vip = self.cleaned_data.get('int_vip')
+        crit = self.cleaned_data.get('int_critical')
+        group = self.cleaned_data.get('int_group')
+        if vip and crit is True and not group:
+            raise forms.ValidationError(_('This field is required.'))
+        return group
 
     def clean(self):
         cdata = self.cleaned_data
