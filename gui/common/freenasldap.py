@@ -1308,6 +1308,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.kpwdname:
             self.__kpwdname = self.kpwdname
 
+        self.pagesize = FREENAS_LDAP_PAGESIZE
+
         #self.flags = FLAGS_SASL_GSSAPI
         self.flags = 0
 
@@ -1584,6 +1586,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             host=self.dchost, port=self.dcport,
             ssl=self.ssl, certfile=self.certfile, flags=flags)
         self.dchandle.open()
+        self.dchandle.pagesize = self.pagesize
 
         self.set_global_catalog_server()
 
@@ -1592,6 +1595,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             host=self.gchost, port=self.gcport,
             ssl=self.ssl, certfile=self.certfile, flags=flags)
         self.gchandle.open()
+        self.gchandle.pagesize = self.pagesize
 
     def reset_servers(self):
         self.dcname = self.dchost = self.dcport = None
