@@ -848,6 +848,8 @@ class AutoImportWizard(SessionWizardView):
 
     def done(self, form_list, **kwargs):
 
+        appPool.hook_form_init('AutoImportWizard', self, form_list, **kwargs)
+
         cdata = self.get_cleaned_data_for_step('1') or {}
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
@@ -946,10 +948,13 @@ class AutoImportWizard(SessionWizardView):
 
         alertPlugins.run()
 
+        events = ['loadalert()']
+        appPool.hook_form_done('AutoImportWizard', self, self.request, events)
+
         return JsonResp(
             self.request,
             message=unicode(_("Volume imported")),
-            events=['loadalert()'],
+            events=events,
         )
 
 
