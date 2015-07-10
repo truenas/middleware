@@ -133,7 +133,7 @@ class SSSDBase(object):
                 lines.append(line.strip())
             str = string.join(lines, '\n')
 
-        return "%s" % str
+        return "%s\n" % str
 
     def __len__(self):
         len = 0
@@ -238,6 +238,14 @@ class SSSDSectionSSSD(SSSDSectionBase):
             else:
                 domains.append(domain)
         self.domains = string.join(domains, ',')
+
+    def get_domains(self):
+        domains = []
+        self_domains = self.domains.split(',')
+        for s in self_domains:
+            s = s.strip()
+            domains.append(s)
+        return domains
 
     def add_service(self, service):
         if service not in self.section_types():
@@ -364,6 +372,7 @@ class SSSDSectionContainer(object):
                     section[key] = value
                     return
             self.sections.append({name: value})
+            self.order()
 
         else:
             super(SSSDSectionContainer, self).__setitem__(name, value)
@@ -403,12 +412,26 @@ class SSSDSectionContainer(object):
             keys.append(section.keys()[0])
         return keys
 
+    def order(self):
+        section_types = ['sssd', 'nss', 'pam', 'sudo', 'ssh', 'domain']
+
+        sections = []
+        for st in section_types:
+            for s in self.sections: 
+                if st in s:
+                    sections.append({ st : s[st] })
+                elif st == 'domain':
+                    key = s.keys()[0]
+                    if key.startswith('domain'):
+                        sections.append({ key: s[key] })
+
+        self.sections = sections
+
 
 class SSSDConf(SSSDBase):
     def __init__(self, *args, **kwargs):
         super(SSSDConf, self).__init__(*args, **kwargs)
         self.sections = SSSDSectionContainer()
-        self.domain_override = True
 
         if 'parse' in kwargs:
             self.parse = kwargs.pop('parse')
@@ -419,9 +442,9 @@ class SSSDConf(SSSDBase):
         if not self.sections['sssd']:
             self.sections['sssd'] = SSSDSectionSSSD()
             self.sections['sssd'].config_file_version = 2
-        self.sections['sssd'].full_name_format = r"%2$s\%1$s"
-        self.sections['sssd'].re_expression = r"(((?P<domain>[^\\]+)\\(?P<name>.+$))" \
-            r"|((?P<name>[^@]+)@(?P<domain>.+$))|(^(?P<name>[^@\\]+)$))"
+            self.sections['sssd'].full_name_format = r"%2$s\%1$s"
+            self.sections['sssd'].re_expression = r"(((?P<domain>[^\\]+)\\(?P<name>.+$))" \
+                r"|((?P<name>[^@]+)@(?P<domain>.+$))|(^(?P<name>[^@\\]+)$))"
 
     def add_nss_section(self):
         if not self.sections['nss']:
@@ -434,23 +457,45 @@ class SSSDConf(SSSDBase):
         self.sections['sssd'].add_service('pam')
 
     def merge_config(self, sc):
+        domains = self.sections['sssd'].get_domains()
         services = self.sections['sssd'].get_services()
+
+        domains_override = False
 
         for s in sc.sections:
             st = s.get_section_type()
             self_s = self.sections[st]
 
-            if st.startswith('domain') and self_s and not sc.domain_override:
-                for var in s:
-                    self_s[var] = s[var]
-            else:
-                self.sections[st] = s
+            if st.startswith('domain'):
+                if self_s:
+                    for var in s:
+                        self_s[var] = s[var]
 
-            if st not in services:
-                services.append(st)
+                else:
+                    self.sections[st] = s
+
+                if s.domain not in domains:
+                    domains.append(s.domain)
+
+            else:
+                if self_s:
+                    if st == 'sssd' and s.domains:
+                        domains_override = True
+
+                    for var in s:
+                        self_s[var] = s[var]
+
+                else: 
+                    self.sections[st] = s
+
+                if st not in services:
+                    services.append(st)
 
         for s in services:
             self.sections['sssd'].add_service(s)
+        if not domains_override:
+            for d in domains:
+                self.sections['sssd'].add_domain(d)
 
     def num_sections(self):
         lines = []
@@ -477,7 +522,7 @@ class SSSDConf(SSSDBase):
 
         section = None
 
-        if nsections:
+        if not nsections:
             self.add_sssd_section()
 
             cookie = 'domain/%s' % self.cookie
@@ -486,8 +531,6 @@ class SSSDConf(SSSDBase):
             self.sections[cookie] = section
             self.sections['sssd'].add_domain(self.cookie)
             self.sections['sssd'].add_newline()
-
-            self.domain_override = False
 
         for line in lines:
             line = line.strip()
