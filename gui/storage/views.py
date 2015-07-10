@@ -833,7 +833,7 @@ def volume_detach(request, vid):
                 form.done(request, events)
                 return JsonResp(
                     request,
-                    message=_("The volume has been successfully detached")
+                    message=_("The volume has been successfully detached"),
                     events=events,
                 )
             except ServiceFailed, e:
