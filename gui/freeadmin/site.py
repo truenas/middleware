@@ -254,7 +254,7 @@ class FreeAdminSite(object):
                 e,
                 exc_info=True,
             )
-            dat = ""
+            data = ""
 
         return HttpResponse(data, content_type="application/json")
 
