@@ -104,6 +104,9 @@ cifs_func()
 	section_header "net usersidlist"
 	net usersidlist
 	section_footer
+	section_header "net groupmap list"
+	net groupmap list
+	section_footer
 
 	section_header "net status sessions"
 	net status sessions
