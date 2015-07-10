@@ -30,7 +30,8 @@ import errno
 import libzfs
 import nvpair
 from gevent.event import Event
-from task import Provider, Task, TaskStatus, TaskException, VerifyException, TaskAbortException, query
+from task import (Provider, Task, TaskStatus, TaskException,
+                  VerifyException, TaskAbortException, query)
 from dispatcher.rpc import RpcException, accepts, returns, description
 from dispatcher.rpc import SchemaHelper as h
 from balancer import TaskState
@@ -883,7 +884,59 @@ def _init(dispatcher, plugin):
 
     try:
         zfs = libzfs.ZFS()
+        # Try to reimport Pools into the system after upgrade, this checks
+        # for any non-imported pools in the system via the python binding
+        # analogous of `zpool import` and then tries to verify its guid with
+        # the pool's in the database. In the event two pools with the same guid
+        # are found (Very rare and only happens in special broken cases) it
+        # logs said guid with pool name and skips that import.
+        unimported_unique_pools = {}
+        unimported_duplicate_pools = []
+        for pool in zfs.find_import():
+            if pool.guid in unimported_unique_pools:
+                # This means that the pool is prolly a duplicate
+                # Thus remove it from this dict of pools
+                # and put it in the duplicate dict
+                del unimported_unique_pools[pool.guid]
+                unimported_duplicate_pools.append(pool)
+            else:
+                # Since there can be more than two duplicate copies
+                # of a pool might exist, we still need to check for
+                # it in the unimported pool list
+                duplicate_guids = map(lambda x: x.guid,
+                                      unimported_duplicate_pools)
+                if pool.guid in duplicate_guids:
+                    continue
+                else:
+                    unimported_unique_pools[pool.guid] = pool
+        # Logging the duplicate pool naes and guids, if any
+        if unimported_duplicate_pools:
+            dispatcher.logger.warning(
+                'The following pools were unimported because of duplicates' +
+                'being found: ')
+            for duplicate_pool in unimported_duplicate_pools:
+                dispatcher.logger.warning(
+                    'Unimported Pool Name: {0}, GUID: {1}'.format(
+                        duplicate_pool.name, duplicate_pool.guid))
+        # Finally, Importing the unique unimported pools that are present in
+        # the database
+        for vol in dispatcher.datastore.query('volumes'):
+            if long(vol['id']) in unimported_unique_pools:
+                pool_to_import = unimported_unique_pools[long(vol['id'])]
+                # Check if the volume name is also the same
+                if vol['name'] == pool_to_import.name:
+                    opts = nvpair.NVList(otherdict=({}))
+                    zfs.import_pool(pool_to_import, pool_to_import.name, opts)
+                else:
+                    # What to do now??
+                    # When in doubt log it!
+                    dispatcher.logger.error(
+                        'Cannot Import pool with guid: {0}'.format(vol['id']) +
+                        ' because it is named as: {0} in'.format(vol['name']) +
+                        ' the database but the actual system found it named' +
+                        ' as {0}'.format(pool_to_import.name))
         for pool in zfs.pools:
             zpool_create_resources(dispatcher, pool)
-    except libzfs.ZFSException:
-        pass
+    except libzfs.ZFSException as err:
+        # Log what happened
+        dispatcher.logger.error('ZfsPlugin init error: {0}'.format(str(err)))
