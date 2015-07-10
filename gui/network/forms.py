@@ -61,18 +61,20 @@ class InterfacesForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
 
-        if SW_NAME.lower() != 'truenas':
+        self._node = None
+        self._carp = False
+        if hasattr(notifier, 'failover_status'):
+            if notifier().failover_licensed():
+                self._carp = True
+            else:
+                self._node = notifier().failover_node()
+
+        if not self._carp:
             del self.fields['int_vip']
             del self.fields['int_vhid']
-            del self.fields['int_pass']
-            del self.fields['int_skew']
             del self.fields['int_critical']
             del self.fields['int_group']
             del self.fields['int_ipv4address_b']
-
-        self._node = None
-        if hasattr(notifier, 'failover_status'):
-            self._node = notifier().failover_node()
 
         self.fields['int_interface'].choices = choices.NICChoices()
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
@@ -130,18 +132,6 @@ class InterfacesForm(ModelForm):
                         },
                     )
                 )
-        else:
-            # In case there is a CARP instance but no Interfaces instance
-            if hasattr(notifier, 'failover_status'):
-                from freenasUI.failover.models import CARP
-                int_interfaces = [
-                    o.int_interface for o in models.Interfaces.objects.all()
-                ]
-                for o in CARP.objects.all():
-                    if o.carp_name not in int_interfaces:
-                        self.fields['int_interface'].choices += [
-                            (o.carp_name, o.carp_name),
-                        ]
 
     def clean_int_interface(self):
         if self.instance.id:
@@ -200,9 +190,7 @@ class InterfacesForm(ModelForm):
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
         used_networks = []
-        qs = models.Interfaces.objects.all().exclude(
-            int_interface__startswith='carp'
-        )
+        qs = models.Interfaces.objects.all()
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
         for iface in qs:
@@ -244,12 +232,30 @@ class InterfacesForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_int_vhid(self):
+        vip = self.cleaned_data.get('int_vip')
+        vhid = self.cleaned_data.get('int_vhid')
+        if vip and not vhid:
+            raise forms.ValidationError(_('This field is required'))
+        return vhid
+
     def clean(self):
         cdata = self.cleaned_data
 
         ipv4key = 'int_ipv4address'
         ipv4addr = cdata.get(ipv4key)
+        ipv4addr_b = cdata.get('int_ipv4address_b')
         ipv4net = cdata.get("int_v4netmaskbit")
+
+        if ipv4addr and ipv4addr_b and ipv4net:
+            network = IPNetwork('%s/%s' % (ipv4addr, ipv4net))
+            if not network.overlaps(
+                IPNetwork('%s/%s' % (ipv4addr_b, ipv4net))
+            ):
+                self._errors['int_ipv4address_b'] = self.error_class([
+                    _('The IP must be within the same network')
+                ])
+
         ipv6addr = cdata.get("int_ipv6address")
         ipv6net = cdata.get("int_v6netmaskbit")
         ipv4 = True if ipv4addr and ipv4net else False
@@ -257,7 +263,7 @@ class InterfacesForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr and not self._errors.get(ipv4key):
+            if not (ipv4addr or ipv4addr_b) and not self._errors.get(ipv4key):
                 self._errors[ipv4key] = self.error_class([
                     _("You have to specify IPv4 address as well"),
                 ])
