@@ -48,6 +48,15 @@ class GlobalConfiguration(Model):
             regex=r'^[a-zA-Z\.\-\_0-9]+$',
         )],
     )
+    gc_hostname_b = models.CharField(
+        max_length=120,
+        verbose_name=_("Hostname (Node B)"),
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+        blank=True,
+        null=True,
+    )
     gc_domain = models.CharField(
         max_length=120,
         verbose_name=_("Domain"),

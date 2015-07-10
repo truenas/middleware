@@ -402,6 +402,12 @@ class GlobalConfigurationForm(ModelForm):
         fields = '__all__'
         model = models.GlobalConfiguration
 
+    def __init__(self, *args, **kwargs):
+        super(GlobalConfigurationForm, self).__init__(*args, **kwargs)
+        if hasattr(notifier, 'failover_licensed'):
+            if not notifier().failover_licensed():
+                del self.fields['gc_hostname_b']
+
     def _clean_nameserver(self, value):
         if value:
             if value.is_loopback:
