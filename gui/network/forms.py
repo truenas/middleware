@@ -57,6 +57,9 @@ class InterfacesForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Interfaces
+        widgets = {
+            'int_vhid': forms.widgets.TextInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
