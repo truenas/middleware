@@ -833,6 +833,13 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("System hostname"),
         blank=True
     )
+    ad_netbiosname_b = models.CharField(
+        verbose_name=_("NetBIOS Name (Node B)"),
+        max_length=120,
+        help_text=_("System hostname"),
+        blank=True,
+        null=True,
+    )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
@@ -844,7 +851,7 @@ class ActiveDirectory(DirectoryServiceBase):
         default='off'
     )
     ad_certificate = models.ForeignKey(
-        CertificateAuthority, 
+        CertificateAuthority,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
