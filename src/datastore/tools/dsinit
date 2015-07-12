@@ -30,6 +30,7 @@ from __future__ import print_function
 import argparse
 import os
 import sys
+import subprocess
 import string
 import json
 
@@ -84,7 +85,7 @@ def main():
 
     ds = config['datastore']
     db_dir = ds['dbdir']
-    driver_name = ds['drier']
+    driver_name = ds['driver']
     driver_dir = os.path.join('/usr/local/lib/datastore/drivers', ds['driver'])
     control = os.path.join(driver_dir, 'control')
 
