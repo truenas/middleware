@@ -79,7 +79,7 @@ class InterfacesForm(ModelForm):
             del self.fields['int_group']
             del self.fields['int_ipv4address_b']
 
-        self.fields['int_interface'].choices = choices.NICChoices()
+        self.fields['int_interface'].choices = choices.NICChoices(nocarp=True)
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", '
             '"id_int_ipv4address_b", "id_int_v4netmaskbit"]);')

@@ -346,7 +346,7 @@ class whoChoices:
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False,
+    def __init__(self, nocarp=False, nolagg=False, novlan=False,
                  exclude_configured=True, include_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
         pipe = popen("/sbin/ifconfig -l")
@@ -381,6 +381,10 @@ class NICChoices(object):
                 if interface[0] in self._NIClist:
                     self._NIClist.remove(interface[0])
 
+        if nocarp:
+            for nic in list(self._NIClist):
+                if nic.startswith('carp'):
+                    self._NIClist.remove(nic)
         if nolagg:
             # vlan devices are not valid parents of laggs
             for nic in self._NIClist:
