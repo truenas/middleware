@@ -56,7 +56,7 @@ ha_mode()
 
 	if [ $? -eq 0 ]; then
 		node=$(echo ${encstat}|awk -F "-" '{print $NF}'|sed "s/'//g")
-		echo "AUTOMATIC:${node}" > ${HA_MODE_FILE}
+		echo "ECHOSTREAM:${node}" > ${HA_MODE_FILE}
 	else
 		echo "MANUAL" > ${HA_MODE_FILE}
 	fi
@@ -69,7 +69,7 @@ ha_mode()
 ha_node()
 {
 
-	if ! ha_mode | grep -q "AUTOMATIC:"; then
+	if ! ha_mode | grep -q ":"; then
 		return 1
 	fi
 
