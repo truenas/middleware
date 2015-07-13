@@ -91,8 +91,8 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update  as mUpdate
-from freenasUI.system.utils import BootEnv
+from freenasUI.system.models import Update as mUpdate
+from freenasUI.system.utils import BootEnv, get_pending_updates
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -2872,8 +2872,6 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        data = []
-        changes = None
         # If it is HA licensed get pending updates from stanbdy node
         if (
             hasattr(notifier, 'failover_status') and
@@ -2883,31 +2881,7 @@ class UpdateResourceMixin(NestedMixin):
             data = s.update_pending()
         else:
             path = notifier().get_update_location()
-            changes = Update.PendingUpdatesChanges(path)
-        if not data and changes:
-            if changes.get("Reboot", True) == False:
-                for svc in changes.get("Restart", []):
-                    data.append({
-                        'operation' : svc,
-                        'name' : Update.GetServiceDescription(svc),
-                        })
-            for new, op, old in changes['Packages']:
-                if op == 'upgrade':
-                    name = '%s-%s -> %s-%s' % (
-                        old.Name(),
-                        old.Version(),
-                        new.Name(),
-                        new.Version(),
-                    )
-                elif op == 'install':
-                    name = '%s-%s' % (new.Name(), new.Version())
-                else:
-                    name = '%s-%s' % (old.Name(), old.Version())
-
-                data.append({
-                    'operation': op,
-                    'name': name,
-                })
+            data = get_pending_updates(path)
         return self.create_response(
             request,
             data,
