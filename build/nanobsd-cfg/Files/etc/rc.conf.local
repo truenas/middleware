@@ -248,7 +248,11 @@ _interface_config()
 
 		if [ -n "${carp1_skew}" ]; then
 
-			internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
+			if [ $(ha_mode) = "ECHOSTREAM" ]; then
+				internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
+			elif [ $(ha_mode) = "SBB" ]; then
+				internal_iface="ix0"
+			fi
 			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
 			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
 			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
