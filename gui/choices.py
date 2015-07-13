@@ -355,6 +355,17 @@ class NICChoices(object):
         self._NIClist = filter(
             lambda y: y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0'),
             self._NIClist)
+
+        from freenasUI.middleware.notifier import notifier
+        # Remove internal interfaces for failover
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            for iface in notifier().failover_internal_interfaces():
+                if iface in self._NIClist:
+                    self._NIClist.remove(iface)
+
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
