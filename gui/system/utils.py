@@ -34,7 +34,7 @@ from uuid import uuid4
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
-from freenasOS import Configuration
+from freenasOS import Configuration, Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
@@ -77,7 +77,7 @@ class CheckUpdateHandler(object):
     def __init__(self):
         self.changes = []
         self.restarts = []
-        
+
     def call(self, op, newpkg, oldpkg):
         self.changes.append({
             'operation': op,
@@ -92,7 +92,7 @@ class CheckUpdateHandler(object):
             # We may have service changes
             for svc in diffs.get("Restart", []):
                 self.restarts.append(GetServiceDescription(svc))
-                
+
     @property
     def output(self):
         output = ''
@@ -311,7 +311,7 @@ class VerifyHandler(object):
             os.unlink(self.DUMPFILE)
 
 
-def get_changelog(train, start = '', end = ''):
+def get_changelog(train, start='', end=''):
     conf = Configuration.Configuration()
     changelog = conf.GetChangeLog(train=train)
     if not changelog:
@@ -320,7 +320,7 @@ def get_changelog(train, start = '', end = ''):
     return parse_changelog(changelog.read(), start, end)
 
 
-def parse_changelog(changelog, start = '', end = ''):
+def parse_changelog(changelog, start='', end=''):
     regexp = r'### START (\S+)(.+?)### END \1'
     reg = re.findall(regexp, changelog, re.S | re.M)
 
@@ -337,9 +337,39 @@ def parse_changelog(changelog, start = '', end = ''):
         elif changelog is not None:
             changelog += changes.strip('\n') + '\n'
         if seq == end:
-            break    
+            break
 
     return changelog
+
+
+def get_pending_updates(path):
+    data = []
+    changes = Update.PendingUpdatesChanges(path)
+    if changes:
+        if changes.get("Reboot", True) is False:
+            for svc in changes.get("Restart", []):
+                data.append({
+                    'operation': svc,
+                    'name': Update.GetServiceDescription(svc),
+                    })
+        for new, op, old in changes['Packages']:
+            if op == 'upgrade':
+                name = '%s-%s -> %s-%s' % (
+                    old.Name(),
+                    old.Version(),
+                    new.Name(),
+                    new.Version(),
+                )
+            elif op == 'install':
+                name = '%s-%s' % (new.Name(), new.Version())
+            else:
+                name = '%s-%s' % (old.Name(), old.Version())
+
+            data.append({
+                'operation': op,
+                'name': name,
+            })
+    return data
 
 
 def debug_get_settings():
