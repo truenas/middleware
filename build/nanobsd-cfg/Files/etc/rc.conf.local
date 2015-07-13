@@ -34,7 +34,9 @@ HA_MODE_FILE="/tmp/.ha_mode"
 
 ha_mode()
 {
-	local encstat node
+	local encstat manual node serial
+
+	manual=1
 
 	if [ -f ${HA_MODE_FILE} ]; then
 		cat ${HA_MODE_FILE}
@@ -57,7 +59,20 @@ ha_mode()
 	if [ $? -eq 0 ]; then
 		node=$(echo ${encstat}|awk -F "-" '{print $NF}'|sed "s/'//g")
 		echo "ECHOSTREAM:${node}" > ${HA_MODE_FILE}
+		manual=0
 	else
+		# Check for SBB
+		if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X8DTS" ]; then
+			serial=$(/usr/local/sbin/dmidecode -s system-serial-number)
+			node=$(/usr/local/www/freenasUI/tools/license_node.py ${serial})
+			if [ "${node}" = "A" -o "${node}" = "B" ]; then
+				echo "SBB:${node}" > ${HA_MODE_FILE}
+				manual=0
+			fi
+		fi
+	fi
+
+	if [ ${manual} -eq 1 ]; then
 		echo "MANUAL" > ${HA_MODE_FILE}
 	fi
 
