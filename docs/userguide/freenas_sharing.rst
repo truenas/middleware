@@ -1127,7 +1127,7 @@ Target Global Configuration
 
 **Figure 10.5a: iSCSI Target Global Configuration Variables**
 
-.. image:: images/global1.png
+.. image:: images/global1a.png
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1138,19 +1138,6 @@ Target Global Configuration
 +=================================+==============================+===========================================================================================+
 | Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of :rfc:`3721`           |
 |                                 |                              | if you are unfamiliar with this format                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
-|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
-|                                 |                              | *CHAP* and                                                                                |
-|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
-|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
-|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
-|                                 |                              | *Auto*, and not needed if set to                                                          |
-|                                 |                              | *None*                                                                                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 | ISNS Servers                    | string                       | space delimited list of hostnames or IP addresses of ISNS server(s) to register the       |
@@ -1175,25 +1162,38 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 
 **Figure 10.5b: Adding an iSCSI Portal**
 
-.. image:: images/portal.png
+.. image:: images/portal1.png
 
 **Table 10.5b: Portal Configuration Settings**
 
-+-------------+----------------+-----------------------------------------------------------------------------+
-| **Setting** | **Value**      | **Description**                                                             |
-|             |                |                                                                             |
-|             |                |                                                                             |
-+=============+================+=============================================================================+
-| Comment     | string         | optional description; portals are automatically assigned a numeric group ID |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| IP address  | drop-down menu | select the IP address associated with an interface or the wildcard address  |
-|             |                | of *0.0.0.0* (any interface)                                                |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Port        | integer        | TCP port used to access the iSCSI target; default is *3260*                 |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| **Setting**           | **Value**      | **Description**                                                             |
+|                       |                |                                                                             |
+|                       |                |                                                                             |
++=======================+================+=============================================================================+
+| Comment               | string         | optional description; portals are automatically assigned a numeric group ID |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| Discovery Auth Method | drop-down menu | configures the authentication level required by the target for discovery of |
+|                       |                | valid devices, where *None* will allow anonymous discovery,                 |
+|                       |                | *CHAP* and                                                                  |
+|                       |                | *Mutual CHAP* require authentication, and                                   |
+|                       |                | *Auto* lets the initiator decide the authentication scheme                  |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| Discovery Auth Group  | drop-down menu | depends on "Discovery Auth Method" setting: required if set to *CHAP* or    |
+|                       |                | *Mutual CHAP*, optional if set to                                           |
+|                       |                | *Auto*, and not needed if set to                                            |
+|                       |                | *None*                                                                      |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| IP address            | drop-down menu | select the IP address associated with an interface or the wildcard address  |
+|                       |                | of *0.0.0.0* (any interface)                                                |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| Port                  | integer        | TCP port used to access the iSCSI target; default is *3260*                 |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
 
 
 FreeNAS® systems with multiple IP addresses or interfaces can use a portal to provide services on different interfaces or subnets. This can be used to
@@ -1329,7 +1329,7 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 
 **Figure 10.5g: Adding an iSCSI Target**
 
-.. image:: images/target1.png
+.. image:: images/target1a.png
 
 **Table 10.5e: Target Settings**
 
@@ -1342,9 +1342,6 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Target Alias                | string         | optional user-friendly name                                                                                 |
-|                             |                |                                                                                                             |
-+-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
-| Serial                      | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address     |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Portal Group ID             | drop-down menu | leave empty or select number of existing portal to use                                                      |
@@ -1394,7 +1391,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-.. image:: images/extent2a.png
+.. image:: images/extent2b.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1407,6 +1404,9 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent Type        | drop-down menu | select from *File* or                                                                                                |
 |                    |                | *Device*                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Serial             | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address              |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
