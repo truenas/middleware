@@ -41,6 +41,7 @@ usr/local/libexec/freenas-debug/cifs/cifs.sh
 usr/local/libexec/freenas-debug/domain_controller/domain_controller.sh
 usr/local/libexec/freenas-debug/dtrace/disklatencycmd.d
 usr/local/libexec/freenas-debug/dtrace/dtrace.sh
+usr/local/libexec/freenas-debug/dtrace/zfslower.d
 usr/local/libexec/freenas-debug/geom/geom.sh
 usr/local/libexec/freenas-debug/hardware/hardware.sh
 usr/local/libexec/freenas-debug/include.sh
