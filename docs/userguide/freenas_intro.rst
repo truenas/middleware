@@ -403,9 +403,16 @@ that have occurred since 9.3-RELEASE.
 
 * The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
   :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
+
+* The "Discovery Auth Method" and "Discovery Auth Group" fields have moved from :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration` to
+  :menuselection:`Sharing --> Block (iSCSI) --> Portals --> Add Portal`.
   
 * The "Logical Block Size" field has been moved from :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` to
-  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`
+  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
+
+* The "Serial" field has been moved from  :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` to :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`. 
+
+* The :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` screen now supports the creation of multiple iSCSI groups.
 
 * The "Disable Physical Block Size Reporting" checkbox, "Available Space Threshold" field, and "LUN RPM" drop-down menu have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
