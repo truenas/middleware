@@ -2872,10 +2872,19 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        path = notifier().get_update_location()
-        changes = Update.PendingUpdatesChanges(path)
         data = []
-        if changes:
+        changes = None
+        # If it is HA licensed get pending updates from stanbdy node
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            s = notifier().failover_rpc()
+            data = s.update_pending()
+        else:
+            path = notifier().get_update_location()
+            changes = Update.PendingUpdatesChanges(path)
+        if not data and changes:
             if changes.get("Reboot", True) == False:
                 for svc in changes.get("Restart", []):
                     data.append({
