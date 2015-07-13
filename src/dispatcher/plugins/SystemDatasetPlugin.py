@@ -31,7 +31,6 @@ import errno
 import uuid
 import logging
 import libzfs
-import nvpair
 from dispatcher.rpc import RpcException, accepts, returns, description, private
 from dispatcher.rpc import SchemaHelper as h
 from task import Task, Provider
@@ -49,7 +48,7 @@ def create_system_dataset(dispatcher, pool):
         zfs.get_dataset('{0}/.system-{1}'.format(pool.name, dsid))
         return
     except libzfs.ZFSException:
-        nv = nvpair.NVList()
+        nv = {}
         nv['mountpoint'] = 'none'
         pool.create('{0}/.system-{1}'.format(pool.name, dsid), nv)
 

@@ -28,7 +28,6 @@
 import os
 import errno
 import libzfs
-import nvpair
 from gevent.event import Event
 from task import (Provider, Task, TaskStatus, TaskException,
                   VerifyException, TaskAbortException, query)
@@ -234,7 +233,7 @@ class ZpoolCreateTask(Task):
         zfs = libzfs.ZFS()
         mountpoint = params.get('mountpoint', '/volumes/{0}'.format(name))
 
-        opts = nvpair.NVList(otherdict={
+        opts = {
             'feature@async_destroy': 'enabled',
             'feature@empty_bpobj': 'enabled',
             'feature@lz4_compress': 'enabled',
@@ -246,14 +245,14 @@ class ZpoolCreateTask(Task):
             'cachefile': '/data/zfs/zpool.cache',
             'failmode': 'continue',
             'autoexpand': 'on',
-        })
+        }
 
-        fsopts = nvpair.NVList(otherdict={
+        fsopts = {
             'compression': 'lz4',
             'aclmode': 'passthrough',
             'aclinherit': 'passthrough',
             'mountpoint': mountpoint
-        })
+        }
 
         nvroot = convert_topology(zfs, topology)
 
@@ -330,7 +329,7 @@ class ZpoolImportTask(Task):
 
     def run(self, guid, name=None, properties=None):
         zfs = libzfs.ZFS()
-        opts = nvpair.NVList(otherdict=(properties or {}))
+        opts = properties or {}
         try:
             pool = first_or_default(
                        lambda p: str(p.guid) == guid, zfs.find_import())
@@ -402,7 +401,7 @@ class ZfsDatasetCreateTask(Task):
         try:
             zfs = libzfs.ZFS()
             pool = zfs.get(pool_name)
-            pool.create(path, nvpair.NVList(otherdict=params))
+            pool.create(path, params)
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
@@ -420,7 +419,7 @@ class ZfsVolumeCreateTask(Task):
         try:
             zfs = libzfs.ZFS()
             pool = zfs.get(pool_name)
-            pool.create(path, nvpair.NVList(otherdict=params))
+            pool.create(path, params)
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
@@ -437,7 +436,7 @@ class ZfsSnapshotCreateTask(Task):
         try:
             zfs = libzfs.ZFS()
             pool = zfs.get(pool_name)
-            pool.create(path, nvpair.NVList(otherdict=params))
+            pool.create(path, params)
         except libzfs.ZFSException, err:
             raise TaskException(errno.EFAULT, str(err))
 
@@ -925,7 +924,7 @@ def _init(dispatcher, plugin):
                 pool_to_import = unimported_unique_pools[long(vol['id'])]
                 # Check if the volume name is also the same
                 if vol['name'] == pool_to_import.name:
-                    opts = nvpair.NVList(otherdict=({}))
+                    opts = {}
                     zfs.import_pool(pool_to_import, pool_to_import.name, opts)
                 else:
                     # What to do now??
