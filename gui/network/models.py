@@ -52,7 +52,7 @@ class GlobalConfiguration(Model):
     )
     gc_hostname_b = models.CharField(
         max_length=120,
-        verbose_name=_("Hostname (Node B)"),
+        verbose_name=_("Hostname"),
         validators=[RegexValidator(
             regex=r'^[a-zA-Z\.\-\_0-9]+$',
         )],

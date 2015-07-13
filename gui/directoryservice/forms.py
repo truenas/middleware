@@ -335,6 +335,13 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
+        if hasattr(notifier, 'failover_node'):
+            from freenasUI.failover.utils import node_label_field
+            node_label_field(
+                notifier().failover_node(),
+                self.fields['ad_netbiosname'],
+                self.fields['ad_netbiosname_b'],
+            )
 
     def clean_ad_dcname(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')

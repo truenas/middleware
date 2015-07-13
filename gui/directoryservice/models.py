@@ -834,7 +834,7 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True
     )
     ad_netbiosname_b = models.CharField(
-        verbose_name=_("NetBIOS Name (Node B)"),
+        verbose_name=_("NetBIOS Name"),
         max_length=120,
         help_text=_("System hostname"),
         blank=True,

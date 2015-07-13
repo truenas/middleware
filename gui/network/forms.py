@@ -411,6 +411,14 @@ class GlobalConfigurationForm(ModelForm):
             if not notifier().failover_licensed():
                 del self.fields['gc_hostname_b']
 
+            else:
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    notifier().failover_node(),
+                    self.fields['gc_hostname'],
+                    self.fields['gc_hostname_b'],
+                )
+
     def _clean_nameserver(self, value):
         if value:
             if value.is_loopback:
