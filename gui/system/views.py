@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import cPickle as pickle
 import datetime
 import json
@@ -1255,14 +1255,27 @@ def update_check(request):
         uuid = request.GET.get('uuid')
         if not uuid:
 
-            running = UpdateHandler.is_running()
-            if running is not False:
-                return HttpResponse(running, status=202)
-
             if request.POST.get('apply') == '1':
                 apply_ = True
             else:
                 apply_ = False
+
+            # If it is HA run updated on the other node
+            if (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_licensed()
+            ):
+                s = notifier().failover_rpc()
+                uuid = s.updated(apply_)
+                if uuid is False:
+                    raise MiddlewareError(_('Update daemon failed!'))
+                return HttpResponse(uuid, status=202)
+
+            running = UpdateHandler.is_running()
+            if running is not False:
+                return HttpResponse(running, status=202)
+
+
             # Why not use subprocess module?
             # Because for some reason it was leaving a zombie process behind
             # My guess is that its related to fork within a thread and fds
@@ -1298,7 +1311,21 @@ def update_check(request):
                 return HttpResponse(uuid, status=202)
 
         else:
-            handler = UpdateHandler(uuid=uuid)
+
+            if (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_licensed()
+            ):
+                s = notifier().failover_rpc()
+                rv = s.updated_handler(uuid)
+
+                def exit():
+                    pass
+
+                rv['exit'] = exit
+                handler = namedtuple('Handler', rv.keys())(**rv)
+            else:
+                handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
                 raise MiddlewareError(handler.error)
             if not handler.finished:
@@ -1319,6 +1346,18 @@ def update_check(request):
                     message=_('Packages downloaded'),
                 )
     else:
+        # If it is HA run update check on the other node
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            s = notifier().failover_rpc()
+            return render(
+                request,
+                'system/update_check.html',
+                s.update_check(),
+            )
+
         handler = CheckUpdateHandler()
         try:
             update = CheckForUpdates(
@@ -1349,9 +1388,19 @@ def update_check(request):
 
 
 def update_progress(request):
-    handler = UpdateHandler()
+
+    # If it is HA run update handler on the other node
+    if (
+        hasattr(notifier, 'failover_status') and
+        notifier().failover_licensed()
+    ):
+        s = notifier().failover_rpc()
+        rv = s.updated_handler(None)
+        load = rv['data']
+    else:
+        load = UpdateHandler().load()
     return HttpResponse(
-        json.dumps(handler.load()),
+        json.dumps(load),
         content_type='application/json',
     )
 
