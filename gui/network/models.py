@@ -24,7 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import random
 import re
+import string
 
 from django.core.validators import RegexValidator
 from django.db import models, transaction
@@ -277,6 +279,13 @@ class Interfaces(Model):
                     continue
                 self.int_carp = i
                 break
+        if self.int_vip and not self.int_pass:
+            self.int_pass = ''.join([
+                random.SystemRandom().choice(
+                    string.ascii_letters + string.digits
+                )
+                for n in xrange(16)
+            ])
         super(Interfaces, self).save(*args, **kwargs)
         if self._original_int_options != self.int_options and \
                 re.search(r'mtu \d+', self._original_int_options) and \
