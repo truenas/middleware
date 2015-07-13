@@ -25,31 +25,7 @@ It accepts a fields key which will then exclude these fields and not the
 whole table.
 """
 NO_SYNC_MAP = {
-    'directoryservice_activedirectory': {
-        'fields': ['ad_netbiosname'],
-    },
     'network_alias': {},
-    'network_globalconfiguration': {
-        'fields': ['gc_hostname'],
-    },
-    'services_ssh': {
-        'fields': [
-            'ssh_host_dsa_key',
-            'ssh_host_dsa_key_pub',
-            'ssh_host_dsa_key_cert_pub',
-            'ssh_host_ecdsa_key',
-            'ssh_host_ecdsa_key_pub',
-            'ssh_host_ecdsa_key_cert_pub',
-            'ssh_host_ed25519_key',
-            'ssh_host_ed25519_key_pub',
-            'ssh_host_ed25519_key_cert_pub',
-            'ssh_host_key',
-            'ssh_host_key_pub',
-            'ssh_host_rsa_key',
-            'ssh_host_rsa_key_pub',
-            'ssh_host_rsa_key_cert_pub',
-        ],
-    },
     'system_systemdataset': {
         'fields': ['sys_uuid'],
     },
