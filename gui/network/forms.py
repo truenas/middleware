@@ -64,13 +64,16 @@ class InterfacesForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
 
-        self._node = None
         self._carp = False
         if hasattr(notifier, 'failover_status'):
             if notifier().failover_licensed():
+                from freenasUI.failover.utils import node_label_field
                 self._carp = True
-            else:
-                self._node = notifier().failover_node()
+                node_label_field(
+                    notifier().failover_node(),
+                    self.fields['int_ipv4address'],
+                    self.fields['int_ipv4address_b'],
+                )
 
         if not self._carp:
             del self.fields['int_vip']
