@@ -19,21 +19,16 @@ if is_truenas ; then
     export NAS_PORTS_DIRECT=1
 fi
 
-if [ "${GIT_LOCATION}" = "EXTERNAL" ] ; then
-    : ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos}
-    : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
-    : ${GIT_LICENSELIB_REPO=https://github.com/freenas/licenselib.git}
-fi
+: ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos}
+: ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
+: ${GIT_LICENSELIB_REPO=https://github.com/freenas/licenselib.git}
 
 : ${GIT_FREEBSD_BRANCH=9.3-STABLE}
-: ${GIT_FREEBSD_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/trueos.git}
 : ${GIT_FREEBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/src"}
 
 : ${GIT_PORTS_BRANCH=masters/2014q4}
-: ${GIT_PORTS_REPO=git@gitserver.ixsystems.com:/git/repos/freenas-build/ports.git}
 : ${GIT_PORTS_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/ports"}
 
-: ${GIT_LICENSELIB_REPO=git@gitserver.ixsystems.com:repos/projects/licenselib}
 : ${GIT_LICENSELIB_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/licenselib"}
 
 : ${REPOS="FREEBSD PORTS LICENSELIB ${ADDL_REPOS}"}
