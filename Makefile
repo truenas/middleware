@@ -50,7 +50,6 @@ ENV_SETUP=env _KEY=set
 
 ENV_SETUP+= NANO_LABEL=${NANO_LABEL}
 ENV_SETUP+= VERSION=${VERSION}
-ENV_SETUP+= GIT_LOCATION=${GIT_LOCATION}
 ENV_SETUP+= BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 ENV_SETUP+= SEQUENCE=${TRAIN}-${BUILD_TIMESTAMP}
 ENV_SETUP+= TRAIN=${TRAIN}
@@ -131,8 +130,7 @@ changelog:
 	fi
 
 freenas: release
-release: git-verify
-	@if [ "${NANO_LABEL}" = "TrueNAS" -a "${GIT_LOCATION}" != "INTERNAL" ]; then echo "You can only run this target from an internal repository."; exit 2; fi
+release: builder-verify
 	@echo "Doing executing target $@ on host: `hostname`"
 	@echo "Build directory: `pwd`"
 	${ENV_SETUP} script -a ${RELEASE_LOGFILE} ${MAKE} build
