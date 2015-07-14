@@ -1159,6 +1159,17 @@ def update_apply(request):
         uuid = request.GET.get('uuid')
         if not uuid:
 
+            # If it is HA run updated on the other node
+            if (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_licensed()
+            ):
+                s = notifier().failover_rpc()
+                uuid = s.updated(False, True)
+                if uuid is False:
+                    raise MiddlewareError(_('Update daemon failed!'))
+                return HttpResponse(uuid, status=202)
+
             running = UpdateHandler.is_running()
             if running is not False:
                 return HttpResponse(running, status=202)
@@ -1197,21 +1208,56 @@ def update_apply(request):
                     raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
         else:
-            handler = UpdateHandler(uuid=uuid)
+            failover = False
+            if (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_licensed()
+            ):
+                failover = True
+                s = notifier().failover_rpc()
+                rv = s.updated_handler(uuid)
+
+                def exit():
+                    pass
+
+                rv['exit'] = exit
+                handler = namedtuple('Handler', rv.keys())(**rv)
+
+            else:
+                handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
                 raise MiddlewareError(handler.error)
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
-            if handler.reboot:
-                request.session['allow_reboot'] = True
-                return render(request, 'system/done.html')
+
+            if failover:
+                try:
+                    s.reboot()
+                except:
+                    pass
+                return render(request, 'failover/update_standby.html')
             else:
-                return JsonResp(
-                    request,
-                    message=_('Update has been applied'),
-                )
+                if handler.reboot:
+                    request.session['allow_reboot'] = True
+                    return render(request, 'system/done.html')
+                else:
+                    return JsonResp(
+                        request,
+                        message=_('Update has been applied'),
+                    )
     else:
+        # If it is HA run update check on the other node
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            s = notifier().failover_rpc()
+            return render(
+                request,
+                'system/update.html',
+                s.update_check(),
+            )
         handler = CheckUpdateHandler()
         update = CheckForUpdates(
             diff_handler=handler.diff_call,
@@ -1266,7 +1312,7 @@ def update_check(request):
                 notifier().failover_licensed()
             ):
                 s = notifier().failover_rpc()
-                uuid = s.updated(apply_)
+                uuid = s.updated(True, apply_)
                 if uuid is False:
                     raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
