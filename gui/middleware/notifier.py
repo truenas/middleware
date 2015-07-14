@@ -2074,8 +2074,7 @@ class notifier:
     def _reload_disk(self):
         self._system("/usr/sbin/service ix-fstab quietstart")
         self._system("/usr/sbin/service ix-swap quietstart")
-        self._system("/usr/sbin/service encswap quietstart")
-        self._system("/usr/sbin/service swap1 quietstart")
+        self._system("/usr/sbin/service swap quietstart")
         self._system("/usr/sbin/service mountlate quietstart")
         self.restart("collectd")
         self.__confxml = None
