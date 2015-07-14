@@ -86,6 +86,10 @@ get_ta()
 	fi
 
 	sysctl_path="${path}/sbin/sysctl"
+	if [ ! -f "${sysctl_path}" ]
+	then
+		return 1
+	fi
 
 	arch="$(file -b "${sysctl_path}" | awk '{ print $2 }')"
 	if [ "${arch}" = "64-bit" ] ; then
@@ -133,7 +137,16 @@ migrate_warden_templates()
 		fi	
 
 		ta="$(get_ta "${template}")"
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi		
+
 		tv="$(get_tv "${template}")"
+		if [ "$?" != "0" ]
+		then
+			continue
+		fi
 
 		template="${jc_dataset}/.warden-template-${t}"
 		if [ "${tv}" = "${version}" -a \
@@ -204,6 +217,11 @@ get_tv()
 	fi
 
 	sysctl_path="${path}/sbin/sysctl"
+	if [ ! -f "${sysctl_path}" ]
+	then
+		return 1
+	fi
+
 	version="$(file -b "${sysctl_path}"|cut -d ',' -f 6|awk '{ print $3 }')"
 	if [ -n "${version}" ]
 	then
