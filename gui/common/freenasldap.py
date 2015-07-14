@@ -51,6 +51,7 @@ from freenasUI.common.system import (
     get_freenas_var_by_file,
     ldap_objects,
     activedirectory_objects,
+    get_hostname
 )
 from freenasUI.common.freenascache import (
     FreeNAS_UserCache,
@@ -446,8 +447,31 @@ class FreeNAS_LDAP_Directory(object):
         if not isopen:
             self.close()
 
+        log.debug("FreeNAS_LDAP_Directory.search: leave")
         return results
 
+    def _modify(self, dn, modlist):
+        log.debug("FreeNAS_LDAP_Directory._modify: enter")
+        if not self._isopen:
+            return None
+
+        res = self._handle.modify_ext_s(dn, modlist)
+
+        log.debug("FreeNAS_LDAP_Directory._modify: leave")
+        return res
+
+    def modify(self, dn, modlist):
+        log.debug("FreeNAS_LDAP_Directory.modify: enter")
+        isopen = self._isopen
+        self.open()
+
+        res = self._modify(dn, modlist)
+
+        if not isopen:
+            self.close()
+
+        log.debug("FreeNAS_LDAP_Directory.modify: leave")
+        return res 
 
 class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
@@ -1244,6 +1268,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def __keys(self):
         return [
+            'machine',
             'domainname',
             'netbiosname',
             'bindname',
@@ -1309,6 +1334,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             self.__kpwdname = self.kpwdname
 
         self.pagesize = FREENAS_LDAP_PAGESIZE
+        self.machine = "%s$" % get_hostname()
 
         #self.flags = FLAGS_SASL_GSSAPI
         self.flags = 0
@@ -1476,6 +1502,17 @@ class FreeNAS_ActiveDirectory_Base(object):
                     'use_default_domain'):
                     kwargs[newkey] = \
                         False if long(ad.__dict__[key]) == 0 else True
+
+                elif newkey == 'netbiosname':
+                    netbiosname = ad.ad_netbiosname
+
+                    parts = []
+                    if ',' in netbiosname:
+                        parts = netbiosname.split(',')
+                    elif ' ' in netbiosname:
+                        parts = netbiosname.split()
+                    
+                    kwargs['machine'] = "%s$" % parts[0]
 
                 elif newkey == 'certificate_id':
                     cert = get_certificateauthority_path(ad.ad_certificate)
@@ -1705,6 +1742,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         return handle._search(basedn, scope, filter, attributes, attrsonly,
             serverctrls, clientctrls, timeout, sizelimit)
 
+    def _modify(self, handle, dn, modlist):
+        return handle._modify(dn, modlist)
+
     def get_rootDSE(self):
         log.debug("FreeNAS_ActiveDirectory_Base.get_rootDSE: enter")
 
@@ -1931,6 +1971,28 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.get_sites: enter")
         return sites
 
+    def get_machine_account(self, machine=None):
+        log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: user = %s", machine)
+
+        if machine is None: 
+            machine = self.machine
+        if not machine:
+            raise AssertionError('machine is None')
+
+        filter = '(&(objectClass=computer)(sAMAccountName=%s))' % machine
+        results = self._search(self.dchandle, self.basedn,
+            ldap.SCOPE_SUBTREE, filter)
+
+        try:
+            results = results[0][1]
+
+        except:
+            results = None
+
+        log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: leave")
+        return results
+
     def get_userDN(self, user):
         log.debug("FreeNAS_ActiveDirectory_Base.get_userDN: enter")
         log.debug("FreeNAS_ActiveDirectory_Base.get_userDN: user = %s", user)
@@ -2104,6 +2166,89 @@ class FreeNAS_ActiveDirectory_Base(object):
             count = self.gcount
 
         return count
+
+    def disable_machine_account(self, machine=None):
+        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: machine = %s",
+            machine)
+        
+        res = False
+        results = self.get_machine_account(machine)
+        if not results:
+            return res
+
+        userAccountControl = 0
+        distinguishedName = None
+
+        try:
+            userAccountControl = long(results['userAccountControl'][0])
+            distinguishedName = results['distinguishedName'][0]
+
+        except:
+            userAccountControl = 0
+            distinguishedName = None
+
+        if not distinguishedName: 
+            return res
+
+        if not (userAccountControl & 0x2):
+            userAccountControl |= 0x2
+            try:
+                ret = self._modify(self.dchandle,
+                    distinguishedName,
+                    [(ldap.MOD_REPLACE, 'userAccountControl', str(userAccountControl))]
+                )
+                if ret:
+                    res = True
+
+            except Exception as e:
+                log.debug("ldap modify error: %s", e)
+                res = False
+    
+        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: leave")
+        return res
+
+    def enable_machine_account(self, machine=None):
+        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: machine = %s",
+            machine)
+
+        res = False
+        results = self.get_machine_account(machine)
+        if not results:
+            return res
+
+        userAccountControl = 0
+        distinguishedName = None
+
+        try:
+            userAccountControl = long(results['userAccountControl'][0])
+            distinguishedName = results['distinguishedName'][0]
+
+        except:
+            userAccountControl = 0
+            distinguishedName = None
+
+        if not distinguishedName: 
+            return res
+
+       
+        if userAccountControl & 0x2:
+            userAccountControl &= ~0x2
+            try:
+                ret = self._modify(self.dchandle,
+                    distinguishedName,
+                    [(ldap.MOD_REPLACE, 'userAccountControl', str(userAccountControl))]
+                )
+                if ret:
+                    res = True
+
+            except Exception as e:
+                log.debug("ldap modify error: %s", e)
+                res = False
+    
+        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: leave")
+        return res 
 
 
 class FreeNAS_ActiveDirectory(FreeNAS_ActiveDirectory_Base):
