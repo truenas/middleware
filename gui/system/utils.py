@@ -390,13 +390,6 @@ def run_updated(train, location, download=True, apply=False):
                 os.close(i)
             except OSError:
                 pass
-        log.error("running as %r",
-            [
-                "/usr/local/www/freenasUI/tools/updated.py",
-                '-t', train,
-                '-c', location,
-            ] + (['-d'] if download else []) + (['-a'] if apply else [])
-        )
         os.execv(
             "/usr/local/www/freenasUI/tools/updated.py",
             [

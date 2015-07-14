@@ -87,6 +87,7 @@ from freenasUI.system.utils import (
     debug_run,
     get_changelog,
     parse_changelog,
+    run_updated,
 )
 
 GRAPHS_DIR = '/var/db/graphs'
@@ -1174,39 +1175,15 @@ def update_apply(request):
             if running is not False:
                 return HttpResponse(running, status=202)
 
-            # Why not use subprocess module?
-            # Because for some reason it was leaving a zombie process behind
-            # My guess is that its related to fork within a thread and fds
-            readfd, writefd = os.pipe()
-            updated_pid = os.fork()
-            if updated_pid == 0:
-                os.close(readfd)
-                os.dup2(writefd, 1)
-                os.close(writefd)
-                for i in xrange(3, 1024):
-                    try:
-                        os.close(i)
-                    except OSError:
-                        pass
-                os.execv(
-                    "/usr/local/www/freenasUI/tools/updated.py",
-                    [
-                        "/usr/local/www/freenasUI/tools/updated.py",
-                        '-t', str(updateobj.get_train()),
-                        '-c', str(notifier().get_update_location()),
-                        '-a',
-                    ]
-                )
-            else:
-                os.close(writefd)
-                pid, returncode = os.waitpid(updated_pid, 0)
-                returncode >>= 8
-                uuid = os.read(readfd, 1024)
-                if uuid:
-                    uuid = uuid.strip('\n')
-                if returncode != 0:
-                    raise MiddlewareError(_('Update daemon failed!'))
-                return HttpResponse(uuid, status=202)
+            returncode, uuid = run_updated(
+                str(updateobj.get_train()),
+                str(notifier().get_update_location()),
+                download=False,
+                apply=True,
+            )
+            if returncode != 0:
+                raise MiddlewareError(_('Update daemon failed!'))
+            return HttpResponse(uuid, status=202)
         else:
             failover = False
             if (
@@ -1321,40 +1298,15 @@ def update_check(request):
             if running is not False:
                 return HttpResponse(running, status=202)
 
-
-            # Why not use subprocess module?
-            # Because for some reason it was leaving a zombie process behind
-            # My guess is that its related to fork within a thread and fds
-            readfd, writefd = os.pipe()
-            updated_pid = os.fork()
-            if updated_pid == 0:
-                os.close(readfd)
-                os.dup2(writefd, 1)
-                os.close(writefd)
-                for i in xrange(3, 1024):
-                    try:
-                        os.close(i)
-                    except OSError:
-                        pass
-                os.execv(
-                    "/usr/local/www/freenasUI/tools/updated.py",
-                    [
-                        "/usr/local/www/freenasUI/tools/updated.py",
-                        '-t', str(updateobj.get_train()),
-                        '-c', str(notifier().get_update_location()),
-                        '-d',
-                    ] + (['-a'] if apply_ else [])
-                )
-            else:
-                os.close(writefd)
-                pid, returncode = os.waitpid(updated_pid, 0)
-                returncode >>= 8
-                uuid = os.read(readfd, 1024)
-                if uuid:
-                    uuid = uuid.strip('\n')
-                if returncode != 0:
-                    raise MiddlewareError(_('Update daemon failed!'))
-                return HttpResponse(uuid, status=202)
+            returncode, uuid = run_updated(
+                str(updateobj.get_train()),
+                str(notifier().get_update_location()),
+                download=True,
+                apply=apply_,
+            )
+            if returncode != 0:
+                raise MiddlewareError(_('Update daemon failed!'))
+            return HttpResponse(uuid, status=202)
 
         else:
 
