@@ -1310,10 +1310,12 @@ def update_check(request):
 
         else:
 
+            failover = False
             if (
                 hasattr(notifier, 'failover_status') and
                 notifier().failover_licensed()
             ):
+                failover = True
                 s = notifier().failover_rpc()
                 rv = s.updated_handler(uuid)
 
@@ -1329,7 +1331,15 @@ def update_check(request):
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
+
             if handler.apply:
+                if failover:
+                    try:
+                        s.reboot()
+                    except:
+                        pass
+                    return render(request, 'failover/update_standby.html')
+
                 if handler.reboot:
                     request.session['allow_reboot'] = True
                     return render(request, 'system/done.html')
