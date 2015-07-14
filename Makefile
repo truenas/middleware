@@ -33,11 +33,6 @@ RELEASE_LOGFILE?=release.build.log
 .endif
 
 
-GIT_REPO_SETTING=.git-repo-setting
-.if exists(${GIT_REPO_SETTING})
-GIT_LOCATION!=cat ${GIT_REPO_SETTING}
-.endif
-
 UPDATE_USER?=sef		# For now, just use sef's account
 UPDATE_HOST?=update.freenas.org
 
@@ -67,16 +62,16 @@ builder-verify:
 	${ENV_SETUP} /bin/sh build/check_sandbox.sh
 .endif
 
-build: git-verify
+build: builder-verify
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
 	${ENV_SETUP} /bin/sh build/do_build.sh
 
-checkout: git-verify
+checkout: builder-verify
 	${ENV_SETUP} /bin/sh build/do_checkout.sh
 
-update: git-verify
+update: builder-verify
 	git pull
 	${ENV_SETUP} /bin/sh build/do_checkout.sh
 
@@ -190,26 +185,8 @@ build-bug-report:
 	mail -s "build fail for $${SUDO_USER:-$$USER}" ${BUILD_BUG_EMAIL} < \
 		${RELEASE_LOGFILE}
 
-git-verify: builder-verify
-	@if [ ! -f ${GIT_REPO_SETTING} ]; then \
-		echo "No git repo choice is set.  Please use \"make git-external\" to build as an"; \
-		echo "external developer or \"make git-internal\" to build as an ${COMPANY}"; \
-		echo "internal developer.  You only need to do this once."; \
-		exit 1; \
-	fi
-	@echo "NOTICE: You are building from the ${GIT_LOCATION} git repo."
-
-git-internal:
+set-template:
 	@git config --local commit.template .gitcommit.txt
-	@echo "INTERNAL" > ${GIT_REPO_SETTING}
-	@echo "You are set up for internal (${COMPANY}) development.  You can use"
-	@echo "the standard make targets (e.g. build or release) now."
-
-git-external:
-	@git config --local commit.template .gitcommit.txt
-	@echo "EXTERNAL" > ${GIT_REPO_SETTING}
-	@echo "You are set up for external (github) development.  You can use"
-	@echo "the standard make targets (e.g. build or release) now."
 
 tag:
 	${ENV_SETUP} /bin/sh build/apply_tag.sh
