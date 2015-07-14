@@ -81,6 +81,12 @@ ha_mode()
 	return 0
 }
 
+ha_hardware() {
+
+	ha_mode | cut -d ":" -f 1
+
+}
+
 ha_node()
 {
 
@@ -248,9 +254,9 @@ _interface_config()
 
 		if [ -n "${carp1_skew}" ]; then
 
-			if [ $(ha_mode) = "ECHOSTREAM" ]; then
+			if [ $(ha_hardware) = "ECHOSTREAM" ]; then
 				internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
-			elif [ $(ha_mode) = "SBB" ]; then
+			elif [ $(ha_hardware) = "SBB" ]; then
 				internal_iface="ix0"
 			fi
 			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
