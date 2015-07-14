@@ -127,7 +127,10 @@ class UpdateHandler(object):
                 if self.uuid != uuid:
                     raise
             except:
-                raise ValueError("UUID not found")
+                raise ValueError("UUID not found: %s - %s (on disk)" % (
+                    uuid,
+                    self.uuid,
+                ))
         else:
             self.apply = apply_
             self.uuid = uuid4().hex
@@ -370,6 +373,46 @@ def get_pending_updates(path):
                 'name': name,
             })
     return data
+
+
+def run_updated(train, location, download=True, apply=False):
+    # Why not use subprocess module?
+    # Because for some reason it was leaving a zombie process behind
+    # My guess is that its related to fork within a thread and fds
+    readfd, writefd = os.pipe()
+    updated_pid = os.fork()
+    if updated_pid == 0:
+        os.close(readfd)
+        os.dup2(writefd, 1)
+        os.close(writefd)
+        for i in xrange(3, 1024):
+            try:
+                os.close(i)
+            except OSError:
+                pass
+        log.error("running as %r",
+            [
+                "/usr/local/www/freenasUI/tools/updated.py",
+                '-t', train,
+                '-c', location,
+            ] + (['-d'] if download else []) + (['-a'] if apply else [])
+        )
+        os.execv(
+            "/usr/local/www/freenasUI/tools/updated.py",
+            [
+                "/usr/local/www/freenasUI/tools/updated.py",
+                '-t', train,
+                '-c', location,
+            ] + (['-d'] if download else []) + (['-a'] if apply else []),
+        )
+    else:
+        os.close(writefd)
+        pid, returncode = os.waitpid(updated_pid, 0)
+        returncode >>= 8
+        uuid = os.read(readfd, 1024)
+        if uuid:
+            uuid = uuid.strip('\n')
+        return returncode, uuid
 
 
 def debug_get_settings():
