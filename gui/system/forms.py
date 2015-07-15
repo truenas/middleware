@@ -884,7 +884,7 @@ class ManualUpdateWizard(FileWizard):
 
         try:
             if not _n.is_freenas() and _n.failover_licensed():
-                s = _n.failover_rpc()
+                s = _n.failover_rpc(timeout=10)
                 s.notifier('create_upload_location', None, None)
                 _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
                 s.update_manual(
