@@ -168,6 +168,9 @@ class notifier:
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
 
+    def is_freenas(self):
+        return True
+
     def _system(self, command):
         log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
