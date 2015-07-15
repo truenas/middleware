@@ -108,6 +108,11 @@
 #
 : ${WARDEN:="/usr/local/bin/warden"}
 
+#
+#	TrueNAS
+#
+: ${HA_MODE_FILE="/tmp/.ha_mode"}
+
 
 __escape()
 {
@@ -852,4 +857,72 @@ jail_post_delete()
 system_dataset_enabled()
 {
 	test -n "$(find "${FREENAS_SYSTEMDATASET}" -prune -type d ! -empty 2>/dev/null)"
+}
+
+ha_mode()
+{
+	local encstat manual node serial
+
+	manual=1
+
+	if [ -f ${HA_MODE_FILE} ]; then
+		cat ${HA_MODE_FILE}
+		return 0
+	fi
+
+	# Temporary workaround for VirtualBOX
+	if [ "$(/usr/local/sbin/dmidecode -s bios-version)" = "VirtualBox" ]; then
+
+		encstat=$(/usr/local/sbin/dmidecode -s system-uuid)
+		if [ ${encstat} = "B9E1B270-1B0C-48C7-99C8-BFB965D71584" ]; then
+			encstat="Encl-A"
+		else
+			encstat="Encl-B"
+		fi
+	else
+		encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
+	fi
+
+	if [ $? -eq 0 ]; then
+		node=$(echo ${encstat}|awk -F "-" '{print $NF}'|sed "s/'//g")
+		echo "ECHOSTREAM:${node}" > ${HA_MODE_FILE}
+		manual=0
+	else
+		# Check for SBB
+		if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X8DTS" ]; then
+			serial=$(/usr/local/sbin/dmidecode -s system-serial-number)
+			node=$(/usr/local/www/freenasUI/tools/license_node.py ${serial})
+			if [ "${node}" = "A" -o "${node}" = "B" ]; then
+				echo "SBB:${node}" > ${HA_MODE_FILE}
+				manual=0
+			fi
+		fi
+	fi
+
+	if [ ${manual} -eq 1 ]; then
+		echo "MANUAL" > ${HA_MODE_FILE}
+	fi
+
+	cat ${HA_MODE_FILE}
+
+	return 0
+}
+
+ha_hardware() {
+
+	ha_mode | cut -d ":" -f 1
+
+}
+
+ha_node()
+{
+
+	if ! ha_mode | grep -q ":"; then
+		return 1
+	fi
+
+	ha_mode | cut -d ":" -f 2
+
+	return 0
+
 }
