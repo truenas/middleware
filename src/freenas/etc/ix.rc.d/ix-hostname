@@ -38,9 +38,16 @@ generate_hostname()
 	elif dirsrv_enabled activedirectory; then
 		local domainname
 		local netbiosname
+		local netbiosname_field
+
+		if [ "$(ha_node)" = "B" ]; then
+			netbiosname_field="ad_netbiosname_b"
+		else
+			netbiosname_field="ad_netbiosname"
+		fi
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT ad_domainname, ad_netbiosname from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
+		"SELECT ad_domainname, ${netbiosname_field} from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
 		while read -r domainname netbiosname; do
 			netbiosname="$(echo "${netbiosname}"|cut -f1 -d','|cut -f1 -d ' '|tr A-Z a-z)"
 			domainname="$(echo "${domainname}"|tr A-Z a-z)"
