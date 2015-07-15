@@ -36,7 +36,6 @@ import re
 import stat
 import string
 import subprocess
-import tempfile
 
 from OpenSSL import crypto
 
@@ -54,7 +53,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
-from freenasOS import Configuration, Train, Update
+from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size, humanize_number_si
@@ -65,7 +64,6 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.common.ssl import (
     create_self_signed_CA,
-    create_self_signed_certificate,
     create_certificate_signing_request,
     create_certificate,
     sign_certificate,
@@ -108,6 +106,7 @@ from freenasUI.sharing.models import (
 from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, MountPoint, Volume, Scrub
 from freenasUI.system import models
+from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 
 log = logging.getLogger('system.forms')
@@ -804,9 +803,9 @@ class InitialWizard(CommonWizard):
             if share_purpose == 'iscsitarget':
                 continue
 
-            if share_purpose  == 'afp':
+            if share_purpose == 'afp':
                 share_acl = 'mac'
-            elif share_purpose  == 'cifs':
+            elif share_purpose == 'cifs':
                 share_acl = 'windows'
             else:
                 share_acl = 'unix'
@@ -875,49 +874,44 @@ class ManualUpdateWizard(FileWizard):
             'system/manualupdate_wizard_%s.html' % self.get_step_index(),
         ]
 
-    def do_update(self, updatefile, sha256):
-
-        # Verify integrity of uploaded image.
-        path = self.file_storage.path(updatefile.file.name)
-        checksum = notifier().checksum(path)
-        if checksum != sha256.lower().strip():
-            self.file_storage.delete(updatefile.name)
-            raise MiddlewareError("Invalid update file, wrong checksum")
-
-        # Validate that the image would pass all pre-install
-        # requirements.
-        #
-        # IMPORTANT: pre-install step have scripts or executables
-        # from the upload, so the integrity has to be verified
-        # before we proceed with this step.
-        try:
-            retval = notifier().validate_update(path)
-        except:
-            self.file_storage.delete(updatefile.name)
-            raise
-
-        if not retval:
-            self.file_storage.delete(updatefile.name)
-            raise MiddlewareError("Invalid update file")
-
-        notifier().apply_update(path)
-        try:
-            notifier().destroy_upload_location()
-        except Exception, e:
-            log.warn("Failed to destroy upload location: %s", e.value)
-
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
         assert ('sha256' in cleaned_data)
         updatefile = cleaned_data.get('updatefile')
 
-        self.do_update(updatefile, cleaned_data['sha256'].encode('ascii', 'ignore'))
+        _n = notifier()
+        path = self.file_storage.path(updatefile.file.name)
 
-        self.request.session['allow_reboot'] = True
+        try:
+            if not _n.is_freenas() and _n.failover_licensed():
+                s = _n.failover_rpc()
+                s.notifier('create_upload_location', None, None)
+                _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
+                s.update_manual(
+                    '/var/tmp/firmware/update.tar.xz',
+                    cleaned_data['sha256'].encode('ascii', 'ignore'),
+                )
+                try:
+                    s.reboot()
+                except:
+                    pass
+                response = render_to_response('failover/update_standby.html')
+            else:
+                manual_update(
+                    path,
+                    cleaned_data['sha256'].encode('ascii', 'ignore'),
+                )
+                self.request.session['allow_reboot'] = True
+                response = render_to_response('system/done.html', {
+                    'retval': getattr(self, 'retval', None),
+                })
+        except:
+            try:
+                self.file_storage.delete(updatefile.name)
+            except:
+                log.warn('Failed to delete uploaded file', exc_info=True)
+            raise
 
-        response = render_to_response('system/done.html', {
-            'retval': getattr(self, 'retval', None),
-        })
         if not self.request.is_ajax():
             response.content = (
                 "<html><body><textarea>"
