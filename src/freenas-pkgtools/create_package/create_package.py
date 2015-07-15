@@ -1,7 +1,7 @@
 #!/usr/local/bin/python -R
 # Create a pkgng-like package from a directory.
 
-import os, sys, stat
+import os, sys, stat, re
 import json
 import tarfile
 import getopt
@@ -80,7 +80,31 @@ SCRIPTS = [
 	"pre-upgrade",
 	"post-upgrade",
 	"upgrade"
-]
+]             
+
+def ProcessFileList(files, cfg_file):
+    cfg_dir = os.path.dirname(cfg_file)
+    for f in files:
+        if not f.startswith('@'):
+            yield f
+
+        m = re.match(r"@(\w+)\(([^)]*)\)", f)
+        if m:
+            command, arg = m.groups()
+            if command == "include":
+                fpath = os.path.join(cfg_dir, arg)
+                flist = open(fpath, "r")
+                included_files = flist.readlines()
+                for i in ProcessFileList(included_files, fpath):
+                    yield i
+
+                flist.close()
+            else:
+                if debug: print >> sys.stderr, "Unknown directive: %s" % (command,)
+
+        else:
+            if debug: print >> sys.stderr, "Malformed @directive: %s" % (f,)
+
 def TemplateFiles(path):
     """
     Load a ConfigParser file as a configuration file.
@@ -117,8 +141,8 @@ def TemplateFiles(path):
         for f in opt.split():
             includes.append(f)
 
-    rv["include"] = includes
-    rv["exclude"] = excludes
+    rv["include"] = list(ProcessFileList(includes, cfg_file))
+    rv["exclude"] = list(ProcessFileList(excludes, cfg_file))
     return rv
 
 def LoadTemplate(path):
@@ -139,17 +163,17 @@ def LoadTemplate(path):
     """
     rv = {}
     if os.path.exists(path) == False:
-	raise Exception("%s does not exist" % path)
+        raise Exception("%s does not exist" % path)
     if os.path.isdir(path):
-	base_dir = path
-	cfg_file = path + "/config"
+        base_dir = path
+        cfg_file = path + "/config"
     else:
-	base_dir = os.path.dirname(path)
-	cfg_file = path
+        base_dir = os.path.dirname(path)
+        cfg_file = path
 
     cfp = ConfigParser.ConfigParser()
     try:
-	cfp.read(cfg_file)
+        cfp.read(cfg_file)
     except:
 	return rv
 
