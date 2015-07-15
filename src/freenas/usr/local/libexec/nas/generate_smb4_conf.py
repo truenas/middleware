@@ -643,13 +643,6 @@ def add_ldap_conf(smb4_conf):
 
 
 def add_activedirectory_conf(smb4_conf):
-    # TODO: These 4 variables are never used?
-    # rid_range_start = 20000
-    # rid_range_end = 20000000
-
-    # ad_range_start = 10000
-    # ad_range_end = 90000000
-
     try:
         ad = ActiveDirectory.objects.all()[0]
     except:

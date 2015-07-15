@@ -2250,6 +2250,41 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: leave")
         return res 
 
+    def joined(self):
+        log.debug("FreeNAS_ActiveDirectory_Base.joined: enter")
+
+        res = False
+        results = self.get_machine_account() 
+        if not results:
+            return res
+
+        distinguishedName = None
+
+        try:
+            distinguishedName = results['distinguishedName'][0]
+
+        except:
+            distinguishedName = None
+
+        if not distinguishedName: 
+            return res
+
+        args = [
+            "/usr/local/bin/net",
+            "ads",
+            "dn",
+            distinguishedName,
+            "-P",
+            "-l" 
+        ]  
+
+        (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+        if returncode == 0:
+            res = True
+
+        log.debug("FreeNAS_ActiveDirectory_Base.joined: leave")
+        return res
+
 
 class FreeNAS_ActiveDirectory(FreeNAS_ActiveDirectory_Base):
     def __init__(self, **kwargs):

@@ -225,7 +225,7 @@ activedirectory_stop()
         /usr/local/www/freenasUI/tools/cachetool.py expire
 
 	AD_log "activedirectory_stop: leaving domain"
-	AD_leave_domain
+	AD_disable_machine_account	
 }
 
 
