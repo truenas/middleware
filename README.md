@@ -1,5 +1,7 @@
 ## IMPORTANT NOTE:  This is the master branch of freenas, which is used only for the creation and testing of 9.3-Nightlies builds.  If you are building or developing for:
 
+[![Join the chat at https://gitter.im/freenas/freenas](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/freenas/freenas?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 * FreeNAS 10:	Use the freenas10/development branch (and see the README there)
 * 9.3-STABLE:	Use the 9.3-STABLE branch
 
