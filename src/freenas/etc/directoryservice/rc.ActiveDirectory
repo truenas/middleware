@@ -890,6 +890,11 @@ AD_join_domain()
 	return ${res}
 }
 
+AD_enable_machine_account()
+{
+	${AD_TOOL} enable_machine_account
+}
+
 AD_status_domain()
 {
 	local bindname="${1}"
@@ -942,6 +947,11 @@ AD_leave_domain()
 
 	AD_log "AD_leave_domain: ${ok}"
 	return ${res}
+}
+
+AD_disable_machine_account()
+{
+	${AD_TOOL} disable_machine_account
 }
 
 AD_has_unix_extensions()

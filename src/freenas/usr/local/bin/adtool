@@ -69,6 +69,7 @@ class ADToolShell(cmd.Cmd):
             [ "binddn", "Bind DN"],
             [ "netbiosname", "Netbios name of the domain" ],
             [ "workgroup", "Netbios name of the domain" ],
+            [ "machine", "machine account name" ],
             [ "site", "Domain site" ],
             [ "dcname", "Domain controller in hostname:port format" ],
             [ "dchost", "Domain controller hostname" ],
@@ -101,7 +102,10 @@ class ADToolShell(cmd.Cmd):
             [ "forest_global_catalog_servers", "Global catalog servers for forst" ],
             [ "kerberos_servers", "Kerberos servers for domain" ],
             [ "kerberos_domain_controllers", "Kerberos domain controllers for domain" ],
-            [ "kpasswd_servers", "Kerberos password change servers for domain" ]
+            [ "kpasswd_servers", "Kerberos password change servers for domain" ],
+            [ "enable_machine_account", "enable machine account in domain" ],
+            [ "disable_machine_account", "disable machine account in domain" ],
+            [ "joined", "joined status for domain" ]
         ]
 
         print >> sys.stderr, """\
@@ -143,6 +147,28 @@ Available options:
     def do_join(self, arg):
         pass
 
+    def do_enable_machine_account(self, arg):
+        args = arg.split()
+
+        machine = None
+        for arg in args:
+            machine = arg
+        if not machine:
+            machine = self.adc.machine         
+
+        return self.adc.enable_machine_account(machine)
+
+    def do_disable_machine_account(self, arg):
+        args = arg.split()
+
+        machine = None
+        for arg in args:
+            machine = arg
+        if not machine:
+            machine = self.adc.machine         
+
+        return self.adc.disable_machine_account(machine)
+
     def do_save(self, arg):
         self.ado.save()
         self.adc.reload()
@@ -167,6 +193,7 @@ Available options:
 
     def get_config_file(self, args):
         keys = [
+            "ad_machine",
             "ad_bindname",
             "ad_domainname",
             "ad_netbiosname",
@@ -328,6 +355,13 @@ Available options:
 
     def set_workgroup(self, args):
         return self.set_netbiosname(args)
+
+    def get_machine(self, args):
+        print >> sys.stdout, self.adc.machine
+
+    def set_machine(self, args):
+        for arg in args:
+            self.adc.machine = arg
 
     def get_site(self, args):
         print >> sys.stdout, self.adc.site
@@ -591,6 +625,19 @@ Available options:
             print >> sys.stdout, kpasswd_server
 
     def set_kpasswd_servers(self, args):
+        pass
+
+    def get_joined(self, args):
+        joined = "0"
+        if self.adc.joined():
+            joined = "1"
+
+        print >> sys.stdout, joined
+
+    def set_joined(self, args):
+        pass
+
+    def set_machine(self, args):
         pass
 
 
