@@ -1855,7 +1855,13 @@ class notifier:
             p1 = self._pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
             stdout, stderr = p1.communicate()
             ret = p1.returncode
-            if ret != 0:
+            if ret == 0:
+                # If we are replacing a faulted disk, kick it right after replace
+                # is initiated.
+                if from_label.isdigit():
+                    self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
+                # TODO: geli detach -l
+            else:
                 if from_swap != '':
                     self._system('/sbin/geli onetime /dev/%s' % (from_swap))
                     self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
@@ -1866,7 +1872,6 @@ class notifier:
                 if encrypt:
                     self._system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
-            # TODO: geli detach -l
 
         # Restore previous larger ashift state.
         if larger_ashift == 1:
