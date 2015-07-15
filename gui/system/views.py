@@ -1161,10 +1161,7 @@ def update_apply(request):
         if not uuid:
 
             # If it is HA run updated on the other node
-            if (
-                hasattr(notifier, 'failover_status') and
-                notifier().failover_licensed()
-            ):
+            if not notifier().is_freenas() and notifier().failover_licensed():
                 s = notifier().failover_rpc()
                 uuid = s.updated(False, True)
                 if uuid is False:
@@ -1186,10 +1183,8 @@ def update_apply(request):
             return HttpResponse(uuid, status=202)
         else:
             failover = False
-            if (
-                hasattr(notifier, 'failover_status') and
-                notifier().failover_licensed()
-            ):
+            # Get update handler from standby node
+            if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
                 s = notifier().failover_rpc()
                 rv = s.updated_handler(uuid)
@@ -1225,10 +1220,7 @@ def update_apply(request):
                     )
     else:
         # If it is HA run update check on the other node
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_licensed()
-        ):
+        if not notifier().is_freenas() and notifier().failover_licensed():
             s = notifier().failover_rpc()
             return render(
                 request,
@@ -1284,10 +1276,7 @@ def update_check(request):
                 apply_ = False
 
             # If it is HA run updated on the other node
-            if (
-                hasattr(notifier, 'failover_status') and
-                notifier().failover_licensed()
-            ):
+            if not notifier().is_freenas() and notifier().failover_licensed():
                 s = notifier().failover_rpc()
                 uuid = s.updated(True, apply_)
                 if uuid is False:
@@ -1311,10 +1300,8 @@ def update_check(request):
         else:
 
             failover = False
-            if (
-                hasattr(notifier, 'failover_status') and
-                notifier().failover_licensed()
-            ):
+            # Get update handler from standby node
+            if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
                 s = notifier().failover_rpc()
                 rv = s.updated_handler(uuid)
@@ -1355,10 +1342,7 @@ def update_check(request):
                 )
     else:
         # If it is HA run update check on the other node
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_licensed()
-        ):
+        if not notifier().is_freenas() and notifier().failover_licensed():
             s = notifier().failover_rpc()
             return render(
                 request,
@@ -1398,10 +1382,7 @@ def update_check(request):
 def update_progress(request):
 
     # If it is HA run update handler on the other node
-    if (
-        hasattr(notifier, 'failover_status') and
-        notifier().failover_licensed()
-    ):
+    if not notifier().is_freenas() and notifier().failover_licensed():
         s = notifier().failover_rpc()
         rv = s.updated_handler(None)
         load = rv['data']
