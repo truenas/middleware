@@ -85,8 +85,10 @@ SCRIPTS = [
 def ProcessFileList(files, cfg_file):
     cfg_dir = os.path.dirname(cfg_file)
     for f in files:
+        f = f.strip()
         if not f.startswith('@'):
             yield f
+            continue
 
         m = re.match(r"@(\w+)\(([^)]*)\)", f)
         if m:
