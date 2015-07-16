@@ -37,9 +37,14 @@ class Migration(DataMigration):
                 if sys.sys_uuid:
                     sys.sys_uuid_b = sys.sys_uuid
                     sys.save()
+
+            try:
+                open('/data/sync_fields_to_peer', 'w').close()
+            except:
+                pass
         elif node == 'A':
             try:
-                open('/data/sync_fields_from_standby', 'w').close()
+                open('/data/sync_fields_from_peer', 'w').close()
             except:
                 pass
 
