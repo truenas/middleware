@@ -5351,7 +5351,7 @@ class notifier:
         except:
             systemdataset = SystemDataset.objects.create()
 
-        if not systemdataset.sys_uuid:
+        if not systemdataset.get_sys_uuid():
             systemdataset.new_uuid()
             systemdataset.save()
 
@@ -5409,9 +5409,9 @@ class notifier:
 
         datasets = [basename]
         for sub in (
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ):
             datasets.append('%s/%s' % (basename, sub))
 
@@ -5465,8 +5465,8 @@ class notifier:
             'rrd': '%s/rrd' % basename,
         }
         newdatasets = {
-            'syslog': '%s/syslog-%s' % (basename, sysdataset.sys_uuid),
-            'rrd': '%s/rrd-%s' % (basename, sysdataset.sys_uuid),
+            'syslog': '%s/syslog-%s' % (basename, sysdataset.get_sys_uuid()),
+            'rrd': '%s/rrd-%s' % (basename, sysdataset.get_sys_uuid()),
         }
         proc = self._pipeopen(
             'zfs list -H -o name %s' % ' '.join(
@@ -5520,9 +5520,9 @@ class notifier:
     def system_dataset_mount(self, pool, path=SYSTEMPATH):
         systemdataset, basename = self.system_dataset_settings()
         sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ]
 
         # Check if .system datasets are already mounted
@@ -5540,9 +5540,9 @@ class notifier:
     def system_dataset_umount(self, pool):
         systemdataset, basename = self.system_dataset_settings()
         sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ]
 
         for i in sub:

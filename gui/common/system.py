@@ -620,7 +620,7 @@ def backup_database():
 
     newfile = os.path.join(
         systempath,
-        'configs-%s' % systemdataset.sys_uuid,
+        'configs-%s' % systemdataset.get_sys_uuid(),
         get_sw_version(),
         '%s.db' % today,
     )

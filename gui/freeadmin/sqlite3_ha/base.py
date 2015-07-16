@@ -26,9 +26,6 @@ whole table.
 """
 NO_SYNC_MAP = {
     'network_alias': {},
-    'system_systemdataset': {
-        'fields': ['sys_uuid'],
-    },
 }
 
 
