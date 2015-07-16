@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# Copyright (c) 2015 iXsystems, Inc.
+# All rights reserved.
+# This file is a part of TrueNAS
+# and may not be copied and/or distributed
+# without the express permission of iXsystems.
+
 from lockfile import LockFile
 
 import atexit
