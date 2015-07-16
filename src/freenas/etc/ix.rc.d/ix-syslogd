@@ -99,10 +99,17 @@ get_system_dataset()
 get_syslog_dataset()
 {
 	local system_dataset="$(get_system_dataset)"
+	local sys_uuid_field
+
+	if [ "$(ha_node)" = "B" ]; then
+		sys_uuid_field="sys_uuid_b"
+	else
+		sys_uuid_field="sys_uuid"
+	fi
 
 	if [ -n "${system_dataset}" ]
 	then
-		echo "${system_dataset}/syslog-$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select sys_uuid from system_systemdataset")"
+		echo "${system_dataset}/syslog-$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select ${sys_uuid_field} from system_systemdataset")"
 	fi
 }
 
