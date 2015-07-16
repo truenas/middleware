@@ -16,29 +16,32 @@ class Migration(DataMigration):
     )
 
     def forwards(self, orm):
-        if notifier().failover_node() == 'B':
+        node = notifier().failover_node()
+        if node == 'B':
             for ad in orm['directoryservice.ActiveDirectory'].objects.all():
                 if ad.ad_netbiosname:
                     ad.ad_netbiosname_b = ad.ad_netbiosname
                     ad.save()
 
-        if notifier().failover_node() == 'B':
             for iface in orm['network.Interfaces'].objects.all():
                 if iface.int_ipv4address:
                     iface.int_ipv4address_b = iface.int_ipv4address
                     iface.save()
 
-        if notifier().failover_node() == 'B':
             for obj in orm['network.GlobalConfiguration'].objects.all():
                 if obj.gc_hostname:
                     obj.gc_hostname_b = obj.gc_hostname
                     obj.save()
 
-        if notifier().failover_node() == 'B':
             for sys in orm['system.SystemDataset'].objects.all():
                 if sys.sys_uuid:
                     sys.sys_uuid_b = sys.sys_uuid
                     sys.save()
+        elif node == 'A':
+            try:
+                open('/data/sync_fields_from_standby', 'w').close()
+            except:
+                pass
 
 
     def backwards(self, orm):
