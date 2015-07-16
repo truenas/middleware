@@ -1460,6 +1460,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: leave")
 
     def set_kwargs(self):
+        from freenasUI.middleware.notifier import notifier
+
         kwargs = self.kwargs 
 
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
@@ -1469,6 +1471,16 @@ class FreeNAS_ActiveDirectory_Base(object):
                     continue
 
                 newkey = key.replace("ad_", "")
+                if (
+                    key.startswith('ad_netbiosname') and
+                    not notifier().is_freenas() and
+                    notifier().failover_node() == 'B'
+                ):
+                    if key == 'ad_netbiosname_b':
+                        newkey = 'netbiosname'
+                    elif key == 'ad_netbiosname':
+                        continue
+
                 if newkey in ('verbose_logging',
                     'unix_extensions', 'allow_trusted_doms',
                     'use_default_domain'):
