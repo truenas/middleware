@@ -11,15 +11,15 @@ class LSIFirmwareAlert(BaseAlert):
     def run(self):
         alerts = []
         mps = defaultdict(dict)
-        for o in sysctl.filter('dev.mps'):
-            mibs = o.name.split('.', 3)
+        for k, v in sysctl.filter('dev.mps'):
+            mibs = k.split('.', 3)
             if len(mibs) < 4:
                 continue
 
             number, mib = mibs[2:4]
 
             try:
-                major = int(o.value.split('.', 1)[0])
+                major = int(v.split('.', 1)[0])
                 mps[number][mib] = major
             except:
                 continue

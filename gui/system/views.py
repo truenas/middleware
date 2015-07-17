@@ -103,9 +103,9 @@ log = logging.getLogger('system.views')
 def _system_info(request=None):
     # OS, hostname, release
     __, hostname, __ = os.uname()[0:3]
-    platform = sysctl.filter('hw.model')[0].value
+    platform = sysctl.sysctlbyname('hw.model')
     physmem = '%dMB' % (
-        sysctl.filter('hw.physmem')[0].value / 1048576,
+        sysctl.sysctlbyname('hw.physmem') / 1048576,
     )
     # All this for a timezone, because time.asctime() doesn't add it in.
     date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'

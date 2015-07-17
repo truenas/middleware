@@ -4968,9 +4968,10 @@ class notifier:
         """
         Tiny wrapper for sysctl module for compatibility
         """
-        sysc = sysctl.filter(unicode(name))
+        sysc = sysctl.sysctlbyname(name)
         if sysc:
-            return sysc[0].value
+            return sysc
+            
         raise ValueError(name)
 
     def staticroute_delete(self, sr):
