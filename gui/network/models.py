@@ -267,7 +267,7 @@ class Interfaces(Model):
     def save(self, *args, **kwargs):
         if not self.int_vip:
             self.int_carp = None
-        elif not self.int_carp:
+        elif self.int_carp in (None, ''):
             used = [i[0] for i in Interfaces.objects.values_list('int_carp')]
             # More than 50 CARPs? I dont think so, but lets be safe
             # and avoid counting how many interfaces we have got.
