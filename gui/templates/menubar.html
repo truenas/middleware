@@ -51,7 +51,7 @@
   </div>
 
   {% for menu in menu_hook %}
-  <div id="{% if menu.id %}{{ menu.id }}{% else %}menuBar_{{ forloop.counter }}{% endif %}" data-dojo-type="dijit.MenuBarItem" onClick="{{ menu.onclick }}" class="menu_icon{% if menu.align %} {{ menu.align }}{% endif %}">
+  <div id="{% if menu.id %}{{ menu.id }}{% else %}menuBar_{{ forloop.counter }}{% endif %}" data-dojo-type="dijit.MenuBarItem" onClick="{{ menu.onclick }}" class="menu_icon{% if menu.align %} {{ menu.align }}{% endif %}"{% if menu.style %} style="{{ menu.style }}"{% endif %}>
     {% if menu.img %}
       {{ menu.img|safe }}
     {% else %}
