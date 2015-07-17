@@ -46,6 +46,7 @@ from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
 )
+from freenasUI.tools.vhid import scan_for_vrrp
 
 log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
@@ -242,8 +243,17 @@ class InterfacesForm(ModelForm):
     def clean_int_vhid(self):
         vip = self.cleaned_data.get('int_vip')
         vhid = self.cleaned_data.get('int_vhid')
+        iface = self.cleaned_data.get('int_interface')
         if vip and not vhid:
             raise forms.ValidationError(_('This field is required'))
+        if not self.instance.id and iface:
+            used_vhids = scan_for_vrrp(iface, count=None, timeout=5)
+            if vhid in used_vhids:
+                raise forms.ValidationError(
+                    _("The following VHIDs are already in use: %s") % (
+                        ', '.join([str(i) for i in used_vhids]),
+                    )
+                )
         return vhid
 
     def clean_int_group(self):
