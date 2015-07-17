@@ -78,11 +78,10 @@ def license_update(request):
                 f.write(form.cleaned_data.get('license').encode('ascii'))
             try:
                 _n = notifier()
-                if hasattr(_n, 'failover_getpeer'):
-                    ip, secret = _n.failover_getpeer()
-                    if ip:
-                        s = _n.failover_rpc(ip=ip)
-                        _n.sync_file_send(s, secret, utils.LICENSE_FILE)
+                if not _n.is_freenas():
+                    s = _n.failover_rpc()
+                    if s:
+                        _n.sync_file_send(s, utils.LICENSE_FILE)
                 events = []
                 form.done(request, events)
             except Exception as e:
