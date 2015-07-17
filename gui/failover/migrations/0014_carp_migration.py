@@ -50,6 +50,8 @@ class Migration(DataMigration):
                 # If CARP address is within interface range attach CARP into it
                 if ipnet.overlaps(carp_ipnet):
                     iface.int_vip = carp_iface.int_ipv4address
+                    if carp.carp_number is not None:
+                        iface.int_carp = carp.carp_number
                     if carp.carp_vhid:
                         iface.int_vhid = carp.carp_vhid
                     if carp.carp_pass:
