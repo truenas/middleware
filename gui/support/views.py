@@ -83,9 +83,15 @@ def license_update(request):
                     if ip:
                         s = _n.failover_rpc(ip=ip)
                         _n.sync_file_send(s, secret, utils.LICENSE_FILE)
+                events = []
+                form.done(request, events)
             except Exception as e:
                 log.debug("Failed to sync license file: %s", e)
-            return JsonResp(request, message=_('License updated.'))
+            return JsonResp(
+                request,
+                events=events,
+                message=_('License updated.')
+            )
         else:
             return JsonResp(request, form=form)
     else:
