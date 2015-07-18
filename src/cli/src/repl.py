@@ -41,7 +41,7 @@ import termios
 import config
 import json
 import time
-import gettext
+import icu
 import getpass
 import traceback
 import Queue
@@ -68,8 +68,8 @@ else:
 
 DEFAULT_CONFIGFILE = '/usr/local/etc/middleware.conf'
 DEFAULT_RC = os.path.expanduser('~/.freenascli.conf')
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 PROGRESS_CHARS = ['-', '\\', '|', '/']

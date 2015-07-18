@@ -28,14 +28,13 @@
 
 import os
 import crypt
-import gettext
+import icu
 from namespace import Namespace, Command, EntityNamespace, IndexCommand, TaskBasedSaveMixin, RpcBasedLoadMixin, description
 from output import ValueType
 
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
-
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 @description(_("System users"))
 class UsersNamespace(TaskBasedSaveMixin, RpcBasedLoadMixin, EntityNamespace):

@@ -29,15 +29,15 @@ import os
 import importlib
 import sys
 import config
-import gettext
+import icu
 import enum
 import string
 from threading import Lock
 
 
 output_lock = Lock()
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 class ValueType(enum.Enum):

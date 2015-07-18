@@ -32,15 +32,15 @@ import termios
 import sys
 import select
 import sandbox
-import gettext
+import icu
 from namespace import Command, CommandException, description
 from output import (
     Column, output_value, output_dict, format_value, output_msg, output_list
 )
 from dispatcher.shell import ShellClient
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 @description("Sets variable value")

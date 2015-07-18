@@ -29,7 +29,7 @@
 import sys
 import time
 import config
-import gettext
+import icu
 import natural.date
 import natural.size
 from texttable import Texttable
@@ -38,8 +38,8 @@ from termcolor import cprint
 from output import ValueType, get_terminal_size, resolve_cell
 
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 class AsciiOutputFormatter(object):

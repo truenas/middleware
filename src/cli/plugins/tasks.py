@@ -26,14 +26,14 @@
 #####################################################################
 
 
-import gettext
+import icu 
 from descriptions import tasks
 from namespace import Namespace, IndexCommand, Command, description
 from output import Column, ValueType, output_table
 
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 @description("Lists system services")

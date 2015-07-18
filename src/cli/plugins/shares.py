@@ -25,13 +25,13 @@
 #
 #####################################################################
 
-import gettext
+import icu
 from namespace import Namespace, EntityNamespace, Command, IndexCommand, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import ValueType, output_list
 
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 @description("Lists users connected to particular share")

@@ -26,14 +26,14 @@
 #####################################################################
 
 
-import gettext
+import icu 
 from namespace import EntityNamespace, Command, CommandException, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import Column, output_table, output_tree
 from fnutils import first_or_default
 
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 @description("Adds new vdev to volume")

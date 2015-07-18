@@ -27,13 +27,13 @@
 
 
 import copy
-import gettext
+import icu 
 from namespace import Namespace, EntityNamespace, ConfigNamespace, Command, RpcBasedLoadMixin, TaskBasedSaveMixin, description
 from output import ValueType
 
 
-t = gettext.translation('freenas-cli', fallback=True)
-_ = t.ugettext
+t = icu.Transliterator.createInstance("Any-Accents", icu.UTransDirection.FORWARD)
+_ = t.transliterate
 
 
 class InterfaceCreateCommand(Command):
