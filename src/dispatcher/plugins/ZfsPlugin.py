@@ -496,7 +496,7 @@ def convert_topology(zfs, topology):
     for group, vdevs in topology.items():
         nvroot[group] = []
         for i in vdevs:
-            vdev = libzfs.ZFSVdev(zfs)
+            vdev = libzfs.ZFSVdev(zfs, "disk")
             vdev.type = i['type']
 
             if i['type'] == 'disk':
@@ -505,7 +505,7 @@ def convert_topology(zfs, topology):
             if 'children' in i:
                 ret = []
                 for c in i['children']:
-                    cvdev = libzfs.ZFSVdev(zfs)
+                    cvdev = libzfs.ZFSVdev(zfs, "disk")
                     cvdev.type = c['type']
                     cvdev.path = c['path']
                     ret.append(cvdev)
