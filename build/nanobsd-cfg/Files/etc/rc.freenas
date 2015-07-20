@@ -888,14 +888,19 @@ ha_mode()
 		echo "ECHOSTREAM:${node}" > ${HA_MODE_FILE}
 		manual=0
 	else
+		local hardware
 		# Check for SBB
 		if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X8DTS" ]; then
-			serial=$(/usr/local/sbin/dmidecode -s system-serial-number)
-			node=$(/usr/local/www/freenasUI/tools/license_node.py ${serial})
-			if [ "${node}" = "A" -o "${node}" = "B" ]; then
-				echo "SBB:${node}" > ${HA_MODE_FILE}
-				manual=0
-			fi
+			hardware="SBB"
+		# Eeverything else is called ULTIMATE since we can't realiably determine it
+		else
+			hardware="ULTIMATE"
+		fi
+		serial=$(/usr/local/sbin/dmidecode -s system-serial-number)
+		node=$(/usr/local/www/freenasUI/tools/license_node.py ${serial})
+		if [ "${node}" = "A" -o "${node}" = "B" ]; then
+			echo "${hardware}:${node}" > ${HA_MODE_FILE}
+			manual=0
 		fi
 	fi
 
