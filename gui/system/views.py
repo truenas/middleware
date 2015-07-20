@@ -35,6 +35,7 @@ import shutil
 import socket
 import subprocess
 import sysctl
+import tarfile
 import time
 import urllib
 import xmlrpclib
@@ -874,23 +875,49 @@ def reload_httpd(request):
 
 
 def debug(request):
-    hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
     mntpt, direc, dump = debug_get_settings()
+
+    _n = notifier()
+    standby_debug = None
+    if not _n.is_freenas() and _n.failover_licensed():
+        s = _n.failover_rpc()
+        standby_debug = s.debug()
 
     with mntlock(mntpt=mntpt):
 
         debug_run(direc)
 
-        wrapper = FileWrapper(file(dump))
+        if standby_debug:
+            debug_file = '%s/debug.tar' % direc
+            _n.sync_file_recv(s, standby_debug, '%s/standby.txz' % direc)
+            if _n.failover_node() == 'B':
+                hostname_a = gc.gc_hostname
+                hostname_b = gc.gc_hostname_b
+            else:
+                hostname_a = gc.gc_hostname_b
+                hostname_b = gc.gc_hostname
+            with tarfile.open(debug_file, 'w') as tar:
+                tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_b)
+                tar.add(dump, '%s.txz' % hostname_a)
+            extension = 'tar'
+            hostname = ''
+        else:
+            debug_file = dump
+            extension = '.tgz'
+            hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+
+        wrapper = FileWrapper(file(debug_file))
         response = StreamingHttpResponse(
             wrapper,
             content_type='application/octet-stream',
         )
-        response['Content-Length'] = os.path.getsize(dump)
+        response['Content-Length'] = os.path.getsize(debug_file)
         response['Content-Disposition'] = \
-            'attachment; filename=debug-%s-%s.tgz' % (
-                hostname.encode('utf-8'),
-                time.strftime('%Y%m%d%H%M%S'))
+            'attachment; filename=debug%s-%s.%s' % (
+                hostname,
+                time.strftime('%Y%m%d%H%M%S'),
+                extension)
 
         opts = ["/bin/rm", "-r", "-f", direc]
         p1 = pipeopen(' '.join(opts), allowfork=True)
