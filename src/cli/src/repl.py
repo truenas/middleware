@@ -572,6 +572,8 @@ class MainLoop(object):
 
 
 def main():
+    logging.basicConfig(filename='/var/log/freenascli.log',
+                        level=logging.DEBUG)
     parser = argparse.ArgumentParser()
     parser.add_argument('hostname', metavar='HOSTNAME', nargs='?',
                         default='127.0.0.1')
