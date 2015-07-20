@@ -61,19 +61,18 @@ def main(command, quiet):
                   "There's nothing to enable here.")
             sys.exit(7)
         if Failover.objects.all()[0].disabled is True:
-            ip = Failover.objects.all()[0].ipaddress
-            ret = os.system("ssh -o ConnectTimeout=3 %s "
-                            "/usr/local/libexec/truenas/hactl-worker enable"
-                            % ip)
-            if not ret:
+            s = _not.failover_rpc()
+            try:
+                if s is None:
+                    raise ValueError
+                s.hactl('enable')
                 for item in Failover.objects.all():
                     item.disabled = False
-                    item.master = False
                     item.save()
                 os.system("/usr/sbin/service ix-devd start")
                 print "Failover enabled."
                 sys.exit(0)
-            else:
+            except:
                 print "Unable to contact remote node.  Failover not enabled."
                 sys.exit(2)
         else:
@@ -85,19 +84,21 @@ def main(command, quiet):
                   "There's nothing to disable here.")
             sys.exit(8)
         if Failover.objects.all()[0].disabled is False:
-            ip = Failover.objects.all()[0].ipaddress
+            s = _not.failover_rpc()
             if (_not.failover_status() == "MASTER" or
                     _not.failover_status() == "IMPORTING"):
                 status = "master"
-                ret = os.system("ssh -o ConnectTimeout=3 %s "
-                                "/usr/local/libexec/truenas/hactl-worker "
-                                "disable passive" % ip)
+                try:
+                    ret = s.hactl('disable', ['passive'])
+                except:
+                    ret = False
             else:
                 status = "passive"
-                ret = os.system("ssh -o ConnectTimeout=3 %s "
-                                "/usr/local/libexec/truenas/hactl-worker "
-                                "disable active" % ip)
-            if not ret:
+                try:
+                    ret = s.hactl('disable', ['active'])
+                except:
+                    ret = False
+            if ret is not False:
                 for item in Failover.objects.all():
                     item.disabled = True
                     if status == "master":
