@@ -187,6 +187,8 @@ _interface_config()
 				internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
 			elif [ $(ha_hardware) = "SBB" ]; then
 				internal_iface="ix0"
+			elif [ $(ha_hardware) = "ULTIMATE" ]; then
+				internal_iface="igb1"
 			fi
 			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
 			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
