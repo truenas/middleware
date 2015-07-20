@@ -211,7 +211,7 @@ class FreeAdminSite(object):
             console = False
         try:
             hostname = GlobalConfiguration.objects.order_by(
-                '-id')[0].gc_hostname
+                '-id')[0].get_hostname()
         except:
             hostname = None
 

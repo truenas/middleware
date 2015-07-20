@@ -134,6 +134,16 @@ class GlobalConfiguration(Model):
     def __unicode__(self):
         return u'%s' % self.id
 
+    def get_hostname(self):
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_node() == 'B':
+                return self.gc_hostname_b
+            else:
+                return self.gc_hostname
+        else:
+            return self.gc_hostname
+
     def save(self, *args, **kwargs):
         # See #3437
         if self._orig_gc_hostname != self.gc_hostname:
