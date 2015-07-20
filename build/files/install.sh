@@ -736,9 +736,6 @@ menu_install()
     fi
 
     _action="installation"
-    if [ -z "${_do_upgrade}" ]; then
-	_do_upgrade=0
-    fi
     # This needs to be re-done.
     # If we're not interactive, then we have
     # to assume _disks is correct.
@@ -757,7 +754,7 @@ menu_install()
 		_action="upgrade"
 	    fi
 	else
-	    if [ -z "${_do_upgrade}" ]; then
+	    if [ "${_do_upgrade}" != "0" ]; then
 		_do_upgrade=1
 		_action="upgrade"
 	    fi
@@ -783,6 +780,11 @@ menu_install()
 	fi
     fi
     done
+    # If we haven't set _do_upgrade by now, we're not
+    # doing an upgrade.
+    if [ -z "${_do_upgrade}" ]; then
+	_do_upgrade=0
+    fi
 
     if [ "${_satadom}" = "YES" -a -n "$(echo ${_disks}|grep "raid/")" ]; then
 	_realdisks=$(cat ${REALDISKS})
