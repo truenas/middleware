@@ -3914,29 +3914,6 @@ class notifier:
             retval = 'Try again later.'
         return retval
 
-    # Reactivate replication on all snapshots
-    def zfs_dataset_reset_replicated_snapshots(self, name, recursive=False):
-        name = str(name)
-        retval = None
-        if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r '%s'" % (name)
-        else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
-        try:
-            with mntlock(blocking=False):
-                zfsproc = self._pipeopen(zfscmd)
-                output = zfsproc.communicate()[0]
-                if output != '':
-                    snapshots_list = output.splitlines()
-                for snapshot_item in filter(None, snapshots_list):
-                    snapshot, state = snapshot_item.split('\t')
-                    if state != 'NEW':
-                        self.zfs_set_option(snapshot, 'freenas:state', 'NEW')
-                        self._system("/sbin/zfs hold -r freenas:repl %s" % (snapshot))
-        except IOError:
-            retval = 'Try again later.'
-        return retval
-
     def iface_destroy(self, name):
         self._system("ifconfig %s destroy" % name)
 
