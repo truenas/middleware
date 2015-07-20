@@ -746,7 +746,9 @@ def add_domaincontroller_conf(smb4_conf):
 
 
 def get_smb4_users():
-    return bsdUsers.objects.filter(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$')
+    return bsdUsers.objects.filter(Q(bsdusr_smbhash__regex=r'^.+:.+:[X]{32}:.+$') | \
+        Q(bsdusr_smbhash__regex=r'^.+:.+:[A-F0-9]{32}:.+$')
+    )
 
 
 def get_disabled_users():
