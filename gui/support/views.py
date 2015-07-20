@@ -76,13 +76,13 @@ def license_update(request):
         if form.is_valid():
             with open(utils.LICENSE_FILE, 'wb+') as f:
                 f.write(form.cleaned_data.get('license').encode('ascii'))
+            events = []
             try:
                 _n = notifier()
                 if not _n.is_freenas():
                     s = _n.failover_rpc()
                     if s:
                         _n.sync_file_send(s, utils.LICENSE_FILE)
-                events = []
                 form.done(request, events)
             except Exception as e:
                 log.debug("Failed to sync license file: %s", e)
