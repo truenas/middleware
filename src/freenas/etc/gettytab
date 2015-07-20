@@ -247,3 +247,19 @@ freenas_serial57600:\
 	:ht:np:sp#57600:lo=/etc/netcli.sh:al=root:
 freenas_serial115200:\
 	:ht:np:sp#115200:lo=/etc/netcli.sh:al=root:
+
+#
+# FreeNAS CLI entry
+#
+cli|freenas-cli:\
+	:ht:np:sp#15200:lo=/usr/local/bin/logincli:al=root:
+cli_serial9600:\
+	:ht:np:sp#9600:lo=/usr/local/bin/logincli:al=root:
+cli_serial19200:\
+	:ht:np:sp#19200:lo=/usr/local/bin/logincli:al=root:
+cli_serial38400:\
+	:ht:np:sp#38400:lo=/usr/local/bin/logincli:al=root:
+cli_serial57600:\
+	:ht:np:sp#57600:lo=/usr/local/bin/logincli:al=root:
+cli_serial115200:\
+	:ht:np:sp#115200:lo=/usr/local/bin/logincli:al=root:
