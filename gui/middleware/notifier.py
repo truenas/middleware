@@ -4969,7 +4969,7 @@ class notifier:
         Tiny wrapper for sysctl module for compatibility
         """
         sysc = sysctl.sysctlbyname(name)
-        if sysc:
+        if sysc is not None:
             return sysc
             
         raise ValueError(name)
