@@ -790,7 +790,7 @@ class NT4(DirectoryServiceBase):
 
         if not self.nt4_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
             if gc_hostname:
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
                 if m:
@@ -975,7 +975,7 @@ class ActiveDirectory(DirectoryServiceBase):
 
         if not self.ad_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
             if gc_hostname:
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
                 if m:
