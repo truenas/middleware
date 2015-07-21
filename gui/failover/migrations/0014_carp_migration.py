@@ -6,6 +6,8 @@ from django.db import models
 
 import ipaddr
 
+from freenasUI.middleware.notifier import notifier
+
 
 class Migration(DataMigration):
 
@@ -34,10 +36,16 @@ class Migration(DataMigration):
                 continue
 
             carp_ipnet = ipaddr.IPNetwork('%s/32' % carp_iface.int_ipv4address)
+            internal_ifaces = notifier().failover_internal_interfaces()
 
             for iface in orm['network.Interfaces'].objects.exclude(
                 int_interface__startswith='carp',
             ):
+
+                if iface.int_interface in internal_ifaces:
+                    iface.delete()
+                    continue
+
                 if not iface.int_ipv4address or not iface.int_v4netmaskbit:
                     continue
 
