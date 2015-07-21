@@ -94,5 +94,15 @@ def ha_node():
     return data.split(':', 1)[-1]
 
 
+def ha_hardware():
+
+    if os.path.exists(HA_MODE_FILE):
+        with open(HA_MODE_FILE, 'r') as f:
+            data = f.read()
+    else:
+        data = ha_mode()
+    return data.split(':')[0]
+
+
 if __name__ == '__main__':
     print ha_mode()
