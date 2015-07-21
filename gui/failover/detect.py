@@ -34,7 +34,7 @@ def ha_mode():
             '-v', '/dev/ses0',
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         encstat = proc.communicate()[0].strip()
-        reg = re.search(r"3U20D-Encl-[AB]'", encstat, re.M)
+        reg = re.search(r"3U20D-Encl-([AB])'", encstat, re.M)
         node = reg.group(1) if reg else None
 
     if node:
