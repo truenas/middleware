@@ -863,53 +863,12 @@ ha_mode()
 {
 	local encstat manual node serial
 
-	manual=1
-
 	if [ -f ${HA_MODE_FILE} ]; then
 		cat ${HA_MODE_FILE}
 		return 0
 	fi
 
-	# Temporary workaround for VirtualBOX
-	if [ "$(/usr/local/sbin/dmidecode -s bios-version)" = "VirtualBox" ]; then
-
-		encstat=$(/usr/local/sbin/dmidecode -s system-uuid)
-		if [ ${encstat} = "B9E1B270-1B0C-48C7-99C8-BFB965D71584" ]; then
-			encstat="Encl-A"
-		else
-			encstat="Encl-B"
-		fi
-	else
-		encstat=$(getencstat -v /dev/ses0 | egrep "3U20D-Encl-[AB]" 2> /dev/null)
-	fi
-
-	if [ $? -eq 0 ]; then
-		node=$(echo ${encstat}|awk -F "-" '{print $NF}'|sed "s/'//g")
-		echo "ECHOSTREAM:${node}" > ${HA_MODE_FILE}
-		manual=0
-	else
-		local hardware
-		# Check for SBB
-		if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X8DTS" ]; then
-			hardware="SBB"
-		# Eeverything else is called ULTIMATE since we can't realiably determine it
-		else
-			hardware="ULTIMATE"
-		fi
-		serial=$(/usr/local/sbin/dmidecode -s system-serial-number)
-		node=$(/usr/local/www/freenasUI/tools/license_node.py ${serial})
-		if [ "${node}" = "A" -o "${node}" = "B" ]; then
-			echo "${hardware}:${node}" > ${HA_MODE_FILE}
-			manual=0
-		fi
-	fi
-
-	if [ ${manual} -eq 1 ]; then
-		echo "MANUAL" > ${HA_MODE_FILE}
-	fi
-
-	cat ${HA_MODE_FILE}
-
+	/usr/local/bin/python /usr/local/www/freenasUI/failover/detect.py 2> /dev/null
 	return 0
 }
 
