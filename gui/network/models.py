@@ -352,9 +352,9 @@ class Interfaces(Model):
 
 class Alias(Model):
     alias_interface = models.ForeignKey(
-            Interfaces,
-            verbose_name=_("Interface")
-            )
+        Interfaces,
+        verbose_name=_("Interface")
+    )
     alias_vip = IP4AddressField(
         verbose_name=_("Virtual IPv4"),
         default='',

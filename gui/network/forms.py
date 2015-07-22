@@ -66,15 +66,15 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).__init__(*args, **kwargs)
 
         self._carp = False
-        if hasattr(notifier, 'failover_status'):
-            if notifier().failover_licensed():
-                from freenasUI.failover.utils import node_label_field
-                self._carp = True
-                node_label_field(
-                    notifier().failover_node(),
-                    self.fields['int_ipv4address'],
-                    self.fields['int_ipv4address_b'],
-                )
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed():
+            from freenasUI.failover.utils import node_label_field
+            self._carp = True
+            node_label_field(
+                _n.failover_node(),
+                self.fields['int_ipv4address'],
+                self.fields['int_ipv4address_b'],
+            )
 
         if not self._carp:
             del self.fields['int_vip']
@@ -732,12 +732,7 @@ class StaticRouteForm(ModelForm):
 class AliasForm(ModelForm):
 
     class Meta:
-        fields = (
-            'alias_v4address',
-            'alias_v4netmaskbit',
-            'alias_v6address',
-            'alias_v6netmaskbit',
-        )
+        fields = '__all__'
         model = models.Alias
 
     def __init__(self, *args, **kwargs):
@@ -748,6 +743,24 @@ class AliasForm(ModelForm):
         self.instance._original_alias_v6address = self.instance.alias_v6address
         self.instance._original_alias_v6netmaskbit = (
             self.instance.alias_v6netmaskbit)
+
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed():
+            from freenasUI.failover.utils import node_label_field
+            node_label_field(
+                _n.failover_node(),
+                self.fields['alias_v4address'],
+                self.fields['alias_v4address_b'],
+            )
+            node_label_field(
+                _n.failover_node(),
+                self.fields['alias_v6address'],
+                self.fields['alias_v6address_b'],
+            )
+        else:
+            del self.fields['alias_vip']
+            del self.fields['alias_v4address_b']
+            del self.fields['alias_v6address_b']
 
     def clean_alias_v4address(self):
         ip = self.cleaned_data.get("alias_v4address")
