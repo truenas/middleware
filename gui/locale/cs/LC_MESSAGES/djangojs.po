@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-07-05 21:24+0000\n"
+"PO-Revision-Date: 2015-07-12 16:44+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1436131467.0\n"
+"X-POOTLE-MTIME: 1436719465.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -77,7 +77,7 @@ msgstr "Vždy ve vybran."
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
-msgstr "Vždy N."
+msgstr "Co N"
 
 msgid "Plugins"
 msgstr "Zásuvné moduly"
@@ -442,7 +442,8 @@ msgstr "<font color='red'>STOP</font>: Opravdu víte, co děláte?<br /><br />"
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
 msgstr ""
-"Zásuvný modul idmap_ad umožňuje komponentě Winbind číst mapování z<br />"
+"Zásuvný modul idmap_ad umožňuje komponentě Winbind číst mapování "
+"identifikátorů z<br />"
 
 # "identifikátorů z<br />"
 #: freeadmin/static/lib/js/freeadmin.js:1164
@@ -531,7 +532,7 @@ msgstr "Tuto kolonku je nutné vyplnit."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr "Nahrávání příloh na počítač…"
+msgstr "Nahrávání příloh na stroj…"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
@@ -543,7 +544,7 @@ msgstr "Odesílání hlášení…"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr "Odesílání příloh k hlášení z počítače"
+msgstr "Odesílání příloh k hlášení ze stroje…"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Train Descriptions"

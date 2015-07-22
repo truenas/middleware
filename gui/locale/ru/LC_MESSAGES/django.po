@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-06-04 21:29+0000\n"
-"Last-Translator: xRaider <xraiderus@gmail.com>\n"
+"PO-Revision-Date: 2015-07-09 17:17+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1433453357.0\n"
+"X-POOTLE-MTIME: 1436462255.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -11717,9 +11717,8 @@ msgid "Changelog"
 msgstr "Журнал изменений"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
@@ -11738,33 +11737,30 @@ msgid "15000"
 msgstr ""
 
 #: choices.py:811
-#, fuzzy
 msgid "Sensitive"
-msgstr "Чувствительность к регистру"
+msgstr "Чувствительный"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "Нечувствительный"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Смешанный"
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Гостевая учетная запись"
+msgstr "Учетная запись Microsoft"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
 msgid "netbiosname: %s"
-msgstr ""
+msgstr "NetBIOS-имя: %s"
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
-msgstr "Рабочая группа"
+msgstr "Рабочая группа: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
@@ -11800,23 +11796,20 @@ msgid "Restart"
 msgstr "Перезапуск..."
 
 #: jails/forms.py:219
-#, fuzzy
 msgid "Jail name cannot have '.' or ' '"
-msgstr "Имя jail не может содержать '.'"
+msgstr "Имя jail не может содержать '.' или ' '"
 
 #: jails/forms.py:590
-#, fuzzy
 msgid "Jail root does not exist!"
-msgstr "Jail не существует"
+msgstr "Корень jail не существует!"
 
 #: jails/forms.py:1027
-#, fuzzy
 msgid ""
 "Destination must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
-"Наборы данных должны начинаться с буквы или цифры и могут так-же содержать "
-"\"-\", \"_\", \":\", \" \" и \".\"."
+"Назначение должно начинаться с буквы или цифры и может так-же содержать \"-\""
+", \" \", и \".\"."
 
 #: jails/models.py:554
 msgid "mtree"
@@ -11831,39 +11824,38 @@ msgid ""
 "If this is a system template, it will not be visible in the UI and will only "
 "be used internally."
 msgstr ""
+"Если это шаблон системы, он не будет виден в интерфейсе и будет "
+"использоваться только внутри."
 
 #: jails/nav.py:73
-#, fuzzy
 msgid "Add Jail"
 msgstr "Добавить jail"
 
 #: jails/views.py:192
-#, fuzzy
 msgid "Jail successfully restarted."
-msgstr "Jail успешно запущен."
+msgstr "Jail успешно перезапущен."
 
 #: middleware/notifier.py:3791
 msgid "Failed to upload config, version newer than the current installed."
-msgstr ""
+msgstr "Ошибка загрузки конфигурации, версия новее чем установлена."
 
 #: services/forms.py:89
 msgid "You have %d pending active iSCSI connection(s)."
-msgstr ""
+msgstr "Имеется %d активных iSCSI соединений."
 
 #: services/forms.py:654
 #: services/forms.py:662
 msgid "Incorrect usage of the # delimiter."
-msgstr ""
+msgstr "Некорректное использование разделителя #."
 
 #: services/forms.py:666
 #: services/forms.py:676
-#, fuzzy
 msgid "Invalid domain name."
-msgstr "Имя домена NIS"
+msgstr "Неверное имя домена."
 
 #: services/forms.py:672
 msgid "Invalid domain name or incorrect hash delimiter."
-msgstr ""
+msgstr "Неверное имя домена или некорректный разделитель."
 
 #: services/forms.py:716
 #, fuzzy
@@ -11871,43 +11863,38 @@ msgid "Confirm Privacy Passphrase"
 msgstr "Подтвердите пароль"
 
 #: services/forms.py:762
-#, fuzzy
 msgid "Password must contain at least 8 characters"
-msgstr "В имени присутствуют недопустимые символы (%s)."
+msgstr "Пароль должен содержать не менее 8 символов."
 
 #: services/forms.py:820
-#, fuzzy
 msgid "Passphrase must contain at least 8 characters"
-msgstr "В имени присутствуют недопустимые символы (%s)."
+msgstr "Пароль должен содержать не менее 8 символов."
 
 #: services/forms.py:976
-#, fuzzy
 msgid "Secret must be between 12 and 16 characters."
-msgstr "Это значение должно быть от 0 до 1000 включительно."
+msgstr "Секрет должен содержать 12-16 символов."
 
 #: services/forms.py:983
 msgid "Peer secret must be between 12 and 16 characters."
-msgstr ""
+msgstr "Секрет должен содержать 12-16 символов."
 
 #: services/forms.py:1082
-#, fuzzy
 msgid "LUN ID is already being used for this target."
-msgstr "LUN уже существует для той же цели."
+msgstr "LUN ID уже существует для этой цели."
 
 #: services/forms.py:1633
-#, fuzzy
 msgid "Double quotes are not allowed."
-msgstr "Кавычки не разрешены"
+msgstr "Двойные кавычки не разрешены."
 
 #: services/forms.py:1640
-#, fuzzy
 msgid "Alias name must be unique."
-msgstr "Имя экстента должно быть уникально."
+msgstr "Псевдоним должен быть уникален."
 
 #: services/forms.py:1644
 msgid ""
 "target is a reserved word, please choose a different name for this alias."
 msgstr ""
+"target -- зарезервированные слово, пожалуйста выберите другой псевдоним."
 
 #: services/models.py:322
 #, fuzzy
@@ -11948,20 +11935,21 @@ msgstr ""
 
 #: services/models.py:437
 msgid "List of Internet Storage Name Service (iSNS) Servers"
-msgstr ""
+msgstr "Список Internet Storage Name Service (iSNS) серверов"
 
 #: services/models.py:440
-#, fuzzy
 msgid "Pool Available Space Threshold (%)"
 msgstr "Порог доступного места для пула (%)"
 
 #: services/models.py:445
 msgid "Remaining ZFS pool capacity warning threshold when using zvol extents"
 msgstr ""
+"Порог предупреждения об оставшейся емкости ZFS пула при использовании ZVOL "
+"экстентов"
 
 #: services/models.py:504
 msgid "Disable Physical Block Size Reporting"
-msgstr ""
+msgstr "Отключить сообщение размера физического блока"
 
 #: services/models.py:506
 msgid ""
@@ -11969,20 +11957,21 @@ msgid ""
 "can be up to 128K. Some initiators do not work with values above 4K, "
 "checking this disables reporting the physical blocksize."
 msgstr ""
+"По умолчанию в роли размера физического блока сообщается размер блока ZFS, "
+"который может достигать 128К. Некоторые инициаторы не работают со значениями "
+"выше 4К. Включение этой опции отключает сообщение физического размера блока."
 
 #: services/models.py:512
-#, fuzzy
 msgid "Available Space Threshold (%)"
 msgstr "Порог доступного места (%)"
 
 #: services/models.py:516
 msgid "Remaining dataset/zvol capacity warning threshold"
-msgstr ""
+msgstr "Порог предупреждения об оставшемся доступном месте для датасета/zvol."
 
 #: services/models.py:550
-#, fuzzy
 msgid "LUN RPM"
-msgstr "LUN ID"
+msgstr "Частота вращения LUN"
 
 #: services/models.py:551
 msgid ""
@@ -11992,47 +11981,49 @@ msgid ""
 "LUNs as swap devices, there is some value to picking a non-SSD RPM if your "
 "extent is indeed not SSDs and the initiator will be VMWare."
 msgstr ""
+"Значение частоты вращения LUN которое будет сообщено инициатору. По "
+"умолчанию выбрано SSD, чтобы избежать попыток дефрагментации диска из "
+"Windows, что было бы наихудшим вариантом для ZFS. VMWare позволяет "
+"использовать SSD в качестве устройств подкачки, потому существует некоторый "
+"смысл в выборе другого значения этого параметра если ваш накопитель "
+"действительно не SSD и инициатором будет VMWare."
 
 #: services/models.py:821
-#, fuzzy
 msgid ""
 "Base Name will be appended automatically when starting without 'iqn.', "
 "'eui.' or 'naa.'."
 msgstr ""
-"Базовое имя будет добавлено ​​автоматически если не начинается с 'iqn.'."
+"Базовое имя будет добавлено ​​автоматически если не начинается с 'iqn.', "
+"'eui.' или 'naa.'."
 
 #: services/models.py:835
-#, fuzzy
 msgid "Fiber Channel"
-msgstr "Канал"
+msgstr "Fiber Channel"
 
 #: services/models.py:836
 msgid "Both"
-msgstr ""
+msgstr "Оба"
 
 #: services/models.py:840
-#, fuzzy
 msgid "Target Mode"
-msgstr "Имя цели"
+msgstr "Режим цели"
 
 #: services/models.py:868
-#, fuzzy
 msgid "Target this group belongs to"
-msgstr "Том этой группы принадлежит"
+msgstr "Цель которой принадлежит эта группа"
 
 #: services/models.py:909
 #: services/models.py:910
-#, fuzzy
 msgid "iSCSI Groups"
-msgstr "Группы"
+msgstr "Группы iSCSI"
 
 #: services/models.py:960
 msgid "Fiber Channel Target"
-msgstr ""
+msgstr "Цель Fiber Channel"
 
 #: services/models.py:961
 msgid "Fiber Channel Targets"
-msgstr ""
+msgstr "Цели Fiber Channel"
 
 #: services/models.py:978
 #, fuzzy
@@ -12111,30 +12102,25 @@ msgstr ""
 "пароля отправляется по сети (более безопасный)"
 
 #: services/views.py:334
-#, fuzzy
 msgid "Fiber Channel Ports have been successfully changed."
-msgstr "Ваши изменения были успешно обновлены!"
+msgstr "Порты Fiber Channel были успешно изменены."
 
 #: sharing/forms.py:291
-#, fuzzy
 msgid "A share with this name already exists."
-msgstr "Цель с таким именем уже существует."
+msgstr "Ресурс с таким именем уже существует."
 
 #: sharing/forms.py:527
-#, fuzzy
 msgid "Whitespace is not a valid character for NFS shares."
-msgstr "Это не правильный адрес сервера имен"
+msgstr "Пробел недопустим в общем доступе NFS."
 
 #: storage/admin.py:510
-#, fuzzy
 msgid "Online"
-msgstr "Offline"
+msgstr "Online"
 
 #: storage/admin.py:636
 #: storage/forms.py:1851
-#, fuzzy
 msgid "VMware Sync"
-msgstr "Синхронизация VMWare"
+msgstr "Синхронизация VMware"
 
 #: storage/forms.py:732
 msgid ""
@@ -12142,162 +12128,147 @@ msgid ""
 "copied over to the path specified in the 'Destination' field below and then "
 "unmounted. Importing non-zfs disks permanently as a Volume is deprecated"
 msgstr ""
+"Этот диск с не-ZFS файловой системой. Он будет примонтирован, его данные "
+"скопированы в место указанному в поле \"Destination\" ниже, после чего он "
+"будет отмонтирован. Постоянный импорт не-ZFS дисков более не поддерживается."
 
 #: storage/forms.py:746
 msgid "This must be a dataset/folder in an existing Volume"
-msgstr ""
+msgstr "Это должно быть каталогом на существующем томе."
 
 #: storage/forms.py:797
 msgid ""
 "The path %s does not exist.                    This must be a dataset/folder "
 "in an existing Volume"
-msgstr ""
+msgstr "Путь %s не существует. Это должно быть каталогом на существующем томе."
 
 #: storage/forms.py:1439
-#, fuzzy
 msgid "The path %s already exists."
 msgstr "Путь %s уже существует."
 
 #: storage/forms.py:1553
 msgid "Allow the zvol to consume more then 80% of available space"
-msgstr ""
+msgstr "Позволить zvol занимать более 80% доступного места"
 
 #: storage/forms.py:2132
 msgid "This field will be empty if you have not setup a periodic snapshot task"
 msgstr ""
+"Это поле будет пустым если вы не настроили периодическое создание спимков"
 
 #: storage/models.py:413
 #: tasks/models.py:122
 #: tasks/models.py:450
-#, fuzzy
 msgid "Every {0} minute(s)"
-msgstr "Каждую %s минут(у)"
+msgstr "Каждые {0} минут(ы)"
 
 #: storage/models.py:421
 #: tasks/models.py:131
 #: tasks/models.py:459
 #: tasks/models.py:649
-#, fuzzy
 msgid "Every {0} hour(s)"
-msgstr "Каждые %s час(а)"
+msgstr "Каждые {0} час(а)"
 
 #: storage/models.py:429
 #: tasks/models.py:140
 #: tasks/models.py:468
 #: tasks/models.py:658
-#, fuzzy
 msgid "Every {0} days"
-msgstr "Каждые %s дня"
+msgstr "Каждые {0} дня"
 
 #: storage/models.py:1026
-#, fuzzy
 msgid "Exclude System Dataset"
-msgstr "Системный набор данных"
+msgstr "Исключить системный набор данных"
 
 #: storage/models.py:1027
 msgid ""
 "Do not snapshot the system dataset. This is useful when replicating the root "
 "of a pool to the root of a pool of another FreeNAS system."
 msgstr ""
+"Не создавать снимки системного датасета. Это полезно при репликации корня "
+"пула в корень пула другой системы FreeNAS."
 
 #: storage/models.py:1125
-#, fuzzy
 msgid ""
 "Username on the above VMware host with enough privileges to snapshot virtual "
 "machines."
 msgstr ""
-"Имя пользователя на указанном VMWare хосте с правами для создания снимков "
+"Имя пользователя на указанном VMware хосте с правами для создания снимков "
 "виртуальных машин."
 
 #: storage/models.py:1141
-#, fuzzy
 msgid "The datastore on the VMware side that the filesystem corresponds to."
-msgstr "Хранилище на стороне VMWare к которому относится файловая система."
+msgstr "Хранилище на стороне VMware к которому относится файловая система."
 
 #: storage/models.py:1147
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMware-Snapshot"
-msgstr "VMWare-Снимок"
+msgstr "VMware-Снимок"
 
 #: storage/models.py:1148
-#, fuzzy
 msgid "VMware-Snapshots"
-msgstr "VMWare-Снимок"
+msgstr "VMware-Снимки"
 
 #: storage/views.py:787
-#, fuzzy
 msgid "Disk online operation has been issued."
-msgstr "Инициирована процедура отключения диска."
+msgstr "Инициирована процедура подключения диска."
 
 #: support/forms.py:58
-#, fuzzy
 msgid "This is not a valid license."
-msgstr "Недопустимая маска"
+msgstr "Это не действительная лицензия."
 
 #: support/models.py:40
-#, fuzzy
 msgid "From Email"
 msgstr "Обратный адрес"
 
 #: support/models.py:41
 msgid "The email address that the system will use to create this ticket"
-msgstr ""
+msgstr "Этот адрес будет использоваться системой для создания тикета"
 
 #: support/utils.py:57
 #: support/utils.py:102
 #: support/utils.py:127
-#, fuzzy
 msgid "Connection failed: %s"
-msgstr "Соединения"
+msgstr "Ошибка подключения: %s"
 
 #: support/utils.py:59
 #: support/utils.py:104
 #: support/utils.py:129
-#, fuzzy
 msgid "Connection timed out: %s"
-msgstr "Соединения"
+msgstr "Превышено время ожидания подключения: %s"
 
 #: support/utils.py:107
 msgid "Ticket creation failed, try again later."
-msgstr ""
+msgstr "Ошибка создания тикета, попробуйте позже."
 
 #: support/views.py:88
-#, fuzzy
 msgid "License updated."
-msgstr "%s успешно обновлен."
+msgstr "Лицензия обновлена."
 
 #: system/forms.py:1027
-#, fuzzy
 msgid "Continue operation if the server could not be reached/validated."
-msgstr "Служба не может быть запущена."
+msgstr "Продолжать функционирование если сервер недоступен."
 
 #: system/forms.py:2215
 #: system/forms.py:2688
-#, fuzzy
 msgid "A certificate with this name already exists."
-msgstr "Цель с таким именем уже существует."
+msgstr "Сертификат с таким именем уже существует."
 
 #: system/forms.py:2245
 #: system/forms.py:2678
-#, fuzzy
 msgid "Passphrase confirmation does not match."
-msgstr "Подтверждение не совпадает с паролем"
+msgstr "Подтверждение не совпадает с паролем."
 
 #: system/forms.py:2981
-#, fuzzy
 msgid "Hostname or IP address"
-msgstr "IP-адрес контроллера"
+msgstr "Имя сервера или IP адрес"
 
 #: system/forms.py:2985
-#, fuzzy
 msgid "User name"
 msgstr "Имя пользователя"
 
 #: system/forms.py:3001
-#, fuzzy
 msgid "Remote directory"
-msgstr "Домашний Каталог"
+msgstr "Удалённый каталог"
 
 #: system/forms.py:3005
 #, fuzzy
@@ -12472,13 +12443,12 @@ msgid "Put all updated files into place at the end"
 msgstr ""
 
 #: templates/reporting/index.html:15
-#, fuzzy
 msgid "ZFS"
-msgstr "NFS"
+msgstr "ZFS"
 
 #: templates/services/iscsi.html:45
 msgid "Fiber Channel Ports"
-msgstr ""
+msgstr "Порты Fiber Channel"
 
 #: templates/sharing/index.html:27
 #, fuzzy
@@ -12487,84 +12457,73 @@ msgstr "Разблокировать"
 
 #: templates/sharing/index.html:27
 msgid "FC"
-msgstr ""
+msgstr "FC"
 
 #: templates/storage/disk_online.html:3
-#, fuzzy
 msgid "Are you sure you want to online?"
-msgstr "Вы уверены, что хотите отключить?"
+msgstr "Вы уверены, что хотите подключить?"
 
 #: templates/support/home.html:3
-#, fuzzy
 msgid "License Information"
-msgstr "Информация о системе"
+msgstr "Информация о лицензии"
 
 #: templates/support/home.html:6
 #: templates/support/home.html.py:8
-#, fuzzy
 msgid "Update License"
-msgstr "Обновить плагин"
+msgstr "Обновить лицензию"
 
 #: templates/support/home.html:16
-#, fuzzy
 msgid "Model"
-msgstr "Режим"
+msgstr "Модель"
 
 #: templates/support/home.html:18
-#, fuzzy
 msgid "System Serial"
-msgstr "Системное время"
+msgstr "Серийный номер системы"
 
 #: templates/support/home.html:20
-#, fuzzy
 msgid "Contract Type"
-msgstr "Контакт"
+msgstr "Тип контакта"
 
 #: templates/support/home.html:34
 msgid "Bronze"
-msgstr ""
+msgstr "Бронзовый"
 
 #: templates/support/home.html:35
-#, fuzzy
 msgid "Silver"
-msgstr "Восстановление"
+msgstr "Серебряный"
 
 #: templates/support/home.html:36
 msgid "Gold"
-msgstr ""
+msgstr "Золотой"
 
 #: templates/support/home.html:37
 #: templates/support/home.html.py:38
-#, fuzzy
 msgid "8x5 FreeNAS Support"
-msgstr "Поддержка EA"
+msgstr "8x5 Поддержка FreeNAS"
 
 #: templates/support/home.html:38
 msgid "Maximum of 6 incidents per year"
-msgstr ""
+msgstr "Максимум 6 случаев в год"
 
 #: templates/support/home.html:40
-#, fuzzy
 msgid "Contract Date"
-msgstr "Контакт"
+msgstr "Дата контакта"
 
 #: templates/support/home.html:41
-#, fuzzy
 msgid "Expired"
-msgstr "Восстановлено"
+msgstr "Истёк"
 
 #: templates/support/home.html:44
-#, fuzzy
 msgid "Customer Name"
-msgstr "Общее имя"
+msgstr "Имя клиента"
 
 #: templates/support/home.html:46
 msgid "Features"
-msgstr ""
+msgstr "Возможности"
 
 #: templates/support/home.html:55
 msgid "Additional Hardware"
-msgstr ""
+msgstr "Дополнительное оборудование"
 
 #: templates/support/home.html:58
 msgid "E16 Enclosure"
@@ -12660,20 +12619,17 @@ msgstr ""
 
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
-msgstr ""
+msgstr "Отключает все виды входа по паролю, включая общий доступ."
 
 #: network/forms.py:305
-#, fuzzy
 msgid "VLAN ID"
-msgstr "LUN ID"
+msgstr "VLAN ID"
 
 #: sharing/forms.py:465
-#, fuzzy
 msgid "A mountpoint with this path is already in use by another share."
-msgstr "Сеть %s уже используется дугим интерфейсом."
+msgstr "Точка монтирования с этим путем уже используется другим ресурсом."
 
 #: storage/forms.py:441
-#, fuzzy
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
