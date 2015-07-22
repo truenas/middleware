@@ -125,9 +125,13 @@ _interface_config()
 		echo \"
 
 		local aliases has_ipv6
-		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_v4address, alias_v4netmaskbit, alias_v6address, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
-		while read alias_id v4addr v4netmask v6addr v6netmask; do
+		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
+		while read alias_id v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
 			eval counter=\${counter_${interface}:-0}
+			if [ "$(ha_node)" = "B" ]; then
+				v4addr=${v4addr_b}
+				v6addr=${v6addr_b}
+			fi
 			if [ -n "${v4addr}" ]; then
 				echo "ifconfig_${interface}_alias${counter}=\"inet ${v4addr}/${v4netmask}\""
 				eval "counter_${interface}=\$((counter+1))"
