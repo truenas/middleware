@@ -117,13 +117,63 @@ class idmap_nss_Form(ModelForm):
 
 
 class idmap_rfc2307_Form(ModelForm):
+    idmap_rfc2307_ldap_user_dn_password2 = forms.CharField(
+        max_length=120,
+        label=_("Confirm LDAP User DN Password"),
+        widget=forms.widgets.PasswordInput(),
+        required=False
+    ) 
+
     class Meta:
-        fields = '__all__'
+        fields = [
+            'idmap_rfc2307_range_low',
+            'idmap_rfc2307_range_high',
+            'idmap_rfc2307_ldap_server',
+            'idmap_rfc2307_bind_path_user',
+            'idmap_rfc2307_bind_path_group',
+            'idmap_rfc2307_user_cn',
+            'idmap_rfc2307_cn_realm',
+            'idmap_rfc2307_ldap_domain',
+            'idmap_rfc2307_ldap_url',
+            'idmap_rfc2307_ldap_user_dn',
+            'idmap_rfc2307_ldap_user_dn_password',
+            'idmap_rfc2307_ldap_user_dn_password2',
+            'idmap_rfc2307_ldap_realm',
+            'idmap_rfc2307_ssl',
+            'idmap_rfc2307_certificate'
+        ]
         model = models.idmap_rfc2307
+        widgets = {
+            'idmap_rfc2307_ldap_user_dn_password':
+                forms.widgets.PasswordInput(render_value=False)
+        }
         exclude = [
             'idmap_ds_type',
             'idmap_ds_id'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_rfc2307_Form, self).__init__(*args, **kwargs)
+        if self.instance.idmap_rfc2307_ldap_user_dn_password:
+            self.fields['idmap_rfc2307_ldap_user_dn_password'].required = False
+        if self._api is True:
+            del self.fields['idmap_rfc2307_ldap_user_dn_password']
+
+    def clean_idmap_rfc2307_ldap_user_dn_password2(self):
+        password1 = self.cleaned_data.get("idmap_rfc2307_ldap_user_dn_password")
+        password2 = self.cleaned_data.get("idmap_rfc2307_ldap_user_dn_password2")
+        if password1 != password2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return password2
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("idmap_rfc2307_ldap_user_dn_password2"):
+            cdata['idmap_rfc2307_ldap_user_dn_password2'] = \
+                self.instance.idmap_rfc2307_ldap_user_dn_password2
+        return cdata
 
 
 class idmap_rid_Form(ModelForm):

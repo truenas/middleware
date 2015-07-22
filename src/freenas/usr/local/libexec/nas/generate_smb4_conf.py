@@ -439,6 +439,49 @@ def configure_idmap_rfc2307(smb4_conf, idmap, domain):
         ))
 
 
+def set_idmap_rfc2307_secret():
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+    except:
+        return False
+
+    domain = None
+    idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
+
+    try:
+        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        domain = fad.netbiosname.upper()
+    except:
+        return False
+
+    args = [
+        "/usr/local/bin/net",
+        "idmap",
+        "secret"
+    ]
+
+    net_cmd = "%s '%s' '%s'" % (
+        string.join(args, ' '),
+        domain,
+        idmap.idmap_rfc2307_ldap_user_dn_password
+    )
+
+    p = pipeopen(net_cmd, quiet=True)
+    net_out = p.communicate()
+    if net_out and net_out[0]:
+        for line in net_out[0].split('\n'):
+            if not line:
+                continue
+            print line
+ 
+    ret = True
+    if p.returncode != 0:
+        print >> sys.stderr, "Failed to set idmap secret!"
+        ret = False
+
+    return ret
+
+
 def configure_idmap_rid(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
@@ -591,7 +634,7 @@ def set_ldap_password():
     if ldap.ldap_bindpw:
         p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % (
             ldap.ldap_bindpw,
-        ))
+        ), quiet=True)
         out = p.communicate()
         if out and out[1]:
             for line in out[1].split('\n'):
@@ -1433,6 +1476,9 @@ def main():
                           "/var/etc/private/passdb.tdb")
         smb4_map_groups()
         smb4_grant_rights()
+
+    if role == 'member' and activedirectory_enabled():
+        set_idmap_rfc2307_secret()
 
 
 if __name__ == '__main__':
