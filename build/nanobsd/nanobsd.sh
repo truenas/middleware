@@ -171,8 +171,8 @@ run_late_customize
 if [ -f "${AVATAR_ROOT}/FreeBSD/repo-manifest" ]; then
     # Versions for everything!
     eval $(awk '
-	/freenas.git/ { printf("VERSION_freenas=-%s\n", $2); }
-	/trueos.git/ { printf("VERSION_trueos=-%s\n", $2); }
+	$1 ~ /freenas$/ || $1 ~ /freenas.git$/ { printf("VERSION_freenas=-%s\n", $2); }
+	$1 ~ /trueos$/ || $1 ~ /trueos.git$/ { printf("VERSION_trueos=-%s\n", $2); }
 	/ports.git/ { printf("VERSION_ports=-%s\n", $2); }
 	/truenas.git/ { printf("VERSION_truenas=-%s\n", $2); }' \
 	    "${AVATAR_ROOT}/FreeBSD/repo-manifest")
