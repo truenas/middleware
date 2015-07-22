@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2011-08-06 13:00+0000\n"
-"Last-Translator: nonless <tero.harju@netti.fi>\n"
+"PO-Revision-Date: 2015-07-09 12:35+0000\n"
+"Last-Translator: hpummila <h.pummila@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1312635659.0\n"
+"X-POOTLE-MTIME: 1436445349.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Raportointi"
@@ -32,7 +32,7 @@ msgstr "Järjestelmän tiedot"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
-msgstr "Verkon asetukset"
+msgstr "Verkkoasetukset"
 
 #: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
@@ -44,12 +44,12 @@ msgstr "Tili"
 
 #: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
-msgstr "Varastointi"
+msgstr "Levytila"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
 msgid "Some error occurred"
-msgstr ""
+msgstr "Tapahtui virhe"
 
 #~ msgid "Edit"
 #~ msgstr "Muokkaa"
@@ -68,11 +68,11 @@ msgstr "Muokkaa levyä"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "Odota hetki..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
-msgstr ""
+msgstr "Virhe havaittu!"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
@@ -80,7 +80,7 @@ msgstr "Kaikki valitut"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
-msgstr ""
+msgstr "Jokainen N"
 
 #~ msgid "Replace"
 #~ msgstr "Korvata"
@@ -94,15 +94,15 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:258
 msgid "Enable service"
-msgstr ""
+msgstr "Ota palvelu käyttöön"
 
 #: freeadmin/static/lib/js/freeadmin.js:784
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Cachen uudelleen rakennus käynnissä."
 
 #: freeadmin/static/lib/js/freeadmin.js:786
 msgid "The cache could not be rebuilt: "
-msgstr ""
+msgstr "Cachea ei voitu rakentaa uudelleen: "
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
@@ -248,20 +248,19 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Vahvista"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
 msgid "System"
-msgstr ""
+msgstr "Järjestelmä"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Tehtävä"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Verkon asetukset"
+msgstr "Verkko"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 msgid "Sharing"
@@ -273,8 +272,9 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
+#, fuzzy
 msgid "Initial Wizard"
-msgstr ""
+msgstr "Aloitus velho"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
 msgid "Share name"
@@ -320,7 +320,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 msgid "Wizard"
-msgstr ""
+msgstr "Ohjattu toiminto"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
@@ -328,17 +328,19 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Varoitus!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Tämä asetus POISTAA SALAUKSEN replikointi taskeilta ja tuli käyttää VAIN "
+"turvatussa lähiverkossa!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Haluatko varmasti tehdä tämän?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
@@ -354,7 +356,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Isäntänimi ei voi olla tyhjä."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
@@ -401,7 +403,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "WebGUI uudelleen käynnitymyssä"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
