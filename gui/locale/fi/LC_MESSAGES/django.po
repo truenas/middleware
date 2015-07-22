@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2011-08-06 13:00+0000\n"
-"Last-Translator: nonless <tero.harju@netti.fi>\n"
+"PO-Revision-Date: 2015-07-09 12:42+0000\n"
+"Last-Translator: hpummila <h.pummila@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1312635659.0\n"
+"X-POOTLE-MTIME: 1436445777.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -26,15 +26,15 @@ msgstr ""
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:42 choices.py:558
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:47
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:48
 msgid "HTTPS"
@@ -42,15 +42,15 @@ msgstr ""
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr ""
+msgstr "Automaattinen"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
@@ -3023,6 +3023,7 @@ msgstr ""
 msgid "View File Extents"
 msgstr ""
 
+# Global term so do not need to be translated
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
 msgstr "iSCSI"
@@ -6356,7 +6357,7 @@ msgstr ""
 #: jails/models.py:352
 #, fuzzy
 msgid "IPv6 Network"
-msgstr "Verkko"
+msgstr "IPv6 Verkko"
 
 #: jails/models.py:362
 msgid "IPv6 Network End Address"
@@ -7247,9 +7248,8 @@ msgid "This jail is required by %d plugin(s)"
 msgstr ""
 
 #: jails/models.py:337
-#, fuzzy
 msgid "IPv4 Network"
-msgstr "Verkko"
+msgstr "IPv4 Verkko"
 
 #: jails/models.py:357
 msgid "IPv6 Network Start Address"
@@ -9438,9 +9438,8 @@ msgid "Domain administrator account name"
 msgstr ""
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
-msgstr "Salasana"
+msgstr "Domain administrator tilin salasana."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
@@ -9968,10 +9967,11 @@ msgstr ""
 msgid "Distinguished Name"
 msgstr ""
 
+# What "Boot" is means? Needs more information about the "Boot" to finalyze the translation
 #: system/forms.py:163
 #, fuzzy
 msgid "Failed to create a new Boot."
-msgstr "Poista"
+msgstr "Uuden Boot luonti epäonnistui."
 
 #: system/admin.py:74
 #: system/admin.py:163
@@ -9981,7 +9981,7 @@ msgstr ""
 #: system/forms.py:183
 #, fuzzy
 msgid "Failed to rename Boot Environment."
-msgstr "Poista"
+msgstr "Käynnistys Ympäristön uudelleen nimeäminen epäonnistui."
 
 #: system/forms.py:1028
 msgid "Place to temporarily place update file"
@@ -10858,7 +10858,7 @@ msgstr ""
 #: storage/views.py:351
 #, fuzzy
 msgid "Volume successfully Imported."
-msgstr "Tila"
+msgstr "Levyn tuonti onnistui."
 
 #: storage/views.py:356
 msgid "Error Importing Volume"
@@ -11051,7 +11051,7 @@ msgstr "Levy"
 #: jails/views.py:192
 #, fuzzy
 msgid "Jail successfully restarted."
-msgstr "Tila"
+msgstr "Jail uudelleen käynnistetty onnistuneesti."
 
 #: middleware/notifier.py:3791
 msgid "Failed to upload config, version newer than the current installed."
@@ -11354,7 +11354,7 @@ msgstr ""
 #: tasks/models.py:658
 #, fuzzy
 msgid "Every {0} days"
-msgstr "Jokapäivä"
+msgstr "Joka {0} päivä"
 
 #: storage/models.py:1026
 #, fuzzy
