@@ -24,9 +24,7 @@ Mapping of tables to not to replicate to the remote side
 It accepts a fields key which will then exclude these fields and not the
 whole table.
 """
-NO_SYNC_MAP = {
-    'network_alias': {},
-}
+NO_SYNC_MAP = {}
 
 
 class Journal(object):
