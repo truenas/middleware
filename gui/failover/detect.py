@@ -9,8 +9,8 @@ def ha_mode():
 
     if os.path.exists(HA_MODE_FILE):
         with open(HA_MODE_FILE, 'r') as f:
-            data = f.read()
-        return data.strip()
+            data = f.read().strip()
+        return data
 
     # Temporary workaround for VirtualBOX
     proc = subprocess.Popen([
@@ -84,7 +84,7 @@ def ha_node():
 
     if os.path.exists(HA_MODE_FILE):
         with open(HA_MODE_FILE, 'r') as f:
-            data = f.read()
+            data = f.read().strip()
     else:
         data = ha_mode()
 
@@ -98,7 +98,7 @@ def ha_hardware():
 
     if os.path.exists(HA_MODE_FILE):
         with open(HA_MODE_FILE, 'r') as f:
-            data = f.read()
+            data = f.read().strip()
     else:
         data = ha_mode()
     return data.split(':')[0]
