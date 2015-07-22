@@ -1000,6 +1000,12 @@ class FreeNAS_ActiveDirectory_Base(object):
         if not srv_hosts:
             return None
 
+        if len(srv_hosts) == 1:
+            for s in srv_hosts: 
+                host = s.target.to_text(True)
+                port = long(s.port)
+                return (host, port)
+
         best_host = None
         latencies = {}
 
