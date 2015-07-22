@@ -1,0 +1,12 @@
+
+                            LDAP Wrapper for Python
+
+   This module provides an LDAP API to Python in the spirit of RFC1823.
+
+Some cool things people have done with ldapmodule
+
+     * LANL phone book (source)
+     * Michael Stroeder's web2ldap (previously ldap-client-cgi.py).
+     * LDAP support for Zope (see also Zope)
+
+WWW: http://www.python-ldap.org/
