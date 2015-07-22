@@ -207,8 +207,9 @@ class notifier:
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
-    def _pipeopen(self, command):
-        log.debug("Popen()ing: %s", command)
+    def _pipeopen(self, command, logger=log):
+        if logger:
+            logger.debug("Popen()ing: %s", command)
         return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
 
     def _pipeerr(self, command, good_status=0):
