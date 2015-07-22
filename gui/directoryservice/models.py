@@ -515,6 +515,12 @@ class idmap_rfc2307(idmap_base):
         ),
         blank=True
     )
+    idmap_rfc2307_ldap_user_dn_password = models.CharField(
+        verbose_name=_("LDAP User DN Password"),
+        max_length=120,
+        help_text=_("Password for LDAP User DN"),
+        blank=True
+    )
     idmap_rfc2307_ldap_realm = models.CharField(
         verbose_name=_("LDAP Realm"),
         max_length=120,
@@ -549,6 +555,13 @@ class idmap_rfc2307(idmap_base):
         self.idmap_backend_type = IDMAP_TYPE_RFC2307
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
 
+        if self.idmap_rfc2307_ldap_user_dn_password:
+            self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_decrypt(
+                self.idmap_rfc2307_ldap_user_dn_password
+            )
+
+        self._idmap_rfc2307_ldap_user_dn_password_encrypted = False
+
     def get_url(self):
         return self.idmap_rfc2307_ldap_url
 
@@ -557,6 +570,15 @@ class idmap_rfc2307(idmap_base):
 
     def get_certificate(self):
         return self.idmap_rfc2307_certificate
+
+    def save(self, *args, **kwargs):
+        if self.idmap_rfc2307_ldap_user_dn_password and \
+            not self._idmap_rfc2307_ldap_user_dn_password_encrypted:
+            self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_encrypt(
+                self.idmap_rfc2307_ldap_user_dn_password
+            )   
+            self._idmap_rfc2307_ldap_user_dn_password_encrypted = True
+        super(idmap_rfc2307, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("RFC2307 Idmap")
