@@ -33,6 +33,7 @@ import urllib2
 
 from django.core.validators import RegexValidator
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -762,14 +763,18 @@ class AliasForm(ModelForm):
             del self.fields['alias_v4address_b']
             del self.fields['alias_v6address_b']
 
-    def clean_alias_v4address(self):
-        ip = self.cleaned_data.get("alias_v4address")
+    def _common_alias(self, field):
+        ip = self.cleaned_data.get(field)
         par_ip = self.parent.cleaned_data.get("int_ipv4address") \
             if hasattr(self, 'parent') and \
             hasattr(self.parent, 'cleaned_data') else None
         if ip:
-            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
-            qs2 = models.Alias.objects.filter(alias_v4address=ip)
+            qs = models.Interfaces.objects.filter(
+                Q(int_ipv4address=ip) | Q(int_ipv4address_b=ip)
+            )
+            qs2 = models.Alias.objects.filter(
+                Q(alias_v4address=ip) | Q(alias_v4address_b=ip)
+            )
             if self.instance.id:
                 qs2 = qs2.exclude(id=self.instance.id)
             if qs.exists() or qs2.exists() or par_ip == ip:
@@ -778,12 +783,26 @@ class AliasForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_alias_v4address(self):
+        return self._common_alias('alias_v4address')
+
+    def clean_alias_v4address_b(self):
+        return self._common_alias('alias_v4address_b')
+
     def clean_alias_v4netmaskbit(self):
+        vip = self.cleaned_data.get("alias_vip")
         ip = self.cleaned_data.get("alias_v4address")
         nw = self.cleaned_data.get("alias_v4netmaskbit")
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
+
+        if vip:
+            if not network.overlaps(IPNetwork('%s/%s' % (vip, nw))):
+                raise forms.ValidationError(_(
+                    'Virtual IP is not in the same network'
+                ))
+
         if (
             self.instance.id and
             self.instance.alias_interface.int_interface.startswith('carp')
