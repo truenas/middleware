@@ -170,9 +170,9 @@ class idmap_rfc2307_Form(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        if not cdata.get("idmap_rfc2307_ldap_user_dn_password2"):
-            cdata['idmap_rfc2307_ldap_user_dn_password2'] = \
-                self.instance.idmap_rfc2307_ldap_user_dn_password2
+        if not cdata.get("idmap_rfc2307_ldap_user_dn_password"):
+            cdata['idmap_rfc2307_ldap_user_dn_password'] = \
+                self.instance.idmap_rfc2307_ldap_user_dn_password
         return cdata
 
 
