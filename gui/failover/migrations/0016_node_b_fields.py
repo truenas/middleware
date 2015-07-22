@@ -11,7 +11,7 @@ class Migration(DataMigration):
 
     depends_on = (
         ('directoryservice', '0045_auto__add_field_activedirectory_ad_netbiosname_b'),
-        ('network', '0017_auto__add_field_globalconfiguration_gc_hostname_b'),
+        ('network', '0018_auto__add_field_alias_alias_vip__add_field_alias_alias_v4address_b__ad'),
         ('system', '0096_auto__add_field_systemdataset_sys_uuid_b'),
     )
 
@@ -37,6 +37,14 @@ class Migration(DataMigration):
                 if sys.sys_uuid:
                     sys.sys_uuid_b = sys.sys_uuid
                     sys.save()
+
+            for alias in orm['network.Alias'].objects.all():
+                if alias.alias_v4address:
+                    alias.alias_v4address_b = alias.alias_v4address
+                    alias.save()
+                if alias.alias_v6address:
+                    alias.alias_v6address_b = alias.alias_v6address
+                    alias.save()
 
             try:
                 open('/data/sync_fields_to_peer', 'w').close()
