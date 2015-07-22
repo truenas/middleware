@@ -355,32 +355,47 @@ class Alias(Model):
             Interfaces,
             verbose_name=_("Interface")
             )
+    alias_vip = IP4AddressField(
+        verbose_name=_("Virtual IPv4"),
+        default='',
+        blank=True,
+    )
     alias_v4address = IP4AddressField(
-            verbose_name=_("IPv4 Address"),
-            default='',
-            blank=True,
-            )
+        verbose_name=_("IPv4 Address"),
+        default='',
+        blank=True,
+    )
+    alias_v4address_b = IP4AddressField(
+        verbose_name=_("IPv4 Address"),
+        default='',
+        blank=True,
+    )
     alias_v4netmaskbit = models.CharField(
-            max_length=3,
-            choices=choices.v4NetmaskBitList,
-            default='',
-            blank=True,
-            verbose_name=_("IPv4 Netmask"),
-            help_text=""
-            )
+        max_length=3,
+        choices=choices.v4NetmaskBitList,
+        default='',
+        blank=True,
+        verbose_name=_("IPv4 Netmask"),
+        help_text=""
+    )
     alias_v6address = IP6AddressField(
-            verbose_name=_("IPv6 Address"),
-            default='',
-            blank=True,
-            )
+        verbose_name=_("IPv6 Address"),
+        default='',
+        blank=True,
+    )
+    alias_v6address_b = IP6AddressField(
+        verbose_name=_("IPv6 Address"),
+        default='',
+        blank=True,
+    )
     alias_v6netmaskbit = models.CharField(
-            max_length=3,
-            choices=choices.v6NetmaskBitList,
-            default='',
-            blank=True,
-            verbose_name=_("IPv6 Prefix Length"),
-            help_text=""
-            )
+        max_length=3,
+        choices=choices.v6NetmaskBitList,
+        default='',
+        blank=True,
+        verbose_name=_("IPv6 Prefix Length"),
+        help_text=""
+    )
 
     def __unicode__(self):
         if self.alias_v4address:
