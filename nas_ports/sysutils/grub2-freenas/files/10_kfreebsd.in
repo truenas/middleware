@@ -1,0 +1,4 @@
+#! /bin/sh
+
+# Exit for now, we can use 10_ktrueos instead
+return 0

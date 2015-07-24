@@ -1,0 +1,22 @@
+#!/bin/sh
+
+PREFIX=${PKG_PREFIX-/usr/local}
+
+if [ "$2" != "POST-INSTALL" ] ; then
+   exit 0
+fi
+
+# If this is during staging, we can skip for now
+echo $PREFIX | grep -q '/stage/'
+if [ $? -eq 0 ] ; then
+   exit 0
+fi
+
+# Copy over user-editable 40_custom script
+if [ ! -e "${PREFIX}/etc/grub.d/40_custom" ] ; then
+   cp ${PREFIX}/etc/grub.d/40_custom.dist ${PREFIX}/etc/grub.d/40_custom
+   chmod 755 ${PREFIX}/etc/grub.d/40_custom
+fi
+
+exit 0
+

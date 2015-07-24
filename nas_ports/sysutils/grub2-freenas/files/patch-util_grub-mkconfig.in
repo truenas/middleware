@@ -1,0 +1,15 @@
+--- util/grub-mkconfig.in.orig	2014-03-03 11:00:26.000000000 -0500
++++ util/grub-mkconfig.in	2014-07-03 11:31:47.013881961 -0400
+@@ -278,3 +278,12 @@
+ 
+ gettext "done" >&2
+ echo >&2
++
++# If pcbsd-utils are installed, the restamp-grub command will exist
++# Use it to do the grub-install and copy grub.cfg to other BEs
++if which restamp-grub >/dev/null 2>/dev/null ; then
++   restamp-grub
++ else
++   true
++fi
++

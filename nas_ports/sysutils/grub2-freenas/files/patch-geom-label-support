@@ -1,0 +1,182 @@
+diff --git a/grub-core/osdep/freebsd/getroot.c b/grub-core/osdep/freebsd/getroot.c
+index ccc1d70..64c0aad 100644
+--- grub-core/osdep/freebsd/getroot.c
++++ grub-core/osdep/freebsd/getroot.c
+@@ -296,6 +296,105 @@ grub_util_get_grub_dev_os (const char *os_dev)
+   return grub_dev;
+ }
+ 
++int grub_util_check_geom_label(const char *name)
++{
++  struct gmesh mesh;
++  struct gclass *class;
++  struct ggeom *geom;
++  struct gprovider *pp;
++  struct gprovider *pplabel;
++  struct gconsumer *cp;
++  const char *geom_name;
++  const char *test_name;
++  int err;
++
++  err = geom_gettree (&mesh);
++  if (err != 0)
++    grub_util_error ("%s", _("couldn't open geom"));
++
++  LIST_FOREACH (class, &mesh.lg_class, lg_class)
++    if (strcasecmp (class->lg_name, "label") == 0)
++      break;
++  if (!class)
++    grub_util_error ("%s", _("couldn't find geom `label' class"));
++
++  if (strncmp (name, "/dev/", sizeof ("/dev/") - 1) == 0)
++    test_name = name + sizeof ("/dev/") - 1;
++  else
++    test_name = name;
++
++  LIST_FOREACH (geom, &class->lg_geom, lg_geom)
++    {
++     LIST_FOREACH(pp, &geom->lg_provider, lg_provider)
++       {
++         geom_name = pp->lg_name;
++         if (strcasecmp (geom_name, test_name) != 0)
++           continue;
++
++         LIST_FOREACH(cp, &geom->lg_consumer, lg_consumer)
++           {
++             pplabel = cp->lg_provider;
++             if (pplabel == NULL)
++               continue;
++	     return 1;
++           }
++        }
++    }
++  return 0;
++}
++
++const char *
++grub_util_convert_geom_label_to_dev (const char *name, int *full_path)
++{
++  struct gmesh mesh;
++  struct gclass *class;
++  struct ggeom *geom;
++  struct gprovider *pp;
++  struct gprovider *pplabel;
++  struct gconsumer *cp;
++  static char buf[256];
++  const char *geom_name;
++  int err;
++
++  grub_util_info ("Converting label '%s' to device", name);
++
++  err = geom_gettree (&mesh);
++  if (err != 0)
++    grub_util_error ("%s", _("couldn't open geom"));
++
++  LIST_FOREACH (class, &mesh.lg_class, lg_class)
++    if (strcasecmp (class->lg_name, "label") == 0)
++      break;
++  if (!class)
++    grub_util_error ("%s", _("couldn't find geom `label' class"));
++
++
++  LIST_FOREACH (geom, &class->lg_geom, lg_geom)
++    {
++     LIST_FOREACH(pp, &geom->lg_provider, lg_provider)
++       {
++         geom_name = pp->lg_name;
++         if (strcasecmp (geom_name, name) != 0)
++           continue;
++
++         LIST_FOREACH(cp, &geom->lg_consumer, lg_consumer)
++           {
++             pplabel = cp->lg_provider;
++             if (pplabel == NULL)
++               continue;
++
++             if ( full_path )
++               snprintf(buf, sizeof(buf), "/dev/%s", pplabel->lg_name);
++             else
++               snprintf(buf, sizeof(buf), "%s", pplabel->lg_name);
++	     return buf;
++           }
++        }
++    }
++  grub_util_error ("%s", _("couldn't convert gptid to real device name"));
++  return 0;
++}
++
+ /* FIXME: geom actually gives us the whole container hierarchy.
+    It can be used more efficiently than this.  */
+ void
+diff --git a/grub-core/osdep/unix/getroot.c b/grub-core/osdep/unix/getroot.c
+index e3887cb..cd010ce 100644
+--- grub-core/osdep/unix/getroot.c
++++ grub-core/osdep/unix/getroot.c
+@@ -504,6 +504,12 @@ grub_guess_root_devices (const char *dir_in)
+   if (!os_dev)
+     os_dev = find_root_devices_from_libzfs (dir);
+ 
++#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
++  if (os_dev)
++    if ( grub_util_check_geom_label(os_dev) )
++      os_dev = grub_util_convert_geom_label_to_dev (os_dev + sizeof ("/dev/") - 1, 1);
++#endif
++
+   if (os_dev)
+     {
+       char **cur;
+diff --git a/include/grub/emu/getroot.h b/include/grub/emu/getroot.h
+index 73fa2d3..3c43db4 100644
+--- include/grub/emu/getroot.h
++++ include/grub/emu/getroot.h
+@@ -44,6 +44,8 @@ char *grub_util_get_grub_dev (const char *os_dev);
+ #if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
+ void grub_util_follow_gpart_up (const char *name, grub_disk_addr_t *off_out,
+ 				char **name_out);
++int grub_util_check_geom_label(const char *name);
++const char *grub_util_convert_geom_label_to_dev (const char *name, int *full_path);
+ #endif
+ 
+ #include <sys/stat.h>
+diff --git a/util/grub-install.c b/util/grub-install.c
+index 7d61c32..5900535 100644
+--- util/grub-install.c
++++ util/grub-install.c
+@@ -236,7 +236,16 @@ argp_parser (int key, char *arg, struct argp_state *state)
+     case ARGP_KEY_ARG:
+       if (install_device)
+ 	grub_util_error ("%s", _("More than one install device?"));
++#if defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
++    /* Check if passing a FreeBSD geom label */
++    if ( grub_util_check_geom_label(arg) )
++      install_device = \
++        xstrdup(grub_util_convert_geom_label_to_dev (arg + sizeof ("/dev/") - 1, 1));
++    else
+       install_device = xstrdup (arg);
++#else
++      install_device = xstrdup (arg);
++#endif
+       return 0;
+ 
+     default:
+diff --git a/util/grub-probe.c b/util/grub-probe.c
+index ecb7b6b..21e3fa3 100644
+--- util/grub-probe.c
++++ util/grub-probe.c
+@@ -799,7 +799,16 @@ argp_parser (int key, char *arg, struct argp_state *state)
+ 
+     case ARGP_KEY_ARG:
+       assert (arguments->ndevices < arguments->device_max);
++#if defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
++    /* Check if passing a FreeBSD geom label */
++    if ( grub_util_check_geom_label(arg) )
++      arguments->devices[arguments->ndevices++] = \
++	xstrdup(grub_util_convert_geom_label_to_dev (arg + sizeof ("/dev/") - 1, 1));
++    else
+       arguments->devices[arguments->ndevices++] = xstrdup(arg);
++#else
++      arguments->devices[arguments->ndevices++] = xstrdup(arg);
++#endif
+       break;
+ 
+     default:

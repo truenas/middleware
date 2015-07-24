@@ -1,0 +1,126 @@
+#!/bin/sh
+#
+# Copyright 2015 iXsystems (Kris Moore)
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# Script to detect other NON BSD OS's and add to grub.cfg
+
+check_ntfs_part()
+{
+   local disk="$1"
+   fs_label=`grub-probe --device /dev/${disk} --target=fs_label`
+
+   # Check for common windows NTFS labels for bootable partitions
+   if [ "$fs_label" != "System Reserved" -a "$fs_label" != "SYSTEM RESERVED" -a "$fs_label" != "eMachines" -a "$fs_label" != "OS" -a "$fs_label" != "SYSTEM" -a "$fs_label" != "SYSTEM_DRV" ] ; then return; fi
+
+   fs_uuid=`grub-probe --device /dev/${disk} --target=fs_uuid`
+   if [ -z "$fs_uuid" ] ; then
+      echo "Warning: Could not get fs_uuid for $disk"
+      return
+   fi
+
+   cat << EOF
+menuentry "Microsoft Windows ($disk)" {
+   search --no-floppy --fs-uuid --set=root $fs_uuid
+   chainloader +1
+}
+EOF
+}
+
+print_uefichain() {
+    cat << EOF
+menuentry "Chainload Disk (hd${hdnum} - $1)" {
+   set root=('hd${hdnum},${rootpre}1')
+   chainloader $1
+}
+
+EOF
+}
+
+# Look for file-systems on the zpool disk
+for disk in `zpool status | grep ONLINE | grep -v "state:" | awk '{print $1}'`
+do
+  disk="`echo $disk | sed 's|.eli||g'`"
+  if [ ! -e "/dev/$disk" ] ; then continue ; fi
+
+  # Get the parent disk name
+  parentdisk=`grub-probe --target=disk --device /dev/$disk`
+  parentdisk="`echo $parentdisk | sed 's|/dev/||g'`"
+  if [ ! -e "/dev/$parentdisk" ] ; then continue ; fi
+
+  for ldisk in `cd /dev/ && ls ${parentdisk}s[0-9] ${parentdisk}p[0-99] 2>/dev/null`
+  do
+    fs_type=`grub-probe --device /dev/${ldisk} --target=fs 2>/dev/null`
+    case $fs_type in
+     ntfs) check_ntfs_part "$ldisk" ;; # Start checking for NTFS
+        *) ;; # Unknown for now, add more!
+    esac
+  done
+done
+
+# Look for other disks to chainload
+hdnum=0
+for disk in `cd /dev/ && ls ada[0-9] da[0-9] 2>/dev/null`
+do
+  # Skip disks apart of zpool
+  zpool status | grep ONLINE | grep -v "state:" | grep -q "$disk"
+  if [ $? -eq 0 ] ; then
+    hdnum=`expr $hdnum + 1`
+    continue
+  fi
+
+  # Check if the first partition on this disk is EFI
+  if [ -e "/dev/${disk}s1" ] ; then
+    fp="/dev/${disk}s1"
+    rootpre=""
+  else
+    fp="/dev/${disk}p1"
+    rootpre="gpt"
+  fi
+
+  # Add UEFI chainloader
+  if [ "`grub-probe --device -t fs $fp`" = "fat" ] ; then
+
+    # Lets mount the FAT partition and look for UEFI boots
+    uefimnt="/tmp/.grub-uefi.$$"
+    if [ ! -d "$uefimnt" ] ; then mkdir $uefimnt; fi
+    mount_msdosfs $fp $uefimnt
+    if [ $? -eq 0 ] ; then
+       if [ -e "${uefimnt}/EFI/Boot/bootx64.efi" ] ; then
+	 print_uefichain "/EFI/Boot/bootx64.efi"
+       fi
+       cd $uefimnt
+       for i in `find . | grep \.efi$ | grep -v "./EFI/Boot/bootx64.efi"`
+       do
+	 i="`echo $i | sed 's|\./|/|g'`"
+	 print_uefichain "$i"
+       done
+       cd /dev
+       umount $uefimnt
+       rmdir $uefimnt
+    fi
+  fi
+
+  hdnum=`expr $hdnum + 1`
+done

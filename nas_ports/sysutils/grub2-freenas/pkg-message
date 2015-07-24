@@ -1,0 +1,11 @@
+#############################################################
+To install GRUB on the master boot record of your hard drive
+use 'grub-install <drive-to-install>' command.
+
+A typical menu entry in /boot/grub/grub.cfg for FreeBSD:
+menuentry "FreeBSD" {
+	set root="(hd0,msdos1,bsd1)"
+	kfreebsd /boot/loader
+}
+Or use grub-mkconfig to create the config file.
+#############################################################

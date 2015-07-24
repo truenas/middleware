@@ -1,0 +1,21 @@
+--- util/grub-mkconfig_lib.in.orig	2014-03-03 11:00:26.000000000 -0500
++++ util/grub-mkconfig_lib.in	2014-06-05 12:45:58.532199020 -0400
+@@ -139,7 +139,17 @@
+     echo "insmod ${module}"
+   done
+ 
+-  fs="`"${grub_probe}" --device $@ --target=fs`"
++  # KPM - 6-24-2013
++  # Add this work-around since GRUB doesn't like to identify ZFS
++  # partitions which are in a raidz configuration, gives Unknown FS error
++  # We can instead look at zpool to see if this device is used though
++  zpool status 2>/dev/null | grep -q "`echo ${device} | sed 's|/dev/||g'`"
++  if [ $? -eq 0 ] ; then
++     fs="zfs"
++  else
++     fs="`"${grub_probe}" --device $@ --target=fs`"
++  fi
++
+   for module in ${fs} ; do
+     echo "insmod ${module}"
+   done
