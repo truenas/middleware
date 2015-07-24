@@ -2750,7 +2750,7 @@ class notifier:
                                     stderr=subprocess.STDOUT,
                                     )
         except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The update failed: %s' % (str(cpe), ))
+            raise MiddlewareError('The update failed %s: %s' % (str(cpe), cpe.output))
         finally:
             os.chdir('/')
             os.unlink(path)
