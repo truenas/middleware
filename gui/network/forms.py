@@ -409,6 +409,18 @@ class IPMIForm(Form):
         bits = 0xffffffff ^ (1 << 32 - cidr) - 1
         return socket.inet_ntoa(pack('>I', bits))
 
+    def clean_ipv4address(self):
+        ipv4 = self.cleaned_data.get('ipv4address')
+        if ipv4:
+            ipv4 = str(ipv4)
+        return ipv4
+
+    def clean_ipv4gw(self):
+        ipv4 = self.cleaned_data.get('ipv4gw')
+        if ipv4:
+            ipv4 = str(ipv4)
+        return ipv4
+
 
 class GlobalConfigurationForm(ModelForm):
 
