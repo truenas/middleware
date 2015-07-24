@@ -726,6 +726,31 @@ class KerberosKeytab(Model):
         return self.keytab_principal
 
 
+class KerberosPrincipal(Model):
+    principal_keytab = models.ForeignKey(
+        KerberosKeytab,
+        verbose_name=_("Keytab"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
+    principal_version = models.IntegerField(
+        verbose_name=_("Version number"),
+        default=-1
+    )
+    principal_encryption = models.CharField(
+        verbose_name=_("Encryption algorithm"),
+        max_length=120
+    )
+    principal_name = models.CharField(
+        verbose_name=_("Principal name"),
+        max_length=120
+    )
+    principal_timestamp = models.DateTimeField(
+        verbose_name=_("Date")
+    )
+
+
 class KerberosSettings(Model):
     ks_appdefaults_aux = models.TextField(
         verbose_name=_("Appdefaults auxiliary parameters"),
