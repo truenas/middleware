@@ -167,7 +167,7 @@ _interface_config()
 		local carp1_skew carp2_skew
 		local internal_ip internal_iface
 
-		if [ $(ha_mode) == "MANUAL" ]; then
+		if [ $(ha_mode) = "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
 		else
 			node=$(ha_node)
