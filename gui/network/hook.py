@@ -20,6 +20,7 @@ class NetworkHook(AppHook):
             models.VLAN,
         ]
 
+        _n = notifier()
         tabs = []
         if (
             hasattr(notifier, 'failover_status') and
@@ -54,7 +55,7 @@ class NetworkHook(AppHook):
                 'url': url,
             })
 
-        if notifier().ipmi_loaded():
+        if _n.ipmi_loaded():
             tabs.insert(2, {
                 'name': 'IPMI',
                 'focus': 'network.IPMI',
@@ -62,7 +63,18 @@ class NetworkHook(AppHook):
                 'url': reverse('network_ipmi'),
             })
 
-        tabs.insert(3, {
+        index = 3
+        if not _n.is_freenas() and _n.failover_licensed():
+            node = _n.failover_node()
+            tabs.insert(index, {
+                'name': 'IPMI_B',
+                'focus': 'network.IPMI_B',
+                'verbose_name': _('IPMI (Node %s)') % ('B' if node == 'A' else 'A'),
+                'url': reverse('failover_ipmi'),
+            })
+            index += 1
+
+        tabs.insert(index, {
             'name': 'NetworkSummary',
             'focus': 'network.NetworkSummary',
             'verbose_name': _('Network Summary'),
