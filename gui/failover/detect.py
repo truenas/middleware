@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import subprocess
 
 HA_MODE_FILE = '/tmp/.ha_mode'
@@ -105,4 +106,6 @@ def ha_hardware():
 
 
 if __name__ == '__main__':
+    if '/usr/local/www' not in sys.path:
+        sys.path.append('/usr/local/www')
     print ha_mode()
