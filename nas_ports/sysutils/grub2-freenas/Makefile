@@ -1,7 +1,7 @@
 # Created by: kmoore@FreeBSD.org
 # $FreeBSD$
 
-PORTNAME=	grub2-pcbsd
+PORTNAME=	grub2-freenas
 PORTVERSION=	2.02p
 PORTREVISION=	26
 CATEGORIES=	sysutils
