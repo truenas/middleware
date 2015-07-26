@@ -33,6 +33,8 @@ import os
 import re
 import shutil
 import socket
+import dateutil.parser
+import natural.date
 import subprocess
 import sysctl
 import time
@@ -76,6 +78,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
@@ -101,19 +104,11 @@ log = logging.getLogger('system.views')
 
 
 def _system_info(request=None):
-    # OS, hostname, release
-    __, hostname, __ = os.uname()[0:3]
-    platform = sysctl.sysctlbyname('hw.model')
-    physmem = '%dMB' % (
-        sysctl.sysctlbyname('hw.physmem') / 1048576,
-    )
-    # All this for a timezone, because time.asctime() doesn't add it in.
-    date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = subprocess.check_output(
-        "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-        shell=True
-    )
-    loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
+    config = dispatcher.call_sync('system.general.get_config')
+    loadavg = dispatcher.call_sync('system.info.load_avg')
+    hw = dispatcher.call_sync('system.info.hardware')
+    time_info = dispatcher.call_sync('system.info.time')
+    systime = dateutil.parser.parse(time_info['system_time'])
 
     try:
         freenas_build = get_sw_version()
@@ -121,12 +116,12 @@ def _system_info(request=None):
         freenas_build = "Unrecognized build"
 
     return {
-        'hostname': hostname,
-        'platform': platform,
-        'physmem': physmem,
-        'date': date,
-        'uptime': uptime,
-        'loadavg': loadavg,
+        'hostname': config['hostname'],
+        'platform': hw['cpu_model'],
+        'physmem': '{0}MB'.format(hw['memory_size'] / 1048576),
+        'date': systime.strftime('%a %b %d %H:%M:%S %Y'),
+        'uptime': natural.date.compress(time_info['uptime'], pad=' '),
+        'loadavg': '{0:.2f} {1:.2f} {2:.2f}'.format(*loadavg),
         'freenas_build': freenas_build,
     }
 
