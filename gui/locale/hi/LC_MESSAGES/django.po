@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-07-03 09:16+0000\n"
+"PO-Revision-Date: 2015-07-22 09:15+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hi\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1435914998.0\n"
+"X-POOTLE-MTIME: 1437556532.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11646,4 +11646,16 @@ msgstr ""
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
+msgstr ""
+
+#: directoryservice/forms.py:122
+msgid "Confirm LDAP User DN Password"
+msgstr ""
+
+#: directoryservice/models.py:519
+msgid "LDAP User DN Password"
+msgstr ""
+
+#: directoryservice/models.py:521
+msgid "Password for LDAP User DN"
 msgstr ""
