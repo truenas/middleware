@@ -12961,3 +12961,18 @@ msgid ""
 msgstr ""
 "Vous tentez d'ajouter un dispositif virtuel (vdev) constitué de %(addnum)s "
 "dispositif(s) dans un pool constitué de %(vdevnum)s dispositif(s)"
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "Confirmer le nouveau mot de passe"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "ID Utilisateur"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "ID Utilisateur"

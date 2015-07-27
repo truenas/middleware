@@ -12708,3 +12708,18 @@ msgstr ""
 "U probeert een virtueel apparaat dat uit %(addnum)s apparaten bestaat toe te "
 "voegen in een pool die een virtueel apparaat bevat dat uit %(vdevnum)s "
 "apparaten bestaat"
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "Nieuw wachtwoord bevestigen"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "DN van LDAP-gebruiker"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "DN van LDAP-gebruiker"

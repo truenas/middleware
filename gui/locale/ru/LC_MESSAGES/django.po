@@ -12636,3 +12636,18 @@ msgid ""
 msgstr ""
 "Вы пытаететесь добавить виртуальное устройство состоящее из %(addnum)s "
 "устройств в том содержащий виртуальное устройство из %(vdevnum)s устройств"
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "Подтверждение пароля"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "Основной пароль пользователя UPS"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "Сервер Паролей"

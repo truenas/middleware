@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-07-12 14:32+0000\n"
+"PO-Revision-Date: 2015-07-12 14:36+0000\n"
 "Last-Translator: Herald <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1436711567.0\n"
+"X-POOTLE-MTIME: 1436711800.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11917,3 +11917,18 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr "您试图向已存在 %(addnum)s 个驱动器的存储池中添加虚拟驱动器，该存储池已存在 %(vdevnum)s 个虚拟驱动器"
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "确认新密码"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "LDAP 用户 DN"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "LDAP 用户 DN"
