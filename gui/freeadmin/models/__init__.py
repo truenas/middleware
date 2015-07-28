@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import copy
 import logging
 import six
 
@@ -181,10 +182,12 @@ class NewQuerySet(object):
         self._fetch_all()
         return len(self._result_cache)
 
-    def _clone(self, klass=None, setup=False, **kwargs):
+    def _clone(self, klass=None, **kwargs):
         if klass is None:
             klass = self.__class__
         c = klass(model=self.model)
+        c._filters = copy.copy(self._filters)
+        c._sort = copy.copy(self._sort)
         return c
 
     def _fetch_all(self):
