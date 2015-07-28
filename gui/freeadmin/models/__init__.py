@@ -146,6 +146,8 @@ class NewQuerySet(object):
         self._m2f = MIDDLEWARE2FIELD.get(
             self.model._meta.model_name
         )
+        self._sort = None
+        self._dir = None
 
     def __iter__(self):
         self._fetch_all()
@@ -247,3 +249,13 @@ class NewQuerySet(object):
                         continue
 
             yield self.model(**data)
+
+    def order_by(self, *args):
+        for i in args:
+            if i.startswith('-'):
+                self._sort = i[1:]
+                self._dir = 'desc'
+            else:
+                self._sort = i
+                self._dir = 'asc'
+        return self
