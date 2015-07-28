@@ -294,6 +294,20 @@ class NewModel(Model):
     class Meta:
         abstract = True
 
+    def delete(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
+        methods = get_middleware_methods(self)
+        method = methods.get('delete')
+        if method is None:
+            raise NotImplementedError("RPC %s method for '%s' not defined'" % (
+                mname,
+                self._meta.model_name,
+            ))
+
+        task = dispatcher.call_task_sync(method, [self.id])
+        if task['state'] != 'FINISHED':
+            raise ValueError(task['error']['message'])
+
     def save(self, *args, **kwargs):
         from freenasUI.middleware.connector import connection as dispatcher
         methods = get_middleware_methods(self)
