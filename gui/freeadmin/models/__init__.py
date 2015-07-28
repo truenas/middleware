@@ -275,3 +275,21 @@ class NewQuerySet(object):
                 self._sort = i
                 self._dir = 'asc'
         return self
+
+
+class NewManager(models.Manager):
+
+    def __init__(self, qs_class=NewQuerySet):
+        self.queryset_class = qs_class
+        super(NewManager, self).__init__()
+
+    def get_queryset(self):
+        return NewQuerySet(self.model)
+
+
+class NewModel(Model):
+
+    objects = NewManager()
+
+    class Meta:
+        abstract = True
