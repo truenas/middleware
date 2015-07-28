@@ -219,6 +219,15 @@ class NewQuerySet(object):
 
         return self
 
+    def get(self, *args, **kwargs):
+        self.filter(*args, **kwargs)
+        self._fetch_all()
+        if len(self._result_cache) == 0:
+            raise self.model.DoesNotExist
+        if len(self._result_cache) > 1:
+            raise self.model.MultipleObjectsReturned
+        return self._result_cache[0]
+
     def iterator(self):
         from freenasUI.middleware.connector import connection as dispatcher
         print self._filters
