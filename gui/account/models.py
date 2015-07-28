@@ -34,13 +34,13 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.freeadmin.models import Model, PathField
+from freenasUI.freeadmin.models import Model, NewModel, PathField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
 
 
-class bsdGroups(Model):
+class bsdGroups(NewModel):
     bsdgrp_gid = models.IntegerField(
         verbose_name=_("Group ID")
     )
