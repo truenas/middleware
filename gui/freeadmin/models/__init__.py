@@ -134,6 +134,12 @@ def get_middleware_methods(model):
     return methods
 
 
+class NewQuery(object):
+    """Required by tastypie"""
+
+    query_terms = set(['gt', 'in', 'month', 'isnull', 'endswith', 'week_day', 'year', 'regex', 'gte', 'contains', 'lt', 'startswith', 'iendswith', 'icontains', 'iexact', 'exact', 'day', 'minute', 'search', 'hour', 'iregex', 'second', 'range', 'istartswith', 'lte'])
+
+
 class NewQuerySet(object):
 
     def __init__(self, model, **kwargs):
@@ -148,6 +154,7 @@ class NewQuerySet(object):
         )
         self._sort = None
         self._dir = None
+        self.query = NewQuery()
 
     def __iter__(self):
         self._fetch_all()
