@@ -391,7 +391,10 @@ class NewModel(Model):
                     for field, errors in extra['fields'].items():
                         key = m2f.get(field)
                         if key:
-                            fields[key] = errors
+                            if not isinstance(key, (list, tuple)):
+                                key = [key]
+                            for k in key:
+                                fields[k] = errors
                 if not fields:
                     fields['__all__'] = [error['message']]
                 raise ValidationError(fields)

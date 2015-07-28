@@ -378,11 +378,14 @@ class BaseFreeAdmin(object):
                         events=events)
                 except ValidationError, e:
                     for fname, errors in e.fields.items():
+                        _errors = []
+                        for code, error in errors:
+                            _errors.append(error)
                         if fname == '__all__':
-                            mf._errors['__all__'] = mf.error_class(errors)
+                            mf._errors['__all__'] = mf.error_class(_errors)
                             continue
                         if fname in mf.fields:
-                            mf._errors[fname] = mf.error_class(errors)
+                            mf._errors[fname] = mf.error_class(_errors)
                     return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError, e:
                     return JsonResp(
@@ -594,6 +597,17 @@ class BaseFreeAdmin(object):
                                 m._meta.verbose_name,
                             ),
                             events=events)
+                except ValidationError, e:
+                    for fname, errors in e.fields.items():
+                        _errors = []
+                        for code, error in errors:
+                            _errors.append(error)
+                        if fname == '__all__':
+                            mf._errors['__all__'] = mf.error_class(_errors)
+                            continue
+                        if fname in mf.fields:
+                            mf._errors[fname] = mf.error_class(_errors)
+                    return JsonResp(request, form=mf, formsets=formsets)
                 except ServiceFailed, e:
                     return JsonResp(
                         request,
