@@ -293,3 +293,56 @@ class NewModel(Model):
 
     class Meta:
         abstract = True
+
+    def save(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
+        methods = get_middleware_methods(self)
+
+        if self.id is not None:
+            mname = 'update'
+            method_args = [self.id]
+            updated = True
+        else:
+            mname = 'add'
+            method_args = []
+            updated = False
+
+        method = methods.get(mname)
+        if method is None:
+            raise NotImplementedError("RPC %s method for '%s' not defined'" % (
+                mname,
+                self._meta.model_name,
+            ))
+
+        data = self.__dict__.copy()
+        f2m = FIELD2MIDDLEWARE.get(self._meta.model_name)
+        if f2m:
+            for key, val in data.items():
+                field = f2m.get(key)
+                if field == key:
+                    continue
+                if field:
+                    data[field] = val
+                del data[key]
+        method_args.append(data)
+
+        cls = origin = self.__class__
+        using = None
+        raw = None
+        update_fields = data.keys()
+        if cls._meta.proxy:
+            cls = cls._meta.concrete_model
+        meta = cls._meta
+
+        if not meta.auto_created:
+            signals.pre_save.send(sender=origin, instance=self, raw=raw, using=using,
+                                  update_fields=update_fields)
+
+        task = dispatcher.call_task_sync(method, method_args)
+        if task['state'] != 'FINISHED':
+            raise ValueError(task['error']['message'])
+
+        if not meta.auto_created:
+            signals.post_save.send(sender=origin, instance=self, created=(not updated),
+                                   update_fields=update_fields, raw=raw, using=using)
+        return self
