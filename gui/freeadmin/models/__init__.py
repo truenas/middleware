@@ -25,8 +25,10 @@
 #
 #####################################################################
 import logging
+import six
 
 from django.db import models
+from django.db.models import signals
 from django.db.models.base import ModelBase
 
 from freenasUI.common.log import log_traceback
@@ -177,6 +179,13 @@ class NewQuerySet(object):
     def count(self):
         self._fetch_all()
         return len(self._result_cache)
+
+    def exists(self):
+        self._fetch_all()
+        return len(self._result_cache) > 0
+
+    def exclude(self, *args, **kwargs):
+        return self._exclude_or_filter(True, *args, **kwargs)
 
     def filter(self, *args, **kwargs):
         return self._exclude_or_filter(False, *args, **kwargs)
