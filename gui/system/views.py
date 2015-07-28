@@ -104,16 +104,12 @@ log = logging.getLogger('system.views')
 
 
 def _system_info(request=None):
+    version = dispatcher.call_sync('system.info.version')
     config = dispatcher.call_sync('system.general.get_config')
     loadavg = dispatcher.call_sync('system.info.load_avg')
     hw = dispatcher.call_sync('system.info.hardware')
     time_info = dispatcher.call_sync('system.info.time')
     systime = dateutil.parser.parse(time_info['system_time'])
-
-    try:
-        freenas_build = get_sw_version()
-    except:
-        freenas_build = "Unrecognized build"
 
     return {
         'hostname': config['hostname'],
@@ -121,8 +117,8 @@ def _system_info(request=None):
         'physmem': '{0}MB'.format(hw['memory_size'] / 1048576),
         'date': systime.strftime('%a %b %d %H:%M:%S %Y'),
         'uptime': natural.date.compress(time_info['uptime'], pad=' '),
-        'loadavg': '{0:.2f} {1:.2f} {2:.2f}'.format(*loadavg),
-        'freenas_build': freenas_build,
+        'loadavg': '{0:.2f}, {1:.2f}, {2:.2f}'.format(*loadavg),
+        'freenas_build': version,
     }
 
 
