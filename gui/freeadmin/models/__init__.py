@@ -156,8 +156,10 @@ class NewQuerySet(object):
         self._m2f = MIDDLEWARE2FIELD.get(
             self.model._meta.model_name
         )
-        self._sort = None
-        self._dir = None
+        if model._meta.ordering:
+            self._sort = self._transform_order(*model._meta.ordering)
+        else:
+            self._sort = None
         self.query = NewQuery()
 
     def __iter__(self):
@@ -255,8 +257,6 @@ class NewQuerySet(object):
         options = {}
         if self._sort is not None:
             options['sort'] = self._sort
-        if self._dir is not None:
-            options['dir'] = self._dir
 
         for i in dispatcher.call_sync(method, self._filters, options):
             data = {}
@@ -273,15 +273,29 @@ class NewQuerySet(object):
 
             yield self.model(**data)
 
-    def order_by(self, *args):
+    def _transform_order(self, *args):
+        sort = []
         for i in args:
             if i.startswith('-'):
-                self._sort = i[1:]
-                self._dir = 'desc'
+                key = i[1:]
+                desc = True
             else:
-                self._sort = i
-                self._dir = 'asc'
-        return self
+                key = i
+                desc = False
+
+            if self._f2m:
+                field = self._f2m.get(key)
+                if field:
+                    if desc:
+                        sort.append('-{0}'.format(field))
+                    else:
+                        sort.append(field)
+        return sort
+
+    def order_by(self, *args):
+        clone = self._clone()
+        clone._sort = clone._transform_order(*args)
+        return clone
 
 
 class NewManager(models.Manager):
