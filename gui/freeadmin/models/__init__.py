@@ -31,10 +31,9 @@ from django.db import models
 from django.db.models import signals
 from django.db.models.base import ModelBase
 
-from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
 
-#FIXME: Backward compatible
+# FIXME: Backward compatible
 from .fields import (
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field
 )
@@ -137,7 +136,12 @@ def get_middleware_methods(model):
 class NewQuery(object):
     """Required by tastypie"""
 
-    query_terms = set(['gt', 'in', 'month', 'isnull', 'endswith', 'week_day', 'year', 'regex', 'gte', 'contains', 'lt', 'startswith', 'iendswith', 'icontains', 'iexact', 'exact', 'day', 'minute', 'search', 'hour', 'iregex', 'second', 'range', 'istartswith', 'lte'])
+    query_terms = set([
+        'gt', 'in', 'month', 'isnull', 'endswith', 'week_day', 'year', 'regex',
+        'gte', 'contains', 'lt', 'startswith', 'iendswith', 'icontains',
+        'iexact', 'exact', 'day', 'minute', 'search', 'hour', 'iregex',
+        'second', 'range', 'istartswith', 'lte'
+    ])
 
 
 class NewQuerySet(object):
@@ -222,7 +226,9 @@ class NewQuerySet(object):
                     (field, '=' if not opposite else '!=', val)
                 )
             else:
-                raise NotImplementedError("Filter '%s' not implemented" % _filter)
+                raise NotImplementedError(
+                    "Filter '%s' not implemented" % _filter
+                )
 
         return self
 
@@ -237,13 +243,14 @@ class NewQuerySet(object):
 
     def iterator(self):
         from freenasUI.middleware.connector import connection as dispatcher
-        print self._filters
         methods = get_middleware_methods(self.model)
         method = methods.get('query')
         if method is None:
-            raise NotImplementedError("RPC query method for '%s' not defined'" % (
-                self.model._meta.model_name,
-            ))
+            raise NotImplementedError(
+                "RPC query method for '%s' not defined'" % (
+                    self.model._meta.model_name,
+                )
+            )
 
         options = {}
         if self._sort is not None:
@@ -299,10 +306,11 @@ class NewModel(Model):
         methods = get_middleware_methods(self)
         method = methods.get('delete')
         if method is None:
-            raise NotImplementedError("RPC %s method for '%s' not defined'" % (
-                mname,
-                self._meta.model_name,
-            ))
+            raise NotImplementedError(
+                "RPC delete method for '%s' not defined'" % (
+                    self._meta.model_name,
+                )
+            )
 
         task = dispatcher.call_task_sync(method, [self.id])
         if task['state'] != 'FINISHED':
@@ -349,14 +357,18 @@ class NewModel(Model):
         meta = cls._meta
 
         if not meta.auto_created:
-            signals.pre_save.send(sender=origin, instance=self, raw=raw, using=using,
-                                  update_fields=update_fields)
+            signals.pre_save.send(
+                sender=origin, instance=self, raw=raw, using=using,
+                update_fields=update_fields
+            )
 
         task = dispatcher.call_task_sync(method, method_args)
         if task['state'] != 'FINISHED':
             raise ValueError(task['error']['message'])
 
         if not meta.auto_created:
-            signals.post_save.send(sender=origin, instance=self, created=(not updated),
-                                   update_fields=update_fields, raw=raw, using=using)
+            signals.post_save.send(
+                sender=origin, instance=self, created=(not updated),
+                update_fields=update_fields, raw=raw, using=using,
+            )
         return self
