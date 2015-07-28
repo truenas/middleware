@@ -39,3 +39,8 @@ class MiddlewareError(Exception):
 
     def __str__(self):
         return "[%s: %s]" % (type(self).__name__, self.value.encode('utf-8'))
+
+
+class ValidationError(Exception):
+    def __init__(self, fields):
+        self.fields = fields

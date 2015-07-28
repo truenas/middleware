@@ -33,6 +33,7 @@ from django.db.models import signals
 from django.db.models.base import ModelBase
 
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.middleware.exceptions import ValidationError
 
 # FIXME: Backward compatible
 from .fields import (
@@ -381,7 +382,20 @@ class NewModel(Model):
 
         task = dispatcher.call_task_sync(method, method_args)
         if task['state'] != 'FINISHED':
-            raise ValueError(task['error']['message'])
+            error = task['error']
+            if error:
+                extra = error.get('extra')
+                fields = {}
+                if extra and 'fields' in extra:
+                    m2f = MIDDLEWARE2FIELD.get(self._meta.model_name)
+                    for field, errors in extra['fields'].items():
+                        key = m2f.get(field)
+                        if key:
+                            fields[key] = errors
+                if not fields:
+                    fields['__all__'] = [error['message']]
+                raise ValidationError(fields)
+            raise ValueError(task['state'])
 
         if not meta.auto_created:
             signals.post_save.send(

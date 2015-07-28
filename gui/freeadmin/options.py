@@ -44,7 +44,7 @@ from django.utils.translation import ugettext as _
 from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.exceptions import MiddlewareError, ValidationError
 from freenasUI.services.exceptions import ServiceFailed
 from tastypie.validation import FormValidation
 
@@ -376,6 +376,14 @@ class BaseFreeAdmin(object):
                             m._meta.verbose_name,
                         ),
                         events=events)
+                except ValidationError, e:
+                    for fname, errors in e.fields.items():
+                        if fname == '__all__':
+                            mf._errors['__all__'] = mf.error_class(errors)
+                            continue
+                        if fname in mf.fields:
+                            mf._errors[fname] = mf.error_class(errors)
+                    return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError, e:
                     return JsonResp(
                         request,
