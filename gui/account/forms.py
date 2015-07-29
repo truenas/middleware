@@ -690,17 +690,11 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
                 self.initial['bsdgrp_gid'] = dispatcher.call_sync('groups.next_gid')
             except:
                 pass
-            self.fields['allow'] = forms.BooleanField(
-                label=_("Allow repeated GIDs"),
-                initial=False,
-                required=False,
-            )
 
     def save(self):
         ins = super(bsdGroupsForm, self).save()
         notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
             ntgroup=self.instance.bsdgrp_group)
-        notifier().reload("user")
         return ins
 
 
