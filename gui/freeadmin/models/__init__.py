@@ -25,6 +25,7 @@
 #
 #####################################################################
 import copy
+import errno
 import logging
 import six
 
@@ -97,23 +98,43 @@ class Model(models.Model):
             ), )
 
 
-FIELD2MIDDLEWARE = {
-    'bsdgroups': {
-        'bsdgrp_group': 'name',
-        'bsdgrp_builtin': 'builtin',
-        'bsdgrp_gid': 'id',
-        'bsdgrp_sudo': 'sudo',
-        'id': 'id',
-    },
-}
+class FieldMiddlewareMapping(object):
 
-MIDDLEWARE2FIELD = {
-    'bsdgroups': {
-        'name': 'bsdgrp_group',
-        'builtin': 'bsdgrp_builtin',
-        'id': ('id', 'bsdgrp_gid'),
-        'sudo': 'bsdgrp_sudo',
-    },
+    def __init__(self, tuples):
+        self.__field = {}
+        self.__middleware = {}
+        for key, val in tuples:
+            keylist = self.__to_list(key)
+            vallist = self.__to_list(val)
+
+            for k in keylist:
+                self.__field[k] = val
+
+            for v in vallist:
+                self.__middleware[v] = keylist
+
+    def __to_list(self, key):
+        if isinstance(key, (str, unicode)):
+            key = [key]
+        elif not isinstance(key, (list, tuple)):
+            raise ValueError(
+                "Invalid type for %r: %s" % (key, type(key).__name__)
+            )
+        return key
+
+    def get_field_to_middleware(self, field):
+        return self.__field.get(field, None)
+
+    def get_middleware_to_field(self, field):
+        return self.__middleware.get(field, [])
+
+FMM = {
+    'bsdgroups': FieldMiddlewareMapping((
+        ('bsdgrp_group', 'name'),
+        ('bsdgrp_builtin', 'builtin'),
+        (('bsdgrp_gid', 'id'), 'id'),
+        ('bsdgrp_sudo', 'sudo'),
+    )),
 }
 
 MIDDLEWARE_MODEL_METHODS = {
@@ -152,12 +173,7 @@ class NewQuerySet(object):
         self.model = model
         self._result_cache = None
         self._filters = []
-        self._f2m = FIELD2MIDDLEWARE.get(
-            self.model._meta.model_name
-        )
-        self._m2f = MIDDLEWARE2FIELD.get(
-            self.model._meta.model_name
-        )
+        self._fmm = FMM.get(model._meta.model_name)
         if model._meta.ordering:
             self._sort = self._transform_order(*model._meta.ordering)
         else:
@@ -220,9 +236,9 @@ class NewQuerySet(object):
 
             val = self.model._meta.get_field(key).to_python(val)
 
-            if self._f2m:
-                field = self._f2m.get(key)
-                if field is None:
+            if self._fmm:
+                field = self._fmm.get_field_to_middleware(key)
+                if not field:
                     raise NotImplementedError("Field '%s' not mapped" % key)
             else:
                 field = key
@@ -264,16 +280,11 @@ class NewQuerySet(object):
 
         for i in dispatcher.call_sync(method, self._filters, options):
             data = {}
-            if self._m2f:
-                for key, val in i.items():
-                    field = self._m2f.get(key)
-                    if isinstance(field, tuple):
-                        for f in field:
-                            data[f] = val
-                    elif isinstance(field, str):
-                        data[field] = val
-                    elif field is None:
-                        continue
+            if not self._fmm:
+                continue
+            for key, val in i.items():
+                for f in self._fmm.get_middleware_to_field(key):
+                    data[f] = val
 
             yield self.model(**data)
 
@@ -287,8 +298,8 @@ class NewQuerySet(object):
                 key = i
                 desc = False
 
-            if self._f2m:
-                field = self._f2m.get(key)
+            if self._fmm:
+                field = self._fmm.get_field_to_middleware(key)
                 if field:
                     if desc:
                         sort.append('-{0}'.format(field))
@@ -355,10 +366,10 @@ class NewModel(Model):
             ))
 
         data = self.__dict__.copy()
-        f2m = FIELD2MIDDLEWARE.get(self._meta.model_name)
-        if f2m:
+        fmm = FMM.get(self._meta.model_name)
+        if fmm:
             for key, val in data.items():
-                field = f2m.get(key)
+                field = fmm.get_field_to_middleware(key)
                 if field == key:
                     continue
                 if field:
@@ -387,14 +398,10 @@ class NewModel(Model):
                 extra = error.get('extra')
                 fields = {}
                 if extra and 'fields' in extra:
-                    m2f = MIDDLEWARE2FIELD.get(self._meta.model_name)
+                    fmm = FMM.get(self._meta.model_name)
                     for field, errors in extra['fields'].items():
-                        key = m2f.get(field)
-                        if key:
-                            if not isinstance(key, (list, tuple)):
-                                key = [key]
-                            for k in key:
-                                fields[k] = errors
+                        for key in fmm.get_middleware_to_field(field):
+                            fields[key] = errors
                 if not fields:
                     fields['__all__'] = [(errno.EINVAL, error['message'])]
                 raise ValidationError(fields)
