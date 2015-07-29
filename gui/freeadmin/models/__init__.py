@@ -31,6 +31,7 @@ import six
 
 from django.db import models
 from django.db.models import signals
+from django.db.models.fields.related import ForeignKey
 from django.db.models.base import ModelBase
 
 from freenasUI.freeadmin.apppool import appPool
@@ -128,6 +129,7 @@ class FieldMiddlewareMapping(object):
     def get_middleware_to_field(self, field):
         return self.__middleware.get(field, [])
 
+
 FMM = {
     'bsdgroups': FieldMiddlewareMapping((
         ('bsdgrp_group', 'name'),
@@ -136,6 +138,7 @@ FMM = {
         ('bsdgrp_sudo', 'sudo'),
     )),
 }
+
 
 MIDDLEWARE_MODEL_METHODS = {
     'bsdgroups': {
@@ -284,7 +287,11 @@ class NewQuerySet(object):
                 continue
             for key, val in i.items():
                 for f in self._fmm.get_middleware_to_field(key):
-                    data[f] = val
+                    mfield = self.model._meta.get_field(f)
+                    if isinstance(mfield, ForeignKey):
+                        data[f] = mfield.rel.to.objects.get(pk=val)
+                    else:
+                        data[f] = val
 
             yield self.model(**data)
 
