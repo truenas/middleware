@@ -235,6 +235,10 @@ class NewQuerySet(object):
         if self._result_cache is None:
             self._result_cache = list(self.iterator())
 
+    def all(self):
+        self._fetch_all()
+        return self
+
     def count(self):
         self._fetch_all()
         return len(self._result_cache)
