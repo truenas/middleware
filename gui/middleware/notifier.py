@@ -2382,14 +2382,6 @@ class notifier:
         uid = uid.split(':')[0]
         return uid
 
-    def user_getnextgid(self):
-        command = "/usr/sbin/pw groupnext"
-        pw = self._pipeopen(command)
-        gid = pw.communicate()[0]
-        if pw.returncode != 0:
-            raise ValueError("Could not retrieve groupnext")
-        return gid
-
     def save_pubkey(self, homedir, pubkey, username, groupname):
         homedir = str(homedir)
         pubkey = str(pubkey).strip()

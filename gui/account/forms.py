@@ -39,6 +39,7 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.storage.widgets import UnixPermissionField
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.forms')
@@ -686,7 +687,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
             )
         else:
             try:
-                self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
+                self.initial['bsdgrp_gid'] = dispatcher.call_sync('groups.next_gid')
             except:
                 pass
             self.fields['allow'] = forms.BooleanField(
