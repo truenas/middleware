@@ -2359,20 +2359,6 @@ class notifier:
             return False
         return True
 
-    def user_deletegroup(self, groupname):
-        """
-        Delete a group using pw(8) utility
-
-        Returns:
-            bool
-        """
-        pipe = self._pipeopen('/usr/sbin/pw groupdel "%s"' % (groupname, ))
-        err = pipe.communicate()[1]
-        if pipe.returncode != 0:
-            log.warn("Failed to delete group %s: %s", groupname, err)
-            return False
-        return True
-
     def user_getnextuid(self):
         command = "/usr/sbin/pw usernext"
         pw = self._pipeopen(command)
