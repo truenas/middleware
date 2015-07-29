@@ -137,6 +137,21 @@ FMM = {
         (('bsdgrp_gid', 'id'), 'id'),
         ('bsdgrp_sudo', 'sudo'),
     )),
+    'bsdusers': FieldMiddlewareMapping((
+        (('bsdusr_uid', 'id'), 'id'),
+        ('bsdusr_username', 'username'),
+        ('bsdusr_unixhash', 'unixhash'),
+        ('bsdusr_smbhash', 'smbhash'),
+        ('bsdusr_group', 'group'),
+        ('bsdusr_home', 'home'),
+        ('bsdusr_shell', 'shell'),
+        ('bsdusr_full_name', 'full_name'),
+        ('bsdusr_builtin', 'builtin'),
+        ('bsdusr_email', 'email'),
+        ('bsdusr_password_disabled', 'password_disabled'),
+        ('bsdusr_locked', 'locked'),
+        ('bsdusr_sudo', 'sudo'),
+    )),
 }
 
 
@@ -146,6 +161,12 @@ MIDDLEWARE_MODEL_METHODS = {
         'add': 'groups.create',
         'delete': 'groups.delete',
         'update': 'groups.update',
+    },
+    'bsdusers': {
+        'query': 'users.query',
+        'add': 'users.create',
+        'delete': 'users.delete',
+        'update': 'users.update',
     }
 }
 

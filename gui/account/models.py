@@ -34,7 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.freeadmin.models import Model, NewModel, PathField
+from freenasUI.freeadmin.models import Model, NewModel, NewManager, PathField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
@@ -77,12 +77,12 @@ def get_sentinel_group():
     return bsdGroups.objects.get(bsdgrp_group='nobody')
 
 
-class UserManager(models.Manager):
+class UserManager(NewManager):
     def get_by_natural_key(self, username):
         return self.get(**{self.model.USERNAME_FIELD: username})
 
 
-class bsdUsers(Model):
+class bsdUsers(NewModel):
 
     USERNAME_FIELD = 'bsdusr_username'
     REQUIRED_FIELDS = []
