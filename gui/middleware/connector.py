@@ -27,7 +27,6 @@
 import logging
 import time
 import socket
-from notifier import MiddlewareError
 from dispatcher.client import Client, ClientError
 
 
@@ -57,6 +56,7 @@ def create_connection():
         connection.connect('127.0.0.1')
         connection.login_service('django')
     except socket.error, err:
+        from notifier import MiddlewareError
         raise MiddlewareError('Cannot connect to dispatcher: {0}'.format(str(err)))
 
 
