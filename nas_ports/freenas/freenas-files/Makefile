@@ -155,7 +155,6 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/register_mdns.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/register_mdns.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/scrub ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/scrub
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba
-	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/dfree ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/dfree
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/samba/samba-backtrace ${STAGEDIR}/${PREFIX}/usr/local/libexec/samba/samba-backtrace
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas2flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas2flash
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/sbin/sas3flash ${STAGEDIR}/${PREFIX}/usr/local/sbin/sas3flash
