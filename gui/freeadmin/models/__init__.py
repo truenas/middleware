@@ -33,7 +33,7 @@ from django.db.models import signals
 from django.db.models.base import ModelBase
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.middleware.exceptions import ValidationError
+from freenasUI.middleware.exceptions import MiddlewareError, ValidationError
 
 # FIXME: Backward compatible
 from .fields import (
@@ -332,7 +332,7 @@ class NewModel(Model):
 
         task = dispatcher.call_task_sync(method, [self.id])
         if task['state'] != 'FINISHED':
-            raise ValueError(task['error']['message'])
+            raise MiddlewareError(task['error']['message'])
 
     def save(self, *args, **kwargs):
         from freenasUI.middleware.connector import connection as dispatcher
