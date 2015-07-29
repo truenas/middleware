@@ -55,9 +55,9 @@ def create_connection():
         connection.on_error(on_error)
         connection.connect('127.0.0.1')
         connection.login_service('django')
-    except socket.error, err:
-        from notifier import MiddlewareError
-        raise MiddlewareError('Cannot connect to dispatcher: {0}'.format(str(err)))
+    except socket.error:
+        logger.exception('Cannot connect to dispatcher')
+        connection = None
 
 
 create_connection()
