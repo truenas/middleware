@@ -396,7 +396,7 @@ class NewModel(Model):
                             for k in key:
                                 fields[k] = errors
                 if not fields:
-                    fields['__all__'] = [error['message']]
+                    fields['__all__'] = [(errno.EINVAL, error['message'])]
                 raise ValidationError(fields)
             raise ValueError(task['state'])
 
