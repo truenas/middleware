@@ -249,9 +249,11 @@ class NewQuerySet(object):
         return len(self._result_cache) > 0
 
     def exclude(self, *args, **kwargs):
+        self._result_cache = None
         return self._exclude_or_filter(True, *args, **kwargs)
 
     def filter(self, *args, **kwargs):
+        self._result_cache = None
         return self._exclude_or_filter(False, *args, **kwargs)
 
     def _exclude_or_filter(self, opposite, *args, **kwargs):
@@ -284,6 +286,7 @@ class NewQuerySet(object):
         return self
 
     def get(self, *args, **kwargs):
+        self._result_cache = None
         self.filter(*args, **kwargs)
         self._fetch_all()
         if len(self._result_cache) == 0:
