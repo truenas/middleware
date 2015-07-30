@@ -84,7 +84,6 @@ class ADToolShell(cmd.Cmd):
             [ "kpwdhost", "Kerberos password change server hostname" ],
             [ "kpwdport", "Kerberos password change server port" ],
             [ "krb_realm", "Kerberos realm" ],
-            [ "keytab_name", "Kerberos keytab name" ],
             [ "keytab_principal", "Kerberos keytab principal" ],
             [ "keytab_file", "Kerberos keytab file" ],
             [ "ssl", "SSL/TLS value" ],
@@ -213,7 +212,6 @@ Available options:
             "ad_kpwdhost",
             "ad_kpwdport",
             "ad_krb_realm",
-            "ad_keytab_name",
             "ad_keytab_principal",
             "ad_keytab_file",
             "ad_timeout",
@@ -456,13 +454,6 @@ Available options:
     def set_krb_realm(self, args):
         for arg in args:
             self.adc.krb_realm = arg 
-  
-    def get_keytab_name(self, args):
-        print >> sys.stdout, self.adc.keytab_name
-
-    def set_keytab_name(self, args):
-        for arg in args:
-            self.adc.keytab_name = arg
    
     def get_keytab_principal(self, args):
         print >> sys.stdout, self.adc.keytab_principal

@@ -51,19 +51,17 @@ kerberos_start_activedirectory()
 	local bindname="$(AD_get ad_bindname)"
 	local bindpw="$(AD_get ad_bindpw)"
 	local domainname="$(AD_get ad_domainname)"
-	local keytab="$(AD_get ad_keytab_name)"
+	local keytab_principal="$(AD_get ad_keytab_principal)"
 
-	if [ -n "${keytab}" ]
+	if [ -n "${keytab_principal}" ]
 	then
 		local res=0
 		local keytab_file="$(AD_get ad_keytab_file)"
-		local keytab_principal="$(AD_get ad_keytab_principal)"
 
 		if kerbers_principal_check "${keytab_principal}"
 		then
 			return 0
 		fi
-
 
 		AD_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
 		/usr/bin/kinit -t "${keytab_file}" --renewable -k "${keytab_principal}"
@@ -148,12 +146,10 @@ kerberos_status_activedirectory()
 	AD_init
 
 	local domainname=$(AD_get ad_domainname)
-	local bindname=$(AD_get ad_bindname)
-	local bindpw=$(AD_get ad_bindpw)
 
-	if [ -n "${bindname}" -a -n "${domainname}" -a -n "${bindpw}" ]
+	domainname=$(echo "${domainname}"|tr a-z A-Z)
+	if [ -n "${domainname}" ]
 	then
-		domainname=$(echo "${domainname}"|tr a-z A-Z)
 
 		AD_log "kerberos_status: klist -t"
 		/usr/bin/klist -t
@@ -183,13 +179,12 @@ kerberos_start_ldap()
 	local binddn="$(LDAP_get ldap_binddn)"
 	local bindpw="$(LDAP_get ldap_bindpw)"
 	local hostname="$(LDAP_get ldap_hostname)"
-	local keytab="$(LDAP_get ldap_keytab_name)"
+	local keytab_principal="$(LDAP_get ldap_keytab_principal)"
 
-	if [ -n "${keytab}" ]
+	if [ -n "${keytab_principal}" ]
 	then
 		local res=0
 		local keytab_file="$(LDAP_get ldap_keytab_file)"
-		local keytab_principal="$(LDAP_get ldap_keytab_principal)"
 
 		if kerbers_principal_check "${keytab_principal}"
 		then
@@ -360,9 +355,9 @@ kerberos_renew()
 		LDAP_init
 
 		local realm=$(LDAP_get ldap_krb_realm)
-		local keytab="$(LDAP_get ldap_keytab_name)"
+		local keytab_principal="$(LDAP_get ldap_keytab_principal)"
 
-		if [ -z "${realm}" -a -z "${keytab}" ]
+		if [ -z "${realm}" -a -z "${keytab_principal}" ]
 		then
 			return
 		fi

@@ -111,11 +111,6 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
             'label': _("Name")
         })
 
-        columns.append({
-            'name': "keytab_principal",
-            'label': _("Principal")
-        })
-
         return columns
 
     def get_datagrid_context(self, request):
