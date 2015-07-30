@@ -125,7 +125,7 @@ class bsdUsers(NewModel):
     )
     bsdusr_full_name = models.CharField(
         max_length=120,
-        verbose_name=_("Full Name")
+        verbose_name=_("Full Name"),
     )
     bsdusr_builtin = models.BooleanField(
         default=False,
@@ -150,10 +150,6 @@ class bsdUsers(NewModel):
     bsdusr_sudo = models.BooleanField(
         verbose_name=_("Permit Sudo"),
         default=False,
-    )
-    bsdusr_microsoft_account = models.BooleanField(
-        verbose_name=_("Microsoft Account"),
-        default=False
     )
 
     is_active = True
@@ -211,7 +207,7 @@ class bsdUsers(NewModel):
 
     def set_password(self, password):
         # Django auth backend calls set_password even if user doesnt exist
-        if not self.bsdusr_username or not self.id:
+        if not self.bsdusr_username or self.id is None:
             time.sleep(0.1)
             return
         unixhash, smbhash = notifier().user_changepassword(
