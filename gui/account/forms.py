@@ -85,7 +85,6 @@ class NewPasswordForm(Form):
                     username=user.bsdusr_username,
                     password=self.cleaned_data['password'].encode('utf-8'),
                 )
-                notifier().reload("user")
         return valid
 
 
@@ -232,7 +231,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             'bsdusr_password_disabled',
             'bsdusr_locked',
             'bsdusr_sudo',
-            'bsdusr_microsoft_account',
             'bsdusr_sshpubkey',
             'bsdusr_to_group',
         )
@@ -265,7 +263,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             'javascript:toggleGeneric("id_bsdusr_sudo", '
             '["id_bsdusr_password_disabled"], false);')
 
-        if not self.instance.id:
+        if self.instance.ids is None:
             try:
                 self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
             except:
@@ -285,7 +283,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.bsdusr_home_saved = u'/nonexistent'
             self.bsdusr_home_copy = False
 
-        elif self.instance.id:
+        elif self.instance.id is not None:
             self.fields['bsdusr_to_group'].initial = [
                 x.bsdgrpmember_group.id
                 for x in models.bsdGroupMembership.objects.filter(
@@ -352,13 +350,13 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             return self.instance.bsdusr_username
 
     def clean_bsdusr_uid(self):
-        if self.instance.id and self.instance.bsdusr_builtin:
+        if self.instance.id is not None and self.instance.bsdusr_builtin:
             return self.instance.bsdusr_uid
         else:
             return self.cleaned_data.get("bsdusr_uid")
 
     def clean_bsdusr_group(self):
-        if self.instance.id and self.instance.bsdusr_builtin:
+        if self.instance.id is not None and self.instance.bsdusr_builtin:
             return self.instance.bsdusr_group
         else:
             create = self.cleaned_data.get("bsdusr_creategroup")
@@ -388,7 +386,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
-        if self.instance.id and self.instance.bsdusr_uid == 0:
+        if self.instance.id is not None and self.instance.bsdusr_uid == 0:
             return self.instance.bsdusr_home
         elif home is not None:
             if ':' in home:
@@ -408,10 +406,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                         self.bsdusr_home_copy = True
                     return home
 
-                if not self.instance.id:
+                if self.instance.id is None:
                     home = "%s/%s" % (home.rstrip('/'), bsdusr_username)
                
-                if not self.instance.id and not home.endswith(bsdusr_username):
+                if self.instance.id is None and not home.endswith(bsdusr_username):
                     raise forms.ValidationError(
                         _('Home directory must end with username')
                     )
@@ -427,7 +425,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
     def clean_bsdusr_mode(self):
         mode = self.cleaned_data.get('bsdusr_mode')
-        if not self.instance.id and not mode:
+        if self.instance.id is None and not mode:
             return '755'
         return mode
 
@@ -468,7 +466,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             (
                 not bsdusr_home.startswith(u'/mnt/') and (
                     self.instance.id is None or
-                    (self.instance.id and self.instance.bsdusr_uid != 0)
+                    (self.instance.id is not None and self.instance.bsdusr_uid != 0)
                 )
             )
         ):
@@ -581,7 +579,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsdgrpmember_user=bsduser)
             m.save()
 
-        _notifier.reload("user")
         if self.bsdusr_home_copy:
             p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
                 self.cleaned_data['bsdusr_username'],
@@ -679,7 +676,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
 
     def __init__(self, *args, **kwargs):
         super(bsdGroupsForm, self).__init__(*args, **kwargs)
-        if self.instance.id:
+        if self.instance.id is not None:
             self.fields['bsdgrp_gid'].widget.attrs['readonly'] = True
             self.fields['bsdgrp_gid'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
