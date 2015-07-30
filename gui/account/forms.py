@@ -263,7 +263,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             'javascript:toggleGeneric("id_bsdusr_sudo", '
             '["id_bsdusr_password_disabled"], false);')
 
-        if self.instance.ids is None:
+        if self.instance.id is None:
             try:
                 self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
             except:
