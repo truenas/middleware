@@ -1052,8 +1052,6 @@ def generate_smb4_shares(smb4_shares):
             task = share.cifs_storage_task
 
         vfs_objects = []
-        if share.cifs_recyclebin:
-            vfs_objects.append('recycle')
         if task:
             vfs_objects.append('shadow_copy2')
         if is_within_zfs(share.cifs_path):
@@ -1061,12 +1059,14 @@ def generate_smb4_shares(smb4_shares):
             vfs_objects.append('zfsacl')
         vfs_objects.extend(share.cifs_vfsobjects)
 
-        confset1(smb4_shares, "recycle:repository = .recycle/%U")
-        confset1(smb4_shares, "recycle:keeptree = yes")
-        confset1(smb4_shares, "recycle:versions = yes")
-        confset1(smb4_shares, "recycle:touch = yes")
-        confset1(smb4_shares, "recycle:directory_mode = 0777")
-        confset1(smb4_shares, "recycle:subdir_mode = 0700")
+        if share.cifs_recyclebin:
+            vfs_objects.append('recycle')
+            confset1(smb4_shares, "recycle:repository = .recycle/%U")
+            confset1(smb4_shares, "recycle:keeptree = yes")
+            confset1(smb4_shares, "recycle:versions = yes")
+            confset1(smb4_shares, "recycle:touch = yes")
+            confset1(smb4_shares, "recycle:directory_mode = 0777")
+            confset1(smb4_shares, "recycle:subdir_mode = 0700")
 
         if task:
             confset1(smb4_shares, "shadow:snapdir = .zfs/snapshot")
