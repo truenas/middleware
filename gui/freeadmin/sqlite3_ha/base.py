@@ -24,45 +24,7 @@ Mapping of tables to not to replicate to the remote side
 It accepts a fields key which will then exclude these fields and not the
 whole table.
 """
-NO_SYNC_MAP = {
-    'directoryservice_activedirectory': {
-        'fields': ['ad_netbiosname'],
-    },
-    'network_alias': {},
-    'network_carp': {
-        'fields': ['carp_skew'],
-    },
-    'network_globalconfiguration': {
-        'fields': ['gc_hostname'],
-    },
-    'network_interfaces': {},
-    'network_lagginterface': {},
-    'network_lagginterfacemembers': {},
-    'services_ssh': {
-        'fields': [
-            'ssh_host_dsa_key',
-            'ssh_host_dsa_key_pub',
-            'ssh_host_dsa_key_cert_pub',
-            'ssh_host_ecdsa_key',
-            'ssh_host_ecdsa_key_pub',
-            'ssh_host_ecdsa_key_cert_pub',
-            'ssh_host_ed25519_key',
-            'ssh_host_ed25519_key_pub',
-            'ssh_host_ed25519_key_cert_pub',
-            'ssh_host_key',
-            'ssh_host_key_pub',
-            'ssh_host_rsa_key',
-            'ssh_host_rsa_key_pub',
-            'ssh_host_rsa_key_cert_pub',
-        ],
-    },
-    'system_failover': {
-        'fields': ['ipaddress'],
-    },
-    'system_systemdataset': {
-        'fields': ['sys_uuid'],
-    },
-}
+NO_SYNC_MAP = {}
 
 
 class Journal(object):
@@ -132,15 +94,14 @@ class RunSQLRemote(threading.Thread):
     def run(self):
         from freenasUI.middleware.notifier import notifier
         from freenasUI.common.log import log_traceback
-        # FIXME: cache value
-        ip, secret = notifier().failover_getpeer()
-        s = notifier().failover_rpc(ip=ip)
+        # FIXME: cache IP value
+        s = notifier().failover_rpc()
         try:
             with Journal() as f:
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    s.run_sql(secret, self._sql, self._params)
+                    s.run_sql(self._sql, self._params)
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
@@ -165,7 +126,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
-    def dump_send(self, failover=None):
+    def dump_send(self):
         """
         Method responsible for dumping the database into SQL,
         excluding the tables that should not be synced between nodes.
@@ -197,17 +158,17 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             for row in cur.fetchall():
                 script.append(row[0])
 
-        s = notifier().failover_rpc(ip=failover.ipaddress)
+        s = notifier().failover_rpc()
         # If we are syncing then we need to clear the Journal in case
         # everything goes as planned.
         with Journal() as j:
             try:
-                sync = s.sync_to(failover.secret, script)
+                sync = s.sync_to(script)
                 if sync:
                     j.queries = []
                 return sync
             except (xmlrpclib.Fault, socket.error) as e:
-                log.error('Failed sync_to %s: %s', failover.ipaddress, e)
+                log.error('Failed sync_to: %s', e)
                 return False
 
     def dump_recv(self, script):

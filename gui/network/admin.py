@@ -4,10 +4,13 @@ from freenasUI.api.resources import (
     InterfacesResourceMixin, LAGGInterfaceResourceMixin,
     LAGGInterfaceMembersResourceMixin
 )
+from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
+
+SW_NAME = get_sw_name()
 
 
 class InterfacesFAdmin(BaseFreeAdmin):
@@ -28,10 +31,17 @@ class InterfacesFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'int_ipv4address',
+        'int_ipv4address_b',
         'int_v4netmaskbit',
         'int_ipv6address',
         'int_v6netmaskbit',
-        )
+        'int_carp',
+        'int_vip',
+        'int_vhid',
+        'int_pass',
+        'int_critical',
+        'int_group',
+    )
 
     def get_datagrid_columns(self):
         columns = super(InterfacesFAdmin, self).get_datagrid_columns()
@@ -50,6 +60,7 @@ class InterfacesFAdmin(BaseFreeAdmin):
             'label': _('IPv6 Addresses'),
             'sortable': False,
         })
+
         return columns
 
     def get_confirm_message(self, action, **kwargs):

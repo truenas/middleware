@@ -511,6 +511,12 @@ class SystemDataset(Model):
         editable=False,
         max_length=32,
     )
+    sys_uuid_b = models.CharField(
+        editable=False,
+        max_length=32,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = _("System Dataset")
@@ -521,6 +527,10 @@ class SystemDataset(Model):
         icon_object = u"SystemDatasetIcon"
         icon_view = u"SystemDatasetIcon"
         icon_add = u"SystemDatasetIcon"
+
+    def __init__(self, *args, **kwargs):
+        super(SystemDataset, self).__init__(*args, **kwargs)
+        self.__sys_uuid_field = None
 
     @property
     def usedataset(self):
@@ -534,8 +544,19 @@ class SystemDataset(Model):
             return False
         return volume[0].is_decrypted()
 
+    def get_sys_uuid(self):
+        if not self.__sys_uuid_field:
+            if (
+                not notifier().is_freenas() and
+                notifier().failover_node() == 'B'
+            ):
+                self.__sys_uuid_field = 'sys_uuid_b'
+            else:
+                self.__sys_uuid_field = 'sys_uuid'
+        return getattr(self, self.__sys_uuid_field)
+
     def new_uuid(self):
-        self.sys_uuid = uuid.uuid4().hex
+        setattr(self, self.__sys_uuid_field, uuid.uuid4().hex)
 
 
 class Update(Model):

@@ -33,11 +33,13 @@ import urllib2
 
 from django.core.validators import RegexValidator
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
+from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
@@ -45,8 +47,10 @@ from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
 )
+from freenasUI.tools.vhid import scan_for_vrrp
 
 log = logging.getLogger('network.forms')
+SW_NAME = get_sw_name()
 
 
 class InterfacesForm(ModelForm):
@@ -55,16 +59,42 @@ class InterfacesForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Interfaces
+        widgets = {
+            'int_vhid': forms.widgets.TextInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(InterfacesForm, self).__init__(*args, **kwargs)
-        self.fields['int_interface'].choices = choices.NICChoices()
+
+        self._carp = False
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed():
+            from freenasUI.failover.utils import node_label_field
+            self._carp = True
+            node_label_field(
+                _n.failover_node(),
+                self.fields['int_ipv4address'],
+                self.fields['int_ipv4address_b'],
+            )
+
+        if not self._carp:
+            del self.fields['int_vip']
+            del self.fields['int_vhid']
+            del self.fields['int_critical']
+            del self.fields['int_group']
+            del self.fields['int_ipv4address_b']
+
+        self.fields['int_interface'].choices = choices.NICChoices(nocarp=True)
         self.fields['int_dhcp'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_dhcp", ["id_int_ipv4address", '
-            '"id_int_v4netmaskbit"]);')
+            '"id_int_ipv4address_b", "id_int_v4netmaskbit"]);')
         self.fields['int_ipv6auto'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_int_ipv6auto", '
             '["id_int_ipv6address", "id_int_v6netmaskbit"]);')
+        if 'int_critical' in self.fields:
+            self.fields['int_critical'].widget.attrs['onChange'] = (
+                'javascript:toggleGeneric("id_int_critical", '
+                '["id_int_group"], true);')
         dhcp = False
         ipv6auto = False
         if self.data:
@@ -78,8 +108,12 @@ class InterfacesForm(ModelForm):
             if self.instance.int_ipv6auto:
                 ipv6auto = True
         if dhcp:
-            self.fields['int_ipv4address'].widget.attrs['disabled'] = (
-                'disabled')
+            if 'int_ipv4address' in self.fields:
+                self.fields['int_ipv4address'].widget.attrs['disabled'] = (
+                    'disabled')
+            if 'int_ipv4address_b' in self.fields:
+                self.fields['int_ipv4address_b'].widget.attrs['disabled'] = (
+                    'disabled')
             self.fields['int_v4netmaskbit'].widget.attrs['disabled'] = (
                 'disabled')
         if ipv6auto:
@@ -89,13 +123,10 @@ class InterfacesForm(ModelForm):
                 'disabled')
 
         if self.instance.id:
-            if self.instance.int_interface.startswith('carp'):
-                self.fields['int_v4netmaskbit'].widget.attrs['readonly'] = True
-                self.fields['int_v4netmaskbit'].widget.attrs['class'] = (
-                    'dijitDisabled dijitSelectDisabled'
+            if 'int_group' in self.fields and not self.instance.int_critical:
+                self.fields['int_group'].widget.attrs['disabled'] = (
+                    'disabled'
                 )
-                self.fields['int_v4netmaskbit'].initial = '32'
-                self.instance.int_v4netmaskbit = '32'
             self.fields['int_interface'] = \
                 forms.CharField(
                     label=self.fields['int_interface'].label,
@@ -110,28 +141,16 @@ class InterfacesForm(ModelForm):
                         },
                     )
                 )
-        else:
-            # In case there is a CARP instance but no Interfaces instance
-            if hasattr(notifier, 'failover_status'):
-                from freenasUI.failover.models import CARP
-                int_interfaces = [
-                    o.int_interface for o in models.Interfaces.objects.all()
-                ]
-                for o in CARP.objects.all():
-                    if o.carp_name not in int_interfaces:
-                        self.fields['int_interface'].choices += [
-                            (o.carp_name, o.carp_name),
-                        ]
 
     def clean_int_interface(self):
         if self.instance.id:
             return self.instance.int_interface
         return self.cleaned_data.get('int_interface')
 
-    def clean_int_ipv4address(self):
-        ip = self.cleaned_data.get("int_ipv4address")
+    def _common_clean_ipv4address(self, fname):
+        ip = self.cleaned_data.get(fname)
         if ip:
-            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
+            qs = models.Interfaces.objects.filter(**{fname: ip})
             qs2 = models.Alias.objects.filter(alias_v4address=ip)
             if self.instance.id:
                 qs = qs.exclude(id=self.instance.id)
@@ -140,6 +159,12 @@ class InterfacesForm(ModelForm):
                     _("You cannot configure multiple interfaces with the same "
                         "IP address (%s)") % ip)
         return ip
+
+    def clean_int_ipv4address(self):
+        return self._common_clean_ipv4address('int_ipv4address')
+
+    def clean_int_ipv4address_b(self):
+        return self._common_clean_ipv4address('int_ipv4address_b')
 
     def clean_int_dhcp(self):
         dhcp = self.cleaned_data.get("int_dhcp")
@@ -173,12 +198,8 @@ class InterfacesForm(ModelForm):
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
-        if self.instance.id and self.instance.int_interface.startswith('carp'):
-            return nw
         used_networks = []
-        qs = models.Interfaces.objects.all().exclude(
-            int_interface__startswith='carp'
-        )
+        qs = models.Interfaces.objects.all()
         if self.instance.id:
             qs = qs.exclude(id=self.instance.id)
         for iface in qs:
@@ -220,11 +241,47 @@ class InterfacesForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_int_vhid(self):
+        vip = self.cleaned_data.get('int_vip')
+        vhid = self.cleaned_data.get('int_vhid')
+        iface = self.cleaned_data.get('int_interface')
+        if vip and not vhid:
+            raise forms.ValidationError(_('This field is required'))
+        if not self.instance.id and iface:
+            used_vhids = scan_for_vrrp(iface, count=None, timeout=5)
+            if vhid in used_vhids:
+                raise forms.ValidationError(
+                    _("The following VHIDs are already in use: %s") % (
+                        ', '.join([str(i) for i in used_vhids]),
+                    )
+                )
+        return vhid
+
+    def clean_int_group(self):
+        vip = self.cleaned_data.get('int_vip')
+        crit = self.cleaned_data.get('int_critical')
+        group = self.cleaned_data.get('int_group')
+        if vip and crit is True and not group:
+            raise forms.ValidationError(_('This field is required.'))
+        return group
+
     def clean(self):
         cdata = self.cleaned_data
 
-        ipv4addr = cdata.get("int_ipv4address")
+        ipv4key = 'int_ipv4address'
+        ipv4addr = cdata.get(ipv4key)
+        ipv4addr_b = cdata.get('int_ipv4address_b')
         ipv4net = cdata.get("int_v4netmaskbit")
+
+        if ipv4addr and ipv4addr_b and ipv4net:
+            network = IPNetwork('%s/%s' % (ipv4addr, ipv4net))
+            if not network.overlaps(
+                IPNetwork('%s/%s' % (ipv4addr_b, ipv4net))
+            ):
+                self._errors['int_ipv4address_b'] = self.error_class([
+                    _('The IP must be within the same network')
+                ])
+
         ipv6addr = cdata.get("int_ipv6address")
         ipv6net = cdata.get("int_v6netmaskbit")
         ipv4 = True if ipv4addr and ipv4net else False
@@ -232,8 +289,8 @@ class InterfacesForm(ModelForm):
 
         # IF one field of ipv4 is entered, require the another
         if (ipv4addr or ipv4net) and not ipv4:
-            if not ipv4addr and not self._errors.get('int_ipv4address'):
-                self._errors['int_ipv4address'] = self.error_class([
+            if not (ipv4addr or ipv4addr_b) and not self._errors.get(ipv4key):
+                self._errors[ipv4key] = self.error_class([
                     _("You have to specify IPv4 address as well"),
                 ])
             if not ipv4net and 'int_v4netmaskbit' not in self._errors:
@@ -264,6 +321,7 @@ class InterfacesForm(ModelForm):
         # or the interface wouldn't appear once IP was changed.
         notifier().start("network")
         notifier().reload("networkgeneral")
+        super(InterfacesForm, self).done(*args, **kwargs)
 
 
 class IPMIForm(Form):
@@ -351,12 +409,38 @@ class IPMIForm(Form):
         bits = 0xffffffff ^ (1 << 32 - cidr) - 1
         return socket.inet_ntoa(pack('>I', bits))
 
+    def clean_ipv4address(self):
+        ipv4 = self.cleaned_data.get('ipv4address')
+        if ipv4:
+            ipv4 = str(ipv4)
+        return ipv4
+
+    def clean_ipv4gw(self):
+        ipv4 = self.cleaned_data.get('ipv4gw')
+        if ipv4:
+            ipv4 = str(ipv4)
+        return ipv4
+
 
 class GlobalConfigurationForm(ModelForm):
 
     class Meta:
         fields = '__all__'
         model = models.GlobalConfiguration
+
+    def __init__(self, *args, **kwargs):
+        super(GlobalConfigurationForm, self).__init__(*args, **kwargs)
+        if hasattr(notifier, 'failover_licensed'):
+            if not notifier().failover_licensed():
+                del self.fields['gc_hostname_b']
+
+            else:
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    notifier().failover_node(),
+                    self.fields['gc_hostname'],
+                    self.fields['gc_hostname_b'],
+                )
 
     def _clean_nameserver(self, value):
         if value:
@@ -661,12 +745,7 @@ class StaticRouteForm(ModelForm):
 class AliasForm(ModelForm):
 
     class Meta:
-        fields = (
-            'alias_v4address',
-            'alias_v4netmaskbit',
-            'alias_v6address',
-            'alias_v6netmaskbit',
-        )
+        fields = '__all__'
         model = models.Alias
 
     def __init__(self, *args, **kwargs):
@@ -678,14 +757,36 @@ class AliasForm(ModelForm):
         self.instance._original_alias_v6netmaskbit = (
             self.instance.alias_v6netmaskbit)
 
-    def clean_alias_v4address(self):
-        ip = self.cleaned_data.get("alias_v4address")
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed():
+            from freenasUI.failover.utils import node_label_field
+            node_label_field(
+                _n.failover_node(),
+                self.fields['alias_v4address'],
+                self.fields['alias_v4address_b'],
+            )
+            node_label_field(
+                _n.failover_node(),
+                self.fields['alias_v6address'],
+                self.fields['alias_v6address_b'],
+            )
+        else:
+            del self.fields['alias_vip']
+            del self.fields['alias_v4address_b']
+            del self.fields['alias_v6address_b']
+
+    def _common_alias(self, field):
+        ip = self.cleaned_data.get(field)
         par_ip = self.parent.cleaned_data.get("int_ipv4address") \
             if hasattr(self, 'parent') and \
             hasattr(self.parent, 'cleaned_data') else None
         if ip:
-            qs = models.Interfaces.objects.filter(int_ipv4address=ip)
-            qs2 = models.Alias.objects.filter(alias_v4address=ip)
+            qs = models.Interfaces.objects.filter(
+                Q(int_ipv4address=ip) | Q(int_ipv4address_b=ip)
+            )
+            qs2 = models.Alias.objects.filter(
+                Q(alias_v4address=ip) | Q(alias_v4address_b=ip)
+            )
             if self.instance.id:
                 qs2 = qs2.exclude(id=self.instance.id)
             if qs.exists() or qs2.exists() or par_ip == ip:
@@ -694,12 +795,26 @@ class AliasForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_alias_v4address(self):
+        return self._common_alias('alias_v4address')
+
+    def clean_alias_v4address_b(self):
+        return self._common_alias('alias_v4address_b')
+
     def clean_alias_v4netmaskbit(self):
+        vip = self.cleaned_data.get("alias_vip")
         ip = self.cleaned_data.get("alias_v4address")
         nw = self.cleaned_data.get("alias_v4netmaskbit")
         if not nw or not ip:
             return nw
         network = IPNetwork('%s/%s' % (ip, nw))
+
+        if vip:
+            if not network.overlaps(IPNetwork('%s/%s' % (vip, nw))):
+                raise forms.ValidationError(_(
+                    'Virtual IP is not in the same network'
+                ))
+
         if (
             self.instance.id and
             self.instance.alias_interface.int_interface.startswith('carp')

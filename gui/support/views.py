@@ -76,16 +76,21 @@ def license_update(request):
         if form.is_valid():
             with open(utils.LICENSE_FILE, 'wb+') as f:
                 f.write(form.cleaned_data.get('license').encode('ascii'))
+            events = []
             try:
                 _n = notifier()
-                if hasattr(_n, 'failover_getpeer'):
-                    ip, secret = _n.failover_getpeer()
-                    if ip:
-                        s = _n.failover_rpc(ip=ip)
-                        _n.sync_file_send(s, secret, utils.LICENSE_FILE)
+                if not _n.is_freenas():
+                    s = _n.failover_rpc()
+                    if s is not None:
+                        _n.sync_file_send(s, utils.LICENSE_FILE)
+                form.done(request, events)
             except Exception as e:
-                log.debug("Failed to sync license file: %s", e)
-            return JsonResp(request, message=_('License updated.'))
+                log.debug("Failed to sync license file: %s", e, exc_info=True)
+            return JsonResp(
+                request,
+                events=events,
+                message=_('License updated.')
+            )
         else:
             return JsonResp(request, form=form)
     else:
