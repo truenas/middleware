@@ -1509,12 +1509,17 @@ class FreeNAS_ActiveDirectory_Base(object):
                     netbiosname = ad.ad_netbiosname
 
                     parts = []
+                    machine = netbiosname
+
                     if ',' in netbiosname:
                         parts = netbiosname.split(',')
+                        machine = parts[0] 
+                        
                     elif ' ' in netbiosname:
                         parts = netbiosname.split()
+                        machine = parts[0] 
                     
-                    kwargs['machine'] = "%s$" % parts[0]
+                    kwargs['machine'] = "%s$" % machine
 
                 elif newkey == 'certificate_id':
                     cert = get_certificateauthority_path(ad.ad_certificate)
