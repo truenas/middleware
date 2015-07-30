@@ -56,7 +56,8 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
-    DS_TYPE_CIFS
+    DS_TYPE_CIFS,
+    idmap_to_enum
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 from freenasUI.middleware.notifier import notifier
@@ -437,6 +438,15 @@ def configure_idmap_rfc2307(smb4_conf, idmap, domain):
             domain,
             idmap.idmap_rfc2307_ldap_realm
         ))
+
+
+def idmap_backend_rfc2307():
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+    except:
+        return False
+
+    return (idmap_to_enum(ad.ad_idmap_backend) == IDMAP_TYPE_RFC2307)
 
 
 def set_idmap_rfc2307_secret():
@@ -1477,7 +1487,7 @@ def main():
         smb4_map_groups()
         smb4_grant_rights()
 
-    if role == 'member' and activedirectory_enabled():
+    if role == 'member' and activedirectory_enabled() and idmap_backend_rfc2307():
         set_idmap_rfc2307_secret()
 
 
