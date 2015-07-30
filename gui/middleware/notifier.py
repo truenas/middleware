@@ -168,6 +168,9 @@ class notifier:
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
 
+    def is_freenas(self):
+        return True
+
     def _system(self, command):
         log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
@@ -204,8 +207,9 @@ class notifier:
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
-    def _pipeopen(self, command):
-        log.debug("Popen()ing: %s", command)
+    def _pipeopen(self, command, logger=log):
+        if logger:
+            logger.debug("Popen()ing: %s", command)
         return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
 
     def _pipeerr(self, command, good_status=0):
@@ -2749,7 +2753,7 @@ class notifier:
                                     stderr=subprocess.STDOUT,
                                     )
         except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The update failed: %s' % (str(cpe), ))
+            raise MiddlewareError('The update failed %s: %s' % (str(cpe), cpe.output))
         finally:
             os.chdir('/')
             os.unlink(path)
@@ -5369,7 +5373,7 @@ class notifier:
         except:
             systemdataset = SystemDataset.objects.create()
 
-        if not systemdataset.sys_uuid:
+        if not systemdataset.get_sys_uuid():
             systemdataset.new_uuid()
             systemdataset.save()
 
@@ -5427,9 +5431,9 @@ class notifier:
 
         datasets = [basename]
         for sub in (
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ):
             datasets.append('%s/%s' % (basename, sub))
 
@@ -5483,8 +5487,8 @@ class notifier:
             'rrd': '%s/rrd' % basename,
         }
         newdatasets = {
-            'syslog': '%s/syslog-%s' % (basename, sysdataset.sys_uuid),
-            'rrd': '%s/rrd-%s' % (basename, sysdataset.sys_uuid),
+            'syslog': '%s/syslog-%s' % (basename, sysdataset.get_sys_uuid()),
+            'rrd': '%s/rrd-%s' % (basename, sysdataset.get_sys_uuid()),
         }
         proc = self._pipeopen(
             'zfs list -H -o name %s' % ' '.join(
@@ -5538,9 +5542,9 @@ class notifier:
     def system_dataset_mount(self, pool, path=SYSTEMPATH):
         systemdataset, basename = self.system_dataset_settings()
         sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ]
 
         # Check if .system datasets are already mounted
@@ -5558,9 +5562,9 @@ class notifier:
     def system_dataset_umount(self, pool):
         systemdataset, basename = self.system_dataset_settings()
         sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ]
 
         for i in sub:

@@ -108,6 +108,11 @@
 #
 : ${WARDEN:="/usr/local/bin/warden"}
 
+#
+#	TrueNAS
+#
+: ${HA_MODE_FILE="/tmp/.ha_mode"}
+
 
 __escape()
 {
@@ -852,4 +857,36 @@ jail_post_delete()
 system_dataset_enabled()
 {
 	test -n "$(find "${FREENAS_SYSTEMDATASET}" -prune -type d ! -empty 2>/dev/null)"
+}
+
+ha_mode()
+{
+	local encstat manual node serial
+
+	if [ -f ${HA_MODE_FILE} ]; then
+		cat ${HA_MODE_FILE}
+		return 0
+	fi
+
+	/usr/local/bin/python /usr/local/www/freenasUI/failover/detect.py 2> /dev/null
+	return 0
+}
+
+ha_hardware() {
+
+	ha_mode | cut -d ":" -f 1
+
+}
+
+ha_node()
+{
+
+	if ! ha_mode | grep -q ":"; then
+		return 1
+	fi
+
+	ha_mode | cut -d ":" -f 2
+
+	return 0
+
 }

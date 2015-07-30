@@ -13,7 +13,13 @@ require([
         handleAs: 'text'
       }).then(function(data) {
         if(data == 'PROMPT') {
-          editObject('Update License', '/support/license/update/', []);
+          commonDialog({
+            id: "licenseDialog",
+            name: 'Update License',
+            url: '/support/license/update/',
+            nodes: [],
+            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;"
+          });
         }
       });
 

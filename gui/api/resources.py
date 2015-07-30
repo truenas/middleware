@@ -89,8 +89,8 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update  as mUpdate
-from freenasUI.system.utils import BootEnv
+from freenasUI.system.models import Update as mUpdate
+from freenasUI.system.utils import BootEnv, get_pending_updates
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -2868,33 +2868,16 @@ class UpdateResourceMixin(NestedMixin):
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        path = notifier().get_update_location()
-        changes = Update.PendingUpdatesChanges(path)
-        data = []
-        if changes:
-            if changes.get("Reboot", True) == False:
-                for svc in changes.get("Restart", []):
-                    data.append({
-                        'operation' : svc,
-                        'name' : Update.GetServiceDescription(svc),
-                        })
-            for new, op, old in changes['Packages']:
-                if op == 'upgrade':
-                    name = '%s-%s -> %s-%s' % (
-                        old.Name(),
-                        old.Version(),
-                        new.Name(),
-                        new.Version(),
-                    )
-                elif op == 'install':
-                    name = '%s-%s' % (new.Name(), new.Version())
-                else:
-                    name = '%s-%s' % (old.Name(), old.Version())
-
-                data.append({
-                    'operation': op,
-                    'name': name,
-                })
+        # If it is HA licensed get pending updates from stanbdy node
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            s = notifier().failover_rpc()
+            data = s.update_pending()
+        else:
+            path = notifier().get_update_location()
+            data = get_pending_updates(path)
         return self.create_response(
             request,
             data,
