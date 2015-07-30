@@ -960,12 +960,12 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
         help_text=_("Timeout for AD related commands."),
-        default=10
+        default=60
     )
     ad_dns_timeout = models.IntegerField(
         verbose_name=_("DNS timeout"),
         help_text=_("Timeout for AD DNS queries."),
-        default=10
+        default=60
     )
     ad_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),
