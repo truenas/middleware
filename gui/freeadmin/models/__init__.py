@@ -398,16 +398,17 @@ class NewModel(Model):
                 self._meta.model_name,
             ))
 
-        data = self.__dict__.copy()
+        data = {}
         fmm = FMM.get(self._meta.model_name)
-        if fmm:
-            for key, val in data.items():
-                field = fmm.get_field_to_middleware(key)
-                if field == key:
-                    continue
-                if field:
-                    data[field] = val
-                del data[key]
+        for f in self._meta.fields:
+            if not fmm:
+                data[f.name] = getattr(self, f.name)
+                continue
+            field = fmm.get_field_to_middleware(f.name)
+            if isinstance(f, ForeignKey):
+                data[field] = getattr(self, f.name).id
+            else:
+                data[field] = getattr(self, f.name)
         method_args.append(data)
 
         cls = origin = self.__class__
