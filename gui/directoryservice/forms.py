@@ -43,6 +43,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FreeNAS_ActiveDirectory_Exception,
 )
+from freenasUI.common.pipesubr import run
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     validate_netbios_name,
@@ -322,7 +323,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_dcname',
         'ad_gcname',
         'ad_kerberos_realm',
-        'ad_kerberos_keytab',
+        'ad_kerberos_principal',
         'ad_nss_info',
         'ad_timeout',
         'ad_dns_timeout',
@@ -469,7 +470,7 @@ class ActiveDirectoryForm(ModelForm):
         netbiosname = cdata.get("ad_netbiosname")
         ssl = cdata.get("ad_ssl")
         certificate = cdata["ad_certificate"]
-        ad_kerberos_keytab = cdata["ad_kerberos_keytab"]
+        ad_kerberos_principal = cdata["ad_kerberos_principal"]
         workgroup = None
 
         if certificate: 
@@ -482,7 +483,7 @@ class ActiveDirectoryForm(ModelForm):
             'certfile': certificate
         }
 
-        if not ad_kerberos_keytab:
+        if not ad_kerberos_principal:
             if not cdata.get("ad_bindpw"):
                 cdata['ad_bindpw'] = self.instance.ad_bindpw
 
@@ -508,8 +509,7 @@ class ActiveDirectoryForm(ModelForm):
             args['bindpw'] = bindpw
 
         else: 
-            args['keytab_name'] = ad_kerberos_keytab.keytab_name
-            args['keytab_principal'] = ad_kerberos_keytab.keytab_principal
+            args['keytab_principal'] = ad_kerberos_principal.principal_name
             args['keytab_file'] = '/etc/krb5.keytab'
 
         workgroup = FreeNAS_ActiveDirectory.get_workgroup_name(**args)
@@ -594,7 +594,7 @@ class LDAPForm(ModelForm):
         'ldap_machinesuffix',
         'ldap_sudosuffix',
         'ldap_kerberos_realm',
-        'ldap_kerberos_keytab',
+        'ldap_kerberos_principal',
         'ldap_ssl',
         'ldap_certificate',
         'ldap_timeout',
@@ -776,8 +776,62 @@ class KerberosKeytabCreateForm(ModelForm):
 
         return encoded
 
+    def save_principals(self, keytab):
+        if not keytab:
+            return False
+
+        keytab_file = self.cleaned_data.get("keytab_file")
+        regex = re.compile(
+            '^(\d+)\s+([\w-]+(\s+\(\d+\))?)\s+([^\s]+)\s+([\d+\-]+)(\s+)?$'
+        )
+
+        tmpfile = tempfile.mktemp(dir="/tmp")
+        with open(tmpfile, 'w') as f:
+            decoded = base64.b64decode(keytab_file)
+            f.write(decoded)
+            f.close()
+
+        (res, out, err) = run("/usr/sbin/ktutil -vk '%s' list" % tmpfile)
+        if res != 0:
+            log.debug("save_principals(): %s", err)
+            os.unlink(tmpfile)
+            return False
+
+        os.unlink(tmpfile)
+
+        ret = False
+        out = out.splitlines()
+        if not out:
+            return False
+
+        for line in out:
+            line = line.strip()
+            if not line:
+                continue
+            m = regex.match(line)
+            if m:
+                try:
+                    kp = models.KerberosPrincipal()
+                    kp.principal_keytab = keytab
+                    kp.principal_version = int(m.group(1))
+                    kp.principal_encryption = m.group(2)
+                    kp.principal_name = m.group(4)
+                    kp.principal_timestamp = m.group(5)
+                    kp.save()
+                    ret = True
+
+                except Exception as e:
+                    log.debug("save_principals(): %s", e)
+                    ret = False
+
+        return ret
+
     def save(self):
-        super(KerberosKeytabCreateForm, self).save()
+        obj = super(KerberosKeytabCreateForm, self).save()
+        if not self.save_principals(obj):
+            obj.delete()
+            log.debug("save(): unable to save principals")
+
         notifier().start("ix-kerberos")
 
 
@@ -793,10 +847,6 @@ class KerberosKeytabEditForm(ModelForm):
 
         self.fields['keytab_name'].widget.attrs['readonly'] = True
         self.fields['keytab_name'].widget.attrs['class'] = (
-            'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
-        )
-        self.fields['keytab_principal'].widget.attrs['readonly'] = True
-        self.fields['keytab_principal'].widget.attrs['class'] = (
             'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         )
 

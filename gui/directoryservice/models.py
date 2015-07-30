@@ -712,18 +712,19 @@ class KerberosKeytab(Model):
         help_text=_("Descriptive Name."),
         unique=True
     )
-    keytab_principal = models.CharField(
-        verbose_name=_("Principal"),
-        max_length=120,
-        help_text=_("Kerberos principal, eg: primary/instance@REALM")
-    )
     keytab_file = models.TextField(
         verbose_name=_("Keytab"),
         help_text=_("Kerberos keytab file")
     )
 
+    def delete(self):
+        KerberosPrincipal.objects.filter(
+            principal_keytab=self
+        ).delete()
+        super(KerberosKeytab, self).delete()
+
     def __unicode__(self):
-        return self.keytab_principal
+        return self.keytab_name
 
 
 class KerberosPrincipal(Model):
@@ -749,6 +750,9 @@ class KerberosPrincipal(Model):
     principal_timestamp = models.DateTimeField(
         verbose_name=_("Date")
     )
+
+    def __unicode__(self):
+        return self.principal_name
 
 
 class KerberosSettings(Model):
@@ -946,9 +950,9 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ad_kerberos_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Kerberos Keytab"),
+    ad_kerberos_principal = models.ForeignKey(
+        KerberosPrincipal,
+        verbose_name=_("Kerberos Principal"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -1182,9 +1186,9 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ldap_kerberos_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Kerberos Keytab"),
+    ldap_kerberos_principal = models.ForeignKey(
+        KerberosPrincipal,
+        verbose_name=_("Kerberos Principal"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True
