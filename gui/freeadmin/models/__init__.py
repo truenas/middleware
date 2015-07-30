@@ -34,6 +34,7 @@ from django.db.models import signals
 from django.db.models.fields.related import ForeignKey
 from django.db.models.base import ModelBase
 
+from dispatcher.rpc import RpcException
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError, ValidationError
 
@@ -423,7 +424,12 @@ class NewModel(Model):
                 update_fields=update_fields
             )
 
-        task = dispatcher.call_task_sync(method, method_args)
+        try:
+            task = dispatcher.call_task_sync(method, method_args)
+        except RpcException, e:
+            raise ValidationError({
+                '__all__': [(errno.EINVAL, i['message']) for i in e.extra],
+            })
         if task['state'] != 'FINISHED':
             error = task['error']
             if error:
