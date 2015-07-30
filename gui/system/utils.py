@@ -34,7 +34,7 @@ from uuid import uuid4
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
-from freenasOS import Configuration
+from freenasOS import Configuration, Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
@@ -77,7 +77,7 @@ class CheckUpdateHandler(object):
     def __init__(self):
         self.changes = []
         self.restarts = []
-        
+
     def call(self, op, newpkg, oldpkg):
         self.changes.append({
             'operation': op,
@@ -92,7 +92,7 @@ class CheckUpdateHandler(object):
             # We may have service changes
             for svc in diffs.get("Restart", []):
                 self.restarts.append(GetServiceDescription(svc))
-                
+
     @property
     def output(self):
         output = ''
@@ -127,7 +127,10 @@ class UpdateHandler(object):
                 if self.uuid != uuid:
                     raise
             except:
-                raise ValueError("UUID not found")
+                raise ValueError("UUID not found: %s - %s (on disk)" % (
+                    uuid,
+                    self.uuid,
+                ))
         else:
             self.apply = apply_
             self.uuid = uuid4().hex
@@ -311,7 +314,7 @@ class VerifyHandler(object):
             os.unlink(self.DUMPFILE)
 
 
-def get_changelog(train, start = '', end = ''):
+def get_changelog(train, start='', end=''):
     conf = Configuration.Configuration()
     changelog = conf.GetChangeLog(train=train)
     if not changelog:
@@ -320,7 +323,7 @@ def get_changelog(train, start = '', end = ''):
     return parse_changelog(changelog.read(), start, end)
 
 
-def parse_changelog(changelog, start = '', end = ''):
+def parse_changelog(changelog, start='', end=''):
     regexp = r'### START (\S+)(.+?)### END \1'
     reg = re.findall(regexp, changelog, re.S | re.M)
 
@@ -337,9 +340,99 @@ def parse_changelog(changelog, start = '', end = ''):
         elif changelog is not None:
             changelog += changes.strip('\n') + '\n'
         if seq == end:
-            break    
+            break
 
     return changelog
+
+
+def get_pending_updates(path):
+    data = []
+    changes = Update.PendingUpdatesChanges(path)
+    if changes:
+        if changes.get("Reboot", True) is False:
+            for svc in changes.get("Restart", []):
+                data.append({
+                    'operation': svc,
+                    'name': Update.GetServiceDescription(svc),
+                    })
+        for new, op, old in changes['Packages']:
+            if op == 'upgrade':
+                name = '%s-%s -> %s-%s' % (
+                    old.Name(),
+                    old.Version(),
+                    new.Name(),
+                    new.Version(),
+                )
+            elif op == 'install':
+                name = '%s-%s' % (new.Name(), new.Version())
+            else:
+                name = '%s-%s' % (old.Name(), old.Version())
+
+            data.append({
+                'operation': op,
+                'name': name,
+            })
+    return data
+
+
+def run_updated(train, location, download=True, apply=False):
+    # Why not use subprocess module?
+    # Because for some reason it was leaving a zombie process behind
+    # My guess is that its related to fork within a thread and fds
+    readfd, writefd = os.pipe()
+    updated_pid = os.fork()
+    if updated_pid == 0:
+        os.close(readfd)
+        os.dup2(writefd, 1)
+        os.close(writefd)
+        for i in xrange(3, 1024):
+            try:
+                os.close(i)
+            except OSError:
+                pass
+        os.execv(
+            "/usr/local/www/freenasUI/tools/updated.py",
+            [
+                "/usr/local/www/freenasUI/tools/updated.py",
+                '-t', train,
+                '-c', location,
+            ] + (['-d'] if download else []) + (['-a'] if apply else []),
+        )
+    else:
+        os.close(writefd)
+        pid, returncode = os.waitpid(updated_pid, 0)
+        returncode >>= 8
+        uuid = os.read(readfd, 1024)
+        if uuid:
+            uuid = uuid.strip('\n')
+        return returncode, uuid
+
+
+def manual_update(path, sha256):
+    from freenasUI.middleware.notifier import notifier
+    from freenasUI.middleware.exceptions import MiddlewareError
+
+    # Verify integrity of uploaded image.
+    checksum = notifier().checksum(path)
+    if checksum != sha256.lower().strip():
+        raise MiddlewareError("Invalid update file, wrong checksum")
+
+    # Validate that the image would pass all pre-install
+    # requirements.
+    #
+    # IMPORTANT: pre-install step have scripts or executables
+    # from the upload, so the integrity has to be verified
+    # before we proceed with this step.
+    retval = notifier().validate_update(path)
+
+    if not retval:
+        raise MiddlewareError("Invalid update file")
+
+    notifier().apply_update(path)
+    try:
+        notifier().destroy_upload_location()
+    except Exception, e:
+        log.warn("Failed to destroy upload location: %s", e.value)
 
 
 def debug_get_settings():

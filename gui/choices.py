@@ -346,7 +346,7 @@ class whoChoices:
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False,
+    def __init__(self, nocarp=False, nolagg=False, novlan=False,
                  exclude_configured=True, include_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
         pipe = popen("/sbin/ifconfig -l")
@@ -355,6 +355,17 @@ class NICChoices(object):
         self._NIClist = filter(
             lambda y: y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0'),
             self._NIClist)
+
+        from freenasUI.middleware.notifier import notifier
+        # Remove internal interfaces for failover
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            for iface in notifier().failover_internal_interfaces():
+                if iface in self._NIClist:
+                    self._NIClist.remove(iface)
+
         conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
         c = conn.cursor()
         # Remove interfaces that are parent devices of a lagg
@@ -370,6 +381,10 @@ class NICChoices(object):
                 if interface[0] in self._NIClist:
                     self._NIClist.remove(interface[0])
 
+        if nocarp:
+            for nic in list(self._NIClist):
+                if nic.startswith('carp'):
+                    self._NIClist.remove(nic)
         if nolagg:
             # vlan devices are not valid parents of laggs
             for nic in self._NIClist:
@@ -479,7 +494,7 @@ class IPChoices(NICChoices):
         from freenasUI.middleware.notifier import notifier
         if hasattr(notifier, 'failover_status'):
             try:
-                if notifier().failover_status() != 'SINGLE':
+                if notifier().failover_status() not in ('SINGLE', 'ERROR'):
                     self._NIClist = filter(
                         lambda y: re.search(r'^carp[0,3-9]|carp\d\d+$', y),
                         self._NIClist,
@@ -505,6 +520,8 @@ class IPChoices(NICChoices):
         return self._IPlist.remove(addr)
 
     def __iter__(self):
+        if not self._IPlist:
+            return iter([('0.0.0.0', '0.0.0.0')])
         return iter((i, i) for i in self._IPlist)
 
 

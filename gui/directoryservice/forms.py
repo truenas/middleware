@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,8 +27,6 @@
 import base64
 import logging
 import os
-import re
-import shutil
 import tempfile
 
 from django.forms import FileField
@@ -36,7 +34,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 
-from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
@@ -50,7 +47,7 @@ from freenasUI.common.system import (
     validate_netbios_names,
     compare_netbios_names
 )
-from freenasUI.directoryservice import models, utils
+from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -299,10 +296,9 @@ class NT4Form(ModelForm):
             if started is False:
                 self.instance.ad_enable = False
                 super(NT4Form, self).save()
-                raise ServiceFailed("nt4",
-                    _("NT4 failed to reload."))
+                raise ServiceFailed("nt4", _("NT4 failed to reload."))
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("nt4")
 
         obj = super(NT4Form, self).save()
@@ -313,6 +309,7 @@ class ActiveDirectoryForm(ModelForm):
 
     advanced_fields = [
         'ad_netbiosname',
+        'ad_netbiosname_b',
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
@@ -343,6 +340,7 @@ class ActiveDirectoryForm(ModelForm):
         for name in (
             'ad_domainname',
             'ad_netbiosname',
+            'ad_netbiosname_b',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_unix_extensions',
@@ -388,10 +386,17 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
+        if hasattr(notifier, 'failover_node'):
+            from freenasUI.failover.utils import node_label_field
+            node_label_field(
+                notifier().failover_node(),
+                self.fields['ad_netbiosname'],
+                self.fields['ad_netbiosname_b'],
+            )
 
     def clean_ad_dcname(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
-        ad_dcport = 389 
+        ad_dcport = 389
 
         ad_ssl = self.cleaned_data.get('ad_ssl')
         if ad_ssl == 'on':
@@ -410,7 +415,7 @@ class ActiveDirectoryForm(ModelForm):
             ret = FreeNAS_ActiveDirectory.port_is_listening(
                 host=ad_dcname, port=ad_dcport, errors=errors
             )
-     
+
             if ret is False:
                 raise Exception(
                     'Invalid Host/Port: %s' % errors[0]
@@ -420,7 +425,7 @@ class ActiveDirectoryForm(ModelForm):
             raise forms.ValidationError('%s.' % e)
 
         return self.cleaned_data.get('ad_dcname')
-    
+
     def clean_ad_gcname(self):
         ad_gcname = self.cleaned_data.get('ad_gcname')
         ad_gcport = 3268
@@ -442,7 +447,7 @@ class ActiveDirectoryForm(ModelForm):
             ret = FreeNAS_ActiveDirectory.port_is_listening(
                 host=ad_gcname, port=ad_gcport, errors=errors
             )
-     
+
             if ret is False:
                 raise Exception(
                     'Invalid Host/Port: %s' % errors[0]
@@ -461,6 +466,21 @@ class ActiveDirectoryForm(ModelForm):
             raise forms.ValidationError(e)
         return netbiosname
 
+    def clean_ad_netbiosname_b(self):
+        netbiosname_a = self.cleaned_data.get("ad_netbiosname")
+        netbiosname = self.cleaned_data.get("ad_netbiosname_b")
+        if not netbiosname:
+            return netbiosname
+        if netbiosname_a and netbiosname_a == netbiosname:
+            raise forms.ValidationError(_(
+                'NetBIOS cannot be the same as the first.'
+            ))
+        try:
+            validate_netbios_names(netbiosname)
+        except Exception as e:
+            raise forms.ValidationError(e)
+        return netbiosname
+
     def clean(self):
         cdata = self.cleaned_data
         domain = cdata.get("ad_domainname")
@@ -468,12 +488,13 @@ class ActiveDirectoryForm(ModelForm):
         bindpw = cdata.get("ad_bindpw")
         site = cdata.get("ad_site")
         netbiosname = cdata.get("ad_netbiosname")
+        netbiosname_b = cdata.get("ad_netbiosname_b")
         ssl = cdata.get("ad_ssl")
         certificate = cdata["ad_certificate"]
         ad_kerberos_principal = cdata["ad_kerberos_principal"]
         workgroup = None
 
-        if certificate: 
+        if certificate:
             certificate = certificate.get_certificate_path()
 
         args = {
@@ -488,9 +509,9 @@ class ActiveDirectoryForm(ModelForm):
                 cdata['ad_bindpw'] = self.instance.ad_bindpw
 
             if not bindname:
-                raise forms.ValidationError("No domain account name specified") 
+                raise forms.ValidationError("No domain account name specified")
             if not bindpw:
-                raise forms.ValidationError("No domain account password specified") 
+                raise forms.ValidationError("No domain account password specified")
 
             binddn = "%s@%s" % (bindname, domain)
             errors = []
@@ -515,9 +536,17 @@ class ActiveDirectoryForm(ModelForm):
         workgroup = FreeNAS_ActiveDirectory.get_workgroup_name(**args)
         if workgroup:
             if compare_netbios_names(netbiosname, workgroup, None):
-                raise forms.ValidationError("The NetBIOS name cannot be the same as the workgroup name!")
+                raise forms.ValidationError(_(
+                    "The NetBIOS name cannot be the same as the workgroup name!"
+                ))
+            if netbiosname_b:
+                if compare_netbios_names(netbiosname_b, workgroup, None):
+                    raise forms.ValidationError(_(
+                        "The NetBIOS name cannot be the same as the workgroup "
+                        "name!"
+                    ))
 
-        else: 
+        else:
             log.warn("Unable to determine workgroup name")
 
         if ssl in ("off", None):
@@ -545,10 +574,12 @@ class ActiveDirectoryForm(ModelForm):
             if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
-                raise ServiceFailed("activedirectory",
-                    _("Active Directory failed to reload."))
+                raise ServiceFailed(
+                    "activedirectory",
+                    _("Active Directory failed to reload."),
+                )
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("activedirectory")
         return obj
 
@@ -580,7 +611,7 @@ class NISForm(ModelForm):
                 super(NISForm, self).save()
                 raise ServiceFailed("nis", _("NIS failed to reload."))
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("nis")
 
 
@@ -703,10 +734,9 @@ class LDAPForm(ModelForm):
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
-                raise ServiceFailed("ldap",
-                    _("LDAP failed to reload."))
+                raise ServiceFailed("ldap", _("LDAP failed to reload."))
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("ldap")
 
         return obj
@@ -741,7 +771,7 @@ class KerberosRealmForm(ModelForm):
 class KerberosKeytabCreateForm(ModelForm):
     keytab_file = FileField(
         label=_("Kerberos Keytab"),
-        required=False 
+        required=False
     )
 
     class Meta:
@@ -758,7 +788,7 @@ class KerberosKeytabCreateForm(ModelForm):
         encoded = None
         if hasattr(keytab_file, 'temporary_file_path'):
             filename = keytab_file.temporary_file_path()
-            with open(temporary_file_path, "r") as f:
+            with open(filename, "r") as f:
                 keytab_contents = f.read()
                 encoded = base64.b64encode(keytab_contents)
                 f.close()

@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import cPickle as pickle
 import datetime
 import json
@@ -35,6 +35,7 @@ import shutil
 import socket
 import subprocess
 import sysctl
+import tarfile
 import time
 import urllib
 import xmlrpclib
@@ -87,6 +88,7 @@ from freenasUI.system.utils import (
     debug_run,
     get_changelog,
     parse_changelog,
+    run_updated,
 )
 
 GRAPHS_DIR = '/var/db/graphs'
@@ -873,23 +875,49 @@ def reload_httpd(request):
 
 
 def debug(request):
-    hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
     mntpt, direc, dump = debug_get_settings()
+
+    _n = notifier()
+    standby_debug = None
+    if not _n.is_freenas() and _n.failover_licensed():
+        s = _n.failover_rpc()
+        standby_debug = s.debug()
 
     with mntlock(mntpt=mntpt):
 
         debug_run(direc)
 
-        wrapper = FileWrapper(file(dump))
+        if standby_debug:
+            debug_file = '%s/debug.tar' % direc
+            _n.sync_file_recv(s, standby_debug, '%s/standby.txz' % direc)
+            if _n.failover_node() == 'B':
+                hostname_a = gc.gc_hostname
+                hostname_b = gc.gc_hostname_b
+            else:
+                hostname_a = gc.gc_hostname_b
+                hostname_b = gc.gc_hostname
+            with tarfile.open(debug_file, 'w') as tar:
+                tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_b)
+                tar.add(dump, '%s.txz' % hostname_a)
+            extension = 'tar'
+            hostname = ''
+        else:
+            debug_file = dump
+            extension = '.tgz'
+            hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+
+        wrapper = FileWrapper(file(debug_file))
         response = StreamingHttpResponse(
             wrapper,
             content_type='application/octet-stream',
         )
-        response['Content-Length'] = os.path.getsize(dump)
+        response['Content-Length'] = os.path.getsize(debug_file)
         response['Content-Disposition'] = \
-            'attachment; filename=debug-%s-%s.tgz' % (
-                hostname.encode('utf-8'),
-                time.strftime('%Y%m%d%H%M%S'))
+            'attachment; filename=debug%s-%s.%s' % (
+                hostname,
+                time.strftime('%Y%m%d%H%M%S'),
+                extension)
 
         opts = ["/bin/rm", "-r", "-f", direc]
         p1 = pipeopen(' '.join(opts), allowfork=True)
@@ -1159,59 +1187,73 @@ def update_apply(request):
         uuid = request.GET.get('uuid')
         if not uuid:
 
+            # If it is HA run updated on the other node
+            if not notifier().is_freenas() and notifier().failover_licensed():
+                s = notifier().failover_rpc()
+                uuid = s.updated(False, True)
+                if uuid is False:
+                    raise MiddlewareError(_('Update daemon failed!'))
+                return HttpResponse(uuid, status=202)
+
             running = UpdateHandler.is_running()
             if running is not False:
                 return HttpResponse(running, status=202)
 
-            # Why not use subprocess module?
-            # Because for some reason it was leaving a zombie process behind
-            # My guess is that its related to fork within a thread and fds
-            readfd, writefd = os.pipe()
-            updated_pid = os.fork()
-            if updated_pid == 0:
-                os.close(readfd)
-                os.dup2(writefd, 1)
-                os.close(writefd)
-                for i in xrange(3, 1024):
-                    try:
-                        os.close(i)
-                    except OSError:
-                        pass
-                os.execv(
-                    "/usr/local/www/freenasUI/tools/updated.py",
-                    [
-                        "/usr/local/www/freenasUI/tools/updated.py",
-                        '-t', str(updateobj.get_train()),
-                        '-c', str(notifier().get_update_location()),
-                        '-a',
-                    ]
-                )
-            else:
-                os.close(writefd)
-                pid, returncode = os.waitpid(updated_pid, 0)
-                returncode >>= 8
-                uuid = os.read(readfd, 1024)
-                if uuid:
-                    uuid = uuid.strip('\n')
-                if returncode != 0:
-                    raise MiddlewareError(_('Update daemon failed!'))
-                return HttpResponse(uuid, status=202)
+            returncode, uuid = run_updated(
+                str(updateobj.get_train()),
+                str(notifier().get_update_location()),
+                download=False,
+                apply=True,
+            )
+            if returncode != 0:
+                raise MiddlewareError(_('Update daemon failed!'))
+            return HttpResponse(uuid, status=202)
         else:
-            handler = UpdateHandler(uuid=uuid)
+            failover = False
+            # Get update handler from standby node
+            if not notifier().is_freenas() and notifier().failover_licensed():
+                failover = True
+                s = notifier().failover_rpc()
+                rv = s.updated_handler(uuid)
+
+                def exit():
+                    pass
+
+                rv['exit'] = exit
+                handler = namedtuple('Handler', rv.keys())(**rv)
+
+            else:
+                handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
                 raise MiddlewareError(handler.error)
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
-            if handler.reboot:
-                request.session['allow_reboot'] = True
-                return render(request, 'system/done.html')
+
+            if failover:
+                try:
+                    s.reboot()
+                except:
+                    pass
+                return render(request, 'failover/update_standby.html')
             else:
-                return JsonResp(
-                    request,
-                    message=_('Update has been applied'),
-                )
+                if handler.reboot:
+                    request.session['allow_reboot'] = True
+                    return render(request, 'system/done.html')
+                else:
+                    return JsonResp(
+                        request,
+                        message=_('Update has been applied'),
+                    )
     else:
+        # If it is HA run update check on the other node
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            s = notifier().failover_rpc()
+            return render(
+                request,
+                'system/update.html',
+                s.update_check(),
+            )
         handler = CheckUpdateHandler()
         update = CheckForUpdates(
             diff_handler=handler.diff_call,
@@ -1255,56 +1297,63 @@ def update_check(request):
         uuid = request.GET.get('uuid')
         if not uuid:
 
-            running = UpdateHandler.is_running()
-            if running is not False:
-                return HttpResponse(running, status=202)
-
             if request.POST.get('apply') == '1':
                 apply_ = True
             else:
                 apply_ = False
-            # Why not use subprocess module?
-            # Because for some reason it was leaving a zombie process behind
-            # My guess is that its related to fork within a thread and fds
-            readfd, writefd = os.pipe()
-            updated_pid = os.fork()
-            if updated_pid == 0:
-                os.close(readfd)
-                os.dup2(writefd, 1)
-                os.close(writefd)
-                for i in xrange(3, 1024):
-                    try:
-                        os.close(i)
-                    except OSError:
-                        pass
-                os.execv(
-                    "/usr/local/www/freenasUI/tools/updated.py",
-                    [
-                        "/usr/local/www/freenasUI/tools/updated.py",
-                        '-t', str(updateobj.get_train()),
-                        '-c', str(notifier().get_update_location()),
-                        '-d',
-                    ] + (['-a'] if apply_ else [])
-                )
-            else:
-                os.close(writefd)
-                pid, returncode = os.waitpid(updated_pid, 0)
-                returncode >>= 8
-                uuid = os.read(readfd, 1024)
-                if uuid:
-                    uuid = uuid.strip('\n')
-                if returncode != 0:
+
+            # If it is HA run updated on the other node
+            if not notifier().is_freenas() and notifier().failover_licensed():
+                s = notifier().failover_rpc()
+                uuid = s.updated(True, apply_)
+                if uuid is False:
                     raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
+            running = UpdateHandler.is_running()
+            if running is not False:
+                return HttpResponse(running, status=202)
+
+            returncode, uuid = run_updated(
+                str(updateobj.get_train()),
+                str(notifier().get_update_location()),
+                download=True,
+                apply=apply_,
+            )
+            if returncode != 0:
+                raise MiddlewareError(_('Update daemon failed!'))
+            return HttpResponse(uuid, status=202)
+
         else:
-            handler = UpdateHandler(uuid=uuid)
+
+            failover = False
+            # Get update handler from standby node
+            if not notifier().is_freenas() and notifier().failover_licensed():
+                failover = True
+                s = notifier().failover_rpc()
+                rv = s.updated_handler(uuid)
+
+                def exit():
+                    pass
+
+                rv['exit'] = exit
+                handler = namedtuple('Handler', rv.keys())(**rv)
+            else:
+                handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
                 raise MiddlewareError(handler.error)
             if not handler.finished:
                 return HttpResponse(handler.uuid, status=202)
             handler.exit()
+
             if handler.apply:
+                if failover:
+                    try:
+                        s.reboot()
+                    except:
+                        pass
+                    return render(request, 'failover/update_standby.html')
+
                 if handler.reboot:
                     request.session['allow_reboot'] = True
                     return render(request, 'system/done.html')
@@ -1319,6 +1368,15 @@ def update_check(request):
                     message=_('Packages downloaded'),
                 )
     else:
+        # If it is HA run update check on the other node
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            s = notifier().failover_rpc()
+            return render(
+                request,
+                'system/update_check.html',
+                s.update_check(),
+            )
+
         handler = CheckUpdateHandler()
         try:
             update = CheckForUpdates(
@@ -1349,9 +1407,16 @@ def update_check(request):
 
 
 def update_progress(request):
-    handler = UpdateHandler()
+
+    # If it is HA run update handler on the other node
+    if not notifier().is_freenas() and notifier().failover_licensed():
+        s = notifier().failover_rpc()
+        rv = s.updated_handler(None)
+        load = rv['data']
+    else:
+        load = UpdateHandler().load()
     return HttpResponse(
-        json.dumps(handler.load()),
+        json.dumps(load),
         content_type='application/json',
     )
 

@@ -196,9 +196,16 @@ DC_get_hostname()
 {
 	local hostname
 	local domain
+	local hostname_field
+
+	if [ "$(ha_node)" = "B" ]; then
+		hostname_field="gc_hostname_b"
+	else
+		hostname_field="gc_hostname"
+	fi
 
 	hostname="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT gc_hostname FROM network_globalconfiguration")"
+		SELECT ${hostname_field} FROM network_globalconfiguration")"
 	domain="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 		SELECT gc_domain FROM network_globalconfiguration")"
 

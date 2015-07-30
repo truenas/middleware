@@ -841,7 +841,7 @@ class NT4(DirectoryServiceBase):
 
         if not self.nt4_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
             if gc_hostname:
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
                 if m:
@@ -884,6 +884,13 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("System hostname"),
         blank=True
     )
+    ad_netbiosname_b = models.CharField(
+        verbose_name=_("NetBIOS Name"),
+        max_length=120,
+        help_text=_("System hostname"),
+        blank=True,
+        null=True,
+    )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
@@ -895,7 +902,7 @@ class ActiveDirectory(DirectoryServiceBase):
         default='off'
     )
     ad_certificate = models.ForeignKey(
-        CertificateAuthority, 
+        CertificateAuthority,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
@@ -1019,7 +1026,7 @@ class ActiveDirectory(DirectoryServiceBase):
 
         if not self.ad_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
             if gc_hostname:
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
                 if m:

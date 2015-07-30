@@ -1011,6 +1011,11 @@ def shutdown(*args):
 
 
 def get_urls(addrs, ipv6=False):
+
+    skip_internal = False
+    if not notifier().is_freenas():
+        skip_internal = True
+
     urls = []
     inet = ('inet6', 'prefixlen') if ipv6 else ('inet', 'broadcast')
     for addr in addrs:
@@ -1026,6 +1031,14 @@ def get_urls(addrs, ipv6=False):
             ips = [ip]
         ips = filter(lambda y: y != '::1' and not y.endswith('lo0'), ips)
         for o in ips:
+            if skip_internal and o in (
+                '169.254.10.1',
+                '169.254.10.2',
+                '169.254.10.20',
+                '169.254.10.80',
+            ):
+                continue
+
             try:
                 if ipv6:
                     url = 'http://[%s]' % o
@@ -1063,6 +1076,7 @@ def show_ip():
     addrsv6 = []
     for line in p1.communicate()[0].strip('\n').split('\n'):
         _type, addr = line.split(',')
+
         if _type == 'tcp4':
             addrsv4.append(addr)
         else:
