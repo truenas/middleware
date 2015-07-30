@@ -426,6 +426,7 @@ class NewModel(Model):
             )
 
         try:
+            log.debug("Calling task '%s' with args %r", method, method_args)
             task = dispatcher.call_task_sync(method, method_args)
         except RpcException, e:
             raise ValidationError({
@@ -445,6 +446,9 @@ class NewModel(Model):
                     fields['__all__'] = [(errno.EINVAL, error['message'])]
                 raise ValidationError(fields)
             raise ValueError(task['state'])
+
+        if self.id is None and task['result'] is not None:
+            self.id = task['result']
 
         if not meta.auto_created:
             signals.post_save.send(
