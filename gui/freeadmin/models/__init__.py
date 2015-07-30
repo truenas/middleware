@@ -315,7 +315,13 @@ class NewQuerySet(object):
                 for f in self._fmm.get_middleware_to_field(key):
                     mfield = self.model._meta.get_field(f)
                     if isinstance(mfield, ForeignKey):
-                        data[f] = mfield.rel.to.objects.get(pk=val)
+                        try:
+                            data[f] = mfield.rel.to.objects.get(pk=val)
+                        except:
+                            log.error(
+                                "%r(%d).%s has no foreign key '%d'",
+                                self.model, i.get('id'), f, val)
+                            raise
                     else:
                         data[f] = val
 
@@ -430,7 +436,7 @@ class NewModel(Model):
             task = dispatcher.call_task_sync(method, method_args)
         except RpcException, e:
             raise ValidationError({
-                '__all__': [(errno.EINVAL, i['message']) for i in e.extra],
+                '__all__': [(errno.EINVAL, i['message']) for i in e.extra] if e.extra else [(errno.EINVAL, str(e))],
             })
         if task['state'] != 'FINISHED':
             error = task['error']
