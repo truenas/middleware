@@ -237,8 +237,7 @@ class NewQuerySet(object):
             self._result_cache = list(self.iterator())
 
     def all(self):
-        self._fetch_all()
-        return self
+        return self._clone()
 
     def count(self):
         self._fetch_all()
@@ -249,14 +248,13 @@ class NewQuerySet(object):
         return len(self._result_cache) > 0
 
     def exclude(self, *args, **kwargs):
-        self._result_cache = None
         return self._exclude_or_filter(True, *args, **kwargs)
 
     def filter(self, *args, **kwargs):
-        self._result_cache = None
         return self._exclude_or_filter(False, *args, **kwargs)
 
     def _exclude_or_filter(self, opposite, *args, **kwargs):
+        c = self._clone()
         for key, val in kwargs.items():
             _filter = 'exact'
             if '__' in key:
@@ -265,17 +263,17 @@ class NewQuerySet(object):
             if key == 'pk':
                 key = 'id'
 
-            val = self.model._meta.get_field(key).to_python(val)
+            val = c.model._meta.get_field(key).to_python(val)
 
-            if self._fmm:
-                field = self._fmm.get_field_to_middleware(key)
+            if c._fmm:
+                field = c._fmm.get_field_to_middleware(key)
                 if not field:
                     raise NotImplementedError("Field '%s' not mapped" % key)
             else:
                 field = key
 
             if _filter == 'exact':
-                self._filters.append(
+                c._filters.append(
                     (field, '=' if not opposite else '!=', val)
                 )
             else:
@@ -283,17 +281,16 @@ class NewQuerySet(object):
                     "Filter '%s' not implemented" % _filter
                 )
 
-        return self
+        return c
 
     def get(self, *args, **kwargs):
-        self._result_cache = None
-        self.filter(*args, **kwargs)
-        self._fetch_all()
-        if len(self._result_cache) == 0:
-            raise self.model.DoesNotExist
-        if len(self._result_cache) > 1:
-            raise self.model.MultipleObjectsReturned
-        return self._result_cache[0]
+        c = self._clone().filter(*args, **kwargs)
+        c._fetch_all()
+        if len(c._result_cache) == 0:
+            raise c.model.DoesNotExist
+        if len(c._result_cache) > 1:
+            raise c.model.MultipleObjectsReturned
+        return c._result_cache[0]
 
     def iterator(self):
         from freenasUI.middleware.connector import connection as dispatcher
