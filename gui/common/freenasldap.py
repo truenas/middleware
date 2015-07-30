@@ -605,7 +605,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
 
-        if self.kerberos_realm or self.kerberos_principal:
+        if self.kerberos_realm or self.keytab_principal:
             self.get_kerberos_ticket()
             self.flags |= FLAGS_SASL_GSSAPI
 
