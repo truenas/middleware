@@ -854,7 +854,6 @@ AD_show_config()
 	printf "ad_timeout:            %s\n" $(AD_get ad_timeout)
 	printf "ad_dns_timeout:        %s\n" $(AD_get ad_dns_timeout)
 	printf "ad_krb_realm:          %s\n" $(AD_get ad_krb_realm)
-	printf "ad_keytab_name:        %s\n" $(AD_get ad_keytab_name)
 	printf "ad_keytab_principal:   %s\n" $(AD_get ad_keytab_principal)
 	printf "ad_keytab_file:        %s\n" $(AD_get ad_keytab_file)
 	printf "ad_ssl:                %s\n" $(AD_get ad_ssl)
@@ -966,12 +965,10 @@ AD_has_unix_extensions()
 
 AD_has_keytab()
 {
-	local ad_keytab_name="$(AD_get ad_keytab_name)"
 	local ad_keytab_principal="$(AD_get ad_keytab_principal)"
 	local ad_keytab_file="$(AD_get ad_keytab_file)"
 
-	if [ -n "${ad_keytab_name}" -a -n "${ad_keytab_principal}" \
-		-a -s "${ad_keytab_file}" ]
+	if [ -n "${ad_keytab_principal}" -a -s "${ad_keytab_file}" ]
 	then
 		return 0
 	fi

@@ -74,7 +74,7 @@ ldapctl_start()
 {
 	local ldap_started=0
 	local realm
-	local keytab
+	local keytab_principal
 
 	if ! LDAP_init
 	then
@@ -100,9 +100,9 @@ ldapctl_start()
 	ldapctl_cmd ${service} ix-nsswitch quietstart
 
 	realm="$(LDAP_get ldap_krb_realm)"
-	keytab="$(LDAP_get ldap_keytab_name)"
+	keytab_principal="$(LDAP_get ldap_keytab_principal)"
 
-	if [ -n "${realm}" -o -n "${keytab}" ]
+	if [ -n "${realm}" -o -n "${keytab_principal}" ]
 	then
 		ldapctl_cmd ${service} ix-kinit quietstart
 		if ! ldapctl_cmd ${service} ix-kinit status

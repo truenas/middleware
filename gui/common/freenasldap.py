@@ -499,7 +499,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             'krb_admin_server',
             'krb_kpasswd_server',
             'kerberos_keytab',
-            'keytab_name',
             'keytab_principal',
             'keytab_file',
             'idmap_backend',
@@ -582,14 +581,13 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['krb_admin_server'] = kr.krb_admin_server
                         kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
 
-                elif newkey == 'kerberos_keytab_id':
-                    kt = ldap.ldap_kerberos_keytab
+                elif newkey == 'kerberos_principal_id':
+                    kp = ldap.ldap_kerberos_principal
 
-                    if kt:
-                        kwargs['kerberos_keytab'] = kt
-                        kwargs['keytab_name'] = kt.keytab_name
-                        kwargs['keytab_principal'] = kt.keytab_principal
-                        kwargs['keytab_file'] = '/etc/krb5.keytab'
+                    if kp: 
+                        kwargs['kerberos_principal'] = kp
+                        kwargs['keytab_principal'] = kp.principal_name
+                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
 
                 else:
                     if not newkey in kwargs:
@@ -607,7 +605,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
 
-        if self.kerberos_realm or self.kerberos_keytab:
+        if self.kerberos_realm or self.kerberos_principal:
             self.get_kerberos_ticket()
             self.flags |= FLAGS_SASL_GSSAPI
 
@@ -652,7 +650,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         res = False 
         kinit = False
 
-        if self.keytab_name and self.keytab_principal:
+        if self.keytab_principal:
             krb_principal = self.get_kerberos_principal_from_cache()
             if krb_principal and krb_principal.upper() == \
                 self.keytab_principal.upper():
@@ -1256,12 +1254,11 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     @staticmethod
     def get_workgroup_name(domain, site=None, binddn=None, bindpw=None,
-        ssl='off', certfile=None, keytab_name=None, keytab_principal=None,
-        keytab_file=None, errors=[]):
+        ssl='off', certfile=None, keytab_principal=None, keytab_file=None, errors=[]):
 
         f = FreeNAS_ActiveDirectory(domainname=domain, site=site, binddn=binddn,
-            bindpw=bindpw, ssl=ssl, certfile=certfile, keytab_name=keytab_name,
-            keytab_principal=keytab_principal, keytab_file=keytab_file
+            bindpw=bindpw, ssl=ssl, certfile=certfile, keytab_principal=keytab_principal,
+            keytab_file=keytab_file
         )
         return f.get_netbios_name()
 
@@ -1304,7 +1301,6 @@ class FreeNAS_ActiveDirectory_Base(object):
             'kerberos_realm',
             'krb_realm',
             'kerberos_keytab',
-            'keytab_name',
             'keytab_principal',
             'keytab_file',
             'dchandle',
@@ -1392,7 +1388,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         res = False 
         kinit = False
 
-        if self.keytab_name and self.keytab_principal:
+        if self.keytab_principal:
             krb_principal = self.get_kerberos_principal_from_cache()
             if krb_principal and krb_principal.upper() == \
                 self.keytab_principal.upper():
@@ -1532,14 +1528,13 @@ class FreeNAS_ActiveDirectory_Base(object):
                         kwargs['krb_realm'] = kr.krb_realm
                         #self.flags |= FLAGS_SASL_GSSAPI
 
-                elif newkey == 'kerberos_keytab_id':
-                    kt = ad.ad_kerberos_keytab
+                elif newkey == 'kerberos_principal_id':
+                    kp = ad.ad_kerberos_principal
 
-                    if kt:
-                        kwargs['kerberos_keytab'] = kt
-                        kwargs['keytab_name'] = kt.keytab_name
-                        kwargs['keytab_principal'] = kt.keytab_principal
-                        kwargs['keytab_file'] = '/etc/krb5.keytab'
+                    if kp:
+                        kwargs['kerberos_principal'] = kp
+                        kwargs['keytab_principal'] = kp.principal_name
+                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
                         #self.flags |= FLAGS_SASL_GSSAPI
 
                 else:
@@ -1621,7 +1616,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.set_kpasswd_server()
 
         flags = self.flags &~ FLAGS_SASL_GSSAPI
-        if self.keytab_name and self.keytab_principal:
+        if self.keytab_principal:
             flags |= FLAGS_SASL_GSSAPI
 
         self.dchandle = FreeNAS_LDAP_Directory(
