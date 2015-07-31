@@ -90,6 +90,7 @@ from freenasUI.directoryservice.models import (
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.services.models import (
     services,
     iSCSITarget,
@@ -191,12 +192,9 @@ class BootEnvRenameForm(Form):
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        rename = Update.RenameClone(
-            self._name,
-            self.cleaned_data.get('name'),
-        )
-        if rename is False:
-            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+        result = dispatcher.call_task_sync('boot_environments.rename', self._name, self.cleaned_data.get('name'))
+        if result['state'] != 'FINISHED':
+            raise MiddlewareError(_(result['error']['message']))
 
 
 class BootEnvPoolAttachForm(Form):

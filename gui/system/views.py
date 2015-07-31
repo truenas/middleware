@@ -240,16 +240,17 @@ def bootenv_datagrid_structure(request):
 
 def bootenv_activate(request, name):
     if request.method == 'POST':
-        active = ActivateClone(name)
-        if active is not False:
+        result = dispatcher.call_task_sync('boot_environments.activate', name)
+        if result['state'] == 'FINISHED':
             return JsonResp(
                 request,
                 message=_('Boot Environment successfully activated.'),
             )
-        return JsonResp(
-            request,
-            message=_('Failed to activate Boot Environment.'),
-        )
+        else:
+            return JsonResp(
+                request,
+                message=_('Failed to activate Boot Environment.'),
+            )
     return render(request, 'system/bootenv_activate.html', {
         'name': name,
     })
@@ -276,7 +277,7 @@ def bootenv_add(request, source=None):
 def bootenv_scrub(request):
     if request.method == "POST":
         try:
-            notifier().zfs_scrub('freenas-boot')
+            dispatcher.submit_task('zfs.pool.scrub', 'freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
         except Exception, e:
             return JsonResp(request, error=True, message=repr(e))
@@ -312,16 +313,17 @@ def bootenv_scrub_interval(request):
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
-        delete = DeleteClone(name)
-        if delete is not False:
+        result = dispatcher.call_task_sync('boot_environments.delete', name)
+        if result['state'] == 'FINISHED':
             return JsonResp(
                 request,
                 message=_('Boot Environment successfully deleted.'),
             )
-        return JsonResp(
-            request,
-            message=_('Failed to delete Boot Environment.'),
-        )
+        else:
+            return JsonResp(
+                request,
+                message=_('Failed to delete Boot Environment.'),
+            )
     return render(request, 'system/bootenv_delete.html', {
         'name': name,
     })
