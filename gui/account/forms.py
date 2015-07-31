@@ -98,24 +98,6 @@ class bsdUserGroupMixin:
             shell_dict[shell] = os.path.basename(shell)
         return shell_dict.items()
 
-    def pw_checkname(self, bsdusr_username):
-        if bsdusr_username.startswith('-'):
-            raise forms.ValidationError(_("Your name cannot start with \"-\""))
-        if bsdusr_username.find('$') not in (-1, len(bsdusr_username) - 1):
-            raise forms.ValidationError(
-                _("The character $ is only allowed as the final character")
-            )
-        INVALID_CHARS = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
-        invalids = []
-        for char in bsdusr_username:
-            if char in INVALID_CHARS and char not in invalids:
-                invalids.append(char)
-        if invalids:
-            raise forms.ValidationError(
-                _("Your name contains invalid characters (%s).") % (
-                    ", ".join(invalids),
-                ))
-
     def pw_checkfullname(self, name):
         INVALID_CHARS = ':'
         invalids = []
@@ -334,20 +316,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.fields['bsdusr_sshpubkey'].initial = (
                 self.instance.bsdusr_sshpubkey
             )
-
-    def clean_bsdusr_username(self):
-        if self.instance.id is None:
-            bsdusr_username = self.cleaned_data["bsdusr_username"]
-            self.pw_checkname(bsdusr_username)
-            try:
-                models.bsdUsers.objects.get(bsdusr_username=bsdusr_username)
-            except models.bsdUsers.DoesNotExist:
-                return bsdusr_username
-            raise forms.ValidationError(
-                _("A user with that username already exists.")
-            )
-        else:
-            return self.instance.bsdusr_username
 
     def clean_bsdusr_uid(self):
         if self.instance.id is not None and self.instance.bsdusr_builtin:
