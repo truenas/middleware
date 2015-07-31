@@ -44,30 +44,19 @@ log = logging.getLogger('system.utils')
 class BootEnv(object):
 
     def __init__(
-            self, name=None, active=None, mountpoint=None, space=None, created=None, **kwargs
+            self, id=None, active=None, on_reboot=None, mountpoint=None, space=None, created=None, **kwargs
     ):
-        self._id = name
+        self._id = id
         self.active = active
-        self._created = created
+        self.on_reboot = on_reboot
+        self.created = created
         self.mountpoint = mountpoint
-        self.name = name
+        self.name = id
         self.space = space
 
     @property
     def id(self):
         return self._id
-
-    @property
-    def created(self):
-        offset = time.strftime('%z')
-        hours = int(offset[1:3])
-        minutes = int(offset[3:5])
-        delta = timedelta(hours=hours, minutes=minutes)
-        if offset[0] == '+':
-            date = self._created - delta
-        else:
-            date = self._created + delta
-        return date.strftime('%Y-%m-%d %H:%M:%S GMT')
 
 
 class CheckUpdateHandler(object):

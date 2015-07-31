@@ -64,6 +64,7 @@ from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
@@ -2682,9 +2683,7 @@ class BootEnvResource(NestedMixin, DojoResource):
         return HttpResponse('Boot Environment has been renamed.', status=202)
 
     def get_list(self, request, **kwargs):
-        results = []
-        for clone in Update.ListClones():
-            results.append(BootEnv(**clone))
+        results = [BootEnv(**i) for i in dispatcher.call_sync('boot_environments.query')]
 
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
@@ -2796,7 +2795,7 @@ class BootEnvResource(NestedMixin, DojoResource):
             )
             bundle.data['_deletebulk_url'] = reverse('system_bootenv_deletebulk')
             active_humanize = []
-            if 'R' not in bundle.obj.active:
+            if not bundle.obj.on_reboot:
                 bundle.data['_activate_url'] = reverse(
                     'system_bootenv_activate', kwargs={
                         'name': bundle.obj.name
@@ -2804,8 +2803,10 @@ class BootEnvResource(NestedMixin, DojoResource):
                 )
             else:
                 active_humanize.append(_('On Reboot'))
-            if 'N' in bundle.obj.active:
+
+            if bundle.obj.active:
                 active_humanize.append(_('Now'))
+
             bundle.data['active'] = ', '.join(active_humanize)
             bundle.data['_rename_url'] = reverse(
                 'system_bootenv_rename', kwargs={'name': bundle.obj.name},
