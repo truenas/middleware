@@ -32,6 +32,7 @@ import ctypes
 import logging
 import os
 import signal
+import threading
 
 
 logging.NOTICE = 60
@@ -78,39 +79,48 @@ def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
         close_fds=False, preexec_fn=preexec_fn)
 
 
+class Command(object):
+    def __init__(self, command):
+        self.command = command
+        self.process = None
+        self.stdout = None
+        self.stderr = None
+
+    @property
+    def returncode(self):
+        ret = -1
+        if self.process:
+            ret = self.process.returncode
+        return ret
+
+    def run(self, important=True, logger=log, allowfork=False, quiet=False, timeout=None):
+        def target():
+            self.process = pipeopen(self.command, important, logger, allowfork, quiet)
+            (self.stdout, self.stderr) = self.process.communicate()
+
+        thread = threading.Thread(target=target)
+        thread.start()
+
+        thread.join(timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+
+        return (self.returncode, self.stdout, self.stderr)
+
+
 def run(command, important=True, logger=log, allowfork=False, quiet=False, timeout=-1):
-    class run_alarm:
-        pass
-    def run_alarm_handler(sig, frame):
-        raise run_alarm
-
-    stdout = stderr = None
-
     try:
-        timeout = long(timeout)
+        timeout = float(timeout)
     except:
-        timeout = -1
+        timeout = 0
 
-    p = pipeopen(command, important, logger, allowfork, quiet)
-    if timeout != -1:
-        signal.signal(signal.SIGALRM, run_alarm_handler)
-        signal.alarm(timeout)
+    if timeout <= 0:
+        timeout = None
 
-    try:
-        (stdout, stderr) = p.communicate()
-        if timeout != -1:
-            signal.alarm(0)
+    c = Command(command)
 
-    except run_alarm:
-        try:
-            os.kill(p.pid, signal.SIGKILL)
-
-        except OSError:
-            pass 
-
-        return (-9, None, None)
-
-    return (p.returncode, stdout, stderr)
+    return c.run(important, logger, allowfork, quiet, timeout)
 
 
 def system(command, important=True, logger=log):
