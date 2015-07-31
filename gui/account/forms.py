@@ -90,13 +90,10 @@ class NewPasswordForm(Form):
 
 class bsdUserGroupMixin:
     def _populate_shell_choices(self):
-        with open('/etc/shells') as fd:
-            shells = map(str.rstrip,
-                         filter(lambda x: x.startswith('/'), fd.readlines()))
-        shell_dict = {}
-        for shell in shells + ['/sbin/nologin']:
-            shell_dict[shell] = os.path.basename(shell)
-        return shell_dict.items()
+        return [
+            (i, i.split('/')[-1])
+            for i in dispatcher.call_sync('shell.get_shells')
+        ]
 
     def pw_checkfullname(self, name):
         INVALID_CHARS = ':'
