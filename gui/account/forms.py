@@ -265,7 +265,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
         if self.instance.id is None:
             try:
-                self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
+                self.fields['bsdusr_uid'].initial = dispatcher.call_sync('users.next_uid')
             except:
                 pass
             self.fields['bsdusr_home'].label = _('Create Home Directory In')
