@@ -30,7 +30,8 @@ class BsdUserFAdmin(BaseFreeAdmin):
         'id',
         'bsdusr_unixhash',
         'bsdusr_smbhash',
-        )
+        'bsdusr_sshpubkey',
+    )
 
     def _action_builder(self, name, label=None, url=None, builtin=None):
         func = "editObject"

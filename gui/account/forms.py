@@ -172,10 +172,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         label=_("Create a new primary group for the user"),
         required=False,
         initial=True)
-    bsdusr_sshpubkey = forms.CharField(
-        label=_("SSH Public Key"),
-        widget=forms.Textarea,
-        required=False)
     bsdusr_mode = UnixPermissionField(
         label=_('Home Directory Mode'),
         initial='755',
@@ -310,9 +306,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             if self.instance.bsdusr_password_disabled is True:
                 self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
                 self.fields['bsdusr_sudo'].widget.attrs['disabled'] = True
-            self.fields['bsdusr_sshpubkey'].initial = (
-                self.instance.bsdusr_sshpubkey
-            )
 
     def clean_bsdusr_uid(self):
         if self.instance.id is not None and self.instance.bsdusr_builtin:
@@ -394,19 +387,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             return '755'
         return mode
 
-    def clean_bsdusr_sshpubkey(self):
-        ssh = self.cleaned_data.get('bsdusr_sshpubkey', '')
-        ssh = ssh.strip(' ').strip('\n')
-        ssh = re.sub(r'[ ]{2,}', ' ', ssh, re.M)
-        ssh = re.sub(r'\n{2,}', '\n', ssh, re.M)
-        old = ssh
-        while True:
-            ssh = re.sub(r'(\S{15,})\n(\S{15,})', '\\1\\2', ssh, re.M)
-            if ssh == old:
-                break
-            old = ssh
-        return ssh
-
     def clean_bsdusr_full_name(self):
         name = self.cleaned_data["bsdusr_full_name"]
         self.pw_checkfullname(name)
@@ -426,18 +406,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             cleaned_data.get("bsdusr_password_disabled", False)
         )
         bsdusr_home = cleaned_data.get('bsdusr_home', '')
-        if (
-            bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
-            (
-                not bsdusr_home.startswith(u'/mnt/') and (
-                    self.instance.id is None or
-                    (self.instance.id is not None and self.instance.bsdusr_uid != 0)
-                )
-            )
-        ):
-            del cleaned_data['bsdusr_sshpubkey']
-            self._errors['bsdusr_sshpubkey'] = self.error_class([
-                _("Home directory is not writable, leave this blank")])
         if self.instance.id is None:
             FIELDS = ['bsdusr_password', 'bsdusr_password2']
             if password_disable:
@@ -552,15 +520,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             ))
             p.communicate()
 
-        bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
-        if bsdusr_sshpubkey:
-            _notifier.save_pubkey(
-                bsduser.bsdusr_home,
-                bsdusr_sshpubkey,
-                bsduser.bsdusr_username,
-                bsduser.bsdusr_group.bsdgrp_group)
-        else:
-            _notifier.delete_pubkey(bsduser.bsdusr_home)
         return bsduser
 
 

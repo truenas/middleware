@@ -152,6 +152,7 @@ FMM = {
         ('bsdusr_password_disabled', 'password_disabled'),
         ('bsdusr_locked', 'locked'),
         ('bsdusr_sudo', 'sudo'),
+        ('bsdusr_sshpubkey', 'sshpubkey'),
     )),
 }
 

@@ -151,6 +151,10 @@ class bsdUsers(NewModel):
         verbose_name=_("Permit Sudo"),
         default=False,
     )
+    bsdusr_sshpubkey = models.TextField(
+        verbose_name=_('SSH Public Key'),
+        blank=True,
+    )
 
     is_active = True
     is_staff = True
@@ -160,18 +164,6 @@ class bsdUsers(NewModel):
     def has_root_password(cls):
         qs = cls.objects.filter(bsdusr_uid=0).exclude(bsdusr_unixhash='*')
         return qs.exists()
-
-    @property
-    def bsdusr_sshpubkey(self):
-        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
-        if not os.path.exists(keysfile):
-            return ''
-        try:
-            with open(keysfile, 'r') as f:
-                keys = f.read()
-            return keys
-        except:
-            return ''
 
     class Meta:
         verbose_name = _("User")
