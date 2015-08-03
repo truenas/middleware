@@ -1106,6 +1106,9 @@ In order to configure iSCSI:
 
 The rest of this section describes these steps in more detail.
 
+.. note:: if the system has been licensed for Fibre Channel, the screens will vary slightly than those found in the rest of this section. Refer to the section on
+   :ref:`Fiber Channel Ports` for details.
+
 .. _Target Global Configuration:
 
 Target Global Configuration
@@ -1442,8 +1445,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 .. _Targets/Extents:
 
-Target/Extents
-~~~~~~~~~~~~~~
+Targets/Extents
+~~~~~~~~~~~~~~~
 
 The last step is associating an extent to a target within :menuselection:`Sharing --> Block (iSCSI) --> Target/Extents --> Add Target/Extent`. This screen is
 shown in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
@@ -1481,6 +1484,38 @@ second or so, it will change to a blue ON, indicating that the service has start
 
 Fiber Channel Ports
 ~~~~~~~~~~~~~~~~~~~
+
+If the TrueNAS® system has Fiber Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
+:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fiber Channel Ports' tab will be added. An example is seen in Figure 10.5j.
+
+**Figure 10.5j: Block (iSCSI) Screen**
+
+.. image:: images/tn_fiber1.png
+
+Otherwise, the "Target Global Configuration" screen is the same as described in :ref:`Target Global Configuration`.
+
+Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fiber Channel.
+
+As seen in Figure 10.5k, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to create is iSCSI, Fiber Channel, or both.
+
+**Figure 10.5k: Add Target Screen**
+
+.. image:: images/tn_fiber2.png
+
+If you select "Fiber Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fiber Channel
+connection. An example is seen in Figure 10.5l.
+
+**Figure 10.5l: Configuring a Fiber Channel Target**
+
+.. image:: images/tn_fiber3.png
+
+The screens for adding an extent and associating a target are the same as described in :ref:`Extents` and :ref:`Targets/Extents`.
+
+An example of the "Fiber Channel Ports" screen is shown in Figure 10.5m.
+
+**Figure 10.5m: Configuring a Fiber Channel Port**
+
+.. image:: images/tn_fiber4.png
 
 .. _Connecting to iSCSI:
 
@@ -1537,9 +1572,9 @@ Zvol Based LUN
 ^^^^^^^^^^^^^^
 
 To grow a zvol based LUN, go to :menuselection:`Storage --> Volumes --> View Volumes`, highlight the zvol to be grown, and click its "Edit zvol" button. In
-the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is 4GB.
+the example shown in Figure 10.5n, the current size of the zvol named *zvol1* is 4GB.
 
-**Figure 10.5j: Editing an Existing Zvol**
+**Figure 10.5n: Editing an Existing Zvol**
 
 .. image:: images/tn_grow.png
 
