@@ -88,26 +88,6 @@ class NewPasswordForm(Form):
         return valid
 
 
-class bsdUserGroupMixin:
-    def _populate_shell_choices(self):
-        return [
-            (i, i.split('/')[-1])
-            for i in dispatcher.call_sync('shell.get_shells')
-        ]
-
-    def pw_checkfullname(self, name):
-        INVALID_CHARS = ':'
-        invalids = []
-        for char in name:
-            if char in INVALID_CHARS and char not in invalids:
-                invalids.append(char)
-        if invalids:
-            raise forms.ValidationError(
-                _("Your full name contains invalid characters (%s).") % (
-                    ", ".join(invalids),
-                ))
-
-
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
@@ -146,7 +126,7 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         return ret
 
 
-class bsdUsersForm(ModelForm, bsdUserGroupMixin):
+class bsdUsersForm(ModelForm):
 
     bsdusr_username = forms.CharField(
         label=_("Username"),
@@ -307,6 +287,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 self.fields['bsdusr_locked'].widget.attrs['disabled'] = True
                 self.fields['bsdusr_sudo'].widget.attrs['disabled'] = True
 
+    def _populate_shell_choices(self):
+        return [
+            (i, i.split('/')[-1])
+            for i in dispatcher.call_sync('shell.get_shells')
+        ]
+
     def clean_bsdusr_uid(self):
         if self.instance.id is not None and self.instance.bsdusr_builtin:
             return self.instance.bsdusr_uid
@@ -386,18 +372,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         if self.instance.id is None and not mode:
             return '755'
         return mode
-
-    def clean_bsdusr_full_name(self):
-        name = self.cleaned_data["bsdusr_full_name"]
-        self.pw_checkfullname(name)
-        return name
-
-    def clean_bsdusr_to_group(self):
-        v = self.cleaned_data.get("bsdusr_to_group")
-        if len(v) > 64:
-            raise forms.ValidationError(
-                _("A user cannot belong to more than 64 auxiliary groups"))
-        return v
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -568,7 +542,7 @@ class bsdUserPasswordForm(ModelForm):
         return self.instance
 
 
-class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
+class bsdUserEmailForm(ModelForm):
 
     class Meta:
         model = models.bsdUsers
@@ -580,7 +554,7 @@ class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
         return bsduser
 
 
-class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
+class bsdGroupsForm(ModelForm):
 
     class Meta:
         fields = '__all__'
