@@ -2369,7 +2369,6 @@ class notifier:
         return uid
 
     def _reload_user(self):
-        self._system("/usr/sbin/service ix-passwd quietstart")
         self._system("/usr/sbin/service ix-aliases quietstart")
         self._system("/usr/sbin/service ix-sudoers quietstart")
         self.reload("cifs")
