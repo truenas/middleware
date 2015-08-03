@@ -115,7 +115,7 @@ class BsdGroupFAdmin(BaseFreeAdmin):
     object_filters = {'bsdgrp_builtin__exact': False}
     object_num = -1
 
-    exclude = (
+    exclude_fields = (
         'id',
         'bsdgrp_users',
     )

@@ -624,26 +624,24 @@ class bsdGroupToUserForm(Form):
         self.fields['bsdgroup_to_user'].choices = [
             (x.id, x.bsdusr_username) for x in models.bsdUsers.objects.all()
         ]
-        self.fields['bsdgroup_to_user'].initial = [
-            (x.bsdgrpmember_user.id)
-            for x in models.bsdGroupMembership.objects.filter(
-                bsdgrpmember_group=group
-            )
-        ]
+        self._grp_users = [i['id'] for i in dispatcher.call_sync('users.query', [('groups', 'in', group.id)])]
+        self.fields['bsdgroup_to_user'].initial = self._grp_users
 
     def save(self):
         group = models.bsdGroups.objects.get(id=self.groupid)
-        models.bsdGroupMembership.objects.filter(
-            bsdgrpmember_group=group
-        ).delete()
-        userid_list = self.cleaned_data['bsdgroup_to_user']
+
+        userid_list = [int(i) for i in self.cleaned_data['bsdgroup_to_user']]
+        for userid in self._grp_users:
+            if userid not in userid_list:
+                user = models.bsdUsers.objects.get(id=userid)
+                if group.id in user.bsdusr_groups:
+                    user.bsdusr_groups.remove(group.id)
+                    user.save()
         for userid in userid_list:
-            user = models.bsdUsers.objects.get(id=userid)
-            m = models.bsdGroupMembership(
-                bsdgrpmember_group=group,
-                bsdgrpmember_user=user)
-            m.save()
-        notifier().reload("user")
+            if userid not in self._grp_users:
+                user = models.bsdUsers.objects.get(id=userid)
+                user.bsdusr_groups.append(group.id)
+                user.save()
 
 
 class bsdUserToGroupForm(Form):
