@@ -381,7 +381,7 @@ class NewModel(Model):
                 )
             )
 
-        task = dispatcher.call_task_sync(method, [self.id])
+        task = dispatcher.call_task_sync(method, self.id)
         if task['state'] != 'FINISHED':
             raise MiddlewareError(task['error']['message'])
 
@@ -434,7 +434,7 @@ class NewModel(Model):
 
         try:
             log.debug("Calling task '%s' with args %r", method, method_args)
-            task = dispatcher.call_task_sync(method, method_args)
+            task = dispatcher.call_task_sync(method, *method_args)
         except RpcException, e:
             raise ValidationError({
                 '__all__': [(errno.EINVAL, i['message']) for i in e.extra] if e.extra else [(errno.EINVAL, str(e))],
