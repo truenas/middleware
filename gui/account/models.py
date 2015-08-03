@@ -34,7 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.freeadmin.models import Model, NewModel, NewManager, PathField
+from freenasUI.freeadmin.models import Model, NewModel, NewManager, PathField, ListField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
@@ -58,6 +58,7 @@ class bsdGroups(NewModel):
         default=False,
         verbose_name=_("Permit Sudo"),
     )
+    bsdgrp_users = ListField(blank=True, null=True, editable=False)
 
     class Meta:
         verbose_name = _("Group")
@@ -155,6 +156,7 @@ class bsdUsers(NewModel):
         verbose_name=_('SSH Public Key'),
         blank=True,
     )
+    bsdusr_groups = ListField(blank=True, null=True, editable=False)
 
     is_active = True
     is_staff = True

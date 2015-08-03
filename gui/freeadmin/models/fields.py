@@ -217,3 +217,32 @@ class Network6Field(models.CharField):
         defaults = {'form_class': NF}
         kwargs.update(defaults)
         return super(Network6Field, self).formfield(**kwargs)
+
+
+class ListField(MultiSelectField):
+
+    def formfield(self, **kwargs):
+        from django.forms import CharField
+        defaults = {
+            'required': not self.blank,
+            'label': capfirst(self.verbose_name),
+            'help_text': self.help_text,
+            'choices': self.get_choices(include_blank=False),
+        }
+        if self.has_default():
+            defaults['initial'] = self.default or []
+        defaults.update(kwargs)
+        return CharField(**defaults)
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if isinstance(value, basestring):
+            return [value]
+        elif isinstance(value, list):
+            return value
+
+    def to_python(self, value):
+        if isinstance(value, list):
+            return value
+        if value in ('', None):
+            return []
+        return value.split(',')

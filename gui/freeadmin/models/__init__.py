@@ -40,7 +40,8 @@ from freenasUI.middleware.exceptions import MiddlewareError, ValidationError
 
 # FIXME: Backward compatible
 from .fields import (
-    UserField, GroupField, PathField, MACField, Network4Field, Network6Field
+    UserField, GroupField, PathField, MACField, Network4Field, Network6Field,
+    ListField,
 )
 
 log = logging.getLogger('freeadmin.models')
@@ -137,6 +138,7 @@ FMM = {
         ('bsdgrp_builtin', 'builtin'),
         (('bsdgrp_gid', 'id'), 'id'),
         ('bsdgrp_sudo', 'sudo'),
+        ('bsdgrp_users', 'members'),
     )),
     'bsdusers': FieldMiddlewareMapping((
         (('bsdusr_uid', 'id'), 'id'),
@@ -153,6 +155,7 @@ FMM = {
         ('bsdusr_locked', 'locked'),
         ('bsdusr_sudo', 'sudo'),
         ('bsdusr_sshpubkey', 'sshpubkey'),
+        ('bsdusr_groups', 'groups'),
     )),
 }
 
