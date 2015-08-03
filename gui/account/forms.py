@@ -659,12 +659,7 @@ class bsdUserToGroupForm(Form):
             (x.id, x.bsdgrp_group)
             for x in models.bsdGroups.objects.all()
         ]
-        self.fields['bsduser_to_group'].initial = [
-            x.bsdgrpmember_group.id
-            for x in models.bsdGroupMembership.objects.filter(
-                bsdgrpmember_user=user
-            )
-        ]
+        self.fields['bsduser_to_group'].initial = user.bsdusr_groups
 
     def clean_bsduser_to_group(self):
         v = self.cleaned_data.get("bsduser_to_group")
@@ -676,17 +671,8 @@ class bsdUserToGroupForm(Form):
 
     def save(self):
         user = models.bsdUsers.objects.get(id=self.userid)
-        models.bsdGroupMembership.objects.filter(
-            bsdgrpmember_user=user
-        ).delete()
-        groupid_list = self.cleaned_data['bsduser_to_group']
-        for groupid in groupid_list:
-            group = models.bsdGroups.objects.get(id=groupid)
-            m = models.bsdGroupMembership(
-                bsdgrpmember_group=group,
-                bsdgrpmember_user=user)
-            m.save()
-        notifier().reload("user")
+        user.bsdusr_groups = [int(i) for i in self.cleaned_data['bsduser_to_group']]
+        user.save()
 
 
 class DeleteGroupForm(forms.Form):
