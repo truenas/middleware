@@ -1477,6 +1477,11 @@ target.
 Once iSCSI has been configured, don't forget to start it in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to iSCSI. After a
 second or so, it will change to a blue ON, indicating that the service has started.
 
+.. _Fiber Channel Ports:
+
+Fiber Channel Ports
+~~~~~~~~~~~~~~~~~~~
+
 .. _Connecting to iSCSI:
 
 Connecting to iSCSI
