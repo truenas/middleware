@@ -259,10 +259,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.bsdusr_home_copy = False
 
         elif self.instance.id is not None:
-            user = dispatcher.call_sync('users.query', [('id', '=', 1000)])
+            user = dispatcher.call_sync(
+                'users.query',
+                [('id', '=', self.instance.id)],
+                {'single': True})
             if user:
-                user = user[0]
-            self.fields['bsdusr_to_group'].initial = user['groups']
+                self.fields['bsdusr_to_group'].initial = user['groups']
 
             del self.fields['bsdusr_creategroup']
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
