@@ -259,12 +259,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.bsdusr_home_copy = False
 
         elif self.instance.id is not None:
-            self.fields['bsdusr_to_group'].initial = [
-                x.bsdgrpmember_group.id
-                for x in models.bsdGroupMembership.objects.filter(
-                    bsdgrpmember_user=self.instance.id
-                )
-            ]
+            user = dispatcher.call_sync('users.query', [('id', '=', 1000)])
+            if user:
+                user = user[0]
+            self.fields['bsdusr_to_group'].initial = user['groups']
 
             del self.fields['bsdusr_creategroup']
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
@@ -498,19 +496,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsduser.bsdusr_smbhash = smbhash
                 bsduser.save()
 
-        #
-        # Check if updating group membership
-        #
-        models.bsdGroupMembership.objects.filter(
-            bsdgrpmember_user=bsduser
-        ).delete()
-        groupid_list = self.cleaned_data['bsdusr_to_group']
-        for groupid in groupid_list:
-            group = models.bsdGroups.objects.get(id=groupid)
-            m = models.bsdGroupMembership(
-                bsdgrpmember_group=group,
-                bsdgrpmember_user=bsduser)
-            m.save()
+        # Update group membership
+        # FIXME: make it part of first save
+        groupid_list = [int(i) for i in self.cleaned_data['bsdusr_to_group']]
+        dispatcher.call_task_sync('users.update', bsduser.id, {'groups': groupid_list})
 
         if self.bsdusr_home_copy:
             p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
