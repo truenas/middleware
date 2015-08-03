@@ -2368,51 +2368,6 @@ class notifier:
         uid = uid.split(':')[0]
         return uid
 
-    def save_pubkey(self, homedir, pubkey, username, groupname):
-        homedir = str(homedir)
-        pubkey = str(pubkey).strip()
-        if pubkey:
-            pubkey = '%s\n' % pubkey
-        sshpath = '%s/.ssh' % (homedir)
-        keypath = '%s/.ssh/authorized_keys' % (homedir)
-        try:
-            oldpubkey = open(keypath).read()
-            if oldpubkey == pubkey:
-                return
-        except:
-            pass
-
-        #if homedir == '/root':
-        #    self._system("/sbin/mount -uw -o noatime /")
-        saved_umask = os.umask(077)
-        if not os.path.isdir(sshpath):
-            os.makedirs(sshpath)
-        if not os.path.isdir(sshpath):
-            return  # FIXME: need better error reporting here
-        if pubkey == '' and os.path.exists(keypath):
-            os.unlink(keypath)
-        else:
-            fd = open(keypath, 'w')
-            fd.write(pubkey)
-            fd.close()
-            self._system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
-        #if homedir == '/root':
-        #    self._system("/sbin/mount -ur /")
-        os.umask(saved_umask)
-
-    def delete_pubkey(self, homedir):
-        homedir = str(homedir)
-        keypath = '%s/.ssh/authorized_keys' % (homedir, )
-        if os.path.exists(keypath):
-            try:
-                #if homedir == '/root':
-                #    self._system("/sbin/mount -uw -o noatime /")
-                os.unlink(keypath)
-            finally:
-                #if homedir == '/root':
-                #    self._system("/sbin/mount -ur /")
-                pass
-
     def _reload_user(self):
         self._system("/usr/sbin/service ix-passwd quietstart")
         self._system("/usr/sbin/service ix-aliases quietstart")
