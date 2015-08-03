@@ -47,7 +47,6 @@ from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
 )
-from freenasUI.tools.vhid import scan_for_vrrp
 
 log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
@@ -242,6 +241,7 @@ class InterfacesForm(ModelForm):
         return ip
 
     def clean_int_vhid(self):
+        from freenasUI.tools.vhid import scan_for_vrrp
         vip = self.cleaned_data.get('int_vip')
         vhid = self.cleaned_data.get('int_vhid')
         iface = self.cleaned_data.get('int_interface')
