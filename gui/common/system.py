@@ -687,6 +687,7 @@ def validate_netbios_name(netbiosname):
     if not regex.match(netbiosname):
         raise Exception("Invalid NetBIOS name")
 
+
 def validate_netbios_names(netbiosname, validate_func=validate_netbios_name):
     if not netbiosname:
         raise Exception("NULL NetBIOS name")
@@ -700,11 +701,12 @@ def validate_netbios_names(netbiosname, validate_func=validate_netbios_name):
         parts = netbiosname.split()
     else:
         validate_func(netbiosname)
-     
+
     if parts:
         for p in parts:
             n = p.strip()
             validate_func(n)
+
 
 def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_netbios_name):
     if not netbiosname1 or not netbiosname2:
