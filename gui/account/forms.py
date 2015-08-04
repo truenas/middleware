@@ -26,7 +26,6 @@
 #####################################################################
 import logging
 import os
-import re
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
@@ -398,84 +397,35 @@ class bsdUsersForm(ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        _notifier = notifier()
+        self.cleaned_data['groups'] = [
+            int(i) for i in self.cleaned_data.pop('bsdusr_to_group', [])
+        ]
         if self.instance.id is None:
-            group = self.cleaned_data['bsdusr_group']
-            if group is None:
+            grp = self.cleaned_data['bsdusr_group']
+            if grp is None:
                 try:
-                    gid = models.bsdGroups.objects.get(
+                    grp = models.bsdGroups.objects.get(
                         bsdgrp_group=self.cleaned_data['bsdusr_username']
-                    ).bsdgrp_gid
+                    )
                 except:
-                    gid = -1
-            else:
-                gid = group.bsdgrp_gid
-            uid, gid, unixhash, smbhash = _notifier.user_create(
-                username=self.cleaned_data['bsdusr_username'].encode(
-                    'utf8', 'ignore'
-                ),
-                fullname=self.cleaned_data['bsdusr_full_name'].encode(
-                    'utf8', 'ignore'
-                ).replace(':', ''),
-                password=self.cleaned_data['bsdusr_password'].encode(
-                    'utf8', 'ignore'
-                ),
-                uid=self.cleaned_data['bsdusr_uid'],
-                gid=gid,
-                shell=str(self.cleaned_data['bsdusr_shell']),
-                homedir=str(self.cleaned_data['bsdusr_home']),
-                homedir_mode=int(
-                    self.cleaned_data.get('bsdusr_mode', '755'),
-                    8
-                ),
-                password_disabled=self.cleaned_data.get(
-                    'bsdusr_password_disabled', False
-                ),
-            )
+                    grp = models.bsdGroups()
+                    grp.bsdgrp_group = self.cleaned_data['bsdusr_username']
+                    grp.save(data={
+                        'bsdgrp_group': self.cleaned_data['bsdusr_username']
+                    })
+
             bsduser = super(bsdUsersForm, self).save(commit=False)
-            try:
-                grp = models.bsdGroups.objects.get(bsdgrp_gid=gid)
-            except models.bsdGroups.DoesNotExist:
-                grp = models.bsdGroups(
-                    bsdgrp_gid=gid,
-                    bsdgrp_group=self.cleaned_data['bsdusr_username'],
-                    bsdgrp_builtin=False,
-                )
-                grp.save()
-            bsduser.bsdusr_group = grp
-            bsduser.bsdusr_uid = uid
-            bsduser.bsdusr_shell = self.cleaned_data['bsdusr_shell']
-            bsduser.bsdusr_unixhash = unixhash
-            bsduser.bsdusr_smbhash = smbhash
-            bsduser.bsdusr_builtin = False
-            bsduser.save()
+            self.cleaned_data['password'] = self.cleaned_data.pop(
+                'bsdusr_password', None)
+            self.cleaned_data['bsdusr_group'] = grp
+            bsduser.save(data=self.cleaned_data)
 
         else:
             bsduser = super(bsdUsersForm, self).save(commit=False)
             bsduser.bsdusr_group = self.cleaned_data['bsdusr_group']
-            bsduser.save()
-
-            #
-            # Check if updating password
-            #
-            bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
-            if self._api is True:
-                bsdusr_password2 = bsdusr_password
-            else:
-                bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
-            if bsdusr_password and (bsdusr_password == bsdusr_password2):
-                unixhash, smbhash = _notifier.user_changepassword(
-                    username=bsduser.bsdusr_username.encode('utf8'),
-                    password=bsdusr_password.encode('utf8'),
-                )
-                bsduser.bsdusr_unixhash = unixhash
-                bsduser.bsdusr_smbhash = smbhash
-                bsduser.save()
-
-        # Update group membership
-        # FIXME: make it part of first save
-        groupid_list = [int(i) for i in self.cleaned_data['bsdusr_to_group']]
-        dispatcher.call_task_sync('users.update', bsduser.id, {'groups': groupid_list})
+            self.cleaned_data['password'] = self.cleaned_data.pop(
+                'bsdusr_password', None)
+            bsduser.save(data=self.cleaned_data)
 
         if self.bsdusr_home_copy:
             p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
