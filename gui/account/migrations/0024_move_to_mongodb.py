@@ -46,7 +46,7 @@ class Migration(DataMigration):
                 'home': u.bsdusr_home,
                 'shell': u.bsdusr_shell,
                 'full_name': u.bsdusr_full_name,
-                'bultin': False,
+                'builtin': False,
                 'email': u.bsdusr_email,
                 'password_disabled': u.bsdusr_password_disabled,
                 'locked': u.bsdusr_locked,
