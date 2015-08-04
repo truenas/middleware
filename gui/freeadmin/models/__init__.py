@@ -360,6 +360,13 @@ class NewQuerySet(object):
         clone = self._clone()
         return clone
 
+    def values_list(self, *args):
+        self._fetch_all()
+        rv = []
+        for i in self._result_cache:
+            rv.append(tuple([getattr(i, a) for a in args]))
+        return rv
+
 
 class NewManager(models.Manager):
 
