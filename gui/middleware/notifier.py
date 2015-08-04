@@ -869,8 +869,6 @@ class notifier:
 
     def _stop_afp(self):
         self._system("/usr/sbin/service netatalk forcestop")
-        self._system("/bin/pkill afpd")
-        self._system("/bin/pkill cnid_metad")
 
     def _restart_afp(self):
         self._stop_afp()
