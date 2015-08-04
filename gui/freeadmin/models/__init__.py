@@ -45,6 +45,57 @@ from .fields import (
 )
 
 log = logging.getLogger('freeadmin.models')
+MIDDLEWARE_MODEL_METHODS = {}
+
+
+class FieldMiddlewareMapping(object):
+
+    def __init__(self, tuples):
+        self.__field = {}
+        self.__middleware = {}
+        for key, val in tuples:
+            keylist = self.__to_list(key)
+            vallist = self.__to_list(val)
+
+            for k in keylist:
+                self.__field[k] = val
+
+            for v in vallist:
+                self.__middleware[v] = keylist
+
+    def __to_list(self, key):
+        if isinstance(key, (str, unicode)):
+            key = [key]
+        elif not isinstance(key, (list, tuple)):
+            raise ValueError(
+                "Invalid type for %r: %s" % (key, type(key).__name__)
+            )
+        return key
+
+    def get_field_to_middleware(self, field):
+        return self.__field.get(field, None)
+
+    def get_middleware_to_field(self, field):
+        return self.__middleware.get(field, [])
+
+
+class Middleware(object):
+
+    def __init__(self, model, klass):
+
+        self.field_mapping = FieldMiddlewareMapping(
+            getattr(klass, 'field_mapping', ()))
+        self.provider_name = getattr(
+            klass, 'provider_name', model._meta.model_name)
+
+        self.middleware_methods = getattr(klass, 'middleware_methods', None)
+        if self.middleware_methods is None:
+            self.middlware_methods = {
+                'query': '%s.query' % self.provider_name,
+                'add': '%s.create' % self.provider_name,
+                'delete': '%s.delete' % self.provider_name,
+                'update': '%s.update' % self.provider_name,
+            }
 
 
 class FreeModelBase(ModelBase):
@@ -58,6 +109,10 @@ class FreeModelBase(ModelBase):
             pass
         elif hasattr(new_class, 'FreeAdmin'):
             site.register(new_class, freeadmin=new_class.FreeAdmin)
+
+        if hasattr(new_class, 'Middleware'):
+            new_class.add_to_class(
+                '_middleware', Middleware(new_class, new_class.Middleware))
 
         return new_class
 
@@ -101,82 +156,10 @@ class Model(models.Model):
             ), )
 
 
-class FieldMiddlewareMapping(object):
-
-    def __init__(self, tuples):
-        self.__field = {}
-        self.__middleware = {}
-        for key, val in tuples:
-            keylist = self.__to_list(key)
-            vallist = self.__to_list(val)
-
-            for k in keylist:
-                self.__field[k] = val
-
-            for v in vallist:
-                self.__middleware[v] = keylist
-
-    def __to_list(self, key):
-        if isinstance(key, (str, unicode)):
-            key = [key]
-        elif not isinstance(key, (list, tuple)):
-            raise ValueError(
-                "Invalid type for %r: %s" % (key, type(key).__name__)
-            )
-        return key
-
-    def get_field_to_middleware(self, field):
-        return self.__field.get(field, None)
-
-    def get_middleware_to_field(self, field):
-        return self.__middleware.get(field, [])
-
-
-FMM = {
-    'bsdgroups': FieldMiddlewareMapping((
-        ('bsdgrp_group', 'name'),
-        ('bsdgrp_builtin', 'builtin'),
-        (('bsdgrp_gid', 'id'), 'id'),
-        ('bsdgrp_sudo', 'sudo'),
-        ('bsdgrp_users', 'members'),
-    )),
-    'bsdusers': FieldMiddlewareMapping((
-        (('bsdusr_uid', 'id'), 'id'),
-        ('bsdusr_username', 'username'),
-        ('bsdusr_unixhash', 'unixhash'),
-        ('bsdusr_smbhash', 'smbhash'),
-        ('bsdusr_group', 'group'),
-        ('bsdusr_home', 'home'),
-        ('bsdusr_shell', 'shell'),
-        ('bsdusr_full_name', 'full_name'),
-        ('bsdusr_builtin', 'builtin'),
-        ('bsdusr_email', 'email'),
-        ('bsdusr_password_disabled', 'password_disabled'),
-        ('bsdusr_locked', 'locked'),
-        ('bsdusr_sudo', 'sudo'),
-        ('bsdusr_sshpubkey', 'sshpubkey'),
-        ('bsdusr_groups', 'groups'),
-    )),
-}
-
-
-MIDDLEWARE_MODEL_METHODS = {
-    'bsdgroups': {
-        'query': 'groups.query',
-        'add': 'groups.create',
-        'delete': 'groups.delete',
-        'update': 'groups.update',
-    },
-    'bsdusers': {
-        'query': 'users.query',
-        'add': 'users.create',
-        'delete': 'users.delete',
-        'update': 'users.update',
-    }
-}
-
-
 def get_middleware_methods(model):
+    methods = model._middleware.middlware_methods
+    if methods is not None:
+        return methods
     methods = MIDDLEWARE_MODEL_METHODS.get(model._meta.model_name)
     if methods is None:
         raise NotImplementedError("RPC methods for '%s' not defined'" % (
@@ -202,7 +185,7 @@ class NewQuerySet(object):
         self.model = model
         self._result_cache = None
         self._filters = []
-        self._fmm = FMM.get(model._meta.model_name)
+        self._fmm = model._middleware.field_mapping
         if model._meta.ordering:
             self._sort = self._transform_order(*model._meta.ordering)
         else:
@@ -428,7 +411,7 @@ class NewModel(Model):
                 self._meta.model_name,
             ))
 
-        fmm = FMM.get(self._meta.model_name)
+        fmm = self._middleware.field_mapping
         data = kwargs.pop('data', {})
         if data:
             # Allow task to be submitted with custom data
@@ -482,7 +465,7 @@ class NewModel(Model):
                 extra = error.get('extra')
                 fields = {}
                 if extra and 'fields' in extra:
-                    fmm = FMM.get(self._meta.model_name)
+                    fmm = self._middleware.field_mapping
                     for field, errors in extra['fields'].items():
                         for key in fmm.get_middleware_to_field(field):
                             fields[key] = errors

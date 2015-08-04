@@ -26,7 +26,6 @@
 #####################################################################
 import crypt
 import logging
-import os
 import time
 
 from django.db import models
@@ -64,6 +63,16 @@ class bsdGroups(NewModel):
         verbose_name = _("Group")
         verbose_name_plural = _("Groups")
         ordering = ['bsdgrp_builtin', 'bsdgrp_group']
+
+    class Middleware:
+        field_mapping = (
+            ('bsdgrp_group', 'name'),
+            ('bsdgrp_builtin', 'builtin'),
+            (('bsdgrp_gid', 'id'), 'id'),
+            ('bsdgrp_sudo', 'sudo'),
+            ('bsdgrp_users', 'members'),
+        )
+        provider_name = 'groups'
 
     def __unicode__(self):
         return self.bsdgrp_group
@@ -171,6 +180,26 @@ class bsdUsers(NewModel):
         verbose_name = _("User")
         verbose_name_plural = _("Users")
         ordering = ['bsdusr_builtin', 'bsdusr_username']
+
+    class Middleware:
+        field_mapping = (
+            (('bsdusr_uid', 'id'), 'id'),
+            ('bsdusr_username', 'username'),
+            ('bsdusr_unixhash', 'unixhash'),
+            ('bsdusr_smbhash', 'smbhash'),
+            ('bsdusr_group', 'group'),
+            ('bsdusr_home', 'home'),
+            ('bsdusr_shell', 'shell'),
+            ('bsdusr_full_name', 'full_name'),
+            ('bsdusr_builtin', 'builtin'),
+            ('bsdusr_email', 'email'),
+            ('bsdusr_password_disabled', 'password_disabled'),
+            ('bsdusr_locked', 'locked'),
+            ('bsdusr_sudo', 'sudo'),
+            ('bsdusr_sshpubkey', 'sshpubkey'),
+            ('bsdusr_groups', 'groups'),
+        )
+        provider_name = 'users'
 
     def __unicode__(self):
         return self.bsdusr_username
