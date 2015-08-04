@@ -235,7 +235,6 @@ class bsdUsersForm(ModelForm):
             )
             self.fields['bsdusr_group'].required = False
             self.bsdusr_home_saved = u'/nonexistent'
-            self.bsdusr_home_copy = False
 
         elif self.instance.id is not None:
             user = dispatcher.call_sync(
@@ -249,7 +248,6 @@ class bsdUsersForm(ModelForm):
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
             self.advanced_fields = []
             self.bsdusr_home_saved = self.instance.bsdusr_home
-            self.bsdusr_home_copy = False
             self.fields.keyOrder.remove('bsdusr_mode')
             self.fields.keyOrder.insert(
                 len(self.fields.keyOrder) - 1,
@@ -345,20 +343,15 @@ class bsdUsersForm(ModelForm):
                 saved_home = self.bsdusr_home_saved
 
                 if home.endswith(bsdusr_username):
-                    if home != saved_home:
-                        self.bsdusr_home_copy = True
                     return home
 
                 if self.instance.id is None:
                     home = "%s/%s" % (home.rstrip('/'), bsdusr_username)
-               
+
                 if self.instance.id is None and not home.endswith(bsdusr_username):
                     raise forms.ValidationError(
                         _('Home directory must end with username')
                     )
-
-                if home != saved_home:
-                    self.bsdusr_home_copy = True
 
                 return home
 
@@ -426,14 +419,6 @@ class bsdUsersForm(ModelForm):
             self.cleaned_data['password'] = self.cleaned_data.pop(
                 'bsdusr_password', None)
             bsduser.save(data=self.cleaned_data)
-
-        if self.bsdusr_home_copy:
-            p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
-                self.cleaned_data['bsdusr_username'],
-                self.bsdusr_home_saved,
-                self.cleaned_data['bsdusr_home']
-            ))
-            p.communicate()
 
         return bsduser
 
