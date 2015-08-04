@@ -1375,8 +1375,11 @@ virtualization does a pass-through to the disk or hardware RAID controller. None
 capabilities of the disk or controller.
 
 Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
-as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots. A zvol is also required in order to take
-advantage of VAAI primitives and should be used when using virtualization software as the iSCSI initiator.
+as far as FreeNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots.
+
+When determining whether or not to use a file or a device extent, be aware that a zvol is required to take advantage of all VAAI primitives and is recommended when
+using virtualization software as the iSCSI initiator. The ATS, WRITE SAME, XCOPY and STUN, primitives are supported by both file and device extents. The UNMAP
+primitive is supported by zvols and raw SSDs. The threshold warnings primitive is fully supported by zvols and partially supported by file extents.
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
@@ -1406,7 +1409,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | *Device*                                                                                                             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Serial             | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address              |
+| Serial             | string         | unique LUN ID; the default is generated from the system's MAC address                                                |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
@@ -1423,11 +1426,10 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Logical Block Size | drop-down menu | only appears if *File* is selected; some initiators (MS SQL) do not like large physical block sizes; only override   |
-|                    |                | the default if the initiator requires a different block size                                                         |
+| Logical Block Size | drop-down menu | only override the default if the initiator requires a different block size                                           |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K, check this box                                 |
+| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K (MS SQL), check this box                        |
 | Block Size         |                |                                                                                                                      |
 | Reporting          |                |                                                                                                                      |
 |                    |                |                                                                                                                      |
