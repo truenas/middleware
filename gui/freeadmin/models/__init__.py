@@ -355,6 +355,11 @@ class NewQuerySet(object):
         clone._sort = clone._transform_order(*args)
         return clone
 
+    def select_related(self, *args):
+        """This is a NOOP"""
+        clone = self._clone()
+        return clone
+
 
 class NewManager(models.Manager):
 
