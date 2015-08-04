@@ -56,6 +56,7 @@ from django.utils.translation import ugettext as __
 from dojango import forms
 from freenasOS import Configuration, Train, Update
 from freenasUI import choices
+from freenasUI.account.forms import bsdUsersForm
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
@@ -88,6 +89,7 @@ from freenasUI.directoryservice.models import (
     NT4,
 )
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
@@ -493,11 +495,9 @@ class InitialWizard(CommonWizard):
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:
-                            gid = _n.group_create(share_group)
-                            group = bsdGroups.objects.create(
-                                bsdgrp_gid=gid,
-                                bsdgrp_group=share_group,
-                            )
+                            group = bsdGroups()
+                            group.bsdgrp_group = share_group
+                            group.save(data={'bsdgrp_group': share_group})
                         else:
                             group = bsdGroups.objects.all()[0]
                     else:
@@ -512,22 +512,20 @@ class InitialWizard(CommonWizard):
                             else:
                                 password = '!'
                                 password_disabled = True
-                            uid, gid, unixhash, smbhash = _n.user_create(
-                                username=share_user,
-                                fullname=share_user,
-                                password=password,
-                                shell='/bin/csh',
-                                homedir='/nonexistent',
-                                password_disabled=password_disabled
-                            )
-                            bsdUsers.objects.create(
-                                bsdusr_username=share_user,
-                                bsdusr_full_name=share_user,
-                                bsdusr_uid=uid,
-                                bsdusr_group=group,
-                                bsdusr_unixhash=unixhash,
-                                bsdusr_smbhash=smbhash,
-                            )
+                            bsduser = bsdUsers()
+                            bsduserform = bsdUsersForm(data={
+                                'bsdusr_home': '/nonexistent',
+                                'bsdusr_shell': '/bin/csh',
+                                'bsdusr_group': group.id,
+                                'bsdusr_password': password,
+                                'bsdusr_password2': password,
+                                'bsdusr_uid': dispatcher.call_sync('users.next_uid'),
+                                'bsdusr_username': share_user,
+                                'bsdusr_full_name': share_user,
+                                'bsdusr_password_disabled': password_disabled,
+                            }, instance=bsduser)
+                            bsduserform.is_valid()
+                            bsduserform.save()
 
                 else:
                     errno, errmsg = _n.create_zfs_vol(
