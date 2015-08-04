@@ -72,8 +72,9 @@ def main(command, quiet):
                 os.system("/usr/sbin/service ix-devd start")
                 print "Failover enabled."
                 sys.exit(0)
-            except:
+            except Exception,e:
                 print "Unable to contact remote node.  Failover not enabled."
+                print e
                 sys.exit(2)
         else:
             print "Failover not disabled.  Cannot enable!"
