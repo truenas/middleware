@@ -1,0 +1,3 @@
+/boot/kernel/sample_driver.ko
+/usr/local/bin/sample
+/usr/share/man/man8/sample.8.gz
