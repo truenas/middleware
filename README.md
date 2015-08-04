@@ -36,7 +36,6 @@ To build the system (experts only):
 * Build it
 
 ```
-% make git-external
 % make checkout
 % make release
 ```
