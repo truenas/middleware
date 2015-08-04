@@ -52,7 +52,7 @@ class Migration(DataMigration):
                 'locked': u.bsdusr_locked,
                 'sudo': u.bsdusr_sudo,
                 'sshpubkey': bsdusr_sshpubkey(u),
-                'bsdusr_groups': groups,
+                'groups': groups,
             })
 
     def backwards(self, orm):
