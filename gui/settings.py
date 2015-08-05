@@ -222,6 +222,9 @@ SOUTH_TESTS_MIGRATE = False
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
 FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
 
+if 'DJANGO_LOGGING_DISABLE' in os.environ:
+    LOGGING_CONFIG = None
+
 # the site admins on every HTTP 500 error.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
