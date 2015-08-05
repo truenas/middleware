@@ -129,9 +129,11 @@ def system_info(request):
 
 
 def bootenv_datagrid(request):
-    bootzvolstats = notifier().zpool_status('freenas-boot')
-    bootme = notifier().zpool_parse('freenas-boot')
-    zlist = zpool_list(name='freenas-boot')
+    boot_pool = dispatcher.call_sync(
+        'zfs.pool.query',
+        [('name', '=', 'freenas-boot')],
+        {'single': True})
+
     try:
         advanced = models.Advanced.objects.order_by('-id')[0]
     except:
@@ -144,10 +146,8 @@ def bootenv_datagrid(request):
             'resource_name': 'system/bootenv',
         }),
         'structure_url': reverse('system_bootenv_datagrid_structure'),
-        'bootme': bootme,
-        'stats': bootzvolstats,
-        'advanced': advanced,
-        'zlist': zlist,
+        'boot_pool': boot_pool,
+        'advanced': advanced
     })
 
 

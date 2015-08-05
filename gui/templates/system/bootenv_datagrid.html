@@ -22,25 +22,25 @@
       </script>
       </button>
     </div>
-    {% if bootme %}
+    {% if boot_pool %}
       <div class="gridAdd left" style="padding-left: 10px">
-        <strong>{% trans "Boot Volume Condition" %}: {{ stats.0 }} {{ stats.1 }}</strong><br />
-          {% if bootme.scrub.status == "IN_PROGRESS" %}
-            <p style="padding: 3px;">{% trans "Scrub Status" %}: {{ bootme.scrub.status_verbose }}</p>
+        <strong>{% trans "Boot Volume Condition" %}: {{ boot_pool.status }}</strong><br />
+          {% if boot_pool.scan.state == "SCANNING" %}
+            <p style="padding: 3px;">{% trans "Scrub Status" %}: {{ boot_pool.scan.state }}</p>
             <!-- comment this till one can find a auto refresh method
             <p style="padding: 3px;">
-              {% if bootme.scrub.progress %}{% trans "Progress" %}: {{ bootme.scrub.progress }}% &nbsp; &nbsp; {% endif %}
-              {% if bootme.scrub.scanned %}{% trans "Scan" %}: {% blocktrans with scanned=bootme.scrub.scanned total=bootme.scrub.total %}{{ scanned }} out of {{ total }}{% endblocktrans %} &nbsp; &nbsp; {% endif %}
+              {% trans "Progress" %}: {{ boot_pool.scan.percentage }}% &nbsp; &nbsp;
+              {% trans "Scan" %}: {% blocktrans with scanned=boot_pool.scan.bytes_processed total=boot_pool.scan.bytes_total %}{{ scanned }} out of {{ total }}{% endblocktrans %} &nbsp; &nbsp;
             </p>
             -->
           {% endif %}
-        {% if bootme.scrub.date %}<p style="padding-bottom: 0px;">{% trans "Last Scrub Run on" %}: {{ bootme.scrub.date }} &nbsp; &nbsp; </p>{% endif %}
+        {% if boot_pool.scan.start_time %}<p style="padding-bottom: 0px;">{% trans "Last Scrub Run on" %}: {{ boot_pool.scan.start_time }} &nbsp; &nbsp; </p>{% endif %}
       </div>
     {% endif %}
       <div class="gridAdd left" style="padding-left: 10px">
-        <strong>{% trans "Size" %}:</strong> {{ zlist.size|humanize_size }}<br />
+        <strong>{% trans "Size" %}:</strong> {{ boot_pool.properties.size.rawvalue|humanize_size }}<br />
         <p style="padding-bottom: 0px;">
-	  <strong>{% trans "Used" %}:</strong> {{ zlist.alloc|humanize_size }} ({{ zlist.capacity }}%)
+	  <strong>{% trans "Used" %}:</strong> {{ boot_pool.properties.allocated.rawvalue|humanize_size }} ({{ boot_pool.properties.capacity.value }})
 	</p>
       </div>
     <div style="clear: both;"></div>
