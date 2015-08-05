@@ -26,7 +26,6 @@
 #####################################################################
 import crypt
 import logging
-import os
 import time
 
 from django.db import models
@@ -34,13 +33,13 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.freeadmin.models import Model, PathField
+from freenasUI.freeadmin.models import Model, NewModel, NewManager, PathField, ListField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
 
 
-class bsdGroups(Model):
+class bsdGroups(NewModel):
     bsdgrp_gid = models.IntegerField(
         verbose_name=_("Group ID")
     )
@@ -58,39 +57,42 @@ class bsdGroups(Model):
         default=False,
         verbose_name=_("Permit Sudo"),
     )
+    bsdgrp_users = ListField(blank=True, null=True, editable=False)
 
     class Meta:
         verbose_name = _("Group")
         verbose_name_plural = _("Groups")
         ordering = ['bsdgrp_builtin', 'bsdgrp_group']
 
+    class Middleware:
+        field_mapping = (
+            ('bsdgrp_group', 'name'),
+            ('bsdgrp_builtin', 'builtin'),
+            (('bsdgrp_gid', 'id'), 'id'),
+            ('bsdgrp_sudo', 'sudo'),
+            ('bsdgrp_users', 'members'),
+        )
+        provider_name = 'groups'
+
     def __unicode__(self):
         return self.bsdgrp_group
 
     def delete(self, using=None, reload=True, pwdelete=True):
-        if self.bsdgrp_builtin is True:
-            raise ValueError(_(
-                "Group %s is built-in and can not be deleted!"
-            ) % (self.bsdgrp_group))
-        if pwdelete:
-            notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
         if domaincontroller_enabled():
             Samba4().group_delete(self.bsdgrp_group.encode('utf-8'))
         super(bsdGroups, self).delete(using)
-        if reload:
-            notifier().reload("user")
 
 
 def get_sentinel_group():
     return bsdGroups.objects.get(bsdgrp_group='nobody')
 
 
-class UserManager(models.Manager):
+class UserManager(NewManager):
     def get_by_natural_key(self, username):
         return self.get(**{self.model.USERNAME_FIELD: username})
 
 
-class bsdUsers(Model):
+class bsdUsers(NewModel):
 
     USERNAME_FIELD = 'bsdusr_username'
     REQUIRED_FIELDS = []
@@ -133,7 +135,7 @@ class bsdUsers(Model):
     )
     bsdusr_full_name = models.CharField(
         max_length=120,
-        verbose_name=_("Full Name")
+        verbose_name=_("Full Name"),
     )
     bsdusr_builtin = models.BooleanField(
         default=False,
@@ -159,10 +161,11 @@ class bsdUsers(Model):
         verbose_name=_("Permit Sudo"),
         default=False,
     )
-    bsdusr_microsoft_account = models.BooleanField(
-        verbose_name=_("Microsoft Account"),
-        default=False
+    bsdusr_sshpubkey = models.TextField(
+        verbose_name=_('SSH Public Key'),
+        blank=True,
     )
+    bsdusr_groups = ListField(blank=True, null=True, editable=False)
 
     is_active = True
     is_staff = True
@@ -173,22 +176,30 @@ class bsdUsers(Model):
         qs = cls.objects.filter(bsdusr_uid=0).exclude(bsdusr_unixhash='*')
         return qs.exists()
 
-    @property
-    def bsdusr_sshpubkey(self):
-        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
-        if not os.path.exists(keysfile):
-            return ''
-        try:
-            with open(keysfile, 'r') as f:
-                keys = f.read()
-            return keys
-        except:
-            return ''
-
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
         ordering = ['bsdusr_builtin', 'bsdusr_username']
+
+    class Middleware:
+        field_mapping = (
+            (('bsdusr_uid', 'id'), 'id'),
+            ('bsdusr_username', 'username'),
+            ('bsdusr_unixhash', 'unixhash'),
+            ('bsdusr_smbhash', 'smbhash'),
+            ('bsdusr_group', 'group'),
+            ('bsdusr_home', 'home'),
+            ('bsdusr_shell', 'shell'),
+            ('bsdusr_full_name', 'full_name'),
+            ('bsdusr_builtin', 'builtin'),
+            ('bsdusr_email', 'email'),
+            ('bsdusr_password_disabled', 'password_disabled'),
+            ('bsdusr_locked', 'locked'),
+            ('bsdusr_sudo', 'sudo'),
+            ('bsdusr_sshpubkey', 'sshpubkey'),
+            ('bsdusr_groups', 'groups'),
+        )
+        provider_name = 'users'
 
     def __unicode__(self):
         return self.bsdusr_username
@@ -219,7 +230,7 @@ class bsdUsers(Model):
 
     def set_password(self, password):
         # Django auth backend calls set_password even if user doesnt exist
-        if not self.bsdusr_username or not self.id:
+        if not self.bsdusr_username or self.id is None:
             time.sleep(0.1)
             return
         unixhash, smbhash = notifier().user_changepassword(

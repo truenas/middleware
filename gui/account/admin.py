@@ -30,7 +30,9 @@ class BsdUserFAdmin(BaseFreeAdmin):
         'id',
         'bsdusr_unixhash',
         'bsdusr_smbhash',
-        )
+        'bsdusr_sshpubkey',
+        'bsdusr_groups',
+    )
 
     def _action_builder(self, name, label=None, url=None, builtin=None):
         func = "editObject"
@@ -112,6 +114,11 @@ class BsdGroupFAdmin(BaseFreeAdmin):
     delete_form = "DeleteGroupForm"
     object_filters = {'bsdgrp_builtin__exact': False}
     object_num = -1
+
+    exclude_fields = (
+        'id',
+        'bsdgrp_users',
+    )
 
     icon_object = u"GroupIcon"
     icon_model = u"GroupsIcon"
