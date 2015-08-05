@@ -413,6 +413,7 @@ class bsdUsersForm(ModelForm):
                 'bsdusr_password', None)
             self.cleaned_data['bsdusr_group'] = grp
             self.cleaned_data.pop('bsdusr_mode', None)
+            self.cleaned_data.pop('bsdusr_creategroup', None)
             bsduser.save(data=self.cleaned_data)
 
         else:
@@ -421,6 +422,7 @@ class bsdUsersForm(ModelForm):
             self.cleaned_data['password'] = self.cleaned_data.pop(
                 'bsdusr_password', None)
             bsduser.save(data=self.cleaned_data)
+        notifier().reload("user")
 
         return bsduser
 
@@ -518,6 +520,7 @@ class bsdGroupsForm(ModelForm):
         ins = super(bsdGroupsForm, self).save()
         notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
             ntgroup=self.instance.bsdgrp_group)
+        notifier().reload("user")
         return ins
 
 
@@ -602,3 +605,4 @@ class DeleteGroupForm(forms.Form):
         if self.cleaned_data.get("cascade") is True:
             models.bsdUsers.objects.filter(bsdusr_group=self.instance).delete()
         notifier().groupmap_delete(self.instance.bsdgrp_group)
+        notifier().reload("user")
