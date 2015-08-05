@@ -151,15 +151,10 @@ class bsdUsersForm(ModelForm):
         label=_("Create a new primary group for the user"),
         required=False,
         initial=True)
-    bsdusr_mode = UnixPermissionField(
-        label=_('Home Directory Mode'),
-        initial='755',
-        required=False)
     bsdusr_to_group = SelectMultipleField(
         label=_('Auxiliary groups'),
         choices=(),
         required=False)
-    advanced_fields = ['bsdusr_mode']
 
     class Meta:
         model = models.bsdUsers
@@ -176,7 +171,6 @@ class bsdUsersForm(ModelForm):
             'bsdusr_username',
             'bsdusr_creategroup',
             'bsdusr_home',
-            'bsdusr_mode',
             'bsdusr_shell',
             'bsdusr_full_name',
             'bsdusr_email',
@@ -248,18 +242,10 @@ class bsdUsersForm(ModelForm):
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
             self.advanced_fields = []
             self.bsdusr_home_saved = self.instance.bsdusr_home
-            self.fields.keyOrder.remove('bsdusr_mode')
-            self.fields.keyOrder.insert(
-                len(self.fields.keyOrder) - 1,
-                'bsdusr_mode',
-            )
             self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             self.fields['bsdusr_username'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
-            if os.path.exists(self.instance.bsdusr_home):
-                mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
-                self.fields['bsdusr_mode'].initial = oct(mode)
             if self.instance.bsdusr_builtin:
                 self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
                 self.fields['bsdusr_uid'].widget.attrs['class'] = (
@@ -274,8 +260,6 @@ class bsdUsersForm(ModelForm):
                     'dijitDisabled dijitTextBoxDisabled '
                     'dijitValidationTextBoxDisabled'
                 )
-                self.fields['bsdusr_mode'].widget.attrs['disabled'] = True
-                self.fields['bsdusr_mode'].required = False
             if self.instance.bsdusr_locked or self.instance.bsdusr_sudo:
                 self.fields['bsdusr_password_disabled'].widget.attrs[
                     'disabled'
@@ -359,12 +343,6 @@ class bsdUsersForm(ModelForm):
             _('Home directory has to start with /mnt/ or be /nonexistent')
         )
 
-    def clean_bsdusr_mode(self):
-        mode = self.cleaned_data.get('bsdusr_mode')
-        if self.instance.id is None and not mode:
-            return '755'
-        return mode
-
     def clean(self):
         cleaned_data = self.cleaned_data
 
@@ -412,7 +390,6 @@ class bsdUsersForm(ModelForm):
             self.cleaned_data['password'] = self.cleaned_data.pop(
                 'bsdusr_password', None)
             self.cleaned_data['bsdusr_group'] = grp
-            self.cleaned_data.pop('bsdusr_mode', None)
             self.cleaned_data.pop('bsdusr_creategroup', None)
             bsduser.save(data=self.cleaned_data)
 
