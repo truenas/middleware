@@ -57,9 +57,7 @@ from django.views.decorators.cache import never_cache
 from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
-    ActivateClone,
     CheckForUpdates,
-    DeleteClone,
 )
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock

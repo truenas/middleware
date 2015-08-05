@@ -169,15 +169,9 @@ class BootEnvAddForm(Form):
         return name
 
     def save(self, *args, **kwargs):
-        kwargs = {}
-        if self._source:
-            kwargs['bename'] = self._source
-        clone = Update.CreateClone(
-            self.cleaned_data.get('name'),
-            **kwargs
-        )
-        if clone is False:
-            raise MiddlewareError(_('Failed to create a new Boot.'))
+        result = dispatcher.call_task_sync('boot_environments.create', self.cleaned_data.get('name'), self._source)
+        if result['state'] != 'FINISHED':
+            raise MiddlewareError(_(result['error']['message']))
 
 
 class BootEnvRenameForm(Form):
@@ -849,9 +843,11 @@ class InitialWizard(CommonWizard):
         for service in services_restart:
             _n.restart(service)
 
-        Update.CreateClone('Wizard-%s' % (
+        result = dispatcher.call_task_sync('boot_environments.create', 'Wizard-%s' % (
             datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         ))
+        if result['state'] != 'FINISHED':
+            raise MiddlewareError(_(result['error']['message']))
 
         progress['percent'] = 100
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
