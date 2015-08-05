@@ -12,6 +12,7 @@ usr/local/bin/ixdiagnose
 usr/local/bin/mfistatus.py
 usr/local/bin/perftests-nas
 usr/local/bin/sas2ircu
+usr/local/bin/sas3ircu
 usr/local/bin/zilstat
 usr/local/bin/adtool
 usr/local/bin/ldaptool
