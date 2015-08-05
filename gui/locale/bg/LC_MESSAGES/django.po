@@ -12457,3 +12457,80 @@ msgstr "Идентификационен номер на потребителя"
 #, fuzzy
 msgid "Password for LDAP User DN"
 msgstr "Идентификационен номер на потребителя"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr "Партньорската тайна не може да бъде същата като потребителската."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr "Партньорската тайна не може да бъде същата като потребителската."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "Версия на операционната система"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Модел за автентикация"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Име на модула"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "Брой на сървърите"
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "Неопределени адреси, не са валидни като nameservers"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Пътят трябва да съдържа точката на монтиране на диска."
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "Портали"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+#, fuzzy
+msgid "Critical for Failover"
+msgstr "Критични сигнали"
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "Портали"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""
