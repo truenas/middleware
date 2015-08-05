@@ -12901,3 +12901,80 @@ msgstr "ID Pengguna"
 #, fuzzy
 msgid "Password for LDAP User DN"
 msgstr "ID Pengguna"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr "Rahasia bersama tidak bisa sama dengan rahasia pengguna."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr "Rahasia bersama tidak bisa sama dengan rahasia pengguna."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "Versi OS"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Model Otentikasi"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Nama domain"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "Jumlah server"
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "Nama pengguna telah terdaftar. Cari yg lain."
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Klon harus pada volume yang sama"
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "Portal"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+#, fuzzy
+msgid "Critical for Failover"
+msgstr "Kritikal"
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "Portal"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""

@@ -13212,3 +13212,85 @@ msgstr "Benutzer ID"
 #, fuzzy
 msgid "Password for LDAP User DN"
 msgstr "Benutzer ID"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr ""
+"Das Peer-Geheimnis darf nicht das gleiche, wie das Benutzer-Geheimnis sein."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr ""
+"Das Peer-Geheimnis darf nicht das gleiche, wie das Benutzer-Geheimnis sein."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "Version"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Verschlüsselungsmodus"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Service Principal Name"
+
+# Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "Kerberos Keytab Datei"
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "Die folgenden Laufwerke haben bereits Tests für folgende Typen: %s"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Der Klon muss sich innerhalb desselben Laufwerks befinden."
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+# Übersetzen oder nicht?
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "Portal IP"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+#, fuzzy
+msgid "Critical for Failover"
+msgstr "Kritische Alarme"
+
+# Übersetzen oder nicht?
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "Portal IP"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""
