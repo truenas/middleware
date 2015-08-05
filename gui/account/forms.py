@@ -487,6 +487,8 @@ class bsdGroupsForm(ModelForm):
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled'
             )
+            self.instance._original_bsdgrp_group = self.instance.bsdgrp_group
+
         else:
             try:
                 self.initial['bsdgrp_gid'] = dispatcher.call_sync('groups.next_gid')
@@ -495,8 +497,14 @@ class bsdGroupsForm(ModelForm):
 
     def save(self):
         ins = super(bsdGroupsForm, self).save()
+
+        if self.instance and hasattr(self.instance, "_original_bsdgrp_group") and \
+            self.instance._original_bsdgrp_group != self.instance.bsdgrp_group:
+            notifier().groupmap_delete(ntgroup=self.instance._original_bsdgrp_group)
+ 
         notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
             ntgroup=self.instance.bsdgrp_group)
+
         notifier().reload("user")
         return ins
 

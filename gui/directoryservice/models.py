@@ -515,6 +515,12 @@ class idmap_rfc2307(idmap_base):
         ),
         blank=True
     )
+    idmap_rfc2307_ldap_user_dn_password = models.CharField(
+        verbose_name=_("LDAP User DN Password"),
+        max_length=120,
+        help_text=_("Password for LDAP User DN"),
+        blank=True
+    )
     idmap_rfc2307_ldap_realm = models.CharField(
         verbose_name=_("LDAP Realm"),
         max_length=120,
@@ -549,6 +555,13 @@ class idmap_rfc2307(idmap_base):
         self.idmap_backend_type = IDMAP_TYPE_RFC2307
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
 
+        if self.idmap_rfc2307_ldap_user_dn_password:
+            self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_decrypt(
+                self.idmap_rfc2307_ldap_user_dn_password
+            )
+
+        self._idmap_rfc2307_ldap_user_dn_password_encrypted = False
+
     def get_url(self):
         return self.idmap_rfc2307_ldap_url
 
@@ -557,6 +570,15 @@ class idmap_rfc2307(idmap_base):
 
     def get_certificate(self):
         return self.idmap_rfc2307_certificate
+
+    def save(self, *args, **kwargs):
+        if self.idmap_rfc2307_ldap_user_dn_password and \
+            not self._idmap_rfc2307_ldap_user_dn_password_encrypted:
+            self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_encrypt(
+                self.idmap_rfc2307_ldap_user_dn_password
+            )   
+            self._idmap_rfc2307_ldap_user_dn_password_encrypted = True
+        super(idmap_rfc2307, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("RFC2307 Idmap")
@@ -690,18 +712,47 @@ class KerberosKeytab(Model):
         help_text=_("Descriptive Name."),
         unique=True
     )
-    keytab_principal = models.CharField(
-        verbose_name=_("Principal"),
-        max_length=120,
-        help_text=_("Kerberos principal, eg: primary/instance@REALM")
-    )
     keytab_file = models.TextField(
         verbose_name=_("Keytab"),
         help_text=_("Kerberos keytab file")
     )
 
+    def delete(self):
+        KerberosPrincipal.objects.filter(
+            principal_keytab=self
+        ).delete()
+        super(KerberosKeytab, self).delete()
+
     def __unicode__(self):
-        return self.keytab_principal
+        return self.keytab_name
+
+
+class KerberosPrincipal(Model):
+    principal_keytab = models.ForeignKey(
+        KerberosKeytab,
+        verbose_name=_("Keytab"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
+    principal_version = models.IntegerField(
+        verbose_name=_("Version number"),
+        default=-1
+    )
+    principal_encryption = models.CharField(
+        verbose_name=_("Encryption algorithm"),
+        max_length=120
+    )
+    principal_name = models.CharField(
+        verbose_name=_("Principal name"),
+        max_length=120
+    )
+    principal_timestamp = models.DateTimeField(
+        verbose_name=_("Date")
+    )
+
+    def __unicode__(self):
+        return self.principal_name
 
 
 class KerberosSettings(Model):
@@ -790,7 +841,7 @@ class NT4(DirectoryServiceBase):
 
         if not self.nt4_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
             if gc_hostname:
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
                 if m:
@@ -833,6 +884,13 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("System hostname"),
         blank=True
     )
+    ad_netbiosname_b = models.CharField(
+        verbose_name=_("NetBIOS Name"),
+        max_length=120,
+        help_text=_("System hostname"),
+        blank=True,
+        null=True,
+    )
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
@@ -844,7 +902,7 @@ class ActiveDirectory(DirectoryServiceBase):
         default='off'
     )
     ad_certificate = models.ForeignKey(
-        CertificateAuthority, 
+        CertificateAuthority,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
@@ -899,9 +957,9 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ad_kerberos_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Kerberos Keytab"),
+    ad_kerberos_principal = models.ForeignKey(
+        KerberosPrincipal,
+        verbose_name=_("Kerberos Principal"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -909,12 +967,12 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_timeout = models.IntegerField(
         verbose_name=_("AD timeout"),
         help_text=_("Timeout for AD related commands."),
-        default=10
+        default=60
     )
     ad_dns_timeout = models.IntegerField(
         verbose_name=_("DNS timeout"),
         help_text=_("Timeout for AD DNS queries."),
-        default=10
+        default=60
     )
     ad_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),
@@ -968,7 +1026,7 @@ class ActiveDirectory(DirectoryServiceBase):
 
         if not self.ad_netbiosname:
             from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
+            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
             if gc_hostname:
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
                 if m:
@@ -1135,9 +1193,9 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True
     )
-    ldap_kerberos_keytab = models.ForeignKey(
-        KerberosKeytab,
-        verbose_name=_("Kerberos Keytab"),
+    ldap_kerberos_principal = models.ForeignKey(
+        KerberosPrincipal,
+        verbose_name=_("Kerberos Principal"),
         on_delete=models.SET_NULL,
         blank=True,
         null=True

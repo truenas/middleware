@@ -168,6 +168,9 @@ class notifier:
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
 
+    def is_freenas(self):
+        return True
+
     def _system(self, command):
         log.debug("Executing: %s", command)
         # TODO: python's signal class should be taught about sigprocmask(2)
@@ -204,8 +207,9 @@ class notifier:
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
-    def _pipeopen(self, command):
-        log.debug("Popen()ing: %s", command)
+    def _pipeopen(self, command, logger=log):
+        if logger:
+            logger.debug("Popen()ing: %s", command)
         return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
 
     def _pipeerr(self, command, good_status=0):
@@ -865,8 +869,6 @@ class notifier:
 
     def _stop_afp(self):
         self._system("/usr/sbin/service netatalk forcestop")
-        self._system("/bin/pkill afpd")
-        self._system("/bin/pkill cnid_metad")
 
     def _restart_afp(self):
         self._stop_afp()
@@ -1855,7 +1857,13 @@ class notifier:
             p1 = self._pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
             stdout, stderr = p1.communicate()
             ret = p1.returncode
-            if ret != 0:
+            if ret == 0:
+                # If we are replacing a faulted disk, kick it right after replace
+                # is initiated.
+                if from_label.isdigit():
+                    self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
+                # TODO: geli detach -l
+            else:
                 if from_swap != '':
                     self._system('/sbin/geli onetime /dev/%s' % (from_swap))
                     self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
@@ -1866,7 +1874,6 @@ class notifier:
                 if encrypt:
                     self._system('/sbin/geli detach %s' % (devname, ))
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
-            # TODO: geli detach -l
 
         # Restore previous larger ashift state.
         if larger_ashift == 1:
@@ -2528,7 +2535,7 @@ class notifier:
                                     stderr=subprocess.STDOUT,
                                     )
         except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The update failed: %s' % (str(cpe), ))
+            raise MiddlewareError('The update failed %s: %s' % (str(cpe), cpe.output))
         finally:
             os.chdir('/')
             os.unlink(path)
@@ -3685,29 +3692,6 @@ class notifier:
                     if state != '-':
                         self.zfs_inherit_option(snapshot, 'freenas:state')
                         self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
-        except IOError:
-            retval = 'Try again later.'
-        return retval
-
-    # Reactivate replication on all snapshots
-    def zfs_dataset_reset_replicated_snapshots(self, name, recursive=False):
-        name = str(name)
-        retval = None
-        if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r '%s'" % (name)
-        else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
-        try:
-            with mntlock(blocking=False):
-                zfsproc = self._pipeopen(zfscmd)
-                output = zfsproc.communicate()[0]
-                if output != '':
-                    snapshots_list = output.splitlines()
-                for snapshot_item in filter(None, snapshots_list):
-                    snapshot, state = snapshot_item.split('\t')
-                    if state != 'NEW':
-                        self.zfs_set_option(snapshot, 'freenas:state', 'NEW')
-                        self._system("/sbin/zfs hold -r freenas:repl %s" % (snapshot))
         except IOError:
             retval = 'Try again later.'
         return retval
@@ -5149,7 +5133,7 @@ class notifier:
         except:
             systemdataset = SystemDataset.objects.create()
 
-        if not systemdataset.sys_uuid:
+        if not systemdataset.get_sys_uuid():
             systemdataset.new_uuid()
             systemdataset.save()
 
@@ -5207,9 +5191,9 @@ class notifier:
 
         datasets = [basename]
         for sub in (
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ):
             datasets.append('%s/%s' % (basename, sub))
 
@@ -5263,8 +5247,8 @@ class notifier:
             'rrd': '%s/rrd' % basename,
         }
         newdatasets = {
-            'syslog': '%s/syslog-%s' % (basename, sysdataset.sys_uuid),
-            'rrd': '%s/rrd-%s' % (basename, sysdataset.sys_uuid),
+            'syslog': '%s/syslog-%s' % (basename, sysdataset.get_sys_uuid()),
+            'rrd': '%s/rrd-%s' % (basename, sysdataset.get_sys_uuid()),
         }
         proc = self._pipeopen(
             'zfs list -H -o name %s' % ' '.join(
@@ -5318,9 +5302,9 @@ class notifier:
     def system_dataset_mount(self, pool, path=SYSTEMPATH):
         systemdataset, basename = self.system_dataset_settings()
         sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ]
 
         # Check if .system datasets are already mounted
@@ -5338,9 +5322,9 @@ class notifier:
     def system_dataset_umount(self, pool):
         systemdataset, basename = self.system_dataset_settings()
         sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.sys_uuid,
-            'rrd-%s' % systemdataset.sys_uuid,
-            'configs-%s' % systemdataset.sys_uuid,
+            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
+            'rrd-%s' % systemdataset.get_sys_uuid(),
+            'configs-%s' % systemdataset.get_sys_uuid(),
         ]
 
         for i in sub:

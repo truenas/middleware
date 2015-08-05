@@ -56,7 +56,8 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
-    DS_TYPE_CIFS
+    DS_TYPE_CIFS,
+    idmap_to_enum
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 from freenasUI.middleware.notifier import notifier
@@ -439,6 +440,58 @@ def configure_idmap_rfc2307(smb4_conf, idmap, domain):
         ))
 
 
+def idmap_backend_rfc2307():
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+    except:
+        return False
+
+    return (idmap_to_enum(ad.ad_idmap_backend) == IDMAP_TYPE_RFC2307)
+
+
+def set_idmap_rfc2307_secret():
+    try:
+        ad = ActiveDirectory.objects.all()[0]
+    except:
+        return False
+
+    domain = None
+    idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
+
+    try:
+        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        domain = fad.netbiosname.upper()
+    except:
+        return False
+
+    args = [
+        "/usr/local/bin/net",
+        "idmap",
+        "secret"
+    ]
+
+    net_cmd = "%s '%s' '%s'" % (
+        string.join(args, ' '),
+        domain,
+        idmap.idmap_rfc2307_ldap_user_dn_password
+    )
+
+    p = pipeopen(net_cmd, quiet=True)
+    net_out = p.communicate()
+    if net_out and net_out[0]:
+        for line in net_out[0].split('\n'):
+            if not line:
+                continue
+            print line
+ 
+    ret = True
+    if p.returncode != 0:
+        print >> sys.stderr, "Failed to set idmap secret!"
+        ret = False
+
+    return ret
+
+
 def configure_idmap_rid(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
@@ -591,7 +644,7 @@ def set_ldap_password():
     if ldap.ldap_bindpw:
         p = pipeopen("/usr/local/bin/smbpasswd -w '%s'" % (
             ldap.ldap_bindpw,
-        ))
+        ), quiet=True)
         out = p.communicate()
         if out and out[1]:
             for line in out[1].split('\n'):
@@ -643,13 +696,6 @@ def add_ldap_conf(smb4_conf):
 
 
 def add_activedirectory_conf(smb4_conf):
-    # TODO: These 4 variables are never used?
-    # rid_range_start = 20000
-    # rid_range_end = 20000000
-
-    # ad_range_start = 10000
-    # ad_range_end = 90000000
-
     try:
         ad = ActiveDirectory.objects.all()[0]
     except:
@@ -753,7 +799,9 @@ def add_domaincontroller_conf(smb4_conf):
 
 
 def get_smb4_users():
-    return bsdUsers.objects.filter(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$')
+    return bsdUsers.objects.filter(Q(bsdusr_smbhash__regex=r'^.+:.+:[X]{32}:.+$') | \
+        Q(bsdusr_smbhash__regex=r'^.+:.+:[A-F0-9]{32}:.+$')
+    )
 
 
 def get_disabled_users():
@@ -860,7 +908,6 @@ def generate_smb4_conf(smb4_conf, role):
     confset1(smb4_conf, "directory name cache size = 0")
     confset1(smb4_conf, "kernel change notify = no")
 
-    confset1(smb4_conf, "dfree command = /usr/local/libexec/samba/dfree")
     confset1(smb4_conf,
              "panic action = /usr/local/libexec/samba/samba-backtrace")
     confset1(smb4_conf, "nsupdate command = /usr/local/bin/samba-nsupdate -g")
@@ -1005,20 +1052,21 @@ def generate_smb4_shares(smb4_shares):
             task = share.cifs_storage_task
 
         vfs_objects = []
-        if share.cifs_recyclebin:
-            vfs_objects.append('recycle')
         if task:
             vfs_objects.append('shadow_copy2')
         if is_within_zfs(share.cifs_path):
+            vfs_objects.append('zfs_space')
             vfs_objects.append('zfsacl')
         vfs_objects.extend(share.cifs_vfsobjects)
 
-        confset1(smb4_shares, "recycle:repository = .recycle/%U")
-        confset1(smb4_shares, "recycle:keeptree = yes")
-        confset1(smb4_shares, "recycle:versions = yes")
-        confset1(smb4_shares, "recycle:touch = yes")
-        confset1(smb4_shares, "recycle:directory_mode = 0777")
-        confset1(smb4_shares, "recycle:subdir_mode = 0700")
+        if share.cifs_recyclebin:
+            vfs_objects.append('recycle')
+            confset1(smb4_shares, "recycle:repository = .recycle/%U")
+            confset1(smb4_shares, "recycle:keeptree = yes")
+            confset1(smb4_shares, "recycle:versions = yes")
+            confset1(smb4_shares, "recycle:touch = yes")
+            confset1(smb4_shares, "recycle:directory_mode = 0777")
+            confset1(smb4_shares, "recycle:subdir_mode = 0700")
 
         if task:
             confset1(smb4_shares, "shadow:snapdir = .zfs/snapshot")
@@ -1438,6 +1486,9 @@ def main():
                           "/var/etc/private/passdb.tdb")
         smb4_map_groups()
         smb4_grant_rights()
+
+    if role == 'member' and activedirectory_enabled() and idmap_backend_rfc2307():
+        set_idmap_rfc2307_secret()
 
 
 if __name__ == '__main__':

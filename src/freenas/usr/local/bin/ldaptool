@@ -79,7 +79,6 @@ class LDAPToolShell(cmd.Cmd):
             [ "krb_kdc", "Kerberos KDC" ],
             [ "krb_admin_server", "Kerberos admin server" ],
             [ "krb_kpasswd_server", "Kerberos password server" ],
-            [ "keytab_name", "Kerberos keytab name" ],
             [ "keytab_principal", "Kerberos keytab principal" ],
             [ "keytab_file", "Kerberos keytab file" ],
             [ "certfile", "SSL/TLS certificate" ],
@@ -166,7 +165,6 @@ Available options:
             "ldap_krb_kdc",
             "ldap_krb_admin_server",
             "ldap_krb_kpasswd_server",
-            "ldap_keytab_name",
             "ldap_keytab_principal",
             "ldap_keytab_file",
             "ldap_ssl",
@@ -325,13 +323,6 @@ Available options:
     def set_krb_kpasswd_server(self, args):
         for arg in args:
             self.lc.krb_kpasswd_server = arg
-    
-    def get_keytab_name(self, args):
-        print >> sys.stdout, self.lc.keytab_name
-
-    def set_keytab_name(self, args):
-        for arg in args:
-            self.lc.keytab_name = arg
     
     def get_keytab_principal(self, args):
         print >> sys.stdout, self.lc.keytab_principal

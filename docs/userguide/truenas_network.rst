@@ -7,8 +7,6 @@ Network Configuration
 
 The Network section of the administrative GUI contains the following components for viewing and configuring the TrueNAS® system's network settings:
 
-*   :ref:`CARPs`: used when configuring high availablility.
-
 *   :ref:`Global Configuration`: used to to set non-interface specific network settings.
 
 *   :ref:`Interfaces`: used to configure a specified interface's network settings.
@@ -25,79 +23,6 @@ The Network section of the administrative GUI contains the following components 
 
 Each of these is described in more detail in this section.
 
-.. index:: CARPs:
-
-.. _CARPs:
-
-CARPs
------
-
-`Network -> CARPs` is used to configure the CARP information that is used when configuring high availability in `System -> Failovers`.
-
-Failover using CARP is only available on certain appliances and requires an advanced configuration between multiple TrueNAS® appliances that is created with
-the assistance of an iXsystems support engineer. Failover can only be used with iSCSI or NFS. Contact your iXsystems representative if you wish to schedule a
-time to configure failover. **Do not attempt to configure CARP on your own as it will fail and may render existing shares or volumes inaccessible.**
-
-This section provides an overview of CARP terminology and the CARP screen that appears in the graphical administrative utility.
-
-The following terminology is used by CARP:
-
-**Redundancy group:** a group of hosts on a network segment which are assigned the same virtual IP address. Within the group, one host is designated the
-"master" and the rest are considered "backups". The master responds to any traffic directed at the virtual IP address.
-
-**Advertisements:** the master sends regular network packets known as advertisements so the backups know that it is still available. If the backups don't 
-receive an advertisement from the master for a set period of time, the backup host with the lowest configured advertisements skew value will take over as
-master.
-
-**Advertisements Skew:** measured in 1/256 of a second. The value is added to the advertisement interval in order to make one host advertise a bit slower than
-the other.
-
-**Virtual host ID:** allows group members to identify which redundancy group the advertisement belongs to.
-
-**Password:** in order to prevent a malicious user from spoofing CARP advertisements, each group can be configured with a password.
-
-Figure 7.1a shows the configuration screen that appears when you click `Network -> CARPs -> Add CARP`. Table 7.1a describes the available configuration
-options.
-
-**Figure 7.1a: Adding a CARP**
-
-.. image:: images/carp.png
-
-**Table 7.1a: CARP Configuration Options**
-
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Setting             | Value     | Description                                                                                                     |
-|                     |           |                                                                                                                 |
-+=====================+===========+=================================================================================================================+
-| Interface Number    | number    | number, beginning with 0, used to identify the CARP interface                                                   |
-|                     |           |                                                                                                                 |
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Virtual Host ID     | integer   | allowed values range from 1 to 255; use the same value for all members of the redundancy group                  |
-|                     |           |                                                                                                                 |
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Password            | string    | use the same value for all members of the redundancy group                                                      |
-|                     |           |                                                                                                                 |
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Advertisements Skew | integer   | change this value on the backup that should be promoted to master should the original master become unavailable |
-|                     |           |                                                                                                                 |
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Critical for        | checkbox  | check this box to indicate that if any interface in this CARP goes down that a failover should be initiated,    |
-| Failover            |           | even if other interfaces in the CARP are still up                                                               |
-|                     |           |                                                                                                                 |
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-| Group               | drop-down | requires "Critical for Failover" to be checked; failover will only occur if all of the interfaces in this group |
-|                     | menu      | fail--see note below table                                                                                      |
-|                     |           |                                                                                                                 |
-+---------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-
-.. note:: when selecting a group number, keep in mind that "0" and "1" are reserved. The group number itself does not matter as it merely provides a way to group
-   interfaces. For example, you could put laggs in one group and management interfaces in another group.  Interface groups allow for a configuration where there are MPIO iSCSI
-   interfaces, which support round-robin so failover needs not be triggered until all interfaces fail, an NFS interface, which does not support round-robin so a failover
-   should occur when that interface fails, as well as configurations where the management network is a convenience, but the data network is mission critical.
-   Any interface that is not put into a group will never failover, which can be useful when the network itself is highly redundant since if the network itself fails,
-   failover won't help.
-
-
 .. index:: Global Configuration
 
 .. _Global Configuration:
@@ -105,10 +30,10 @@ options.
 Global Configuration
 --------------------
 
-Network --> Global Configuration, shown in Figure 7.2a, allows you to set non-interface specific network settings.
+Network --> Global Configuration, shown in Figure 7.1a, allows you to set non-interface specific network settings.
 
-Table 7.2a summarizes the settings that can be configured using the "Global Configuration" tab. The hostname and domain will be pre-filled for you, as seen in
-Figure 5.1a, but can be changed to meet the local network's requirements.
+Table 7.1a summarizes the settings that can be configured using the "Global Configuration" tab. The hostname and domain will be pre-filled for you,
+but can be changed to meet the local network's requirements.
 
 If you will be using :ref:`Active Directory`, set the IP address of the DNS server used in the realm.
 
@@ -117,11 +42,11 @@ TrueNAS® system in the "Host name database" field.
 
 .. note:: if you add a gateway to the Internet, make sure that the TrueNAS® system is protected by a properly configured firewall.
 
-**Figure 7.2a: Global Configuration Screen**
+**Figure 7.1a: Global Configuration Screen**
 
 .. image:: images/tn_network1.png
 
-**Table 7.2a: Global Configuration Settings**
+**Table 7.1a: Global Configuration Settings**
 
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | Setting                | Value      | Description                                                                                                          |
@@ -184,16 +109,16 @@ manual configuration.
 .. note:: typically the interface used to access the TrueNAS® administrative GUI is configured by DHCP. This interface will not appear in this screen, even
    though it is already dynamically configured and in use.
 
-Figure 7.3a shows the screen that opens when you click `Interfaces --> Add Interface`. Table 7.3a summarizes the configuration options when you "Add" an
+Figure 7.2a shows the screen that opens when you click `Interfaces --> Add Interface`. Table 7.2a summarizes the configuration options when you "Add" an
 interface or Edit an already configured interface. Note that if any changes to this screen require a network restart, the screen will turn red when you
 click the "OK" button and a pop-up message will remind you that network connectivity to the FreeNAS® system will be interrupted while the changes are
 applied. Click "Yes" to proceed with the network restart or "No" to cancel the operation.
 
-**Figure 7.3a: Adding or Editing an Interface**
+**Figure 7.2a: Adding or Editing an Interface**
 
 .. image:: images/interface.png
 
-**Table 7.3a: Interface Configuration Settings**
+**Table 7.2a: Interface Configuration Settings**
 
 +---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 | Setting             | Value          | Description                                                                                                         |
@@ -254,14 +179,14 @@ powering on the system without requiring physical access to the system. It can a
 assist with a configuration or troubleshooting issue.
 
 The IP addressing information for the out-of-band management port can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen,
-shown in Figure 7.4a, provides a shortcut to the most basic IPMI configuration. Table 7.4a summarizes the options when configuring IPMI using the TrueNAS®
+shown in Figure 7.3a, provides a shortcut to the most basic IPMI configuration. Table 7.3a summarizes the options when configuring IPMI using the TrueNAS®
 GUI.
 
-**Figure 7.4a: IPMI Configuration**
+**Figure 7.3a: IPMI Configuration**
 
 .. image:: images/tn_ipmi.png
 
-**Table 7.4a: IPMI Options**
+**Table 7.3a: IPMI Options**
 
 +----------------------+----------------+-----------------------------------------------------------------------------+
 | **Setting**          | **Value**      | **Description**                                                             |
@@ -372,9 +297,9 @@ Creating a Link Aggregation
 **Before** creating a link aggregation, double-check that no interfaces have been manually configured in `Network --> Interfaces --> View Interfaces`. If any
 configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
 
-Figure 7.5a shows the configuration options when adding a lagg interface using `Network --> Link Aggregations --> Create Link Aggregation`.
+Figure 7.4a shows the configuration options when adding a lagg interface using `Network --> Link Aggregations --> Create Link Aggregation`.
 
-**Figure 7.5a: Creating a lagg Interface**
+**Figure 7.4a: Creating a lagg Interface**
 
 .. image:: images/lagg.png
 
@@ -387,9 +312,9 @@ point, as the network is restarted. You may also have to change your switch sett
 set manually, you may have to manually enter a default gateway from the console setup menu option in order to get access into the GUI through the new lagg
 interface.
 
-If you click the "Edit" button for a lagg, you can set the configuration options described in Table 7.5a.
+If you click the "Edit" button for a lagg, you can set the configuration options described in Table 7.4a.
 
-**Table 7.5a: Configurable Options for a lagg**
+**Table 7.4a: Configurable Options for a lagg**
 
 +---------------------+----------------+----------------------------------------------------------------------------------+
 | **Setting**         | **Value**      | **Description**                                                                  |
@@ -431,9 +356,9 @@ This screen also allows you to configure an alias for the lagg interface. If you
 you wish to configure.
 
 If you click the "Edit Members" button, click the entry for a member, then click its "Edit" button, you can set the configuration options summarized in Table
-7.5b.
+7.4b.
 
-**Table 7.5b: Configuring a Member Interface**
+**Table 7.4b: Configuring a Member Interface**
 
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**      | **Description**                                                                                |
@@ -486,15 +411,15 @@ Static Routes
 -------------
 
 By default, no static routes are defined on the TrueNAS® system. Should you need a static route to reach portions of your network, add the route using
-`Network --> Static Routes --> Add Static Route`, shown in Figure 7.7a.
+`Network --> Static Routes --> Add Static Route`, shown in Figure 7.6a.
 
-**Figure 7.7a: Adding a Static Route**
+**Figure 7.6a: Adding a Static Route**
 
 .. image:: images/static.png
 
-The available options are summarized in Table 7.7a.
+The available options are summarized in Table 7.6a.
 
-**Table 7.7a: Static Route Options**
+**Table 7.6a: Static Route Options**
 
 +---------------------+-----------+-------------------------------------+
 | **Setting**         | **Value** | **Description**                     |
@@ -526,17 +451,17 @@ TrueNAS® uses FreeBSD's
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
 interface to demultiplex frames with IEEE 802.1q tags. This allows nodes on different VLANs to communicate through a layer 3 switch or router. A vlan
 interface must be assigned a parent interface and a numeric VLAN tag. A single parent can be assigned to multiple vlan interfaces provided they have different
-tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen shown in Figure 7.8a.
+tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen shown in Figure 7.7a.
 
 .. note:: VLAN tagging is the only 802.1q feature that is implemented.
 
-**Figure 7.8a: Adding a VLAN**
+**Figure 7.7a: Adding a VLAN**
 
 .. image:: images/vlan.png
 
-Table 7.8a summarizes the configurable fields.
+Table 7.7a summarizes the configurable fields.
 
-**Table 7.8a: Adding a VLAN**
+**Table 7.7a: Adding a VLAN**
 
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Setting           | Value          | Description                                                                                       |

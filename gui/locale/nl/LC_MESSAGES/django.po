@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-06-20 13:11+0000\n"
+"PO-Revision-Date: 2015-07-12 17:28+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1434805872.0\n"
+"X-POOTLE-MTIME: 1436722138.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9330,7 +9330,7 @@ msgid ""
 "has a virtual device of type '%(vdevtype)s'"
 msgstr ""
 "U probeert een virtueel apparaat van het type '%(addtype)s' toe te voegen in "
-"een pool die een virtueel apparaat van het type '%(vdevtype)s' heeft"
+"een pool die een virtueel apparaat van het type '%(vdevtype)s' bevat"
 
 #: storage/forms.py:568
 msgid ""
@@ -12690,6 +12690,7 @@ msgstr ""
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
+"Dit schakelt alle vormen van wachtwoordaanmelding uit, waaronder voor delen."
 
 #: network/forms.py:305
 msgid "VLAN ID"
@@ -12700,11 +12701,102 @@ msgid "A mountpoint with this path is already in use by another share."
 msgstr "Er wordt al een koppelpunt met dit pad door een andere share gebruikt."
 
 #: storage/forms.py:441
-#, fuzzy
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
 "U probeert een virtueel apparaat dat uit %(addnum)s apparaten bestaat toe te "
 "voegen in een pool die een virtueel apparaat bevat dat uit %(vdevnum)s "
-"apparaten bestond"
+"apparaten bestaat"
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "Nieuw wachtwoord bevestigen"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "DN van LDAP-gebruiker"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "DN van LDAP-gebruiker"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr "Het peergeheim mag niet hetzelfde zijn als het gebruikersgeheim."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr "Het peergeheim mag niet hetzelfde zijn als het gebruikersgeheim."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "Versie"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Versleutelingscodering"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Principal"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "Kerberos-realm."
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "De volgende adressen zijn niet geldig: %s"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Kloon moet zich op hetzelfde volume bevinden"
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "Portal-IP"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+#, fuzzy
+msgid "Critical for Failover"
+msgstr "Kritieke waarschuwingen"
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "Portal-IP"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""

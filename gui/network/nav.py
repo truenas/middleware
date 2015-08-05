@@ -24,6 +24,29 @@ class IPMI(TreeNode):
             raise ValueError
 
 
+class IPMI_B(TreeNode):
+
+    gname = u'IPMI_B'
+    name = _(u'IPMI')
+    type = 'opennetwork'
+    icon = u'IPMIIcon'
+    append_to = 'network'
+
+    def pre_build_options(self):
+        _n = notifier()
+        if _n.is_freenas():
+            raise ValueError
+
+        node = _n.failover_node()
+        if node not in ('A', 'B'):
+            raise ValueError
+
+        if node == 'A':
+            self.name = _('IPMI (Node B)')
+        else:
+            self.name = _('IPMI (Node A)')
+
+
 class NetSummary(TreeNode):
 
     gname = 'NetworkSummary'

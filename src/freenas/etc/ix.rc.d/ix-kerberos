@@ -16,20 +16,20 @@ generate_krb5_conf()
 generate_krb5_keytab()
 {
 	local IFS="|"
+	local kdir="/etc/kerberos"
+
+	mkdir -p "${kdir}"
+	rm -rf "${kdir}"/*
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
+		keytab_name,
 		keytab_file
 	FROM
 		directoryservice_kerberoskeytab
-        " | while read keytab_file
+        " | while read keytab_name keytab_file
 	do
-		local tmp="$(mktemp /tmp/tmp.XXXXXX)"
-		
-		echo "${keytab_file}" | /usr/bin/b64decode -r > "${tmp}"
-
-		/usr/sbin/ktutil copy "${tmp}" "/etc/krb5.keytab"
-		rm -f "${tmp}"
+		echo "${keytab_file}" | /usr/bin/b64decode -r > "${kdir}/${keytab_name}"
 	done
 }
 

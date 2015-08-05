@@ -1106,6 +1106,9 @@ In order to configure iSCSI:
 
 The rest of this section describes these steps in more detail.
 
+.. note:: if the system has been licensed for Fibre Channel, the screens will vary slightly than those found in the rest of this section. Refer to the section on
+   :ref:`Fiber Channel Ports` for details.
+
 .. _Target Global Configuration:
 
 Target Global Configuration
@@ -1116,7 +1119,7 @@ Target Global Configuration
 
 **Figure 10.5a: iSCSI Target Global Configuration Variables**
 
-.. image:: images/global1.png
+.. image:: images/global1a.png
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1127,19 +1130,6 @@ Target Global Configuration
 +=================================+==============================+===========================================================================================+
 | Base Name                       | string                       | see the "Constructing iSCSI names using the iqn. format" section of :rfc:`3721`           |
 |                                 |                              | if you are unfamiliar with this format                                                    |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Method           | drop-down menu               | configures the authentication level required by the target for discovery of valid         |
-|                                 |                              | devices, where *None* will allow anonymous discovery,                                     |
-|                                 |                              | *CHAP* and                                                                                |
-|                                 |                              | *Mutual CHAP* require authentication, and                                                 |
-|                                 |                              | *Auto* lets the initiator decide the authentication scheme                                |
-|                                 |                              |                                                                                           |
-+---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
-| Discovery Auth Group            | drop-down menu               | depends on "Discovery Auth Method" setting: required if set to *CHAP* or                  |
-|                                 |                              | *Mutual CHAP*, optional if set to                                                         |
-|                                 |                              | *Auto*, and not needed if set to                                                          |
-|                                 |                              | *None*                                                                                    |
 |                                 |                              |                                                                                           |
 +---------------------------------+------------------------------+-------------------------------------------------------------------------------------------+
 | ISNS Servers                    | string                       | space delimited list of hostnames or IP addresses of ISNS server(s) to register the       |
@@ -1164,26 +1154,38 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 
 **Figure 10.5b: Adding an iSCSI Portal**
 
-.. image:: images/portal.png
+.. image:: images/portal1.png
 
 **Table 10.5b: Portal Configuration Settings**
 
-+-------------+----------------+-----------------------------------------------------------------------------+
-| **Setting** | **Value**      | **Description**                                                             |
-|             |                |                                                                             |
-|             |                |                                                                             |
-+=============+================+=============================================================================+
-| Comment     | string         | optional description; portals are automatically assigned a numeric group ID |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| IP address  | drop-down menu | select the IP address associated with an interface or the wildcard address  |
-|             |                | of *0.0.0.0* (any interface)                                                |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Port        | integer        | TCP port used to access the iSCSI target; default is *3260*                 |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| **Setting**           | **Value**      | **Description**                                                             |
+|                       |                |                                                                             |
+|                       |                |                                                                             |
++=======================+================+=============================================================================+
+| Comment               | string         | optional description; portals are automatically assigned a numeric group ID |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| Discovery Auth Method | drop-down menu | configures the authentication level required by the target for discovery of |
+|                       |                | valid devices, where *None* will allow anonymous discovery,                 |
+|                       |                | *CHAP* and                                                                  |
+|                       |                | *Mutual CHAP* require authentication, and                                   |
+|                       |                | *Auto* lets the initiator decide the authentication scheme                  |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| Discovery Auth Group  | drop-down menu | depends on "Discovery Auth Method" setting: required if set to *CHAP* or    |
+|                       |                | *Mutual CHAP*, optional if set to                                           |
+|                       |                | *Auto*, and not needed if set to                                            |
+|                       |                | *None*                                                                      |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| IP address            | drop-down menu | select the IP address associated with an interface or the wildcard address  |
+|                       |                | of *0.0.0.0* (any interface)                                                |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
+| Port                  | integer        | TCP port used to access the iSCSI target; default is *3260*                 |
+|                       |                |                                                                             |
++-----------------------+----------------+-----------------------------------------------------------------------------+
 
 TrueNAS® systems with multiple IP addresses or interfaces can use a portal to provide services on different interfaces or subnets. This can be used to
 configure multi-path I/O (MPIO). MPIO is more efficient than a link aggregation.
@@ -1318,7 +1320,7 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 
 **Figure 10.5g: Adding an iSCSI Target**
 
-.. image:: images/target1.png
+.. image:: images/target1a.png
 
 **Table 10.5e: Target Settings**
 
@@ -1331,9 +1333,6 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Target Alias                | string         | optional user-friendly name                                                                                 |
-|                             |                |                                                                                                             |
-+-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
-| Serial                      | string         | unique ID for target to allow for multiple LUNs; the default is generated from the system's MAC address     |
 |                             |                |                                                                                                             |
 +-----------------------------+----------------+-------------------------------------------------------------------------------------------------------------+
 | Portal Group ID             | drop-down menu | leave empty or select number of existing portal to use                                                      |
@@ -1367,8 +1366,11 @@ virtualization does a pass-through to the disk or hardware RAID controller. None
 capabilities of the disk or controller.
 
 Virtualizing a zvol adds the benefits of ZFS such as its read cache and write cache. Even if the client formats the device extent with a different filesystem,
-as far as TrueNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots. A zvol is also required in order to take
-advantage of VAAI primitives and should be used when using virtualization software as the iSCSI initiator.
+as far as TrueNAS® is concerned, the data benefits from ZFS features such as block checksums and snapshots. 
+
+When determining whether or not to use a file or a device extent, be aware that a zvol is required to take advantage of all VAAI primitives and is recommended when
+using virtualization software as the iSCSI initiator. The ATS, WRITE SAME, XCOPY and STUN, primitives are supported by both file and device extents. The UNMAP
+primitive is supported by zvols and raw SSDs. The threshold warnings primitive is fully supported by zvols and partially supported by file extents.
 
 **File extent:** allows you to export a portion of a ZFS volume. The advantage of a file extent is that you can create multiple exports per volume.
 
@@ -1383,7 +1385,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 **Figure 10.5h: Adding an iSCSI Extent**
 
-.. image:: images/extent2a.png
+.. image:: images/extent2b.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1396,6 +1398,9 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent Type        | drop-down menu | select from *File* or                                                                                                |
 |                    |                | *Device*                                                                                                             |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Serial             | string         | unique LUN ID; the default is generated from the system's MAC address                                                |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Path to the extent | browse button  | only appears if *File* is selected; either browse to an existing file and use                                        |
@@ -1412,17 +1417,16 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Available Space    | string         | only appears if *File* or a zvol is selected; when the specified percentage of free space is reached, the system     |
-| Threshold          |                | will issue an alert                                                                                                  |
+| Logical Block Size | drop-down menu | only override the default if the initiator requires a different block size                                           |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Logical Block Size | drop-down menu | only appears if *File* is selected; some initiators (MS SQL) do not like large physical block sizes; only override   |
-|                    |                | the default if the initiator requires a different block size                                                         |
-|                    |                |                                                                                                                      |
-+--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
-| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K, check this box                                 |
+| Disable Physical   | checkbox       | if the initiator does not support physical block size values over 4K (MS SQL), check this box                        |
 | Block Size         |                |                                                                                                                      |
 | Reporting          |                |                                                                                                                      |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Available Space    | string         | only appears if *File* or a zvol is selected; when the specified percentage of free space is reached, the system     |
+| Threshold          |                | will issue an alert                                                                                                  |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Comment            | string         | optional                                                                                                             |
@@ -1443,8 +1447,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 
 .. _Targets/Extents:
 
-Target/Extents
-~~~~~~~~~~~~~~
+Targets/Extents
+~~~~~~~~~~~~~~~
 
 The last step is associating an extent to a target within :menuselection:`Sharing --> Block (iSCSI) --> Target/Extents --> Add Target/Extent`. This screen is
 shown in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
@@ -1477,6 +1481,43 @@ target.
 
 Once iSCSI has been configured, don't forget to start it in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to iSCSI. After a
 second or so, it will change to a blue ON, indicating that the service has started.
+
+.. _Fiber Channel Ports:
+
+Fiber Channel Ports
+~~~~~~~~~~~~~~~~~~~
+
+If the TrueNAS® system has Fiber Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
+:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fiber Channel Ports' tab will be added. An example is seen in Figure 10.5j.
+
+**Figure 10.5j: Block (iSCSI) Screen**
+
+.. image:: images/tn_fiber1.png
+
+Otherwise, the "Target Global Configuration" screen is the same as described in :ref:`Target Global Configuration`.
+
+Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fiber Channel.
+
+As seen in Figure 10.5k, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to create is iSCSI, Fiber Channel, or both.
+
+**Figure 10.5k: Add Target Screen**
+
+.. image:: images/tn_fiber2.png
+
+If you select "Fiber Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fiber Channel
+connection. An example is seen in Figure 10.5l.
+
+**Figure 10.5l: Configuring a Fiber Channel Target**
+
+.. image:: images/tn_fiber3.png
+
+The screens for adding an extent and associating a target are the same as described in :ref:`Extents` and :ref:`Targets/Extents`.
+
+An example of the "Fiber Channel Ports" screen is shown in Figure 10.5m.
+
+**Figure 10.5m: Configuring a Fiber Channel Port**
+
+.. image:: images/tn_fiber4.png
 
 .. _Connecting to iSCSI:
 
@@ -1533,9 +1574,9 @@ Zvol Based LUN
 ^^^^^^^^^^^^^^
 
 To grow a zvol based LUN, go to :menuselection:`Storage --> Volumes --> View Volumes`, highlight the zvol to be grown, and click its "Edit zvol" button. In
-the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is 4GB.
+the example shown in Figure 10.5n, the current size of the zvol named *zvol1* is 4GB.
 
-**Figure 10.5j: Editing an Existing Zvol**
+**Figure 10.5n: Editing an Existing Zvol**
 
 .. image:: images/tn_grow.png
 

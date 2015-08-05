@@ -302,12 +302,6 @@ Hello,
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
-            # Take a hold on snapshots.
-            holdcmd = '/sbin/zfs hold%s freenas:repl "%s"' % (rflag, snapname)
-            proc = pipeopen(holdcmd, logger=log)
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                log.error("Failed to create snapshot '%s': %s", snapname, err)
             MNTLOCK.unlock()
         else:
             snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
@@ -318,8 +312,6 @@ Hello,
 
         if Task.objects.filter(task_filesystem=fs, task_excludesystemdataset=True, task_recursive=True):
             if "/" not in fs:
-                os.system("/sbin/zfs list -t snapshot -o name -H -r %s/.system | "
-                        "/usr/bin/xargs -n 1 /sbin/zfs release freenas:repl" % fs)
                 os.system("/sbin/zfs list -t snapshot -o name -H -r %s/.system | "
                           "/usr/bin/xargs -n 1 /sbin/zfs destroy" % fs)
 

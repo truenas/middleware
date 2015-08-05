@@ -11,12 +11,18 @@
 generate_hostname()
 {
 	local IFS="|"
-	local id gc_hostname gc_domain
+	local id gc_hostname gc_domain hostname_field
+
+	if [ "$(ha_node)" = "B" ]; then
+		hostname_field="gc_hostname_b"
+	else
+		hostname_field="gc_hostname"
+	fi
 
 	id="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
             "SELECT id FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
 	gc_hostname="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-            "SELECT gc_hostname FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
+            "SELECT ${hostname_field} FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
 	gc_domain="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
             "SELECT gc_domain FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
 
@@ -32,9 +38,16 @@ generate_hostname()
 	elif dirsrv_enabled activedirectory; then
 		local domainname
 		local netbiosname
+		local netbiosname_field
+
+		if [ "$(ha_node)" = "B" ]; then
+			netbiosname_field="ad_netbiosname_b"
+		else
+			netbiosname_field="ad_netbiosname"
+		fi
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT ad_domainname, ad_netbiosname from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
+		"SELECT ad_domainname, ${netbiosname_field} from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
 		while read -r domainname netbiosname; do
 			netbiosname="$(echo "${netbiosname}"|cut -f1 -d','|cut -f1 -d ' '|tr A-Z a-z)"
 			domainname="$(echo "${domainname}"|tr A-Z a-z)"

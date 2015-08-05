@@ -284,6 +284,14 @@ def login_wrapper(
     shutdown, reboot or logout pages,
     instead redirect to /
     """
+
+    # Overload hook_app_index to shortcut passive node
+    # Doing that in another layer will use too many reasources
+    view = appPool.hook_app_index('account_login', request)
+    view = filter(None, view)
+    if view:
+        return view[0]
+
     if extra_context is None:
         extra_context = {}
     extra_context.update({

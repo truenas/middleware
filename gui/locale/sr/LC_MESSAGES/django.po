@@ -12497,3 +12497,95 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "Potvrdi Novu Lozinku"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "ID Korisnika"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "ID Korisnika"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr "Tajna za peer ne može biti ista kao tajna za korisnika."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr "Tajna za peer ne može biti ista kao tajna za korisnika."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "Verzija"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Režim šifrovanja"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Ime dodatne komponente"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "Broj servera"
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "Sledeći diskovi već imaju testove za ovaj tip: %s"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Klon mora biti u istom volumenu"
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "IP Portala"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+#, fuzzy
+msgid "Critical for Failover"
+msgstr "Kritična upozorenja"
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "IP Portala"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""

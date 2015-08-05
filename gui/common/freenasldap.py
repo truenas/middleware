@@ -51,6 +51,7 @@ from freenasUI.common.system import (
     get_freenas_var_by_file,
     ldap_objects,
     activedirectory_objects,
+    get_hostname
 )
 from freenasUI.common.freenascache import (
     FreeNAS_UserCache,
@@ -446,8 +447,31 @@ class FreeNAS_LDAP_Directory(object):
         if not isopen:
             self.close()
 
+        log.debug("FreeNAS_LDAP_Directory.search: leave")
         return results
 
+    def _modify(self, dn, modlist):
+        log.debug("FreeNAS_LDAP_Directory._modify: enter")
+        if not self._isopen:
+            return None
+
+        res = self._handle.modify_ext_s(dn, modlist)
+
+        log.debug("FreeNAS_LDAP_Directory._modify: leave")
+        return res
+
+    def modify(self, dn, modlist):
+        log.debug("FreeNAS_LDAP_Directory.modify: enter")
+        isopen = self._isopen
+        self.open()
+
+        res = self._modify(dn, modlist)
+
+        if not isopen:
+            self.close()
+
+        log.debug("FreeNAS_LDAP_Directory.modify: leave")
+        return res 
 
 class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
@@ -475,7 +499,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             'krb_admin_server',
             'krb_kpasswd_server',
             'kerberos_keytab',
-            'keytab_name',
             'keytab_principal',
             'keytab_file',
             'idmap_backend',
@@ -558,14 +581,13 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                         kwargs['krb_admin_server'] = kr.krb_admin_server
                         kwargs['krb_kpasswd_server'] = kr.krb_kpasswd_server
 
-                elif newkey == 'kerberos_keytab_id':
-                    kt = ldap.ldap_kerberos_keytab
+                elif newkey == 'kerberos_principal_id':
+                    kp = ldap.ldap_kerberos_principal
 
-                    if kt:
-                        kwargs['kerberos_keytab'] = kt
-                        kwargs['keytab_name'] = kt.keytab_name
-                        kwargs['keytab_principal'] = kt.keytab_principal
-                        kwargs['keytab_file'] = '/etc/krb5.keytab'
+                    if kp: 
+                        kwargs['kerberos_principal'] = kp
+                        kwargs['keytab_principal'] = kp.principal_name
+                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
 
                 else:
                     if not newkey in kwargs:
@@ -583,7 +605,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
 
-        if self.kerberos_realm or self.kerberos_keytab:
+        if self.kerberos_realm or self.keytab_principal:
             self.get_kerberos_ticket()
             self.flags |= FLAGS_SASL_GSSAPI
 
@@ -628,7 +650,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         res = False 
         kinit = False
 
-        if self.keytab_name and self.keytab_principal:
+        if self.keytab_principal:
             krb_principal = self.get_kerberos_principal_from_cache()
             if krb_principal and krb_principal.upper() == \
                 self.keytab_principal.upper():
@@ -976,6 +998,12 @@ class FreeNAS_ActiveDirectory_Base(object):
         if not srv_hosts:
             return None
 
+        if len(srv_hosts) == 1:
+            for s in srv_hosts: 
+                host = s.target.to_text(True)
+                port = long(s.port)
+                return (host, port)
+
         best_host = None
         latencies = {}
 
@@ -1226,12 +1254,11 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     @staticmethod
     def get_workgroup_name(domain, site=None, binddn=None, bindpw=None,
-        ssl='off', certfile=None, keytab_name=None, keytab_principal=None,
-        keytab_file=None, errors=[]):
+        ssl='off', certfile=None, keytab_principal=None, keytab_file=None, errors=[]):
 
         f = FreeNAS_ActiveDirectory(domainname=domain, site=site, binddn=binddn,
-            bindpw=bindpw, ssl=ssl, certfile=certfile, keytab_name=keytab_name,
-            keytab_principal=keytab_principal, keytab_file=keytab_file
+            bindpw=bindpw, ssl=ssl, certfile=certfile, keytab_principal=keytab_principal,
+            keytab_file=keytab_file
         )
         return f.get_netbios_name()
 
@@ -1244,6 +1271,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def __keys(self):
         return [
+            'machine',
             'domainname',
             'netbiosname',
             'bindname',
@@ -1273,7 +1301,6 @@ class FreeNAS_ActiveDirectory_Base(object):
             'kerberos_realm',
             'krb_realm',
             'kerberos_keytab',
-            'keytab_name',
             'keytab_principal',
             'keytab_file',
             'dchandle',
@@ -1307,6 +1334,9 @@ class FreeNAS_ActiveDirectory_Base(object):
             self.__krbname = self.krbname
         if self.kpwdname:
             self.__kpwdname = self.kpwdname
+
+        self.pagesize = FREENAS_LDAP_PAGESIZE
+        self.machine = "%s$" % get_hostname()
 
         #self.flags = FLAGS_SASL_GSSAPI
         self.flags = 0
@@ -1358,7 +1388,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         res = False 
         kinit = False
 
-        if self.keytab_name and self.keytab_principal:
+        if self.keytab_principal:
             krb_principal = self.get_kerberos_principal_from_cache()
             if krb_principal and krb_principal.upper() == \
                 self.keytab_principal.upper():
@@ -1460,6 +1490,8 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: leave")
 
     def set_kwargs(self):
+        from freenasUI.middleware.notifier import notifier
+
         kwargs = self.kwargs 
 
         if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
@@ -1469,11 +1501,37 @@ class FreeNAS_ActiveDirectory_Base(object):
                     continue
 
                 newkey = key.replace("ad_", "")
+                if (
+                    key.startswith('ad_netbiosname') and
+                    not notifier().is_freenas() and
+                    notifier().failover_node() == 'B'
+                ):
+                    if key == 'ad_netbiosname_b':
+                        newkey = 'netbiosname'
+                    elif key == 'ad_netbiosname':
+                        continue
+
                 if newkey in ('verbose_logging',
                     'unix_extensions', 'allow_trusted_doms',
                     'use_default_domain'):
                     kwargs[newkey] = \
                         False if long(ad.__dict__[key]) == 0 else True
+
+                elif newkey == 'netbiosname':
+                    netbiosname = ad.ad_netbiosname
+
+                    parts = []
+                    machine = netbiosname
+
+                    if ',' in netbiosname:
+                        parts = netbiosname.split(',')
+                        machine = parts[0] 
+                        
+                    elif ' ' in netbiosname:
+                        parts = netbiosname.split()
+                        machine = parts[0] 
+                    
+                    kwargs['machine'] = "%s$" % machine
 
                 elif newkey == 'certificate_id':
                     cert = get_certificateauthority_path(ad.ad_certificate)
@@ -1487,14 +1545,13 @@ class FreeNAS_ActiveDirectory_Base(object):
                         kwargs['krb_realm'] = kr.krb_realm
                         #self.flags |= FLAGS_SASL_GSSAPI
 
-                elif newkey == 'kerberos_keytab_id':
-                    kt = ad.ad_kerberos_keytab
+                elif newkey == 'kerberos_principal_id':
+                    kp = ad.ad_kerberos_principal
 
-                    if kt:
-                        kwargs['kerberos_keytab'] = kt
-                        kwargs['keytab_name'] = kt.keytab_name
-                        kwargs['keytab_principal'] = kt.keytab_principal
-                        kwargs['keytab_file'] = '/etc/krb5.keytab'
+                    if kp:
+                        kwargs['kerberos_principal'] = kp
+                        kwargs['keytab_principal'] = kp.principal_name
+                        kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
                         #self.flags |= FLAGS_SASL_GSSAPI
 
                 else:
@@ -1576,7 +1633,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.set_kpasswd_server()
 
         flags = self.flags &~ FLAGS_SASL_GSSAPI
-        if self.keytab_name and self.keytab_principal:
+        if self.keytab_principal:
             flags |= FLAGS_SASL_GSSAPI
 
         self.dchandle = FreeNAS_LDAP_Directory(
@@ -1584,6 +1641,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             host=self.dchost, port=self.dcport,
             ssl=self.ssl, certfile=self.certfile, flags=flags)
         self.dchandle.open()
+        self.dchandle.pagesize = self.pagesize
 
         self.set_global_catalog_server()
 
@@ -1592,6 +1650,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             host=self.gchost, port=self.gcport,
             ssl=self.ssl, certfile=self.certfile, flags=flags)
         self.gchandle.open()
+        self.gchandle.pagesize = self.pagesize
 
     def reset_servers(self):
         self.dcname = self.dchost = self.dcport = None
@@ -1700,6 +1759,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         clientctrls=None, timeout=-1, sizelimit=0):
         return handle._search(basedn, scope, filter, attributes, attrsonly,
             serverctrls, clientctrls, timeout, sizelimit)
+
+    def _modify(self, handle, dn, modlist):
+        return handle._modify(dn, modlist)
 
     def get_rootDSE(self):
         log.debug("FreeNAS_ActiveDirectory_Base.get_rootDSE: enter")
@@ -1927,6 +1989,28 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.get_sites: enter")
         return sites
 
+    def get_machine_account(self, machine=None):
+        log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: user = %s", machine)
+
+        if machine is None: 
+            machine = self.machine
+        if not machine:
+            raise AssertionError('machine is None')
+
+        filter = '(&(objectClass=computer)(sAMAccountName=%s))' % machine
+        results = self._search(self.dchandle, self.basedn,
+            ldap.SCOPE_SUBTREE, filter)
+
+        try:
+            results = results[0][1]
+
+        except:
+            results = None
+
+        log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: leave")
+        return results
+
     def get_userDN(self, user):
         log.debug("FreeNAS_ActiveDirectory_Base.get_userDN: enter")
         log.debug("FreeNAS_ActiveDirectory_Base.get_userDN: user = %s", user)
@@ -2100,6 +2184,124 @@ class FreeNAS_ActiveDirectory_Base(object):
             count = self.gcount
 
         return count
+
+    def disable_machine_account(self, machine=None):
+        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: machine = %s",
+            machine)
+        
+        res = False
+        results = self.get_machine_account(machine)
+        if not results:
+            return res
+
+        userAccountControl = 0
+        distinguishedName = None
+
+        try:
+            userAccountControl = long(results['userAccountControl'][0])
+            distinguishedName = results['distinguishedName'][0]
+
+        except:
+            userAccountControl = 0
+            distinguishedName = None
+
+        if not distinguishedName: 
+            return res
+
+        if not (userAccountControl & 0x2):
+            userAccountControl |= 0x2
+            try:
+                ret = self._modify(self.dchandle,
+                    distinguishedName,
+                    [(ldap.MOD_REPLACE, 'userAccountControl', str(userAccountControl))]
+                )
+                if ret:
+                    res = True
+
+            except Exception as e:
+                log.debug("ldap modify error: %s", e)
+                res = False
+    
+        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: leave")
+        return res
+
+    def enable_machine_account(self, machine=None):
+        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: machine = %s",
+            machine)
+
+        res = False
+        results = self.get_machine_account(machine)
+        if not results:
+            return res
+
+        userAccountControl = 0
+        distinguishedName = None
+
+        try:
+            userAccountControl = long(results['userAccountControl'][0])
+            distinguishedName = results['distinguishedName'][0]
+
+        except:
+            userAccountControl = 0
+            distinguishedName = None
+
+        if not distinguishedName: 
+            return res
+
+       
+        if userAccountControl & 0x2:
+            userAccountControl &= ~0x2
+            try:
+                ret = self._modify(self.dchandle,
+                    distinguishedName,
+                    [(ldap.MOD_REPLACE, 'userAccountControl', str(userAccountControl))]
+                )
+                if ret:
+                    res = True
+
+            except Exception as e:
+                log.debug("ldap modify error: %s", e)
+                res = False
+    
+        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: leave")
+        return res 
+
+    def joined(self):
+        log.debug("FreeNAS_ActiveDirectory_Base.joined: enter")
+
+        res = False
+        results = self.get_machine_account() 
+        if not results:
+            return res
+
+        distinguishedName = None
+
+        try:
+            distinguishedName = results['distinguishedName'][0]
+
+        except:
+            distinguishedName = None
+
+        if not distinguishedName: 
+            return res
+
+        args = [
+            "/usr/local/bin/net",
+            "ads",
+            "dn",
+            distinguishedName,
+            "-P",
+            "-l" 
+        ]  
+
+        (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+        if returncode == 0:
+            res = True
+
+        log.debug("FreeNAS_ActiveDirectory_Base.joined: leave")
+        return res
 
 
 class FreeNAS_ActiveDirectory(FreeNAS_ActiveDirectory_Base):

@@ -154,7 +154,7 @@ def send_mail(subject=None,
 
     try:
         gc = GlobalConfiguration.objects.order_by('-id')[0]
-        local_hostname = "%s.%s" % (gc.gc_hostname, gc.gc_domain)
+        local_hostname = "%s.%s" % (gc.get_hostname(), gc.gc_domain)
     except:
         local_hostname = "%s.local" % get_sw_name()
 
@@ -620,7 +620,7 @@ def backup_database():
 
     newfile = os.path.join(
         systempath,
-        'configs-%s' % systemdataset.sys_uuid,
+        'configs-%s' % systemdataset.get_sys_uuid(),
         get_sw_version(),
         '%s.db' % today,
     )
@@ -639,7 +639,7 @@ def get_dc_hostname():
     gc_hostname = gc_domain = hostname = None
     try:
         gc = GlobalConfiguration.objects.all()[0]
-        gc_hostname = gc.gc_hostname
+        gc_hostname = gc.get_hostname()
         gc_domain = gc.gc_domain
 
     except:
@@ -665,7 +665,7 @@ def get_hostname():
     hostname = None
     try:
         gc = GlobalConfiguration.objects.all()[0]
-        hostname = gc.gc_hostname
+        hostname = gc.get_hostname()
 
     except:
         pass

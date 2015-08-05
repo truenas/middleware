@@ -12633,3 +12633,95 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "Confirmare parolă"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "DN utilizator LDAP"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "DN utilizator LDAP"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr "The peer secret cannot be the same as user secret."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr "The peer secret cannot be the same as user secret."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "Versiune"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Tip criptare"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Principal"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "realm Kerberos."
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "Următoarele adrese nu sunt valide: %s"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Clona trebuie să fie în acelaşi volum"
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "IP portal"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+#, fuzzy
+msgid "Critical for Failover"
+msgstr "Alerte critice"
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "IP portal"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""

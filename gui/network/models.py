@@ -24,7 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import random
 import re
+import string
 
 from django.core.validators import RegexValidator
 from django.db import models, transaction
@@ -47,6 +49,15 @@ class GlobalConfiguration(Model):
         validators=[RegexValidator(
             regex=r'^[a-zA-Z\.\-\_0-9]+$',
         )],
+    )
+    gc_hostname_b = models.CharField(
+        max_length=120,
+        verbose_name=_("Hostname"),
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+        blank=True,
+        null=True,
     )
     gc_domain = models.CharField(
         max_length=120,
@@ -123,6 +134,16 @@ class GlobalConfiguration(Model):
     def __unicode__(self):
         return u'%s' % self.id
 
+    def get_hostname(self):
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_node() == 'B':
+                return self.gc_hostname_b
+            else:
+                return self.gc_hostname
+        else:
+            return self.gc_hostname
+
     def save(self, *args, **kwargs):
         # See #3437
         if self._orig_gc_hostname != self.gc_hostname:
@@ -161,10 +182,15 @@ class Interfaces(Model):
             " as default router, etc.")
     )
     int_ipv4address = IPAddressField(
-            verbose_name=_("IPv4 Address"),
-            blank=True,
-            default='',
-            )
+        verbose_name=_("IPv4 Address"),
+        blank=True,
+        default='',
+    )
+    int_ipv4address_b = IPAddressField(
+        verbose_name=_("IPv4 Address"),
+        blank=True,
+        default='',
+    )
     int_v4netmaskbit = models.CharField(
             max_length=3,
             choices=choices.v4NetmaskBitList,
@@ -194,6 +220,36 @@ class Interfaces(Model):
             verbose_name=_("IPv6 Prefix Length"),
             help_text=""
             )
+    int_carp = models.IntegerField(
+        editable=False,
+        null=True,
+    )
+    int_vip = IPAddressField(
+        verbose_name=_("Virtual IP"),
+        blank=True,
+        null=True,
+    )
+    int_vhid = models.PositiveIntegerField(
+        verbose_name=_("Virtual Host ID"),
+        null=True,
+        blank=True,
+    )
+    int_pass = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name=_("Password"),
+        editable=False,
+    )
+    int_critical = models.BooleanField(
+        default=False,
+        verbose_name=_("Critical for Failover"),
+    )
+    int_group = models.IntegerField(
+        verbose_name=_('Group'),
+        choices=[(i, i) for i in range(1, 33)],
+        null=True,
+        blank=True,
+    )
     int_options = models.CharField(
             max_length=120,
             verbose_name=_("Options"),
@@ -219,6 +275,27 @@ class Interfaces(Model):
         notifier().start("network")
 
     def save(self, *args, **kwargs):
+        if not self.int_vip:
+            self.int_carp = None
+        elif self.int_carp in (None, ''):
+            used = [i[0] for i in Interfaces.objects.values_list('int_carp')]
+            # More than 50 CARPs? I dont think so, but lets be safe
+            # and avoid counting how many interfaces we have got.
+            # FIXME: concurrency? Two CARP with same number
+            for i in xrange(50):
+                if i in (1, 2):
+                    continue
+                if i in used:
+                    continue
+                self.int_carp = i
+                break
+        if self.int_vip and not self.int_pass:
+            self.int_pass = ''.join([
+                random.SystemRandom().choice(
+                    string.ascii_letters + string.digits
+                )
+                for n in xrange(16)
+            ])
         super(Interfaces, self).save(*args, **kwargs)
         if self._original_int_options != self.int_options and \
                 re.search(r'mtu \d+', self._original_int_options) and \
@@ -240,6 +317,11 @@ class Interfaces(Model):
                 str(self.int_ipv4address),
                 str(self.int_v4netmaskbit),
                 ))
+        if self.int_ipv4address_b:
+            ips.append("%s/%s" % (
+                str(self.int_ipv4address_b),
+                str(self.int_v4netmaskbit),
+            ))
         for alias in self.alias_set.exclude(alias_v4address=''):
             ips.append("%s/%s" % (
                 str(alias.alias_v4address),
@@ -270,35 +352,50 @@ class Interfaces(Model):
 
 class Alias(Model):
     alias_interface = models.ForeignKey(
-            Interfaces,
-            verbose_name=_("Interface")
-            )
+        Interfaces,
+        verbose_name=_("Interface")
+    )
+    alias_vip = IP4AddressField(
+        verbose_name=_("Virtual IPv4"),
+        default='',
+        blank=True,
+    )
     alias_v4address = IP4AddressField(
-            verbose_name=_("IPv4 Address"),
-            default='',
-            blank=True,
-            )
+        verbose_name=_("IPv4 Address"),
+        default='',
+        blank=True,
+    )
+    alias_v4address_b = IP4AddressField(
+        verbose_name=_("IPv4 Address"),
+        default='',
+        blank=True,
+    )
     alias_v4netmaskbit = models.CharField(
-            max_length=3,
-            choices=choices.v4NetmaskBitList,
-            default='',
-            blank=True,
-            verbose_name=_("IPv4 Netmask"),
-            help_text=""
-            )
+        max_length=3,
+        choices=choices.v4NetmaskBitList,
+        default='',
+        blank=True,
+        verbose_name=_("IPv4 Netmask"),
+        help_text=""
+    )
     alias_v6address = IP6AddressField(
-            verbose_name=_("IPv6 Address"),
-            default='',
-            blank=True,
-            )
+        verbose_name=_("IPv6 Address"),
+        default='',
+        blank=True,
+    )
+    alias_v6address_b = IP6AddressField(
+        verbose_name=_("IPv6 Address"),
+        default='',
+        blank=True,
+    )
     alias_v6netmaskbit = models.CharField(
-            max_length=3,
-            choices=choices.v6NetmaskBitList,
-            default='',
-            blank=True,
-            verbose_name=_("IPv6 Prefix Length"),
-            help_text=""
-            )
+        max_length=3,
+        choices=choices.v6NetmaskBitList,
+        default='',
+        blank=True,
+        verbose_name=_("IPv6 Prefix Length"),
+        help_text=""
+    )
 
     def __unicode__(self):
         if self.alias_v4address:

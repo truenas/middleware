@@ -826,12 +826,16 @@ def volume_detach(request, vid):
             services=services)
         if form.is_valid():
             try:
+                events = []
                 volume.delete(
                     destroy=form.cleaned_data['mark_new'],
                     cascade=form.cleaned_data.get('cascade', True))
+                form.done(request, events)
                 return JsonResp(
                     request,
-                    message=_("The volume has been successfully detached"))
+                    message=_("The volume has been successfully detached"),
+                    events=events,
+                )
             except ServiceFailed, e:
                 return JsonResp(request, error=True, message=unicode(e))
     else:

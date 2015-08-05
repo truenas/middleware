@@ -12327,3 +12327,92 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
+
+#: directoryservice/forms.py:122
+#, fuzzy
+msgid "Confirm LDAP User DN Password"
+msgstr "改變密碼"
+
+#: directoryservice/models.py:519
+#, fuzzy
+msgid "LDAP User DN Password"
+msgstr "用戶 ID"
+
+#: directoryservice/models.py:521
+#, fuzzy
+msgid "Password for LDAP User DN"
+msgstr "用戶 ID"
+
+#: directoryservice/forms.py:476
+msgid "NetBIOS cannot be the same as the first."
+msgstr ""
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr ""
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "操作系統版本"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "詳情"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "IPv4 地址"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "伺服器數量"
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "群組的 gid 已經存在！"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "該路徑必須位於一個磁區的掛載點之下。"
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "埠"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+msgid "Critical for Failover"
+msgstr ""
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "埠"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""

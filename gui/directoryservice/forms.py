@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,8 +27,6 @@
 import base64
 import logging
 import os
-import re
-import shutil
 import tempfile
 
 from django.forms import FileField
@@ -36,20 +34,20 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 
-from freenasUI import choices
 from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
     FreeNAS_ActiveDirectory_Exception,
 )
+from freenasUI.common.pipesubr import run
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     validate_netbios_name,
     validate_netbios_names,
     compare_netbios_names
 )
-from freenasUI.directoryservice import models, utils
+from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -117,13 +115,63 @@ class idmap_nss_Form(ModelForm):
 
 
 class idmap_rfc2307_Form(ModelForm):
+    idmap_rfc2307_ldap_user_dn_password2 = forms.CharField(
+        max_length=120,
+        label=_("Confirm LDAP User DN Password"),
+        widget=forms.widgets.PasswordInput(),
+        required=False
+    ) 
+
     class Meta:
-        fields = '__all__'
+        fields = [
+            'idmap_rfc2307_range_low',
+            'idmap_rfc2307_range_high',
+            'idmap_rfc2307_ldap_server',
+            'idmap_rfc2307_bind_path_user',
+            'idmap_rfc2307_bind_path_group',
+            'idmap_rfc2307_user_cn',
+            'idmap_rfc2307_cn_realm',
+            'idmap_rfc2307_ldap_domain',
+            'idmap_rfc2307_ldap_url',
+            'idmap_rfc2307_ldap_user_dn',
+            'idmap_rfc2307_ldap_user_dn_password',
+            'idmap_rfc2307_ldap_user_dn_password2',
+            'idmap_rfc2307_ldap_realm',
+            'idmap_rfc2307_ssl',
+            'idmap_rfc2307_certificate'
+        ]
         model = models.idmap_rfc2307
+        widgets = {
+            'idmap_rfc2307_ldap_user_dn_password':
+                forms.widgets.PasswordInput(render_value=False)
+        }
         exclude = [
             'idmap_ds_type',
             'idmap_ds_id'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_rfc2307_Form, self).__init__(*args, **kwargs)
+        if self.instance.idmap_rfc2307_ldap_user_dn_password:
+            self.fields['idmap_rfc2307_ldap_user_dn_password'].required = False
+        if self._api is True:
+            del self.fields['idmap_rfc2307_ldap_user_dn_password']
+
+    def clean_idmap_rfc2307_ldap_user_dn_password2(self):
+        password1 = self.cleaned_data.get("idmap_rfc2307_ldap_user_dn_password")
+        password2 = self.cleaned_data.get("idmap_rfc2307_ldap_user_dn_password2")
+        if password1 != password2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return password2
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("idmap_rfc2307_ldap_user_dn_password"):
+            cdata['idmap_rfc2307_ldap_user_dn_password'] = \
+                self.instance.idmap_rfc2307_ldap_user_dn_password
+        return cdata
 
 
 class idmap_rid_Form(ModelForm):
@@ -248,10 +296,9 @@ class NT4Form(ModelForm):
             if started is False:
                 self.instance.ad_enable = False
                 super(NT4Form, self).save()
-                raise ServiceFailed("nt4",
-                    _("NT4 failed to reload."))
+                raise ServiceFailed("nt4", _("NT4 failed to reload."))
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("nt4")
 
         obj = super(NT4Form, self).save()
@@ -262,6 +309,7 @@ class ActiveDirectoryForm(ModelForm):
 
     advanced_fields = [
         'ad_netbiosname',
+        'ad_netbiosname_b',
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
@@ -272,7 +320,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_dcname',
         'ad_gcname',
         'ad_kerberos_realm',
-        'ad_kerberos_keytab',
+        'ad_kerberos_principal',
         'ad_nss_info',
         'ad_timeout',
         'ad_dns_timeout',
@@ -292,6 +340,7 @@ class ActiveDirectoryForm(ModelForm):
         for name in (
             'ad_domainname',
             'ad_netbiosname',
+            'ad_netbiosname_b',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_unix_extensions',
@@ -337,10 +386,17 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
+        if hasattr(notifier, 'failover_node'):
+            from freenasUI.failover.utils import node_label_field
+            node_label_field(
+                notifier().failover_node(),
+                self.fields['ad_netbiosname'],
+                self.fields['ad_netbiosname_b'],
+            )
 
     def clean_ad_dcname(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
-        ad_dcport = 389 
+        ad_dcport = 389
 
         ad_ssl = self.cleaned_data.get('ad_ssl')
         if ad_ssl == 'on':
@@ -359,7 +415,7 @@ class ActiveDirectoryForm(ModelForm):
             ret = FreeNAS_ActiveDirectory.port_is_listening(
                 host=ad_dcname, port=ad_dcport, errors=errors
             )
-     
+
             if ret is False:
                 raise Exception(
                     'Invalid Host/Port: %s' % errors[0]
@@ -369,7 +425,7 @@ class ActiveDirectoryForm(ModelForm):
             raise forms.ValidationError('%s.' % e)
 
         return self.cleaned_data.get('ad_dcname')
-    
+
     def clean_ad_gcname(self):
         ad_gcname = self.cleaned_data.get('ad_gcname')
         ad_gcport = 3268
@@ -391,7 +447,7 @@ class ActiveDirectoryForm(ModelForm):
             ret = FreeNAS_ActiveDirectory.port_is_listening(
                 host=ad_gcname, port=ad_gcport, errors=errors
             )
-     
+
             if ret is False:
                 raise Exception(
                     'Invalid Host/Port: %s' % errors[0]
@@ -410,6 +466,21 @@ class ActiveDirectoryForm(ModelForm):
             raise forms.ValidationError(e)
         return netbiosname
 
+    def clean_ad_netbiosname_b(self):
+        netbiosname_a = self.cleaned_data.get("ad_netbiosname")
+        netbiosname = self.cleaned_data.get("ad_netbiosname_b")
+        if not netbiosname:
+            return netbiosname
+        if netbiosname_a and netbiosname_a == netbiosname:
+            raise forms.ValidationError(_(
+                'NetBIOS cannot be the same as the first.'
+            ))
+        try:
+            validate_netbios_names(netbiosname)
+        except Exception as e:
+            raise forms.ValidationError(e)
+        return netbiosname
+
     def clean(self):
         cdata = self.cleaned_data
         domain = cdata.get("ad_domainname")
@@ -417,12 +488,13 @@ class ActiveDirectoryForm(ModelForm):
         bindpw = cdata.get("ad_bindpw")
         site = cdata.get("ad_site")
         netbiosname = cdata.get("ad_netbiosname")
+        netbiosname_b = cdata.get("ad_netbiosname_b")
         ssl = cdata.get("ad_ssl")
         certificate = cdata["ad_certificate"]
-        ad_kerberos_keytab = cdata["ad_kerberos_keytab"]
+        ad_kerberos_principal = cdata["ad_kerberos_principal"]
         workgroup = None
 
-        if certificate: 
+        if certificate:
             certificate = certificate.get_certificate_path()
 
         args = {
@@ -432,14 +504,14 @@ class ActiveDirectoryForm(ModelForm):
             'certfile': certificate
         }
 
-        if not ad_kerberos_keytab:
+        if not ad_kerberos_principal:
             if not cdata.get("ad_bindpw"):
                 cdata['ad_bindpw'] = self.instance.ad_bindpw
 
             if not bindname:
-                raise forms.ValidationError("No domain account name specified") 
+                raise forms.ValidationError("No domain account name specified")
             if not bindpw:
-                raise forms.ValidationError("No domain account password specified") 
+                raise forms.ValidationError("No domain account password specified")
 
             binddn = "%s@%s" % (bindname, domain)
             errors = []
@@ -458,16 +530,23 @@ class ActiveDirectoryForm(ModelForm):
             args['bindpw'] = bindpw
 
         else: 
-            args['keytab_name'] = ad_kerberos_keytab.keytab_name
-            args['keytab_principal'] = ad_kerberos_keytab.keytab_principal
+            args['keytab_principal'] = ad_kerberos_principal.principal_name
             args['keytab_file'] = '/etc/krb5.keytab'
 
         workgroup = FreeNAS_ActiveDirectory.get_workgroup_name(**args)
         if workgroup:
             if compare_netbios_names(netbiosname, workgroup, None):
-                raise forms.ValidationError("The NetBIOS name cannot be the same as the workgroup name!")
+                raise forms.ValidationError(_(
+                    "The NetBIOS name cannot be the same as the workgroup name!"
+                ))
+            if netbiosname_b:
+                if compare_netbios_names(netbiosname_b, workgroup, None):
+                    raise forms.ValidationError(_(
+                        "The NetBIOS name cannot be the same as the workgroup "
+                        "name!"
+                    ))
 
-        else: 
+        else:
             log.warn("Unable to determine workgroup name")
 
         if ssl in ("off", None):
@@ -495,10 +574,12 @@ class ActiveDirectoryForm(ModelForm):
             if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
-                raise ServiceFailed("activedirectory",
-                    _("Active Directory failed to reload."))
+                raise ServiceFailed(
+                    "activedirectory",
+                    _("Active Directory failed to reload."),
+                )
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("activedirectory")
         return obj
 
@@ -530,7 +611,7 @@ class NISForm(ModelForm):
                 super(NISForm, self).save()
                 raise ServiceFailed("nis", _("NIS failed to reload."))
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("nis")
 
 
@@ -544,7 +625,7 @@ class LDAPForm(ModelForm):
         'ldap_machinesuffix',
         'ldap_sudosuffix',
         'ldap_kerberos_realm',
-        'ldap_kerberos_keytab',
+        'ldap_kerberos_principal',
         'ldap_ssl',
         'ldap_certificate',
         'ldap_timeout',
@@ -653,10 +734,9 @@ class LDAPForm(ModelForm):
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
-                raise ServiceFailed("ldap",
-                    _("LDAP failed to reload."))
+                raise ServiceFailed("ldap", _("LDAP failed to reload."))
         else:
-            if started == True:
+            if started is True:
                 started = notifier().stop("ldap")
 
         return obj
@@ -691,7 +771,7 @@ class KerberosRealmForm(ModelForm):
 class KerberosKeytabCreateForm(ModelForm):
     keytab_file = FileField(
         label=_("Kerberos Keytab"),
-        required=False 
+        required=False
     )
 
     class Meta:
@@ -708,7 +788,7 @@ class KerberosKeytabCreateForm(ModelForm):
         encoded = None
         if hasattr(keytab_file, 'temporary_file_path'):
             filename = keytab_file.temporary_file_path()
-            with open(temporary_file_path, "r") as f:
+            with open(filename, "r") as f:
                 keytab_contents = f.read()
                 encoded = base64.b64encode(keytab_contents)
                 f.close()
@@ -726,8 +806,62 @@ class KerberosKeytabCreateForm(ModelForm):
 
         return encoded
 
+    def save_principals(self, keytab):
+        if not keytab:
+            return False
+
+        keytab_file = self.cleaned_data.get("keytab_file")
+        regex = re.compile(
+            '^(\d+)\s+([\w-]+(\s+\(\d+\))?)\s+([^\s]+)\s+([\d+\-]+)(\s+)?$'
+        )
+
+        tmpfile = tempfile.mktemp(dir="/tmp")
+        with open(tmpfile, 'w') as f:
+            decoded = base64.b64decode(keytab_file)
+            f.write(decoded)
+            f.close()
+
+        (res, out, err) = run("/usr/sbin/ktutil -vk '%s' list" % tmpfile)
+        if res != 0:
+            log.debug("save_principals(): %s", err)
+            os.unlink(tmpfile)
+            return False
+
+        os.unlink(tmpfile)
+
+        ret = False
+        out = out.splitlines()
+        if not out:
+            return False
+
+        for line in out:
+            line = line.strip()
+            if not line:
+                continue
+            m = regex.match(line)
+            if m:
+                try:
+                    kp = models.KerberosPrincipal()
+                    kp.principal_keytab = keytab
+                    kp.principal_version = int(m.group(1))
+                    kp.principal_encryption = m.group(2)
+                    kp.principal_name = m.group(4)
+                    kp.principal_timestamp = m.group(5)
+                    kp.save()
+                    ret = True
+
+                except Exception as e:
+                    log.debug("save_principals(): %s", e)
+                    ret = False
+
+        return ret
+
     def save(self):
-        super(KerberosKeytabCreateForm, self).save()
+        obj = super(KerberosKeytabCreateForm, self).save()
+        if not self.save_principals(obj):
+            obj.delete()
+            log.debug("save(): unable to save principals")
+
         notifier().start("ix-kerberos")
 
 
@@ -743,10 +877,6 @@ class KerberosKeytabEditForm(ModelForm):
 
         self.fields['keytab_name'].widget.attrs['readonly'] = True
         self.fields['keytab_name'].widget.attrs['class'] = (
-            'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
-        )
-        self.fields['keytab_principal'].widget.attrs['readonly'] = True
-        self.fields['keytab_principal'].widget.attrs['class'] = (
             'dijitDisabled dijitTextBoxDisabled dijitValidationTextBoxDisabled'
         )
 

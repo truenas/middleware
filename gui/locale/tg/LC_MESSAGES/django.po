@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2015-07-03 09:17+0000\n"
+"PO-Revision-Date: 2015-08-04 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tg\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1435915020.0\n"
+"X-POOTLE-MTIME: 1438679819.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11643,4 +11643,82 @@ msgstr ""
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
+msgstr ""
+
+#: directoryservice/forms.py:122
+msgid "Confirm LDAP User DN Password"
+msgstr ""
+
+#: directoryservice/models.py:519
+msgid "LDAP User DN Password"
+msgstr ""
+
+#: directoryservice/models.py:521
+msgid "Password for LDAP User DN"
+msgstr ""
+
+#: directoryservice/forms.py:476
+msgid "NetBIOS cannot be the same as the first."
+msgstr ""
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr ""
+
+#: directoryservice/models.py:739
+msgid "Version number"
+msgstr ""
+
+#: directoryservice/models.py:743
+msgid "Encryption algorithm"
+msgstr ""
+
+#: directoryservice/models.py:747
+msgid "Principal name"
+msgstr ""
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+msgid "Kerberos Principal"
+msgstr ""
+
+#: network/forms.py:254
+msgid "The following VHIDs are already in use: %s"
+msgstr ""
+
+#: network/forms.py:282
+msgid "The IP must be within the same network"
+msgstr ""
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+msgid "Virtual IP"
+msgstr ""
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+msgid "Critical for Failover"
+msgstr ""
+
+#: network/models.py:359
+msgid "Virtual IPv4"
+msgstr ""
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
 msgstr ""
