@@ -263,6 +263,14 @@ class NewQuerySet(object):
                 c._filters.append(
                     (field, '=' if not opposite else '!=', val)
                 )
+            elif _filter == 'regex':
+                if opposite:
+                    raise NotImplementedError(
+                        "Exclude for regex not implemented"
+                    )
+                c._filters.append(
+                    (field, '~', val)
+                )
             else:
                 raise NotImplementedError(
                     "Filter '%s' not implemented" % _filter
