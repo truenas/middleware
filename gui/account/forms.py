@@ -393,6 +393,7 @@ class bsdUsersForm(ModelForm):
         self.cleaned_data['groups'] = [
             int(i) for i in self.cleaned_data.pop('bsdusr_to_group', [])
         ]
+        self.cleaned_data.pop('bsdusr_password2', None)
         if self.instance.id is None:
             grp = self.cleaned_data['bsdusr_group']
             if grp is None:
@@ -411,6 +412,7 @@ class bsdUsersForm(ModelForm):
             self.cleaned_data['password'] = self.cleaned_data.pop(
                 'bsdusr_password', None)
             self.cleaned_data['bsdusr_group'] = grp
+            self.cleaned_data.pop('bsdusr_mode', None)
             bsduser.save(data=self.cleaned_data)
 
         else:
