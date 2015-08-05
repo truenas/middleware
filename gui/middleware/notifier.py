@@ -2204,21 +2204,6 @@ class notifier:
         user = self.___getpwnam(username)
         return (user.pw_passwd, smb_hash)
 
-    def user_deleteuser(self, username):
-        """
-        Delete a user using pw(8) utility
-
-        Returns:
-            bool
-        """
-        self._system('/usr/local/bin/smbpasswd -x "%s"' % (username))
-        pipe = self._pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
-        err = pipe.communicate()[1]
-        if pipe.returncode != 0:
-            log.warn("Failed to delete user %s: %s", username, err)
-            return False
-        return True
-
     def user_getnextuid(self):
         command = "/usr/sbin/pw usernext"
         pw = self._pipeopen(command)

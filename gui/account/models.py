@@ -258,7 +258,6 @@ class bsdUsers(NewModel):
             raise ValueError(_(
                 "User %s is built-in and can not be deleted!"
             ) % (self.bsdusr_username))
-        notifier().user_deleteuser(self.bsdusr_username.encode('utf-8'))
         if domaincontroller_enabled():
             Samba4().user_delete(self.bsdusr_username.encode('utf-8'))
         try:
