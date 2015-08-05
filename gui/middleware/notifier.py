@@ -2222,8 +2222,6 @@ class notifier:
         return uid
 
     def _reload_user(self):
-        self._system("/usr/sbin/service ix-aliases quietstart")
-        self._system("/usr/sbin/service ix-sudoers quietstart")
         self.reload("cifs")
 
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
