@@ -55,6 +55,9 @@ class Migration(DataMigration):
                 'groups': groups,
             })
 
+        ds.collection_record_migration('groups', 'freenas9_migration')
+        ds.collection_record_migration('users', 'freenas9_migration')
+
     def backwards(self, orm):
         "Write your backwards methods here."
 
