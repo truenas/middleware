@@ -12757,3 +12757,81 @@ msgstr "Bruker-ID"
 #, fuzzy
 msgid "Password for LDAP User DN"
 msgstr "Bruker-ID"
+
+#: directoryservice/forms.py:476
+#, fuzzy
+msgid "NetBIOS cannot be the same as the first."
+msgstr ""
+"Deltakerens hemmelighet kan ikke være den samme som brukerhemmeligheten."
+
+#: directoryservice/forms.py:540
+#: directoryservice/forms.py:545
+#, fuzzy
+msgid "The NetBIOS name cannot be the same as the workgroup name!"
+msgstr ""
+"Deltakerens hemmelighet kan ikke være den samme som brukerhemmeligheten."
+
+#: directoryservice/models.py:739
+#, fuzzy
+msgid "Version number"
+msgstr "OS Versjon"
+
+#: directoryservice/models.py:743
+#, fuzzy
+msgid "Encryption algorithm"
+msgstr "Godkjenningsmodell"
+
+#: directoryservice/models.py:747
+#, fuzzy
+msgid "Principal name"
+msgstr "Domenenavn"
+
+#: directoryservice/models.py:962
+#: directoryservice/models.py:1198
+#, fuzzy
+msgid "Kerberos Principal"
+msgstr "Antall servere"
+
+#: network/forms.py:254
+#, fuzzy
+msgid "The following VHIDs are already in use: %s"
+msgstr "Uspesifiserte adresser er ikke gyldig som navneservere(DNS)"
+
+#: network/forms.py:282
+#, fuzzy
+msgid "The IP must be within the same network"
+msgstr "Stien må befinne seg innenfor et volum monteringspunkt"
+
+#: network/forms.py:815
+msgid "Virtual IP is not in the same network"
+msgstr ""
+
+#: network/hook.py:72
+msgid "IPMI (Node %s)"
+msgstr ""
+
+#: network/models.py:228
+#, fuzzy
+msgid "Virtual IP"
+msgstr "Portal"
+
+#: network/models.py:233
+msgid "Virtual Host ID"
+msgstr ""
+
+#: network/models.py:245
+msgid "Critical for Failover"
+msgstr ""
+
+#: network/models.py:359
+#, fuzzy
+msgid "Virtual IPv4"
+msgstr "Portal"
+
+#: network/nav.py:45
+msgid "IPMI (Node B)"
+msgstr ""
+
+#: network/nav.py:47
+msgid "IPMI (Node A)"
+msgstr ""
