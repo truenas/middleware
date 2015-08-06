@@ -23,7 +23,7 @@ fi
 : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
 : ${GIT_LICENSELIB_REPO=https://github.com/freenas/licenselib.git}
 
-: ${GIT_FREEBSD_BRANCH=masters/releng/9.3}
+: ${GIT_FREEBSD_BRANCH=9.3.1-STABLE}
 : ${GIT_FREEBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/src"}
 
 : ${GIT_PORTS_BRANCH=masters/2014q4}
