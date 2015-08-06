@@ -524,3 +524,11 @@ class ConfigQuerySet(object):
 
     def order_by(self, *args):
         return self._clone()
+
+    def values(self, *args):
+        c = self._clone()
+        obj = c[0]
+        data = {}
+        for i in args:
+            data[i] = getattr(obj, i)
+        return [data]
