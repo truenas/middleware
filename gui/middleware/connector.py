@@ -34,7 +34,7 @@ logger = logging.getLogger('middleware.dispatcher')
 connection = None
 
 
-def on_error(error):
+def on_error(error, **kwargs):
     if error in (ClientError.CONNECTION_CLOSED, ClientError.LOGOUT):
         logger.warning('Conenction lost, trying to reconnect')
         while True:
