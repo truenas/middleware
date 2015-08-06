@@ -9,6 +9,8 @@
 . /etc/rc.freenas
 
 readonly UPDATE_FAILED_LOG="/data/update.failed"
+HBA_FIRMWARE_UPDATE="/data/.hba_firmware_update"
+REBOOT_REQUIRED=0
 
 # The function below takes two arguments
 # 1. The path you want it to write its output to (the .crt and .key files)
@@ -99,9 +101,34 @@ EOF
 db_update()
 {
 	local precertman
+	if [ -f ${HBA_FIRMWARE_UPDATE} ]; then
+		if [ -f /usr/local/sbin/firmware_update.py ]; then
+			LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/firmware_update.py
+			if [ $? -eq 0 ]; then
+				# A reboot will be required, but we'll hold off
+				# on that and do database upgrades if they need
+				# to be done as well to avoid a double reboot.
+				REBOOT_REQUIRED=1
+			fi
+		else
+			# The auto firmware update tool is only in TrueNAS
+			# FreeNAS users will mostly be happy that FreeNAS doesn't
+			# muck with their HBA firmware...because the chance of bricking
+			# a random card is a non-zero number.  (Besides, tracking down
+			# the firmware for every embedded Avago card out there is not
+			# realistic.)
+			mount -uw /
+			rm ${HBA_FIRMWARE_UPDATE}
+			#mount -ur /
+		fi
+	fi
+			
 	if [ ! -f $NEED_UPDATE_SENTINEL ]; then
-	    # exit this script and continue with normal boot.
-	    exit 0
+		if [ ${REBOOT_REQUIRED} -eq 1 ]; then
+			reboot
+		fi
+		# exit this script and continue with normal boot.
+		exit 0
 	fi
 
 	# We are running very early, make / read-write.
