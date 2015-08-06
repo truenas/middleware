@@ -271,6 +271,10 @@ class NewQuerySet(object):
                 c._filters.append(
                     (field, '~', val)
                 )
+            elif _filter == 'in':
+                c._filters.append(
+                    (field, 'in' if not opposite else 'nin', val)
+                )
             else:
                 raise NotImplementedError(
                     "Filter '%s' not implemented" % _filter
