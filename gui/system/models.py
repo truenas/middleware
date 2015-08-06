@@ -46,7 +46,8 @@ from freenasUI.common.ssl import (
     write_certificate_signing_request,
     write_privatekey
 )
-from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.freeadmin.models import ConfigQuerySet, NewManager, NewModel, Model, UserField
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 
@@ -63,7 +64,7 @@ class Alert(Model):
         )
 
 
-class Settings(Model):
+class Settings(NewModel):
     stg_guiprotocol = models.CharField(
             max_length=120,
             choices=choices.PROTOCOL_CHOICES,
@@ -140,8 +141,49 @@ class Settings(Model):
         editable=False,
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("General")
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        sysui = dispatcher.call_sync('system.ui.get_config')
+        sysgen = dispatcher.call_sync('system.general.get_config')
+
+        protocol = sysui.get('webui_procotol', [])
+        if 'HTTP' in protocol and 'HTTPS' in protocol:
+            protocol = 'httphttps'
+        elif 'HTTP' in protocol:
+            protocol = 'http'
+        elif 'HTTPS' in protocol:
+            protocol = 'https'
+
+        # FIXME: only first address accounted for
+        listenv4 = None
+        listenv6 = None
+        for i in sysui.get('webui_listen', []):
+            if ':' in i and not listenv6:
+                listenv6 = i.strip('[]')
+            elif not listenv4:
+                listenv4 = i
+
+        return cls(**dict(
+            id=1,
+            stg_guiprotocol=protocol,
+            stg_guiport=sysui.get('webui_http_port'),
+            stg_guihttpsport=sysui.get('webui_https_port'),
+            stg_guiaddress=listenv4,
+            stg_guiv6address=listenv6,
+            stg_guihttpsredirect=sysui.get('webui_http_redirect_https'),
+            stg_timezone=sysgen.get('timezone'),
+            stg_language=sysgen.get('language'),
+            stg_kbdmap=sysgen.get('console_keymap'),
+            stg_syslogserver=sysgen.get('syslog_server'),
+        ))
 
 
 class NTPServer(Model):

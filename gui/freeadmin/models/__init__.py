@@ -83,6 +83,7 @@ class Middleware(object):
 
     def __init__(self, model, klass):
 
+        self.configstore = getattr(klass, 'configstore', False)
         self.field_mapping = FieldMiddlewareMapping(
             getattr(klass, 'field_mapping', ()))
         self.provider_name = getattr(
@@ -378,7 +379,7 @@ class NewManager(models.Manager):
         super(NewManager, self).__init__()
 
     def get_queryset(self):
-        return NewQuerySet(self.model)
+        return self.queryset_class(self.model)
 
 
 class NewModel(Model):
@@ -495,3 +496,31 @@ class NewModel(Model):
                 update_fields=update_fields, raw=raw, using=using,
             )
         return self
+
+
+class ConfigQuerySet(object):
+
+    def __init__(self, model, **kwargs):
+        self.model = model
+        self.query = NewQuery()
+        self._object = None
+
+    def __getitem__(self, k):
+        self._get_object()
+        return self._object[0]
+
+    def __iter__(self):
+        self._get_object()
+        yield self._object
+
+    def _clone(self, klass=None, **kwargs):
+        if klass is None:
+            klass = self.__class__
+        return klass(model=self.model)
+
+    def _get_object(self):
+        if self._object is None:
+            self._object = [self.model._load()]
+
+    def order_by(self, *args):
+        return self._clone()
