@@ -22,6 +22,11 @@ def bsdusr_sshpubkey(user):
 class Migration(DataMigration):
 
     def forwards(self, orm):
+
+        # Skip for install time, we only care for upgrades here
+        if 'FREENAS_INSTALL' in os.environ:
+            return
+
         ds = get_default_datastore()
 
         for g in orm['account.bsdGroups'].objects.filter(bsdgrp_builtin=False):
