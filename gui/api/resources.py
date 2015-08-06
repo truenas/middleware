@@ -49,7 +49,7 @@ from freenasUI.account.forms import (
     bsdUserPasswordForm,
 )
 from freenasUI.account.forms import bsdUserToGroupForm
-from freenasUI.account.models import bsdUsers, bsdGroups, bsdGroupMembership
+from freenasUI.account.models import bsdUsers, bsdGroups
 from freenasUI.api.utils import DojoResource
 from freenasUI.common import humanize_size, humanize_number_si
 from freenasUI.common.system import (
@@ -1585,11 +1585,9 @@ class BsdUserResourceMixin(NestedMixin):
     def groups_get_detail(self, request, **kwargs):
         bundle, obj = self._get_parent(request, kwargs)
 
-        objects = bsdGroupMembership.objects.filter(bsdgrpmember_user=obj)
-
         bundles = []
-        for obj in objects:
-            bundles.append(obj.bsdgrpmember_group.bsdgrp_group)
+        for gid in obj.bsdusr_groups:
+            bundles.append(bsdGroups.objects.get(id=gid))
 
         return self.create_response(request, bundles)
 
