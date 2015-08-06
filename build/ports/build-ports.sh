@@ -21,6 +21,20 @@ cleanup()
 	done
 }
 
+# Small func to get git revisions (if REVCMD var populated in repos.sh)
+# and then EXPORT These as REPONAME_REVISION
+do_git_repo_revision()
+{
+	local repo_name=$1
+    eval local checkout_path=\${GIT_${repo_name}_CHECKOUT_PATH}
+    eval local my_ver_cmd=\${GIT_${repo_name}_REVCMD}
+    if [ -n "${my_ver_cmd}" ] ; then
+        local revno=$(git -C "${checkout_path}" ${my_ver_cmd})
+        eval "${repo_name}_VERSION"=\${revno}
+        export "${repo_name}_VERSION"
+    fi
+}
+
 # XX: Uncomment to debug
 #TRACE=-x
 
@@ -52,9 +66,18 @@ if [ -d ${GIT_LICENSELIB_CHECKOUT_PATH} ]; then
 	cp -a ${GIT_LICENSELIB_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
 fi
 
+if [ -d ${GIT_PYLIBZFS_CHECKOUT_PATH} ]; then
+	cp -a ${GIT_PYLIBZFS_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
+fi
+
 for d in $EXTRA_PORT_DIRS; do
 	mkdir -p "${GIT_PORTS_CHECKOUT_PATH}/${d}"
 	cp -a ${AVATAR_ROOT}/nas_ports/${d}/* ${GIT_PORTS_CHECKOUT_PATH}/${d}
+done
+
+# Set custom git repo based ports's REVISIONS
+for repo in ${REPOS}; do
+    do_git_repo_revision ${repo}
 done
 
 MAKE_JOBS=$(sysctl -n kern.smp.cpus)

@@ -23,6 +23,7 @@ fi
 : ${GIT_FREEBSD_REPO=https://github.com/trueos/trueos}
 : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
 : ${GIT_LICENSELIB_REPO=https://github.com/freenas/licenselib.git}
+: ${GIT_PYLIBZFS_REPO=https://github.com/freenas/py-libzfs.git}
 
 : ${GIT_FREEBSD_BRANCH=9.3.1-STABLE}
 : ${GIT_FREEBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/src"}
@@ -32,4 +33,6 @@ fi
 
 : ${GIT_LICENSELIB_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/licenselib"}
 
-: ${REPOS="FREEBSD PORTS LICENSELIB ${ADDL_REPOS}"}
+: ${GIT_PYLIBZFS_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/py-libzfs"}
+: ${GIT_PYLIBZFS_REVCMD="rev-list HEAD --count"}
+: ${REPOS="FREEBSD PORTS LICENSELIB PYLIBZFS ${ADDL_REPOS}"}
