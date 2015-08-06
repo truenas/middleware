@@ -262,10 +262,12 @@ class bsdUsers(NewModel):
             Samba4().user_delete(self.bsdusr_username.encode('utf-8'))
         try:
             gobj = self.bsdusr_group
-            count = bsdGroupMembership.objects.filter(
-                bsdgrpmember_group=gobj).count()
-            count2 = bsdUsers.objects.filter(bsdusr_group=gobj).exclude(
-                id=self.id).count()
+            count = bsdUsers.objects.filter(
+                bsdusr_group=gobj.id,
+            ).exclude(id=self.id).count()
+            count2 = bsdUsers.objects.filter(
+                bsdusr_groups__in=[gobj.id]
+            ).exclude(id=self.id).count()
             if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False, pwdelete=False)
         except:
@@ -282,24 +284,3 @@ class bsdUsers(NewModel):
         ):
             kwargs['update_fields'].remove('last_login')
         super(bsdUsers, self).save(*args, **kwargs)
-
-
-class bsdGroupMembership(Model):
-    bsdgrpmember_group = models.ForeignKey(
-        bsdGroups,
-        verbose_name=_("Group"),
-    )
-    bsdgrpmember_user = models.ForeignKey(
-        bsdUsers,
-        verbose_name=_("User"),
-    )
-
-    class Meta:
-        verbose_name = _("Group Membership")
-        verbose_name_plural = _("Group Memberships")
-
-    def __unicode__(self):
-        return "%s:%s" % (
-            self.bsdgrpmember_group.bsdgrp_group,
-            self.bsdgrpmember_user.bsdusr_username,
-        )

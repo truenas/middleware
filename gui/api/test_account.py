@@ -150,10 +150,6 @@ class UsersResourceTest(APITestCase):
             bsdgrp_gid=100,
             bsdgrp_group='mail',
         )
-        models.bsdGroupMembership.objects.create(
-            bsdgrpmember_group=group,
-            bsdgrpmember_user=obj,
-        )
         resp = self.api_client.get(
             '%s%d/groups/' % (self.get_api_url(), obj.id),
             format='json',
