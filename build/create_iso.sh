@@ -104,14 +104,8 @@ main()
 	if is_truenas ; then
 		cp -p ${TRUENAS_COMPONENTS_ROOT}/build/files/install_sata_dom.sh \
 			${INSTALLUFSDIR}/etc
-		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/sbin/sas2flash \
-			${INSTALLUFSDIR}/usr/local/sbin
-		cp -p ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/sbin/sas3flash \
-			${INSTALLUFSDIR}/usr/local/sbin
 		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/install/ \
 			${INSTALLUFSDIR}/usr/local/install/
-		cp -Rp ${TRUENAS_COMPONENTS_ROOT}/nanobsd/Installer/firmware/ \
-			${INSTALLUFSDIR}/usr/local/firmware/
 	fi
 	cp -p ${AVATAR_ROOT}/build/files/rc ${INSTALLUFSDIR}/etc
 
