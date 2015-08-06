@@ -1,0 +1,22 @@
+--- extras/Makefile.in.orig	2014-10-01 03:18:08.000000000 +0900
++++ extras/Makefile.in	2014-11-25 05:50:23.000000000 +0900
+@@ -443,8 +443,8 @@
+ 	  echo "$$d$$p"; \
+ 	done | $(am__base_list) | \
+ 	while read files; do \
+-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(voldir)'"; \
+-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(voldir)" || exit $$?; \
++	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(voldir)/$${files}.sample'"; \
++	  $(INSTALL_DATA) $$files "$(DESTDIR)$(voldir)/$${files}.sample" || exit $$?; \
+ 	done
+ 
+ uninstall-volDATA:
+@@ -773,7 +773,7 @@
+ install-data-local:
+ 	$(mkdir_p) $(DESTDIR)$(GLUSTERD_WORKDIR)/groups
+ 	$(INSTALL_DATA) $(top_srcdir)/extras/group-virt.example \
+-		$(DESTDIR)$(GLUSTERD_WORKDIR)/groups/virt
++		$(DESTDIR)$(GLUSTERD_WORKDIR)/groups/virt.sample
+ 
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.

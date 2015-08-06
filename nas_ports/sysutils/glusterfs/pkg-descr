@@ -1,0 +1,9 @@
+GlusterFS is an open source, distributed file system capable of
+scaling to several petabytes and handling thousands of
+clients. GlusterFS clusters together storage building blocks over
+Infiniband RDMA or TCP/IP interconnect, aggregating disk and memory
+resources and managing data in a single global namespace.  GlusterFS
+is based on a stackable user space design and can deliver exceptional
+performance for diverse workloads.
+
+WWW: http://www.gluster.org

@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# $FreeBSD$
+
+# PROVIDE: glusterd
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="glusterd"
+rcvar="${name}_enable"
+start_precmd="glusterd_prestart"
+
+glusterd_prestart()
+{
+
+	mkdir -p /var/db/glusterd /var/log/glusterfs
+}
+
+load_rc_config $name
+: ${glusterd_program:="%%PREFIX%%/sbin/$name"}
+: ${glusterd_pidfile:="/var/run/${name}.pid"}
+pidfile="$glusterd_pidfile"
+glusterd_flags="--pid-file=\"${glusterd_pidfile}\" ${glusterd_flags}"
+
+run_rc_command "$1"

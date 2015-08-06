@@ -1,0 +1,21 @@
+--- configure.orig	2015-02-16 21:13:46.743376747 +0000
++++ configure	2015-02-16 21:20:20.085666758 +0000
+@@ -16076,6 +16076,9 @@
+      linux*)
+ #do nothing
+        ;;
++     freebsd*)
++#do nothing
++       ;;
+      netbsd*)
+ #do nothing
+        ;;
+@@ -19518,7 +19521,7 @@
+ 
+ 
+ 
+-for ac_header in python$PYTHON_VERSION/Python.h
++for ac_header in python$PYTHON_VERSION/Python.h Python.h
+ do
+ as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
