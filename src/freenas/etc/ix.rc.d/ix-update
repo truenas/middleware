@@ -102,6 +102,7 @@ db_update()
 {
 	local precertman
 	if [ -f ${HBA_FIRMWARE_UPDATE} ]; then
+		mount -uw /
 		if [ -f /usr/local/sbin/firmware_update.py ]; then
 			LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/firmware_update.py
 			if [ $? -eq 0 ]; then
@@ -117,9 +118,7 @@ db_update()
 			# a random card is a non-zero number.  (Besides, tracking down
 			# the firmware for every embedded Avago card out there is not
 			# realistic.)
-			mount -uw /
 			rm ${HBA_FIRMWARE_UPDATE}
-			#mount -ur /
 		fi
 	fi
 			
