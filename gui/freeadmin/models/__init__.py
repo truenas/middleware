@@ -405,6 +405,32 @@ class NewModel(Model):
             raise MiddlewareError(task['error']['message'])
 
     def save(self, *args, **kwargs):
+
+        cls = origin = self.__class__
+        using = None
+        raw = None
+        update_fields = {}
+        if cls._meta.proxy:
+            cls = cls._meta.concrete_model
+        meta = cls._meta
+
+        if not meta.auto_created:
+            signals.pre_save.send(
+                sender=origin, instance=self, raw=raw, using=using,
+                update_fields=update_fields
+            )
+
+        updated = self._save(*args, **kwargs)
+
+        if not meta.auto_created:
+            signals.post_save.send(
+                sender=origin, instance=self, created=(not updated),
+                update_fields=update_fields, raw=raw, using=using,
+            )
+
+        return self
+
+    def _save(self, *args, **kwargs):
         from freenasUI.middleware.connector import connection as dispatcher
         methods = get_middleware_methods(self)
 
@@ -451,20 +477,6 @@ class NewModel(Model):
                     data[field] = getattr(self, f.name)
         method_args.append(data)
 
-        cls = origin = self.__class__
-        using = None
-        raw = None
-        update_fields = data.keys()
-        if cls._meta.proxy:
-            cls = cls._meta.concrete_model
-        meta = cls._meta
-
-        if not meta.auto_created:
-            signals.pre_save.send(
-                sender=origin, instance=self, raw=raw, using=using,
-                update_fields=update_fields
-            )
-
         try:
             log.debug("Calling task '%s' with args %r", method, method_args)
             task = dispatcher.call_task_sync(method, *method_args)
@@ -490,12 +502,7 @@ class NewModel(Model):
         if self.id is None and task['result'] is not None:
             self.id = task['result']
 
-        if not meta.auto_created:
-            signals.post_save.send(
-                sender=origin, instance=self, created=(not updated),
-                update_fields=update_fields, raw=raw, using=using,
-            )
-        return self
+        return updated
 
 
 class ConfigQuerySet(object):
