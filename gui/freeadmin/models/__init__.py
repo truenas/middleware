@@ -535,6 +535,9 @@ class ConfigQuerySet(object):
         if self._object is None:
             self._object = [self.model._load()]
 
+    def get(self, *args, **kwargs):
+        return self[0]
+
     def order_by(self, *args):
         return self._clone()
 
