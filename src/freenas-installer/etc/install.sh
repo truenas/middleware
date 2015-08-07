@@ -912,7 +912,7 @@ menu_install()
 	cp /data/factory-v1.db /tmp/data/data/
 	chown www:www /tmp/data/data/factory-v1.db
     else
-	cp -R /data/* /tmp/data/data
+	cp -R /data/* /tmp/data/data/
 	chown -R www:www /tmp/data/data
     fi
 
@@ -993,7 +993,10 @@ menu_install()
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	if [ -n "${_password}" ]; then
 		# Set the root password
-		chroot /tmp/data /etc/netcli reset_root_pw ${_password}
+		#chroot /tmp/data /etc/netcli reset_root_pw ${_password}
+		chroot /tmp/data /usr/local/sbin/dsinit --start-forked
+		chroot /tmp/data /usr/local/sbin/dspasswd root ${_password}
+		chroot /tmp/data /usr/local/sbin/dsinit --stop-forked
 	fi
     fi
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
