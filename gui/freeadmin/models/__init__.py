@@ -283,6 +283,10 @@ class NewQuerySet(object):
 
         return c
 
+    def complex_filter(self, *args, **kwargs):
+        log.debug("Unimplemented complex_filter called: %r - %r", args, kwargs)
+        return self._clone()
+
     def get(self, *args, **kwargs):
         c = self._clone().filter(*args, **kwargs)
         c._fetch_all()
@@ -363,6 +367,9 @@ class NewQuerySet(object):
         """This is a NOOP"""
         clone = self._clone()
         return clone
+
+    def using(self, *args, **kwargs):
+        return self._clone()
 
     def values_list(self, *args):
         self._fetch_all()
