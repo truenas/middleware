@@ -663,12 +663,29 @@ class Update(Model):
         return self.upd_train
 
 
-CA_TYPE_EXISTING        = 0x00000001
-CA_TYPE_INTERNAL        = 0x00000002
-CA_TYPE_INTERMEDIATE    = 0x00000004
-CERT_TYPE_EXISTING      = 0x00000008
-CERT_TYPE_INTERNAL      = 0x00000010
-CERT_TYPE_CSR           = 0x00000020
+
+class CertificateMiddleware:
+    field_mapping = (
+        ('id', 'id'),
+        ('cert_type', 'type'),
+        ('cert_name', 'name'),
+        ('cert_certificate', 'certificate'),
+        ('cert_privatekey', 'privatekey'),
+        ('cert_CSR', 'csr'),
+        ('cert_key_length', 'key_length'),
+        ('cert_digest_algorithm', 'digest_algorithm'),
+        ('cert_lifetime', 'lifetime'),
+        ('cert_country', 'country'),
+        ('cert_state', 'state'),
+        ('cert_city', 'city'),
+        ('cert_organization', 'organization'),
+        ('cert_email', 'email'),
+        ('cert_common', 'common'),
+        ('cert_serial', 'serial'),
+        ('cert_sidngedby', 'signedby'),
+    )
+    provider_name = 'crypto.certificates'
+
 
 class CertificateBase(NewModel):
     cert_root_path = "/etc/certificates"
@@ -837,14 +854,14 @@ class CertificateBase(NewModel):
             self.__CSR = self.get_CSR()
 
     def __load_thingy(self):
-        if self.cert_type == CERT_TYPE_CSR:
+        if self.cert_type == 'CERT_CSR':
             self.__load_CSR() 
         else:
             self.__load_certificate() 
 
     def __get_thingy(self):
         thingy = self.__certificate
-        if self.cert_type == CERT_TYPE_CSR:
+        if self.cert_type == 'CERT_CSR':
             thingy = self.__CSR
  
         return thingy
@@ -878,9 +895,9 @@ class CertificateBase(NewModel):
     def cert_internal(self):
         internal = "YES"
 
-        if self.cert_type == CA_TYPE_EXISTING:
+        if self.cert_type == 'CA_EXISTING':
             internal = "NO" 
-        elif self.cert_type == CERT_TYPE_EXISTING: 
+        elif self.cert_type == 'CERT_EXISTING': 
             internal = "NO" 
 
         return internal
@@ -889,14 +906,14 @@ class CertificateBase(NewModel):
     def cert_issuer(self):
         issuer = None
 
-        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE,
-            CERT_TYPE_EXISTING):
+        if self.cert_type in ('CA_EXISTING', 'CA_INTERMEDIATE',
+            'CERT_EXISTING'):
             issuer = "external"
-        elif self.cert_type == CA_TYPE_INTERNAL:
+        elif self.cert_type == 'CA_INTERNAL':
             issuer = "self-signed"
-        elif self.cert_type == CERT_TYPE_INTERNAL:
+        elif self.cert_type == 'CERT_INTERNAL':
             issuer = self.cert_signedby
-        elif self.cert_type == CERT_TYPE_CSR:
+        elif self.cert_type == 'CERT_CSR':
             issuer = "external - signature pending"
 
         return issuer
@@ -964,69 +981,47 @@ class CertificateBase(NewModel):
     @property
     def cert_type_existing(self):
         ret = False
-        if self.cert_type & CERT_TYPE_EXISTING:
+        if self.cert_type == 'CERT_EXISTING':
             ret = True
         return ret
 
     @property
     def cert_type_internal(self):
         ret = False
-        if self.cert_type & CERT_TYPE_INTERNAL:
+        if self.cert_type == 'CERT_INTERNAL':
             ret = True
         return ret
 
     @property
     def cert_type_CSR(self):
         ret = False
-        if self.cert_type & CERT_TYPE_CSR:
+        if self.cert_type == 'CERT_CSR':
             ret = True
         return ret
 
     @property
     def CA_type_existing(self):
         ret = False
-        if self.cert_type & CA_TYPE_EXISTING:
+        if self.cert_type == 'CA_EXISTING':
             ret = True
         return ret
 
     @property
     def CA_type_internal(self):
         ret = False
-        if self.cert_type & CA_TYPE_INTERNAL:
+        if self.cert_type == 'CA_INTERNAL':
             ret = True
         return ret
 
     @property
     def CA_type_intermediate(self):
         ret = False
-        if self.cert_type & CA_TYPE_INTERMEDIATE:
+        if self.cert_type == 'CA_INTERMEDIATE':
             ret = True
         return ret
 
     class Meta:
         abstract = True
-
-    class Middleware:
-        field_mapping = (
-            ('id', 'id'),
-            ('cert_type', 'type'),
-            ('cert_name', 'name'),
-            ('cert_certificate', 'certificate'),
-            ('cert_privatekey', 'privatekey'),
-            ('cert_CSR', 'csr'),
-            ('cert_key_length', 'key_length'),
-            ('cert_digest_algorithm', 'digest_algorithm'),
-            ('cert_lifetime', 'lifetime'),
-            ('cert_country', 'country'),
-            ('cert_state', 'state'),
-            ('cert_city', 'city'),
-            ('cert_organization', 'organization'),
-            ('cert_email', 'email'),
-            ('cert_common', 'common'),
-            ('cert_serial', 'serial'),
-            ('cert_sidngedby', 'signedby'),
-        )
-        provider_name = 'crypto.certificates'
 
 
 class CertificateAuthority(CertificateBase):
@@ -1058,6 +1053,11 @@ class CertificateAuthority(CertificateBase):
     class Meta:
         verbose_name = _("CA")
 
+    class Middleware(CertificateMiddleware):
+        default_filters = [
+            ('type', 'in', ['CA_EXISTING', 'CA_INTERMEDIATE', 'CA_INTERNAL']),
+        ]
+
 
 class Certificate(CertificateBase):
 
@@ -1080,6 +1080,11 @@ class Certificate(CertificateBase):
 
     class Meta:
         verbose_name = _("Certificate")
+
+    class Middleware(CertificateMiddleware):
+        default_filters = [
+            ('type', 'nin', ['CA_EXISTING', 'CA_INTERMEDIATE', 'CA_INTERNAL']),
+        ]
 
 
 class Backup(Model):

@@ -2238,7 +2238,7 @@ class CertificateAuthorityImportForm(ModelForm):
         return passphrase
 
     def save(self):
-        self.instance.cert_type = models.CA_TYPE_EXISTING
+        self.instance.cert_type = 'CA_EXISTING'
 
         cert_info = load_certificate(self.instance.cert_certificate)
         self.instance.cert_country = cert_info['country']
@@ -2342,7 +2342,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         return name
 
     def save(self):
-        self.instance.cert_type = models.CA_TYPE_INTERNAL
+        self.instance.cert_type = 'CA_INTERNAL'
         cert_info = {
             'key_length': self.instance.cert_key_length,
             'country': self.instance.cert_country,
@@ -2465,7 +2465,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         return name
 
     def save(self):
-        self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
+        self.instance.cert_type = 'CA_INTERMEDIATE'
         cert_info = {
             'key_length': self.instance.cert_key_length,
             'country': self.instance.cert_country,
@@ -2597,7 +2597,7 @@ class CertificateCSREditForm(ModelForm):
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_EXISTING
+        self.instance.cert_type = 'CERT_EXISTING'
         super(CertificateCSREditForm, self).save()
         notifier().start("ix-ssl")
 
@@ -2681,7 +2681,7 @@ class CertificateImportForm(ModelForm):
         return name
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_EXISTING
+        self.instance.cert_type = 'CERT_EXISTING'
 
         cert_info = load_certificate(self.instance.cert_certificate)
         self.instance.cert_country = cert_info['country']
@@ -2802,7 +2802,7 @@ class CertificateCreateInternalForm(ModelForm):
         return name
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_INTERNAL
+        self.instance.cert_type = 'CERT_INTERNAL'
         cert_info = {
             'key_length': self.instance.cert_key_length,
             'country': self.instance.cert_country,
@@ -2926,7 +2926,7 @@ class CertificateCreateCSRForm(ModelForm):
         return name
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_CSR
+        self.instance.cert_type = 'CERT_CSR'
         req_info = {
             'key_length': self.instance.cert_key_length,
             'country': self.instance.cert_country,

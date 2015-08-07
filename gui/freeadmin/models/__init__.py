@@ -84,6 +84,7 @@ class Middleware(object):
     def __init__(self, model, klass):
 
         self.configstore = getattr(klass, 'configstore', False)
+        self.default_filters = getattr(klass, 'default_filters', None)
         self.field_mapping = FieldMiddlewareMapping(
             getattr(klass, 'field_mapping', ()))
         self.provider_name = getattr(
@@ -185,7 +186,7 @@ class NewQuerySet(object):
     def __init__(self, model, **kwargs):
         self.model = model
         self._result_cache = None
-        self._filters = []
+        self._filters = model._middleware.default_filters or []
         self._fmm = model._middleware.field_mapping
         if model._meta.ordering:
             self._sort = self._transform_order(*model._meta.ordering)

@@ -48,7 +48,6 @@ from freenasUI.common.ssl import (
 from freenasUI.system.models import (
     Settings,
     Certificate,
-    CERT_TYPE_EXISTING,
 )
 
 log = logging.getLogger('tools.updatessl')
@@ -82,7 +81,7 @@ def main(certfile,keyfile):
     cert_info = load_certificate(crt)
     created_cert = Certificate.objects.create(
                        cert_name = "freenas-pre-certui",
-                       cert_type = CERT_TYPE_EXISTING,
+                       cert_type = 'CERT_EXISTING',
                        cert_certificate = crt,
                        cert_privatekey = export_privatekey(key), 
                        cert_country = cert_info['country'],
