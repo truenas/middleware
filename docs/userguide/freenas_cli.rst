@@ -21,7 +21,7 @@ The following utilities are specific to RAID controllers:
 
 * :ref:`tw_cli`:_used to monitor and maintain 3ware RAID controllers
 
-* :ref:`MegaCli`: used to configure and manage LSI MegaRAID SAS family of RAID controllers
+* :ref:`MegaCli`: used to configure and manage Avago MegaRAID SAS family of RAID controllers
 
 This section also describes the following utilities:
 
@@ -918,7 +918,7 @@ contains a handy wrapper script that will notify you of errors.
 MegaCli
 -------
 
-:command:`MegaCli` is the command line interface for the LSI MegaRAID SAS family of RAID controllers. FreeNAS® also includes the
+:command:`MegaCli` is the command line interface for the Avago MegaRAID SAS family of RAID controllers. FreeNAS® also includes the
 `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
 utility which can be used to configure and manage connected storage devices.
 

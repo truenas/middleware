@@ -23,8 +23,6 @@ work as long as you attribute iXsystems as the original source of the Guide.
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
-3ware® and LSI® are trademarks or registered trademarks of LSI Corporation.
-
 Active Directory® is a registered trademark or trademark of Microsoft Corporation in the United States and/or other countries.
 
 Apple, Mac and Mac OS are trademarks of Apple Inc., registered in the U.S. and other countries.
@@ -334,11 +332,13 @@ that have occurred since 9.3-RELEASE.
 
 * The driver for the Intel X710 10GbE adapter was added.
 
-* The mrsas(4) LSI MegaRAID driver was added.
+* The supported Avago (formerly known as LSI) MegaRAID HBA firmware version has been updated to v20 and the alert regarding a version mismatch has been updated accordingly.
+
+* The mrsas(4) Avago MegaRAID driver was added.
 
 * Support for the Mach Xtreme MX-ES/MXUB3 and the Kingston DT100G2 USB drives has been added.
 
-* Support for LSI MegaRAID SAS passthrough has been added.
+* Support for Avago MegaRAID SAS passthrough has been added.
 
 * Man pages have been added and can be accessed from :ref:`Shell`.
 
@@ -550,9 +550,8 @@ utility :command:`tw_cli` for managing 3ware RAID controllers.
 
 FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS.
 
-If you need reliable disk alerting and immediate reporting of a failed drive, use an HBA such as a LSI
-MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
-`forum post <https://forums.freenas.org/index.php?threads/confused-about-that-lsi-card-join-the-crowd.11901/>`_.
+If you need reliable disk alerting and immediate reporting of a failed drive, use an HBA such as an Avago
+MegaRAID controller or a 3Ware twa-compatible controller.
 
 Suggestions for testing disks before adding them to a RAID array can be found in this
 `forum post <https://forums.freenas.org/index.php?threads/checking-new-hdds-in-raid.12082/>`_.

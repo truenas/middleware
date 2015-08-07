@@ -326,7 +326,7 @@ Be aware of the following caveats **before** attempting an upgrade to 9.3:
   you need a new feature flag, it is safe to leave the ZFS pool at its current version and uncheck the alert. If you do decide to upgrade the pool, you will
   not be able to boot into a previous version that does not support the newer feature flags.
 
-* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. It is recommended to upgrade the firmware before
+* The mps driver for 6G Avago SAS HBAs is version 20, which requires phase 20 firmware on the controller. It is recommended to upgrade the firmware before
   installing FreeNAS® or immediately after upgrading FreeNAS®, using the instructions in :ref:`Alert`. Running older firmware can cause many woes, including
   the failure to probe all of the attached disks, which can lead to degraded or unavailable arrays. While you can mismatch your firmware version with a higher
   version and things will "probably still work", there are no guarantees as that driver and firmware combination is untested.
