@@ -90,7 +90,6 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.services.models import (
     services,
     iSCSITarget,
