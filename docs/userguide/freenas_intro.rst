@@ -334,6 +334,9 @@ that have occurred since 9.3-RELEASE.
 
 * The supported Avago (formerly known as LSI) MegaRAID HBA firmware version has been updated to v20 and the alert regarding a version mismatch has been updated accordingly.
 
+* The 12Gbps Avago HBA driver, mpr(4), has been updated to version 9 and an alert will be issued if there is a version mismatch. The :command:`sas3ircu` command line utility
+  has also been added. This tool is similar in functionality to the :command:`sas2ircu` tool which is for MegaRAID HBAs using the mps(4) driver.
+
 * The mrsas(4) Avago MegaRAID driver was added.
 
 * Support for the Mach Xtreme MX-ES/MXUB3 and the Kingston DT100G2 USB drives has been added.
