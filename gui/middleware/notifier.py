@@ -1015,12 +1015,10 @@ class notifier:
         self._system("/usr/sbin/service snmpd quietstart")
 
     def _restart_http(self):
-        self._system("/usr/sbin/service ix-nginx quietstart")
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx restart")
 
     def _reload_http(self):
-        self._system("/usr/sbin/service ix-nginx quietstart")
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx reload")
 
