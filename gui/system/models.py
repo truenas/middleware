@@ -670,10 +670,11 @@ CERT_TYPE_EXISTING      = 0x00000008
 CERT_TYPE_INTERNAL      = 0x00000010
 CERT_TYPE_CSR           = 0x00000020
 
-class CertificateBase(Model):
+class CertificateBase(NewModel):
     cert_root_path = "/etc/certificates"
 
-    cert_type = models.IntegerField()
+    id = models.CharField(editable=False, max_length=120, primary_key=True)
+    cert_type = models.CharField(max_length=64)
     cert_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
@@ -1004,6 +1005,28 @@ class CertificateBase(Model):
 
     class Meta:
         abstract = True
+
+    class Middleware:
+        field_mapping = (
+            ('id', 'id'),
+            ('cert_type', 'type'),
+            ('cert_name', 'name'),
+            ('cert_certificate', 'certificate'),
+            ('cert_privatekey', 'privatekey'),
+            ('cert_CSR', 'csr'),
+            ('cert_key_length', 'key_length'),
+            ('cert_digest_algorithm', 'digest_algorithm'),
+            ('cert_lifetime', 'lifetime'),
+            ('cert_country', 'country'),
+            ('cert_state', 'state'),
+            ('cert_city', 'city'),
+            ('cert_organization', 'organization'),
+            ('cert_email', 'email'),
+            ('cert_common', 'common'),
+            ('cert_serial', 'serial'),
+            ('cert_sidngedby', 'signedby'),
+        )
+        provider_name = 'crypto.certificates'
 
 
 class CertificateAuthority(CertificateBase):
