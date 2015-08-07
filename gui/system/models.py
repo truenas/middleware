@@ -185,6 +185,42 @@ class Settings(NewModel):
             stg_syslogserver=sysgen.get('syslog_server'),
         ))
 
+    def _save(self, *args, **kwargs):
+        if self.stg_guiprotocol == 'httphttps':
+            protocol = ['HTTP', 'HTTPS']
+        elif self.stg_guiprotocol == 'https':
+            protocol = ['HTTPS']
+        else:
+            protocol = ['HTTP']
+
+        listen = []
+        if self.stg_guiaddress:
+            listen.append(self.stg_guiaddress)
+        if self.stg_guiv6address:
+            listen.append(self.stg_guiv6address)
+
+        data = {
+            'webui_protocol': protocol,
+            'webui_listen': listen,
+            'webui_http_redirect_https': self.stg_guihttpsredirect or False,
+        }
+        if self.stg_guiport:
+            data['webui_http_port'] = self.stg_guiport
+        if self.stg_guihttpsport:
+            data['webui_https_port'] = self.stg_guihttpsport
+
+        self._save_task_call('system.ui.configure', data)
+
+        data = {
+            'language': self.stg_language,
+            'timezone': self.stg_timezone,
+            'console_keymap': self.stg_kbdmap,
+            'syslog_server': self.stg_syslogserver,
+        }
+        self._save_task_call('system.general.configure', data)
+
+        return True
+
 
 class NTPServer(Model):
     ntp_address = models.CharField(
