@@ -32,6 +32,7 @@ import re
 import subprocess
 import urllib
 import signal
+from fnutils.query import wrap
 
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -2516,68 +2517,35 @@ class BootEnvResource(NestedMixin, DojoResource):
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        pool = notifier().zpool_parse('freenas-boot')
-
-        bundle = self.build_bundle(
-            data={}, request=request
-        )
-
-        bundle.data['id'] = 1
-        bundle.data['name'] = 'freenas-boot'
-        bundle.data['children'] = []
+        pool = wrap(dispatcher.call_sync('zfs.pool.query', [('name', '=', 'freenas-boot')], {'single': True}))
+        bundle = self.build_bundle(data={}, request=request)
         bundle.data.update({
-            'read': pool.data.read,
-            'write': pool.data.write,
-            'cksum': pool.data.cksum,
+            'id': 1,
+            'name': pool['name'],
+            'children': [],
+            'read': pool['root_vdev.stats.read_errors'],
+            'write': pool['root_vdev.stats.write_errors'],
+            'cksum': pool['root_vdev.stats.checksum_errors'],
         })
+
         uid = Uid(1)
-        for key in ('data', 'cache', 'spares', 'logs'):
-            root = getattr(pool, key, None)
-            if not root:
-                continue
+        for key, vdevs in pool['groups'].items():
+            def serialize_vdev(vdev):
+                ret = {
+                    'name': vdev['path'] or vdev['type'],
+                    'type': vdev['type'],
+                    'status': vdev['status'],
+                    'read': vdev['stats.read_errors'],
+                    'write': vdev['stats.write_errors'],
+                    'cksum': vdev['stats.checksum_errors'],
+                    'children': [serialize_vdev(i) for i in vdev['children']]
+                }
 
-            current = root
-            parent = bundle.data
-            tocheck = []
-            while True:
+                if vdev['type'] in ('disk', 'mirror'):
+                    ret['_attach_url'] = reverse('system_bootenv_pool_attach',) + '?label=' + ret['name']
 
-                if isinstance(current, zfs.Root):
-                    data = {
-                        'name': current.name,
-                        'type': 'root',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                        'children': [],
-                    }
-                elif isinstance(current, zfs.Vdev):
-                    data = {
-                        'name': current.name,
-                        'type': 'vdev',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                        'children': [],
-                    }
-                    if (
-                        current.name == 'stripe' or
-                        current.name.startswith('mirror')
-                    ):
-                        data['_attach_url'] = reverse(
-                            'system_bootenv_pool_attach',
-                        ) + '?label=' + list(iter(current))[0].name
-                elif isinstance(current, zfs.Dev):
-                    data = {
-                        'name': current.devname,
-                        'label': current.name,
-                        'type': 'dev',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                    }
+                if vdev['type'] == 'disk':
+                    """
                     if self.is_webclient(bundle.request):
                         try:
                             disk = Disk.objects.order_by(
@@ -2588,7 +2556,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                             )
                         except IndexError:
                             disk = None
-                        if current.status == 'ONLINE':
+                        if vdev['status'] == 'ONLINE':
                             data['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
@@ -2603,12 +2571,12 @@ class BootEnvResource(NestedMixin, DojoResource):
                                     'label': current.name,
                                 })
 
-                        """
+                        ""
                         Replacing might go south leaving multiple UNAVAIL
                         disks, for that reason replace button should be
                         enable even for disks already under replacing
                         subtree
-                        """
+                        ""
                         data['_replace_url'] = reverse(
                             'system_bootenv_pool_replace',
                             kwargs={
@@ -2635,23 +2603,13 @@ class BootEnvResource(NestedMixin, DojoResource):
                                         'vname': pool.name,
                                         'label': current.name,
                                     })
+                    """
+                    pass
 
-                else:
-                    raise ValueError("Invalid node")
+                return ret
 
-                if key == 'data' and isinstance(current, zfs.Root):
-                    parent.update(data)
-                else:
-                    data['id'] = uid.next()
-                    parent['children'].append(data)
-
-                for child in current:
-                    tocheck.append((data, child))
-
-                if tocheck:
-                    parent, current = tocheck.pop()
-                else:
-                    break
+            for v in vdevs:
+                bundle.data['children'].append(serialize_vdev(v))
 
         bundle = self.alter_detail_data_to_serialize(request, bundle)
         response = self.create_response(request, [bundle.data])
