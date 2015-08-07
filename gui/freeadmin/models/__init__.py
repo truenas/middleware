@@ -430,8 +430,34 @@ class NewModel(Model):
 
         return self
 
-    def _save(self, *args, **kwargs):
+    def _save_task_call(self, method, *method_args):
         from freenasUI.middleware.connector import connection as dispatcher
+
+        try:
+            log.debug("Calling task '%s' with args %r", method, method_args)
+            task = dispatcher.call_task_sync(method, *method_args)
+        except RpcException, e:
+            raise ValidationError({
+                '__all__': [(errno.EINVAL, i['message']) for i in e.extra] if e.extra else [(errno.EINVAL, str(e))],
+            })
+
+        if task['state'] != 'FINISHED':
+            error = task['error']
+            if error:
+                extra = error.get('extra')
+                fields = {}
+                if extra and 'fields' in extra:
+                    fmm = self._middleware.field_mapping
+                    for field, errors in extra['fields'].items():
+                        for key in fmm.get_middleware_to_field(field):
+                            fields[key] = errors
+                if not fields:
+                    fields['__all__'] = [(errno.EINVAL, error['message'])]
+                raise ValidationError(fields)
+            raise ValueError(task['state'])
+        return task
+
+    def _save(self, *args, **kwargs):
         methods = get_middleware_methods(self)
 
         if self.id is not None:
@@ -477,27 +503,7 @@ class NewModel(Model):
                     data[field] = getattr(self, f.name)
         method_args.append(data)
 
-        try:
-            log.debug("Calling task '%s' with args %r", method, method_args)
-            task = dispatcher.call_task_sync(method, *method_args)
-        except RpcException, e:
-            raise ValidationError({
-                '__all__': [(errno.EINVAL, i['message']) for i in e.extra] if e.extra else [(errno.EINVAL, str(e))],
-            })
-        if task['state'] != 'FINISHED':
-            error = task['error']
-            if error:
-                extra = error.get('extra')
-                fields = {}
-                if extra and 'fields' in extra:
-                    fmm = self._middleware.field_mapping
-                    for field, errors in extra['fields'].items():
-                        for key in fmm.get_middleware_to_field(field):
-                            fields[key] = errors
-                if not fields:
-                    fields['__all__'] = [(errno.EINVAL, error['message'])]
-                raise ValidationError(fields)
-            raise ValueError(task['state'])
+        task = self._save_call_task(method, *method_args)
 
         if self.id is None and task['result'] is not None:
             self.id = task['result']
