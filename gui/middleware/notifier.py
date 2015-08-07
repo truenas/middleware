@@ -562,12 +562,11 @@ class notifier:
         self._system("/usr/sbin/service routing restart")
 
     def _reload_timeservices(self):
-        self._system("/usr/sbin/service ix-localtime quietstart")
+        from freenasUI.sysyem.models import Settings
         self._system("/usr/sbin/service ix-ntpd quietstart")
         self._system("/usr/sbin/service ntpd restart")
-        c = self._open_db()
-        c.execute("SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1")
-        os.environ['TZ'] = c.fetchone()[0]
+        timezone = Settings.objects.all()[0].stg_timezone
+        os.environ['TZ'] = timezone
         time.tzset()
 
     def _restart_smartd(self):
