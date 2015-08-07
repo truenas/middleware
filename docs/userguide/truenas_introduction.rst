@@ -4,8 +4,6 @@
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
 
-3ware® and LSI® are trademarks or registered trademarks of LSI Corporation.
-
 Active Directory® is a registered trademark or trademark of Microsoft Corporation in the United States and/or other countries.
 
 Apple, Mac and Mac OS are trademarks of Apple Inc., registered in the U.S. and other countries.
