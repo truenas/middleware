@@ -505,7 +505,8 @@ class NewModel(Model):
                     continue
                 field = fmm.get_field_to_middleware(f.name)
                 if isinstance(f, ForeignKey):
-                    data[field] = getattr(self, f.name).id
+                    related = getattr(self, f.name)
+                    data[field] = related.id if related is not None else None
                 else:
                     data[field] = getattr(self, f.name)
         method_args.append(data)
