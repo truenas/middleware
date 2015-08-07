@@ -42,12 +42,12 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a Certificate Authority or certificate is invalid or malformed
 
-* the status of a LSI MegaRAID SAS controller has changed;
+* the status of an Avago MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
   is included for managing these devices
 
-An alert will also be generated when the LSI HBA firmware version does not match the driver version. To resolve this alert, download the IT (integrated
-target) firmware, not the IR (integrated RAID) firmware, from the LSI website. Then, specify the name of the firmware image and bios as well as the
+An alert will also be generated when the Avago HBA firmware version does not match the driver version. To resolve this alert, download the IT (integrated
+target) firmware, not the IR (integrated RAID) firmware, from the Avago website. Then, specify the name of the firmware image and bios as well as the
 controller to flash::
 
  sas2flash -f firmwareimagename -b biosname -c controllernumber
