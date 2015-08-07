@@ -6,7 +6,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 
 
-class LSIFirmwareAlert(BaseAlert):
+class MPSFirmwareAlert(BaseAlert):
 
     def run(self):
         alerts = []
@@ -42,4 +42,4 @@ class LSIFirmwareAlert(BaseAlert):
 
         return alerts
 
-alertPlugins.register(LSIFirmwareAlert)
+alertPlugins.register(MPSFirmwareAlert)
