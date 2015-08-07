@@ -715,17 +715,26 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
 
-.. note:: hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in
-   :menuselection:`Services --> CIFS`.
+Note the following regarding some of the "Advanced Mode" settings:
 
-.. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every
-         share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
-         this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
-         can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
-         password control.
+* Hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in :menuselection:`Services --> CIFS`.
 
-If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
+* Be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every share that exists
+  using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box is unchecked, even the owner
+  of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they can still access the share from the command line.
+  Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
+
+* If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
+  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
+  
+To configure support for OS/2 clients, add this line to "Auxiliary Parameters"::
+
+ lanman auth = yes
+ 
+To configure lanman authentication for pre-NT authentication, add these lines instead::
+
+ client lanman auth = yes
+  client plaintext auth = yes
 
 Table 10.4b provides an overview of the available VFS modules. Be sure to research each module **before** adding or deleting it from the "Selected" column of
 the "VFS Objects" field for the share. Some modules will need additional configuration after they are added. Refer to
