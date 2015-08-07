@@ -330,6 +330,8 @@ that have occurred since 9.3-RELEASE.
 
 * SSSD was updated to `1.11.7 <https://fedorahosted.org/sssd/wiki/Releases/Notes-1.11.7>`_.
 
+* Nut has been updated to `2.7.3 <http://www.networkupstools.org/source/2.7/new-2.7.3.txt>`_ which adds support for several new devices, including the Tripp Lite SMART500RT1U UPS.
+
 * The driver for the Intel X710 10GbE adapter was added.
 
 * The supported Avago (formerly known as LSI) MegaRAID HBA firmware version has been updated to v20 and the alert regarding a version mismatch has been updated accordingly.
@@ -455,6 +457,10 @@ that have occurred since 9.3-RELEASE.
 * An alert will be generated when a S.M.A.R.T. error occurs.
 
 * An alert will be generated if a Certificate Authority or certificate is invalid or malformed.
+
+* The :command:`zfslower.d` DTrace script has been added. This script is useful for determining the cause of latency, where a reasonable latency might be
+  10 ms. If you run :command:`dtrace -s zfslower.d 10`, it will display all ZFS operations that take longer than 10ms. If no ZFS operations take longer than 10ms
+  but the client is experiencing latency, you know it is not a filesystem issue.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
