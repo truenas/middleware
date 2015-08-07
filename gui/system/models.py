@@ -47,7 +47,6 @@ from freenasUI.common.ssl import (
     write_privatekey
 )
 from freenasUI.freeadmin.models import ConfigQuerySet, NewManager, NewModel, Model, UserField
-from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 
@@ -151,6 +150,7 @@ class Settings(NewModel):
 
     @classmethod
     def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
         sysui = dispatcher.call_sync('system.ui.get_config')
         sysgen = dispatcher.call_sync('system.general.get_config')
 
