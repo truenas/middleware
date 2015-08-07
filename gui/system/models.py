@@ -197,7 +197,7 @@ class Settings(NewModel):
         if self.stg_guiaddress:
             listen.append(self.stg_guiaddress)
         if self.stg_guiv6address:
-            listen.append(self.stg_guiv6address)
+            listen.append('[{0}]'.format(self.stg_guiv6address))
 
         data = {
             'webui_protocol': protocol,
