@@ -21,7 +21,7 @@ BUILD_DEPENDS=  ${LOCALBASE}/bin/cython:${PORTSDIR}/lang/cython
 
 WRKSRC?=/usr/nas_source/py-libzfs
 
-MAKE_ENV=       FREEBSD_SRC=/usr/src:FREENAS=1
+MAKE_ENV=       FREEBSD_SRC=/usr/src
 
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
