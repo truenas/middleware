@@ -58,7 +58,7 @@ save_sambaSID()
 
 generate_smb_config()
 {
-	/usr/local/libexec/nas/generate_smb4_conf.py
+	/usr/local/sbin/dispatcherctl call etcd.generation.generate_group '"samba"'
 }
 
 samba_pre_init()
