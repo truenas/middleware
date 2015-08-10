@@ -1761,11 +1761,11 @@ def certificate_to_json(certtype):
 
 def CA_info(request, id):
     return certificate_to_json(
-        models.CertificateAuthority.objects.get(pk=int(id))
+        models.CertificateAuthority.objects.get(pk=id)
     )
 
 
 def certificate_info(request, id):
     return certificate_to_json(
-        models.Certificate.objects.get(pk=int(id))
+        models.Certificate.objects.get(pk=id)
     )
