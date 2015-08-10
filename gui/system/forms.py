@@ -37,8 +37,6 @@ import stat
 import string
 import subprocess
 
-from OpenSSL import crypto
-
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -53,7 +51,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
-from freenasOS import Configuration, Update
+from freenasOS import Configuration
 from freenasUI import choices
 from freenasUI.account.forms import bsdUsersForm
 from freenasUI.account.models import bsdGroups, bsdUsers
@@ -62,16 +60,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP
-)
-from freenasUI.common.ssl import (
-    create_self_signed_CA,
-    create_certificate_signing_request,
-    create_certificate,
-    sign_certificate,
-    load_certificate,
-    load_privatekey,
-    export_privatekey,
-    generate_key
 )
 
 from freenasUI.directoryservice.forms import (
