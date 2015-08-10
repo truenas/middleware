@@ -2493,9 +2493,13 @@ class CertificateCSREditForm(ModelForm):
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
     def save(self):
-        self.instance.cert_type = 'CERT_EXISTING'
-        super(CertificateCSREditForm, self).save()
+        obj = super(CertificateCSREditForm, self).save(commit=False)
+        obj.save(
+            method='crypto.certificates.csr_update',
+            data={'certificate': self.cleaned_data.get('cert_certificate')},
+        )
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
