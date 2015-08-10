@@ -85,12 +85,11 @@ def zpool_iostat(name=None):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-
     output = zfsproc.communicate()[0].strip('\n')
-
     rv = {}
-    o1 = output.split('\n')[3:-1]
-    for line in o1:
+    output = output.split('\n')
+    output = output[3:-1] if len(output) > 4 else output[3:]
+    for line in output:
         data = line.split()
         attrs = {
              'pool': data[0],
@@ -102,7 +101,6 @@ def zpool_iostat(name=None):
              'bwrite': unprettyprint(data[6]),
              }
         rv[attrs['pool']] = attrs
-
     if name:
         return rv[name]
     return rv

@@ -275,17 +275,6 @@ class zpoolioOneWorker(threading.Thread):
         global zpoolio_one
         zfs = libzfs.ZFS()
         previous_values = {}
-        # for pool in zfs.pools:
-        #     last_val = {
-        #         'pool': pool.name,
-        #         'alloc': unprettyprint(pool.properties['allocated'].value),
-        #         'free': unprettyprint(pool.properties['free'].value),
-        #         'opread': pool.root_vdev.stats.ops[libzfs.ZIOType.READ],
-        #         'opwrite': pool.root_vdev.stats.ops[libzfs.ZIOType.WRITE],
-        #         'bwread': pool.root_vdev.stats.bytes[libzfs.ZIOType.READ],
-        #         'bwrite': pool.root_vdev.stats.bytes[libzfs.ZIOType.WRITE],
-        #     }
-        #     previous_values[pool.name] = last_val
         while not QUIT_FLAG.wait(1.0):
             rv = {}
             for pool in zfs.pools:
