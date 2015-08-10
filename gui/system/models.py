@@ -682,7 +682,7 @@ class CertificateMiddleware:
         ('cert_email', 'email'),
         ('cert_common', 'common'),
         ('cert_serial', 'serial'),
-        ('cert_sidngedby', 'signedby'),
+        ('cert_signedby', 'signedby'),
     )
     provider_name = 'crypto.certificates'
 
