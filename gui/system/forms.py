@@ -2735,39 +2735,19 @@ class CertificateCreateCSRForm(ModelForm):
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        return name
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
 
     def save(self):
-        self.instance.cert_type = 'CERT_CSR'
-        req_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        (req, key) = create_certificate_signing_request(req_info)
-
-        self.instance.cert_CSR = \
-            crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-
-        super(CertificateCreateCSRForm, self).save()
-
+        obj = super(CertificateCreateCSRForm, self).save(commit=False)
+        obj.save(
+            method='crypto.certificates.csr_create',
+            data=self.cleaned_data,
+        )
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
