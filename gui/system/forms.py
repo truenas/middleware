@@ -2683,6 +2683,11 @@ class CertificateCreateInternalForm(ModelForm):
             "javascript:certificate_autopopulate();"
         )
 
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
+
     def clean_cert_name(self):
         cdata = self.cleaned_data
         name = cdata.get('cert_name')
@@ -2698,50 +2703,13 @@ class CertificateCreateInternalForm(ModelForm):
         return name
 
     def save(self):
-        self.instance.cert_type = 'CERT_INTERNAL'
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        signing_cert = self.instance.cert_signedby
-
-        publickey = generate_key(self.instance.cert_key_length)
-        signkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
-            signing_cert.cert_privatekey
+        obj = super(CertificateCreateInternalForm, self).save(commit=False)
+        obj.save(
+            method='crypto.certificates.cert_internal_create',
+            data=self.cleaned_data,
         )
-
-        cert = create_certificate(cert_info)
-        cert.set_pubkey(publickey)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                                 subject=cert),
-        ])
-
-        cert.set_serial_number(signing_cert.cert_serial)
-        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
-
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
-
-        super(CertificateCreateInternalForm, self).save()
-        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial +1
-        ca.save()
-
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
