@@ -1716,7 +1716,6 @@ def certificate_export_certificate_and_privatekey(request, id):
 def certificate_to_json(certtype):
     try:
         data = {
-            'cert_root_path':  certtype.cert_root_path,
             'cert_type': certtype.cert_type,
             'cert_certificate': certtype.cert_certificate,
             'cert_privatekey': certtype.cert_privatekey,

@@ -27,7 +27,6 @@
 import dateutil
 import logging
 import os
-import string
 import uuid
 import signal
 
@@ -37,8 +36,6 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
-from OpenSSL import crypto
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import ConfigQuerySet, NewManager, NewModel, Model, UserField
@@ -658,7 +655,6 @@ class Update(Model):
         return self.upd_train
 
 
-
 class CertificateMiddleware:
     field_mapping = (
         ('id', 'id'),
@@ -681,12 +677,14 @@ class CertificateMiddleware:
         ('cert_DN', 'dn'),
         ('cert_valid_from', 'valid_from'),
         ('cert_valid_until', 'valid_until'),
+        ('cert_certificate_path', 'certificate_path'),
+        ('cert_privatekey_path', 'privatekey_path'),
+        ('cert_CSR_path', 'csr_path'),
     )
     provider_name = 'crypto.certificates'
 
 
 class CertificateBase(NewModel):
-    cert_root_path = "/etc/certificates"
 
     id = models.CharField(editable=False, max_length=120, primary_key=True)
     cert_type = models.CharField(max_length=64)
@@ -803,42 +801,39 @@ class CertificateBase(NewModel):
         blank=True,
         editable=False,
     )
+    cert_certificate_path = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_privatekey_path = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_CSR_path = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
 
     def get_certificate_path(self):
-        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
+        return self.cert_certificate_path
 
     def get_privatekey_path(self):
-        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateBase, self).__init__(*args, **kwargs)
-
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
+        return self.cert_privatekey_path
 
     def __unicode__(self):
         return self.cert_name
-
-    @property
-    def cert_certificate_path(self):
-        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
-
-    @property
-    def cert_privatekey_path(self):
-        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    @property
-    def cert_CSR_path(self):
-        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
 
     @property
     def cert_internal(self):
         internal = "YES"
 
         if self.cert_type == 'CA_EXISTING':
-            internal = "NO" 
-        elif self.cert_type == 'CERT_EXISTING': 
-            internal = "NO" 
+            internal = "NO"
+        elif self.cert_type == 'CERT_EXISTING':
+            internal = "NO"
 
         return internal
 
@@ -947,13 +942,6 @@ class CertificateBase(NewModel):
 
 
 class CertificateAuthority(CertificateBase):
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateAuthority, self).__init__(*args, **kwargs)
-
-        self.cert_root_path = "%s/CA" % self.cert_root_path
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
 
     def delete(self):
         temp_cert_name = self.cert_name
