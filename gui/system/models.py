@@ -683,6 +683,7 @@ class CertificateMiddleware:
         ('cert_common', 'common'),
         ('cert_serial', 'serial'),
         ('cert_signedby', 'signedby'),
+        ('cert_DN', 'dn'),
     )
     provider_name = 'crypto.certificates'
 
@@ -790,6 +791,11 @@ class CertificateBase(NewModel):
             null=True,
             verbose_name=_("Signing Certificate Authority")
             )
+    cert_DN = models.CharField(
+        max_length=2000,
+        blank=True,
+        editable=False,
+    )
 
     def get_certificate(self):
         certificate = None
@@ -929,16 +935,6 @@ class CertificateBase(NewModel):
             except:
                 pass
         return count
-
-    @property
-    def cert_DN(self):
-        self.__load_thingy()
-
-        parts = []
-        for c in self.__get_thingy().get_subject().get_components():
-            parts.append("%s=%s" % (c[0], c[1]))
-        DN = "/%s" % string.join(parts, '/')
-        return DN
 
     #
     # Returns ASN1 GeneralizedTime - Need to parse it...
