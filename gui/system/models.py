@@ -684,6 +684,8 @@ class CertificateMiddleware:
         ('cert_serial', 'serial'),
         ('cert_signedby', 'signedby'),
         ('cert_DN', 'dn'),
+        ('cert_valid_from', 'valid_from'),
+        ('cert_valid_until', 'valid_until'),
     )
     provider_name = 'crypto.certificates'
 
@@ -793,6 +795,16 @@ class CertificateBase(NewModel):
             )
     cert_DN = models.CharField(
         max_length=2000,
+        blank=True,
+        editable=False,
+    )
+    cert_valid_from = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_valid_until = models.CharField(
+        max_length=200,
         blank=True,
         editable=False,
     )
@@ -941,15 +953,11 @@ class CertificateBase(NewModel):
     #
     @property
     def cert_from(self):
-        self.__load_thingy()
-
-        thingy = self.__get_thingy()
         try:
-            before = thingy.get_notBefore()
-            t1 = dtparser.parse(before) 
+            before = self.cert_valid_from
+            t1 = dtparser.parse(before)
             t2 = t1.astimezone(dateutil.tz.tzutc())
-            before = t2.ctime() 
-
+            before = t2.ctime()
         except Exception as e:
             before = None
 
@@ -960,15 +968,11 @@ class CertificateBase(NewModel):
     #
     @property
     def cert_until(self):
-        self.__load_thingy()
-
-        thingy = self.__get_thingy()
         try:
-            after = thingy.get_notAfter()
-            t1 = dtparser.parse(after) 
+            after = self.cert_valid_until
+            t1 = dtparser.parse(after)
             t2 = t1.astimezone(dateutil.tz.tzutc())
-            after = t2.ctime() 
-
+            after = t2.ctime()
         except Exception as e:
             after = None
 
