@@ -41,11 +41,6 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
-from freenasUI.common.ssl import (
-    write_certificate,
-    write_certificate_signing_request,
-    write_privatekey
-)
 from freenasUI.freeadmin.models import ConfigQuerySet, NewManager, NewModel, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
@@ -809,59 +804,11 @@ class CertificateBase(NewModel):
         editable=False,
     )
 
-    def get_certificate(self):
-        certificate = None
-        try:
-            if self.cert_certificate:
-                certificate = crypto.load_certificate(
-                    crypto.FILETYPE_PEM,
-                    self.cert_certificate
-                )
-        except:
-            pass
-        return certificate
-
-    def get_privatekey(self):
-        privatekey = None
-        if self.cert_privatekey:
-            privatekey = crypto.load_privatekey(
-                crypto.FILETYPE_PEM,
-                self.cert_privatekey
-            )
-        return privatekey
-
-    def get_CSR(self):
-        CSR = None
-        if self.cert_CSR:
-            CSR = crypto.load_certificate_request(
-                crypto.FILETYPE_PEM,
-                self.cert_CSR
-            )
-        return CSR
-
     def get_certificate_path(self):
         return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
 
     def get_privatekey_path(self):
         return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    def get_CSR_path(self):
-        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
-
-    def write_certificate(self, path=None):
-        if not path:
-            path = self.get_certificate_path()
-        write_certificate(self.get_certificate(), path)
-
-    def write_privatekey(self, path=None):
-        if not path:
-            path = self.get_privatekey_path()
-        write_privatekey(self.get_privatekey(), path)
-
-    def write_CSR(self, path=None):
-        if not path:
-            path = self.get_CSR_path()
-        write_certificate_signing_request(self.get_CSR(), path)
 
     def __init__(self, *args, **kwargs):
         super(CertificateBase, self).__init__(*args, **kwargs)
@@ -872,15 +819,15 @@ class CertificateBase(NewModel):
     def __unicode__(self):
         return self.cert_name
 
-    @property 
+    @property
     def cert_certificate_path(self):
         return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
 
-    @property 
+    @property
     def cert_privatekey_path(self):
         return "%s/%s.key" % (self.cert_root_path, self.cert_name)
 
-    @property 
+    @property
     def cert_CSR_path(self):
         return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
 

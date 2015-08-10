@@ -179,28 +179,6 @@ def export_privatekey(buf, passphrase=None):
     )
 
 
-def write_certificate(certificate, path):
-    open(path, "w").write(
-        crypto.dump_certificate(crypto.FILETYPE_PEM, certificate)
-    )
-
-
-def write_privatekey(privatekey, path, passphrase=None):
-    open(path, "w").write(
-        crypto.dump_privatekey(
-            crypto.FILETYPE_PEM,
-            privatekey,
-            passphrase=str(passphrase) if passphrase else None
-        )
-    )
-
-
-def write_certificate_signing_request(req, path):
-    open(path, "w").write(
-        crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
-    )
-
-
 def get_certificate_path(name):
     from freenasUI.system.models import Certificate
 
