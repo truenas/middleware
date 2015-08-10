@@ -468,7 +468,7 @@ class NewModel(Model):
     def _save(self, *args, **kwargs):
         methods = get_middleware_methods(self)
 
-        if self.id is not None:
+        if self.id not in (None, ''):
             mname = 'update'
             method_args = [self.id]
             updated = True
