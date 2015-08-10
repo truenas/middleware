@@ -2341,7 +2341,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
     cert_country = forms.ChoiceField(
         label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
         required=True,
-        choices=choices.COUNTRY_CHOICES(), 
+        choices=choices.COUNTRY_CHOICES(),
         initial='US',
         help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
     )
@@ -2385,16 +2385,6 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:CA_autopopulate();"
         )
-
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        return name
 
     def clean_cert_key_length(self):
         key = self.cleaned_data.get('cert_key_length')
@@ -2455,7 +2445,7 @@ class CertificateEditForm(ModelForm):
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     def save(self):
-        super(CertificateEditForm, self).save()
+        super(CertificateEditForm, self).save(commit=False)
         notifier().start("ix-ssl") 
 
     class Meta:
