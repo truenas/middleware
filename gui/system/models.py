@@ -831,7 +831,7 @@ class CertificateBase(NewModel):
         return privatekey
 
     def get_CSR(self):
-        CSR = None 
+        CSR = None
         if self.cert_CSR:
             CSR = crypto.load_certificate_request(
                 crypto.FILETYPE_PEM,
@@ -863,33 +863,8 @@ class CertificateBase(NewModel):
             path = self.get_CSR_path()
         write_certificate_signing_request(self.get_CSR(), path)
 
-    def __load_certificate(self):
-        if self.cert_certificate != None and self.__certificate == None:
-            self.__certificate = self.get_certificate()
-
-    def __load_CSR(self):
-        if self.cert_CSR != None and self.__CSR == None:
-            self.__CSR = self.get_CSR()
-
-    def __load_thingy(self):
-        if self.cert_type == 'CERT_CSR':
-            self.__load_CSR() 
-        else:
-            self.__load_certificate() 
-
-    def __get_thingy(self):
-        thingy = self.__certificate
-        if self.cert_type == 'CERT_CSR':
-            thingy = self.__CSR
- 
-        return thingy
-
     def __init__(self, *args, **kwargs):
         super(CertificateBase, self).__init__(*args, **kwargs)
-
-        self.__certificate = None
-        self.__CSR = None
-        self.__load_thingy() 
 
         if not os.path.exists(self.cert_root_path):
             os.mkdir(self.cert_root_path, 0755)
