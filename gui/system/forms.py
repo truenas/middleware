@@ -2638,20 +2638,6 @@ class CertificateCreateInternalForm(ModelForm):
         if key:
             return int(key)
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        if name.find('"') != -1:
-            raise forms.ValidationError(
-                """You cannnot issue a certificate with a `"` in its name"""
-            )
-        return name
-
     def save(self):
         obj = super(CertificateCreateInternalForm, self).save(commit=False)
         obj.save(
