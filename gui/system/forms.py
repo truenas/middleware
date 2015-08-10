@@ -2198,35 +2198,6 @@ class CertificateAuthorityImportForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(_(
-                "A certificate with this name already exists."
-            ))
-        return name
-
-    def clean_cert_passphrase(self):
-        cdata = self.cleaned_data
-
-        passphrase = cdata.get('cert_passphrase')
-        privatekey = cdata.get('cert_privatekey')
-
-        if not privatekey:
-            return passphrase
-
-        try:
-            privatekey = load_privatekey(
-                privatekey,
-                passphrase
-            )
-        except Exception as e:
-            raise forms.ValidationError(_("Incorrect passphrase"))
-
-        return passphrase
-
     def clean_cert_passphrase2(self):
         cdata = self.cleaned_data
         passphrase = cdata.get('cert_passphrase')
@@ -2239,30 +2210,15 @@ class CertificateAuthorityImportForm(ModelForm):
         return passphrase
 
     def save(self):
-        self.instance.cert_type = 'CA_EXISTING'
-
-        cert_info = load_certificate(self.instance.cert_certificate)
-        self.instance.cert_country = cert_info['country']
-        self.instance.cert_state = cert_info['state']
-        self.instance.cert_city = cert_info['city']
-        self.instance.cert_organization = cert_info['organization']
-        self.instance.cert_common = cert_info['common']
-        self.instance.cert_email = cert_info['email']
-        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
-
-        cert_privatekey = self.cleaned_data.get('cert_privatekey')
-        cert_passphrase = self.cleaned_data.get('cert_passphrase')
-
-        if cert_passphrase and cert_privatekey:
-            privatekey = export_privatekey(
-                cert_privatekey,
-                cert_passphrase
-            )
-            self.instance.cert_privatekey = privatekey
-
-        super(CertificateAuthorityImportForm, self).save()
-
+        obj = super(CertificateAuthorityImportForm, self).save(commit=False)
+        self.cleaned_data['passphrase'] = self.cleaned_data.pop('cert_passphrase', None)
+        self.cleaned_data.pop('cert_passphrase2', None)
+        privatekey = self.cleaned_data.get('cert_privatekey')
+        if not privatekey:
+            self.cleaned_data.pop('cert_privatekey')
+        obj.save(method='crypto.certificates.ca_import', data=self.cleaned_data)
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
