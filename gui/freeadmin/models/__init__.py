@@ -477,7 +477,11 @@ class NewModel(Model):
             method_args = []
             updated = False
 
-        method = methods.get(mname)
+        if 'method' in kwargs:
+            method = kwargs.pop('method')
+        else:
+            method = methods.get(mname)
+
         if method is None:
             raise NotImplementedError("RPC %s method for '%s' not defined'" % (
                 mname,
