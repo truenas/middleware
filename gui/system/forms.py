@@ -2155,7 +2155,8 @@ class CertificateAuthorityEditForm(ModelForm):
     )
 
     def save(self):
-        super(CertificateAuthorityEditForm, self).save()
+        obj = super(CertificateAuthorityEditForm, self).save(commit=False)
+        obj.save(method='crypto.certificates.ca_update', data=self.cleaned_data)
         notifier().start("ix-ssl")
 
     class Meta:
