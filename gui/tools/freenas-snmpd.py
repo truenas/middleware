@@ -12,19 +12,19 @@ import fcntl
 import socket
 import asyncore
 import json
+import libzfs
 from setproctitle import setproctitle
 from syslog import (
     syslog,
     LOG_ALERT,
-    LOG_ERR,
 )
 
 
 PIDFILE = '/var/run/freenas-snmpd.pid'
 SOCKFILE = '/var/run/freenas-snmpd.sock'
-QUIT_FLAG = threading.Event() # Termination Event
+QUIT_FLAG = threading.Event()  # Termination Event
 
-# Global Dicts 
+# Global Dicts
 # The following contain zilstat results from the last
 # zilstat command (1, 5 and 10 second intervals)
 global zilstat_one
@@ -57,7 +57,7 @@ def unprettyprint(ster):
     return long(num)
 
 
-# Our custom termincate signal handler
+# Our custom terminate signal handler
 # is called when the daemon recieves signal.SIGTERM
 def cust_terminate(signal_number, stack_frame):
     global proc_pid_list
@@ -223,6 +223,7 @@ def zfs_zilstat_ops(interval):
             pass
     return attrs
 
+
 class zilOneWorker(threading.Thread):
     def __init__(self):
         super(zilOneWorker, self).__init__()
@@ -266,52 +267,59 @@ class zpoolioOneWorker(threading.Thread):
     def __init__(self):
         super(zpoolioOneWorker, self).__init__()
         self.daemon = True
+        global zpoolio_one
+        with lock:
+            zpoolio_one = {}
 
     def run(self):
         global zpoolio_one
-        global proc_pid_list
-        temp = []
-        zfs_proc = subprocess.Popen(
-            'zpool iostat 1',
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            preexec_fn=os.setsid)
-
-        with lock:
-            proc_pid_list.append(zfs_proc.pid)
-        # Waste the first three lines!
-        # Do not remove these!!!
-        zfs_proc.stdout.readline()
-        zfs_proc.stdout.readline()
-        zfs_proc.stdout.readline()
-
-        # Continually parse `zpool iostat interval`
-        while not QUIT_FLAG.wait(0.01):
-            nextline = zfs_proc.stdout.readline()
-            if nextline == '' and zfs_proc.poll() != None:
-                break
-            temp.append(nextline)
-            if nextline.startswith('----'):
-                if temp:
-                    rv = {}
-                    for line in temp[:-1]:
-                        data = line.split()
-                        attrs = {
-                             'pool': data[0],
-                             'alloc': unprettyprint(data[1]),
-                             'free': unprettyprint(data[2]),
-                             'opread': unprettyprint(data[3]),
-                             'opwrite': unprettyprint(data[4]),
-                             'bwread': unprettyprint(data[5]),
-                             'bwrite': unprettyprint(data[6]),
-                             }
-                        rv[attrs['pool']] = attrs
-                    with lock:
-                       zpoolio_one = rv
-                    temp = []
-                continue
-        zfs_proc.kill()
+        zfs = libzfs.ZFS()
+        previous_values = {}
+        # for pool in zfs.pools:
+        #     last_val = {
+        #         'pool': pool.name,
+        #         'alloc': unprettyprint(pool.properties['allocated'].value),
+        #         'free': unprettyprint(pool.properties['free'].value),
+        #         'opread': pool.root_vdev.stats.ops[libzfs.ZIOType.READ],
+        #         'opwrite': pool.root_vdev.stats.ops[libzfs.ZIOType.WRITE],
+        #         'bwread': pool.root_vdev.stats.bytes[libzfs.ZIOType.READ],
+        #         'bwrite': pool.root_vdev.stats.bytes[libzfs.ZIOType.WRITE],
+        #     }
+        #     previous_values[pool.name] = last_val
+        while not QUIT_FLAG.wait(1.0):
+            rv = {}
+            for pool in zfs.pools:
+                next_val = {
+                    'pool': pool.name,
+                    'alloc': unprettyprint(pool.properties['allocated'].value),
+                    'free': unprettyprint(pool.properties['free'].value),
+                    'opread': pool.root_vdev.stats.ops[libzfs.ZIOType.READ],
+                    'opwrite': pool.root_vdev.stats.ops[libzfs.ZIOType.WRITE],
+                    'bwread': pool.root_vdev.stats.bytes[libzfs.ZIOType.READ],
+                    'bwrite': pool.root_vdev.stats.bytes[libzfs.ZIOType.WRITE],
+                }
+                try:
+                    update_dict = {
+                        'opread': next_val['opread'] - previous_values[pool.name]['opread'],
+                        'opwrite': next_val['opwrite'] - previous_values[pool.name]['opwrite'],
+                        'bwread': next_val['bwread'] - previous_values[pool.name]['bwread'],
+                        'bwrite': next_val['bwrite'] - previous_values[pool.name]['bwrite'],
+                    }
+                except KeyError:
+                    # This means that the 'previous_values' dict does not contain this
+                    # pool (maybe it was just added or maybe we just started this worker)
+                    # and thus there is nothing to report at this point for this pool
+                    pass
+                else:
+                    # If the Key Error exception was not raised then do the following
+                    rv[pool.name] = next_val.copy()
+                    rv[pool.name].update(update_dict)
+                finally:
+                    # In either case we want the next previous_value's pool.name key to contain
+                    # the current next_val
+                    previous_values[pool.name] = next_val.copy()
+            with lock:
+                zpoolio_one = rv
 
 if __name__ == '__main__':
 
