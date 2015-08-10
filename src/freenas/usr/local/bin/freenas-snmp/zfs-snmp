@@ -32,6 +32,7 @@ import snmpresponse
 import subprocess
 import json
 import socket
+import libzfs
 
 
 sys.path.append("/usr/local/www")
@@ -48,8 +49,22 @@ size_dict = {"K": 1024,
              "T": 1099511627776}
 
 
-# Method to convert 1K --> 1024 and so on
+class ArgumentValidationError(ValueError):
+    """
+    Raised when the type of an argument to a function is not what it should be.
+    """
+    def __init__(self, arg_num, func_name, accepted_arg_type):
+        self.error = 'The {0} argument of {1}() is not a {2}'.format(
+            arg_num, func_name, accepted_arg_type)
+
+    def __str__(self):
+        return self.error
+
+
 def unprettyprint(ster):
+    """
+    Method to convert 1K --> 1024 and so on...
+    """
     num = 0.0
     try:
         num = float(ster)
@@ -168,7 +183,7 @@ def zilstatd_ops(interval):
             s.close()
             if data:
                 return long(float(data["ops"]))
-        except socket.error:
+        except (socket.error, ValueError):
             pass
     return long(0)
 
@@ -185,7 +200,7 @@ def zpoolio_interval(interval):
             s.close()
             if data:
                 return data
-        except socket.error:
+        except (socket.error, ValueError):
             pass
     return {}
 
@@ -202,26 +217,9 @@ def zfs_zilstat_ops10(oid):
     return ('counter64', zilstatd_ops(10))
 
 
-# def zfs_read(oid):
-    # 32 bit KB counter
-    # return ('counter',
-    #     kstat(".zfs.misc.arcstats.l2_read_bytes") / 1024 % 2**32)
-
-
-# def zfs_readdir(oid):
-    # 32 bit KB counter
-    # return ('counter',
-    #     kstat("unix:0:vopstats_zfs:readdir_bytes") / 1024 % 2**32)
-
-
-# def zfs_write(oid):
-    # 32 bit KB counter
-    # return ('counter',
-    #     kstat(".zfs.misc.arcstats.l2_write_bytes") / 1024 % 2**32)
-
 def zfs_l2arc_size(oid):
     # KB
-    return ('gauge', kstat("kstat.zfs.misc.arcstats.l2_size") / 1024)
+    return ('gauge', kstat("zfs.misc.arcstats.l2_size") / 1024)
 
 
 def zfs_l2arc_hits(oid):
@@ -248,40 +246,30 @@ def zfs_l2arc_read(oid):
             kstat("zfs.misc.arcstats.l2_read_bytes") / 1024 % 2**32)
 
 
-def zfs_pools():
-    statuses = {"ONLINE": 1, "DEGRADED": 2, "FAULTED": 3}
-    pools = [re.split('\s+', line)
-             for line in commands.getoutput(
-                "zpool list -H -o name,health").split("\n")]
-    pools = [(row[0], statuses.get(row[1], 4)) for row in pools]
-    return pools
+def zfs_segregate(zfs_dataset):
+    """
+    A function to obtain and segregte all the datsets (children) and zvols
+    in the provided (`zfs_dataset`) dataset. The best example to use this
+    is to provide it with a zfs pool's root dataset and it will return a
+    a tuple of (datsets, zvols) where each of them is a list.
 
+    Note: Please make sure that the input to this function (`zfs_dataset`)
+    is of type: libzfs.ZFSDataset
+    """
+    if type(zfs_dataset) is not libzfs.ZFSDataset:
+        raise ArgumentValidationError(1, 'zfs_segregate', libzfs.ZFSDataset)
+    zvols = []
+    datasets = []
+    if zfs_dataset.properties['type'].value == 'volume':
+        # since zvols do not have children lets just return now
+        return datasets, [zfs_dataset]
+    else:
+        datasets = [zfs_dataset]
+    for x, y in map(zfs_segregate, list(zfs_dataset.children)):
+        datasets.extend(x)
+        zvols.extend(y)
+    return datasets, zvols
 
-def zfs_used_avail(fs):
-    return [int(x) / 1024
-            for x in commands.getoutput(
-                "zfs get -Hpo value used,available " + fs).split("\n")]
-
-
-def zfs_used(fs, divisor=1):
-    return ('gauge', zfs_used_avail(fs)[0] / divisor)
-
-
-def zfs_avail(fs, divisor=1):
-    return ('gauge', zfs_used_avail(fs)[1] / divisor)
-
-
-def zfs_size(fs, divisor=1):
-    return ('gauge',
-            (zfs_used_avail(fs)[0] + zfs_used_avail(fs)[1]) / divisor)
-
-
-def zfs_vols():
-    vols = [re.split('\s+', line)
-            for line in commands.getoutput(
-                "zfs list -H -t volume").split("\n")]
-    vols = [(row[0]) for row in vols]
-    return vols
 
 # nymnetworks     OBJECT IDENTIFIER ::= {enterprises 25359}
 # zfs             OBJECT IDENTIFIER ::= {nymnetworks 1}
@@ -291,6 +279,7 @@ def zfs_vols():
 # io              OBJECT IDENTIFIER ::= {zfs 4}
 # vols            OBJECT IDENTIFIER ::= {zfs 5}
 # zil             OBJECT IDENTIFIER ::= {zfs 6}
+# ds              OBJECT IDENTIFIER ::= {zfs 7}
 
 
 result = [
@@ -314,72 +303,93 @@ result = [
     (BASE_OID + '.6.1.0', zfs_zilstat_ops1),
     (BASE_OID + '.6.2.0', zfs_zilstat_ops5),
     (BASE_OID + '.6.3.0', zfs_zilstat_ops10),
-    # (BASE_OID + '.4.1.0', zfs_read),
-    # (BASE_OID + '.4.2.0', zfs_readdir),
-    # (BASE_OID + '.4.3.0', zfs_write),
 ]
 
 i = 1
 all_iostat = zpool_iostat()
 onesec_iostat = zpoolio_interval(1)
-for pool, health in zfs_pools():
-    result.append((BASE_OID + '.1.1.' + str(i), ('string', pool)))
-    result.append((BASE_OID + '.1.2.' + str(i),
-                   lambda oid, fs=pool: zfs_avail(fs)))
-    result.append((BASE_OID + '.1.3.' + str(i),
-                   lambda oid, fs=pool: zfs_used(fs)))
-    result.append((BASE_OID + '.1.4.' + str(i), ('integer', health)))
-    result.append((BASE_OID + '.1.5.' + str(i),
-                   lambda oid, fs=pool: zfs_size(fs)))
-    result.append((BASE_OID + '.1.12.' + str(i),
-                   lambda oid, fs=pool: zfs_avail(fs, 1024)))
-    result.append((BASE_OID + '.1.13.' + str(i),
-                   lambda oid, fs=pool: zfs_used(fs, 1024)))
-    result.append((BASE_OID + '.1.14.' + str(i),
-                   lambda oid, fs=pool: zfs_size(fs, 1024)))
-    result.append((BASE_OID + '.1.15.' + str(i),
+zfs = libzfs.ZFS()
+pools = [pool for pool in zfs.pools]
+datasets = []
+zvols = []
+for res in map(zfs_segregate, [pool.root_dataset for pool in pools]):
+    # Excluding the first item in the datasets list as its always the root_dataset
+    # and we already have the stats on that (i.e. the pool!)
+    datasets.extend(res[0][1:])
+    zvols.extend(res[1])
+
+for zpool in pools:
+    stri = str(i)
+    pool = zpool.name
+    pool_health = zpool.properties['health'].value
+    # Dividing by 1024 to ge to KB
+    pool_used = unprettyprint(zpool.root_dataset.properties['used'].value)/1024
+    pool_available = unprettyprint(zpool.root_dataset.properties['available'].value)/1024
+    pool_size = unprettyprint(zpool.properties['size'].value)/1024
+    result.append((BASE_OID + '.1.1.' + stri, ('string', pool)))
+    result.append((BASE_OID + '.1.2.' + stri, ('gauge', pool_available)))
+    result.append((BASE_OID + '.1.3.' + stri, ('gauge', pool_used)))
+    result.append((BASE_OID + '.1.4.' + stri, ('string', pool_health)))
+    result.append((BASE_OID + '.1.5.' + stri, ('gauge', pool_size)))
+    result.append((BASE_OID + '.1.12.' + stri, ('gauge', pool_available/1024)))
+    result.append((BASE_OID + '.1.13.' + stri, ('gauge', pool_used/1024)))
+    result.append((BASE_OID + '.1.14.' + stri, ('gauge', pool_size/1024)))
+    result.append((BASE_OID + '.1.15.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          all_iostat[fs]['opread'])))
-    result.append((BASE_OID + '.1.16.' + str(i),
+    result.append((BASE_OID + '.1.16.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          all_iostat[fs]['opwrite'])))
-    result.append((BASE_OID + '.1.17.' + str(i),
+    result.append((BASE_OID + '.1.17.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          all_iostat[fs]['bwread'])))
-    result.append((BASE_OID + '.1.18.' + str(i),
+    result.append((BASE_OID + '.1.18.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          all_iostat[fs]['bwrite'])))
-    result.append((BASE_OID + '.1.19.' + str(i),
+    result.append((BASE_OID + '.1.19.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          onesec_iostat[fs].get('opread', 0))))
-    result.append((BASE_OID + '.1.20.' + str(i),
+    result.append((BASE_OID + '.1.20.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          onesec_iostat[fs].get('opwrite', 0))))
-    result.append((BASE_OID + '.1.21.' + str(i),
+    result.append((BASE_OID + '.1.21.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          onesec_iostat[fs].get('bwread', 0))))
-    result.append((BASE_OID + '.1.22.' + str(i),
+    result.append((BASE_OID + '.1.22.' + stri,
                    lambda oid, fs=pool: ('counter64',
                                          onesec_iostat[fs].get('bwrite', 0))))
     i += 1
 
 i = 1
-if zfs_vols()[0] != '':
-    for vol in zfs_vols():
-        result.append((BASE_OID + '.5.1.' + str(i), ('string', vol)))
-        result.append((BASE_OID + '.5.2.' + str(i),
-                       lambda oid, fs=vol: zfs_avail(fs)))
-        result.append((BASE_OID + '.5.3.' + str(i),
-                       lambda oid, fs=vol: zfs_used(fs)))
-        result.append((BASE_OID + '.5.4.' + str(i),
-                       lambda oid, fs=vol: zfs_size(fs)))
-        result.append((BASE_OID + '.5.12.' + str(i),
-                       lambda oid, fs=vol: zfs_avail(fs, 1024)))
-        result.append((BASE_OID + '.5.13.' + str(i),
-                       lambda oid, fs=vol: zfs_used(fs, 1024)))
-        result.append((BASE_OID + '.5.14.' + str(i),
-                       lambda oid, fs=vol: zfs_size(fs, 1024)))
-        i += 1
+for zvol in zvols:
+    stri = str(i)
+    volsize = unprettyprint(zvol.properties['volsize'].value)/1024
+    vol_used = unprettyprint(zvol.properties['used'].value)/1024
+    vol_available = unprettyprint(zvol.properties['available'].value)/1024
+    result.append((BASE_OID + '.5.1.' + stri, ('string', zvol.name)))
+    result.append((BASE_OID + '.5.2.' + stri, ('gauge', vol_available)))
+    result.append((BASE_OID + '.5.3.' + stri, ('gauge', vol_used)))
+    result.append((BASE_OID + '.5.4.' + stri, ('gauge', volsize)))
+    result.append((BASE_OID + '.5.12.' + stri, ('gauge', vol_available/1024)))
+    result.append((BASE_OID + '.5.13.' + stri, ('gauge', vol_used/1024)))
+    result.append((BASE_OID + '.5.14.' + stri, ('gauge', volsize/1024)))
+    i += 1
+
+i = 1
+for ds in datasets:
+    stri = str(i)
+    ds_used = unprettyprint(ds.properties['used'].value)/1024
+    ds_available = unprettyprint(ds.properties['available'].value)/1024
+    ds_size = ds_used + ds_available
+    result.append((BASE_OID + '.7.1.' + stri, ('string', ds.name)))
+    result.append((BASE_OID + '.7.2.' + stri, ('gauge', ds_available)))
+    result.append((BASE_OID + '.7.3.' + stri, ('gauge', ds_used)))
+    result.append((BASE_OID + '.7.4.' + stri, ('gauge', ds_size)))
+    result.append((BASE_OID + '.7.12.' + stri, ('gauge', ds_available/1024)))
+    result.append((BASE_OID + '.7.13.' + stri, ('gauge', ds_used/1024)))
+    result.append((BASE_OID + '.7.14.' + stri, ('gauge', ds_size/1024)))
+    i += 1
+
 
 operation = sys.argv[1]
 req_oid = sys.argv[2]
