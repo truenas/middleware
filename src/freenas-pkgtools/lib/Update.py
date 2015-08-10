@@ -243,10 +243,120 @@ def GetRootDataset():
     rv = lines[1].split()[0]
     return rv
                                                                                                                 
+def CloneSetAttr(clone, **kwargs):
+    """
+    Given a clone, set attributes defined in kwargs.
+    Currently only 'keep' (which maps to beadm:keep)
+    is allowed.
+    """
+    if clone is None:
+        raise ValueError("Clone must be set")
+    if kwargs is None:
+        return True
+
+    if "keep" in kwargs:
+        # This maps to zfs set beadm:keep=%s freenas-boot/ROOT/${bename}
+        tval = bool(kwargs["keep"])
+        cmd = ["/sbin/zfs", "set", "beadm:keep=%s" % tval, "freenas-boot/ROOT/%s" % clone["realname"]]
+        # Should I try this and raise a custom exception?
+        subprocess.check_call(cmd)
+        return True
+    return False
+
+def PruneClones(cb = None):
+    """
+    Attempt to prune boot environments based on age.
+    It will try deleting BEs until either:
+    1:  There are no more BEs suitable for deletion.
+    2:  At least 80% of the pool is free.
+    3:  At least 2gbytes is free.
+    If cb is not None, it will be called with something.
+
+    """
+    def PoolInfo(pool_name = "freenas-boot"):
+        """
+        Return some info about the pool, namely the
+        amount of available space and the amount of used
+        space.  This would be easier with py-libzfs.
+        Always returns a two-tuple.
+        """
+        try:
+            cmd = ["/sbin/zpool", "get", "-Hp", "-o", "value",
+                   "size,allocated", pool_name]
+            (size, used) = subprocess.check_output(cmd).split()
+            return (int(size), int(used))
+        except:
+            log.debug("Could not get pool information")
+            return (None, None)
+
+    def PruneDone(size, used):
+        mbytes_min = 2 * 1024 * 1024
+        if (size - used) < mbytes_min:
+            return False
+        if ((used * 100.0) / size) < 80.0:
+            return False
+        return True
+    def DCW(be):
+        """
+        Dead Clone Walking:  return true if the
+        clone is eligible for pruning.  That is, if
+        it does not have a keep property set to True,
+        and is not currently mounted or active.
+        For now, if "keep" is not in it, we exclude it
+        as well, but log it.
+        """
+        if "keep" not in be:
+            log.debug("Cannot prune clone {0} since it is missing a keep option".format(be["name"]))
+            return False
+        if be["keep"] is None:
+            log.debug("Cannot prune clone {0} since keep is None".format(be["name"]))
+            return False
+        if be["keep"] == True:
+            return False
+        if be["mountpoint"] != "-":
+            log.debug("Cannot prune clone {0} since it is mounted at {1}".format(be["name"], be["mountpoint"]))
+            return False
+        if be["active"] != "-":
+            log.debug("Cannot prune clone {0} since it is active {1}".format(be["name"], be["active"]))
+            return False
+        return True
+    
+    (size, used) = PoolInfo()
+    if size is None:
+        log.error("Cannot get pool information, not pruning")
+        return False
+    if PruneDone(size, used):
+        log.debug("No pruning necessary")
+        return True
+    clones = sorted(ListClones(), key = lambda be: be["created"])
+    for be in clones:
+        # Check if clone is eligible.
+        # 
+        if DCW(be):
+            log.debug("I want to get rid of clone %s" % be["name"])
+            if DeleteClone(be["realname"]) is True:
+                log.debug("Successfully deleted clone %s" % be["realname"])
+                (size, used) = PoolInfo()
+                if size is None:
+                    log.debug("Can no longer get pool information")
+                    return False
+                if PruneDone(size, used):
+                    log.debug("Pruning done!")
+                    return True
+            else:
+                log.debug("Could not delete clone %s" % be["realname"])
+        else:
+            log.debug("Clone %s not eligible for pruning" % be["realname"])
+        # Next BE, please
+        
+    log.debug("Done with prune loop.  Must have failed.")
+    return False
+
 def ListClones():
     # Return a list of boot-environment clones.
-    # This is just a simple wrapper for
-    # "beadm list -H"
+    # The outer loop is just a simple wrapper for
+    # "beadm list -H"; it then gets a set of properties
+    # for each BE.
     # Because of that, it can't use RunCommand
     cmd = [beadm, "list", "-H" ]
     rv = []
@@ -268,14 +378,25 @@ def ListClones():
         name = fields[0]
         if len(fields) > 5 and fields[5] != "-":
             name = fields[5]
-        rv.append({
+        tdict = {
             'realname' : fields[0],
             'name': name,
             'active': fields[1],
             'mountpoint': fields[2],
             'space': fields[3],
             'created': datetime.strptime(fields[4], '%Y-%m-%d %H:%M'),
-        })
+        }
+        try:
+            prop_cmd = ["/sbin/zfs", "get", "-H", "-o", "value", "beadm:keep"]
+            prop_cmd.append("freenas-boot/ROOT/{0}".format(tdict["realname"]))
+            keep_str = subprocess.check_output(prop_cmd).rstrip()
+            if keep_str == "-":
+                tdict["keep"] = None
+            else:
+                tdict["keep"] = bool(keep_str)
+        except:
+            log.debug("Could not get beadm properties from dataset")
+        rv.append(tdict)
     return rv
 
 def FindClone(name):
