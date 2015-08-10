@@ -33,31 +33,12 @@ log = logging.getLogger('common.ssl')
 
 
 
-def export_certificate(buf):
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
-    return crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-
-
-def export_privatekey(buf, passphrase=None):
-    key = crypto.load_privatekey(
-        crypto.FILETYPE_PEM,
-        buf,
-        passphrase=str(passphrase) if passphrase else None
-    )
-
-    return crypto.dump_privatekey(
-        crypto.FILETYPE_PEM,
-        key,
-        passphrase=str(passphrase) if passphrase else None
-    )
-
-
 def get_certificate_path(name):
     from freenasUI.system.models import Certificate
 
     try:
         certificate = Certificate.objects.get(cert_name=name)
-        path = certificate.get_certificate_path() 
+        path = certificate.get_certificate_path()
     except:
         path = None
 

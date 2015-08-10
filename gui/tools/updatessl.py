@@ -27,6 +27,7 @@
 
 import logging
 import os
+import re
 import sys
 
 sys.path.extend([
@@ -40,10 +41,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.common.ssl import (
-    load_privatekey,
-    export_privatekey,
-)
 from freenasUI.system.models import (
     Settings,
     Certificate,
@@ -87,6 +84,20 @@ def load_privatekey(buf, passphrase=None):
         crypto.FILETYPE_PEM,
         buf,
         passphrase=lambda x: str(passphrase) if passphrase else ''
+    )
+
+
+def export_privatekey(buf, passphrase=None):
+    key = crypto.load_privatekey(
+        crypto.FILETYPE_PEM,
+        buf,
+        passphrase=str(passphrase) if passphrase else None
+    )
+
+    return crypto.dump_privatekey(
+        crypto.FILETYPE_PEM,
+        key,
+        passphrase=str(passphrase) if passphrase else None
     )
 
 
