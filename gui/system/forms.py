@@ -2288,41 +2288,16 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        return name
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
 
     def save(self):
-        self.instance.cert_type = 'CA_INTERNAL'
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'serial': self.instance.cert_serial,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        (cert, key) = create_self_signed_CA(cert_info)
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        self.instance.cert_serial = 01
-
-        super(CertificateAuthorityCreateInternalForm, self).save()
-
+        obj = super(CertificateAuthorityCreateInternalForm, self).save(commit=False)
+        obj.save(method='crypto.certificates.ca_internal_create', data=self.cleaned_data)
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
