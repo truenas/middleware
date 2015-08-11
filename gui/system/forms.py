@@ -2618,7 +2618,7 @@ class CertificateCreateInternalForm(ModelForm):
                 Q(cert_privatekey__exact='')
             )
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
-            "javascript:certificate_autopopulate();"
+            "javascript:CA_autopopulate();"
         )
 
     def clean_cert_key_length(self):
