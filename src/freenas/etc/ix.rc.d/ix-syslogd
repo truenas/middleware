@@ -11,44 +11,7 @@
 
 generate_syslog_conf()
 {
-	local IFS="|"
-	local f="stg_syslogserver"
-	eval local $f
-	local sf=$(var_to_sf $f)
-	local serverhost=""
-	local serverport=""
-
-	cp /conf/base/etc/local/syslog-ng.conf.freenas /etc/local/syslog-ng.conf
-
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-	SELECT
-		$sf
-
-	FROM
-		system_settings
-
-	ORDER BY
-		-id
-
-	LIMIT 1
-	" | \
-	while eval read -r $f; do
-		if [ -n "${stg_syslogserver}" ]; then
-			if echo "${stg_syslogserver}" | grep -q ":"; then
-				serverhost=$(echo ${stg_syslogserver}|cut -d: -f1)
-				serverport=$(echo ${stg_syslogserver}|cut -d: -f2)
-			else
-				serverhost="${stg_syslogserver}"
-				serverport="514"
-			fi
-{
-cat << __EOF__
-destination loghost { udp("${serverhost}" port(${serverport}) localport(514)); };
-log { source(src); destination(loghost); };
-__EOF__
-} >> /etc/local/syslog-ng.conf
-		fi
-	done
+	/usr/local/sbin/dispatcherctl call etcd.generation.generate_group '"syslog"'
 }
 
 use_syslog_dataset()
