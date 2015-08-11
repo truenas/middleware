@@ -27,7 +27,6 @@
 import dateutil
 import logging
 import os
-import string
 import uuid
 import signal
 
@@ -38,14 +37,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from OpenSSL import crypto
-
 from freenasUI import choices
-from freenasUI.common.ssl import (
-    write_certificate,
-    write_certificate_signing_request,
-    write_privatekey
-)
 from freenasUI.freeadmin.models import ConfigQuerySet, NewManager, NewModel, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
@@ -663,17 +655,39 @@ class Update(Model):
         return self.upd_train
 
 
-CA_TYPE_EXISTING        = 0x00000001
-CA_TYPE_INTERNAL        = 0x00000002
-CA_TYPE_INTERMEDIATE    = 0x00000004
-CERT_TYPE_EXISTING      = 0x00000008
-CERT_TYPE_INTERNAL      = 0x00000010
-CERT_TYPE_CSR           = 0x00000020
+class CertificateMiddleware:
+    field_mapping = (
+        ('id', 'id'),
+        ('cert_type', 'type'),
+        ('cert_name', 'name'),
+        ('cert_certificate', 'certificate'),
+        ('cert_privatekey', 'privatekey'),
+        ('cert_CSR', 'csr'),
+        ('cert_key_length', 'key_length'),
+        ('cert_digest_algorithm', 'digest_algorithm'),
+        ('cert_lifetime', 'lifetime'),
+        ('cert_country', 'country'),
+        ('cert_state', 'state'),
+        ('cert_city', 'city'),
+        ('cert_organization', 'organization'),
+        ('cert_email', 'email'),
+        ('cert_common', 'common'),
+        ('cert_serial', 'serial'),
+        ('cert_signedby', 'signedby'),
+        ('cert_DN', 'dn'),
+        ('cert_valid_from', 'valid_from'),
+        ('cert_valid_until', 'valid_until'),
+        ('cert_certificate_path', 'certificate_path'),
+        ('cert_privatekey_path', 'privatekey_path'),
+        ('cert_CSR_path', 'csr_path'),
+    )
+    provider_name = 'crypto.certificates'
 
-class CertificateBase(Model):
-    cert_root_path = "/etc/certificates"
 
-    cert_type = models.IntegerField()
+class CertificateBase(NewModel):
+
+    id = models.CharField(editable=False, max_length=120, primary_key=True)
+    cert_type = models.CharField(max_length=64)
     cert_name = models.CharField(
             max_length=120,
             verbose_name=_("Name"),
@@ -772,115 +786,54 @@ class CertificateBase(Model):
             null=True,
             verbose_name=_("Signing Certificate Authority")
             )
-
-    def get_certificate(self):
-        certificate = None
-        try:
-            if self.cert_certificate:
-                certificate = crypto.load_certificate(
-                    crypto.FILETYPE_PEM,
-                    self.cert_certificate
-                )
-        except:
-            pass
-        return certificate
-
-    def get_privatekey(self):
-        privatekey = None
-        if self.cert_privatekey:
-            privatekey = crypto.load_privatekey(
-                crypto.FILETYPE_PEM,
-                self.cert_privatekey
-            )
-        return privatekey
-
-    def get_CSR(self):
-        CSR = None 
-        if self.cert_CSR:
-            CSR = crypto.load_certificate_request(
-                crypto.FILETYPE_PEM,
-                self.cert_CSR
-            )
-        return CSR
+    cert_DN = models.CharField(
+        max_length=2000,
+        blank=True,
+        editable=False,
+    )
+    cert_valid_from = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_valid_until = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_certificate_path = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_privatekey_path = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
+    cert_CSR_path = models.CharField(
+        max_length=200,
+        blank=True,
+        editable=False,
+    )
 
     def get_certificate_path(self):
-        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
+        return self.cert_certificate_path
 
     def get_privatekey_path(self):
-        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    def get_CSR_path(self):
-        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
-
-    def write_certificate(self, path=None):
-        if not path:
-            path = self.get_certificate_path()
-        write_certificate(self.get_certificate(), path)
-
-    def write_privatekey(self, path=None):
-        if not path:
-            path = self.get_privatekey_path()
-        write_privatekey(self.get_privatekey(), path)
-
-    def write_CSR(self, path=None):
-        if not path:
-            path = self.get_CSR_path()
-        write_certificate_signing_request(self.get_CSR(), path)
-
-    def __load_certificate(self):
-        if self.cert_certificate != None and self.__certificate == None:
-            self.__certificate = self.get_certificate()
-
-    def __load_CSR(self):
-        if self.cert_CSR != None and self.__CSR == None:
-            self.__CSR = self.get_CSR()
-
-    def __load_thingy(self):
-        if self.cert_type == CERT_TYPE_CSR:
-            self.__load_CSR() 
-        else:
-            self.__load_certificate() 
-
-    def __get_thingy(self):
-        thingy = self.__certificate
-        if self.cert_type == CERT_TYPE_CSR:
-            thingy = self.__CSR
- 
-        return thingy
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateBase, self).__init__(*args, **kwargs)
-
-        self.__certificate = None
-        self.__CSR = None
-        self.__load_thingy() 
-
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
+        return self.cert_privatekey_path
 
     def __unicode__(self):
         return self.cert_name
-
-    @property 
-    def cert_certificate_path(self):
-        return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
-
-    @property 
-    def cert_privatekey_path(self):
-        return "%s/%s.key" % (self.cert_root_path, self.cert_name)
-
-    @property 
-    def cert_CSR_path(self):
-        return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
 
     @property
     def cert_internal(self):
         internal = "YES"
 
-        if self.cert_type == CA_TYPE_EXISTING:
-            internal = "NO" 
-        elif self.cert_type == CERT_TYPE_EXISTING: 
-            internal = "NO" 
+        if self.cert_type == 'CA_EXISTING':
+            internal = "NO"
+        elif self.cert_type == 'CERT_EXISTING':
+            internal = "NO"
 
         return internal
 
@@ -888,14 +841,14 @@ class CertificateBase(Model):
     def cert_issuer(self):
         issuer = None
 
-        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE,
-            CERT_TYPE_EXISTING):
+        if self.cert_type in ('CA_EXISTING', 'CA_INTERMEDIATE',
+            'CERT_EXISTING'):
             issuer = "external"
-        elif self.cert_type == CA_TYPE_INTERNAL:
+        elif self.cert_type == 'CA_INTERNAL':
             issuer = "self-signed"
-        elif self.cert_type == CERT_TYPE_INTERNAL:
+        elif self.cert_type == 'CERT_INTERNAL':
             issuer = self.cert_signedby
-        elif self.cert_type == CERT_TYPE_CSR:
+        elif self.cert_type == 'CERT_CSR':
             issuer = "external - signature pending"
 
         return issuer
@@ -912,30 +865,16 @@ class CertificateBase(Model):
                 pass
         return count
 
-    @property
-    def cert_DN(self):
-        self.__load_thingy()
-
-        parts = []
-        for c in self.__get_thingy().get_subject().get_components():
-            parts.append("%s=%s" % (c[0], c[1]))
-        DN = "/%s" % string.join(parts, '/')
-        return DN
-
     #
     # Returns ASN1 GeneralizedTime - Need to parse it...
     #
     @property
     def cert_from(self):
-        self.__load_thingy()
-
-        thingy = self.__get_thingy()
         try:
-            before = thingy.get_notBefore()
-            t1 = dtparser.parse(before) 
+            before = self.cert_valid_from
+            t1 = dtparser.parse(before)
             t2 = t1.astimezone(dateutil.tz.tzutc())
-            before = t2.ctime() 
-
+            before = t2.ctime()
         except Exception as e:
             before = None
 
@@ -946,15 +885,11 @@ class CertificateBase(Model):
     #
     @property
     def cert_until(self):
-        self.__load_thingy()
-
-        thingy = self.__get_thingy()
         try:
-            after = thingy.get_notAfter()
-            t1 = dtparser.parse(after) 
+            after = self.cert_valid_until
+            t1 = dtparser.parse(after)
             t2 = t1.astimezone(dateutil.tz.tzutc())
-            after = t2.ctime() 
-
+            after = t2.ctime()
         except Exception as e:
             after = None
 
@@ -963,42 +898,42 @@ class CertificateBase(Model):
     @property
     def cert_type_existing(self):
         ret = False
-        if self.cert_type & CERT_TYPE_EXISTING:
+        if self.cert_type == 'CERT_EXISTING':
             ret = True
         return ret
 
     @property
     def cert_type_internal(self):
         ret = False
-        if self.cert_type & CERT_TYPE_INTERNAL:
+        if self.cert_type == 'CERT_INTERNAL':
             ret = True
         return ret
 
     @property
     def cert_type_CSR(self):
         ret = False
-        if self.cert_type & CERT_TYPE_CSR:
+        if self.cert_type == 'CERT_CSR':
             ret = True
         return ret
 
     @property
     def CA_type_existing(self):
         ret = False
-        if self.cert_type & CA_TYPE_EXISTING:
+        if self.cert_type == 'CA_EXISTING':
             ret = True
         return ret
 
     @property
     def CA_type_internal(self):
         ret = False
-        if self.cert_type & CA_TYPE_INTERNAL:
+        if self.cert_type == 'CA_INTERNAL':
             ret = True
         return ret
 
     @property
     def CA_type_intermediate(self):
         ret = False
-        if self.cert_type & CA_TYPE_INTERMEDIATE:
+        if self.cert_type == 'CA_INTERMEDIATE':
             ret = True
         return ret
 
@@ -1007,13 +942,6 @@ class CertificateBase(Model):
 
 
 class CertificateAuthority(CertificateBase):
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateAuthority, self).__init__(*args, **kwargs)
-
-        self.cert_root_path = "%s/CA" % self.cert_root_path
-        if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
 
     def delete(self):
         temp_cert_name = self.cert_name
@@ -1034,6 +962,11 @@ class CertificateAuthority(CertificateBase):
 
     class Meta:
         verbose_name = _("CA")
+
+    class Middleware(CertificateMiddleware):
+        default_filters = [
+            ('type', 'in', ['CA_EXISTING', 'CA_INTERMEDIATE', 'CA_INTERNAL']),
+        ]
 
 
 class Certificate(CertificateBase):
@@ -1057,6 +990,11 @@ class Certificate(CertificateBase):
 
     class Meta:
         verbose_name = _("Certificate")
+
+    class Middleware(CertificateMiddleware):
+        default_filters = [
+            ('type', 'nin', ['CA_EXISTING', 'CA_INTERMEDIATE', 'CA_INTERNAL']),
+        ]
 
 
 class Backup(Model):

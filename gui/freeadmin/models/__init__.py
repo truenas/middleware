@@ -84,6 +84,7 @@ class Middleware(object):
     def __init__(self, model, klass):
 
         self.configstore = getattr(klass, 'configstore', False)
+        self.default_filters = getattr(klass, 'default_filters', None)
         self.field_mapping = FieldMiddlewareMapping(
             getattr(klass, 'field_mapping', ()))
         self.provider_name = getattr(
@@ -185,7 +186,7 @@ class NewQuerySet(object):
     def __init__(self, model, **kwargs):
         self.model = model
         self._result_cache = None
-        self._filters = []
+        self._filters = model._middleware.default_filters or []
         self._fmm = model._middleware.field_mapping
         if model._meta.ordering:
             self._sort = self._transform_order(*model._meta.ordering)
@@ -283,6 +284,10 @@ class NewQuerySet(object):
 
         return c
 
+    def complex_filter(self, *args, **kwargs):
+        log.debug("Unimplemented complex_filter called: %r - %r", args, kwargs)
+        return self._clone()
+
     def get(self, *args, **kwargs):
         c = self._clone().filter(*args, **kwargs)
         c._fetch_all()
@@ -363,6 +368,9 @@ class NewQuerySet(object):
         """This is a NOOP"""
         clone = self._clone()
         return clone
+
+    def using(self, *args, **kwargs):
+        return self._clone()
 
     def values_list(self, *args):
         self._fetch_all()
@@ -460,7 +468,7 @@ class NewModel(Model):
     def _save(self, *args, **kwargs):
         methods = get_middleware_methods(self)
 
-        if self.id is not None:
+        if self.id not in (None, ''):
             mname = 'update'
             method_args = [self.id]
             updated = True
@@ -469,7 +477,11 @@ class NewModel(Model):
             method_args = []
             updated = False
 
-        method = methods.get(mname)
+        if 'method' in kwargs:
+            method = kwargs.pop('method')
+        else:
+            method = methods.get(mname)
+
         if method is None:
             raise NotImplementedError("RPC %s method for '%s' not defined'" % (
                 mname,
@@ -498,7 +510,8 @@ class NewModel(Model):
                     continue
                 field = fmm.get_field_to_middleware(f.name)
                 if isinstance(f, ForeignKey):
-                    data[field] = getattr(self, f.name).id
+                    related = getattr(self, f.name)
+                    data[field] = related.id if related is not None else None
                 else:
                     data[field] = getattr(self, f.name)
         method_args.append(data)

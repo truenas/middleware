@@ -37,8 +37,6 @@ import stat
 import string
 import subprocess
 
-from OpenSSL import crypto
-
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -53,7 +51,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
-from freenasOS import Configuration, Update
+from freenasOS import Configuration
 from freenasUI import choices
 from freenasUI.account.forms import bsdUsersForm
 from freenasUI.account.models import bsdGroups, bsdUsers
@@ -62,16 +60,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP
-)
-from freenasUI.common.ssl import (
-    create_self_signed_CA,
-    create_certificate_signing_request,
-    create_certificate,
-    sign_certificate,
-    load_certificate,
-    load_privatekey,
-    export_privatekey,
-    generate_key
 )
 
 from freenasUI.directoryservice.forms import (
@@ -2155,7 +2143,8 @@ class CertificateAuthorityEditForm(ModelForm):
     )
 
     def save(self):
-        super(CertificateAuthorityEditForm, self).save()
+        obj = super(CertificateAuthorityEditForm, self).save(commit=False)
+        obj.save(method='crypto.certificates.ca_update', data=self.cleaned_data)
         notifier().start("ix-ssl")
 
     class Meta:
@@ -2197,35 +2186,6 @@ class CertificateAuthorityImportForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(_(
-                "A certificate with this name already exists."
-            ))
-        return name
-
-    def clean_cert_passphrase(self):
-        cdata = self.cleaned_data
-
-        passphrase = cdata.get('cert_passphrase')
-        privatekey = cdata.get('cert_privatekey')
-
-        if not privatekey:
-            return passphrase
-
-        try:
-            privatekey = load_privatekey(
-                privatekey,
-                passphrase
-            )
-        except Exception as e:
-            raise forms.ValidationError(_("Incorrect passphrase"))
-
-        return passphrase
-
     def clean_cert_passphrase2(self):
         cdata = self.cleaned_data
         passphrase = cdata.get('cert_passphrase')
@@ -2238,30 +2198,15 @@ class CertificateAuthorityImportForm(ModelForm):
         return passphrase
 
     def save(self):
-        self.instance.cert_type = models.CA_TYPE_EXISTING
-
-        cert_info = load_certificate(self.instance.cert_certificate)
-        self.instance.cert_country = cert_info['country']
-        self.instance.cert_state = cert_info['state']
-        self.instance.cert_city = cert_info['city']
-        self.instance.cert_organization = cert_info['organization']
-        self.instance.cert_common = cert_info['common']
-        self.instance.cert_email = cert_info['email']
-        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
-
-        cert_privatekey = self.cleaned_data.get('cert_privatekey')
-        cert_passphrase = self.cleaned_data.get('cert_passphrase')
-
-        if cert_passphrase and cert_privatekey:
-            privatekey = export_privatekey(
-                cert_privatekey,
-                cert_passphrase
-            )
-            self.instance.cert_privatekey = privatekey
-
-        super(CertificateAuthorityImportForm, self).save()
-
+        obj = super(CertificateAuthorityImportForm, self).save(commit=False)
+        self.cleaned_data['passphrase'] = self.cleaned_data.pop('cert_passphrase', None)
+        self.cleaned_data.pop('cert_passphrase2', None)
+        privatekey = self.cleaned_data.get('cert_privatekey')
+        if not privatekey:
+            self.cleaned_data.pop('cert_privatekey')
+        obj.save(method='crypto.certificates.ca_import', data=self.cleaned_data)
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
@@ -2331,41 +2276,16 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        return name
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
 
     def save(self):
-        self.instance.cert_type = models.CA_TYPE_INTERNAL
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'serial': self.instance.cert_serial,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        (cert, key) = create_self_signed_CA(cert_info)
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        self.instance.cert_serial = 01
-
-        super(CertificateAuthorityCreateInternalForm, self).save()
-
+        obj = super(CertificateAuthorityCreateInternalForm, self).save(commit=False)
+        obj.save(method='crypto.certificates.ca_internal_create', data=self.cleaned_data)
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
@@ -2409,7 +2329,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
     cert_country = forms.ChoiceField(
         label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
         required=True,
-        choices=choices.COUNTRY_CHOICES(), 
+        choices=choices.COUNTRY_CHOICES(),
         initial='US',
         help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
     )
@@ -2454,62 +2374,16 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             "javascript:CA_autopopulate();"
         )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.CertificateAuthority.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        return name
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
 
     def save(self):
-        self.instance.cert_type = models.CA_TYPE_INTERMEDIATE
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        signing_cert = self.instance.cert_signedby
-
-        publickey = generate_key(self.instance.cert_key_length)
-        signkey = load_privatekey(signing_cert.cert_privatekey)
-
-        cert = create_certificate(cert_info)
-        cert.set_pubkey(publickey)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension("basicConstraints", True,
-                             "CA:TRUE, pathlen:0"),
-            crypto.X509Extension("keyUsage", True,
-                             "keyCertSign, cRLSign"),
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                                 subject=cert),
-        ])
-
-        cert.set_serial_number(signing_cert.cert_serial)
-        self.instance.cert_serial = 01
-        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
-
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
-
-        super(CertificateAuthorityCreateIntermediateForm, self).save()
-        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial +1
-        ca.save()
+        obj = super(CertificateAuthorityCreateIntermediateForm, self).save(commit=False)
+        obj.save(method='crypto.certificates.ca_intermediate_create', data=self.cleaned_data)
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
@@ -2559,7 +2433,7 @@ class CertificateEditForm(ModelForm):
         self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     def save(self):
-        super(CertificateEditForm, self).save()
+        super(CertificateEditForm, self).save(commit=False)
         notifier().start("ix-ssl") 
 
     class Meta:
@@ -2597,9 +2471,13 @@ class CertificateCSREditForm(ModelForm):
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_EXISTING
-        super(CertificateCSREditForm, self).save()
+        obj = super(CertificateCSREditForm, self).save(commit=False)
+        obj.save(
+            method='crypto.certificates.csr_update',
+            data={'certificate': self.cleaned_data.get('cert_certificate')},
+        )
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
@@ -2640,25 +2518,6 @@ class CertificateImportForm(ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
-    def clean_cert_passphrase(self):
-        cdata = self.cleaned_data
-
-        passphrase = cdata.get('cert_passphrase')
-        privatekey = cdata.get('cert_privatekey')
-
-        if not privatekey:
-            return passphrase
-
-        try:
-            pkey = load_privatekey(
-                privatekey,
-                passphrase
-            )
-        except Exception as e:
-            raise forms.ValidationError(_("Incorrect passphrase"))
-
-        return passphrase
-
     def clean_cert_passphrase2(self):
         cdata = self.cleaned_data
         passphrase = cdata.get('cert_passphrase')
@@ -2670,41 +2529,16 @@ class CertificateImportForm(ModelForm):
             ))
         return passphrase
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(_(
-                "A certificate with this name already exists."
-            ))
-        return name
-
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_EXISTING
-
-        cert_info = load_certificate(self.instance.cert_certificate)
-        self.instance.cert_country = cert_info['country']
-        self.instance.cert_state = cert_info['state']
-        self.instance.cert_city = cert_info['city']
-        self.instance.cert_organization = cert_info['organization']
-        self.instance.cert_common = cert_info['common']
-        self.instance.cert_email = cert_info['email']
-        self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
-
-        cert_privatekey = self.cleaned_data.get('cert_privatekey')
-        cert_passphrase = self.cleaned_data.get('cert_passphrase')
- 
-        if cert_passphrase and cert_privatekey:
-            privatekey = export_privatekey(
-                cert_privatekey,
-                cert_passphrase
-            )
-            self.instance.cert_privatekey = privatekey
-
-        super(CertificateImportForm, self).save()
-
+        obj = super(CertificateImportForm, self).save(commit=False)
+        self.cleaned_data['passphrase'] = self.cleaned_data.pop('cert_passphrase', None)
+        self.cleaned_data.pop('cert_passphrase2', None)
+        obj.save(
+            method='crypto.certificates.cert_import',
+            data=self.cleaned_data,
+        )
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
@@ -2787,65 +2621,19 @@ class CertificateCreateInternalForm(ModelForm):
             "javascript:certificate_autopopulate();"
         )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        if name.find('"') != -1:
-            raise forms.ValidationError(
-                """You cannnot issue a certificate with a `"` in its name"""
-            )
-        return name
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_INTERNAL
-        cert_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'lifetime': self.instance.cert_lifetime,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        signing_cert = self.instance.cert_signedby
-
-        publickey = generate_key(self.instance.cert_key_length)
-        signkey = crypto.load_privatekey(
-            crypto.FILETYPE_PEM,
-            signing_cert.cert_privatekey
+        obj = super(CertificateCreateInternalForm, self).save(commit=False)
+        obj.save(
+            method='crypto.certificates.cert_internal_create',
+            data=self.cleaned_data,
         )
-
-        cert = create_certificate(cert_info)
-        cert.set_pubkey(publickey)
-        cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
-        cert.set_issuer(cacert.get_subject())
-        cert.add_extensions([
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                                 subject=cert),
-        ])
-
-        cert.set_serial_number(signing_cert.cert_serial)
-        sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
-
-        self.instance.cert_certificate = \
-            crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, publickey)
-
-        super(CertificateCreateInternalForm, self).save()
-        ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial +1
-        ca.save()
-
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [
@@ -2915,39 +2703,19 @@ class CertificateCreateCSRForm(ModelForm):
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
 
-    def clean_cert_name(self):
-        cdata = self.cleaned_data
-        name = cdata.get('cert_name')
-        certs = models.Certificate.objects.filter(cert_name=name)
-        if certs:
-            raise forms.ValidationError(
-                "A certificate with this name already exists."
-            )
-        return name
+    def clean_cert_key_length(self):
+        key = self.cleaned_data.get('cert_key_length')
+        if key:
+            return int(key)
 
     def save(self):
-        self.instance.cert_type = models.CERT_TYPE_CSR
-        req_info = {
-            'key_length': self.instance.cert_key_length,
-            'country': self.instance.cert_country,
-            'state': self.instance.cert_state,
-            'city': self.instance.cert_city,
-            'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
-            'email': self.instance.cert_email,
-            'digest_algorithm': self.instance.cert_digest_algorithm
-        }
-
-        (req, key) = create_certificate_signing_request(req_info)
-
-        self.instance.cert_CSR = \
-            crypto.dump_certificate_request(crypto.FILETYPE_PEM, req)
-        self.instance.cert_privatekey = \
-            crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-
-        super(CertificateCreateCSRForm, self).save()
-
+        obj = super(CertificateCreateCSRForm, self).save(commit=False)
+        obj.save(
+            method='crypto.certificates.csr_create',
+            data=self.cleaned_data,
+        )
         notifier().start("ix-ssl")
+        return obj
 
     class Meta:
         fields = [

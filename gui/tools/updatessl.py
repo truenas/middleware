@@ -27,6 +27,7 @@
 
 import logging
 import os
+import re
 import sys
 
 sys.path.extend([
@@ -40,18 +41,65 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.common.ssl import (
-    load_certificate,
-    load_privatekey,
-    export_privatekey,
-)
 from freenasUI.system.models import (
     Settings,
     Certificate,
-    CERT_TYPE_EXISTING,
 )
 
+from OpenSSL import crypto
+
 log = logging.getLogger('tools.updatessl')
+
+
+def load_certificate(buf):
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
+
+    cert_info = {}
+    cert_info['country'] = cert.get_subject().C
+    cert_info['state'] = cert.get_subject().ST
+    cert_info['city'] = cert.get_subject().L
+    cert_info['organization'] = cert.get_subject().O
+    cert_info['common'] = cert.get_subject().CN
+    cert_info['email'] = cert.get_subject().emailAddress
+
+    signature_algorithm = cert.get_signature_algorithm()
+    m = re.match('^(.+)[Ww]ith', signature_algorithm)
+    if m:
+        cert_info['digest_algorithm'] = m.group(1).upper()
+
+    return cert_info
+
+
+#
+# This will raise an exception if it's an encrypted private key
+# and no password is provided. Unfortunately, the exception type
+# is generic and no error string is provided. The purpose here is 
+# to determine if this is an encrypted private key or not. If it not,
+# then the key will load and return fine. If it is encrypted, then it 
+# will load if the correct passphrase is provided, otherwise it will
+# throw an exception.
+#
+def load_privatekey(buf, passphrase=None):
+    return crypto.load_privatekey(
+        crypto.FILETYPE_PEM,
+        buf,
+        passphrase=lambda x: str(passphrase) if passphrase else ''
+    )
+
+
+def export_privatekey(buf, passphrase=None):
+    key = crypto.load_privatekey(
+        crypto.FILETYPE_PEM,
+        buf,
+        passphrase=str(passphrase) if passphrase else None
+    )
+
+    return crypto.dump_privatekey(
+        crypto.FILETYPE_PEM,
+        key,
+        passphrase=str(passphrase) if passphrase else None
+    )
+
 
 
 def main(certfile,keyfile):
@@ -82,7 +130,7 @@ def main(certfile,keyfile):
     cert_info = load_certificate(crt)
     created_cert = Certificate.objects.create(
                        cert_name = "freenas-pre-certui",
-                       cert_type = CERT_TYPE_EXISTING,
+                       cert_type = 'CERT_EXISTING',
                        cert_certificate = crt,
                        cert_privatekey = export_privatekey(key), 
                        cert_country = cert_info['country'],
