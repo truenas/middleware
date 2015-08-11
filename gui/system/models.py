@@ -154,6 +154,13 @@ class Settings(NewModel):
         elif 'HTTPS' in protocol:
             protocol = 'https'
 
+        certificate = sysui.get('webui_https_certificate')
+        if certificate:
+            try:
+                certificate = Certificate.objects.get(pk=certificate)
+            except Certificate.DoesNotExist:
+                certificate = None
+
         # FIXME: only first address accounted for
         listenv4 = None
         listenv6 = None
@@ -166,6 +173,7 @@ class Settings(NewModel):
         return cls(**dict(
             id=1,
             stg_guiprotocol=protocol,
+            stg_guicertificate=certificate,
             stg_guiport=sysui.get('webui_http_port'),
             stg_guihttpsport=sysui.get('webui_https_port'),
             stg_guiaddress=listenv4,
@@ -191,10 +199,16 @@ class Settings(NewModel):
         if self.stg_guiv6address:
             listen.append('[{0}]'.format(self.stg_guiv6address))
 
+        if self.stg_guicertificate:
+            certificate = self.stg_guicertificate.id
+        else:
+            certificate = None
+
         data = {
             'webui_protocol': protocol,
             'webui_listen': listen,
             'webui_http_redirect_https': self.stg_guihttpsredirect or False,
+            'webui_https_certificate': certificate,
         }
         if self.stg_guiport:
             data['webui_http_port'] = self.stg_guiport
