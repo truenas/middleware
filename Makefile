@@ -33,12 +33,11 @@ RELEASE_LOGFILE?=release.build.log
 .endif
 
 
-.if defined(PRODUCTION) && ${PRODUCTION} == "yes"
-UPDATE_USER=sef
-UPDATE_HOST=update.freenas.org
-.else
-UPDATE_USER?=jkh		# For now, just use sef's account
+UPDATE_USER?=releng
+.if defined(UPDATE_INTERNAL)
 UPDATE_HOST?=update-int.ixsystems.com
+.else
+UPDATE_HOST?=update.freenas.org
 .endif
 
 ENV_SETUP=env _KEY=set
