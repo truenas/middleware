@@ -508,6 +508,9 @@ class NewModel(Model):
                 if not fmm:
                     data[f.name] = getattr(self, f.name)
                     continue
+                # Do not send id for update task
+                if f.name == 'id' and not updated:
+                    continue
                 field = fmm.get_field_to_middleware(f.name)
                 if isinstance(f, ForeignKey):
                     related = getattr(self, f.name)
