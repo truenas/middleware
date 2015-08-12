@@ -27,17 +27,10 @@
 import glob
 import logging
 import os
-import base64
 import re
 import shutil
-import smtplib
 import sqlite3
 import subprocess
-import syslog
-import traceback
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.Utils import formatdate
 from datetime import datetime, timedelta
 
 from django.utils.translation import ugettext_lazy as _
@@ -115,10 +108,10 @@ def send_mail(subject=None,
               extra_headers=None,
               attachments=None,
               timeout=300,
+              settings=None,
               ):
-    from freenasUI.account.models import bsdUsers
-    from freenasUI.network.models import GlobalConfiguration
-    from freenasUI.system.models import Email
+    from freenasUI.middleware.connector import connection as dispatcher
+
     if not channel:
         channel = get_sw_name().lower()
     if interval > timedelta():
@@ -136,93 +129,20 @@ def send_mail(subject=None,
 
     error = False
     errmsg = ''
-    em = Email.objects.all().order_by('-id')[0]
-    if not to:
-        to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
-    if attachments:
-        msg = MIMEMultipart()
-        msg.preamble = text
-        map(lambda attachment: msg.attach(attachment), attachments)
-    else:
-        msg = MIMEText(text, _charset='utf-8')
-    if subject:
-        msg['Subject'] = subject
-
-    msg['From'] = em.em_fromemail
-    msg['To'] = ', '.join(to)
-    msg['Date'] = formatdate()
 
     try:
-        gc = GlobalConfiguration.objects.order_by('-id')[0]
-        local_hostname = "%s.%s" % (gc.get_hostname(), gc.gc_domain)
-    except:
-        local_hostname = "%s.local" % get_sw_name()
-
-    msg['Message-ID'] = "<%s-%s.%s@%s>" % (get_sw_name().lower(), datetime.utcnow().strftime("%Y%m%d.%H%M%S.%f"), base64.urlsafe_b64encode(os.urandom(3)), local_hostname)
-
-    if not extra_headers:
-        extra_headers = {}
-    for key, val in extra_headers.items():
-        if key in msg:
-            msg.replace_header(key, val)
-        else:
-            msg[key] = val
-    msg = msg.as_string()
-
-    try:
-        if not em.em_outgoingserver or not em.em_port:
-            # See NOTE below.
-            raise ValueError('you must provide an outgoing mailserver and mail'
-                             ' server port when sending mail')
-        if em.em_security == 'ssl':
-            server = smtplib.SMTP_SSL(
-                em.em_outgoingserver,
-                em.em_port,
-                timeout=timeout,
-                local_hostname=local_hostname)
-        else:
-            server = smtplib.SMTP(
-                em.em_outgoingserver,
-                em.em_port,
-                timeout=timeout,
-                local_hostname=local_hostname)
-            if em.em_security == 'tls':
-                server.starttls()
-        if em.em_smtp:
-            server.login(
-                em.em_user.encode('utf-8'),
-                em.em_pass.encode('utf-8'))
-        # NOTE: Don't do this.
-        #
-        # If smtplib.SMTP* tells you to run connect() first, it's because the
-        # mailserver it tried connecting to via the outgoing server argument
-        # was unreachable and it tried to connect to 'localhost' and barfed.
-        # This is because FreeNAS doesn't run a full MTA.
-        #else:
-        #    server.connect()
-        server.sendmail(em.em_fromemail, to, msg)
-        server.quit()
-    except ValueError as ve:
-        # Don't spam syslog with these messages. They should only end up in the
-        # test-email pane.
-        errmsg = str(ve)
-        error = True
+        dispatcher.call_sync('mail.send', {
+            'to': to,
+            'subject': subject,
+            'message': text,
+            'extra_headers': extra_headers or {},
+        }, *([] if not settings else [settings]))
     except Exception as e:
-        syslog.openlog(channel, syslog.LOG_PID,
-                       facility=syslog.LOG_MAIL)
-        try:
-            for line in traceback.format_exc().splitlines():
-                syslog.syslog(syslog.LOG_ERR, line)
-        finally:
-            syslog.closelog()
+        error = True
         errmsg = str(e)
-        error = True
-    except smtplib.SMTPAuthenticationError as e:
-        errmsg = "%d %s" % (e.smtp_code, e.smtp_error)
-        error = True
-    except:
-        errmsg = "Unexpected error."
-        error = True
+        if hasattr(e, 'extra'):
+            errmsg += ' - {0}'.format(e.extra)
+
     return error, errmsg
 
 
