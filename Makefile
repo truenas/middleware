@@ -33,7 +33,7 @@ RELEASE_LOGFILE?=release.build.log
 .endif
 
 
-UPDATE_USER?=sef		# For now, just use sef's account
+UPDATE_USER?=releng
 UPDATE_HOST?=update.freenas.org
 
 ENV_SETUP=env _KEY=set
