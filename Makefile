@@ -32,6 +32,12 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
+UPDATE_USER?=releng
+.if defined(UPDATE_INTERNAL)
+UPDATE_HOST?=update-int.ixsystems.com
+.else
+UPDATE_HOST?=update.freenas.org
+.endif
 
 UPDATE_USER?=releng
 UPDATE_HOST?=update.freenas.org
