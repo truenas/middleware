@@ -23,7 +23,7 @@ PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
 .endif
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH?="/builds/${NANO_LABEL}/nightlies/"
+IX_INTERNAL_PATH?="/builds/${NANO_LABEL}/nightlies/9.3"
 IX_STABLE_DIR?="/builds/${NANO_LABEL}/9.3/STABLE/"
 
 .ifdef SCRIPT
