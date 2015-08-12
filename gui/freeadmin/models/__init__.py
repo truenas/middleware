@@ -519,6 +519,9 @@ class NewModel(Model):
                     data[field] = getattr(self, f.name)
         method_args.append(data)
 
+        # Allow extra arguments to be passed to the task
+        method_args.extend(kwargs.pop('extra_args', []))
+
         task = self._save_task_call(method, *method_args)
 
         if self.id is None and task['result'] is not None:
