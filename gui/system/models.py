@@ -400,7 +400,7 @@ class Advanced(Model):
         deletable = False
 
 
-class Email(Model):
+class Email(NewModel):
     em_fromemail = models.CharField(
             max_length=120,
             verbose_name=_("From email"),
@@ -448,11 +448,50 @@ class Email(Model):
             help_text=_("A password to authenticate to the remote server"),
             )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("Email")
 
     class FreeAdmin:
         deletable = False
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        mail = dispatcher.call_sync('mail.get_config')
+        security = 'plain'
+        if mail['encryption'] in ('PLAIN', 'SSL', 'TLS'):
+            security = mail['encryption'].lower()
+        return cls(**dict(
+            id=1,
+            em_fromemail=mail['from'],
+            em_outgoingserver=mail['server'],
+            em_port=mail['port'],
+            em_smtp=mail['auth'],
+            em_security=security,
+            em_user=mail['user'],
+            em_pass=mail['pass'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        encryption = 'PLAIN'
+        if self.em_security in ('plain', 'tls', 'ssl'):
+            encryption = self.em_security.upper()
+        data = {
+            'from': self.em_fromemail,
+            'server': self.em_outgoingserver,
+            'port': self.em_port,
+            'auth': self.em_smtp,
+            'encryption': encryption,
+            'user': self.em_user,
+            'pass': self.em_pass,
+        }
+        self._save_task_call('mail.configure', data)
+        return True
 
 
 class Tunable(Model):
