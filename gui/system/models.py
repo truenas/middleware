@@ -228,7 +228,8 @@ class Settings(NewModel):
         return True
 
 
-class NTPServer(Model):
+class NTPServer(NewModel):
+    id = models.CharField(editable=False, max_length=120, primary_key=True)
     ntp_address = models.CharField(
             verbose_name=_("Address"),
             max_length=120,
@@ -291,6 +292,18 @@ class NTPServer(Model):
         icon_object = u"NTPServerIcon"
         icon_view = u"ViewNTPServerIcon"
         icon_add = u"AddNTPServerIcon"
+
+    class Middleware:
+        field_mapping = (
+            ('id', 'id'),
+            ('ntp_address', 'address'),
+            ('ntp_burst', 'burst'),
+            ('ntp_iburst', 'iburst'),
+            ('ntp_prefer', 'prefer'),
+            ('ntp_minpoll', 'minpoll'),
+            ('ntp_maxpoll', 'maxpoll'),
+        )
+        provider_name = 'ntpservers'
 
 
 class Advanced(Model):
