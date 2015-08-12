@@ -37,6 +37,7 @@ from django.db.models.base import ModelBase
 from dispatcher.rpc import RpcException
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError, ValidationError
+from fnutils.query import wrap
 
 # FIXME: Backward compatible
 from .fields import (
@@ -312,7 +313,7 @@ class NewQuerySet(object):
         if self._sort is not None:
             options['sort'] = self._sort
 
-        for i in dispatcher.call_sync(method, self._filters, options):
+        for i in wrap(dispatcher.call_sync(method, self._filters, options)):
             data = {}
             if not self._fmm:
                 continue
