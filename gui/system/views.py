@@ -233,7 +233,7 @@ def bootenv_datagrid_structure(request):
 
 def bootenv_activate(request, name):
     if request.method == 'POST':
-        result = dispatcher.call_task_sync('boot_environments.activate', name)
+        result = dispatcher.call_task_sync('boot.environments.activate', name)
         if result['state'] == 'FINISHED':
             return JsonResp(
                 request,
@@ -306,7 +306,7 @@ def bootenv_scrub_interval(request):
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
-        result = dispatcher.call_task_sync('boot_environments.delete', name)
+        result = dispatcher.call_task_sync('boot.environments.delete', name)
         if result['state'] == 'FINISHED':
             return JsonResp(
                 request,
@@ -405,9 +405,9 @@ def bootenv_rename(request, name):
 
 
 def bootenv_pool_attach(request):
-    label = request.GET.get('label')
+    guid = request.GET.get('guid')
     if request.method == 'POST':
-        form = forms.BootEnvPoolAttachForm(request.POST, label=label)
+        form = forms.BootEnvPoolAttachForm(request.POST, guid=guid)
         if form.is_valid():
             form.done()
             return JsonResp(
@@ -416,16 +416,16 @@ def bootenv_pool_attach(request):
             )
         return JsonResp(request, form=form)
     else:
-        form = forms.BootEnvPoolAttachForm(label=label)
+        form = forms.BootEnvPoolAttachForm(guid=guid)
     return render(request, 'system/bootenv_pool_attach.html', {
         'form': form,
-        'label': label,
+        'guid': guid,
     })
 
 
-def bootenv_pool_detach(request, label):
+def bootenv_pool_detach(request, label, guid):
     if request.method == 'POST':
-        notifier().zfs_detach_disk('freenas-boot', label)
+        dispatcher.call_task_sync('zfs.pool.detach', 'freenas-boot', guid)
         return JsonResp(
             request,
             message=_("Disk has been successfully detached."))

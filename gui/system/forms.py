@@ -157,7 +157,7 @@ class BootEnvAddForm(Form):
         return name
 
     def save(self, *args, **kwargs):
-        result = dispatcher.call_task_sync('boot_environments.create', self.cleaned_data.get('name'), self._source)
+        result = dispatcher.call_task_sync('boot.environments.create', self.cleaned_data.get('name'), self._source)
         if result['state'] != 'FINISHED':
             raise MiddlewareError(_(result['error']['message']))
 
@@ -174,7 +174,7 @@ class BootEnvRenameForm(Form):
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        result = dispatcher.call_task_sync('boot_environments.rename', self._name, self.cleaned_data.get('name'))
+        result = dispatcher.call_task_sync('boot.environments.rename', self._name, self.cleaned_data.get('name'))
         if result['state'] != 'FINISHED':
             raise MiddlewareError(_(result['error']['message']))
 
@@ -187,7 +187,7 @@ class BootEnvPoolAttachForm(Form):
         label=_('Member disk'))
 
     def __init__(self, *args, **kwargs):
-        self.label = kwargs.pop('label')
+        self.guid = kwargs.pop('guid')
         super(BootEnvPoolAttachForm, self).__init__(*args, **kwargs)
         self.fields['attach_disk'].choices = self._populate_disk_choices()
         self.fields['attach_disk'].choices.sort(
@@ -221,13 +221,12 @@ class BootEnvPoolAttachForm(Form):
         return choices
 
     def done(self):
-        devname = self.cleaned_data['attach_disk']
+        devname = os.path.join('/dev', self.cleaned_data['attach_disk'])
+        result = dispatcher.call_task_sync('boot.attach_disk', self.guid, devname)
+        if result['state'] != 'FINISHED':
+            raise MiddlewareError(_(result['error']['message']))
 
-        rv = notifier().bootenv_attach_disk(self.label, devname)
-        if rv == 0:
-            return True
-        else:
-            return False
+        return True
 
 
 class BootEnvPoolReplaceForm(Form):
@@ -827,7 +826,7 @@ class InitialWizard(CommonWizard):
         for service in services_restart:
             _n.restart(service)
 
-        result = dispatcher.call_task_sync('boot_environments.create', 'Wizard-%s' % (
+        result = dispatcher.call_task_sync('boot.environments.create', 'Wizard-%s' % (
             datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         ))
         if result['state'] != 'FINISHED':
