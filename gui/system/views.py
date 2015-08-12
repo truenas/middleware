@@ -662,22 +662,31 @@ def testmail(request):
             form=form,
         )
 
-    sid = transaction.savepoint()
-    form.save()
-
     error = False
     if request.is_ajax():
         sw_name = get_sw_name()
+        encryption = 'PLAIN'
+        if form.cleaned_data['em_security'] in ('plain', 'ssl', 'tls'):
+            encryption = form.cleaned_data['em_security'].upper()
+        settings = {
+            'from': form.cleaned_data['em_fromemail'],
+            'server': form.cleaned_data['em_outgoingserver'],
+            'port': form.cleaned_data['em_port'],
+            'encryption': encryption,
+            'auth': form.cleaned_data['em_smtp'],
+            'user': form.cleaned_data['em_user'],
+            'pass': form.cleaned_data['em_pass1'],
+        }
         error, errmsg = send_mail(
             subject=_('Test message from %s') % sw_name,
             text=_('This is a message test from %s') % sw_name,
             to=[email],
-            timeout=10)
+            timeout=10,
+            settings=settings)
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
         errmsg = _('Your test email has been sent!')
-    transaction.savepoint_rollback(sid)
 
     form.errors[allfield] = form.error_class([errmsg])
     return JsonResp(
