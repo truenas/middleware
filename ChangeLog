@@ -1,0 +1,38 @@
+#6951	Bug	Important	ix-activedirectory is deleting computer object on service stop
+#7950	Bug	Nice to have	rsync module group name spaces
+#9091	Bug	Nice to have	Fix Cron task's escaping of "
+#9184	Bug	Nice to have	Update.failed
+#9802	Feature	Nice to have	Provide a method for picking the kerberos principal when multiple principals are present in a keytab
+#10353	Bug	Nice to have	Fixes an issue with manual updates.
+#10354	Bug	Important	cifs issue with how disk space is presented in windows when quotas are set
+#10361	Bug	Expected	Fix a traceback on multiple choices validation error
+#10400	Bug	Important	Leave "Physical Block Size Report" disabled for upgrades
+#10408	Bug	Nice to have	Creating a jail and then rebooting/creating a new jail forces a refetch.
+#10418	Bug	Important	CIFS "Local Master" always in effect.
+#10442	Bug	Nice to have	Merge non-critical changes from upstream FreeBSD
+#10444	Bug	Important	Filters out the boot media during installation.
+#10447	Bug	Nice to have	Bad spelling, and general bad quality warning message in GUI
+#10472	Bug	Expected	Fixes a typo in the Update module.
+#10507	Bug	Nice to have	flake cleanup of generate_sssd_conf.py
+#10518	Bug	Nice to have	pyflakes doesn't like the update library code
+#10535	Bug	Important	Active Directory pagesize is not being passed along when performing queries
+#10560	Feature	Nice to have	Add zfslower.d to the image
+#10574	Bug	Expected	LDAP service fails on server with too many accounts
+#10595	Bug	Important	Disks referenced by numeric ID should be kicked out of the pool when they are replaced
+#10601	Bug	Nice to have	Group rename/delete not consistent to Samba groups
+#10612	Bug	Critical	Fixes a GUI Upgrade (aka Manual Upgrade) problem.
+#10613	Bug	Important	SAMBA users not in tdb
+#10655	Feature	Important	nut v2.7.3 needed for Tripp Lite SMART500RT1U UPS
+#10680	Bug	Expected	FreeBSD-SA-15:13.tcp
+#10719	Bug	Important	Export Recycle Bin
+#10769	Bug	Nice to have	App fixes for FreeBSD security advisory 2015-07-28
+#10772	Bug	Expected	AD Kerberos does not work
+#10792	Bug	Important	Remove "exclude dataset" UI from Replication Tasks
+#10801	Bug	Nice to have	set AD timeouts to a higher value
+#10807	Feature	Nice to have	Revise FreeNAS zfs snmp stats
+#10814	Bug	Nice to have	stack trace when trying to save forms where run() is used without a timeout because django doesn't like signals
+#10840	Bug	Expected	Fix zfsL2ArcSize (.1.3.6.1.4.1.25359.1.3.5.0) snmp OID
+#10861	Bug	Important	sas3flash looks for /dev/mpr3_0
+#10862	Feature	Nice to have	Update mpr driver to version 9
+#10868	Feature	Important	Add sas3ircu to the build
+#10908	Feature	Important	add alerts for mpr 12 gbps HBA firmware mismatches
