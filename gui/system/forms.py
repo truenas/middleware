@@ -94,7 +94,7 @@ from freenasUI.sharing.models import (
     NFS_Share_Path,
 )
 from freenasUI.storage.forms import VolumeAutoImportForm
-from freenasUI.storage.models import Disk, MountPoint, Volume, Scrub
+from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
 from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
@@ -398,11 +398,6 @@ class InitialWizard(CommonWizard):
                 )
                 volume.save()
 
-                MountPoint.objects.create(
-                    mp_volume=volume,
-                    mp_path='/mnt/' + volume_name,
-                    mp_options='rw',
-                )
                 Scrub.objects.create(scrub_volume=volume)
 
                 if volume_form:
