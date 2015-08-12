@@ -537,7 +537,7 @@ class ConfigQuerySet(object):
 
     def __iter__(self):
         self._get_object()
-        yield self._object
+        yield self._object[0]
 
     def _clone(self, klass=None, **kwargs):
         if klass is None:
