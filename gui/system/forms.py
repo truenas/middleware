@@ -1004,43 +1004,9 @@ class NTPForm(ModelForm):
         fields = '__all__'
         model = models.NTPServer
 
-    def __init__(self, *args, **kwargs):
-        super(NTPForm, self).__init__(*args, **kwargs)
-        self.usable = True
-
-    def clean_ntp_address(self):
-        addr = self.cleaned_data.get("ntp_address")
-        p1 = subprocess.Popen(
-            ["/usr/sbin/ntpdate", "-q", addr],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        p1.communicate()
-        if p1.returncode != 0:
-            self.usable = False
-        return addr
-
-    def clean_ntp_maxpoll(self):
-        maxp = self.cleaned_data.get("ntp_maxpoll")
-        minp = self.cleaned_data.get("ntp_minpoll")
-        if not maxp > minp:
-            raise forms.ValidationError(_(
-                "Max Poll should be higher than Min Poll"
-            ))
-        return maxp
-
-    def clean(self):
-        cdata = self.cleaned_data
-        if not cdata.get("force", False) and not self.usable:
-            self._errors['ntp_address'] = self.error_class([_(
-                "Server could not be reached. Check \"Force\" to continue "
-                "regardless."
-            )])
-            del cdata['ntp_address']
-        return cdata
-
     def save(self):
-        super(NTPForm, self).save()
+        obj = super(NTPForm, self).save(commit=False)
+        obj.save(extra_args=[self.cleaned_data.get('force')])
         notifier().start("ix-ntpd")
         notifier().restart("ntpd")
 
