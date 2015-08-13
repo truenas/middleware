@@ -1002,8 +1002,6 @@ class NTPForm(ModelForm):
     def save(self):
         obj = super(NTPForm, self).save(commit=False)
         obj.save(extra_args=[self.cleaned_data.get('force')])
-        notifier().start("ix-ntpd")
-        notifier().restart("ntpd")
 
 
 class AdvancedForm(ModelForm):

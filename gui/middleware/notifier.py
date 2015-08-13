@@ -563,8 +563,6 @@ class notifier:
 
     def _reload_timeservices(self):
         from freenasUI.sysyem.models import Settings
-        self._system("/usr/sbin/service ix-ntpd quietstart")
-        self._system("/usr/sbin/service ntpd restart")
         timezone = Settings.objects.all()[0].stg_timezone
         os.environ['TZ'] = timezone
         time.tzset()
