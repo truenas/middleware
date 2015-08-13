@@ -4,7 +4,7 @@
 
 NANO_LABEL?=TrueNAS
 VERSION?=9.3.1-STABLE
-TRAIN?=${NANO_LABEL}-${VERSION}
+TRAIN?=${NANO_LABEL}-9.3-STABLE
 
 .if defined(PRODUCTION) && ${PRODUCTION} == "yes"
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
