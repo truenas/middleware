@@ -507,7 +507,7 @@ class Email(NewModel):
         return True
 
 
-class Tunable(Model):
+class Tunable(NewModel):
     tun_var = models.CharField(
             max_length=50,
             unique=True,
@@ -553,6 +553,17 @@ class Tunable(Model):
         icon_object = u"TunableIcon"
         icon_add = u"AddTunableIcon"
         icon_view = u"ViewTunableIcon"
+
+    class Middleware:
+        field_mapping = (
+            ('id', 'id'),
+            ('tun_var', 'var'),
+            ('tun_value', 'value'),
+            ('tun_type', 'type'),
+            ('tun_comment', 'comment'),
+            ('tun_enabled', 'enabled'),
+        )
+        provider_name = 'tunables'
 
 
 class Registration(Model):
