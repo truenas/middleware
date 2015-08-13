@@ -1,73 +1,44 @@
-#3576	Set IPMI VLAN via GUI
-#5158	Non-optimal default CIFS Service settings
-#6764   Performance Test - iozone failes
-#6971   Make Certificate Admin Datagrid View more Robust
-#8224	TrueNAS Docs use the Freenas Logo.
-#8236	Fix volume status alert for TrueNAS
-#8279	In TrueNAS-9.3-STABLE-201502271916 buld: Getting infinite  loop in fenceD after HA.
-#8309   Use # delimiter for freedns.afraid.org hashes
-#8328	Unlock from GUI should set passphrase for escrow daemon
-#8430	ProSys:  carp0 going down does not cause devd to run the interface down script
-#8481	hactl should not fail when Failover object is not found
-#8801	carp-state-change-hook.py needs a shutdown verb
-#9160   Include MFIP driver in FreeNAS
-#9229   Feature for LDAP authentication via SSH public keys
-#9353	Allow freenas-boot to be used as system dataset
-#9478	Grey out username field if SNMPv3 is not checked
-#9602	volumes that are encrypted show up in system dataset dropdown
-#9721	Fix rare panic on iSCSI connection start/close.
-#9737   ix-smartd Areca ARC-1880 fails
-#9745	Reload iSCSI when deleting a target.
-#9760	Fix backtrace if enclosure slot has passX device, but not daX.
-#9769	Stop System General Tab from tracingback on a bad Certificate
-#9771	Fixes an issue where a second upgrade to the same version may have failed.
-#9779	User password changes not persistent across reboot
-#9784	Make NUT UPS shutoff optional
-#9797	Fixes an issue where cloning a renamed boot environment would fail.
-#9815	iSCSI LUN IDs behavior inconsistent
-#9822   AFP should not be the default category for bugs submitted in FreeNAS
-#9837	HAReplication still shows as tab in Storage
-#9845	Fix running hactl enable on a single node to not traceback.
-#9860	Add alert to warn about access denied and version mismatch in HA
-#9862   Unable to create cron task running as root
-#9867	Allows .local hosts to be resolved.
-#9869	netperf netserver "unknown test number 97"
-#9913   Bootup error:  False Bad Number
-#9915   Use the already-existing port for nss-mdns
-#9931   Missing iSCSI information buttons
-#9932	System: Advanced: Missing info buttons
-#9933	Add NTP Server: Missing info button for Force
-#9937   Added information button for 'Force size' checkbox.
-#9948   Noise from a shell script while booting
-#9964   Unable to use root as maproot user
-#9983   Update Samba to 4.1.18
-#10013  Critical NetBIOS Workgroup Name Error in GUI for CIFS
-#10027	Bad English in replication failed message
-#10051	Speed up boot by eliminating an extraneous enclosure sync on an HA unit.
-#10059	Fix Task tabs appearance for some languages
-#10072	Errors in /usr/local/bin/adtool and /usr/local/bin/ldaptool
-#10073	Errors in /usr/local/bin/manifest_util
-#10076	Double quotes are not allowed in iSCSI target alias
-#10089	Fixes an issue where an upgrade might leave symbolic links around, resulting in a later verification failure.
-#10090	Use kerberos servers found at run-time (if not hard set in kerberos UI)
-#10114	Parse port in syslog server field
-#10136	SNMPv3 requiring community to proceed on GUI and missing configuration parameters on GUI
-#10138	Security fixes in FreeBSD-EN-15:06.file
-#10144	errors in /usr/local/www/freenasUI/tools/cachetool.py
-#10159	Jails that have long names fail to autostart
-#10187	Enclosure alerts should also log the raw data for HW debugging purposes
-#10188	App FreeBSD SA-15:10.openssl
-#10189	App FreeBSD SA-15:10.openssl
-#10195	Conflicting volume operations for multiple volumes with more than 100 datasets
-#10196	Account Unknown(SID) showing in Windows Security tab
-#10206	Optimize pipesubr.pipeopen()
-#10208	ssh authorized_keys gets corrupted when adding ed25519 keys
-#10249	NFS complain about bad exports file syntax.
-#10269	Fibre Channel port down is not reliable/safe
-#10277	Unable to set mountpoint permissions using the API
-#10287	Adds a "--no-delta" option to freenas-update CLI.
-#10308	Add help text for "Disable password login" field
-#10314	Field length of "Directory Service --> LDAP -->Bind DN"
-#10321	NFS Shares being over restrictive about mountpoints
-#10337	Displays the update server in use.
-#10380	Allow same mountpoint to be share over distinct networks
+#6951	ix-activedirectory is deleting computer object on service stop
+#7950	rsync module group name spaces
+#9091	Fix Cron task's escaping of "
+#9184	Update.failed
+#9802	Provide a method for picking the kerberos principal when multiple principals are present in a keytab
+#9902	Auto configure HA
+#9979	UI changes for Fiber Channel support
+#9980	API changes to support Fiber Channel
+#10353	Fixes an issue with manual updates.
+#10354	cifs issue with how disk space is presented in windows when quotas are set
+#10361	Fix a traceback on multiple choices validation error
+#10400	Leave "Physical Block Size Report" disabled for upgrades
+#10408	Creating a jail and then rebooting/creating a new jail forces a refetch.
+#10418	CIFS "Local Master" always in effect.
+#10429	Kernel panics in CTL on forced unmount of backing file.
+#10442	Merge non-critical changes from upstream FreeBSD
+#10444	Filters out the boot media during installation.
+#10447	Bad spelling, and general bad quality warning message in GUI
+#10472	Fixes a typo in the Update module.
+#10507	flake cleanup of generate_sssd_conf.py
+#10518	pyflakes doesn't like the update library code
+#10535	Active Directory pagesize is not being passed along when performing queries
+#10552	remote fenced still running can defeat failover
+#10560	Add zfslower.d to the image
+#10574	LDAP service fails on server with too many accounts
+#10595	Disks referenced by numeric ID should be kicked out of the pool when they are replaced
+#10601	Group rename/delete not consistent to Samba groups
+#10612	Fixes a GUI Upgrade (aka Manual Upgrade) problem.
+#10613	SAMBA users not in tdb
+#10655	nut v2.7.3 needed for Tripp Lite SMART500RT1U UPS
+#10680	FreeBSD-SA-15:13.tcp
+#10719	Export Recycle Bin
+#10769	App fixes for FreeBSD security advisory 2015-07-28
+#10772	AD Kerberos does not work
+#10792	Remove "exclude dataset" UI from Replication Tasks
+#10801	set AD timeouts to a higher value
+#10807	Revise FreeNAS zfs snmp stats
+#10814	stack trace when trying to save forms where run() is used without a timeout because django doesn't like signals
+#10840	Fix zfsL2ArcSize (.1.3.6.1.4.1.25359.1.3.5.0) snmp OID
+#10857	all drives probed by grub on upgrades and cleanups
+#10861	sas3flash looks for /dev/mpr3_0
+#10862	Update mpr driver to version 9
+#10868	Add sas3ircu to the build
+#10908	add alerts for mpr 12 gbps HBA firmware mismatches
