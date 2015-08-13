@@ -104,7 +104,7 @@ db_update()
 	if [ -f ${HBA_FIRMWARE_UPDATE} ]; then
 		mount -uw /
 		if [ -f /usr/local/sbin/firmware_update.py ]; then
-			LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/firmware_update.py
+			LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/firmware_update.py
 			if [ $? -eq 0 ]; then
 				# A reboot will be required, but we'll hold off
 				# on that and do database upgrades if they need
