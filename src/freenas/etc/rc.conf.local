@@ -618,9 +618,17 @@ _gen_conf()
 		echo "watchdogd_enable=\"NO\""
 	fi
 
-	local tun_var tun_value
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT tun_var, tun_value FROM system_tunable WHERE tun_enabled = 1 AND tun_type = 'rc' ORDER BY id" | \
-	while read -r tun_var tun_value; do
+	local tun_var tun_value tun_enabled
+        /usr/local/sbin/dsutil query tunables 'type = RC' | while read line; do
+		_tmp=$(echo $line|jq ".var")
+                tun_var=$(eval echo $_tmp)
+		_tmp=$(echo $line|jq ".value")
+                tun_value=$(eval echo $_tmp)
+		_tmp=$(echo $line|jq ".enabled")
+                tun_enabled=$(eval echo $_tmp)
+		if [ "${tun_enable}" = "null" -o "${tun_enabled}" = "false" ]; then
+			continue
+		fi
 		echo "${tun_var}=\"${tun_value}\""
 	done
 }
