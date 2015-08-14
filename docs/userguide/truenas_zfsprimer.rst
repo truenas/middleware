@@ -128,5 +128,5 @@ While ZFS provides many benefits, there are some caveats to be aware of:
   disk will fail before the resilvering process completes. If the number of failed disks exceeds the number allowed per vdev for the type of RAIDZ, the data
   in the pool will be lost. For this reason, RAIDZ1 is not recommended for drives over 1 TB in size.
   
-* It is recommended to use drives of equal sizes. While ZFS can create a pool using disks of differing sizes, the capacity will be limited by the size of the
+* It is recommended to use drives of equal sizes when creating a vdev. While ZFS can create a vdev using disks of differing sizes, its capacity will be limited by the size of the
   smallest disk.
