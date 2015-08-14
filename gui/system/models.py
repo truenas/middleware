@@ -508,6 +508,7 @@ class Email(NewModel):
 
 
 class Tunable(NewModel):
+    id = models.CharField(editable=False, max_length=120, primary_key=True)
     tun_var = models.CharField(
             max_length=50,
             unique=True,
