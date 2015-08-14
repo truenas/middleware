@@ -620,11 +620,11 @@ _gen_conf()
 
 	local tun_var tun_value tun_enabled
         /usr/local/sbin/dsutil query tunables 'type = RC' | while read line; do
-		_tmp=$(echo $line|jq ".var")
+		_tmp=$(echo $line|/usr/local/bin/jq ".var")
                 tun_var=$(eval echo $_tmp)
-		_tmp=$(echo $line|jq ".value")
+		_tmp=$(echo $line|/usr/local/bin/jq ".value")
                 tun_value=$(eval echo $_tmp)
-		_tmp=$(echo $line|jq ".enabled")
+		_tmp=$(echo $line|/usr/local/bin/jq ".enabled")
                 tun_enabled=$(eval echo $_tmp)
 		if [ "${tun_enable}" = "null" -o "${tun_enabled}" = "false" ]; then
 			continue
