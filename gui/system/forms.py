@@ -1213,56 +1213,6 @@ class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
 
 
-"""
-TODO: Move to a unittest .py file.
-
-invalid_sysctls = [
-    'a.0',
-    'a.b',
-    'a..b',
-    'a._.b',
-    'a.b._.c',
-    '0',
-    '0.a',
-    'a-b',
-    'a',
-]
-
-valid_sysctls = [
-    'ab.0',
-    'ab.b',
-    'smbios.system.version',
-    'dev.emu10kx.0.multichannel_recording',
-    'hw.bce.tso0',
-    'kern.sched.preempt_thresh',
-    'net.inet.tcp.tso',
-]
-
-assert len(filter(SYSCTL_VARNAME_FORMAT_RE.match, invalid_sysctls)) == 0
-assert len(
-    filter(SYSCTL_VARNAME_FORMAT_RE.match, valid_sysctls)) == len(valid_sysctls
-)
-"""
-
-# NOTE:
-# - setenv in the kernel is more permissive than this, but we want to reduce
-#   user footshooting.
-# - this doesn't reject all benign input; it just rejects input that would
-#   break system boots.
-# XXX: note that I'm explicitly rejecting input for root sysctl nodes.
-SYSCTL_TUNABLE_VARNAME_FORMAT = """Sysctl variable names must:<br />
-1. Start with a letter.<br />
-2. Contain at least one period.<br />
-3. End with a letter or number.<br />
-4. Can contain a combination of alphanumeric characters, numbers and/or underscores.
-"""
-SYSCTL_VARNAME_FORMAT_RE = \
-    re.compile('[a-z][a-z0-9_]+\.([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
-LOADER_VARNAME_FORMAT_RE = \
-    re.compile('[a-z][a-z0-9_]+\.*([a-z0-9_]+\.)*[a-z0-9_]+', re.I)
-
-
 class TunableForm(ModelForm):
 
     class Meta:
@@ -1271,40 +1221,6 @@ class TunableForm(ModelForm):
 
     def clean_tun_comment(self):
         return self.cleaned_data.get('tun_comment').strip()
-
-    def clean_tun_value(self):
-        value = self.cleaned_data.get('tun_value')
-        if '"' in value or "'" in value:
-            raise forms.ValidationError(_('Quotes are not allowed'))
-        return value
-
-    def clean_tun_var(self):
-        value = self.cleaned_data.get('tun_var').strip()
-        qs = models.Tunable.objects.filter(tun_var=value)
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            raise forms.ValidationError(_(
-                'This variable already exists'
-            ))
-        return value
-
-    def clean(self):
-        cdata = self.cleaned_data
-        value = cdata.get('tun_var')
-        if value:
-            if (
-                cdata.get('tun_type') in ('loader', 'rc') and
-                not LOADER_VARNAME_FORMAT_RE.match(value)
-            ) or (
-                cdata.get('tun_type') == 'sysctl' and
-                not SYSCTL_VARNAME_FORMAT_RE.match(value)
-            ):
-                self.errors['tun_var'] = self.error_class(
-                    [_(SYSCTL_TUNABLE_VARNAME_FORMAT)]
-                )
-                cdata.pop('tun_var', None)
-        return cdata
 
     def save(self):
         super(TunableForm, self).save()

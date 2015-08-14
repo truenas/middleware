@@ -847,9 +847,9 @@ class SERIAL_CHOICES(object):
 
 
 TUNABLE_TYPES = (
-    ('loader', _('Loader')),
-    ('rc', _('rc.conf')),
-    ('sysctl', _('Sysctl')),
+    ('LOADER', _('Loader')),
+    ('RC', _('rc.conf')),
+    ('SYSCTL', _('Sysctl')),
 )
 
 IDMAP_CHOICES = (
