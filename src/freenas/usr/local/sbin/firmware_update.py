@@ -218,7 +218,8 @@ for controller in controllerlist:
                     # going to have a firmware for it anyways.
                     # This should never happen on TrueNAS BOM hardware
                     assert (controller_boardname.startswith("SAS") or
-                            controller_boardname.startswith("SMC"))
+                            controller_boardname.startswith("SMC") or
+                            controller_boardname.startswith("LSI"))
                 except:
                     LOGLINES.append("Invalid boardname detected for %s" % controller)
                     if controller_boardname:
