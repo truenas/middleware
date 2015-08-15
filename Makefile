@@ -23,8 +23,8 @@ PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
 .endif
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH?="/builds/${NANO_LABEL}/nightlies/9.3"
-IX_STABLE_DIR?="/builds/${NANO_LABEL}/9.3/STABLE/"
+IX_INTERNAL_PATH?="/builds/${NANO_LABEL}/nightlies/9.3.1"
+IX_STABLE_DIR?="/builds/${NANO_LABEL}/9.3.1/STABLE/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
@@ -118,9 +118,9 @@ changelog:
 		echo ChangeLog already exists.; exit 1; \
 	fi
 	@if [ -f /root/redmine-api-key ]; then \
-		if [ "${TRAIN}" = "FreeNAS-9.3.1-STABLE" ]; then \
+		if [ "${TRAIN}" = "FreeNAS-9.3-STABLE" ]; then \
 			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "freenas" > ChangeLog; \
-		elif [ "${TRAIN}" = "TrueNAS-9.3.1-STABLE" ]; then \
+		elif [ "${TRAIN}" = "TrueNAS-9.3-STABLE" ]; then \
 			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "truenas" > ChangeLog; \
 		else \
 			echo "I don't create ChangeLogs for ${TRAIN}"; \
