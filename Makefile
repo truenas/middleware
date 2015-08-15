@@ -3,8 +3,8 @@
 .endif
 
 NANO_LABEL?=FreeNAS
-VERSION?=9.3-MASTER
-TRAIN?=${NANO_LABEL}-${VERSION}
+VERSION?=9.3.1-MASTER
+TRAIN?=${NANO_LABEL}-9.3-Nightlies
 
 .if defined(PRODUCTION) && ${PRODUCTION} == "yes"
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
@@ -23,8 +23,8 @@ PRINTABLE_TIMESTAMP!=date -u '+%Y/%m/%d-%H:%M'
 .endif
 
 STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-IX_INTERNAL_PATH?="/builds/${NANO_LABEL}/nightlies/9.3"
-IX_STABLE_DIR?="/builds/${NANO_LABEL}/9.3/STABLE/"
+IX_INTERNAL_PATH?="/builds/${NANO_LABEL}/nightlies/9.3.1"
+IX_STABLE_DIR?="/builds/${NANO_LABEL}/9.3.1/STABLE/"
 
 .ifdef SCRIPT
 RELEASE_LOGFILE?=${SCRIPT}
