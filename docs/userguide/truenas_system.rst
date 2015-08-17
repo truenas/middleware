@@ -27,7 +27,7 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Support`: used to view licensing information or create a support ticket.
 
-* :ref:`Failovers`: used to configure high availability.
+* :ref:`Failovers`: used to manage high availability.
 
 Each of these is described in more detail in this section.
 
@@ -976,43 +976,43 @@ a new login, if you are not already logged into the `iXsystems Support page <htt
 Failovers
 ---------
 
-Some TrueNAS® appliances use the Common Address Redundancy Protocol (`CARP <http://www.openbsd.org/faq/pf/carp.html>`_) to provide high availability and
-failover. CARP was originally developed by the OpenBSD project and provides an open source, non patent-encumbered alternative to the VRRP and HSRP protocols.
+If the TrueNAS® appliance has been licensed for High Availability (HA), a "Failover" tab will appear under System. HA-licensed appliances use the Common Address Redundancy Protocol
+(`CARP <http://www.openbsd.org/faq/pf/carp.html>`_) to provide high availability and failover. CARP was originally developed by the OpenBSD project and provides an open source, non
+patent-encumbered alternative to the VRRP and HSRP protocols.
 
-Failover is only available on certain appliances and requires an advanced configuration between multiple TrueNAS® appliances that is created with the
-assistance of an iXsystems support engineer. Seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted
-by the failover event. Contact your iXsystems representative if you wish to schedule a time to configure failover.
+.. note:: seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted by the failover event. 
 
-This section provides an overview of the failover screen that is available in the graphical administrative interface. Your iXsystems support engineer will
-assist you in the configuration and testing of a failover that is suited to your specific environment.
-**Do not attempt to configure failover on your own as it will fail and may render existing shares or volumes inaccessible.**
-
-The options available in :menuselection:`System --> Failovers --> Create Failover` are shown in Figure 5.11a and described in Table 5.11a.
+The options available in :menuselection:`System --> Failovers` are shown in Figure 5.11a and described in Table 5.11a.
 
 **Figure 5.11a: Creating a Failover**
 
-.. image:: images/failover1a.png
+.. image:: images/failover1b.png
 
-**Table 5.11a: Options When Creating a Failover**
+**Table 5.11a: Failover Options**
 
-+-------------+----------------+-----------------------------------------------------------------------------+
-| **Setting** | **Value**      | **Description**                                                             |
-|             |                |                                                                             |
-+=============+================+=============================================================================+
-| Volume      | drop-down menu | select the ZFS pool                                                         |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| CARP        | drop-down menu | select *carp0*, previously created in Network -> CARPs -> Add CARP          |
-|             |                |                                                                             |
-+-------------+----------------+-----------------------------------------------------------------------------+
-| Remote IP   | string         | input the IP address of the remote node's failover interface                |
-|             |                | (typically *169.254.10.x*)                                                  |
-+-------------+----------------+-----------------------------------------------------------------------------+
++----------------+----------------+-----------------------------------------------------------------------------+
+| **Setting**    | **Value**      | **Description**                                                             |
+|                |                |                                                                             |
++================+================+=============================================================================+
+| Disabled       | checkbox       |                                                                             |
+|                |                |                                                                             |
++----------------+----------------+-----------------------------------------------------------------------------+
+| Master         | checkbox       |                                                                             |
+|                |                |                                                                             |
++----------------+----------------+-----------------------------------------------------------------------------+
+|Timeout         | integer        |                                                                             |
+|                |                |                                                                             |
++----------------+----------------+-----------------------------------------------------------------------------+
+| Sync to Peer   | button         |                                                                             |
+|                |                |                                                                             |
++----------------+----------------+-----------------------------------------------------------------------------+
+| Sync From Peer | button         |                                                                             |
+|                |                |                                                                             |
++----------------+----------------+-----------------------------------------------------------------------------+
 
 
-Once a failover configuration is working, a new icon will be added between the Log Out and Alert icons to each device in the failover configuration. The
-active device will have a green Active icon and the passive device will have a red Passive icon. An entry will also be added to
-`System -> Failovers` on each device. 
+Once a failover configuration is working, a "HA Enabled" icon will be added after the "Alert" icon on the active device in the failover configuration. The passive device will indicate the IP
+address of the active node, will have a red "Standby" icon, and it will no longer accept logins as all configuration changes need to occur on the active node.
 
 .. index:: Failovers
 
