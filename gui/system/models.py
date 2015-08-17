@@ -454,7 +454,8 @@ class Advanced(NewModel):
             'debugkernel': self.adv_debugkernel,
             'uploadcrash': self.adv_uploadcrash,
             'motd': self.adv_motd,
-            'boot_scrub_internal': self.adv_periodic_notifyuser.id,
+            'boot_scrub_internal': self.adv_boot_scrub,
+            'adv_periodic_notifyuser': self.adv_periodic_notifyuser.id,
         }
         self._save_task_call('system.advanced.configure', data)
         return True
