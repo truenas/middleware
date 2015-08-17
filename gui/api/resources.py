@@ -192,12 +192,7 @@ class AlertResource(DojoResource):
 class DiskResourceMixin(object):
 
     class Meta:
-        queryset = Disk.objects.filter(
-            disk_enabled=True,
-            disk_multipath_name=''
-        ).exclude(
-            Q(disk_name__startswith='multipath') | Q(disk_name='')
-        )
+        queryset = Disk.objects.filter(disk_enabled=True)
         allowed_methods = ['get', 'put']
 
     def dehydrate(self, bundle):
@@ -205,7 +200,7 @@ class DiskResourceMixin(object):
         if self.is_webclient(bundle.request):
             bundle.data['_edit_url'] += '?deletable=false'
             bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
-                'devname': bundle.obj.disk_name,
+                'devname': os.path.basename(bundle.obj.disk_name),
             })
             bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
             bundle.data['disk_size'] = humanize_number_si(

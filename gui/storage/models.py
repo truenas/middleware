@@ -471,6 +471,11 @@ class Scrub(Model):
 
 
 class Disk(NewModel):
+    id = models.CharField(
+        editable=False,
+        max_length=120,
+        primary_key=True
+    )
     disk_name = models.CharField(
         max_length=120,
         verbose_name=_("Name")
@@ -573,10 +578,7 @@ class Disk(NewModel):
 
     @property
     def devname(self):
-        if self.disk_multipath_name:
-            return "multipath/%s" % self.disk_multipath_name
-        else:
-            return self.disk_name
+        return os.path.basename(self.disk_name)
 
     def get_disk_size(self):
         # FIXME
@@ -613,6 +615,23 @@ class Disk(NewModel):
         verbose_name = _("Disk")
         verbose_name_plural = _("Disks")
         ordering = ["disk_subsystem", "disk_number"]
+
+    class Middleware:
+        field_mapping = (
+            ('disk_serial', 'serial'),
+            ('disk_name', 'path'),
+            (('disk_identifier', 'id'), 'id'),
+            ('disk_description', 'description'),
+            ('disk_size', 'mediasize'),
+            ('disk_hddstandby', 'standby_mode'),
+            ('disk_advpowermgmt', 'apm_mode'),
+            ('disk_acousticlevel', 'acoustic_level'),
+            ('disk_togglesmart', 'smart'),
+            ('disk_smartoptions', 'smart_options'),
+            ('disk_enabled', 'online')
+        )
+
+        provider_name = 'disks'
 
     def __unicode__(self):
         return unicode(self.disk_name)
