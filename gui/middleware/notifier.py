@@ -1606,45 +1606,21 @@ class notifier:
     def list_zfs_vols(self, volname, sort=None):
         """Return a dictionary that contains all ZFS volumes list"""
 
-        if sort is None:
-            sort = ''
-        else:
-            sort = '-s %s' % sort
+        from freenasUI.middleware.connector import connection as dispatcher
+        result = dispatcher.call_sync('zfs.query', [
+            ('type', '=', 'volume'),
+            ('pool', '=', volname)
+        ], {'sort': sort} if sort else None)
 
-        zfsproc = self._pipeopen("/sbin/zfs list -p -H -o name,volsize,used,avail,refer,compression,compressratio %s -t volume -r '%s'" % (sort, str(volname),))
-        zfs_output, zfs_err = zfsproc.communicate()
-        zfs_output = zfs_output.split('\n')
-        retval = {}
-        for line in zfs_output:
-            if line == "":
-                continue
-            data = line.split('\t')
-            retval[data[0]] = {
-                'volsize': int(data[1]),
-                'used': int(data[2]),
-                'avail': int(data[3]),
-                'refer': int(data[4]),
-                'compression': data[5],
-                'compressratio': data[6],
-            }
-        return retval
+        return {i['name']: i for i in result}
 
     def list_zfs_fsvols(self, system=False):
-        proc = self._pipeopen("/sbin/zfs list -H -o name -t volume,filesystem")
-        out, err = proc.communicate()
-        out = out.split('\n')
-        retval = OrderedDict()
-        if system is False:
-            systemdataset, basename = self.system_dataset_settings()
-        if proc.returncode == 0:
-            for line in out:
-                if not line:
-                    continue
-                if system is False and basename:
-                    if line == basename or line.startswith(basename + '/'):
-                        continue
-                retval[line] = line
-        return retval
+        from freenasUI.middleware.connector import connection as dispatcher
+        result = dispatcher.call_sync('zfs.query', [
+            ('name', '~', '\.system'),
+        ] if system else None)
+
+        return {i['name']: i for i in result}
 
     def __snapshot_hold(self, name):
         """
