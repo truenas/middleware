@@ -160,7 +160,7 @@ class Model(models.Model):
 
 
 def get_middleware_methods(model):
-    methods = model._middleware.middlware_methods
+    methods = model._middleware.middleware_methods
     if methods is not None:
         return methods
     methods = MIDDLEWARE_MODEL_METHODS.get(model._meta.model_name)
