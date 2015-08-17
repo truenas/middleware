@@ -558,6 +558,9 @@ class ConfigQuerySet(object):
     def get(self, *args, **kwargs):
         return self[0]
 
+    def latest(self, *args, **kwargs):
+        return self[0]
+
     def order_by(self, *args):
         return self._clone()
 
