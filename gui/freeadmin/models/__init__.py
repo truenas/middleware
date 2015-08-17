@@ -93,7 +93,7 @@ class Middleware(object):
 
         self.middleware_methods = getattr(klass, 'middleware_methods', None)
         if self.middleware_methods is None:
-            self.middlware_methods = {
+            self.middleware_methods = {
                 'query': '%s.query' % self.provider_name,
                 'add': '%s.create' % self.provider_name,
                 'delete': '%s.delete' % self.provider_name,
