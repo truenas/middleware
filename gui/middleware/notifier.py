@@ -3038,36 +3038,17 @@ class notifier:
         Returns:
             Dict of disks
         """
-        disksd = {}
+        from freenasUI.middleware.connector import connection as dispatcher
+        disks = dispatcher.call_sync('disks.query')
 
-        disks = self.__get_disks()
+        def convert(disk):
+            return {
+                'devname': disk['path'],
+                'capacity': disk['mediasize'],
+                'ident': disk['lunid']
+            }
 
-        """
-        Replace devnames by its multipath equivalent
-        """
-        for mp in self.multipath_all():
-            for dev in mp.devices:
-                if dev in disks:
-                    disks.remove(dev)
-            disks.append(mp.devname)
-
-        for disk in disks:
-            info = self._pipeopen('/usr/sbin/diskinfo %s' % disk).communicate()[0].split('\t')
-            if len(info) > 3:
-                disksd.update({
-                    disk: {
-                        'devname': info[0],
-                        'capacity': info[2],
-                    },
-                })
-
-        for mp in self.multipath_all():
-            for consumer in mp.consumers:
-                if consumer.lunid and mp.devname in disksd:
-                    disksd[mp.devname]['ident'] = consumer.lunid
-                    break
-
-        return disksd
+        return {d['path']: convert(d) for d in disks}
 
     def get_partitions(self, try_disks=True):
         disks = self.get_disks().keys()
