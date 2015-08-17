@@ -1224,10 +1224,12 @@ class TunableForm(ModelForm):
 
     def save(self):
         super(TunableForm, self).save()
-        if self.cleaned_data.get('tun_type') == 'loader':
-            notifier().reload("loader")
-        else:
-            notifier().reload("sysctl")
+        try:
+            if self.instance.tun_type == 'RC':
+                os.unlink('/var/tmp/freenas_config.md5')
+                notifier()._system("sh /etc/rc.conf.local")
+        except:
+            pass
 
 
 class RegistrationForm(ModelForm):

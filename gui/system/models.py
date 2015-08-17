@@ -539,10 +539,12 @@ class Tunable(NewModel):
 
     def delete(self):
         super(Tunable, self).delete()
-        if self.tun_type == 'loader':
-            notifier().reload("loader")
-        else:
-            notifier().reload("sysctl")
+        try:
+            if self.instance.tun_type == 'RC':
+                os.unlink('/var/tmp/freenas_config.md5')
+                notifier()._system("sh /etc/rc.conf.local")
+        except:
+            pass
 
     class Meta:
         verbose_name = _("Tunable")
