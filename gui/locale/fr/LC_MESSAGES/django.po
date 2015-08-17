@@ -13054,3 +13054,12 @@ msgstr ""
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+#, fuzzy
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr ""
+"La version du firmware %(fwversion)s ne correspond pas à la version du "
+"driver %(drversion)s pour /dev/mps%(mps)s"

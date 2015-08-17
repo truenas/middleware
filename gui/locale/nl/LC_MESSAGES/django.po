@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-07-12 17:28+0000\n"
-"Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
+"PO-Revision-Date: 2015-08-16 00:09+0000\n"
+"Last-Translator: rayborggreve <ray@reposity.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1436722138.0\n"
+"X-POOTLE-MTIME: 1439683779.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8577,7 +8577,9 @@ msgstr "Aanmelden met wachtwoord uitschakelen"
 msgid "Group Memberships"
 msgstr "Groepslidmaatschappen"
 
+# %(days)s = plural of days, e.g. Mondays?
 #: api/resources.py:860
+#, fuzzy
 msgid "on every %(days)s"
 msgstr "op iedere %(days)s"
 
@@ -11830,6 +11832,7 @@ msgstr "Kerberos-instellingen"
 msgid "LDAP Schema type."
 msgstr "Type LDAP-schema"
 
+# Guide is een gids, Manual is handleiding???
 #: freeadmin/navtree.py:249
 #: templates/menubar.html:73
 #, fuzzy
@@ -12395,14 +12398,13 @@ msgid "Acknowledged"
 msgstr "Bevestigd"
 
 #: system/models.py:966
-#, fuzzy
 msgid "Backup worker PID"
 msgstr "PID van backup worker"
 
 #: system/models.py:971
 #, fuzzy
 msgid "Started at"
-msgstr "Gestart op"
+msgstr "Begonnen op"
 
 #: system/models.py:975
 #, fuzzy
@@ -12454,6 +12456,7 @@ msgstr "Kan %s-licentie niet ontcijferen"
 msgid "Your %s license has expired"
 msgstr "Uw %s-licentie is verlopen"
 
+# "... in %(days)s", or "... _on_ %(date)s"?
 #: system/alertmods/license_expired.py:36
 #, fuzzy
 msgid "Your %(sw_name)s license is going to expire in %(date)s"
@@ -12541,7 +12544,6 @@ msgid "Model"
 msgstr "Model"
 
 #: templates/support/home.html:18
-#, fuzzy
 msgid "System Serial"
 msgstr "Serienummer van systeem"
 
@@ -12710,93 +12712,92 @@ msgstr ""
 "apparaten bestaat"
 
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Nieuw wachtwoord bevestigen"
+msgstr "Bevestig het DN-wachtwoord van de LDAP-gebruiker"
 
 #: directoryservice/models.py:519
 #, fuzzy
 msgid "LDAP User DN Password"
-msgstr "DN van LDAP-gebruiker"
+msgstr "DN-wachtwoord van LDAP-gebruiker"
 
 #: directoryservice/models.py:521
 #, fuzzy
 msgid "Password for LDAP User DN"
-msgstr "DN van LDAP-gebruiker"
+msgstr "Wachtwoord voor DN van LDAP-gebruiker"
 
+# NetBIOS _name_?
 #: directoryservice/forms.py:476
 #, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr "Het peergeheim mag niet hetzelfde zijn als het gebruikersgeheim."
+msgstr "NetBIOS kan niet hetzelfde zijn als de eerste."
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr "Het peergeheim mag niet hetzelfde zijn als het gebruikersgeheim."
+msgstr "De NetBIOS-naam kan niet hetzelfde zijn als de werkgroepnaam!"
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "Versie"
+msgstr "Versienummer"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "Versleutelingscodering"
+msgstr "Versleutelingsalgoritme"
 
 #: directoryservice/models.py:747
-#, fuzzy
 msgid "Principal name"
-msgstr "Principal"
+msgstr "Principal-naam"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
 #, fuzzy
 msgid "Kerberos Principal"
-msgstr "Kerberos-realm."
+msgstr "Principal-naam van Kerberos"
 
 #: network/forms.py:254
-#, fuzzy
 msgid "The following VHIDs are already in use: %s"
-msgstr "De volgende adressen zijn niet geldig: %s"
+msgstr "De volgende VHID's zijn al in gebruik: %s"
 
 #: network/forms.py:282
-#, fuzzy
 msgid "The IP must be within the same network"
-msgstr "Kloon moet zich op hetzelfde volume bevinden"
+msgstr "Het IP moet binnen hetzelfde netwerk liggen"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
-msgstr ""
+msgstr "Virtueel IP ligt niet in hetzelfde netwerk"
 
 #: network/hook.py:72
 msgid "IPMI (Node %s)"
-msgstr ""
+msgstr "IPMI (Node %s)"
 
 #: network/models.py:228
-#, fuzzy
 msgid "Virtual IP"
-msgstr "Portal-IP"
+msgstr "Virtueel IP"
 
 #: network/models.py:233
 msgid "Virtual Host ID"
-msgstr ""
+msgstr "ID van virtuele host"
 
 #: network/models.py:245
-#, fuzzy
 msgid "Critical for Failover"
-msgstr "Kritieke waarschuwingen"
+msgstr "Kritiek voor Failover"
 
 #: network/models.py:359
-#, fuzzy
 msgid "Virtual IPv4"
-msgstr "Portal-IP"
+msgstr "Virtueel IPv4"
 
 #: network/nav.py:45
 msgid "IPMI (Node B)"
-msgstr ""
+msgstr "IPMI (Node B)"
 
 #: network/nav.py:47
 msgid "IPMI (Node A)"
+msgstr "IPMI (Node A)"
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
 msgstr ""
+"Firmwareversie %(fwversion)s komt niet overeen met stuurprogrammaversie "
+"%(drversion)s voor /dev/mpr%(mpr)s"

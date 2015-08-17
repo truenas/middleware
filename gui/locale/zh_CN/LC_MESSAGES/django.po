@@ -12009,3 +12009,10 @@ msgstr ""
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+#, fuzzy
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr "/dev/mps%(mps)s 中固件版本 %(fwversion)s 与驱动器版本 %(drversion)s 不匹配"

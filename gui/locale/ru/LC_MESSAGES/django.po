@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-08-04 10:30+0000\n"
+"PO-Revision-Date: 2015-08-15 23:14+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1438684202.0\n"
+"X-POOTLE-MTIME: 1439680489.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -258,7 +258,7 @@ msgstr "Машина Времени"
 
 #: choices.py:199
 msgid "No case folding"
-msgstr "Без учёта регистра"
+msgstr "Без учета регистра"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -989,7 +989,7 @@ msgstr "Сервер имен 3"
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
 msgid "Global Configuration"
-msgstr "Общая конфигурация"
+msgstr "Общие настройки"
 
 #: network/models.py:87
 msgid "Pick your NIC"
@@ -1002,7 +1002,7 @@ msgstr "Имя интерфейса"
 # глагол повелительного наклонения
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Задайте имя для Вашего сетевого интерфейса."
+msgstr "Задайте имя сетевого интерфейса."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -2065,7 +2065,7 @@ msgstr ""
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr "Глобальная конфигурация цели"
+msgstr "Общие настройки"
 
 #: services/models.py:396
 msgid "Extent Name"
@@ -7886,7 +7886,7 @@ msgstr "Конечный адрес IPv4 сети"
 #: jails/models.py:305
 #: jails/models.py:306
 msgid "Jails Configuration"
-msgstr "Конфигурация jail"
+msgstr "Настройки jail"
 
 #: jails/models.py:347
 msgid "OS"
@@ -7897,7 +7897,7 @@ msgstr "ОС"
 #: templates/jails/index.html:40
 #: templates/plugins/index.html:20
 msgid "Configuration"
-msgstr "Конфигурация"
+msgstr "Настройки"
 
 #: jails/utils.py:567
 msgid "Unable to determine IPv4 for plugin"
@@ -8837,11 +8837,11 @@ msgstr "ВНИМАНИЕ - Данные сервисы зависят от эт�
 
 #: choices.py:171
 msgid "CORE"
-msgstr "Ядро"
+msgstr "CORE"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr "Ядро+"
+msgstr "COREPLUS"
 
 #: choices.py:173
 msgid "LANMAN1"
@@ -9650,7 +9650,7 @@ msgstr ""
 
 #: services/models.py:117
 msgid "Domain logons"
-msgstr "Входы в ломен"
+msgstr "Входы в домен"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
@@ -9673,7 +9673,7 @@ msgstr "Включить экспериментальную цель"
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
-msgstr "Пароли содержвщие знак вопроса (?) запрещены из-за проблем с CIFS."
+msgstr "Пароли содержащие знак вопроса (?) запрещены из-за проблем с CIFS."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -9794,7 +9794,7 @@ msgstr "Включить TPC"
 
 #: services/models.py:596
 msgid "Allow initiators to xcopy without authenticating to foreign targets."
-msgstr "Разрешить инициаторами хсору на другие цели."
+msgstr "Разрешить инициаторам хсору на другие цели без аутентификации."
 
 #: templates/directoryservice/activedirectory_edit.html:8
 #: templates/directoryservice/ldap_edit.html:8
@@ -10414,7 +10414,7 @@ msgstr "Kerberos"
 
 #: templates/directoryservice/index.html:15
 msgid "Kerberos Realms"
-msgstr "Область Kerberos"
+msgstr "Области Kerberos"
 
 #: templates/directoryservice/index.html:18
 msgid "Kerberos Keytabs"
@@ -10455,7 +10455,7 @@ msgstr "Создать промежуточный центр сертифика�
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr "Импортировать сушествуюший сертификат"
+msgstr "Импортировать существуюший сертификат"
 
 #: choices.py:818
 msgid "Create an internal Certificate"
@@ -10581,7 +10581,7 @@ msgstr "Глобальные дополнительные параметры"
 
 #: services/models.py:328
 msgid "These parameters are added to [Global] section of afp.conf"
-msgstr "Эти параметры добавляются в раздел [global] файла smb.conf"
+msgstr "Эти параметры добавляются в раздел [Global] файла afp.conf"
 
 #: services/models.py:1728
 msgid "HTTP Port"
@@ -11584,7 +11584,7 @@ msgstr "Загрузить хранилища"
 #: templates/vmware/index.html:3
 #: vmware/models.py:67
 msgid "Configure"
-msgstr "Конфигурация"
+msgstr "Настроить"
 
 #: templates/system/update_verify.html:79
 msgid "<bold>All files verified successfully!</bold>"
@@ -11963,7 +11963,7 @@ msgstr "Порог предупреждения об оставшемся дос
 
 #: services/models.py:550
 msgid "LUN RPM"
-msgstr "Частота вращения LUN"
+msgstr "Частота вращения"
 
 #: services/models.py:551
 msgid ""
@@ -12707,3 +12707,11 @@ msgstr "IPMI (Узел B)"
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr "IPMI (Узел A)"
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr ""
+"Версия firmware %(fwversion)s не соответствует версии драйвера %(drversion)s "
+"для /dev/mpr%(mpr)s"
