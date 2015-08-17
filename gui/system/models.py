@@ -522,7 +522,7 @@ class Tunable(NewModel):
         verbose_name=_('Type'),
         max_length=20,
         choices=choices.TUNABLE_TYPES,
-        default='loader',
+        default='LOADER',
     )
     tun_comment = models.CharField(
             max_length=100,
