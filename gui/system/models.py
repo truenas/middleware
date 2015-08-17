@@ -306,7 +306,7 @@ class NTPServer(NewModel):
         provider_name = 'ntpservers'
 
 
-class Advanced(Model):
+class Advanced(NewModel):
     adv_consolemenu = models.BooleanField(
         verbose_name=_("Enable Console Menu"),
         default=False,
@@ -378,13 +378,6 @@ class Advanced(Model):
         verbose_name=_("Enable automatic upload of kernel crash dumps and daily telemetry"),
         default=True,
     )
-    adv_anonstats = models.BooleanField(
-            verbose_name=_("Enable report anonymous statistics"),
-            default=True,
-            editable=False)
-    adv_anonstats_token = models.TextField(
-            blank=True,
-            editable=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),
@@ -406,11 +399,65 @@ class Advanced(Model):
                     "select that user in the dropdown.")
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("Advanced")
 
     class FreeAdmin:
         deletable = False
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.account.models import bsdUsers
+        from freenasUI.middleware.connector import connection as dispatcher
+        adv = dispatcher.call_sync('system.advanced.get_config')
+        try:
+            user = bsdUsers.objects.get(id=adv['periodic_notify_user'])
+        except bsdUsers.DoesNotExist:
+            user = bsdUsers.objects.order_by('id')[0]
+        return cls(**dict(
+            adv_consolemenu=adv['console_cli'],
+            adv_serialconsole=adv['serial_console'],
+            adv_serialport=adv['serial_port'],
+            adv_serialspeed=adv['serial_speed'],
+            adv_consolescreensaver=adv['console_screensaver'],
+            adv_powerdaemon=adv['powerd'],
+            adv_swapondrive=adv['swapondrive'],
+            adv_consolemsg=adv['consolemsg'],
+            adv_traceback=adv['traceback'],
+            adv_advancedmode=adv['advancedmode'],
+            adv_autotune=adv['autotune'],
+            adv_debugkernel=adv['debugkernel'],
+            adv_uploadcrash=adv['uploadcrash'],
+            adv_motd=adv['motd'],
+            adv_boot_scrub=adv['boot_scrub_internal'],
+            adv_periodic_notifyuser=user,
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'console_cli': self.adv_consolemenu,
+            'serial_console': self.adv_serialconsole,
+            'serial_port': self.adv_serialport,
+            'serial_speed': self.adv_serialspeed,
+            'console_screensaver': self.adv_consolescreensaver,
+            'powerd': self.adv_powerdaemon,
+            'swapondrive': self.adv_swapondrive,
+            'consolemsg': self.adv_consolemsg,
+            'traceback': self.adv_traceback,
+            'advancedmode': self.adv_advancedmode,
+            'autotune': self.adv_autotune,
+            'debugkernel': self.adv_debugkernel,
+            'uploadcrash': self.adv_uploadcrash,
+            'motd': self.adv_motd,
+            'boot_scrub_internal': self.adv_periodic_notifyuser.id,
+        }
+        self._save_task_call('system.advanced.configure', data)
+        return True
 
 
 class Email(NewModel):
