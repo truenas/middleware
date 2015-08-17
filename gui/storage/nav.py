@@ -200,38 +200,38 @@ class Volumes(TreeNode):
         if has_multipath:
             self.append_child(ViewMultipaths())
 
-        mp = models.MountPoint.objects.select_related().order_by('-id')
+        mp = models.Volume.objects.order_by('-id')
         for i in mp:
-            nav = TreeNode(i.mp_volume.id)
-            nav.name = i.mp_path
+            nav = TreeNode(i.id)
+            nav.name = i.vol_name
             nav.order = -i.id
             nav.model = 'Volume'
-            nav.kwargs = {'oid': i.mp_volume.id, 'model': 'Volume'}
+            nav.kwargs = {'oid': i.id, 'model': 'Volume'}
             nav.icon = u'VolumesIcon'
 
-            if i.mp_volume.vol_fstype == 'ZFS':
+            if i.vol_fstype == 'ZFS':
                 ds = TreeNode('Dataset')
                 ds.name = _(u'Create Dataset')
                 ds.view = 'storage_dataset'
                 ds.icon = u'AddDatasetIcon'
                 ds.type = 'object'
-                ds.kwargs = {'fs': i.mp_volume.vol_name}
+                ds.kwargs = {'fs': i.vol_name}
                 nav.append_child(ds)
 
                 zv = AddZVol()
-                zv.kwargs = {'parent': i.mp_volume.vol_name}
+                zv.kwargs = {'parent': i.vol_name}
                 nav.append_child(zv)
 
             subnav = TreeNode('ChangePermissions')
             subnav.name = _('Change Permissions')
             subnav.type = 'editobject'
             subnav.view = 'storage_mp_permission'
-            subnav.kwargs = {'path': i.mp_path}
+            subnav.kwargs = {'path': i.vol_mountpoint}
             subnav.model = 'Volume'
             subnav.icon = u'ChangePasswordIcon'
             subnav.app_name = 'storage'
 
-            datasets = i.mp_volume.get_datasets(hierarchical=True)
+            datasets = i.get_datasets(hierarchical=True)
             if datasets:
                 for name, d in datasets.items():
                     # TODO: non-recursive algo

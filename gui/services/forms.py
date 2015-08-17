@@ -57,7 +57,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.storage.models import Volume, MountPoint, Disk
+from freenasUI.storage.models import Volume, Disk
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import fc_enabled
 from ipaddr import (
@@ -1389,8 +1389,8 @@ class iSCSITargetExtentForm(ModelForm):
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
         valid = False
-        for mp in MountPoint.objects.all():
-            if path == mp.mp_path:
+        for mp in Volume.objects.all():
+            if path == vol.vol_mountpoint:
                 raise forms.ValidationError(
                     _("You need to specify a file inside your volume/dataset.")
                 )

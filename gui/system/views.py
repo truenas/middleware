@@ -72,7 +72,6 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network.models import GlobalConfiguration
-from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
 from freenasUI.system.utils import (
     CheckUpdateHandler,
@@ -703,8 +702,10 @@ class DojoFileStore(object):
         if self.filterVolumes:
             self.mp = [
                 os.path.abspath(mp.mp_path.encode('utf8'))
-                for mp in MountPoint.objects.filter(
-                    mp_volume__vol_fstype='ZFS'
+                for mp in dispatcher.call_sync(
+                    'volumes.query',
+                    [('status', '=', 'ONLINE')],
+                    {'select': 'properties.mountpoint'}
                 )
             ]
 
