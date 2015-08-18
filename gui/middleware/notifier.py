@@ -807,9 +807,6 @@ class notifier:
         self._system("/usr/sbin/service ix-motd quietstart")
         self._system("/usr/sbin/service motd quietstart")
 
-    def _start_ttys(self):
-        self._system("/usr/sbin/service ix-ttys quietstart")
-
     def _reload_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
         self._system("/usr/sbin/service proftpd restart")

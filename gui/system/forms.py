@@ -1040,22 +1040,8 @@ class AdvancedForm(ModelForm):
     def save(self):
         super(AdvancedForm, self).save()
         loader_reloaded = False
-        if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
-            notifier().start("ttys")
         if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
             notifier().restart("powerd")
-        if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
-            notifier().start("ix-device_hints")
-            notifier().start("ttys")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
-                self.instance._original_adv_serialport != self.instance.adv_serialport):
-            notifier().start("ix-device_hints")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
         if self.instance._original_adv_consolescreensaver != self.instance.adv_consolescreensaver:
             if self.instance.adv_consolescreensaver == 0:
                 notifier().stop("saver")
