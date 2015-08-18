@@ -322,7 +322,6 @@ class Advanced(NewModel):
             "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
         ),
         verbose_name=_("Serial Port Address"),
-        choices=choices.SERIAL_CHOICES(),
     )
     adv_serialspeed = models.CharField(
             max_length=120,

@@ -1010,8 +1010,8 @@ class AdvancedForm(ModelForm):
         model = models.Advanced
 
     def __init__(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
         super(AdvancedForm, self).__init__(*args, **kwargs)
-        self.instance._original_adv_motd = self.instance.adv_motd
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
         self.instance._original_adv_serialconsole = (
@@ -1030,11 +1030,16 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
 
+        ports = dispatcher.call_sync('system.advanced.serial_ports')
+        if not ports:
+            ports = ['0x2f8']
+
+        self.fields['adv_serialport'].widget = forms.widgets.Select(
+            choices=[(p, p) for p in ports])
+
     def save(self):
         super(AdvancedForm, self).save()
         loader_reloaded = False
-        if self.instance._original_adv_motd != self.instance.adv_motd:
-            notifier().start("motd")
         if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
             notifier().start("ttys")
         if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
