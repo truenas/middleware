@@ -1042,21 +1042,6 @@ class AdvancedForm(ModelForm):
         loader_reloaded = False
         if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
             notifier().restart("powerd")
-        if self.instance._original_adv_consolescreensaver != self.instance.adv_consolescreensaver:
-            if self.instance.adv_consolescreensaver == 0:
-                notifier().stop("saver")
-            else:
-                notifier().start("saver")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and not loader_reloaded
-        ):
-            notifier().reload("loader")
-        if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
-            notifier().reload("loader")
         if self.instance._original_adv_periodic_notifyuser != self.instance.adv_periodic_notifyuser:
             notifier().start("ix-periodic")
 
