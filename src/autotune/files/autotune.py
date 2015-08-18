@@ -257,7 +257,7 @@ def main(argv):
                         default=USERLAND_RESERVED_MEM,
                         type=int,
                         )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     knobs = DEF_KNOBS.get(args.conf)
     if not knobs:
