@@ -13,9 +13,9 @@ if [ "$ID" = "root" ]; then
 	ID="jkh"
 fi
 
-if [ $# -lt 4 ]; then
+if [ $# -lt 3 ]; then
 	echo Usage: $0 stagedir FreeNAS-version datestamp
-	echo Usage: e.g. $0 stagedir FreeNAS-9.3-BETA 9.3-BETA 20131225
+	echo Usage: e.g. $0 stagedir FreeNAS-9.3-BETA 20131225
 	exit 1
 fi
 
