@@ -299,13 +299,37 @@ mount_disk() {
 	return 0
 }
 	
+create_partitions() {
+    local _disk="$1"
+    local _size=""
+    
+    if [ $# -eq 2 ]; then
+	_size="-s $2"
+    fi
+    gpart destroy -F ${_disk} || true
+    if gpart create -s GPT ${_disk}; then
+	if gpart add -t bios-boot -i 1 -s 512k ${_disk}; then
+	    if is_truenas; then
+		gpart add -t freebsd-swap -s 16g -i 3 ${_disk}
+	    fi
+	    if gpart add -t freebsd-zfs -i 2 -a 4k ${_size} ${_disk}; then
+		return 0
+	    fi
+	fi
+    fi
+
+    return 1
+}
+
 get_minimum_size() {
     local _min=0
     local _disk
     local _size
     # We use 1mbyte because the bios-boot is 512k,
     # and there's some header space.
-    local _m1=$(expr 1024 \* 1024)
+    # Now we use 8MBytes because gpart and some thumb drives
+    # misbehave.
+    local _m1=$(expr 1024 \* 1024 \* 8)
     # If we decide we want to round it down,
     # set this to the size (eg, 256 * 1024 * 1024)
     local _round=0
@@ -313,13 +337,14 @@ get_minimum_size() {
 
     for _disk
     do
-	_size=$(diskinfo ${_disk} | awk ' { print $3; }')
-	_size=$(expr ${_size} - ${_m1})
-	if is_truenas; then
-	    if [ "${_size}" -lt ${_g16} ]; then
-		continue
-	    fi
-	    _size=$(expr ${_size} - ${_g16})
+	_size=""
+	if create_partitions ${_disk} 1>&2; then
+	    _size=$(gpart show ${_disk} | awk '/freebsd-zfs/ { print $2 * 512; }')
+	    gpart destroy -F ${_disk} 1>&2
+	fi
+	if [ -z "${_size}" ]; then
+	    echo "Could not do anything with ${_disk}, skipping" 1>&2
+	    continue
 	fi
 	if [ ${_round} -gt 0 ]; then
 	    _size=$(expr \( ${_size} / ${_round} \) \* ${_round})
@@ -353,20 +378,8 @@ partition_disk() {
 	    # but caching seems to have caused problems.
 	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1 >&2
 
-	    # Now create a GPT partition.
-	    gpart create -s gpt ${_disk} >&2
-	    # For grub
-	    gpart add -t bios-boot -i 1 -s 512k ${_disk} >&2
-
-	    # If we're truenas, add swap
-	    if is_truenas; then
-	        # Is this correct?
-	        gpart add -t freebsd-swap -i 3 -s 16g ${_disk} >&2
-	    fi
-	    # The rest of the disk
-	    gpart add -t freebsd-zfs -i 2 -a 4k -s ${_minsize} ${_disk} >&2
-
-	    # And make it active
+	    create_partitions ${_disk} ${_minsize} >&2
+	    # Make the disk active
 	    gpart set -a active ${_disk} >&2
 
 	    echo ${_disk}p2
