@@ -423,7 +423,7 @@ class Advanced(NewModel):
             adv_consolemenu=adv['console_cli'],
             adv_serialconsole=adv['serial_console'],
             adv_serialport=adv['serial_port'],
-            adv_serialspeed=adv['serial_speed'],
+            adv_serialspeed=str(adv['serial_speed']),
             adv_consolescreensaver=adv['console_screensaver'],
             adv_powerdaemon=adv['powerd'],
             adv_swapondrive=adv['swapondrive'],
@@ -439,11 +439,17 @@ class Advanced(NewModel):
         ))
 
     def _save(self, *args, **kwargs):
+        from freenasUI.account.models import bsdUsers
+        try:
+            userid = bsdUsers.objects.get(
+                bsdusr_username=self.adv_periodic_notifyuser).id
+        except bsdUsers.DoesNotExist:
+            userid = 0
         data = {
             'console_cli': self.adv_consolemenu,
             'serial_console': self.adv_serialconsole,
             'serial_port': self.adv_serialport,
-            'serial_speed': self.adv_serialspeed,
+            'serial_speed': int(self.adv_serialspeed),
             'console_screensaver': self.adv_consolescreensaver,
             'powerd': self.adv_powerdaemon,
             'swapondrive': self.adv_swapondrive,
@@ -455,7 +461,7 @@ class Advanced(NewModel):
             'uploadcrash': self.adv_uploadcrash,
             'motd': self.adv_motd,
             'boot_scrub_internal': self.adv_boot_scrub,
-            'periodic_notify_user': self.adv_periodic_notifyuser.id,
+            'periodic_notify_user': userid,
         }
         self._save_task_call('system.advanced.configure', data)
         return True
