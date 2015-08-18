@@ -1019,9 +1019,6 @@ class AdvancedForm(ModelForm):
         )
         self.instance._original_adv_serialspeed = self.instance.adv_serialspeed
         self.instance._original_adv_serialport = self.instance.adv_serialport
-        self.instance._original_adv_consolescreensaver = (
-            self.instance.adv_consolescreensaver
-        )
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
         self.instance._original_adv_advancedmode = (
             self.instance.adv_advancedmode
