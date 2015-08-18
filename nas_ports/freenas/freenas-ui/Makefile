@@ -36,7 +36,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:${PORTSDIR}/freenas/py-licenselib \
 	dmidecode>0:${PORTSDIR}/sysutils/dmidecode \
 	freenas-datastore>0:${PORTSDIR}/freenas/freenas-datastore \
-	freenas-dispatcher>0:${PORTSDIR}/freenas/freenas-dispatcher
+	freenas-dispatcher>0:${PORTSDIR}/freenas/freenas-dispatcher \
+	${PYTHON_PKGNAMEPREFIX}sysctl>0:${PORTSDIR}/freenas/py-sysctl
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
