@@ -67,7 +67,6 @@ main()
 	rm -rf ${INSTALLUFSDIR}/boot
 	rm -f ${INSTALLUFSDIR}/bin/* ${INSTALLUFSDIR}/sbin/*
 	rm -f ${INSTALLUFSDIR}/usr/bin/* ${INSTALLUFSDIR}/usr/sbin/*
-
 	mkdir -p ${INSTALLUFSDIR}/usr/local/pre-install
 	mkdir -p ${INSTALLUFSDIR}/usr/local/firmware
 	mkdir -p ${INSTALLUFSDIR}/usr/local/install
@@ -80,6 +79,21 @@ main()
 	tar -xf - -C ${INSTALLUFSDIR}
 	# Copy the installation scripts and modules as well
 	tar -C ${NANO_OBJ}/_.pkgtools -cf - ./usr/local/lib ./usr/local/bin/freenas-install | tar -C ${INSTALLUFSDIR} -xf -
+        # And prune that out a bit -- these are just some big ones
+        rm -rf ${INSTALLUFSDIR}/usr/local/lib/python*/test
+        for pkg in pysphere samba django south Crypto lxml _xmlplus
+        do
+            rm -rf ${INSTALLUFSDIR}/usr/local/lib/python*/site-packages/${pkg}
+        done
+        rm -rf ${INSTALLUFSDIR}/var/db/pkg
+        rm -rf ${INSTALLUFSDIR}/conf
+        rm -rf ${INSTALLUFSDIR}/usr/share/man
+        rm -rf ${INSTALLUFSDIR}/usr/share/groff_font
+        rm -rf ${INSTALLUFSDIR}/usr/share/locale
+        rm -rf ${INSTALLUFSDIR}/usr/share/misc
+        rm -rf ${INSTALLUFSDIR}/usr/share/zoneinfo
+        find -x ${INSTALLUFSDIR} \( -name '*.a' -o -name '*.pyc' \) -type f -print0 | xargs -0 rm -f
+
 	set +x
 # SEF
 # Build packages here.
