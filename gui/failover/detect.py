@@ -14,12 +14,13 @@ def ha_mode():
         return data
 
     # Temporary workaround for VirtualBOX
-    proc = subprocess.Popen([
-        '/usr/local/sbin/dmidecode',
-        '-s', 'bios-version',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    bios = proc.communicate()[0].strip()
-    if bios == 'VirtualBox':
+    #proc = subprocess.Popen([
+    #    '/usr/local/sbin/dmidecode',
+    #    '-s', 'bios-version',
+    #], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #bios = proc.communicate()[0].strip()
+    #if bios == 'VirtualBox':
+    if False:
         proc = subprocess.Popen([
             '/usr/local/sbin/dmidecode',
             '-s', 'system-uuid',
