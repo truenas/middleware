@@ -1,5 +1,5 @@
 #6951	Bug	Important	ix-activedirectory is deleting computer object on service stop
-#7950	Bug	Nice to have	rsync module group name spaces
+#7950	Bug	Nice to have	Fix rsyncd.conf gid field parsing (allow spaces in them and improve delimiter logic)
 #9091	Bug	Nice to have	Fix Cron task's escaping of "
 #9184	Bug	Nice to have	Update.failed
 #9802	Feature	Nice to have	Provide a method for picking the kerberos principal when multiple principals are present in a keytab
@@ -22,6 +22,7 @@
 #10601	Bug	Nice to have	Group rename/delete not consistent to Samba groups
 #10612	Bug	Critical	Fixes a GUI Upgrade (aka Manual Upgrade) problem.
 #10613	Bug	Important	SAMBA users not in tdb
+#10649	Feature	Nice to have	Trims down the install environment a bit for space reasons.
 #10655	Feature	Important	nut v2.7.3 needed for Tripp Lite SMART500RT1U UPS
 #10680	Bug	Expected	FreeBSD-SA-15:13.tcp
 #10719	Bug	Important	Export Recycle Bin
@@ -37,3 +38,4 @@
 #10862	Feature	Nice to have	Update mpr driver to version 9
 #10868	Feature	Important	Add sas3ircu to the build
 #10908	Feature	Important	add alerts for mpr 12 gbps HBA firmware mismatches
+#11027	Bug	Nice to have	Fix multiple integer overflows in expat library
