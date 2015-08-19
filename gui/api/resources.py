@@ -729,7 +729,7 @@ class VolumeResourceMixin(NestedMixin):
         data = {
             'id': uid.next(),
             'name': name,
-            'type': 'dataset' if dataset['type'] == 'filesystem' else 'zvol',
+            'type': 'dataset' if dataset['type'] == 'FILESYSTEM' else 'zvol',
             'status': '-',
             'path': dataset['name'],
             'avail': dataset['properties.available.rawvalue'],
@@ -738,7 +738,7 @@ class VolumeResourceMixin(NestedMixin):
 
         data['used_pct'] = int((float(data['used']) / float(data['avail'] + data['used'])) * 100.0)
 
-        if dataset['type'] == 'filesystem':
+        if dataset['type'] == 'FILESYSTEM':
             data['mountpoint'] = dataset['properties.mountpoint.value']
 
         if self.is_webclient(bundle.request):
@@ -756,7 +756,7 @@ class VolumeResourceMixin(NestedMixin):
                 kwargs={
                     'parent': dataset['name'],
                 })
-            if dataset['type'] == 'filesystem':
+            if dataset['type'] == 'FILESYSTEM':
                 data['_dataset_delete_url'] = reverse(
                     'storage_dataset_delete',
                     kwargs={
