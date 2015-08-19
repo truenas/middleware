@@ -831,21 +831,6 @@ CASE_SENSITIVITY_CHOICES = (
 )
 
 
-class SERIAL_CHOICES(object):
-
-    def __iter__(self):
-        pipe = popen("/usr/sbin/devinfo -u | grep uart | grep 0x | cut -d- -f 1 | "
-                     "awk '{print $1}'")
-        ports = filter(
-            lambda y: True if y else False,
-            pipe.read().strip().strip('\n').split('\n')
-        )
-        if not ports:
-            ports = ['0x2f8']
-        for p in ports:
-            yield (p, p)
-
-
 TUNABLE_TYPES = (
     ('LOADER', _('Loader')),
     ('RC', _('rc.conf')),

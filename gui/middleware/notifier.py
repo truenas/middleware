@@ -807,9 +807,6 @@ class notifier:
         self._system("/usr/sbin/service ix-motd quietstart")
         self._system("/usr/sbin/service motd quietstart")
 
-    def _start_ttys(self):
-        self._system("/usr/sbin/service ix-ttys quietstart")
-
     def _reload_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
         self._system("/usr/sbin/service proftpd restart")
@@ -1025,24 +1022,6 @@ class notifier:
 
     def _start_loader(self):
         self._system("/usr/sbin/service ix-loader quietstart")
-
-    def __saver_loaded(self):
-        pipe = os.popen("kldstat|grep daemon_saver")
-        out = pipe.read().strip('\n')
-        pipe.close()
-        return (len(out) > 0)
-
-    def _start_saver(self):
-        if not self.__saver_loaded():
-            self._system("kldload daemon_saver")
-
-    def _stop_saver(self):
-        if self.__saver_loaded():
-            self._system("kldunload daemon_saver")
-
-    def _restart_saver(self):
-        self._stop_saver()
-        self._start_saver()
 
     def _open_db(self, ret_conn=False):
         """Open and return a cursor object for database access."""

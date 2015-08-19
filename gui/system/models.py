@@ -170,6 +170,12 @@ class Settings(NewModel):
             elif not listenv4:
                 listenv4 = i
 
+        user_attrs = dispatcher.call_sync(
+            'users.query',
+            [('id', '=', 0)],
+            {'single': True}
+        ).get('attributes')
+
         return cls(**dict(
             id=1,
             stg_guiprotocol=protocol,
@@ -183,9 +189,11 @@ class Settings(NewModel):
             stg_language=sysgen.get('language'),
             stg_kbdmap=sysgen.get('console_keymap'),
             stg_syslogserver=sysgen.get('syslog_server'),
+            stg_wizardshown=user_attrs.get('gui_wizard_shown', False),
         ))
 
     def _save(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
         if self.stg_guiprotocol == 'httphttps':
             protocol = ['HTTP', 'HTTPS']
         elif self.stg_guiprotocol == 'https':
@@ -224,6 +232,15 @@ class Settings(NewModel):
             'syslog_server': self.stg_syslogserver,
         }
         self._save_task_call('system.general.configure', data)
+
+        user = dispatcher.call_sync('users.query', [('id', '=', 0)], {'single': True})
+        user_attrs = user['attributes']
+        new_user_attrs = user_attrs.copy()
+        new_user_attrs.update({
+            'gui_wizard_shown': self.stg_wizardshown,
+        })
+        if user_attrs != new_user_attrs:
+            self._save_task_call('users.update', user['id'], {'attributes': new_user_attrs})
 
         return True
 
@@ -306,7 +323,7 @@ class NTPServer(NewModel):
         provider_name = 'ntpservers'
 
 
-class Advanced(Model):
+class Advanced(NewModel):
     adv_consolemenu = models.BooleanField(
         verbose_name=_("Enable Console Menu"),
         default=False,
@@ -322,7 +339,6 @@ class Advanced(Model):
             "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
         ),
         verbose_name=_("Serial Port Address"),
-        choices=choices.SERIAL_CHOICES(),
     )
     adv_serialspeed = models.CharField(
             max_length=120,
@@ -378,13 +394,6 @@ class Advanced(Model):
         verbose_name=_("Enable automatic upload of kernel crash dumps and daily telemetry"),
         default=True,
     )
-    adv_anonstats = models.BooleanField(
-            verbose_name=_("Enable report anonymous statistics"),
-            default=True,
-            editable=False)
-    adv_anonstats_token = models.TextField(
-            blank=True,
-            editable=False)
     # TODO: need geom_eli in kernel
     #adv_encswap = models.BooleanField(
     #        verbose_name = _("Encrypt swap space"),
@@ -406,11 +415,86 @@ class Advanced(Model):
                     "select that user in the dropdown.")
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("Advanced")
 
     class FreeAdmin:
         deletable = False
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.account.models import bsdUsers
+        from freenasUI.middleware.connector import connection as dispatcher
+        adv = dispatcher.call_sync('system.advanced.get_config')
+        user_attrs = dispatcher.call_sync(
+            'users.query',
+            [('id', '=', 0)],
+            {'single': True}
+        ).get('attributes')
+        try:
+            user = bsdUsers.objects.get(id=adv['periodic_notify_user'])
+        except bsdUsers.DoesNotExist:
+            user = bsdUsers.objects.order_by('id')[0]
+        return cls(**dict(
+            adv_consolemenu=adv['console_cli'],
+            adv_serialconsole=adv['serial_console'],
+            adv_serialport=adv['serial_port'],
+            adv_serialspeed=str(adv['serial_speed']),
+            adv_consolescreensaver=adv['console_screensaver'],
+            adv_powerdaemon=adv['powerd'],
+            adv_swapondrive=adv['swapondrive'],
+            adv_consolemsg=user_attrs.get('gui_messages_footer', False),
+            adv_traceback=user_attrs.get('gui_traceback', False),
+            adv_advancedmode=user_attrs.get('gui_advancedmode', False),
+            adv_autotune=adv['autotune'],
+            adv_debugkernel=adv['debugkernel'],
+            adv_uploadcrash=adv['uploadcrash'],
+            adv_motd=adv['motd'],
+            adv_boot_scrub=adv['boot_scrub_internal'],
+            adv_periodic_notifyuser=user,
+        ))
+
+    def _save(self, *args, **kwargs):
+        from freenasUI.account.models import bsdUsers
+        from freenasUI.middleware.connector import connection as dispatcher
+        try:
+            userid = bsdUsers.objects.get(
+                bsdusr_username=self.adv_periodic_notifyuser).id
+        except bsdUsers.DoesNotExist:
+            userid = 0
+        user = dispatcher.call_sync('users.query', [('id', '=', 0)], {'single': True})
+        user_attrs = user['attributes']
+        new_user_attrs = user_attrs.copy()
+        new_user_attrs.update({
+            'gui_messages_footer': self.adv_consolemsg,
+            'gui_traceback': self.adv_traceback,
+            'gui_advancedmode': self.adv_advancedmode,
+        })
+        if user_attrs != new_user_attrs:
+            self._save_task_call('users.update', user['id'], {'attributes': new_user_attrs})
+
+        data = {
+            'console_cli': self.adv_consolemenu,
+            'serial_console': self.adv_serialconsole,
+            'serial_port': self.adv_serialport,
+            'serial_speed': int(self.adv_serialspeed),
+            'console_screensaver': self.adv_consolescreensaver,
+            'powerd': self.adv_powerdaemon,
+            'swapondrive': self.adv_swapondrive,
+            'autotune': self.adv_autotune,
+            'debugkernel': self.adv_debugkernel,
+            'uploadcrash': self.adv_uploadcrash,
+            'motd': self.adv_motd,
+            'boot_scrub_internal': self.adv_boot_scrub,
+            'periodic_notify_user': userid,
+        }
+        self._save_task_call('system.advanced.configure', data)
+        return True
 
 
 class Email(NewModel):
@@ -709,7 +793,7 @@ class SystemDataset(Model):
         setattr(self, self.__sys_uuid_field, uuid.uuid4().hex)
 
 
-class Update(Model):
+class Update(NewModel):
     upd_autocheck = models.BooleanField(
         verbose_name=_('Check Automatically For Updates'),
         default=True,
@@ -719,8 +803,29 @@ class Update(Model):
         blank=True,
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _('Update')
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('update.get_config')
+        return cls(**dict(
+            upd_autocheck=config['check_auto'],
+            upd_train=config['train'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        self._save_task_call('update.configure', {
+            'check_auto': self.upd_autocheck,
+            'train': self.upd_train,
+        })
+        return True
 
     def get_train(self):
         #FIXME: lazy import, why?
