@@ -1010,8 +1010,8 @@ class AdvancedForm(ModelForm):
         model = models.Advanced
 
     def __init__(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
         super(AdvancedForm, self).__init__(*args, **kwargs)
-        self.instance._original_adv_motd = self.instance.adv_motd
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
         self.instance._original_adv_serialconsole = (
@@ -1019,9 +1019,6 @@ class AdvancedForm(ModelForm):
         )
         self.instance._original_adv_serialspeed = self.instance.adv_serialspeed
         self.instance._original_adv_serialport = self.instance.adv_serialport
-        self.instance._original_adv_consolescreensaver = (
-            self.instance.adv_consolescreensaver
-        )
         self.instance._original_adv_consolemsg = self.instance.adv_consolemsg
         self.instance._original_adv_advancedmode = (
             self.instance.adv_advancedmode
@@ -1030,44 +1027,12 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
 
-    def save(self):
-        super(AdvancedForm, self).save()
-        loader_reloaded = False
-        if self.instance._original_adv_motd != self.instance.adv_motd:
-            notifier().start("motd")
-        if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
-            notifier().start("ttys")
-        if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
-            notifier().restart("powerd")
-        if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
-            notifier().start("ix-device_hints")
-            notifier().start("ttys")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
-                self.instance._original_adv_serialport != self.instance.adv_serialport):
-            notifier().start("ix-device_hints")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        if self.instance._original_adv_consolescreensaver != self.instance.adv_consolescreensaver:
-            if self.instance.adv_consolescreensaver == 0:
-                notifier().stop("saver")
-            else:
-                notifier().start("saver")
-            if not loader_reloaded:
-                notifier().reload("loader")
-                loader_reloaded = True
-        if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and not loader_reloaded
-        ):
-            notifier().reload("loader")
-        if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
-            notifier().reload("loader")
-        if self.instance._original_adv_periodic_notifyuser != self.instance.adv_periodic_notifyuser:
-            notifier().start("ix-periodic")
+        ports = dispatcher.call_sync('system.advanced.serial_ports')
+        if not ports:
+            ports = ['0x2f8']
+
+        self.fields['adv_serialport'].widget = forms.widgets.Select(
+            choices=[(p, p) for p in ports])
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
