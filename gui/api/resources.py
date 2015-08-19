@@ -777,7 +777,7 @@ class VolumeResourceMixin(NestedMixin):
                     kwargs={
                         'path': data['mountpoint'],
                     })
-            elif dataset['type'] == 'volume':
+            elif dataset['type'] == 'VOLUME':
                 data['_zvol_delete_url'] = reverse(
                     'storage_zvol_delete',
                     kwargs={
