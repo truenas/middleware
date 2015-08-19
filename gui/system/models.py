@@ -170,6 +170,12 @@ class Settings(NewModel):
             elif not listenv4:
                 listenv4 = i
 
+        user_attrs = dispatcher.call_sync(
+            'users.query',
+            [('id', '=', 0)],
+            {'single': True}
+        ).get('attributes')
+
         return cls(**dict(
             id=1,
             stg_guiprotocol=protocol,
@@ -183,9 +189,11 @@ class Settings(NewModel):
             stg_language=sysgen.get('language'),
             stg_kbdmap=sysgen.get('console_keymap'),
             stg_syslogserver=sysgen.get('syslog_server'),
+            stg_wizardshown=user_attrs.get('gui_wizard_shown', False),
         ))
 
     def _save(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
         if self.stg_guiprotocol == 'httphttps':
             protocol = ['HTTP', 'HTTPS']
         elif self.stg_guiprotocol == 'https':
@@ -224,6 +232,15 @@ class Settings(NewModel):
             'syslog_server': self.stg_syslogserver,
         }
         self._save_task_call('system.general.configure', data)
+
+        user = dispatcher.call_sync('users.query', [('id', '=', 0)], {'single': True})
+        user_attrs = user['attributes']
+        new_user_attrs = user_attrs.copy()
+        new_user_attrs.update({
+            'gui_wizard_shown': self.stg_wizardshown,
+        })
+        if user_attrs != new_user_attrs:
+            self._save_task_call('users.update', user['id'], {'attributes': new_user_attrs})
 
         return True
 
