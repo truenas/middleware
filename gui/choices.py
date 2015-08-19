@@ -819,9 +819,9 @@ SAMBA4_FOREST_LEVEL_CHOICES = (
 )
 
 SHARE_TYPE_CHOICES = (
-    ('unix', 'UNIX'),
-    ('windows', 'Windows'),
-    ('mac', 'Mac')
+    ('UNIX', 'UNIX'),
+    ('WINDOWS', 'Windows'),
+    ('MAC', 'Mac')
 )
 
 CASE_SENSITIVITY_CHOICES = (
