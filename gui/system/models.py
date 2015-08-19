@@ -414,6 +414,11 @@ class Advanced(NewModel):
         from freenasUI.account.models import bsdUsers
         from freenasUI.middleware.connector import connection as dispatcher
         adv = dispatcher.call_sync('system.advanced.get_config')
+        user_attrs = dispatcher.call_sync(
+            'users.query',
+            [('id', '=', 0)],
+            {'single': True}
+        ).get('attributes')
         try:
             user = bsdUsers.objects.get(id=adv['periodic_notify_user'])
         except bsdUsers.DoesNotExist:
@@ -426,9 +431,9 @@ class Advanced(NewModel):
             adv_consolescreensaver=adv['console_screensaver'],
             adv_powerdaemon=adv['powerd'],
             adv_swapondrive=adv['swapondrive'],
-            adv_consolemsg=adv['consolemsg'],
-            adv_traceback=adv['traceback'],
-            adv_advancedmode=adv['advancedmode'],
+            adv_consolemsg=user_attrs.get('gui_messages_footer', False),
+            adv_traceback=user_attrs.get('gui_traceback', False),
+            adv_advancedmode=user_attrs.get('gui_advancedmode', False),
             adv_autotune=adv['autotune'],
             adv_debugkernel=adv['debugkernel'],
             adv_uploadcrash=adv['uploadcrash'],
@@ -439,11 +444,23 @@ class Advanced(NewModel):
 
     def _save(self, *args, **kwargs):
         from freenasUI.account.models import bsdUsers
+        from freenasUI.middleware.connector import connection as dispatcher
         try:
             userid = bsdUsers.objects.get(
                 bsdusr_username=self.adv_periodic_notifyuser).id
         except bsdUsers.DoesNotExist:
             userid = 0
+        user = dispatcher.call_sync('users.query', [('id', '=', 0)], {'single': True})
+        user_attrs = user['attributes']
+        new_user_attrs = user_attrs.copy()
+        new_user_attrs.update({
+            'gui_messages_footer': self.adv_consolemsg,
+            'gui_traceback': self.adv_traceback,
+            'gui_advancedmode': self.adv_advancedmode,
+        })
+        if user_attrs != new_user_attrs:
+            self._save_task_call('users.update', user['id'], {'attributes': new_user_attrs})
+
         data = {
             'console_cli': self.adv_consolemenu,
             'serial_console': self.adv_serialconsole,
@@ -452,9 +469,6 @@ class Advanced(NewModel):
             'console_screensaver': self.adv_consolescreensaver,
             'powerd': self.adv_powerdaemon,
             'swapondrive': self.adv_swapondrive,
-            'consolemsg': self.adv_consolemsg,
-            'traceback': self.adv_traceback,
-            'advancedmode': self.adv_advancedmode,
             'autotune': self.adv_autotune,
             'debugkernel': self.adv_debugkernel,
             'uploadcrash': self.adv_uploadcrash,
