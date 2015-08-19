@@ -411,10 +411,15 @@ def dataset_create(request, fs):
             if recordsize:
                 props['recordsize'] = recordsize
 
-            result = dispatcher.call_task_sync('volume.dataset.create', pool_name, dataset_name, {
-                'share_type': dataset_share_type,
-                'properties': {k: {'value': v} for k, v in props.items()}
-            })
+            result = dispatcher.call_task_sync(
+                'volume.dataset.create',
+                pool_name,
+                dataset_name,
+                'FILESYSTEM', {
+                    'share_type': dataset_share_type,
+                    'properties': {k: {'value': v} for k, v in props.items()}
+                }
+            )
 
             if result['state'] == 'FINISHED':
                 return JsonResp(
@@ -497,17 +502,26 @@ def zvol_create(request, parent):
             props['compression'] = str(zvol_compression)
             if zvol_blocksize:
                 props['volblocksize'] = zvol_blocksize
-            errno, errmsg = notifier().create_zfs_vol(
-                name=str(zvol_name),
-                size=str(zvol_size),
-                sparse=cleaned_data.get("zvol_sparse", False),
-                props=props)
-            if errno == 0:
+
+            if cleaned_data.get("zvol_sparse", False):
+                props['sparse'] = {'value': True}
+
+            pool_name = zvol_name.split('/')[0]
+            result = dispatcher.call_task_sync(
+                'volume.dataset.create',
+                pool_name,
+                zvol_name,
+                'VOLUME', {
+                    'properties': {k: {'value': v} for k, v in props.items()}
+                }
+            )
+
+            if result['state'] == 'FINISHED':
                 return JsonResp(
                     request,
                     message=_("ZFS Volume successfully added."))
             else:
-                zvol_form.set_error(errmsg)
+                zvol_form.set_error(result['error']['message'])
     else:
         zvol_form = forms.ZVol_CreateForm(
             initial=defaults,
