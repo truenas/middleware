@@ -46,8 +46,8 @@ EOF
 [${rsyncmod_name}]
     path = ${rsyncmod_path}
     max connections = ${rsyncmod_maxconn}
-    uid = $(echo ${rsyncmod_user} | sed -e 's/\\/\\\\/g' -e 's/ /\\ /g')
-    gid = $(echo ${rsyncmod_group} | sed -e 's/\\/\\\\/g' -e 's/ /\\ /g')
+    uid = ${rsyncmod_user}
+    gid = ${rsyncmod_group}
 EOF
 		if [ -n "${rsyncmod_comment}" ]; then
 			echo "    comment = ${rsyncmod_comment}" >> $cfg
