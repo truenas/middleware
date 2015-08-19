@@ -793,7 +793,7 @@ class SystemDataset(Model):
         setattr(self, self.__sys_uuid_field, uuid.uuid4().hex)
 
 
-class Update(Model):
+class Update(NewModel):
     upd_autocheck = models.BooleanField(
         verbose_name=_('Check Automatically For Updates'),
         default=True,
@@ -803,8 +803,29 @@ class Update(Model):
         blank=True,
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _('Update')
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('update.get_config')
+        return cls(**dict(
+            upd_autocheck=config['check_auto'],
+            upd_train=config['train'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        self._save_task_call('update.configure', {
+            'check_auto': self.upd_autocheck,
+            'train': self.upd_train,
+        })
+        return True
 
     def get_train(self):
         #FIXME: lazy import, why?
