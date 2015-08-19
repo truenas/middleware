@@ -115,14 +115,7 @@ fi
 if [ -z "${SEQUENCE}" -a -n "${git}" ]; then
     # Get the sequence number from the time of the commit
     SEQUENCE=`$git_cmd show -s --format=%ct ${git}`
-    if [ -n "${TRAIN}" ]; then
-	if expr "${TRAIN}" : "${NANO_LABEL}-" > /dev/null
-	then
-	    SEQUENCE=$(expr "${TRAIN}" : "${NANO_LABEL}"-'\(.*\)')-${SEQUENCE}
-	else
-	    SEQUENCE="${TRAIN}-${SEQUENCE}"
-	fi
-    fi
+    SEQUENCE="${NANO_LABEL}-${VERSION}-${SEQUENCE}"
     export SEQUENCE
 fi
 
@@ -173,7 +166,7 @@ else
 fi
 
 # Feature sets to enable as part of the build.
-: ${SW_FEATURES:="REPORTING"}
+SW_FEATURES="REPORTING"
 
 # DEBUG=1, etc.
 for feature in $SW_FEATURES; do
@@ -364,12 +357,7 @@ LOCAL_DIRS=${NANO_LOCAL_DIRS}
 ${DEBUG_BUILD}
 "
 
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-	CONF_BUILD="$CONF_BUILD
-WITHOUT_CLANG=true
-WITHOUT_SSP=true
-"
-fi
+CONF_BUILD="$CONF_BUILD WITHOUT_CLANG=true WITHOUT_SSP=true"
 
 if is_truenas ; then
 	CONF_BUILD="$CONF_BUILD
@@ -402,31 +390,9 @@ WITHOUT_RCS=true
 WITHOUT_SHAREDOCS=true
 "
 
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -ge 10 ]; then
-	PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
-WITH_LIBCPLUSPLUS=true
-"
+if ! is_truenas ; then
+	PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF} WITHOUT_TOOLCHAIN=true WITHOUT_BINUTILS=true"
 fi
-
-if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -ge 10 ]; then
-	if ! is_truenas ; then
-		PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
-WITHOUT_CLANG_EXTRAS=true
-WITHOUT_CLANG_FULL=true
-WITHOUT_GCC=true
-WITHOUT_GDB=true
-"
-	fi
-fi
-
-#if [ "$FREEBSD_RELEASE_MAJOR_VERSION" -lt 10 ]; then
-#	if ! is_truenas ; then
-#		PKG_ONLY_MAKE_CONF="${PKG_ONLY_MAKE_CONF}
-#WITHOUT_TOOLCHAIN=true
-#WITHOUT_BINUTILS=true
-#"
-#	fi
-#fi
 
 export CONF_BUILD
 export CONF_INSTALL
