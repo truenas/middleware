@@ -976,43 +976,86 @@ a new login, if you are not already logged into the `iXsystems Support page <htt
 Failovers
 ---------
 
-If the TrueNAS® appliance has been licensed for High Availability (HA), a "Failover" tab will appear under System. HA-licensed appliances use the Common Address Redundancy Protocol
+If the TrueNAS® appliance has been licensed for High Availability (HA), a "Failover" tab will be added to "System". HA-licensed appliances use the Common Address Redundancy Protocol
 (`CARP <http://www.openbsd.org/faq/pf/carp.html>`_) to provide high availability and failover. CARP was originally developed by the OpenBSD project and provides an open source, non
-patent-encumbered alternative to the VRRP and HSRP protocols.
+patent-encumbered alternative to the VRRP and HSRP protocols. TrueNAS® uses a two-unit active/standby model and provides an HA synchronization daemon to automatically monitor the status of
+the active node, synchronize any configuration changes between the active and the standby node, and failover to the standby node should the active node become unavailable.
 
-.. note:: seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted by the failover event. 
+.. warning:: seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted by the failover event. 
+
+To configure HA, turn on both units in the appliance. Use the instructions in the :ref:`Console Setup Menu` to log into the graphical interface for one of the units, it doesn't matter which
+one. If this is the first login, it will automatically display the "Upload License" screen. Otherwise, click :menuselection:`System --> Support --> Upload License`. Paste the HA license you
+received from iXsystems and press "OK" to activate it. The license contains the serial numbers for both units in the chassis. Once the license is activated, the "Failovers" tab is added to
+"System" and some fields are modified in "Network" so that the peer IP address, peer hostname, and virtual IP can be configured. An extra "IPMI (Node A/B)" tab will also be added so that
+:ref:`IPMI` can be configured for the other unit.
+
+.. note:: the modified fields will refer to this node as *This Node* and the other node as either
+   *A* or
+   *B*. The node value is hard-coded into each unit and the value that appears is automatically generated. For example, if you are on node *A*, the fields will refer to node
+   *B*, and vice versa.
+
+To configure HA networking, go to :menuselection:`Network --> Global Configuration`. The "Hostname" field will be replaced by two fields:
+
+* **Hostname (Node A/B):** input the hostname to use for the other node.
+
+* **Hostname (This Node):** input the hostname to use for this node.
+
+Next, go to :menuselection:`Network --> Interfaces --> Add Interface`. The HA license adds several fields to the usual :ref:`Interfaces` screen:
+
+* **IPv4 Address (Node A/B):** if the other node will use a static IP address, rather than DHCP, set it here.
+
+* **IPv4 Address (This Node):** if this node will use a static IP address, rather than DHCP, set it here.
+
+* **Virtual IP:** input the IP address to use for administrative access to the appliance.
+
+* **Virtual Host ID:** the Virtual Host ID (VHID) must be unique on the broadcast segment of the network. It can be any unused number between *1* and
+  *255*.
+
+* **Critical for Failover:** check this box if a failover should occur when this interface becomes unavailable. How many seconds it takes for that failover to occur depends upon the
+  value of the "Timeout", as described in Table 5.11a. This checkbox is interface-specific, allowing you to have different settings for a management network and a data network.
+
+* **Group:** this drop-down menu is greyed out unless the "Critical for Failover" checkbox is checked. This box allows you to group multiple, critical for failover interfaces. In this case,
+  all of the interfaces in a group must go down before failover occurs. This can be a useful configuration in a multipath scenario.
+
+Once the network configuration is complete, logout and log back in, this time using the "Virtual IP" address. You can now configure volumes and shares as usual and the configurations will
+automatically synchronize between the active and the standby node. A "HA Enabled" icon will be added after the "Alert" icon on the active node and the passive node will indicate the virtual
+IP address that is used for configuration management. The standby node will also have a red "Standby" icon and will no longer accept logins as all configuration changes need to occur on the
+active node.
+
+.. note:: once the "Virtual IP" address is configured, all subsequent logins should occur using this address.
 
 The options available in :menuselection:`System --> Failovers` are shown in Figure 5.11a and described in Table 5.11a.
 
-**Figure 5.11a: Creating a Failover**
+**Figure 5.11a: Example Failovers Screen**
 
 .. image:: images/failover1b.png
 
-**Table 5.11a: Failover Options**
+**Table 5.11b: Failover Options**
 
-+----------------+----------------+-----------------------------------------------------------------------------+
-| **Setting**    | **Value**      | **Description**                                                             |
-|                |                |                                                                             |
-+================+================+=============================================================================+
-| Disabled       | checkbox       |                                                                             |
-|                |                |                                                                             |
-+----------------+----------------+-----------------------------------------------------------------------------+
-| Master         | checkbox       |                                                                             |
-|                |                |                                                                             |
-+----------------+----------------+-----------------------------------------------------------------------------+
-|Timeout         | integer        |                                                                             |
-|                |                |                                                                             |
-+----------------+----------------+-----------------------------------------------------------------------------+
-| Sync to Peer   | button         |                                                                             |
-|                |                |                                                                             |
-+----------------+----------------+-----------------------------------------------------------------------------+
-| Sync From Peer | button         |                                                                             |
-|                |                |                                                                             |
-+----------------+----------------+-----------------------------------------------------------------------------+
++----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **Setting**    | **Value**      | **Description**                                                                                                                                       |
+|                |                |                                                                                                                                                       |
++================+================+=======================================================================================================================================================+
+| Disabled       | checkbox       | when checked, disables failover which changes the "HA Enabled" icon to "HA Disabled" and activates the "Master" field                                 |
+|                |                |                                                                                                                                                       |
++----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Master         | checkbox       | greyed out unless "Disabled" is checked; in that case, this box is automatically checked on the master system, allowing the master to automatically   |
+|                |                | takeover when the "Disabled" box is unchecked                                                                                                         |
+|                |                |                                                                                                                                                       |
++----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+|Timeout         | integer        | specifies, in seconds, how quickly failover occurs after a network failure; the default of *0* indicates that failover either occurs immediately or,  |
+|                |                | if the system is using a link aggregation, after 2 seconds                                                                                            |
+|                |                |                                                                                                                                                       |
++----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Sync to Peer   | button         | forces a configuration change on the active node to sync to the standby node; since the HA daemon does this automatically, you should never need to   |
+|                |                | do this unless instructed to do so by your iX support engineer                                                                                        |
+|                |                |                                                                                                                                                       |
++----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Sync From Peer | button         | forces a configuration change on the standby node to sync to the active node; since the HA daemon does this automatically, you should never need to   |
+|                |                | do this unless instructed to do so by your iX support engineer                                                                                        |
++----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 
-Once a failover configuration is working, a "HA Enabled" icon will be added after the "Alert" icon on the active device in the failover configuration. The passive device will indicate the IP
-address of the active node, will have a red "Standby" icon, and it will no longer accept logins as all configuration changes need to occur on the active node.
 
 .. index:: Failovers
 
