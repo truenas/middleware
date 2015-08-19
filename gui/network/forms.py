@@ -441,6 +441,8 @@ class GlobalConfigurationForm(ModelForm):
                     self.fields['gc_hostname'],
                     self.fields['gc_hostname_b'],
                 )
+        else:
+            del self.fields['gc_hostname_b']
 
     def _clean_nameserver(self, value):
         if value:
