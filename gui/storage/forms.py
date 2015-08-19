@@ -1393,7 +1393,8 @@ class ZFSDataset(Form):
                 if ds['properties.{0}.source'.format(attr)] in ('DEFAULT', 'NONE'):
                     self.fields[formfield].initial = 0
                 else:
-                    self.fields[formfield].initial = ds['properties.{0}.value'.format(attr)]
+                    val = ds['properties.{0}.value'.format(attr)]
+                    self.fields[formfield].initial = val if val != 'none' else 0
 
             if ds['properties.dedup.source'] == 'INHERITED':
                 self.fields['dataset_dedup'].initial = 'inherit'
