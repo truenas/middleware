@@ -109,7 +109,7 @@ html_theme_options = {
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 if tags.has('truenas'):
-    html_title = 'TrueNAS User Guide 9.3 Table of Contents'
+    html_title = 'TrueNAS User Guide 9.3.1 Table of Contents'
 else:
     html_title = 'FreeNAS User Guide 9.3 Table of Contents'
 
