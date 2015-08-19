@@ -336,6 +336,7 @@ def volimport(request):
         'disks': disks
     })
 
+
 def volimport_progress(request):
       s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
       s.connect(SOCKIMP)
@@ -343,6 +344,7 @@ def volimport_progress(request):
       data = s.recv(1024)
       s.close()
       return HttpResponse(data, content_type='application/json')
+
 
 def volimport_abort(request):
     if request.method == 'POST':
@@ -449,8 +451,6 @@ def dataset_edit(request, dataset_name):
             if dataset_form.cleaned_data["dataset_dedup"] == "inherit":
                 dataset_form.cleaned_data["dataset_compression"] = None
 
-            error = False
-            errors = {}
             pool_name = dataset_name.split('/')[0]
 
             result = dispatcher.call_task_sync('volume.dataset.update', pool_name, dataset_name, {
@@ -471,10 +471,7 @@ def dataset_edit(request, dataset_name):
                     request,
                     message=_("Dataset successfully edited."))
             else:
-                for field, err in errors.items():
-                    dataset_form._errors[field] = dataset_form.error_class([
-                        err,
-                    ])
+                dataset_form._errors['__all__'] = dataset_form.error_class([result['error']['message']])
                 return JsonResp(request, form=dataset_form)
         else:
             return JsonResp(request, form=dataset_form)
