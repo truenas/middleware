@@ -1034,14 +1034,6 @@ class AdvancedForm(ModelForm):
         self.fields['adv_serialport'].widget = forms.widgets.Select(
             choices=[(p, p) for p in ports])
 
-    def save(self):
-        super(AdvancedForm, self).save()
-        loader_reloaded = False
-        if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
-            notifier().restart("powerd")
-        if self.instance._original_adv_periodic_notifyuser != self.instance.adv_periodic_notifyuser:
-            notifier().start("ix-periodic")
-
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
             if self.instance.adv_consolemsg:
