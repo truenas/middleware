@@ -68,6 +68,8 @@ from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
 from pysphere import VIServer
+from fnutils import first_or_default
+from fnutils.query import wrap
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -1352,50 +1354,53 @@ class ZFSDataset(Form):
         self._fs = kwargs.pop('fs')
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
-        _n = notifier()
-        parentdata = _n.zfs_get_options(self._fs)
+
+        parent_ds = wrap(self.get_dataset(self._fs))
 
         self.fields['dataset_atime'].choices = _inherit_choices(
             choices.ZFS_AtimeChoices,
-            parentdata['atime'][0]
+            parent_ds['properties.atime.value']
         )
         self.fields['dataset_compression'].choices = _inherit_choices(
             choices.ZFS_CompressionChoices,
-            parentdata['compression'][0]
+            parent_ds['properties.compression.value']
         )
         self.fields['dataset_dedup'].choices = _inherit_choices(
             choices.ZFS_DEDUP_INHERIT,
-            parentdata['dedup'][0]
+            parent_ds['properties.dedup.value']
         )
 
         if self._create is False:
             del self.fields['dataset_name']
             del self.fields['dataset_recordsize']
             del self.fields['dataset_case_sensitivity']
-            data = _n.zfs_get_options(self._fs)
 
-            if data['compression'][2] == 'inherit':
+            ds = wrap(self.get_dataset(self._fs))
+
+            if ds['properties.compression.source'] == 'INHERITED':
                 self.fields['dataset_compression'].initial = 'inherit'
             else:
-                self.fields['dataset_compression'].initial = data['compression'][0]
-            self.fields['dataset_share_type'].initial = _n.get_dataset_share_type(self._fs)
+                self.fields['dataset_compression'].initial = ds['properties.compression.value']
+            self.fields['dataset_share_type'].initial = ds['share_type']
 
-            if data['atime'][2] == 'inherit':
+            if ds['properties.atime.source'] == 'INHERITED':
                 self.fields['dataset_atime'].initial = 'inherit'
             else:
-                self.fields['dataset_atime'].initial = data['atime'][0]
+                self.fields['dataset_atime'].initial = ds['properties.atime.value']
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
                 formfield = 'dataset_%s' % (attr)
-                if data[attr][0] == 'none':
+                if ds['properties.{0}.source'.format(attr)] in ('DEFAULT', 'NONE'):
                     self.fields[formfield].initial = 0
                 else:
-                    self.fields[formfield].initial = data[attr][0]
-            if data['dedup'][2] == 'inherit':
+                    self.fields[formfield].initial = ds['properties.{0}.value'.format(attr)]
+
+            if ds['properties.dedup.source'] == 'INHERITED':
                 self.fields['dataset_dedup'].initial = 'inherit'
-            elif data['dedup'][0] in ('on', 'off', 'verify'):
-                self.fields['dataset_dedup'].initial = data['dedup'][0]
-            elif data['dedup'][0] == 'sha256,verify':
+
+            elif ds['properties.dedup.value'] in ('on', 'off', 'verify'):
+                self.fields['dataset_dedup'].initial = ds['properties.dedup.value']
+            elif ds['properties.dedup.value'] == 'sha256,verify':
                 self.fields['dataset_dedup'].initial = 'verify'
             else:
                 self.fields['dataset_dedup'].initial = 'off'
@@ -1410,6 +1415,20 @@ class ZFSDataset(Form):
                 '=ZFS Deduplication Activation">TrueNAS Support</a> for '
                 'assistance.</span><br />'
             )
+
+    def get_dataset(self, name):
+        from freenasUI.middleware.connector import connection as dispatcher
+        pool_name = name.split('/')[0]
+        vol = dispatcher.call_sync(
+            'volumes.query',
+            [('name', '=', pool_name)],
+            {'single': True}
+        )
+
+        if not vol:
+            return None
+
+        return wrap(first_or_default(lambda d: d['name'] == name, vol['datasets']))
 
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]

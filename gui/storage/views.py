@@ -49,6 +49,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
@@ -375,6 +376,7 @@ def dataset_create(request, fs):
             props = {}
             cleaned_data = dataset_form.cleaned_data
             dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
+            pool_name = dataset_name.split('/')[0]
             dataset_compression = cleaned_data.get('dataset_compression')
             dataset_share_type = cleaned_data.get('dataset_share_type')
             if dataset_share_type == "windows":
@@ -382,9 +384,12 @@ def dataset_create(request, fs):
             props['casesensitivity'] = cleaned_data.get(
                 'dataset_case_sensitivity'
             )
-            props['compression'] = dataset_compression.__str__()
+            if dataset_compression != 'inherit':
+                props['compression'] = dataset_compression.__str__()
+
             dataset_atime = cleaned_data.get('dataset_atime')
-            props['atime'] = dataset_atime.__str__()
+            if dataset_atime != 'inherit':
+                props['atime'] = dataset_atime.__str__()
             refquota = cleaned_data.get('dataset_refquota')
             if refquota != '0':
                 props['refquota'] = refquota.__str__()
@@ -403,16 +408,13 @@ def dataset_create(request, fs):
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
                 props['recordsize'] = recordsize
-            errno, errmsg = notifier().create_zfs_dataset(
-                path=str(dataset_name),
-                props=props)
-            if errno == 0:
-                if dataset_share_type == "unix":
-                    notifier().dataset_init_unix(dataset_name)
-                elif dataset_share_type == "windows":
-                    notifier().dataset_init_windows(dataset_name)
-                elif dataset_share_type == "mac":
-                    notifier().dataset_init_apple(dataset_name)
+
+            result = dispatcher.call_task_sync('volume.dataset.create', pool_name, dataset_name, {
+                'share_type': dataset_share_type,
+                'properties': {k: {'value': v} for k, v in props.items()}
+            })
+
+            if result['state'] == 'FINISHED':
                 return JsonResp(
                     request,
                     message=_("Dataset successfully added."))
@@ -437,43 +439,34 @@ def dataset_edit(request, dataset_name):
         if dataset_form.is_valid():
             if dataset_form.cleaned_data["dataset_quota"] == "0":
                 dataset_form.cleaned_data["dataset_quota"] = "none"
+
             if dataset_form.cleaned_data["dataset_refquota"] == "0":
                 dataset_form.cleaned_data["dataset_refquota"] = "none"
 
+            if dataset_form.cleaned_data["dataset_compression"] == "inherit":
+                dataset_form.cleaned_data["dataset_compression"] = None
+
+            if dataset_form.cleaned_data["dataset_dedup"] == "inherit":
+                dataset_form.cleaned_data["dataset_compression"] = None
+
             error = False
             errors = {}
+            pool_name = dataset_name.split('/')[0]
 
-            for attr in (
-                'compression',
-                'atime',
-                'dedup',
-                'reservation',
-                'refreservation',
-                'quota',
-                'refquota',
-                'share_type'
-            ):
-                formfield = 'dataset_%s' % attr
-                val = dataset_form.cleaned_data[formfield]
+            result = dispatcher.call_task_sync('volume.dataset.update', pool_name, dataset_name, {
+                'share_type': dataset_form.cleaned_data['dataset_share_type'],
+                'properties': {
+                    'compression': {'value': dataset_form.cleaned_data['dataset_compression']},
+                    'atime': {'value': dataset_form.cleaned_data['dataset_atime']},
+                    'dedup': {'value': dataset_form.cleaned_data['dataset_dedup']},
+                    'reservation': {'value': dataset_form.cleaned_data['dataset_reservation']},
+                    'refreservation': {'value': dataset_form.cleaned_data['dataset_refreservation']},
+                    'quota': {'value': dataset_form.cleaned_data['dataset_quota']},
+                    'refquota': {'value': dataset_form.cleaned_data['dataset_refquota']},
+                }
+            })
 
-                if val == "inherit":
-                    success, err = notifier().zfs_inherit_option(
-                        dataset_name,
-                        attr)
-                else:
-                    if attr == "share_type":
-                        notifier().change_dataset_share_type(
-                            dataset_name, val)
-                    else:
-                        success, err = notifier().zfs_set_option(
-                            dataset_name,
-                            attr,
-                            val)
-                error |= not success
-                if not success:
-                    errors[formfield] = err
-
-            if not error:
+            if result['state'] == 'FINISHED':
                 return JsonResp(
                     request,
                     message=_("Dataset successfully edited."))
@@ -908,7 +901,6 @@ def multipath_status(request):
 
 
 def multipath_status_json(request):
-
     multipaths = notifier().multipath_all()
     _id = 1
     items = []
