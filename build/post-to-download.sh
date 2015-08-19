@@ -6,7 +6,7 @@ if [ "${NANO_LABEL}" != "FreeNAS" ]; then
 fi
 
 set -e
-PUSHIT=9.3
+PUSHIT=9.3.1
 ID=`id -un`
 
 if [ "$ID" = "root" ]; then	
