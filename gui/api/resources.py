@@ -94,7 +94,7 @@ from freenasUI.system.forms import (
     ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import BootEnv, get_pending_updates
+from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
     HttpAccepted,
@@ -2837,8 +2837,22 @@ class UpdateResourceMixin(NestedMixin):
             s = notifier().failover_rpc()
             data = s.update_pending()
         else:
-            path = notifier().get_update_location()
-            data = get_pending_updates(path)
+            update = dispatcher.call_sync('update.get_update_info')
+            data = []
+            if update:
+                for op in update['operations']:
+                    if op['operation'] == 'upgrade':
+                        name = '%s-%s -> %s-%s' % (
+                            op['previous_name'],
+                            op['previous_version'],
+                            op['new_name'],
+                            op['new_version'],
+                        )
+                    elif op['operation'] == 'install':
+                        name = '%s-%s' % (op['new_name'], op['new_version'])
+                    else:
+                        name = '%s-%s' % (op['previous_name'], op['previous_version'])
+                    data.append({'operation': op['operation'], 'name': name})
         return self.create_response(
             request,
             data,

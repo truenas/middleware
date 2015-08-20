@@ -130,36 +130,6 @@ class VerifyHandler(object):
             os.unlink(self.DUMPFILE)
 
 
-def get_pending_updates(path):
-    data = []
-    changes = Update.PendingUpdatesChanges(path)
-    if changes:
-        if changes.get("Reboot", True) is False:
-            for svc in changes.get("Restart", []):
-                data.append({
-                    'operation': svc,
-                    'name': Update.GetServiceDescription(svc),
-                    })
-        for new, op, old in changes['Packages']:
-            if op == 'upgrade':
-                name = '%s-%s -> %s-%s' % (
-                    old.Name(),
-                    old.Version(),
-                    new.Name(),
-                    new.Version(),
-                )
-            elif op == 'install':
-                name = '%s-%s' % (new.Name(), new.Version())
-            else:
-                name = '%s-%s' % (old.Name(), old.Version())
-
-            data.append({
-                'operation': op,
-                'name': name,
-            })
-    return data
-
-
 def manual_update(path, sha256):
     from freenasUI.middleware.notifier import notifier
     from freenasUI.middleware.exceptions import MiddlewareError
