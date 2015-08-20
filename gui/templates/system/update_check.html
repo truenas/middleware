@@ -19,23 +19,24 @@ doSubmit({
 <tr>
   <td>
 {% if update %}
-{% if update.Notice %}
-<strong>{% trans "NOTICE" %}: {{ update.Notice }}</strong>
+{% if update.notice %}
+<strong>{% trans "NOTICE" %}: {{ update.notice }}</strong>
 {% endif %}
-{% if update.Notes %}
-{% for note, url_ in update.Notes.items %}
+{% if update.notes %}
+{% for note, url_ in update.notes.items %}
 <p><a href="{{ url_ }}" target="_blank">{{ note }}</a></p>
 {% endfor %}
 {% endif %}
 
-{% if changelog %}
+{% if update.changelog %}
 {% trans "Changelog" %}:
-<pre style="padding: 8px; margin: 4px; max-height: 100px; overflow: auto;">{{ changelog }}</pre>
+<pre style="padding: 8px; margin: 4px; max-height: 100px; overflow: auto;">{{ update.changelog }}</pre>
 {% endif %}
 
 {% trans "The following packages will be downloaded:" %}
-<pre style="padding: 8px; margin: 4px;">{{ handler.output }}</pre>
-<p><input data-dojo-type="dijit.form.CheckBox" name="apply" type="checkbox" checked="checked" value="1" /> {% trans "Apply updates after downloading" %}{% if handler.reboot %} ({% trans "The system will reboot" %}){% endif %}</p>
+<pre style="padding: 8px; margin: 4px;">{% for op in update.operations %}{% if op.operation == 'upgrade' %}{{ op.previous_name }}-{{ op.previous_version }} -&gt; {{ op.new_name }}-{{ op.new_version }}{% else %}{{ op.operation }}: {{ op.new_name }}-{{ op.new_version }}{% endif %}
+{% endfor %}</pre>
+<p><input data-dojo-type="dijit.form.CheckBox" name="apply" type="checkbox" checked="checked" value="1" /> {% trans "Apply updates after downloading" %} ({% trans "The system will reboot" %})</p>
 {% trans "Do you want to continue?" %}
 {% else %}
     {% if not network %}

@@ -80,7 +80,6 @@ from freenasUI.system.utils import (
     VerifyHandler,
     debug_get_settings,
     debug_run,
-    get_changelog,
     parse_changelog,
     run_updated,
 )
@@ -1281,11 +1280,6 @@ def update_apply(request):
 
 def update_check(request):
 
-    try:
-        updateobj = models.Update.objects.order_by('-id')[0]
-    except IndexError:
-        updateobj = models.Update.objects.create()
-
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
         if not uuid:
@@ -1307,15 +1301,12 @@ def update_check(request):
             if running is not False:
                 return HttpResponse(running, status=202)
 
-            returncode, uuid = run_updated(
-                str(updateobj.get_train()),
-                str(notifier().get_update_location()),
-                download=True,
-                apply=apply_,
-            )
-            if returncode != 0:
-                raise MiddlewareError(_('Update daemon failed!'))
-            return HttpResponse(uuid, status=202)
+            if not apply_:
+                task = dispatcher.submit_task('update.download')
+            handler = UpdateHandler()
+            handler.tid = task
+            handler.dump()
+            return HttpResponse(handler.uuid, status=202)
 
         else:
 
@@ -1370,32 +1361,18 @@ def update_check(request):
                 s.update_check(),
             )
 
-        handler = CheckUpdateHandler()
-        try:
-            update = CheckForUpdates(
-                diff_handler=handler.diff_call,
-                handler=handler.call,
-                train=updateobj.get_train(),
-            )
-            network = True
-        except UpdateManifestNotFound:
-            network = False
-            update = False
-        if update:
-            conf = Configuration.Configuration()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                sequence = sys_mani.Sequence()
+        task = dispatcher.call_task_sync('update.check')
+        network = True
+        if task['state'] != 'FINISHED':
+            if task['error']['code'] == '51':
+                network = False
             else:
-                sequence = ''
-            changelog = get_changelog(updateobj.get_train(), start = sequence, end = update.Sequence())
-        else:
-            changelog = None
+                log.warn("Update check task failed: %r", task)
+
+        update = dispatcher.call_sync('update.get_update_info')
         return render(request, 'system/update_check.html', {
             'update': update,
             'network': network,
-            'handler': handler,
-            'changelog': changelog,
         })
 
 
@@ -1407,7 +1384,20 @@ def update_progress(request):
         rv = s.updated_handler(None)
         load = rv['data']
     else:
-        load = UpdateHandler().load()
+        handler = UpdateHandler()
+        load = handler.load()
+        task = dispatcher.call_sync('task.status', handler.tid)
+        log.error("progress %r", task)
+        if task['state'] in ('FINISHED', 'FAILED'):
+            handler.finished = True
+            if task['state'] == 'FAILED':
+                handler.error = task['error']['message']
+            load = handler.dump()
+        else:
+            handler.progress = task['progress']['percentage']
+            handler.details = task['progress']['message']
+            load = handler.dump()
+
     return HttpResponse(
         json.dumps(load),
         content_type='application/json',

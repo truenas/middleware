@@ -27,14 +27,12 @@ import json
 import logging
 import os
 import re
-import time
-from datetime import timedelta
 from uuid import uuid4
 
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
-from freenasOS import Configuration, Update
+from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
@@ -125,7 +123,7 @@ class UpdateHandler(object):
             self.uuid = uuid4().hex
             self.details = ''
             self.indeterminate = False
-            self.pid = None
+            self.tid = None
             self.progress = 0
             self.step = 1
             self.finished = False
@@ -136,70 +134,31 @@ class UpdateHandler(object):
 
     @classmethod
     def is_running(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
         if not os.path.exists(cls.DUMPFILE):
             return False
 
         with LockFile(cls.DUMPFILE) as lock:
             with open(cls.DUMPFILE, 'rb') as f:
-                data = json.loads(f.read())
+                try:
+                    data = json.loads(f.read())
+                except ValueError:
+                    os.unlink(cls.DUMPFILE)
+                    return False
 
-        pid = int(data.get('pid'))
+        tid = int(data.get('tid'))
         try:
-            os.kill(pid, 0)
+            task = dispatcher.call_sync('task.status', tid)
+            if task is None:
+                return False
+            if task['state'] not in ('FINISHED', 'FAILED'):
+                return True
+            else:
+                return False
         except:
-            return False
+            raise
         else:
             return data['uuid']
-
-    def get_handler(self, index, pkg, pkgList):
-        self.step = 1
-        self._pkgname = '%s-%s' % (
-            pkg.Name(),
-            pkg.Version(),
-        )
-        self.details = '%s %s' % (
-            _('Downloading'),
-            self._pkgname,
-        )
-        stepprogress = int((1.0 / float(len(pkgList))) * 100)
-        self._baseprogress = index * stepprogress
-        self.progress = (index - 1) * stepprogress
-        self.dump()
-        return self.get_file_handler
-
-    def get_file_handler(
-        self, method, filename, size=None, progress=None, download_rate=None
-    ):
-        filename = filename.rsplit('/', 1)[-1]
-        if progress is not None:
-            self.progress = (progress * self._baseprogress) / 100
-            if self.progress == 0:
-                self.progress = 1
-            self.details = '%s<br />%s(%d%%)%s' % (
-                filename,
-                '%s ' % humanize_size(size)
-                if size else '',
-                progress,
-                '  %s/s' % humanize_size(download_rate)
-                if download_rate else '',
-            )
-        self.dump()
-
-    def install_handler(self, index, name, packages):
-        if self.apply:
-            self.step = 2
-        else:
-            self.step = 1
-        self.indeterminate = False
-        total = len(packages)
-        self.progress = int((float(index) / float(total)) * 100.0)
-        self.details = '%s %s (%d/%d)' % (
-            _('Installing'),
-            name,
-            index,
-            total,
-        )
-        self.dump()
 
     def dump(self):
         with LockFile(self.DUMPFILE) as lock:
@@ -209,7 +168,7 @@ class UpdateHandler(object):
                     'error': self.error,
                     'finished': self.finished,
                     'indeterminate': self.indeterminate,
-                    'pid': self.pid,
+                    'tid': self.tid,
                     'percent': self.progress,
                     'step': self.step,
                     'uuid': self.uuid,
@@ -218,6 +177,7 @@ class UpdateHandler(object):
                 if self.details:
                     data['details'] = self.details
                 f.write(json.dumps(data))
+        return data
 
     def load(self):
         if not os.path.exists(self.DUMPFILE):
@@ -231,7 +191,7 @@ class UpdateHandler(object):
         self.finished = data['finished']
         self.indeterminate = data['indeterminate']
         self.progress = data['percent']
-        self.pid = data['pid']
+        self.tid = data['tid']
         self.step = data['step']
         self.uuid = data['uuid']
         self.reboot = data['reboot']
@@ -301,15 +261,6 @@ class VerifyHandler(object):
         log.debug("VerifyUpdate: handler.exit() was called")
         if os.path.exists(self.DUMPFILE):
             os.unlink(self.DUMPFILE)
-
-
-def get_changelog(train, start='', end=''):
-    conf = Configuration.Configuration()
-    changelog = conf.GetChangeLog(train=train)
-    if not changelog:
-        return None
-
-    return parse_changelog(changelog.read(), start, end)
 
 
 def parse_changelog(changelog, start='', end=''):
