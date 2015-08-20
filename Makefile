@@ -32,9 +32,14 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-
-UPDATE_USER?=sef		# For now, just use sef's account
+UPDATE_USER?=releng
+.if defined(UPDATE_INTERNAL)
+UPDATE_HOST?=update-int.ixsystems.com
+POST_TO_DOWNLOAD=no
+.else
 UPDATE_HOST?=update.freenas.org
+POST_TO_DOWNLOAD=yes
+.endif
 
 ENV_SETUP=env _KEY=set
 
@@ -110,9 +115,9 @@ changelog:
 		echo ChangeLog already exists.; exit 1; \
 	fi
 	@if [ -f /root/redmine-api-key ]; then \
-		if [ "${TRAIN}" == "FreeNAS-9.3-STABLE" ]; then \
+		if [ "${TRAIN}" = "FreeNAS-9.3-STABLE" ]; then \
 			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "freenas" > ChangeLog; \
-		elif [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
+		elif [ "${TRAIN}" = "TrueNAS-9.3-STABLE" ]; then \
 			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "truenas" > ChangeLog; \
 		else \
 			echo "I don't create ChangeLogs for ${TRAIN}"; \
