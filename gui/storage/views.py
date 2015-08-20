@@ -55,6 +55,7 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 import socket
+from fnutils.query import wrap
 
 log = logging.getLogger('storage.views')
 
@@ -853,27 +854,41 @@ def volume_detach(request, vid):
 
 
 def zpool_scrub(request, vid):
-    volume = models.Volume.objects.get(pk=vid)
-    try:
-        pool = notifier().zpool_parse(volume.vol_name)
-    except:
-        raise MiddlewareError(
-            _('Pool output could not be parsed. Is the pool imported?')
-        )
+    volume = wrap(dispatcher.call_sync(
+        'volumes.query',
+        [('id', '=', str(vid))],
+        {'single': True}
+    ))
+
+    if not volume:
+        raise MiddlewareError(_('Pool not found.'))
+
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
-            notifier().zfs_scrub(str(volume.vol_name), stop=True)
+            task = dispatcher.call_sync(
+                'tasks.query',
+                [
+                    ('name', '=', 'zfs.pool.scrub'),
+                    ('state', '=', 'EXECUTING')
+                ]
+            )
+
+            if task:
+                dispatcher.call_sync('task.abort', task['id'])
+            else:
+                raise MiddlewareError(_('Scrub task not found.'))
+
             return JsonResp(
                 request,
                 message=_("The scrub process has stopped"),
             )
         else:
-            notifier().zfs_scrub(str(volume.vol_name))
+            dispatcher.submit_task('zfs.pool.scrub', volume['name'])
             return JsonResp(request, message=_("The scrub process has begun"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
-        'scrub': pool.scrub,
+        'scrub': volume['scan.state'],
     })
 
 
@@ -1256,6 +1271,7 @@ def volume_upgrade(request, object_id):
             _('Pool output could not be parsed. Is the pool imported?')
         )
     if request.method == "POST":
+        dispatcher.call_task_sync('volume.upgrade', object_id)
         upgrade = notifier().zpool_upgrade(str(volume.vol_name))
         if upgrade is not True:
             return JsonResp(
