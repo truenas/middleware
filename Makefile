@@ -41,9 +41,6 @@ UPDATE_HOST?=update.freenas.org
 POST_TO_DOWNLOAD=yes
 .endif
 
-UPDATE_USER?=releng
-UPDATE_HOST?=update.freenas.org
-
 ENV_SETUP=env _KEY=set
 
 ENV_SETUP+= NANO_LABEL=${NANO_LABEL}
