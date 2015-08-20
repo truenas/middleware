@@ -32,11 +32,12 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-UPDATE_USER?=releng
 .if defined(UPDATE_INTERNAL)
+UPDATE_USER?=releng
 UPDATE_HOST?=update-int.ixsystems.com
 POST_TO_DOWNLOAD=no
 .else
+UPDATE_USER?=sef
 UPDATE_HOST?=update.freenas.org
 POST_TO_DOWNLOAD=yes
 .endif
