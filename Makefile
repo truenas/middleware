@@ -32,12 +32,13 @@ RELEASE_LOGFILE?=${SCRIPT}
 RELEASE_LOGFILE?=release.build.log
 .endif
 
-
 UPDATE_USER?=releng
 .if defined(UPDATE_INTERNAL)
 UPDATE_HOST?=update-int.ixsystems.com
+POST_TO_DOWNLOAD=no
 .else
 UPDATE_HOST?=update.freenas.org
+POST_TO_DOWNLOAD=yes
 .endif
 
 ENV_SETUP=env _KEY=set
@@ -114,9 +115,9 @@ changelog:
 		echo ChangeLog already exists.; exit 1; \
 	fi
 	@if [ -f /root/redmine-api-key ]; then \
-		if [ "${TRAIN}" == "FreeNAS-9.3-STABLE" ]; then \
+		if [ "${TRAIN}" = "FreeNAS-9.3-STABLE" ]; then \
 			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "freenas" > ChangeLog; \
-		elif [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
+		elif [ "${TRAIN}" = "TrueNAS-9.3-STABLE" ]; then \
 			python build/create_redmine_changelog.py -k `cat /root/redmine-api-key` -p "truenas" > ChangeLog; \
 		else \
 			echo "I don't create ChangeLogs for ${TRAIN}"; \
@@ -143,12 +144,13 @@ release-push: release
 	cp ReleaseNotes UPGRADING objs/${STAGEDIR}/
 	if [ -f ChangeLog ]; then cp ChangeLog objs/${STAGEDIR}/; fi
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
-	if [ "${TRAIN}" == "TrueNAS-9.3-STABLE" ]; then \
+	if [ "${POST_TO_DOWNLOAD}" = "yes" ]; then ${ENV_SETUP} /bin/sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; fi
+	if [ "${TRAIN}" = "FreeNAS-9.3-STABLE" ]; then \
+		echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com; \
+		if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi; \
 		mv "${IX_INTERNAL_PATH}/${STAGEDIR}" "${IX_STABLE_DIR}"/`echo ${STAGEDIR} | awk -F- '{print $$4}'`; \
 		(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest); \
-		if [ "${PRODUCTION}" == "yes" ]; then \
-			${ENV_SETUP} ${MAKE} save-build-env; \
-		fi \
+		${ENV_SETUP} ${MAKE} save-build-env ; \
 	fi
 
 update-push:	release
