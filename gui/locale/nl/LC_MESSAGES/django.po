@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-08-16 00:09+0000\n"
-"Last-Translator: rayborggreve <ray@reposity.nl>\n"
+"PO-Revision-Date: 2015-08-17 13:38+0000\n"
+"Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1439683779.0\n"
+"X-POOTLE-MTIME: 1439818696.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -2743,8 +2743,8 @@ msgid ""
 "Extra options to /etc/ssh/sshd_config (usually empty). Note, incorrect "
 "entered options prevent SSH service to be started."
 msgstr ""
-"Extra opties naar /etc/ssh/sshd_config (doorgaans leeg). Opmerking: verkeerd "
-"ingevoerde opties weerhouden de SSH-service ervan op te starten."
+"Extra opties voor /etc/ssh/sshd_config (doorgaans leeg). Opmerking: verkeerd "
+"ingevoerde opties weerhouden de SSH-service ervan te worden gestart."
 
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
@@ -8581,7 +8581,7 @@ msgstr "Groepslidmaatschappen"
 #: api/resources.py:860
 #, fuzzy
 msgid "on every %(days)s"
-msgstr "op iedere %(days)s"
+msgstr "op elke %(days)s"
 
 #: freeadmin/navtree.py:608
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
@@ -11832,7 +11832,8 @@ msgstr "Kerberos-instellingen"
 msgid "LDAP Schema type."
 msgstr "Type LDAP-schema"
 
-# Guide is een gids, Manual is handleiding???
+# Afhankelijk van context, dus niet altijd letterlijk.
+# Echter, User Guide = Gebruikershandleiding, Guided Tour = Rondleiding, Travel Guide = Reisgids. Handleiding lijkt daarom geschikter.
 #: freeadmin/navtree.py:249
 #: templates/menubar.html:73
 #, fuzzy
@@ -12404,12 +12405,12 @@ msgstr "PID van backup worker"
 #: system/models.py:971
 #, fuzzy
 msgid "Started at"
-msgstr "Begonnen op"
+msgstr "Begonnen om"
 
 #: system/models.py:975
 #, fuzzy
 msgid "Finished at"
-msgstr "Voltooid op"
+msgstr "Voltooid om"
 
 #: system/models.py:995
 msgid "System Backup"
@@ -12711,10 +12712,13 @@ msgstr ""
 "voegen in een pool die een virtueel apparaat bevat dat uit %(vdevnum)s "
 "apparaten bestaat"
 
+# Lijkt _titel_ van dialoogvenster, dan infinitief, dus helewerkwoordsvorm. (Alleen) bij opdracht aan (zin in richting van) gebruiker, imperatief (geb. wijs), maar dan ook overige 'confirm'-strings aanpassen. Test/controle vereist.
 #: directoryservice/forms.py:122
+#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Bevestig het DN-wachtwoord van de LDAP-gebruiker"
+msgstr "DN-wachtwoord van LDAP-gebruiker bevestigen"
 
+# Zo kort mogelijk houden / onbepaald / onnodig, dus geen lidwoord. Wel 'van' tussen beide znw. (geen krantenkopstijl).
 #: directoryservice/models.py:519
 #, fuzzy
 msgid "LDAP User DN Password"
@@ -12750,9 +12754,8 @@ msgstr "Principal-naam"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
-#, fuzzy
 msgid "Kerberos Principal"
-msgstr "Principal-naam van Kerberos"
+msgstr "Kerberos-principal"
 
 #: network/forms.py:254
 msgid "The following VHIDs are already in use: %s"
