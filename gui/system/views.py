@@ -55,10 +55,6 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
 from freenasOS import Configuration
-from freenasOS.Exceptions import UpdateManifestNotFound
-from freenasOS.Update import (
-    CheckForUpdates,
-)
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -76,11 +72,9 @@ from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
 from freenasUI.system.utils import (
-    CheckUpdateHandler,
     VerifyHandler,
     debug_get_settings,
     debug_run,
-    parse_changelog,
     task_running,
 )
 
@@ -1169,11 +1163,6 @@ def update_save(request):
 
 
 def update_apply(request):
-
-    try:
-        updateobj = models.Update.objects.order_by('-id')[0]
-    except IndexError:
-        updateobj = models.Update.objects.create()
 
     if request.method == 'POST':
         uuid = request.GET.get('uuid')
