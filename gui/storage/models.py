@@ -77,32 +77,13 @@ class Volume(NewModel):
     vol_status = models.CharField(
         max_length=120
     )
+    vol_upgraded = models.BooleanField(
+        editable=False
+    )
 
     @property
     def is_upgraded(self):
-        if not self.is_decrypted():
-            return True
-        try:
-            version = notifier().zpool_version(str(self.vol_name))
-        except ValueError:
-            return True
-        if version == '-':
-            proc = subprocess.Popen([
-                       "zpool",
-                       "get",
-                       "-H", "-o", "property,value",
-                       "all",
-                       str(self.vol_name),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            data = proc.communicate()[0].strip('\n')
-            for line in data.split('\n'):
-                if not line.startswith('feature') or '\t' not in line:
-                    continue
-                prop, value = line.split('\t', 1)
-                if value not in ('active', 'enabled'):
-                    return False
-            return True
-        return False
+        return self.vol_upgraded
 
     class Meta:
         verbose_name = _("Volume")
@@ -113,7 +94,8 @@ class Volume(NewModel):
             ('vol_name', 'name'),
             ('vol_fstype', 'type'),
             ('vol_mountpoint', 'properties.mountpoint'),
-            ('vol_status', 'status')
+            ('vol_status', 'status'),
+            ('vol_upgraded', 'upgraded')
         )
 
         provider_name = 'volumes'
@@ -155,10 +137,10 @@ class Volume(NewModel):
     def get_status(self):
         try:
             status = self.vol_status
-                if status == 'UNKNOWN' and self.vol_encrypt > 0:
-                    return _("LOCKED")
-                else:
-                    self._status = status
+            if status == 'UNKNOWN' and self.vol_encrypt > 0:
+                return _("LOCKED")
+            else:
+                self._status = status
             return self._status
         except Exception, e:
             if self.is_decrypted():
@@ -631,7 +613,12 @@ class Disk(NewModel):
             ('disk_enabled', 'online')
         )
 
-        provider_name = 'disks'
+        middleware_methods = {
+            'query': 'disks.query',
+            'add': None,
+            'delete': 'disks.delete',
+            'update': 'disks.configure'
+        }
 
     def __unicode__(self):
         return unicode(self.disk_name)
