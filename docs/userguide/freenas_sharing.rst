@@ -1183,16 +1183,14 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 |                       |                |                                                                             |
 +-----------------------+----------------+-----------------------------------------------------------------------------+
 | Discovery Auth Method | drop-down menu | configures the authentication level required by the target for discovery of |
-|                       |                | valid devices, where *None* will allow anonymous discovery,                 |
+|                       |                | valid devices, where *None* will allow anonymous discovery while            |
 |                       |                | *CHAP* and                                                                  |
-|                       |                | *Mutual CHAP* require authentication, and                                   |
-|                       |                | *Auto* lets the initiator decide the authentication scheme                  |
+|                       |                | *Mutual CHAP* require authentication                                        |
 |                       |                |                                                                             |
 +-----------------------+----------------+-----------------------------------------------------------------------------+
-| Discovery Auth Group  | drop-down menu | depends on "Discovery Auth Method" setting: required if set to *CHAP* or    |
-|                       |                | *Mutual CHAP*, optional if set to                                           |
-|                       |                | *Auto*, and not needed if set to                                            |
-|                       |                | *None*                                                                      |
+| Discovery Auth Group  | drop-down menu | select a user created in "Authorized Access" if the "Discovery Auth Method" |
+|                       |                | is set to *CHAP* or                                                         |
+|                       |                | *Mutual CHAP*                                                               |
 |                       |                |                                                                             |
 +-----------------------+----------------+-----------------------------------------------------------------------------+
 | IP address            | drop-down menu | select the IP address associated with an interface or the wildcard address  |
