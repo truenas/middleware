@@ -33,7 +33,6 @@ from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
 from freenasOS import Update
-from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
 log = logging.getLogger('system.utils')
@@ -103,103 +102,17 @@ class CheckUpdateHandler(object):
         return output
 
 
-class UpdateHandler(object):
-
-    DUMPFILE = '/tmp/.upgradeprogress'
-
-    def __init__(self, uuid=None, apply_=None):
-        if uuid:
-            try:
-                self.load()
-                if self.uuid != uuid:
-                    raise
-            except:
-                raise ValueError("UUID not found: %s - %s (on disk)" % (
-                    uuid,
-                    self.uuid,
-                ))
-        else:
-            self.apply = apply_
-            self.uuid = uuid4().hex
-            self.details = ''
-            self.indeterminate = False
-            self.tid = None
-            self.progress = 0
-            self.step = 1
-            self.finished = False
-            self.error = False
-            self.reboot = False
-        self._pkgname = ''
-        self._baseprogress = 0
-
-    @classmethod
-    def is_running(cls):
-        from freenasUI.middleware.connector import connection as dispatcher
-        if not os.path.exists(cls.DUMPFILE):
-            return False
-
-        with LockFile(cls.DUMPFILE) as lock:
-            with open(cls.DUMPFILE, 'rb') as f:
-                try:
-                    data = json.loads(f.read())
-                except ValueError:
-                    os.unlink(cls.DUMPFILE)
-                    return False
-
-        tid = int(data.get('tid'))
-        try:
-            task = dispatcher.call_sync('task.status', tid)
-            if task is None:
-                return False
-            if task['state'] not in ('FINISHED', 'FAILED'):
-                return True
-            else:
-                return False
-        except:
-            raise
-        else:
-            return data['uuid']
-
-    def dump(self):
-        with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'wb') as f:
-                data = {
-                    'apply': self.apply,
-                    'error': self.error,
-                    'finished': self.finished,
-                    'indeterminate': self.indeterminate,
-                    'tid': self.tid,
-                    'percent': self.progress,
-                    'step': self.step,
-                    'uuid': self.uuid,
-                    'reboot': self.reboot,
-                }
-                if self.details:
-                    data['details'] = self.details
-                f.write(json.dumps(data))
-        return data
-
-    def load(self):
-        if not os.path.exists(self.DUMPFILE):
-            return None
-        with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'rb') as f:
-                data = json.loads(f.read())
-        self.apply = data.get('apply', '')
-        self.details = data.get('details', '')
-        self.error = data['error']
-        self.finished = data['finished']
-        self.indeterminate = data['indeterminate']
-        self.progress = data['percent']
-        self.tid = data['tid']
-        self.step = data['step']
-        self.uuid = data['uuid']
-        self.reboot = data['reboot']
-        return data
-
-    def exit(self):
-        if os.path.exists(self.DUMPFILE):
-            os.unlink(self.DUMPFILE)
+def task_running(request):
+    from freenasUI.middleware.connector import connection as dispatcher
+    tid = request.session.get('update', {}).get('task')
+    if tid is None:
+        return False, None
+    task = dispatcher.call_sync('task.status', int(tid))
+    if task is None:
+        return False, None
+    if task['state'] in ('FINISHED', 'FAILED'):
+        return False, task
+    return True, task
 
 
 class VerifyHandler(object):
@@ -313,39 +226,6 @@ def get_pending_updates(path):
                 'name': name,
             })
     return data
-
-
-def run_updated(train, location, download=True, apply=False):
-    # Why not use subprocess module?
-    # Because for some reason it was leaving a zombie process behind
-    # My guess is that its related to fork within a thread and fds
-    readfd, writefd = os.pipe()
-    updated_pid = os.fork()
-    if updated_pid == 0:
-        os.close(readfd)
-        os.dup2(writefd, 1)
-        os.close(writefd)
-        for i in xrange(3, 1024):
-            try:
-                os.close(i)
-            except OSError:
-                pass
-        os.execv(
-            "/usr/local/www/freenasUI/tools/updated.py",
-            [
-                "/usr/local/www/freenasUI/tools/updated.py",
-                '-t', train,
-                '-c', location,
-            ] + (['-d'] if download else []) + (['-a'] if apply else []),
-        )
-    else:
-        os.close(writefd)
-        pid, returncode = os.waitpid(updated_pid, 0)
-        returncode >>= 8
-        uuid = os.read(readfd, 1024)
-        if uuid:
-            uuid = uuid.strip('\n')
-        return returncode, uuid
 
 
 def manual_update(path, sha256):

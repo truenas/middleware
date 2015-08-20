@@ -25,6 +25,7 @@
 #
 #####################################################################
 from collections import OrderedDict, namedtuple
+from uuid import uuid4
 import cPickle as pickle
 import datetime
 import json
@@ -76,12 +77,11 @@ from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
 from freenasUI.system.utils import (
     CheckUpdateHandler,
-    UpdateHandler,
     VerifyHandler,
     debug_get_settings,
     debug_run,
     parse_changelog,
-    run_updated,
+    task_running,
 )
 
 GRAPHS_DIR = '/var/db/graphs'
@@ -1187,18 +1187,18 @@ def update_apply(request):
                     raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
-            running = UpdateHandler.is_running()
+            running, task = task_running(request)
             if running is not False:
-                return HttpResponse(running, status=202)
+                return HttpResponse(task['id'], status=202)
 
-            returncode, uuid = run_updated(
-                str(updateobj.get_train()),
-                str(notifier().get_update_location()),
-                download=False,
-                apply=True,
-            )
-            if returncode != 0:
-                raise MiddlewareError(_('Update daemon failed!'))
+            task = dispatcher.submit_task('update.update')
+            uuid = str(uuid4())
+            request.session['update'] = {
+                'task': task,
+                'apply': True,
+                'uuid': uuid,
+                'applying': True,
+            }
             return HttpResponse(uuid, status=202)
         else:
             failover = False
@@ -1215,12 +1215,13 @@ def update_apply(request):
                 handler = namedtuple('Handler', rv.keys())(**rv)
 
             else:
-                handler = UpdateHandler(uuid=uuid)
-            if handler.error is not False:
-                raise MiddlewareError(handler.error)
-            if not handler.finished:
-                return HttpResponse(handler.uuid, status=202)
-            handler.exit()
+                running, task = task_running(request)
+
+            update = request.session['update']
+            if running:
+                return HttpResponse(update['uuid'], status=202)
+            if task and task['error']:
+                raise MiddlewareError(task['error']['message'])
 
             if failover:
                 try:
@@ -1229,14 +1230,8 @@ def update_apply(request):
                     pass
                 return render(request, 'failover/update_standby.html')
             else:
-                if handler.reboot:
-                    request.session['allow_reboot'] = True
-                    return render(request, 'system/done.html')
-                else:
-                    return JsonResp(
-                        request,
-                        message=_('Update has been applied'),
-                    )
+                request.session['allow_reboot'] = True
+                return render(request, 'system/done.html')
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
@@ -1246,35 +1241,9 @@ def update_apply(request):
                 'system/update.html',
                 s.update_check(),
             )
-        handler = CheckUpdateHandler()
-        update = CheckForUpdates(
-            diff_handler=handler.diff_call,
-            handler=handler.call,
-            train=updateobj.get_train(),
-            cache_dir=notifier().get_update_location(),
-        )
-        changelog = None
-        if update:
-            changelogpath = '%s/ChangeLog.txt' % (
-                notifier().get_update_location()
-            )
-            conf = Configuration.Configuration()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                sequence = sys_mani.Sequence()
-            else:
-                sequence = ''
-            if os.path.exists(changelogpath):
-                with open(changelogpath, 'r') as f:
-                    changelog = parse_changelog(
-                        f.read(),
-                        start=sequence,
-                        end=update.Sequence()
-                    )
+        update = dispatcher.call_sync('update.get_update_info')
         return render(request, 'system/update.html', {
             'update': update,
-            'handler': handler,
-            'changelog': changelog,
         })
 
 
@@ -1297,16 +1266,19 @@ def update_check(request):
                     raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
-            running = UpdateHandler.is_running()
+            running, task = task_running(request)
             if running is not False:
-                return HttpResponse(running, status=202)
+                return HttpResponse(task['id'], status=202)
 
-            if not apply_:
-                task = dispatcher.submit_task('update.download')
-            handler = UpdateHandler()
-            handler.tid = task
-            handler.dump()
-            return HttpResponse(handler.uuid, status=202)
+            task = dispatcher.submit_task('update.download')
+            uuid = str(uuid4())
+            request.session['update'] = {
+                'task': task,
+                'apply': apply_,
+                'uuid': uuid,
+                'applying': False,
+            }
+            return HttpResponse(uuid, status=202)
 
         else:
 
@@ -1323,14 +1295,25 @@ def update_check(request):
                 rv['exit'] = exit
                 handler = namedtuple('Handler', rv.keys())(**rv)
             else:
-                handler = UpdateHandler(uuid=uuid)
-            if handler.error is not False:
-                raise MiddlewareError(handler.error)
-            if not handler.finished:
-                return HttpResponse(handler.uuid, status=202)
-            handler.exit()
+                running, task = task_running(request)
 
-            if handler.apply:
+            update = request.session['update']
+            uuid = update['uuid']
+            apply_ = update['apply']
+            log.error("check task %r", task)
+            if running is False and task['name'] == 'update.download' and apply_:
+                task = dispatcher.submit_task('update.update')
+                update['task'] = task
+                update['applying'] = True
+                request.session['update'] = update
+                return HttpResponse(update['uuid'], status=202)
+
+            if running:
+                return HttpResponse(update['uuid'], status=202)
+            if task and task['error']:
+                raise MiddlewareError(task['error']['message'])
+
+            if update['apply']:
                 if failover:
                     try:
                         s.reboot()
@@ -1384,19 +1367,21 @@ def update_progress(request):
         rv = s.updated_handler(None)
         load = rv['data']
     else:
-        handler = UpdateHandler()
-        load = handler.load()
-        task = dispatcher.call_sync('task.status', handler.tid)
-        log.error("progress %r", task)
-        if task['state'] in ('FINISHED', 'FAILED'):
-            handler.finished = True
-            if task['state'] == 'FAILED':
-                handler.error = task['error']['message']
-            load = handler.dump()
+        load = {}
+        running, task = task_running(request)
+        update = request.session['update']
+        if update['apply'] and update.get('applying'):
+            load['step'] = 2
         else:
-            handler.progress = task['progress']['percentage']
-            handler.details = task['progress']['message']
-            load = handler.dump()
+            load['step'] = 1
+        if task:
+            if running:
+                if 'progress' in task:
+                    load['percent'] = task['progress']['percentage']
+                    load['details'] = task['progress']['message']
+                    load['indeterminate'] = False
+        if not load:
+            load['indeterminate'] = True
 
     return HttpResponse(
         json.dumps(load),
