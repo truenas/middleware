@@ -218,14 +218,10 @@ def main():
             'all': 1,
             'p': [],
         },
-
         'smartd': {
             'all': 0,
-            'p': [
-                '^Device:'
-                ],
+            'p': ['^Device:'],
         },
-
         'kernel': {
             'all': 0,
             'p': [

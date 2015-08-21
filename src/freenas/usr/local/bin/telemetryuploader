@@ -18,6 +18,8 @@ args = parser.parse_args()
 hostid = ''
 dmisha256 = ''
 sha256 = ''
+m = 1
+piece_size = 1024*1024  # 1 MiB
 
 
 if os.path.isfile("/etc/hostid"):
@@ -27,8 +29,8 @@ if os.path.isfile("/etc/hostid"):
     m = u.int % 60
 
 if os.path.isfile("/tmp/dmisha.txt"):
-    f = open("/tmp/dmisha.txt")
-    dmisha256 = f.read().strip()
+    with open("/tmp/dmisha.txt", 'r') as f:
+        dmisha256 = f.read().strip()
     f.close()
 
 if args.jitter:
@@ -45,13 +47,17 @@ for file in args.files:
     try:
         if args.debug:
             print " running sha256 "
+        sha256 = hashlib.sha256()
         with open(file, 'r') as f:
-            sha256 = hashlib.sha256(f.read()).hexdigest()
+            read = f.read(piece_size)
+            while read:
+                sha256.update(read)
+                read = f.read(piece_size)
+            sha256 = sha256.hexdigest()
     except:
         sha256 = ''
         if args.debug:
-            var = traceback.format_exc().splitlines()
-            print var
+            print traceback.format_exc().splitlines()
 
     files = {
         'docfile': open(file, 'rb')
