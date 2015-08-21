@@ -96,7 +96,6 @@ from freenasUI.sharing.models import (
 from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
-from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 
 log = logging.getLogger('system.forms')
@@ -126,13 +125,13 @@ def clean_path_execbit(path):
 
 
 def clean_path_locked(mp):
-    qs = MountPoint.objects.filter(mp_path=mp)
+    qs = Volume.objects.filter(vol_name=mp.replace('/mnt/', ''))
     if qs.exists():
         obj = qs[0]
-        if not obj.mp_volume.is_decrypted():
+        if not obj.is_decrypted():
             raise forms.ValidationError(
                 _("The volume %s is locked by encryption") % (
-                    obj.mp_volume.vol_name,
+                    obj.vol_name,
                 )
             )
 
@@ -870,10 +869,14 @@ class ManualUpdateWizard(FileWizard):
                     pass
                 response = render_to_response('failover/update_standby.html')
             else:
-                manual_update(
+                task = dispatcher.call_task_sync(
+                    'update.manual',
                     path,
                     cleaned_data['sha256'].encode('ascii', 'ignore'),
                 )
+                if task['error']:
+                    raise MiddlewareError(task['error']['message'])
+                _n.destroy_upload_location()
                 self.request.session['allow_reboot'] = True
                 response = render_to_response('system/done.html', {
                     'retval': getattr(self, 'retval', None),
@@ -1151,8 +1154,8 @@ class ManualUpdateTemporaryLocationForm(Form):
     def __init__(self, *args, **kwargs):
         super(ManualUpdateTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [
-            (x.mp_path, x.mp_path)
-            for x in MountPoint.objects.exclude(mp_volume__vol_fstype='iscsi')
+            ('/mnt/%s' % x.vol_name, '/mnt/%s' % x.vol_name)
+            for x in Volume.objects.all()
         ]
         self.fields['mountpoint'].choices.append(
             (':temp:', _('Memory device'))

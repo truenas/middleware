@@ -26,13 +26,10 @@
 import json
 import logging
 import os
-import re
-from uuid import uuid4
 
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
-from freenasOS import Update
 from freenasUI.common.pipesubr import pipeopen
 
 log = logging.getLogger('system.utils')
@@ -128,33 +125,6 @@ class VerifyHandler(object):
         log.debug("VerifyUpdate: handler.exit() was called")
         if os.path.exists(self.DUMPFILE):
             os.unlink(self.DUMPFILE)
-
-
-def manual_update(path, sha256):
-    from freenasUI.middleware.notifier import notifier
-    from freenasUI.middleware.exceptions import MiddlewareError
-
-    # Verify integrity of uploaded image.
-    checksum = notifier().checksum(path)
-    if checksum != sha256.lower().strip():
-        raise MiddlewareError("Invalid update file, wrong checksum")
-
-    # Validate that the image would pass all pre-install
-    # requirements.
-    #
-    # IMPORTANT: pre-install step have scripts or executables
-    # from the upload, so the integrity has to be verified
-    # before we proceed with this step.
-    retval = notifier().validate_update(path)
-
-    if not retval:
-        raise MiddlewareError("Invalid update file")
-
-    notifier().apply_update(path)
-    try:
-        notifier().destroy_upload_location()
-    except Exception, e:
-        log.warn("Failed to destroy upload location: %s", e.value)
 
 
 def debug_get_settings():
