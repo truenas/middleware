@@ -43,7 +43,7 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
-from freenasOS import Configuration, Update, Train
+from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -2837,7 +2837,7 @@ class UpdateResourceMixin(NestedMixin):
             s = notifier().failover_rpc()
             data = s.update_pending()
         else:
-            update = dispatcher.call_sync('update.get_update_info')
+            update = dispatcher.call_sync('update.update_info')
             data = []
             if update:
                 for op in update['operations']:
@@ -2861,36 +2861,20 @@ class UpdateResourceMixin(NestedMixin):
     def trains(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
 
-        try:
-            update = mUpdate.objects.order_by('-id')[0]
-        except IndexError:
-            update = mUpdate.objects.create()
-
-        conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
-        trains = conf.AvailableTrains() or []
-        if trains:
-            trains = trains.keys()
-
-        seltrain = update.get_train()
-        if seltrain in conf._trains:
-            seltrain = conf._trains.get(seltrain)
-        else:
-            seltrain = Train.Train(seltrain)
+        trains = dispatcher.call_sync('update.trains')
+        seltrain = None
+        train_names = []
+        for train in trains:
+            if seltrain is None and train['current']:
+                seltrain = train
+            train_names.append(train['name'])
 
         data = {
-            'trains': trains,
-            'selected_train': {
-                'name': seltrain.Name(),
-                'descr': seltrain.Description(),
-                'sequence': seltrain.LastSequence(),
-            },
+            'trains': train_names,
+            'selected_train': seltrain,
         }
 
-        return self.create_response(
-            request,
-            data,
-        )
+        return self.create_response(request, data)
 
 
 class FCPort(object):

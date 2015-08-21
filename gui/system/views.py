@@ -1230,7 +1230,7 @@ def update_apply(request):
                 'system/update.html',
                 s.update_check(),
             )
-        update = dispatcher.call_sync('update.get_update_info')
+        update = dispatcher.call_sync('update.update_info')
         return render(request, 'system/update.html', {
             'update': update,
         })
@@ -1341,7 +1341,7 @@ def update_check(request):
             else:
                 log.warn("Update check task failed: %r", task)
 
-        update = dispatcher.call_sync('update.get_update_info')
+        update = dispatcher.call_sync('update.update_info')
         return render(request, 'system/update_check.html', {
             'update': update,
             'network': network,
