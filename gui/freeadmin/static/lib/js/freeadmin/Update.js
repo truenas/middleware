@@ -133,7 +133,7 @@ define([
         query: {"format": "json"}
       }).then(function(data) {
         me.dapCurrentTrain.innerHTML = data.selected_train.name;
-        me.dapCurrentTrainDesc.innerHTML = data.selected_train.descr;
+        me.dapCurrentTrainDesc.innerHTML = data.selected_train.description;
 
         var options = [];
         for(var i in data.trains) {
