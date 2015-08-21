@@ -34,7 +34,7 @@ log = logging.getLogger('common.warden')
 #
 # Python bindings for the PC-BSD warden
 #
-WARDEN = "/usr/local/bin/warden"
+WARDEN = "/usr/local/bin/warden2"
 WARDENCONF = "/usr/local/etc/warden.conf"
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
