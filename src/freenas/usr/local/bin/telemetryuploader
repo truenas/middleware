@@ -4,12 +4,11 @@ import argparse
 import requests
 import uuid
 import time
-import sys
 import os
 import traceback
-import subprocess
+import hashlib
 
-parser = argparse.ArgumentParser(description='send data to ix systems')
+parser = argparse.ArgumentParser(description='send data to iXsystems')
 parser.add_argument('files', metavar='files', type=str, nargs='+', help='files to upload')
 parser.add_argument('--jitter', action='store_true',  help='delay running based on hash of UUID.')
 parser.add_argument('--debug', action='store_true',  help="Debug/Verbose output")
@@ -22,9 +21,8 @@ sha256 = ''
 
 
 if os.path.isfile("/etc/hostid"):
-    f = open("/etc/hostid")
-    hostid = f.read().strip()
-    f.close()
+    with open("/etc/hostid", 'r') as f:
+        hostid = f.read().strip()
     u = uuid.UUID("{" + hostid + "}")
     m = u.int % 60
 
@@ -47,24 +45,25 @@ for file in args.files:
     try:
         if args.debug:
             print " running sha256 "
-        sha256 = subprocess.check_output( [ "/sbin/sha256", "-q", file ]).strip()
+        with open(file, 'r') as f:
+            sha256 = hashlib.sha256(f.read()).hexdigest()
     except:
         sha256 = ''
         if args.debug:
             var = traceback.format_exc().splitlines()
             print var
-        
-    
+
     files = {
         'docfile': open(file, 'rb')
     }
-    data = {}
-    data = { 'hostid': hostid, 'dmi-sha256': dmisha256, 'sha256': sha256 }
+    data = {
+        'hostid': hostid,
+        'dmi-sha256': dmisha256,
+        'sha256': sha256
+    }
     if args.debug:
         print data
-    
     r = requests.post(url, data=data, files=files)
     if args.debug:
         print r
         status_code = r.status_code
-        
