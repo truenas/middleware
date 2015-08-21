@@ -7,7 +7,6 @@ import gzip
 import bz2
 import json
 import re
-import pprint
 import subprocess
 import os
 
@@ -15,9 +14,8 @@ import traceback
 import struct
 import hashlib
 
-from time import gmtime, strftime
 from datetime import datetime
-from pyparsing import Word, alphas, Suppress, Combine, nums, string, Optional, Regex
+from pyparsing import Word, alphas, Suppress, nums, string, Optional, Regex
 
 
 class Parser(object):
@@ -37,7 +35,8 @@ class Parser(object):
         hostname = Word(alphas + nums + "_" + "-" + ".")
 
         # appname
-        appname = Word(alphas + nums + "/" + "-" + "_" + ".") + Optional(Suppress("[") + ints + Suppress("]")) + Suppress(":")
+        appname = Word(alphas + nums + "/" + "-" + "_" + ".") + \
+            Optional(Suppress("[") + ints + Suppress("]")) + Suppress(":")
 
         # message
         message = Regex(".*")
@@ -61,12 +60,13 @@ class Parser(object):
             str(self.tz))
 
         d = time.strptime(dstr, "%Y-%b-%d %H:%M:%S %Z")
-        payload = {}
-        payload["timestamp"] = int(time.mktime(d))
-
-        payload["timestamp_raw"] = parsed[0] + " " + parsed[1] + " " + parsed[2] + ":" + parsed[3] + ":" +  parsed[4]
-        payload["hostname"] = parsed[5]
-        payload["program"] = parsed[6]
+        payload = {
+            "timestamp": int(time.mktime(d)),
+            "timestamp_raw": "{0} {1} {2}:{3}:{4}".format(
+                parsed[0], parsed[1], parsed[2], parsed[3],  parsed[4]),
+            "hostname": parsed[5],
+            "program": parsed[6]
+        }
 
         try:
             payload["pid"] = parsed[7]
@@ -75,7 +75,6 @@ class Parser(object):
             payload["text"] = parsed[7]
             payload["pid"] = -1
         return payload
-
 
 
 def dmisha256_v1():
@@ -97,16 +96,17 @@ def dmisha256_v1():
     s = struct.Struct('64s')
     for kw in keywords:
         if kw == 'dmi-memory-serial-number' and data[kw] == '__NOTSET__':
-            data[kw] = ''            
+            data[kw] = ''
         buffer = s.pack(str(data[kw]))
         hashStr = hashStr + buffer
     sha256 = hashlib.sha256(hashStr).hexdigest()
     return sha256
 
+
 def parseDMILine(line):
     global inBlock, whichBlock, whichBlock2, data, skipTerms, goodBlocks, fieldsToCap
     rePatField = re.compile('^.*: (.*)$')
-    
+
     p = line.split()
     try:
         p[0]
@@ -140,53 +140,39 @@ def parseDMILine(line):
 
 def parseDMI(dmioutput):
     global inBlock, whichBlock, whichBlock2, data, skipTerms, goodBlocks, fieldsToCap
-    OKS=0
-    ERRORS=0
-    skipTerms = [
-    '#',
-    'Handle',
-    'Table',        
-    ]    
-    goodBlocks = [
-    'System',
-    'Base',
-    'Chassis',
-    'Processor',
-    'Memory',
-    ]    
-    fieldsToCap = { }
-    fieldsToCap['System'] = { }
-    fieldsToCap['Base'] = { }
-    fieldsToCap['Chassis'] = { }
-    fieldsToCap['Processor'] = { }
-    fieldsToCap['Memory'] = { }
-    
-    fieldsToCap['System']['Product'] = 'dmi-system-product-name'
-    fieldsToCap['System']['UUID:'] = 'dmi-system-uuid'
-    fieldsToCap['System']['Serial'] = 'dmi-system-serial-number'
-    
-    fieldsToCap['Base']['Product'] = 'dmi-baseboard-product-name'
-    fieldsToCap['Base']['Serial'] = 'dmi-baseboard-serial-number'
-    fieldsToCap['Base']['Manufacturer:'] = 'dmi-baseboard-manufacturer'
-    
-    fieldsToCap['Chassis']['Serial'] = 'dmi-chassis-serial-number'
-    fieldsToCap['Processor']['Serial'] = 'dmi-processor-serial-number'
-    fieldsToCap['Memory']['Serial'] = 'dmi-memory-serial-number'
-    
+    skipTerms = ['#', 'Handle', 'Table']
+    goodBlocks = ['System', 'Base', 'Chassis', 'Processor', 'Memory']
+    fieldsToCap = {
+        'System': {
+            'Product': 'dmi-system-product-name',
+            'UUID:': 'dmi-system-uuid',
+            'Serial': 'dmi-system-serial-number'
+        },
+        'Base': {
+            'Product': 'dmi-baseboard-product-name',
+            'Serial': 'dmi-baseboard-serial-number',
+            'Manufacturer:': 'dmi-baseboard-manufacturer'
+        },
+        'Chassis': {'Serial': 'dmi-chassis-serial-number'},
+        'Processor': {'Serial': 'dmi-processor-serial-number'},
+        'Memory': {'Serial': 'dmi-memory-serial-number'}
+    }
+
     inBlock = 0
     whichBlock = ''
     whichBlock2 = ''
 
-    data = {}
-    data['dmi-system-uuid'] = ''
-    data['dmi-system-serial-number'] = ''
-    data['dmi-system-product-name'] = ''
-    data['dmi-baseboard-product-name'] = ''
-    data['dmi-baseboard-serial-number'] = ''
-    data['dmi-baseboard-manufacturer'] = ''
-    data['dmi-chassis-serial-number'] = ''
-    data['dmi-processor-serial-number'] = ''
-    data['dmi-memory-serial-number'] = '__NOTSET__'
+    data = {
+        'dmi-system-uuid': '',
+        'dmi-system-serial-number': '',
+        'dmi-system-product-name': '',
+        'dmi-baseboard-product-name': '',
+        'dmi-baseboard-serial-number': '',
+        'dmi-baseboard-manufacturer': '',
+        'dmi-chassis-serial-number': '',
+        'dmi-processor-serial-number': '',
+        'dmi-memory-serial-number': '__NOTSET__'
+    }
 
     for line in dmioutput.splitlines():
         parseDMILine(line)
@@ -194,21 +180,15 @@ def parseDMI(dmioutput):
     return data
 
 
-
-
-""" --------------------------------- """
-
-
 def main():
     log = {
-        'telemetry' : {
+        'telemetry': {
             'type': 'main',
             'version': 2,
         },
         'filecontents': {},
         'cmdout': {},
     }
-
 
     files_to_log = [
         '/data/license',
@@ -219,16 +199,18 @@ def main():
     cmds_to_log = {
         'zpool_list': ['/sbin/zpool', 'list'],
         'zfs_list': ['/sbin/zfs', 'list'],
-        'zfs_get_all': ['/sbin/zfs', 'get', '-t', 'filesystem', 'type,creation,used,available,referenced,compressratio,recordsize,checksum,compression,copies,dedup,refcompressratio' ],
+        'zfs_get_all': [
+            '/sbin/zfs', 'get', '-t', 'filesystem',
+            'type,creation,used,available,referenced,'
+            + 'compressratio,recordsize,checksum,compression,copies,dedup,refcompressratio'
+        ],
         'arc_summary': ['/usr/local/bin/arc_summary.py', ''],
         'dmidecode': ['/usr/local/sbin/dmidecode', ''],
-        'kstat_zfs': [ '/sbin/sysctl', 'kstat.zfs' ],
+        'kstat_zfs': ['/sbin/sysctl', 'kstat.zfs'],
         'uname': ['/usr/bin/uname', '-a'],
-        'ipmitoolsdr': ['/usr/local/bin/ipmitool', '-c' , 'sdr' ],
-        'ipmitoolsel': ['/usr/local/bin/ipmitool', '-c' , 'sel', 'elist' ],
-        
+        'ipmitoolsdr': ['/usr/local/bin/ipmitool', '-c', 'sdr'],
+        'ipmitoolsel': ['/usr/local/bin/ipmitool', '-c', 'sel', 'elist'],
     }
-
 
     filters = {
         'zfsd':
@@ -262,15 +244,15 @@ def main():
 
     }
 
-
-    parser = argparse.ArgumentParser(description='Gather and stage data for sending to ix Systems.')
-
-    parser.add_argument('files', metavar='files', type=str, nargs='+', help='File to read, txt or gz, will auto-dectect')
+    parser = argparse.ArgumentParser(description='Gather and stage data for sending to iXsystems.')
+    parser.add_argument('files',
+                        metavar='files',
+                        type=str, nargs='+',
+                        help='File to read, txt or gz, will auto-dectect')
     parser.add_argument('--debug', action='store_true',  help="Debug/Verbose output")
 
     args = parser.parse_args()
     now = time.time()
-
 
     for cmdname in cmds_to_log:
         if args.debug:
@@ -278,7 +260,8 @@ def main():
         try:
             if args.debug:
                 print "[DEBUG]: running " + cmdname
-            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname], stderr=subprocess.STDOUT)
+            log['cmdout'][cmdname] = subprocess.check_output(
+                cmds_to_log[cmdname], stderr=subprocess.STDOUT)
             if cmdname == 'dmidecode':
                 if args.debug:
                     print "[DEBUG]: running parseDMI " + cmdname
@@ -286,9 +269,8 @@ def main():
                 log['dmi']['dmi-sha256'] = dmisha256_v1()
                 if args.debug:
                     print "[DEBUG]: writing dmisha " + cmdname
-                f = open("/tmp/dmisha.txt", "w")
-                f.write(log['dmi']['dmi-sha256'])
-                f.close()                
+                with open("/tmp/dmisha.txt", "w") as f:
+                    f.write(log['dmi']['dmi-sha256'])
 #           log['cmdout'][cmdname] = ''
         except:
             log['cmdout'][cmdname] = 'Error Running Command'
@@ -306,7 +288,6 @@ def main():
             log['filecontents'][f] = "ERROR opening or reading file."
             continue
 
-
     bzf = bz2.BZ2File('/var/log/telemetry.json.bz2', 'wb')
     json.dump(log, bzf)
     bzf.write("\n")
@@ -315,7 +296,7 @@ def main():
 
     for file in args.files:
         mtime = os.path.getmtime(str(file))
-        if ( (now - mtime) > (48*60*60) ):
+        if ((now - mtime) > (48*60*60)):
             continue
         if file.endswith('.gz'):
             file = gzip.GzipFile(file)
@@ -332,8 +313,11 @@ def main():
                     pl = parser.parse(line)
                 except:
                     continue
-                pl['telemetry'] = { 'type': 'syslog', 'version': 2 }
-                if ( (now - pl['timestamp']) > (24*60*60) ):
+                pl['telemetry'] = {
+                    'type': 'syslog',
+                    'version': 2
+                }
+                if ((now - pl['timestamp']) > (24*60*60)):
                     continue
                 for f in filters:
                     if pl['program'] == f:
@@ -349,4 +333,4 @@ def main():
     bzf.close()
 
 if __name__ == "__main__":
-  main()
+    main()
