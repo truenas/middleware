@@ -12,6 +12,7 @@
 #10442	Bug	Nice to have	Merge non-critical changes from upstream FreeBSD
 #10444	Bug	Important	Filters out the boot media during installation.
 #10447	Bug	Nice to have	Bad spelling, and general bad quality warning message in GUI
+#10454	Bug	Important	iSCSI Service wont start if path to extend contains a space
 #10472	Bug	Expected	Fixes a typo in the Update module.
 #10507	Bug	Nice to have	flake cleanup of generate_sssd_conf.py
 #10518	Bug	Nice to have	pyflakes doesn't like the update library code
@@ -39,3 +40,4 @@
 #10868	Feature	Important	Add sas3ircu to the build
 #10908	Feature	Important	add alerts for mpr 12 gbps HBA firmware mismatches
 #11027	Bug	Nice to have	Fix multiple integer overflows in expat library
+#11068	Bug	Expected	Fixes for FreeBSD IRET handling vulnerability
