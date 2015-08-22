@@ -252,7 +252,7 @@ fi
 export NANO_XZ
 export PXZ_ACCEL
 
-: ${PORTS_DISTFILES_CACHE:="/freenas/Dev/releng/FreeNAS/ports/distfiles"}
+: ${PORTS_DISTFILES_CACHE:="/builds/distfiles_cache"}
 export PORTS_DISTFILES_CACHE
 
 # See bsd.port.mk
