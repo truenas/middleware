@@ -1130,6 +1130,7 @@ class iSCSITargetToExtentForm(ModelForm):
     def clean(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
         target = self.cleaned_data.get('iscsi_target')
+        extent = self.cleaned_data.get('iscsi_extent')
         if lunid and target:
             qs = models.iSCSITargetToExtent.objects.filter(
                 iscsi_lunid=lunid,
@@ -1141,6 +1142,14 @@ class iSCSITargetToExtentForm(ModelForm):
                 raise forms.ValidationError(
                     _("LUN ID is already being used for this target.")
                 )
+        qs = models.iSCSITargetToExtent.objects.filter(
+            iscsi_target__id=target.id,
+            iscsi_extent__id=extent.id
+            )
+        if qs.exists():
+            raise forms.ValidationError(
+                _("Extent is already in this target.")
+            )
         return self.cleaned_data
 
     def save(self):
