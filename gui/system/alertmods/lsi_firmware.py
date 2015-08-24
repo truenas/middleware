@@ -1,6 +1,6 @@
 from collections import defaultdict
 import errno
-import sysctl
+from bsd import sysctl
 
 from django.utils.translation import ugettext as _
 

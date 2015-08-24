@@ -119,7 +119,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
-import sysctl
+from bsd import sysctl
 
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
