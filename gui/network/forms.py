@@ -314,6 +314,16 @@ class InterfacesForm(ModelForm):
                 _("You have to choose between IPv4 or IPv6"),
             ])
 
+        vip = cdata.get("int_vip")
+        if vip and not ipv4addr_b:
+            self._errors['int_ipv4address_b'] = self.error_class([
+                _("This field is required for failover")
+            ])
+        if vip and not ipv4addr:
+            self._errors['int_ipv4address'] = self.error_class([
+                _("This field is required for failover")
+            ])
+
         return cdata
 
     def done(self, *args, **kwargs):
