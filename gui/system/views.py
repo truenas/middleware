@@ -72,7 +72,6 @@ from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import MountPoint
 from freenasUI.system import forms, models
 from freenasUI.system.utils import (
-    VerifyHandler,
     debug_get_settings,
     debug_run,
     task_running,
@@ -83,6 +82,7 @@ VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
 BOOTENV_DELETE_PROGRESS = '/tmp/.bootenv_bulkdelete'
+UPDATE_VERIFY_PROGRESS = '/tmp/.update_verify_progress'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
 PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 
@@ -1380,40 +1380,26 @@ def update_progress(request):
 
 def update_verify(request):
     if request.method == 'POST':
-        handler = VerifyHandler()
+        tid = dispatcher.submit_task('update.verify')
+        with open(UPDATE_VERIFY_PROGRESS, 'w+') as f:
+            f.write(str(tid))
+
+        dispatcher.call_sync('task.wait', tid, timeout=3600)
+        task = dispatcher.call_sync('task.status', tid)
+
         try:
-            log.debug("Starting VerifyUpdate")
-            error_flag, ed, warn_flag, wl = Configuration.do_verify(handler.verify_handler)
-        except Exception, e:
-            log.debug("VerifyUpdate Exception ApplyUpdate: %s" %e)
-            handler.error = unicode(e)
-        handler.finished = True
-        handler.dump()
-        log.debug("VerifyUpdate finished!")
-        if handler.error is not False:
-            handler.exit()
-            raise MiddlewareError(handler.error)
-        handler.exit()
-        if error_flag or warn_flag:
-            checksums = None
-            wrongtype = None
-            notfound = None
-            perms = None
-            if ed['checksum']:
-                checksums = ed['checksum']
-            if ed['notfound']:
-                notfound = ed['notfound']
-            if ed['wrongtype']:
-                wrongtype = ed['wrongtype']
-            if warn_flag:
-                perms = wl
-            return render(request, 'system/update_verify.html', {
-                'error': True,
-                'checksums': checksums,
-                'notfound': notfound,
-                'wrongtype': wrongtype,
-                'perms': perms,
-            })
+            os.unlink(UPDATE_VERIFY_PROGRESS)
+        except:
+            pass
+
+        if task['state'] != 'FINISHED':
+            raise MiddlewareError(task['error']['message'])
+
+        res = task['result'] or {}
+        if res.get('error') or res.get('warn'):
+            ctx = res
+            ctx['error'] = True
+            return render(request, 'system/update_verify.html', ctx)
         else:
             return render(request, 'system/update_verify.html', {
                 'success': True,
@@ -1423,9 +1409,25 @@ def update_verify(request):
 
 
 def verify_progress(request):
-    handler = VerifyHandler()
+    tid = None
+    data = {}
+    if os.path.exists(UPDATE_VERIFY_PROGRESS):
+        try:
+            with open(UPDATE_VERIFY_PROGRESS, 'r') as f:
+                tid = int(f.read())
+        except:
+            pass
+
+    if tid:
+        task = dispatcher.call_sync('task.status', tid)
+        if 'progress' in task:
+            data['percent'] = task['progress']['percentage']
+            data['details'] = task['progress']['message']
+            data['indeterminate'] = False
+    else:
+        data['indeterminate'] = True
     return HttpResponse(
-        json.dumps(handler.load()),
+        json.dumps(data),
         content_type='application/json',
     )
 
