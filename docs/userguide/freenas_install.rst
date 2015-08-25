@@ -28,7 +28,7 @@ This section describes the following:
 Getting FreeNAS®
 -----------------
 
-FreeNAS® 9.3 can be downloaded from
+FreeNAS® 9.3.1 can be downloaded from
 `http://download.freenas.org/ <http://download.freenas.org/>`_.
 
 .. note:: FreeNAS® will only install to 64-bit hardware and the installer will not work on 32-bit hardware.
@@ -286,14 +286,14 @@ Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the 
 #. Upgrades to major releases, for example from version 9.3 to 10.0, can still be performed using either an ISO or the graphical administrative interface.
    Unless the Release Notes for the new major release indicate that your current version requires an ISO upgrade, you can use either upgrade method.
 
-#. Minor releases have been replaced with signed updates. This means that, for example, there will not be a 9.3.1 or 9.3.2 minor release. It also means that
+#. Minor releases have been replaced with signed updates. This means that
    you do not have to wait for a minor release to update the system with a system update or newer versions of drivers and features and that you no longer have
    to manually download an upgrade file and its associated checksum in order to do so.
 
 #. The updater automatically creates a boot environment, meaning that updates are a low-risk operation. Boot environments provide the option to return to the
    previous version of the operating system by rebooting the system and selecting the previous boot environment from the boot menu.
 
-This section describes how to perform an upgrade from an earlier version of FreeNAS® to 9.3. Once 9.3 is installed, use the instructions in :ref:`Update` to keep
+This section describes how to perform an upgrade from an earlier version of FreeNAS® to 9.3.1. Once 9.3.1 is installed, use the instructions in :ref:`Update` to keep
 the system updated.
 
 .. _Caveats:
@@ -301,7 +301,7 @@ the system updated.
 Caveats:
 ~~~~~~~~
 
-Be aware of the following caveats **before** attempting an upgrade to 9.3:
+Be aware of the following caveats **before** attempting an upgrade to 9.3.1:
 
 * **Upgrades from FreeNAS® 0.7x are not supported.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
   will have to manually recreate your configuration, and if supported, import the FreeNAS® 0.7x volumes or disks.
@@ -352,7 +352,7 @@ Before upgrading the operating system, perform the following steps:
 Upgrading Using the ISO
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://download.freenas.org/9.3/latest/x64/>`_ the :file:`.iso` to the computer that
+To perform an upgrade using this method, `download <http://download.freenas.org/9.3.1/latest/x64/>`_ the :file:`.iso` to the computer that
 will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
 :ref:`Preparing the Media`.
 
@@ -390,7 +390,7 @@ the "Upload Config" button to upload the configuration that you saved before you
 Upgrading From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://download.freenas.org/9.3/latest/x64/>`_ the :file:`.txz` file and its
+To perform an upgrade using this method, `download <http://download.freenas.org/9.3.1/latest/x64/>`_ the :file:`.txz` file and its
 associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to :menuselection:`System --> Settings --> Advanced --> Firmware Update` as
 shown in Figure 2.5c.
 

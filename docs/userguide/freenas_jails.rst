@@ -13,7 +13,7 @@ management. Any software installed using "Jails" must be managed from the comman
 While FreeNAS® automatically creates a jail whenever a plugin is installed, it does not let the user install multiple plugins into the same jail. In
 contrast, using "Jails" allows users to create as many jails as needed and to customize the operating system and installed software within each jail.
 
-In FreeNAS® 9.3, two types of jails are supported:
+Beginning with FreeNAS® 9.3, two types of jails are supported:
 
 #. By default, a
    `FreeBSD jail <https://en.wikipedia.org/wiki/Freebsd_jail>`_ is created. This provides a very light-weight, operating system-level virtualization. Consider
@@ -680,7 +680,7 @@ Click the "New" button to create virtual machines. You can then install the desi
 Managing Jail Templates
 -----------------------
 
-FreeNAS® 9.3 supports the ability to add custom templates to the "Templates" drop-down menu described in Table 13.2a.
+FreeNAS® supports the ability to add custom templates to the "Templates" drop-down menu described in Table 13.2a.
 
 By default, FreeNAS® provides the *VirtualBox* template. To view the default and any customized templates, click :menuselection:`Jails --> Templates`. A
 listing showing the default template is seen in Figure 13.4a.

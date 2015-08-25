@@ -590,7 +590,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® 9.3.1 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -603,7 +603,7 @@ The GUI does not display the sysctls that are pre-set when FreeNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® 9.3.1 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas"
@@ -627,7 +627,7 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3 deprecates the following tunables::
+The ZFS version used in 9.3.1 deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -680,7 +680,7 @@ menu will list any files with checksum mismatches or permission errors.
 To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
 be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
 `bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
-of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the 9.3 Release Notes in your web browser.
+of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the Release Notes in your web browser.
 
 **Figure 5.8b: Reviewing Updates**
 

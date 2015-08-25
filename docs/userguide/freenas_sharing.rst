@@ -551,7 +551,7 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
-Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® 9.3 uses TCP. To support UDP connections, go to
+Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® uses TCP. To support UDP connections, go to
 :menuselection:`Services --> NFS` and check the box "Serve UDP NFS clients".
 
 .. index:: WebDAV
@@ -1078,7 +1078,7 @@ drive; rather than mounting remote directories, initiators format and directly m
 a new target for each LUN. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
 
-In FreeNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
+Beginning with FreeNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
 locally, rather than over the network. It also supports the following VAAI (vStorage APIs for Array Integration) primitives, where VAAI is VMware's API
 framework that enables certain storage tasks, such as large data moves, to be offloaded from the virtualization hardware to the storage array.
 
