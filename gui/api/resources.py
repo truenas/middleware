@@ -2623,7 +2623,7 @@ class BootEnvResource(NestedMixin, DojoResource):
         return HttpResponse('Boot Environment has been renamed.', status=202)
 
     def get_list(self, request, **kwargs):
-        results = [BootEnv(**i) for i in dispatcher.call_sync('boot_environments.query')]
+        results = [BootEnv(**i) for i in dispatcher.call_sync('boot.environments.query')]
 
         for sfield in self._apply_sorting(request.GET):
             if sfield.startswith('-'):
