@@ -764,6 +764,9 @@ def disk_detach(request, vname, guid):
 
 def disk_offline(request, vname, guid):
     disk = dispatcher.call_sync('volumes.vdev_by_guid', vname, guid)
+    if not disk:
+        raise MiddlewareError('Vdev not found')
+
     if request.method == "POST":
         result = dispatcher.call_task_sync(
             'zfs.pool.offline_disk',
@@ -785,6 +788,9 @@ def disk_offline(request, vname, guid):
 
 def disk_online(request, vname, guid):
     disk = dispatcher.call_sync('volumes.vdev_by_guid', vname, guid)
+    if not disk:
+        raise MiddlewareError('Vdev not found')
+
     if request.method == "POST":
         result = dispatcher.call_task_sync(
             'zfs.pool.online_disk',
