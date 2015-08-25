@@ -226,14 +226,42 @@ class VolumeManagerForm(VolumeMixin, Form):
     def save(self):
         formset = self._formset
         volume_name = self.cleaned_data.get("volume_name")
-        init_rand = self.cleaned_data.get("encryption_inirand", False)
-        if self.cleaned_data.get("encryption", False):
-            volume_encrypt = 1
-        else:
-            volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
+        topology = {}
 
-        with transaction.atomic():
+        for i, form in enumerate(formset):
+            if not form.cleaned_data.get('vdevtype'):
+                continue
+
+            if form.cleaned_data.get("vdevtype") == 'stripe':
+                for disk in form.cleaned_data.get("disks"):
+                    topology.setdefault('data', []).append({
+                        'type': 'disk',
+                        'path': disk
+                    })
+
+            if form.cleaned_data.get("vdevtype") in ('mirror', 'raidz1', 'raidz2', 'raidz3'):
+                topology.setdefault('data', []).append({
+                    'type': form.cleaned_data.get("vdevtype"),
+                    'children': [{'type': 'disk', 'path': d} for d in form.cleaned_data.get("disks")]
+                })
+
+            if form.cleaned_data.get("vdevtype") in ('cache', 'log', 'spare'):
+                for disk in form.cleaned_data.get("disks"):
+                    topology.setdefault(form.cleaned_data.get("vdevtype"), []).append({
+                        'type': 'disk',
+                        'path': disk
+                    })
+
+        from freenasUI.middleware.connector import connection as dispatcher
+
+        dispatcher.call_task_sync('volume.create', {
+            'name': volume_name,
+            'type': 'zfs',
+            'topology': topology
+        })
+
+        """with transaction.atomic():
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS')
@@ -285,24 +313,22 @@ class VolumeManagerForm(VolumeMixin, Form):
             notifier().geli_passphrase(volume, None)
             volume.vol_encrypt = 1
             volume.save()
+        """
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
         notifier().reload("disk")
         notifier().start("ix-syslogd")
         notifier().restart("system_datasets")
-        # For scrub cronjob
-        if volume.vol_fstype == 'ZFS':
-            notifier().restart("cron")
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
             notifier().restart("smartd")
 
         # ModelForm compatibility layer for API framework
-        self.instance = volume
+        #self.instance = volume
 
-        return volume
+        return None
 
 
 class VolumeVdevForm(Form):
@@ -2279,7 +2305,7 @@ class VolumeExport(Form):
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,
-                label=_("Also delete the share's configuration"))
+                label=_("Also delete the shares configuration"))
 
 
 class Dataset_Destroy(Form):
