@@ -119,7 +119,7 @@ When scheduling a script, make sure that the script is executable and has been f
 +-------------+----------------+-----------------------------------------------------------------------------------+
 | When        | drop-down menu | select when the command/script will run; choices are *Pre Init*                   |
 |             |                | (very early in boot process before filesystems are mounted), *Post Init*          |
-|             |                | (towards end of boot process before FreeNAS services are started), or *Shutdown*  |
+|             |                | (towards end of boot process before TrueNAS services are started), or *Shutdown*  |
 |             |                |                                                                                   |
 +-------------+----------------+-----------------------------------------------------------------------------------+
 
@@ -352,7 +352,7 @@ for the *root* user. When creating the key pair, do not enter the passphrase as 
  Your identification has been saved in /root/.ssh/id_rsa.
  Your public key has been saved in /root/.ssh/id_rsa.pub.
  The key fingerprint is:
- f5:b0:06:d1:33:e4:95:cf:04:aa:bb:6e:a4:b7:2b:df root@freenas.local
+ f5:b0:06:d1:33:e4:95:cf:04:aa:bb:6e:a4:b7:2b:df root@truenas.local
  The key's randomart image is:
  +--[ RSA 2048]----+
  |        .o. oo   |
@@ -384,7 +384,7 @@ Next, view and copy the contents of the generated public key::
  SrWotUQzqILq0SmUpViAAv4Ik3T8NtxXyohKmFNbBczU6tEsVGHo/2BLjvKiSHRPHc/1DX9hofcFti4h
  dcD7Y5mvU3MAEeDClt02/xoi5xS/RLxgP0R5dNrakw958Yn001sJS9VMf528fknUmasti00qmDDcp/kO
  xT+S6DFNDBy6IYQN4heqmhTPRXqPhXqcD1G+rWr/nZK4H8Ckzy+l9RaEXMRuTyQgqJB/rsRcmJX5fApd
- DmNfwrRSxLjDvUzfywnjFHlKk/+TQIT1gg1QQaj21PJD9pnDVF0AiJrWyWnR root@freenas.local
+ DmNfwrRSxLjDvUzfywnjFHlKk/+TQIT1gg1QQaj21PJD9pnDVF0AiJrWyWnR root@truenas.local
 
 
 Go to *PULL* and paste (or append) the copied key into the "SSH Public Key" field of

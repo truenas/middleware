@@ -33,9 +33,6 @@ can import the account information and imported users can be authorized to acces
 .. note:: if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
    :ref:`NT4` instead.
 
-Many changes and improvements have been made to Active Directory support within TrueNAS®. If you are not running TrueNAS® 9.3-RELEASE, it is strongly
-recommended that you upgrade before attempting Active Directory integration.
-
 **Before configuring the Active Directory service**, ensure name resolution is properly configured by
 :command:`ping` ing the domain name of the Active Directory domain controller from Shell on the TrueNAS® system. If the
 :command:`ping` fails, check the DNS server and default gateway settings in
@@ -515,7 +512,7 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 | Domain Controller      | string    | hostname of domain controller                                                                    |
 |                        |           |                                                                                                  |
 +------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of FreeNAS system; cannot be greater than 15 characters                                 |
+| NetBIOS Name           | string    | hostname of TrueNAS system; cannot be greater than 15 characters                                 |
 |                        |           |                                                                                                  |
 +------------------------+-----------+--------------------------------------------------------------------------------------------------+
 | Workgroup Name         | string    | name of Windows server's workgroup                                                               |
@@ -549,7 +546,7 @@ automatically once a day as a cron job.
 Kerberos Realms
 ---------------
 
-TrueNAS® 9.3 creates a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
+TrueNAS® creates a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
 view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
 shown in Figure 9.5a.
 

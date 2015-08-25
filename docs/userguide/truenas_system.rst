@@ -319,10 +319,10 @@ If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
+**Backup:** used to backup the TrueNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
 button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
-backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the TrueNAS® console menu shown in Figure 3a.
 
 .. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
              was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
@@ -552,7 +552,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.1 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -567,7 +567,7 @@ The GUI does not display the sysctls that are pre-set when TrueNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.1 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="truenas-logo"
@@ -598,7 +598,7 @@ The GUI does not display the loaders that are pre-set when TrueNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3 deprecates the following tunables::
+The ZFS version used in 9.3.1 deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -660,7 +660,7 @@ If Something Goes Wrong
 
 If an update fails, an alert will be issued and the details will be written to :file:`/data/update.failed`.
 
-To return to a previous version of the operating system, you will need physical or IPMI access to the FreeNAS® console. Reboot the system and press any key
+To return to a previous version of the operating system, you will need physical or IPMI access to the TrueNAS® console. Reboot the system and press any key
 (except :kbd:`Enter`) when the boot menu appears to pause the boot. Select an entry with a date prior to the update then press  :kbd:`Enter` in order to boot
 into that version of the operating system, before the update was applied.
 
@@ -675,13 +675,13 @@ ZFS pools can be upgraded from the graphical administrative interface.
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
 * the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version
-  of FreeNAS® that does not support those feature flags.**
+  of TrueNAS® that does not support those feature flags.**
 
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**
   While it is unlikely that the pool upgrade will affect the data, it is always better to be safe than sorry.
 
 * upgrading a ZFS pool is **optional**. You do not need to upgrade the pool if you do not need newer feature flags or if you want to keep the possibility of
-  reverting to an earlier version of FreeNAS® or repurposing the disks in another operating system that supports ZFS. If you do decide to upgrade the pool to
+  reverting to an earlier version of TrueNAS® or repurposing the disks in another operating system that supports ZFS. If you do decide to upgrade the pool to
   the latest feature flags, you will not be able to import that pool into another operating system that does not yet support those feature flags.
 
 To perform the ZFS pool upgrade, go to :menuselection:`Storage --> Volumes --> View Volumes` and highlight the volume (ZFS pool) to upgrade. Click the
@@ -781,7 +781,7 @@ The configurable options are described in Table 5.9b. When completing the fields
 | Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               | mandatory; input the FQDN of FreeNAS system                                                     |
+| Common Name          | string               | mandatory; input the FQDN of TrueNAS system                                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -890,7 +890,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Email Address        | string               | mandatory; input the email address for the person responsible for the CA                        |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Common Name          | string               | mandatory; input the FQDN of FreeNAS system                                                     |
+| Common Name          | string               | mandatory; input the FQDN of TrueNAS system                                                     |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 

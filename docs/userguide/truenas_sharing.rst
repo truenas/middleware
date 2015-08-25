@@ -65,7 +65,7 @@ Apple (AFP) Shares
 TrueNAS® uses the
 `Netatalk <http://netatalk.sourceforge.net/>`_
 AFP server to share data with Apple systems. This section describes the configuration screen for fine-tuning AFP shares created using the :ref:`Wizard`. It
-then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup to a dataset on the FreeNAS® system,
+then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup to a dataset on the TrueNAS® system,
 and for connecting to the share from a Mac OS X client.
 
 To view the AFP share created by the Wizard, click :menuselection:`Sharing --> Apple (AFP)` and highlight the name of the share. Click its "Edit" button to see
@@ -547,7 +547,7 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
-Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® 9.3 uses TCP. To support UDP connections, go to
+Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, TrueNAS® uses TCP. To support UDP connections, go to
 :menuselection:`Services --> NFS` and check the box "Serve UDP NFS clients".
 
 .. index:: WebDAV
@@ -556,8 +556,7 @@ Some older versions of NFS clients default to UDP instead of TCP and do not auto
 WebDAV Shares
 ------------------
 
-In TrueNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory from a web
-browser.
+WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory from a web browser.
 
 Configuring WebDAV shares is a two step process. First, create the WebDAV share(s) to specify which data can be accessed. Then, configure the WebDAV service
 by specifying the port, authentication type, and authentication password. Once the configuration is complete, the share can be accessed using a URL in the
@@ -861,7 +860,7 @@ Configuring Unauthenticated Access
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CIFS supports guest logins, meaning that users can access the CIFS share without needing to provide a username or password. This type of share is convenient
-as it is easy to configure, easy to access, and does not require any users to be configured on the FreeNAS® system. This type of configuration is also the
+as it is easy to configure, easy to access, and does not require any users to be configured on the TrueNAS® system. This type of configuration is also the
 least secure as anyone on the network can access the contents of the share. Additionally, since all access is as the guest user, even if the user inputs a
 username or password, there is no way to differentiate which users accessed or modified the data on the share. This type of configuration is best suited for
 small networks where quick and easy access to the share is more important than the security of the data on the share.
@@ -1068,7 +1067,7 @@ drive; rather than mounting remote directories, initiators format and directly m
 a new target for each LUN. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
 
-In TrueNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
+In TrueNAS®, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
 locally, rather than over the network. It also supports the following VAAI (vStorage APIs for Array Integration) primitives, where VAAI is VMware's API
 framework that enables certain storage tasks, such as large data moves, to be offloaded from the virtualization hardware to the storage array.
 

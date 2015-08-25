@@ -62,7 +62,7 @@ Table 8.1a summarizes the configuration options of this screen.
 | Volume name      | string         | ZFS volumes must conform to these                                                          |
 |                  |                | `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`__;     |
 |                  |                | it is recommended to choose a name that will stick out in the logs (e.g. **not**           |
-|                  |                | :file:`data` or :file:`freenas`)                                                           |
+|                  |                | :file:`data` or :file:`truenas`)                                                           |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Volume to extend | drop-down menu | used to extend an existing ZFS pool; see :ref:`Extending a ZFS Volume` for instructions    |
@@ -193,7 +193,7 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 | Volume name   | string           | ZFS volumes must conform to these                                                              |
 |               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_ ;        |
 |               |                  | it is recommended to choose a name that will stick out in the logs (e.g.                       |
-|               |                  | **not** :file:`data` or :file:`freenas`)                                                       |
+|               |                  | **not** :file:`data` or :file:`truenas`)                                                       |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | Encryption    | checkbox         | read the section on `Encryption`_ before choosing to use encryption                            |
@@ -848,10 +848,7 @@ The safest way to perform this is to use a spare drive port or an eSATA port and
 If you do not have a spare drive port, you will need to replace one drive with a larger drive using the instructions in :ref:`Replacing a Failed Drive`. This process is slow and
 places the system in a degraded state. Since a failure at this point could be disastrous, **do not attempt this method unless the system has a reliable backup.** Replace one drive
 at a time and wait for the resilver process to complete on the replaced drive before replacing the next drive. Once all the drives are replaced and the resilver completes, you
-should see the added space in the pool.
-
-.. note:: either method requires the ZFS property "autoexpand".  Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not,
-   the pool will not recognize that the disk capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. 
+should see the added space in the pool. 
 
 To verify the autoexpand property, run this command from :ref:`Shell`, replacing *Vol1* with the name of the volume to expand::
 
@@ -1055,7 +1052,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 |                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another FreeNAS system              |
+| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another TrueNAS system              |
 | Dataset        |                            |                                                                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+

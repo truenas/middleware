@@ -1354,7 +1354,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 | Email subject             | string         | if "Send Email" box checked, subject of email updates                                                 |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Power Off UPS             | checkbox       | if checked, the UPS will also power off after shutting down the FreeNAS system                        |
+| Power Off UPS             | checkbox       | if checked, the UPS will also power off after shutting down the TrueNAS system                        |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
