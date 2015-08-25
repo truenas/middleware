@@ -246,6 +246,12 @@ class VolumeManagerForm(VolumeMixin, Form):
                     vol_encrypt=volume_encrypt)
                 volume.save()
 
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path='/mnt/' + volume_name,
+                    mp_options="rw",
+                )
+                mp.save()
             self.volume = volume
 
             grouped = OrderedDict()
@@ -658,6 +664,14 @@ class ZFSVolumeWizardForm(forms.Form):
                 )
                 volume.save()
 
+                mp_path = '/mnt/' + volume_name
+
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path=mp_path,
+                    mp_options=mp_options,
+                )
+                mp.save()
             self.volume = volume
 
             zpoolfields = re.compile(r'zpool_(.+)')
@@ -876,6 +890,12 @@ class AutoImportWizard(SessionWizardView):
                     with open(volume.get_geli_keyfile(), 'wb') as f:
                         f.write(keydata)
                 self.volume = volume
+
+                mp = models.MountPoint(
+                    mp_volume=volume,
+                    mp_path='/mnt/' + volume_name,
+                    mp_options='rw')
+                mp.save()
 
                 _n = notifier()
 
