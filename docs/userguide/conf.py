@@ -25,13 +25,11 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinxcontrib.httpdomain',
-	      'sphinx.ext.numfig'
-]
+extensions = ['sphinxcontrib.httpdomain']
 
 # -- Options for automatic Figure numbering
-numfig = True
-numfig_secnum_depth = (2)
+#numfig = True
+#numfig_secnum_depth = (2)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
