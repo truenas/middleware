@@ -40,4 +40,5 @@
 #10868	Feature	Important	Add sas3ircu to the build
 #10908	Feature	Important	add alerts for mpr 12 gbps HBA firmware mismatches
 #11027	Bug	Nice to have	Fix multiple integer overflows in expat library
+#11042	Bug	Expected	used extents are not removed from choices in the associated targets drop down
 #11068	Bug	Expected	Fixes for FreeBSD IRET handling vulnerability
