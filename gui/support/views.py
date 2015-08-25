@@ -30,14 +30,14 @@ import logging
 import os
 import subprocess
 
-from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from django.core.files.uploadedfile import TemporaryUploadedFile
 
 from dispatcher.rpc import RpcException
-from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.connector import connection as dispatcher
@@ -127,7 +127,7 @@ def ticket(request):
 
         mntpt, direc, dump = debug_get_settings()
         debug_run(direc)
-        files.append(File(open(dump, 'rb'), name=os.path.basename(dump)))
+        files.append(dump)
     else:
         debug = False
 
@@ -136,16 +136,15 @@ def ticket(request):
     step += 1
 
     data = {
-        'title': request.POST.get('subject'),
-        'body': request.POST.get('desc'),
-        'version': get_sw_version().split('-', 1)[-1],
+        'subject': request.POST.get('subject'),
+        'description': request.POST.get('desc'),
         'category': request.POST.get('category'),
         'debug': debug,
     }
 
     if get_sw_name().lower() == 'freenas':
         data.update({
-            'user': request.POST.get('username'),
+            'username': request.POST.get('username'),
             'password': request.POST.get('password'),
             'type': request.POST.get('type'),
         })
@@ -172,25 +171,36 @@ def ticket(request):
             'serial': serial,
         })
 
-    success, msg, tid = utils.new_ticket(data)
+    for f in request.FILES.getlist('attachment'):
+        if not isinstance(f, TemporaryUploadedFile):
+            tmpfile = '/tmp/%s' % f.name
+            with open(tmpfile, 'wb') as fh:
+                for chunk in f.chunks():
+                    fh.write(chunk)
+            files.append(tmpfile)
+        else:
+            files.append(f.temporary_file_path())
 
-    with open(TICKET_PROGRESS, 'w') as f:
-        f.write(json.dumps({'indeterminate': True, 'step': step}))
-    step += 1
+    if files:
+        data['attachments'] = files
 
-    data = {'message': msg, 'error': not success}
-
-    if not success:
-        pass
+    task = dispatcher.call_task_sync('support.submit', data)
+    if task['state'] != 'FINISHED':
+        data = {
+            'error': True,
+            'message': task['error']['message'],
+        }
     else:
+        data = {
+            'error': False,
+            'message': task['result'][1],
+        }
 
-        files.extend(request.FILES.getlist('attachment'))
-        for f in files:
-            success, attachmsg = utils.ticket_attach({
-                'user': request.POST.get('username'),
-                'password': request.POST.get('password'),
-                'ticketnum': tid,
-            }, f)
+    for f in files:
+        try:
+            os.unlink(f)
+        except:
+            pass
 
     data = (
         '<html><body><textarea>%s</textarea></boby></html>' % (
