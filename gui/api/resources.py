@@ -859,44 +859,44 @@ class VolumeResourceMixin(NestedMixin):
             bundle.data['_scrub_url'] = reverse(
                 'storage_scrub',
                 kwargs={
-                    'vid': bundle.obj.id,
+                    'vid': bundle.obj.vol_guid,
                 })
             bundle.data['_upgrade_url'] = reverse(
                 'storage_volume_upgrade',
                 kwargs={
-                    'object_id': bundle.obj.id,
+                    'object_id': bundle.obj.vol_guid,
                 })
             if bundle.obj.vol_encrypt > 0:
                 bundle.data['_unlock_url'] = reverse(
                     'storage_volume_unlock',
                     kwargs={
-                        'object_id': bundle.obj.id,
+                        'object_id': bundle.obj.vol_guid,
                     })
                 bundle.data['_download_key_url'] = reverse(
                     'storage_volume_key',
                     kwargs={
-                        'object_id': bundle.obj.id,
+                        'object_id': bundle.obj.vol_guid,
                     })
                 bundle.data['_rekey_url'] = reverse(
                     'storage_volume_rekey',
                     kwargs={
-                        'object_id': bundle.obj.id,
+                        'object_id': bundle.obj.vol_guid,
                     })
                 bundle.data['_add_reckey_url'] = reverse(
                     'storage_volume_recoverykey_add',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_rem_reckey_url'] = reverse(
                     'storage_volume_recoverykey_remove',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_create_passphrase_url'] = reverse(
                     'storage_volume_create_passphrase',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_change_passphrase_url'] = reverse(
                     'storage_volume_change_passphrase',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_volume_lock_url'] = reverse(
                     'storage_volume_lock',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
 
         if is_decrypted:
             if self.is_webclient(bundle.request):
