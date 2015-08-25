@@ -197,7 +197,7 @@ def volumemanager(request):
 
     bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
 
-    qs = models.Volume.objects.filter(vol_fstype='ZFS')
+    qs = models.Volume.objects.filter(vol_fstype='zfs')
     swap = Advanced.objects.latest('id').adv_swapondrive
 
     encwarn = (

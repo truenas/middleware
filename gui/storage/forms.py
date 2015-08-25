@@ -255,11 +255,14 @@ class VolumeManagerForm(VolumeMixin, Form):
 
         from freenasUI.middleware.connector import connection as dispatcher
 
-        dispatcher.call_task_sync('volume.create', {
+        result = dispatcher.call_task_sync('volume.create', {
             'name': volume_name,
             'type': 'zfs',
             'topology': topology
         })
+
+        if result['state'] != 'FINISHED':
+            return False
 
         """with transaction.atomic():
             vols = models.Volume.objects.filter(
@@ -328,7 +331,7 @@ class VolumeManagerForm(VolumeMixin, Form):
         # ModelForm compatibility layer for API framework
         #self.instance = volume
 
-        return None
+        return True
 
 
 class VolumeVdevForm(Form):
