@@ -364,6 +364,7 @@ device		ubsa		# Belkin F5U103 and compatible serial adapters
 device		uftdi		# For FTDI usb serial adapters
 device		uplcom		# Prolific PL-2303 serial adapters
 device		uslcom		# SI Labs CP2101/CP2102 serial adapters
+device		umodem
 
 # USB Ethernet, requires miibus
 device		aue		# ADMtek USB Ethernet
