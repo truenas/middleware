@@ -746,7 +746,7 @@ def clonesnap(request, snapshot):
     })
 
 
-def disk_detach(request, vname, label):
+def disk_detach(request, vname, guid):
 
     volume = models.Volume.objects.get(vol_name=vname)
 
@@ -762,39 +762,45 @@ def disk_detach(request, vname, label):
     })
 
 
-def disk_offline(request, vname, label):
-
-    volume = models.Volume.objects.get(vol_name=vname)
-    disk = notifier().label_to_disk(label)
-
+def disk_offline(request, vname, guid):
+    disk = dispatcher.call_sync('volumes.vdev_by_guid', vname, guid)
     if request.method == "POST":
-        notifier().zfs_offline_disk(volume, label)
-        return JsonResp(
-            request,
-            message=_("Disk offline operation has been issued."))
+        result = dispatcher.call_task_sync(
+            'zfs.pool.offline_disk',
+            vname,
+            guid)
+
+        if result['state'] == 'FINISHED':
+            return JsonResp(
+                request,
+                message=_("Disk offline operation has been issued."))
+        else:
+            raise MiddlewareError(result['error']['message'])
 
     return render(request, 'storage/disk_offline.html', {
         'vname': vname,
-        'label': label,
-        'disk': disk,
+        'label': disk['path'],
     })
 
 
-def disk_online(request, vname, label):
-
-    volume = models.Volume.objects.get(vol_name=vname)
-    disk = notifier().label_to_disk(label)
-
+def disk_online(request, vname, guid):
+    disk = dispatcher.call_sync('volumes.vdev_by_guid', vname, guid)
     if request.method == "POST":
-        notifier().zfs_online_disk(volume, label)
-        return JsonResp(
-            request,
-            message=_("Disk online operation has been issued."))
+        result = dispatcher.call_task_sync(
+            'zfs.pool.online_disk',
+            vname,
+            guid)
+
+        if result['state'] == 'FINISHED':
+            return JsonResp(
+                request,
+                message=_("Disk online operation has been issued."))
+        else:
+            raise MiddlewareError(result['error']['message'])
 
     return render(request, 'storage/disk_online.html', {
         'vname': vname,
-        'label': label,
-        'disk': disk,
+        'label': disk['path'],
     })
 
 

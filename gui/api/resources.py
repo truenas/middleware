@@ -326,6 +326,9 @@ class VolumeResourceMixin(NestedMixin):
     def obj_get(self, bundle, **kwargs):
         if 'pk' in kwargs and not kwargs['pk'].isdigit():
             kwargs['vol_name'] = kwargs.pop('pk')
+        else:
+            kwargs['vol_guid'] = kwargs.pop('pk')
+            
         return super(VolumeResourceMixin, self).obj_get(bundle, **kwargs)
 
     def prepend_urls(self):
@@ -546,9 +549,9 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        assert bundle.obj.vol_fstype == 'ZFS'
+        assert bundle.obj.vol_fstype == 'zfs'
 
-        pool = wrap(dispatcher.call_sync('zfs.pool.query', [('name', '=', bundle.obj.vol_name)], {'single': True}))
+        pool = wrap(dispatcher.call_sync('volumes.query', [('id', '=', bundle.obj.vol_guid)], {'single': True}))
         bundle.data.update({
             'id': bundle.obj.id,
             'name': pool['name'],
@@ -558,9 +561,9 @@ class VolumeResourceMixin(NestedMixin):
             'cksum': pool['root_vdev.stats.checksum_errors'],
         })
 
-        uid = Uid(bundle.obj.id * 100)
+        uid = Uid(100)
 
-        for key, vdevs in pool['groups'].items():
+        for key, vdevs in pool['topology'].items():
             def serialize_vdev(vdev):
                 ret = {
                     'id': uid.next(),
@@ -574,91 +577,65 @@ class VolumeResourceMixin(NestedMixin):
                     'children': [serialize_vdev(i) for i in vdev['children']]
                 }
 
+                if vdev['type'] == 'disk':
+                    if self.is_webclient(bundle.request):
+                        try:
+                            disk = Disk.objects.order_by(
+                                'disk_enabled'
+                            ).filter(disk_name=vdev['path'])[0]
+                            ret['_disk_url'] = "%s?deletable=false" % (
+                                disk.get_edit_url(),
+                            )
+                        except IndexError:
+                            pass
+
+                        if vdev['status'] == 'ONLINE':
+                            ret['_offline_url'] = reverse(
+                                'storage_disk_offline',
+                                kwargs={
+                                    'vname': pool['name'],
+                                    'guid': vdev['guid'],
+                                }
+                            )
+
+                        elif vdev['status'] == 'OFFLINE' and bundle.obj.vol_encrypt == 0:
+                            ret['_online_url'] = reverse(
+                                'storage_disk_online',
+                                kwargs={
+                                    'vname': pool['name'],
+                                    'guid': vdev['guid']
+                                }
+                            )
+
                 return ret
 
             for v in vdevs:
                 bundle.data['children'].append(serialize_vdev(v))
 
-            """
-                if isinstance(current, zfs.Root):
-                    data = {
-                        'name': current.name,
-                        'type': 'root',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                        'children': [],
-                    }
-                elif isinstance(current, zfs.Vdev):
-                    data = {
-                        'name': current.name,
-                        'type': 'vdev',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                        'children': [],
-                    }
-                    if (
-                        current.parent.name == "logs" and
-                        not current.name.startswith("stripe")
-                    ):
-                        data['_remove_url'] = reverse(
-                            'storage_zpool_disk_remove',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
-                elif isinstance(current, zfs.Dev):
-                    data = {
-                        'name': current.devname,
-                        'label': current.name,
-                        'type': 'dev',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                    }
-                    if self.is_webclient(bundle.request):
-                        try:
-                            disk = Disk.objects.order_by(
-                                'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
-                            data['_disk_url'] = "%s?deletable=false" % (
-                                disk.get_edit_url(),
-                            )
-                        except IndexError:
-                            disk = None
-                        if current.status == 'ONLINE':
-                            data['_offline_url'] = reverse(
-                                'storage_disk_offline',
+                """
+                    elif isinstance(current, zfs.Vdev):
+                        data = {
+                            'name': current.name,
+                            'type': 'vdev',
+                            'status': current.status,
+                            'read': current.read,
+                            'write': current.write,
+                            'cksum': current.cksum,
+                            'children': [],
+                        }
+                        if (
+                            current.parent.name == "logs" and
+                            not current.name.startswith("stripe")
+                        ):
+                            data['_remove_url'] = reverse(
+                                'storage_zpool_disk_remove',
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
+                """
 
-                        elif (
-                            current.status == 'OFFLINE' and
-                            bundle.obj.vol_encrypt == 0
-                        ):
-                            pname = (
-                                current.parent.parent.name
-                                if current.parent.parent else None
-                            )
-                            dev = pool.get_dev_by_name(current.name)
-                            if (
-                                dev and dev.path and os.path.exists(dev.path)
-                            ) and pname not in (
-                                'cache',
-                            ):
-                                data['_online_url'] = reverse(
-                                    'storage_disk_online',
-                                    kwargs={
-                                        'vname': pool.name,
-                                        'label': current.name,
-                                    })
-
+                """
                         if current.replacing:
                             data['_detach_url'] = reverse(
                                 'storage_disk_detach',
@@ -700,7 +677,7 @@ class VolumeResourceMixin(NestedMixin):
                                         'vname': pool.name,
                                         'label': current.name,
                                     })
-            """
+                """
 
         bundle = self.alter_detail_data_to_serialize(request, bundle)
         response = self.create_response(request, [bundle.data])
