@@ -609,8 +609,16 @@ class VolumeResourceMixin(NestedMixin):
 
                 return ret
 
-            for v in vdevs:
-                bundle.data['children'].append(serialize_vdev(v))
+            if key != 'data' and len(vdevs) > 0:
+                bundle.data['children'].append({
+                    'id': uid.next(),
+                    'name': key,
+                    'type': key,
+                    'children': [serialize_vdev(i) for i in vdevs]
+                })
+            else:
+                for v in vdevs:
+                    bundle.data['children'].append(serialize_vdev(v))
 
                 """
                     elif isinstance(current, zfs.Vdev):
