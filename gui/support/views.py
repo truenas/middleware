@@ -36,9 +36,11 @@ from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 
+from dispatcher.rpc import RpcException
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.notifier import notifier
 from freenasUI.support import forms, utils
 from freenasUI.system.utils import debug_get_settings, debug_run
@@ -200,20 +202,19 @@ def ticket(request):
 
 @require_POST
 def ticket_categories(request):
-    success, msg = utils.fetch_categories({
-        'user': request.POST.get('user'),
-        'password': request.POST.get('password'),
-    })
-    data = {
-        'error': not success,
-    }
-
-    if success:
-        data['categories'] = OrderedDict(
-            sorted([('------', '')] + msg.items(), key=lambda y: y[0].lower())
+    data = {}
+    try:
+        categories = dispatcher.call_sync(
+            'support.categories', request.POST.get('user'), request.POST.get('password')
         )
+        data['categories'] = OrderedDict(
+            sorted([('------', '')] + categories.items(), key=lambda y: y[0].lower())
+        )
+    except RpcException, e:
+        data['error'] = True
+        data['message'] = str(e)
     else:
-        data['message'] = msg
+        data['error'] = False
 
     return HttpResponse(json.dumps(data), content_type='application/json')
 
