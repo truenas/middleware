@@ -1,4 +1,4 @@
-o HA support has been completely refactored.  All implimentation details of
+o HA support has been completely refactored.  All implementation details of
   HA are now completely hidden from the UI and automatically configured by
   the system.
 
