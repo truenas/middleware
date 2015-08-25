@@ -15,7 +15,7 @@ o Fix a bug that always enabled Samba as Local Master, no matter how it
 
 o Automatically remove unavailable devices from ZFS pools when they are
   replaced.  This addresses a bug where the "ghost" of a failed and
-  subsequently replaced drive could cause a pool to report as DEGRADED
+  subsequently replaced drive could cause a pool to report as DEGRADED.
 
 o Address an issue that would cause grub to taste every drive in a pool
   when updating certain types of tunables in the GUI.  For systems with
