@@ -802,6 +802,10 @@ class Update(NewModel):
         max_length=50,
         blank=True,
     )
+    upd_server = models.CharField(
+        max_length=255,
+        blank=True,
+    )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -818,6 +822,7 @@ class Update(NewModel):
         return cls(**dict(
             upd_autocheck=config['check_auto'],
             upd_train=config['train'],
+            upd_server=config['update_server'],
         ))
 
     def _save(self, *args, **kwargs):
@@ -826,18 +831,6 @@ class Update(NewModel):
             'train': self.upd_train,
         })
         return True
-
-    def get_train(self):
-        #FIXME: lazy import, why?
-        from freenasOS import Configuration
-        conf = Configuration.Configuration()
-        conf.LoadTrainsConfig()
-        trains = conf.AvailableTrains() or []
-        if trains:
-            trains = trains.keys()
-        if not self.upd_train or self.upd_train not in trains:
-            return conf.CurrentTrain()
-        return self.upd_train
 
 
 class CertificateMiddleware:

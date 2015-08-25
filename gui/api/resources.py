@@ -43,7 +43,7 @@ from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
-from freenasOS import Configuration, Update
+from freenasOS import Update
 from freenasUI import choices
 from freenasUI.account.forms import (
     bsdUsersForm,
@@ -93,7 +93,6 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import BootEnv
 from tastypie import fields
 from tastypie.http import (
@@ -180,7 +179,7 @@ class AlertResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -1882,10 +1881,9 @@ class JailTemplateResourceMixin(object):
         bundle.data['jt_instances'] = bundle.obj.jt_instances
 
         if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse('jail_template_edit',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
+            bundle.data['_edit_url'] = reverse(
+                'jail_template_edit',
+                kwargs={'id': bundle.obj.id}
             )
 
         return bundle
@@ -2076,7 +2074,7 @@ class SnapshotResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -2218,7 +2216,7 @@ class AvailablePluginsResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -2380,21 +2378,15 @@ class CertificateAuthorityResourceMixin(object):
             if self.is_webclient(bundle.request):
                 bundle.data['_edit_url'] = reverse(
                     'CA_edit',
-                    kwargs={
-                       'id': bundle.obj.id
-                    }
+                    kwargs={'id': bundle.obj.id}
                 )
                 bundle.data['_export_certificate_url'] = reverse(
                     'CA_export_certificate',
-                    kwargs={
-                       'id': bundle.obj.id
-                    }
+                    kwargs={'id': bundle.obj.id}
                 )
                 bundle.data['_export_privatekey_url'] = reverse(
-                     'CA_export_privatekey',
-                     kwargs={
-                        'id': bundle.obj.id
-                     }
+                    'CA_export_privatekey',
+                    kwargs={'id': bundle.obj.id}
                 )
         except Exception as err:
             bundle.data['cert_DN'] = "ERROR: " + str(err)
@@ -2443,27 +2435,19 @@ class CertificateResourceMixin(object):
 
                 bundle.data['_edit_url'] = reverse(
                     'certificate_edit',
-                    kwargs={
-                       'id': bundle.obj.id
-                    }
+                    kwargs={'id': bundle.obj.id}
                 )
                 bundle.data['_export_certificate_url'] = reverse(
                     'certificate_export_certificate',
-                    kwargs={
-                       'id': bundle.obj.id
-                    }
+                    kwargs={'id': bundle.obj.id}
                 )
                 bundle.data['_export_privatekey_url'] = reverse(
                     'certificate_export_privatekey',
-                    kwargs={
-                        'id': bundle.obj.id
-                    }
+                    kwargs={'id': bundle.obj.id}
                 )
                 bundle.data['_export_certificate_and_privatekey_url'] = reverse(
                     'certificate_export_certificate_and_privatekey',
-                    kwargs={
-                       'id': bundle.obj.id
-                    }
+                    kwargs={'id': bundle.obj.id}
                 )
         except:
             # There was an error parsing this Certificate object

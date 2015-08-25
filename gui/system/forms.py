@@ -51,7 +51,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext as __
 
 from dojango import forms
-from freenasOS import Configuration
 from freenasUI import choices
 from freenasUI.account.forms import bsdUsersForm
 from freenasUI.account.models import bsdGroups, bsdUsers
@@ -1953,9 +1952,7 @@ class UpdateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(UpdateForm, self).__init__(*args, **kwargs)
-        self._conf = Configuration.Configuration()
-        self._conf.LoadTrainsConfig()
-        self.fields['curtrain'].initial = self._conf.CurrentTrain()
+        self.fields['curtrain'].initial = dispatcher.call_sync('update.get_current_train')
 
 
 class CertificateAuthorityForm(ModelForm):

@@ -54,7 +54,6 @@ from django.shortcuts import render, redirect
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
-from freenasOS import Configuration
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
@@ -1131,7 +1130,6 @@ def update_index(request):
 
     return render(request, 'system/update_index.html', {
         'update': update,
-        'updateserver': Configuration.Configuration().UpdateServerURL(),
     })
 
 

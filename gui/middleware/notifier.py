@@ -5424,16 +5424,6 @@ class notifier:
                 #action = re.sub(r'\s+', ' ', msg)
         return (state, status)
 
-    def get_train(self):
-        from freenasUI.system.models import Update
-        try:
-            update = Update.objects.order_by('-id')[0]
-        except IndexError:
-            update = Update.objects.create()
-        if not update.upd_autocheck:
-            return ''
-        return update.get_train() or ''
-
     def pwenc_reset_model_passwd(self, model, field):
         for obj in model.objects.all():
             setattr(obj, field, '')
