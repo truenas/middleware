@@ -716,11 +716,12 @@ def add_ldap_section(sc):
     ldap_save = ldap
     ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
 
-    if ldap.keytab_name and ldap.kerberos_realm:
+    if ldap.keytab_file and ldap.keytab_principal:
         ldap_section.auth_provider = 'krb5'
         ldap_section.chpass_provider = 'krb5'
         ldap_section.ldap_sasl_mech = 'GSSAPI'
         ldap_section.ldap_sasl_authid = ldap.keytab_principal
+        ldap_section.ldap_krb5_keytab = ldap.keytab_file
         ldap_section.krb5_server = ldap.krb_kdc
         ldap_section.krb5_realm = ldap.krb_realm
         ldap_section.krb5_canonicalize = 'false'
