@@ -225,7 +225,7 @@ The following mailing lists are available:
 Videos
 ------
 
-A series of instructional videos are available for FreeNAS® 9.3. They include:
+A series of instructional videos are available for FreeNAS®. They include:
 
 * `Changes in FreeNAS® 9.3 <https://www.youtube.com/watch?v=weKWqmbWdR4>`_
 
