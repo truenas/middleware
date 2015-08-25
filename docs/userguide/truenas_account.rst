@@ -234,7 +234,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
 | nologin      | use when creating a system account or to create a user account that can authenticate with shares but which cannot    |
-|              | login to the FreeNAS system using :command:`ssh`                                                                     |
+|              | login to the TrueNAS system using :command:`ssh`                                                                     |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
 | bash         | `Bourne Again shell <https://en.wikipedia.org/wiki/Bash_%28Unix_shell%29>`_                                          |

@@ -31,7 +31,7 @@ Figure 13b shows the configuration screen that appears when unformatted disks ar
 
 Input a name for the ZFS pool that conforms to these
 `naming conventions <http://docs.oracle.com/cd/E23824_01/html/821-1448/gbcpt.html>`_. It is recommended to choose a name that will stick out in the logs (e.g.
-**not** :file:`data` or :file:`freenas`).
+**not** :file:`data` or :file:`truenas`).
 
 Next, decide if the pool should provide disk redundancy, and if so, which type. The :ref:`ZFS Primer` discusses RAIDZ redundancy in more detail. If you prefer
 to make a more complex configuration, click the "Exit" button to close the "Wizard" and instead use :ref:`Volume Manager`.
@@ -145,7 +145,7 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 | Domain Controller       | string         | hostname of domain controller                                                                         |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| NetBIOS Name            | string         | hostname of FreeNAS system; cannot be greater than 15 characters                                      |
+| NetBIOS Name            | string         | hostname of TrueNAS system; cannot be greater than 15 characters                                      |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Workgroup Name          | string         | name of Windows server's workgroup                                                                    |

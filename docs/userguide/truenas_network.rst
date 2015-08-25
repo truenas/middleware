@@ -111,7 +111,7 @@ manual configuration.
 
 Figure 7.2a shows the screen that opens when you click `Interfaces --> Add Interface`. Table 7.2a summarizes the configuration options when you "Add" an
 interface or Edit an already configured interface. Note that if any changes to this screen require a network restart, the screen will turn red when you
-click the "OK" button and a pop-up message will remind you that network connectivity to the FreeNAS® system will be interrupted while the changes are
+click the "OK" button and a pop-up message will remind you that network connectivity to the TrueNAS® system will be interrupted while the changes are
 applied. Click "Yes" to proceed with the network restart or "No" to cancel the operation.
 
 **Figure 7.2a: Adding or Editing an Interface**
