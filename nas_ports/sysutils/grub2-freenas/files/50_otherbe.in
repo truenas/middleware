@@ -31,10 +31,10 @@ ROOTFS=`mount | awk '/ \/ / {print $1}'`
 BEDS="$( echo ${ROOTFS} | awk -F '/' '{print $2}' )"
 if [ "$BEDS" = "dev" ] ; then BEDS="ROOT"; fi
 
-if [ -f /data/freenas-v1.db ]; then
+if [ -d /data/freenas.db ]; then
     # FreeNAS install
-    ser=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialconsole FROM system_advanced")
-    if [ "${ser}" -eq 1 ]; then
+    ser=$(/usr/local/sbin/dsutil config-get system.serial.console)
+    if [ "${ser}" = "true" ]; then
         out="-Dh"
     else
         out=""
