@@ -30,6 +30,7 @@ generate_krb5_keytab()
         " | while read keytab_name keytab_file
 	do
 		echo "${keytab_file}" | /usr/bin/b64decode -r > "${kdir}/${keytab_name}"
+		/usr/sbin/ktutil copy "${kdir}/${keytab_name}" "/etc/krb5.keytab"
 	done
 }
 
