@@ -30,48 +30,6 @@
 . /etc/rc.freenas
 
 
-http_ssl_enabled()
-{
-	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			stg_guiprotocol
-		FROM
-			system_settings
-		WHERE
-			stg_guiprotocol = 'https'
-		ORDER BY
-			-id
-		LIMIT 1
-	")
-
-	if [ -n "${ssl}" ]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
-ftp_tls_enabled()
-{
-	local ssl=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
-		SELECT
-			ftp_tls
-		FROM
-			services_ftp
-		ORDER BY
-			-id
-		LIMIT 1
-	")
-
-	if [ "${ssl}" -gt "0" ]
-	then
-		return 0
-	fi
-
-	return 1
-}
-
 _interface_config()
 {
 	local saved_ifs="${IFS}"
@@ -403,24 +361,6 @@ _nut_config() {
 	done
 }
 
-_ssl_config()
-{
-	local ssl_list
-
-	if http_ssl_enabled
-	then
-		ssl_list="${ssl_list} nginx"
-	fi
-
-	if ftp_tls_enabled
-	then
-		ssl_list="${ssl_list} proftpd"
-	fi
-
-	ssl_list=$(echo ${ssl_list}|xargs)
-	echo "ixssl_list=\"${ssl_list}\""
-}
-
 _sssd_config()
 {
 	sssd_enable="NO"
@@ -564,8 +504,6 @@ _gen_conf()
 		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
 		echo "smartd_flags=\"-i ${inter}\""
 	done
-
-	_ssl_config
 
 	echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
 		tr \\\n \  `\""
