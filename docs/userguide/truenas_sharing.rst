@@ -1525,6 +1525,14 @@ An example of the "Fiber Channel Ports" screen is shown in Figure 10.5m.
 
 .. image:: images/tn_fiber4.png
 
+This screen shows the status of each attached fiber channel port, where:
+
+* **Initiator:** indicates that the port is acting as a client and has access to any physically attached storage.
+
+* **Target:** indicates that clients are connecting to the specified target through this port.
+
+* **Disabled:** indicates that this fiber channel port is not in use.
+
 .. _Connecting to iSCSI:
 
 Connecting to iSCSI
