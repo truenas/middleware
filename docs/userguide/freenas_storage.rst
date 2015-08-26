@@ -1215,9 +1215,9 @@ Configure PUSH
 ~~~~~~~~~~~~~~
 
 On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots`.
+:menuselection:`Storage --> Snapshots`.
 
-To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication Task` which will open the screen shown in Figure 8.3b.
+To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication` which will open the screen shown in Figure 8.3b.
 For this example, the required configuration is as follows:
 
 * the Volume/Dataset is :file:`local/data`
@@ -1235,7 +1235,7 @@ For this example, the required configuration is as follows:
 
 .. image:: images/replication2a.png
 
-Table 8.3a summarizes the available options in the "Add Replication Task" screen.
+Table 8.3a summarizes the available options in the "Add Replication" screen.
 
 **Table 8.3a: Adding a Replication Task**
 
@@ -1314,12 +1314,10 @@ The "Begin" and "End" times can be used to create a window of time where replica
 day a snapshot occurs. Change these times if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For
 the "End" time, consider how long replication will take so that it finishes before the next day's office hours begin.
 
-Once the replication task is created, it will appear in the "View Replication Tasks" of *PUSH.*
-
-*PUSH* will immediately attempt to replicate its latest snapshot to
-*PULL*. If the replication is successful, the snapshot will appear in the
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` tab of *PULL*. If the snapshot is not replicated, refer to
-:ref:`Troubleshooting Replication` for troubleshooting tips.
+Once the replication task is saved, *PUSH* will immediately attempt to replicate its latest snapshot to
+*PULL*. If the replication is successful, the snapshot will appear in the :menuselection:`Storage --> Snapshots` tab of 
+*PULL*. Also, the "Last snapshot sent to remote side" and "Status" fields of :menuselection:`Storage --> Snapshots` on *PUSH* will indicate when the last snapshot was successfully sent
+to that "Remote Hostname". If the snapshot is not replicated, refer to :ref:`Troubleshooting Replication` for troubleshooting tips.
 
 .. _Troubleshooting Replication:
 
@@ -1336,14 +1334,14 @@ If you have followed all of the steps above and have *PUSH* snapshots that are n
  ssh -vv -i /data/ssh/replication hostname_or_ip
 
 This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to 
-:menuselection:`Storage --> Replication Tasks --> View Replication Tasks` and click the "View Public Key" button. Make sure that it matches one of the values
+:menuselection:`Storage --> Replication Tasks` and click the "View Public Key" button. Make sure that it matches one of the values
 in :file:`/~/.ssh/authorized_keys` on *PULL*, where :file:`~` represents the home directory of the replication user.
 
 Also check :file:`/var/log/auth.log` on *PULL* and :file:`/var/log/messages` on
 *PUSH* to see if either log gives an indication of the error.
 
 If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` check the box next to every snapshot except for the
+:menuselection:`Storage --> Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
 Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the *local/data*
