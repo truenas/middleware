@@ -504,38 +504,27 @@ class Disk(NewModel):
         verbose_name=_("Description"),
         blank=True
     )
-    disk_transfermode = models.CharField(
+    disk_hddstandby = models.IntegerField(
         max_length=120,
-        choices=choices.TRANSFERMODE_CHOICES,
-        default="Auto",
-        verbose_name=_("Transfer Mode")
-    )
-    disk_hddstandby = models.CharField(
-        max_length=120,
+        null=True,
         choices=choices.HDDSTANDBY_CHOICES,
-        default="Always On",
         verbose_name=_("HDD Standby")
     )
-    disk_advpowermgmt = models.CharField(
+    disk_advpowermgmt = models.IntegerField(
         max_length=120,
+        null=True,
         choices=choices.ADVPOWERMGMT_CHOICES,
-        default="Disabled",
         verbose_name=_("Advanced Power Management")
     )
     disk_acousticlevel = models.CharField(
         max_length=120,
         choices=choices.ACOUSTICLVL_CHOICES,
-        default="Disabled",
+        default="DISABLED",
         verbose_name=_("Acoustic Level")
     )
     disk_togglesmart = models.BooleanField(
         default=True,
         verbose_name=_("Enable S.M.A.R.T."),
-    )
-    disk_smartoptions = models.CharField(
-        max_length=120,
-        verbose_name=_("S.M.A.R.T. extra options"),
-        blank=True
     )
     disk_enabled = models.BooleanField(
         default=True,
