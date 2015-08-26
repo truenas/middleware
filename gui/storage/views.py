@@ -1295,10 +1295,9 @@ def volume_upgrade(request, object_id):
 
 
 def disk_editbulk(request):
-
     if request.method == "POST":
         ids = request.POST.get("ids", "").split(",")
-        disks = models.Disk.objects.filter(id__in=ids)
+        disks = dispatcher.call_sync('disks.query', [('id', 'in', ids)])
         form = forms.DiskEditBulkForm(request.POST, disks=disks)
         if form.is_valid():
             form.save()
@@ -1309,12 +1308,12 @@ def disk_editbulk(request):
         return JsonResp(request, form=form)
     else:
         ids = request.GET.get("ids", "").split(",")
-        disks = models.Disk.objects.filter(id__in=ids)
+        disks = dispatcher.call_sync('disks.query', [('id', 'in', ids)])
         form = forms.DiskEditBulkForm(disks=disks)
 
     return render(request, "storage/disk_editbulk.html", {
         'form': form,
-        'disks': ', '.join([disk.disk_name for disk in disks]),
+        'disks': ', '.join([disk['path'] for disk in disks]),
     })
 
 

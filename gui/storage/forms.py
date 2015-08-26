@@ -1192,75 +1192,37 @@ class DiskFormPartial(ModelForm):
     def clean_disk_name(self):
         return self.instance.disk_name
 
-    def save(self, *args, **kwargs):
-        obj = super(DiskFormPartial, self).save(*args, **kwargs)
-        # Commit ataidle changes, if any
-        if (
-            obj.disk_hddstandby != obj._original_state['disk_hddstandby']
-            or
-            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt']
-            or
-            obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
-        ):
-            notifier().start_ataidle(obj.disk_name)
-
-        if (
-            obj.disk_togglesmart != self._original_smart_en or
-            obj.disk_smartoptions != self._original_smart_opts
-        ):
-            if obj.disk_togglesmart == 0:
-                notifier().toggle_smart_off(obj.disk_name)
-            else:
-                notifier().toggle_smart_on(obj.disk_name)
-            started = notifier().restart("smartd")
-            if (
-                started is False
-                and
-                services.objects.get(srv_service='smartd').srv_enable
-            ):
-                raise ServiceFailed(
-                    "smartd",
-                    _("The SMART service failed to restart.")
-                )
-        return obj
-
 
 class DiskEditBulkForm(Form):
-
     ids = forms.CharField(
         widget=forms.widgets.HiddenInput(),
     )
-    disk_hddstandby = forms.ChoiceField(
+    standby_mode = forms.ChoiceField(
         choices=(('', '-----'),) + choices.HDDSTANDBY_CHOICES,
         required=False,
         initial="Always On",
         label=_("HDD Standby")
     )
-    disk_advpowermgmt = forms.ChoiceField(
+    apm_mode = forms.ChoiceField(
         required=False,
         choices=(('', '-----'),) + choices.ADVPOWERMGMT_CHOICES,
         label=_("Advanced Power Management")
     )
-    disk_acousticlevel = forms.ChoiceField(
+    acoustic_level = forms.ChoiceField(
         required=False,
         choices=(('', '-----'),) + choices.ACOUSTICLVL_CHOICES,
         label=_("Acoustic Level")
     )
-    disk_togglesmart = forms.BooleanField(
+    smart = forms.BooleanField(
         initial=True,
         label=_("Enable S.M.A.R.T."),
-        required=False,
-    )
-    disk_smartoptions = forms.CharField(
-        max_length=120,
-        label=_("S.M.A.R.T. extra options"),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         self._disks = kwargs.pop('disks')
         super(DiskEditBulkForm, self).__init__(*args, **kwargs)
-        self.fields['ids'].initial = ','.join([str(d.id) for d in self._disks])
+        self.fields['ids'].initial = ','.join([str(d['id']) for d in self._disks])
 
         """
         Make sure all the disks have a same option for each field
@@ -1268,46 +1230,34 @@ class DiskEditBulkForm(Form):
         """
         initials = {}
         for disk in self._disks:
-
-            for opt in (
-                'disk_hddstandby',
-                'disk_advpowermgmt',
-                'disk_acousticlevel',
-                'disk_smartoptions',
-            ):
+            for opt in ('standby_mode', 'apm_mode', 'acoustic_level'):
                 if opt not in initials:
-                    initials[opt] = getattr(disk, opt)
-                elif initials[opt] != getattr(disk, opt):
+                    initials[opt] = disk.get(opt, '')
+                elif initials[opt] != disk.get(opt, ''):
                     initials[opt] = ''
 
-            if 'disk_togglesmart' not in initials:
-                initials['disk_togglesmart'] = disk.disk_togglesmart
-            elif initials['disk_togglesmart'] != disk.disk_togglesmart:
-                initials['disk_togglesmart'] = True
+            if 'smart' not in initials:
+                initials['smart'] = disk.get('smart')
+            elif initials['smart'] != disk.get('smart'):
+                initials['smart'] = True
 
         for key, val in initials.items():
             self.fields[key].initial = val
 
     def save(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        for disk in self._disks:
+            apm = self.cleaned_data.get('apm_mode')
+            standby = self.cleaned_data.get('standby_mode')
 
-        with transaction.atomic():
-            for disk in self._disks:
+            dispatcher.call_task_sync('disks.configure', disk['id'], {
+                'smart': self.cleaned_data.get("smart"),
+                'acoustic_level': self.cleaned_data.get('acoustic_level', 'DISABLED'),
+                'apm_mode': int(apm) if apm else None,
+                'standby_mode': int(standby) if standby else None
+            })
 
-                for opt in (
-                    'disk_hddstandby',
-                    'disk_advpowermgmt',
-                    'disk_acousticlevel',
-                ):
-                    if self.cleaned_data.get(opt):
-                        setattr(disk, opt, self.cleaned_data.get(opt))
-
-                disk.disk_togglesmart = self.cleaned_data.get(
-                    "disk_togglesmart")
-                # This is not a choice field, an empty value should reset all
-                disk.disk_smartoptions = self.cleaned_data.get(
-                    "disk_smartoptions")
-                disk.save()
-        return self._disks
+        return True
 
 
 class ZFSDataset(Form):
