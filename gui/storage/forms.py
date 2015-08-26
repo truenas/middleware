@@ -741,8 +741,7 @@ class ZFSVolumeWizardForm(forms.Form):
 
 
 class VolumeImportForm(Form):
-
-    volume_disks = forms.ChoiceField(
+    disks = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
         label=_('Member disk'),
@@ -752,49 +751,29 @@ class VolumeImportForm(Form):
                     "then unmounted. Importing non-zfs disks permanently "
                     "as a Volume is deprecated"),
     )
-    volume_fstype = forms.ChoiceField(
-        choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        label='File System type',
-    )
 
-    volume_dest_path = PathField(
+    dest_path = PathField(
         label=_("Destination"),
         help_text=_("This must be a dataset/folder in an existing Volume"),
     )
 
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
-        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        result = []
+        disks = dispatcher.call_sync('volumes.find_media')
 
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
+        for d in disks:
+            hsize = humanize_number_si(d['size'])
+            result.append((
+                d['path'],
+                "{label} <{path}> (size {hsize}, type {fstype})".format(hsize=hsize, **d)
+            ))
 
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks.extend([d.disk_name for d in models.Disk.objects.filter(
-            id__in=diskids)])
-
-        n = notifier()
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        _parts = n.get_partitions()
-        for name, part in _parts.items():
-            for i in used_disks:
-                if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
-                    del _parts[name]
-                    continue
-
-        parts = []
-        for name, part in _parts.items():
-            parts.append(Disk(part['devname'], part['capacity']))
-
-        choices = sorted(parts)
-        choices = [tuple(p) for p in choices]
-        return choices
+        return result
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -814,9 +793,6 @@ class VolumeImportForm(Form):
                 [_(u"The path %s does not exist.\
                     This must be a dataset/folder in an existing Volume" % path)])
         return cleaned_data
-
-    def done(self, request):
-        volume_fstype = self.cleaned_data['volume_fstype']
 
 
 def show_descrypt_condition(wizard):
