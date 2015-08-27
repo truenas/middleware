@@ -65,6 +65,7 @@ define([
         }, this.dapFCModeDis);
 
         on(me._mini, 'change', lang.hitch(me, me.modeChange));
+        on(me._mdis, 'change', lang.hitch(me, me.modeChange));
 
         var tgtoptions = [{label: '------', value: ''}];
         for(var i=0;i<me.targets.length;i++) {
