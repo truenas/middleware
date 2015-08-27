@@ -319,6 +319,7 @@ def fiberchanneltotarget(request):
         role = sysctl.filter('dev.isp.%d.role' % int(port_number))
         if role:
             role = role[0]
+        tun_var = 'hint.isp.%d.role' % port_number
 
         qs = models.FiberChannelToTarget.objects.filter(fc_port=fc_port)
         if qs.exists():
@@ -337,7 +338,7 @@ def fiberchanneltotarget(request):
                     sysctl_set[int(port_number)] = 2
             fctt.fc_target = None
             fctt.save()
-            qs = Tunable.objects.filter(tun_var='dev.isp.%d.role' % port_number)
+            qs = Tunable.objects.filter(tun_var=tun_var)
             if qs.exists():
                 tun = qs[0]
                 if tun.tun_value != '2':
@@ -346,7 +347,7 @@ def fiberchanneltotarget(request):
                 tun.save()
             else:
                 tun = Tunable()
-                tun.tun_var = 'dev.isp.%d.role' % port_number
+                tun.tun_var = tun_var
                 tun.tun_value = '2'
                 tun.save()
                 loader = True
@@ -358,7 +359,7 @@ def fiberchanneltotarget(request):
                     role.value = 0
             if fctt.id:
                 fctt.delete()
-            qs = Tunable.objects.filter(tun_var='dev.isp.%d.role' % port_number)
+            qs = Tunable.objects.filter(tun_var=tun_var)
             if qs.exists():
                 loader = True
                 qs.delete()
@@ -370,7 +371,7 @@ def fiberchanneltotarget(request):
                     role.value = 0
             fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
             fctt.save()
-            qs = Tunable.objects.filter(tun_var='dev.isp.%d.role' % port_number)
+            qs = Tunable.objects.filter(tun_var=tun_var)
             if qs.exists():
                 loader = True
                 qs.delete()
