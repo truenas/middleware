@@ -155,7 +155,6 @@ WARDEN_CREATE_FLAGS_LINUXJAIL		= warden_arg(0x00000100, "--linuxjail", True, "sc
 WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000200, "--archive", True, "archive")
 WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000400, "--linuxarchive", True, "linuxarchive")
 WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00000800, "--version", True, "version")
-WARDEN_CREATE_FLAGS_TEMPLATE 		= warden_arg(0x00001000, "--template", True, "template")
 WARDEN_CREATE_FLAGS_SYSLOG		= warden_arg(0x00002000, "--syslog")
 WARDEN_CREATE_FLAGS_LOGFILE		= warden_arg(0x00004000, "--logfile", True, "logfile")
 WARDEN_CREATE_FLAGS = [
@@ -171,7 +170,6 @@ WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_ARCHIVE,
     WARDEN_CREATE_FLAGS_LINUXARCHIVE,
     WARDEN_CREATE_FLAGS_VERSION,
-    WARDEN_CREATE_FLAGS_TEMPLATE,
     WARDEN_CREATE_FLAGS_SYSLOG,
     WARDEN_CREATE_FLAGS_LOGFILE
 ]
@@ -300,43 +298,6 @@ WARDEN_TYPE_FLAGS = [
     WARDEN_TYPE_FLAGS_PORTJAIL,
     WARDEN_TYPE_FLAGS_PLUGINJAIL,
     WARDEN_TYPE_FLAGS_STANARD
-]
-
-WARDEN_TEMPLATE = "template"
-WARDEN_TEMPLATE_FLAGS_CREATE	=  warden_arg(0x00000001, "create")
-WARDEN_TEMPLATE_FLAGS_DELETE	=  warden_arg(0x00000002, "delete")
-WARDEN_TEMPLATE_FLAGS_LIST	=  warden_arg(0x00000004, "list")
-WARDEN_TEMPLATE_FLAGS = [
-    WARDEN_TEMPLATE_FLAGS_CREATE,
-    WARDEN_TEMPLATE_FLAGS_DELETE,
-    WARDEN_TEMPLATE_FLAGS_LIST
-]
-
-WARDEN_TEMPLATE_CREATE = "create"
-WARDEN_TEMPLATE_CREATE_FLAGS_FBSD	= warden_arg(0x00000010, "-fbsd", True, "fbsd")
-WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS	= warden_arg(0x00000020, "-trueos", True, "trueos")
-WARDEN_TEMPLATE_CREATE_FLAGS_ARCH	= warden_arg(0x00000040, "-arch", True, "arch")
-WARDEN_TEMPLATE_CREATE_FLAGS_TAR	= warden_arg(0x00000080, "-tar", True, "tar")
-WARDEN_TEMPLATE_CREATE_FLAGS_NICK	= warden_arg(0x00000100, "-nick", True, "nick")
-WARDEN_TEMPLATE_CREATE_FLAGS_LINUX	= warden_arg(0x00000200, "-linuxjail", False)
-WARDEN_TEMPLATE_CREATE_FLAGS_MTREE	= warden_arg(0x00000400, "-mtree", True, "mtree")
-WARDEN_TEMPLATE_CREATE_FLAGS = [
-    WARDEN_TEMPLATE_CREATE_FLAGS_FBSD,
-    WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS,
-    WARDEN_TEMPLATE_CREATE_FLAGS_ARCH,
-    WARDEN_TEMPLATE_CREATE_FLAGS_TAR,
-    WARDEN_TEMPLATE_CREATE_FLAGS_NICK,
-    WARDEN_TEMPLATE_CREATE_FLAGS_LINUX,
-    WARDEN_TEMPLATE_CREATE_FLAGS_MTREE
-]
-
-WARDEN_TEMPLATE_DELETE= "delete"
-WARDEN_TEMPLATE_DELETE_FLAGS = [ ]
-
-WARDEN_TEMPLATE_LIST = "list"
-WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE      = warden_arg(0x00000001, "-v", False)
-WARDEN_TEMPLATE_LIST_FLAGS = [
-    WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE
 ]
 
 WARDEN_ZFSMKSNAP = "zfsmksnap"
@@ -799,64 +760,7 @@ class warden_type(warden_base):
 
 
 class warden_template(warden_base):
-    def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        self.args = ""
-        self.jail = None
-
-        type = None
-        tflags = None
-
-        if flags & WARDEN_TEMPLATE_FLAGS_CREATE:
-            type = WARDEN_TEMPLATE_CREATE
-            tflags = WARDEN_TEMPLATE_CREATE_FLAGS
-        elif flags & WARDEN_TEMPLATE_FLAGS_DELETE:
-            type = WARDEN_TEMPLATE_DELETE
-            tflags = WARDEN_TEMPLATE_DELETE_FLAGS
-        elif flags & WARDEN_TEMPLATE_FLAGS_LIST:
-            type = WARDEN_TEMPLATE_LIST
-            tflags = WARDEN_TEMPLATE_LIST_FLAGS
-
-        if kwargs.has_key("template") and kwargs["template"] is not None:
-            self.args += " '%s'" % kwargs['template']
-
-        cmd = "%s %s" % (WARDEN_TEMPLATE, type)
-        super(warden_template, self).__init__(cmd,
-            tflags, flags | WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE, **kwargs)
-
-    def ass(self, key, val):
-        return "%s '%s'" % (key, val)
-
-    def parse(self, thestuff):
-        themap = {
-            'nick': WARDEN_TKEY_NICK,
-            'type': WARDEN_TKEY_TYPE,
-            'version': WARDEN_TKEY_VERSION,
-            'arch': WARDEN_TKEY_ARCH,
-            'instances': WARDEN_TKEY_INSTANCES
-        } 
-
-        lines = thestuff[1].splitlines()
-
-        template = {}
-        templates = []
-        for line in lines:
-            for k in themap:
-                if line.startswith(k + ':'):
-                    parts = line.split(':')
-                    if k == 'nick':
-                        if template:
-                            templates.append(template)
-                        template = { WARDEN_TKEY_NICK: parts[1].strip() }
-                    else:
-                        val = None
-                        parts = line.split()
-                        if len(parts) > 1:
-                            val = string.join(parts[1:], ' ').strip()
-                        template[themap[k]] = val
-        if template:
-            templates.append(template) 
-        return templates
-
+    pass
 
 class warden_zfsmksnap(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
