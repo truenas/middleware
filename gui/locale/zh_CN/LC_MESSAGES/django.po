@@ -12016,3 +12016,14 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr "/dev/mps%(mps)s 中固件版本 %(fwversion)s 与驱动器版本 %(drversion)s 不匹配"
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "要启用匿名登陆则此项必填"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "Target 中已存在相同的 LUN。"

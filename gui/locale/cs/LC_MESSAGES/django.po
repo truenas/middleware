@@ -12498,3 +12498,14 @@ msgid ""
 msgstr ""
 "Verze firmware %(fwversion)s neodpovídá verzi ovladače %(drversion)s pro "
 "zařízení /dev/mps%(mps)s"
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "Vyplnění této kolonky je vyžadováno pro anonymní přihlášení"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "Pro tento cíl je tento identifikátor LUN již používán."

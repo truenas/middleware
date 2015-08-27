@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-09-18 11:18+0000\n"
-"Last-Translator: caesartan <caesartan@gmail.com>\n"
+"PO-Revision-Date: 2015-08-23 02:54+0000\n"
+"Last-Translator: tiack <tiackstar@yahoo.com.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411039126.0\n"
+"X-POOTLE-MTIME: 1440298490.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "報表"
@@ -65,7 +65,7 @@ msgstr "發生錯誤"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr "請稍候"
+msgstr "請稍候..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -100,7 +100,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:258
 msgid "Enable service"
-msgstr ""
+msgstr "啟用服務                "
 
 #: freeadmin/static/lib/js/freeadmin.js:784
 msgid "The cache is being rebuilt."
@@ -124,7 +124,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:400
 msgid "Support"
-msgstr ""
+msgstr "支援"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:124
 msgid "Size"
@@ -171,7 +171,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
 msgid "Capacity"
-msgstr ""
+msgstr "容量                "
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
 msgid "Drag and drop this to resize"
@@ -255,28 +255,27 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "確認"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
 msgid "System"
-msgstr ""
+msgstr "系統"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
 msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "網路設定"
+msgstr "網路"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 msgid "Sharing"
-msgstr ""
+msgstr "共享"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "目錄"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
@@ -400,7 +399,7 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "確認安裝"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
@@ -477,7 +476,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "如果你沒有帳號，請"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"

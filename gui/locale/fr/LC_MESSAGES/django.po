@@ -13063,3 +13063,14 @@ msgid ""
 msgstr ""
 "La version du firmware %(fwversion)s ne correspond pas à la version du "
 "driver %(drversion)s pour /dev/mps%(mps)s"
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "Ce champ est nécessaire pour les connexions anonymes"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "Le LUN existe déjà sur la cible."

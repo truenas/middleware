@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-08-15 23:14+0000\n"
+"PO-Revision-Date: 2015-08-25 11:36+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1439680489.0\n"
+"X-POOTLE-MTIME: 1440502610.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -4286,7 +4286,7 @@ msgstr "Тома"
 #: templates/storage/volumes.html.py:124 templates/storage/volumes.html:209
 #: templates/storage/volumes.html.py:213
 msgid "Create ZFS Dataset"
-msgstr "Создание набора данных ZFS"
+msgstr "Создать набор данных ZFS"
 
 #: storage/nav.py:148 storage/nav.py:201 templates/storage/volumes.html:139
 #: templates/storage/volumes.html.py:143 templates/storage/volumes.html:218
@@ -4618,7 +4618,7 @@ msgstr "Совет дня (MOTD)"
 
 #: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
-msgstr "Расширенный"
+msgstr "Расширенные"
 
 #: system/models.py:209
 msgid "From email"
@@ -5723,7 +5723,7 @@ msgstr "Изменить набор данных"
 #: templates/storage/datasets.html:3
 #, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "Создание набора данных ZFS в %(fs)s"
+msgstr "Создать набор данных ZFS в %(fs)s"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
@@ -8828,7 +8828,7 @@ msgid ""
 "Remember to add a new recovery key as this action invalidates the previous "
 "recovery key"
 msgstr ""
-"Не забудте добавить новый ключ восстановления, так как это действие делает "
+"Не забудьте добавить новый ключ восстановления, так как это действие делает "
 "предыдущий ключ недействительным"
 
 #: templates/storage/volume_detach.html:19
@@ -9355,8 +9355,9 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
-"Вы пытаететесь добавить виртуальное устройство состоящее из %(addnum)s "
-"устройств в том содержащий виртуальное устройство из %(vdevnum)s устройств"
+"Вы пытаетесь добавить виртуальное устройство состоящее из %(addnum)s "
+"устройств(а) в том содержащий виртуальное устройство из %(vdevnum)s "
+"устройств(а)"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
@@ -9378,7 +9379,7 @@ msgstr ""
 
 #: storage/forms.py:1422
 msgid "Share type"
-msgstr "Типа общего ресурса"
+msgstr "Тип общего ресурса"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
@@ -9577,7 +9578,7 @@ msgstr "Вы хотите заблокировать этот том?"
 msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
-msgstr "Не забудте создать новый пароль, так как это действие удаляет текущий"
+msgstr "Не забудьте создать новый пароль, так как это действие удаляет текущий"
 
 #: templates/storage/replication_datagrid.html:16
 msgid ""
@@ -10565,7 +10566,7 @@ msgstr "Шаблон jail успешно изменен."
 
 #: services/forms.py:1541
 msgid "Confirm WebDAV Password"
-msgstr "Подтвердите WebDAV пароль"
+msgstr "Подтвердите пароль WebDAV"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
@@ -10593,7 +10594,7 @@ msgid ""
 "already in use by another service (e.g. 22 for SSH)."
 msgstr ""
 "Это порт, на котором будет работать WebDAV.<br />Не используйте порт, "
-"который уже используется другой службой (например, 22 используеься SSH)."
+"который уже используется другой службой (например, 22 используется SSH)."
 
 #: services/models.py:1736
 msgid "HTTPS Port"
@@ -10605,7 +10606,7 @@ msgid ""
 "that is already in use by another service (e.g. 22 for SSH)."
 msgstr ""
 "Это порт, на котором будет работать Безопасный WebDAV.<br />Не используйте "
-"порт, который уже используется другой службой (например, 22 используеься "
+"порт, который уже используется другой службой (например, 22 используется "
 "SSH)."
 
 #: services/models.py:1745
@@ -10663,11 +10664,11 @@ msgstr ""
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
-msgstr "Ресурс WebDAV"
+msgstr "Общий ресурс WebDAV"
 
 #: sharing/models.py:375
 msgid "WebDAV Shares"
-msgstr "Ресурсы WebDAV"
+msgstr "Общие ресурсы WebDAV"
 
 #: storage/admin.py:263
 #: storage/admin.py:361
@@ -10677,7 +10678,7 @@ msgstr "Редактировать параметры"
 #: storage/admin.py:268
 #: storage/admin.py:367
 msgid "Create Dataset"
-msgstr "Создание набора данных"
+msgstr "Создать набор данных"
 
 #: storage/forms.py:1439
 msgid "Case Sensitivity"
@@ -10895,7 +10896,7 @@ msgstr "Центр сертификации успешно импортиров�
 
 #: system/views.py:915
 msgid "Internal Certificate Authority successfully created."
-msgstr "Внутренний цетр сертификации успешно создан."
+msgstr "Внутренний центр сертификации успешно создан."
 
 #: system/views.py:934
 msgid "Intermediate Certificate Authority successfully created."
@@ -11138,7 +11139,7 @@ msgid ""
 "Always backup the key! If the key is lost, the data on the disks will also "
 "be lost with no hope of recovery."
 msgstr ""
-"Всегда сохраняйте копия ключа! Если ключ будет утерян, данные на дисках "
+"Всегда сохраняйте копии ключа! Если ключ будет утерян, данные на дисках "
 "также будут утеряны без надежды на восстановление."
 
 #: storage/views.py:209
@@ -11189,8 +11190,7 @@ msgstr "Объекты VFS"
 
 #: storage/forms.py:2132
 msgid "I'm also aware the snapshots are currently on hold for replication"
-msgstr ""
-"Я также знаю, что снимки в настоящее время на удерживаются для репликации"
+msgstr "Я также знаю, что снимки в настоящее время удерживаются для репликации"
 
 #: storage/forms.py:2098
 msgid "Also delete the share's configuration"
@@ -11288,7 +11288,7 @@ msgid ""
 "Minute: 0-59."
 msgstr ""
 "Разрешенные значения:<br>Ползунок: 0-30 (Каждая N-ная минута).<br>Конкретная "
-"минута: 0-59"
+"минута: 0-59."
 
 #: tasks/models.py:309
 msgid ""
@@ -11296,7 +11296,7 @@ msgid ""
 "0-23."
 msgstr ""
 "Разрешенные значения:<br>Ползунок: 0-12 (Каждый N-ный час).<br>Конкретный "
-"час: 0-23"
+"час: 0-23."
 
 #: tasks/models.py:317
 msgid ""
@@ -11304,7 +11304,7 @@ msgid ""
 "1-31."
 msgstr ""
 "Разрешенные значения:<br>Ползунок: 0-15 (Каждый N-ный день).<br>Конкретный "
-"день: 1-31"
+"день: 1-31."
 
 #: templates/system/update.html:23
 msgid "NOTICE"
@@ -11344,7 +11344,7 @@ msgstr "Следующие адреса не допустимы: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
-msgstr "Эта группа аутентификации не поддепрживает взаимный CHAP."
+msgstr "Эта группа аутентификации не поддерживает взаимный CHAP"
 
 #: services/models.py:440
 msgid "iSNS Servers"
@@ -11364,7 +11364,7 @@ msgid ""
 "already in use by another service (e.g. 22 for SSH)."
 msgstr ""
 "Это порт, на котором будет работать WebDAV.<br>Не используйте порт, который "
-"уже используется другой службой (например, 22 используеься SSH)."
+"уже используется другой службой (например, 22 используется SSH)."
 
 #: services/models.py:1744
 msgid ""
@@ -11372,7 +11372,7 @@ msgid ""
 "that is already in use by another service (e.g. 22 for SSH)."
 msgstr ""
 "Это порт, на котором будет работать Безопасный WebDAV.<br>Не используйте "
-"порт, который уже используется другой службой (например, 22 используеься "
+"порт, который уже используется другой службой (например, 22 используется "
 "SSH)."
 
 #: services/models.py:1760
@@ -11463,7 +11463,7 @@ msgstr "Журналы (RAID 0: Низкая надежность, максим�
 
 #: system/forms.py:2752
 msgid "Datastore not found in the server."
-msgstr "Ресурс на найден на сервере"
+msgstr "Ресурс на найден на сервере."
 
 #: system/forms.py:2757
 msgid "Failed to connect: %s"
@@ -11538,7 +11538,7 @@ msgstr "Загрузочный том ДЕГРАДИРОВАН"
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
 msgstr ""
-"Доступно новое обновление. Примените его на закладке Система -> Обновление"
+"Доступно новое обновление. Примените его на закладке Система -> Обновление."
 
 #: templates/system/boot_scrub.html:5
 msgid "Do you want to scrub your boot pool now?"
@@ -11859,11 +11859,11 @@ msgstr "Подтвердите пароль"
 
 #: services/forms.py:762
 msgid "Password must contain at least 8 characters"
-msgstr "Пароль должен содержать не менее 8 символов."
+msgstr "Пароль должен содержать не менее 8 символов"
 
 #: services/forms.py:820
 msgid "Passphrase must contain at least 8 characters"
-msgstr "Пароль должен содержать не менее 8 символов."
+msgstr "Пароль должен содержать не менее 8 символов"
 
 #: services/forms.py:976
 msgid "Secret must be between 12 and 16 characters."
@@ -11959,7 +11959,7 @@ msgstr "Порог доступного места (%)"
 
 #: services/models.py:516
 msgid "Remaining dataset/zvol capacity warning threshold"
-msgstr "Порог предупреждения об оставшемся доступном месте для датасета/zvol."
+msgstr "Порог предупреждения об оставшемся доступном месте для датасета/zvol"
 
 #: services/models.py:550
 msgid "LUN RPM"
@@ -12125,13 +12125,13 @@ msgstr ""
 
 #: storage/forms.py:746
 msgid "This must be a dataset/folder in an existing Volume"
-msgstr "Это должно быть каталогом на существующем томе."
+msgstr "Это должно быть каталогом на существующем томе"
 
 #: storage/forms.py:797
 msgid ""
 "The path %s does not exist.                    This must be a dataset/folder "
 "in an existing Volume"
-msgstr "Путь %s не существует. Это должно быть каталогом на существующем томе."
+msgstr "Путь %s не существует. Это должно быть каталогом на существующем томе"
 
 #: storage/forms.py:1439
 msgid "The path %s already exists."
@@ -12444,7 +12444,7 @@ msgstr "Порты Fiber Channel"
 
 #: templates/sharing/index.html:27
 msgid "Block"
-msgstr "Блочное устройство"
+msgstr "Блочные устройства"
 
 #: templates/sharing/index.html:27
 msgid "FC"
@@ -12498,7 +12498,7 @@ msgstr "Максимум 6 случаев в год"
 
 #: templates/support/home.html:40
 msgid "Contract Date"
-msgstr "Дата контакта"
+msgstr "Дата контракта"
 
 #: templates/support/home.html:41
 msgid "Expired"
@@ -12626,8 +12626,9 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
-"Вы пытаететесь добавить виртуальное устройство состоящее из %(addnum)s "
-"устройств в том содержащий виртуальное устройство из %(vdevnum)s устройств"
+"Вы пытаетесь добавить виртуальное устройство состоящее из %(addnum)s "
+"устройств(а) в том содержащий виртуальное устройство из %(vdevnum)s "
+"устройств(а)"
 
 #: directoryservice/forms.py:122
 msgid "Confirm LDAP User DN Password"
@@ -12664,9 +12665,8 @@ msgstr ""
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
-#, fuzzy
 msgid "Kerberos Principal"
-msgstr "Область Kerberos."
+msgstr ""
 
 #: network/forms.py:254
 msgid "The following VHIDs are already in use: %s"
@@ -12715,3 +12715,13 @@ msgid ""
 msgstr ""
 "Версия firmware %(fwversion)s не соответствует версии драйвера %(drversion)s "
 "для /dev/mpr%(mpr)s"
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "Это поле является обязательным для анонимного входа"
+
+#: services/forms.py:1151
+msgid "Extent is already in this target."
+msgstr "Экстент уже в этой цели."
