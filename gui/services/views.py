@@ -26,6 +26,7 @@
 #####################################################################
 import json
 import logging
+import sysctl
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -45,6 +46,7 @@ from freenasUI.services.forms import (
     servicesForm,
     CIFSForm
 )
+from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
 
 log = logging.getLogger("services.views")
@@ -303,6 +305,8 @@ def services_cifs(request):
 def fiberchanneltotarget(request):
 
     i = 0
+    sysctl_set = {}
+    loader = False
     while True:
 
         fc_port = request.POST.get('fcport-%d-port' % i)
@@ -311,26 +315,79 @@ def fiberchanneltotarget(request):
         if fc_port is None:
             break
 
+        port_number = int(fc_port.replace('isp', ''))
+        role = sysctl.filter('dev.isp.%d.role' % int(port_number))
+        if role:
+            role = role[0]
+
         qs = models.FiberChannelToTarget.objects.filter(fc_port=fc_port)
         if qs.exists():
             fctt = qs[0]
         else:
             fctt = models.FiberChannelToTarget()
             fctt.fc_port = fc_port
+        # Initiator mode
         if fc_target in ('false', False):
+            if role:
+                # From disabled to initiator, just set sysctl
+                if role.value == 0:
+                    role.value = 2
+                # From target to initiator, reload ctld then set to 2
+                elif role.value == 1:
+                    sysctl_set[int(port_number)] = 2
             fctt.fc_target = None
             fctt.save()
+            qs = Tunable.objects.filter(tun_var='dev.isp.%d.role' % port_number)
+            if qs.exists():
+                tun = qs[0]
+                if tun.tun_value != '2':
+                    tun.tun_value = '2'
+                    loader = True
+                tun.save()
+            else:
+                tun = Tunable()
+                tun.tun_var = 'dev.isp.%d.role' % port_number
+                tun.tun_value = '2'
+                tun.save()
+                loader = True
+        # Disabled
         elif fc_target is None:
+            if role:
+                # From initiator to disabled, just set sysctl
+                if role.value == 2:
+                    role.value = 0
             if fctt.id:
                 fctt.delete()
+            qs = Tunable.objects.filter(tun_var='dev.isp.%d.role' % port_number)
+            if qs.exists():
+                loader = True
+                qs.delete()
+        # Target mode
         else:
+            if role:
+                # From initiator to target, first set sysctl
+                if role.value == 2:
+                    role.value = 0
             fctt.fc_target = models.iSCSITarget.objects.get(id=fc_target)
             fctt.save()
+            qs = Tunable.objects.filter(tun_var='dev.isp.%d.role' % port_number)
+            if qs.exists():
+                loader = True
+                qs.delete()
 
         i += 1
 
     if i > 0:
         notifier().reload("iscsitarget")
+
+    for port, val in sysctl_set.items():
+        role = sysctl.filter('dev.isp.%d.role' % int(port))
+        if role:
+            role = role[0]
+            role.value = val 
+
+    if loader:
+        notifier().reload('loader')
 
     return JsonResp(
         request,
