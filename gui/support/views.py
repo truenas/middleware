@@ -95,7 +95,15 @@ def license_update(request):
             return JsonResp(request, form=form)
     else:
         form = forms.LicenseUpdateForm()
+
+    eula = None
+    if not notifier().is_freenas():
+        if os.path.exists('/usr/local/share/truenas/eula'):
+            with open('/usr/local/share/truenas/eula', 'r') as f:
+                eula = f.read().decode('utf8')
+
     return render(request, 'support/license_update.html', {
+        'eula': eula,
         'form': form,
         'license': license,
     })
