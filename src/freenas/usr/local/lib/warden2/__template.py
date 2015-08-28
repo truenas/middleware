@@ -25,44 +25,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import platform
-from sys import stderr
-from __fetch import __fetch_jails
-from __pipeopen import __pipeopen
-from __rel import __rel_list
-
-
-def __create_jail(args):
-    """
-    This wraps `warden create` and translates the syntax to `iocage create`.
-    """
-    # iocage looks for 'MAJOR.MINOR-RELEASE' without the patch level, this strips the patch level
-    _host_release = '-'.join(platform.release().split('-')[:2])
-    if args.boot:
-        args.boot = 'on'
+def __template_handling(args):
+    if 'list' in args.list:
+        print 'nick: standard'
+        print 'type: FreeBSD'
+        print 'version:'
+        print 'arch: amd64'
     else:
-        args.boot = 'off'
-
-    # Check if the user supplied a RELEASE, otherwise assume hosts RELEASE
-    if not args.release:
-        args.release = _host_release
-
-    # If iocage doesn't have the RELEASE already fetched, do so now
-    if __rel_list(args) is False:
-        print '  Fetching:', args.release
-        __fetch_jails(args)
-
-    print '  Creating jail, please wait...'
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/local/sbin/iocage',
-         'create',
-         'tag={0}'.format(args.tag),
-         'vnet=off',
-         'ip4_addr={0}'.format(args.ip4),
-         'boot={0}'.format(args.boot),
-         'release={0}'.format(args.release)])
-    if retcode == 0:
-        print '  Jail created!'
-    else:
-        print results_stdout
-        stderr.write(results_stderr)
+        pass

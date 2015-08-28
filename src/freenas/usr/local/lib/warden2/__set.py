@@ -25,44 +25,27 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import platform
-from sys import stderr
-from __fetch import __fetch_jails
 from __pipeopen import __pipeopen
-from __rel import __rel_list
+import time
+from sys import stderr
 
 
-def __create_jail(args):
+def __set_jail_prop(args):
     """
-    This wraps `warden create` and translates the syntax to `iocage create`.
+    Take 2 arguments and supplies that to `iocage set` for the jail
     """
-    # iocage looks for 'MAJOR.MINOR-RELEASE' without the patch level, this strips the patch level
-    _host_release = '-'.join(platform.release().split('-')[:2])
-    if args.boot:
-        args.boot = 'on'
-    else:
-        args.boot = 'off'
+    if args.set in 'vnet-enable':
+        args.set = 'vnet=on'
+    if args.set in ('nat-disable', 'nat-enable'):
+        exit(0)
 
-    # Check if the user supplied a RELEASE, otherwise assume hosts RELEASE
-    if not args.release:
-        args.release = _host_release
-
-    # If iocage doesn't have the RELEASE already fetched, do so now
-    if __rel_list(args) is False:
-        print '  Fetching:', args.release
-        __fetch_jails(args)
-
-    print '  Creating jail, please wait...'
     (retcode, results_stdout, results_stderr) = __pipeopen(
         ['/usr/local/sbin/iocage',
-         'create',
-         'tag={0}'.format(args.tag),
-         'vnet=off',
-         'ip4_addr={0}'.format(args.ip4),
-         'boot={0}'.format(args.boot),
-         'release={0}'.format(args.release)])
+         'set',
+         '{0}'.format(args.set),
+         '{0}'.format(args.jail)])
     if retcode == 0:
-        print '  Jail created!'
+        print '  Property {0} set on {1}'.format(args.set, args.jail)
     else:
         print results_stdout
         stderr.write(results_stderr)

@@ -31,8 +31,10 @@ from __chroot import __chroot_jail
 from __create import __create_jail
 from __delete import __delete_jail
 from __list import __list_jails
+from __set import __set_jail_prop
 from __start import __start_jail
 from __stop import __stop_jail
+from __template import __template_handling
 from __warden import __warden_usage
 
 
@@ -55,7 +57,11 @@ _create_parser = subparsers.add_parser('create')
 _create_parser.add_argument('tag', action='store')
 _create_parser.add_argument('--ipv4', action='store', dest='ip4')
 _create_parser.add_argument('--startauto', action='store_true', dest='boot')
-_create_parser.add_argument('--version', action='store', dest='release')
+_create_parser.add_argument('--version', action='store', dest='release', default='10.2-RELEASE')
+_create_parser.add_argument('--vanilla', action='store_true')
+_create_parser.add_argument('--syslog', action='store_true')
+_create_parser.add_argument('--template', action='store', nargs=argparse.REMAINDER)
+_create_parser.add_argument('--logfile', action='store', dest=None)
 _create_parser.set_defaults(func=__create_jail)
 
 _delete_parser = subparsers.add_parser('delete')
@@ -68,6 +74,11 @@ _list_parser.add_argument('-v', help='Wraps "iocage list --long"',
                           action='store_true', dest='_long_list')
 _list_parser.set_defaults(func=__list_jails)
 
+_set_parser = subparsers.add_parser('set')
+_set_parser.add_argument('set', action='store')
+_set_parser.add_argument('jail', action='store')
+_set_parser.set_defaults(func=__set_jail_prop)
+
 _start_parser = subparsers.add_parser('start')
 _start_parser.add_argument('jail', action='store')
 _start_parser.set_defaults(func=__start_jail)
@@ -75,3 +86,8 @@ _start_parser.set_defaults(func=__start_jail)
 _stop_parser = subparsers.add_parser('stop')
 _stop_parser.add_argument('jail', action='store')
 _stop_parser.set_defaults(func=__stop_jail)
+
+_template_parser = subparsers.add_parser('template')
+_template_parser.add_argument('list', action='store', nargs=argparse.REMAINDER)
+_template_parser.add_argument('create', action='store', nargs=argparse.REMAINDER)
+_template_parser.set_defaults(func=__template_handling)
