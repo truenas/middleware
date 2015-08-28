@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2015-08-08 09:16+0000\n"
+"PO-Revision-Date: 2015-08-25 09:33+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uz\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1439025375.0\n"
+"X-POOTLE-MTIME: 1440495229.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11728,4 +11728,13 @@ msgstr ""
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
+msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+msgid "This field is required for failover"
+msgstr ""
+
+#: services/forms.py:1151
+msgid "Extent is already in this target."
 msgstr ""

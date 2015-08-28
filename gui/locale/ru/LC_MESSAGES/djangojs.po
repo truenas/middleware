@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-08-10 09:30+0000\n"
+"PO-Revision-Date: 2015-08-25 06:27+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1439199056.0\n"
+"X-POOTLE-MTIME: 1440484037.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -310,7 +310,7 @@ msgstr "Это поле может содержать только буквы, �
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr "Укажите размер используя суфиксы B, K, M, G, T."
+msgstr "Укажите размер используя суффиксы B, K, M, G, T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"

@@ -12427,3 +12427,14 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "이 입력란은 익명 접속을 위해서 꼭 필요합니다"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "이미 같은 대상에 LUN이 존재합니다."

@@ -12363,3 +12363,14 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "To polje je potrebno za anonimen vpis"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "LUN je že v istem zadetku."
