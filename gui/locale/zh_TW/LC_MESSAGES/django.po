@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2014-09-18 11:18+0000\n"
-"Last-Translator: caesartan <caesartan@gmail.com>\n"
+"PO-Revision-Date: 2015-08-24 15:03+0000\n"
+"Last-Translator: tiack <tiackstar@yahoo.com.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1411039126.0\n"
+"X-POOTLE-MTIME: 1440428637.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -480,11 +480,11 @@ msgstr "Rsync 資料同步模組"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "推"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "拉"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -928,9 +928,8 @@ msgid "Physical NICs in the LAGG"
 msgstr "LAGG 介面上的實體網路卡"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "實體網路卡"
+msgstr "LAGG 實體網路卡"
 
 #: network/forms.py:360
 #, python-format
@@ -1070,7 +1069,6 @@ msgid "Virtual Interface"
 msgstr "虛擬介面"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr "介面名稱必須為 vlanXX 格式，其中 XX 為數字。例如：vlan0."
 
@@ -1160,9 +1158,8 @@ msgstr "檢視所有網路聚集"
 #~ msgstr "LAGG 介面新增成功"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "群組的 gid 已經存在！"
+msgstr "這個IP已經被使用！"
 
 #: plugins/forms.py:92
 #, fuzzy
@@ -1226,7 +1223,7 @@ msgstr ""
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr ""
+msgstr "已掛載?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
@@ -1244,9 +1241,8 @@ msgstr "暫存區重建失敗"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
-#, fuzzy
 msgid "Plugin name"
-msgstr "網域名稱"
+msgstr "外掛名稱"
 
 #: plugins/models.py:39
 msgid "Name of the plugin"
@@ -1261,9 +1257,8 @@ msgid "Info name of the plugin"
 msgstr ""
 
 #: plugins/models.py:50
-#, fuzzy
 msgid "Plugin version"
-msgstr "Windows 版本"
+msgstr "外掛 版本"
 
 #: plugins/models.py:51
 #, fuzzy
@@ -1271,9 +1266,8 @@ msgid "Version of the plugin"
 msgstr "加密連線"
 
 #: plugins/models.py:57
-#, fuzzy
 msgid "Plugin API version"
-msgstr "Windows 版本"
+msgstr "外掛 API 版本"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
@@ -1286,9 +1280,8 @@ msgstr ""
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
-#, fuzzy
 msgid "Plugin IP address"
-msgstr "控制器的IP位址"
+msgstr "外掛 IP位址"
 
 #: plugins/models.py:80 plugins/models.py:81
 #: templates/plugins/plugin_info.html:17
@@ -1330,9 +1323,8 @@ msgid "Mount Points"
 msgstr "載掛點"
 
 #: plugins/views.py:52
-#, fuzzy
 msgid "Plugin successfully updated."
-msgstr "%s 更新成功"
+msgstr "外掛已成功更新"
 
 #: plugins/views.py:80
 #, fuzzy
@@ -1344,14 +1336,12 @@ msgid "Unable to remove plugin."
 msgstr ""
 
 #: plugins/views.py:101
-#, fuzzy
 msgid "Plugin successfully updated"
-msgstr "%s 更新成功"
+msgstr "外掛已成功更新"
 
 #: plugins/views.py:130
-#, fuzzy
 msgid "Plugin successfully installed"
-msgstr "%s 更新成功"
+msgstr "外掛已成功安裝"
 
 #: plugins/views.py:201
 msgid "There was a problem importing the jail."
@@ -1774,7 +1764,6 @@ msgid "Auxiliary parameters"
 msgstr "附屬參數"
 
 #: services/models.py:144
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
 msgstr "這些參數將被新增至 smb.conf 的 [Global] 區段"
 
@@ -4518,9 +4507,8 @@ msgstr ""
 "(STRONGLY DISCOURAGED)."
 
 #: system/models.py:179
-#, fuzzy
 msgid "Show console messages in the footer"
-msgstr "將控制訊息顯示在頁尾 (需重新讀取使用介面)"
+msgstr "將控制訊息顯示在頁面下方 (需重新讀取使用介面)"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
@@ -4528,7 +4516,7 @@ msgstr "如果有嚴重錯誤，請顯示追踪訊息"
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "預設顯示進階欄位"
 
 #: system/models.py:188
 #, fuzzy
@@ -4978,14 +4966,12 @@ msgstr "變更電子郵件"
 #~ msgstr "變更管理者密碼"
 
 #: templates/freeadmin/advanced_btn.html:25
-#, fuzzy
 msgid "Basic Mode"
-msgstr "Rsync 資料同步模組"
+msgstr "基本模式"
 
 #: templates/freeadmin/advanced_btn.html:27
-#, fuzzy
 msgid "Advanced Mode"
-msgstr "進階"
+msgstr "進階模式"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5259,7 +5245,7 @@ msgstr "沒有設置預設路由"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "安裝..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
@@ -5281,9 +5267,8 @@ msgid "Edit Plugin"
 msgstr "編輯入口首頁"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
-#, fuzzy
 msgid "Delete plugin"
-msgstr "刪除複寫"
+msgstr "刪除外掛"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
@@ -5576,9 +5561,8 @@ msgid "Update"
 msgstr "更新"
 
 #: templates/services/plugins.html:56
-#, fuzzy
 msgid "Update plugin"
-msgstr "刪除複寫"
+msgstr "更新外掛"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
@@ -6059,9 +6043,7 @@ msgstr "寄送測試郵件"
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
-msgstr ""
-"提示：測試發送電子郵件給 root 使用者。請從選單 [使用者] -> [root]  -> [更改電"
-"子郵件]"
+msgstr "提示：測試發送電子郵件給 root 使用者。請更改 [使用者] -> [root]  -> [電子郵件] 欄位"
 
 #: templates/system/ntpserver.html:7
 msgid "iBurst"
@@ -6730,7 +6712,7 @@ msgstr "ActiveDirectory 設定"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "加密，無密碼的加密"
 
 #: choices.py:173
 msgid "LANMAN1"
@@ -6749,17 +6731,16 @@ msgid "SMB2_02"
 msgstr ""
 
 #: choices.py:312
-#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb 壓縮法 (推薦)"
+msgstr "lzjb 壓縮法 (過時,不推薦)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip 壓縮法 (最高壓縮)"
 
 #: choices.py:613
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:675
 msgid "Verbose"
@@ -6795,9 +6776,8 @@ msgid "auth+!data"
 msgstr ""
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "確認密碼"
+msgstr "確認新密碼"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
@@ -6858,7 +6838,6 @@ msgid "IPv4 bridge netmask"
 msgstr "IPv4 網路遮罩"
 
 #: jails/models.py:128
-#, fuzzy
 msgid "IPv6 address"
 msgstr "IPv6 位址"
 
@@ -6924,7 +6903,6 @@ msgid "Jail Templates"
 msgstr "IPv4 網路遮罩"
 
 #: jails/models.py:533
-#, fuzzy
 msgid "Read-Only"
 msgstr "唯讀"
 
@@ -6973,7 +6951,6 @@ msgid "In Progress"
 msgstr ""
 
 #: network/forms.py:380
-#, fuzzy
 msgid "The IP \"%s\" is not valid"
 msgstr " '%s' 不是有效的 IP 位址"
 
@@ -7030,9 +7007,8 @@ msgid "Unable to set repository: %s"
 msgstr ""
 
 #: plugins/models.py:112
-#, fuzzy
 msgid "Plugin"
-msgstr "網域名稱"
+msgstr "外掛"
 
 #: plugins/models.py:217
 #, fuzzy
@@ -7229,9 +7205,8 @@ msgid "NIS Domain"
 msgstr "網域名稱"
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "國家"
+msgstr "國碼"
 
 #: services/models.py:1858
 msgid ""
@@ -7462,9 +7437,8 @@ msgid "Recovery Key"
 msgstr "每天"
 
 #: storage/forms.py:2400
-#, fuzzy
 msgid "Restart services"
-msgstr "服務控制"
+msgstr "重啟服務"
 
 #: storage/forms.py:2417
 msgid "Jails/Plugins"
@@ -7531,7 +7505,6 @@ msgid "The volume %s is locked by encryption"
 msgstr "磁區無法提供服務"
 
 #: system/forms.py:518
-#, fuzzy
 msgid "The two passphrase fields didn't match."
 msgstr "密碼和確認密碼不一致！"
 
@@ -7554,7 +7527,6 @@ msgid "System dataset pool"
 msgstr "原生資料集"
 
 #: system/models.py:70
-#, fuzzy
 msgid "WebGUI HTTP Port"
 msgstr "WebGUI 連接埠"
 
@@ -7690,11 +7662,11 @@ msgstr ""
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "未加密"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "加密，有密碼的加密"
 
 #: choices.py:172
 msgid "COREPLUS"
@@ -7709,13 +7681,12 @@ msgid "SMB2_24"
 msgstr ""
 
 #: choices.py:307
-#, fuzzy
 msgid "lz4 (recommended)"
-msgstr "lzjb 壓縮法 (推薦)"
+msgstr "lz4 壓縮法 (推薦)"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle 壓縮法 (補零加密)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -7723,7 +7694,7 @@ msgstr ""
 
 #: choices.py:610
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:672
 msgid "Fatal"
@@ -7754,7 +7725,6 @@ msgid "Local 5"
 msgstr "本機使用者"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
 msgstr "網路卡"
 
@@ -7806,9 +7776,8 @@ msgstr "無效的韌體更新檔"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "無效的韌體更新驗證碼"
+msgstr "無效網路: %s"
 
 #: freeadmin/navtree.py:576
 #, fuzzy
@@ -7831,7 +7800,7 @@ msgstr "刪除複寫"
 
 #: jails/admin.py:200
 msgid "Start"
-msgstr ""
+msgstr "啟動"
 
 #: jails/admin.py:271
 msgid "Instances"
@@ -7899,7 +7868,7 @@ msgstr "檢視%s"
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
-msgstr ""
+msgstr "安裝外掛失敗: %s"
 
 #: jails/views.py:95
 #, fuzzy
@@ -7925,7 +7894,6 @@ msgid "None requested"
 msgstr ""
 
 #: network/admin.py:44
-#, fuzzy
 msgid "IPv4 Addresses"
 msgstr "IPv4 位址"
 
@@ -7994,18 +7962,17 @@ msgstr ""
 
 #: plugins/plugin.py:119
 msgid "Failed to download %(url)s: %(error)s"
-msgstr ""
+msgstr "%(url)s 下載失敗 : %(error)s"
 
 #: plugins/views.py:181
 #: plugins/views.py:242
-#, fuzzy
 msgid "Invalid plugin"
-msgstr "無效的前置字元"
+msgstr "無效的外掛"
 
 #: plugins/views.py:192
 #: plugins/views.py:250
 msgid "Failed to download plugin"
-msgstr ""
+msgstr "下載外掛失敗"
 
 #: plugins/views.py:224
 #: plugins/views.py:355
@@ -8446,12 +8413,10 @@ msgid "Unable to migrate system dataset!"
 msgstr ""
 
 #: system/models.py:61
-#, fuzzy
 msgid "WebGUI IPv4 Address"
-msgstr "WebGUI 網址"
+msgstr "WebGUI IPv4 網址"
 
 #: system/models.py:75
-#, fuzzy
 msgid "WebGUI HTTPS Port"
 msgstr "WebGUI 連接埠"
 
@@ -8507,9 +8472,8 @@ msgid "Registration"
 msgstr "目的端"
 
 #: system/models.py:1138
-#, fuzzy
 msgid "Syslog"
-msgstr "Syslog 伺服器"
+msgstr "系統記錄"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
@@ -8566,7 +8530,7 @@ msgstr "確定刪除 \"%(name)\"？"
 
 #: templates/plugins/index.html:12
 msgid "Installed"
-msgstr ""
+msgstr "已安裝"
 
 #: templates/registration/login.html:57
 msgid "For security reasons, you must now set a new root password:"
@@ -8675,9 +8639,8 @@ msgid ""
 msgstr ""
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:171
 msgid "CORE"
@@ -8700,9 +8663,8 @@ msgid "SMB3_00"
 msgstr ""
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip 壓縮法(最快)"
+msgstr "lz4 壓縮法(最快)"
 
 #: choices.py:569
 msgid "Verify"
@@ -8710,15 +8672,15 @@ msgstr ""
 
 #: choices.py:609
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: choices.py:611
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:612
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 #: choices.py:686
 #, fuzzy
@@ -8777,7 +8739,6 @@ msgid "auth+data"
 msgstr ""
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "新密碼"
 
@@ -8792,7 +8753,6 @@ msgid "Permit Sudo"
 msgstr ""
 
 #: account/models.py:146
-#, fuzzy
 msgid "Disable password login"
 msgstr "停用密碼登入"
 
@@ -8824,16 +8784,15 @@ msgstr "儲存"
 
 #: jails/admin.py:201
 msgid "Stop"
-msgstr ""
+msgstr "停止"
 
 #: jails/forms.py:94
 msgid "vanilla"
 msgstr ""
 
 #: jails/forms.py:486
-#, fuzzy
 msgid "Path does not exist!"
-msgstr "路徑不存在"
+msgstr "路徑不存在!"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
@@ -8986,7 +8945,6 @@ msgid "Media Status"
 msgstr "狀態"
 
 #: network/admin.py:49
-#, fuzzy
 msgid "IPv6 Addresses"
 msgstr "IPv6 位址"
 
@@ -9023,9 +8981,8 @@ msgid "jail not found"
 msgstr "找不到網頁"
 
 #: plugins/views.py:171
-#, fuzzy
 msgid "Plugin not installed"
-msgstr "%s 更新成功"
+msgstr "外掛尚未安裝"
 
 #: plugins/views.py:205
 #, fuzzy
@@ -9095,9 +9052,8 @@ msgid ""
 msgstr "主機別名。可重複讓每個網域用相同的IP。請使用空白字元來分隔多個主機別名。"
 
 #: services/models.py:1018
-#, fuzzy
 msgid "UPS Mode"
-msgstr "模式"
+msgstr "UPS 模式"
 
 #: services/models.py:1085
 #, fuzzy
@@ -9445,9 +9401,8 @@ msgid "Unable to create system dataset!"
 msgstr ""
 
 #: system/models.py:67
-#, fuzzy
 msgid "WebGUI IPv6 Address"
-msgstr "WebGUI 網址"
+msgstr "WebGUI IPv6 網址"
 
 #: system/models.py:203
 msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
@@ -9729,9 +9684,8 @@ msgid "ATTENTION - Currently the following services depend on this volume: "
 msgstr ""
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "確定要卸載嗎？"
+msgstr "確定要編輯嗎？"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9831,9 +9785,8 @@ msgstr ""
 
 #: system/nav.py:45
 #: templates/system/index.html:3
-#, fuzzy
 msgid "Information"
-msgstr "非正式"
+msgstr "資訊"
 
 #: tasks/nav.py:4
 #: templates/menubar.html:13
@@ -10455,9 +10408,8 @@ msgid "Kerberos Realm"
 msgstr "Kerberos Keytab 檔"
 
 #: services/views.py:269
-#, fuzzy
 msgid "CIFS successfully updated."
-msgstr "%s 更新成功"
+msgstr "CIFS 更新成功"
 
 #: sharing/models.py:290
 msgid "Security"
@@ -10557,23 +10509,23 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10669,9 +10621,8 @@ msgid "Global auxiliary parameters"
 msgstr "附屬參數"
 
 #: services/models.py:328
-#, fuzzy
 msgid "These parameters are added to [Global] section of afp.conf"
-msgstr "這些參數將被新增至 smb.conf 的 [Global] 區段"
+msgstr "這些參數將被新增至 afp.conf 的 [Global] 區段"
 
 #: services/models.py:1728
 #, fuzzy
@@ -10893,7 +10844,7 @@ msgstr "請在這貼上您產生的私鑰和公鑰的內容"
 
 #: system/models.py:550
 msgid "Check Automatically For Updates"
-msgstr ""
+msgstr "自動檢查系統更新"
 
 #: system/utils.py:82
 msgid "Downloading"
@@ -11247,9 +11198,8 @@ msgid ""
 msgstr ""
 
 #: jails/models.py:359
-#, fuzzy
 msgid "IPv4 DHCP"
-msgstr "DHCP"
+msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
 #, fuzzy
@@ -11263,9 +11213,8 @@ msgid ""
 msgstr ""
 
 #: storage/views.py:203
-#, fuzzy
 msgid "WARNING!"
-msgstr "警告"
+msgstr "警告!"
 
 #: storage/views.py:205
 msgid ""
@@ -11603,9 +11552,8 @@ msgstr ""
 
 #: system/models.py:920
 #: templates/system/index.html:33
-#, fuzzy
 msgid "VMWare Plugin"
-msgstr "網域名稱"
+msgstr "VMWare 外掛"
 
 #: system/views.py:239
 msgid "Scrubbing the Boot Pool..."
@@ -11651,9 +11599,8 @@ msgid "Failed to delete Boot Environments."
 msgstr "刪除複寫"
 
 #: system/alertmods/boot_volume_status.py:44
-#, fuzzy
 msgid "The boot volume status is DEGRADED"
-msgstr "磁區 %s 狀態異常(DEGRADED)"
+msgstr "啟動磁區狀態異常(DEGRADED)"
 
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
@@ -11692,13 +11639,12 @@ msgid "The following packages will be downloaded:"
 msgstr ""
 
 #: templates/system/update_check.html:31
-#, fuzzy
 msgid "Do you want to continue?"
-msgstr "確定要將磁碟離線嗎？"
+msgstr "確定要繼續嗎？"
 
 #: templates/system/update_check.html:32
 msgid "Apply updates after downloading"
-msgstr ""
+msgstr "下載後更新"
 
 #: templates/system/vmwareplugin_add.html:5
 #: templates/system/vmwareplugin_edit.html:6
@@ -11823,9 +11769,8 @@ msgstr "系統時間"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week) 週"
+msgstr "%(weeks)s 週"
 
 #: system/views.py:419
 #, fuzzy
@@ -11833,9 +11778,8 @@ msgid "Disk has been successfully detached."
 msgstr "磁區更新成功"
 
 #: system/alertmods/boot_volume_status.py:15
-#, fuzzy
 msgid "The boot volume state is %(state)s: %(status)s"
-msgstr "磁區 %(volume) 狀態 %(status)"
+msgstr "啟動磁區狀態 %(state): %(status)s"
 
 #: system/alertmods/volume_status.py:17
 #, fuzzy
@@ -11849,25 +11793,24 @@ msgid "Changelog"
 msgstr "變更"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
@@ -11882,9 +11825,8 @@ msgid "Mixed"
 msgstr ""
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "訪客帳號"
+msgstr "Microsoft 帳號"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -11893,9 +11835,8 @@ msgstr ""
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
-msgstr "工作群組"
+msgstr "工作群組: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
@@ -12009,9 +11950,8 @@ msgid "Passphrase must contain at least 8 characters"
 msgstr "您的名稱中包含無效字元 (%s)."
 
 #: services/forms.py:976
-#, fuzzy
 msgid "Secret must be between 12 and 16 characters."
-msgstr "值必須介於 0 ～ 1000 之間。"
+msgstr "加密必須是12~16個字元"
 
 #: services/forms.py:983
 msgid "Peer secret must be between 12 and 16 characters."
@@ -12170,9 +12110,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1062
-#, fuzzy
 msgid "SNMP v3 Support"
-msgstr "支援 EA"
+msgstr "支援 SNMP v3"
 
 #: services/models.py:1075
 msgid "MD5"
@@ -12436,9 +12375,8 @@ msgid ""
 msgstr ""
 
 #: system/models.py:292
-#, fuzzy
 msgid "Periodic Notification User"
-msgstr "保存修改時間"
+msgstr "定期通知使用者"
 
 #: system/models.py:277
 msgid "The kernel built with debug symbols will be booted instead."
@@ -12483,9 +12421,8 @@ msgid "Finished at"
 msgstr "資料集名稱"
 
 #: system/models.py:995
-#, fuzzy
 msgid "System Backup"
-msgstr "系統"
+msgstr "系統備份"
 
 #: system/views.py:303
 msgid "Interval must be an integer."
@@ -12716,11 +12653,10 @@ msgid "The system will reboot to perform this operation!"
 msgstr "系統時間"
 
 #: templates/system/email_edit.html:21
-#, fuzzy
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Account -> "
 "Users -> View Users -> root -> Change E-mail"
-msgstr "提示：測試發送電子郵件給 root 使用者。請從選單 [使用者] -> [root]  -> [更改電子郵件]"
+msgstr "提示：測試發送電子郵件給 root 使用者。請從選單 [使用者] -> [root] -> [更改電子郵件]"
 
 #: templates/system/initialwizard_volume.html:79
 #, fuzzy
@@ -12867,3 +12803,14 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "欲使用『匿名登入』功能須填此欄位"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "LUN 已存在於同一目標。"

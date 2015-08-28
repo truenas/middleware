@@ -12804,3 +12804,14 @@ msgid ""
 msgstr ""
 "Firmwareversie %(fwversion)s komt niet overeen met stuurprogrammaversie "
 "%(drversion)s voor /dev/mpr%(mpr)s"
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "Dit veld is vereist voor anonieme aanmelding"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "LUN-ID wordt al gebruikt voor dit doel."
