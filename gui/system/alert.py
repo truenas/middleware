@@ -190,6 +190,7 @@ class AlertPlugins:
                 }
 
             except Exception, e:
+                log.debug("Alert module '%s' failed: %s", instance, e, exc_info=True)
                 log.error("Alert module '%s' failed: %s", instance, e)
 
         crits = sorted([a for a in rvs if a and a.getLevel() == Alert.CRIT])
