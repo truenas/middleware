@@ -113,12 +113,17 @@ ldapctl_start()
 		fi  
 	fi
 
-	ldapctl_cmd ${service} ix-sssd start	
-	if sssd_running
+	anonbind="$(LDAP_get ldap_anonbind)"
+	if [ "${anonbind}" = "0" ]
 	then
-		sssd_restart
-	else
-		sssd_start
+		ldapctl_cmd ${service} ix-sssd start	
+		if sssd_running
+		then
+			sssd_restart
+		else
+			sssd_start
+		fi
+	
 	fi
 
 	if ! ldapctl_cmd ${service} ix-ldap status

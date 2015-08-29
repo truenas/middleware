@@ -22,6 +22,7 @@ from freenasUI.common.system import (
     activedirectory_has_keytab,
     domaincontroller_enabled,
     ldap_enabled,
+    ldap_anonymous_bind,
     ldap_sudo_configured,
     nis_enabled,
     nt4_enabled
@@ -58,7 +59,10 @@ def main():
         #if nt4_enabled():
         #    nsswitch_conf['hosts'].append('wins')
 
-        if ldap_enabled():
+        if ldap_enabled() and ldap_anonymous_bind():
+            nsswitch_conf['passwd'].append('ldap')
+            nsswitch_conf['group'].append('ldap')
+        elif ldap_enabled():
             nsswitch_conf['passwd'].append('sss')
             nsswitch_conf['group'].append('sss')
             if ldap_sudo_configured():
