@@ -14,6 +14,11 @@ generate_ldapconf()
 	/usr/local/libexec/nas/generate_ldap_conf.py
 }
 
+generate_nss_ldapconf()
+{
+	/usr/local/libexec/nas/generate_nss_ldap_conf.py
+}
+
 get_cifs_homedir()
 {
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
@@ -124,6 +129,8 @@ ldap_start()
 {
 	if dirsrv_enabled ldap
 	then
+		generate_nss_ldapconf
+
 		if ! generate_ldapconf
 		then
 			return 1

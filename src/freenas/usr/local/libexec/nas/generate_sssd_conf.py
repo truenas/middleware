@@ -27,7 +27,8 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.common.system import (
     activedirectory_enabled,
-    ldap_enabled
+    ldap_enabled,
+    ldap_anonymous_bind
 )
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
@@ -889,6 +890,9 @@ def get_directoryservice_cookie():
 
 def main():
     sssd_conf = None
+
+    if ldap_anonymous_bind():
+        sys.exit(1)
 
     sssd_setup()
     if os.path.exists(SSSD_CONFIGFILE):
