@@ -394,6 +394,21 @@ def ldap_has_samba_schema():
     return has_samba_schema
 
 
+def ldap_anonymous_bind():
+    from freenasUI.directoryservice.models import LDAP
+
+    anonymous_bind = False
+    try:
+        ldap = LDAP.objects.all()[0]
+        if ldap.ldap_anonbind:
+            anonymous_bind = True
+
+    except: 
+        anonymous_bind = False
+
+    return anonymous_bind
+
+
 def ldap_objects():
     from freenasUI.directoryservice.models import LDAP
 
