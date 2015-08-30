@@ -676,6 +676,7 @@ class iSCSITargetPortalIP(Model):
             ('iscsi_target_portalip_ip', 'iscsi_target_portalip_port'),
             )
         verbose_name = _("Portal IP")
+        verbose_name_plural = _("Portal IPs")
 
     def __unicode__(self):
         return "%s:%d" % (
@@ -906,7 +907,7 @@ class iSCSITargetGroups(Model):
         )
 
     class Meta:
-        verbose_name = _("iSCSI Groups")
+        verbose_name = _("iSCSI Group")
         verbose_name_plural = _("iSCSI Groups")
         unique_together = (
             ('iscsi_target', 'iscsi_target_portalgroup'),

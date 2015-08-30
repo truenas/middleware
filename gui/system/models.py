@@ -956,6 +956,7 @@ class CertificateAuthority(CertificateBase):
 
     class Meta:
         verbose_name = _("CA")
+        verbose_name_plural = _("CAs")
 
 
 class Certificate(CertificateBase):
@@ -979,6 +980,7 @@ class Certificate(CertificateBase):
 
     class Meta:
         verbose_name = _("Certificate")
+        verbose_name_plural = _("Certificates")
 
 
 class Backup(Model):
