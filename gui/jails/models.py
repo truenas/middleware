@@ -644,7 +644,7 @@ class JailTemplate(Model):
             raise MiddlewareError(_(e))
 
     class Meta:
-        verbose_name = _("Jail Templates")
+        verbose_name = _("Jail Template")
         verbose_name_plural = _("Jail Templates")
 
 
