@@ -1073,7 +1073,7 @@ class notifier:
         # so next partition starts at mutiple of 128.
         swapsize = ((swapsize+127)/128)*128
         # To be safe, wipe out the disk, both ends... before we start
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
             size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
@@ -1087,7 +1087,7 @@ class notifier:
             # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 4,
+                size / 1024 - 32,
                 ))
 
         commands = []
@@ -1772,9 +1772,9 @@ class notifier:
             # Grab all disks from the group
             for disk in disks:
                 self._system("geom %s clear %s" % (geom_type, disk))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
+                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (disk,))
                 self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
+                      "| awk '{print int($3 / (1024*1024)) - 32;}'`" % (disk, disk))
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
@@ -5024,7 +5024,7 @@ class notifier:
         return self.__get_geoms_recursive(provid)
 
     def _do_disk_wipe_quick(self, devname):
-        pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         err = pipe.communicate()[1]
         if pipe.returncode != 0:
             raise MiddlewareError(
@@ -5038,7 +5038,7 @@ class notifier:
         else:
             pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 4,
+                size / 1024 - 32,
             ))
             pipe.communicate()
 
@@ -5773,7 +5773,7 @@ class notifier:
     def bootenv_attach_disk(self, label, devname):
         """Attach a new disk to the pool"""
 
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
             size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
@@ -5783,7 +5783,7 @@ class notifier:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 4,
+                size / 1024 - 32,
                 ))
 
         commands = []
@@ -5811,7 +5811,7 @@ class notifier:
     def bootenv_replace_disk(self, label, devname):
         """Attach a new disk to the pool"""
 
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (devname, ))
+        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
             size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
@@ -5821,7 +5821,7 @@ class notifier:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 4,
+                size / 1024 - 32,
                 ))
 
         commands = []
