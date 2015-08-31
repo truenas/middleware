@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2015-08-25 08:34+0000\n"
+"PO-Revision-Date: 2015-08-31 08:20+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1440491642.0\n"
+"X-POOTLE-MTIME: 1441009250.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1966,7 +1966,7 @@ msgid ""
 "actual number is limited to QueueDepth of the target."
 msgstr ""
 "Максимальна кількість попередньо відправлених R2T в кожному з'єднанні (32 "
-"типово). Фактична кількість обмежена параметром \"QueueDepth\" цілі."
+"типово). Фактична кількість обмежена параметром QueueDepth цілі."
 
 #: services/models.py:305
 msgid "MaxOutstandingR2T"
@@ -2145,8 +2145,8 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"Ініціатор авторизується до цільового iSCSI. Він отримує ім'я, або приймає "
-"значення \"ALL\" для будь-якого ініціатора."
+"Ініціатор авторизований на доступ до цілі iSCSI. Вкажіть ім'я, або значення "
+"'ALL' для будь-якого ініціатора."
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2157,8 +2157,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"Мережа авторизується до цільового iSCSI. Вона отримує IP-адресу, CIDR-"
-"адресу, або приймає значення \"ALL\" для будь-якого IP-адреси."
+"Мережа авторизована на доступ до цілі iSCSI. Вкажіть IP-адресу, CIDR-адресу, "
+"або приймає значення 'ALL' для будь-якоі IP-адреси."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2190,7 +2190,7 @@ msgstr "Ім'я цілі"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Базове ім'я буде додано автоматично при запуску без \"iqn.\"."
+msgstr "Базове ім'я буде додано автоматично якщо не починається з 'iqn.'."
 
 #: services/models.py:640
 msgid "Target Alias"
@@ -2358,8 +2358,8 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Інформація про розташування, тобто фізичне розташування системи: \"Перший "
-"поверх будівлі, кімната xyzzy\"."
+"Інформація про розташування, тобто фізичне розташування системи: 'Перший "
+"поверх будівлі, кімната xyzzy'."
 
 #: services/models.py:859
 msgid "Contact"
@@ -2371,7 +2371,7 @@ msgid ""
 "system: 'admin@email.address'."
 msgstr ""
 "Контактна інформація, тобто ім'я або електронна пошта співробітника, "
-"відповідального за дану систему: \"admin@email.address\"."
+"відповідального за дану систему: 'admin@email.address'."
 
 #: services/models.py:867
 msgid "Community"
@@ -2379,7 +2379,7 @@ msgstr "Спільнота"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr "У більшості випадків тут використовується \"public\"."
+msgstr "У більшості випадків тут використовується 'public'."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
@@ -3634,7 +3634,7 @@ msgstr "Спільні ресурси UNIX (NFS)"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
-msgstr "Спільне використання"
+msgstr "Спільні ресурси"
 
 #: storage/forms.py:105
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
@@ -6859,7 +6859,7 @@ msgstr "Мережа %s вже використовується iншим iнт�
 
 #: network/forms.py:284
 msgid "The IP \"%s\" is not valid"
-msgstr "IP-адреса '%s' є недопустимою"
+msgstr "IP-адреса \"%s\" є недопустимою"
 
 #: network/forms.py:343
 msgid "You need a domain, e.g. hostname.domain"
@@ -8076,7 +8076,7 @@ msgid ""
 "instead."
 msgstr ""
 "Увiмкнення дедуплікаціі може мати радикальні наслідки для продуктивностi <br "
-"/> і навіть можливості доступу до даних. <br /> Обдумайте замість цього "
+"/> і навіть можливості доступу до даних.<br /> Обдумайте замість цього "
 "використання стиснення."
 
 #: storage/forms.py:483
@@ -12266,7 +12266,7 @@ msgstr "Порти Fiber Channel"
 
 #: templates/sharing/index.html:27
 msgid "Block"
-msgstr "Блоковий пристрій"
+msgstr "Блокові пристрої"
 
 #: templates/sharing/index.html:27
 msgid "FC"
