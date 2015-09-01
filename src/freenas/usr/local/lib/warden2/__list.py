@@ -38,7 +38,7 @@ def __list_jails(args):
         (retcode, results_stdout, results_stderr) = __pipeopen(
             ['/usr/local/sbin/iocage',
              'list',
-             '--long'])
+             '--warden'])
         while 'id: -' in results_stdout:
             results_stdout = results_stdout.replace('id: -', 'id: {0}'.format(id_num), 1)
             id_num += 1
