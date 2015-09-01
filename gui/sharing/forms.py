@@ -34,6 +34,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import SelectMultipleWidget
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.pipesubr import pipeopen
@@ -323,11 +324,13 @@ class AFP_ShareForm(ModelForm):
                     }
                 ))
         obj.save()
-        notifier().reload("afp")
         return obj
 
     def done(self, request, events):
-        if not services.objects.get(srv_service='afp').srv_enable:
+        dispatcher.call_sync('etcd.generation.generate_group', 'afp')
+        dispatcher.call_sync('services.reload', 'afp')
+        config = dispatcher.call_sync('service.afp.get_config')
+        if not config['enable']:
             events.append('ask_service("afp")')
         super(AFP_ShareForm, self).done(request, events)
 
