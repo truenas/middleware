@@ -39,6 +39,7 @@ from freenasUI.directoryservice.models import (
 from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
@@ -195,6 +196,50 @@ def servicesToggleView(request, formname):
     changing_service = form2namemap[formname]
     if changing_service == "":
         raise "Unknown service - Invalid request?"
+
+
+    # Temporary hack for new middleware
+    if changing_service == 'afp':
+        svc = dispatcher.call_sync(
+            'services.query',
+            [('name', '=', changing_service)],
+            {'single': True}
+        )
+        data = {}
+        func = None
+        status = 'off'
+        if svc['state'] == 'running':
+            func = 'stop'
+            status = 'off'
+        elif svc['state'] == 'stopped':
+            func = 'start'
+            status = 'on'
+        else:
+            log.error("Unexpected service state for %(svc)s: %(state)s" % {
+                'svc': changing_service,
+                'state': svc['state'],
+            })
+            data['error'] = True
+            data['message'] = 'Service state unknown'
+
+        if func:
+            task = dispatcher.call_task_sync('service.manage', changing_service, func)
+            if task['state'] != 'FINISHED':
+                data['error'] = True
+                data['message'] = task['error']['message']
+            else:
+                data.update({
+                    'service': changing_service,
+                    'status': status,
+                    'error': False,
+                    'message': None,
+                    'enabled_svcs': [],
+                    'disabled_svcs': [],
+                    'events': [],
+                })
+
+        return HttpResponse(json.dumps(data), content_type="application/json")
+
 
     svc_entry = models.services.objects.get(srv_service=changing_service)
     if svc_entry.srv_enable:
