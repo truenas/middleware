@@ -245,6 +245,8 @@ A series of instructional videos are available for FreeNAS®. They include:
 
 * `FreeNAS 9.3 - First Time Setup Wizard <https://www.youtube.com/watch?v=isvHJ51YRBk>`_
 
+* `FreeNAS® 9.3 Permissions Overview <https://www.youtube.com/watch?v=jpi_6OJwzJE>`_
+
 .. index:: Professional Support
 .. _Professional Support:
 
