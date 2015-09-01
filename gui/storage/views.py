@@ -939,18 +939,18 @@ def multipath_status(request):
 
 
 def multipath_status_json(request):
-    multipaths = notifier().multipath_all()
+    multipaths = wrap(dispatcher.call_sync('disks.query', [('is_multipath', '=', True)]))
     _id = 1
     items = []
     for mp in multipaths:
         children = []
-        for cn in mp.consumers:
+        for member, status in mp['status.multipath.members'].items():
             actions = {}
             items.append({
                 'id': str(_id),
-                'name': cn.devname,
-                'status': cn.status,
-                'lunid': cn.lunid,
+                'name': member,
+                'status': status,
+                'lunid': mp['lunid'],
                 'type': 'consumer',
                 'actions': json.dumps(actions),
             })
@@ -958,8 +958,8 @@ def multipath_status_json(request):
             _id += 1
         data = {
             'id': str(_id),
-            'name': mp.devname,
-            'status': mp.status,
+            'name': mp['path'],
+            'status': mp['status.multipath.status'],
             'type': 'root',
             'children': children,
         }

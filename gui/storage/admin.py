@@ -87,11 +87,9 @@ class VolumeFAdmin(BaseFreeAdmin):
     )
 
     def get_datagrid_context(self, request):
-        has_multipath = models.Disk.objects.exclude(
-            disk_multipath_name='').exists()
-        return {
-            'has_multipath': has_multipath,
-        }
+        from freenasUI.middleware.connector import connection as dispatcher
+        has_multipath = dispatcher.call_sync('disks.query', [('is_multipath', '=', True)], {"count": True}) > 0
+        return {'has_multipath': has_multipath}
 
     def get_datagrid_columns(self):
 

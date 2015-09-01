@@ -194,9 +194,8 @@ class Volumes(TreeNode):
             ViewDisks(),
         ])
 
-        has_multipath = models.Disk.objects.exclude(
-            disk_multipath_name=''
-        ).exists()
+        from freenasUI.middleware.connector import connection as dispatcher
+        has_multipath = dispatcher.call_sync('disks.query', [('is_multipath', '=', True)], {"count": True}) > 0
         if has_multipath:
             self.append_child(ViewMultipaths())
 
