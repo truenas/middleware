@@ -4,10 +4,10 @@
            <strong>{% trans "AFP" %}</strong>
        </td>
        <td>
-       <img id="afp_toggle" name="afp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "afp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="afp_toggle" name="afp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.afp == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="afp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "AFP Settings"|force_escape|force_escape %}', '{{ afp.get_edit_url }}');" title="{% trans "AFP Settings" %}">
+           <img id="afp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "AFP Settings"|escapejs %}', '{{ afp.get_edit_url }}');" title="{% trans "AFP Settings" %}">
        </td>
    </tr>
    <tr>

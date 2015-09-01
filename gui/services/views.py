@@ -142,9 +142,12 @@ def core(request):
     except IndexError:
 	webdav = models.WebDAV.objects.create()
 
+    srv_mw = {k['name']: k['state'] for k in dispatcher.call_sync('services.query')}
+
     srv = models.services.objects.all()
     return render(request, 'services/core.html', {
         'srv': srv,
+        'srv_mw': srv_mw,
         'cifs': cifs,
         'afp': afp,
         'lldp': lldp,
@@ -208,10 +211,10 @@ def servicesToggleView(request, formname):
         data = {}
         func = None
         status = 'off'
-        if svc['state'] == 'running':
+        if svc['state'] == 'RUNNING':
             func = 'stop'
             status = 'off'
-        elif svc['state'] == 'stopped':
+        elif svc['state'] == 'STOPPED':
             func = 'start'
             status = 'on'
         else:
