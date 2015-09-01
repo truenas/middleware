@@ -1,14 +1,14 @@
 # $FreeBSD$
 
 PORTNAME=	freenas-sample
-PORTVERSION=	0.02b
+PORTVERSION=	0.02c
 PORTREVISION=	0
 CATEGORIES=	sysutils
 
 USE_GITHUB=	yes
 GH_ACCOUNT=	freenas
 GH_PROJECT=	sample
-GH_TAGNAME=	d33e294
+GH_TAGNAME=	a7da1d7
 
 #USES=           python:2.7+
 USES=		python:2.7+,build
