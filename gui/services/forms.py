@@ -288,26 +288,6 @@ class AFPForm(ModelForm):
         super(AFPForm, self).__init__(*args, **kwargs)
         self.fields['afp_srv_bindip'].choices = list(choices.IPChoices())
 
-    def save(self):
-        super(AFPForm, self).save()
-        started = notifier().restart("afp")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='afp').srv_enable
-        ):
-            raise ServiceFailed("afp", _("The AFP service failed to reload."))
-
-    def clean_afp_srv_dbpath(self):
-        path = self.cleaned_data.get('afp_srv_dbpath')
-        if not path:
-            return path
-        if not os.path.exists(path):
-            raise forms.ValidationError(_('This path does not exist.'))
-        if not os.path.isdir(path):
-            raise forms.ValidationError(_('This path is not a directory.'))
-        return path
-
     def clean(self):
         cleaned_data = self.cleaned_data
         home = cleaned_data['afp_srv_homedir_enable']
