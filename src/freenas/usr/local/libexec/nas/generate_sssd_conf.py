@@ -792,7 +792,7 @@ def add_activedirectory_section(sc):
 
     __, hostname, __ = os.uname()[0:3]
 
-    if ad.keytab_name and ad.kerberos_realm and os.path.exists(ad.keytab_file):
+    if ad.keytab_file and ad.keytab_principal:
         use_ad_provider = True
 
     if use_ad_provider:
@@ -891,7 +891,7 @@ def get_directoryservice_cookie():
 def main():
     sssd_conf = None
 
-    if ldap_anonymous_bind():
+    if ldap_enabled() and ldap_anonymous_bind():
         sys.exit(1)
 
     sssd_setup()
