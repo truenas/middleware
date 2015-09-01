@@ -234,8 +234,10 @@ class AFP_Share(Model):
         return unicode(self.afp_name)
 
     def delete(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
         super(AFP_Share, self).delete(*args, **kwargs)
-        notifier().reload("afp")
+        dispatcher.call_sync('etcd.generation.generate_group', 'afp')
+        dispatcher.call_sync('services.reload', 'afp')
 
     class Meta:
         verbose_name = _("Apple (AFP) Share")
