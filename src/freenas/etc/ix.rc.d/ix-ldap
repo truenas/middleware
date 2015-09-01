@@ -60,19 +60,31 @@ ldap_status()
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
-		ldap_anonbind, 	 
-		ldap_binddn, 	 
-		ldap_bindpw, 	 
-		ldap_ssl
+		ldap.ldap_anonbind, 	 
+		ldap.ldap_binddn, 	 
+		ldap.ldap_bindpw, 	 
+		ldap.ldap_ssl,
+		kr.krb_realm,
+		kp.principal_name
 	FROM
-		directoryservice_ldap
+		directoryservice_ldap as ldap
+
+	LEFT OUTER JOIN
+		directoryservice_kerberosrealm as kr
+	ON
+		ldap.ldap_kerberos_realm_id = kr.id
+
+	LEFT OUTER JOIN
+		directoryservice_kerberosprincipal as kp
+	ON
+		ldap.ldap_kerberos_principal_id = kp.id
 
 	ORDER BY
-		-directoryservice_ldap.id
+		-ldap.id
 
 	LIMIT 1
 	" | \
-	while eval read ldap_anonbind ldap_binddn ldap_bindpw ldap_ssl
+	while eval read ldap_anonbind ldap_binddn ldap_bindpw ldap_ssl realm principal
 	do
 		local res=1
 		local ldapsearch=/usr/local/bin/ldapsearch
@@ -83,7 +95,22 @@ ldap_status()
 			options="-Z"
 		fi
 
-		if [ "${ldap_anonbind}" = "0" ]
+		if [ -n "${realm}" -a -n "${principal}" ]
+		then
+			local temp=$(mktemp /tmp/tmp.XXXXXX)
+			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
+			local cmd
+		
+			chmod 400 "${temp}"
+
+			echo "${ldapsearch} ${options} -Y GSSAPI  -b '' -s base" > "${cmdfile}"
+			cmd=$(cat ${cmdfile})
+			eval "${cmd}" >/dev/null 2>&1
+			res=$?
+
+			rm -f "${temp}" "${cmdfile}"
+
+		elif [ "${ldap_anonbind}" = "0" ]
 		then
 			local temp=$(mktemp /tmp/tmp.XXXXXX)
 			local cmdfile=$(mktemp /tmp/tmp.XXXXXX)
