@@ -31,7 +31,7 @@ from __pipeopen import __pipeopen
 def __list_jails(args):
     """
     Wraps `warden list` and `warden list -v` to `iocage list`
-    and `iocage list --long` respectively.
+    and `iocage list --warden` respectively.
     """
     if args._long_list:
         id_num = 1
