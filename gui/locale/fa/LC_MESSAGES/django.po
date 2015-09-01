@@ -12132,3 +12132,18 @@ msgstr "پرکردن این فیلد الزامی است"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "این آدرس IP درحال استفاده است"
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "اضافه کردن قالب Jail"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "درگاه"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "گروه‌ها"

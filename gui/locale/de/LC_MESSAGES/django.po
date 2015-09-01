@@ -13311,3 +13311,19 @@ msgstr "Dieses Feld ist für die anonyme Anmeldung notwendig"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN existiert bereits im gleichen Ziel."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Jail-Vorlagen hinzufügen"
+
+# Übersetzen oder nicht?
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Gruppen"

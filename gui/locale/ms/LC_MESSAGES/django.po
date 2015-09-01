@@ -12201,3 +12201,18 @@ msgstr "Ruangan ini diperlukan untuk login orang luar"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN telah wujud dalam target sama."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Nama Penuh"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Peranti Maya"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Kumpulan"

@@ -12979,3 +12979,18 @@ msgstr "השדה הזה נדרש לצורך כניסה אנונימית"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN כבר קיים עם אותה מטרה."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 Netmask"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "שער"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "קבוצות"

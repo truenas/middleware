@@ -12380,3 +12380,18 @@ msgstr "This field is required for anonymous login"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN already exists in the same target."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Jail IP Netmask"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Groups"

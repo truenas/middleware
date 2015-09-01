@@ -12346,3 +12346,18 @@ msgstr "Þessi reitur krefst útfyllingar"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "Notandi með þetta notandanafn er þegar til."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 netmöskvi"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Bæta við Gátt"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Hópar"

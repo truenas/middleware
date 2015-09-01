@@ -12606,3 +12606,18 @@ msgstr "Ovo polje je obavezno za anonimno prijavljivanje"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN već postoji u istom cilju."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "JAIL IP mrežna maska"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "IP Portala"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Grupe"

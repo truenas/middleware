@@ -12149,3 +12149,18 @@ msgstr "Šis laukas būtinas anoniminiam prisijungimui"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN jau egzistuoja šiam tikslui."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 Adresas"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portas"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Grupės"

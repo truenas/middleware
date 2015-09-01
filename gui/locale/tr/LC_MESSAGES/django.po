@@ -12793,3 +12793,18 @@ msgstr "Bu alan anonim giriş için gereklidir."
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "Aynı hedefte bu LUN zaten mevcut."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Kafes Şablonları"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Gruplar"

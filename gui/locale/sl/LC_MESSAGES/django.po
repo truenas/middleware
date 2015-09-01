@@ -12374,3 +12374,18 @@ msgstr "To polje je potrebno za anonimen vpis"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN je že v istem zadetku."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 mrežna maska"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Navidezni vmesniki"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Skupine"
