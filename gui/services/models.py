@@ -41,7 +41,8 @@ from freenasUI.directoryservice.models import (
     KerberosRealm,
 )
 from freenasUI.freeadmin.models import (
-    Model, UserField, GroupField, PathField
+    Model, UserField, GroupField, PathField,
+    ConfigQuerySet, NewModel, NewManager, ListField
 )
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
@@ -270,7 +271,7 @@ class CIFS(Model):
         icon_model = u"CIFSIcon"
 
 
-class AFP(Model):
+class AFP(NewModel):
     afp_srv_guest = models.BooleanField(
         verbose_name=_("Guest Access"),
         help_text=_("Allows guest access to all apple shares on this box."),
@@ -289,7 +290,7 @@ class AFP(Model):
                     "file, but does not require a valid login. The user root "
                     "can not be used as guest account."),
     )
-    afp_srv_bindip = MultiSelectField(
+    afp_srv_bindip = ListField(
         verbose_name=_("Bind IP Addresses"),
         help_text=_(
             "IP address(es) to advertise and listens to. If none specified, "
@@ -334,9 +335,12 @@ class AFP(Model):
     afp_srv_global_aux = models.TextField(
         verbose_name=_("Global auxiliary parameters"),
         blank=True,
+        null=True,
         help_text=_(
             "These parameters are added to [Global] section of afp.conf"),
     )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
         verbose_name = _(u"AFP")
@@ -345,6 +349,41 @@ class AFP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"AFPIcon"
+
+    class Middleware:
+        configstore = True
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.afp.get_config')
+        return cls(**dict(
+            afp_srv_guest=config['guest_enable'],
+            afp_srv_guest_user=config['guest_user'],
+            afp_srv_bindip=config['bind_addresses'],
+            afp_srv_connections_limit=config['connections_limit'],
+            afp_srv_homedir_enable=config['homedir_enable'],
+            afp_srv_homedir=config['homedir_path'],
+            afp_srv_homename=config['homedir_name'],
+            afp_srv_dbpath=config['dbpath'],
+            afp_srv_global_aux=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
+        data = {
+            'guest_enable': self.afp_srv_guest,
+            'guest_user': self.afp_srv_guest_user,
+            'bind_addresses': self.afp_srv_bindip or None,
+            'connections_limit': self.afp_srv_connections_limit,
+            'homedir_enable': self.afp_srv_homedir_enable,
+            'homedir_path': self.afp_srv_homedir or None,
+            'homedir_name': self.afp_srv_homename or None,
+            'dbpath': self.afp_srv_dbpath or None,
+            'auxiliary': self.afp_srv_global_aux or None,
+        }
+        self._save_task_call('service.afp.configure', data)
+        return True
 
 
 class NFS(Model):
