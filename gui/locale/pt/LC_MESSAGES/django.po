@@ -12883,3 +12883,18 @@ msgstr "Este campo é necessário para uma entrada anónima"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN já existe no mesmo destino."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Máscara IP para jail"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Grupos"

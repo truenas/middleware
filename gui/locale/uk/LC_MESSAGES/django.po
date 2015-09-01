@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2015-08-31 08:20+0000\n"
+"PO-Revision-Date: 2015-08-31 09:37+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441009250.0\n"
+"X-POOTLE-MTIME: 1441013859.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -2998,8 +2998,8 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"Цей параметр задає ім'я користувача для передачі файлів в / з модуля. У "
-"поєднанні з опцією \"Група\" визначає можливі права для доступу до файлів. "
+"Цей параметр задає ім'я користувача для передачі файлів в/з модуля. У "
+"поєднанні з опцією 'Група' визначає можливі права для доступу до файлів. "
 "Залиште це поле порожнім, щоб використовувати типові налаштування."
 
 #: services/models.py:1424
@@ -12546,3 +12546,16 @@ msgstr "Це поле є обов'язковим для забезпечення
 #: services/forms.py:1151
 msgid "Extent is already in this target."
 msgstr "Екстент вже у цієї ж цілі."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Шаблони jail"
+
+#: services/models.py:679
+msgid "Portal IPs"
+msgstr "IP портала"
+
+#: services/models.py:910
+msgid "iSCSI Group"
+msgstr "Група iSCSI"

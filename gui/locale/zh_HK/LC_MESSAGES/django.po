@@ -12433,3 +12433,18 @@ msgstr "如欲使用「匿名登入」功能則須填寫此欄位"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN 已存在於同一目標"
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 Netmask"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "埠"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "群組"

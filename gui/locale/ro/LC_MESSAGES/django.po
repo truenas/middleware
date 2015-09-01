@@ -12742,3 +12742,18 @@ msgstr "Câmp obligatoriu în cazul logării anonime"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN already exists in the same target."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr " Șabloane Jail"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "IP portal"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Grupuri"

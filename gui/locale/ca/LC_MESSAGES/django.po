@@ -13029,3 +13029,18 @@ msgstr "Aquest camp es requereix per fer login anònim"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "El LUN ja existeix en el mateix target."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Màscara IPv4 "
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Grups"

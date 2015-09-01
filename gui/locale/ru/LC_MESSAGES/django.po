@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-08-30 15:00+0000\n"
+"PO-Revision-Date: 2015-08-31 10:00+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1440946834.0\n"
+"X-POOTLE-MTIME: 1441015250.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -1552,7 +1552,7 @@ msgid ""
 "Auth Method."
 msgstr ""
 "Это поле обязательно, если установлен алгоритм CHAP или Взаимный CHAP как "
-"метод авторизации контроллера."
+"метод аутентификации контроллера."
 
 #: services/forms.py:730
 msgid "This is not a valid network"
@@ -1607,7 +1607,7 @@ msgstr ""
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr "Номер аутентификационной группы"
+msgstr "Номер группы аутентификации"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -2139,7 +2139,7 @@ msgstr "IP адрес"
 
 #: services/models.py:534
 msgid "Portal IP"
-msgstr "IP портал"
+msgstr "IP портала"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2176,7 +2176,7 @@ msgstr ""
 
 #: services/models.py:604
 msgid "Peer User"
-msgstr "Пользователь-напарник"
+msgstr "Пользователь напарника"
 
 #: services/models.py:609
 msgid "Peer Secret"
@@ -2236,7 +2236,7 @@ msgstr "Идентификатор группы инициаторов"
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
-msgstr "Метод авторизации"
+msgstr "Метод аутентификации"
 
 #: services/models.py:675 services/models.py:687
 msgid ""
@@ -11000,7 +11000,7 @@ msgstr "Импорт центра сертификации"
 #: templates/system/certificateauthority_datagrid.html:11
 #: templates/system/certificateauthority_datagrid.html:13
 msgid "Create Internal CA"
-msgstr "Создать внутренний СА"
+msgstr "Создать внутренний центр сертификации"
 
 #: templates/system/certificateauthority_datagrid.html:18
 #: templates/system/certificateauthority_datagrid.html:20
@@ -11253,7 +11253,7 @@ msgstr ""
 
 #: services/models.py:744
 msgid "The authentication method accepted by the target."
-msgstr "Метод аутентификации принят целью."
+msgstr "Метод аутентификации принимаемый целью."
 
 #: system/forms.py:1905
 msgid "Current Train"
@@ -12725,3 +12725,16 @@ msgstr "Это поле является обязательным для ано�
 #: services/forms.py:1151
 msgid "Extent is already in this target."
 msgstr "Экстент уже в этой цели."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Шаблоны jail"
+
+#: services/models.py:679
+msgid "Portal IPs"
+msgstr "IP портала"
+
+#: services/models.py:910
+msgid "iSCSI Group"
+msgstr "Группа iSCSI"

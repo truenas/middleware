@@ -12438,3 +12438,18 @@ msgstr "이 입력란은 익명 접속을 위해서 꼭 필요합니다"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "이미 같은 대상에 LUN이 존재합니다."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 서브넷 마스크"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "포탈 더하기"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "그룹"

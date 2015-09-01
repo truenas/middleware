@@ -12590,3 +12590,18 @@ msgstr "Névtelen belépéshez szükséges mező"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "A LUN már létezik a célcsoportban."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Börtön Sablonok"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portál"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Csoportok"

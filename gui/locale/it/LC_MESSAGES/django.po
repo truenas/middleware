@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2014-11-20 08:48+0000\n"
-"Last-Translator: Rafbor <raffaeleborrelli@hotmail.it>\n"
+"PO-Revision-Date: 2015-08-31 14:59+0000\n"
+"Last-Translator: Tex <al.con@libero.it>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1416473315.0\n"
+"X-POOTLE-MTIME: 1441033142.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7007,8 +7007,9 @@ msgid "LANMAN2"
 msgstr ""
 
 #: choices.py:175
+#, fuzzy
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
@@ -7016,7 +7017,7 @@ msgstr ""
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (migliore compressione)"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -7025,11 +7026,12 @@ msgstr ""
 #: services/models.py:2104
 #, fuzzy
 msgid "Domain Controller"
-msgstr "Nome del Domain Controller"
+msgstr "Gestore accessi"
 
 #: choices.py:709
+#, fuzzy
 msgid "data"
-msgstr ""
+msgstr "Dati"
 
 #: choices.py:711
 msgid "auth"
@@ -7046,11 +7048,13 @@ msgstr ""
 #: account/forms.py:58
 #, fuzzy
 msgid "Confirm New Password"
-msgstr "Conferma Password"
+msgstr "Conferma nuova Password"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
 msgstr ""
+" La directory Principale (Home directory) non può contenere i due "
+"punti                                "
 
 #: account/models.py:139
 msgid "Built-in User"
@@ -7986,8 +7990,9 @@ msgid "SMB2_24"
 msgstr ""
 
 #: choices.py:318
+#, fuzzy
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (miglior compromesso)           "
 
 #: choices.py:685
 msgid "Auth"
@@ -7996,7 +8001,7 @@ msgstr ""
 #: choices.py:688
 #, fuzzy
 msgid "Local 2"
-msgstr "Utente locale"
+msgstr "Utente locale 2"
 
 #: choices.py:691
 #, fuzzy
@@ -8006,21 +8011,20 @@ msgstr "Utente locale"
 #: choices.py:701
 #, fuzzy
 msgid "NIS"
-msgstr "NIC"
+msgstr "NIS"
 
 #: choices.py:713
 msgid "ctrl+data"
 msgstr ""
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "Nuova password"
 
 #: account/forms.py:398
 #, fuzzy
 msgid "Create Home Directory In"
-msgstr "Directory Home"
+msgstr "Crea la Directory Principale d'Ingresso"
 
 #: account/models.py:54
 #, fuzzy
@@ -8037,16 +8041,16 @@ msgstr ""
 #: api/resources.py:1875
 #, fuzzy
 msgid "Invalid snapshot"
-msgstr "Ultimo snapshot"
+msgstr "Istantanea non valida                "
 
 #: common/system.py:279
+#, fuzzy
 msgid "Mount failed (%(retcode)s) -> %(output)s"
-msgstr ""
+msgstr "Montaggio (mount) fallito (%(retcode)s) -> %(output)s                "
 
 #: freeadmin/forms.py:220
-#, fuzzy
 msgid "A file is required"
-msgstr "Questo campo è obbligatorio"
+msgstr "È necessario un file                "
 
 #: freeadmin/navtree.py:576
 #, fuzzy
@@ -8069,9 +8073,8 @@ msgstr "Modifica portale"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
-#, fuzzy
 msgid "Upload Plugin"
-msgstr "Elimina replicazione"
+msgstr "Carica Plugin                "
 
 #: jails/admin.py:200
 msgid "Start"
@@ -8991,8 +8994,9 @@ msgid "CORE"
 msgstr ""
 
 #: choices.py:176
+#, fuzzy
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
@@ -9007,24 +9011,23 @@ msgid "SMB3_00"
 msgstr ""
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (più veloce)"
+msgstr "lz4 (più veloce)"
 
 #: choices.py:686
 #, fuzzy
 msgid "Local 0"
-msgstr "Utente locale"
+msgstr "Utente locale 0"
 
 #: choices.py:687
 #, fuzzy
 msgid "Local 1"
-msgstr "Utente locale"
+msgstr "Utente locale 1"
 
 #: choices.py:689
 #, fuzzy
 msgid "Local 3"
-msgstr "Utente locale"
+msgstr "Utente locale 3"
 
 #: choices.py:690
 #, fuzzy
@@ -9043,39 +9046,41 @@ msgstr "Utente locale"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:707
 #, fuzzy
 msgid "on"
-msgstr "Nessuno"
+msgstr "Acceso"
 
 #: choices.py:708
 #, fuzzy
 msgid "off"
-msgstr "Off"
+msgstr "Spento"
 
 #: choices.py:710
 msgid "!data"
 msgstr ""
 
 #: choices.py:712
+#, fuzzy
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
 msgstr ""
 
 #: account/forms.py:534
-#, fuzzy
 msgid "Home directory must end with username"
-msgstr "La cartella home non è scrivibile, lasciare il campo vuoto"
+msgstr ""
+"La directory Principale (Home directory) deve terminare con il nome utente "
+"(username)                "
 
 #: account/models.py:58
 #: account/models.py:154
 msgid "Permit Sudo"
-msgstr ""
+msgstr "permettere Sudo                "
 
 #: account/models.py:146
 #, fuzzy
@@ -9083,21 +9088,18 @@ msgid "Disable password login"
 msgstr "Disabilita login con password"
 
 #: account/models.py:265
-#, fuzzy
 msgid "Group Memberships"
-msgstr "Appartenenza al Gruppo"
+msgstr "Membri del gruppo"
 
 #: jails/admin.py:89
 #: jails/models.py:183
-#, fuzzy
 msgid "Autostart"
-msgstr "Auto"
+msgstr "Avvio automatico"
 
 #: jails/admin.py:189
 #: jails/nav.py:264
-#, fuzzy
 msgid "Add Storage"
-msgstr "Storage"
+msgstr "Aggiungi archivio                "
 
 #: jails/admin.py:201
 msgid "Stop"
@@ -9944,7 +9946,7 @@ msgstr "Si desidera abilitare questo servizio?"
 #: freeadmin/options.py:633
 #, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Sei sicuro di voler scollegare?"
+msgstr "Sei sicuro di voler modificare questo?                "
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9980,21 +9982,21 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Le password che contengono un punto interrogativo (?) non sono attualmente "
+"permesse a causa di problemi con CIFS.                "
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Riavvio del servizio AFP fallito."
+msgstr "Impossibile ricaricare NT4                 "
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Riavvio del servizio ActiveDirectory fallito."
+msgstr ""
+"Impossibile riavvio del servizio ActiveDirectory fallito.                "
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Riavvio del servizio AFP fallito."
+msgstr "Riavvio del servizio LDAP fallito.                "
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
@@ -10002,7 +10004,7 @@ msgstr "Riavvio del servizio AFP fallito."
 #: directoryservice/models.py:358
 #, fuzzy
 msgid "Enable"
-msgstr "Abilitato"
+msgstr "Abilita"
 
 #: directoryservice/models.py:295
 #, fuzzy
@@ -10191,6 +10193,7 @@ msgid "Schema Mode"
 msgstr "Modalità di accesso"
 
 #: directoryservice/models.py:145
+#, fuzzy
 msgid ""
 "Defines the schema that idmap_ad should use when querying Active Directory "
 "regarding user and group information. This can be either the RFC2307 schema "
@@ -10199,14 +10202,23 @@ msgid ""
 ". Please note that primary group membership is currently always calculated "
 "via the \"primaryGroupID\" LDAP attribute."
 msgstr ""
+"Definisce lo schema che idmap_ad dovrebbe usare durante l'esecuzione di "
+"query di Active Directory, per quanto riguarda utente e informazioni sul "
+"gruppo. Questo può essere il supporto dello schema RFC2307 inclusi in "
+"Windows 2003 R2 o il Servizio per Unix (SFU). Per SFU 3.0 o 3.5 scegliere "
+"\"SFU\", per SFU 2.0 scegliere \"sfu20\". Si prega di notare che "
+"l'appartenenza al gruppo primario è attualmente sempre calcolato tramite "
+"l'attributo LDAP \"primaryGroupID\"."
 
 #: directoryservice/models.py:156
+#, fuzzy
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
+#, fuzzy
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
@@ -10232,14 +10244,18 @@ msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
+"Cambiare il modulo in modalità di sola lettura. Non saranno assegnate nuove "
+"gamme né saranno create nuove mappature nell'insieme idmap.                "
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
-msgstr ""
+msgstr "Ignorare già creato                "
 
 #: directoryservice/models.py:205
 msgid "Ignore any mapping requests for the BUILTIN domain."
 msgstr ""
+"Ignorare eventuali richieste di mappatura per il dominio "
+"BUILTIN.                "
 
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
@@ -10715,44 +10731,46 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
 msgstr "Autenticazione semplice"
 
 #: choices.py:44
 #, fuzzy
 msgid "Digest Authentication"
-msgstr "                  Autenticazione avanzata                "
+msgstr "Autenticazione avanzata                "
 
 #: choices.py:799
 msgid "adex"
 msgstr ""
 
 #: choices.py:811
+#, fuzzy
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Importare un Certificato Autorità esistente                "
 
 #: choices.py:812
+#, fuzzy
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Creare un'Autorità di Certificazione interna                "
 
 #: choices.py:813
+#, fuzzy
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Creare un'Autorità di Certificazione intermedia                "
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Importa un Cerificato esistente                "
 
 #: choices.py:818
 #, fuzzy
 msgid "Create an internal Certificate"
-msgstr "Certificato SSL"
+msgstr "Creare un certificato interno                "
 
 #: choices.py:819
 #, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "Certificato autofirmato"
+msgstr "Creare una Richiesta Certificato Firmato"
 
 #: choices.py:823
 msgid "512"
@@ -10772,11 +10790,11 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
@@ -10788,7 +10806,7 @@ msgstr ""
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -10796,9 +10814,8 @@ msgid "NIS failed to reload."
 msgstr "Riavvio del servizio AFP fallito."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Riavvia"
+msgstr "al riavvio                "
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -10806,9 +10823,8 @@ msgid "ADEX Idmap"
 msgstr ""
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "No"
+msgstr "Ora                "
 
 #: directoryservice/models.py:637
 #, fuzzy
@@ -12055,7 +12071,7 @@ msgstr "Ora di Sistema"
 #: choices.py:588
 #, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week)s settimana(e)"
+msgstr "% settimana(e)"
 
 #: system/views.py:419
 #, fuzzy
@@ -12081,40 +12097,42 @@ msgstr "Cambia"
 #: choices.py:237
 #, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
 msgstr ""
 
 #: choices.py:811
+#, fuzzy
 msgid "Sensitive"
-msgstr ""
+msgstr "Sensibile"
 
 #: choices.py:812
+#, fuzzy
 msgid "Insensitive"
-msgstr ""
+msgstr "Insensibile"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Misto"
 
 #: account/models.py:160
 #, fuzzy
 msgid "Microsoft Account"
-msgstr "Account Ospite"
+msgstr "Account Microsoft"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -12989,8 +13007,11 @@ msgid ""
 msgstr ""
 
 #: account/models.py:151
+#, fuzzy
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
+"Questo disabiliterà tutti i tipi di accesso con password, inclusa la "
+"condivisione (sharing)"
 
 #: network/forms.py:305
 #, fuzzy
@@ -13116,3 +13137,18 @@ msgstr "Questo campo e' necessario per un login anonimo"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN già esistente nello stesso target"
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Netmask IPv4"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "IP Portale"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Gruppi"

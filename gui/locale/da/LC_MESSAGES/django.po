@@ -12379,3 +12379,18 @@ msgstr "Dette felt er påkrævet for anonym login"
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "LUN findes allerede i samme mål."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4-netmaske"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Virtuel netværks enhed"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Grupper"

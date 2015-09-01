@@ -13078,3 +13078,18 @@ msgstr "Αυτό το πεδίο απαιτείται για ανώνυμη σύ
 #, fuzzy
 msgid "Extent is already in this target."
 msgstr "Η LUN υπάρχει ήδη στον ίδιο στόχο."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Διαδρομή υποδομής (Jail)"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "IP πύλης"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Ομάδες"
