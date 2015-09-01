@@ -352,6 +352,17 @@ class AFP(NewModel):
 
     class Middleware:
         configstore = True
+        field_mapping = (
+            ('afp_srv_guest', 'guest_enable'),
+            ('afp_srv_guest_user', 'guest_user'),
+            ('afp_srv_bindip', 'bind_addresses'),
+            ('afp_srv_connections_limit', 'connections_limit'),
+            ('afp_srv_homedir_enable', 'homedir_enable'),
+            ('afp_srv_homedir', 'homedir_path'),
+            ('afp_srv_homename', 'homedir_name'),
+            ('afp_srv_dbpath', 'dbpath'),
+            ('afp_srv_global_aux', 'auxiliary'),
+        )
 
     @classmethod
     def _load(cls):
