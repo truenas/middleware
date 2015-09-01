@@ -677,6 +677,12 @@ seen in Example 3.6a. In this example, the TrueNAS® system has one network inte
  You may try the following URLs to access the web user interface:
  http://192.168.1.108
 
+.. index:: GUI Access
+.. _Accessing the Administrative GUI:
+
+Accessing the Administrative GUI
+--------------------------------
+ 
 Once the system has an IP address, input that address into a graphical web browser from a computer capable of accessing the network containing the TrueNAS®
 system. You should be prompted to input the password for the *root* user, as seen in Figure 3.6b.
 
@@ -684,12 +690,15 @@ system. You should be prompted to input the password for the *root* user, as see
 
 .. image:: images/tn_login.png
 
-Enter the default password of *abcd1234*. You should then see the administrative GUI as shown in the example in Figure 3.6c.
+Enter the default password of *abcd1234*. 
 
 .. note:: you can change the default *root* password to a more secure value by going to `Account --> Users --> View Users`. Highlight the entry for
           *root*, click the "Modify User" button, enter the new password in the "Password" and "Password confirmation" fields, and click "OK" to save the new
           password to use on subsequent logins.
 
+The first time you login, the EULA, found in :ref:`Appendix A`, will be displayed along with a box where you can paste the license for the TrueNAS® appliance. Once you have
+read the EULA and pasted in the license, click "OK". You should then see the administrative GUI as shown in the example in Figure 3.6c.
+          
 **Figure 3.6c: TrueNAS® Graphical Configuration Menu**
 
 .. image:: images/tn_initial.png
