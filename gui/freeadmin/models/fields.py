@@ -222,7 +222,7 @@ class Network6Field(models.CharField):
 class ListField(MultiSelectField):
 
     def formfield(self, **kwargs):
-        from django.forms import CharField
+        from freenasUI.freeadmin.forms import SelectMultipleField
         defaults = {
             'required': not self.blank,
             'label': capfirst(self.verbose_name),
@@ -232,7 +232,7 @@ class ListField(MultiSelectField):
         if self.has_default():
             defaults['initial'] = self.default or []
         defaults.update(kwargs)
-        return CharField(**defaults)
+        return SelectMultipleField(**defaults)
 
     def get_db_prep_value(self, value, connection, prepared=False):
         if isinstance(value, basestring):
