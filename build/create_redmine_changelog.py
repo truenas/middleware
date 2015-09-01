@@ -46,8 +46,8 @@ def main(argv):
     for issue in reversed(issues):
         skip = False
         try:
-            if str(issue.fixed_version) != "SU Candidate":
-                sys.stderr.write("WARNING: " + bugs + "/issues/" + str(issue.id) + " is set to " + str(issue.fixed_version) + " not SU Candidate\n") 
+            if str(issue.fixed_version) != "Next SU Candidate":
+                sys.stderr.write("WARNING: " + bugs + "/issues/" + str(issue.id) + " is set to " + str(issue.fixed_version) + " not Next SU Candidate\n") 
                 skip = True
         except exceptions.ResourceAttrError:
             sys.stderr.write("WARNING: " + bugs + "/issues/" + str(issue.id) + " target version is not set\n") 
