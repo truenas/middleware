@@ -63,6 +63,7 @@ usr/local/libexec/nas/generate_afpd_conf.py
 usr/local/libexec/nas/generate_ctl_conf.py
 usr/local/libexec/nas/generate_krb5_conf.py
 usr/local/libexec/nas/generate_ldap_conf.py
+usr/local/libexec/nas/generate_nss_ldap_conf.py
 usr/local/libexec/nas/generate_nsswitch_conf.py
 usr/local/libexec/nas/generate_resolv_conf.py
 usr/local/libexec/nas/generate_smb4_conf.py

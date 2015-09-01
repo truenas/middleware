@@ -147,6 +147,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ctl_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ctl_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_krb5_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_krb5_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_ldap_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_ldap_conf.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_nss_ldap_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_nss_ldap_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_nsswitch_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_nsswitch_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_resolv_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_resolv_conf.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/libexec/nas/generate_smb4_conf.py ${STAGEDIR}/${PREFIX}/usr/local/libexec/nas/generate_smb4_conf.py
