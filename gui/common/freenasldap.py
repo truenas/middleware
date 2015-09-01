@@ -161,6 +161,10 @@ class FreeNAS_LDAP_Directory(object):
         if kwargs.has_key('flags') and kwargs['flags'] is not None:
             self.flags = kwargs['flags']
 
+        if self.kerberos_realm or self.keytab_principal:
+            self.get_kerberos_ticket()
+            self.flags |= FLAGS_SASL_GSSAPI
+
         self._handle = None
         self._isopen = False
         self._cache = FreeNAS_LDAP_QueryCache()
@@ -608,10 +612,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         super(FreeNAS_LDAP_Base, self).__init__(**kwargs)
 
-        if self.kerberos_realm or self.keytab_principal:
-            self.get_kerberos_ticket()
-            self.flags |= FLAGS_SASL_GSSAPI
-
         self.ucount = 0
         self.gcount = 0
 
@@ -647,9 +647,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         return principal
 
     def get_kerberos_ticket(self):
-        isopen = self._isopen
-        self.open()
-
         res = False 
         kinit = False
 
@@ -711,9 +708,6 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
                 time.sleep(1)
                 i += 1
-
-        if not isopen:
-            self.close()
 
         return res
 
