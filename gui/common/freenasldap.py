@@ -135,6 +135,8 @@ class FreeNAS_LDAP_Directory(object):
         self.bindpw = kwargs.get('bindpw', None)
         self.basedn = kwargs.get('basedn', None)
         self.anonbind = kwargs.get('anonbind', False)
+        self.kerberos_realm = None
+        self.keytab_principal = None
 
         self.ssl = FREENAS_LDAP_NOSSL
         if kwargs.has_key('ssl') and kwargs['ssl'] is not None:

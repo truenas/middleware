@@ -19,7 +19,7 @@ NSSWITCH_CONF_PATH = "/etc/nsswitch.conf"
 from freenasUI.common.system import (
     activedirectory_enabled,
     activedirectory_has_unix_extensions,
-    activedirectory_has_keytab,
+    activedirectory_has_principal,
     domaincontroller_enabled,
     ldap_enabled,
     ldap_anonymous_bind,
@@ -48,7 +48,7 @@ def main():
     if verb == 'start':
         if activedirectory_enabled() and \
             activedirectory_has_unix_extensions() and  \
-            activedirectory_has_keytab():
+            activedirectory_has_principal():
             nsswitch_conf['passwd'].append('sss')
             nsswitch_conf['group'].append('sss')
         elif activedirectory_enabled() or \
