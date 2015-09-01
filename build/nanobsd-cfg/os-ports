@@ -175,6 +175,10 @@ add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
 
+# For vcenter plugin
+add_port devel/py-six
+add_port www/py-requests
+add_port net/py-pyvmomi
 
 if [ "${REPORTING}" = 1 ]; then
 	add_port graphics/png
