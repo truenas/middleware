@@ -534,7 +534,11 @@ class ActiveDirectoryForm(ModelForm):
             args['keytab_principal'] = ad_kerberos_principal.principal_name
             args['keytab_file'] = '/etc/krb5.keytab'
 
-        workgroup = FreeNAS_ActiveDirectory.get_workgroup_name(**args)
+        try:
+            workgroup = FreeNAS_ActiveDirectory.get_workgroup_name(**args)
+        except Exception as e:
+            raise forms.ValidationError(e)
+
         if workgroup:
             if compare_netbios_names(netbiosname, workgroup, None):
                 raise forms.ValidationError(_(
