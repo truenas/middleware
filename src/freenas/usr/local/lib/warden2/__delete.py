@@ -39,6 +39,16 @@ def __delete_jail(args):
              'destroy',
              '-f',
              '{0}'.format(args.jail)])
+        if retcode != 0:
+            __pipeopen(
+                ['/usr/local/sbin/iocage',
+                 'stop',
+                 '{0}'.format(args.jail)])
+            (retcode, results_stdout, results_stderr) = __pipeopen(
+                ['/usr/local/sbin/iocage',
+                 'destroy',
+                 '-f',
+                 '{0}'.format(args.jail)])
     else:
         _answer = raw_input('Would you like to destroy {0}? y[N]'.format(args.jail))
         if _answer == 'y' or _answer == 'Y':

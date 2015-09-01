@@ -34,10 +34,23 @@ def __list_jails(args):
     and `iocage list --long` respectively.
     """
     if args._long_list:
+        id_num = 1
         (retcode, results_stdout, results_stderr) = __pipeopen(
             ['/usr/local/sbin/iocage',
              'list',
-             '--long'], do_print=True)
+             '--long'])
+        while 'id: -' in results_stdout:
+            results_stdout = results_stdout.replace('id: -', 'id: {0}'.format(id_num), 1)
+            id_num += 1
+        results_stdout = results_stdout.replace(': off', ': Disabled')
+        results_stdout = results_stdout.replace(': on', ': Enabled')
+        results_stdout = results_stdout.replace(': down', ': Stopped')
+        results_stdout = results_stdout.replace(': up', ': Running')
+        results_stdout = results_stdout.replace(': None', ': ')
+        results_stdout = results_stdout.replace(': none', ': ')
+        results_stdout = results_stdout.replace('type: jail', 'type: standard')
+        results_stdout = results_stdout.replace('type: jail', 'type: pluginjail')
+        print results_stdout
     else:
         (retcode, results_stdout, results_stderr) = __pipeopen(
             ['/usr/local/sbin/iocage', 'list'], do_print=True)
