@@ -231,6 +231,15 @@ def servicesToggleView(request, formname):
                 data['error'] = True
                 data['message'] = task['error']['message']
             else:
+                task = dispatcher.call_task_sync(
+                    'service.configure',
+                    changing_service,
+                    {'enable': True if status == 'on' else False}
+                )
+                if task['state'] != 'FINISHED':
+                    data['error'] = True
+                    data['message'] = task['error']['message']
+
                 data.update({
                     'service': changing_service,
                     'status': status,
