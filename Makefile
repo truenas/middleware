@@ -146,8 +146,7 @@ release-push: release
 	if [ -f ChangeLog ]; then cp ChangeLog objs/${STAGEDIR}/; fi
 	cp -r "objs/${STAGEDIR}" "${IX_INTERNAL_PATH}/${STAGEDIR}"
 	if [ "${POST_TO_DOWNLOAD}" = "yes" ]; then ${ENV_SETUP} /bin/sh build/post-to-download.sh "${IX_INTERNAL_PATH}" "${NANO_LABEL}-${VERSION}" "${BUILD_TIMESTAMP}"; fi
-	if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi
-	${ENV_SETUP} ${MAKE} save-build-env
+	if [ "${UPDATE_INTERNAL}" != "yes" ]; then ${ENV_SETUP} ${MAKE} save-build-env; fi
 
 update-push:	release
 	@echo ${KEY_PASSWORD} | ${ENV_SETUP} /bin/sh build/post-to-upgrade.sh objs/LATEST/
