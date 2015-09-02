@@ -266,6 +266,9 @@ for replication in replication_tasks:
     else:
         Rflag = ''
 
+    # For now, use 'recurse' flag as followdelete flag
+    followdelete = not not replication.repl_userepl
+
     wanted_list = []
     known_latest_snapshot = ''
     expected_local_snapshot = ''
@@ -312,6 +315,7 @@ for replication in replication_tasks:
         map_target = {}
 
     tasks = {}
+    delete_tasks = {}
 
     # Now we have map_source and map_target, which would be used to calculate the replication
     # path from source to target.
@@ -328,28 +332,34 @@ for replication in replication_tasks:
             list_target = map_target[dataset]
             i = len(list_source) - 1
             j = len(list_target) - 1
-            sourcesnap = list_source[i][0]
-            targetsnap = list_target[j][0]
+            sourcesnap, sourcetime = list_source[i]
+            targetsnap, targettime = list_target[j]
             while i >= 0 and j >= 0:
                 # found.
-                if sourcesnap == targetsnap:
+                if sourcesnap == targetsnap and sourcetime == targettime:
                     break
-                elif sourcesnap > targetsnap:
+                elif sourcetime > targettime:
                     i-=1
                     if i < 0:
                         break
-                    sourcesnap = list_source[i][0]
+                    sourcesnap, sourcetime = list_source[i]
                 else:
                     j-=1
                     if j < 0:
                         break
-                    targetsnap = list_target[j][0]
+                    targetsnap, targettime = list_target[j]
             if sourcesnap == targetsnap:
                 # found: i, j points to the right position.
                 # we do not care much if j is pointing to the last snapshot
                 # if source side have new snapshot(s), report it.
                 if i < len(list_source) - 1:
                     tasks[dataset] = [ m[0] for m in list_source[i:] ]
+                if followdelete:
+                    # All snapshots that do not exist on the source side should
+                    # be deleted when followdelete is requested.
+                    delete_set = set([ m[0] for m in list_target]) - set([ m[0] for m in list_source])
+                    if len(delete_set) > 0:
+                        delete_tasks[dataset] = delete_set
             else:
                 # no identical snapshot found, nuke and repave.
                 tasks[dataset] = [None] + [ m[0] for m in list_source[i:] ]
@@ -423,9 +433,28 @@ Hello,
                 continue
         elif tasklist[1] != None:
             psnap = tasklist[0]
+            allsucceeded = True
             for nsnap in tasklist[1:]:
-                sendzfs(psnap, nsnap, dataset, localfs, remotefs_final, throttle, replication)
+                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs_final, throttle, replication)
+                allsucceeded = allsucceeded and success
+                if not success:
+                    # Report the situation
+                    error, errmsg = send_mail(
+                        subject="Replication failed at %s@%s -> %s" % (dataset, psnap, nsnap),
+                        text="""
+Hello,
+    The replication failed for the local ZFS %s while attempting to
+    apply incremental send of snapshot %s -> %s to %s
+                        """ % (dataset, psnap, nsnap, remote), interval=datetime.timedelta(hours=2), channel='autorepl')
+                    results[replication.id] = 'Failed: %s (%s->%s)' % (dataset, psnap, nsnap)
+                    break
                 psnap = nsnap
+            if allsucceeded and delete_tasks.has_key(dataset):
+                zfsname = remotefs_final + dataset[l:]
+                for snapshot in delete_tasks[dataset]:
+                    rzfscmd = '"zfs destroy -d \'%s@%s\'"' % (zfsname, snapshot)
+                    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+                    sshproc.communicate()
         else:
             # Remove the named dataset.
             zfsname = remotefs_final + dataset[l:]
