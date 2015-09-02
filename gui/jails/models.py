@@ -306,6 +306,7 @@ class Jails(Model):
         if self.jail_ipv4:
             parts = self.jail_ipv4.split('/')
             self.jail_ipv4 = parts[0]
+            self.jail_ipv4 = self.jail_ipv4.replace('DEFAULT|', '')
             if len(parts) > 1:
                 self.jail_ipv4_netmask = parts[1]
 

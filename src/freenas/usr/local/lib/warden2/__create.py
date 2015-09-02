@@ -58,7 +58,7 @@ def __create_jail(args):
          'create',
          'tag={0}'.format(args.tag),
          'vnet=off',
-         'ip4_addr={0}'.format(args.ip4),
+         'ip4_addr=DEFAULT|{0}'.format(args.ip4),
          'boot={0}'.format(args.boot),
          'release={0}'.format(args.release)])
     if retcode == 0:
