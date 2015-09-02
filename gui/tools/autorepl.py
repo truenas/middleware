@@ -348,7 +348,7 @@ for replication in replication_tasks:
                     if j < 0:
                         break
                     targetsnap, targettime = list_target[j]
-            if sourcesnap == targetsnap:
+            if sourcesnap == targetsnap and sourcetime == targettime:
                 # found: i, j points to the right position.
                 # we do not care much if j is pointing to the last snapshot
                 # if source side have new snapshot(s), report it.
@@ -404,10 +404,10 @@ Hello,
                     results[replication.id] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
                     ### rzfs destroy %s
             psnap = tasklist[1]
-            success = sendzfs(None, psnap, dataset, localfs, remotefs_final, throttle, replication)
+            success = sendzfs(None, psnap, dataset, localfs, remotefs, throttle, replication)
             if success:
                 for nsnap in tasklist[2:]:
-                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs_final, throttle, replication)
+                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication)
                     if not success:
                         # Report the situation
                         error, errmsg = send_mail(
@@ -435,7 +435,7 @@ Hello,
             psnap = tasklist[0]
             allsucceeded = True
             for nsnap in tasklist[1:]:
-                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs_final, throttle, replication)
+                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication)
                 allsucceeded = allsucceeded and success
                 if not success:
                     # Report the situation
