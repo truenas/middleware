@@ -1,7 +1,10 @@
 #10654	Bug	Nice to have	sssd does not pull user identification information when using an anonymous LDAP bind
 #10978	Bug	Expected	Be wasteful but clevererer about partitioning installation media.
+#11012	Bug	Expected	Unexpected server bounce at midnight
 #11053	Bug	Nice to have	USB to SERIAL Driver
 #11092	Bug	Important	Anonymous bind attempt instead of GSSAPI
 #11118	Bug	Expected	Generation of sssd.conf is broken
 #11129	Bug	Expected	App SA-15:22.openssh
 #11138	Bug	Critical	NFS4 and Kerberos broken because of new keytab handling
+#11279	Bug	Nice to have	Fix reporting of replication progress in some corner case
+#11300	Bug	Nice to have	CVE-2015-5722 malformed DNSSEC key can cause a validating resolver to exit due to a failed assertion in buffer.c
