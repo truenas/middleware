@@ -62,7 +62,7 @@ def create_self_signed_CA(cert_info):
     cert.set_pubkey(key)
     cert.add_extensions([
         crypto.X509Extension("basicConstraints", True,
-                             "CA:TRUE, pathlen:0"),
+                             "CA:TRUE"),
         crypto.X509Extension("keyUsage", True,
                              "keyCertSign, cRLSign"),
         crypto.X509Extension("subjectKeyIdentifier", False, "hash",
