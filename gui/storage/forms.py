@@ -1660,9 +1660,9 @@ class MountPointAccessForm(Form):
     mp_acl = forms.ChoiceField(
         label=_('Permission Type'),
         choices=(
-            ('unix', 'Unix'),
-            ('mac', 'Mac'),
-            ('windows', 'Windows'),
+            ('PERMS', 'Unix'),
+            ('PERMS', 'Mac'),
+            ('ACL', 'Windows'),
         ),
         initial='unix',
         widget=forms.widgets.RadioSelect(),
@@ -1673,29 +1673,66 @@ class MountPointAccessForm(Form):
         label=_('Set permission recursively')
     )
 
+    def modes_to_oct(self, modes):
+        import stat
+        modes = wrap(modes)
+        result = 0
+
+        if modes['user.read']:
+            result &= stat.S_IRUSR
+
+        if modes['user.write']:
+            result &= stat.S_IWUSR
+
+        if modes['user.execute']:
+            result &= stat.S_IXUSR
+
+        if modes['group.read']:
+            result &= stat.S_IRGRP
+
+        if modes['group.write']:
+            result &= stat.S_IWGRP
+
+        if modes['group.execute']:
+            result &= stat.S_IXGRP
+
+        if modes['others.read']:
+            result &= stat.S_IROTH
+
+        if modes['others.write']:
+            result &= stat.S_IWOTH
+
+        if modes['others.execute']:
+            result &= stat.S_IXOTH
+
+        return result
+
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
+        from freenasUI.middleware.connector import connection as dispatcher
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
-            if os.path.exists(os.path.join(path, ".windows")):
-                self.fields['mp_acl'].initial = 'windows'
+            pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
+            pool = dispatcher.call_sync('volumes.query', [('name', '=', pool_name)], {'single': True})
+            ds = first_or_default(lambda o: o['name'] == ds_name, pool['datasets'])
+            stat = dispatcher.call_sync('filesystem.stat', path)
+
+            self.fields['mp_acl'].initial = ds['permissions_type']
+            if self.fields['mp_acl'].initial == 'WINDOWS':
                 self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
-            elif os.path.exists(os.path.join(path, ".mac")):
-                self.fields['mp_acl'].initial = 'mac'
-            else:
-                self.fields['mp_acl'].initial = 'unix'
+
             # 8917: This needs to be handled by an upper layer but for now
             # just prevent a backtrace.
             try:
                 self.fields['mp_mode'].initial = "%.3o" % (
-                    notifier().mp_get_permission(path),
+                    self.modes_to_oct(stat['permissions']['modes'])
                 )
-                user, group = notifier().mp_get_owner(path)
-                self.fields['mp_user'].initial = user
-                self.fields['mp_group'].initial = group
+                self.fields['mp_user'].initial = stat['user']
+                self.fields['mp_group'].initial = stat['group']
             except:
                 pass
+
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
     def clean(self):
@@ -1711,24 +1748,29 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
+        from freenasUI.middleware.connector import connection as dispatcher
 
-        kwargs = {}
+        kwargs = {
+            'user': None,
+            'group': None,
+            'modes': None
+        }
 
         if self.cleaned_data.get('mp_group_en'):
             kwargs['group'] = self.cleaned_data['mp_group']
 
         if self.cleaned_data.get('mp_mode_en'):
-            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
+            kwargs['modes'] = self.cleaned_data['mp_mode']
 
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
-        notifier().mp_change_permission(
-            path=path,
-            recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'],
-            **kwargs
-        )
+        pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
+        dispatcher.call_task_sync('file.set_permissions', path, kwargs, True)
+        dispatcher.call_task_sync('volume.dataset.update', pool_name, ds_name, {
+            'permissions_type': self.cleaned_data['mp_acl']
+        })
+
 
 
 class PeriodicSnapForm(ModelForm):
