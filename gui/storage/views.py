@@ -161,11 +161,13 @@ def volumemanager(request):
 
     # Grab disk list
     # Root device already ruled out
-    for disk, info in notifier().get_disks().items():
+    result = dispatcher.call_sync('disks.query', [('path', 'in', dispatcher.call_sync('volumes.get_available_disks'))])
+
+    for d in result:
         disks.append(forms.Disk(
-            info['devname'],
-            info['capacity'],
-            serial=info.get('ident')
+            d['path'],
+            d['mediasize'],
+            serial=d.get('serial')
         ))
     disks = sorted(disks, key=lambda x: (x.size, x.dev), cmp=_diskcmp)
 
