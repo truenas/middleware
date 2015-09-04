@@ -6,12 +6,12 @@
 
 Written by users of the FreeNAS® network-attached storage operating system.
 
-Version 9.3
+Version |version|
 
 Copyright © 2011-2015
 `iXsystems <http://www.ixsystems.com/>`_
 
-This Guide covers the installation and use of FreeNAS® 9.3.
+This Guide covers the installation and use of FreeNAS® |version|.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
 read the instructions in the `README <https://github.com/freenas/freenas/blob/master/docs/userguide/README>`_. If you use IRC Freenode, you are welcome to join
@@ -22,8 +22,6 @@ The FreeNAS® Users Guide is freely available for sharing and redistribution und
 work as long as you attribute iXsystems as the original source of the Guide.
 
 FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
-
-3ware® and LSI® are trademarks or registered trademarks of LSI Corporation.
 
 Active Directory® is a registered trademark or trademark of Microsoft Corporation in the United States and/or other countries.
 
@@ -65,7 +63,7 @@ Windows® is a registered trademark of Microsoft Corporation in the United State
 
 **Typographic Conventions**
 
-The FreeNAS® 9.3 Users Guide uses the following typographic conventions:
+The FreeNAS® |version| Users Guide uses the following typographic conventions:
 
 * Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Import CA" button.
 
@@ -92,366 +90,11 @@ system that has been optimized for file storage and sharing.
 FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols can be configured to provide storage access to a
 wide range of operating systems. A plugins system is provided for extending the built-in features by installing additional software.
 
-.. index:: What's New, Changelog
-.. _What's New in 9.3:
+.. _What's New in |version|:
 
-What's New in 9.3
------------------
+What's New in |version|
+-----------------------
 
-FreeNAS® 9.3 fixes `this list of bugs <https://bugs.freenas.org/projects/freenas/issues?query_id=98>`_.
-
-It is based on the stable version of FreeBSD 9.3 which adds 
-`these features <https://www.freebsd.org/releases/9.3R/relnotes.html>`_, supports
-`this hardware <https://www.freebsd.org/releases/9.3R/hardware.html>`_, and incorporates all of the
-`security releases <http://www.freebsd.org/security/advisories.html>`_
-issued since FreeBSD 9.3 RELEASE.
-
-* FreeNAS® is now 64-bit only.
-
-* FreeNAS® is now ZFS only. This means that the "UFS Volume Manager" has been removed and disks can no longer be formatted with UFS. However, for backwards
-  compatibility, existing UFS-formatted disks can still be imported using "Import Disk" so that their contents can be copied to a ZFS pool.
-
-* There is now only one type of installation file, :file:`.iso`. This file can be either burned to CD or written to a USB flash drive. This is an installer
-  file as new versions of FreeNAS® must be installed using a menu-driven installer.
-  
-* FreeNAS® now formats the device holding the operating system with ZFS and uses the GRUB boot loader. This provides support for multiple boot environments,
-  allowing you to easily recover from a failed upgrade, system update, or configuration.
-  
-* The new installer provides the option to select multiple devices, meaning that you can now mirror the boot device.
-  
-* The administrative GUI can now be accessed over IPv6.
-
-* NFSv4 support, which includes Kerberized NFS support, has been added.
-
-* The system logger has been replaced by `syslog-ng <https://www.balabit.com/network-security/syslog-ng>`_.
-
-* A configuration wizard has been added. On a fresh install, this wizard will run after the *root* password is set, making it easy to quickly create a volume
-  and share(s). Users who prefer to manually create their volumes and shares can exit the wizard and create these as usual. The wizard can be re-run at a
-  later time by selecting :ref:`Wizard <Initial Configuration Wizard>` from the graphical tree menu.
-
-* The ability to manage boot environments has been added to :menuselection:`System --> Boot`.
-
-* The ability to manage :file:`rc.conf` variables has been added to
-  :menuselection:`System --> Tunables`.
-
-* The ability to check for updates and perform upgrades has been added to :menuselection:`System --> Update`.
-
-* The ability to import or create an internal or intermediate CA (Certificate Authority) has been added to :menuselection:`System --> CAs`. 
-
-* The ability to import existing certificates or to create self-signed certificates has been added to :menuselection:`System --> Certificates`. All services
-  which support the use of certificates now have a drop-down menu for selecting an imported or created certificate.
-
-* The ZFS pool version can now be upgraded by clicking the "Upgrade" button in the :menuselection:`Storage --> Volumes --> View Volumes` screen.
-
-* The ability to manage VMware snapshots has been added to :menuselection:`Storage --> VMware-Snapshot`.
-
-* The :command:`afpusers` command has been added. Similar to
-  `macusers <http://netatalk.sourceforge.net/3.0/htmldocs/macusers.1.html>`_, it can be used to list the users connected to AFP shares.
-
-* Kernel iSCSI has replaced :command:`istgt`. This improves support for VMware VAAI acceleration and adds support for Microsoft ODX acceleration and Windows
-  2012 clustering. Zvol based LUNs can now be grown from the GUI. LUNs can now be grown on-the-fly, without having to first disconnect initiators or stop the
-  iSCSI service.
-
-* Support for Link Layer Discovery Protocol (:ref:`LLDP`) has been added. This allows network devices to advertise their identity, capabilities, and neighbors on
-  an Ethernet LAN.
-
-* `Net-SNMP <http://net-snmp.sourceforge.net/>`_ has replaced :command:`bsnmpd` as the SNMP service.
-
-* The :file:`/usr/local/share/snmp/mibs/FREENAS-MIB.txt` MIB has been added for making ZFS statistics available via :command:`net-snmp`.
-
-* Support for WebDAV has been added which can be configured from :menuselection:`Services --> WebDAV`. This provides a file browser with HTTP authentication
-  and optional SSL encryption.
-
-* The Linux jail templates have been removed as they were too experimental and limited to 32-bit. Instead, use the VirtualBox template, which installs a
-  web-based instance of phpVirtualBox, and use that to install the desired Linux distro or any other operating system.
-
-* The various FreeBSD jail templates have been replaced with one FreeBSD template to reduce confusion in knowing which template to use.
-
-* Plugins and Jails now support DHCP configuration for IPv4 and IPv6. This should resolve most software connectivity issues when the network contains a DHCP
-  server.
-
-* The cruciblewds, MediaBrowser, s3cmd, SickRage, Sonarr, and Syncthing plugins have been added. The Minidlna plugin has been removed as it is not supported
-  by the current implementation of FastCGI. Instructions for manually installing Minidlna into a jail can be found in
-  `this forum post <https://forums.freenas.org/index.php?threads/how-to-install-minidlna-on-freenas-9-3-prior-to-plugin.25395/>`_.
-
-* Support for the Atheros AR813x/AR815x Gigabit Ethernet driver, `alc(4) <https://www.freebsd.org/cgi/man.cgi?query=alc>`_, has been added.
-
-The GUI has been reorganized as follows:
-
-* :menuselection:`System --> System Information` is now :menuselection:`System --> Information`.
-
-* :menuselection:`System --> Settings` has been divided into :menuselection:`System --> General`, :menuselection:`System --> Advanced`,
-  :menuselection:`System --> Email`, and :menuselection:`System --> System Dataset`.
-
-* :menuselection:`System --> Sysctls` and :menuselection:`System --> Tunables` have been merged into :menuselection:`System --> Tunables`. The "Type" field
-  has been added to :menuselection:`System --> Tunables` so you can specify whether a "Loader" or a "Sysctl" is being created.
-
-* NTP Servers has been moved to :menuselection:`System --> General`.
-
-* :menuselection:`System --> Settings --> SSL` has been moved to :menuselection:`System --> General --> Set SSL Certificate`.
-  
-* A new :ref:`Tasks` menu has been added and the following have been moved to Tasks: Cron Jobs, Init/Shutdown Scripts, Rsync Tasks, and S.M.A.R.T Tests.
-
-* A :ref:`Snapshots` menu has been added to Storage.
-
-* iSCSI configuration has been moved to :menuselection:`Sharing --> Block (iSCSI)`.
-
-* :menuselection:`Services --> Directory Services` has been renamed to Directory Service and moved as its own item in the tree.
-
-* :menuselection:`Services --> Directory Services --> Domain Controller` has been moved to :menuselection:`Services --> Domain Controller`.
-
-* :menuselection:`Services --> LLDP` has been added.
-
-* Log Out has been moved from the upper right corner to the tree menu.
-
-The following fields have been added or deleted:
-
-* The "System Update" option has been added to the "Console setup" menu. The "Reset WebGUI login credentials" entry in the "Console setup" menu has been
-  renamed to "Reset Root Password".
-
-* The "Certificate" drop-down menu and "WebGUI -> HTTPS Port" field have been added to :menuselection:`System --> General`.
-
-* The "System dataset pool" and "Use system dataset for syslog" fields have been removed from :menuselection:`System --> Advanced` as these are now set in
-  :menuselection:`System --> System Dataset`.
-
-* A "Performance Test" button has been added to :menuselection:`System --> Advanced`.
-
-* The "Firmware Update" button has been moved from :menuselection:`System --> Advanced` and renamed to :menuselection:`System --> Update --> Manual Update`.
-
-* The "Directory Services" field is now deprecated and has been removed from :menuselection:`System --> General`. FreeNAS® now supports the
-  `System Security Services Daemon (SSSD) <https://fedorahosted.org/sssd/>`_
-  which provides support for multiple directory services.
-
-* The "Rebuild LDAP/AD Cache" button has been removed from :menuselection:`System --> Advanced`. It has been renamed to "Rebuild Directory Service Cache" and
-  now appears in the configuration screen for each type of directory service.
-
-* The *rc.conf* "Type" has been added to :menuselection:`System --> Tunables`.
-
-* The "HTTP Proxy" field has been added to :menuselection:`Network --> Global Configuration`.
-
-* The "Channel" drop-down menu has been added to :menuselection:`Network --> IPMI`.
-
-* A "Run Now" button has been added for the highlighted cron job in :menuselection:`Tasks --> Cron Jobs --> View Cron Jobs`.
-
-* The "Rsync Create" checkbox has been added to :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
-
-* The icons in Storage have been renamed to clarify their purpose. "Auto Import Volume" is now "Import Volume", "Import Volume" is now "Import Disk", "ZFS
-  Volume Manager" is now "Volume Manager", and "ZFS Scrubs" are now "Scrubs".
-
-* The "Apply Owner (user)", "Apply Owner (group)", and "Apply Mode" checkboxes have been added to the "Change Permissions" screen.
-
-* The "Case Sensitivity" drop-down menu has been added to :menuselection:`Storage --> Volumes --> Create ZFS Dataset`.
-
-* An "Upgrade" button has been added to the available icons for a highlighted volume in :menuselection:`Storage --> Volumes --> View Volumes`. This means that
-  you no longer need to upgrade a ZFS pool from the command line.
-
-* The "Change Permissions" screen for a volume or dataset now has three "Permission Type"s: *Unix*, *Mac*, and *Windows*.
-
-* The "Volume Status" screen now shows the status of the latest ZFS scrub, the number of errors, number of repaired blocks, and the date of the last scrub.
-
-* The "Volume Status" screen now shows the resilvering status when a disk is replaced.
-  
-* The "Enable High Speed Ciphers" checkbox has been replaced by the "Encryption Cipher" drop-down menu in 
-  :menuselection:`Storage --> Replication Tasks --> Add Replication Tasks`. This allows you to temporarily disable encryption for the initial replication which
-  can significantly reduce the time needed for the initial replication.
-
-* The "Workgroup Name" field and "Use keytab" checkbox are deprecated and have been removed from :menuselection:`Directory Service --> Active Directory`. The
-  "Enable" and "Site Name" fields and the "Idmap backend", "Windbind NSS Info", and "SASL wrapping" drop-down menus have been added to
-  :menuselection:`Directory Service --> Active Directory`. The "Kerberos Server" and "Kerberos Password Server" fields have been replaced by the "Kerberos
-  Realm" drop-down menu.
-
-* The "Encryption Mode" field has been removed from :menuselection:`Directory Service --> LDAP`. The "Enable" and "Samba Schema" checkboxes, "SUDO Suffix",
-  "LDAP timeout", and "DNS timeout" fields, and the "Kerberos Realm", "Kerberos Keytab", and "Idmap backend" drop-down menus have been added.
-
-* The "Enable" checkbox has been added to :menuselection:`Directory Service --> NIS`.
-
-* The "Use default domain" and "Enable" checkboxes and the "Idmap backend" drop-down menu have been added to :menuselection:`Directory Service --> NT4`.
-
-* :menuselection:`Directory Service --> Kerberos Realms` and :menuselection:`Directory Service --> Kerberos Keytabs` have been added. Added keytabs are stored
-  in the configuration database so that they persist across reboots and system upgrades.
-
-* The "Database Path" field has been moved from :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share` to :menuselection:`Services --> AFP`.
-
-* The "Hosts Allow" and "Hosts Deny" fields have been added to :menuselection:`Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
-
-* The "Bind IP Addresses" and "Global auxiliary parameters" fields have been added to :menuselection:`Services --> AFP`.
-
-* The "Zero Device Numbers" field has been moved from :menuselection:`Services --> AFP to Sharing --> Apple (AFP) Share --> Add Apple (AFP) Share`.
-
-* The "Security" selection fields have been added to :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share`.
-
-* The "Use as home share" checkbox and "VFS Objects" fields have been added to :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
-
-* :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration` has been reduced to the configuration options used by kernel iSCSI. The "ISNS
-  Servers" and the "Pool Available Size Threshold" fields have been added.
-
-* The "Available Size Threshold", "Enable TPC", and "Xen initiator compat mode" fields have been added to
-  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
-
-* The "Target Flags" and "Queue Depth" fields are now deprecated and have been removed from
-  :menuselection:`Sharing --> (Block) iSCSI --> Targets --> Add Target`.
-
-* The "Domain logons", "Obey pam restrictions", and "Bind IP Addresses" checkboxes and the "Idmap Range Low" and "Idmap Range High" fields have been added to
-  :menuselection:`Services --> CIFS`. The "Enable home directories", "Enable home directories browsing", "Home directories", and "Homes auxiliary parameters"
-  fields have been removed from :menuselection:`Services --> CIFS` as they have been replaced by the "Use as home share" checkbox in
-  :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share`.
-
-* :menuselection:`Services --> Directory Services` has been renamed to :menuselection:`Services --> Domain Controller`.
-
-* The "Kerberos Realm" drop-down menu has been added to :menuselection:`Services --> Domain Controller`.
-
-* The "IP Server" field has been added to :menuselection:`Services --> Dynamic DNS`.
-
-* The "TLS use implicit SSL" checkbox has been removed from :menuselection:`Services --> FTP` as this feature is deprecated. The "Certificate and private key"
-  field has been replaced by the "Certificate" drop-down menu which is integrated into the new Certification Manager, allowing one to select their own
-  certificates.
-
-* The "Enable NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
-
-* The "vanilla" option has been removed from :menuselection:`Jails --> Add Jails` as it was confusing.
-
-* The "NIC" drop-down menu has been added to :menuselection:`Jails --> Add Jails` so that the interface to use for jail connections can be specified.
-
-* The "ZFS" tab has been added to :ref:`Reporting`, providing graphs for "ARC Size" and "ARC Hit Ratio".
-
-.. _What's New Since 9.3-RELEASE:
-
-What's New Since 9.3-RELEASE
-----------------------------
-
-Beginning with version 9.3, FreeNAS® uses a "rolling release" model instead of point releases. The new :ref:`Update` mechanism makes it easy to keep
-up-to-date with the latest security fixes, bug fixes, and new features. Some updates affect the user interface so this section lists any functional changes
-that have occurred since 9.3-RELEASE.
-
-.. note::the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
-   system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
-
-* Samba was updated to `4.1.18 <https://www.samba.org/samba/history/samba-4.1.18.html>`_.
-
-* Netatalk was updated to `3.1.7 <http://netatalk.sourceforge.net/3.1/ReleaseNotes3.1.7.html>`_.
-
-* SSSD was updated to `1.11.7 <https://fedorahosted.org/sssd/wiki/Releases/Notes-1.11.7>`_.
-
-* The driver for the Intel X710 10GbE adapter was added.
-
-* The mrsas(4) LSI MegaRAID driver was added.
-
-* Support for the Mach Xtreme MX-ES/MXUB3 and the Kingston DT100G2 USB drives has been added.
-
-* Support for LSI MegaRAID SAS passthrough has been added.
-
-* Man pages have been added and can be accessed from :ref:`Shell`.
-
-* LZ4 compression is used on the boot pool in order to increase space for boot environments.
-
-* Support for hot spare drive replacement has been added. If you have spare drives in your pool, and a drive fails, FreeNAS® should automatically remove the failed
-  drive from the pool and replace it with the spare.
-
-* An installation of STABLE, as of 201501212031, now creates two boot environments. The system will boot into the *default* boot environment and users can
-  make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned
-  to a pristine, non-configured version of the installation.
-
-* The "Create backup" and "Restore from a backup" options have been added to the FreeNAS® console setup menu shown in Figure 3a.
-
-* The "Microsoft Account" checkbox has been added to :menuselection:`Account --> Users --> Add User`.
-
-* The ability to set the boot pool scrub interval has been added to :menuselection:`System --> Boot`.
-
-* The size of and the amount of used space in the boot pool is displayed in :menuselection:`System --> Boot`.
-
-* The "Enable automatic upload of kernel crash dumps and daily telemetry" checkbox has been added to :menuselection:`System --> Advanced`.
-
-* A "Backup" button has been added to :menuselection:`System --> Advanced`.
-
-* The "Periodic Notification User" drop-down menu has been added to :menuselection:`System --> Advanced`.
-
-* The "Performance Test" button has been removed from :menuselection:`System --> Advanced`.
-
-* The system will issue an alert if an update fails and the details of the failure will be written to :file:`/data/update.failed`.
-
-* The "Confirm Passphrase" field has been added to :menuselection:`System --> CAs --> Import CA`
-  and :menuselection:`System --> Certificates --> Import Certificate`.
-
-* The "Support" tab has been added to :menuselection:`System --> Support`, providing a convenient method for reporting a bug or requesting a new feature.
-
-* The "Rsync Create" checkbox has been renamed to "Validate Remote Path" and the "Delay Updates" checkbox has been added to
-  :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`.
-
-* The "VLAN ID" field has been added to :menuselection:`Network --> IPMI`.
-
-* A reboot is no longer required when creating :ref:`Link Aggregations`.
-
-* The "Exclude System Dataset" checkbox has been added to :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`.
-
-* The :file:`/usr/local/bin/test_ssh.py` script has been added for testing the SSH connection for a defined replication task.
-
-* The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
-
-* A pop-up warning will appear if you go to change :menuselection:`Directory Service --> Active Directory --> Advanced Mode -> Idmap backend` as selecting the wrong
-  backend will break Active Directory integration.
-
-* The "Schema" drop-down menu has been added to :menuselection:`Directory Service --> LDAP`.
-
-* The "Kerberos Settings" tab as been added to :ref:`Directory Service`.
-
-* The ability to "Online" a previously offlined disk has been added to :menuselection:`Storage --> Volumes --> Volume Status`.
-
-* The "Periodic Snapshot Task" drop-down menu has been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
-
-* All available VFS objects have been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`
-  and the "aio_pthread" and "streams_xattr" VFS objects are enabled by default.
-
-* The "Pool Available Size Threshold" field has been renamed to "Pool Available Space Threshold" in
-  :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`.
-
-* The "Discovery Auth Method" and "Discovery Auth Group" fields have moved from :menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration` to
-  :menuselection:`Sharing --> Block (iSCSI) --> Portals --> Add Portal`.
-  
-* The "Logical Block Size" field has been moved from :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` to
-  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
-
-* The "Serial" field has been moved from  :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` to :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`. 
-
-* The :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` screen now supports the creation of multiple iSCSI groups.
-
-* The "Disable Physical Block Size Reporting" checkbox, "Available Space Threshold" field, and "LUN RPM" drop-down menu have been added to
-  :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
-
-* The "Home share name" field  has been added to :menuselection:`Services --> AFP`.
-
-* The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
-
-* The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
-
-* The "SNMP v3 Support" checkbox, "Username", "Password", and "Privacy Passphrase" fields, and "Authentication Type" and "Privacy Protocol" drop-down menus have been added to
-  :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
-
-* The "Power Off UPS" checkbox had been added to :menuselection:`Services --> UPS`.
-
-* The MediaBrowser Plugin has been renamed to Emby.
-
-* The :menuselection:`Jails --> Add Jails` button has been renamed to "Add Jail".
-
-* A "Restart" button is now available when you click the entry for an installed jail.
-
-* The "Mtree" field and "Read-only" checkbox have been added to :menuselection:`Jails --> Templates --> Add Jail Templates`.
-
-* The "Mtree" field has been added to the "Edit" options for existing jail templates.
-
-* The **-C**, **-D** and **-j** options have been added to :ref:`freenas-debug`.
-
-* A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
-
-* The "Help" icon has been replaced by the :ref:`Guide` icon, providing an offline version of the FreeNAS® User Guide (this documentation).
-
-* A warning message now occurs if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of the
-  connected initiators.
-
-* An alert will be generated when a new update becomes available.
-
-* An alert will be generated when a S.M.A.R.T. error occurs.
-
-* An alert will be generated if a Certificate Authority or certificate is invalid or malformed.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
@@ -459,13 +102,11 @@ that have occurred since 9.3-RELEASE.
 Hardware Recommendations
 ------------------------
 
-Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
-<http://www.freebsd.org/releases/9.3R/hardware.html>`__. Supported processors are listed in section
-`2.1 amd64 <https://www.freebsd.org/releases/9.3R/hardware.html#proc>`_. Beginning with version 9.3, FreeNAS® is only available for 64-bit (also known as
-amd64) processors.
+Since FreeNAS® 10 is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
+<http://www.freebsd.org/releases/10.2R/hardware.html>`__. Supported processors are listed in section
+`2.1 amd64 <https://www.freebsd.org/releases/10.2R/hardware.html#proc>`_. FreeNAS® is only available for 64-bit (also known as amd64) processors.
 
-.. note:: beginning with version 9.3, FreeNAS® boots from a GPT partition. This means that the system BIOS must be able to boot using either the legacy BIOS
-          firmware interface or EFI.
+.. note:: FreeNAS® boots from a GPT partition. This means that the system BIOS must be able to boot using either the legacy BIOS firmware interface or EFI.
 
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started.
 You can also skim through the
@@ -543,22 +184,19 @@ When determining the type and size of device to install the operating system to,
 Storage Disks and Controllers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The
-`Disk section <http://www.freebsd.org/releases/9.3R/hardware.html#DISK>`_
+The `Disk section <http://www.freebsd.org/releases/10.2R/hardware.html#DISK>`_
 of the FreeBSD Hardware List lists the supported disk controllers. In addition, support for 3ware 6gbps RAID controllers has been added along with the CLI
 utility :command:`tw_cli` for managing 3ware RAID controllers.
 
 FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS.
 
-If you need reliable disk alerting and immediate reporting of a failed drive, use an HBA such as a LSI
-MegaRAID controller or a 3Ware twa-compatible controller. More information about LSI cards and FreeNAS® can be found in this
-`forum post <https://forums.freenas.org/index.php?threads/confused-about-that-lsi-card-join-the-crowd.11901/>`_.
+If you need reliable disk alerting and immediate reporting of a failed drive, use an HBA such as an Avago
+MegaRAID controller or a 3Ware twa-compatible controller.
 
 Suggestions for testing disks before adding them to a RAID array can be found in this
 `forum post <https://forums.freenas.org/index.php?threads/checking-new-hdds-in-raid.12082/>`_.
 
-`This article <http://technutz.com/purpose-built-nas-hard-drives/>`_
-provides a good overview of hard drives which are well suited for a NAS.
+`This article <http://technutz.com/purpose-built-nas-hard-drives/>`_ provides a good overview of hard drives which are well suited for a NAS.
 
 If you have some money to spend and wish to optimize your disk subsystem, consider your read/write needs, your budget, and your RAID requirements:
 
@@ -568,8 +206,7 @@ If you have some money to spend and wish to optimize your disk subsystem, consid
 
 * 7200 RPM SATA disks are designed for single-user sequential I/O and are not a good choice for multi-user writes.
 
-If you have the budget and high performance is a key requirement, consider a
-`Fusion-I/O card <http://www.fusionio.com/products/>`_
+If you have the budget and high performance is a key requirement, consider a `Fusion-I/O card <http://www.fusionio.com/products/>`_
 which is optimized for massive random access. These cards are expensive and are suited for high-end systems that demand performance. A Fusion-I/O card can be
 formatted with a filesystem and used as direct storage; when used this way, it does not have the write issues typically associated with a flash device. A
 Fusion-I/O card can also be used as a cache device when your ZFS dataset size is bigger than your RAM. Due to the increased throughput, systems running these
@@ -593,8 +230,7 @@ size. Further, when creating a RAIDZ*, only the size of the smallest disk will b
 Network Interfaces
 ~~~~~~~~~~~~~~~~~~
 
-The
-`Ethernet section <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_
+The `Ethernet section <http://www.freebsd.org/releases/10.2R/hardware.html#ETHERNET>`_
 of the FreeBSD Hardware Notes indicates which interfaces are supported by each driver. While many interfaces are supported, FreeNAS® users have seen the best
 performance from Intel and Chelsio interfaces, so consider these brands if you are purchasing a new NIC. Realteks will perform poorly under CPU load as
 interfaces with these chipsets do not provide their own processors.

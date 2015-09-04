@@ -6,7 +6,7 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
-Beginning with version 9.3, FreeNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
+FreeNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
 type of dataset and permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is
 recommended to use the Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune
 the default permissions from the client operating system to meet the requirements of the network.
@@ -551,7 +551,7 @@ If your clients are receiving "reverse DNS" errors, add an entry for the IP addr
 If the client receives timeout errors when trying to mount the share, add the IP address and hostname of the client to the "Host name data base" field of
 :menuselection:`Network --> Global Configuration`.
 
-Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® 9.3 uses TCP. To support UDP connections, go to
+Some older versions of NFS clients default to UDP instead of TCP and do not auto-negotiate for TCP. By default, FreeNAS® uses TCP. To support UDP connections, go to
 :menuselection:`Services --> NFS` and check the box "Serve UDP NFS clients".
 
 .. index:: WebDAV
@@ -560,8 +560,7 @@ Some older versions of NFS clients default to UDP instead of TCP and do not auto
 WebDAV Shares
 ------------------
 
-Beginning with FreeNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory
-from a web browser.
+WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory from a web browser.
 
 Configuring WebDAV shares is a two step process. First, create the WebDAV share(s) to specify which data can be accessed. Then, configure the WebDAV service
 by specifying the port, authentication type, and authentication password. Once the configuration is complete, the share can be accessed using a URL in the
@@ -718,18 +717,26 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
+Note the following regarding some of the "Advanced Mode" settings:
 
-.. note:: hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in
-   :menuselection:`Services --> CIFS`.
+* Hostname lookups add some time to accessing the CIFS share. If you only use IP addresses, uncheck the "Hostnames lookups" box in :menuselection:`Services --> CIFS`.
 
-.. note:: be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every
-         share that exists using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If
-         this box is unchecked, even the owner of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they
-         can still access the share from the command line. Unchecking this option provides limited security and is not a substitute for proper permissions and
-         password control.
+* Be careful about unchecking the "Browsable to Network Clients" box. When this box is checked (the default), other users will see the names of every share that exists
+  using Windows Explorer, but they will receive a permissions denied error message if they try to access someone else's share. If this box is unchecked, even the owner
+  of the share won't see it or be able to create a drive mapping for the share in Windows Explorer. However, they can still access the share from the command line.
+  Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
 
-If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
+* If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
+  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
+  
+To configure support for OS/2 clients, add this line to "Auxiliary Parameters"::
+
+ lanman auth = yes
+ 
+To configure lanman authentication for pre-NT authentication, add these lines instead::
+
+ client lanman auth = yes
+  client plaintext auth = yes
 
 Table 10.4b provides an overview of the available VFS modules. Be sure to research each module **before** adding or deleting it from the "Selected" column of
 the "VFS Objects" field for the share. Some modules will need additional configuration after they are added. Refer to
@@ -1070,7 +1077,7 @@ drive; rather than mounting remote directories, initiators format and directly m
 a new target for each LUN. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
 
-In FreeNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
+In FreeNAS®, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
 locally, rather than over the network. It also supports the following VAAI (vStorage APIs for Array Integration) primitives, where VAAI is VMware's API
 framework that enables certain storage tasks, such as large data moves, to be offloaded from the virtualization hardware to the storage array.
 
@@ -1088,7 +1095,7 @@ framework that enables certain storage tasks, such as large data moves, to be of
 * **stun:** if a volume runs out of space, this feature pauses any running virtual machines so that the space issue can be fixed, instead of reporting write
   errors.
 
-* **threshold warning:** the system reports a warning when a configurable capacity is reached. In FreeNAS, this threshold can be configured at the pool
+* **threshold warning:** the system reports a warning when a configurable capacity is reached. In FreeNAS®, this threshold can be configured at the pool
   level when using zvols (see Table 10.5a) or at the extent level (see Table 10.5f) for both file- and device-based extents. Typically, the warning is set at
   the pool level, unless file extents are used, in which case it must be set at the extent level.
 
@@ -1175,16 +1182,14 @@ Table 10.5b summarizes the settings that can be configured when adding a portal.
 |                       |                |                                                                             |
 +-----------------------+----------------+-----------------------------------------------------------------------------+
 | Discovery Auth Method | drop-down menu | configures the authentication level required by the target for discovery of |
-|                       |                | valid devices, where *None* will allow anonymous discovery,                 |
+|                       |                | valid devices, where *None* will allow anonymous discovery while            |
 |                       |                | *CHAP* and                                                                  |
-|                       |                | *Mutual CHAP* require authentication, and                                   |
-|                       |                | *Auto* lets the initiator decide the authentication scheme                  |
+|                       |                | *Mutual CHAP* require authentication                                        |
 |                       |                |                                                                             |
 +-----------------------+----------------+-----------------------------------------------------------------------------+
-| Discovery Auth Group  | drop-down menu | depends on "Discovery Auth Method" setting: required if set to *CHAP* or    |
-|                       |                | *Mutual CHAP*, optional if set to                                           |
-|                       |                | *Auto*, and not needed if set to                                            |
-|                       |                | *None*                                                                      |
+| Discovery Auth Group  | drop-down menu | select a user created in "Authorized Access" if the "Discovery Auth Method" |
+|                       |                | is set to *CHAP* or                                                         |
+|                       |                | *Mutual CHAP*                                                               |
 |                       |                |                                                                             |
 +-----------------------+----------------+-----------------------------------------------------------------------------+
 | IP address            | drop-down menu | select the IP address associated with an interface or the wildcard address  |

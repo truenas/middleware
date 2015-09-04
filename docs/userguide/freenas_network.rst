@@ -311,7 +311,7 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
 .. image:: images/lagg1.png
 
 .. note:: if interfaces are installed but do not appear in the "Physical NICs" list, check that a FreeBSD driver for the interface exists
-   `here <http://www.freebsd.org/releases/9.3R/hardware.html#ETHERNET>`_.
+   `here <http://www.freebsd.org/releases/10.2R/hardware.html#ETHERNET>`_.
 
 To create the link aggregation, select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 

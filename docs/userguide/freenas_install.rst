@@ -28,8 +28,7 @@ This section describes the following:
 Getting FreeNAS®
 -----------------
 
-FreeNAS® 9.3 can be downloaded from
-`http://download.freenas.org/ <http://download.freenas.org/>`_.
+FreeNAS® |version| can be downloaded from `http://download.freenas.org/ <http://download.freenas.org/>`_.
 
 .. note:: FreeNAS® will only install to 64-bit hardware and the installer will not work on 32-bit hardware.
 
@@ -62,7 +61,7 @@ The value produced by running the command should match the value of the :file:`s
 Preparing the Media
 -------------------
 
-Beginning with version 9.3, FreeNAS® must be installed using a menu-driven installer, as the ZFS boot partition is created during the installation. To
+FreeNAS® must be installed using a menu-driven installer, as the ZFS boot partition is created during the installation. To
 perform an installation, download the :file:`.iso` file and write it to either a CD or a USB stick.
 
 To burn the :file:`.iso` file to CD, use a CD burning utility.
@@ -95,7 +94,7 @@ the device name representing the device to write to on your system.
 
 ::
 
- dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/da0 bs=64k
+ dd if=FreeNAS-10.1-RELEASE-x64.iso of=/dev/da0 bs=64k
  6117+0 records in
  6117+0 records out
  400883712 bytes transferred in 88.706398 secs (4519220 bytes/sec)
@@ -146,11 +145,11 @@ which is faster. When running these commands, substitute the name of the install
  diskutil unmountDisk /dev/disk1
  Unmount of all volumes on disk1 was successful
 
- dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/rdisk1 bs=64k
+ dd if=FreeNAS-10.1-RELEASE-x64.iso of=/dev/rdisk1 bs=64k
 
 .. note:: if you get the error "Resource busy" when you run the :command:`dd` command, go to :menuselection:`Applications --> Utilities --> Disk Utility`,
    find your USB thumb drive, and click on its partitions to make sure all of them are unmounted. If you get the error "dd: /dev/disk1: Permission denied",
-   run the :command:`dd` command by typing :command:`sudo dd if=FreeNAS-9.3-RELEASE-x64.iso of=/dev/rdisk1 bs=64k`, which will prompt for your password.
+   run the :command:`dd` command by typing :command:`sudo dd if=FreeNAS-10.1-RELEASE-x64.iso of=/dev/rdisk1 bs=64k`, which will prompt for your password.
 
 The :command:`dd` command will take some minutes to complete. Wait until you get a prompt back and a message that displays how long it took to write the image
 to the USB drive.
@@ -281,19 +280,19 @@ written from the image file. Be very careful that you specify the USB stick when
 Upgrading
 ---------
 
-Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the operating system up-to-date:
+FreeNAS® provides flexibility for keeping the operating system up-to-date:
 
-#. Upgrades to major releases, for example from version 9.3 to 10.0, can still be performed using either an ISO or the graphical administrative interface.
+#. Upgrades to major releases, for example from version 9.3 to |version|, can be performed using either an ISO or the graphical administrative interface.
    Unless the Release Notes for the new major release indicate that your current version requires an ISO upgrade, you can use either upgrade method.
 
-#. Minor releases have been replaced with signed updates. This means that, for example, there will not be a 9.3.1 or 9.3.2 minor release. It also means that
+#. Minor releases have been replaced with signed updates. This means that
    you do not have to wait for a minor release to update the system with a system update or newer versions of drivers and features and that you no longer have
    to manually download an upgrade file and its associated checksum in order to do so.
 
 #. The updater automatically creates a boot environment, meaning that updates are a low-risk operation. Boot environments provide the option to return to the
    previous version of the operating system by rebooting the system and selecting the previous boot environment from the boot menu.
 
-This section describes how to perform an upgrade from an earlier version of FreeNAS® to 9.3. Once 9.3 is installed, use the instructions in :ref:`Update` to keep
+This section describes how to perform an upgrade from an earlier version of FreeNAS® to |version|. Once |version| is installed, use the instructions in :ref:`Update` to keep
 the system updated.
 
 .. _Caveats:
@@ -301,7 +300,7 @@ the system updated.
 Caveats:
 ~~~~~~~~
 
-Be aware of the following caveats **before** attempting an upgrade to 9.3:
+Be aware of the following caveats **before** attempting an upgrade to |version|:
 
 * **Upgrades from FreeNAS® 0.7x are not supported.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
   will have to manually recreate your configuration, and if supported, import the FreeNAS® 0.7x volumes or disks.
@@ -326,7 +325,7 @@ Be aware of the following caveats **before** attempting an upgrade to 9.3:
   you need a new feature flag, it is safe to leave the ZFS pool at its current version and uncheck the alert. If you do decide to upgrade the pool, you will
   not be able to boot into a previous version that does not support the newer feature flags.
 
-* The mps driver for 6G LSI SAS HBAs is version 16, which requires phase 16 firmware on the controller. It is recommended to upgrade the firmware before
+* The mps driver for 6G Avago SAS HBAs is version 20, which requires phase 20 firmware on the controller. It is recommended to upgrade the firmware before
   installing FreeNAS® or immediately after upgrading FreeNAS®, using the instructions in :ref:`Alert`. Running older firmware can cause many woes, including
   the failure to probe all of the attached disks, which can lead to degraded or unavailable arrays. While you can mismatch your firmware version with a higher
   version and things will "probably still work", there are no guarantees as that driver and firmware combination is untested.
@@ -352,7 +351,7 @@ Before upgrading the operating system, perform the following steps:
 Upgrading Using the ISO
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://download.freenas.org/9.3/latest/x64/>`_ the :file:`.iso` to the computer that
+To perform an upgrade using this method, `download <http://download.freenas.org/10/latest/x64/>`_ the :file:`.iso` to the computer that
 will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
 :ref:`Preparing the Media`.
 
@@ -390,7 +389,7 @@ the "Upload Config" button to upload the configuration that you saved before you
 Upgrading From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://download.freenas.org/9.3/latest/x64/>`_ the :file:`.txz` file and its
+To perform an upgrade using this method, `download <http://download.freenas.org/10/latest/x64/>`_ the :file:`.txz` file and its
 associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to :menuselection:`System --> Settings --> Advanced --> Firmware Update` as
 shown in Figure 2.5c.
 
@@ -460,9 +459,7 @@ You can always:
 Upgrading a ZFS Pool
 ~~~~~~~~~~~~~~~~~~~~
 
-Beginning with FreeNAS® 9.3, ZFS pools can be upgraded from the graphical administrative interface.
-
-Before upgrading an existing ZFS pool, be aware of the following caveats first:
+ZFS pools can be upgraded from the graphical administrative interface. Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
 * the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version
   of FreeNAS® that does not support those feature flags.**

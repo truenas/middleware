@@ -31,7 +31,7 @@ can import the account information and imported users can be authorized to acces
 .. note:: if your network contains an NT4 domain controller, or any domain controller containing a version which is earlier than Windows 2000, configure
    :ref:`NT4` instead.
 
-Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running the latest FreeNAS® 9.3-STABLE, it is
+Many changes and improvements have been made to Active Directory support within FreeNAS®. If you are not running the latest FreeNAS® STABLE |version|, it is
 strongly recommended that you update the system before attempting Active Directory integration.
 
 **Before configuring the Active Directory service**, ensure name resolution is properly configured by
