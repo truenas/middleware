@@ -595,6 +595,7 @@ class iSCSITargetExtent(Model):
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
             te.delete()
         super(iSCSITargetExtent, self).delete()
+        notifier().reload("iscsitarget")
 
     def save(self, *args, **kwargs):
         if not self.iscsi_target_extent_naa:
