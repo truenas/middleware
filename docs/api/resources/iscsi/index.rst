@@ -181,8 +181,9 @@ Create resource
         }
 
    :json string iscsi_target_extent_name: identifier of the extent
-   :json string iscsi_target_extent_type: File, Device, ZFS Volume
-   :json string iscsi_target_extent_path: path to the extent
+   :json string iscsi_target_extent_type: File, Disk
+   :json string iscsi_target_extent_path: path to the extent (for File type)
+   :json string iscsi_target_extent_disk: path to the disk or zvol (for Disk type)  e.g. "zvol/tank/zvol1", "ada1"
    :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
    :json boolean iscsi_target_extent_insecure_tpc: allow initiators to xcopy without authenticating to foreign targets
    :json boolean iscsi_target_extent_xen: Xen initiator compat mode
@@ -241,8 +242,9 @@ Update resource
         }
 
    :json string iscsi_target_extent_name: identifier of the extent
-   :json string iscsi_target_extent_type: File, Device, ZFS Volume
-   :json string iscsi_target_extent_path: path to the extent
+   :json string iscsi_target_extent_type: File, Disk
+   :json string iscsi_target_extent_path: path to the extent (for File type)
+   :json string iscsi_target_extent_disk: path to the disk or zvol (for Disk type)  e.g. "zvol/tank/zvol1", "ada1"
    :json string iscsi_target_extent_filesize: size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, TB for convenience
    :json boolean iscsi_target_extent_insecure_tpc: allow initiators to xcopy without authenticating to foreign targets
    :json boolean iscsi_target_extent_xen: Xen initiator compat mode
