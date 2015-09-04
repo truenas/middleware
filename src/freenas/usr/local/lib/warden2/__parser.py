@@ -70,7 +70,7 @@ _delete_parser.add_argument('--confirm', action='store_true')
 _delete_parser.set_defaults(func=__delete_jail)
 
 _list_parser = subparsers.add_parser('list')
-_list_parser.add_argument('-v', help='Wraps "iocage list --long"',
+_list_parser.add_argument('-v', help='Wraps "iocage list --warden"',
                           action='store_true', dest='_long_list')
 _list_parser.set_defaults(func=__list_jails)
 

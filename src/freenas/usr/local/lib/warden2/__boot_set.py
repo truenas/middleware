@@ -31,7 +31,7 @@ from sys import stderr
 
 def __boot_jail_prop(args):
     """
-    Take 2 arguments and supplies that to `iocage set` for the jail
+    Take 1 argument and supplies that to `iocage set boot` for the jail
     """
     print '  Toggling jail property boot on {0}'.format(args.jail)
     (retcode, results_stdout, results_stderr) = __pipeopen(
