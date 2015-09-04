@@ -935,8 +935,7 @@ def generate_smb4_conf(smb4_conf, role):
         confset2(smb4_conf, "domain logons = %s",
                  "yes" if cifs.cifs_srv_domain_logons else "no")
 
-    if (cifs.cifs_srv_localmaster and not nt4_enabled()
-            and not activedirectory_enabled()):
+    if (not nt4_enabled() and not activedirectory_enabled()):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.cifs_srv_localmaster else "no")
 
