@@ -17,7 +17,7 @@ kerberos_get_principal()
 	/usr/bin/klist 2>/dev/null|egrep '^ +Principal'|awk '{ print $2 }'
 }
 
-kerbers_principal_check()
+kerberos_principal_check()
 {
 	local principal="${1}"
 	local krb_principal="$(kerberos_get_principal)"
@@ -58,11 +58,6 @@ kerberos_start_activedirectory()
 		local res=0
 		local keytab_file="$(AD_get ad_keytab_file)"
 
-		if kerbers_principal_check "${keytab_principal}"
-		then
-			return 0
-		fi
-
 		AD_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
 		/usr/bin/kinit -t "${keytab_file}" --renewable -k "${keytab_principal}"
 		if [ "$?" != "0" ]
@@ -98,10 +93,6 @@ kerberos_start_activedirectory()
 	elif [ -n "${realm}" -a -n "${bindname}" -a -n "${bindpw}" ]
 	then
 		local principal="${bindname}@${realm}"
-		if kerbers_principal_check "${principal}"
-		then
-			return 0
-		fi
 
 		pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
 		echo -n "${bindpw}" > ${pwfile}
@@ -186,11 +177,6 @@ kerberos_start_ldap()
 		local res=0
 		local keytab_file="$(LDAP_get ldap_keytab_file)"
 
-		if kerbers_principal_check "${keytab_principal}"
-		then
-			return 0
-		fi
-
 		LDAP_log "kerberos_start: /usr/bin/kinit --renewable -t ${keytab_file} -k ${keytab_principal}"
 		/usr/bin/kinit -t "${keytab_file}" \
 			--renewable -k "${keytab_principal}"
@@ -233,10 +219,6 @@ kerberos_start_ldap()
 		fi
 
 		local principal="${uid}@${realm}"
-		if kerbers_principal_check "${principal}"
-		then
-			return 0
-		fi
 
 		pwfile="$(mktemp /tmp/tmp.XXXXXXXX)"
 		echo -n "${bindpw}" > ${pwfile}
