@@ -143,3 +143,7 @@ as such) in the snapshot UI.
 
 * FreeNAS now supports automatic drive replacement on failure, if spare
 drives are available.
+le.
+
+* The replication code has been substantially rewritten and can now
+recover from out-of-sync replications it far better fashion.
