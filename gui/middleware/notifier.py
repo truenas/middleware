@@ -3119,43 +3119,6 @@ class notifier:
             return True, ''
         return False, err
 
-    def detect_volumes(self, extra=None):
-        """
-        Responsible to detect existing volumes by running zpool commands
-
-        Used by: Automatic Volume Import
-        """
-
-        volumes = []
-        doc = self._geom_confxml()
-
-        pool_name = re.compile(r'pool: (?P<name>%s).*?id: (?P<id>\d+)' % (zfs.ZPOOL_NAME_RE, ), re.I | re.M | re.S)
-        p1 = self._pipeopen("zpool import")
-        res = p1.communicate()[0]
-
-        for pool, zid in pool_name.findall(res):
-            # get status part of the pool
-            status = res.split('id: %s\n' % zid)[1].split('pool:')[0]
-            try:
-                roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
-            except Exception, e:
-                log.warn("Error parsing %s: %s", pool, e)
-                continue
-
-            if roots['data'].status != 'UNAVAIL':
-                volumes.append({
-                    'label': pool,
-                    'type': 'zfs',
-                    'id': roots.id,
-                    'group_type': 'none',
-                    'cache': roots['cache'].dump() if roots['cache'] else None,
-                    'log': roots['logs'].dump() if roots['logs'] else None,
-                    'spare': roots['spares'].dump() if roots['spares'] else None,
-                    'disks': roots['data'].dump(),
-                    })
-
-        return volumes
-
     def zfs_import(self, name, id=None):
         if id is not None:
             imp = self._pipeopen('zpool import -f -R /mnt %s' % id)
