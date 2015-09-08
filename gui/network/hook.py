@@ -75,11 +75,4 @@ class NetworkHook(AppHook):
             })
             index += 1
 
-        tabs.insert(index, {
-            'name': 'NetworkSummary',
-            'focus': 'network.NetworkSummary',
-            'verbose_name': _('Network Summary'),
-            'url': reverse('network_summary'),
-        })
-
         return tabs
