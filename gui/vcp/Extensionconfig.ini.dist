@@ -1,0 +1,6 @@
+[RegisterParam]
+
+company=iXsystem
+label="Test extension"
+description=Plugin for iXsystem
+key=com.vmware.truenas
