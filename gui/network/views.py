@@ -37,7 +37,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network import models
-from freenasUI.network.forms import HostnameForm, IPMIForm, GlobalConfigurationForm
+from freenasUI.network.forms import HostnameForm, IPMIForm
 
 
 def hostname(request):
@@ -51,21 +51,6 @@ def hostname(request):
         request,
         form=form,
     )
-
-
-def globalconfiguration(request):
-    if request.method == "POST":
-        form = GlobalConfigurationForm(request.POST)
-        if form.is_valid():
-            form.save()
-
-            return JsonResp(request, message=_("Network configuration successfully saved"))
-    else:
-        form = GlobalConfigurationForm()
-
-    return render(request, 'network/global_configuration.html', {
-        'form': form,
-    })
 
 
 def ipmi(request):

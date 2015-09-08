@@ -13,6 +13,7 @@ class NetworkHook(AppHook):
         from freenasUI.middleware.notifier import notifier
         from freenasUI.network import models
         tabmodels = [
+            models.GlobalConfiguration,
             models.Interfaces,
             models.LAGGInterface,
             models.StaticRoute,
@@ -28,13 +29,6 @@ class NetworkHook(AppHook):
             backup = True
         else:
             backup = False
-
-        tabs.append({
-            'name': 'Global configuration',
-            'focus': 'network.GlobalConfiguration',
-            'verbose_name': _('Global configuration'),
-            'url': reverse('network_globalconfiguration')
-        })
 
         for model in tabmodels:
             if backup and model._meta.db_table not in NO_SYNC_MAP:
