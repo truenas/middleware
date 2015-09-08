@@ -464,26 +464,34 @@ class Alias(Model):
         #edit_modelform = "InterfacesEditForm"
 
 
-class VLAN(Model):
+class VLAN(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
+
     vlan_vint = models.CharField(
-            max_length=120,
-            verbose_name=_("Virtual Interface"),
-            help_text=_("Interface names must be vlanX where X is a number. "
-                "Example: vlan0.")
-            )
+        max_length=120,
+        verbose_name=_("Virtual Interface"),
+        help_text=_("Interface names must be vlanX where X is a number. "
+            "Example: vlan0.")
+    )
+
     vlan_pint = models.CharField(
-            max_length=300,
-            blank=False,
-            verbose_name=_("Physical Interface")
-            )
+        max_length=300,
+        blank=False,
+        verbose_name=_("Physical Interface")
+    )
+
     vlan_tag = models.PositiveIntegerField(
-            verbose_name=_("VLAN Tag")
-            )
+        verbose_name=_("VLAN Tag")
+    )
+
     vlan_description = models.CharField(
-            max_length=120,
-            verbose_name=_("Description"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Description"),
+        blank=True
+    )
 
     def __unicode__(self):
         return self.vlan_vint
@@ -498,6 +506,18 @@ class VLAN(Model):
         verbose_name = _("VLAN")
         verbose_name_plural = _("VLANs")
         ordering = ["vlan_vint"]
+
+    class Middleware:
+        provider_name = 'network.interfaces'
+        default_filters = [
+            ('type', '=', 'VLAN')
+        ]
+        field_mapping = (
+            (('id', 'vlan_vint'), 'id'),
+            ('vlan_pint', 'vlan.parent'),
+            ('vlan_tag', 'vlan.tag'),
+            ('vlan_description', 'name')
+        )
 
     class FreeAdmin:
         icon_object = u"VLANIcon"
