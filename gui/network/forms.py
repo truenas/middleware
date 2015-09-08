@@ -41,13 +41,15 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
-from freenasUI.contrib.IPAddressField import IP4AddressFormField
+from freenasUI.contrib.IPAddressField import IP4AddressFormField, IP6AddressFormField, IPAddressFormField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
 )
+
+from fnutils.query import wrap
 
 log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
@@ -418,25 +420,84 @@ class IPMIForm(Form):
         return ipv4
 
 
-class GlobalConfigurationForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.GlobalConfiguration
+class GlobalConfigurationForm(Form):
+    hostname = forms.CharField(
+        max_length=120,
+        label=_("Hostname"),
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+    )
+    ipv4gateway = IP4AddressFormField(
+        label=_("IPv4 Default Gateway"),
+        required=False
+        )
+    ipv6gateway = IP6AddressFormField(
+        label=_("IPv6 Default Gateway"),
+        required=False
+        )
+    nameserver1 = IPAddressFormField(
+        label=_("Nameserver 1"),
+        required=False
+        )
+    nameserver2 = IPAddressFormField(
+        label=_("Nameserver 2"),
+        required=False
+        )
+    nameserver3 = IPAddressFormField(
+        label=_("Nameserver 3"),
+        required=False
+        )
+    httpproxy = forms.CharField(
+        label=_('HTTP Proxy'),
+        max_length=255,
+        required=False
+        )
+    netwait_enabled = forms.BooleanField(
+        label=_("Enable netwait feature"),
+        help_text=_("If enabled, delays the start of network-reliant services "
+            "until interface is up and ICMP packets to a destination defined "
+            "in netwait ip list are flowing.  Link state is examined first, "
+            "followed by \"pinging\" an IP address to verify network "
+            "usability.  If no destination can be reached or timeouts are "
+            "exceeded, network services are started anyway with no guarantee "
+            "that the network is usable."),
+        required=False
+        )
+    netwait_ip = forms.CharField(
+        label=_("Netwait IP list"),
+        help_text=_("Space-delimited list of IP addresses to ping(8). If "
+            "multiple IP addresses are specified, each will be tried until "
+            "one is successful or the list is exhausted. If it is empty the "
+            "default gateway will be used."),
+        max_length=300,
+        required=False
+        )
+    hosts = forms.CharField(
+        label=_("Host name data base"),
+        help_text=_("This field is appended to /etc/hosts which contains "
+            "information regarding known hosts on the network. hosts(5)"),
+        required=False
+        )
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfigurationForm, self).__init__(*args, **kwargs)
-        if hasattr(notifier, 'failover_licensed'):
-            if not notifier().failover_licensed():
-                del self.fields['gc_hostname_b']
 
-            else:
-                from freenasUI.failover.utils import node_label_field
-                node_label_field(
-                    notifier().failover_node(),
-                    self.fields['gc_hostname'],
-                    self.fields['gc_hostname_b'],
-                )
+        from freenasUI.middleware.connector import connection as dispatcher
+        general = wrap(dispatcher.call_sync('system.general.get_config'))
+        network = wrap(dispatcher.call_sync('network.config.get_global_config'))
+
+        self.fields['hostname'].initial = general['hostname']
+        self.fields['ipv4gateway'].initial = network.get('gateway.ipv4')
+        self.fields['ipv6gateway'].initial = network.get('gateway.ipv6')
+        self.fields['netwait_enabled'].initial = network.get('netwait.enabled')
+        self.fields['netwait_ip'].initial = ' '.join(network.get('netwait.addresses', []))
+
+        for idx, i in enumerate(network['dns.addresses']):
+            if idx > 2:
+                break
+
+            self.fields['nameserver{0}'.format(idx)].initial = i
 
     def _clean_nameserver(self, value):
         if value:
@@ -455,22 +516,22 @@ class GlobalConfigurationForm(ModelForm):
                         _("169.254/16 subnet is not valid for nameserver"))
 
     def clean_gc_nameserver1(self):
-        val = self.cleaned_data.get("gc_nameserver1")
+        val = self.cleaned_data.get("nameserver1")
         self._clean_nameserver(val)
         return val
 
     def clean_gc_nameserver2(self):
-        val = self.cleaned_data.get("gc_nameserver2")
+        val = self.cleaned_data.get("nameserver2")
         self._clean_nameserver(val)
         return val
 
     def clean_gc_nameserver3(self):
-        val = self.cleaned_data.get("gc_nameserver3")
+        val = self.cleaned_data.get("nameserver3")
         self._clean_nameserver(val)
         return val
 
     def clean_gc_netwait_ip(self):
-        iplist = self.cleaned_data.get("gc_netwait_ip").strip()
+        iplist = self.cleaned_data.get("netwait_ip").strip()
         if not iplist:
             return ''
         for ip in iplist.split(' '):
@@ -480,67 +541,69 @@ class GlobalConfigurationForm(ModelForm):
                 raise forms.ValidationError(
                     _("The IP \"%s\" is not valid") % ip
                 )
-        return iplist
+        return iplist.split(' ')
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        nameserver1 = cleaned_data.get("gc_nameserver1")
-        nameserver2 = cleaned_data.get("gc_nameserver2")
-        nameserver3 = cleaned_data.get("gc_nameserver3")
+        nameserver1 = cleaned_data.get("nameserver1")
+        nameserver2 = cleaned_data.get("nameserver2")
+        nameserver3 = cleaned_data.get("nameserver3")
         if nameserver3:
             if nameserver2 == "":
                 msg = _(u"Must fill out nameserver 2 before "
                         "filling out nameserver 3")
-                self._errors["gc_nameserver3"] = self.error_class([msg])
+                self._errors["nameserver3"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
-                self._errors["gc_nameserver2"] = self.error_class([msg])
-                del cleaned_data["gc_nameserver2"]
+                self._errors["nameserver2"] = self.error_class([msg])
+                del cleaned_data["nameserver2"]
             if nameserver1 == "":
                 msg = _(u"Must fill out nameserver 1 before "
                         "filling out nameserver 3")
-                self._errors["gc_nameserver3"] = self.error_class([msg])
+                self._errors["nameserver3"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
-                self._errors["gc_nameserver1"] = self.error_class([msg])
-                del cleaned_data["gc_nameserver1"]
+                self._errors["nameserver1"] = self.error_class([msg])
+                del cleaned_data["nameserver1"]
             if nameserver1 == "" or nameserver2 == "":
-                del cleaned_data["gc_nameserver3"]
+                del cleaned_data["nameserver3"]
         elif nameserver2:
             if nameserver1 == "":
-                del cleaned_data["gc_nameserver2"]
+                del cleaned_data["nameserver2"]
                 msg = _(u"Must fill out nameserver 1 before "
                         "filling out nameserver 2")
-                self._errors["gc_nameserver2"] = self.error_class([msg])
+                self._errors["nameserver2"] = self.error_class([msg])
                 msg = _(u"Required when using nameserver 3")
-                self._errors["gc_nameserver1"] = self.error_class([msg])
-                del cleaned_data["gc_nameserver1"]
+                self._errors["nameserver1"] = self.error_class([msg])
+                del cleaned_data["nameserver1"]
         return cleaned_data
 
     def save(self):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
-        retval = super(GlobalConfigurationForm, self).save()
+        from freenasUI.middleware.connector import connection as dispatcher
 
-        whattoreload = "hostname"
-        if self.instance._orig_gc_ipv4gateway != self.cleaned_data.get('gc_ipv4gateway'):
-            whattoreload = "networkgeneral"
-        if self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway'):
-            whattoreload = "networkgeneral"
-        notifier().reload(whattoreload)
+        dns_servers = []
+        for i in ("nameserver1", "nameserver2", "nameserver3"):
+            v = self.cleaned_data.get(i)
+            if v:
+                dns_servers.append(v)
 
-        http_proxy = self.cleaned_data.get('gc_httpproxy')
-        if http_proxy:
-            os.environ['http_proxy'] = http_proxy
-            os.environ['https_proxy'] = http_proxy
-        elif not http_proxy:
-            if 'http_proxy' in os.environ:
-                del os.environ['http_proxy']
-            if 'https_proxy' in os.environ:
-                del os.environ['https_proxy']
+        result = dispatcher.call_task_sync('system.general.configure', {
+            'hostname': self.cleaned_data.get('hostname')
+        })
 
-        # Reset global opener so ProxyHandler can be recalculated
-        urllib2.install_opener(None)
-
-        return retval
+        result = dispatcher.call_task_sync('network.configure', {
+            'gateway': {
+                'ipv4': self.cleaned_data.get('ipv4gateway'),
+                'ipv6': self.cleaned_data.get('ipv6gateway')
+            },
+            'dns': {
+                'servers': dns_servers
+            },
+            'netwait': {
+                'enabled': self.cleaned_data.get('netwait_enabled', False),
+                'addresses': self.cleaned_data.get('netwait_addresses', []),
+            }
+        })
 
 
 class HostnameForm(Form):
