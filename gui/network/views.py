@@ -41,13 +41,12 @@ from freenasUI.network.forms import HostnameForm, IPMIForm
 
 
 def hostname(request):
-    try:
-        globalconf = models.GlobalConfiguration.objects.order_by("-id")[0]
-    except IndexError:
-        globalconf = models.GlobalConfiguration.objects.create()
-    form = HostnameForm(instance=globalconf, data=request.POST)
+    general = dispatcher.call_sync('system.general.get_config')
+    form = HostnameForm(initial={'hostname': general['hostname']}, data=request.POST)
+
     if form.is_valid():
         form.save()
+
     return JsonResp(
         request,
         form=form,

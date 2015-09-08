@@ -544,7 +544,6 @@ class GlobalConfigurationForm(ModelForm):
 
 
 class HostnameForm(Form):
-
     hostname = forms.CharField(
         max_length=200,
         validators=[RegexValidator(
@@ -552,25 +551,12 @@ class HostnameForm(Form):
         )],
     )
 
-    def __init__(self, *args, **kwargs):
-        self.instance = kwargs.pop('instance')
-        super(HostnameForm, self).__init__(*args, **kwargs)
-
-    def clean_hostname(self):
-        hostname = self.cleaned_data.get('hostname')
-        if '.' not in hostname:
-            raise forms.ValidationError(_(
-                'You need a domain, e.g. hostname.domain'
-            ))
-        host, domain = hostname.split('.', 1)
-        return host, domain
-
     def save(self):
-        host, domain = self.cleaned_data.get('hostname')
-        self.instance.gc_hostname = host
-        self.instance.gc_domain = domain
-        self.instance.save()
-        notifier().reload("hostname")
+        from freenasUI.middleware.connector import connection as dispatcher
+        hostname = self.cleaned_data.get('hostname')
+        dispatcher.call_task_sync('system.general.configure', {
+            'hostname': hostname
+        })
 
 
 class VLANForm(ModelForm):
