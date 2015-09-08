@@ -861,12 +861,9 @@ class AutoImportWizard(SessionWizardView):
 
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
-        volume_name = vol['label']
+        volume_name = vol['name']
         group_type = vol['group_type']
-        if vol['type'] == 'geom':
-            volume_fstype = 'UFS'
-        elif vol['type'] == 'zfs':
-            volume_fstype = 'ZFS'
+        volume_fstype = 'zfs'
 
         try:
             with transaction.atomic():
@@ -986,7 +983,7 @@ class AutoImportDecryptForm(Form):
 
     def _populate_disk_choices(self):
         gelis = notifier().geli_get_all_providers()
-        for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
+        for vol in models.Volume.objects.all():
             for disk in vol.get_disks():
                 for geli in list(gelis):
                     if '%sp' % disk in geli[1]:
@@ -1061,45 +1058,23 @@ class VolumeAutoImportForm(Form):
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        vols = notifier().detect_volumes()
-
-        for vol in list(vols):
-            # Exclude volumes with same guid as existing volumes
-            # See #6808
-            if vol.get('id') in guids:
-                vols.remove(vol)
-                continue
-            for vdev in vol['disks']['vdevs']:
-                for disk in vdev['disks']:
-                    if filter(lambda x: x is not None and re.search(
-                        r'^%s([ps]|$)' % disk['name'],
-                        x
-                    ), used_disks):
-                        vols.remove(vol)
-                        break
-                else:
-                    continue
-                break
+        from freenasUI.middleware.connector import connection as dispatcher
+        vols = dispatcher.call_sync('volumes.find')
 
         for vol in vols:
-            if vol.get("id", None):
-                devname = "%s [%s, id=%s]" % (
-                    vol['label'],
-                    vol['type'],
-                    vol['id'])
-            else:
-                devname = "%s [%s]" % (vol['label'], vol['type'])
-            diskchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = devname
+            devname = "{0} [id={1}]".format(vol['name'], vol['id'])
+            diskchoices["%s|%s" % (vol['name'], vol.get('id', ''))] = devname
 
         choices = diskchoices.items()
         return choices
 
     def clean(self):
+        from freenasUI.middleware.connector import connection as dispatcher
         cleaned_data = self.cleaned_data
-        vols = notifier().detect_volumes()
+        vols = dispatcher.call_sync('volumes.find')
         volume_name, zid = cleaned_data.get('volume_disks', '|').split('|', 1)
         for vol in vols:
-            if vol['label'] == volume_name:
+            if vol['name'] == volume_name:
                 if (zid and zid == vol['id']) or not zid:
                     cleaned_data['volume'] = vol
                     break
@@ -1108,36 +1083,6 @@ class VolumeAutoImportForm(Form):
             self._errors['__all__'] = self.error_class([
                 _("You must select a volume."),
             ])
-
-        else:
-            if models.Volume.objects.filter(
-                    vol_name=cleaned_data['volume']['label']).count() > 0:
-                msg = _(u"You already have a volume with same name")
-                self._errors["volume_disks"] = self.error_class([msg])
-                del cleaned_data["volume_disks"]
-
-            if cleaned_data['volume']['type'] == 'geom':
-                if cleaned_data['volume']['group_type'] == 'mirror':
-                    dev = "/dev/mirror/%s" % (cleaned_data['volume']['label'])
-                elif cleaned_data['volume']['group_type'] == 'stripe':
-                    dev = "/dev/stripe/%s" % (cleaned_data['volume']['label'])
-                elif cleaned_data['volume']['group_type'] == 'raid3':
-                    dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
-                else:
-                    raise NotImplementedError
-
-                isvalid = notifier().precheck_partition(dev, 'UFS')
-                if not isvalid:
-                    msg = _(
-                        u"The selected disks were not verified for this "
-                        "import rules.")
-                    self._errors["volume_disks"] = self.error_class([msg])
-
-                    if "volume_disks" in cleaned_data:
-                        del cleaned_data["volume_disks"]
-
-            elif cleaned_data['volume']['type'] != 'zfs':
-                raise NotImplementedError
 
         return cleaned_data
 
