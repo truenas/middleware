@@ -37,16 +37,17 @@ ataidle_start()
 		case "$disk_name" in
 		ad*)
 			;;
+		da*)
+			;;
 		*)
 			continue
 			;;
 		esac
-		if [ -z "`/usr/local/sbin/ataidle /dev/${disk_name} | grep -E "APM.*yes"`" ]; then
-			ataidle_args=""
+		if [ -n "`/usr/local/sbin/smartctl -g apm /dev/${disk_name} | grep Unavailable`" ]; then
 		elif [ "${disk_advpowermgmt}" != "Disabled" ]; then
-			ataidle_args="-P ${disk_advpowermgmt} "
+			/sbin/camcontrol apm ${disk_name} -l ${disk_advpowermgmt}
 		else
-			ataidle_args="-P 0 "
+			/sbin/camcontrol apm ${disk_name}
 		fi
 		if [ "${disk_acousticlevel}" != "Disabled" ]; then
 			if [ "${disk_acousticlevel}" = "Minimum" ]; then
@@ -59,14 +60,13 @@ ataidle_start()
 		else
 			disk_acousticlevel=0
 		fi
-		if [ -n "`/usr/local/sbin/ataidle /dev/${disk_name} | grep -E "AAM.*yes"`" ]; then
-			ataidle_args="${ataidle_args}-A ${disk_acousticlevel}"
-		fi
-		if [ -n "${ataidle_args}" ]; then
-			echo ${ataidle_args} /dev/${disk_name} | xargs /usr/local/sbin/ataidle
+		if [ -z "`/usr/local/sbin/smartctl -g aam /dev/${disk_name} | grep Unavailable`" ]; then
+			/sbin/camcontrol aam ${disk_name} -l ${disk_acousticlevel}
 		fi
 		if [ "${disk_hddstandby}" != "Always On" ]; then
-			(sleep 60; /usr/local/sbin/ataidle -I ${disk_hddstandby} /dev/${disk_name}) > /dev/null 2>&1 &
+			(sleep 60; /sbin/camcontrol idle ${disk_name} -t ${disk_hddstandby}) > /dev/null 2>&1 &
+		else
+			(sleep 60; /sbin/camcontrol idle ${disk_name} -t 0) > /dev/null 2>&1 &
 		fi
 	done
 }
