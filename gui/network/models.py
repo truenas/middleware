@@ -35,13 +35,14 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
     IP6AddressField)
-from freenasUI.freeadmin.models import Model
+from freenasUI.freeadmin.models import Model, NewModel, ConfigQuerySet, NewManager
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
+from fnutils.query import wrap
 
 
-class GlobalConfiguration(Model):
+class GlobalConfiguration(NewModel):
     gc_hostname = models.CharField(
         max_length=120,
         verbose_name=_("Hostname"),
@@ -58,14 +59,6 @@ class GlobalConfiguration(Model):
         )],
         blank=True,
         null=True,
-    )
-    gc_domain = models.CharField(
-        max_length=120,
-        verbose_name=_("Domain"),
-        default='local',
-        validators=[RegexValidator(
-            regex=r'^[a-zA-Z\.\-\_0-9]+$',
-        )],
     )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
@@ -117,13 +110,6 @@ class GlobalConfiguration(Model):
         blank=True,
         max_length=300,
         )
-    gc_hosts = models.TextField(
-        verbose_name=_("Host name data base"),
-        help_text=_("This field is appended to /etc/hosts which contains "
-            "information regarding known hosts on the network. hosts(5)"),
-        default='',
-        blank=True,
-        )
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfiguration, self).__init__(*args, **kwargs)
@@ -159,8 +145,56 @@ class GlobalConfiguration(Model):
         verbose_name = _("Global Configuration")
         verbose_name_plural = _("Global Configuration")
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Middleware:
+        configstore = True
+
     class FreeAdmin:
         deletable = False
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        network = wrap(dispatcher.call_sync('network.config.get_global_config'))
+        general = wrap(dispatcher.call_sync('system.general.get_config'))
+
+        return cls(**dict(
+            id=1,
+            gc_hostname=general['hostname'],
+            gc_ipv4gateway=network['gateway.ipv4'],
+            gc_ipv6gateway=network['gateway.ipv6'],
+            gc_nameserver1=network.get('dns.addresses.0'),
+            gc_nameserver2=network.get('dns.addresses.1'),
+            gc_nameserver3=network.get('dns.addresses.2'),
+            gc_netwait_enabled=network.get('netwait.enabled'),
+            gc_netwait_ip=' '.join(network.get('netwait.addresses', []))
+        ))
+
+    def _save(self, *args, **kwargs):
+        dns_servers = []
+        for i in ("gc_nameserver1", "gc_nameserver2", "gc_nameserver3"):
+            v = getattr(self, i)
+            if v:
+                dns_servers.append(v)
+
+        self._save_task_call('system.general.configure', {
+            'hostname': self.gc_hostname
+        })
+
+        self._save_task_call('network.configure', {
+            'gateway': {
+                'ipv4': self.gc_ipv4gateway,
+                'ipv6': self.gc_ipv6gateway
+            },
+            'dns': {
+                'addresses': dns_servers
+            },
+            'netwait': {
+                'enable': self.gc_netwait_enabled,
+                'addresses': self.gc_netwait_ip.split()
+            }
+        })
 
 
 class Interfaces(Model):
