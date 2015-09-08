@@ -297,7 +297,7 @@ Hello,
         # If there is associated replication task, mark the snapshots as 'NEW'.
         if Replication.objects.filter(repl_filesystem=fs, repl_enabled=True).count() > 0:
             MNTLOCK.lock()
-            snapcmd = '/sbin/zfs snapshot%s -o freenas:state=NEW %s"%s"' % (rflag, vmflag, snapname)
+            snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:
@@ -316,17 +316,11 @@ Hello,
 
     MNTLOCK.lock()
     for snapshot in snapshots_pending_delete:
-        # TODO: Future versions will have freenas:state removed in favor of holds.
-        zfsproc = pipeopen('/sbin/zfs get -H freenas:state "%s"' % (snapshot, ), logger=log)
-        output = zfsproc.communicate()[0]
-        if output != '':
-            fsname, attrname, value, source = output.split('\n')[0].split('\t')
-            if value == '-':
-                snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot) #snapshots with clones will have destruction deferred
-                proc = pipeopen(snapcmd, logger=log)
-                err = proc.communicate()[1]
-                if proc.returncode != 0:
-                    log.error("Failed to destroy snapshot '%s': %s", snapshot, err)
+        snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot) #snapshots with clones will have destruction deferred
+        proc = pipeopen(snapcmd, logger=log)
+        err = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.error("Failed to destroy snapshot '%s': %s", snapshot, err)
     MNTLOCK.unlock()
 
 
