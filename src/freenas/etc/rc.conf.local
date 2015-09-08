@@ -38,19 +38,6 @@ _interface_config()
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
 	local vlan_vint vlan_pint vlan_tag
 
-	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` = 0 ]; then
-		IFS="${saved_ifs}"
-		for interface in $(ifconfig -l)
-		do
-			if echo "${interface}"|egrep -q '^(bridge|epair|ipfw|lo)[0-9]+'
-			then
-				continue
-			fi
-			echo "ifconfig_${interface}=\"DHCP\""
-		done
-	fi
-
-	local IFS=\|
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
