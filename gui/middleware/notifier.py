@@ -1651,19 +1651,6 @@ class notifier:
                 retval[line] = line
         return retval
 
-    def __snapshot_hold(self, name):
-        """
-        Check if a given snapshot is being hold by the replication system
-        DISCLAIMER: mntlock has to be acquired before this call
-        """
-        zfsproc = self._pipeopen("zfs get -H freenas:state '%s'" % (name))
-        output = zfsproc.communicate()[0]
-        if output != '':
-            fsname, attrname, value, source = output.split('\n')[0].split('\t')
-            if value != '-' and value != 'NEW':
-                return True
-        return False
-
     def repl_remote_snapshots(self, repl):
         """
         Get a list of snapshots in the remote side
@@ -1684,24 +1671,6 @@ class notifier:
 
     def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
-        if '@' in path:
-            try:
-                with mntlock(blocking=False):
-                    if self.__snapshot_hold(path):
-                        retval = 'Held by replication system.'
-            except IOError:
-                retval = 'Try again later.'
-        elif recursive:
-            try:
-                with mntlock(blocking=False):
-                    zfsproc = self._pipeopen("/sbin/zfs list -Hr -t snapshot -o name '%s'" % (path))
-                    snaps = zfsproc.communicate()[0]
-                    for snap in filter(None, snaps.splitlines()):
-                        if self.__snapshot_hold(snap):
-                            retval = '%s: Held by replication system.' % snap
-                            break
-            except IOError:
-                retval = 'Try again later.'
         if retval is None:
             mp = self.__get_mountpath(path, 'ZFS')
             if self.contains_jail_root(mp):
@@ -3896,9 +3865,9 @@ class notifier:
         name = str(name)
         retval = None
         if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r '%s'" % (name)
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name -r '%s'" % (name)
         else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
+            zfscmd = "/sbin/zfs list -Ht snapshot -o name -r -d 1 '%s'" % (name)
         try:
             with mntlock(blocking=False):
                 zfsproc = self._pipeopen(zfscmd)
@@ -3906,10 +3875,8 @@ class notifier:
                 if output != '':
                     snapshots_list = output.splitlines()
                 for snapshot_item in filter(None, snapshots_list):
-                    snapshot, state = snapshot_item.split('\t')
-                    if state != '-':
-                        self.zfs_inherit_option(snapshot, 'freenas:state')
-                        self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
+                    snapshot = snapshot_item.split('\t')[0]
+                    self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
         except IOError:
             retval = 'Try again later.'
         return retval
