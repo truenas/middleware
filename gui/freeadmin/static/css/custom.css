@@ -1136,6 +1136,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.VsphereIcon {
+    background-image:url('/static/images/ui/tree/vsphere.png');
+    width:16px;
+    height:16px;
+}
 .dijitTextArea {
     min-height:60px;
 }
