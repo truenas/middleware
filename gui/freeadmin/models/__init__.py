@@ -513,6 +513,9 @@ class NewModel(Model):
                 if f.name == 'id' and not updated:
                     continue
                 field = fmm.get_field_to_middleware(f.name)
+                if not field:
+                    continue
+
                 if isinstance(f, ForeignKey):
                     related = getattr(self, f.name)
                     data[field] = related.id if related is not None else None
