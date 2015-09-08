@@ -40,6 +40,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
 from fnutils.query import wrap
+from fnutils import force_none
 
 
 class GlobalConfiguration(NewModel):
@@ -184,8 +185,8 @@ class GlobalConfiguration(NewModel):
 
         self._save_task_call('network.configure', {
             'gateway': {
-                'ipv4': self.gc_ipv4gateway,
-                'ipv6': self.gc_ipv6gateway
+                'ipv4': force_none(self.gc_ipv4gateway),
+                'ipv6': force_none(self.gc_ipv6gateway)
             },
             'dns': {
                 'addresses': dns_servers
@@ -584,25 +585,52 @@ class LAGGInterfaceMembers(Model):
         ordering = ["lagg_interfacegroup"]
 
 
-class StaticRoute(Model):
-    sr_destination = models.CharField(
-            max_length=120,
-            verbose_name=_("Destination network")
-            )
+class StaticRoute(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
+
+    sr_name = models.CharField(
+        max_length=120,
+        verbose_name=_("Name"),
+    )
+
+    sr_type = models.CharField(
+        max_length=120,
+        verbose_name=_("Protocol"),
+        choices=choices.AddressFamily
+    )
+
+    sr_destination = IP4AddressField(
+        max_length=120,
+        verbose_name=_("Destination network")
+    )
+
+    sr_netmask = models.IntegerField(
+        choices=choices.v4NetmaskBitList,
+        verbose_name=_("Destination netmask")
+    )
+
     sr_gateway = IP4AddressField(
-            max_length=120,
-            verbose_name=_("Gateway")
-            )
-    sr_description = models.CharField(
-            max_length=120,
-            verbose_name=_("Description"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Gateway")
+    )
 
     class Meta:
         verbose_name = _("Static Route")
         verbose_name_plural = _("Static Routes")
-        ordering = ["sr_destination", "sr_gateway"]
+        ordering = ["sr_destination", "sr_netmask", "sr_gateway"]
+
+    class Middleware:
+        provider_name = 'network.routes'
+        field_mapping = (
+            (('id', 'sr_name'), 'id'),
+            ('sr_type', 'type'),
+            ('sr_destination', 'network'),
+            ('sr_netmask', 'netmask'),
+            ('sr_gateway', 'gateway')
+        )
 
     class FreeAdmin:
         icon_object = u"StaticRouteIcon"
