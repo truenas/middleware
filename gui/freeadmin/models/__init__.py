@@ -317,27 +317,20 @@ class NewQuerySet(object):
             data = {}
             if not self._fmm:
                 continue
-            forbreak = False
-            for key, val in i.items():
-                for f in self._fmm.get_middleware_to_field(key):
-                    mfield = self.model._meta.get_field(f)
-                    if isinstance(mfield, ForeignKey):
-                        try:
-                            data[f] = mfield.rel.to.objects.get(pk=val)
-                        except mfield.rel.to.DoesNotExist:
-                            log.error(
-                                "%r(%d).%s has no foreign key '%d', skipping",
-                                self.model, i.get('id'), f, val)
-                            forbreak = True
-                            break
-                    else:
-                        data[f] = val
 
-                if forbreak:
-                    break
-
-            if forbreak:
-                continue
+            for mfield in self.model._meta.fields:
+                key = self._fmm.get_field_to_middleware(mfield.name)
+                val = i.get(key)
+                if isinstance(mfield, ForeignKey):
+                    try:
+                        data[mfield.name] = mfield.rel.to.objects.get(pk=val)
+                    except mfield.rel.to.DoesNotExist:
+                        log.error(
+                            "%r(%d).%s has no foreign key '%d', skipping",
+                            self.model, i.get('id'), mfield.name, val)
+                        break
+                else:
+                    data[mfield.name] = val
 
             yield self.model(**data)
 
