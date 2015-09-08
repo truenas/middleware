@@ -882,16 +882,9 @@ class AutoImportWizard(SessionWizardView):
                 self.volume = volume
 
                 _n = notifier()
-
-                if vol['type'] != 'zfs':
-                    _n.label_disk(
-                        volume_name,
-                        "%s/%s" % (group_type, volume_name),
-                        'UFS')
-                else:
-                    volume.vol_guid = vol['id']
-                    volume.save()
-                    models.Scrub.objects.create(scrub_volume=volume)
+                volume.vol_guid = vol['id']
+                volume.save()
+                models.Scrub.objects.create(scrub_volume=volume)
 
                 if vol['type'] == 'zfs' and not _n.zfs_import(
                         vol['label'], vol['id']):
