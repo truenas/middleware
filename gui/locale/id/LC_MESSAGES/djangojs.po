@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2012-03-10 16:45+0000\n"
-"Last-Translator: ngosngosan <ngosngosan@gmail.com>\n"
+"PO-Revision-Date: 2015-09-08 04:38+0000\n"
+"Last-Translator: masisn <mas_isn@yahoo.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1331397940.0\n"
+"X-POOTLE-MTIME: 1441687110.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Pelaporan"
@@ -540,4 +540,8 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:185
+msgid "vCenter Plugin Configuration"
 msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-08-31 09:16+0000\n"
+"PO-Revision-Date: 2015-09-08 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441012610.0\n"
+"X-POOTLE-MTIME: 1441703796.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11748,4 +11748,74 @@ msgstr ""
 
 #: services/models.py:910
 msgid "iSCSI Group"
+msgstr ""
+
+#: templates/vcp/index.html:6
+msgid "Plugin Name:"
+msgstr ""
+
+#: templates/vcp/index.html:10
+msgid "Available Plugin Version:"
+msgstr ""
+
+#: templates/vcp/index.html:20
+msgid "Installed Plugin Version:"
+msgstr ""
+
+#: templates/vcp/index.html:33
+msgid "Uninstall"
+msgstr ""
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+msgid " vCenter Hostname/IP Address"
+msgstr ""
+
+#: vcp/models.py:55
+msgid " vCenter Port"
+msgstr ""
+
+#: vcp/models.py:60
+msgid " vCenter User name"
+msgstr ""
+
+#: vcp/models.py:67
+msgid " vCenter Password"
+msgstr ""
+
+#: vcp/models.py:74
+msgid "version"
+msgstr ""
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+msgid "VCenter Configuration"
+msgstr ""
+
+#: vcp/nav.py:44
+msgid "vCenter Plugin Configuration"
+msgstr ""
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
 msgstr ""

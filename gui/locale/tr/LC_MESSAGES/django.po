@@ -12808,3 +12808,84 @@ msgstr "Portal IP"
 #, fuzzy
 msgid "iSCSI Group"
 msgstr "Gruplar"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "Eklenti adı"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "Kullanılabilir Eklentiler"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "Eklenti Yükle"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "Kur"
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "Kontrolör IP adresi"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Uzak Bağlantı Noktası Numarası"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "Kullanıcı adı"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Parola Değiştir"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "Sürüm"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Yapılandırma"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Hedef Genel Yapılandırma"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""

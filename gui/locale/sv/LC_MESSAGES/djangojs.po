@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-06-10 09:19+0000\n"
+"PO-Revision-Date: 2015-08-27 13:46+0000\n"
 "Last-Translator: pkvar <peter@3dgrafiker.se>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1433927997.0\n"
+"X-POOTLE-MTIME: 1440683206.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapportering"
@@ -537,4 +537,8 @@ msgstr "Uppdatera"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:185
+msgid "vCenter Plugin Configuration"
 msgstr ""

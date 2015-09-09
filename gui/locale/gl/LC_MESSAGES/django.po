@@ -11850,3 +11850,77 @@ msgstr ""
 #: services/models.py:910
 msgid "iSCSI Group"
 msgstr ""
+
+#: templates/vcp/index.html:6
+msgid "Plugin Name:"
+msgstr ""
+
+#: templates/vcp/index.html:10
+msgid "Available Plugin Version:"
+msgstr ""
+
+#: templates/vcp/index.html:20
+msgid "Installed Plugin Version:"
+msgstr ""
+
+#: templates/vcp/index.html:33
+msgid "Uninstall"
+msgstr ""
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+msgid " vCenter Hostname/IP Address"
+msgstr ""
+
+#: vcp/models.py:55
+msgid " vCenter Port"
+msgstr ""
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "nome de usuario"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "contrasinal"
+
+#: vcp/models.py:74
+msgid "version"
+msgstr ""
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Confirmar contrasinal"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Confirmar contrasinal"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""

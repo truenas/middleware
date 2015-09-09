@@ -557,3 +557,7 @@ msgstr "Atualizar"
 #, fuzzy
 msgid "Pending Updates"
 msgstr "Aplicar as operações pendentes"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:185
+msgid "vCenter Plugin Configuration"
+msgstr ""
