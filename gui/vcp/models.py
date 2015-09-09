@@ -75,8 +75,8 @@ class VcenterConfiguration(Model):
         )
 
     class Meta:
-        verbose_name = _("VCenter Configuration")
-        verbose_name_plural = _("VCenter Configuration")
+        verbose_name = _("vCenter Configuration")
+        verbose_name_plural = _("vCenter Configurations")
 
     class FreeAdmin:
         icon_model = 'VsphereIcon'
