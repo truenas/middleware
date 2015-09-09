@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -28,13 +28,12 @@
 import utils
 
 from django.utils.translation import ugettext_lazy as _
-from freenasUI.vcp import models
 from freenasUI.freeadmin.tree import TreeNode
-from freenasUI.choices import LAGGType
 
 NAME = _('vCenter')
 ICON = 'VsphereIcon'
 ORDER = 70
+
 
 class VcenterConfigurationView(TreeNode):
     gname = 'VcenterConfiguration'
@@ -44,12 +43,8 @@ class VcenterConfigurationView(TreeNode):
     name = _(u'vCenter Plugin Configuration')
     icon = u'SettingsIcon'
 
-    def __init__(self, *args, **kwargs):
-        super(VcenterConfigurationView, self).__init__(*args, **kwargs)
 
 def init(tree_roots, nav, request):
 
     if not utils.vcp_enabled():
         tree_roots.unregister(nav)
-    
-
