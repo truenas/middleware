@@ -36,7 +36,7 @@ from freenasUI.common import pbi
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import Alias, Interfaces
+from freenasUI.network.models import Interfaces
 from freenasUI.plugins import models
 from freenasUI.jails.utils import new_default_plugin_jail
 

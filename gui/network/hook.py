@@ -34,7 +34,7 @@ class NetworkHook(AppHook):
         for model in tabmodels:
             if backup and model._meta.db_table not in NO_SYNC_MAP:
                 continue
-            if model._admin.deletable is False:
+            if model is models.GlobalConfiguration:
                 try:
                     obj = model.objects.order_by('-id')[0]
                 except IndexError:

@@ -16,9 +16,6 @@ SW_NAME = get_sw_name()
 
 
 class InterfacesFAdmin(BaseFreeAdmin):
-
-    create_modelform = "InterfacesForm"
-    edit_modelform = "InterfacesEditForm"
     icon_object = u"InterfacesIcon"
     icon_model = u"InterfacesIcon"
     icon_add = u"AddInterfaceIcon"

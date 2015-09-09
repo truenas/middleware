@@ -293,21 +293,19 @@ class Interfaces(NewModel):
     def aliases(self):
         from freenasUI.middleware.connector import connection as dispatcher
         iface = dispatcher.call_sync('network.interfaces.query', [('id', '=', self.id)], {'single': True})
-        return iface['aliases']
+        return filter(lambda a: a['type'] != 'LINK', iface.get('aliases', []))
 
     def get_ipv4_addresses(self):
         """
         Includes IPv4 addresses in aliases
         """
-        ips = []
-        return ips
+        return map(lambda a: a['address'], filter(lambda a: a['type'] == 'INET', self.aliases))
 
     def get_ipv6_addresses(self):
         """
         Includes IPv6 addresses in aliases
         """
-        ips = []
-        return ips
+        return map(lambda a: a['address'], filter(lambda a: a['type'] == 'INET6', self.aliases))
 
     def get_media_status(self):
         return notifier().iface_media_status(self.int_interface)
