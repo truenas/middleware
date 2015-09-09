@@ -202,7 +202,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service == 'afp':
+    if changing_service in ('afp', 'cifs'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],
