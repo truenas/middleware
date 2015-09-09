@@ -198,7 +198,12 @@ class GlobalConfiguration(NewModel):
         })
 
 
-class Interfaces(Model):
+class Interfaces(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
+
     int_interface = models.CharField(
             max_length=300,
             blank=False,
@@ -208,7 +213,8 @@ class Interfaces(Model):
     int_name = models.CharField(
             max_length="120",
             verbose_name=_("Interface Name"),
-            help_text=_("Name your NIC.")
+            help_text=_("Name your NIC."),
+            blank=True
             )
     int_dhcp = models.BooleanField(
         verbose_name=_("DHCP"),
@@ -216,24 +222,6 @@ class Interfaces(Model):
         help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
             " as default router, etc.")
     )
-    int_ipv4address = IPAddressField(
-        verbose_name=_("IPv4 Address"),
-        blank=True,
-        default='',
-    )
-    int_ipv4address_b = IPAddressField(
-        verbose_name=_("IPv4 Address"),
-        blank=True,
-        default='',
-    )
-    int_v4netmaskbit = models.CharField(
-            max_length=3,
-            choices=choices.v4NetmaskBitList,
-            blank=True,
-            default='',
-            verbose_name=_("IPv4 Netmask"),
-            help_text=""
-            )
     int_ipv6auto = models.BooleanField(
         verbose_name=_("Auto configure IPv6"),
         default=False,
@@ -242,54 +230,6 @@ class Interfaces(Model):
             "via rtsol(8)."
         ),
     )
-    int_ipv6address = IPAddressField(
-            verbose_name=_("IPv6 Address"),
-            blank=True,
-            default='',
-            )
-    int_v6netmaskbit = models.CharField(
-            max_length=4,
-            choices=choices.v6NetmaskBitList,
-            blank=True,
-            default='',
-            verbose_name=_("IPv6 Prefix Length"),
-            help_text=""
-            )
-    int_carp = models.IntegerField(
-        editable=False,
-        null=True,
-    )
-    int_vip = IPAddressField(
-        verbose_name=_("Virtual IP"),
-        blank=True,
-        null=True,
-    )
-    int_vhid = models.PositiveIntegerField(
-        verbose_name=_("Virtual Host ID"),
-        null=True,
-        blank=True,
-    )
-    int_pass = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name=_("Password"),
-        editable=False,
-    )
-    int_critical = models.BooleanField(
-        default=False,
-        verbose_name=_("Critical for Failover"),
-    )
-    int_group = models.IntegerField(
-        verbose_name=_('Group'),
-        choices=[(i, i) for i in range(1, 33)],
-        null=True,
-        blank=True,
-    )
-    int_options = models.CharField(
-            max_length=120,
-            verbose_name=_("Options"),
-            blank=True
-            )
 
     def __unicode__(self):
         if not self.int_name:
@@ -298,7 +238,6 @@ class Interfaces(Model):
 
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)
-        self._original_int_options = self.int_options
 
     def delete(self):
         with transaction.atomic():
@@ -342,26 +281,25 @@ class Interfaces(Model):
         verbose_name_plural = _("Interfaces")
         ordering = ["int_interface"]
 
+    class Middleware:
+        provider_name = 'network.interfaces'
+        field_mapping = (
+            (('id', 'int_interface'), 'id'),
+            ('int_name', 'name'),
+            ('int_dhcp', 'dhcp')
+        )
+
+    @property
+    def aliases(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        iface = dispatcher.call_sync('network.interfaces.query', [('id', '=', self.id)], {'single': True})
+        return iface['aliases']
+
     def get_ipv4_addresses(self):
         """
         Includes IPv4 addresses in aliases
         """
         ips = []
-        if self.int_ipv4address:
-            ips.append("%s/%s" % (
-                str(self.int_ipv4address),
-                str(self.int_v4netmaskbit),
-                ))
-        if self.int_ipv4address_b:
-            ips.append("%s/%s" % (
-                str(self.int_ipv4address_b),
-                str(self.int_v4netmaskbit),
-            ))
-        for alias in self.alias_set.exclude(alias_v4address=''):
-            ips.append("%s/%s" % (
-                str(alias.alias_v4address),
-                str(alias.alias_v4netmaskbit),
-                ))
         return ips
 
     def get_ipv6_addresses(self):
@@ -369,99 +307,10 @@ class Interfaces(Model):
         Includes IPv6 addresses in aliases
         """
         ips = []
-        if self.int_ipv6address:
-            ips.append("%s/%s" % (
-                str(self.int_ipv6address),
-                str(self.int_v6netmaskbit),
-                ))
-        for alias in self.alias_set.exclude(alias_v6address=''):
-            ips.append("%s/%s" % (
-                str(alias.alias_v6address),
-                str(alias.alias_v6netmaskbit),
-                ))
         return ips
 
     def get_media_status(self):
         return notifier().iface_media_status(self.int_interface)
-
-
-class Alias(Model):
-    alias_interface = models.ForeignKey(
-        Interfaces,
-        verbose_name=_("Interface")
-    )
-    alias_vip = IP4AddressField(
-        verbose_name=_("Virtual IPv4"),
-        default='',
-        blank=True,
-    )
-    alias_v4address = IP4AddressField(
-        verbose_name=_("IPv4 Address"),
-        default='',
-        blank=True,
-    )
-    alias_v4address_b = IP4AddressField(
-        verbose_name=_("IPv4 Address"),
-        default='',
-        blank=True,
-    )
-    alias_v4netmaskbit = models.CharField(
-        max_length=3,
-        choices=choices.v4NetmaskBitList,
-        default='',
-        blank=True,
-        verbose_name=_("IPv4 Netmask"),
-        help_text=""
-    )
-    alias_v6address = IP6AddressField(
-        verbose_name=_("IPv6 Address"),
-        default='',
-        blank=True,
-    )
-    alias_v6address_b = IP6AddressField(
-        verbose_name=_("IPv6 Address"),
-        default='',
-        blank=True,
-    )
-    alias_v6netmaskbit = models.CharField(
-        max_length=3,
-        choices=choices.v6NetmaskBitList,
-        default='',
-        blank=True,
-        verbose_name=_("IPv6 Prefix Length"),
-        help_text=""
-    )
-
-    def __unicode__(self):
-        if self.alias_v4address:
-            return u'%s:%s' % (
-                self.alias_interface.int_name,
-                self.alias_v4address)
-        elif self.alias_v6address:
-            return u'%s:%s' % (
-                self.alias_interface.int_name,
-                self.alias_v6address)
-
-    @property
-    def alias_network(self):
-        if self.alias_v4address:
-            return '%s/%s' % (self.alias_v4address, self.alias_v4netmaskbit)
-        else:
-            return '%s/%s' % (self.alias_v6address, self.alias_v6netmaskbit)
-
-    def delete(self):
-        super(Alias, self).delete()
-        notifier().stop("netif")
-        notifier().start("network")
-
-    class Meta:
-        verbose_name = _("Alias")
-        verbose_name_plural = _("Aliases")
-
-    class FreeAdmin:
-        pass
-        #create_modelform = "InterfacesForm"
-        #edit_modelform = "InterfacesEditForm"
 
 
 class VLAN(NewModel):
@@ -661,13 +510,39 @@ class StaticRoute(NewModel):
     def __unicode__(self):
         return self.sr_destination
 
-    def save(self, *args, **kwargs):
-        super(StaticRoute, self).save(*args, **kwargs)
 
-    def delete(self, *args, **kwargs):
-        super(StaticRoute, self).delete(*args, **kwargs)
-        try:
-            # TODO: async user notification
-            notifier().staticroute_delete(self)
-        except MiddlewareError:
-            pass
+class Host(NewModel):
+    id = models.CharField(
+        max_length=255,
+        primary_key=True
+    )
+
+    name = models.CharField(
+        max_length=255,
+        primary_key=True,
+        verbose_name=_("Hostname")
+    )
+
+    address = IPAddressField(
+        verbose_name=_("Address")
+    )
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _("Host")
+        verbose_name_plural = _("Hosts")
+
+    class Middleware:
+        provider_name = 'network.hosts'
+        field_mapping = (
+            (('id', 'name'), 'id'),
+            ('address', 'address')
+        )
+
+    class FreeAdmin:
+        icon_object = u"StaticRouteIcon"
+        icon_model = u"StaticRouteIcon"
+        icon_add = u"AddStaticRouteIcon"
+        icon_view = u"ViewAllStaticRoutesIcon"

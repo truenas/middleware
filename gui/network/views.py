@@ -31,13 +31,14 @@ from subprocess import Popen, PIPE
 
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.http import HttpResponse
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network import models
-from freenasUI.network.forms import HostnameForm, IPMIForm
+from freenasUI.network.forms import HostnameForm, IPMIForm, InterfacesForm, AliasFormSet
 
 
 def hostname(request):
@@ -51,6 +52,27 @@ def hostname(request):
         request,
         form=form,
     )
+
+
+def empty_alias_formset(request):
+    form = AliasFormSet()
+    return HttpResponse(form.empty_form.as_table())
+
+
+def editinterface(request, interface_name):
+    if request.method == "POST":
+        pass
+
+    else:
+        nic = models.Interfaces.objects.get(pk=interface_name)
+        form = InterfacesForm(instance=nic)
+        aliases = AliasFormSet(initial=nic.aliases)
+
+    return render(request, 'network/editinterface.html', {
+        'interface_name': interface_name,
+        'form': form,
+        'formset': aliases
+    })
 
 
 def ipmi(request):

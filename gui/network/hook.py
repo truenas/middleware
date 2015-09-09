@@ -17,6 +17,7 @@ class NetworkHook(AppHook):
             models.Interfaces,
             models.LAGGInterface,
             models.StaticRoute,
+            models.Host,
             models.VLAN,
         ]
 

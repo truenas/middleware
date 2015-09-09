@@ -67,7 +67,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network.forms import AliasForm
-from freenasUI.network.models import Alias, Interfaces
+from freenasUI.network.models import Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
@@ -1179,12 +1179,17 @@ class InterfacesResourceMixin(object):
         bundle.data['int_media_status'] = bundle.obj.get_media_status()
         bundle.data['ipv4_addresses'] = bundle.obj.get_ipv4_addresses()
         bundle.data['ipv6_addresses'] = bundle.obj.get_ipv6_addresses()
-        bundle.data['int_aliases'] = [
-            a.alias_network for a in bundle.obj.alias_set.all()
-        ]
+        #bundle.data['int_aliases'] = [
+        #    a.alias_network for a in bundle.obj.alias_set.all()
+        #]
         for key in bundle.data.keys():
             if key.startswith('alias_set'):
                 del bundle.data[key]
+
+        bundle.data['_edit_url'] = reverse(
+            'network_interface_edit',
+            kwargs={'interface_name': bundle.obj.id}) + '?deletable=false'
+
         return bundle
 
     def hydrate(self, bundle):

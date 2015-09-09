@@ -30,6 +30,7 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns('freenasUI.network.views',
     url(r'^home/$', 'network', name='network_home'),
     url(r'^ipmi/$', 'ipmi', name='network_ipmi'),
-    url(r'^summary/$', 'summary', name='network_summary'),
     url(r'^hostname/$', 'hostname', name='network_hostname'),
+    url(r'^empty-alias-formset/', 'empty_alias_formset', name='network_empty_alias_formset'),
+    url(r'^editinterface/(?P<interface_name>[^/]+)/$', 'editinterface', name='network_interface_edit'),
 )

@@ -1,4 +1,6 @@
+from collections import OrderedDict
 from django.utils.translation import ugettext as _
+from django.utils.html import escapejs
 
 from freenasUI.api.resources import (
     InterfacesResourceMixin, LAGGInterfaceResourceMixin,
@@ -21,12 +23,6 @@ class InterfacesFAdmin(BaseFreeAdmin):
     icon_model = u"InterfacesIcon"
     icon_add = u"AddInterfaceIcon"
     icon_view = u"ViewAllInterfacesIcon"
-    inlines = [
-        {
-            'form': 'AliasForm',
-            'prefix': 'alias_set'
-        },
-    ]
     resource_mixin = InterfacesResourceMixin
     exclude_fields = (
         'id',
@@ -42,6 +38,21 @@ class InterfacesFAdmin(BaseFreeAdmin):
         'int_critical',
         'int_group',
     )
+
+    def get_actions(self):
+        actions = OrderedDict()
+        actions["Edit"] = {
+            'button_name': _("Edit"),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('%s', data._edit_url, [mybtn,]);
+                }
+            }""" % (escapejs(_('Edit interface')), ),
+        }
+        return actions
+
 
     def get_datagrid_columns(self):
         columns = super(InterfacesFAdmin, self).get_datagrid_columns()
