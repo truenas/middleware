@@ -38,7 +38,7 @@ class VcenterConfiguration(Model):
 
     vc_management_ip = models.CharField(
         max_length = 120,
-        verbose_name = _(" TrueNAS Management IP Address"),
+        verbose_name = _("TrueNAS Management IP Address"),
         choices=zip(ip_choices,ip_choices), default='1',
         help_text = 'Please select the TrueNAS interface that vCenter Web client can route to.',
         )
@@ -46,25 +46,25 @@ class VcenterConfiguration(Model):
     vc_ip = IP4AddressField(
         blank = False,
         default = '',
-        verbose_name = _(" vCenter Hostname/IP Address"),
+        verbose_name = _("vCenter Hostname/IP Address"),
         )
 
     vc_port = models.CharField(
         max_length = 120,
         default = '443',
-        verbose_name = _(" vCenter Port"),
+        verbose_name = _("vCenter Port"),
         )
 
     vc_username = models.CharField(
         max_length = 120,
-        verbose_name = _(" vCenter User name"),
+        verbose_name = _("vCenter User name"),
         )
 
     vc_password = models.CharField(
         blank = True,
         null = True,
         max_length = 120,
-        verbose_name = _(" vCenter Password"),
+        verbose_name = _("vCenter Password"),
         )
 
     vc_version = models.CharField(
