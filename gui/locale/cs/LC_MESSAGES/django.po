@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-07-12 16:44+0000\n"
+"PO-Revision-Date: 2015-09-02 09:57+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1436719465.0\n"
+"X-POOTLE-MTIME: 1441187834.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12399,30 +12399,25 @@ msgstr ""
 "zařízení"
 
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Potvrzení nového hesla"
+msgstr "Potvrzení hesla rozlišeného názvu LDAP uživatele"
 
 #: directoryservice/models.py:519
-#, fuzzy
 msgid "LDAP User DN Password"
-msgstr "Rozlišené jméno (DN) uživatele LDAP"
+msgstr "Heslo rozlišeného názvu LDAP uživatele"
 
 #: directoryservice/models.py:521
-#, fuzzy
 msgid "Password for LDAP User DN"
-msgstr "Rozlišené jméno (DN) uživatele LDAP"
+msgstr "Heslo rozlišeného názvu LDAP uživatele"
 
 #: directoryservice/forms.py:476
-#, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr "Heslo pro protějšek nesmí být stejné, jako uživatelské heslo."
+msgstr "NetBIOS nemůže být stejný, jako první."
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr "Heslo pro protějšek nesmí být stejné, jako uživatelské heslo."
+msgstr "NetBIOS název nemůže být stejný jako název pracovní skupiny!"
 
 #: directoryservice/models.py:739
 #, fuzzy
@@ -12441,9 +12436,8 @@ msgstr "Protějšek"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
-#, fuzzy
 msgid "Kerberos Principal"
-msgstr "Kerberos oblast."
+msgstr "Kerberos identita (principal)"
 
 #: network/forms.py:254
 #, fuzzy
@@ -12457,63 +12451,57 @@ msgstr "Je třeba, aby se klon nacházel na stejném svazku"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
-msgstr ""
+msgstr "Virtuální IP adresa se nenachází ve stejné síti"
 
 #: network/hook.py:72
 msgid "IPMI (Node %s)"
-msgstr ""
+msgstr "IPMI (uzel %s)"
 
 #: network/models.py:228
-#, fuzzy
 msgid "Virtual IP"
-msgstr "IP adresa portálu"
+msgstr "Virtuální IP adresa"
 
 #: network/models.py:233
 msgid "Virtual Host ID"
 msgstr ""
 
 #: network/models.py:245
-#, fuzzy
 msgid "Critical for Failover"
-msgstr "Kritické výstrahy"
+msgstr "Kritické pro převzetí služby v případě selhání"
 
 #: network/models.py:359
-#, fuzzy
 msgid "Virtual IPv4"
-msgstr "IP adresa portálu"
+msgstr "Virtuální IPv4 adresa"
 
 #: network/nav.py:45
 msgid "IPMI (Node B)"
-msgstr ""
+msgstr "IPMI (uzel B)"
 
 #: network/nav.py:47
 msgid "IPMI (Node A)"
-msgstr ""
+msgstr "IPMI (uzel A)"
 
 #: system/alertmods/mpr_firmware.py:34
-#, fuzzy
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
 "Verze firmware %(fwversion)s neodpovídá verzi ovladače %(drversion)s pro "
-"zařízení /dev/mps%(mps)s"
+"zařízení /dev/mpr%(mpr)s"
 
 #: network/forms.py:320
 #: network/forms.py:324
-#, fuzzy
 msgid "This field is required for failover"
-msgstr "Vyplnění této kolonky je vyžadováno pro anonymní přihlášení"
+msgstr ""
+"Vyplnění této kolonky je vyžadováno pro převzetí služby v případě selhání"
 
 #: services/forms.py:1151
-#, fuzzy
 msgid "Extent is already in this target."
-msgstr "Pro tento cíl je tento identifikátor LUN již používán."
+msgstr "Úložná jednotka se již nachází v tomto cíli."
 
 #: jails/models.py:647
-#, fuzzy
 msgid "Jail Template"
-msgstr "šablony vyhrazených prostředí"
+msgstr "Šablona vyhrazeného prostředí"
 
 #: services/models.py:679
 #, fuzzy
@@ -12524,3 +12512,84 @@ msgstr "IP adresa portálu"
 #, fuzzy
 msgid "iSCSI Group"
 msgstr "iSCSI skupiny"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "Název zásuvného modulu"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "Dostupné zásuvné moduly"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "Nainstalovat plugin"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "Instalovat"
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "Název stroje nebo jeho IP adresa"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Port na protistraně"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "Uživatelské jméno"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Změnit heslo"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "Verze"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Nastavení"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Celkové nastavení cíle"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""

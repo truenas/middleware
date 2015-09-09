@@ -12621,3 +12621,84 @@ msgstr "IP Portala"
 #, fuzzy
 msgid "iSCSI Group"
 msgstr "Grupe"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "Ime dodatne komponente"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "Dostupne radnje"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "Instalirati dodatnu komponentu"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "Instalirano..."
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "IP adresa kontrolera"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Udaljeni port"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "Korisničko ime"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Promeni Šifru"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "Verzija"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Globalna Konfiguracija"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Globalna konfiguracija odredišta"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""

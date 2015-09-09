@@ -543,3 +543,7 @@ msgstr "Ενημέρωση"
 #, fuzzy
 msgid "Pending Updates"
 msgstr "Εφαρμογή ενημερώσεων σε εκκρεμότητα"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:185
+msgid "vCenter Plugin Configuration"
+msgstr ""

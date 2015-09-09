@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-08-24 15:03+0000\n"
+"PO-Revision-Date: 2015-09-02 04:59+0000\n"
 "Last-Translator: tiack <tiackstar@yahoo.com.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1440428637.0\n"
+"X-POOTLE-MTIME: 1441169955.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4177,9 +4177,8 @@ msgid "Auto Import Volume"
 msgstr "自動搜尋磁區"
 
 #: storage/nav.py:96
-#, fuzzy
 msgid "View Volumes"
-msgstr "檢視全部磁區"
+msgstr "檢視磁區"
 
 #: storage/nav.py:108 templates/storage/volumes.html:129
 #: templates/storage/volumes.html.py:133
@@ -7314,7 +7313,6 @@ msgid "The specified group's permission are used by all clients"
 msgstr ""
 
 #: storage/admin.py:130
-#, fuzzy
 msgid "Compression"
 msgstr "壓縮"
 
@@ -8193,9 +8191,8 @@ msgid "Wipe"
 msgstr ""
 
 #: storage/admin.py:136
-#, fuzzy
 msgid "Compression Ratio"
-msgstr "壓縮等級"
+msgstr "壓縮率"
 
 #: storage/admin.py:274
 #: storage/admin.py:376
@@ -11110,9 +11107,8 @@ msgstr ""
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
 #: templates/storage/volume_datagrid.html:19
-#, fuzzy
 msgid "Import Disk"
-msgstr "匯入磁區"
+msgstr "匯入磁碟"
 
 #: system/forms.py:1852
 #, fuzzy
@@ -12829,3 +12825,84 @@ msgstr "入口"
 #, fuzzy
 msgid "iSCSI Group"
 msgstr "群組"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "外掛名稱"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "可執行的功能"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "外掛 版本"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "已安裝"
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "控制器的IP位址"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "遠端主機"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "帳號"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "變更密碼"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "OS 版本"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "全區組態"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "目標全區組態"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""
