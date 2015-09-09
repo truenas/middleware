@@ -265,6 +265,22 @@ class InterfacesForm(ModelForm):
             raise forms.ValidationError(_('This field is required.'))
         return group
 
+    def clean_int_critical(self):
+        CRIT = False
+        qs = models.Interfaces.objects.all()
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        for interface in qs:
+            if interface.int_critical:
+                CRIT = True
+        crit = self.cleaned_data.get('int_critical')
+        if crit:
+            CRIT = True
+        if not CRIT:
+            raise forms.ValidationError(_('One interface must be marked xicritical for failover.'))
+        return crit
+
+
     def clean(self):
         cdata = self.cleaned_data
 
