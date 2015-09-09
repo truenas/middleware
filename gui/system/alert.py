@@ -56,6 +56,12 @@ class Alert(object):
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
             self._id = id
+        qs = mAlert.objects.filter(message_id=self.getId())
+        if qs.exists():
+            self._timestamp = qs[0].timestamp
+        else:
+            self._timestamp = int(time.time())
+            mAlert.objects.create(message_id=self.getId(), timestamp=self._timestamp)
 
     def __repr__(self):
         return '<Alert: %s>' % self._id
@@ -96,8 +102,11 @@ class Alert(object):
     def setDismiss(self, value):
         self._dismiss = value
 
-    def getDismiss(self, value):
+    def getDismiss(self):
         return self._dismiss
+
+    def getTimestamp(self):
+        return self._timestamp
 
 
 class AlertPlugins:
