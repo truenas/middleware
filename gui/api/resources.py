@@ -145,14 +145,38 @@ class AlertResource(DojoResource):
     level = fields.CharField(attribute='_level')
     message = fields.CharField(attribute='_message')
     dismissed = fields.BooleanField(attribute='_dismiss')
+    timestamp = fields.IntegerField(attribute='_timestamp', null=True)
 
     class Meta:
         allowed_methods = ['get']
         object_class = Alert
         resource_name = 'system/alert'
 
+
     def get_list(self, request, **kwargs):
         results = alertPlugins.run()
+
+        if (
+            'timestamp' in request.GET or
+            'timestamp__gte' in request.GET or
+            'timestamp__lte' in request.GET
+        ):
+            for res in list(results):
+                eq = request.GET.get('timestamp')
+                if eq and int(eq) != res.getTimestamp():
+                    results.remove(res)
+                    continue
+
+                gte = request.GET.get('timestamp__gte')
+                if gte and int(gte) < res.getTimestamp():
+                    results.remove(res)
+                    continue
+
+                lte = request.GET.get('timestamp__lte')
+                if lte and int(lte) < res.getTimestamp():
+                    results.remove(res)
+                    continue
+
         paginator = self._meta.paginator_class(
             request,
             results,
