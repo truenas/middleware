@@ -27,9 +27,10 @@
 import dateutil
 import logging
 import os
-import string
-import uuid
 import signal
+import string
+import time
+import uuid
 
 from dateutil import parser as dtparser
 
@@ -57,10 +58,9 @@ class Alert(Model):
     message_id = models.CharField(
         unique=True,
         max_length=100,
-        )
-    dismiss = models.BooleanField(
-        default=True,
-        )
+    )
+    dismiss = models.BooleanField(default=True)
+    timestamp = models.IntegerField(default=lambda: int(time.time()))
 
 
 class Settings(Model):
