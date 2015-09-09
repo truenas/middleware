@@ -277,7 +277,7 @@ class InterfacesForm(ModelForm):
         if crit:
             CRIT = True
         if not CRIT:
-            raise forms.ValidationError(_('One interface must be marked xicritical for failover.'))
+            raise forms.ValidationError(_('One interface must be marked critical for failover.'))
         return crit
 
 
