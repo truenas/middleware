@@ -1982,7 +1982,7 @@ class DomainController(Model):
             )
         self._dc_passwd_encrypted = False
 
-    def save(self):
+    def save(self, *args, **kwargs):
 
         if self.dc_passwd and not self._dc_passwd_encrypted:
             self.dc_passwd = notifier().pwenc_encrypt(
@@ -1990,7 +1990,7 @@ class DomainController(Model):
             )
             self._dc_passwd_encrypted = True
 
-        super(DomainController, self).save()
+        obj = super(DomainController, self).save(*args, **kwargs)
 
         if not self.dc_kerberos_realm:
             try:
@@ -2012,6 +2012,7 @@ class DomainController(Model):
             except Exception as e:
                 log.debug("DomainController: Unable to create kerberos realm: "
                           "%s", e)
+        return obj
 
     class Meta:
         verbose_name = _(u"Domain Controller")
