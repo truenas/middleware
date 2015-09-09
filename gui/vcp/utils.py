@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,9 +27,6 @@
 
 from __future__ import with_statement
 
-import socket
-import struct
-import zipfile
 import shutil
 import os
 import base64
@@ -37,20 +34,21 @@ import ConfigParser
 
 from contextlib import closing
 from subprocess import Popen, PIPE
-from django.utils.translation import ugettext as _
 from django.conf import settings
 from Crypto.Cipher import DES
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import ZipFile
 from ConfigParser import SafeConfigParser
 
+
 def vcp_enabled():
-    try :
-       for file in os.listdir(settings.STATIC_ROOT):
-           if 'plugin' in file and '.zip' in file :
-               return True
-       return False
-    except :
-       return False
+    try:
+        for file in os.listdir(settings.STATIC_ROOT):
+            if 'plugin' in file and '.zip' in file:
+                return True
+        return False
+    except:
+        return False
+
 
 def get_management_ips():
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
@@ -60,8 +58,8 @@ def get_management_ips():
         'lo0',
         'pfsync0',
         'pflog0',
-        ), int_list)
-    str_IP=[]
+    ), int_list)
+    str_IP = []
     str_IP.append('--Select--')
     ifaces = {}
     for iface in int_list:
@@ -132,31 +130,28 @@ def get_management_ips():
 
 
 def get_plugin_file_name():
-    try :
+    try:
+        for file in os.listdir(settings.STATIC_ROOT):
+            if '.zip' in file and 'plugin' in file:
+                return file
+    except:
+        return None
 
-       for file in os.listdir(settings.STATIC_ROOT):
-          if '.zip' in file and 'plugin' in file:
-            return file
-
-    except :
-       return None
 
 def get_plugin_version():
-    try :
-
-       err_message = 'Not available'
-       for file in os.listdir(settings.STATIC_ROOT):
-           if '.zip' in file and 'plugin' in file:
-             if file.count('_')<2 or file.count('.')<3:
-                return err_message
-             version = file.split('_')[1]
-             return version
-
-    except Exception as ex:
-       return err_message
+    try:
+        err_message = 'Not available'
+        for file in os.listdir(settings.STATIC_ROOT):
+            if '.zip' in file and 'plugin' in file:
+                if file.count('_') < 2 or file.count('.') < 3:
+                    return err_message
+                version = file.split('_')[1]
+                return version
+    except Exception:
+        return err_message
 
 
-def zip_this_file(src_path,dest_path,Ftype):
+def zip_this_file(src_path, dest_path, Ftype):
     shutil.make_archive(dest_path, Ftype, src_path)
 
 
@@ -165,79 +160,76 @@ def zipdir(src_path, dest_path):
     with closing(ZipFile(dest_path, "w")) as z:
 
         for root, dirs, files in os.walk(src_path):
-             for fn in files:
+            for fn in files:
                 absfn = os.path.join(root, fn)
-                zfn = absfn[len(src_path)+len(os.sep):]
+                zfn = absfn[len(src_path) + len(os.sep):]
                 z.write(absfn, zfn)
 
 
-def extract_zip(src_path,dest_path):
+def extract_zip(src_path, dest_path):
     if not os.path.exists(dest_path):
-        os.makedirs(dest_path);
-    os.system("unzip "+src_path+ " -d "+dest_path)
+        os.makedirs(dest_path)
+    os.system("unzip " + src_path + " -d " + dest_path)
 
 
 def remove_directory(dest_path):
     if os.path.exists(dest_path):
         shutil.rmtree(dest_path)
 
-def update_plugin_zipfile(ip,username,password,port,install_mode,plugin_vesion):
+
+def update_plugin_zipfile(ip, username, password, port, install_mode, plugin_vesion):
     try:
+        fname = get_plugin_file_name()
+        if fname is None:
+            return False
 
-       fname = get_plugin_file_name()
-       if fname is None:
-           return False
-
-       pat = settings.STATIC_ROOT
-       extract_zip(pat+'/'+fname,pat+'/plugin');
-       extract_zip(pat+'/plugin/plugins/ixsystems-vcp-service.jar',pat+'/plugin/plugins/ixsystems-vcp-service');
-       status_flag=create_propertyFile(pat+'/plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties',install_mode,plugin_vesion,ip,username,password,port,'Calsoft@');
-       zipdir(pat+'/plugin/plugins/ixsystems-vcp-service',pat+'/plugin/plugins/ixsystems-vcp-service.jar');
-       remove_directory(pat+'/plugin/plugins/ixsystems-vcp-service');
-       zip_this_file(pat+'/plugin',pat+'/'+fname[0:len(fname)-4],'zip');
-       remove_directory(pat+'/plugin');
-       return status_flag
-
+        pat = settings.STATIC_ROOT
+        extract_zip(pat + '/' + fname, pat + '/plugin')
+        extract_zip(pat + '/plugin/plugins/ixsystems-vcp-service.jar', pat + '/plugin/plugins/ixsystems-vcp-service')
+        status_flag = create_propertyFile(pat + '/plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties', install_mode, plugin_vesion, ip, username, password, port, 'Calsoft@')
+        zipdir(pat + '/plugin/plugins/ixsystems-vcp-service', pat + '/plugin/plugins/ixsystems-vcp-service.jar')
+        remove_directory(pat + '/plugin/plugins/ixsystems-vcp-service')
+        zip_this_file(pat + '/plugin', pat + '/' + fname[0:len(fname) - 4], 'zip')
+        remove_directory(pat + '/plugin')
+        return status_flag
     except Exception as ex:
-        return str(ex).replace("'","").replace("<","").replace(">","")
+        return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
 
-def encrypt_string(str,key):
-    cipher = DES.new(key,DES.MODE_CFB, key)
+def encrypt_string(str, key):
+    cipher = DES.new(key, DES.MODE_CFB, key)
     resolved = cipher.encrypt(base64.b64encode(str))
     return resolved
 
 
-def decrypt_string(str_ciph,key):
-    cipher = DES.new(key,DES.MODE_CFB, key)
+def decrypt_string(str_ciph, key):
+    cipher = DES.new(key, DES.MODE_CFB, key)
     resolved = cipher.decrypt(str_ciph)
     return base64.b64decode(resolved)
 
 
-
-def create_propertyFile(fpath,install_mode,plugin_vesion,host_ip,username,password,port,enc_key):
-     try:
-
+def create_propertyFile(fpath, install_mode, plugin_vesion, host_ip, username, password, port, enc_key):
+    try:
         plugin_vesion_old = plugin_vesion
         plugin_vesion_new = plugin_vesion
         if 'UPGRADE' in install_mode:
-           cp = SafeConfigParser()
-           cp.read(fpath)
-           plugin_vesion_old = cp.get('installation_parameter','plugin_version_new')
+            cp = SafeConfigParser()
+            cp.read(fpath)
+            plugin_vesion_old = cp.get('installation_parameter', 'plugin_version_new')
 
         Config = ConfigParser.ConfigParser()
-        cfgfile = open(fpath,'w')
+        cfgfile = open(fpath, 'w')
         Config.add_section('installation_parameter')
-        Config.set('installation_parameter','ip',host_ip)
-        Config.set('installation_parameter','username',username)
-        Config.set('installation_parameter','port',port)
-        Config.set('installation_parameter','password',encrypt_string(password,enc_key))
-        Config.set('installation_parameter','install_mode',install_mode)
-        Config.set('installation_parameter','plugin_version_old',plugin_vesion_old)
-        Config.set('installation_parameter','plugin_version_new',plugin_vesion_new)
+        Config.set('installation_parameter', 'ip', host_ip)
+        Config.set('installation_parameter', 'username', username)
+        Config.set('installation_parameter', 'port', port)
+        Config.set('installation_parameter', 'password', encrypt_string(password, enc_key))
+        Config.set('installation_parameter', 'install_mode', install_mode)
+        Config.set('installation_parameter', 'plugin_version_old', plugin_vesion_old)
+        Config.set('installation_parameter', 'plugin_version_new', plugin_vesion_new)
         Config.write(cfgfile)
         cfgfile.close()
         return True
 
-     except Exception as ex:
-         return str(ex).replace("'","").replace("<","").replace(">","")
+    except Exception as ex:
+        return str(ex).replace("'", "").replace("<", "").replace(">", "")

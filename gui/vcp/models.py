@@ -1,5 +1,5 @@
-#+
-# Copyright 2010 iXsystems, Inc.
+#
+# Copyright 2015 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,55 +24,54 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
-import utils
+from . import utils
 
 from django.db import models
 from freenasUI.freeadmin.models import Model
 from django.utils.translation import ugettext_lazy as _
-from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,IP6AddressField)
+from freenasUI.contrib.IPAddressField import IP4AddressField
+
 
 class VcenterConfiguration(Model):
 
     ip_choices = utils.get_management_ips()
 
     vc_management_ip = models.CharField(
-        max_length = 120,
-        verbose_name = _("TrueNAS Management IP Address"),
-        choices=zip(ip_choices,ip_choices), default='1',
-        help_text = 'Please select the TrueNAS interface that vCenter Web client can route to.',
-        )
-
-    vc_ip = IP4AddressField(
-        blank = False,
-        default = '',
-        verbose_name = _("vCenter Hostname/IP Address"),
-        )
-
-    vc_port = models.CharField(
-        max_length = 120,
-        default = '443',
-        verbose_name = _("vCenter Port"),
-        )
-
-    vc_username = models.CharField(
-        max_length = 120,
-        verbose_name = _("vCenter User name"),
-        )
-
-    vc_password = models.CharField(
-        blank = True,
-        null = True,
-        max_length = 120,
-        verbose_name = _("vCenter Password"),
-        )
-
-    vc_version = models.CharField(
-        blank = True,
-        null = True,
         max_length=120,
-        verbose_name = _("version"),
-        )
+        verbose_name=_("TrueNAS Management IP Address"),
+        choices=zip(ip_choices, ip_choices),
+        default='1',
+        help_text=_(
+            'Please select the TrueNAS interface that vCenter Web client can '
+            'route to.'
+        ),
+    )
+    vc_ip = IP4AddressField(
+        blank=False,
+        default='',
+        verbose_name=_("vCenter Hostname/IP Address"),
+    )
+    vc_port = models.CharField(
+        max_length=120,
+        default='443',
+        verbose_name=_("vCenter Port"),
+    )
+    vc_username = models.CharField(
+        max_length=120,
+        verbose_name=_("vCenter User name"),
+    )
+    vc_password = models.CharField(
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("vCenter Password"),
+    )
+    vc_version = models.CharField(
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("version"),
+    )
 
     class Meta:
         verbose_name = _("vCenter Configuration")

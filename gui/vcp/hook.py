@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -25,13 +25,9 @@
 #
 #####################################################################
 
-
-import os
 from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.hook import AppHook
-from django.conf import settings
 from utils import vcp_enabled
-
 
 
 class VcpHook(AppHook):
@@ -40,12 +36,10 @@ class VcpHook(AppHook):
 
     def top_menu(self, request):
         if vcp_enabled():
-            return [
-                        {
-                            'name': _('vCenter'),
-                            'icon': 'images/ui/menu/vsphere.png',
-                            'onclick': 'Menu.openVcp();',
-                            'weight': 8,
-                        },
-                    ]
-        return[]
+            return [{
+                'name': _('vCenter'),
+                'icon': 'images/ui/menu/vsphere.png',
+                'onclick': 'Menu.openVcp();',
+                'weight': 8,
+            }]
+        return []
