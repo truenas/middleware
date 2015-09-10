@@ -76,7 +76,7 @@ class services(Model):
         super(services, self).save(*args, **kwargs)
 
 
-class CIFS(Model):
+class CIFS(NewModel):
     cifs_srv_netbiosname = models.CharField(
         max_length=120,
         verbose_name=_("NetBIOS name"),
@@ -262,6 +262,8 @@ class CIFS(Model):
         null=True,
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _(u"CIFS")
         verbose_name_plural = _(u"CIFS")
@@ -269,6 +271,97 @@ class CIFS(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"CIFSIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('cifs_srv_netbiosname', 'netbiosname'),
+            ('cifs_srv_workgroup', 'workgroup'),
+            ('cifs_srv_description', 'description'),
+            ('cifs_srv_doscharset', 'dos_charset'),
+            ('cifs_srv_unixcharset', 'unix_charset'),
+            ('cifs_srv_loglevel', 'log_level'),
+            ('cifs_srv_syslog', 'syslog'),
+            ('cifs_srv_localmaster', 'local_master'),
+            ('cifs_srv_domain_logons', 'domain_logons'),
+            ('cifs_srv_timeserver', 'time_server'),
+            ('cifs_srv_guest', 'guest_user'),
+            ('cifs_srv_filemask', 'filemask'),
+            ('cifs_srv_dirmask', 'dirmask'),
+            ('cifs_srv_nullpw', 'empty_password'),
+            ('cifs_srv_unixext', 'unixext'),
+            ('cifs_srv_zeroconf', 'zeroconf'),
+            ('cifs_srv_hostlookup', 'hostlookup'),
+            ('cifs_srv_min_protocol', 'min_protocol'),
+            ('cifs_srv_max_protocol', 'max_protocol'),
+            ('cifs_srv_allow_execute_always', 'execute_always'),
+            ('cifs_srv_obey_pam_restrictions', 'obey_pam_restrictions'),
+            ('cifs_srv_bindip', 'bind_addresses'),
+            ('cifs_SID', 'sid'),
+            ('cifs_srv_smb_options', 'auxiliary'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.cifs.get_config')
+        return cls(**dict(
+            cifs_srv_netbiosname=config['netbiosname'],
+            cifs_srv_workgroup=config['workgroup'],
+            cifs_srv_description=config['description'],
+            cifs_srv_doscharset=config['dos_charset'],
+            cifs_srv_unixcharset=config['unix_charset'],
+            cifs_srv_loglevel=config['log_level'],
+            cifs_srv_syslog=config['syslog'],
+            cifs_srv_localmaster=config['local_master'],
+            cifs_srv_domain_logons=config['domain_logons'],
+            cifs_srv_timeserver=config['time_server'],
+            cifs_srv_guest=config['guest_user'],
+            cifs_srv_filemask=config['filemask'],
+            cifs_srv_dirmask=config['dirmask'],
+            cifs_srv_nullpw=config['empty_password'],
+            cifs_srv_unixext=config['unixext'],
+            cifs_srv_zeroconf=config['zeroconf'],
+            cifs_srv_hostlookup=config['hostlookup'],
+            cifs_srv_min_protocol=config['min_protocol'],
+            cifs_srv_max_protocol=config['max_protocol'],
+            cifs_srv_allow_execute_always=config['execute_always'],
+            cifs_srv_obey_pam_restrictions=config['obey_pam_restrictions'],
+            cifs_srv_bindip=config['bind_addresses'],
+            cifs_SID=config['sid'],
+            cifs_srv_smb_options=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
+        data = {
+            'netbiosname': self.cifs_srv_netbiosname,
+            'workgroup': self.cifs_srv_workgroup,
+            'description': self.cifs_srv_description,
+            'dos_charset': self.cifs_srv_doscharset,
+            'unix_charset': self.cifs_srv_unixcharset,
+            'log_level': self.cifs_srv_loglevel,
+            'syslog': self.cifs_srv_syslog,
+            'local_master': self.cifs_srv_localmaster,
+            'domain_logons': self.cifs_srv_domain_logons,
+            'time_server': self.cifs_srv_timeserver,
+            'guest_user': self.cifs_srv_guest,
+            'filemask': self.cifs_srv_filemask,
+            'dirmask': self.cifs_srv_dirmask,
+            'empty_password': self.cifs_srv_nullpw,
+            'unixext': self.cifs_srv_unixext,
+            'zeroconf': self.cifs_srv_zeroconf,
+            'hostlookup': self.cifs_srv_hostlookup,
+            'min_protocol': self.cifs_srv_min_protocol or None,
+            'max_protocol': self.cifs_srv_max_protocol,
+            'execute_always': self.cifs_srv_allow_execute_always,
+            'obey_pam_restrictions': self.cifs_srv_obey_pam_restrictions,
+            'bind_addresses': self.cifs_srv_bindip or None,
+            'sid': self.cifs_SID,
+            'auxiliary': self.cifs_srv_smb_options or None,
+        }
+        self._save_task_call('service.cifs.configure', data)
+        return True
 
 
 class AFP(NewModel):
