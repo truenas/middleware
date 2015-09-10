@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/local/bin/python
 #
 # Copyright 2015 iXsystems, Inc.
 # All rights reserved
@@ -25,6 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+
+
 def __template_handling(args):
     if 'list' in args.list:
         print 'nick: standard'
