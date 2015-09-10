@@ -245,16 +245,6 @@ class CIFSForm(ModelForm):
         obj.cifs_srv_bindip = self.cleaned_data.get('cifs_srv_bindip')
         obj.save()
 
-        started = notifier().restart("cifs")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='cifs').srv_enable
-        ):
-            raise ServiceFailed(
-                "cifs", _("The CIFS service failed to reload.")
-            )
-
 
 class AFPForm(ModelForm):
 
