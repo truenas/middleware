@@ -45,8 +45,6 @@ from freenasUI.common.samba import (
     Samba4
 )
 from freenasUI.common.system import (
-    validate_netbios_name,
-    validate_netbios_names,
     activedirectory_enabled,
     nt4_enabled,
     ldap_enabled
@@ -211,40 +209,20 @@ class CIFSForm(ModelForm):
             self.initial['cifs_srv_domain_logons'] = True
             self.fields['cifs_srv_domain_logons'].widget.attrs['readonly'] = True
 
-    def __check_octet(self, v):
-        try:
-            if v != "" and (int(v, 8) & ~011777):
-                raise ValueError
-        except:
-            raise forms.ValidationError(_("This is not a valid mask"))
-
     def clean_cifs_srv_workgroup(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
         workgroup = self.cleaned_data.get("cifs_srv_workgroup").strip()
-        if netbios and netbios.lower() == workgroup.lower():
-            raise forms.ValidationError("NetBIOS and Workgroup must be unique")
-        try:
-            validate_netbios_name(workgroup)
-        except Exception as e:
-            raise forms.ValidationError(_("workgroup: %s" % e))
         return workgroup
 
     def clean_cifs_srv_netbiosname(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
-        try:
-            validate_netbios_names(netbios)
-        except Exception as e:
-            raise forms.ValidationError(_("netbiosname: %s" % e))
+        netbios = self.cleaned_data.get("cifs_srv_netbiosname", '').strip()
         return netbios
 
     def clean_cifs_srv_filemask(self):
         v = self.cleaned_data.get("cifs_srv_filemask").strip()
-        self.__check_octet(v)
         return v
 
     def clean_cifs_srv_dirmask(self):
         v = self.cleaned_data.get("cifs_srv_dirmask").strip()
-        self.__check_octet(v)
         return v
 
     def clean_cifs_srv_bindip(self):
