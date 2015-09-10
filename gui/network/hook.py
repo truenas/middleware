@@ -55,12 +55,13 @@ class NetworkHook(AppHook):
                 'url': url,
             })
 
-        if _n.ipmi_loaded():
+        from freenasUI.middleware.connector import connection as dispatcher
+        if dispatcher.call_sync('ipmi.is_ipmi_loaded'):
             tabs.insert(2, {
                 'name': 'IPMI',
                 'focus': 'network.IPMI',
                 'verbose_name': _('IPMI'),
-                'url': reverse('network_ipmi'),
+                'url': reverse('network_ipmi')
             })
 
         index = 3

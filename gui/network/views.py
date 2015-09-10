@@ -35,6 +35,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network import models
 from freenasUI.network.forms import HostnameForm, IPMIForm
 
@@ -58,37 +59,30 @@ def ipmi(request):
     if request.method == "POST":
         form = IPMIForm(request.POST)
         if form.is_valid():
-            rv = notifier().ipmi_set_lan(
-                form.cleaned_data,
-                channel=int(form.cleaned_data.get('channel')),
+            args = {
+                'dhcp': form.cleaned_data['dhcp'],
+                'address': str(form.cleaned_data['address']),
+                'netmask': int(form.cleaned_data['netmask']),
+                'gateway': str(form.cleaned_data['gateway']),
+                'vlan_id': form.cleaned_data.get('vlan_id')
+            }
+
+            if form.cleaned_data.get('password'):
+                args['password'] = form.cleaned_data['password']
+
+            import logging
+            logging.warning('ipmi args: {0}'.format(args))
+            result = dispatcher.call_task_sync(
+                'ipmi.configure',
+                int(form.cleaned_data.get('channel')),
+                args
             )
-            if rv == 0:
+            if result['state'] == 'FINISHED':
                 return JsonResp(request, message=_("IPMI successfully edited"))
             else:
                 return JsonResp(request, error=True, message=_("IPMI failed"))
     else:
-        try:
-            ipmi = notifier().ipmi_get_lan()
-
-            #TODO: There might be a better way to convert netmask to CIDR
-            mask = ipmi.get("SubnetMask")
-            num, cidr = struct.unpack('>I', socket.inet_aton(mask))[0], 0
-            while num > 0:
-                num = num << 1 & 0xffffffff
-                cidr += 1
-            initial = {
-                'dhcp': False
-                if ipmi.get("IpAddressSource") == "Static Address"
-                else True,
-                'ipv4address': ipmi.get("IpAddress"),
-                'ipv4gw': ipmi.get("DefaultGatewayIp"),
-                'ipv4netmaskbit': str(cidr),
-                'vlanid': ipmi.get("8021qVlanId")
-                if ipmi.get("8021qVlanId") != 'Disabled'
-                else '',
-            }
-        except Exception:
-            initial = {}
+        initial = dispatcher.call_sync('ipmi.get_config', int(request.GET.get('channel', 1)))
         form = IPMIForm(initial=initial)
     return render(request, 'network/ipmi.html', {
         'form': form,

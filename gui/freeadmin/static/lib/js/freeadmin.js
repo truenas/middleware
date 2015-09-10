@@ -361,6 +361,11 @@ require([
 
     }
 
+    load_into = function(id, url) {
+        var widget = registry.byId(id);
+        widget.set("href", url);
+    }
+
     alertDismiss = function() {
         var input = this;
         var msgid = input.value;

@@ -20,7 +20,8 @@ class IPMI(TreeNode):
     append_to = 'network'
 
     def pre_build_options(self):
-        if not notifier().ipmi_loaded():
+        from freenasUI.middleware.connector import connection as dispatcher
+        if not dispatcher.call_sync('ipmi.is_ipmi_loaded'):
             raise ValueError
 
 
