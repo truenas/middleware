@@ -1195,7 +1195,7 @@ class DynamicDNS(NewModel):
         return cls(**dict(
             ddns_provider=config['provider'],
             ddns_ipserver=config['ipserver'],
-            ddns_domain=config['domain'],
+            ddns_domain=','.join(config['domains'] or []),
             ddns_username=config['username'],
             ddns_password=config['password'],
             ddns_updateperiod=config['update_period'],
@@ -1207,7 +1207,7 @@ class DynamicDNS(NewModel):
         data = {
             'provider': self.ddns_provider or None,
             'ipserver': self.ddns_ipserver or None,
-            'domain': self.ddns_domain,
+            'domains': self.ddns_domain.split(','),
             'username': self.ddns_username,
             'password': self.ddns_password,
             'update_period': self.ddns_updateperiod or None,
