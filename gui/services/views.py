@@ -182,7 +182,7 @@ def servicesToggleView(request, formname):
         'lldp_toggle': 'lldp',
         'nfs_toggle': 'nfs',
         'iscsitarget_toggle': 'iscsitarget',
-        'dynamicdns_toggle': 'dynamicdns',
+        'dynamicdns_toggle': 'dyndns',
         'snmp_toggle': 'snmp',
         'httpd_toggle': 'httpd',
         'ftp_toggle': 'ftp',
@@ -202,7 +202,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service in ('afp', 'cifs'):
+    if changing_service in ('afp', 'cifs', 'dyndns'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],

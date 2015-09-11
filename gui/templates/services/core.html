@@ -37,12 +37,12 @@
            <strong>{% trans "Dynamic DNS" %}</strong>
        </td>
        <td>
-       <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "dynamicdns" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="dynamicdns_toggle" name="dynamicdns_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.dyndns == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
            <img id="dynamicdns_settings"
            src="{{ STATIC_URL }}images/ui/buttons/settings.png"
-           onClick="editObject('{% trans "Dynamic DNS Settings"|force_escape|force_escape %}', '{{ dynamicdns.get_edit_url }}');" title="{% trans "Dynamic DNS Settings" %}">
+           onClick="editObject('{% trans "Dynamic DNS Settings"|escapejs %}', '{{ dynamicdns.get_edit_url }}');" title="{% trans "Dynamic DNS Settings" %}">
        </td>
    </tr>
    <tr>
