@@ -205,23 +205,26 @@ class Interfaces(NewModel):
     )
 
     int_interface = models.CharField(
-            max_length=300,
-            blank=False,
-            verbose_name=_("NIC"),
-            help_text=_("Pick your NIC")
-            )
+        max_length=300,
+        blank=False,
+        verbose_name=_("NIC"),
+        help_text=_("Pick your NIC")
+    )
+
     int_name = models.CharField(
             max_length="120",
             verbose_name=_("Interface Name"),
             help_text=_("Name your NIC."),
             blank=True
-            )
+    )
+
     int_dhcp = models.BooleanField(
         verbose_name=_("DHCP"),
         default=False,
         help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
             " as default router, etc.")
     )
+
     int_ipv6auto = models.BooleanField(
         verbose_name=_("Auto configure IPv6"),
         default=False,
@@ -229,6 +232,17 @@ class Interfaces(NewModel):
             "When enabled, automatically configurate IPv6 address "
             "via rtsol(8)."
         ),
+    )
+
+    int_disableipv6 = models.BooleanField(
+        verbose_name=_("Disable IPv6"),
+        default=False
+    )
+
+    int_mtu = models.IntegerField(
+        verbose_name=_("MTU"),
+        null=True,
+        blank=True
     )
 
     def __unicode__(self):
@@ -248,34 +262,6 @@ class Interfaces(NewModel):
         notifier().stop("netif")
         notifier().start("network")
 
-    def save(self, *args, **kwargs):
-        if not self.int_vip:
-            self.int_carp = None
-        elif self.int_carp in (None, ''):
-            used = [i[0] for i in Interfaces.objects.values_list('int_carp')]
-            # More than 50 CARPs? I dont think so, but lets be safe
-            # and avoid counting how many interfaces we have got.
-            # FIXME: concurrency? Two CARP with same number
-            for i in xrange(50):
-                if i in (1, 2):
-                    continue
-                if i in used:
-                    continue
-                self.int_carp = i
-                break
-        if self.int_vip and not self.int_pass:
-            self.int_pass = ''.join([
-                random.SystemRandom().choice(
-                    string.ascii_letters + string.digits
-                )
-                for n in xrange(16)
-            ])
-        super(Interfaces, self).save(*args, **kwargs)
-        if self._original_int_options != self.int_options and \
-                re.search(r'mtu \d+', self._original_int_options) and \
-                self.int_options.find("mtu") == -1:
-            notifier().interface_mtu(self.int_interface, "1500")
-
     class Meta:
         verbose_name = _("Interface")
         verbose_name_plural = _("Interfaces")
@@ -286,7 +272,10 @@ class Interfaces(NewModel):
         field_mapping = (
             (('id', 'int_interface'), 'id'),
             ('int_name', 'name'),
-            ('int_dhcp', 'dhcp')
+            ('int_dhcp', 'dhcp'),
+            ('int_ipv6auto', 'rtadv'),
+            ('int_disableipv6', 'noipv6'),
+            ('int_mtu', 'mtu')
         )
 
     @property

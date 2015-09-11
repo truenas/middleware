@@ -366,6 +366,14 @@ require([
         widget.set("href", url);
     }
 
+    delete_last_formset = function(name) {
+        var extra = registry.byId("id_"+name+"-TOTAL_FORMS");
+        var extran = extra.get("value");
+        extran = parseInt(extran) - 1;
+        registry.byId('formset-' + name + '-' + extran).destroy();
+        extra.set('value', parseInt(extran));
+    }
+
     alertDismiss = function() {
         var input = this;
         var msgid = input.value;

@@ -56,7 +56,7 @@ SW_NAME = get_sw_name()
 
 class InterfacesForm(ModelForm):
     class Meta:
-        fields = ['int_name', 'int_dhcp', 'int_ipv6auto']
+        fields = ['id', 'int_name', 'int_dhcp', 'int_ipv6auto', 'int_disableipv6', 'int_mtu']
         model = models.Interfaces
 
 

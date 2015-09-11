@@ -12,7 +12,7 @@
                 </td>
             </tr>
             {% for form in formset %}
-            <tr>
+            <tr data-dojo-type="dijit.layout.ContentPane" id="formset-form-{{ forloop.counter0 }}">
                 <td colspan="2">
                     <table>
                         {{ form }}
@@ -23,6 +23,7 @@
             <tr>
                 <td colspan="2">
                 <a href="javascript:void(0);" onClick="add_formset(this, '{% url 'network_empty_alias_formset' %}', 'form');">{% trans "Add address" %}</a>
+                <a href="javascript:void(0);" onClick="delete_last_formset('form')">{% trans "Delete address" %}</a>
                 </td>
             </tr>
         </table>

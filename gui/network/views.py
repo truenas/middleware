@@ -56,12 +56,35 @@ def hostname(request):
 
 def empty_alias_formset(request):
     form = AliasFormSet()
-    return HttpResponse(form.empty_form.as_table())
+    return render(request, 'network/alias_empty_form.html', {
+        'form': form
+    })
 
 
 def editinterface(request, interface_name):
+    from freenasUI.middleware.connector import connection as dispatcher
+
     if request.method == "POST":
-        pass
+        form = InterfacesForm(data=request.POST)
+        aliases = AliasFormSet(data=request.POST)
+
+        if form.is_valid():
+            form.save(method='network.interface.configure')
+
+        import logging
+        logging.warning(aliases.cleaned_data)
+
+        def convert_alias(alias):
+            return {
+                'address': str(alias['address']),
+                'netmask': alias['netmask'],
+                'type': alias['type']
+            }
+
+        final = map(convert_alias, aliases.cleaned_data)
+        dispatcher.call_task_sync('network.interface.configure', interface_name, {
+            'aliases': final
+        })
 
     else:
         nic = models.Interfaces.objects.get(pk=interface_name)

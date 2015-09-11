@@ -567,3 +567,4 @@ class ConfigQuerySet(object):
         for i in args:
             data[i] = getattr(obj, i)
         return [data]
+
