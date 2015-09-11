@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-08-31 10:00+0000\n"
+"PO-Revision-Date: 2015-09-10 21:16+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441015250.0\n"
+"X-POOTLE-MTIME: 1441919770.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -11813,7 +11813,7 @@ msgstr ""
 
 #: jails/models.py:555
 msgid "The mtree file for the template"
-msgstr ""
+msgstr "Файл mtree для шаблона"
 
 #: jails/models.py:562
 msgid ""
@@ -12694,7 +12694,7 @@ msgstr "ID виртуального хоста"
 
 #: network/models.py:245
 msgid "Critical for Failover"
-msgstr "Критично для отказоустойчивости"
+msgstr "Критично для переключения"
 
 #: network/models.py:359
 msgid "Virtual IPv4"
@@ -12718,18 +12718,16 @@ msgstr ""
 
 #: network/forms.py:320
 #: network/forms.py:324
-#, fuzzy
 msgid "This field is required for failover"
-msgstr "Это поле является обязательным для анонимного входа"
+msgstr "Это поле обязательно для переключения"
 
 #: services/forms.py:1151
 msgid "Extent is already in this target."
 msgstr "Экстент уже в этой цели."
 
 #: jails/models.py:647
-#, fuzzy
 msgid "Jail Template"
-msgstr "Шаблоны jail"
+msgstr "Шаблон jail"
 
 #: services/models.py:679
 msgid "Portal IPs"
@@ -12740,82 +12738,108 @@ msgid "iSCSI Group"
 msgstr "Группа iSCSI"
 
 #: templates/vcp/index.html:6
-#, fuzzy
 msgid "Plugin Name:"
-msgstr "Имя плагина"
+msgstr "Название плагина:"
 
 #: templates/vcp/index.html:10
-#, fuzzy
 msgid "Available Plugin Version:"
-msgstr "Доступные плагины"
+msgstr "Доступная версия плагина:"
 
 #: templates/vcp/index.html:20
-#, fuzzy
 msgid "Installed Plugin Version:"
-msgstr "Установить плагин"
+msgstr "Установленная версия плагина:"
 
 #: templates/vcp/index.html:33
-#, fuzzy
 msgid "Uninstall"
-msgstr "Установка"
+msgstr "Удаление"
 
 #: vcp/forms.py:56
 msgid "Please select the TrueNAS management interface."
-msgstr ""
+msgstr "Выберите интерфейс управления TrueNAS."
 
 #: vcp/hook.py:45
 #: vcp/nav.py:35
 msgid "vCenter"
-msgstr ""
+msgstr "vCenter"
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
-msgstr ""
+msgstr "IP адрес управления TrueNAS"
 
 #: vcp/models.py:49
-#, fuzzy
 msgid " vCenter Hostname/IP Address"
-msgstr "Имя сервера или IP адрес"
+msgstr "Имя хоста или IP адрес vCenter"
 
 #: vcp/models.py:55
-#, fuzzy
 msgid " vCenter Port"
-msgstr "Удаленный порт"
+msgstr "Порт vCenter"
 
 #: vcp/models.py:60
-#, fuzzy
 msgid " vCenter User name"
-msgstr "Имя пользователя"
+msgstr "Имя пользователя vCenter"
 
 #: vcp/models.py:67
-#, fuzzy
 msgid " vCenter Password"
-msgstr "Сменить Пароль"
+msgstr "Пароль vCenter"
 
 #: vcp/models.py:74
-#, fuzzy
 msgid "version"
 msgstr "Версия"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
-#, fuzzy
 msgid "VCenter Configuration"
-msgstr "Настройки"
+msgstr "Настройки vCenter"
 
 #: vcp/nav.py:44
-#, fuzzy
 msgid "vCenter Plugin Configuration"
-msgstr "Общие настройки"
+msgstr "Настройка плагина vCenter"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr ""
+msgstr "Плагин vCenter успешно установлен"
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr ""
+msgstr "Плагин vCenter успешно обновлен."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
-msgstr ""
+msgstr "Плагин vCenter успешно удален."
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr "Один из интерфейсов должен быть помечен как критичный для переключения."
+
+#: vcp/models.py:41
+msgid "TrueNAS Management IP Address"
+msgstr "IP адрес управления TrueNAS"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr "Выберите интерфейс TrueNAS доступный Web клиенту vCenter."
+
+#: vcp/models.py:52
+msgid "vCenter Hostname/IP Address"
+msgstr "Имя хоста или IP адрес vCenter"
+
+#: vcp/models.py:57
+msgid "vCenter Port"
+msgstr "Порт vCenter"
+
+#: vcp/models.py:61
+msgid "vCenter User name"
+msgstr "Имя пользователя vCenter"
+
+#: vcp/models.py:67
+msgid "vCenter Password"
+msgstr "Пароль vCenter"
+
+#: vcp/models.py:77
+msgid "vCenter Configuration"
+msgstr "Настройки vCenter"
+
+#: vcp/models.py:78
+msgid "vCenter Configurations"
+msgstr "Настройки vCenter"

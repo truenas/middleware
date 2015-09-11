@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2015-09-08 09:16+0000\n"
+"PO-Revision-Date: 2015-09-10 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: et\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441703761.0\n"
+"X-POOTLE-MTIME: 1441876563.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11821,4 +11821,41 @@ msgstr ""
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
+msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+msgid "TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+msgid "vCenter Hostname/IP Address"
+msgstr ""
+
+#: vcp/models.py:57
+msgid "vCenter Port"
+msgstr ""
+
+#: vcp/models.py:61
+msgid "vCenter User name"
+msgstr ""
+
+#: vcp/models.py:67
+msgid "vCenter Password"
+msgstr ""
+
+#: vcp/models.py:77
+msgid "vCenter Configuration"
+msgstr ""
+
+#: vcp/models.py:78
+msgid "vCenter Configurations"
 msgstr ""

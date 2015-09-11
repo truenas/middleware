@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-09-02 13:38+0000\n"
+"PO-Revision-Date: 2015-09-09 09:20+0000\n"
 "Last-Translator: Fraz <francis.heche@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441201135.0\n"
+"X-POOTLE-MTIME: 1441790458.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -25,10 +25,12 @@ msgstr "Entier"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
+#, fuzzy
 msgid "SSL"
 msgstr "SSL"
 
 #: choices.py:42 choices.py:558
+#, fuzzy
 msgid "TLS"
 msgstr "TLS"
 
@@ -41,8 +43,9 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
+#, fuzzy
 msgid "Auto"
-msgstr "Auto"
+msgstr "Automatique"
 
 #: choices.py:54
 msgid "PIO0"
@@ -105,12 +108,14 @@ msgid "SATA 3.0Gbit/s"
 msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
+#, fuzzy
 msgid "Always On"
-msgstr "Toujours Actif"
+msgstr "Toujours actif"
 
 #: choices.py:86 choices.py:95
+#, fuzzy
 msgid "Disabled"
-msgstr "Désactivé"
+msgstr "Désactivé(e)"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -135,6 +140,7 @@ msgid "Level 192 - Intermediate power usage without Standby"
 msgstr "Niveau 192 - Consommation intermédiaire sans mise en veille"
 
 #: choices.py:92
+#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
 msgstr "Niveau 254 - Performance maximale, consommation maximale"
 
@@ -143,8 +149,9 @@ msgid "Minimum"
 msgstr "Minimum"
 
 #: choices.py:97
+#, fuzzy
 msgid "Medium"
-msgstr "Moyen"
+msgstr "Moyen(ne)"
 
 #: choices.py:98
 msgid "Maximum"
@@ -227,18 +234,21 @@ msgid "Sunday"
 msgstr "Dimanche"
 
 #: choices.py:163
+#, fuzzy
 msgid "Anonymous"
 msgstr "Anonyme"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "Utilisateur Local"
+msgstr "Utilisateur local"
 
 #: choices.py:189
+#, fuzzy
 msgid "Normal"
-msgstr "Normal"
+msgstr "Normal(e)"
 
 #: choices.py:190
+#, fuzzy
 msgid "Full"
 msgstr "Complet"
 
@@ -13168,3 +13178,47 @@ msgstr ""
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
 msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+#, fuzzy
+msgid "TrueNAS Management IP Address"
+msgstr "Adresse IP du DNS de translation"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+#, fuzzy
+msgid "vCenter Hostname/IP Address"
+msgstr "Adresse IP du contrôleur"
+
+#: vcp/models.py:57
+#, fuzzy
+msgid "vCenter Port"
+msgstr "Port distant"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "vCenter User name"
+msgstr "Nom d'utilisateur"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid "vCenter Password"
+msgstr "Modifier le mot de passe"
+
+#: vcp/models.py:77
+#, fuzzy
+msgid "vCenter Configuration"
+msgstr "Configuration"
+
+#: vcp/models.py:78
+#, fuzzy
+msgid "vCenter Configurations"
+msgstr "Configuration"
