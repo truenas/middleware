@@ -112,10 +112,12 @@ that have occurred since 9.3-RELEASE.
 
 * The driver for the Intel X710 10GbE adapter was added.
 
-* The supported Avago (formerly known as LSI) MegaRAID HBA firmware version has been updated to v20 and the alert regarding a version mismatch has been updated accordingly.
+* The 6Gbps Avago (LSI) HBA driver, `mps(4) <https://www.freebsd.org/cgi/man.cgi?query=mps&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_, has been updated to version 20 and an
+  :ref:`Alert` will be issued if there is a version mismatch.
 
-* The 12Gbps Avago HBA driver, mpr(4), has been updated to version 9 and an alert will be issued if there is a version mismatch. The :command:`sas3ircu` command line utility
-  has also been added. This tool is similar in functionality to the :command:`sas2ircu` tool which is for MegaRAID HBAs using the mps(4) driver.
+* The 12Gbps Avago (LSI) HBA driver, `mpr(4) <https://www.freebsd.org/cgi/man.cgi?query=mpr&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_, has been updated to version 9 and an
+  :ref:`Alert` will be issued if there is a version mismatch. The :command:`sas3ircu` command line utility has also been added. This tool is similar in functionality to the
+  :command:`sas2ircu` tool which is for MegaRAID HBAs using the `mps(4) <https://www.freebsd.org/cgi/man.cgi?query=mps&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_ driver.
 
 * The mrsas(4) Avago MegaRAID driver was added.
 
