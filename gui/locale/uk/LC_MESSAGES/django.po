@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2015-08-31 09:37+0000\n"
+"PO-Revision-Date: 2015-09-10 09:41+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441013859.0\n"
+"X-POOTLE-MTIME: 1441878094.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11638,7 +11638,7 @@ msgstr ""
 
 #: jails/models.py:555
 msgid "The mtree file for the template"
-msgstr ""
+msgstr "Файл mtree для шаблону"
 
 #: jails/models.py:562
 msgid ""
@@ -12539,18 +12539,16 @@ msgstr ""
 
 #: network/forms.py:320
 #: network/forms.py:324
-#, fuzzy
 msgid "This field is required for failover"
-msgstr "Це поле є обов'язковим для забезпечення анонімного входу"
+msgstr "Це поле є обов'язковим для перемикання"
 
 #: services/forms.py:1151
 msgid "Extent is already in this target."
 msgstr "Екстент вже у цієї ж цілі."
 
 #: jails/models.py:647
-#, fuzzy
 msgid "Jail Template"
-msgstr "Шаблони jail"
+msgstr "Шаблон jail"
 
 #: services/models.py:679
 msgid "Portal IPs"
@@ -12561,33 +12559,29 @@ msgid "iSCSI Group"
 msgstr "Група iSCSI"
 
 #: templates/vcp/index.html:6
-#, fuzzy
 msgid "Plugin Name:"
-msgstr "Ім'я плагіна"
+msgstr "Назва плагіна:"
 
 #: templates/vcp/index.html:10
-#, fuzzy
 msgid "Available Plugin Version:"
-msgstr "Доступні плагiни"
+msgstr "Доступна версія плагіна:"
 
 #: templates/vcp/index.html:20
-#, fuzzy
 msgid "Installed Plugin Version:"
-msgstr "Встановлення плагіна"
+msgstr "Встановлення плагіна плагіна:"
 
 #: templates/vcp/index.html:33
-#, fuzzy
 msgid "Uninstall"
-msgstr "Встановлення"
+msgstr "Вилучення"
 
 #: vcp/forms.py:56
 msgid "Please select the TrueNAS management interface."
-msgstr ""
+msgstr "Виберіть інтерфейс управління TrueNAS."
 
 #: vcp/hook.py:45
 #: vcp/nav.py:35
 msgid "vCenter"
-msgstr ""
+msgstr "vCenter"
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
@@ -12614,7 +12608,6 @@ msgid " vCenter Password"
 msgstr "Змінити пароль"
 
 #: vcp/models.py:74
-#, fuzzy
 msgid "version"
 msgstr "Версія"
 
@@ -12625,18 +12618,55 @@ msgid "VCenter Configuration"
 msgstr "Конфігурація"
 
 #: vcp/nav.py:44
-#, fuzzy
 msgid "vCenter Plugin Configuration"
-msgstr "Глобальна конфігурація цілі"
+msgstr "Налаштування плагіна vCenter"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr ""
+msgstr "Плагін vCenter успішно встановлено."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr ""
+msgstr "Плагін vCenter успішно оновлено."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
+msgstr "Плагін vCenter успішно видалено."
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
 msgstr ""
+"Один з інтерфейсів повинен бути позначений як критичний для перемикання."
+
+#: vcp/models.py:41
+msgid "TrueNAS Management IP Address"
+msgstr "IP адрес управління TrueNAS"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr "Виберіть інтерфейс TrueNAS доступний Web клієнту vCenter."
+
+#: vcp/models.py:52
+msgid "vCenter Hostname/IP Address"
+msgstr "Ім'я хоста або IP адреса vCenter"
+
+#: vcp/models.py:57
+msgid "vCenter Port"
+msgstr "Порт vCenter"
+
+#: vcp/models.py:61
+msgid "vCenter User name"
+msgstr "Ім’я користувача vCenter"
+
+#: vcp/models.py:67
+msgid "vCenter Password"
+msgstr "Пароль vCenter"
+
+#: vcp/models.py:77
+msgid "vCenter Configuration"
+msgstr "Конфігурація vCenter"
+
+#: vcp/models.py:78
+msgid "vCenter Configurations"
+msgstr "Конфігурації vCenter"
