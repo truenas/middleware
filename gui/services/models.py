@@ -333,7 +333,6 @@ class CIFS(NewModel):
         ))
 
     def _save(self, *args, **kwargs):
-        from freenasUI.middleware.connector import connection as dispatcher
         data = {
             'netbiosname': self.cifs_srv_netbiosname,
             'workgroup': self.cifs_srv_workgroup,
@@ -474,7 +473,6 @@ class AFP(NewModel):
         ))
 
     def _save(self, *args, **kwargs):
-        from freenasUI.middleware.connector import connection as dispatcher
         data = {
             'guest_enable': self.afp_srv_guest,
             'guest_user': self.afp_srv_guest_user,
@@ -1109,7 +1107,7 @@ class FiberChannelToTarget(Model):
         verbose_name_plural = _('Fiber Channel Targets')
 
 
-class DynamicDNS(Model):
+class DynamicDNS(NewModel):
     ddns_provider = models.CharField(
         max_length=120,
         choices=choices.DYNDNSPROVIDER_CHOICES,
@@ -1169,6 +1167,8 @@ class DynamicDNS(Model):
             "inadyn-mt.conf."),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("Dynamic DNS")
         verbose_name_plural = _("Dynamic DNS")
@@ -1176,6 +1176,48 @@ class DynamicDNS(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"DDNSIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('ddns_provider', 'provider'),
+            ('ddns_ipserver', 'ipserver'),
+            ('ddns_domain', 'domain'),
+            ('ddns_username', 'username'),
+            ('ddns_password', 'password'),
+            ('ddns_updateperiod', 'update_period'),
+            ('ddns_fupdateperiod', 'force_update_period'),
+            ('ddns_options', 'auxiliary'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.dyndns.get_config')
+        return cls(**dict(
+            ddns_provider=config['provider'],
+            ddns_ipserver=config['ipserver'],
+            ddns_domain=config['domain'],
+            ddns_username=config['username'],
+            ddns_password=config['password'],
+            ddns_updateperiod=config['update_period'],
+            ddns_fupdateperiod=config['force_update_period'],
+            ddns_options=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'provider': self.ddns_provider or None,
+            'ipserver': self.ddns_ipserver or None,
+            'domain': self.ddns_domain,
+            'username': self.ddns_username,
+            'password': self.ddns_password,
+            'update_period': self.ddns_updateperiod or None,
+            'force_update_period': self.ddns_fupdateperiod or None,
+            'auxiliary': self.ddns_options or None,
+        }
+        self._save_task_call('service.dyndns.configure', data)
+        return True
 
 
 class SNMP(Model):
