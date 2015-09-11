@@ -630,22 +630,6 @@ class DynamicDNSForm(ModelForm):
         if not cdata.get("ddns_password"):
             cdata['ddns_password'] = self.instance.ddns_password
         return cdata
-
-    def save(self):
-        obj = super(DynamicDNSForm, self).save(commit=False)
-        obj.ddns_password = notifier().pwenc_encrypt(
-            self.cleaned_data.get('ddns_password')
-        )
-        obj.save()
-        started = notifier().restart("dynamicdns")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='dynamicdns').srv_enable
-        ):
-            raise ServiceFailed(
-                "dynamicdns", _("The DynamicDNS service failed to reload.")
-            )
 DynamicDNSForm.base_fields.keyOrder.remove('ddns_password2')
 DynamicDNSForm.base_fields.keyOrder.insert(5, 'ddns_password2')
 
