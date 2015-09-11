@@ -1148,14 +1148,12 @@ class DynamicDNS(NewModel):
         max_length=120,
         verbose_name=_("Password"),
     )
-    ddns_updateperiod = models.CharField(
-        max_length=120,
+    ddns_updateperiod = models.IntegerField(
         verbose_name=_("Update period"),
         blank=True,
         help_text=_("Time in seconds. Default is about 1 min."),
     )
-    ddns_fupdateperiod = models.CharField(
-        max_length=120,
+    ddns_fupdateperiod = models.IntegerField(
         verbose_name=_("Forced update period"),
         blank=True,
     )
