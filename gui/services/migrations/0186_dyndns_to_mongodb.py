@@ -30,7 +30,8 @@ class Migration(DataMigration):
             cs.set('service.dyndns.provider', ddns.ddns_provider)
         if ddns.ddns_ipserver:
             cs.set('service.dyndns.ipserver', ddns.ddns_ipserver)
-        cs.set('service.dyndns.domain', ddns.ddns_domain)
+        if ddns.ddns_domain:
+            cs.set('service.dyndns.domains', ddns.ddns_domain.split(','))
         cs.set('service.dyndns.username', ddns.ddns_username)
         cs.set('service.dyndns.password', ddns.ddns_password)
         if ddns.ddns_updateperiod:
