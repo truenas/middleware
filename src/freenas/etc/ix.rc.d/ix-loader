@@ -6,7 +6,7 @@
 # PROVIDE: ix-loader
 # REQUIRE: ix-update
 
-. /etc/rc.subr
+. /etc/rc.freenas
 
 : ${AUTOTUNE_REBOOT=true}
 
@@ -103,6 +103,21 @@ loader_debugkernel()
 	fi
 }
 
+loader_ha()
+{
+	local node
+
+	node=$(ha_node)
+
+	if [ "${node}" = "A" ]; then
+		echo "kern.cam.ctl.ha_id=1"
+	elif [ "${node}" = "B" ]; then
+		echo "kern.cam.ctl.ha_id=2"
+	else
+		echo "kern.cam.ctl.ha_id=0"
+	fi
+}
+
 do_autotune()
 {
 	local autotune
@@ -135,7 +150,7 @@ generate_boot_loader_conf_local()
 	local tmp
 	local first_install=0
 
-	settings="serial user debugkernel"
+	settings="serial user debugkernel ha"
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
