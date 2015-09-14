@@ -58,6 +58,7 @@ class InterfacesForm(ModelForm):
     class Meta:
         fields = ['id', 'int_name', 'int_dhcp', 'int_ipv6auto', 'int_disableipv6', 'int_mtu']
         model = models.Interfaces
+        widgets = {'int_mtu': forms.widgets.TextInput()}
 
 
 class IPMIForm(Form):
@@ -459,4 +460,4 @@ class AliasForm(Form):
     )
 
 
-AliasFormSet = formset_factory(AliasForm)
+AliasFormSet = formset_factory(AliasForm, extra=0)
