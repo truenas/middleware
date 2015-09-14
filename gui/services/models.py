@@ -1433,7 +1433,7 @@ class UPS(Model):
         icon_model = u"UPSIcon"
 
 
-class FTP(Model):
+class FTP(NewModel):
     ftp_port = models.PositiveIntegerField(
         default=21,
         verbose_name=_("Port"),
@@ -1655,9 +1655,193 @@ class FTP(Model):
         help_text=_("These parameters are added to proftpd.conf."),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("FTP")
         verbose_name_plural = _("FTP")
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('ftp_port', 'port'),
+            ('ftp_clients', 'max_clients'),
+            ('ftp_ipconnections', 'ip_connections'),
+            ('ftp_loginattempt', 'login_attempt'),
+            ('ftp_timeout', 'timeout'),
+            ('ftp_rootlogin', 'root_login'),
+            ('ftp_onlyanonymous', 'anonymous_path'),
+            ('ftp_anonpath', 'only_anonymous'),
+            ('ftp_onlylocal', 'only_local'),
+            ('ftp_banner', 'display_login'),
+            ('ftp_filemask', 'filemask'),
+            ('ftp_dirmask', 'dirmask'),
+            ('ftp_fxp', 'fxp'),
+            ('ftp_resume', 'resume'),
+            ('ftp_defaultroot', 'chroot'),
+            ('ftp_ident', 'ident'),
+            ('ftp_reversedns', 'reverse_dns'),
+            ('ftp_masqaddress', 'masquerade_address'),
+            ('ftp_passiveportsmin', 'passive_ports_min'),
+            ('ftp_passiveportsmax', 'passive_ports_max'),
+            ('ftp_localuserbw', 'local_up_bandwidth'),
+            ('ftp_localuserdlbw', 'local_down_bandwidth'),
+            ('ftp_anonuserbw', 'anon_up_bandwidth'),
+            ('ftp_anonuserdlbw', 'anon_down_bandwidth'),
+            ('ftp_tls', 'rls'),
+            ('ftp_tls_policy', 'tls_policy'),
+            ('ftp_ssltls_certificate', 'tls_ssl_certificate'),
+            ('ftp_options', 'auxiliary'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.ftp.get_config')
+        if config['tls_ssl_certificate']:
+            certificate = Certificate.objects.get(id=config['tls_ssl_certificate'])
+        else:
+            certificate = None
+
+        ftp_tls_opt_allow_client_renegotiations = False
+        ftp_tls_opt_allow_dot_login = False
+        ftp_tls_opt_allow_per_user = False
+        ftp_tls_opt_common_name_required = False
+        ftp_tls_opt_enable_diags = False
+        ftp_tls_opt_export_cert_data = False
+        ftp_tls_opt_no_cert_request = False
+        ftp_tls_opt_no_empty_fragments = False
+        ftp_tls_opt_no_session_reuse_required = False
+        ftp_tls_opt_stdenvvars = False
+        ftp_tls_opt_dns_name_required = False
+        ftp_tls_opt_ip_address_required = False
+        if config['tls_options']:
+            if 'ALLOW_CLIENT_RENEGOTIATIONS' in config['tls_options']:
+                ftp_tls_opt_allow_client_renegotiations = True
+            elif 'ALLOW_DOT_LOGIN' in config['tls_options']:
+                ftp_tls_opt_allow_dot_login = True
+            elif 'ALLOW_PER_USER' in config['tls_options']:
+                ftp_tls_opt_allow_per_user = True
+            elif 'COMMON_NAME_REQUIRED' in config['tls_options']:
+                ftp_tls_opt_common_name_required = True
+            elif 'ENABLE_DIAGNOSTICS' in config['tls_options']:
+                ftp_tls_opt_enable_diags = True
+            elif 'EXPORT_CERTIFICATE_DATA' in config['tls_options']:
+                ftp_tls_opt_export_cert_data = True
+            elif 'NO_CERTIFICATE_REQUEST' in config['tls_options']:
+                ftp_tls_opt_no_cert_request = True
+            elif 'NO_EMPTY_FRAGMENTS' in config['tls_options']:
+                ftp_tls_opt_no_empty_fragments = True
+            elif 'NO_SESSION_REUSE_REQUIRED' in config['tls_options']:
+                ftp_tls_opt_no_session_reuse_required = True
+            elif 'STANDARD_ENV_VARS' in config['tls_options']:
+                ftp_tls_opt_stdenvvars = True
+            elif 'DNS_NAME_REQUIRED' in config['tls_options']:
+                ftp_tls_opt_dns_name_required = True
+            elif 'IP_ADDRESS_REQUIRED' in config['tls_options']:
+                ftp_tls_opt_ip_address_required = True
+
+        return cls(**dict(
+            ftp_port=config['port'],
+            ftp_clients=config['max_clients'],
+            ftp_ipconnections=config['ip_connections'],
+            ftp_loginattempt=config['login_attempt'],
+            ftp_timeout=config['timeout'],
+            ftp_rootlogin=config['root_login'],
+            ftp_onlyanonymous=config['only_anonymous'],
+            ftp_anonpath=config['anonymous_path'],
+            ftp_onlylocal=config['only_local'],
+            ftp_banner=config['display_login'],
+            ftp_filemask=config['filemask'],
+            ftp_dirmask=config['dirmask'],
+            ftp_fxp=config['fxp'],
+            ftp_resume=config['resume'],
+            ftp_defaultroot=config['chroot'],
+            ftp_ident=config['ident'],
+            ftp_reversedns=config['reverse_dns'],
+            ftp_masqaddress=config['masquerade_address'],
+            ftp_passiveportsmin=config['passive_ports_min'],
+            ftp_passiveportsmax=config['passive_ports_max'],
+            ftp_localuserbw=config['local_up_bandwidth'],
+            ftp_localuserdlbw=config['local_down_bandwidth'],
+            ftp_anonuserbw=config['anon_up_bandwidth'],
+            ftp_anonuserdlbw=config['anon_down_bandwidth'],
+            ftp_tls=config['tls'],
+            ftp_tls_policy=config['tls_policy'].lower(),
+            ftp_tls_opt_allow_client_renegotiations=ftp_tls_opt_allow_client_renegotiations,
+            ftp_tls_opt_allow_dot_login=ftp_tls_opt_allow_dot_login,
+            ftp_tls_opt_allow_per_user=ftp_tls_opt_allow_per_user,
+            ftp_tls_opt_common_name_required=ftp_tls_opt_common_name_required,
+            ftp_tls_opt_enable_diags=ftp_tls_opt_enable_diags,
+            ftp_tls_opt_export_cert_data=ftp_tls_opt_export_cert_data,
+            ftp_tls_opt_no_cert_request=ftp_tls_opt_no_cert_request,
+            ftp_tls_opt_no_empty_fragments=ftp_tls_opt_no_empty_fragments,
+            ftp_tls_opt_no_session_reuse_required=ftp_tls_opt_no_session_reuse_required,
+            ftp_tls_opt_stdenvvars=ftp_tls_opt_stdenvvars,
+            ftp_tls_opt_dns_name_required=ftp_tls_opt_dns_name_required,
+            ftp_tls_opt_ip_address_required=ftp_tls_opt_ip_address_required,
+            ftp_ssltls_certificate=certificate,
+            ftp_options=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        tls_options = []
+        if self.ftp_tls_opt_allow_client_renegotiations:
+            tls_options.append('ALLOW_CLIENT_RENEGOTIATIONS')
+        if self. ftp_tls_opt_allow_dot_login:
+            tls_options.append('ALLOW_DOT_LOGIN')
+        if self.ftp_tls_opt_allow_per_user:
+            tls_options.append('ALLOW_PER_USER')
+        if self.ftp_tls_opt_common_name_required:
+            tls_options.append('COMMON_NAME_REQUIRED')
+        if self.ftp_tls_opt_enable_diags:
+            tls_options.append('ENABLE_DIAGNOSTICS')
+        if self.ftp_tls_opt_export_cert_data:
+            tls_options.append('EXPORT_CERTIFICATE_DATA')
+        if self.ftp_tls_opt_no_cert_request:
+            tls_options.append('NO_CERTIFICATE_REQUEST')
+        if self.ftp_tls_opt_no_empty_fragments:
+            tls_options.append('NO_EMPTY_FRAGMENTS')
+        if self.ftp_tls_opt_no_session_reuse_required:
+            tls_options.append('NO_SESSION_REUSE_REQUIRED')
+        if self.ftp_tls_opt_stdenvvars:
+            tls_options.append('STANDARD_ENV_VARS')
+        if self.ftp_tls_opt_dns_name_required:
+            tls_options.append('DNS_NAME_REQUIRED')
+        if self.ftp_tls_opt_ip_address_required:
+            tls_options.append('IP_ADDRESS_REQUIRED')
+        data = {
+            'port': self.ftp_port,
+            'max_clients': self.ftp_clients,
+            'ip_connections': self.ftp_ipconnections,
+            'login_attempt': self.ftp_loginattempt,
+            'timeout': self.ftp_timeout,
+            'root_login': self.ftp_rootlogin,
+            'only_anonymous': self.ftp_onlyanonymous,
+            'anonymous_path': self.ftp_anonpath,
+            'only_local': self.ftp_onlylocal,
+            'display_login': self.ftp_banner,
+            'filemask': self.ftp_filemask,
+            'dirmask': self.ftp_dirmask,
+            'fxp': self.ftp_fxp,
+            'resume': self.ftp_resume,
+            'chroot': self.ftp_defaultroot,
+            'ident': self.ftp_ident,
+            'reverse_dns': self.ftp_reversedns,
+            'masquerade_address': self.ftp_masqaddress,
+            'passive_ports_min': self.ftp_passiveportsmin,
+            'passive_ports_max': self.ftp_passiveportsmax,
+            'local_up_bandwidth': self.ftp_localuserbw,
+            'local_down_bandwidth': self.ftp_localuserdlbw,
+            'anon_up_bandwidth': self.ftp_anonuserbw,
+            'anon_down_bandwidth': self.ftp_anonuserdlbw,
+            'tls': self.ftp_tls,
+            'tls_policy': self.ftp_tls_policy.upper(),
+            'tls_options': tls_options,
+            'auxiliary': self.ftp_options or None,
+        }
+        self._save_task_call('service.ftp.configure', data)
+        return True
 
 
 class TFTP(Model):
