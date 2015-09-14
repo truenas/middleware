@@ -266,8 +266,7 @@ for replication in replication_tasks:
     else:
         Rflag = ''
 
-    # For now, use 'recurse' flag as followdelete flag
-    followdelete = not not replication.repl_userepl
+    followdelete = not not replication.repl_followdelete
 
     wanted_list = []
     known_latest_snapshot = ''
