@@ -45,7 +45,7 @@ log = logging.getLogger('plugins.forms')
 
 def _clean_jail_ipv4address(jip):
     if (
-        Alias.objects.filter(alias_v4address=jip).exists() or
+        #Alias.objects.filter(alias_v4address=jip).exists() or
         Interfaces.objects.filter(int_ipv4address=jip).exists()
     ):
         raise forms.ValidationError(_("This IP is already in use."))

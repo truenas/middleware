@@ -69,22 +69,19 @@ def editinterface(request, interface_name):
         aliases = AliasFormSet(data=request.POST)
 
         if form.is_valid():
-            form.save(method='network.interface.configure')
+            form.save()
 
-        import logging
-        logging.warning(aliases.cleaned_data)
+            def convert_alias(alias):
+                return {
+                    'address': str(alias['address']),
+                    'netmask': alias['netmask'],
+                    'type': alias['type']
+                }
 
-        def convert_alias(alias):
-            return {
-                'address': str(alias['address']),
-                'netmask': alias['netmask'],
-                'type': alias['type']
-            }
-
-        final = map(convert_alias, aliases.cleaned_data)
-        dispatcher.call_task_sync('network.interface.configure', interface_name, {
-            'aliases': final
-        })
+            final = map(convert_alias, aliases.cleaned_data)
+            dispatcher.call_task_sync('network.interface.configure', interface_name, {
+                'aliases': final
+            })
 
     else:
         nic = models.Interfaces.objects.get(pk=interface_name)

@@ -268,7 +268,10 @@ class Interfaces(NewModel):
         ordering = ["int_interface"]
 
     class Middleware:
-        provider_name = 'network.interfaces'
+        middleware_methods = {
+            'query': 'network.interfaces.query',
+            'update': 'network.interface.configure'
+        }
         field_mapping = (
             (('id', 'int_interface'), 'id'),
             ('int_name', 'name'),

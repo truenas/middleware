@@ -93,7 +93,7 @@ class Middleware(object):
 
         self.middleware_methods = getattr(klass, 'middleware_methods', None)
         if self.middleware_methods is None:
-            self.middlware_methods = {
+            self.middleware_methods = {
                 'query': '%s.query' % self.provider_name,
                 'add': '%s.create' % self.provider_name,
                 'delete': '%s.delete' % self.provider_name,
@@ -160,7 +160,7 @@ class Model(models.Model):
 
 
 def get_middleware_methods(model):
-    methods = model._middleware.middlware_methods
+    methods = model._middleware.middleware_methods
     if methods is not None:
         return methods
     methods = MIDDLEWARE_MODEL_METHODS.get(model._meta.model_name)
