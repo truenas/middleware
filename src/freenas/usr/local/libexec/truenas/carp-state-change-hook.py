@@ -327,6 +327,9 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     except:
         pass
 
+    # 0 for Active node
+    run('/sbin/sysctl kern.cam.ctl.ha_role=0')
+
     log.warn('Volume imports complete.')
     log.warn('Restarting services.')
 
@@ -442,6 +445,9 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/etc/rc.d/statd stop')
     run('/etc/rc.d/watchdogd quietstop')
     run('watchdog -t 4')
+
+    # make CTL to close backing storages, allowing pool to export
+    run('/sbin/sysctl kern.cam.ctl.ha_role=1')
 
     for volume in fobj['volumes'] + fobj['phrasedvolumes']:
         error, output = run('zpool list %s' % volume)
