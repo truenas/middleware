@@ -299,11 +299,13 @@ class VLANForm(ModelForm):
     vlan_pint = forms.ChoiceField(label=_("Parent Interface"))
 
     class Meta:
-        fields = ['vlan_pint', 'vlan_tag', 'vlan_description']
+        fields = ['id', 'vlan_pint', 'vlan_tag', 'vlan_description']
         model = models.VLAN
+        widgets = {'id': forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
         super(VLANForm, self).__init__(*args, **kwargs)
+        self.fields['id'].required = False
         self.fields['vlan_pint'].choices = list(
             choices.NICChoices(novlan=True, exclude_configured=False)
         )
@@ -324,18 +326,13 @@ class VLANForm(ModelForm):
         return tag
 
     def save(self):
-        vlan_pint = self.cleaned_data['vlan_pint']
-        if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
-            vlan_interface = models.Interfaces(
-                int_interface=vlan_pint,
-                int_name=vlan_pint,
-                int_dhcp=False,
-                int_ipv6auto=False,
-                int_options='up',
-            )
-            vlan_interface.save()
+        from freenasUI.middleware.connector import connection as dispatcher
+
+        if not self.instance.id:
+            result = dispatcher.call_task_sync('network.interface.create', 'VLAN')
+            self.instance.id = result['result']
+
         retval = super(VLANForm, self).save()
-        notifier().start("network")
         return retval
 
 

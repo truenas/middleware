@@ -323,7 +323,8 @@ class VLAN(NewModel):
     )
 
     vlan_tag = models.PositiveIntegerField(
-        verbose_name=_("VLAN Tag")
+        verbose_name=_("VLAN Tag"),
+        null=True
     )
 
     vlan_description = models.CharField(
@@ -347,7 +348,10 @@ class VLAN(NewModel):
         ordering = ["vlan_vint"]
 
     class Middleware:
-        provider_name = 'network.interfaces'
+        middleware_methods = {
+            'query': 'network.interfaces.query',
+            'update': 'network.interface.configure'
+        }
         default_filters = [
             ('type', '=', 'VLAN')
         ]
