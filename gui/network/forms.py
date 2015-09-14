@@ -299,7 +299,7 @@ class VLANForm(ModelForm):
     vlan_pint = forms.ChoiceField(label=_("Parent Interface"))
 
     class Meta:
-        fields = '__all__'
+        fields = ['vlan_pint', 'vlan_tag', 'vlan_description']
         model = models.VLAN
 
     def __init__(self, *args, **kwargs):
