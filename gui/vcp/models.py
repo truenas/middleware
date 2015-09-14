@@ -61,8 +61,6 @@ class VcenterConfiguration(Model):
         verbose_name=_("vCenter User name"),
     )
     vc_password = models.CharField(
-        blank=True,
-        null=True,
         max_length=120,
         verbose_name=_("vCenter Password"),
     )

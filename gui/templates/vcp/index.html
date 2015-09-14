@@ -29,15 +29,15 @@
     {% block oklabel %}{% trans "Install" %}{% endblock %}
 </button>
 {% if not inline %}
-<button id="btn_vcenterconfiguration_Cancel" data-dojo-type="dijit.form.Button"  type="button">
+<button id="btn_vcenterconfiguration_Cancel" data-dojo-type="dijit.form.Button">
     {% block cancellabel %}{% trans "Uninstall" %}{% endblock %}
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e">
         
         form = getForm(this);
         doSubmit({
-            form: this,
+            form: form,
             event: e,
-            url: '{% url "vcp_uninstall" %}{% if inline %}?inline=true{% endif %}',
+            url: '{% url "vcp_uninstall" %}',
         });
     </script>
 </button>
@@ -47,12 +47,12 @@
 {% endwith %}
 
     {% block extra_buttons %}
-         <button id="btn_vcenterconfiguration_Update" data-dojo-type="dijit.form.Button" type="button">Upgrade
+         <button id="btn_vcenterconfiguration_Update" data-dojo-type="dijit.form.Button">Upgrade
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e">
                
               form = getForm(this);
                 doSubmit({
-                    form: this,
+                    form: form,
                     event: e,
                     url: '{% url "vcp_upgrade" %}',
                     });               
