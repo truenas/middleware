@@ -177,10 +177,12 @@ _interface_config()
 			carp1_skew="20"
 			carp2_skew="80"
 			internal_ip="169.254.10.1"
+			/sbin/sysctl kern.cam.ctl.ha_peer="listen 169.254.10.1"
 		elif [ ${node} = "B" ]; then
 			carp1_skew="80"
 			carp2_skew="20"
 			internal_ip="169.254.10.2"
+			/sbin/sysctl kern.cam.ctl.ha_peer="connect 169.254.10.1"
 		else
 			echo "# Could not determine system node"
 		fi
