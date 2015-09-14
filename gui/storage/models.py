@@ -902,9 +902,13 @@ class Replication(Model):
     )
     repl_userepl = models.BooleanField(
         default=False,
+        verbose_name=_("Recursively replicate child dataset's snapshots"),
+    )
+    repl_followdelete = models.BooleanField(
+        default=False,
         verbose_name=_(
-            "Recursively replicate and remove stale snapshot "
-            "on remote side"),
+            "Delete snapshots that are no longer available locally after "
+            "successful replication of new snapshots"),
     )
     repl_resetonce = models.BooleanField(
         default=False,
