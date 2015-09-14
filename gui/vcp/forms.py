@@ -27,10 +27,11 @@
 
 import logging
 
-from django import forms
+from dojango import forms
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.common.forms import ModelForm
 from freenasUI.vcp import models
+from django.forms import widgets
 from freenasUI.system.models import Settings
 
 from . import plugin, utils
@@ -102,7 +103,7 @@ class VcenterConfigurationForm(ModelForm):
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
             username = str(obj.vc_username)
-            password = str(obj.vc_password)
+            password = str(self.cleaned_data['vc_password'])
             port = str(obj.vc_port)
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, True
@@ -131,7 +132,7 @@ class VcenterConfigurationForm(ModelForm):
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
             username = str(obj.vc_username)
-            password = str(obj.vc_password)
+            password = str(self.cleaned_data['vc_password'])
             port = str(obj.vc_port)
             manage_ip = str(obj.vc_management_ip)
             status_flag = self.validate_vcp_param(ip, port, username, password, True)
@@ -226,3 +227,6 @@ class VcenterConfigurationForm(ModelForm):
     class Meta:
         model = models.VcenterConfiguration
         exclude = ['vc_version']
+        widgets = {
+            'vc_password': forms.PasswordInput(),
+        }
