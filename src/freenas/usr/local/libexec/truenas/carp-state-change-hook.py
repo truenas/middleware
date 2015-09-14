@@ -327,9 +327,6 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     except:
         pass
 
-    # 0 for Active node
-    run('/sbin/sysctl kern.cam.ctl.ha_role=0')
-
     log.warn('Volume imports complete.')
     log.warn('Restarting services.')
 
@@ -340,9 +337,6 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/usr/sbin/service ix-nfsd quietstart')
     run('/usr/sbin/service mountd quietrestart')
     run('/usr/sbin/service nfsd quietrestart')
-    run('/usr/sbin/service ix-ctld quietstart')
-    run('/usr/sbin/service ctld forcestop')
-    run('/usr/sbin/service ctld quietstart')
     run('/usr/sbin/service ix-system quietstart')
     run('/usr/sbin/service ix-pre-samba quietstart')
     run('/usr/sbin/service samba_server forcestop')
@@ -351,6 +345,9 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/usr/sbin/service ix-afpd quietstart')
     run('/usr/sbin/service netatalk forcestop')
     run('/usr/sbin/service netatalk quietstart')
+
+    # 0 for Active node
+    run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
     log.warn('Service restarts complete.')
 
