@@ -483,7 +483,7 @@ class NewModel(Model):
             ))
 
         fmm = self._middleware.field_mapping
-        data = kwargs.pop('data', {})
+        data = wrap(kwargs.pop('data', {}))
         if data:
             # Allow task to be submitted with custom data
             for key, val in data.items():
@@ -491,9 +491,9 @@ class NewModel(Model):
                 if field is None:
                     continue
                 if isinstance(val, NewModel):
-                    data[field] = val.id
+                    data.set(field, val.id)
                 else:
-                    data[field] = val
+                    data.set(field, val)
                 if field != key:
                     data.pop(key)
         else:
@@ -511,9 +511,10 @@ class NewModel(Model):
 
                 if isinstance(f, ForeignKey):
                     related = getattr(self, f.name)
-                    data[field] = related.id if related is not None else None
+                    data.set(field, related.id if related is not None else None)
                 else:
-                    data[field] = getattr(self, f.name)
+                    data.set(field, getattr(self, f.name))
+
         method_args.append(data)
 
         # Allow extra arguments to be passed to the task
