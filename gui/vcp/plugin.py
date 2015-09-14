@@ -173,8 +173,8 @@ class PluginManager:
                 return True
 
         except requests.exceptions.ConnectionError:
-            return 'Installation Failed. Provided vCenter Hostname/IP and port are not valid. '
+            return 'Provided vCenter Hostname/IP and port are not valid. '
         except vim.fault.InvalidLogin:
-            return 'Installation Failed. Provided vCenter credentials are not valid.'
+            return 'Provided vCenter credentials are not valid.'
         except Exception:
-            return 'Installation Failed. Please contact support.'
+            return 'Internal Error. Please contact support.'
