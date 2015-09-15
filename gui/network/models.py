@@ -363,21 +363,22 @@ class VLAN(NewModel):
         icon_view = u"ViewAllVLANsIcon"
 
 
-class LAGGInterface(Model):
-    # LAGG interface to protocol type map.
-    # This model amends Interface to provide information regarding to a lagg
-    # interface.
-    # A corresponding interface is created as "laggX"
-    lagg_interface = models.ForeignKey(
-            Interfaces,
-            unique=True,
-            verbose_name=_("Interface")
-            )
+class LAGGInterface(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
+
+    lagg_interface = models.CharField(
+        max_length=120,
+        verbose_name=_("Interface")
+    )
+
     lagg_protocol = models.CharField(
-            max_length=120,
-            verbose_name=_("Protocol Type"),
-            choices=choices.LAGGType,
-            )
+        max_length=120,
+        verbose_name=_("Protocol Type"),
+        choices=choices.LAGGType,
+    )
 
     class Meta:
         verbose_name = _("Link Aggregation")
@@ -405,6 +406,16 @@ class LAGGInterface(Model):
             ).delete()
         self.lagg_interface.delete()
         notifier().iface_destroy(self.lagg_interface.int_interface)
+
+    class Middleware:
+        provider_name = 'network.interfaces'
+        default_filters = [
+            ('type', '=', 'LAGG')
+        ]
+        field_mapping = (
+            (('id', 'lagg_interface'), 'id'),
+            ('lagg_protocol', 'lagg.protocol'),
+        )
 
 
 class LAGGInterfaceMembers(Model):

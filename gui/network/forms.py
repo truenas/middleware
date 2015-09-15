@@ -360,7 +360,7 @@ class LAGGInterfaceForm(ModelForm):
 
     class Meta:
         model = models.LAGGInterface
-        exclude = ('lagg_interface', )
+        exclude = ('lagg_interface', 'id')
         widgets = {
             'lagg_protocol': forms.RadioSelect(),
         }

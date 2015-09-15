@@ -298,12 +298,12 @@ PWEncryptionChoices = (
 )
 
 LAGGType = (
-    ('failover',    'Failover'),
-    ('fec',         'FEC'),
-    ('lacp',        'LACP'),
-    ('loadbalance', 'Load Balance'),
-    ('roundrobin',  'Round Robin'),
-    ('none',        'None'),
+    ('FAILOVER',    'Failover'),
+    ('LOADBALANCE', 'FEC'),
+    ('LACP',        'LACP'),
+    ('LOADBALANCE', 'Load Balance'),
+    ('ROUNDROBIN',  'Round Robin'),
+    ('NONE',        'None'),
 )
 
 ZFS_AtimeChoices = (
