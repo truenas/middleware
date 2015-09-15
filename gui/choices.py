@@ -57,47 +57,28 @@ PROTOCOL_CHOICES = (
     ('httphttps', _('HTTP+HTTPS')),
 )
 
-TRANSFERMODE_CHOICES = (
-    ('Auto', _('Auto')),
-    ('PIO0', _('PIO0')),
-    ('PIO1', _('PIO1')),
-    ('PIO2', _('PIO2')),
-    ('PIO3', _('PIO3')),
-    ('PIO4', _('PIO4')),
-    ('WDMA0', _('WDMA0')),
-    ('WDMA1', _('WDMA1')),
-    ('WDMA2', _('WDMA2')),
-    ('UDMA16', _('UDMA-16')),
-    ('UDMA33', _('UDMA-33')),
-    ('UDMA66', _('UDMA-66')),
-    ('UDMA100', _('UDMA-100')),
-    ('UDMA133', _('UDMA-133')),
-    ('SATA150', _('SATA 1.5Gbit/s')),
-    ('SATA300', _('SATA 3.0Gbit/s')),
-)
-
 HDDSTANDBY_CHOICES = (
-    ('', _('Always On')),
-    ('5', '5'),
-    ('10', '10'),
-    ('20', '20'),
-    ('30', '30'),
-    ('60', '60'),
-    ('120', '120'),
-    ('180', '180'),
-    ('240', '240'),
-    ('300', '300'),
-    ('330', '330'),
+    (0, _('Always On')),
+    (5, '5'),
+    (10, '10'),
+    (20, '20'),
+    (30, '30'),
+    (60, '60'),
+    (120, '120'),
+    (180, '180'),
+    (240, '240'),
+    (300, '300'),
+    (330, '330'),
 )
 
 ADVPOWERMGMT_CHOICES = (
-    ('', _('Disabled')),
-    ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
-    ('64',  _('Level 64 - Intermediate power usage with Standby')),
-    ('127', _('Level 127 - Intermediate power usage with Standby')),
-    ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
-    ('192', _('Level 192 - Intermediate power usage without Standby')),
-    ('254', _('Level 254 - Maximum performance, maximum power usage')),
+    (0, _('Disabled')),
+    (1, _('Level 1 - Minimum power usage with Standby (spindown)')),
+    (64, _('Level 64 - Intermediate power usage with Standby')),
+    (127, _('Level 127 - Intermediate power usage with Standby')),
+    (128, _('Level 128 - Minimum power usage without Standby (no spindown)')),
+    (192, _('Level 192 - Intermediate power usage without Standby')),
+    (254, _('Level 254 - Maximum performance, maximum power usage')),
 )
 
 ACOUSTICLVL_CHOICES = (
