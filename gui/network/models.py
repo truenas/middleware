@@ -395,7 +395,11 @@ class LAGGInterface(NewModel):
         return iface.get('lagg.ports', [])
 
     class Middleware:
-        provider_name = 'network.interfaces'
+        middleware_methods = {
+            'query': 'network.interfaces.query',
+            'update': 'network.interface.configure',
+            'delete': 'network.interface.delete'
+        }
         default_filters = [
             ('type', '=', 'LAGG')
         ]
