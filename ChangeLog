@@ -1,10 +1,9 @@
-#10654	Bug	Nice to have	sssd does not pull user identification information when using an anonymous LDAP bind
-#10978	Bug	Expected	Be wasteful but clevererer about partitioning installation media.
-#11012	Bug	Expected	Unexpected server bounce at midnight
-#11053	Bug	Nice to have	USB to SERIAL Driver
-#11092	Bug	Important	Anonymous bind attempt instead of GSSAPI
-#11118	Bug	Expected	Generation of sssd.conf is broken
-#11129	Bug	Expected	App SA-15:22.openssh
-#11138	Bug	Critical	NFS4 and Kerberos broken because of new keytab handling
-#11279	Bug	Nice to have	Fix reporting of replication progress in some corner case
-#11300	Bug	Nice to have	CVE-2015-5722 malformed DNSSEC key can cause a validating resolver to exit due to a failed assertion in buffer.c
+#10418	Bug	Important	CIFS "Local Master" always in effect.
+#11227	Bug	Important	Fixed a bug that prevents snapshots being deleted at the sending side.
+#11262	Bug	Important	Active Directory won't re-start if krb5 ticket expires
+#11331	Bug	Important	Can't destroy a zvol in GUI when iSCSI is enabled and system is possessed by evil spirits
+#11335	Bug	Important	Make self-signed certificates and CAs work proper with Windows
+#11361	Bug	Critical	Windows Previous Versions "Can't Read" error
+#11409	Bug	Important	grub configuration generation issue
+#11420	Feature	Nice to have	Replication: Recursive replicate vs Remove stale snapshots
+#11421	Bug	Important	Fix DomainController migration failure for upgrade from 9.2.X
