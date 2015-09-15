@@ -1414,7 +1414,7 @@ class iSCSITargetExtentForm(ModelForm):
                                 'error': msg,
                             })
                         )
-                    notifier().sync_disk(self.cleaned_data["iscsi_target_extent_disk"])
+                    # XXX notifier().sync_disk(self.cleaned_data["iscsi_target_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = str(diskobj.id)
             oExtent.iscsi_target_extent_filesize = 0
