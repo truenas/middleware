@@ -377,6 +377,7 @@ class LAGGInterface(NewModel):
         max_length=120,
         verbose_name=_("Protocol Type"),
         choices=choices.LAGGType,
+        null=True
     )
 
     class Meta:
@@ -391,7 +392,7 @@ class LAGGInterface(NewModel):
     def members(self):
         from freenasUI.middleware.connector import connection as dispatcher
         iface = wrap(dispatcher.call_sync('network.interfaces.query', [('id', '=', self.id)], {'single': True}))
-        return iface.get('lagg.ports')
+        return iface.get('lagg.ports', [])
 
     class Middleware:
         provider_name = 'network.interfaces'
