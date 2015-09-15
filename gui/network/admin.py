@@ -160,4 +160,3 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 
 site.register(models.Interfaces, InterfacesFAdmin)
 site.register(models.LAGGInterface, LAGGInterfaceFAdmin)
-site.register(models.LAGGInterfaceMembers, LAGGInterfaceMembersFAdmin)

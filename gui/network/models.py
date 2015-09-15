@@ -201,14 +201,15 @@ class GlobalConfiguration(NewModel):
 class Interfaces(NewModel):
     id = models.CharField(
         max_length=120,
-        primary_key=True
+        primary_key=True,
+        verbose_name=_("Interface name")
     )
 
     int_name = models.CharField(
-            max_length="120",
-            verbose_name=_("Interface Name"),
-            help_text=_("Name your NIC."),
-            blank=True
+        max_length="120",
+        verbose_name=_("Interface description"),
+        help_text=_("Describe your NIC."),
+        blank=True
     )
 
     int_dhcp = models.BooleanField(
@@ -294,7 +295,15 @@ class Interfaces(NewModel):
     def get_media_status(self):
         from freenasUI.middleware.connector import connection as dispatcher
         iface = wrap(dispatcher.call_sync('network.interfaces.query', [('id', '=', self.id)], {'single': True}))
-        return iface['status.link_state']
+        link = iface['status.link_state']
+
+        if link == 'LINK_STATE_UP':
+            return _("Link up")
+
+        if link == 'LINK_STATE_DOWN':
+            return _("No carrier")
+
+        return _("Unknown")
 
 
 class VLAN(NewModel):
@@ -344,7 +353,8 @@ class VLAN(NewModel):
     class Middleware:
         middleware_methods = {
             'query': 'network.interfaces.query',
-            'update': 'network.interface.configure'
+            'update': 'network.interface.configure',
+            'delete': 'network.interface.delete'
         }
         default_filters = [
             ('type', '=', 'VLAN')
@@ -386,18 +396,7 @@ class LAGGInterface(NewModel):
         ordering = ["lagg_interface"]
 
     def __unicode__(self):
-        interface_list = LAGGInterfaceMembers.objects.filter(
-            lagg_interfacegroup=self.id)
-        if interface_list != None:
-            interfaces = ', '.join(
-                [int.lagg_physnic for int in interface_list]
-                )
-        else:
-            interfaces = 'None'
-        return "%s (%s: %s)" % (
-            self.lagg_interface,
-            self.lagg_protocol,
-            interfaces)
+        return self.id
 
     def delete(self):
         super(LAGGInterface, self).delete()
@@ -416,41 +415,6 @@ class LAGGInterface(NewModel):
             (('id', 'lagg_interface'), 'id'),
             ('lagg_protocol', 'lagg.protocol'),
         )
-
-
-class LAGGInterfaceMembers(Model):
-    # Physical interfaces list inside one LAGG group
-    lagg_interfacegroup = models.ForeignKey(
-            LAGGInterface,
-            verbose_name=_("LAGG Interface Group")
-            )
-    lagg_ordernum = models.IntegerField(
-            verbose_name=_("LAGG Priority Number"),
-            )
-    lagg_physnic = models.CharField(
-            max_length=120,
-            unique=True,
-            verbose_name=_("Physical NIC")
-            )
-    lagg_deviceoptions = models.CharField(
-            max_length=120,
-            verbose_name=_("Options")
-            )
-
-    def __unicode__(self):
-        return self.lagg_physnic
-
-    def delete(self):
-        notifier().lagg_remove_port(
-            self.lagg_interfacegroup.lagg_interface.int_interface,
-            self.lagg_physnic,
-            )
-        super(LAGGInterfaceMembers, self).delete()
-
-    class Meta:
-        verbose_name = _("Link Aggregation Member")
-        verbose_name_plural = _("Link Aggregation Members")
-        ordering = ["lagg_interfacegroup"]
 
 
 class StaticRoute(NewModel):

@@ -1280,7 +1280,7 @@ class LAGGInterfaceResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(LAGGInterfaceResourceMixin, self).dehydrate(bundle)
-        bundle.data['lagg_interface'] = bundle.obj.lagg_interface.int_interface
+        bundle.data['lagg_interface'] = bundle.obj.id
         if 'lagg_interfaces' in bundle.data:
             del bundle.data['lagg_interfaces']
         if 'lagg_interface_id' in bundle.data:
@@ -1290,39 +1290,16 @@ class LAGGInterfaceResourceMixin(object):
             bundle.data['_edit_url'] = reverse(
                 'freeadmin_network_interfaces_edit',
                 kwargs={
-                    'oid': bundle.obj.lagg_interface.id,
+                    'oid': bundle.obj.id,
                 }) + '?deletable=false'
             bundle.data['_delete_url'] = reverse(
                 'freeadmin_network_interfaces_delete',
                 kwargs={
-                    'oid': bundle.obj.lagg_interface.id,
+                    'oid': bundle.obj.id,
                 })
             bundle.data['_members_url'] = reverse(
                 'freeadmin_network_lagginterfacemembers_datagrid'
             ) + '?id=%d' % bundle.obj.id
-        return bundle
-
-
-class LAGGInterfaceMembersResourceMixin(object):
-
-    def build_filters(self, filters=None):
-        if filters is None:
-            filters = {}
-        orm_filters = super(
-            LAGGInterfaceMembersResourceMixin,
-            self).build_filters(filters)
-        lagggrp = filters.get("lagg_interfacegroup__id")
-        if lagggrp:
-            orm_filters["lagg_interfacegroup__id"] = lagggrp
-        return orm_filters
-
-    def dehydrate(self, bundle):
-        bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
-            bundle
-        )
-        bundle.data['lagg_interfacegroup'] = unicode(
-            bundle.obj.lagg_interfacegroup
-        )
         return bundle
 
 

@@ -338,7 +338,7 @@ class VLANForm(ModelForm):
             'network.interface.configure',
             self.instance.id,
             {
-                'name': force_none(self.vlan_description),
+                'name': force_none(self.instance.vlan_description),
                 'vlan': {
                     'tag': self.instance.vlan_tag,
                     'parent': self.instance.vlan_pint
@@ -376,74 +376,22 @@ class LAGGInterfaceForm(ModelForm):
         )
 
     def save(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
 
-        # Search for a available slot for laggX interface
-        interface_names = [
-            v[0]
-            for v in models.Interfaces.objects.all()
-            .values_list('int_interface')
-        ]
-        candidate_index = 0
-        while ("lagg%d" % (candidate_index)) in interface_names:
-            candidate_index += 1
-        lagg_name = "lagg%d" % candidate_index
-        lagg_protocol = self.cleaned_data['lagg_protocol']
-        lagg_member_list = self.cleaned_data['lagg_interfaces']
-        with transaction.atomic():
-            # Step 1: Create an entry in interface table that
-            # represents the lagg interface
-            lagg_interface = models.Interfaces(
-                int_interface=lagg_name,
-                int_name=lagg_name,
-                int_dhcp=False,
-                int_ipv6auto=False
-            )
-            lagg_interface.save()
-            # Step 2: Write associated lagg attributes
-            lagg_interfacegroup = models.LAGGInterface(
-                lagg_interface=lagg_interface,
-                lagg_protocol=lagg_protocol
-            )
-            lagg_interfacegroup.save()
-            # Step 3: Write lagg's members in the right order
-            order = 0
-            for interface in lagg_member_list:
-                lagg_member_entry = models.LAGGInterfaceMembers(
-                    lagg_interfacegroup=lagg_interfacegroup,
-                    lagg_ordernum=order,
-                    lagg_physnic=interface,
-                    lagg_deviceoptions='up'
-                )
-                lagg_member_entry.save()
-                order = order + 1
-        self.instance = lagg_interfacegroup
-        notifier().start("network")
-        return lagg_interfacegroup
+        result = dispatcher.call_task_sync('network.interface.create', 'LAGG')
+        self.instance.id = result['result']
 
+        dispatcher.call_task_sync('network.interface.configure', {
+            'lagg': {
+                'protocol': self.instance.lagg_protocol,
+                'members': self.cleaned_data['lagg_interfaces']
+            }
+        })
 
-class LAGGInterfaceMemberForm(ModelForm):
-    lagg_physnic = forms.ChoiceField(label=_("LAGG Physical NIC"))
-
-    class Meta:
-        fields = '__all__'
-        model = models.LAGGInterfaceMembers
-
-    def __init__(self, *args, **kwargs):
-        super(LAGGInterfaceMemberForm, self).__init__(*args, **kwargs)
-        if self.instance.id:
-            self.fields['lagg_interfacegroup'].widget.attrs['readonly'] = True
-            self.fields['lagg_interfacegroup'].widget.attrs['class'] = (
-                'dijitDisabled dijitSelectDisabled')
-            self.fields['lagg_physnic'].widget.attrs['readonly'] = True
-            self.fields['lagg_physnic'].widget.attrs['class'] = (
-                'dijitDisabled dijitSelectDisabled')
-            self.fields['lagg_physnic'].choices = (
-                (self.instance.lagg_physnic, self.instance.lagg_physnic),
-            )
+        if result['state'] == 'FINISHED':
+            return True
         else:
-            self.fields['lagg_physnic'].choices = list(
-                choices.NICChoices(nolagg=True, novlan=True)
-            )
+            raise MiddlewareError(result['error']['message'])
 
 
 class StaticRouteForm(ModelForm):
