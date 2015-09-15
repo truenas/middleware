@@ -1643,15 +1643,16 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
 
     def save(self):
         o = super(iSCSITargetAuthorizedInitiatorForm, self).save(commit=False)
-        i = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
-        while True:
-            qs = models.iSCSITargetAuthorizedInitiator.objects.filter(
-                iscsi_target_initiator_tag=i
-            )
-            if not qs.exists():
-                break
-            i += 1
-        o.iscsi_target_initiator_tag = i
+        if self.instance.id is None:
+            i = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
+            while True:
+                qs = models.iSCSITargetAuthorizedInitiator.objects.filter(
+                    iscsi_target_initiator_tag=i
+                )
+                if not qs.exists():
+                    break
+                i += 1
+            o.iscsi_target_initiator_tag = i
         o.save()
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(
