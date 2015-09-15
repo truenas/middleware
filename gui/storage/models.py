@@ -39,13 +39,13 @@ from django.utils.translation import ugettext as __, ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.freeadmin.models import Model, NewModel, UserField
 
 log = logging.getLogger('storage.models')
 REPL_RESULTFILE = '/tmp/.repl-result'
 
 
-class Volume(Model):
+class Volume(NewModel):
     vol_name = models.CharField(
         unique=True,
         max_length=120,
@@ -71,50 +71,39 @@ class Volume(Model):
         blank=True,
         editable=False,
     )
+    vol_mountpoint = models.CharField(
+        max_length=120
+    )
+    vol_status = models.CharField(
+        max_length=120
+    )
+    vol_upgraded = models.BooleanField(
+        editable=False
+    )
 
     @property
     def is_upgraded(self):
-        if not self.is_decrypted():
-            return True
-        try:
-            version = notifier().zpool_version(str(self.vol_name))
-        except ValueError:
-            return True
-        if version == '-':
-            proc = subprocess.Popen([
-                       "zpool",
-                       "get",
-                       "-H", "-o", "property,value",
-                       "all",
-                       str(self.vol_name),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            data = proc.communicate()[0].strip('\n')
-            for line in data.split('\n'):
-                if not line.startswith('feature') or '\t' not in line:
-                    continue
-                prop, value = line.split('\t', 1)
-                if value not in ('active', 'enabled'):
-                    return False
-            return True
-        return False
+        return self.vol_upgraded
 
     class Meta:
         verbose_name = _("Volume")
 
+    class Middleware:
+        field_mapping = (
+            (('id', 'vol_guid'), 'id'),
+            ('vol_name', 'name'),
+            ('vol_fstype', 'type'),
+            ('vol_mountpoint', 'properties.mountpoint'),
+            ('vol_status', 'status'),
+            ('vol_upgraded', 'upgraded')
+        )
+
+        provider_name = 'volumes'
+
     def get_disks(self):
         try:
-            if not hasattr(self, '_disks'):
-                n = notifier()
-                if self.vol_fstype == 'ZFS':
-                    pool = n.zpool_parse(self.vol_name)
-                    self._disks = pool.get_disks()
-                else:
-                    prov = n.get_label_consumer(
-                        self.vol_fstype.lower(),
-                        self.vol_name)
-                    self._disks = n.get_disks_from_provider(prov) \
-                        if prov is not None else []
-            return self._disks
+            from freenasUI.middleware.connector import connection as dispatcher
+            return dispatcher.call_sync('volumes.get_volume_disks', self.vol_name)
         except Exception, e:
             log.debug(
                 "Exception on retrieving disks for %s: %s",
@@ -122,38 +111,36 @@ class Volume(Model):
                 e)
             return []
 
-    def get_children(self, hierarchical=True, include_root=True):
-        if self.vol_fstype == 'ZFS':
-            return zfs.zfs_list(
-                path=self.vol_name,
-                recursive=True,
-                types=["filesystem", "volume"],
-                hierarchical=hierarchical,
-                include_root=include_root)
+    def get_children(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        return dispatcher.call_sync(
+            'volumes.query',
+            [('id', '=', self.vol_guid)],
+            {"single": True, "select": "datasets"}
+        )
 
-    def get_datasets(self, hierarchical=False, include_root=False):
-        if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(
-                path=self.vol_name,
-                recursive=True,
-                hierarchical=hierarchical,
-                include_root=include_root)
+    def get_properties(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        return dispatcher.call_sync(
+            'volumes.query',
+            [('id', '=', self.vol_guid)],
+            {"single": True, "select": "properties"}
+        )
+
+    def get_datasets(self):
+        return filter(lambda x: x['type'] == 'filesystem', self.get_children())
 
     def get_zvols(self):
-        if self.vol_fstype == 'ZFS':
-            return notifier().list_zfs_vols(self.vol_name)
+        return filter(lambda x: x['type'] == 'volume', self.get_children())
 
-    def _get_status(self):
+    @property
+    def get_status(self):
         try:
-            # Make sure do not compute it twice
-            if not hasattr(self, '_status'):
-                status = notifier().get_volume_status(
-                    self.vol_name,
-                    self.vol_fstype)
-                if status == 'UNKNOWN' and self.vol_encrypt > 0:
-                    return _("LOCKED")
-                else:
-                    self._status = status
+            status = self.vol_status
+            if status == 'UNKNOWN' and self.vol_encrypt > 0:
+                return _("LOCKED")
+            else:
+                self._status = status
             return self._status
         except Exception, e:
             if self.is_decrypted():
@@ -162,7 +149,6 @@ class Volume(Model):
                     self.vol_name,
                     e)
                 return _(u"Error")
-    status = property(_get_status)
 
     def get_geli_keyfile(self):
         from freenasUI.middleware.notifier import GELI_KEYPATH
@@ -466,7 +452,12 @@ class Scrub(Model):
             pass
 
 
-class Disk(Model):
+class Disk(NewModel):
+    id = models.CharField(
+        editable=False,
+        max_length=120,
+        primary_key=True
+    )
     disk_name = models.CharField(
         max_length=120,
         verbose_name=_("Name")
@@ -513,38 +504,27 @@ class Disk(Model):
         verbose_name=_("Description"),
         blank=True
     )
-    disk_transfermode = models.CharField(
+    disk_hddstandby = models.IntegerField(
         max_length=120,
-        choices=choices.TRANSFERMODE_CHOICES,
-        default="Auto",
-        verbose_name=_("Transfer Mode")
-    )
-    disk_hddstandby = models.CharField(
-        max_length=120,
+        null=True,
         choices=choices.HDDSTANDBY_CHOICES,
-        default="Always On",
         verbose_name=_("HDD Standby")
     )
-    disk_advpowermgmt = models.CharField(
+    disk_advpowermgmt = models.IntegerField(
         max_length=120,
+        null=True,
         choices=choices.ADVPOWERMGMT_CHOICES,
-        default="Disabled",
         verbose_name=_("Advanced Power Management")
     )
     disk_acousticlevel = models.CharField(
         max_length=120,
         choices=choices.ACOUSTICLVL_CHOICES,
-        default="Disabled",
+        default="DISABLED",
         verbose_name=_("Acoustic Level")
     )
     disk_togglesmart = models.BooleanField(
         default=True,
         verbose_name=_("Enable S.M.A.R.T."),
-    )
-    disk_smartoptions = models.CharField(
-        max_length=120,
-        verbose_name=_("S.M.A.R.T. extra options"),
-        blank=True
     )
     disk_enabled = models.BooleanField(
         default=True,
@@ -569,10 +549,7 @@ class Disk(Model):
 
     @property
     def devname(self):
-        if self.disk_multipath_name:
-            return "multipath/%s" % self.disk_multipath_name
-        else:
-            return self.disk_name
+        return os.path.basename(self.disk_name)
 
     def get_disk_size(self):
         # FIXME
@@ -584,6 +561,10 @@ class Disk(Model):
             out = p1.communicate()[0]
             return out.split('\t')[3]
         return 0
+
+    def get_mountpoint(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        return dispatcher
 
     def save(self, *args, **kwargs):
         if self.id and self._original_state.get("disk_togglesmart", None) != \
@@ -606,6 +587,28 @@ class Disk(Model):
         verbose_name_plural = _("Disks")
         ordering = ["disk_subsystem", "disk_number"]
 
+    class Middleware:
+        field_mapping = (
+            ('disk_serial', 'serial'),
+            ('disk_name', 'path'),
+            (('disk_identifier', 'id'), 'id'),
+            ('disk_description', 'description'),
+            ('disk_size', 'mediasize'),
+            ('disk_hddstandby', 'standby_mode'),
+            ('disk_advpowermgmt', 'apm_mode'),
+            ('disk_acousticlevel', 'acoustic_level'),
+            ('disk_togglesmart', 'smart'),
+            ('disk_smartoptions', 'smart_options'),
+            ('disk_enabled', 'online')
+        )
+
+        middleware_methods = {
+            'query': 'disks.query',
+            'add': None,
+            'delete': 'disks.delete',
+            'update': 'disks.configure'
+        }
+
     def __unicode__(self):
         return unicode(self.disk_name)
 
@@ -624,6 +627,7 @@ class EncryptedDisk(Model):
     )
 
 
+"""
 class MountPoint(Model):
     mp_volume = models.ForeignKey(Volume)
     mp_path = models.CharField(
@@ -647,10 +651,10 @@ class MountPoint(Model):
         return os.path.commonprefix([self.mp_path, path]) == self.mp_path
 
     def has_attachments(self):
-        """
+        ""
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
-        """
+        ""
         from freenasUI.jails.models import Jails, JailsConfiguration
         from freenasUI.sharing.models import (
             CIFS_Share, AFP_Share, NFS_Share_Path
@@ -699,10 +703,10 @@ class MountPoint(Model):
         return attachments
 
     def delete_attachments(self):
-        """
+        ""
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
-        """
+        ""
         from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share
         from freenasUI.services.models import iSCSITargetExtent
 
@@ -829,6 +833,7 @@ class MountPoint(Model):
     used_pct = property(_get_used_pct)
     used = property(_get_used)
     status = property(_get_status)
+"""
 
 
 # TODO: Refactor replication out from the storage model to its

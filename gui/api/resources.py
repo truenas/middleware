@@ -191,12 +191,7 @@ class AlertResource(DojoResource):
 class DiskResourceMixin(object):
 
     class Meta:
-        queryset = Disk.objects.filter(
-            disk_enabled=True,
-            disk_multipath_name=''
-        ).exclude(
-            Q(disk_name__startswith='multipath') | Q(disk_name='')
-        )
+        queryset = Disk.objects.filter(disk_enabled=True)
         allowed_methods = ['get', 'put']
 
     def dehydrate(self, bundle):
@@ -204,7 +199,7 @@ class DiskResourceMixin(object):
         if self.is_webclient(bundle.request):
             bundle.data['_edit_url'] += '?deletable=false'
             bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
-                'devname': bundle.obj.disk_name,
+                'devname': os.path.basename(bundle.obj.disk_name),
             })
             bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
             bundle.data['disk_size'] = humanize_number_si(
@@ -330,6 +325,9 @@ class VolumeResourceMixin(NestedMixin):
     def obj_get(self, bundle, **kwargs):
         if 'pk' in kwargs and not kwargs['pk'].isdigit():
             kwargs['vol_name'] = kwargs.pop('pk')
+        else:
+            kwargs['vol_guid'] = kwargs.pop('pk')
+            
         return super(VolumeResourceMixin, self).obj_get(bundle, **kwargs)
 
     def prepend_urls(self):
@@ -550,108 +548,101 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        assert bundle.obj.vol_fstype == 'ZFS'
+        assert bundle.obj.vol_fstype == 'zfs'
 
-        pool = notifier().zpool_parse(bundle.obj.vol_name)
-
-        bundle.data['id'] = bundle.obj.id
-        bundle.data['name'] = bundle.obj.vol_name
-        bundle.data['children'] = []
+        pool = wrap(dispatcher.call_sync('volumes.query', [('id', '=', bundle.obj.vol_guid)], {'single': True}))
         bundle.data.update({
-            'read': pool.data.read,
-            'write': pool.data.write,
-            'cksum': pool.data.cksum,
+            'id': bundle.obj.id,
+            'name': pool['name'],
+            'children': [],
+            'read': pool['root_vdev.stats.read_errors'],
+            'write': pool['root_vdev.stats.write_errors'],
+            'cksum': pool['root_vdev.stats.checksum_errors'],
         })
-        uid = Uid(bundle.obj.id * 100)
-        for key in ('data', 'cache', 'spares', 'logs'):
-            root = getattr(pool, key, None)
-            if not root:
-                continue
 
-            current = root
-            parent = bundle.data
-            tocheck = []
-            while True:
+        uid = Uid(100)
 
-                if isinstance(current, zfs.Root):
-                    data = {
-                        'name': current.name,
-                        'type': 'root',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                        'children': [],
-                    }
-                elif isinstance(current, zfs.Vdev):
-                    data = {
-                        'name': current.name,
-                        'type': 'vdev',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                        'children': [],
-                    }
-                    if (
-                        current.parent.name == "logs" and
-                        not current.name.startswith("stripe")
-                    ):
-                        data['_remove_url'] = reverse(
-                            'storage_zpool_disk_remove',
-                            kwargs={
-                                'vname': pool.name,
-                                'label': current.name,
-                            })
-                elif isinstance(current, zfs.Dev):
-                    data = {
-                        'name': current.devname,
-                        'label': current.name,
-                        'type': 'dev',
-                        'status': current.status,
-                        'read': current.read,
-                        'write': current.write,
-                        'cksum': current.cksum,
-                    }
+        for key, vdevs in pool['topology'].items():
+            def serialize_vdev(vdev):
+                ret = {
+                    'id': uid.next(),
+                    'name': vdev['path'] or vdev['type'],
+                    'guid': vdev['guid'],
+                    'type': vdev['type'],
+                    'status': vdev['status'],
+                    'read': vdev['stats.read_errors'],
+                    'write': vdev['stats.write_errors'],
+                    'cksum': vdev['stats.checksum_errors'],
+                    'children': [serialize_vdev(i) for i in vdev['children']]
+                }
+
+                if vdev['type'] == 'disk':
                     if self.is_webclient(bundle.request):
                         try:
                             disk = Disk.objects.order_by(
                                 'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
-                            data['_disk_url'] = "%s?deletable=false" % (
+                            ).filter(disk_name=vdev['path'])[0]
+                            ret['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
                             )
                         except IndexError:
-                            disk = None
-                        if current.status == 'ONLINE':
-                            data['_offline_url'] = reverse(
+                            pass
+
+                        if vdev['status'] == 'ONLINE':
+                            ret['_offline_url'] = reverse(
                                 'storage_disk_offline',
+                                kwargs={
+                                    'vname': pool['name'],
+                                    'guid': vdev['guid'],
+                                }
+                            )
+
+                        elif vdev['status'] == 'OFFLINE' and bundle.obj.vol_encrypt == 0:
+                            ret['_online_url'] = reverse(
+                                'storage_disk_online',
+                                kwargs={
+                                    'vname': pool['name'],
+                                    'guid': vdev['guid']
+                                }
+                            )
+
+                return ret
+
+            if key != 'data' and len(vdevs) > 0:
+                bundle.data['children'].append({
+                    'id': uid.next(),
+                    'name': key,
+                    'type': key,
+                    'children': [serialize_vdev(i) for i in vdevs]
+                })
+            else:
+                for v in vdevs:
+                    bundle.data['children'].append(serialize_vdev(v))
+
+                """
+                    elif isinstance(current, zfs.Vdev):
+                        data = {
+                            'name': current.name,
+                            'type': 'vdev',
+                            'status': current.status,
+                            'read': current.read,
+                            'write': current.write,
+                            'cksum': current.cksum,
+                            'children': [],
+                        }
+                        if (
+                            current.parent.name == "logs" and
+                            not current.name.startswith("stripe")
+                        ):
+                            data['_remove_url'] = reverse(
+                                'storage_zpool_disk_remove',
                                 kwargs={
                                     'vname': pool.name,
                                     'label': current.name,
                                 })
+                """
 
-                        elif (
-                            current.status == 'OFFLINE' and
-                            bundle.obj.vol_encrypt == 0
-                        ):
-                            pname = (
-                                current.parent.parent.name
-                                if current.parent.parent else None
-                            )
-                            dev = pool.get_dev_by_name(current.name)
-                            if (
-                                dev and dev.path and os.path.exists(dev.path)
-                            ) and pname not in (
-                                'cache',
-                            ):
-                                data['_online_url'] = reverse(
-                                    'storage_disk_online',
-                                    kwargs={
-                                        'vname': pool.name,
-                                        'label': current.name,
-                                    })
-
+                """
                         if current.replacing:
                             data['_detach_url'] = reverse(
                                 'storage_disk_detach',
@@ -660,12 +651,12 @@ class VolumeResourceMixin(NestedMixin):
                                     'label': current.name,
                                 })
 
-                        """
+
                         Replacing might go south leaving multiple UNAVAIL
                         disks, for that reason replace button should be
                         enable even for disks already under replacing
-                        subtree
-                        """
+                        subtre
+
                         data['_replace_url'] = reverse(
                             'storage_zpool_disk_replace',
                             kwargs={
@@ -693,23 +684,7 @@ class VolumeResourceMixin(NestedMixin):
                                         'vname': pool.name,
                                         'label': current.name,
                                     })
-
-                else:
-                    raise ValueError("Invalid node")
-
-                if key == 'data' and isinstance(current, zfs.Root):
-                    parent.update(data)
-                else:
-                    data['id'] = uid.next()
-                    parent['children'].append(data)
-
-                for child in current:
-                    tocheck.append((data, child))
-
-                if tocheck:
-                    parent, current = tocheck.pop()
-                else:
-                    break
+                """
 
         bundle = self.alter_detail_data_to_serialize(request, bundle)
         response = self.create_response(request, [bundle.data])
@@ -729,99 +704,88 @@ class VolumeResourceMixin(NestedMixin):
         child_resource = DatasetResource()
         return child_resource.dispatch_detail(request, pk=pk, parent=obj)
 
-    def _get_children(self, bundle, vol, children, uid):
-        rv = []
-        attr_fields = ('avail', 'used', 'used_pct')
-        for path, child in children.items():
-            if child.name.startswith('.'):
-                continue
+    def _get_children(self, bundle, dataset, uid):
+        name = dataset['name'].split('/')[-1]
 
-            data = {
-                'id': uid.next(),
-                'name': child.name,
-                'type': 'dataset' if child.category == 'filesystem' else 'zvol',
-                'status': '-',
-                'path': child.path,
-            }
-            if child.category == 'filesystem':
-                data['mountpoint'] = child.mountpoint
-            for attr in attr_fields:
-                data[attr] = getattr(child, attr)
+        if name.startswith('.'):
+            return None
 
-            if self.is_webclient(bundle.request):
-                data['compression'] = self.__zfsopts.get(
-                    child.path,
-                    {},
-                ).get('compression', ('', '-'))[1]
-                data['compressratio'] = self.__zfsopts.get(
-                    child.path,
-                    {},
-                ).get('compressratio', ('', '-'))[1]
+        data = {
+            'id': uid.next(),
+            'name': name,
+            'type': 'dataset' if dataset['type'] == 'FILESYSTEM' else 'zvol',
+            'status': '-',
+            'path': dataset['name'],
+            'avail': dataset['properties.available.rawvalue'],
+            'used': dataset['properties.used.rawvalue'],
+        }
 
-                data['used'] = "%s (%s%%)" % (
-                    humanize_size(data['used']),
-                    data['used_pct'],
-                )
-                data['avail'] = humanize_size(data['avail'])
+        data['used_pct'] = int((float(data['used']) / float(data['avail'] + data['used'])) * 100.0)
 
-            if self.is_webclient(bundle.request):
-                data['_add_zfs_volume_url'] = reverse(
-                    'storage_zvol',
+        if dataset['type'] == 'FILESYSTEM':
+            data['mountpoint'] = dataset['properties.mountpoint.value']
+
+        if self.is_webclient(bundle.request):
+            data['compression'] = dataset['properties.compression.value']
+            data['compressratio'] = dataset['properties.compressratio.value']
+            data['used'] = "%s (%s%%)" % (
+                humanize_size(data['used']),
+                data['used_pct'],
+            )
+            data['avail'] = humanize_size(data['avail'])
+
+        if self.is_webclient(bundle.request):
+            data['_add_zfs_volume_url'] = reverse(
+                'storage_zvol',
+                kwargs={
+                    'parent': dataset['name'],
+                })
+            if dataset['type'] == 'FILESYSTEM':
+                data['_dataset_delete_url'] = reverse(
+                    'storage_dataset_delete',
                     kwargs={
-                        'parent': child.path,
+                        'name': dataset['name'],
                     })
-                if child.category == 'filesystem':
-                    data['_dataset_delete_url'] = reverse(
-                        'storage_dataset_delete',
-                        kwargs={
-                            'name': child.path,
-                        })
-                    data['_dataset_edit_url'] = reverse(
-                        'storage_dataset_edit',
-                        kwargs={
-                            'dataset_name': child.path,
-                        })
-                    data['_dataset_create_url'] = reverse(
-                        'storage_dataset',
-                        kwargs={
-                            'fs': child.path,
-                        })
-                    data['_permissions_url'] = reverse(
-                        'storage_mp_permission',
-                        kwargs={
-                            'path': child.mountpoint,
-                        })
-                elif child.category == 'volume':
-                    data['_zvol_delete_url'] = reverse(
-                        'storage_zvol_delete',
-                        kwargs={
-                            'name': child.path,
-                        })
-                    data['_zvol_edit_url'] = reverse(
-                        'storage_zvol_edit',
-                        kwargs={
-                            'name': child.path,
-                        })
-                data['_add_zfs_volume_url'] = reverse(
-                    'storage_zvol', kwargs={
-                        'parent': child.path,
-                    })
-                data['_manual_snapshot_url'] = reverse(
-                    'storage_manualsnap',
+                data['_dataset_edit_url'] = reverse(
+                    'storage_dataset_edit',
                     kwargs={
-                        'fs': child.path,
+                        'dataset_name': dataset['name'],
                     })
+                data['_dataset_create_url'] = reverse(
+                    'storage_dataset',
+                    kwargs={
+                        'fs': dataset['name'],
+                    })
+                data['_permissions_url'] = reverse(
+                    'storage_mp_permission',
+                    kwargs={
+                        'path': data['mountpoint'],
+                    })
+            elif dataset['type'] == 'VOLUME':
+                data['_zvol_delete_url'] = reverse(
+                    'storage_zvol_delete',
+                    kwargs={
+                        'name': dataset['name'],
+                    })
+                data['_zvol_edit_url'] = reverse(
+                    'storage_zvol_edit',
+                    kwargs={
+                        'name': dataset['name'],
+                    })
+            data['_add_zfs_volume_url'] = reverse(
+                'storage_zvol', kwargs={
+                    'parent': dataset['name'],
+                })
+            data['_manual_snapshot_url'] = reverse(
+                'storage_manualsnap',
+                kwargs={
+                    'fs': dataset['name'],
+                })
 
-            if child.children:
-                _children = SortedDict()
-                for child in child.children:
-                    _children[child.name] = child
-                data['children'] = self._get_children(
-                    bundle, vol, _children, uid
-                )
+        if dataset['children']:
+            data['children'] = filter(None, [self._get_children(bundle, c, uid) for c in dataset['children']])
 
-            rv.append(data)
-        return rv
+        return data
 
     def hydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).hydrate(bundle)
@@ -851,13 +815,15 @@ class VolumeResourceMixin(NestedMixin):
 
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
-        mp = bundle.obj.mountpoint_set.all()[0]
+        root_ds = wrap(dispatcher.call_sync('volumes.get_dataset_tree', bundle.obj.vol_name))
 
         for key in bundle.data.keys():
             if key.startswith('layout-'):
                 del bundle.data[key]
 
         bundle.data['name'] = bundle.obj.vol_name
+        bundle.data['status'] = bundle.obj.vol_status
+
         if self.is_webclient(bundle.request):
             bundle.data['compression'] = '-'
             bundle.data['compressratio'] = '-'
@@ -869,11 +835,13 @@ class VolumeResourceMixin(NestedMixin):
                     'vid': bundle.obj.id,
                 })
 
-        attr_fields = ('avail', 'used', 'used_pct')
-        for attr in attr_fields + ('status', ):
-            bundle.data[attr] = getattr(mp, attr)
+        properties = wrap(bundle.obj.get_properties())
+        if properties:
+            bundle.data['avail'] = int(properties['free.rawvalue'])
+            bundle.data['used'] = int(properties['allocated.rawvalue'])
+            bundle.data['used_pct'] = int((float(bundle.data['used']) / float(bundle.data['avail'] + bundle.data['used'])) * 100.0)
 
-        if bundle.obj.vol_fstype != 'ZFS':
+        if bundle.obj.vol_fstype != 'zfs' or bundle.obj.vol_status == 'UNKNOWN':
             return bundle
 
         bundle.data['is_upgraded'] = bundle.obj.is_upgraded
@@ -882,7 +850,7 @@ class VolumeResourceMixin(NestedMixin):
         bundle.data['is_decrypted'] = is_decrypted
 
         if self.is_webclient(bundle.request):
-            bundle.data['_status_url'] = "%s?id=%d" % (
+            bundle.data['_status_url'] = "%s?id=%s" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
                 bundle.obj.id,
             )
@@ -890,49 +858,49 @@ class VolumeResourceMixin(NestedMixin):
             bundle.data['_scrub_url'] = reverse(
                 'storage_scrub',
                 kwargs={
-                    'vid': bundle.obj.id,
+                    'vid': bundle.obj.vol_guid,
                 })
             bundle.data['_upgrade_url'] = reverse(
                 'storage_volume_upgrade',
                 kwargs={
-                    'object_id': bundle.obj.id,
+                    'object_id': bundle.obj.vol_guid,
                 })
             if bundle.obj.vol_encrypt > 0:
                 bundle.data['_unlock_url'] = reverse(
                     'storage_volume_unlock',
                     kwargs={
-                        'object_id': bundle.obj.id,
+                        'object_id': bundle.obj.vol_guid,
                     })
                 bundle.data['_download_key_url'] = reverse(
                     'storage_volume_key',
                     kwargs={
-                        'object_id': bundle.obj.id,
+                        'object_id': bundle.obj.vol_guid,
                     })
                 bundle.data['_rekey_url'] = reverse(
                     'storage_volume_rekey',
                     kwargs={
-                        'object_id': bundle.obj.id,
+                        'object_id': bundle.obj.vol_guid,
                     })
                 bundle.data['_add_reckey_url'] = reverse(
                     'storage_volume_recoverykey_add',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_rem_reckey_url'] = reverse(
                     'storage_volume_recoverykey_remove',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_create_passphrase_url'] = reverse(
                     'storage_volume_create_passphrase',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_change_passphrase_url'] = reverse(
                     'storage_volume_change_passphrase',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
                 bundle.data['_volume_lock_url'] = reverse(
                     'storage_volume_lock',
-                    kwargs={'object_id': bundle.obj.id})
+                    kwargs={'object_id': bundle.obj.vol_guid})
 
         if is_decrypted:
             if self.is_webclient(bundle.request):
                 if isinstance(bundle.data['used'], int):
-                    bundle.data['used'] = "%s (%s)" % (
+                    bundle.data['used'] = "%s (%s%%)" % (
                         humanize_size(bundle.data['used']),
                         bundle.data['used_pct'],
                     )
@@ -941,19 +909,12 @@ class VolumeResourceMixin(NestedMixin):
         else:
             bundle.data['used'] = _("Locked")
 
-        bundle.data['mountpoint'] = mp.mp_path
-
         try:
             uid = self._uid
         except:
             uid = Uid(bundle.obj.id * 1000)
 
-        bundle.data['children'] = self._get_children(
-            bundle,
-            bundle.obj,
-            bundle.obj.get_children(),
-            uid=uid,
-        )
+        bundle.data['children'] = [self._get_children(bundle, root_ds, uid)]
 
         return bundle
 
@@ -2496,6 +2457,7 @@ class BootEnvResource(NestedMixin, DojoResource):
             def serialize_vdev(vdev):
                 ret = {
                     'name': vdev['path'] or vdev['type'],
+                    'guid': vdev['guid'],
                     'type': vdev['type'],
                     'status': vdev['status'],
                     'read': vdev['stats.read_errors'],
@@ -2505,11 +2467,12 @@ class BootEnvResource(NestedMixin, DojoResource):
                 }
 
                 if vdev['type'] in ('disk', 'mirror'):
-                    ret['_attach_url'] = reverse('system_bootenv_pool_attach',) + '?label=' + ret['name']
+                    ret['_attach_url'] = reverse('system_bootenv_pool_attach',) + '?guid=' + ret['guid']
 
                 if vdev['type'] == 'disk':
-                    """
+
                     if self.is_webclient(bundle.request):
+                        """
                         try:
                             disk = Disk.objects.order_by(
                                 'disk_enabled'
@@ -2519,41 +2482,42 @@ class BootEnvResource(NestedMixin, DojoResource):
                             )
                         except IndexError:
                             disk = None
+                        """
+
                         if vdev['status'] == 'ONLINE':
-                            data['_offline_url'] = reverse(
+                            ret['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
-                                    'vname': pool.name,
-                                    'label': current.name,
+                                    'vname': pool['name'],
+                                    'guid': ret['guid'],
                                 })
 
+                        """
                         if current.replacing:
                             data['_detach_url'] = reverse(
                                 'system_bootenv_pool_detach',
                                 kwargs={
                                     'label': current.name,
                                 })
+                        """
 
-                        ""
+                        """
                         Replacing might go south leaving multiple UNAVAIL
                         disks, for that reason replace button should be
                         enable even for disks already under replacing
                         subtree
-                        ""
-                        data['_replace_url'] = reverse(
+                        """
+                        ret['_replace_url'] = reverse(
                             'system_bootenv_pool_replace',
                             kwargs={
-                                'label': current.name,
+                                'label': ret['name'],
                             })
-                        if current.parent.parent.name in (
-                            'spares',
-                            'cache',
-                            'logs',
-                        ):
-                            if not current.parent.name.startswith(
-                                "stripe"
-                            ):
-                                data['_detach_url'] = reverse(
+
+
+                        """
+                        if key in ('spares', 'cache', 'logs',):
+                            if not current.parent.name.startswith("stripe"):
+                                ret['_detach_url'] = reverse(
                                     'storage_disk_detach',
                                     kwargs={
                                         'vname': pool.name,
@@ -2566,8 +2530,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                                         'vname': pool.name,
                                         'label': current.name,
                                     })
-                    """
-                    pass
+                        """
 
                 return ret
 

@@ -68,6 +68,8 @@ from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
 from pysphere import VIServer
+from fnutils import first_or_default
+from fnutils.query import wrap
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -224,14 +226,45 @@ class VolumeManagerForm(VolumeMixin, Form):
     def save(self):
         formset = self._formset
         volume_name = self.cleaned_data.get("volume_name")
-        init_rand = self.cleaned_data.get("encryption_inirand", False)
-        if self.cleaned_data.get("encryption", False):
-            volume_encrypt = 1
-        else:
-            volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
+        topology = {}
 
-        with transaction.atomic():
+        for i, form in enumerate(formset):
+            if not form.cleaned_data.get('vdevtype'):
+                continue
+
+            if form.cleaned_data.get("vdevtype") == 'stripe':
+                for disk in form.cleaned_data.get("disks"):
+                    topology.setdefault('data', []).append({
+                        'type': 'disk',
+                        'path': disk
+                    })
+
+            if form.cleaned_data.get("vdevtype") in ('mirror', 'raidz1', 'raidz2', 'raidz3'):
+                topology.setdefault('data', []).append({
+                    'type': form.cleaned_data.get("vdevtype"),
+                    'children': [{'type': 'disk', 'path': d} for d in form.cleaned_data.get("disks")]
+                })
+
+            if form.cleaned_data.get("vdevtype") in ('cache', 'log', 'spare'):
+                for disk in form.cleaned_data.get("disks"):
+                    topology.setdefault(form.cleaned_data.get("vdevtype"), []).append({
+                        'type': 'disk',
+                        'path': disk
+                    })
+
+        from freenasUI.middleware.connector import connection as dispatcher
+
+        result = dispatcher.call_task_sync('volume.create', {
+            'name': volume_name,
+            'type': 'zfs',
+            'topology': topology
+        })
+
+        if result['state'] != 'FINISHED':
+            return False
+
+        """with transaction.atomic():
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS')
@@ -289,24 +322,22 @@ class VolumeManagerForm(VolumeMixin, Form):
             notifier().geli_passphrase(volume, None)
             volume.vol_encrypt = 1
             volume.save()
+        """
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
         notifier().reload("disk")
         notifier().start("ix-syslogd")
         notifier().restart("system_datasets")
-        # For scrub cronjob
-        if volume.vol_fstype == 'ZFS':
-            notifier().restart("cron")
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
             notifier().restart("smartd")
 
         # ModelForm compatibility layer for API framework
-        self.instance = volume
+        #self.instance = volume
 
-        return volume
+        return True
 
 
 class VolumeVdevForm(Form):
@@ -724,8 +755,7 @@ class ZFSVolumeWizardForm(forms.Form):
 
 
 class VolumeImportForm(Form):
-
-    volume_disks = forms.ChoiceField(
+    disks = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
         label=_('Member disk'),
@@ -735,49 +765,29 @@ class VolumeImportForm(Form):
                     "then unmounted. Importing non-zfs disks permanently "
                     "as a Volume is deprecated"),
     )
-    volume_fstype = forms.ChoiceField(
-        choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
-        widget=forms.RadioSelect(attrs=attrs_dict),
-        label='File System type',
-    )
 
-    volume_dest_path = PathField(
+    dest_path = PathField(
         label=_("Destination"),
         help_text=_("This must be a dataset/folder in an existing Volume"),
     )
 
     def __init__(self, *args, **kwargs):
         super(VolumeImportForm, self).__init__(*args, **kwargs)
-        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['disks'].choices = self._populate_disk_choices()
 
     def _populate_disk_choices(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        result = []
+        disks = dispatcher.call_sync('volumes.find_media')
 
-        used_disks = []
-        for v in models.Volume.objects.all():
-            used_disks.extend(v.get_disks())
+        for d in disks:
+            hsize = humanize_number_si(d['size'])
+            result.append((
+                d['path'],
+                "{label} <{path}> (size {hsize}, type {fstype})".format(hsize=hsize, **d)
+            ))
 
-        qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
-        diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks.extend([d.disk_name for d in models.Disk.objects.filter(
-            id__in=diskids)])
-
-        n = notifier()
-        # Grab partition list
-        # NOTE: This approach may fail if device nodes are not accessible.
-        _parts = n.get_partitions()
-        for name, part in _parts.items():
-            for i in used_disks:
-                if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
-                    del _parts[name]
-                    continue
-
-        parts = []
-        for name, part in _parts.items():
-            parts.append(Disk(part['devname'], part['capacity']))
-
-        choices = sorted(parts)
-        choices = [tuple(p) for p in choices]
-        return choices
+        return result
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -797,9 +807,6 @@ class VolumeImportForm(Form):
                 [_(u"The path %s does not exist.\
                     This must be a dataset/folder in an existing Volume" % path)])
         return cleaned_data
-
-    def done(self, request):
-        volume_fstype = self.cleaned_data['volume_fstype']
 
 
 def show_descrypt_condition(wizard):
@@ -868,12 +875,9 @@ class AutoImportWizard(SessionWizardView):
 
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
-        volume_name = vol['label']
+        volume_name = vol['name']
         group_type = vol['group_type']
-        if vol['type'] == 'geom':
-            volume_fstype = 'UFS'
-        elif vol['type'] == 'zfs':
-            volume_fstype = 'ZFS'
+        volume_fstype = 'zfs'
 
         try:
             with transaction.atomic():
@@ -898,16 +902,9 @@ class AutoImportWizard(SessionWizardView):
                 mp.save()
 
                 _n = notifier()
-
-                if vol['type'] != 'zfs':
-                    _n.label_disk(
-                        volume_name,
-                        "%s/%s" % (group_type, volume_name),
-                        'UFS')
-                else:
-                    volume.vol_guid = vol['id']
-                    volume.save()
-                    models.Scrub.objects.create(scrub_volume=volume)
+                volume.vol_guid = vol['id']
+                volume.save()
+                models.Scrub.objects.create(scrub_volume=volume)
 
                 if vol['type'] == 'zfs' and not _n.zfs_import(
                         vol['label'], vol['id']):
@@ -999,7 +996,7 @@ class AutoImportDecryptForm(Form):
 
     def _populate_disk_choices(self):
         gelis = notifier().geli_get_all_providers()
-        for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
+        for vol in models.Volume.objects.all():
             for disk in vol.get_disks():
                 for geli in list(gelis):
                     if '%sp' % disk in geli[1]:
@@ -1074,45 +1071,23 @@ class VolumeAutoImportForm(Form):
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
-        vols = notifier().detect_volumes()
-
-        for vol in list(vols):
-            # Exclude volumes with same guid as existing volumes
-            # See #6808
-            if vol.get('id') in guids:
-                vols.remove(vol)
-                continue
-            for vdev in vol['disks']['vdevs']:
-                for disk in vdev['disks']:
-                    if filter(lambda x: x is not None and re.search(
-                        r'^%s([ps]|$)' % disk['name'],
-                        x
-                    ), used_disks):
-                        vols.remove(vol)
-                        break
-                else:
-                    continue
-                break
+        from freenasUI.middleware.connector import connection as dispatcher
+        vols = dispatcher.call_sync('volumes.find')
 
         for vol in vols:
-            if vol.get("id", None):
-                devname = "%s [%s, id=%s]" % (
-                    vol['label'],
-                    vol['type'],
-                    vol['id'])
-            else:
-                devname = "%s [%s]" % (vol['label'], vol['type'])
-            diskchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = devname
+            devname = "{0} [id={1}]".format(vol['name'], vol['id'])
+            diskchoices["%s|%s" % (vol['name'], vol.get('id', ''))] = devname
 
         choices = diskchoices.items()
         return choices
 
     def clean(self):
+        from freenasUI.middleware.connector import connection as dispatcher
         cleaned_data = self.cleaned_data
-        vols = notifier().detect_volumes()
+        vols = dispatcher.call_sync('volumes.find')
         volume_name, zid = cleaned_data.get('volume_disks', '|').split('|', 1)
         for vol in vols:
-            if vol['label'] == volume_name:
+            if vol['name'] == volume_name:
                 if (zid and zid == vol['id']) or not zid:
                     cleaned_data['volume'] = vol
                     break
@@ -1121,36 +1096,6 @@ class VolumeAutoImportForm(Form):
             self._errors['__all__'] = self.error_class([
                 _("You must select a volume."),
             ])
-
-        else:
-            if models.Volume.objects.filter(
-                    vol_name=cleaned_data['volume']['label']).count() > 0:
-                msg = _(u"You already have a volume with same name")
-                self._errors["volume_disks"] = self.error_class([msg])
-                del cleaned_data["volume_disks"]
-
-            if cleaned_data['volume']['type'] == 'geom':
-                if cleaned_data['volume']['group_type'] == 'mirror':
-                    dev = "/dev/mirror/%s" % (cleaned_data['volume']['label'])
-                elif cleaned_data['volume']['group_type'] == 'stripe':
-                    dev = "/dev/stripe/%s" % (cleaned_data['volume']['label'])
-                elif cleaned_data['volume']['group_type'] == 'raid3':
-                    dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
-                else:
-                    raise NotImplementedError
-
-                isvalid = notifier().precheck_partition(dev, 'UFS')
-                if not isvalid:
-                    msg = _(
-                        u"The selected disks were not verified for this "
-                        "import rules.")
-                    self._errors["volume_disks"] = self.error_class([msg])
-
-                    if "volume_disks" in cleaned_data:
-                        del cleaned_data["volume_disks"]
-
-            elif cleaned_data['volume']['type'] != 'zfs':
-                raise NotImplementedError
 
         return cleaned_data
 
@@ -1181,75 +1126,37 @@ class DiskFormPartial(ModelForm):
     def clean_disk_name(self):
         return self.instance.disk_name
 
-    def save(self, *args, **kwargs):
-        obj = super(DiskFormPartial, self).save(*args, **kwargs)
-        # Commit ataidle changes, if any
-        if (
-            obj.disk_hddstandby != obj._original_state['disk_hddstandby']
-            or
-            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt']
-            or
-            obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
-        ):
-            notifier().start_ataidle(obj.disk_name)
-
-        if (
-            obj.disk_togglesmart != self._original_smart_en or
-            obj.disk_smartoptions != self._original_smart_opts
-        ):
-            if obj.disk_togglesmart == 0:
-                notifier().toggle_smart_off(obj.disk_name)
-            else:
-                notifier().toggle_smart_on(obj.disk_name)
-            started = notifier().restart("smartd")
-            if (
-                started is False
-                and
-                services.objects.get(srv_service='smartd').srv_enable
-            ):
-                raise ServiceFailed(
-                    "smartd",
-                    _("The SMART service failed to restart.")
-                )
-        return obj
-
 
 class DiskEditBulkForm(Form):
-
     ids = forms.CharField(
         widget=forms.widgets.HiddenInput(),
     )
-    disk_hddstandby = forms.ChoiceField(
+    standby_mode = forms.ChoiceField(
         choices=(('', '-----'),) + choices.HDDSTANDBY_CHOICES,
         required=False,
         initial="Always On",
         label=_("HDD Standby")
     )
-    disk_advpowermgmt = forms.ChoiceField(
+    apm_mode = forms.ChoiceField(
         required=False,
         choices=(('', '-----'),) + choices.ADVPOWERMGMT_CHOICES,
         label=_("Advanced Power Management")
     )
-    disk_acousticlevel = forms.ChoiceField(
+    acoustic_level = forms.ChoiceField(
         required=False,
         choices=(('', '-----'),) + choices.ACOUSTICLVL_CHOICES,
         label=_("Acoustic Level")
     )
-    disk_togglesmart = forms.BooleanField(
+    smart = forms.BooleanField(
         initial=True,
         label=_("Enable S.M.A.R.T."),
-        required=False,
-    )
-    disk_smartoptions = forms.CharField(
-        max_length=120,
-        label=_("S.M.A.R.T. extra options"),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         self._disks = kwargs.pop('disks')
         super(DiskEditBulkForm, self).__init__(*args, **kwargs)
-        self.fields['ids'].initial = ','.join([str(d.id) for d in self._disks])
+        self.fields['ids'].initial = ','.join([str(d['id']) for d in self._disks])
 
         """
         Make sure all the disks have a same option for each field
@@ -1257,46 +1164,34 @@ class DiskEditBulkForm(Form):
         """
         initials = {}
         for disk in self._disks:
-
-            for opt in (
-                'disk_hddstandby',
-                'disk_advpowermgmt',
-                'disk_acousticlevel',
-                'disk_smartoptions',
-            ):
+            for opt in ('standby_mode', 'apm_mode', 'acoustic_level'):
                 if opt not in initials:
-                    initials[opt] = getattr(disk, opt)
-                elif initials[opt] != getattr(disk, opt):
+                    initials[opt] = disk.get(opt, '')
+                elif initials[opt] != disk.get(opt, ''):
                     initials[opt] = ''
 
-            if 'disk_togglesmart' not in initials:
-                initials['disk_togglesmart'] = disk.disk_togglesmart
-            elif initials['disk_togglesmart'] != disk.disk_togglesmart:
-                initials['disk_togglesmart'] = True
+            if 'smart' not in initials:
+                initials['smart'] = disk.get('smart')
+            elif initials['smart'] != disk.get('smart'):
+                initials['smart'] = True
 
         for key, val in initials.items():
             self.fields[key].initial = val
 
     def save(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        for disk in self._disks:
+            apm = self.cleaned_data.get('apm_mode')
+            standby = self.cleaned_data.get('standby_mode')
 
-        with transaction.atomic():
-            for disk in self._disks:
+            dispatcher.call_task_sync('disks.configure', disk['id'], {
+                'smart': self.cleaned_data.get("smart"),
+                'acoustic_level': self.cleaned_data.get('acoustic_level', 'DISABLED'),
+                'apm_mode': int(apm) if apm else None,
+                'standby_mode': int(standby) if standby else None
+            })
 
-                for opt in (
-                    'disk_hddstandby',
-                    'disk_advpowermgmt',
-                    'disk_acousticlevel',
-                ):
-                    if self.cleaned_data.get(opt):
-                        setattr(disk, opt, self.cleaned_data.get(opt))
-
-                disk.disk_togglesmart = self.cleaned_data.get(
-                    "disk_togglesmart")
-                # This is not a choice field, an empty value should reset all
-                disk.disk_smartoptions = self.cleaned_data.get(
-                    "disk_smartoptions")
-                disk.save()
-        return self._disks
+        return True
 
 
 class ZFSDataset(Form):
@@ -1372,50 +1267,54 @@ class ZFSDataset(Form):
         self._fs = kwargs.pop('fs')
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
-        _n = notifier()
-        parentdata = _n.zfs_get_options(self._fs)
+
+        parent_ds = wrap(self.get_dataset(self._fs))
 
         self.fields['dataset_atime'].choices = _inherit_choices(
             choices.ZFS_AtimeChoices,
-            parentdata['atime'][0]
+            parent_ds['properties.atime.value']
         )
         self.fields['dataset_compression'].choices = _inherit_choices(
             choices.ZFS_CompressionChoices,
-            parentdata['compression'][0]
+            parent_ds['properties.compression.value']
         )
         self.fields['dataset_dedup'].choices = _inherit_choices(
             choices.ZFS_DEDUP_INHERIT,
-            parentdata['dedup'][0]
+            parent_ds['properties.dedup.value']
         )
 
         if self._create is False:
             del self.fields['dataset_name']
             del self.fields['dataset_recordsize']
             del self.fields['dataset_case_sensitivity']
-            data = _n.zfs_get_options(self._fs)
 
-            if data['compression'][2] == 'inherit':
+            ds = wrap(self.get_dataset(self._fs))
+
+            if ds['properties.compression.source'] == 'INHERITED':
                 self.fields['dataset_compression'].initial = 'inherit'
             else:
-                self.fields['dataset_compression'].initial = data['compression'][0]
-            self.fields['dataset_share_type'].initial = _n.get_dataset_share_type(self._fs)
+                self.fields['dataset_compression'].initial = ds['properties.compression.value']
+            self.fields['dataset_share_type'].initial = ds['share_type']
 
-            if data['atime'][2] == 'inherit':
+            if ds['properties.atime.source'] == 'INHERITED':
                 self.fields['dataset_atime'].initial = 'inherit'
             else:
-                self.fields['dataset_atime'].initial = data['atime'][0]
+                self.fields['dataset_atime'].initial = ds['properties.atime.value']
 
             for attr in ('refquota', 'quota', 'reservation', 'refreservation'):
                 formfield = 'dataset_%s' % (attr)
-                if data[attr][0] == 'none':
+                if ds['properties.{0}.source'.format(attr)] in ('DEFAULT', 'NONE'):
                     self.fields[formfield].initial = 0
                 else:
-                    self.fields[formfield].initial = data[attr][0]
-            if data['dedup'][2] == 'inherit':
+                    val = ds['properties.{0}.value'.format(attr)]
+                    self.fields[formfield].initial = val if val != 'none' else 0
+
+            if ds['properties.dedup.source'] == 'INHERITED':
                 self.fields['dataset_dedup'].initial = 'inherit'
-            elif data['dedup'][0] in ('on', 'off', 'verify'):
-                self.fields['dataset_dedup'].initial = data['dedup'][0]
-            elif data['dedup'][0] == 'sha256,verify':
+
+            elif ds['properties.dedup.value'] in ('on', 'off', 'verify'):
+                self.fields['dataset_dedup'].initial = ds['properties.dedup.value']
+            elif ds['properties.dedup.value'] == 'sha256,verify':
                 self.fields['dataset_dedup'].initial = 'verify'
             else:
                 self.fields['dataset_dedup'].initial = 'off'
@@ -1430,6 +1329,20 @@ class ZFSDataset(Form):
                 '=ZFS Deduplication Activation">TrueNAS Support</a> for '
                 'assistance.</span><br />'
             )
+
+    def get_dataset(self, name):
+        from freenasUI.middleware.connector import connection as dispatcher
+        pool_name = name.split('/')[0]
+        vol = dispatcher.call_sync(
+            'volumes.query',
+            [('name', '=', pool_name)],
+            {'single': True}
+        )
+
+        if not vol:
+            return None
+
+        return wrap(first_or_default(lambda d: d['name'] == name, vol['datasets']))
 
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
@@ -1705,9 +1618,9 @@ class MountPointAccessForm(Form):
     mp_acl = forms.ChoiceField(
         label=_('Permission Type'),
         choices=(
-            ('unix', 'Unix'),
-            ('mac', 'Mac'),
-            ('windows', 'Windows'),
+            ('PERMS', 'Unix'),
+            ('PERMS', 'Mac'),
+            ('ACL', 'Windows'),
         ),
         initial='unix',
         widget=forms.widgets.RadioSelect(),
@@ -1718,29 +1631,66 @@ class MountPointAccessForm(Form):
         label=_('Set permission recursively')
     )
 
+    def modes_to_oct(self, modes):
+        import stat
+        modes = wrap(modes)
+        result = 0
+
+        if modes['user.read']:
+            result &= stat.S_IRUSR
+
+        if modes['user.write']:
+            result &= stat.S_IWUSR
+
+        if modes['user.execute']:
+            result &= stat.S_IXUSR
+
+        if modes['group.read']:
+            result &= stat.S_IRGRP
+
+        if modes['group.write']:
+            result &= stat.S_IWGRP
+
+        if modes['group.execute']:
+            result &= stat.S_IXGRP
+
+        if modes['others.read']:
+            result &= stat.S_IROTH
+
+        if modes['others.write']:
+            result &= stat.S_IWOTH
+
+        if modes['others.execute']:
+            result &= stat.S_IXOTH
+
+        return result
+
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
+        from freenasUI.middleware.connector import connection as dispatcher
 
         path = kwargs.get('initial', {}).get('path', None)
         if path:
-            if os.path.exists(os.path.join(path, ".windows")):
-                self.fields['mp_acl'].initial = 'windows'
+            pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
+            pool = dispatcher.call_sync('volumes.query', [('name', '=', pool_name)], {'single': True})
+            ds = first_or_default(lambda o: o['name'] == ds_name, pool['datasets'])
+            stat = dispatcher.call_sync('filesystem.stat', path)
+
+            self.fields['mp_acl'].initial = ds['permissions_type']
+            if self.fields['mp_acl'].initial == 'WINDOWS':
                 self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
-            elif os.path.exists(os.path.join(path, ".mac")):
-                self.fields['mp_acl'].initial = 'mac'
-            else:
-                self.fields['mp_acl'].initial = 'unix'
+
             # 8917: This needs to be handled by an upper layer but for now
             # just prevent a backtrace.
             try:
                 self.fields['mp_mode'].initial = "%.3o" % (
-                    notifier().mp_get_permission(path),
+                    self.modes_to_oct(stat['permissions']['modes'])
                 )
-                user, group = notifier().mp_get_owner(path)
-                self.fields['mp_user'].initial = user
-                self.fields['mp_group'].initial = group
+                self.fields['mp_user'].initial = stat['user']
+                self.fields['mp_group'].initial = stat['group']
             except:
                 pass
+
         self.fields['mp_acl'].widget.attrs['onChange'] = "mpAclChange(this);"
 
     def clean(self):
@@ -1756,24 +1706,29 @@ class MountPointAccessForm(Form):
         return self.cleaned_data
 
     def commit(self, path='/mnt/'):
+        from freenasUI.middleware.connector import connection as dispatcher
 
-        kwargs = {}
+        kwargs = {
+            'user': None,
+            'group': None,
+            'modes': None
+        }
 
         if self.cleaned_data.get('mp_group_en'):
             kwargs['group'] = self.cleaned_data['mp_group']
 
         if self.cleaned_data.get('mp_mode_en'):
-            kwargs['mode'] = str(self.cleaned_data['mp_mode'])
+            kwargs['modes'] = self.cleaned_data['mp_mode']
 
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
 
-        notifier().mp_change_permission(
-            path=path,
-            recursive=self.cleaned_data['mp_recursive'],
-            acl=self.cleaned_data['mp_acl'],
-            **kwargs
-        )
+        pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
+        dispatcher.call_task_sync('file.set_permissions', path, kwargs, True)
+        dispatcher.call_task_sync('volume.dataset.update', pool_name, ds_name, {
+            'permissions_type': self.cleaned_data['mp_acl']
+        })
+
 
 
 class PeriodicSnapForm(ModelForm):
@@ -2279,7 +2234,7 @@ class VolumeExport(Form):
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,
-                label=_("Also delete the share's configuration"))
+                label=_("Also delete the shares configuration"))
 
 
 class Dataset_Destroy(Form):

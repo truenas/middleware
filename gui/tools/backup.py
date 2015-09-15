@@ -63,7 +63,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.storage.models import Volume, Disk, MountPoint
+from freenasUI.storage.models import Volume, Disk
 from freenasUI.system.models import Backup
 from freenasUI.settings import LOGGING
 from freenasUI.middleware import notifier

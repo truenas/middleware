@@ -49,11 +49,13 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 import socket
+from fnutils.query import wrap
 
 log = logging.getLogger('storage.views')
 
@@ -159,11 +161,13 @@ def volumemanager(request):
 
     # Grab disk list
     # Root device already ruled out
-    for disk, info in notifier().get_disks().items():
+    result = dispatcher.call_sync('disks.query', [('path', 'in', dispatcher.call_sync('volumes.get_available_disks'))])
+
+    for d in result:
         disks.append(forms.Disk(
-            info['devname'],
-            info['capacity'],
-            serial=info.get('ident')
+            d['path'],
+            d['mediasize'],
+            serial=d.get('serial')
         ))
     disks = sorted(disks, key=lambda x: (x.size, x.dev), cmp=_diskcmp)
 
@@ -195,7 +199,7 @@ def volumemanager(request):
 
     bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
 
-    qs = models.Volume.objects.filter(vol_fstype='ZFS')
+    qs = models.Volume.objects.filter(vol_fstype='zfs')
     swap = Advanced.objects.latest('id').adv_swapondrive
 
     encwarn = (
@@ -335,6 +339,7 @@ def volimport(request):
         'disks': disks
     })
 
+
 def volimport_progress(request):
       s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
       s.connect(SOCKIMP)
@@ -342,6 +347,7 @@ def volimport_progress(request):
       data = s.recv(1024)
       s.close()
       return HttpResponse(data, content_type='application/json')
+
 
 def volimport_abort(request):
     if request.method == 'POST':
@@ -375,6 +381,7 @@ def dataset_create(request, fs):
             props = {}
             cleaned_data = dataset_form.cleaned_data
             dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
+            pool_name = dataset_name.split('/')[0]
             dataset_compression = cleaned_data.get('dataset_compression')
             dataset_share_type = cleaned_data.get('dataset_share_type')
             if dataset_share_type == "windows":
@@ -382,9 +389,12 @@ def dataset_create(request, fs):
             props['casesensitivity'] = cleaned_data.get(
                 'dataset_case_sensitivity'
             )
-            props['compression'] = dataset_compression.__str__()
+            if dataset_compression != 'inherit':
+                props['compression'] = dataset_compression.__str__()
+
             dataset_atime = cleaned_data.get('dataset_atime')
-            props['atime'] = dataset_atime.__str__()
+            if dataset_atime != 'inherit':
+                props['atime'] = dataset_atime.__str__()
             refquota = cleaned_data.get('dataset_refquota')
             if refquota != '0':
                 props['refquota'] = refquota.__str__()
@@ -403,16 +413,18 @@ def dataset_create(request, fs):
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
                 props['recordsize'] = recordsize
-            errno, errmsg = notifier().create_zfs_dataset(
-                path=str(dataset_name),
-                props=props)
-            if errno == 0:
-                if dataset_share_type == "unix":
-                    notifier().dataset_init_unix(dataset_name)
-                elif dataset_share_type == "windows":
-                    notifier().dataset_init_windows(dataset_name)
-                elif dataset_share_type == "mac":
-                    notifier().dataset_init_apple(dataset_name)
+
+            result = dispatcher.call_task_sync(
+                'volume.dataset.create',
+                pool_name,
+                dataset_name,
+                'FILESYSTEM', {
+                    'share_type': dataset_share_type,
+                    'properties': {k: {'value': v} for k, v in props.items()}
+                }
+            )
+
+            if result['state'] == 'FINISHED':
                 return JsonResp(
                     request,
                     message=_("Dataset successfully added."))
@@ -437,51 +449,37 @@ def dataset_edit(request, dataset_name):
         if dataset_form.is_valid():
             if dataset_form.cleaned_data["dataset_quota"] == "0":
                 dataset_form.cleaned_data["dataset_quota"] = "none"
+
             if dataset_form.cleaned_data["dataset_refquota"] == "0":
                 dataset_form.cleaned_data["dataset_refquota"] = "none"
 
-            error = False
-            errors = {}
+            if dataset_form.cleaned_data["dataset_compression"] == "inherit":
+                dataset_form.cleaned_data["dataset_compression"] = None
 
-            for attr in (
-                'compression',
-                'atime',
-                'dedup',
-                'reservation',
-                'refreservation',
-                'quota',
-                'refquota',
-                'share_type'
-            ):
-                formfield = 'dataset_%s' % attr
-                val = dataset_form.cleaned_data[formfield]
+            if dataset_form.cleaned_data["dataset_dedup"] == "inherit":
+                dataset_form.cleaned_data["dataset_compression"] = None
 
-                if val == "inherit":
-                    success, err = notifier().zfs_inherit_option(
-                        dataset_name,
-                        attr)
-                else:
-                    if attr == "share_type":
-                        notifier().change_dataset_share_type(
-                            dataset_name, val)
-                    else:
-                        success, err = notifier().zfs_set_option(
-                            dataset_name,
-                            attr,
-                            val)
-                error |= not success
-                if not success:
-                    errors[formfield] = err
+            pool_name = dataset_name.split('/')[0]
 
-            if not error:
+            result = dispatcher.call_task_sync('volume.dataset.update', pool_name, dataset_name, {
+                'share_type': dataset_form.cleaned_data['dataset_share_type'],
+                'properties': {
+                    'compression': {'value': dataset_form.cleaned_data['dataset_compression']},
+                    'atime': {'value': dataset_form.cleaned_data['dataset_atime']},
+                    'dedup': {'value': dataset_form.cleaned_data['dataset_dedup']},
+                    'reservation': {'value': dataset_form.cleaned_data['dataset_reservation']},
+                    'refreservation': {'value': dataset_form.cleaned_data['dataset_refreservation']},
+                    'quota': {'value': dataset_form.cleaned_data['dataset_quota']},
+                    'refquota': {'value': dataset_form.cleaned_data['dataset_refquota']},
+                }
+            })
+
+            if result['state'] == 'FINISHED':
                 return JsonResp(
                     request,
                     message=_("Dataset successfully edited."))
             else:
-                for field, err in errors.items():
-                    dataset_form._errors[field] = dataset_form.error_class([
-                        err,
-                    ])
+                dataset_form._errors['__all__'] = dataset_form.error_class([result['error']['message']])
                 return JsonResp(request, form=dataset_form)
         else:
             return JsonResp(request, form=dataset_form)
@@ -507,17 +505,26 @@ def zvol_create(request, parent):
             props['compression'] = str(zvol_compression)
             if zvol_blocksize:
                 props['volblocksize'] = zvol_blocksize
-            errno, errmsg = notifier().create_zfs_vol(
-                name=str(zvol_name),
-                size=str(zvol_size),
-                sparse=cleaned_data.get("zvol_sparse", False),
-                props=props)
-            if errno == 0:
+
+            if cleaned_data.get("zvol_sparse", False):
+                props['sparse'] = {'value': True}
+
+            pool_name = zvol_name.split('/')[0]
+            result = dispatcher.call_task_sync(
+                'volume.dataset.create',
+                pool_name,
+                zvol_name,
+                'VOLUME', {
+                    'properties': {k: {'value': v} for k, v in props.items()}
+                }
+            )
+
+            if result['state'] == 'FINISHED':
                 return JsonResp(
                     request,
                     message=_("ZFS Volume successfully added."))
             else:
-                zvol_form.set_error(errmsg)
+                zvol_form.set_error(result['error']['message'])
     else:
         zvol_form = forms.ZVol_CreateForm(
             initial=defaults,
@@ -741,7 +748,7 @@ def clonesnap(request, snapshot):
     })
 
 
-def disk_detach(request, vname, label):
+def disk_detach(request, vname, guid):
 
     volume = models.Volume.objects.get(vol_name=vname)
 
@@ -757,39 +764,51 @@ def disk_detach(request, vname, label):
     })
 
 
-def disk_offline(request, vname, label):
-
-    volume = models.Volume.objects.get(vol_name=vname)
-    disk = notifier().label_to_disk(label)
+def disk_offline(request, vname, guid):
+    disk = dispatcher.call_sync('volumes.vdev_by_guid', vname, guid)
+    if not disk:
+        raise MiddlewareError('Vdev not found')
 
     if request.method == "POST":
-        notifier().zfs_offline_disk(volume, label)
-        return JsonResp(
-            request,
-            message=_("Disk offline operation has been issued."))
+        result = dispatcher.call_task_sync(
+            'zfs.pool.offline_disk',
+            vname,
+            guid)
+
+        if result['state'] == 'FINISHED':
+            return JsonResp(
+                request,
+                message=_("Disk offline operation has been issued."))
+        else:
+            raise MiddlewareError(result['error']['message'])
 
     return render(request, 'storage/disk_offline.html', {
         'vname': vname,
-        'label': label,
-        'disk': disk,
+        'label': disk['path'],
     })
 
 
-def disk_online(request, vname, label):
-
-    volume = models.Volume.objects.get(vol_name=vname)
-    disk = notifier().label_to_disk(label)
+def disk_online(request, vname, guid):
+    disk = dispatcher.call_sync('volumes.vdev_by_guid', vname, guid)
+    if not disk:
+        raise MiddlewareError('Vdev not found')
 
     if request.method == "POST":
-        notifier().zfs_online_disk(volume, label)
-        return JsonResp(
-            request,
-            message=_("Disk online operation has been issued."))
+        result = dispatcher.call_task_sync(
+            'zfs.pool.online_disk',
+            vname,
+            guid)
+
+        if result['state'] == 'FINISHED':
+            return JsonResp(
+                request,
+                message=_("Disk online operation has been issued."))
+        else:
+            raise MiddlewareError(result['error']['message'])
 
     return render(request, 'storage/disk_online.html', {
         'vname': vname,
-        'label': label,
-        'disk': disk,
+        'label': disk['path'],
     })
 
 
@@ -849,27 +868,41 @@ def volume_detach(request, vid):
 
 
 def zpool_scrub(request, vid):
-    volume = models.Volume.objects.get(pk=vid)
-    try:
-        pool = notifier().zpool_parse(volume.vol_name)
-    except:
-        raise MiddlewareError(
-            _('Pool output could not be parsed. Is the pool imported?')
-        )
+    volume = wrap(dispatcher.call_sync(
+        'volumes.query',
+        [('id', '=', str(vid))],
+        {'single': True}
+    ))
+
+    if not volume:
+        raise MiddlewareError(_('Pool not found.'))
+
     if request.method == "POST":
         if request.POST.get("scrub") == 'IN_PROGRESS':
-            notifier().zfs_scrub(str(volume.vol_name), stop=True)
+            task = dispatcher.call_sync(
+                'tasks.query',
+                [
+                    ('name', '=', 'zfs.pool.scrub'),
+                    ('state', '=', 'EXECUTING')
+                ]
+            )
+
+            if task:
+                dispatcher.call_sync('task.abort', task['id'])
+            else:
+                raise MiddlewareError(_('Scrub task not found.'))
+
             return JsonResp(
                 request,
                 message=_("The scrub process has stopped"),
             )
         else:
-            notifier().zfs_scrub(str(volume.vol_name))
+            dispatcher.submit_task('zfs.pool.scrub', volume['name'])
             return JsonResp(request, message=_("The scrub process has begun"))
 
     return render(request, 'storage/scrub_confirm.html', {
         'volume': volume,
-        'scrub': pool.scrub,
+        'scrub': volume['scan.state'],
     })
 
 
@@ -908,19 +941,18 @@ def multipath_status(request):
 
 
 def multipath_status_json(request):
-
-    multipaths = notifier().multipath_all()
+    multipaths = wrap(dispatcher.call_sync('disks.query', [('is_multipath', '=', True)]))
     _id = 1
     items = []
     for mp in multipaths:
         children = []
-        for cn in mp.consumers:
+        for member, status in mp['status.multipath.members'].items():
             actions = {}
             items.append({
                 'id': str(_id),
-                'name': cn.devname,
-                'status': cn.status,
-                'lunid': cn.lunid,
+                'name': member,
+                'status': status,
+                'lunid': mp['lunid'],
                 'type': 'consumer',
                 'actions': json.dumps(actions),
             })
@@ -928,8 +960,8 @@ def multipath_status_json(request):
             _id += 1
         data = {
             'id': str(_id),
-            'name': mp.devname,
-            'status': mp.status,
+            'name': mp['path'],
+            'status': mp['status.multipath.status'],
             'type': 'root',
             'children': children,
         }
@@ -1245,19 +1277,16 @@ def volume_recoverykey_remove(request, object_id):
 
 
 def volume_upgrade(request, object_id):
-    volume = models.Volume.objects.get(pk=object_id)
-    try:
-        version = notifier().zpool_version(volume.vol_name)
-    except:
-        raise MiddlewareError(
-            _('Pool output could not be parsed. Is the pool imported?')
-        )
+    volume = dispatcher.call_sync('volumes.query', [('id', '=', object_id)], {'single': True})
+    if not volume:
+        raise MiddlewareError(_("Unknown volume"))
+
     if request.method == "POST":
-        upgrade = notifier().zpool_upgrade(str(volume.vol_name))
-        if upgrade is not True:
+        result = dispatcher.call_task_sync('volume.upgrade', volume['name'])
+        if result['state'] != 'FINISHED':
             return JsonResp(
                 request,
-                message=_("The pool failed to upgraded: %s") % upgrade,
+                message=_("The pool failed to upgraded: %s") % result['error']['message']
             )
         else:
             return JsonResp(request, message=_("The pool has been upgraded"))
@@ -1268,10 +1297,9 @@ def volume_upgrade(request, object_id):
 
 
 def disk_editbulk(request):
-
     if request.method == "POST":
         ids = request.POST.get("ids", "").split(",")
-        disks = models.Disk.objects.filter(id__in=ids)
+        disks = dispatcher.call_sync('disks.query', [('id', 'in', ids)])
         form = forms.DiskEditBulkForm(request.POST, disks=disks)
         if form.is_valid():
             form.save()
@@ -1282,12 +1310,12 @@ def disk_editbulk(request):
         return JsonResp(request, form=form)
     else:
         ids = request.GET.get("ids", "").split(",")
-        disks = models.Disk.objects.filter(id__in=ids)
+        disks = dispatcher.call_sync('disks.query', [('id', 'in', ids)])
         form = forms.DiskEditBulkForm(disks=disks)
 
     return render(request, "storage/disk_editbulk.html", {
         'form': form,
-        'disks': ', '.join([disk.disk_name for disk in disks]),
+        'disks': ', '.join([disk['path'] for disk in disks]),
     })
 
 

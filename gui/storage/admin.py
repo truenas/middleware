@@ -87,11 +87,9 @@ class VolumeFAdmin(BaseFreeAdmin):
     )
 
     def get_datagrid_context(self, request):
-        has_multipath = models.Disk.objects.exclude(
-            disk_multipath_name='').exists()
-        return {
-            'has_multipath': has_multipath,
-        }
+        from freenasUI.middleware.connector import connection as dispatcher
+        has_multipath = dispatcher.call_sync('disks.query', [('is_multipath', '=', True)], {"count": True}) > 0
+        return {'has_multipath': has_multipath}
 
     def get_datagrid_columns(self):
 
@@ -138,7 +136,7 @@ class VolumeFAdmin(BaseFreeAdmin):
 
     def _action_builder(
         self, name, label=None, url=None, func="editObject", icon=None,
-        show=None, fstype="ZFS", decrypted=True, has_enc=False, enc_level=None,
+        show=None, fstype="zfs", decrypted=True, has_enc=False, enc_level=None,
         hide_unknown=True,
     ):
 
@@ -161,10 +159,10 @@ class VolumeFAdmin(BaseFreeAdmin):
         else:
             hide_cond = "row.data.type !== undefined"
 
-        if fstype == "ZFS":
+        if fstype == "zfs":
             hide_fs = (
                 "row.data.vol_fstype !== undefined && "
-                "row.data.vol_fstype != 'ZFS'"
+                "row.data.vol_fstype != 'zfs'"
             )
         else:
             hide_fs = "false"
@@ -408,8 +406,8 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
         )
 
     def get_datagrid_context(self, request):
-        volume = models.Volume.objects.get(id=request.GET.get('id'))
-        if volume.vol_fstype == 'ZFS':
+        volume = models.Volume.objects.get(vol_guid=request.GET.get('id'))
+        if volume.vol_fstype == 'zfs':
             pool = notifier().zpool_parse(volume.vol_name)
             return {
                 'pool': pool,
