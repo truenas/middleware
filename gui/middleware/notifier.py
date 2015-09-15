@@ -1496,7 +1496,7 @@ class notifier:
         """Return a dictionary that contains all ZFS volumes list"""
 
         from freenasUI.middleware.connector import connection as dispatcher
-        result = dispatcher.call_sync('zfs.query', [
+        result = dispatcher.call_sync('zfs.dataset.query', [
             ('type', '=', 'volume'),
             ('pool', '=', volname)
         ], {'sort': sort} if sort else None)
@@ -1505,7 +1505,7 @@ class notifier:
 
     def list_zfs_fsvols(self, system=False):
         from freenasUI.middleware.connector import connection as dispatcher
-        result = dispatcher.call_sync('zfs.query', [
+        result = dispatcher.call_sync('zfs.dataset.query', [
             ('name', '~', '\.system'),
         ] if system else None)
 
