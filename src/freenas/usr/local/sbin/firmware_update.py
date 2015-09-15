@@ -102,6 +102,19 @@ for controller in controllerlist:
                         LOGLINES.append(controller_boardname)
                     UPDATE_FAIL.append(controller)
                     continue
+
+                # In some cases we'll end up with a board name like:
+                # SAS9206-16E (Notice the ending E is capitalized...)
+                # Handle that case by cooking the output
+                # If we don't do this we'll ultimately fail because the
+                # firmware files are all mps_SAS9206-16e_p20.firmware.bin
+                # Notice the mixed case...I did that so I couldn't
+                # just use lower()...sigh
+                if controller_boardname.endswith("E"):
+                    controller_boardname = controller_boardname[:-1] + 'e'
+                if controller_boardname.endswith("I"):
+                    controller_boardname = controller_boardname[:-1] + 'i'
+
             if line.startswith("Firmware Version"):
                 # We should have a line like:
                 # Firmware Version               : 09.00.00.00
