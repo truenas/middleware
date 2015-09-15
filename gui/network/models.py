@@ -204,13 +204,6 @@ class Interfaces(NewModel):
         primary_key=True
     )
 
-    int_interface = models.CharField(
-        max_length=300,
-        blank=False,
-        verbose_name=_("NIC"),
-        help_text=_("Pick your NIC")
-    )
-
     int_name = models.CharField(
             max_length="120",
             verbose_name=_("Interface Name"),
@@ -265,7 +258,6 @@ class Interfaces(NewModel):
     class Meta:
         verbose_name = _("Interface")
         verbose_name_plural = _("Interfaces")
-        ordering = ["int_interface"]
 
     class Middleware:
         middleware_methods = {
@@ -273,7 +265,7 @@ class Interfaces(NewModel):
             'update': 'network.interface.configure'
         }
         field_mapping = (
-            (('id', 'int_interface'), 'id'),
+            ('id', 'id'),
             ('int_name', 'name'),
             ('int_dhcp', 'dhcp'),
             ('int_ipv6auto', 'rtadv'),
@@ -300,7 +292,9 @@ class Interfaces(NewModel):
         return map(lambda a: a['address'], filter(lambda a: a['type'] == 'INET6', self.aliases))
 
     def get_media_status(self):
-        return notifier().iface_media_status(self.int_interface)
+        from freenasUI.middleware.connector import connection as dispatcher
+        iface = wrap(dispatcher.call_sync('network.interfaces.query', [('id', '=', self.id)], {'single': True}))
+        return iface['status.link_state']
 
 
 class VLAN(NewModel):

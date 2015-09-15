@@ -22,7 +22,6 @@ class InterfacesFAdmin(BaseFreeAdmin):
     icon_view = u"ViewAllInterfacesIcon"
     resource_mixin = InterfacesResourceMixin
     exclude_fields = (
-        'id',
         'int_ipv4address',
         'int_ipv4address_b',
         'int_v4netmaskbit',
@@ -49,7 +48,6 @@ class InterfacesFAdmin(BaseFreeAdmin):
             }""" % (escapejs(_('Edit interface')), ),
         }
         return actions
-
 
     def get_datagrid_columns(self):
         columns = super(InterfacesFAdmin, self).get_datagrid_columns()

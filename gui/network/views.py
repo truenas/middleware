@@ -83,6 +83,7 @@ def editinterface(request, interface_name):
                 'aliases': final
             })
 
+            return JsonResp(request, message=_("Interface successfully edited"))
     else:
         nic = models.Interfaces.objects.get(pk=interface_name)
         form = InterfacesForm(instance=nic)

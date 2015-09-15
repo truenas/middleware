@@ -44,11 +44,13 @@ from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField, IPAddressFormField
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.network import models
 from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
 )
+from fnutils import force_none
 
 log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
@@ -58,7 +60,7 @@ class InterfacesForm(ModelForm):
     class Meta:
         fields = ['id', 'int_name', 'int_dhcp', 'int_ipv6auto', 'int_disableipv6', 'int_mtu']
         model = models.Interfaces
-        widgets = {'int_mtu': forms.widgets.TextInput()}
+        widgets = {'int_mtu': forms.widgets.TextInput(), 'id': forms.HiddenInput()}
 
 
 class IPMIForm(Form):
@@ -332,8 +334,22 @@ class VLANForm(ModelForm):
             result = dispatcher.call_task_sync('network.interface.create', 'VLAN')
             self.instance.id = result['result']
 
-        retval = super(VLANForm, self).save()
-        return retval
+        result = dispatcher.call_task_sync(
+            'network.interface.configure',
+            self.instance.id,
+            {
+                'name': force_none(self.vlan_description),
+                'vlan': {
+                    'tag': self.instance.vlan_tag,
+                    'parent': self.instance.vlan_pint
+                }
+            }
+        )
+
+        if result['state'] == 'FINISHED':
+            return True
+        else:
+            raise MiddlewareError(result['error']['message'])
 
 
 class LAGGInterfaceForm(ModelForm):
