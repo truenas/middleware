@@ -177,7 +177,13 @@ def remove_directory(dest_path):
         shutil.rmtree(dest_path)
 
 
-def update_plugin_zipfile(ip, username, password, port, install_mode, plugin_vesion):
+def update_plugin_zipfile(
+        ip,
+        username,
+        password,
+        port,
+        install_mode,
+        plugin_vesion):
     try:
         fname = get_plugin_file_name()
         if fname is None:
@@ -185,11 +191,31 @@ def update_plugin_zipfile(ip, username, password, port, install_mode, plugin_ves
 
         pat = settings.STATIC_ROOT
         extract_zip(pat + '/' + fname, pat + '/plugin')
-        extract_zip(pat + '/plugin/plugins/ixsystems-vcp-service.jar', pat + '/plugin/plugins/ixsystems-vcp-service')
-        status_flag = create_propertyFile(pat + '/plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties', install_mode, plugin_vesion, ip, username, password, port, 'Calsoft@')
-        zipdir(pat + '/plugin/plugins/ixsystems-vcp-service', pat + '/plugin/plugins/ixsystems-vcp-service.jar')
+        extract_zip(
+            pat + '/plugin/plugins/ixsystems-vcp-service.jar',
+            pat + '/plugin/plugins/ixsystems-vcp-service')
+        status_flag = create_propertyFile(
+            pat +
+            '/plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties',
+            install_mode,
+            plugin_vesion,
+            ip,
+            username,
+            password,
+            port,
+            'Calsoft@')
+        zipdir(pat + '/plugin/plugins/ixsystems-vcp-service',
+               pat + '/plugin/plugins/ixsystems-vcp-service.jar')
         remove_directory(pat + '/plugin/plugins/ixsystems-vcp-service')
-        zip_this_file(pat + '/plugin', pat + '/' + fname[0:len(fname) - 4], 'zip')
+        zip_this_file(
+            pat +
+            '/plugin',
+            pat +
+            '/' +
+            fname[
+                0:len(fname) -
+                4],
+            'zip')
         remove_directory(pat + '/plugin')
         return status_flag
     except Exception as ex:
@@ -208,14 +234,23 @@ def decrypt_string(str_ciph, key):
     return base64.b64decode(resolved)
 
 
-def create_propertyFile(fpath, install_mode, plugin_vesion, host_ip, username, password, port, enc_key):
+def create_propertyFile(
+        fpath,
+        install_mode,
+        plugin_vesion,
+        host_ip,
+        username,
+        password,
+        port,
+        enc_key):
     try:
         plugin_vesion_old = plugin_vesion
         plugin_vesion_new = plugin_vesion
         if 'UPGRADE' in install_mode:
             cp = SafeConfigParser()
             cp.read(fpath)
-            plugin_vesion_old = cp.get('installation_parameter', 'plugin_version_new')
+            plugin_vesion_old = cp.get(
+                'installation_parameter', 'plugin_version_new')
 
         Config = ConfigParser.ConfigParser()
         cfgfile = open(fpath, 'w')
@@ -223,10 +258,21 @@ def create_propertyFile(fpath, install_mode, plugin_vesion, host_ip, username, p
         Config.set('installation_parameter', 'ip', host_ip)
         Config.set('installation_parameter', 'username', username)
         Config.set('installation_parameter', 'port', port)
-        Config.set('installation_parameter', 'password', encrypt_string(password, enc_key))
+        Config.set(
+            'installation_parameter',
+            'password',
+            encrypt_string(
+                password,
+                enc_key))
         Config.set('installation_parameter', 'install_mode', install_mode)
-        Config.set('installation_parameter', 'plugin_version_old', plugin_vesion_old)
-        Config.set('installation_parameter', 'plugin_version_new', plugin_vesion_new)
+        Config.set(
+            'installation_parameter',
+            'plugin_version_old',
+            plugin_vesion_old)
+        Config.set(
+            'installation_parameter',
+            'plugin_version_new',
+            plugin_vesion_new)
         Config.write(cfgfile)
         cfgfile.close()
         return True

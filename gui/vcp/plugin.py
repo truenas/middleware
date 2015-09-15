@@ -91,7 +91,14 @@ class PluginManager:
         ext.client = client
         return ext
 
-    def install_vCenter_plugin(self, vc_ip, usernName, password, port, manage_ip, sys_guiprotocol):
+    def install_vCenter_plugin(
+            self,
+            vc_ip,
+            usernName,
+            password,
+            port,
+            manage_ip,
+            sys_guiprotocol):
         try:
 
             try:
@@ -123,7 +130,14 @@ class PluginManager:
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
-    def upgrade_vCenter_plugin(self, vc_ip, usernName, password, port, manage_ip, sys_guiprotocol):
+    def upgrade_vCenter_plugin(
+            self,
+            vc_ip,
+            usernName,
+            password,
+            port,
+            manage_ip,
+            sys_guiprotocol):
         try:
 
             try:

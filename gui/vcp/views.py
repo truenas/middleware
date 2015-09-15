@@ -33,7 +33,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.vcp.forms import VcenterConfigurationForm
 from freenasUI.vcp import models
-from django.http import HttpResponse,HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 
 from freenasUI.system.models import (
     Settings,
@@ -42,63 +42,69 @@ from freenasUI.system.models import (
 
 def vcp_home(request):
     if request.method == 'POST':
-     form = VcenterConfigurationForm(request.POST)
-     if form.is_valid():
+        form = VcenterConfigurationForm(request.POST)
+        if form.is_valid():
 
-         if form.install_plugin():
-            form.save()
-            obj = models.VcenterConfiguration.objects.latest('id')
-            obj.vc_version = utils.get_plugin_version()
-            obj.vc_password = ''
-            obj.save()
-         else:
-            return JsonResp(request, error = True, message = _(form.vcp_status))
-     else :
-       form.is_update_needed()
-       return render(request, "vcp/index.html", {'form': form })
+            if form.install_plugin():
+                form.save()
+                obj = models.VcenterConfiguration.objects.latest('id')
+                obj.vc_version = utils.get_plugin_version()
+                obj.vc_password = ''
+                obj.save()
+            else:
+                return JsonResp(
+                    request, error=True, message=_(
+                        form.vcp_status))
+        else:
+            form.is_update_needed()
+            return render(request, "vcp/index.html", {'form': form})
     try:
-      obj = models.VcenterConfiguration.objects.latest('id')
-      form = VcenterConfigurationForm(instance=obj)
-      form.fields['vc_ip'].widget.attrs['readonly'] = True
-      form.fields['vc_username'].widget.attrs['readonly'] = True
-      form.fields['vc_port'].widget.attrs['readonly'] = True
-      form.fields['vc_management_ip'].widget.attrs['readonly'] = True
-      form.is_update_needed()
-    except :
-       form = VcenterConfigurationForm()
-       form.is_update_needed()
-    return render(request, "vcp/index.html", {'form': form })
+        obj = models.VcenterConfiguration.objects.latest('id')
+        form = VcenterConfigurationForm(instance=obj)
+        form.fields['vc_ip'].widget.attrs['readonly'] = True
+        form.fields['vc_username'].widget.attrs['readonly'] = True
+        form.fields['vc_port'].widget.attrs['readonly'] = True
+        form.fields['vc_management_ip'].widget.attrs['readonly'] = True
+        form.is_update_needed()
+    except:
+        form = VcenterConfigurationForm()
+        form.is_update_needed()
+    return render(request, "vcp/index.html", {'form': form})
 
 
 def vcp_upgrade(request):
     if request.method == 'POST':
-     form = VcenterConfigurationForm(request.POST)
-     if form.is_valid():
-        if form.upgrade_plugin():
-           return HttpResponseRedirect("/vcp/home")
+        form = VcenterConfigurationForm(request.POST)
+        if form.is_valid():
+            if form.upgrade_plugin():
+                return HttpResponseRedirect("/vcp/home")
+            else:
+                return JsonResp(
+                    request, error=True, message=_(
+                        form.vcp_status))
         else:
-           return JsonResp(request, error = True, message = _(form.vcp_status))
-     else :
             form.is_update_needed()
             form.fields['vc_ip'].widget.attrs['readonly'] = True
             form.fields['vc_username'].widget.attrs['readonly'] = True
             form.fields['vc_port'].widget.attrs['readonly'] = True
             form.fields['vc_management_ip'].widget.attrs['readonly'] = True
-    return render(request, "vcp/index.html", {'form': form })
+    return render(request, "vcp/index.html", {'form': form})
 
 
 def vcp_uninstall(request):
     if request.method == 'POST':
-     form = VcenterConfigurationForm(request.POST)
-     if form.is_valid():
-        if form.uninstall_plugin():
-           return HttpResponseRedirect("/vcp/home")
+        form = VcenterConfigurationForm(request.POST)
+        if form.is_valid():
+            if form.uninstall_plugin():
+                return HttpResponseRedirect("/vcp/home")
+            else:
+                return JsonResp(
+                    request, error=True, message=_(
+                        form.vcp_status))
         else:
-           return JsonResp(request, error = True, message = _(form.vcp_status))
-     else :
             form.is_update_needed()
             form.fields['vc_ip'].widget.attrs['readonly'] = True
             form.fields['vc_username'].widget.attrs['readonly'] = True
             form.fields['vc_port'].widget.attrs['readonly'] = True
             form.fields['vc_management_ip'].widget.attrs['readonly'] = True
-    return render(request, "vcp/index.html", {'form': form })
+    return render(request, "vcp/index.html", {'form': form})
