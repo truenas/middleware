@@ -1093,7 +1093,6 @@ class DiskFormPartial(ModelForm):
         instance = getattr(self, 'instance', None)
         if instance and instance.id:
             self._original_smart_en = self.instance.disk_togglesmart
-            self._original_smart_opts = self.instance.disk_smartoptions
             self.fields['disk_name'].widget.attrs['readonly'] = True
             self.fields['disk_name'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '

@@ -71,9 +71,6 @@ class Volume(NewModel):
         blank=True,
         editable=False,
     )
-    vol_mountpoint = models.CharField(
-        max_length=120
-    )
     vol_status = models.CharField(
         max_length=120
     )
@@ -598,7 +595,6 @@ class Disk(NewModel):
             ('disk_advpowermgmt', 'apm_mode'),
             ('disk_acousticlevel', 'acoustic_level'),
             ('disk_togglesmart', 'smart'),
-            ('disk_smartoptions', 'smart_options'),
             ('disk_enabled', 'online')
         )
 
