@@ -1288,18 +1288,15 @@ class LAGGInterfaceResourceMixin(object):
         if self.is_webclient(bundle.request):
             bundle.data['lagg_interface'] = unicode(bundle.obj)
             bundle.data['_edit_url'] = reverse(
-                'freeadmin_network_interfaces_edit',
+                'network_lagg_edit',
                 kwargs={
-                    'oid': bundle.obj.id,
+                    'interface_name': bundle.obj.id,
                 }) + '?deletable=false'
             bundle.data['_delete_url'] = reverse(
                 'freeadmin_network_interfaces_delete',
                 kwargs={
                     'oid': bundle.obj.id,
                 })
-            bundle.data['_members_url'] = reverse(
-                'freeadmin_network_lagginterfacemembers_datagrid'
-            ) + '?id=%d' % bundle.obj.id
         return bundle
 
 

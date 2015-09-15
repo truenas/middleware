@@ -32,5 +32,7 @@ urlpatterns = patterns('freenasUI.network.views',
     url(r'^ipmi/$', 'ipmi', name='network_ipmi'),
     url(r'^hostname/$', 'hostname', name='network_hostname'),
     url(r'^empty-alias-formset/', 'empty_alias_formset', name='network_empty_alias_formset'),
+    url(r'^empty-lagg-member-formset/', 'empty_lagg_member_formset', name='network_empty_lagg_member_formset'),
     url(r'^editinterface/(?P<interface_name>[^/]+)/$', 'editinterface', name='network_interface_edit'),
+    url(r'^editlagg/(?P<interface_name>[^/]+)/$', 'editlagg', name='network_lagg_edit'),
 )

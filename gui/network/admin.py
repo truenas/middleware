@@ -3,8 +3,7 @@ from django.utils.translation import ugettext as _
 from django.utils.html import escapejs
 
 from freenasUI.api.resources import (
-    InterfacesResourceMixin, LAGGInterfaceResourceMixin,
-    LAGGInterfaceMembersResourceMixin
+    InterfacesResourceMixin, LAGGInterfaceResourceMixin
 )
 from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -96,39 +95,16 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
 
     def get_actions(self):
         actions = super(LAGGInterfaceFAdmin, self).get_actions()
-        actions['EditMembers'] = {
-            'button_name': _('Edit Members'),
+        actions["Edit"] = {
+            'button_name': _("Edit"),
             'on_click': """function() {
-              var mybtn = this;
-              for (var i in grid.selection) {
-                var data = grid.row(i).data;
-                var p = dijit.byId('tab_networksettings');
-
-                var c = p.getChildren();
-                for(var i=0; i<c.length; i++){
-                  if(c[i].title == '%(lagg_members)s ' + data.int_interface){
-                    p.selectChild(c[i]);
-                    return;
-                  }
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('%s', data._edit_url, [mybtn,]);
                 }
-
-                var pane2 = new dijit.layout.ContentPane({
-                  title: '%(lagg_members)s ' + data.int_interface,
-                  refreshOnShow: true,
-                  closable: true,
-                  href: data._members_url
-                });
-                dojo.addClass(pane2.domNode, [
-                 "data_network_LAGGInterfaceMembers" + data.int_name,
-                 "objrefresh"
-                 ]);
-                p.addChild(pane2);
-                p.selectChild(pane2);
-
-              }
-            }""" % {
-            'lagg_members': _('LAGG Members'),
-        }}
+            }""" % (escapejs(_('Edit LAGG interface')), ),
+        }
         return actions
 
     def get_confirm_message(self, action, **kwargs):
@@ -146,17 +122,6 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
                 'Do you want to proceed?'
             )
 
-
-class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
-
-    icon_object = u"LAGGIcon"
-    icon_model = u"LAGGIcon"
-    resource_mixin = LAGGInterfaceMembersResourceMixin
-
-    def get_datagrid_filters(self, request):
-        return {
-            "lagg_interfacegroup__id": request.GET.get("id"),
-            }
 
 site.register(models.Interfaces, InterfacesFAdmin)
 site.register(models.LAGGInterface, LAGGInterfaceFAdmin)

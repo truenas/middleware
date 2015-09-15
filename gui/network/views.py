@@ -37,8 +37,9 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.network import models
-from freenasUI.network.forms import HostnameForm, IPMIForm, InterfacesForm, AliasFormSet
+from freenasUI.network.forms import HostnameForm, IPMIForm, InterfacesForm, AliasFormSet, LAGGMemberFormSet, LAGGInterfaceForm
 
 
 def hostname(request):
@@ -56,7 +57,14 @@ def hostname(request):
 
 def empty_alias_formset(request):
     form = AliasFormSet()
-    return render(request, 'network/alias_empty_form.html', {
+    return render(request, 'network/empty_form.html', {
+        'form': form
+    })
+
+
+def empty_lagg_member_formset(request):
+    form = LAGGMemberFormSet()
+    return render(request, 'network/empty_form.html', {
         'form': form
     })
 
@@ -68,7 +76,7 @@ def editinterface(request, interface_name):
         form = InterfacesForm(data=request.POST)
         aliases = AliasFormSet(data=request.POST)
 
-        if form.is_valid():
+        if form.is_valid() and aliases.is_valid():
             form.save()
 
             def convert_alias(alias):
@@ -79,11 +87,20 @@ def editinterface(request, interface_name):
                 }
 
             final = map(convert_alias, aliases.cleaned_data)
-            dispatcher.call_task_sync('network.interface.configure', interface_name, {
+            result = dispatcher.call_task_sync('network.interface.configure', interface_name, {
                 'aliases': final
             })
 
-            return JsonResp(request, message=_("Interface successfully edited"))
+            if result['state'] == 'FINISHED':
+                return JsonResp(request, message=_("Interface successfully edited"))
+            else:
+                raise MiddlewareError(result['error']['message'])
+
+        return render(request, 'network/editinterface.html', {
+            'interface_name': interface_name,
+            'form': form,
+            'formset': aliases
+        })
     else:
         nic = models.Interfaces.objects.get(pk=interface_name)
         form = InterfacesForm(instance=nic)
@@ -93,6 +110,37 @@ def editinterface(request, interface_name):
         'interface_name': interface_name,
         'form': form,
         'formset': aliases
+    })
+
+
+def editlagg(request, interface_name):
+    from freenasUI.middleware.connector import connection as dispatcher
+
+    if request.method == "POST":
+        form = LAGGInterfaceForm(data=request.POST)
+        members = LAGGMemberFormSet(data=request.POST)
+
+        if form.is_valid():
+            result = dispatcher.call_task_sync('network.interface.configure', interface_name, {
+                'lagg': {
+                    'protocol': form.instance.lagg_protocol,
+                    'ports': map(lambda f: f['member'], members.cleaned_data)
+                }
+            })
+
+            if result['state'] == 'FINISHED':
+                return JsonResp(request, message=_("LAGG successfully edited"))
+            else:
+                raise MiddlewareError(result['error']['message'])
+    else:
+        lagg = models.LAGGInterface.objects.get(pk=interface_name)
+        form = LAGGInterfaceForm(instance=lagg)
+        members = LAGGMemberFormSet(initial=map(lambda m: {'member': m}, lagg.members))
+
+    return render(request, 'network/editlagg.html', {
+        'interface_name': interface_name,
+        'form': form,
+        'formset': members
     })
 
 

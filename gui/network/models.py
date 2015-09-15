@@ -240,21 +240,10 @@ class Interfaces(NewModel):
     )
 
     def __unicode__(self):
-        if not self.int_name:
-            return self.int_interface
-        return u'%s' % self.int_name
+        return unicode(self.id)
 
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)
-
-    def delete(self):
-        with transaction.atomic():
-            for lagg in self.lagginterface_set.all():
-                lagg.delete()
-            if self.id:
-                super(Interfaces, self).delete()
-        notifier().stop("netif")
-        notifier().start("network")
 
     class Meta:
         verbose_name = _("Interface")
@@ -398,13 +387,11 @@ class LAGGInterface(NewModel):
     def __unicode__(self):
         return self.id
 
-    def delete(self):
-        super(LAGGInterface, self).delete()
-        VLAN.objects.filter(
-            vlan_pint=self.lagg_interface.int_interface
-            ).delete()
-        self.lagg_interface.delete()
-        notifier().iface_destroy(self.lagg_interface.int_interface)
+    @property
+    def members(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        iface = wrap(dispatcher.call_sync('network.interfaces.query', [('id', '=', self.id)], {'single': True}))
+        return iface.get('lagg.ports')
 
     class Middleware:
         provider_name = 'network.interfaces'

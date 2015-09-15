@@ -353,11 +353,6 @@ class VLANForm(ModelForm):
 
 
 class LAGGInterfaceForm(ModelForm):
-    lagg_interfaces = forms.MultipleChoiceField(
-        widget=forms.SelectMultiple(),
-        label=_('Physical NICs in the LAGG'),
-    )
-
     class Meta:
         model = models.LAGGInterface
         exclude = ('lagg_interface', 'id')
@@ -367,9 +362,6 @@ class LAGGInterfaceForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(LAGGInterfaceForm, self).__init__(*args, **kwargs)
-        self.fields['lagg_interfaces'].choices = list(
-            choices.NICChoices(nolagg=True)
-        )
         # Remove empty option (e.g. -------)
         self.fields['lagg_protocol'].choices = (
             self.fields['lagg_protocol'].choices[1:]
@@ -392,6 +384,13 @@ class LAGGInterfaceForm(ModelForm):
             return True
         else:
             raise MiddlewareError(result['error']['message'])
+
+
+class LAGGMemberForm(Form):
+    member = forms.ChoiceField(
+        choices=choices.NICChoices(nolagg=True),
+        label=_('Member interface'),
+    )
 
 
 class StaticRouteForm(ModelForm):
@@ -420,5 +419,17 @@ class AliasForm(Form):
         label=_("Prefix length"),
     )
 
+    def clean_netmask(self):
+        af = self.cleaned_data['type']
+        prefixlen = self.cleaned_data['netmask']
+        if af == 'INET' and (prefixlen > 32 or prefixlen < 0):
+            raise forms.ValidationError(_("Prefixlen must be in range 0-32"))
+
+        if af == 'INET6' and (prefixlen > 128 or prefixlen < 0):
+            raise forms.ValidationError(_("Prefixlen must be in range 0-128"))
+
+        return prefixlen
+    
 
 AliasFormSet = formset_factory(AliasForm, extra=0)
+LAGGMemberFormSet = formset_factory(LAGGMemberForm, extra=0)
