@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-08-17 13:38+0000\n"
+"PO-Revision-Date: 2015-09-13 17:54+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1439818696.0\n"
+"X-POOTLE-MTIME: 1442166889.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12807,29 +12807,24 @@ msgstr ""
 
 #: network/forms.py:320
 #: network/forms.py:324
-#, fuzzy
 msgid "This field is required for failover"
-msgstr "Dit veld is vereist voor anonieme aanmelding"
+msgstr "Dit veld is vereist voor failover"
 
 #: services/forms.py:1151
-#, fuzzy
 msgid "Extent is already in this target."
-msgstr "LUN-ID wordt al gebruikt voor dit doel."
+msgstr "Gebeurtenis bevindt zich al in dit doel."
 
 #: jails/models.py:647
-#, fuzzy
 msgid "Jail Template"
-msgstr "Jail-sjablonen"
+msgstr "Jail-sjabloon"
 
 #: services/models.py:679
-#, fuzzy
 msgid "Portal IPs"
-msgstr "Portal-IP"
+msgstr "Portal-IP's"
 
 #: services/models.py:910
-#, fuzzy
 msgid "iSCSI Group"
-msgstr "iSCSI-groepen"
+msgstr "iSCSI-groep"
 
 #: templates/vcp/index.html:6
 #, fuzzy
@@ -12842,23 +12837,21 @@ msgid "Available Plugin Version:"
 msgstr "Beschikbare plug-ins"
 
 #: templates/vcp/index.html:20
-#, fuzzy
 msgid "Installed Plugin Version:"
-msgstr "Installeer Plugin"
+msgstr "Versie van geïnstalleerde plug-in:"
 
 #: templates/vcp/index.html:33
-#, fuzzy
 msgid "Uninstall"
-msgstr "Installeren"
+msgstr "De-installeren"
 
 #: vcp/forms.py:56
 msgid "Please select the TrueNAS management interface."
-msgstr ""
+msgstr "Selecteer de TrueNAS-beheerinterface."
 
 #: vcp/hook.py:45
 #: vcp/nav.py:35
 msgid "vCenter"
-msgstr ""
+msgstr "vCenter"
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
@@ -12885,9 +12878,8 @@ msgid " vCenter Password"
 msgstr "Wachtwoord Wijzigen"
 
 #: vcp/models.py:74
-#, fuzzy
 msgid "version"
-msgstr "Versie"
+msgstr "versie"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
@@ -12896,45 +12888,42 @@ msgid "VCenter Configuration"
 msgstr "Configuratie"
 
 #: vcp/nav.py:44
-#, fuzzy
 msgid "vCenter Plugin Configuration"
-msgstr "Globale configuratie van target"
+msgstr "vCenter-plug-inconfiguratie"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr ""
+msgstr "vCenter-plug-in met succes geïnstalleerd."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr ""
+msgstr "vCenter-plug-in met succes bijgewerkt."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
-msgstr ""
+msgstr "vCenter-plug-in met succes gede-installeerd."
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
-msgstr ""
+msgstr "Eén interface moet als kritiek voor failover worden gemarkeerd."
 
 #: vcp/models.py:41
-#, fuzzy
 msgid "TrueNAS Management IP Address"
-msgstr "IP-adres van DNS-doorstuurserver"
+msgstr "IP-adres voor TrueNAS-beheer"
 
 #: vcp/models.py:45
 msgid ""
 "Please select the TrueNAS interface that vCenter Web client can route to."
 msgstr ""
+"Selecteer de TrueNAS-interface waarnaar vCenter Web client kan routeren."
 
 #: vcp/models.py:52
-#, fuzzy
 msgid "vCenter Hostname/IP Address"
-msgstr "Hostnaam of IP-adres"
+msgstr "Hostnaam of IP-adres van vCenter"
 
 #: vcp/models.py:57
-#, fuzzy
 msgid "vCenter Port"
-msgstr "Externe poort"
+msgstr "vCenter-poort"
 
 #: vcp/models.py:61
 #, fuzzy
@@ -12947,11 +12936,9 @@ msgid "vCenter Password"
 msgstr "Wachtwoord Wijzigen"
 
 #: vcp/models.py:77
-#, fuzzy
 msgid "vCenter Configuration"
-msgstr "Configuratie"
+msgstr "vCenter-configuratie"
 
 #: vcp/models.py:78
-#, fuzzy
 msgid "vCenter Configurations"
-msgstr "Configuratie"
+msgstr "vCenter-configuraties"
