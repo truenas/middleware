@@ -370,6 +370,10 @@ require([
         var extra = registry.byId("id_"+name+"-TOTAL_FORMS");
         var extran = extra.get("value");
         extran = parseInt(extran) - 1;
+
+        if (extran == -1)
+            return;
+
         registry.byId('formset-' + name + '-' + extran).destroy();
         extra.set('value', parseInt(extran));
     }
