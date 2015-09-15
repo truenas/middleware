@@ -999,7 +999,7 @@ def disk_wipe(request, devname):
                     )
                 ])
             else:
-                notifier().disk_wipe(devname, form.cleaned_data['method'])
+                result = dispatcher.call_task_sync('disks.erase', devname, form.cleaned_data['method'])
                 return JsonResp(
                     request,
                     message=_("Disk successfully wiped"))
