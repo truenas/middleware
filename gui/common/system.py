@@ -33,8 +33,6 @@ import shutil
 import smtplib
 import sqlite3
 import subprocess
-import syslog
-import traceback
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
@@ -208,14 +206,8 @@ def send_mail(subject=None,
         errmsg = str(ve)
         error = True
     except Exception as e:
-        syslog.openlog(channel, syslog.LOG_PID,
-                       facility=syslog.LOG_MAIL)
-        try:
-            for line in traceback.format_exc().splitlines():
-                syslog.syslog(syslog.LOG_ERR, line)
-        finally:
-            syslog.closelog()
         errmsg = str(e)
+        log.warn('Failed to send email: %s', errmsg)
         error = True
     except smtplib.SMTPAuthenticationError as e:
         errmsg = "%d %s" % (e.smtp_code, e.smtp_error)
