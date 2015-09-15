@@ -25,15 +25,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import pipeopen
 
 
-def __warden_usage():
+def fetch_jails(args):
     """
-    Lists what commands we support from `warden`.
-    Not all subcommands of these are supported.
+    Fetches the RELEASE that is supplied by ``--version MAJOR.MINOR-RELEASE`
+    if it doesn't exist.
     """
-    _supported_commands = ['auto', 'chroot', 'create', 'delete', 'list', 'start', 'stop']
-    msg = ''
-    for i in _supported_commands:
-        msg += '\n  {0}'.format(i)
-    return msg
+    (retcode, results_stdout, results_stderr) = pipeopen(
+        ['/usr/local/sbin/iocage',
+         'fetch',
+         'release={0}'.format(args.release)])

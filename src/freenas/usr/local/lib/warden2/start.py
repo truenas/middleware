@@ -25,32 +25,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from subprocess import Popen, PIPE
-from sys import stderr
+from is_running import is_jail_running
+import pipeopen
 
 
-def __pipeopen(command_list, do_print=False, shell=False):
+def start_jail(args):
     """
-    The magic sauce that runs the shell command specified by
-    `command_list` and waits for it to finish and returns the returncode
-    of the process, stdout and stderr in the following format:
-    (retcode, stdout, stderr).
-    If the (optional) do_print flag is set as true it will print
-    the stdout and stderr streams appropriately.
-
-    Example Usage:
-    (myretcode, mystdout, mystderr) = __pipeopen(['/bin/echo', 'hello'])
+    Takes 1 argument and supplies that to `is_jail_running`
+    Then if it is not, passes the name to `iocage start`
+    Otherwise tells the user it is already running
     """
-    if shell:
-            proc = Popen(command_list, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=False,
-                         shell=True)
+    (retcode, results_stdout, results_stderr) = pipeopen(
+        ['/usr/local/sbin/iocage',
+         'get',
+         'hostname',
+         '{0}'.format(args.jail)])
+    uuid = results_stdout.rstrip('\n')
+    if not is_jail_running(uuid):
+        (retcode, results_stdout, results_stderr) = pipeopen(
+            ['/usr/local/sbin/iocage',
+             'start',
+             '{0}'.format(args.jail)])
+        print '  Starting jail: {0}'.format(args.jail)
+        if retcode == 0:
+            print '  Jail started successfully!'
+        else:
+            if not results_stderr:
+                print '\n', results_stdout
+            else:
+                print '  Jail did not start successfully.'
+                print '  Error was:', results_stderr
     else:
-        proc = Popen(command_list, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=False)
-    proc.wait()
-    (results_stdout, results_stderr) = proc.communicate()
-    retcode = proc.returncode
-    if do_print:
-        if retcode != 0:
-            stderr.write(results_stderr)
-        print results_stdout
-    return (retcode, results_stdout, results_stderr)
+        print '  Jail is already running!'

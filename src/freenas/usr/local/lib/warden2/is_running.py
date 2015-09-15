@@ -25,36 +25,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
+import pipeopen
 
 
-def __delete_jail(args):
+def is_jail_running(uuid):
     """
-    Takes 1 argument and supplies that to `iocage delete` for the jail
+    Takes 1 argument and checks with `jls` to see if the jail is running
     """
-    print '  Deleting {0}'.format(args.jail)
-    if args.confirm:
-        (retcode, results_stdout, results_stderr) = __pipeopen(
-            ['/usr/local/sbin/iocage',
-             'destroy',
-             '-f',
-             '{0}'.format(args.jail)])
-    else:
-        _answer = raw_input('Would you like to destroy {0}? y[N]'.format(args.jail))
-        if _answer == 'y' or _answer == 'Y':
-            (retcode, results_stdout, results_stderr) = __pipeopen(
-                ['/usr/local/sbin/iocage',
-                 'destroy',
-                 '-f',
-                 '{0}'.format(args.jail)])
-        else:
-            print 'Not confirmed, no action taken.'
-            exit(1)
-    if retcode == 0:
-        print '  Jail destroyed successfully!'
-    else:
-        if not results_stderr:
-            print '\n', results_stdout
-        else:
-            print '  Jail did not destroy successfully.'
-            print '  Error was:', results_stderr
+    (retcode, results_stdout, results_stderr) = pipeopen(
+        ['/usr/sbin/jls',
+         '-j',
+         'ioc-{0}'.format(uuid),
+         'jid'])
+    return results_stdout

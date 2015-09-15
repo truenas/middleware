@@ -25,16 +25,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
 
 
-def __is_jail_running(_uuid):
+def warden_usage():
     """
-    Takes 1 argument and checks with `jls` to see if the jail is running
+    Lists what commands we support from `warden`.
+    Not all subcommands of these are supported.
     """
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/sbin/jls',
-         '-j',
-         'ioc-{0}'.format(_uuid),
-         'jid'])
-    return results_stdout
+    supported_commands = ['auto', 'chroot', 'create', 'delete', 'list', 'start', 'stop']
+    msg = ''
+    for i in supported_commands:
+        msg += '\n  {0}'.format(i)
+    return msg

@@ -25,17 +25,39 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
+import pipeopen
+from sys import stderr
 
 
-def __rel_list(args):
+def boot_jail_prop(args):
     """
-    Lists the releases we have so `__fetch_jails` can be ran
-    in case they aren't downloaded yet.
+    Take 1 argument and supplies that to `iocage set boot` for the jail
     """
-    (retcode, results_stdout, results_stderr) = __pipeopen(
+    print '  Toggling jail property boot on {0}'.format(args.jail)
+    (retcode, results_stdout, results_stderr) = pipeopen(
         ['/usr/local/sbin/iocage',
-         'list',
-         '-r'])
-    _exists = args.release in results_stdout
-    return _exists
+         'get',
+         'boot',
+         '{0}'.format(args.jail)])
+    if 'off' in results_stdout:
+        (retcode, results_stdout, results_stderr) = pipeopen(
+            ['/usr/local/sbin/iocage',
+             'set',
+             'boot=on',
+             '{0}'.format(args.jail)])
+        if retcode == 0:
+            print '  Property boot set on {0}'.format(args.jail)
+        else:
+            print results_stdout
+            stderr.write(results_stderr)
+    else:
+        (retcode, results_stdout, results_stderr) = pipeopen(
+            ['/usr/local/sbin/iocage',
+             'set',
+             'boot=off',
+             '{0}'.format(args.jail)])
+        if retcode == 0:
+            print '  Property boot unset on {0}'.format(args.jail)
+        else:
+            print results_stdout
+            stderr.write(results_stderr)

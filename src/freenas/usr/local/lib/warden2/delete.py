@@ -25,38 +25,36 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
-from sys import stderr
+import pipeopen
 
 
-def __set_jail_prop(args):
+def delete_jail(args):
     """
-    Take 2 arguments and supplies that to `iocage set` for the jail
+    Takes 1 argument and supplies that to `iocage destroy` for the jail
     """
-    if args.set in 'vnet-enable':
-        args.set = 'vnet=on'
-        _ip4 = __pipeopen(
+    print '  Deleting {0}'.format(args.jail)
+    if args.confirm:
+        (retcode, results_stdout, results_stderr) = pipeopen(
             ['/usr/local/sbin/iocage',
-             'get',
-             'ip4_addr',
+             'destroy',
+             '-f',
              '{0}'.format(args.jail)])
-        if _ip4[0] != 0:
-            print '  An error has occured'
-        _ip4 = _ip4[1].rstrip().replace('DEFAULT|', '')
-        __pipeopen(
-            ['/usr/local/sbin/iocage',
-             'set',
-             'ip4_addr={0}'.format(_ip4),
-             '{0}'.format(args.jail)])
-    if args.set in ('nat-disable', 'nat-enable'):
-        exit(0)
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/local/sbin/iocage',
-         'set',
-         '{0}'.format(args.set),
-         '{0}'.format(args.jail)])
-    if retcode == 0:
-        print '  Property {0} set on {1}'.format(args.set, args.jail)
     else:
-        print results_stdout
-        stderr.write(results_stderr)
+        _answer = raw_input('Would you like to destroy {0}? y[N]'.format(args.jail))
+        if _answer == 'y' or _answer == 'Y':
+            (retcode, results_stdout, results_stderr) = pipeopen(
+                ['/usr/local/sbin/iocage',
+                 'destroy',
+                 '-f',
+                 '{0}'.format(args.jail)])
+        else:
+            print 'Not confirmed, no action taken.'
+            exit(1)
+    if retcode == 0:
+        print '  Jail destroyed successfully!'
+    else:
+        if not results_stderr:
+            print '\n', results_stdout
+        else:
+            print '  Jail did not destroy successfully.'
+            print '  Error was:', results_stderr

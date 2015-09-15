@@ -25,35 +25,38 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __is_running import __is_jail_running
-from __pipeopen import __pipeopen
+import pipeopen
+from sys import stderr
 
 
-def __start_jail(args):
+def set_jail_prop(args):
     """
-    Takes 1 argument and supplies that to `__is_jail_running`
-    Then if it is not, passes the name to `iocage start`
-    Otherwise tells the user it is already running
+    Take 2 arguments and supplies that to `iocage set` for the jail
     """
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/local/sbin/iocage',
-         'get',
-         'hostname',
-         '{0}'.format(args.jail)])
-    _uuid = results_stdout.rstrip('\n')
-    if not __is_jail_running(_uuid):
-        (retcode, results_stdout, results_stderr) = __pipeopen(
+    if args.set in 'vnet-enable':
+        args.set = 'vnet=on'
+        ip4 = pipeopen(
             ['/usr/local/sbin/iocage',
-             'start',
+             'get',
+             'ip4_addr',
              '{0}'.format(args.jail)])
-        print '  Starting jail: {0}'.format(args.jail)
-        if retcode == 0:
-            print '  Jail started successfully!'
-        else:
-            if not results_stderr:
-                print '\n', results_stdout
-            else:
-                print '  Jail did not start successfully.'
-                print '  Error was:', results_stderr
+        if ip4[0] != 0:
+            print '  An error has occured'
+        ip4 = ip4[1].rstrip().replace('DEFAULT|', '')
+        pipeopen(
+            ['/usr/local/sbin/iocage',
+             'set',
+             'ip4_addr={0}'.format(ip4),
+             '{0}'.format(args.jail)])
+    if args.set in ('nat-disable', 'nat-enable'):
+        exit(0)
+    (retcode, results_stdout, results_stderr) = pipeopen(
+        ['/usr/local/sbin/iocage',
+         'set',
+         '{0}'.format(args.set),
+         '{0}'.format(args.jail)])
+    if retcode == 0:
+        print '  Property {0} set on {1}'.format(args.set, args.jail)
     else:
-        print '  Jail is already running!'
+        print results_stdout
+        stderr.write(results_stderr)

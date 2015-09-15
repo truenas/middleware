@@ -25,13 +25,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+from is_running import is_jail_running
+import pipeopen
 
 
-def __template_handling(args):
-    if 'list' in args.list:
-        print 'nick: standard'
-        print 'type: FreeBSD'
-        print 'version:'
-        print 'arch: amd64'
+def stop_jail(args):
+    """
+    Takes 1 argument and supplies that to `is_jail_running`
+    Then if it is, passes the name to `iocage stop`
+    Otherwise it tells the user the jail is already stopped
+    """
+    (retcode, results_stdout, results_stderr) = pipeopen(
+        ['/usr/local/sbin/iocage',
+         'get',
+         'hostname',
+         '{0}'.format(args.jail)])
+    uuid = results_stdout.rstrip('\n')
+    if is_jail_running(uuid):
+        (retcode, results_stdout, results_stderr) = pipeopen(
+            ['/usr/local/sbin/iocage',
+             'stop',
+             '{0}'.format(args.jail)])
+        print '  Stopping jail: {0}'.format(args.jail)
+        if retcode == 0:
+            print '  Jail stopped successfully!'
+        else:
+            if not results_stderr:
+                print '\n', results_stdout
+            else:
+                print '  Jail did not stop successfully.'
+                print '  Error was:', results_stderr
     else:
-        pass
+        print '  Jail is already stopped!'

@@ -25,39 +25,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
-from sys import stderr
 
 
-def __boot_jail_prop(args):
+def template_handling(args):
     """
-    Take 1 argument and supplies that to `iocage set boot` for the jail
+    Mimic the warden's template output
     """
-    print '  Toggling jail property boot on {0}'.format(args.jail)
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/local/sbin/iocage',
-         'get',
-         'boot',
-         '{0}'.format(args.jail)])
-    if 'off' in results_stdout:
-        (retcode, results_stdout, results_stderr) = __pipeopen(
-            ['/usr/local/sbin/iocage',
-             'set',
-             'boot=on',
-             '{0}'.format(args.jail)])
-        if retcode == 0:
-            print '  Property boot set on {0}'.format(args.jail)
-        else:
-            print results_stdout
-            stderr.write(results_stderr)
+    if 'list' in args.list:
+        print 'nick: standard'
+        print 'type: FreeBSD'
+        print 'version:'
+        print 'arch: amd64'
     else:
-        (retcode, results_stdout, results_stderr) = __pipeopen(
-            ['/usr/local/sbin/iocage',
-             'set',
-             'boot=off',
-             '{0}'.format(args.jail)])
-        if retcode == 0:
-            print '  Property boot unset on {0}'.format(args.jail)
-        else:
-            print results_stdout
-            stderr.write(results_stderr)
+        pass

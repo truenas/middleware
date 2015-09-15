@@ -25,15 +25,32 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
+from subprocess import Popen, PIPE
+from sys import stderr
 
 
-def __fetch_jails(args):
+def pipeopen(command_list, do_print=False, shell=False):
     """
-    Fetches the RELEASE that is supplied by ``--version MAJOR.MINOR-RELEASE`
-    if it doesn't exist.
+    The magic sauce that runs the shell command specified by
+    `command_list` and waits for it to finish and returns the returncode
+    of the process, stdout and stderr in the following format:
+    (retcode, stdout, stderr).
+    If the (optional) do_print flag is set as true it will print
+    the stdout and stderr streams appropriately.
+
+    Example Usage:
+    (myretcode, mystdout, mystderr) = pipeopen(['/bin/echo', 'hello'])
     """
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/local/sbin/iocage',
-         'fetch',
-         'release={0}'.format(args.release)])
+    if shell:
+            proc = Popen(command_list, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=False,
+                         shell=True)
+    else:
+        proc = Popen(command_list, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=False)
+    proc.wait()
+    (results_stdout, results_stderr) = proc.communicate()
+    retcode = proc.returncode
+    if do_print:
+        if retcode != 0:
+            stderr.write(results_stderr)
+        print results_stdout
+    return (retcode, results_stdout, results_stderr)

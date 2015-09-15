@@ -25,15 +25,44 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from subprocess import call
+import platform
+from sys import stderr
+from fetch import fetch_jails
+import pipeopen
+from rel import rel_list
 
 
-def __chroot_jail(args):
+def create_jail(args):
     """
-    Takes 1 argument and supplies that to `iocage chroot` for the jail
+    This wraps `warden create` and translates the syntax to `iocage create`.
     """
-    print args
-    print '  Chrooting to {0}'.format(args.jail)
-    call(['/usr/local/sbin/iocage',
-          'chroot',
-          '{0}'.format(args.jail)])
+    # iocage looks for 'MAJOR.MINOR-RELEASE' without the patch level, this strips the patch level
+    host_release = '-'.join(platform.release().split('-')[:2])
+    if args.boot:
+        args.boot = 'on'
+    else:
+        args.boot = 'off'
+
+    # Check if the user supplied a RELEASE, otherwise assume hosts RELEASE
+    if not args.release:
+        args.release = host_release
+
+    # If iocage doesn't have the RELEASE already fetched, do so now
+    if rel_list(args) is False:
+        print '  Fetching:', args.release
+        fetch_jails(args)
+
+    print '  Creating jail, please wait...'
+    (retcode, results_stdout, results_stderr) = pipeopen(
+        ['/usr/local/sbin/iocage',
+         'create',
+         'tag={0}'.format(args.tag),
+         'vnet=off',
+         'ip4_addr=DEFAULT|{0}'.format(args.ip4),
+         'boot={0}'.format(args.boot),
+         'release={0}'.format(args.release)])
+    if retcode == 0:
+        print '  Jail created!'
+    else:
+        print results_stdout
+        stderr.write(results_stderr)

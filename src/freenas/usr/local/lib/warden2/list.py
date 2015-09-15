@@ -25,17 +25,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __pipeopen import __pipeopen
+import pipeopen
 
 
-def __list_jails(args):
+def list_jails(args):
     """
     Wraps `warden list` and `warden list -v` to `iocage list`
     and `iocage list --warden` respectively.
     """
     if args._long_list:
         id_num = 1
-        (retcode, results_stdout, results_stderr) = __pipeopen(
+        (retcode, results_stdout, results_stderr) = pipeopen(
             ['/usr/local/sbin/iocage',
              'list',
              '--warden'])
@@ -52,5 +52,5 @@ def __list_jails(args):
         results_stdout = results_stdout.replace('type: jail', 'type: pluginjail')
         print results_stdout
     else:
-        (retcode, results_stdout, results_stderr) = __pipeopen(
+        (retcode, results_stdout, results_stderr) = pipeopen(
             ['/usr/local/sbin/iocage', 'list'], do_print=True)

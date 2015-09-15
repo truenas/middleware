@@ -25,35 +25,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from __is_running import __is_jail_running
-from __pipeopen import __pipeopen
+from subprocess import call
 
 
-def __stop_jail(args):
+def chroot_jail(args):
     """
-    Takes 1 argument and supplies that to `__is_jail_running`
-    Then if it is, passes the name to `iocage stop`
-    Otherwise it tells the user the jail is already stopped
+    Takes 1 argument and supplies that to `iocage chroot` for the jail
     """
-    (retcode, results_stdout, results_stderr) = __pipeopen(
-        ['/usr/local/sbin/iocage',
-         'get',
-         'hostname',
-         '{0}'.format(args.jail)])
-    _uuid = results_stdout.rstrip('\n')
-    if __is_jail_running(_uuid):
-        (retcode, results_stdout, results_stderr) = __pipeopen(
-            ['/usr/local/sbin/iocage',
-             'stop',
-             '{0}'.format(args.jail)])
-        print '  Stopping jail: {0}'.format(args.jail)
-        if retcode == 0:
-            print '  Jail stopped successfully!'
-        else:
-            if not results_stderr:
-                print '\n', results_stdout
-            else:
-                print '  Jail did not stop successfully.'
-                print '  Error was:', results_stderr
-    else:
-        print '  Jail is already stopped!'
+    print args
+    print '  Chrooting to {0}'.format(args.jail)
+    call(['/usr/local/sbin/iocage',
+          'chroot',
+          '{0}'.format(args.jail)])
