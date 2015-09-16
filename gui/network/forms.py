@@ -331,14 +331,16 @@ class InterfacesForm(ModelForm):
             ])
 
         vip = cdata.get("int_vip")
-        if vip and not ipv4addr_b:
-            self._errors['int_ipv4address_b'] = self.error_class([
-                _("This field is required for failover")
-            ])
-        if vip and not ipv4addr:
-            self._errors['int_ipv4address'] = self.error_class([
-                _("This field is required for failover")
-            ])
+        dhcp = cdata.get("int_dhcp")
+        if not dhcp:
+            if vip and not ipv4addr_b:
+                self._errors['int_ipv4address_b'] = self.error_class([
+                    _("This field is required for failover")
+                ])
+            if vip and not ipv4addr:
+                self._errors['int_ipv4address'] = self.error_class([
+                    _("This field is required for failover")
+                ])
 
         return cdata
 
