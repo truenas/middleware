@@ -195,6 +195,9 @@ def servicesToggleView(request, formname):
         'plugins_toggle': 'plugins',
         'domaincontroller_toggle': 'domaincontroller',
         'webdav_toggle': 'webdav'
+        'riak_toggle', 'riak',
+        'stanchion_toggle', 'stanchion',
+        'riak_cs_toggle', 'riak_cs',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
@@ -202,7 +205,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service in ('afp', 'cifs', 'dyndns'):
+    if changing_service in ('afp', 'cifs', 'dyndns', 'riak', 'stanchion', 'riak_cs'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],
