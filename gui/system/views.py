@@ -693,11 +693,11 @@ class DojoFileStore(object):
         self.filterVolumes = filterVolumes
         if self.filterVolumes:
             self.mp = [
-                os.path.abspath(mp.mp_path.encode('utf8'))
+                os.path.abspath(mp.encode('utf8'))
                 for mp in dispatcher.call_sync(
                     'volumes.query',
-                    [('status', '=', 'ONLINE')],
-                    {'select': 'properties.mountpoint'}
+                    [],
+                    {'select': 'mountpoint'}
                 )
             ]
 
@@ -736,7 +736,7 @@ class DojoFileStore(object):
                 [
                     f for f in self.mp if (
                         full_path.startswith(f + '/') or full_path == f or
-                        full_path.startswith('/mnt')
+                        full_path.startswith('/volumes')
                     )
                 ]
             ) > 0:
