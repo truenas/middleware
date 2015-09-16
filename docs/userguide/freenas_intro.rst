@@ -168,6 +168,9 @@ that have occurred since 9.3-RELEASE.
 
 * The "Exclude System Dataset" checkbox has been added to :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`.
 
+* The "Recursively replicate and remove stale snapshot on remote side" option in :menuselection:`Storage --> Replication Tasks --> Add Replication` has been divided into two options:
+  "Recursively replicate child dataset's snapshots" and "Delete snapshots that are no longer available locally after successful replication of new snapshots".
+
 * The :file:`/usr/local/bin/test_ssh.py` script has been added for testing the SSH connection for a defined replication task.
 
 * The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
