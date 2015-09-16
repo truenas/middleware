@@ -12715,3 +12715,15 @@ msgstr "Globala inställningar"
 #, fuzzy
 msgid "vCenter Configurations"
 msgstr "Globala inställningar"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+"Rekursivt kopiera och ta bort gammal ögonblicksbild på fjärrkontrollen sidan"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""

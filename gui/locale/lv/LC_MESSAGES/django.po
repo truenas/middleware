@@ -12933,3 +12933,14 @@ msgstr "Galvenie uzstādījumi"
 #, fuzzy
 msgid "vCenter Configurations"
 msgstr "Galvenie uzstādījumi"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr "Rekursīvi reproducēt un noņemt novecojušu uzņēmumu attālinātajā pusē"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""

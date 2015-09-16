@@ -12019,3 +12019,13 @@ msgstr "Salasanan vahvistus"
 #, fuzzy
 msgid "vCenter Configurations"
 msgstr "Salasanan vahvistus"
+
+#: storage/models.py:905
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""

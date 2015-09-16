@@ -12637,3 +12637,14 @@ msgstr "Nastavení"
 #, fuzzy
 msgid "vCenter Configurations"
 msgstr "Nastavení"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr "Rekurzivně replikovat a odebrat staré zachycené stavy na protistraně"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
