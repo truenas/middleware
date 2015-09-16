@@ -13072,3 +13072,14 @@ msgstr "Hlavné nastavenia"
 #, fuzzy
 msgid "vCenter Configurations"
 msgstr "Hlavné nastavenia"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr "Rekurzívne replikovať a zmazať zastralý snímok na vzdialenej strane"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""

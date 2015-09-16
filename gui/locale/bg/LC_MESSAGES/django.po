@@ -12690,3 +12690,16 @@ msgstr "Глобална конфигурация"
 #, fuzzy
 msgid "vCenter Configurations"
 msgstr "Глобална конфигурация"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+"Рекурсивно възпроижвеждане и премахване на остарелите моментни снимки на "
+"отдалечената страна"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""

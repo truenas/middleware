@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-09-10 09:16+0000\n"
+"PO-Revision-Date: 2015-09-15 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ne\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441876589.0\n"
+"X-POOTLE-MTIME: 1442308565.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11858,4 +11858,14 @@ msgstr ""
 
 #: vcp/models.py:78
 msgid "vCenter Configurations"
+msgstr ""
+
+#: storage/models.py:905
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
 msgstr ""
