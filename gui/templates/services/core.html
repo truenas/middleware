@@ -93,6 +93,30 @@
    </tr>
    <tr>
        <td>
+           <strong>{% trans "Riak" %}</strong>
+       </td>
+       <td colspan="2">
+       <img id="riak_toggle" name="riak_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.riak == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
+       </td>
+   </tr>
+   <tr>
+       <td>
+           <strong>{% trans "Stanchion" %}</strong>
+       </td>
+       <td colspan="2">
+       <img id="stanchion_toggle" name="stanchion_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.stanchion == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
+       </td>
+   </tr>
+   <tr>
+       <td>
+           <strong>{% trans "Riak CS" %}</strong>
+       </td>
+       <td colspan="2">
+       <img id="riak_cs_toggle" name="riak_cs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.riak_cs == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
+       </td>
+   </tr>
+   <tr>
+       <td>
            <strong>{% trans "Rsync" %}</strong>
        </td>
        <td>
