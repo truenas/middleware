@@ -38,6 +38,7 @@ class Migration(DataMigration):
             carp_ipnet = ipaddr.IPNetwork('%s/32' % carp_iface.int_ipv4address)
             internal_ifaces = notifier().failover_internal_interfaces()
 
+            found = False
             for iface in orm['network.Interfaces'].objects.exclude(
                 int_interface__startswith='carp',
             ):
@@ -57,20 +58,29 @@ class Migration(DataMigration):
 
                 # If CARP address is within interface range attach CARP into it
                 if ipnet.overlaps(carp_ipnet):
-                    iface.int_vip = carp_iface.int_ipv4address
-                    if carp.carp_number is not None:
-                        iface.int_carp = carp.carp_number
-                    if carp.carp_vhid:
-                        iface.int_vhid = carp.carp_vhid
-                    if carp.carp_pass:
-                        iface.int_pass = carp.carp_pass
-                    if carp.carp_critical:
-                        iface.int_critical = carp.carp_critical
-                    if carp.carp_group:
-                        iface.int_group = carp.carp_group
-                    iface.save()
-                    carp_iface.delete()
+                    found = iface
                     break
+
+            if found is False:
+                qs = orm['network.Interfaces'].objects.exclude(int_interface__startswith='carp').filter(int_dhcp=True)
+                if qs.exists():
+                    found = qs[0]
+
+            if found is not False:
+                iface = found
+                iface.int_vip = carp_iface.int_ipv4address
+                if carp.carp_number is not None:
+                    iface.int_carp = carp.carp_number
+                if carp.carp_vhid:
+                    iface.int_vhid = carp.carp_vhid
+                if carp.carp_pass:
+                    iface.int_pass = carp.carp_pass
+                if carp.carp_critical:
+                    iface.int_critical = carp.carp_critical
+                if carp.carp_group:
+                    iface.int_group = carp.carp_group
+                iface.save()
+                carp_iface.delete()
 
     def backwards(self, orm):
         "Write your backwards methods here."
