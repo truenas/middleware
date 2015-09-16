@@ -1133,7 +1133,7 @@ A copy of the public key for the replication user on *PUSH* needs to be pasted t
 To obtain a copy of the replication key: on *PUSH* go to :menuselection:`Storage --> Replication Tasks --> View Replication Tasks`. Click the "View Public
 Key" button and copy its contents. An example is shown in Figure 8.3a.
 
-**Figure 8.3a: Copy the Replication Key**
+**Figure 8.3b: Copy the Replication Key**
 
 .. image:: images/tn_replication1.png
 
@@ -1167,7 +1167,7 @@ For this example, the required configuration is as follows:
 
 **Figure 8.3b: Adding a Replication Task**
 
-.. image:: images/replication2a.png
+.. image:: images/replication2b.png
 
 Table 8.3a summarizes the available options in the "Add Replication" screen.
 
@@ -1186,8 +1186,12 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 |                           |                | :file:`/mnt/` is assumed and should not be included in the path                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Recursively replicate     | checkbox       | if checked will replicate child datasets and replace previous snapshot stored on *PULL*                      |
+| Recursively replicate     | checkbox       | if checked will also replicate child datasets                                                                |
 |                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Delete snapshots          | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
+|                           |                | *PUSH*                                                                                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on *PULL* before reverting to normal         |
