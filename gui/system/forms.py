@@ -243,7 +243,8 @@ class BootEnvPoolAttachForm(Form):
         devname = self.cleaned_data['attach_disk']
 
         rv = notifier().bootenv_attach_disk(self.label, devname)
-        if rv == 0:
+        if rv:
+            notifier().sync_disks()
             return True
         else:
             return False
