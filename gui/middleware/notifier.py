@@ -1505,9 +1505,10 @@ class notifier:
 
     def list_zfs_fsvols(self, system=False):
         from freenasUI.middleware.connector import connection as dispatcher
-        result = dispatcher.call_sync('zfs.dataset.query', [
-            ('name', '~', '\.system'),
-        ] if system else None)
+        if system:
+            result = dispatcher.call_sync('zfs.dataset.query', [('name', '~', '\.system')])
+        else:
+            result = dispatcher.call_sync('zfs.dataset.query')
 
         return {i['name']: i for i in result}
 
