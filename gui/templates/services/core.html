@@ -56,6 +56,14 @@
            <img id="ftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "FTP Settings"|force_escape|force_escape %}', '{{ ftp.get_edit_url }}');" title="{% trans "FTP Settings" %}">
        </td>
    </tr>
+   <tr>
+       <td>
+           <strong>{% trans "IPFS" %}</strong>
+       </td>
+       <td colspan="2">
+       <img id="ipfs_toggle" name="ipfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.ipfs == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
+       </td>
+   </tr>
   <tr>
        <td>
            <strong>{% trans "iSCSI" %}</strong>

@@ -199,7 +199,8 @@ def servicesToggleView(request, formname):
         'stanchion_toggle': 'stanchion',
         'riak_cs_toggle': 'riak_cs',
         'swift_toggle': 'swift',
-        'glusterd_toggle': 'glusterd'
+        'glusterd_toggle': 'glusterd',
+        'ipfs_toggle': 'ipfs',
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
