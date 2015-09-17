@@ -470,7 +470,8 @@ class SSSDConf(SSSDBase):
             if st.startswith('domain'):
                 if self_s:
                     for var in s:
-                        self_s[var] = s[var]
+                        if s[var]:
+                            self_s[var] = s[var]
 
                 else:
                     self.sections[st] = s
@@ -484,7 +485,8 @@ class SSSDConf(SSSDBase):
                         domains_override = True
 
                     for var in s:
-                        self_s[var] = s[var]
+                        if s[var]:
+                            self_s[var] = s[var]
 
                 else: 
                     self.sections[st] = s
