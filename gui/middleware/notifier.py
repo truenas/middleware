@@ -250,7 +250,6 @@ class notifier:
         'cifs': ('smbd', '/var/run/samba/smbd.pid'),
         'dynamicdns': ('inadyn-mt', None),
         'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
-        'ftp': ('proftpd', '/var/run/proftpd.pid'),
         'tftp': ('inetd', '/var/run/inetd.pid'),
         'ctld': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
@@ -806,22 +805,6 @@ class notifier:
     def _start_motd(self):
         self._system("/usr/sbin/service ix-motd quietstart")
         self._system("/usr/sbin/service motd quietstart")
-
-    def _reload_ftp(self):
-        self._system("/usr/sbin/service ix-proftpd quietstart")
-        self._system("/usr/sbin/service proftpd restart")
-
-    def _restart_ftp(self):
-        self._stop_ftp()
-        self._start_ftp()
-        self._system("sleep 1")
-
-    def _start_ftp(self):
-        self._system("/usr/sbin/service ix-proftpd quietstart")
-        self._system("/usr/sbin/service proftpd start")
-
-    def _stop_ftp(self):
-        self._system("/usr/sbin/service proftpd forcestop")
 
     def _start_ups(self):
         self._system("/usr/sbin/service ix-ups quietstart")
