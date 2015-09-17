@@ -975,6 +975,12 @@ menu_install()
         install_worker.sh -D /tmp/data -m / install
     fi
     
+    # To support Xen, we need to disable HPET.
+    if [ "$(/tmp/data/usr/local/sbin/dmidecode -s system-product-name)" = "HVM domU" ]; then
+	if ! grep -q 'hint.hpet.0.clock' /tmp/data/boot/loader.conf.local 2>/dev/null ; then
+	    echo 'hint.hpet.0.clock="0"' >> /tmp/data/boot/loader.conf.local
+	fi
+    fi
     # Debugging pause.
     # read foo
     

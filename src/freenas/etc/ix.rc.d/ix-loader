@@ -60,6 +60,19 @@ loader_serial()
 	fi
 }
 
+loader_xen()
+{
+	local xen_guest=0
+	local tmp
+
+	tmp=$(/usr/local/sbin/dmidecode -s system-product-name)
+	if [ $? -eq 0 ]; then
+	    if [ "$tmp" = "HVM domU" ]; then
+		echo 'hint.hpet.0.clock="0"'
+	    fi
+	fi
+}
+
 loader_user() {
 
 	local IFS="|"
@@ -150,7 +163,7 @@ generate_boot_loader_conf_local()
 	local tmp
 	local first_install=0
 
-	settings="serial user debugkernel ha"
+	settings="serial user debugkernel ha xen"
 
 	tmp=$(mktemp /tmp/tmp.XXXXXX)
 
