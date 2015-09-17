@@ -149,7 +149,6 @@ _sssd_config()
 _gen_conf()
 {
 	## Daemons
-	_bool_svcconfig proftpd_enable ftp
 	_bool_svcconfig nfs_server_enable nfs
 	_bool_svcconfig rpc_lockd_enable nfs
 	_bool_svcconfig rpc_statd_enable nfs
