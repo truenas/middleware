@@ -332,16 +332,15 @@ class Volume(NewModel):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
 
 
-class Scrub(Model):
-    scrub_volume = models.OneToOneField(
-        Volume,
-        verbose_name=_("Volume"),
-        limit_choices_to={'vol_fstype': 'ZFS'},
+class Scrub(NewModel):
+    id = models.CharField(
+        max_length=200,
+        verbose_name=_("ID"),
+        primary_key=True
     )
-    scrub_threshold = models.PositiveSmallIntegerField(
-        verbose_name=_("Threshold days"),
-        default=35,
-        help_text=_("Determine how many days shall be between scrubs"),
+    scrub_volume = models.CharField(
+        max_length=200,
+        verbose_name=_("Volume"),
     )
     scrub_description = models.CharField(
         max_length=200,
@@ -386,8 +385,26 @@ class Scrub(Model):
         verbose_name_plural = _("Scrubs")
         ordering = ["scrub_volume__vol_name"]
 
+    class Middleware:
+        provider_name = 'calendar_tasks'
+        default_filters = [
+            ('name', '=', 'zfs.pool.scrub')
+        ]
+        field_mapping = (
+            ('id', 'id'),
+            ('scrub_volume', 'args.0'),
+            ('scrub_enabled', 'enabled'),
+            ('scrub_description', 'description'),
+            ('scrub_minute', 'schedule.minute'),
+            ('scrub_hour', 'schedule.hour'),
+            ('scrub_daymonth', 'schedule.day'),
+            ('scrub_month', 'schedule.month'),
+            ('scrub_dayweek', 'schedule.day_of_week')
+
+        )
+
     def __unicode__(self):
-        return self.scrub_volume.vol_name
+        return self.scrub_volume
 
     def get_human_minute(self):
         if self.scrub_minute == '*':
