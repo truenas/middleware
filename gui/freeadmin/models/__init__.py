@@ -326,7 +326,7 @@ class NewQuerySet(object):
                         data[mfield.name] = mfield.rel.to.objects.get(pk=val)
                     except mfield.rel.to.DoesNotExist:
                         log.error(
-                            "%r(%d).%s has no foreign key '%d', skipping",
+                            "%r(%s).%s has no foreign key '%s', skipping",
                             self.model, i.get('id'), mfield.name, val)
                         break
                 else:
