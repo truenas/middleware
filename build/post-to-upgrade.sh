@@ -65,6 +65,7 @@ ssh ${SSHOPTS} ${SSH} "rm -rf ${TEMP_DEST}" < /dev/null
 if [ -n "${TEMP_CHANGE}" ]; then
     ssh ${SSHOPTS} ${SSH} "rm -f ${TEMP_CHANGE}" < /dev/null
 fi
+ssh ${SSHOPTS} ${SSH} "/usr/local/sbin/rsync-mirror.sh" < /dev/null
 set +e
 
 exit 0
