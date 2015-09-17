@@ -15,6 +15,10 @@ class Migration(DataMigration):
         ('system', '0096_auto__add_field_systemdataset_sys_uuid_b'),
     )
 
+    needed_by = (
+        ('directoryservice', '0050_auto__del_field_activedirectory_ad_kerberos_keytab__del_field_ldap_lda'),
+    )
+
     def forwards(self, orm):
         node = notifier().failover_node()
         if node == 'B':
