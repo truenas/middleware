@@ -1887,20 +1887,8 @@ class PluginsResourceMixin(NestedMixin):
 
 
 class SnapshotResource(DojoResource):
-
-    id = fields.CharField(attribute='fullname')
-    name = fields.CharField(attribute='name')
-    filesystem = fields.CharField(attribute='filesystem')
-    fullname = fields.CharField(attribute='fullname')
-    refer = fields.IntegerField(attribute='refer')
-    used = fields.IntegerField(attribute='used')
-    mostrecent = fields.BooleanField(attribute='mostrecent')
-    parent_type = fields.CharField(attribute='parent_type')
-    replication = fields.CharField(attribute='replication', null=True)
-
     class Meta:
         allowed_methods = ['delete', 'get', 'post']
-        object_class = zfs.Snapshot
         resource_name = 'storage/snapshot'
         max_limit = 0
 
@@ -1940,33 +1928,9 @@ class SnapshotResource(DojoResource):
         return HttpResponse('Snapshot cloned.', status=202)
 
     def get_list(self, request, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
+        results = wrap(dispatcher.call_sync('volumes.snapshots.query'))
 
-        # Get a list of snapshots in remote sides to show whether it has been
-        # transfered already or not
-        repli = {}
-        for repl in Replication.objects.all():
-            """
-            Multiple replications tasks can have the same remote host.
-            We can't get the list of snapshots on the remote side multiple
-            times, make sure we don't do that.
-            """
-            found = False
-            for _repl, snaps in repli.items():
-                if _repl.repl_remote.ssh_remote_hostname == \
-                    repl.repl_remote.ssh_remote_hostname and \
-                    _repl.repl_remote.ssh_remote_port == \
-                    repl.repl_remote.ssh_remote_port:
-                    found = True
-                    repli[repl] = snaps
-                    break
-            if found is False:
-                repli[repl] = notifier().repl_remote_snapshots(repl)
-
-        snapshots = notifier().zfs_snapshot_list(replications=repli)
-
-        results = []
-        for snaps in snapshots.values():
-            results.extend(snaps)
         FIELD_MAP = {
             'extra': 'mostrecent',
         }
@@ -2085,6 +2049,21 @@ class SnapshotResource(DojoResource):
         )
 
     def dehydrate(self, bundle):
+        most_recent = dispatcher.call_sync(
+            'zfs.dataset.get_most_recent_snapshot',
+            bundle.obj['dataset']
+        )
+
+        bundle.data = {
+            'id': bundle.obj['id'],
+            'filesystem': bundle.obj['dataset'],
+            'fullname': bundle.obj['name'],
+            'name': bundle.obj['name'],
+            'used': bundle.obj['properties.used.value'],
+            'refer': bundle.obj['properties.refer.value'],
+            'mostrecent': most_recent == bundle.obj['id']
+        }
+
         if self.is_webclient(bundle.request):
             bundle.data['used'] = humanize_size(bundle.data['used'])
             bundle.data['refer'] = humanize_size(bundle.data['refer'])
@@ -2092,16 +2071,16 @@ class SnapshotResource(DojoResource):
                 'clone_url': reverse(
                     'storage_clonesnap',
                     kwargs={
-                        'snapshot': bundle.obj.fullname,
+                        'snapshot': bundle.obj['id'],
                     }
-                ) + ('?volume=true' if bundle.obj.parent_type == 'volume' else ''),
+                ),
                 'rollback_url': reverse('storage_snapshot_rollback', kwargs={
-                    'dataset': bundle.obj.filesystem,
-                    'snapname': bundle.obj.name,
-                }) if bundle.obj.mostrecent else None,
+                    'dataset': bundle.obj['dataset'],
+                    'snapname': bundle.obj['name'],
+                }) if most_recent == bundle.obj['id'] else None,
                 'delete_url': reverse('storage_snapshot_delete', kwargs={
-                    'dataset': bundle.obj.filesystem,
-                    'snapname': bundle.obj.name,
+                    'dataset': bundle.obj['dataset'],
+                    'snapname': bundle.obj['name']
                 }),
             }
         return bundle
