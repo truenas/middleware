@@ -50,7 +50,7 @@
            <strong>{% trans "FTP" %}</strong>
        </td>
        <td>
-       <img id="ftp_toggle" name="ftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="ftp_toggle" name="ftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.ftp == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
            <img id="ftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "FTP Settings"|force_escape|force_escape %}', '{{ ftp.get_edit_url }}');" title="{% trans "FTP Settings" %}">
