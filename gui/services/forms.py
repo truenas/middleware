@@ -383,29 +383,6 @@ class FTPForm(ModelForm):
         super(FTPForm, self).__init__(*args, **kwargs)
         self.instance._original_ftp_tls = self.instance.ftp_tls
 
-    def clean_ftp_passiveportsmin(self):
-        ports = self.cleaned_data['ftp_passiveportsmin']
-        if (ports < 1024 or ports > 65535) and ports != 0:
-            raise forms.ValidationError(
-                _("This value must be between 1024 and 65535, inclusive. 0 "
-                    "for default")
-            )
-        return ports
-
-    def clean_ftp_passiveportsmax(self):
-        _min = self.cleaned_data['ftp_passiveportsmin']
-        ports = self.cleaned_data['ftp_passiveportsmax']
-        if (ports < 1024 or ports > 65535) and ports != 0:
-            raise forms.ValidationError(
-                _("This value must be between 1024 and 65535, inclusive. 0 "
-                    "for default.")
-            )
-        if _min >= ports and ports != 0:
-            raise forms.ValidationError(
-                _("This must be higher than minimum passive port")
-            )
-        return ports
-
     def clean_ftp_filemask(self):
         perm = self.cleaned_data['ftp_filemask']
         perm = int(perm, 8)
@@ -417,15 +394,6 @@ class FTPForm(ModelForm):
         perm = int(perm, 8)
         mask = (~perm & 0o777)
         return "%.3o" % mask
-
-    def clean_ftp_anonpath(self):
-        anon = self.cleaned_data['ftp_onlyanonymous']
-        path = self.cleaned_data['ftp_anonpath']
-        if anon and not path:
-            raise forms.ValidationError(
-                _("This field is required for anonymous login")
-            )
-        return path
 
     def clean(self):
         cdata = self.cleaned_data
@@ -439,16 +407,6 @@ class FTPForm(ModelForm):
                 "TLS specified without certificate")
 
         return cdata
-
-    def save(self):
-        super(FTPForm, self).save()
-        started = notifier().reload("ftp")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='ftp').srv_enable
-        ):
-            raise ServiceFailed("ftp", _("The ftp service failed to start."))
 
     def done(self, *args, **kwargs):
         if (
