@@ -1838,6 +1838,7 @@ class FTP(NewModel):
             'tls': self.ftp_tls,
             'tls_policy': self.ftp_tls_policy.upper(),
             'tls_options': tls_options,
+            'tls_ssl_certificate': self.ftp_ssltls_certificate.id if self.ftp_ssltls_certificate else NOne,
             'auxiliary': self.ftp_options or None,
         }
         self._save_task_call('service.ftp.configure', data)
