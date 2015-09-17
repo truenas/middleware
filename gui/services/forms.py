@@ -395,19 +395,6 @@ class FTPForm(ModelForm):
         mask = (~perm & 0o777)
         return "%.3o" % mask
 
-    def clean(self):
-        cdata = self.cleaned_data
-        ftp_tls = cdata.get("ftp_tls")
-        if not ftp_tls:
-            return cdata
-
-        certificate = cdata["ftp_ssltls_certificate"]
-        if not certificate:
-            raise forms.ValidationError(
-                "TLS specified without certificate")
-
-        return cdata
-
     def done(self, *args, **kwargs):
         if (
             self.instance._original_ftp_tls != self.instance.ftp_tls
