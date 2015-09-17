@@ -197,8 +197,8 @@ def servicesToggleView(request, formname):
         'webdav_toggle': 'webdav',
         'riak_toggle': 'riak',
         'stanchion_toggle': 'stanchion',
-        'riak_cs_toggle': 'riak_cs'
-        'swift_toggle': 'swift'
+        'riak_cs_toggle': 'riak_cs',
+        'swift_toggle': 'swift',
         'glusterd_toggle': 'glusterd'
     }
     changing_service = form2namemap[formname]
