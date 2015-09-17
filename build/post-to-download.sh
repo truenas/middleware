@@ -41,5 +41,6 @@ ssh ${ID}@download.freenas.org mkdir -p $TARGET
 scp -pr $STAGE/$VERSION-$DATE/* ${ID}@download.freenas.org:$TARGET
 if [ "`echo ${VERSION}|awk -F- '{print $3}'`" != "MASTER" ]; then
 	ssh ${ID}@download.freenas.org "(cd /tank/downloads/${PUSHIT}; rm -f latest; ln -s STABLE/$DATE latest)"
+ssh ${ID}@download.freenas.org /usr/local/sbin/rsync-mirror.sh
 fi
 exit 0
