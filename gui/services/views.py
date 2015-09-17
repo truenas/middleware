@@ -194,10 +194,10 @@ def servicesToggleView(request, formname):
         'ups_toggle': 'ups',
         'plugins_toggle': 'plugins',
         'domaincontroller_toggle': 'domaincontroller',
-        'webdav_toggle': 'webdav'
-        'riak_toggle', 'riak',
-        'stanchion_toggle', 'stanchion',
-        'riak_cs_toggle', 'riak_cs',
+        'webdav_toggle': 'webdav',
+        'riak_toggle': 'riak',
+        'stanchion_toggle': 'stanchion',
+        'riak_cs_toggle': 'riak_cs'
     }
     changing_service = form2namemap[formname]
     if changing_service == "":
