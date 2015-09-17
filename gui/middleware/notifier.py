@@ -4891,7 +4891,6 @@ class notifier:
             self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
             self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
             self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')
-            self.pwenc_reset_model_passwd(DynamicDNS, 'ddns_password')
             self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
             self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
 
