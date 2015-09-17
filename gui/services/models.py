@@ -1688,7 +1688,7 @@ class FTP(NewModel):
             ('ftp_localuserdlbw', 'local_down_bandwidth'),
             ('ftp_anonuserbw', 'anon_up_bandwidth'),
             ('ftp_anonuserdlbw', 'anon_down_bandwidth'),
-            ('ftp_tls', 'rls'),
+            ('ftp_tls', 'tls'),
             ('ftp_tls_policy', 'tls_policy'),
             ('ftp_ssltls_certificate', 'tls_ssl_certificate'),
             ('ftp_options', 'auxiliary'),
