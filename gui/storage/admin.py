@@ -540,11 +540,6 @@ class ScrubFAdmin(BaseFreeAdmin):
         })
 
         columns.append({
-            'name': 'scrub_threshold',
-            'label': _('Threshold days'),
-        })
-
-        columns.append({
             'name': 'scrub_description',
             'label': _('Description'),
         })
