@@ -134,13 +134,13 @@ MONTHS_CHOICES = (
 )
 
 WEEKDAYS_CHOICES = (
-    ('1', _('Monday')),
-    ('2', _('Tuesday')),
-    ('3', _('Wednesday')),
-    ('4', _('Thursday')),
-    ('5', _('Friday')),
-    ('6', _('Saturday')),
-    ('7', _('Sunday')),
+    ('mon', _('Monday')),
+    ('tue', _('Tuesday')),
+    ('wed', _('Wednesday')),
+    ('thu', _('Thursday')),
+    ('fri', _('Friday')),
+    ('sat', _('Saturday')),
+    ('sun', _('Sunday')),
 )
 
 VolumeType_Choices = (
