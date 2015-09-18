@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-09-02 09:57+0000\n"
+"PO-Revision-Date: 2015-09-17 08:05+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441187834.0\n"
+"X-POOTLE-MTIME: 1442477119.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12420,19 +12420,16 @@ msgid "The NetBIOS name cannot be the same as the workgroup name!"
 msgstr "NetBIOS název nemůže být stejný jako název pracovní skupiny!"
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "Verze"
+msgstr "Číslo verze"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "Metoda šifrování"
+msgstr "Šifrovací algoritmus"
 
 #: directoryservice/models.py:747
-#, fuzzy
 msgid "Principal name"
-msgstr "Protějšek"
+msgstr "Název identity"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
@@ -12440,14 +12437,12 @@ msgid "Kerberos Principal"
 msgstr "Kerberos identita (principal)"
 
 #: network/forms.py:254
-#, fuzzy
 msgid "The following VHIDs are already in use: %s"
-msgstr "Následující adresy jsou neplatné: %s"
+msgstr "Následující VHID jsou již používány: %s"
 
 #: network/forms.py:282
-#, fuzzy
 msgid "The IP must be within the same network"
-msgstr "Je třeba, aby se klon nacházel na stejném svazku"
+msgstr "Je třeba, aby IP adresa spadala do stejné sítě"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
@@ -12463,7 +12458,7 @@ msgstr "Virtuální IP adresa"
 
 #: network/models.py:233
 msgid "Virtual Host ID"
-msgstr ""
+msgstr "Identifikátor virtuálního hostitele"
 
 #: network/models.py:245
 msgid "Critical for Failover"
@@ -12504,38 +12499,32 @@ msgid "Jail Template"
 msgstr "Šablona vyhrazeného prostředí"
 
 #: services/models.py:679
-#, fuzzy
 msgid "Portal IPs"
-msgstr "IP adresa portálu"
+msgstr "IP adresy portálu"
 
 #: services/models.py:910
-#, fuzzy
 msgid "iSCSI Group"
-msgstr "iSCSI skupiny"
+msgstr "iSCSI skupina"
 
 #: templates/vcp/index.html:6
-#, fuzzy
 msgid "Plugin Name:"
-msgstr "Název zásuvného modulu"
+msgstr "Název zásuvného modulu:"
 
 #: templates/vcp/index.html:10
-#, fuzzy
 msgid "Available Plugin Version:"
-msgstr "Dostupné zásuvné moduly"
+msgstr "Verze zásuvného modulu k dispozici:"
 
 #: templates/vcp/index.html:20
-#, fuzzy
 msgid "Installed Plugin Version:"
-msgstr "Nainstalovat plugin"
+msgstr "Nainstalovaná verze zásuvného modulu:"
 
 #: templates/vcp/index.html:33
-#, fuzzy
 msgid "Uninstall"
-msgstr "Instalovat"
+msgstr "Odinstalovat"
 
 #: vcp/forms.py:56
 msgid "Please select the TrueNAS management interface."
-msgstr ""
+msgstr "Vyberte správní rozhraní TrueNAS."
 
 #: vcp/hook.py:45
 #: vcp/nav.py:35
@@ -12567,9 +12556,8 @@ msgid " vCenter Password"
 msgstr "Změnit heslo"
 
 #: vcp/models.py:74
-#, fuzzy
 msgid "version"
-msgstr "Verze"
+msgstr "verze"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
@@ -12578,73 +12566,69 @@ msgid "VCenter Configuration"
 msgstr "Nastavení"
 
 #: vcp/nav.py:44
-#, fuzzy
 msgid "vCenter Plugin Configuration"
-msgstr "Celkové nastavení cíle"
+msgstr "Nastavení zásuvného modulu vCenter"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr ""
+msgstr "Zásuvný modul vCenter byl úspěšně nainstalován."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr ""
+msgstr "Zásuvný modul vCenter byl úspěšně zaktualizován."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
-msgstr ""
+msgstr "Zásuvný modul vCenter byl úspěšně odinstalován."
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
 msgstr ""
+"Pro převzetí služby v případě výpadku je třeba, aby jedno rozhraní bylo "
+"označeno jako kritické."
 
 #: vcp/models.py:41
-#, fuzzy
 msgid "TrueNAS Management IP Address"
-msgstr "IP adresa DNS přeposílače"
+msgstr "IP adresa správního rozhraní TrueNAS"
 
 #: vcp/models.py:45
 msgid ""
 "Please select the TrueNAS interface that vCenter Web client can route to."
 msgstr ""
+"Vyberte rozhraní TrueNAS, na které bude odkazovat webový klient vCenter."
 
 #: vcp/models.py:52
-#, fuzzy
 msgid "vCenter Hostname/IP Address"
-msgstr "Název stroje nebo jeho IP adresa"
+msgstr "Název stroje s vCenter nebo jeho IP adresa"
 
 #: vcp/models.py:57
-#, fuzzy
 msgid "vCenter Port"
-msgstr "Port na protistraně"
+msgstr "Port na kterém vCenter očekává spojení"
 
 #: vcp/models.py:61
-#, fuzzy
 msgid "vCenter User name"
-msgstr "Uživatelské jméno"
+msgstr "Uživatelské jméno pro vCenter"
 
 #: vcp/models.py:67
-#, fuzzy
 msgid "vCenter Password"
-msgstr "Změnit heslo"
+msgstr "Heslo pro vCenter"
 
 #: vcp/models.py:77
-#, fuzzy
 msgid "vCenter Configuration"
-msgstr "Nastavení"
+msgstr "Nastavení vCenter"
 
 #: vcp/models.py:78
-#, fuzzy
 msgid "vCenter Configurations"
-msgstr "Nastavení"
+msgstr "Nastavení vCenter"
 
 #: storage/models.py:905
-#, fuzzy
 msgid "Recursively replicate child dataset's snapshots"
-msgstr "Rekurzivně replikovat a odebrat staré zachycené stavy na protistraně"
+msgstr "Rekurzivně replikovat zachycené stavy podřízených datových sad"
 
 #: storage/models.py:910
 msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr ""
+"Po úspěšné replikaci nových zachycených stavů smazat ty, které již nejsou k "
+"dispozici místně."
