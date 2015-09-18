@@ -324,6 +324,18 @@ class whoChoices:
         return iter((i, i) for i in self._wholist)
 
 
+class VolumeChoices:
+    def __init__(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        self.volumes = map(
+            lambda v: (v, v),
+            dispatcher.call_sync('volumes.query', [], {'select': 'name'})
+        )
+
+    def __iter__(self):
+        return iter(self.volumes)
+
+
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""

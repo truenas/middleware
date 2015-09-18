@@ -2258,9 +2258,12 @@ class Dataset_Destroy(Form):
 class ScrubForm(ModelForm):
 
     class Meta:
-        fields = '__all__'
+        exclude = ['id']
         model = models.Scrub
         widgets = {
+            'scrub_volume': forms.Select(
+                choices=choices.VolumeChoices()
+            ),
             'scrub_minute': CronMultiple(
                 attrs={'numChoices': 60, 'label': _("minute")},
             ),
@@ -2287,18 +2290,6 @@ class ScrubForm(ModelForm):
         mchoicefield(self, 'scrub_dayweek', [
             1, 2, 3, 4, 5, 6, 7
         ])
-
-    def clean_scrub_volume(self):
-        vol = self.cleaned_data.get('scrub_volume')
-        if vol:
-            qs = models.Scrub.objects.filter(scrub_volume__id=vol.id)
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.exists():
-                raise forms.ValidationError(
-                    _('A scrub with this volume already exists.')
-                )
-        return vol
 
     def clean_scrub_month(self):
         m = self.data.getlist("scrub_month")

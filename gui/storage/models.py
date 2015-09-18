@@ -400,7 +400,9 @@ class Scrub(NewModel):
             ('scrub_daymonth', 'schedule.day'),
             ('scrub_month', 'schedule.month'),
             ('scrub_dayweek', 'schedule.day_of_week')
-
+        )
+        extra_fields = (
+            ('name', 'zfs.pool.scrub'),
         )
 
     def __unicode__(self):
