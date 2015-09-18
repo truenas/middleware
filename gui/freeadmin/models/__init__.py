@@ -88,6 +88,7 @@ class Middleware(object):
         self.default_filters = getattr(klass, 'default_filters', None)
         self.field_mapping = FieldMiddlewareMapping(
             getattr(klass, 'field_mapping', ()))
+        self.extra_fields = getattr(klass, 'extra_fields', ())
         self.provider_name = getattr(
             klass, 'provider_name', model._meta.model_name)
 
@@ -514,6 +515,9 @@ class NewModel(Model):
                     data.set(field, related.id if related is not None else None)
                 else:
                     data.set(field, getattr(self, f.name))
+
+            for f in self._middleware.extra_fields:
+                data.set(f[0], f[1])
 
         method_args.append(data)
 
