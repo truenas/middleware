@@ -1327,9 +1327,7 @@ class SMARTTestResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(SMARTTestResourceMixin, self).dehydrate(bundle)
-        bundle.data['smarttest_disks'] = [
-            o.id for o in bundle.obj.smarttest_disks.all()
-        ]
+        bundle.data['smarttest_disks'] = bundle.obj._object['args.0']
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
             bundle.data['smarttest_type'] = (

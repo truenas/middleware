@@ -294,6 +294,9 @@ class RsyncForm(ModelForm):
 
 
 class SMARTTestForm(ModelForm):
+    smarttest_disks = forms.MultipleChoiceField(
+        choices=choices.DiskChoices()
+    )
 
     class Meta:
         fields = '__all__'
@@ -344,9 +347,12 @@ class SMARTTestForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
+        if hasattr(self.instance, '_object'):
+            self.fields['smarttest_disks'].initial = self.instance._object['args.0']
+
     def save(self):
+        self.instance.smarttest_disks = self.cleaned_data['smarttest_disks']
         super(SMARTTestForm, self).save()
-        notifier().restart("smartd")
 
     def clean_smarttest_hour(self):
         h = self.cleaned_data.get("smarttest_hour")
@@ -377,21 +383,4 @@ class SMARTTestForm(ModelForm):
     def clean(self):
         disks = self.cleaned_data.get("smarttest_disks", [])
         test = self.cleaned_data.get("smarttest_type")
-        used_disks = []
-        for disk in disks:
-            qs = models.SMARTTest.objects.filter(
-                smarttest_disks__in=[disk],
-                smarttest_type=test,
-            )
-            if self.instance.id:
-                qs = qs.exclude(id=self.instance.id)
-            if qs.count() > 0:
-                used_disks.append(disk.disk_name)
-        if used_disks:
-            self._errors['smarttest_disks'] = self.error_class([_(
-                "The following disks already have tests for this type: %s" % (
-                    ', '.join(used_disks),
-                )),
-            ])
-            self.cleaned_data.pop("smarttest_disks", None)
         return self.cleaned_data

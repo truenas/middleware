@@ -28,7 +28,6 @@ import copy
 import errno
 import logging
 import six
-
 from django.db import models
 from django.db.models import signals
 from django.db.models.fields.related import ForeignKey
@@ -333,7 +332,9 @@ class NewQuerySet(object):
                 else:
                     data[mfield.name] = val
 
-            yield self.model(**data)
+            obj = self.model(**data)
+            obj._object = i
+            yield obj
 
     def _transform_order(self, *args):
         sort = []
@@ -516,8 +517,11 @@ class NewModel(Model):
                 else:
                     data.set(field, getattr(self, f.name))
 
-            for f in self._middleware.extra_fields:
-                data.set(f[0], f[1])
+            for name, val in self._middleware.extra_fields:
+                if callable(val):
+                    val = val(self)
+
+                data.set(name, val)
 
         method_args.append(data)
 

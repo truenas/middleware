@@ -36,7 +36,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.common.log import log_traceback
-from freenasUI.freeadmin.models import Model, UserField, PathField
+from freenasUI.freeadmin.models import Model, NewModel, UserField, PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
 
@@ -558,11 +558,10 @@ class Rsync(Model):
             pass
 
 
-class SMARTTest(Model):
-    smarttest_disks = models.ManyToManyField(
-        Disk,
-        limit_choices_to={'disk_enabled': True},
-        verbose_name=_("Disks"),
+class SMARTTest(NewModel):
+    id = models.CharField(
+        max_length=200,
+        primary_key=True
     )
     smarttest_type = models.CharField(
         choices=choices.SMART_TEST,
@@ -640,11 +639,11 @@ class SMARTTest(Model):
         return ', '.join(labels)
 
     def __unicode__(self):
-        if self.smarttest_disks.count() > 3:
-            disks = [d.disk_name for d in self.smarttest_disks.all()[:3]]
+        if len(self._object['args.0']) > 3:
+            disks = self._object['args.0'][:3]
             disks = ', '.join(disks) + '...'
         else:
-            disks = [d.disk_name for d in self.smarttest_disks.all()]
+            disks = self._object['args.0']
             disks = ', '.join(disks)
 
         return "%s (%s) " % (
@@ -663,3 +662,23 @@ class SMARTTest(Model):
         verbose_name = _("S.M.A.R.T. Test")
         verbose_name_plural = _("S.M.A.R.T. Tests")
         ordering = ["smarttest_type"]
+
+    class Middleware:
+        provider_name = 'calendar_tasks'
+        default_filters = [
+            ('name', '=', 'disks.test_parallel')
+        ]
+        field_mapping = (
+            ('id', 'id'),
+            ('smarttest_type', 'args.1'),
+            ('smarttest_description', 'description'),
+            ('smarttest_minute', 'schedule.minute'),
+            ('smarttest_hour', 'schedule.hour'),
+            ('smarttest_daymonth', 'schedule.day'),
+            ('smarttest_month', 'schedule.month'),
+            ('smarttest_dayweek', 'schedule.day_of_week')
+        )
+        extra_fields = (
+            ('name', 'disks.test_parallel'),
+            ('args.0', lambda s: s.smarttest_disks),
+        )
