@@ -49,7 +49,7 @@ from freenasUI.storage.models import Replication, REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.common.pipesubr import pipeopen, system
 from freenasUI.common.locks import mntlock
-from freenasUI.common.system import send_mail
+from freenasUI.common.system import send_mail, get_sw_name
 
 #
 # Parse a list of 'zfs list -H -t snapshot -p -o name,creation' output
@@ -79,6 +79,8 @@ map_compression = {
     'xz': ('/usr/bin/xz', '/usr/bin/xzdec'),
 }
 
+is_truenas = not (get_sw_name().lower() == 'freenas')
+
 def compress_pipecmds(compression):
     if map_compression.has_key(compression):
         compress, decompress = map_compression[compression]
@@ -89,6 +91,12 @@ def compress_pipecmds(compression):
         decompress = ''
     return (compress, decompress)
 
+def rcro():
+    if is_truenas:
+        return '-o readonly=on '
+    else:
+        return ''
+
 #
 # Attempt to send a snapshot or increamental stream to remote.
 #
@@ -97,7 +105,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication)
     global templog
 
     progressfile = '/tmp/.repl_progress_%d' % replication.id
-    cmd = ['/sbin/zfs', 'send', '-V']
+    cmd = ['/sbin/zfs', 'send', '-Vp']
     if fromsnap is None:
         cmd.append("%s@%s" % (dataset, tosnap))
     else:
@@ -118,8 +126,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication)
         os.close(writefd)
 
     compress, decompress = compress_pipecmds(replication.repl_compression.__str__())
-
-    replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
+    replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s "%s/sbin/zfs receive -F -d %s\'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, rcro(), remotefs)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'r', 0)
         proc = subprocess.Popen(
@@ -296,6 +303,41 @@ for replication in replication_tasks:
         snaplist = [x for x in snaplist if not system_re.match(x)]
         map_source = mapfromdata(snaplist)
 
+    if is_truenas:
+        # Bi-directional replication: the remote side indicates that they are
+        # willing to receive snapshots by setting readonly to 'on', which prevents
+        # local writes.
+        #
+        # We expect to see "on" in the output, or cannot open '%s': dataset does not exist
+        # in the error.  To be safe, also check for children's readonly state.
+        may_proceed = False
+        rzfscmd = '"zfs list -H -o readonly -t filesystem,volume -r %s"' % (remotefs_final)
+        sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+        output, error = sshproc.communicate()
+        if sshproc.returncode:
+            # Be conservative: only consider it's Okay when we see the expected result.
+            if error != '':
+                if output.split('\n')[0] == ("cannot open '%s': dataset does not exist" % (remotefs_final)):
+                    may_proceed = True
+        else:
+            if output != '':
+                if output.find('off') == -1:
+                    may_proceed = True
+        if not may_proceed:
+            # Report the problem and continue
+            error, errmsg = send_mail(
+                subject="Replication denied! (%s)" % remote,
+                text="""
+Hello,
+    The remote system have denied our replication from local ZFS
+    %s to remote ZFS %s.  Please change the 'readonly' property
+    of:
+        %s
+    as well as its children to 'on' to allow receiving replication.
+                """ % (localfs, remotefs_final, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
+            results[replication.id] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
+            continue
+
     # Grab map from remote system
     if replication.repl_userepl:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
@@ -454,6 +496,8 @@ Hello,
                     rzfscmd = '"zfs destroy -d \'%s@%s\'"' % (zfsname, snapshot)
                     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
                     sshproc.communicate()
+            if allsucceeded:
+                    results[replication.id] = 'Succeeded (@%s)' % psnap
         else:
             # Remove the named dataset.
             zfsname = remotefs_final + dataset[l:]
