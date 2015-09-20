@@ -498,7 +498,7 @@ Hello,
                     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
                     sshproc.communicate()
             if allsucceeded:
-                    results[replication.id] = 'Succeeded (@%s)' % psnap
+                    results[replication.id] = 'Succeeded'
         else:
             # Remove the named dataset.
             zfsname = remotefs_final + dataset[l:]
