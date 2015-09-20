@@ -907,8 +907,7 @@ class Replication(Model):
     repl_followdelete = models.BooleanField(
         default=False,
         verbose_name=_(
-            "Delete snapshots that are no longer available locally after "
-            "successful replication of new snapshots"),
+            "Delete stale snapshots on remote system"),
     )
     repl_resetonce = models.BooleanField(
         default=False,
