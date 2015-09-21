@@ -93,6 +93,11 @@ def core(request):
         dynamicdns = models.DynamicDNS.objects.create()
 
     try:
+        ipfs = models.IPFS.objects.order_by("-id")[0]
+    except IndexError:
+        ipfs = models.IPFS.objects.create()
+
+    try:
         lldp = models.LLDP.objects.order_by("-id")[0]
     except IndexError:
         lldp = models.LLDP.objects.create()
@@ -149,6 +154,7 @@ def core(request):
         'srv': srv,
         'srv_mw': srv_mw,
         'cifs': cifs,
+        'ipfs': ipfs,
         'afp': afp,
         'lldp': lldp,
         'nfs': nfs,

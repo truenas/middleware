@@ -1864,3 +1864,10 @@ class WebDAVForm(ModelForm):
     def done(self, *args, **kwargs):
         if self._has_changed('webdav_certssl'):
             notifier().start_ssl("webdav")
+
+
+class IPFSForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.IPFS

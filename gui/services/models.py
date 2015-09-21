@@ -2448,3 +2448,41 @@ class WebDAV(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"WebDAVShareIcon"
+
+
+class IPFS(NewModel):
+    ipfs_path = PathField(
+        verbose_name=_("Path"),
+        blank=True,
+    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("IPFS")
+        verbose_name_plural = _("IPFS")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"IPFSIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('ipfs_path', 'path'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.ipfs.get_config')
+        return cls(**dict(
+            ipfs_path=config['path'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'path': self.ipfs_path or None,
+        }
+        self._save_task_call('service.ipfs.configure', data)
+        return True
