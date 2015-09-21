@@ -1,9 +1,6 @@
-#10418	Bug	Important	CIFS "Local Master" always in effect.
-#11227	Bug	Important	Fixed a bug that prevents snapshots being deleted at the sending side.
-#11262	Bug	Important	Active Directory won't re-start if krb5 ticket expires
-#11331	Bug	Important	Can't destroy a zvol in GUI when iSCSI is enabled and system is possessed by evil spirits
-#11335	Bug	Important	Make self-signed certificates and CAs work proper with Windows
-#11361	Bug	Critical	Windows Previous Versions "Can't Read" error
-#11409	Bug	Important	grub configuration generation issue
-#11420	Feature	Nice to have	Replication: Recursive replicate vs Remove stale snapshots
-#11421	Bug	Important	Fix DomainController migration failure for upgrade from 9.2.X
+#8639	Bug	Nice to have	SATA disks on LSI SAS controller don't spin down after specified "HDD Standby" time
+#7376	Bug	Nice to have	Installing FreeNAS 9.3 on XenServer 6.2
+#6285	Feature Important	Native Fiber Channel Support
+#11593	Feature	Nice to have	"Delete snapshots..." message in Replication Tasks view
+#11511	Bug	Important	LDAP sssd.conf generation
+#11133	Feature	Nice to have	zfs receive needs -x, -o and -l options
