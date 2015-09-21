@@ -506,45 +506,6 @@ class notifier:
     def _restart_pbid(self):
         self._system_nolog("/usr/sbin/service pbid restart")
 
-    def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
-        if not iface:
-            return False
-
-        cmd = "/sbin/ifconfig %s" % iface
-        if newip and newnetmask:
-            cmd += " alias %s/%s" % (newip, newnetmask)
-
-        elif newip:
-            cmd += " alias %s" % newip
-
-        else:
-            cmd = None
-
-        if cmd:
-            p = self._pipeopen(cmd)
-            if p.wait() != 0:
-                return False
-
-        cmd = "/sbin/ifconfig %s" % iface
-        if newip:
-            cmd += " -alias %s" % oldip
-            p = self._pipeopen(cmd)
-            if p.wait() != 0:
-                return False
-
-        if newnetmask and not newip:
-            cmd += " alias %s/%s" % (oldip, newnetmask)
-
-        else:
-            cmd = None
-
-        if cmd:
-            p = self._pipeopen(cmd)
-            if p.wait() != 0:
-                return False
-
-        return True
-
     def _reload_named(self):
         self._system("/usr/sbin/service named reload")
 
@@ -2048,15 +2009,6 @@ class notifier:
         user = self.___getpwnam(username)
         return (user.pw_passwd, smb_hash)
 
-    def user_getnextuid(self):
-        command = "/usr/sbin/pw usernext"
-        pw = self._pipeopen(command)
-        uid = pw.communicate()[0]
-        if pw.returncode != 0:
-            raise ValueError("Could not retrieve usernext")
-        uid = uid.split(':')[0]
-        return uid
-
     def _reload_user(self):
         self.reload("cifs")
 
@@ -2295,81 +2247,6 @@ class notifier:
         if syspath:
             return '%s/update' % syspath
         return '/var/tmp/update'
-
-    def validate_update(self, path):
-
-        os.chdir(os.path.dirname(path))
-
-        # XXX: ugly
-        self._system("rm -rf */")
-
-        percent = 0
-        with open('/tmp/.extract_progress', 'w') as fp:
-            fp.write("2|%d\n" % percent)
-            fp.flush()
-            with open('/tmp/.upgrade_extract', 'w') as f:
-                size = os.stat(path).st_size
-                proc = subprocess.Popen([
-                    "/usr/bin/tar",
-                    "-xSJpf",  # -S for sparse
-                    path,
-                ], stderr=f)
-                RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
-                while True:
-                    if proc.poll() is not None:
-                        break
-                    try:
-                        os.kill(proc.pid, signal.SIGINFO)
-                    except:
-                        break
-                    time.sleep(1)
-                    # TODO: We don't need to read the whole file
-                    with open('/tmp/.upgrade_extract', 'r') as f2:
-                        line = f2.read()
-                    reg = RE_TAR.findall(line)
-                    if reg:
-                        current = Decimal(reg[-1])
-                        percent = (current / size) * 100
-                        fp.write("2|%d\n" % percent)
-                        fp.flush()
-            err = proc.communicate()[1]
-            if proc.returncode != 0:
-                os.chdir('/')
-                raise MiddlewareError(
-                    'The firmware image is invalid, make sure to use .txz file: %s' % err
-                )
-            fp.write("3|\n")
-            fp.flush()
-        os.unlink('/tmp/.extract_progress')
-        try:
-            subprocess.check_output(
-                                    ['bin/install_worker.sh', 'pre-install'],
-                                    stderr=subprocess.STDOUT,
-                                    )
-        except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The firmware does not meet the '
-                                  'pre-install criteria: %s' % (cpe.output, ))
-        finally:
-            os.chdir('/')
-        # XXX: bleh
-        return True
-
-    def apply_update(self, path):
-        from freenasUI.system.views import INSTALLFILE
-        os.chdir(os.path.dirname(path))
-        open(INSTALLFILE, 'w').close()
-        try:
-            subprocess.check_output(
-                                    ['bin/install_worker.sh', 'install'],
-                                    stderr=subprocess.STDOUT,
-                                    )
-        except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The update failed %s: %s' % (str(cpe), cpe.output))
-        finally:
-            os.chdir('/')
-            os.unlink(path)
-            os.unlink(INSTALLFILE)
-        open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def umount_filesystems_within(self, path):
         """
@@ -3516,9 +3393,6 @@ class notifier:
         status = reg.group(1)
 
         return statusmap.get(status, status)
-
-    def interface_mtu(self, iface, mtu):
-        self._system("ifconfig %s mtu %s" % (iface, mtu))
 
     def get_default_ipv4_interface(self):
         p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
