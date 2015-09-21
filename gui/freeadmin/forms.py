@@ -237,8 +237,8 @@ class PathField(forms.CharField):
             valid = False
             paths = dispatcher.call_sync(
                 'volumes.query',
-                [('status', '=', 'ONLINE')],
-                {'select': 'properties.mountpoint'}
+                [],
+                {'select': 'mountpoint'}
             )
             for mp in paths:
                 if absv.startswith(mp[0] + '/') or absv == mp[0]:
