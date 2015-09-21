@@ -583,12 +583,13 @@ class NFS(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.nfs.get_config')
         return cls(**dict(
+            id=1,
             nfs_srv_servers=config['servers'],
             nfs_srv_udp=config['udp'],
             nfs_srv_allow_nonroot=config['nonroot'],
             nfs_srv_v4=config['v4'],
             nfs_srv_v4_krb=config['v4_kerberos'],
-            nfs_srv_bindip=config['bind_addresses'],
+            nfs_srv_bindip=','.join(config['bind_addresses'] or []) or None,
             nfs_srv_mountd_port=config['mountd_port'],
             nfs_srv_rpcstatd_port=config['rpcstatd_port'],
             nfs_srv_rpclockd_port=config['rpclockd_port'],
@@ -601,7 +602,7 @@ class NFS(NewModel):
             'nonroot': self.nfs_srv_allow_nonroot,
             'v4': self.nfs_srv_v4,
             'v4_kerberos': self.nfs_srv_v4_krb,
-            'bind_addresses': self.nfs_srv_bindip or None,
+            'bind_addresses': self.nfs_srv_bindip.split(',') or None,
             'mountd_port': self.nfs_srv_mountd_port,
             'rpcstatd_port': self.nfs_srv_rpcstatd_port,
             'rpclockd_port': self.nfs_srv_rpclockd_port,
