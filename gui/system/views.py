@@ -736,7 +736,7 @@ class DojoFileStore(object):
                 [
                     f for f in self.mp if (
                         full_path.startswith(f + '/') or full_path == f or
-                        full_path.startswith('/volumes')
+                        full_path.startswith('/mnt')
                     )
                 ]
             ) > 0:
