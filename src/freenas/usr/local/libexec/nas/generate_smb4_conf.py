@@ -975,8 +975,6 @@ def generate_smb4_conf(smb4_conf, role):
 
     if role != 'dc':
         confset1(smb4_conf, "pid directory = /var/run/samba")
-        confset1(smb4_conf, "smb passwd file = /var/etc/private/smbpasswd")
-        confset1(smb4_conf, "private dir = /var/etc/private")
 
     confset2(smb4_conf, "create mask = %s", cifs.cifs_srv_filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.cifs_srv_dirmask)
@@ -1184,9 +1182,6 @@ def smb4_setup():
 
     smb4_mkdir("/var/log/samba4")
     os.chmod("/var/log/samba4", 0755)
-
-    smb4_mkdir("/var/etc/private")
-    os.chmod("/var/etc/private", 0700)
 
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
@@ -1482,7 +1477,7 @@ def main():
 
     if role != 'dc':
         smb4_import_users(smb_conf_path, smb4_tdb,
-                          "/var/etc/private/passdb.tdb")
+                          "/var/db/samba4/private/passdb.tdb")
         smb4_map_groups()
         smb4_grant_rights()
 
