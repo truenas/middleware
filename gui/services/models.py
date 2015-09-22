@@ -2214,7 +2214,8 @@ class RsyncMod(NewModel):
     id = models.CharField(
         max_length=200,
         verbose_name=_("ID"),
-        primary_key=True
+        primary_key=True,
+        editable=False,
     )
     rsyncmod_name = models.CharField(
         max_length=120,
