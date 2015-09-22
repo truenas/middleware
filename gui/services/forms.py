@@ -341,13 +341,6 @@ class NFSForm(ModelForm):
         obj = super(NFSForm, self).save(commit=False)
         obj.nfs_srv_bindip = self.cleaned_data.get('nfs_srv_bindip')
         obj.save()
-        started = notifier().restart("nfs")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='nfs').srv_enable
-        ):
-            raise ServiceFailed("nfs", _("The NFS service failed to reload."))
 
 
 class FTPForm(ModelForm):
