@@ -31,6 +31,7 @@ from OpenSSL import crypto
 
 log = logging.getLogger('common.ssl')
 
+
 def generate_key(key_length):
     k = crypto.PKey()
     k.generate_key(crypto.TYPE_RSA, key_length)
@@ -47,14 +48,19 @@ def create_certificate(cert_info):
     cert.get_subject().emailAddress = cert_info['email']
 
     serial = cert_info.get('serial')
-    if serial != None:
+    if serial is not None:
         cert.set_serial_number(serial)
 
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(cert_info['lifetime'] * (60*60*24))
 
     cert.set_issuer(cert.get_subject())
+    # Setting it to '2' actually results in a v3 cert
+    # openssl's cert x509 versions are zero-indexed!
+    # see: https://www.ietf.org/rfc/rfc3280.txt
+    cert.set_version(2)
     return cert
+
 
 def create_self_signed_CA(cert_info):
     key = generate_key(cert_info['key_length'])
@@ -107,7 +113,7 @@ def create_certificate_signing_request(cert_info):
 
 def load_certificate(buf):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
-    
+
     cert_info = {}
     cert_info['country'] = cert.get_subject().C
     cert_info['state'] = cert.get_subject().ST
@@ -121,12 +127,12 @@ def load_certificate(buf):
     if m:
         cert_info['digest_algorithm'] = m.group(1).upper()
 
-    return cert_info 
+    return cert_info
 
 
 def load_certificate_signing_request(buf):
     cert = crypto.load_certificate_request(crypto.FILETYPE_PEM, buf)
-    
+
     cert_info = {}
     cert_info['country'] = cert.get_subject().C
     cert_info['state'] = cert.get_subject().ST
@@ -140,15 +146,15 @@ def load_certificate_signing_request(buf):
     if m:
         cert_info['digest_algorithm'] = m.group(1).upper()
 
-    return cert_info 
+    return cert_info
 
 
 #
 # This will raise an exception if it's an encrypted private key
 # and no password is provided. Unfortunately, the exception type
-# is generic and no error string is provided. The purpose here is 
+# is generic and no error string is provided. The purpose here is
 # to determine if this is an encrypted private key or not. If it not,
-# then the key will load and return fine. If it is encrypted, then it 
+# then the key will load and return fine. If it is encrypted, then it
 # will load if the correct passphrase is provided, otherwise it will
 # throw an exception.
 #
@@ -206,7 +212,7 @@ def get_certificate_path(name):
 
     try:
         certificate = Certificate.objects.get(cert_name=name)
-        path = certificate.get_certificate_path() 
+        path = certificate.get_certificate_path()
     except:
         path = None
 
@@ -230,7 +236,7 @@ def get_certificateauthority_path(name):
 
     try:
         certificate = CertificateAuthority.objects.get(cert_name=name)
-        path = certificate.get_certificate_path() 
+        path = certificate.get_certificate_path()
     except:
         path = None
 
