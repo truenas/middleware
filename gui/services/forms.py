@@ -445,18 +445,6 @@ class RsyncdForm(ModelForm):
         fields = '__all__'
         model = models.Rsyncd
 
-    def save(self):
-        super(RsyncdForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
-
 
 class RsyncModForm(ModelForm):
 
