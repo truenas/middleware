@@ -1886,7 +1886,7 @@ class FTP(NewModel):
             'tls': self.ftp_tls,
             'tls_policy': self.ftp_tls_policy.upper(),
             'tls_options': tls_options,
-            'tls_ssl_certificate': self.ftp_ssltls_certificate.id if self.ftp_ssltls_certificate else NOne,
+            'tls_ssl_certificate': self.ftp_ssltls_certificate.id if self.ftp_ssltls_certificate else None,
             'auxiliary': self.ftp_options or None,
         }
         self._save_task_call('service.ftp.configure', data)
@@ -2204,7 +2204,7 @@ class Rsyncd(NewModel):
     def _save(self, *args, **kwargs):
         data = {
             'port': self.rsyncd_port,
-            'auxiliary': self.rsyncd_auxiliary,
+            'auxiliary': self.rsyncd_auxiliary or None,
         }
         self._save_task_call('service.rsyncd.configure', data)
         return True
