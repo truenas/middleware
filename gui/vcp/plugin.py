@@ -91,7 +91,14 @@ class PluginManager:
         ext.client = client
         return ext
 
-    def install_vCenter_plugin(self, vc_ip, usernName, password, port, manage_ip, sys_guiprotocol):
+    def install_vCenter_plugin(
+            self,
+            vc_ip,
+            usernName,
+            password,
+            port,
+            manage_ip,
+            sys_guiprotocol):
         try:
 
             try:
@@ -123,7 +130,14 @@ class PluginManager:
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
-    def upgrade_vCenter_plugin(self, vc_ip, usernName, password, port, manage_ip, sys_guiprotocol):
+    def upgrade_vCenter_plugin(
+            self,
+            vc_ip,
+            usernName,
+            password,
+            port,
+            manage_ip,
+            sys_guiprotocol):
         try:
 
             try:
@@ -173,8 +187,8 @@ class PluginManager:
                 return True
 
         except requests.exceptions.ConnectionError:
-            return 'Installation Failed. Provided vCenter Hostname/IP and port are not valid. '
+            return 'Provided vCenter Hostname/IP and port are not valid. '
         except vim.fault.InvalidLogin:
-            return 'Installation Failed. Provided vCenter credentials are not valid.'
+            return 'Provided vCenter credentials are not valid.'
         except Exception:
-            return 'Installation Failed. Please contact support.'
+            return 'Internal Error. Please contact support.'

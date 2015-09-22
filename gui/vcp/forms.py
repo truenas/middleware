@@ -27,10 +27,11 @@
 
 import logging
 
-from django import forms
+from dojango import forms
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.common.forms import ModelForm
 from freenasUI.vcp import models
+from django.forms import widgets
 from freenasUI.system.models import Settings
 
 from . import plugin, utils
@@ -62,18 +63,17 @@ class VcenterConfigurationForm(ModelForm):
             manage_ip = str(self.cleaned_data['vc_management_ip'])
             password = str(self.cleaned_data['vc_password'])
             username = str(self.cleaned_data['vc_username'])
-            status_flag = self.validate_vcp_param(ip, port, username, password, False)
+            status_flag = self.validate_vcp_param(
+                ip, port, username, password, False)
 
             if status_flag is True:
                 status_flag = utils.update_plugin_zipfile(
-                    ip, username, password, port, 'NEW', utils.get_plugin_version()
-                )
+                    ip, username, password, port, 'NEW', utils.get_plugin_version())
                 if status_flag is True:
                     sys_guiprotocol = self.get_sys_protocol()
                     plug = plugin.PluginManager()
                     status_flag = plug.install_vCenter_plugin(
-                        ip, username, password, port, manage_ip, sys_guiprotocol
-                    )
+                        ip, username, password, port, manage_ip, sys_guiprotocol)
                     if status_flag is True:
                         self.vcp_is_installed = True
                         self.vcp_is_update_available = False
@@ -102,7 +102,7 @@ class VcenterConfigurationForm(ModelForm):
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
             username = str(obj.vc_username)
-            password = str(obj.vc_password)
+            password = str(self.cleaned_data['vc_password'])
             port = str(obj.vc_port)
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, True
@@ -110,7 +110,8 @@ class VcenterConfigurationForm(ModelForm):
 
             if status_flag is True:
                 plug = plugin.PluginManager()
-                status_flag = plug.uninstall_vCenter_plugin(ip, username, password, port)
+                status_flag = plug.uninstall_vCenter_plugin(
+                    ip, username, password, port)
                 if status_flag is True:
                     models.VcenterConfiguration.objects.all().delete()
                     self.vcp_is_installed = False
@@ -131,21 +132,20 @@ class VcenterConfigurationForm(ModelForm):
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
             username = str(obj.vc_username)
-            password = str(obj.vc_password)
+            password = str(self.cleaned_data['vc_password'])
             port = str(obj.vc_port)
             manage_ip = str(obj.vc_management_ip)
-            status_flag = self.validate_vcp_param(ip, port, username, password, True)
+            status_flag = self.validate_vcp_param(
+                ip, port, username, password, True)
 
             if status_flag is True:
                 status_flag = utils.update_plugin_zipfile(
-                    ip, username, password, port, 'UPGRADE', utils.get_plugin_version()
-                )
+                    ip, username, password, port, 'UPGRADE', utils.get_plugin_version())
                 if status_flag is True:
                     sys_guiprotocol = self.get_sys_protocol()
                     plug = plugin.PluginManager()
                     status_flag = plug.upgrade_vCenter_plugin(
-                        ip, username, password, port, manage_ip, sys_guiprotocol
-                    )
+                        ip, username, password, port, manage_ip, sys_guiprotocol)
                     if status_flag is True:
                         self.vcp_is_update_available = False
                         obj.vc_version = utils.get_plugin_version()
@@ -226,3 +226,6 @@ class VcenterConfigurationForm(ModelForm):
     class Meta:
         model = models.VcenterConfiguration
         exclude = ['vc_version']
+        widgets = {
+            'vc_password': forms.PasswordInput(),
+        }
