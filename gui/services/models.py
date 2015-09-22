@@ -2160,7 +2160,7 @@ class LLDP(Model):
         icon_model = "LLDPIcon"
 
 
-class Rsyncd(Model):
+class Rsyncd(NewModel):
     rsyncd_port = models.IntegerField(
         default=873,
         verbose_name=_("TCP Port"),
@@ -2173,6 +2173,8 @@ class Rsyncd(Model):
                     "in rsyncd.conf"),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("Configure Rsyncd")
         verbose_name_plural = _("Configure Rsyncd")
@@ -2181,6 +2183,31 @@ class Rsyncd(Model):
         deletable = False
         menu_child_of = "services.Rsync"
         icon_model = u"rsyncdIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('rsyncd_port', 'port'),
+            ('rsyncd_auxiliary', 'auxiliary'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.rsyncd.get_config')
+        return cls(**dict(
+            id=1,
+            rsyncd_port=config['port'],
+            rsyncd_auxiliary=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'port': self.rsyncd_port,
+            'auxiliary': self.rsyncd_auxiliary,
+        }
+        self._save_task_call('service.rsyncd.configure', data)
+        return True
 
 
 class RsyncMod(Model):
