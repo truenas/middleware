@@ -505,7 +505,7 @@ class NewModel(Model):
                     data[f.name] = getattr(self, f.name)
                     continue
                 # Do not send id for update task
-                if f.name == 'id' and not updated:
+                if f.name == 'id' and updated:
                     continue
                 field = fmm.get_field_to_middleware(f.name)
                 if not field:
