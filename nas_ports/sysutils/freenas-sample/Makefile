@@ -1,14 +1,14 @@
 # $FreeBSD$
 
 PORTNAME=	freenas-sample
-PORTVERSION=	0.02c
+PORTVERSION=	0.02g
 PORTREVISION=	0
 CATEGORIES=	sysutils
 
 USE_GITHUB=	yes
 GH_ACCOUNT=	freenas
 GH_PROJECT=	sample
-GH_TAGNAME=	a7da1d7
+GH_TAGNAME=	57a99a1
 
 #USES=           python:2.7+
 USES=		python:2.7+,build
@@ -19,6 +19,7 @@ BUILD_DEPENDS+=	${LOCALBASE}/lib/libxo.a:${PORTSDIR}/devel/libxo
 BUILD_DEPENDS+=	${LOCALBASE}/bin/cython:${PORTSDIR}/lang/cython
 BUILD_DEPENDS+=	${LOCALBASE}/bin/python:${PORTSDIR}/lang/python
 MAKE_ENV=	SYSDIR=${SRC_BASE}/sys
+#MAKE_ENV+=	DEBUG_FLAGS="-O0 -g"
 #MAKE_ENV+=	KMODDIR=${STAGEDIR}/boot/kernel
 #MAKE_ENV+=	BINDIR=${PREFIX}/bin
 
