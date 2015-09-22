@@ -2210,7 +2210,12 @@ class Rsyncd(NewModel):
         return True
 
 
-class RsyncMod(Model):
+class RsyncMod(NewModel):
+    id = models.CharField(
+        max_length=200,
+        verbose_name=_("ID"),
+        primary_key=True
+    )
     rsyncmod_name = models.CharField(
         max_length=120,
         verbose_name=_("Module name"),
@@ -2291,6 +2296,22 @@ class RsyncMod(Model):
     class FreeAdmin:
         menu_child_of = 'services.Rsync'
         icon_model = u"rsyncModIcon"
+
+    class Middleware:
+        field_mapping = (
+            ('id', 'id'),
+            ('rsyncmod_name', 'name'),
+            ('rsyncmod_comment', 'description'),
+            ('rsyncmod_path', 'path'),
+            ('rsyncmod_mode', 'mode'),
+            ('rsyncmod_maxconn', 'max_connections'),
+            ('rsyncmod_user', 'user'),
+            ('rsyncmod_group', 'group'),
+            ('rsyncmod_hostsallow', 'hosts_allow'),
+            ('rsyncmod_hostsdeny', 'hosts_deny'),
+            ('rsyncmod_auxiliary', 'auxiliary'),
+        )
+        provider_name = 'service.rsyncd.module'
 
     def __unicode__(self):
         return unicode(self.rsyncmod_name)
