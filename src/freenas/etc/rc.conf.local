@@ -149,7 +149,6 @@ _sssd_config()
 _gen_conf()
 {
 	## Daemons
-	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig snmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
 	_bool_svcconfig inetd_enable tftp
