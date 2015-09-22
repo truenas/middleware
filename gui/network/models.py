@@ -52,15 +52,6 @@ class GlobalConfiguration(NewModel):
             regex=r'^[a-zA-Z\.\-\_0-9]+$',
         )],
     )
-    gc_hostname_b = models.CharField(
-        max_length=120,
-        verbose_name=_("Hostname"),
-        validators=[RegexValidator(
-            regex=r'^[a-zA-Z\.\-\_0-9]+$',
-        )],
-        blank=True,
-        null=True,
-    )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
         default='',
@@ -192,7 +183,7 @@ class GlobalConfiguration(NewModel):
                 'addresses': dns_servers
             },
             'netwait': {
-                'enable': self.gc_netwait_enabled,
+                'enabled': self.gc_netwait_enabled,
                 'addresses': self.gc_netwait_ip.split()
             }
         })

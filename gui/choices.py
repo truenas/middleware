@@ -603,9 +603,9 @@ RepeatUnit_Choices = (
 )
 
 ACCESS_MODE = (
-    ('ro', _('Read-only')),
-    ('wo', _('Write-only')),
-    ('rw', _('Read and Write')),
+    ('READONLY', _('Read-only')),
+    ('WRITEONLY', _('Write-only')),
+    ('READWRITE', _('Read and Write')),
     )
 
 ZFS_DEDUP = (

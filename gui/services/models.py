@@ -488,7 +488,7 @@ class AFP(NewModel):
         return True
 
 
-class NFS(Model):
+class NFS(NewModel):
     nfs_srv_servers = models.PositiveIntegerField(
         default=4,
         validators=[MinValueValidator(1), MaxValueValidator(256)],
@@ -558,9 +558,57 @@ class NFS(Model):
             "port, for both IPv4 and IPv6 address families."),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("NFS")
         verbose_name_plural = _("NFS")
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('nfs_srv_servers', 'servers'),
+            ('nfs_srv_udp', 'udp'),
+            ('nfs_srv_allow_nonroot', 'nonroot'),
+            ('nfs_srv_v4', 'v4'),
+            ('nfs_srv_v4_krb', 'v4_kerberos'),
+            ('nfs_srv_bindip', 'bind_addresses'),
+            ('nfs_srv_mountd_port', 'mountd_port'),
+            ('nfs_srv_rpcstatd_port', 'rpcstatd_port'),
+            ('nfs_srv_rpclockd_port', 'rpclockd_port'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.nfs.get_config')
+        return cls(**dict(
+            id=1,
+            nfs_srv_servers=config['servers'],
+            nfs_srv_udp=config['udp'],
+            nfs_srv_allow_nonroot=config['nonroot'],
+            nfs_srv_v4=config['v4'],
+            nfs_srv_v4_krb=config['v4_kerberos'],
+            nfs_srv_bindip=','.join(config['bind_addresses'] or []) or None,
+            nfs_srv_mountd_port=config['mountd_port'],
+            nfs_srv_rpcstatd_port=config['rpcstatd_port'],
+            nfs_srv_rpclockd_port=config['rpclockd_port'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'servers': self.nfs_srv_servers,
+            'udp': self.nfs_srv_udp,
+            'nonroot': self.nfs_srv_allow_nonroot,
+            'v4': self.nfs_srv_v4,
+            'v4_kerberos': self.nfs_srv_v4_krb,
+            'bind_addresses': self.nfs_srv_bindip.split(',') or None,
+            'mountd_port': self.nfs_srv_mountd_port,
+            'rpcstatd_port': self.nfs_srv_rpcstatd_port,
+            'rpclockd_port': self.nfs_srv_rpclockd_port,
+        }
+        self._save_task_call('service.nfs.configure', data)
+        return True
 
 
 class iSCSITargetGlobalConfiguration(Model):
@@ -1838,7 +1886,7 @@ class FTP(NewModel):
             'tls': self.ftp_tls,
             'tls_policy': self.ftp_tls_policy.upper(),
             'tls_options': tls_options,
-            'tls_ssl_certificate': self.ftp_ssltls_certificate.id if self.ftp_ssltls_certificate else NOne,
+            'tls_ssl_certificate': self.ftp_ssltls_certificate.id if self.ftp_ssltls_certificate else None,
             'auxiliary': self.ftp_options or None,
         }
         self._save_task_call('service.ftp.configure', data)
@@ -2112,7 +2160,7 @@ class LLDP(Model):
         icon_model = "LLDPIcon"
 
 
-class Rsyncd(Model):
+class Rsyncd(NewModel):
     rsyncd_port = models.IntegerField(
         default=873,
         verbose_name=_("TCP Port"),
@@ -2125,6 +2173,8 @@ class Rsyncd(Model):
                     "in rsyncd.conf"),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("Configure Rsyncd")
         verbose_name_plural = _("Configure Rsyncd")
@@ -2134,8 +2184,38 @@ class Rsyncd(Model):
         menu_child_of = "services.Rsync"
         icon_model = u"rsyncdIcon"
 
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('rsyncd_port', 'port'),
+            ('rsyncd_auxiliary', 'auxiliary'),
+        )
 
-class RsyncMod(Model):
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.rsyncd.get_config')
+        return cls(**dict(
+            id=1,
+            rsyncd_port=config['port'],
+            rsyncd_auxiliary=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'port': self.rsyncd_port,
+            'auxiliary': self.rsyncd_auxiliary or None,
+        }
+        self._save_task_call('service.rsyncd.configure', data)
+        return True
+
+
+class RsyncMod(NewModel):
+    id = models.CharField(
+        max_length=200,
+        verbose_name=_("ID"),
+        primary_key=True
+    )
     rsyncmod_name = models.CharField(
         max_length=120,
         verbose_name=_("Module name"),
@@ -2216,6 +2296,22 @@ class RsyncMod(Model):
     class FreeAdmin:
         menu_child_of = 'services.Rsync'
         icon_model = u"rsyncModIcon"
+
+    class Middleware:
+        field_mapping = (
+            ('id', 'id'),
+            ('rsyncmod_name', 'name'),
+            ('rsyncmod_comment', 'description'),
+            ('rsyncmod_path', 'path'),
+            ('rsyncmod_mode', 'mode'),
+            ('rsyncmod_maxconn', 'max_connections'),
+            ('rsyncmod_user', 'user'),
+            ('rsyncmod_group', 'group'),
+            ('rsyncmod_hostsallow', 'hosts_allow'),
+            ('rsyncmod_hostsdeny', 'hosts_deny'),
+            ('rsyncmod_auxiliary', 'auxiliary'),
+        )
+        provider_name = 'service.rsyncd.module'
 
     def __unicode__(self):
         return unicode(self.rsyncmod_name)

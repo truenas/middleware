@@ -244,7 +244,6 @@ class notifier:
 
     __service2daemon = {
         'ssh': ('sshd', '/var/run/sshd.pid'),
-        'rsync': ('rsync', '/var/run/rsyncd.pid'),
         'nfs': ('nfsd', None),
         'afp': ('netatalk', None),
         'cifs': ('smbd', '/var/run/samba/smbd.pid'),
@@ -554,21 +553,6 @@ class notifier:
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service sshd restart")
         self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
-
-    def _reload_rsync(self):
-        self._system("/usr/sbin/service ix-rsyncd quietstart")
-        self._system("/usr/sbin/service rsyncd restart")
-
-    def _restart_rsync(self):
-        self._stop_rsync()
-        self._start_rsync()
-
-    def _start_rsync(self):
-        self._system("/usr/sbin/service ix-rsyncd quietstart")
-        self._system("/usr/sbin/service rsyncd start")
-
-    def _stop_rsync(self):
-        self._system("/usr/sbin/service rsyncd forcestop")
 
     def _started_nis(self):
         res = False

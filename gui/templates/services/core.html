@@ -96,7 +96,7 @@
            <strong>{% trans "NFS" %}</strong>
        </td>
        <td>
-               <img id="nfs_toggle" name="nfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "nfs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+               <img id="nfs_toggle" name="nfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.nfs == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
            <img id="nfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "NFS Settings"|force_escape|force_escape %}', '{{ nfs.get_edit_url }}');" title="{% trans "NFS Settings" %}">
@@ -147,10 +147,10 @@
            <strong>{% trans "Rsync" %}</strong>
        </td>
        <td>
-       <img id="rsync_toggle" name="rsync_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "rsync" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="rsync_toggle" name="rsync_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.rsyncd == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="rsync_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Rsync Settings"|force_escape|force_escape %}', '{{ rsyncd.get_edit_url }}');" title="{% trans "Rsync Settings" %}">
+           <img id="rsync_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Rsync Settings"|escapejs %}', '{{ rsyncd.get_edit_url }}');" title="{% trans "Rsync Settings" %}">
        </td>
    </tr>
    <tr>

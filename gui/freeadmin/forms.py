@@ -241,7 +241,7 @@ class PathField(forms.CharField):
                 {'select': 'mountpoint'}
             )
             for mp in paths:
-                if absv.startswith(mp[0] + '/') or absv == mp[0]:
+                if absv.startswith(mp + '/') or absv == mp:
                     valid = True
                     break
             if not valid and absv in self.includes:
