@@ -176,7 +176,7 @@ class Volumes(TreeNode):
         subnav.app_name = 'storage'
 
         zv = AddZVol()
-        zv.kwargs = {'parent': dataset['properties.mountpoint.value']}
+        zv.kwargs = {'parent': dataset['name']}
 
         node.append_child(nav)
         nav.append_child(subnav)
