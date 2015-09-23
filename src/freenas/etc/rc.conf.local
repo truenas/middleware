@@ -50,18 +50,6 @@ _bool_config()
 	done
 }
 
-# _count_config /variable/ /table/ /field/ /where/
-_count_config()
-{
-	local count value
-	count=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT($3) FROM $2 WHERE $3$4"`
-	if [ "${count}" -gt "0" ]; then
-		value="YES"
-	else
-		value="NO"
-	fi
-	echo $1=\"${value}\"
-}
 
 # _bool_svcconfig /variable/ /service_name/
 _bool_svcconfig()
@@ -175,17 +163,6 @@ _gen_conf()
 	if [ ! -r /etc/zfs/exports ]; then
 		touch /etc/zfs/exports
 	fi
-
-	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
-	if ! is_freenas; then
-		_count_config pf_enable system_failover id \>0
-		_count_config failover_enable system_failover id \>0
-		local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
-		if [ "${failover}" == "BACKUP" ]; then
-			echo "collectd_enable=\"NO\""
-		fi
-	fi
-
 
 	local smartdint
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
