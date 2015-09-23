@@ -1624,27 +1624,6 @@ class SMARTForm(ModelForm):
         fields = '__all__'
         model = models.SMART
 
-    def clean_smart_email(self):
-        email = self.cleaned_data.get("smart_email")
-        if email:
-            invalids = []
-            for e in email.split(','):
-                try:
-                    validate_email(e.strip())
-                except:
-                    invalids.append(e.strip())
-
-            if len(invalids) > 0:
-                raise forms.ValidationError(ungettext_lazy(
-                    'The email %(email)s is not valid',
-                    'The following emails are not valid: %(email)s',
-                    len(invalids)) % {
-                        'email': ", ".join(invalids),
-                    })
-            else:
-                email = email.replace(' ', '')
-        return email
-
 
 class DomainControllerForm(ModelForm):
     dc_passwd2 = forms.CharField(
