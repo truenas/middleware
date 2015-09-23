@@ -158,10 +158,10 @@
            <strong>{% trans "S.M.A.R.T." %}</strong>
        </td>
        <td>
-            <img id="smartd_toggle" name="smartd_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "smartd" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+            <img id="smartd_toggle" name="smartd_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.smartd == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="smartd_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "S.M.A.R.T. Settings"|force_escape|force_escape %}', '{{ smart.get_edit_url }}');" title="{% trans "S.M.A.R.T. Settings" %}">
+           <img id="smartd_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "S.M.A.R.T. Settings"|escapejs %}', '{{ smart.get_edit_url }}');" title="{% trans "S.M.A.R.T. Settings" %}">
        </td>
    </tr>
    <tr>
