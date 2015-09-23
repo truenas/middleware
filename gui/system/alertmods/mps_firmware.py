@@ -27,18 +27,34 @@ class MPSFirmwareAlert(BaseAlert):
         for number, mibs in mps.items():
             firmware = mibs.get('firmware_version')
             driver = mibs.get('driver_version')
-            if firmware != driver:
-                alerts.append(Alert(
-                    Alert.WARN,
-                    _(
-                        'Firmware version %(fwversion)s does not match driver '
-                        'version %(drversion)s for /dev/mps%(mps)s'
-                    ) % {
-                        'fwversion': firmware,
-                        'drversion': driver,
-                        'mps': number,
-                    }
-                ))
+            try:
+                if int(firmware) != int(driver):
+                    alerts.append(Alert(
+                        Alert.WARN,
+                        _(
+                            'Firmware version %(fwversion)s does not match driver '
+                            'version %(drversion)s for /dev/mps%(mps)s'
+                        ) % {
+                            'fwversion': firmware,
+                            'drversion': driver,
+                            'mps': number,
+                        }
+                    ))
+            except ValueError:
+                # cast returned cthulu
+                # This shouldn't ever happen but as a fallback try the old method
+                if firmware != driver:
+                    alerts.append(Alert(
+                        Alert.WARN,
+                        _(
+                            'Firmware version %(fwversion)s does not match driver '
+                            'version %(drversion)s for /dev/mps%(mps)s'
+                        ) % {
+                            'fwversion': firmware,
+                            'drversion': driver,
+                            'mps': number,
+                        }
+                    ))
 
         return alerts
 
