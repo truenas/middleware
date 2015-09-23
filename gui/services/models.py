@@ -2365,7 +2365,7 @@ class SMART(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
-            ('smart_interval', 'internal'),
+            ('smart_interval', 'interval'),
             ('smart_powermode', 'power_mode'),
             ('smart_difference', 'temp_difference'),
             ('smart_informational', 'temp_informational'),
@@ -2378,7 +2378,7 @@ class SMART(NewModel):
         config = dispatcher.call_sync('service.smartd.get_config')
         return cls(**dict(
             id=1,
-            smart_interval=config['internal'],
+            smart_interval=config['interval'],
             smart_powermode=config['power_mode'],
             smart_difference=config['temp_difference'] or 0,
             smart_informational=config['temp_informational'] or 0,
@@ -2387,7 +2387,7 @@ class SMART(NewModel):
 
     def _save(self, *args, **kwargs):
         data = {
-            'internal': self.smart_interval,
+            'interval': self.smart_interval,
             'power_mode': self.smart_powermode,
             'temp_difference': self.smart_difference or None,
             'temp_informational': self.smart_informational or None,
