@@ -1,6 +1,0 @@
-#8639	Bug	Nice to have	SATA disks on LSI SAS controller don't spin down after specified "HDD Standby" time
-#7376	Bug	Nice to have	Installing FreeNAS 9.3 on XenServer 6.2
-#6285	Feature Important	Native Fiber Channel Support
-#11593	Feature	Nice to have	"Delete snapshots..." message in Replication Tasks view
-#11511	Bug	Important	LDAP sssd.conf generation
-#11133	Feature	Nice to have	zfs receive needs -x, -o and -l options
