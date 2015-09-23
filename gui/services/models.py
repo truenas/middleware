@@ -2318,7 +2318,7 @@ class RsyncMod(NewModel):
         return unicode(self.rsyncmod_name)
 
 
-class SMART(Model):
+class SMART(NewModel):
     smart_interval = models.IntegerField(
         default=30,
         verbose_name=_("Check interval"),
@@ -2351,13 +2351,8 @@ class SMART(Model):
                     "email if the temperature is greater or equal than N "
                     "degrees Celsius. 0 to disable"),
     )
-    smart_email = models.CharField(
-        verbose_name=_("Email to report"),
-        max_length=255,
-        blank=True,
-        help_text=_("Destination email address. Separate email addresses "
-                    "by commas"),
-    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
         verbose_name = _("S.M.A.R.T.")
@@ -2366,6 +2361,40 @@ class SMART(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"SMARTIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('smart_interval', 'internal'),
+            ('smart_powermode', 'power_mode'),
+            ('smart_difference', 'temp_difference'),
+            ('smart_informational', 'temp_informational'),
+            ('smart_critical', 'temp_critical'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.smartd.get_config')
+        return cls(**dict(
+            id=1,
+            smart_interval=config['internal'],
+            smart_powermode=config['power_mode'],
+            smart_difference=config['temp_difference'] or 0,
+            smart_informational=config['temp_informational'] or 0,
+            smart_critical=config['temp_critical'] or 0,
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'internal': self.smart_interval,
+            'power_mode': self.smart_powermode,
+            'temp_difference': self.smart_difference or None,
+            'temp_informational': self.smart_informational or None,
+            'temp_critical': self.smart_critical or None,
+        }
+        self._save_task_call('service.smartd.configure', data)
+        return True
 
 
 class RPCToken(Model):

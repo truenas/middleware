@@ -636,11 +636,11 @@ TASK_INTERVAL = (
     )
 
 SMART_POWERMODE = (
-    ('never', _("Never - Check the device regardless of its power mode")),
-    ('sleep', _("Sleep - Check the device unless it is in SLEEP mode")),
-    ('standby', _("Standby - Check the device unless it is in SLEEP or STANDBY"
+    ('NEVER', _("Never - Check the device regardless of its power mode")),
+    ('SLEEP', _("Sleep - Check the device unless it is in SLEEP mode")),
+    ('STANDBY', _("Standby - Check the device unless it is in SLEEP or STANDBY"
                   " mode")),
-    ('idle', _("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE"
+    ('IDLE', _("Idle - Check the device unless it is in SLEEP, STANDBY or IDLE"
                " mode")),
     )
 
