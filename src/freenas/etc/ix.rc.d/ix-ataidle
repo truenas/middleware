@@ -64,7 +64,9 @@ ataidle_start()
 			/sbin/camcontrol aam ${disk_name} -l ${disk_acousticlevel}
 		fi
 		if [ "${disk_hddstandby}" != "Always On" ]; then
-			(sleep 60; /sbin/camcontrol idle ${disk_name} -t ${disk_hddstandby}) > /dev/null 2>&1 &
+			# ataidle was in minutes, camcontrol uses seconds.
+			disk_hddstandby_cooked=$(expr ${disk_hddstandby} \* 60)
+			(sleep 60; /sbin/camcontrol idle ${disk_name} -t ${disk_hddstandby_cooked}) > /dev/null 2>&1 &
 		else
 			(sleep 60; /sbin/camcontrol idle ${disk_name} -t 0) > /dev/null 2>&1 &
 		fi
