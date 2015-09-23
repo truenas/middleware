@@ -1645,12 +1645,6 @@ class SMARTForm(ModelForm):
                 email = email.replace(' ', '')
         return email
 
-    def save(self):
-        super(SMARTForm, self).save()
-        started = notifier().restart("smartd")
-        if started is False and models.services.objects.get(srv_service='smartd').srv_enable:
-            raise ServiceFailed("smartd", _("The S.M.A.R.T. service failed to reload."))
-
 
 class DomainControllerForm(ModelForm):
     dc_passwd2 = forms.CharField(

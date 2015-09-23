@@ -254,7 +254,6 @@ class notifier:
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
         'ups': ('upsd', '/var/db/nut/upsd.pid'),
         'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
-        'smartd': ('smartd', '/var/run/smartd.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
         'webdav': ('httpd', '/var/run/httpd.pid'),
         'backup': (None, '/var/run/backup.pid')
@@ -525,11 +524,6 @@ class notifier:
         timezone = Settings.objects.all()[0].stg_timezone
         os.environ['TZ'] = timezone
         time.tzset()
-
-    def _restart_smartd(self):
-        self._system("/usr/sbin/service ix-smartd quietstart")
-        self._system("/usr/sbin/service smartd forcestop")
-        self._system("/usr/sbin/service smartd restart")
 
     def _reload_ssh(self):
         self._system("/usr/sbin/service ix-sshd quietstart")
@@ -3682,19 +3676,11 @@ class notifier:
                     ]
         return args
 
-    def toggle_smart_off(self, devname):    
-        args = self.get_smartctl_args(devname)
-        Popen(["/usr/local/sbin/smartctl", "--smart=off"] + args, stdout=PIPE)
-
-    def toggle_smart_on(self, devname):
-        args = self.get_smartctl_args(devname)
-        Popen(["/usr/local/sbin/smartctl", "--smart=on"] + args, stdout=PIPE)
-
     def serial_from_device(self, devname):
         if devname in self.__diskserial:
             return self.__diskserial.get(devname)
 
-        args = self.get_smartctl_args(devname) 
+        args = self.get_smartctl_args(devname)
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
