@@ -467,18 +467,6 @@ class RsyncModForm(ModelForm):
         hosts = hosts.replace("\n", " ").strip()
         return hosts
 
-    def save(self):
-        super(RsyncModForm, self).save()
-        started = notifier().reload("rsync")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='rsync').srv_enable
-        ):
-            raise ServiceFailed(
-                "rsync", _("The Rsync service failed to reload.")
-            )
-
 
 class DynamicDNSForm(ModelForm):
     ddns_password2 = forms.CharField(
