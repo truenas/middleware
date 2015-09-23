@@ -1,0 +1,16 @@
+sbin/stanchion
+sbin/stanchion-admin
+sbin/stanchion-debug
+sbin/search-cmd
+man/man1/stanchion-admin.1.gz
+man/man1/stanchion-debug.1.gz
+man/man1/stanchion.1.gz
+man/man1/search-cmd.1.gz
+@sample %%RIAK_CONFDIR%%/stanchion.conf.sample
+@sample %%RIAK_CONFDIR%%/solr-log4j.properties.sample
+@owner %%USERS%%
+@group %%GROUPS%%
+@dir %%RIAK_DBDIR%%
+@dir %%RIAK_HOMEDIR%%
+@dir %%RIAK_LIBDIR%%
+@dir %%RIAK_LOGDIR%%

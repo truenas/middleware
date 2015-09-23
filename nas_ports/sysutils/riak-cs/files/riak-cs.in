@@ -1,0 +1,84 @@
+#!/bin/sh
+# $FreeBSD: head/databases/riak-cs/files/riak-cs.in 357522 2014-06-11 18:44:31Z trociny $
+
+# PROVIDE: riak-cs
+# REQUIRE: LOGIN cleanvar
+# KEYWORD: shutdown
+
+#
+# Add the following lines to /etc/rc.conf to enable riak-cs:
+# riak-cs_enable (bool):		Set to "NO" by default.
+#				Set it to "YES" to enable riak-cs on boot.
+#
+
+. /etc/rc.subr
+
+name="riak-cs"
+rcvar=riak_cs_enable
+
+pidfile=/var/run/riak-cs/riak-cs.pid
+
+start_cmd="riak-cs_start"
+stop_cmd="riak-cs_stop"
+restart_cdm="riak-cs_restart"
+status_cmd="riak-cs_status"
+command="%%PREFIX%%/sbin/riak-cs"
+
+load_rc_config $name
+
+# Read rc.d config and set defaults
+load_rc_config "$name"
+: ${riak-cs_enable="NO"}
+
+riak-cs_start()
+{
+	echo "Starting Riak."
+	%%PREFIX%%/sbin/riak-cs start
+	return 0
+}
+
+riak-cs_stop()
+{
+	echo "Stopping Riak processes"
+	%%PREFIX%%/sbin/riak-cs stop
+	killall -9 epmd
+	return 0
+}
+
+riak-cs_restart()
+{
+	riak-cs_stop
+	riak-cs_start
+	return 0
+}
+
+riak-cs_status()
+{
+	if riak-cs_running; then
+		echo "Riak is running."
+		return 0
+	else
+		echo "Riak is not running"
+		return 1
+	fi
+}
+
+riak-cs_running()
+{
+	local pid result ps
+	pid=`%%PREFIX%%/sbin/riak-cs getpid`
+	result=`echo $?`
+	if [ "$result" == 0 ]; then
+		ps=`ps -waux | grep ${pid} | grep riak-cs`
+		result=`echo $?`
+		if [ "$result" ]; then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 1
+	fi
+}
+
+run_rc_command "$1"

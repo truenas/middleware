@@ -1,0 +1,84 @@
+#!/bin/sh
+# $FreeBSD: head/databases/stanchion/files/stanchion.in 357522 2014-06-11 18:44:31Z trociny $
+
+# PROVIDE: stanchion
+# REQUIRE: LOGIN cleanvar
+# KEYWORD: shutdown
+
+#
+# Add the following lines to /etc/rc.conf to enable stanchion:
+# stanchion_enable (bool):		Set to "NO" by default.
+#				Set it to "YES" to enable stanchion on boot.
+#
+
+. /etc/rc.subr
+
+name="stanchion"
+rcvar=stanchion_enable
+
+pidfile=/var/run/stanchion/stanchion.pid
+
+start_cmd="stanchion_start"
+stop_cmd="stanchion_stop"
+restart_cdm="stanchion_restart"
+status_cmd="stanchion_status"
+command="%%PREFIX%%/sbin/stanchion"
+
+load_rc_config $name
+
+# Read rc.d config and set defaults
+load_rc_config "$name"
+: ${stanchion_enable="NO"}
+
+stanchion_start()
+{
+	echo "Starting Riak."
+	%%PREFIX%%/sbin/stanchion start
+	return 0
+}
+
+stanchion_stop()
+{
+	echo "Stopping Riak processes"
+	%%PREFIX%%/sbin/stanchion stop
+	killall -9 epmd
+	return 0
+}
+
+stanchion_restart()
+{
+	stanchion_stop
+	stanchion_start
+	return 0
+}
+
+stanchion_status()
+{
+	if stanchion_running; then
+		echo "Riak is running."
+		return 0
+	else
+		echo "Riak is not running"
+		return 1
+	fi
+}
+
+stanchion_running()
+{
+	local pid result ps
+	pid=`%%PREFIX%%/sbin/stanchion getpid`
+	result=`echo $?`
+	if [ "$result" == 0 ]; then
+		ps=`ps -waux | grep ${pid} | grep stanchion`
+		result=`echo $?`
+		if [ "$result" ]; then
+			return 0
+		else
+			return 1
+		fi
+	else
+		return 1
+	fi
+}
+
+run_rc_command "$1"
