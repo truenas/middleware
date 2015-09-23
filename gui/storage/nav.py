@@ -2,6 +2,7 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 import models
+from fnutils.query import wrap
 
 NAME = _('Storage')
 BLACKLIST = ['Disk', 'ReplRemote', 'Volume', 'MountPoint']
@@ -150,11 +151,11 @@ class Volumes(TreeNode):
     order = -1
 
     def _gen_dataset(self, node, dataset):
-        if dataset.name.startswith('.'):
+        if dataset['name'].startswith('.'):
             return
 
-        nav = TreeNode(dataset.name)
-        nav.name = dataset.mountpoint
+        nav = TreeNode(dataset['name'])
+        nav.name = dataset['name'].split('/')[-1]
         nav.icon = u'VolumesIcon'
 
         ds = TreeNode('Dataset')
@@ -162,25 +163,25 @@ class Volumes(TreeNode):
         ds.view = 'storage_dataset'
         ds.icon = u'AddDatasetIcon'
         ds.type = 'object'
-        ds.kwargs = {'fs': dataset.path}
+        ds.kwargs = {'fs': dataset['name']}
         nav.append_child(ds)
 
         subnav = TreeNode('ChangePermissions')
         subnav.name = _(u'Change Permissions')
         subnav.type = 'editobject'
         subnav.view = 'storage_mp_permission'
-        subnav.kwargs = {'path': dataset.mountpoint}
+        subnav.kwargs = {'path': dataset['properties.mountpoint.value']}
         subnav.model = 'Volumes'
         subnav.icon = u'ChangePasswordIcon'
         subnav.app_name = 'storage'
 
         zv = AddZVol()
-        zv.kwargs = {'parent': dataset.path}
+        zv.kwargs = {'parent': dataset['properties.mountpoint.value']}
 
         node.append_child(nav)
         nav.append_child(subnav)
         nav.append_child(zv)
-        for child in dataset.children:
+        for child in dataset['children']:
             self._gen_dataset(nav, child)
 
     def __init__(self, *args, **kwargs):
@@ -203,7 +204,6 @@ class Volumes(TreeNode):
         for i in mp:
             nav = TreeNode(i.id)
             nav.name = i.vol_name
-            nav.order = -i.id
             nav.model = 'Volume'
             nav.kwargs = {'oid': i.id, 'model': 'Volume'}
             nav.icon = u'VolumesIcon'
@@ -230,11 +230,8 @@ class Volumes(TreeNode):
             subnav.icon = u'ChangePasswordIcon'
             subnav.app_name = 'storage'
 
-            datasets = i.get_datasets(hierarchical=True)
-            if datasets:
-                for name, d in datasets.items():
-                    # TODO: non-recursive algo
-                    self._gen_dataset(nav, d)
+            root = wrap(i.get_children_tree())
+            self._gen_dataset(nav, root)
 
             nav.append_child(subnav)
             self.insert_child(0, nav)

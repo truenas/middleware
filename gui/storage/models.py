@@ -74,6 +74,9 @@ class Volume(NewModel):
     vol_status = models.CharField(
         max_length=120
     )
+    vol_mountpoint = models.CharField(
+        max_length=120
+    )
     vol_upgraded = models.BooleanField(
         editable=False
     )
@@ -90,7 +93,7 @@ class Volume(NewModel):
             (('id', 'vol_guid'), 'id'),
             ('vol_name', 'name'),
             ('vol_fstype', 'type'),
-            ('vol_mountpoint', 'properties.mountpoint'),
+            ('vol_mountpoint', 'mountpoint'),
             ('vol_status', 'status'),
             ('vol_upgraded', 'upgraded')
         )
@@ -115,6 +118,10 @@ class Volume(NewModel):
             [('id', '=', self.vol_guid)],
             {"single": True, "select": "datasets"}
         )
+
+    def get_children_tree(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        return dispatcher.call_sync('volumes.get_dataset_tree', self.vol_name)
 
     def get_properties(self):
         from freenasUI.middleware.connector import connection as dispatcher
