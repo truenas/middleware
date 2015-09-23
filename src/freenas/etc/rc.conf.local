@@ -140,7 +140,6 @@ _gen_conf()
 	_bool_svcconfig snmpd_enable snmp
 	_bool_svcconfig sshd_enable ssh
 	_bool_svcconfig inetd_enable tftp
-	_bool_svcconfig smartd_enable smartd
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
@@ -163,13 +162,6 @@ _gen_conf()
 	if [ ! -r /etc/zfs/exports ]; then
 		touch /etc/zfs/exports
 	fi
-
-	local smartdint
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
-	while read smartdint; do
-		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
-		echo "smartd_flags=\"-i ${inter}\""
-	done
 
 	echo "geli_devices=\"`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT encrypted_provider FROM storage_encrypteddisk e JOIN storage_volume v ON e.encrypted_volume_id = v.id WHERE v.vol_encrypt=1;" | \
 		tr \\\n \  `\""
