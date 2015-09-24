@@ -2,7 +2,7 @@
 
 PORTNAME=	riak-cs
 PORTVERSION=	2.0.1
-CATEGORIES=	databases
+CATEGORIES=	sysutils
 MASTER_SITES=	http://s3.amazonaws.com/downloads.basho.com/riak-cs/${PORTVERSION:R}/${PORTVERSION}/ \
 	http://downloads.basho.com.s3.amazonaws.com/riak-cs/${PORTVERSION:R}/${PORTVERSION}/
 DISTNAME=	riak-cs-${PORTVERSION}
@@ -23,18 +23,21 @@ USE_GCC=	yes
 USERS=		riakcs
 GROUPS=		riak
 
-RIAK_CONFDIR?=	${PREFIX}/etc/riak-cs
-RIAK_DBDIR?=	/var/db/riak-cs
-RIAK_HOMEDIR?=	${PREFIX}/lib/riak-cs
-RIAK_LIBDIR?=	${PREFIX}/lib/riak-cs/lib
-RIAK_LOGDIR?=	/var/log/riak-cs
+RIAKCS_CONFDIR?=	${PREFIX}/etc/riak-cs
+RIAKCS_DBDIR?=	/var/db/riak-cs
+RIAKCS_HOMEDIR?=	${PREFIX}/lib/riak-cs
+RIAKCS_LIBDIR?=	${PREFIX}/lib/riak-cs/lib
+RIAKCS_LOGDIR?=	/var/log/riak-cs
 
 PLIST=		${WRKDIR}/pkg-plist
-PLIST_SUB+=	RIAK_CONFDIR=${RIAK_CONFDIR} \
-	RIAK_DBDIR=${RIAK_DBDIR} \
-	RIAK_HOMEDIR=${RIAK_HOMEDIR} \
-	RIAK_LIBDIR=${RIAK_LIBDIR} \
-	RIAK_LOGDIR=${RIAK_LOGDIR} \
+PLIST_SUB+=	RIAKCS_CONFDIR=${RIAKCS_CONFDIR} \
+	RIAKCS_DBDIR=${RIAKCS_DBDIR} \
+	RIAKCS_HOMEDIR=${RIAKCS_HOMEDIR} \
+	RIAKCS_LIBDIR=${RIAKCS_LIBDIR} \
+	RIAKCS_LOGDIR=${RIAKCS_LOGDIR} \
+ 	USERS=${USERS} \
+        GROUPS=${GROUPS}
+
 
 ALL_TARGET=	rel
 MAKE_JOBS_UNSAFE=yes
@@ -62,23 +65,17 @@ pre-install:
 		| ${AWK} '{print "@dir lib/"$$2 }' >> ${PLIST})
 
 do-install:
-.for d in ${RIAK_CONFDIR} ${RIAK_LOGDIR} ${RIAK_DBDIR} ${RIAK_LIBDIR} ${RIAK_HOMEDIR}
+.for d in ${RIAKCS_CONFDIR} ${RIAKCS_LOGDIR} ${RIAKCS_DBDIR} ${RIAKCS_LIBDIR} ${RIAKCS_HOMEDIR}
 	${MKDIR} ${STAGEDIR}${d}
 .endfor
-	${INSTALL_DATA} ${WRKSRC}/rel/riak-cs/etc/riak-cs.conf ${STAGEDIR}${RIAK_CONFDIR}/riak-cs.conf.sample
-	(cd ${WRKSRC}/rel/riak-cs/lib/ && ${COPYTREE_BIN} . ${STAGEDIR}${RIAK_LIBDIR})
+	${INSTALL_DATA} ${WRKSRC}/rel/riak-cs/etc/riak-cs.conf ${STAGEDIR}${RIAKCS_CONFDIR}/riak-cs.conf
+	${INSTALL_DATA} ${WRKSRC}/rel/riak-cs/etc/advanced.config ${STAGEDIR}${RIAKCS_CONFDIR}/advanced.config
+	${INSTALL_DATA} ${WRKSRC}/rel/riak-cs/etc/cert.pem ${STAGEDIR}${RIAKCS_CONFDIR}/cert.pem
+	${INSTALL_DATA} ${WRKSRC}/rel/riak-cs/etc/key.pem ${STAGEDIR}${RIAKCS_CONFDIR}/key.pem
+	(cd ${WRKSRC}/rel/riak-cs/lib/ && ${COPYTREE_BIN} . ${STAGEDIR}${RIAKCS_LIBDIR})
 	(cd ${WRKSRC}/rel/riak-cs/bin/ && ${COPYTREE_BIN} . ${STAGEDIR}${PREFIX}/sbin/)
-	(cd ${WRKSRC}/rel/riak-cs/lib/basho-patches && ${COPYTREE_SHARE} . ${STAGEDIR}${RIAK_LIBDIR}/basho-patches)
-	(cd ${WRKSRC}/rel/riak-cs/releases && ${COPYTREE_SHARE} . ${STAGEDIR}${RIAK_HOMEDIR}/releases)
-	${CP} -R ${WRKSRC}/rel/riak-cs/erts-* ${STAGEDIR}${RIAK_HOMEDIR}
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/riak-cs.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/riak-cs-admin.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/riak-cs-debug.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/search-cmd.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/riak-cs/lib/bitcask-1.7.0/priv/bitcask.so
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/riak-cs/lib/erlang_js-1.3.0-0-g07467d8/priv/erlang_js_drv.so
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/riak-cs/lib/syslog-1.0.2/priv/syslog_drv.so
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/riak-cs/lib/canola-2.0.0-0-g9bdfee8/priv/canola-port
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/riak-cs/lib/sext-1.1p3-0-g846b9cc/priv/sext.so
+	(cd ${WRKSRC}/rel/riak-cs/lib/basho-patches && ${COPYTREE_SHARE} . ${STAGEDIR}${RIAKCS_LIBDIR}/basho-patches)
+	(cd ${WRKSRC}/rel/riak-cs/releases && ${COPYTREE_SHARE} . ${STAGEDIR}${RIAKCS_HOMEDIR}/releases)
+	${CP} -R ${WRKSRC}/rel/riak-cs/erts-* ${STAGEDIR}${RIAKCS_HOMEDIR}
 
 .include <bsd.port.post.mk>

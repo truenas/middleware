@@ -38,12 +38,14 @@ PLIST_SUB+=	STANCHION_CONFDIR=${STANCHION_CONFDIR} \
         USERS=${USERS} \
         GROUPS=${GROUPS}
 
-
 ALL_TARGET=	rel
 MAKE_JOBS_UNSAFE=yes
 MAKE_ENV=	PATH=${LOCALBASE}/lib/riak-erlang/bin:${PATH}
 
 .include <bsd.port.pre.mk>
+
+post-patch:
+	@${REINPLACE_CMD} 's|%%PREFIX%%|${PREFIX}|g' ${WRKSRC}/rel/vars.config
 
 pre-install:
 	${RM} -f ${PLIST}
