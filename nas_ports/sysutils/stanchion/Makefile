@@ -35,6 +35,9 @@ PLIST_SUB+=	STANCHION_CONFDIR=${STANCHION_CONFDIR} \
 	STANCHION_HOMEDIR=${STANCHION_HOMEDIR} \
 	STANCHION_LIBDIR=${STANCHION_LIBDIR} \
 	STANCHION_LOGDIR=${STANCHION_LOGDIR} \
+        USERS=${USERS} \
+        GROUPS=${GROUPS}
+
 
 ALL_TARGET=	rel
 MAKE_JOBS_UNSAFE=yes
@@ -62,21 +65,13 @@ do-install:
 .for d in ${STANCHION_CONFDIR} ${STANCHION_LOGDIR} ${STANCHION_DBDIR} ${STANCHION_LIBDIR} ${STANCHION_HOMEDIR}
 	${MKDIR} ${STAGEDIR}${d}
 .endfor
-	${INSTALL_DATA} ${WRKSRC}/rel/stanchion/etc/stanchion.conf ${STAGEDIR}${STANCHION_CONFDIR}/stanchion.conf.sample
-	${INSTALL_DATA} ${WRKSRC}/rel/stanchion/etc/solr-log4j.properties ${STAGEDIR}${STANCHION_CONFDIR}/solr-log4j.properties.sample
+	${INSTALL_DATA} ${WRKSRC}/rel/stanchion/etc/stanchion.conf ${STAGEDIR}${STANCHION_CONFDIR}/stanchion.conf
+	${INSTALL_DATA} ${WRKSRC}/rel/stanchion/etc/advanced.config ${STAGEDIR}${STANCHION_CONFDIR}/advanced.config
+	${INSTALL_DATA} ${WRKSRC}/rel/stanchion/etc/cert.pem ${STAGEDIR}${STANCHION_CONFDIR}/cert.pem
+	${INSTALL_DATA} ${WRKSRC}/rel/stanchion/etc/key.pem ${STAGEDIR}${STANCHION_CONFDIR}/key.pem
 	(cd ${WRKSRC}/rel/stanchion/lib/ && ${COPYTREE_BIN} . ${STAGEDIR}${STANCHION_LIBDIR})
 	(cd ${WRKSRC}/rel/stanchion/bin/ && ${COPYTREE_BIN} . ${STAGEDIR}${PREFIX}/sbin/)
-	(cd ${WRKSRC}/rel/stanchion/lib/basho-patches && ${COPYTREE_SHARE} . ${STAGEDIR}${STANCHION_LIBDIR}/basho-patches)
 	(cd ${WRKSRC}/rel/stanchion/releases && ${COPYTREE_SHARE} . ${STAGEDIR}${STANCHION_HOMEDIR}/releases)
 	${CP} -R ${WRKSRC}/rel/stanchion/erts-* ${STAGEDIR}${STANCHION_HOMEDIR}
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/stanchion.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/stanchion-admin.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/stanchion-debug.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	${INSTALL_MAN} ${WRKSRC}/doc/man/man1/search-cmd.1.gz ${STAGEDIR}${MANPREFIX}/man/man1/
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/stanchion/lib/bitcask-1.7.0/priv/bitcask.so
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/stanchion/lib/erlang_js-1.3.0-0-g07467d8/priv/erlang_js_drv.so
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/stanchion/lib/syslog-1.0.2/priv/syslog_drv.so
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/stanchion/lib/canola-2.0.0-0-g9bdfee8/priv/canola-port
-	@${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/stanchion/lib/sext-1.1p3-0-g846b9cc/priv/sext.so
 
 .include <bsd.port.post.mk>

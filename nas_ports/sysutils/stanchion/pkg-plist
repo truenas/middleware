@@ -1,16 +1,11 @@
 sbin/stanchion
-sbin/stanchion-admin
-sbin/stanchion-debug
-sbin/search-cmd
-man/man1/stanchion-admin.1.gz
-man/man1/stanchion-debug.1.gz
-man/man1/stanchion.1.gz
-man/man1/search-cmd.1.gz
-@sample %%RIAK_CONFDIR%%/stanchion.conf.sample
-@sample %%RIAK_CONFDIR%%/solr-log4j.properties.sample
+@sample %%STANCHION_CONFDIR%%/stanchion.conf
+@sample %%STANCHION_CONFDIR%%/advanced.config
+@sample %%STANCHION_CONFDIR%%/key.pem
+@sample %%STANCHION_CONFDIR%%/cert.pem
 @owner %%USERS%%
 @group %%GROUPS%%
-@dir %%RIAK_DBDIR%%
-@dir %%RIAK_HOMEDIR%%
-@dir %%RIAK_LIBDIR%%
-@dir %%RIAK_LOGDIR%%
+@dir %%STANCHION_DBDIR%%
+@dir %%STANCHION_HOMEDIR%%
+@dir %%STANCHION_LIBDIR%%
+@dir %%STANCHION_LOGDIR%%
