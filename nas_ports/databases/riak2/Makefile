@@ -14,7 +14,7 @@ DISTFILES=	${DISTNAME}${EXTRACT_SUFX} \
 	yz_monitor-1.jar:yokozuna
 EXTRACT_ONLY=	${DISTNAME}${EXTRACT_SUFX} solr-4.7.0-yz-1.tgz
 
-MAINTAINER=	nbari@dalmp.com
+MAINTAINER=	scott@ixsystems.com
 COMMENT=	Riak is an open source, distributed, noSQL database
 
 LICENSE=	APACHE20
