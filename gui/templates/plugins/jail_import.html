@@ -1,9 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-{% block oklabel %}{% trans "Import" %}{% endblock %}
-{% block onSubmit %}
-doSubmit({
-    form: this,
-    event: e,
-    url: '{% block formpost %}{{ request.path }}{% endblock %}'
-});
-{% endblock %}

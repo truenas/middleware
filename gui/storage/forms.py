@@ -919,7 +919,6 @@ class AutoImportWizard(SessionWizardView):
         _n.reload("disk")
         _n.start("ix-system")
         _n.start("ix-syslogd")
-        _n.start("ix-warden")
         # FIXME: do not restart collectd again
         _n.restart("system_datasets")
 
@@ -2526,7 +2525,6 @@ class UnlockPassphraseForm(Form):
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
-        _notifier.start("ix-warden")
         _notifier.restart("system_datasets")
         _notifier.reload("disk")
 

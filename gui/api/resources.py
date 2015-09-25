@@ -39,7 +39,6 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, QueryDict
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
@@ -58,18 +57,13 @@ from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
 )
-from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
-from freenasUI.jails.forms import JailCreateForm, JailsEditForm
-from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Interfaces
-from freenasUI.plugins import availablePlugins, Plugin
-from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetPortalIP, FiberChannelToTarget
@@ -1648,241 +1642,6 @@ class BsdGroupResourceMixin(object):
         return bundle
 
 
-class JailMountPointResourceMixin(object):
-
-    def dehydrate(self, bundle):
-        bundle = super(JailMountPointResourceMixin, self).dehydrate(bundle)
-        bundle.data['mounted'] = bundle.obj.mounted
-        return bundle
-
-
-class JailsResourceMixin(NestedMixin):
-
-    class Meta:
-        validation = FormValidation(form_class=JailCreateForm)
-        put_validation = FormValidation(form_class=JailsEditForm)
-
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/restart%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_restart'),
-                name="api_jails_jails_restart"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_start'),
-                name="api_jails_jails_start"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('jail_stop'),
-                name="api_jails_jails_stop"
-            ),
-        ]
-
-    def jail_restart(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        notifier().reload("http")
-        try:
-            Warden().stop(jail=obj.jail_host)
-            Warden().start(jail=obj.jail_host)
-        except Exception, e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail restarted.', status=202)
-
-    def jail_start(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        #TODO: Duplicated code - jails.views.jail_start
-        notifier().reload("http")
-        try:
-            Warden().start(jail=obj.jail_host)
-        except Exception, e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail started.', status=202)
-
-    def jail_stop(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        #TODO: Duplicated code - jails.views.jail_stop
-        notifier().reload("http")
-        try:
-            Warden().stop(jail=obj.jail_host)
-        except Exception, e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Jail stopped.', status=202)
-
-    def dispatch_list(self, request, **kwargs):
-        proc = subprocess.Popen(
-            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        self.__jls = proc.communicate()[0]
-        return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
-
-    def dehydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).dehydrate(bundle)
-
-        if self.is_webclient(bundle.request):
-            try:
-                reg = re.search(
-                    r'\s*?(\d+).*?\b%s\b' % bundle.obj.jail_host,
-                    self.__jls,
-                )
-                bundle.data['jail_jid'] = int(reg.groups()[0])
-            except:
-                bundle.data['jail_jid'] = None
-
-            bundle.data['jail_os'] = 'FreeBSD'
-            if bundle.obj.is_linux_jail():
-                bundle.data['jail_os'] = 'Linux'
-
-            bundle.data['jail_isplugin'] = False
-            plugin = Plugins.objects.filter(plugin_jail=bundle.obj.jail_host)
-            if plugin:
-                bundle.data['jail_isplugin'] = True
-
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse('jail_edit', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_storage_add_url'] = reverse(
-                'jail_storage_add', kwargs={'jail_id': bundle.obj.id}
-            )
-            bundle.data['_upload_url'] = reverse('plugins_upload', kwargs={
-                'jail_id': bundle.obj.id
-            })
-            bundle.data['_jail_export_url'] = reverse('jail_export', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_import_url'] = reverse('jail_import', kwargs={})
-            bundle.data['_jail_start_url'] = reverse('jail_start', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_stop_url'] = reverse('jail_stop', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_restart_url'] = reverse('jail_restart', kwargs={
-                'id': bundle.obj.id
-            })
-            bundle.data['_jail_delete_url'] = reverse('jail_delete', kwargs={
-                'id': bundle.obj.id
-            })
-            if bundle.obj.jail_ipv4:
-                bundle.data['jail_ipv4'] = bundle.obj.jail_ipv4.split('/')[0]
-
-        return bundle
-
-    def hydrate(self, bundle):
-        bundle = super(JailsResourceMixin, self).hydrate(bundle)
-        if 'id' not in bundle.data:
-            bundle.data['id'] = 1
-        return bundle
-
-
-class JailTemplateResourceMixin(object):
-
-    class Meta:
-        queryset = JailTemplate.objects.exclude(jt_system=True)
-
-    def dehydrate(self, bundle):
-        bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
-        bundle.data['jt_instances'] = bundle.obj.jt_instances
-
-        if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse(
-                'jail_template_edit',
-                kwargs={'id': bundle.obj.id}
-            )
-
-        return bundle
-
-
-class PluginsResourceMixin(NestedMixin):
-
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/start%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('plugin_start'),
-                name="api_plugins_plugins_start"
-            ),
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/stop%s$" % (
-                    self._meta.resource_name, trailing_slash()
-                ),
-                self.wrap_view('plugin_stop'),
-                name="api_plugin_plugins_stop"
-            ),
-        ]
-
-    def plugin_start(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        try:
-            success, errmsg = obj.service_start(request)
-            if success is not True:
-                raise ValueError(errmsg)
-        except Exception, e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Plugin started.', status=202)
-
-    def plugin_stop(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-
-        bundle, obj = self._get_parent(request, kwargs)
-
-        try:
-            success, errmsg = obj.service_stop(request)
-            if success is not True:
-                raise ValueError(errmsg)
-        except Exception, e:
-            raise ImmediateHttpResponse(
-                response=self.error_response(request, {
-                    'error': e,
-                })
-            )
-
-        return HttpResponse('Plugin stopped.', status=202)
-
-
 class SnapshotResource(DojoResource):
     class Meta:
         allowed_methods = ['delete', 'get', 'post']
@@ -2080,74 +1839,6 @@ class SnapshotResource(DojoResource):
                     'snapname': bundle.obj['name']
                 }),
             }
-        return bundle
-
-
-class AvailablePluginsResource(DojoResource):
-
-    id = fields.CharField(attribute='id')
-    name = fields.CharField(attribute='name')
-    description = fields.CharField(attribute='description')
-    version = fields.CharField(attribute='version')
-
-    class Meta:
-        object_class = Plugin
-        resource_name = 'plugins/available'
-
-    def get_list(self, request, **kwargs):
-        results = availablePlugins.get_remote()
-
-        for sfield in self._apply_sorting(request.GET):
-            if sfield.startswith('-'):
-                field = sfield[1:]
-                reverse = True
-            else:
-                field = sfield
-                reverse = False
-            results.sort(
-                key=lambda item: getattr(item, field),
-                reverse=reverse)
-        paginator = self._meta.paginator_class(
-            request,
-            results,
-            resource_uri=self.get_resource_uri(),
-            limit=self._meta.limit,
-            max_limit=self._meta.max_limit,
-            collection_name=self._meta.collection_name,
-        )
-        to_be_serialized = paginator.page()
-        # Dehydrate the bundles in preparation for serialization.
-        bundles = []
-
-        for obj in to_be_serialized[self._meta.collection_name]:
-            bundle = self.build_bundle(obj=obj, request=request)
-            bundles.append(self.full_dehydrate(bundle))
-
-        length = len(bundles)
-        to_be_serialized[self._meta.collection_name] = bundles
-        to_be_serialized = self.alter_list_data_to_serialize(
-            request,
-            to_be_serialized
-        )
-        response = self.create_response(request, to_be_serialized)
-        response['Content-Range'] = 'items %d-%d/%d' % (
-            paginator.offset,
-            paginator.offset + length - 1,
-            len(results)
-        )
-        return response
-
-    def dehydrate(self, bundle):
-        if self.is_webclient(bundle.request):
-            bundle.data['_install_url'] = reverse(
-                'plugins_install_available',
-                kwargs={'oid': bundle.obj.id},
-            )
-            bundle.data['_update_url'] = reverse(
-                'plugin_update',
-                kwargs={'oid': bundle.obj.id},
-            )
-        bundle.data['icon'] = bundle.obj.icon
         return bundle
 
 

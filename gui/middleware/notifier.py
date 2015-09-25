@@ -34,8 +34,7 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from collections import defaultdict, OrderedDict
-from decimal import Decimal
+from collections import defaultdict
 import base64
 from Crypto.Cipher import AES
 import ctypes
@@ -45,8 +44,6 @@ import grp
 import json
 import logging
 import os
-import pipes
-import platform
 import pwd
 import re
 import shutil
@@ -92,17 +89,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
                                   ACL_MAC_FILE)
 from freenasUI.common.freenasacl import ACL
-from freenasUI.common.jail import Jls, Jexec
 from freenasUI.common.locks import mntlock
-from freenasUI.common.pbi import (
-    pbi_add, pbi_delete, pbi_info, pbi_create, pbi_makepatch, pbi_patch,
-    PBI_ADD_FLAGS_NOCHECKSIG, PBI_ADD_FLAGS_INFO,
-    PBI_ADD_FLAGS_FORCE,
-    PBI_INFO_FLAGS_VERBOSE, PBI_CREATE_FLAGS_OUTDIR,
-    PBI_CREATE_FLAGS_BACKUP,
-    PBI_MAKEPATCH_FLAGS_OUTDIR, PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
-    PBI_PATCH_FLAGS_OUTDIR, PBI_PATCH_FLAGS_NOCHECKSIG
-)
 from freenasUI.common.system import (
     FREENAS_DATABASE,
     exclude_path,
@@ -111,9 +98,6 @@ from freenasUI.common.system import (
     get_sw_name,
     domaincontroller_enabled
 )
-from freenasUI.common.warden import (Warden, WardenJail,
-                                     WARDEN_TYPE_PLUGINJAIL,
-                                     WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
@@ -478,23 +462,6 @@ class notifier:
         self._system("/etc/netstart")
         self._system("/usr/sbin/service rtsold start")
 
-    def _stop_jails(self):
-        from freenasUI.jails.models import Jails
-        for jail in Jails.objects.all():
-            Warden().stop(jail=jail.jail_host)
-
-    def _start_jails(self):
-        self._system("/usr/sbin/service ix-warden start")
-        from freenasUI.jails.models import Jails
-        for jail in Jails.objects.filter(jail_autostart=True):
-            Warden().start(jail=jail.jail_host)
-        self._system("/usr/sbin/service ix-plugins start")
-        self.reload("http")
-
-    def _restart_jails(self):
-        self._stop_jails()
-        self._start_jails()
-
     def _stop_pbid(self):
         self._system_nolog("/usr/sbin/service pbid stop")
 
@@ -800,57 +767,6 @@ class notifier:
         self._system("/usr/sbin/service nfsd quietstart")
         self._system("/usr/sbin/service statd quietstart")
         self._system("/usr/sbin/service lockd quietstart")
-
-    def _force_stop_jail(self):
-        self._system("/usr/sbin/service jail forcestop")
-
-    def _start_plugins(self, jail=None, plugin=None):
-        if jail and plugin:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
-        else:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestart")
-
-    def _stop_plugins(self, jail=None, plugin=None):
-        if jail and plugin:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
-        else:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestop")
-
-    def _restart_plugins(self, jail=None, plugin=None):
-        self._stop_plugins(jail=jail, plugin=plugin)
-        self._start_plugins(jail=jail, plugin=plugin)
-
-    def _started_plugins(self, jail=None, plugin=None):
-        res = False
-        if jail and plugin:
-            if self._system_nolog("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
-                res = True
-        else:
-            if self._system_nolog("/usr/sbin/service ix-plugins status") == 0:
-                res = True
-        return res
-
-    def pluginjail_running(self, pjail=None):
-        running = False
-
-        try:
-            wlist = Warden().list()
-            for wj in wlist:
-                wj = WardenJail(**wj)
-                if pjail and wj.host == pjail:
-                    if wj.type == WARDEN_TYPE_PLUGINJAIL and \
-                        wj.status == WARDEN_STATUS_RUNNING:
-                        running = True
-                        break
-
-                elif not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and \
-                    wj.status == WARDEN_STATUS_RUNNING:
-                    running = True
-                    break
-        except:
-            pass
-
-        return running
 
     def start_ataidle(self, what=None):
         if what is not None:
@@ -1487,8 +1403,6 @@ class notifier:
                 retval = 'Try again later.'
         if retval is None:
             mp = self.__get_mountpath(path, 'ZFS')
-            if self.contains_jail_root(mp):
-                self.delete_plugins()
 
             if recursive:
                 zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
@@ -1509,8 +1423,6 @@ class notifier:
 
     def destroy_zfs_vol(self, name):
         mp = self.__get_mountpath(name, 'ZFS')
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
         zfsproc = self._pipeopen("zfs destroy '%s'" % (str(name),))
         retval = zfsproc.communicate()[1]
         return retval
@@ -1519,8 +1431,6 @@ class notifier:
         """Internal procedure to destroy a ZFS volume identified by volume id"""
         vol_name = str(volume.vol_name)
         mp = self.__get_mountpath(vol_name, 'ZFS')
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
         # First, destroy the zpool.
         disks = volume.get_disks()
         self._system("zpool destroy -f %s" % (vol_name, ))
@@ -1528,36 +1438,6 @@ class notifier:
         # Clear out disks associated with the volume
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
-
-    def __destroy_ufs_volume(self, volume):
-        """Internal procedure to destroy a UFS volume identified by volume id"""
-        u_name = str(volume.vol_name)
-        mp = self.__get_mountpath(u_name, 'UFS')
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-
-        disks = volume.get_disks()
-        provider = self.get_label_consumer('ufs', u_name)
-        if provider is None:
-            return None
-        geom_type = provider.xpath("../../name")[0].text.lower()
-
-        if geom_type not in ('mirror', 'stripe', 'raid3'):
-            # Grab disk from the group
-            disk = disks[0]
-            self._system("umount -f /dev/ufs/" + u_name)
-            self.__gpt_unlabeldisk(devname=disk)
-        else:
-            g_name = provider.xpath("../name")[0].text
-            self._system("swapoff -a")
-            self._system("umount -f /dev/ufs/" + u_name)
-            self._system("geom %s stop %s" % (geom_type, g_name))
-            # Grab all disks from the group
-            for disk in disks:
-                self._system("geom %s clear %s" % (geom_type, disk))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=1" % (disk,))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 4;}'`" % (disk, disk))
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
@@ -2239,553 +2119,6 @@ class notifier:
                     raise MiddlewareError('Unable to umount %s' % (
                         mounted['fs_file'],
                         ))
-
-    def get_plugin_upload_path(self):
-        from freenasUI.jails.models import JailsConfiguration
-
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-        plugin_upload_path = "%s/%s" % (jc.jc_path, ".plugins")
-
-        if not os.path.exists(plugin_upload_path):
-            self._system("/bin/mkdir -p %s" % plugin_upload_path)
-            self._system("/usr/sbin/chown www:www %s" % plugin_upload_path)
-            self._system("/bin/chmod 755 %s" % plugin_upload_path)
-
-        return plugin_upload_path
-
-    def install_pbi(self, pjail, newplugin, pbifile="/var/tmp/firmware/pbifile.pbi"):
-        log.debug("install_pbi: pjail = %s", pjail)
-        """
-        Install a .pbi file into the plugins jail
-
-        Returns:
-            bool: installation successful?
-
-        Raises::
-            MiddlewareError: pbi_add failed
-        """
-        from freenasUI.services.models import RPCToken
-        from freenasUI.plugins.models import Plugins
-        from freenasUI.jails.models import JailsConfiguration
-        ret = False
-
-        if 'PATH' in os.environ:
-            paths = os.environ['PATH']
-            parts = paths.split(':')
-            if '/usr/local/sbin' not in parts:
-                paths = "%s:%s" % (paths, '/usr/local/sbin')
-                os.environ['PATH'] = paths
-
-        open('/tmp/.plugin_upload_install', 'w+').close()
-
-        if not pjail:
-            log.debug("install_pbi: pjail is NULL")
-            return False
-
-        if not self.pluginjail_running(pjail=pjail):
-            log.debug("install_pbi: pjail is is not running")
-            return False
-
-        wjail = None
-        wlist = Warden().list()
-        for wj in wlist:
-            wj = WardenJail(**wj)
-            if wj.host == pjail:
-                wjail = wj
-                break
-
-        if wjail is None:
-            raise MiddlewareError("The plugins jail is not running, start "
-                "it before proceeding")
-
-        jail = None
-        for j in Jls():
-            if j.hostname == wjail.host:
-                jail = j
-                break
-
-        # this stuff needs better error checking.. .. ..
-        if jail is None:
-            raise MiddlewareError("The plugins jail is not running, start "
-                "it before proceeding")
-
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-
-        pjail_path = "%s/%s" % (jc.jc_path, wjail.host)
-        plugins_path = "%s/%s" % (pjail_path, ".plugins")
-        tmpdir = "%s/var/tmp" % pjail_path
-
-        saved_tmpdir = None
-        if 'TMPDIR' in os.environ:
-            saved_tmpdir = os.environ['TMPDIR']
-        os.environ['TMPDIR'] = tmpdir
-
-        log.debug("install_pbi: pjail_path = %s, plugins_path = %s", pjail_path, plugins_path)
-
-        pbi = pbiname = prefix = name = version = arch = None
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
-        out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
-
-        if not out:
-            if saved_tmpdir:
-                os.environ['TMPDIR'] = saved_tmpdir
-            else:
-                del os.environ['TMPDIR']
-            raise MiddlewareError("This file was not identified as in PBI "
-                "format, it might as well be corrupt.")
-
-        for pair in out:
-            (var, val) = pair.split('=', 1)
-
-            var = var.lower()
-            if var == 'pbi information for':
-                pbiname = val
-                pbi = "%s.pbi" % val
-
-            elif var == 'prefix':
-                prefix = val
-
-            elif var == 'name':
-                name = val
-
-            elif var == 'version':
-                version = val
-
-            elif var == 'arch':
-                arch = val
-
-        info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
-        res = info.run(jail=True, jid=jail.jid)
-        if res[0] == 0 and res[1]:
-            plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
-            if name in plugins:
-                # FIXME: do pbi_update instead
-                pass
-
-        if pbifile == "/var/tmp/firmware/pbifile.pbi":
-            self._system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
-
-        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG | PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
-            ("/.plugins", pbi))
-        res = p.run(jail=True, jid=jail.jid)
-        if res and res[0] == 0:
-            qs = Plugins.objects.filter(plugin_name=name)
-            if qs.count() > 0:
-                if qs[0].plugin_jail == pjail:
-                    log.warn("Plugin named %s already exists in database, "
-                             "overwriting.", name)
-                    plugin = qs[0]
-                else:
-                    plugin = Plugins()
-            else:
-                plugin = Plugins()
-
-            plugin.plugin_path = prefix
-            plugin.plugin_enabled = True
-            plugin.plugin_ip = jail.ip
-            plugin.plugin_name = name
-            plugin.plugin_arch = arch
-            plugin.plugin_version = version
-            plugin.plugin_pbiname = pbiname
-            plugin.plugin_jail = wjail.host
-
-            # icky, icky icky, this is how we roll though.
-            port = 12345
-            qs = Plugins.objects.order_by('-plugin_port')
-            if qs.count() > 0:
-                port = int(qs[0].plugin_port)
-
-            plugin.plugin_port = port + 1
-
-            """
-            Check freenas file within pbi dir for settings
-            Currently the API only looks for api_version
-            """
-            out = Jexec(jid=jail.jid, command="cat %s/freenas" % prefix).run()
-            if out and out[0] == 0:
-                for line in out[1].splitlines():
-                    line = line.strip()
-                    if not line:
-                        continue
-
-                    key, value = [i.strip() for i in line.split(':', 1)]
-                    key = key.lower()
-                    value = value.strip()
-                    if key in ('api_version', ):
-                        setattr(plugin, 'plugin_%s' % (key, ), value)
-
-            rpctoken = RPCToken.new()
-            plugin.plugin_secret = rpctoken
-
-            plugin_path = "%s/%s" % (pjail_path, plugin.plugin_path)
-            oauth_file = "%s/%s" % (plugin_path, ".oauth")
-
-            log.debug("install_pbi: plugin_path = %s, oauth_file = %s",
-                plugin_path, oauth_file)
-
-            fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
-            os.write(fd, "key = %s\n" % rpctoken.key)
-            os.write(fd, "secret = %s\n" % rpctoken.secret)
-            os.close(fd)
-
-            try:
-                log.debug("install_pbi: trying to save plugin to database")
-                plugin.save()
-                newplugin.append(plugin)
-                log.debug("install_pbi: plugin saved to database")
-                ret = True
-            except Exception, e:
-                log.debug("install_pbi: FAIL! %s", e)
-                ret = False
-
-        elif res and res[0] != 0:
-            # pbid seems to return 255 for any kind of error
-            # lets use error str output to find out what happenned
-            if re.search(r'failed checksum', res[1], re.I | re.S | re.M):
-                raise MiddlewareError("The file %s seems to be "
-                    "corrupt, please try download it again." % (
-                        pbiname,
-                        )
-                    )
-            if saved_tmpdir:
-                os.environ['TMPDIR'] = saved_tmpdir
-            raise MiddlewareError(p.error)
-
-        log.debug("install_pbi: everything went well, returning %s", ret)
-        if saved_tmpdir:
-            os.environ['TMPDIR'] = saved_tmpdir
-        else:
-            del os.environ['TMPDIR']
-        return ret
-
-    def _get_pbi_info(self, pbifile):
-        pbi = pbiname = prefix = name = version = arch = None
-
-        p = pbi_add(flags=PBI_ADD_FLAGS_INFO, pbi=pbifile)
-        out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
-
-        if not out:
-            raise MiddlewareError("This file was not identified as in PBI "
-                "format, it might as well be corrupt.")
-
-        for pair in out:
-            (var, val) = pair.split('=', 1)
-            log.debug("XXX: var = %s, val = %s", var, val)
-
-            var = var.lower()
-            if var == 'pbi information for':
-                pbiname = val
-                pbi = "%s.pbi" % val
-
-            elif var == 'prefix':
-                prefix = val
-
-            elif var == 'name':
-                name = val
-
-            elif var == 'version':
-                version = val
-
-            elif var == 'arch':
-                arch = val
-
-        return pbi, pbiname, prefix, name, version, arch
-
-    def _get_plugin_info(self, name):
-        from freenasUI.plugins.models import Plugins
-        plugin = None
-
-        qs = Plugins.objects.filter(plugin_name__iexact=name)
-        if qs.count() > 0:
-            plugin = qs[0]
-
-        return plugin
-
-    def update_pbi(self, plugin=None):
-        from freenasUI.jails.models import JailsConfiguration, JailMountPoint
-        from freenasUI.services.models import RPCToken
-        from freenasUI.common.pipesubr import pipeopen
-        ret = False
-
-        if not plugin:
-            raise MiddlewareError("plugin could not be found and is NULL")
-
-        if 'PATH' in os.environ:
-            paths = os.environ['PATH']
-            parts = paths.split(':')
-            if '/usr/local/sbin' not in parts:
-                paths = "%s:%s" % (paths, '/usr/local/sbin')
-                os.environ['PATH'] = paths
-
-        log.debug("XXX: update_pbi: starting")
-
-        open('/tmp/.plugin_upload_update', 'w+').close()
-
-        if not plugin:
-            raise MiddlewareError("plugin is NULL")
-
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
-        if not row:
-            log.debug("update_pbi: plugins plugin not in database")
-            return False
-
-        jail_name = row[0]
-
-        jail = None
-        for j in Jls():
-            if j.hostname == jail_name:
-                jail = j
-                break
-
-        if jail is None:
-            return ret
-
-        jc = JailsConfiguration.objects.order_by("-id")[0]
-
-        mountpoints = JailMountPoint.objects.filter(jail=jail_name)
-        for mp in mountpoints:
-            fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
-            p = pipeopen("/sbin/umount -f '%s'" % fp)
-            out = p.communicate()
-            if p.returncode != 0:
-                raise MiddlewareError(out[1])
-
-        jail_root = jc.jc_path
-        jail_path = "%s/%s" % (jail_root, jail_name)
-        plugins_path = "%s/%s" % (jail_path, ".plugins")
-
-        # Get new PBI settings
-        newpbi, newpbiname, newprefix, newname, newversion, newarch = self._get_pbi_info(
-            "/var/tmp/firmware/pbifile.pbi")
-
-        log.debug("XXX: newpbi = %s", newpbi)
-        log.debug("XXX: newpbiname = %s", newpbiname)
-        log.debug("XXX: newprefix = %s", newprefix)
-        log.debug("XXX: newname = %s", newname)
-        log.debug("XXX: newversion = %s", newversion)
-        log.debug("XXX: newarch = %s", newarch)
-
-        pbitemp = "/var/tmp/pbi"
-        oldpbitemp = "%s/old" % pbitemp
-        newpbitemp = "%s/new" % pbitemp
-
-        newpbifile = "%s/%s" % (plugins_path, newpbi)
-        oldpbifile = "%s/%s.pbi" % (plugins_path, plugin.plugin_pbiname)
-
-        log.debug("XXX: oldpbifile = %s", oldpbifile)
-        log.debug("XXX: newpbifile = %s", newpbifile)
-
-        # Rename PBI to it's actual name
-        self._system("/bin/mv /var/tmp/firmware/pbifile.pbi %s" % newpbifile)
-
-        # Create a temporary directory to place old, new, and PBI patch files
-        out = Jexec(jid=jail.jid, command="/bin/mkdir -p %s" % oldpbitemp).run()
-        out = Jexec(jid=jail.jid, command="/bin/mkdir -p %s" % newpbitemp).run()
-        out = Jexec(jid=jail.jid, command="/bin/rm -f %s/*" % pbitemp).run()
-        if out[0] != 0:
-            raise MiddlewareError("There was a problem cleaning up the "
-                "PBI temp dirctory")
-
-        pbiname = newpbiname
-        oldpbiname = "%s.pbi" % plugin.plugin_pbiname
-        newpbiname = "%s.pbi" % newpbiname
-
-        log.debug("XXX: oldpbiname = %s", oldpbiname)
-        log.debug("XXX: newpbiname = %s", newpbiname)
-
-        self.umount_filesystems_within("%s%s" % (jail_path, newprefix))
-
-        # Create a PBI from the installed version
-        p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP | PBI_CREATE_FLAGS_OUTDIR,
-            outdir=oldpbitemp, pbidir=plugin.plugin_pbiname)
-        out = p.run(True, jail.jid)
-        if out[0] != 0:
-            raise MiddlewareError("There was a problem creating the PBI")
-
-        # Copy the old PBI over to our temporary PBI workspace
-        out = Jexec(jid=jail.jid, command="/bin/cp %s/%s /.plugins/old.%s" % (
-            oldpbitemp, oldpbiname, oldpbiname)).run()
-        if out[0] != 0:
-            raise MiddlewareError("Unable to copy old PBI file to plugins directory")
-
-        oldpbifile = "%s/%s" % (oldpbitemp, oldpbiname)
-        newpbifile = "%s/%s" % (newpbitemp, newpbiname)
-
-        log.debug("XXX: oldpbifile = %s", oldpbifile)
-        log.debug("XXX: newpbifile = %s", newpbifile)
-
-        # Copy the new PBI over to our temporary PBI workspace
-        out = Jexec(jid=jail.jid, command="/bin/cp /.plugins/%s %s/" % (
-            newpbiname, newpbitemp)).run()
-        if out[0] != 0:
-            raise MiddlewareError("Unable to copy new PBI file to plugins directory")
-
-        # Now we make the patch for the PBI upgrade
-        p = pbi_makepatch(flags=PBI_MAKEPATCH_FLAGS_OUTDIR | PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
-            outdir=pbitemp, oldpbi=oldpbifile, newpbi=newpbifile)
-        out = p.run(True, jail.jid)
-        if out[0] != 0:
-            raise MiddlewareError("Unable to make a PBI patch")
-
-        pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name.lower(),
-            plugin.plugin_version, newversion, plugin.plugin_arch)
-
-        log.debug("XXX: pbpfile = %s", pbpfile)
-
-        fullpbppath = "%s/%s/%s" % (jail_path, pbitemp, pbpfile)
-        log.debug("XXX: fullpbppath = %s", fullpbppath)
-
-        if not os.access(fullpbppath, os.F_OK):
-            raise MiddlewareError("Unable to create PBP file")
-
-        # Apply the upgrade patch to upgrade the PBI to the new version
-        p = pbi_patch(flags=PBI_PATCH_FLAGS_OUTDIR | PBI_PATCH_FLAGS_NOCHECKSIG,
-            outdir=pbitemp, pbp="%s/%s" % (pbitemp, pbpfile))
-        out = p.run(True, jail.jid)
-        if out[0] != 0:
-            raise MiddlewareError("Unable to patch the PBI")
-
-        # Update the database with the new PBI version
-        plugin.plugin_path = newprefix
-        plugin.plugin_name = newname
-        plugin.plugin_arch = newarch
-        plugin.plugin_version = newversion
-        plugin.plugin_pbiname = pbiname
-
-        try:
-            log.debug("XXX: plugin.save()")
-            plugin.save()
-            ret = True
-            log.debug("XXX: plugin.save(), WE ARE GOOD.")
-
-        except Exception as e:
-            raise MiddlewareError(_(e))
-
-        rpctoken = RPCToken.objects.filter(pk=plugin.id)
-        if not rpctoken:
-            raise MiddlewareError(_("No RPC Token!"))
-        rpctoken = rpctoken[0]
-
-        plugin_path = "%s/%s" % (jail_path, plugin.plugin_path)
-        oauth_file = "%s/%s" % (plugin_path, ".oauth")
-
-        log.debug("update_pbi: plugin_path = %s, oauth_file = %s",
-            plugin_path, oauth_file)
-
-        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
-        os.write(fd, "key = %s\n" % rpctoken.key)
-        os.write(fd, "secret = %s\n" % rpctoken.secret)
-        os.close(fd)
-
-        self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
-        self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
-
-        for mp in mountpoints:
-            fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
-            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source, fp))
-            out = p.communicate()
-            if p.returncode != 0:
-                raise MiddlewareError(out[1])
-
-        log.debug("XXX: update_pbi: returning %s", ret)
-        return ret
-
-    def delete_pbi(self, plugin):
-        ret = False
-
-        if not plugin.id:
-            log.debug("delete_pbi: plugins plugin not in database")
-            return False
-
-        jail_name = plugin.plugin_jail
-
-        jail = None
-        for j in Jls():
-            if j.hostname == jail_name:
-                jail = j
-                break
-
-        if jail is None:
-            return ret
-
-        jail_path = j.path
-
-        info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
-        res = info.run(jail=True, jid=jail.jid)
-        plugins = re.findall(r'^Name: (?P<name>\w+)$', res[1], re.M)
-
-        # Plugin is not installed in the jail at all
-        if res[0] == 0 and plugin.plugin_name not in plugins:
-            return True
-
-        pbi_path = os.path.join(
-            jail_path,
-            jail_name,
-            "usr/pbi",
-            "%s-%s" % (plugin.plugin_name, platform.machine()),
-            )
-        self.umount_filesystems_within(pbi_path)
-
-        p = pbi_delete(pbi=plugin.plugin_pbiname)
-        res = p.run(jail=True, jid=jail.jid)
-        if res and res[0] == 0:
-            try:
-                plugin.delete()
-                ret = True
-
-            except Exception, err:
-                log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
-                ret = False
-
-        return ret
-
-    def contains_jail_root(self, path):
-        try:
-            rpath = os.path.realpath(path)
-        except Exception as e:
-            log.debug("realpath %s: %s", path, e)
-            return False
-
-        rpath = os.path.normpath(rpath)
-
-        try:
-            os.stat(rpath)
-        except Exception as e:
-            log.debug("stat %s: %s", rpath, e)
-            return False
-
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
-        row = c.fetchone()
-        if not row:
-            log.debug("contains_jail_root: jails not configured")
-            return False
-
-        try:
-            jail_root = os.path.realpath(row[0])
-        except Exception as e:
-            log.debug("realpath %s: %s", jail_root, e)
-            return False
-
-        jail_root = os.path.normpath(jail_root)
-
-        try:
-            os.stat(jail_root)
-        except Exception as e:
-            log.debug("stat %s: %s", jail_root, e)
-            return False
-
-        if jail_root.startswith(rpath):
-            return True
-
-        return False
-
-    def delete_plugins(self):
-        from freenasUI.plugins.models import Plugins
-        for p in Plugins.objects.all():
-            p.delete()
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
@@ -4715,7 +4048,7 @@ class notifier:
 
         if reset_passwords:
             from freenasUI.directoryservice.models import ActiveDirectory, LDAP, NT4
-            from freenasUI.services.models import DynamicDNS, WebDAV, UPS
+            from freenasUI.services.models import WebDAV, UPS
             self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
             self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
             self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')

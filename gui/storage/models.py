@@ -206,7 +206,7 @@ class Volume(NewModel):
             reload_collectd = False
 
         # TODO: This is ugly.
-        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails', 'collectd')
+        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'collectd')
         reloads = (False, False, False,  False, False, reload_collectd)
 
         n = notifier()
@@ -677,7 +677,6 @@ class MountPoint(Model):
         Return a dict composed by the name of services and ids of shares
         dependent of this MountPoint
         ""
-        from freenasUI.jails.models import Jails, JailsConfiguration
         from freenasUI.sharing.models import (
             CIFS_Share, AFP_Share, NFS_Share_Path
         )
@@ -688,7 +687,6 @@ class MountPoint(Model):
             'afp': [],
             'nfs': [],
             'iscsitarget': [],
-            'jails': [],
             'collectd': [],
         }
 
@@ -712,15 +710,6 @@ class MountPoint(Model):
                 iscsi_target_extent_type='ZVOL')
             if qs.exists():
                 attachments['iscsitarget'].append(qs[0].id)
-
-        try:
-            jc = JailsConfiguration.objects.latest("id")
-        except:
-            jc = None
-        if jc and jc.jc_path.startswith(self.mp_path):
-            attachments['jails'].extend(
-                [j.id for j in Jails.objects.all()]
-            )
 
         return attachments
 
@@ -755,10 +744,9 @@ class MountPoint(Model):
                     id__in=attachments['iscsitarget']):
                 target.delete()
             reload_iscsi = True
-        reload_jails = len(attachments['jails']) > 0
 
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
-                reload_jails, reload_collectd)
+                reload_collectd)
 
     def delete(self, do_reload=True):
         if do_reload:

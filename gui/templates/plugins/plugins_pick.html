@@ -1,8 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-{% block onSubmit %}
-doSubmit({
-    form: this,
-    event: e,
-    url: '{% url "plugin_update" oid=oid %}'
-});
-{% endblock %}

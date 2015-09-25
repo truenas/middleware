@@ -198,7 +198,6 @@ def servicesToggleView(request, formname):
         'rsync_toggle': 'rsyncd',
         'smartd_toggle': 'smartd',
         'ups_toggle': 'ups',
-        'plugins_toggle': 'plugins',
         'domaincontroller_toggle': 'domaincontroller',
         'webdav_toggle': 'webdav',
         'riak_toggle': 'riak',
