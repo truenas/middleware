@@ -228,10 +228,6 @@ class notifier:
 
     __service2daemon = {
         'ssh': ('sshd', '/var/run/sshd.pid'),
-        'nfs': ('nfsd', None),
-        'afp': ('netatalk', None),
-        'cifs': ('smbd', '/var/run/samba/smbd.pid'),
-        'dynamicdns': ('inadyn-mt', None),
         'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
         'tftp': ('inetd', '/var/run/inetd.pid'),
         'ctld': ('ctld', '/var/run/ctld.pid'),
@@ -461,15 +457,6 @@ class notifier:
                 self._system("ifconfig %s destroy" % interface)
         self._system("/etc/netstart")
         self._system("/usr/sbin/service rtsold start")
-
-    def _stop_pbid(self):
-        self._system_nolog("/usr/sbin/service pbid stop")
-
-    def _start_pbid(self):
-        self._system_nolog("/usr/sbin/service pbid start")
-
-    def _restart_pbid(self):
-        self._system_nolog("/usr/sbin/service pbid restart")
 
     def _reload_named(self):
         self._system("/usr/sbin/service named reload")
@@ -742,32 +729,6 @@ class notifier:
         sn = self._started_notify("start", "upsmon")
         return self._started(svc, sn)
 
-    def _reload_nfs(self):
-        self._system("/usr/sbin/service ix-nfsd quietstart")
-
-    def _restart_nfs(self):
-        self._stop_nfs()
-        self._start_nfs()
-
-    def _stop_nfs(self):
-        self._system("/usr/sbin/service lockd forcestop")
-        self._system("/usr/sbin/service statd forcestop")
-        self._system("/usr/sbin/service nfsd forcestop")
-        self._system("/usr/sbin/service mountd forcestop")
-        self._system("/usr/sbin/service nfsuserd forcestop")
-        self._system("/usr/sbin/service gssd forcestop")
-        self._system("/usr/sbin/service rpcbind forcestop")
-
-    def _start_nfs(self):
-        self._system("/usr/sbin/service ix-nfsd quietstart")
-        self._system("/usr/sbin/service rpcbind quietstart")
-        self._system("/usr/sbin/service gssd quietstart")
-        self._system("/usr/sbin/service nfsuserd quietstart")
-        self._system("/usr/sbin/service mountd quietstart")
-        self._system("/usr/sbin/service nfsd quietstart")
-        self._system("/usr/sbin/service statd quietstart")
-        self._system("/usr/sbin/service lockd quietstart")
-
     def start_ataidle(self, what=None):
         if what is not None:
             self._system("/usr/sbin/service ix-ataidle quietstart %s" % what)
@@ -780,38 +741,11 @@ class notifier:
         else:
             self._system("/usr/sbin/service ix-ssl quietstart")
 
-    def _restart_dynamicdns(self):
-        self._system("/usr/sbin/service ix-inadyn quietstart")
-        self._system("/usr/sbin/service inadyn-mt forcestop")
-        self._system("/usr/sbin/service inadyn-mt restart")
-
     def _restart_system(self):
         self._system("/bin/sleep 3 && /sbin/shutdown -r now &")
 
     def _stop_system(self):
         self._system("/sbin/shutdown -p now")
-
-    def _reload_cifs(self):
-        self._system("/usr/sbin/service ix-pre-samba quietstart")
-        self._system("/usr/sbin/service samba_server forcereload")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
-        self._system("/usr/sbin/service mdnsd restart")
-
-    def _restart_cifs(self):
-        self._system("/usr/sbin/service ix-pre-samba quietstart")
-        self._system("/usr/sbin/service samba_server forcestop")
-        self._system("/usr/sbin/service samba_server quietrestart")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
-        self._system("/usr/sbin/service mdnsd restart")
-
-    def _start_cifs(self):
-        self._system("/usr/sbin/service ix-pre-samba quietstart")
-        self._system("/usr/sbin/service samba_server quietstart")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
-
-    def _stop_cifs(self):
-        self._system("/usr/sbin/service samba_server forcestop")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
 
     def _start_snmp(self):
         self._system("/usr/sbin/service ix-snmpd quietstart")
@@ -835,12 +769,6 @@ class notifier:
     def _reload_http(self):
         self._system("/usr/sbin/service ix_register reload")
         self._system("/usr/sbin/service nginx reload")
-
-    def _reload_loader(self):
-        self._system("/usr/sbin/service ix-loader reload")
-
-    def _start_loader(self):
-        self._system("/usr/sbin/service ix-loader quietstart")
 
     def _open_db(self, ret_conn=False):
         """Open and return a cursor object for database access."""
