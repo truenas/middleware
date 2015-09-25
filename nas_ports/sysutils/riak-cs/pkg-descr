@@ -1,6 +1,0 @@
-Riak is a distributed database designed for maximum availability:
-so long as your client can reach one server, it should be able to
-write data. In most failure scenarios the data you want to read
-should be available, albeit possibly stale.
-
-WWW: http://basho.com/riak
