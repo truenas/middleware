@@ -2457,7 +2457,7 @@ class UpdateResourceMixin(NestedMixin):
         trains = dispatcher.call_sync('update.trains')
         seltrain = None
         train_names = []
-        for train in trains:
+        for train in (trains or []):
             if seltrain is None and train['current']:
                 seltrain = train
             train_names.append(train['name'])
