@@ -1089,6 +1089,8 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
                             if c["mountpoint"] == "/":
                                 s = "Cannot create boot-environment with same name as current boot-environment (%s)" % new_boot_name
                                 break
+                            elif c["active"] in ("R", "NR"):
+                                s = "Cannot destroy boot-environment selected for next reboot (%s)" % new_boot_name
                             else:
                                 # We'll have to destroy it.
                                 # I'd like to rename it, but that gets tricky, due
