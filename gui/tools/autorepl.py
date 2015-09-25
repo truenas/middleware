@@ -344,7 +344,7 @@ Hello,
     else:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
-    output = sshproc.communicate()[0]
+    output, error = sshproc.communicate()
     if output != '':
         snaplist = output.split('\n')
         snaplist = [x for x in snaplist if not system_re.match(x) and x != '']
@@ -352,6 +352,9 @@ Hello,
         l = len(remotefs_final)
         snaplist = [ localfs + x[l:] for x in snaplist ]
         map_target = mapfromdata(snaplist)
+    elif error != '':
+        results[replication.id] = 'Failed: %s' % (error)
+        continue
     else:
         map_target = {}
 
