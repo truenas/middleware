@@ -29,7 +29,8 @@ doSubmit({
 
 {% if update.changelog %}
 {% trans "Changelog" %}:
-<pre style="padding: 8px; margin: 4px; max-height: 100px; overflow: auto;">{{ update.changelog }}</pre>
+<pre style="padding: 8px; margin: 4px; max-height: 100px; overflow: auto;">{% for i in update.changelog %}{{ i }}
+{% endfor %}</pre>
 {% endif %}
 
 {% trans "The following packages will be changed:" %}
