@@ -63,7 +63,7 @@ def main():
     if updateobj.upd_autocheck is False:
         return
 
-    location = notifier().get_update_location()
+    location = '/var/db/system/update'
 
     Update.DownloadUpdate(updateobj.get_train(), location)
 

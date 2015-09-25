@@ -2018,12 +2018,6 @@ class notifier:
 
         return True
 
-    def get_update_location(self):
-        syspath = self.system_dataset_path()
-        if syspath:
-            return '%s/update' % syspath
-        return '/var/tmp/update'
-
     def umount_filesystems_within(self, path):
         """
         Try to umount filesystems within a certain path
@@ -2339,7 +2333,10 @@ class notifier:
             sort = '-s %s' % sort
 
         if system is False:
-            systemdataset, basename = self.system_dataset_settings()
+            #FIXME
+            #systemdataset, basename = self.system_dataset_settings()
+            systemdataset, basename = None, None
+
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
@@ -3474,22 +3471,6 @@ class notifier:
         else:
             raise ValueError("Unknown mode %s" % (mode, ))
 
-    def __toCamelCase(self, name):
-        pass1 = re.sub(r'[^a-zA-Z0-9]', ' ', name.strip())
-        pass2 = re.sub(r'\s{2,}', ' ', pass1)
-        camel = ''.join([word.capitalize() for word in pass2.split()])
-        return camel
-
-    def _restart_system_datasets(self):
-        systemdataset = self.system_dataset_create()
-        if systemdataset is None:
-            return None
-        if systemdataset.sys_syslog_usedataset:
-            self.restart("syslogd")
-        self.restart("cifs")
-        if systemdataset.sys_rrd_usedataset:
-            self.restart("collectd")
-
     def dataset_init_unix(self, dataset):
         """path = "/mnt/%s" % dataset"""
         pass
@@ -3599,214 +3580,6 @@ class notifier:
 
         return True
 
-    def system_dataset_settings(self):
-        from freenasUI.storage.models import Volume
-        from freenasUI.system.models import SystemDataset
-
-        try:
-            systemdataset = SystemDataset.objects.all()[0]
-        except:
-            systemdataset = SystemDataset.objects.create()
-
-        if not systemdataset.get_sys_uuid():
-            systemdataset.new_uuid()
-            systemdataset.save()
-
-        # If there is a pool configured make sure the volume exists
-        # Otherwise reset it to blank
-        if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
-            volume = Volume.objects.filter(
-                vol_name=systemdataset.sys_pool,
-                vol_fstype='ZFS',
-            )
-            if not volume.exists():
-                systemdataset.sys_pool = ''
-                systemdataset.save()
-
-        if not systemdataset.sys_pool:
-            volume = None
-            for o in Volume.objects.filter(vol_fstype='ZFS').order_by(
-                'vol_encrypt'
-            ):
-                if o.is_decrypted():
-                    volume = o
-                    break
-            if not volume:
-                return systemdataset, None
-            else:
-                systemdataset.sys_pool = volume.vol_name
-                systemdataset.save()
-
-        basename = '%s/.system' % systemdataset.sys_pool
-        return systemdataset, basename
-
-    def system_dataset_create(self, mount=True):
-
-        if (
-            hasattr(self, 'failover_status') and
-            self.failover_status() == 'BACKUP'
-        ):
-            if os.path.exists(SYSTEMPATH):
-                os.unlink(SYSTEMPATH)
-            return None
-
-        systemdataset, basename = self.system_dataset_settings()
-        if not basename:
-            if os.path.exists(SYSTEMPATH):
-                try:
-                    os.rmdir(SYSTEMPATH)
-                except Exception, e:
-                    log.debug("Failed to delete %s: %s", SYSTEMPATH, e)
-            return systemdataset
-
-        if not systemdataset.is_decrypted():
-            return None
-
-        self.system_dataset_rename(basename, systemdataset)
-
-        datasets = [basename]
-        for sub in (
-            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
-            'rrd-%s' % systemdataset.get_sys_uuid(),
-            'configs-%s' % systemdataset.get_sys_uuid(),
-        ):
-            datasets.append('%s/%s' % (basename, sub))
-
-        createdds = False
-        for dataset in datasets:
-            proc = self._pipeopen('/sbin/zfs get -H -o value mountpoint "%s"' % dataset)
-            stdout, stderr = proc.communicate()
-            if proc.returncode == 0:
-                if stdout.strip() != 'legacy':
-                    self._system('/sbin/zfs set mountpoint=legacy "%s"' % dataset)
-
-                continue
-
-            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"}, _restart_collectd=False)
-            createdds = True
-
-        if createdds:
-            self.restart('collectd')
-
-        if not os.path.isdir(SYSTEMPATH):
-            if os.path.exists(SYSTEMPATH):
-                os.unlink(SYSTEMPATH)
-            os.mkdir(SYSTEMPATH)
-
-        aclmode = self.get_dataset_aclmode(basename)
-        if aclmode and aclmode.lower() == 'restricted':
-            self.set_dataset_aclmode(basename, 'passthrough')
-
-        if mount:
-            self.system_dataset_mount(systemdataset.sys_pool, SYSTEMPATH)
-
-            corepath = '%s/cores' % SYSTEMPATH
-            if os.path.exists(corepath):
-                self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
-                    corepath,
-                ))
-                os.chmod(corepath, 0775)
-
-            self.nfsv4link()
-
-        return systemdataset
-
-    def system_dataset_rename(self, basename=None, sysdataset=None):
-        if basename is None:
-            basename = self.system_dataset_settings()[1]
-        if sysdataset is None:
-            sysdataset = self.system_dataset_settings()[0]
-
-        legacydatasets = {
-            'syslog': '%s/syslog' % basename,
-            'rrd': '%s/rrd' % basename,
-        }
-        newdatasets = {
-            'syslog': '%s/syslog-%s' % (basename, sysdataset.get_sys_uuid()),
-            'rrd': '%s/rrd-%s' % (basename, sysdataset.get_sys_uuid()),
-        }
-        proc = self._pipeopen(
-            'zfs list -H -o name %s' % ' '.join(
-                [
-                    "%s" % name
-                    for name in legacydatasets.values() + newdatasets.values()
-                ]
-            )
-        )
-        output = proc.communicate()[0].strip('\n').split('\n')
-        for ident, name in legacydatasets.items():
-            if name in output:
-                newname = newdatasets.get(ident)
-                if newname not in output:
-
-                    if ident == 'syslog':
-                        self.stop('syslogd')
-                    elif ident == 'rrd':
-                        self.stop('collectd')
-
-                    proc = self._pipeopen(
-                        'zfs rename -f "%s" "%s"' % (name, newname)
-                    )
-                    errmsg = proc.communicate()[1]
-                    if proc.returncode != 0:
-                        log.error(
-                            "Failed renaming system dataset from %s to %s: %s",
-                            name,
-                            newname,
-                            errmsg,
-                        )
-
-                    if ident == 'syslog':
-                        self.start('syslogd')
-                    elif ident == 'rrd':
-                        self.start('collectd')
-
-                else:
-                    # There is already a dataset using the new name
-                    pass
-
-    def system_dataset_path(self):
-        if not os.path.exists(SYSTEMPATH):
-            return None
-
-        if not os.path.ismount(SYSTEMPATH):
-            return None
-
-        return SYSTEMPATH
-
-    def system_dataset_mount(self, pool, path=SYSTEMPATH):
-        systemdataset, basename = self.system_dataset_settings()
-        sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
-            'rrd-%s' % systemdataset.get_sys_uuid(),
-            'configs-%s' % systemdataset.get_sys_uuid(),
-        ]
-
-        # Check if .system datasets are already mounted
-        if os.path.ismount(path):
-            return
-
-        self._system('/sbin/mount -t zfs "%s/.system" "%s"' % (pool, path))
-
-        for i in sub:
-            if not os.path.isdir('%s/%s' % (path, i)):
-                os.mkdir('%s/%s' % (path, i))
-
-            self._system('/sbin/mount -t zfs "%s/.system/%s" "%s/%s"' % (pool, i, path, i))
-
-    def system_dataset_umount(self, pool):
-        systemdataset, basename = self.system_dataset_settings()
-        sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
-            'rrd-%s' % systemdataset.get_sys_uuid(),
-            'configs-%s' % systemdataset.get_sys_uuid(),
-        ]
-
-        for i in sub:
-            self._system('/sbin/umount -f "%s/.system/%s"' % (pool, i))
-
-        self._system('/sbin/umount -f "%s/.system"' % pool)
-
     def _createlink(self, syspath, item):
         if not os.path.isfile(os.path.join(syspath, os.path.basename(item))):
             if os.path.exists(os.path.join(syspath, os.path.basename(item))):
@@ -3857,52 +3630,6 @@ class notifier:
                 if os.path.islink(item):
                     os.unlink(item)
                 self._createlink(syspath, item)
-
-    def system_dataset_migrate(self, _from, _to):
-
-        rsyncs = (
-            (SYSTEMPATH, '/tmp/system.new'),
-        )
-
-        os.mkdir('/tmp/system.new')
-        self.system_dataset_mount(_to, '/tmp/system.new')
-
-        restart = []
-        if os.path.exists('/var/run/syslog.pid'):
-            restart.append('syslogd')
-            self.stop('syslogd')
-
-        if os.path.exists('/var/run/samba/smbd.pid'):
-            restart.append('cifs')
-            self.stop('cifs')
-
-        if os.path.exists('/var/run/collectd.pid'):
-            restart.append('collectd')
-            self.stop('collectd')
-
-        for src, dest in rsyncs:
-            rv = self._system_nolog('/usr/local/bin/rsync -az "%s/" "%s"' % (
-                src,
-                dest,
-            ))
-
-        if _from and rv == 0:
-            self.system_dataset_umount(_from)
-            self.system_dataset_umount(_to)
-            self.system_dataset_mount(_to, SYSTEMPATH)
-            proc = self._pipeopen(
-                '/sbin/zfs list -H -o name %s/.system|xargs zfs destroy -r' % (
-                    _from,
-                )
-            )
-            proc.communicate()
-
-        os.rmdir('/tmp/system.new')
-
-        for service in restart:
-            self.start(service)
-
-        self.nfsv4link()
 
     def zpool_status(self,pool_name):
         """
@@ -4144,8 +3871,7 @@ class notifier:
         return response
 
     def backup_db(self):
-        from freenasUI.common.system import backup_database
-        backup_database()
+        pass
 
 
 def usage():

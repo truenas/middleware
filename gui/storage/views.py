@@ -1116,7 +1116,6 @@ def volume_lock(request, object_id):
 
     if request.method == "POST":
         notifier().volume_detach(volume)
-        notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
 

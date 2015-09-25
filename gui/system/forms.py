@@ -804,9 +804,7 @@ class InitialWizard(CommonWizard):
         with open(WIZARD_PROGRESSFILE, 'wb') as f:
             f.write(pickle.dumps(progress))
 
-        _n.start("ix-system")
         _n.start("ix-syslogd")
-        _n.restart("system_datasets")  # FIXME: may reload collectd again
         _n.reload("timeservices")
 
         progress['percent'] = 70
@@ -1254,29 +1252,6 @@ class SystemDatasetForm(ModelForm):
         self.instance._original_sys_pool = self.instance.sys_pool
         self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
         self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
-
-    def save(self):
-        super(SystemDatasetForm, self).save()
-        if self.instance.sys_pool:
-            try:
-                notifier().system_dataset_create(mount=False)
-            except:
-                raise MiddlewareError(_("Unable to create system dataset!"))
-
-        if self.instance._original_sys_pool != self.instance.sys_pool:
-            try:
-                notifier().system_dataset_migrate(
-                    self.instance._original_sys_pool, self.instance.sys_pool
-                )
-            except:
-                raise MiddlewareError(_("Unable to migrate system dataset!"))
-
-        notifier().restart("system_datasets")
-
-        if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
-            notifier().restart("syslogd")
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            notifier().restart("collectd")
 
 
 class InitialWizardDSForm(Form):

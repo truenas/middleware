@@ -70,9 +70,6 @@ def debug_get_settings():
     from freenasUI.middleware.notifier import notifier
     direc = "/var/tmp/ixdiagnose"
     mntpt = '/var/tmp'
-    if notifier().system_dataset_path() is not None:
-        direc = os.path.join(notifier().system_dataset_path(), 'ixdiagnose')
-        mntpt = notifier().system_dataset_path()
     dump = os.path.join(direc, 'ixdiagnose.tgz')
 
     return (mntpt, direc, dump)

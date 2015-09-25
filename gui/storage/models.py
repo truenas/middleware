@@ -301,10 +301,10 @@ class Volume(NewModel):
             super(Volume, self).delete()
 
         # If there's a system dataset on this pool, stop using it.
-        if systemdataset:
-            systemdataset.sys_pool = ''
-            systemdataset.save()
-            n.restart('system_datasets')
+        #if systemdataset:
+        #    systemdataset.sys_pool = ''
+        #    systemdataset.save()
+        #    n.restart('system_datasets')
 
         # Refresh the fstab
         n.reload("disk")

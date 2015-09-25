@@ -518,40 +518,6 @@ def exclude_path(path, exclude):
         return [path]
 
 
-def backup_database():
-    from freenasUI.middleware.notifier import notifier
-
-    systemdataset, basename = notifier().system_dataset_settings()
-    systempath = notifier().system_dataset_path()
-    if not systempath or not systemdataset:
-        return
-
-    # Legacy format
-    files = glob.glob('%s/*.db' % systempath)
-    reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-    files = filter(lambda y: reg.match(y), files)
-    for f in files:
-        try:
-            os.unlink(f)
-        except OSError:
-            pass
-
-    today = datetime.now().strftime("%Y%m%d")
-
-    newfile = os.path.join(
-        systempath,
-        'configs-%s' % systemdataset.get_sys_uuid(),
-        get_sw_version(),
-        '%s.db' % today,
-    )
-
-    dirname = os.path.dirname(newfile)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-
-    shutil.copy('/data/freenas-v1.db', newfile)
-
-
 def get_dc_hostname():
     from freenasUI.network.models import GlobalConfiguration
     from freenasUI.common.pipesubr import pipeopen

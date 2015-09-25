@@ -322,7 +322,6 @@ class VolumeManagerForm(VolumeMixin, Form):
         # are committed before the call of ix-fstab
         notifier().reload("disk")
         notifier().start("ix-syslogd")
-        notifier().restart("system_datasets")
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
@@ -919,8 +918,6 @@ class AutoImportWizard(SessionWizardView):
         _n.reload("disk")
         _n.start("ix-system")
         _n.start("ix-syslogd")
-        # FIXME: do not restart collectd again
-        _n.restart("system_datasets")
 
         alertPlugins.run()
 
@@ -2525,7 +2522,6 @@ class UnlockPassphraseForm(Form):
         _notifier = notifier()
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
-        _notifier.restart("system_datasets")
         _notifier.reload("disk")
 
 class KeyForm(Form):
