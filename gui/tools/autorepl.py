@@ -422,6 +422,9 @@ Hello,
     previously_deleted = "/"
     l = len(localfs)
     total_datasets = len(tasks.keys())
+    if total_datasets == 0:
+        results[replication.id] = 'Up to date'
+        continue
     current_dataset = 0
     for dataset in sorted(tasks.keys()):
         tasklist = tasks[dataset]
