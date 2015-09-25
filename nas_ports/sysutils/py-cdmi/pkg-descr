@@ -1,5 +1,0 @@
-CDMI for OpenStack's Swift
-
-A Python egg that adds support for the CDMI protocol to OpenStack Swift.
-
-WWW: https://github.com/osaddon/cdmi
