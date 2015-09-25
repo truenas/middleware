@@ -1288,7 +1288,6 @@ def update_check(request):
             update = request.session['update']
             uuid = update['uuid']
             apply_ = update['apply']
-            log.error("check task %r", task)
             if running is False and task['name'] == 'update.download' and apply_:
                 task = dispatcher.submit_task('update.update')
                 update['task'] = task
@@ -1309,14 +1308,8 @@ def update_check(request):
                         pass
                     return render(request, 'failover/update_standby.html')
 
-                if handler.reboot:
-                    request.session['allow_reboot'] = True
-                    return render(request, 'system/done.html')
-                else:
-                    return JsonResp(
-                        request,
-                        message=_('Update has been applied'),
-                    )
+                request.session['allow_reboot'] = True
+                return render(request, 'system/done.html')
             else:
                 return JsonResp(
                     request,
