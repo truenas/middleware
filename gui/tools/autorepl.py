@@ -92,7 +92,7 @@ def compress_pipecmds(compression):
 #
 # Attempt to send a snapshot or increamental stream to remote.
 #
-def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication):
+def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication, reached_last):
     global results
     global templog
 
@@ -139,6 +139,9 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication)
     msg = msg.replace('WARNING: enabled NONE cipher\n', '')
     log.debug("Replication result: %s" % (msg))
     results[replication.id] = msg
+    if reached_last and msg == "Succeeded":
+        replication.repl_lastsnapshot = tosnap
+        replication.save()
     return (msg == "Succeeded")
 
 log = logging.getLogger('tools.autorepl')
@@ -376,8 +379,12 @@ for replication in replication_tasks:
 
     previously_deleted = "/"
     l = len(localfs)
+    total_datasets = len(tasks.keys())
+    current_dataset = 0
     for dataset in sorted(tasks.keys()):
         tasklist = tasks[dataset]
+        current_dataset += 1
+        reached_last = (current_dataset == total_datasets)
         if tasklist[0] == None:
             # No matching snapshot(s) exist.  If there is any snapshots on the
             # target side, destroy all existing snapshots so we can proceed.
@@ -406,10 +413,10 @@ Hello,
                     results[replication.id] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
                     ### rzfs destroy %s
             psnap = tasklist[1]
-            success = sendzfs(None, psnap, dataset, localfs, remotefs, throttle, replication)
+            success = sendzfs(None, psnap, dataset, localfs, remotefs, throttle, replication, reached_last)
             if success:
                 for nsnap in tasklist[2:]:
-                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication)
+                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication, reached_last)
                     if not success:
                         # Report the situation
                         error, errmsg = send_mail(
@@ -437,7 +444,7 @@ Hello,
             psnap = tasklist[0]
             allsucceeded = True
             for nsnap in tasklist[1:]:
-                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication)
+                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication, reached_last)
                 allsucceeded = allsucceeded and success
                 if not success:
                     # Report the situation
