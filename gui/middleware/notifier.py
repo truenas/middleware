@@ -1761,16 +1761,6 @@ class notifier:
 
         return ret
 
-    def user_lock(self, username):
-        self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
-        self._system('/usr/sbin/pw lock "%s"' % (username))
-        return self.user_gethashedpassword(username)
-
-    def user_unlock(self, username):
-        self._system('/usr/local/bin/smbpasswd -e "%s"' % (username))
-        self._system('/usr/sbin/pw unlock "%s"' % (username))
-        return self.user_gethashedpassword(username)
-
     def user_changepassword(self, username, password):
         """Changes user password"""
         command = '/usr/sbin/pw usermod "%s" -h 0' % (username)
