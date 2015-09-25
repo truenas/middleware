@@ -14,7 +14,7 @@ COMMENT=	Riak CS is an open source, distributed, S3 interface to RIAK KV
 
 LICENSE=	APACHE20
 
-BUILD_DEPENDS=	${LOCALBASE}/lib/riak-erlang/bin/erlc:${PORTSDIR}/lang/riak-erlang
+BUILD_DEPENDS=	${LOCALBASE}/lib/riak-erlang/bin/erlc:${PORTSDIR}/lang/erlang-riak
 
 USES=		gmake readline
 USE_RC_SUBR=	riak-cs
