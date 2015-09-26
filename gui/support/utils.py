@@ -34,13 +34,14 @@ def get_license():
     return license, None
 
 
-def jails_enabled():
-    license, reason = get_license()
-    sw_name = get_sw_name().lower()
-    if sw_name == 'freenas' or (
-        license and Features.jails in license.features
-    ):
-        return True
+# We removed jails so commenting this out for now
+# def jails_enabled():
+#     license, reason = get_license()
+#     sw_name = get_sw_name().lower()
+#     if sw_name == 'freenas' or (
+#         license and Features.jails in license.features
+#     ):
+#         return True
     return False
 
 

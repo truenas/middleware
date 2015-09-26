@@ -179,6 +179,8 @@ DIR_BLACKLIST = [
     'api',
     'freeadmin',
     'static',
+    'jails',
+    'plugins',
 ]
 APP_MODULES = []
 
