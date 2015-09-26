@@ -2448,14 +2448,13 @@ class UnlockPassphraseForm(Form):
     services = forms.MultipleChoiceField(
         label=_("Restart services"),
         widget=forms.widgets.CheckboxSelectMultiple(),
-        initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'nfs', 'webdav'],
+        initial=['afp', 'cifs', 'ftp', 'iscsitarget', 'jails', 'nfs', 'webdav'],
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         super(UnlockPassphraseForm, self).__init__(*args, **kwargs)
-        # Again we deleted plugins
-        # app = appPool.get_app('plugins')
+        app = appPool.get_app('plugins')
         choices = [
             ('afp', _('AFP')),
             ('cifs', _('CIFS')),
@@ -2465,11 +2464,9 @@ class UnlockPassphraseForm(Form):
             ('webdav', _('WebDAV')),
         ]
         if getattr(app, 'unlock_restart', False):
-            # choices.append(
-            #     ('jails', _('Jails/Plugins')),
-            # )
-            # We removed jail so commenting this out
-            pass
+            choices.append(
+                ('jails', _('Jails/Plugins')),
+            )
         self.fields['services'].choices = choices
 
     def clean(self):
