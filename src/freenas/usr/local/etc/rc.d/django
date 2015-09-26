@@ -77,8 +77,6 @@ start_command()
 	/usr/local/bin/python -R ${path}/manage.py runfcgi method=threaded \
 		host=${host} port=${port} pidfile=${pidfile}
 	touch ${logs}
-	/usr/local/bin/python ${path}/tools/alert.py > /dev/null 2>&1
-	sleep 1
 	chown www:www ${logs}
 }
 
