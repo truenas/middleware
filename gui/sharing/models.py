@@ -133,6 +133,9 @@ class CIFS_Share(NewModel):
             ('cifs_guestok', 'properties.guest_ok'),
             ('cifs_guestonly', 'properties.guest_only'),
         )
+        extra_fields = (
+            ('type', 'cifs'),
+        )
 
 
 class AFP_Share(NewModel):
@@ -263,6 +266,9 @@ class AFP_Share(NewModel):
             ('afp_dperm', 'properties.default_directory_perms'),
             ('afp_umask', 'properties.default_umask')
         )
+        extra_fields = (
+            ('type', 'afp'),
+        )
 
 
 class NFS_Share(NewModel):
@@ -352,9 +358,7 @@ class NFS_Share(NewModel):
     )
 
     def __unicode__(self):
-        if self.nfs_comment:
-            return unicode(self.nfs_comment)
-        return u"[%s]" % ', '.join([p.path for p in self.paths.all()])
+        return self.nfs_name
 
     class Meta:
         verbose_name = _("Unix (NFS) Share")
@@ -381,6 +385,10 @@ class NFS_Share(NewModel):
             ('nfs_mapall_user', 'properties.mapall_user'),
             ('nfs_mapall_group', 'properties.mapall_group'),
         )
+        extra_fields = (
+            ('type', 'nfs'),
+        )
+
 
 
 class WebDAV_Share(Model):
