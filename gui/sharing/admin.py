@@ -76,13 +76,6 @@ class NFSShareFAdmin(BaseFreeAdmin):
     icon_add = u"AddUNIXShareIcon"
     icon_view = u"ViewAllUNIXSharesIcon"
     icon_object = u"UNIXShareIcon"
-    inlines = [
-        {
-            'form': 'NFS_SharePathForm',
-            'prefix': 'path_set',
-            'position': 'top',
-        },
-    ]
     resource_mixin = NFSShareResourceMixin
     advanced_fields = (
         'nfs_network',
@@ -95,7 +88,7 @@ class NFSShareFAdmin(BaseFreeAdmin):
         'nfs_security',
     )
     fields = (
-        'nfs_paths',
+        'nfs_path',
         'nfs_comment',
         'nfs_alldirs',
         'nfs_ro'
@@ -104,8 +97,8 @@ class NFSShareFAdmin(BaseFreeAdmin):
     def get_datagrid_columns(self):
         columns = super(NFSShareFAdmin, self).get_datagrid_columns()
         columns.insert(0, {
-            'name': 'nfs_paths',
-            'label': _('Paths'),
+            'name': 'nfs_path',
+            'label': _('Path'),
             'sortable': False,
         })
         return columns

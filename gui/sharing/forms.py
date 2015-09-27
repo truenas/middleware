@@ -32,8 +32,9 @@ from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
+from freenasUI import choices
 from freenasUI.common.forms import ModelForm
-from freenasUI.freeadmin.forms import SelectMultipleWidget
+from freenasUI.freeadmin.forms import SelectMultipleWidget, SelectMultipleField
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -50,7 +51,23 @@ log = logging.getLogger('sharing.forms')
 
 
 class CIFS_ShareForm(ModelForm):
+    cifs_hostsallow = forms.CharField(
+        label=_("Hosts Allow"),
+        help_text=_("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings."),
+        required=False
+    )
 
+    cifs_hostsdeny = forms.CharField(
+        label=_("Hosts Deny"),
+        help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings."),
+        required=False
+    )
+    cifs_vfsobjects = SelectMultipleField(
+        label=_('VFS Objects'),
+        choices=list(choices.CIFS_VFS_OBJECTS())
+    )
+
+    """
     def _get_storage_tasks(self, cifs_path=None, cifs_home=False):
         p = pipeopen("zfs list -H -o mountpoint,name")
         zfsout = p.communicate()[0].split('\n')
@@ -61,12 +78,12 @@ class CIFS_ShareForm(ModelForm):
         if cifs_path:
             for line in zfsout:
                 try:
-                    tasks = [] 
+                    tasks = []
                     zfs_mp, zfs_ds = line.split()
                     if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
                         if cifs_path == zfs_mp:
                             tasks = Task.objects.filter(task_filesystem=zfs_ds)
-                        else: 
+                        else:
                             tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
                     for t in tasks:
                         task_list.append(t)
@@ -78,9 +95,11 @@ class CIFS_ShareForm(ModelForm):
             task_list = Task.objects.filter(Q(task_recursive=True))
 
         return task_list
+    """
 
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
+        self.fields['cifs_vfsobjects'].initial = ['aio_pthread', 'streams_xattr']
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_cifs_guestok", '
             '["id_cifs_guestonly"], true);')
@@ -90,13 +109,11 @@ class CIFS_ShareForm(ModelForm):
                     'disabled'
         elif self.instance.cifs_guestok is False:
             self.fields['cifs_guestonly'].widget.attrs['disabled'] = 'disabled'
-        self.instance._original_cifs_default_permissions = \
-            self.instance.cifs_default_permissions
-        self.fields['cifs_name'].required = False
         self.fields['cifs_home'].widget.attrs['onChange'] = (
             "cifs_storage_task_toggle();"
         )
 
+        """
         if self.instance:
             task_list = []
             if self.instance.cifs_path:
@@ -113,9 +130,11 @@ class CIFS_ShareForm(ModelForm):
 
             else:
                 self.fields['cifs_storage_task'].choices = (('', '-----'),)
+        """
 
     class Meta:
         fields = '__all__'
+        exclude = ['id']
         model = models.CIFS_Share
 
     def clean_cifs_home(self):
@@ -173,6 +192,7 @@ class CIFS_ShareForm(ModelForm):
                 ))
 
         home = self.cleaned_data.get('cifs_home')
+        """
         task = self.cleaned_data.get('cifs_storage_task')
         if not task:
             task_list = []
@@ -184,9 +204,9 @@ class CIFS_ShareForm(ModelForm):
 
             if task_list:
                 obj.cifs_storage_task = task_list[0]
+        """
 
         obj.save()
-        notifier().reload("cifs")
         return obj
 
     def done(self, request, events):
@@ -418,41 +438,6 @@ class NFS_ShareForm(ModelForm):
 
         return cdata
 
-    def cleanformset_nfs_share_path(self, formset, forms):
-        dev = None
-        valid = True
-        ismp = False
-        for form in forms:
-            if not hasattr(form, "cleaned_data"):
-                continue
-            path = form.cleaned_data.get("path")
-            if not path:
-                continue
-            parent = os.path.join(path, "..")
-            try:
-                stat = os.stat(path)
-                if dev is None:
-                    dev = stat.st_dev
-                elif dev != stat.st_dev:
-                    self._fserrors = self.error_class([
-                        _("Paths for a NFS share must reside within the same "
-                            "filesystem")
-                    ])
-                    valid = False
-                    break
-                if os.stat(parent).st_dev != stat.st_dev:
-                    ismp = True
-                if ismp and len(forms) > 1:
-                    self._fserrors = self.error_class([
-                        _("You cannot share a mount point and subdirectories "
-                            "all at once")
-                    ])
-                    valid = False
-                    break
-
-            except OSError:
-                pass
-
         networks = self.cleaned_data.get("nfs_network", "")
         if not networks:
             networks = ['0.0.0.0/0']
@@ -497,24 +482,6 @@ class NFS_ShareForm(ModelForm):
 
         return valid
 
-    def is_valid(self, formsets):
-        paths = formsets.get("formset_nfs_share_path")['instance']
-        valid = False
-        for form in paths:
-            if (
-                form.cleaned_data.get("path")
-                and
-                not form.cleaned_data.get("DELETE")
-            ):
-                valid = True
-                break
-        if not valid:
-            paths._non_form_errors = self.error_class([
-                _("You need at least one path for the share"),
-            ])
-            return valid
-        return super(NFS_ShareForm, self).is_valid(formsets)
-
     def save(self, *args, **kwargs):
         super(NFS_ShareForm, self).save(*args, **kwargs)
 
@@ -523,35 +490,6 @@ class NFS_ShareForm(ModelForm):
         if not services.objects.get(srv_service='nfs').srv_enable:
             events.append('ask_service("nfs")')
         super(NFS_ShareForm, self).done(request, events)
-
-
-class NFS_SharePathForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.NFS_Share_Path
-
-    def clean_path(self):
-        path = self.cleaned_data.get('path')
-        if path and ' ' in path:
-            raise forms.ValidationError(_(
-                'Whitespace is not a valid character for NFS shares.'
-            ))
-        return path
-
-    def save(self, *args, **kwargs):
-        path = self.cleaned_data.get('path').encode('utf8')
-        if path and not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except OSError, e:
-                raise MiddlewareError(_(
-                    'Failed to create %(path)s: %(error)s' % {
-                        'path': path,
-                        'error': e,
-                    }
-                ))
-        return super(NFS_SharePathForm, self).save(*args, **kwargs)
 
 
 class WebDAV_ShareForm(ModelForm):

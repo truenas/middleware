@@ -89,8 +89,7 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import (
     AFP_Share,
     CIFS_Share,
-    NFS_Share,
-    NFS_Share_Path,
+    NFS_Share
 )
 from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, Volume, Scrub
@@ -543,10 +542,6 @@ class InitialWizard(CommonWizard):
                 if 'nfs' == share_purpose:
                     nfs_share = NFS_Share.objects.create(
                         nfs_comment=share_name,
-                    )
-                    NFS_Share_Path.objects.create(
-                        share=nfs_share,
-                        path=path,
                     )
 
                 if 'iscsitarget' == share_purpose:

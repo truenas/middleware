@@ -68,8 +68,7 @@ from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetPortalIP, FiberChannelToTarget
 )
-from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
-from freenasUI.sharing.forms import NFS_SharePathForm
+from freenasUI.sharing.models import NFS_Share
 from freenasUI.storage.forms import (
     CloneSnapshotForm,
     MountPointAccessForm,
@@ -1032,95 +1031,8 @@ class NFSResourceMixin(object):
 
 
 class NFSShareResourceMixin(object):
-
     class Meta:
         resource_name = 'sharing/nfs'
-
-    def dehydrate(self, bundle):
-        bundle = super(NFSShareResourceMixin, self).dehydrate(bundle)
-        if self.is_webclient(bundle.request):
-            bundle.data['nfs_paths'] = u"%s" % ', '.join(bundle.obj.nfs_paths)
-        else:
-            bundle.data['nfs_paths'] = bundle.obj.nfs_paths
-
-        for key in bundle.data.keys():
-            if key.startswith('path_set'):
-                del bundle.data[key]
-        return bundle
-
-    def hydrate(self, bundle):
-        bundle = super(NFSShareResourceMixin, self).hydrate(bundle)
-        if 'nfs_paths' not in bundle.data and bundle.obj.id:
-            qs = bundle.obj.paths.all()
-            initial = qs.count()
-            nfs_paths = []
-            for i, item in enumerate(qs):
-                bundle.data['path_set-%d-path' % i] = item.path
-                bundle.data['path_set-%d-id' % i] = item.id
-                bundle.data['path_set-%d-share' % i] = bundle.obj.id
-                nfs_paths.append(item.path)
-            bundle.data['nfs_paths'] = nfs_paths
-        else:
-            nfs_paths = bundle.data.get('nfs_paths', [])
-            for i, item in enumerate(nfs_paths):
-                bundle.data['path_set-%d-path' % i] = item
-                bundle.data['path_set-%d-id' % i] = ''
-                bundle.data['path_set-%d-share' % i] = bundle.obj.id
-        bundle.data['path_set-INITIAL_FORMS'] = 0
-        bundle.data['path_set-TOTAL_FORMS'] = len(nfs_paths)
-        return bundle
-
-    def is_form_valid(self, bundle, form):
-        fset = inlineformset_factory(
-            NFS_Share,
-            NFS_Share_Path,
-            form=NFS_SharePathForm,
-            formset=FreeBaseInlineFormSet,
-            extra=0,
-        )
-        formset = fset(
-            bundle.data,
-            instance=bundle.obj,
-            prefix="path_set",
-            parent=form,
-        )
-        valid = True
-        for frm in formset.forms:
-            valid &= frm.is_valid()
-        valid &= formset.is_valid()
-        errors = {}
-        if not valid:
-            #if formset._errors:
-            #    errors.update(formset._errors)
-            for frm in formset:
-                errors.update(frm._errors)
-        valid &= form.is_valid(formsets={
-            'formset_nfs_share_path': {
-                'instance': formset,
-            },
-        })
-        if errors:
-            form._errors.update(errors)
-        if form._errors:
-            bundle.errors = dict(form._errors)
-        return valid
-
-    def save_m2m(self, m2m_bundle):
-        paths = []
-        for path in m2m_bundle.obj.paths.all():
-            if path.path not in m2m_bundle.data.get("nfs_paths", []):
-                path.delete()
-            else:
-                paths.append(path.path)
-
-        for path in m2m_bundle.data.get("nfs_paths", []):
-            if path in paths:
-                continue
-            sp = NFS_Share_Path()
-            sp.share = m2m_bundle.obj
-            sp.path = path
-            sp.save()
-        return m2m_bundle
 
 
 class InterfacesResourceMixin(object):

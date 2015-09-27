@@ -29,13 +29,17 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import Model, UserField, GroupField, PathField
+from freenasUI.freeadmin.models import Model, NewModel, UserField, GroupField, PathField
 from freenasUI.freeadmin.models.fields import MultiSelectField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Task
 
 
-class CIFS_Share(Model):
+class CIFS_Share(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
     cifs_path = PathField(
         verbose_name=_("Path"),
         blank=True,
@@ -52,12 +56,8 @@ class CIFS_Share(Model):
             max_length=120,
             verbose_name=_("Comment"),
             blank=True,
+            default=""
             )
-    cifs_default_permissions = models.BooleanField(
-        verbose_name=_('Apply Default Permissions'),
-        help_text=_('Recursively set sane default windows permissions on share'),
-        default=True
-    )
     cifs_ro = models.BooleanField(
         verbose_name=_('Export Read Only'),
         default=False,
@@ -91,36 +91,14 @@ class CIFS_Share(Model):
         ),
         default=False,
     )
-    cifs_hostsallow = models.TextField(
-            blank=True,
-            verbose_name=_("Hosts Allow"),
-            help_text=_("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings.")
-            )
-    cifs_hostsdeny = models.TextField(
-            blank=True,
-            verbose_name=_("Hosts Deny"),
-            help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings.")
-            )
-    cifs_vfsobjects = MultiSelectField(
-        verbose_name=_('VFS Objects'),
-        max_length=255,
-        blank=True,
-        default=['aio_pthread', 'streams_xattr'],
-        choices=list(choices.CIFS_VFS_OBJECTS())
-    )
-    cifs_storage_task = models.ForeignKey(
-        Task,
-        verbose_name=_("Periodic Snapshot Task"),
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True
-    )
-    cifs_auxsmbconf = models.TextField(
-            max_length=120,
-            verbose_name=_("Auxiliary Parameters"),
-            blank=True,
-            help_text=_("These parameters are added to [Share] section of smb.conf")
-            )
+
+    #cifs_storage_task = models.ForeignKey(
+    #    Task,
+    #    verbose_name=_("Periodic Snapshot Task"),
+    #    on_delete=models.SET_NULL,
+    #    blank=True,
+    #    null=True
+    #)
 
     def __unicode__(self):
         return self.cifs_name
@@ -134,8 +112,34 @@ class CIFS_Share(Model):
         verbose_name_plural = _("Windows (CIFS) Shares")
         ordering = ["cifs_name"]
 
+    class Middleware:
+        middleware_methods = {
+            'query': 'shares.query',
+            'create': 'share.create',
+            'update': 'share.update',
+            'delete': 'share.delete'
+        }
+        default_filters = [
+            ('type', '=', 'cifs')
+        ]
+        field_mapping = (
+            (('id', 'cifs_name'), 'id'),
+            ('cifs_path', 'target'),
+            ('cifs_comment', 'description'),
+            ('cifs_ro', 'properties.read_only'),
+            ('cifs_browsable', 'properties.browseable'),
+            ('cifs_recyclebin', 'properties.recyclebin'),
+            ('cifs_showhiddenfiles', 'properties.show_hidden_files'),
+            ('cifs_guestok', 'properties.guest_ok'),
+            ('cifs_guestonly', 'properties.guest_only'),
+        )
 
-class AFP_Share(Model):
+
+class AFP_Share(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
     afp_path = PathField(
         verbose_name=_("Path"),
     )
@@ -233,29 +237,51 @@ class AFP_Share(Model):
     def __unicode__(self):
         return unicode(self.afp_name)
 
-    def delete(self, *args, **kwargs):
-        from freenasUI.middleware.connector import connection as dispatcher
-        super(AFP_Share, self).delete(*args, **kwargs)
-        dispatcher.call_sync('etcd.generation.generate_group', 'afp')
-        dispatcher.call_sync('services.reload', 'afp')
-
     class Meta:
         verbose_name = _("Apple (AFP) Share")
         verbose_name_plural = _("Apple (AFP) Shares")
         ordering = ["afp_name"]
 
+    class Middleware:
+        middleware_methods = {
+            'query': 'shares.query',
+            'create': 'share.create',
+            'update': 'share.update',
+            'delete': 'share.delete'
+        }
+        default_filters = [
+            ('type', '=', 'afp')
+        ]
+        field_mapping = (
+            (('id', 'afp_name'), 'id'),
+            ('afp_comment', 'description'),
+            ('afp_timemachine', 'properties.time_machine'),
+            ('afp_nodev', 'properties.zero_dev_numbers'),
+            ('afp_nostat', 'properties.no_stat'),
+            ('afp_upriv', 'properties.afp3_privileges'),
+            ('afp_fperm', 'properties.default_file_perms'),
+            ('afp_dperm', 'properties.default_directory_perms'),
+            ('afp_umask', 'properties.default_umask')
+        )
 
-class NFS_Share(Model):
+
+class NFS_Share(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
+    )
+    nfs_name = models.CharField(
+        max_length=120,
+        verbose_name=_("Share name")
+    )
+    nfs_path = models.CharField(
+            max_length=255,
+            verbose_name=_("Path"),
+            blank=True,
+            )
     nfs_comment = models.CharField(
             max_length=120,
             verbose_name=_("Comment"),
-            blank=True,
-            )
-    nfs_network = models.TextField(
-            verbose_name=_("Authorized networks"),
-            help_text=_("Networks that are authorized to access the NFS share."
-                " Specify network numbers of the form 1.2.3.4/xx where xx is "
-                "the number of bits of netmask."),
             blank=True,
             )
     nfs_hosts = models.TextField(
@@ -275,14 +301,6 @@ class NFS_Share(Model):
     nfs_ro = models.BooleanField(
         verbose_name=_('Read Only'),
         help_text=_('Export the share read only. Writes are not permitted.'),
-        default=False,
-    )
-    nfs_quiet = models.BooleanField(
-        verbose_name=_('Quiet'),
-        help_text=_(
-            'Inhibit syslog warnings if there are problems with exporting '
-            'this share.'
-        ),
         default=False,
     )
     nfs_maproot_user = UserField(
@@ -338,31 +356,32 @@ class NFS_Share(Model):
             return unicode(self.nfs_comment)
         return u"[%s]" % ', '.join([p.path for p in self.paths.all()])
 
-    def delete(self, *args, **kwargs):
-        super(NFS_Share, self).delete(*args, **kwargs)
-        notifier().reload("nfs")
-
-    @property
-    def nfs_paths(self):
-        return [p.path for p in self.paths.all()]
-
     class Meta:
         verbose_name = _("Unix (NFS) Share")
         verbose_name_plural = _("Unix (NFS) Shares")
 
+    class Middleware:
+        middleware_methods = {
+            'query': 'shares.query',
+            'create': 'share.create',
+            'update': 'share.update',
+            'delete': 'share.delete'
+        }
+        default_filters = [
+            ('type', '=', 'nfs')
+        ]
+        field_mapping = (
+            (('id', 'nfs_name'), 'id'),
+            ('nfs_comment', 'description'),
+            ('nfs_path', 'target'),
+            ('nfs_alldirs', 'properties.alldirs'),
+            ('nfs_ro', 'properties.read_only'),
+            ('nfs_maproot_user', 'properties.maproot_user'),
+            ('nfs_maproot_group', 'properties.maproot_group'),
+            ('nfs_mapall_user', 'properties.mapall_user'),
+            ('nfs_mapall_group', 'properties.mapall_group'),
+        )
 
-class NFS_Share_Path(Model):
-    share = models.ForeignKey(NFS_Share, related_name="paths")
-    path = PathField(
-            verbose_name=_("Path"))
-
-    def __unicode__(self):
-        return self.path
-
-    class Meta:
-        verbose_name = _("Path")
-        verbose_name_plural = _("Paths")
-        ordering = ["path"]
 
 class WebDAV_Share(Model):
     webdav_name = models.CharField(
