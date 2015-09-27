@@ -62,10 +62,6 @@ class CIFS_ShareForm(ModelForm):
         help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings."),
         required=False
     )
-    cifs_vfsobjects = SelectMultipleField(
-        label=_('VFS Objects'),
-        choices=list(choices.CIFS_VFS_OBJECTS())
-    )
 
     """
     def _get_storage_tasks(self, cifs_path=None, cifs_home=False):
@@ -99,7 +95,6 @@ class CIFS_ShareForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
-        self.fields['cifs_vfsobjects'].initial = ['aio_pthread', 'streams_xattr']
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_cifs_guestok", '
             '["id_cifs_guestonly"], true);')
@@ -179,19 +174,6 @@ class CIFS_ShareForm(ModelForm):
 
     def save(self):
         obj = super(CIFS_ShareForm, self).save(commit=False)
-        path = self.cleaned_data.get('cifs_path').encode('utf8')
-        if path and not os.path.exists(path):
-            try:
-                os.makedirs(path)
-            except OSError, e:
-                raise MiddlewareError(_(
-                    'Failed to create %(path)s: %(error)s' % {
-                        'path': path,
-                        'error': e,
-                    }
-                ))
-
-        home = self.cleaned_data.get('cifs_home')
         """
         task = self.cleaned_data.get('cifs_storage_task')
         if not task:

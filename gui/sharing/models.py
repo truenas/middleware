@@ -91,6 +91,13 @@ class CIFS_Share(NewModel):
         ),
         default=False,
     )
+    cifs_vfsobjects = MultiSelectField(
+        verbose_name=_('VFS Objects'),
+        max_length=255,
+        blank=True,
+        default=['aio_pthread', 'streams_xattr'],
+        choices=list(choices.CIFS_VFS_OBJECTS())
+    )
 
     #cifs_storage_task = models.ForeignKey(
     #    Task,
@@ -132,6 +139,7 @@ class CIFS_Share(NewModel):
             ('cifs_showhiddenfiles', 'properties.show_hidden_files'),
             ('cifs_guestok', 'properties.guest_ok'),
             ('cifs_guestonly', 'properties.guest_only'),
+            ('cifs_vfsobjects', 'properties.vfs_objects')
         )
         extra_fields = (
             ('type', 'cifs'),
