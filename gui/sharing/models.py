@@ -257,6 +257,7 @@ class AFP_Share(NewModel):
         ]
         field_mapping = (
             (('id', 'afp_name'), 'id'),
+            ('afp_path', 'target'),
             ('afp_comment', 'description'),
             ('afp_timemachine', 'properties.time_machine'),
             ('afp_nodev', 'properties.zero_dev_numbers'),

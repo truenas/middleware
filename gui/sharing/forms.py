@@ -214,6 +214,7 @@ class AFP_ShareForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = ['id']
         model = models.AFP_Share
 
     def __init__(self, *args, **kwargs):
@@ -336,14 +337,6 @@ class AFP_ShareForm(ModelForm):
                 ))
         obj.save()
         return obj
-
-    def done(self, request, events):
-        dispatcher.call_sync('etcd.generation.generate_group', 'afp')
-        dispatcher.call_sync('services.reload', 'afp')
-        config = dispatcher.call_sync('service.afp.get_config')
-        if not config['enable']:
-            events.append('ask_service("afp")')
-        super(AFP_ShareForm, self).done(request, events)
 
 
 class NFS_ShareForm(ModelForm):
