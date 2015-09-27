@@ -75,10 +75,12 @@ class Volume(NewModel):
         max_length=120
     )
     vol_mountpoint = models.CharField(
-        max_length=120
+        max_length=120,
+        null=True
     )
-    vol_upgraded = models.BooleanField(
-        editable=False
+    vol_upgraded = models.NullBooleanField(
+        editable=False,
+        null=True
     )
 
     @property

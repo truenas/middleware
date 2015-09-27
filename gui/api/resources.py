@@ -830,9 +830,12 @@ class VolumeResourceMixin(NestedMixin):
 
         properties = wrap(bundle.obj.get_properties())
         if properties:
-            bundle.data['avail'] = int(properties['free.rawvalue'])
-            bundle.data['used'] = int(properties['allocated.rawvalue'])
-            bundle.data['used_pct'] = int((float(bundle.data['used']) / float(bundle.data['avail'] + bundle.data['used'])) * 100.0)
+            if properties['free.rawvalue'] == '-' or properties['allocated.rawvalue'] == '-':
+                bundle.data['avail'] = bundle.data['used'] = bundle.data['used_pct'] = 0
+            else:
+                bundle.data['avail'] = int(properties['free.rawvalue'])
+                bundle.data['used'] = int(properties['allocated.rawvalue'])
+                bundle.data['used_pct'] = int((float(bundle.data['used']) / float(bundle.data['avail'] + bundle.data['used'])) * 100.0)
 
         if bundle.obj.vol_fstype != 'zfs' or bundle.obj.vol_status == 'UNKNOWN':
             return bundle
@@ -907,7 +910,8 @@ class VolumeResourceMixin(NestedMixin):
         except:
             uid = Uid(bundle.obj.id * 1000)
 
-        bundle.data['children'] = [self._get_children(bundle, root_ds, uid)]
+        if root_ds:
+            bundle.data['children'] = [self._get_children(bundle, root_ds, uid)]
 
         return bundle
 
