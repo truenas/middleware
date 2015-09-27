@@ -470,12 +470,6 @@ class NFS_ShareForm(ModelForm):
     def save(self, *args, **kwargs):
         super(NFS_ShareForm, self).save(*args, **kwargs)
 
-    def done(self, request, events):
-        notifier().reload("nfs")
-        if not services.objects.get(srv_service='nfs').srv_enable:
-            events.append('ask_service("nfs")')
-        super(NFS_ShareForm, self).done(request, events)
-
 
 class WebDAV_ShareForm(ModelForm):
 

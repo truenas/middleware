@@ -385,6 +385,7 @@ class NFS_Share(NewModel):
             ('nfs_maproot_group', 'properties.maproot_group'),
             ('nfs_mapall_user', 'properties.mapall_user'),
             ('nfs_mapall_group', 'properties.mapall_group'),
+            ('nfs_security', 'properties.security')
         )
         extra_fields = (
             ('type', 'nfs'),
