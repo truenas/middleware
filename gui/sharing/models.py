@@ -289,22 +289,20 @@ class NFS_Share(NewModel):
         max_length=120,
         verbose_name=_("Share name")
     )
-    nfs_path = models.CharField(
-            max_length=255,
-            verbose_name=_("Path"),
-            blank=True,
-            )
+    nfs_path = PathField(
+        verbose_name=_("Path"),
+    )
     nfs_comment = models.CharField(
-            max_length=120,
-            verbose_name=_("Comment"),
-            blank=True,
-            )
+        max_length=120,
+        verbose_name=_("Comment"),
+        blank=True,
+    )
     nfs_hosts = models.TextField(
-            verbose_name=_("Authorized IP addresses or hosts"),
-            help_text=_("IP addresses or hostnames that are authorized to "
-                "access the NFS share."),
-            blank=True,
-            )
+        verbose_name=_("Authorized IP addresses or hosts"),
+        help_text=_("IP addresses or hostnames that are authorized to "
+            "access the NFS share."),
+        blank=True,
+        )
     nfs_alldirs = models.BooleanField(
         verbose_name=_('All Directories'),
         help_text=_(
@@ -319,41 +317,41 @@ class NFS_Share(NewModel):
         default=False,
     )
     nfs_maproot_user = UserField(
-            verbose_name=_("Maproot User"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("If a user is selected, the root user is limited to "
-                "that user's permissions")
-            )
+        verbose_name=_("Maproot User"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_("If a user is selected, the root user is limited to "
+            "that user's permissions")
+    )
     nfs_maproot_group = GroupField(
-            verbose_name=_("Maproot Group"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("If a group is selected, the root user will also be "
-                "limited to that group's permissions")
-            )
+        verbose_name=_("Maproot Group"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_("If a group is selected, the root user will also be "
+            "limited to that group's permissions")
+    )
     nfs_mapall_user = UserField(
-            verbose_name=_("Mapall User"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("The specified user's permissions are used by all "
-                "clients")
-            )
+        verbose_name=_("Mapall User"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_("The specified user's permissions are used by all "
+            "clients")
+    )
     nfs_mapall_group = GroupField(
-            verbose_name=_("Mapall Group"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("The specified group's permission are used by all "
-                "clients")
-            )
+        verbose_name=_("Mapall Group"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_("The specified group's permission are used by all "
+            "clients")
+        )
     nfs_security = MultiSelectField(
         verbose_name=_('Security'),
         max_length=200,
