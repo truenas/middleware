@@ -359,6 +359,7 @@ class NFS_ShareForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = ['id']
         model = models.NFS_Share
         widgets = {
             'nfs_security': SelectMultipleWidget(sorter=True),

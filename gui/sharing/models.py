@@ -115,7 +115,7 @@ class CIFS_Share(NewModel):
     class Middleware:
         middleware_methods = {
             'query': 'shares.query',
-            'create': 'share.create',
+            'add': 'share.create',
             'update': 'share.update',
             'delete': 'share.delete'
         }
@@ -245,7 +245,7 @@ class AFP_Share(NewModel):
     class Middleware:
         middleware_methods = {
             'query': 'shares.query',
-            'create': 'share.create',
+            'add': 'share.create',
             'update': 'share.update',
             'delete': 'share.delete'
         }
@@ -363,7 +363,7 @@ class NFS_Share(NewModel):
     class Middleware:
         middleware_methods = {
             'query': 'shares.query',
-            'create': 'share.create',
+            'add': 'share.create',
             'update': 'share.update',
             'delete': 'share.delete'
         }
