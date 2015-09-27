@@ -240,9 +240,13 @@ class VolumeManagerForm(VolumeMixin, Form):
                         'path': disk
                     })
 
-            if form.cleaned_data.get("vdevtype") in ('mirror', 'raidz1', 'raidz2', 'raidz3'):
+            if form.cleaned_data.get("vdevtype") in ('mirror', 'raidz', 'raidz2', 'raidz3'):
+                vdevtype = form.cleaned_data.get("vdevtype")
+                if vdevtype == 'raidz':
+                    vdevtype = 'raidz1'
+
                 topology.setdefault('data', []).append({
-                    'type': form.cleaned_data.get("vdevtype"),
+                    'type': vdevtype,
                     'children': [{'type': 'disk', 'path': d} for d in form.cleaned_data.get("disks")]
                 })
 
