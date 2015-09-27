@@ -67,19 +67,26 @@ def ha_mode():
             f.write(mode)
         return mode
 
-    proc = subprocess.Popen([
-        '/usr/local/sbin/dmidecode',
-        '-s', 'baseboard-product-name',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    board = proc.communicate()[0].strip()
-    # Check for SBB
-    # Everything else is called ULTIMATE since we can't realiably determine it
-    hardware = 'SBB' if board == 'X8DTS' else 'ULTIMATE'
+    if license.system_serial and license.system_serial_ha:
+        proc = subprocess.Popen([
+            '/usr/local/sbin/dmidecode',
+            '-s', 'baseboard-product-name',
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        board = proc.communicate()[0].strip()
+        # Check for SBB
+        # Everything else is called ULTIMATE since we can't realiably determine it
+        hardware = 'SBB' if board == 'X8DTS' else 'ULTIMATE'
 
-    mode = '%s:%s' % (hardware, node)
-    with open(HA_MODE_FILE, 'w') as f:
-        f.write(mode)
-    return mode
+        mode = '%s:%s' % (hardware, node)
+        with open(HA_MODE_FILE, 'w') as f:
+            f.write(mode)
+        return mode
+    else:
+        mode = 'MANUAL'
+        with open(HA_MODE_FILE, 'w') as f:
+            f.write(mode)
+        return mode
+
 
 
 def ha_node():
