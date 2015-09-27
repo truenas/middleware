@@ -199,9 +199,10 @@ _interface_config()
 			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
 			echo "cloned_interfaces=\"\${cloned_interfaces} carp1 carp2\""
 		fi
+
 		# Select interfaces that have carp enabled
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_carp, int_vip, int_vhid, int_pass FROM network_interfaces WHERE int_vip IS NOT NULL AND int_vip != '' ORDER BY id" | \
-		while read int_carp int_vip int_vhid int_pass; do
+		while read id int_carp int_vip int_vhid int_pass; do
 			if [ -n "${int_pass}" ]; then
 				int_passopt=" pass ${int_pass}"
 			else
@@ -211,7 +212,7 @@ _interface_config()
 			echo "cloned_interfaces=\"\${cloned_interfaces} carp${int_carp}\""
 			# grab any alias VIP(s) for the interface we are currently working on
 			alias_vip=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT alias_vip FROM network_alias INNER JOIN network_interfaces ON network_interfaces.id=network_alias.alias_interface_id WHERE network_interfaces.id=${id}")
-			if [ -n ${alias_vip} ]; then
+			if [ -n "${alias_vip}" ]; then
 				# We set IFS to make our SQL driven loops work.  Rather than try to manage resetting it properly
 				# we will just mangle things so loops here will work as well.
 				# This catches the case where the database contains multiple aliases that are separated by newlines.
@@ -220,7 +221,7 @@ _interface_config()
 				for ip in ${alias_vip_cooked}
 				do
 					echo "ifconfig_carp${int_carp}_alias${acounter}=\"inet ${ip}/32\""
-					acounter=$(eval ${acounter} + 1)
+					acounter=$(expr ${acounter} + 1)
 				done
 			fi
 		done
