@@ -14,9 +14,9 @@ The Network section of the administrative GUI contains the following components 
 
 * :ref:`Link Aggregations`: used to configure link aggregation and link failover.
 
-* :ref:`Network Summary`: provides an overview of the current network settings.
-
 * :ref:`Static Routes`: used to add static routes.
+
+* :ref:`Hosts`: used to manage host entries.
 
 * :ref:`VLANs`: used to configure IEEE 802.1q tagging.
 
@@ -31,10 +31,10 @@ Global Configuration
 
 **Figure 7.1a: Global Configuration**
 
-.. image:: images/network1.png
+.. image:: images/network1a.png
 
-Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The hostname and domain will be pre-filled for you, as seen in
-Figure 7.1a, but can be changed to meet the local network's requirements.
+Table 7.1a summarizes the settings that can be configured using the Global Configuration tab. The default hostname will be pre-filled for you, as seen in
+Figure 7.1a, but can be changed to meet the network's requirements.
 
 **Table 7.1a: Global Configuration Settings**
 
@@ -42,10 +42,8 @@ Figure 7.1a, but can be changed to meet the local network's requirements.
 | **Setting**            | **Value**  | **Description**                                                                                                      |
 |                        |            |                                                                                                                      |
 +========================+============+======================================================================================================================+
-| Hostname               | string     | system host name                                                                                                     |
-|                        |            |                                                                                                                      |
-+------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| Domain                 | string     | system domain name                                                                                                   |
+| Hostname               | string     | system host name; if the system is not a member of a domain, put *.local* after the hostname; otherwise, append the  |
+|                        |            | domain after the hostname (e.g. *hostname.domain.com*)                                                               |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 | IPv4 Default Gateway   | IP address | typically not set (see NOTE below)                                                                                   |
@@ -74,15 +72,8 @@ Figure 7.1a, but can be changed to meet the local network's requirements.
 | Netwait IP list        | string     | if "Enable netwait feature" is checked, list of IP addresses to ping; otherwise, ping the default gateway            |
 |                        |            |                                                                                                                      |
 +------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
-| Host name database     | string     | used to add one entry per line which will be appended to :file:`/etc/hosts`; use the format                          |
-|                        |            | *IP_address space hostname* where multiple hostnames can be used if separated by a space                             |
-|                        |            |                                                                                                                      |
-+------------------------+------------+----------------------------------------------------------------------------------------------------------------------+
 
 If you will be using Active Directory, set the IP address of the realm's DNS server in the "Nameserver 1" field.
-
-If your network does not have a DNS server or NFS, SSH, or FTP users are receiving "reverse DNS" or timeout errors, add an entry for the IP address of
-the FreeNAS® system in the "Host name database" field.
 
 .. note:: in many cases, a FreeNAS® configuration does not include default gateway information as a way to make it more difficult for a remote
    attacker to communicate with the server. While this is a reasonable precaution, such a configuration does **not** restrict inbound traffic from sources
@@ -96,70 +87,58 @@ the FreeNAS® system in the "Host name database" field.
 Interfaces
 ----------
 
-:menuselection:`Network --> Interfaces` is used to view which interfaces have been manually configured, to add a manually configured interface, and to edit an
-interface's manual configuration.
+:menuselection:`Network --> Interfaces`, seen in Figure 7.2a, is used to manage interfaces.
 
-.. note:: typically the interface used to access the FreeNAS® administrative GUI is configured by DHCP. This interface will not appear in this screen, even
-   though it is already dynamically configured and in use.
+To edit the configuration of an interface, highlight its entry and click the "Edit" button. Table 7.2a summarizes the available configuration options. Note that if any changes
+to this screen require a network restart, the screen will turn red when you click the "OK" button and a pop-up message will remind you that network connectivity to the FreeNAS®
+system will be interrupted while the changes are applied. Click "Yes" to proceed with the network restart or "No" to cancel the operation.
 
-Figure 7.2a shows the screen that opens when you click :menuselection:`Interfaces --> Add Interface`. Table 7.2a summarizes the configuration options when you
-add an interface or edit an already configured interface. Note that if any changes to this screen require a network restart, the screen will turn red when you
-click the "OK" button and a pop-up message will remind you that network connectivity to the FreeNAS® system will be interrupted while the changes are
-applied. Click "Yes" to proceed with the network restart or "No" to cancel the operation.
+**Figure 7.2a: Interface Screen**
 
-**Figure 7.2a: Adding or Editing an Interface**
-
-.. image:: images/interface.png
+.. image:: images/interface1.png
 
 **Table 7.2a: Interface Configuration Settings**
 
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| **Setting**         | **Value**      | **Description**                                                                                                     |
-|                     |                |                                                                                                                     |
-+=====================+================+=====================================================================================================================+
-| NIC                 | drop-down menu | select the FreeBSD device name; will be a read-only field when editing an interface                                 |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Interface Name      | string         | description of interface                                                                                            |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| DHCP                | checkbox       | requires static IPv4 or IPv6 configuration if unchecked; note that only one interface can be configured for DHCP    |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| IPv4 Address        | IP address     | set if "DHCP" unchecked                                                                                             |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| IPv4 Netmask        | drop-down menu | set if "DHCP" unchecked                                                                                             |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Auto configure IPv6 | checkbox       | only one interface can be configured for this option; requires manual configuration if unchecked and wish to use    |
-|                     |                | IPv6                                                                                                                |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| IPv6 Address        | IPv6 address   | must be unique on network                                                                                           |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| IPv6 Prefix Length  | drop-down menu | match the prefix used on network                                                                                    |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
-| Options             | string         | additional parameters from                                                                                          |
-|                     |                | `ifconfig(8) <http://www.freebsd.org/cgi/man.cgi?query=ifconfig>`_,                                                 |
-|                     |                | separate multiple parameters with a space; for example: *mtu 9000* will increase the MTU for interfaces that        |
-|                     |                | support jumbo frames                                                                                                |
-|                     |                |                                                                                                                     |
-+---------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| **Setting**           | **Value**      | **Description**                                                                                                     |
+|                       |                |                                                                                                                     |
++=======================+================+=====================================================================================================================+
+| Interface description | string         | optional description of interface                                                                                   |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| DHCP                  | checkbox       | if unchecked, click "Add address" to manually configure the address; while checked, any manually configured IPv4    |
+|                       |                | addresses will be ignored, however manually configured IPv6 addresses will work                                     |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Auto configure IPv6   | checkbox       | if unchecked, click "Add address" to manually configure the IPv6 address                                            |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Disable IPv6          | checkbox       | if checked, IPv6 packets will be ignored by the interface                                                           |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| MTU                   | string         | specify the MTU for interfaces that support jumbo frames (for example: *mtu 9000*)                                  |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Add address           | link           | click this link to add the remaining fields                                                                         |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Address family        | drop-down menu | only appears when "Add address" is clicked; choose *IPv4* or                                                        |
+|                       |                | *IPv6*                                                                                                              |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Address               | string         | only appears when "Add address" is clicked; input an address that matches the "Address family" and is both valid    |
+|                       |                | for and unique on the network                                                                                       |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Prefix Length         | integer        | only appears when "Add address" is clicked; input only the numeric value of the CIDR mask for the network           |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 
+To configure multiple IP addresses for an interface, click the "Add address" link to add as many addresses as needed.
+To delete an address, click the "Delete address" link that appears under that address in the interface's "Edit" screen.
 
-This screen also allows you to configure an IP alias for the interface, which allows the interface to be configured with multiple IP addresses. If you wish to
-set multiple aliases, click the "Add extra alias" link for each alias you wish to configure. To delete an alias, highlight the interface in the tree to access
-its "Edit" screen. Be sure to check the "Delete" checkbox associated with the alias. If you instead click the "Delete" button at the bottom of this screen,
-you will delete the whole interface, not just the alias.
-
-When configuring multiple interfaces, they can **not** be members of the same subnet. Check the subnet mask if you receive an error when setting the IP
-addresses on multiple interfaces.
-
-When configuring an interface for both IPv4 and IPv6, this screen will not let you set both addresses as primary. In other words, you will get an error if you
-fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of these address fields and create an alias for the other address.
+.. _note: when configuring multiple interfaces, they can **not** be members of the same subnet. Check the "Prefix Length" of each interface if you receive an error when configuring
+   addresses on multiple interfaces.
 
 .. _IPMI:
 
@@ -185,7 +164,7 @@ IPMI using the FreeNAS® GUI.
 
 **Figure 7.3a: IPMI Configuration**
 
-.. image:: images/ipmi1.png
+.. image:: images/ipmi1a.png
 
 **Table 7.3a: IPMI Options**
 
@@ -411,16 +390,7 @@ To see if the link aggregation is load balancing properly, run the following com
 
  systat -ifstat
 
-More information about this command can be found at
-`systat(1) <http://www.freebsd.org/cgi/man.cgi?query=systat>`_.
-
-.. _Network Summary:
-
-Network Summary
----------------
-
-:menuselection:`Network --> Network Summary` allows you to quickly view the addressing information of every configured interface. For each interface name, the
-configured IPv4 and IPv6 address(es), DNS server(s), and default gateway will be displayed.
+More information about this command can be found at `systat(1) <http://www.freebsd.org/cgi/man.cgi?query=systat>`_.
 
 .. index:: Route, Static Route
 .. _Static Routes:
@@ -429,34 +399,54 @@ Static Routes
 -------------
 
 By default, no static routes are defined on the FreeNAS® system. Should you need a static route to reach portions of your network, add the route using
-:menuselection:`Network --> Static Routes --> Add Static Route`, shown in Figure 7.6a.
+:menuselection:`Network --> Static Routes --> Add Static Route`, shown in Figure 7.5a.
 
-**Figure 7.6a: Adding a Static Route**
+**Figure 7.5a: Adding a Static Route**
 
-.. image:: images/static.png
+.. image:: images/static1.png
 
-The available options are summarized in Table 7.6a.
+The available options are summarized in Table 7.5a.
 
-**Table 7.6a: Static Route Options**
+**Table 7.5a: Static Route Options**
 
-+---------------------+-----------+-------------------------------------+
-| **Setting**         | **Value** | **Description**                     |
-|                     |           |                                     |
-|                     |           |                                     |
-+=====================+===========+=====================================+
-| Destination network | integer   | use the format *A.B.C.D/E* where    |
-|                     |           | *E* is the CIDR mask                |
-|                     |           |                                     |
-+---------------------+-----------+-------------------------------------+
-| Gateway             | integer   | input the IP address of the gateway |
-|                     |           |                                     |
-+---------------------+-----------+-------------------------------------+
-| Description         | string    | optional                            |
-|                     |           |                                     |
-+---------------------+-----------+-------------------------------------+
++---------------------+----------------+-------------------------------------------------------------------+
+| **Setting**         | **Value**      | **Description**                                                   |
+|                     |                |                                                                   |
++=====================+================+===================================================================+
+| Name                | string         | input a descriptive name for the route                            |
+|                     |                |                                                                   |
++---------------------+----------------+-------------------------------------------------------------------+
+| Protocol            | drop-down menu | select *IPv4* or                                                  |
+|                     |                | *IPv6*                                                            |
+|                     |                |                                                                   |
++---------------------+----------------+-------------------------------------------------------------------+
+| Destination network | integer        | input the network address in the format *A.B.C.D*                 |
+|                     |                |                                                                   |
++---------------------+----------------+-------------------------------------------------------------------+
+| Destination netmask | drop-down menu | select the subnet mask for the network                            |
+|                     |                |                                                                   |
++---------------------+----------------+-------------------------------------------------------------------+
+| Gateway             | integer        | input the IP address of the gateway                               |
+|                     |                |                                                                   |
++---------------------+----------------+-------------------------------------------------------------------+
 
 
-If you add any static routes, they will show in "View Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
+If you add any static routes, an entry for each route will be added to "Static Routes". Click a route's entry to access its "Edit" and "Delete" buttons.
+
+.. index:: Hosts
+.. _Hosts:
+
+Hosts
+-----
+
+The "Hosts" tab, seen in Figure 7.6a, is used to manage :file:`/etc/hosts` entries. If your network does not have a DNS server or NFS, SSH, or FTP users are receiving "reverse DNS" or
+timeout errors, add an entry for the FreeNAS® system.
+
+To add an entry, click the "Add Host" button and enter the hostname and IP address of the host.
+
+**Figure 7.6a: Adding a Host Entry**
+
+.. image:: images/host1.png
 
 .. index:: VLAN, Trunking, 802.1Q
 .. _VLANs:

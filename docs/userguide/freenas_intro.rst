@@ -115,7 +115,20 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 
 In addition to the new features, the following options have changed in the GUI:
 
+* :menuselection:`Account --> Groups --> Add Group --> Allow Repeated GIDs` has been removed.
+
+* :menuselection:`Account --> Users --> Add User --> Microsoft Account` has been removed.
+
+* The functionality provided by :menuselection:`Network --> Global Configuration --> Domain` has been merged into :menuselection:`Network --> Global Configuration --> Hostname`.
+
 * The functionality provided by :menuselection:`Network --> Global Configuration --> Host name database` has moved to :menuselection:`Network --> Hosts`.
+
+* :menuselection:`Network --> Network Summary` has been removed.
+
+* :menuselection:`Network --> Interfaces --> Add Interface` has been removed as :menuselection:`Network --> Interfaces` now displays all detected interfaces. The "Edit" screen for an
+  interface has been simplified to make it easier to add multiple IPv4 and/or IPv6 addresses to an interface.
+  
+* :menuselection:`Network --> Static Routes --> Add Static Route` now supports both IPv4 and IPv6 routes.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
