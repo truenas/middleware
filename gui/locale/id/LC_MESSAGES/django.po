@@ -13147,3 +13147,10 @@ msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr ""
+
+#: storage/models.py:910
+#, fuzzy
+msgid "Delete stale snapshots on remote system"
+msgstr ""
+"Snapshot terakhir dikirim ke sisi jarak jauh (tinggalkan kosong untuk "
+"replikasi penuh)"

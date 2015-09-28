@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-09-16 09:07+0000\n"
+"PO-Revision-Date: 2015-09-27 10:01+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1442394461.0\n"
+"X-POOTLE-MTIME: 1443348107.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -12853,3 +12853,7 @@ msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr "Удалять снимки отсутствующие локально после успешной репликации новых"
+
+#: storage/models.py:910
+msgid "Delete stale snapshots on remote system"
+msgstr "Удалять старые снимки на удаленной стороне"
