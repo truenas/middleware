@@ -1245,37 +1245,6 @@ class notifier:
                         mounted['fs_file'],
                         ))
 
-    def get_volume_status(self, name, fs):
-        status = 'UNKNOWN'
-        if fs == 'ZFS':
-            p1 = self._pipeopen('zpool list -H -o health %s' % str(name))
-            if p1.wait() == 0:
-                status = p1.communicate()[0].strip('\n')
-        elif fs == 'UFS':
-
-            provider = self.get_label_consumer('ufs', name)
-            if provider is None:
-                return 'UNKNOWN'
-            gtype = provider.xpath("../../name")[0].text
-
-            if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
-
-                search = provider.xpath("../config/State")
-                if len(search) > 0:
-                    status = search[0].text
-
-            else:
-                p1 = self._pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
-                p1.communicate()
-                if p1.returncode == 0:
-                    status = 'HEALTHY'
-                else:
-                    status = 'DEGRADED'
-
-        if status in ('UP', 'COMPLETE', 'ONLINE'):
-            status = 'HEALTHY'
-        return status
-
     def checksum(self, path, algorithm='sha256'):
         algorithm2map = {
             'sha256': '/sbin/sha256 -q',
@@ -1307,30 +1276,6 @@ class notifier:
 
         return {d['path']: convert(d) for d in disks}
 
-    def get_partitions(self, try_disks=True):
-        disks = self.get_disks().keys()
-        partitions = {}
-        for disk in disks:
-
-            listing = glob.glob('/dev/%s[a-fps]*' % disk)
-            if try_disks is True and len(listing) == 0:
-                listing = [disk]
-            for part in list(listing):
-                toremove = len([i for i in listing if i.startswith(part) and i != part]) > 0
-                if toremove:
-                    listing.remove(part)
-
-            for part in listing:
-                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
-                info = p1.communicate()[0].split('\t')
-                partitions.update({
-                    part: {
-                        'devname': info[0].replace("/dev/", ""),
-                        'capacity': info[2]
-                    },
-                })
-        return partitions
-
     def precheck_partition(self, dev, fstype):
 
         if fstype == 'UFS':
@@ -1352,29 +1297,6 @@ class notifier:
                 return True
 
         return False
-
-    def label_disk(self, label, dev, fstype=None):
-        """
-        Label the disk being manually imported
-        Currently UFS, NTFS, MSDOSFS and EXT2FS are supported
-        """
-
-        if fstype == 'UFS':
-            p1 = Popen(["/sbin/tunefs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-        elif fstype == 'NTFS':
-            p1 = Popen(["/usr/local/sbin/ntfslabel", dev, label], stdin=PIPE, stdout=PIPE)
-        elif fstype == 'MSDOSFS':
-            p1 = Popen(["/usr/local/bin/mlabel", "-i", dev, "::%s" % label], stdin=PIPE, stdout=PIPE)
-        elif fstype == 'EXT2FS':
-            p1 = Popen(["/usr/local/sbin/tune2fs", "-L", label, dev], stdin=PIPE, stdout=PIPE)
-        elif fstype is None:
-            p1 = Popen(["/sbin/geom", "label", "label", label, dev], stdin=PIPE, stdout=PIPE)
-        else:
-            return False, 'Unknown fstype %r' % fstype
-        err = p1.communicate()[1]
-        if p1.returncode == 0:
-            return True, ''
-        return False, err
 
     def zfs_import(self, name, id=None):
         if id is not None:
