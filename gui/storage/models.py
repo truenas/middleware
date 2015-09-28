@@ -39,6 +39,7 @@ from django.utils.translation import ugettext as __, ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.freeadmin.models import Model, NewModel, UserField
 
 log = logging.getLogger('storage.models')
@@ -186,148 +187,26 @@ class Volume(NewModel):
         Responsible for telling the user whether there is a related
         share, asking for confirmation
         """
-        services = {}
-        for mp in self.mountpoint_set.all():
-            for service, ids in mp.has_attachments().items():
-                if ids:
-                    services[service] = services.get(service, 0) + len(ids)
-        return services
+        from freenasUI.middleware.connector import connection as dispatcher
+        return dispatcher.call_sync('shares.get_dependencies', self.vol_mountpoint)
 
-    def _delete(self, destroy=True, cascade=True, systemdataset=None):
+    def delete(self, destroy=True, cascade=True):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
         """
-        from freenasUI.services.models import iSCSITargetExtent
+        from freenasUI.middleware.connector import connection as dispatcher
 
-        # If we are using this volume to store collectd data
-        # the service needs to be restarted
-        if systemdataset and systemdataset.sys_rrd_usedataset:
-            reload_collectd = True
-        else:
-            reload_collectd = False
-
-        # TODO: This is ugly.
-        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'collectd')
-        reloads = (False, False, False,  False, False, reload_collectd)
-
-        n = notifier()
         if cascade:
-
-            for mp in self.mountpoint_set.all():
-                reloads = map(sum, zip(reloads, mp.delete_attachments()))
-
-            zvols = n.list_zfs_vols(self.vol_name)
-            for zvol in zvols:
-                qs = iSCSITargetExtent.objects.filter(
-                    iscsi_target_extent_path='zvol/' + zvol,
-                    iscsi_target_extent_type='ZVOL')
-                if qs.exists():
-                    if destroy:
-                        notifier().destroy_zfs_vol(zvol)
-                    qs.delete()
-                reloads = map(sum, zip(
-                    reloads, (False, False, False, True, False,
-                              reload_collectd)
-                ))
-
-        else:
-
-            for mp in self.mountpoint_set.all():
-                attachments = mp.has_attachments()
-                reloads = map(
-                    sum,
-                    zip(
-                        reloads,
-                        [len(attachments[svc]) for svc in svcs]
-                    )
-                )
-
-        # Delete scheduled snapshots for this volume
-        Task.objects.filter(
-            models.Q(task_filesystem=self.vol_name)
-            |
-            models.Q(task_filesystem__startswith="%s/" % self.vol_name)
-        ).delete()
-
-        for (svc, dirty) in zip(svcs, reloads):
-            if dirty:
-                n.stop(svc)
-
-        n.detach_volume_swaps(self)
-
-        # Ghosts volumes, does not exists anymore but is in database
-        ghost = False
-        try:
-            status = n.get_volume_status(self.vol_name, self.vol_fstype)
-            ghost = status == 'UNKNOWN'
-        except:
-            ghost = True
-
-        if ghost:
             pass
-        elif destroy:
-            n.destroy("volume", self)
+
+        if destroy:
+            result = dispatcher.call_task_sync('volume.destroy', self.vol_name)
         else:
-            n.volume_detach(self)
+            result = dispatcher.call_task_sync('volume.detach', self.vol_name)
 
-        return (svcs, reloads)
-
-    def delete(self, destroy=True, cascade=True):
-        from freenasUI.system.models import SystemDataset
-
-        try:
-            systemdataset = SystemDataset.objects.filter(
-                sys_pool=self.vol_name
-            )[0]
-        except IndexError:
-            systemdataset = None
-
-        with transaction.atomic():
-            try:
-                svcs, reloads = Volume._delete(
-                    self,
-                    destroy=destroy,
-                    cascade=cascade,
-                    systemdataset=systemdataset,
-                )
-            finally:
-                for mp in self.mountpoint_set.all():
-                    if not os.path.isdir(mp.mp_path):
-                        mp.delete(do_reload=False)
-
-            n = notifier()
-
-            # The framework would cascade delete all database items
-            # referencing this volume.
-            super(Volume, self).delete()
-
-        # If there's a system dataset on this pool, stop using it.
-        #if systemdataset:
-        #    systemdataset.sys_pool = ''
-        #    systemdataset.save()
-        #    n.restart('system_datasets')
-
-        # Refresh the fstab
-        n.reload("disk")
-        # For scrub tasks
-        n.restart("cron")
-
-        # Django signal could have been used instead
-        # Do it this way to make sure its ran in the time we want
-        self.post_delete()
-
-        if self.vol_encryptkey:
-            keyfile = self.get_geli_keyfile()
-            if os.path.exists(keyfile):
-                try:
-                    os.unlink(keyfile)
-                except:
-                    log.warn("Unable to delete geli key file: %s" % keyfile)
-
-        for (svc, dirty) in zip(svcs, reloads):
-            if dirty:
-                n.start(svc)
+        if result['state'] != 'FINISHED':
+            raise MiddlewareError(result['error']['message'])
 
     def post_delete(self):
         pass

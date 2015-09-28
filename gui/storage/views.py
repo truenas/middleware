@@ -829,20 +829,16 @@ def zpool_disk_remove(request, vname, label):
 
 
 def volume_detach(request, vid):
+    volume = models.Volume.objects.get(vol_guid=vid)
+    allocated = volume._object['properties.allocated.rawvalue']
+    usedsize = humanize_size(allocated) if allocated != '-' else 0
+    shares = volume.has_attachments()
 
-    volume = models.Volume.objects.get(pk=vid)
-    usedbytes = sum(
-        [mp._get_used_bytes() for mp in volume.mountpoint_set.all()]
-    )
-    usedsize = humanize_size(usedbytes)
-    services = volume.has_attachments()
-    if volume.vol_encrypt > 0:
-        request.session["allow_gelikey"] = True
     if request.method == "POST":
         form = forms.VolumeExport(
             request.POST,
             instance=volume,
-            services=services)
+            shares=shares)
         if form.is_valid():
             try:
                 events = []
@@ -858,12 +854,12 @@ def volume_detach(request, vid):
             except ServiceFailed, e:
                 return JsonResp(request, error=True, message=unicode(e))
     else:
-        form = forms.VolumeExport(instance=volume, services=services)
+        form = forms.VolumeExport(instance=volume, shares=shares)
     return render(request, 'storage/volume_detach.html', {
         'volume': volume,
         'form': form,
         'used': usedsize,
-        'services': services,
+        'shares': shares,
     })
 
 

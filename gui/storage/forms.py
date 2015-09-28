@@ -865,7 +865,6 @@ class AutoImportWizard(SessionWizardView):
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
         volume_name = vol['name']
-        group_type = vol['group_type']
         volume_fstype = 'zfs'
 
         try:
@@ -2207,9 +2206,9 @@ class VolumeExport(Form):
 
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
-        services = kwargs.pop('services', {})
+        shares = kwargs.pop('shares', {})
         super(VolumeExport, self).__init__(*args, **kwargs)
-        if services.keys():
+        if shares:
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,
