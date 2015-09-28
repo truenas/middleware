@@ -260,30 +260,12 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_status(self, request):
-        from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
-        alerts = alertPlugins.run()
-        current = 'OK'
-        for alert in alerts:
-            # Skip dismissed alerts
-            if alert.getId() in dismisseds:
-                continue
-            status = alert.getLevel()
-            if (
-                (status == 'WARN' and current == 'OK') or
-                status == 'CRIT' and
-                current in ('OK', 'WARN')
-            ):
-                current = status
-        return HttpResponse(current)
+        return HttpResponse('OK')
 
     @never_cache
     def alert_detail(self, request):
-        from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
-        alerts = alertPlugins.run()
+        dismisseds = []
+        alerts = []
         return render(request, "freeadmin/alert_status.html", {
             'alerts': alerts,
             'dismisseds': dismisseds,
@@ -292,20 +274,6 @@ class FreeAdminSite(object):
     @never_cache
     def alert_dismiss(self, request):
         from freenasUI.freeadmin.views import JsonResp
-        from freenasUI.system.models import Alert
-        msgid = request.POST.get("msgid", None)
-        dismiss = request.POST.get("dismiss", None)
-        assert msgid is not None  # FIX ME
-        try:
-            alert = Alert.objects.get(message_id=msgid)
-            if dismiss == "0":
-                alert.delete()
-        except Alert.DoesNotExist:
-            if dismiss == "1":
-                alert = Alert.objects.create(
-                    message_id=msgid,
-                    dismiss=True,
-                )
         return JsonResp(request, message="OK")
 
 site = FreeAdminSite()
