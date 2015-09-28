@@ -142,20 +142,8 @@ class Volume(NewModel):
 
     @property
     def get_status(self):
-        try:
-            status = self.vol_status
-            if status == 'UNKNOWN' and self.vol_encrypt > 0:
-                return _("LOCKED")
-            else:
-                self._status = status
-            return self._status
-        except Exception, e:
-            if self.is_decrypted():
-                log.debug(
-                    "Exception on retrieving status for %s: %s",
-                    self.vol_name,
-                    e)
-                return _(u"Error")
+        return self.vol_status
+
 
     def has_attachments(self):
         """

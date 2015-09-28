@@ -770,14 +770,6 @@ class SystemDataset(Model):
     def usedataset(self):
         return self.sys_syslog_usedataset
 
-    def is_decrypted(self):
-        if self.sys_pool == 'freenas-boot':
-            return True
-        volume = Volume.objects.filter(vol_name=self.sys_pool)
-        if not volume.exists():
-            return False
-        return volume[0].is_decrypted()
-
     def get_sys_uuid(self):
         if not self.__sys_uuid_field:
             if (

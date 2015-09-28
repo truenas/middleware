@@ -236,7 +236,7 @@ def volumemanager(request):
                 'label': x.vol_name,
                 'value': x.vol_name,
                 'enc': x.vol_encrypt > 0
-            } for x in qs if x.is_decrypted()]
+            } for x in qs]
         ),
     })
 
@@ -1152,7 +1152,7 @@ def volume_unlock(request, object_id):
                 volume.vol_name,
                 id=volume.vol_guid
             )
-            if zimport and volume.is_decrypted:
+            if zimport:
                 notifier().sync_encrypted(volume=volume)
                 return JsonResp(
                     request,

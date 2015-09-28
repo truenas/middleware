@@ -126,12 +126,6 @@ def clean_path_locked(mp):
     qs = Volume.objects.filter(vol_name=mp.replace('/mnt/', ''))
     if qs.exists():
         obj = qs[0]
-        if not obj.is_decrypted():
-            raise forms.ValidationError(
-                _("The volume %s is locked by encryption") % (
-                    obj.vol_name,
-                )
-            )
 
 
 class BootEnvAddForm(Form):
@@ -1240,8 +1234,7 @@ class SystemDatasetForm(ModelForm):
         super(SystemDatasetForm, self).__init__(*args, **kwargs)
         pool_choices = [('', ''), ('freenas-boot', 'freenas-boot')]
         for v in Volume.objects.filter(vol_fstype='ZFS'):
-            if v.is_decrypted():
-                pool_choices.append((v.vol_name, v.vol_name))
+            pool_choices.append((v.vol_name, v.vol_name))
 
         self.fields['sys_pool'].choices = pool_choices
         self.instance._original_sys_pool = self.instance.sys_pool
