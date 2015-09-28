@@ -1987,7 +1987,7 @@ class TFTP(Model):
         icon_model = "TFTPIcon"
 
 
-class SSH(Model):
+class SSH(NewModel):
     ssh_tcpport = models.PositiveIntegerField(
         verbose_name=_("TCP Port"),
         default=22,
@@ -2046,94 +2046,8 @@ class SSH(Model):
                     "empty). Note, incorrect entered options prevent SSH "
                     "service to be started."),
     )
-    ssh_host_dsa_key = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_dsa_key_pub = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_dsa_key_cert_pub = models.TextField(
-        max_length=1024,
-        blank=True,
-        null=True,
-        editable=False,
-        verbose_name='ssh_host_dsa_key-cert.pub',
-    )
-    ssh_host_ecdsa_key = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_ecdsa_key_pub = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_ecdsa_key_cert_pub = models.TextField(
-        max_length=1024,
-        blank=True,
-        null=True,
-        editable=False,
-        verbose_name='ssh_host_ecdsa_key-cert.pub',
-    )
-    ssh_host_ed25519_key_pub = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_ed25519_key = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_ed25519_key_cert_pub = models.TextField(
-        max_length=1024,
-        blank=True,
-        null=True,
-        editable=False,
-        verbose_name='ssh_host_ed25519_key-cert.pub',
-    )
-    ssh_host_key = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_key_pub = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_rsa_key = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_rsa_key_pub = models.TextField(
-        max_length=1024,
-        editable=False,
-        blank=True,
-        null=True,
-    )
-    ssh_host_rsa_key_cert_pub = models.TextField(
-        max_length=1024,
-        blank=True,
-        null=True,
-        editable=False,
-        verbose_name='ssh_host_rsa_key-cert.pub',
-    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
         verbose_name = _("SSH")
@@ -2149,30 +2063,47 @@ class SSH(Model):
             'ssh_options',
         )
 
-    def __init__(self, *args, **kwargs):
-        super(SSH, self).__init__(*args, **kwargs)
-        self.__decoded = {}
-        # TODO: In case we ever decide to show the keys in the UI
-        # self._base64_decode('ssh_host_dsa_key_cert_pub')
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('ssh_tcpport', 'port'),
+            ('ssh_rootlogin', 'permit_root_login'),
+            ('ssh_passwordauth', 'allow_password_auth'),
+            ('ssh_tcpfwd', 'allow_port_forwarding'),
+            ('ssh_compression', 'compression'),
+            ('ssh_sftp_log_level', 'sftp_log_level'),
+            ('ssh_sftp_log_facility', 'sftp_log_facility'),
+            ('ssh_options', 'auxiliary'),
+        )
 
-    def _base64_decode(self, field):
-        if self.__decoded.get(field) is not True:
-            data = getattr(self, field)
-            if data:
-                setattr(self, field, base64.b64decode(data))
-            self.__decoded[field] = True
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.ssh.get_config')
+        return cls(**dict(
+            ssh_tcpport=config['port'],
+            ssh_rootlogin=config['permit_root_login'],
+            ssh_passwordauth=config['allow_password_auth'],
+            ssh_tcpfwd=config['allow_port_forwarding'],
+            ssh_compression=config['compression'],
+            ssh_sftp_log_level=config['sftp_log_level'],
+            ssh_sftp_log_facility=config['sftp_log_facility'],
+            ssh_options=config['auxiliary'],
+        ))
 
-    def _base64_encode(self, field):
-        if self.__decoded.get(field) is True:
-            data = getattr(self, field)
-            if data:
-                setattr(self, field, base64.b64encode(data))
-            self.__decoded.pop(field, None)
-
-    def save(self, *args, **kwargs):
-        # TODO: In case we ever decide to show the keys in the UI
-        # self._base64_encode('ssh_host_dsa_key_cert_pub')
-        return super(SSH, self).save(*args, **kwargs)
+    def _save(self, *args, **kwargs):
+        data = {
+            'port': self.ssh_tcpport,
+            'permit_root_login': self.ssh_rootlogin,
+            'allow_password_auth': self.ssh_passwordauth,
+            'allow_port_forwarding': self.ssh_tcpfwd,
+            'compression': self.ssh_compression,
+            'sftp_log_level': self.ssh_sftp_log_level,
+            'sftp_log_facility': self.ssh_sftp_log_facility,
+            'auxiliary': self.ssh_options or None,
+        }
+        self._save_task_call('service.ssh.configure', data)
+        return True
 
 
 class LLDP(Model):
