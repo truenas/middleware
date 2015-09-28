@@ -198,7 +198,9 @@ class Volume(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
 
         if cascade:
-            pass
+            result = dispatcher.call_task_sync('share.delete_dependent', self.vol_mountpoint)
+            if result['state'] != 'FINISHED':
+                raise MiddlewareError(result['error']['message'])
 
         if destroy:
             result = dispatcher.call_task_sync('volume.destroy', self.vol_name)
