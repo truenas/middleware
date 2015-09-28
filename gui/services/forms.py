@@ -428,16 +428,6 @@ class SSHForm(ModelForm):
             'ssh_tcpport': forms.widgets.TextInput(),
         }
 
-    def save(self):
-        super(SSHForm, self).save()
-        started = notifier().reload("ssh")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='ssh').srv_enable
-        ):
-            raise ServiceFailed("ssh", _("The SSH service failed to reload."))
-
 
 class RsyncdForm(ModelForm):
 
