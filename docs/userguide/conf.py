@@ -74,8 +74,8 @@ else:
     project = u'FreeNAS User Guide'
     master_doc = 'freenas'
     exclude_patterns = ['_build', 'truenas*', 'errata']
-    version = '10.1'
-    release = '10.1'
+    version = '10.2-ALPHA'
+    release = '10.2-ALPHA'
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -119,7 +119,7 @@ html_theme_options = {
 if tags.has('truenas'):
     html_title = 'TrueNAS User Guide 9.3.1 Table of Contents'
 else:
-    html_title = 'FreeNAS User Guide 10.1 Table of Contents'
+    html_title = 'FreeNAS User Guide 10.2-ALPHA Table of Contents'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -214,7 +214,7 @@ epub_scheme = 'URL'
 epub_identifier = 'freenas.org'
 
 # A unique identification for the text.
-epub_uid = '10.1'
+epub_uid = '10.2'
 
 # A tuple containing the cover image and cover page html template filenames.
 #epub_cover = ()
