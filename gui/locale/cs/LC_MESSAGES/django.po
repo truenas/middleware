@@ -12632,3 +12632,8 @@ msgid ""
 msgstr ""
 "Po úspěšné replikaci nových zachycených stavů smazat ty, které již nejsou k "
 "dispozici místně."
+
+#: storage/models.py:910
+#, fuzzy
+msgid "Delete stale snapshots on remote system"
+msgstr "Nejnovější zachycený stav, který byl odeslán na protistranu"

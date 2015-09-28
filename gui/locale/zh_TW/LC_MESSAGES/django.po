@@ -12962,3 +12962,8 @@ msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr ""
+
+#: storage/models.py:910
+#, fuzzy
+msgid "Delete stale snapshots on remote system"
+msgstr "將最新的快照傳送到遠端 (欄位空白為全部複製)"
