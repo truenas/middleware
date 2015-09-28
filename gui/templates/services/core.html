@@ -169,10 +169,10 @@
            <strong>{% trans "SNMP" %}</strong>
        </td>
        <td>
-       <img id="snmp_toggle" name="snmp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "snmp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="snmp_toggle" name="snmp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.snmp == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="snmp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SNMP Settings"|force_escape|force_escape %}', '{{ snmp.get_edit_url }}');" title="{% trans "SNMP Settings" %}">
+           <img id="snmp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SNMP Settings"|escapejs %}', '{{ snmp.get_edit_url }}');" title="{% trans "SNMP Settings" %}">
        </td>
    </tr>
    <tr>
