@@ -394,7 +394,7 @@ Unlock
 
 .. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/unlock/
 
-   Unluck encrypted volume `id`.
+   Unlock encrypted volume `id`.
 
    **Example request**:
 
