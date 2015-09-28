@@ -17,6 +17,7 @@ class CronJobForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = ['id']
         model = models.CronJob
         widgets = {
             'cron_command': forms.widgets.TextInput(),
@@ -76,10 +77,6 @@ class CronJobForm(ModelForm):
             return '*'
         w = ",".join(w)
         return w
-
-    def save(self):
-        super(CronJobForm, self).save()
-        notifier().restart("cron")
 
 
 class InitShutdownForm(ModelForm):
@@ -300,6 +297,7 @@ class SMARTTestForm(ModelForm):
 
     class Meta:
         fields = '__all__'
+        exclude = ['id']
         model = models.SMARTTest
         widgets = {
             'smarttest_hour': CronMultiple(
