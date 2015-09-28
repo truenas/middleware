@@ -502,7 +502,11 @@ def zvol_create(request, parent):
             zvol_blocksize = cleaned_data.get("zvol_blocksize")
             zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
-            props['compression'] = str(zvol_compression)
+            props['volsize'] = zvol_size
+
+            if zvol_compression != 'inherit':
+                props['compression'] = str(zvol_compression)
+                
             if zvol_blocksize:
                 props['volblocksize'] = zvol_blocksize
 
