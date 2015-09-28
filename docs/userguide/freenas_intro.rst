@@ -95,18 +95,13 @@ wide range of operating systems. A plugins system is provided for extending the 
 What's New in |version|
 -----------------------
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> e5e17e6... Add beginnings of what's new in 10.
 FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces a significant number of new technologies, including:
 
 * The system base has been updated to FreeBSD 10.2 which is described in the `FreeBSD 10.2 Release Notes <https://www.freebsd.org/releases/10.2R/relnotes.html>`_. 
 
 * A completely new middleware server that mediates all access to FreeNAS® and allows multi-user, multi-role configuration access to the system.
 
-* A new command line interface with tab-completion, inline help, and high-level access to all FreeNAS® functions and event information.
+* A new command line interface with tab-completion, inline help, and high-level access to all FreeNAS® functions and event information. This new CLI has replaced the Console Setup Menu.
 
 * The `GlusterFS <http://www.gluster.org>`_ service provides a scalable, network file system.
 
@@ -117,10 +112,10 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 * The `Stanchion <https://github.com/basho/stanchion>`_ service enforce the serialization of requests for Riak CS. 
 
 * The `Swift <http://docs.openstack.org/developer/swift/>`_ service provides object storage for `OpenStack <https://www.openstack.org/>`_.
-<<<<<<< HEAD
->>>>>>> e5e17e6... Add beginnings of what's new in 10.
-=======
->>>>>>> e5e17e6... Add beginnings of what's new in 10.
+
+In addition to the new features, the following options have changed in the GUI:
+
+* The functionality provided by :menuselection:`Network --> Global Configuration --> Host name database` has moved to :menuselection:`Network --> Hosts`.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
@@ -128,15 +123,7 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 Hardware Recommendations
 ------------------------
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-Since FreeNAS® 10 is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
-=======
 Since FreeNAS® |version| is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
->>>>>>> e5e17e6... Add beginnings of what's new in 10.
-=======
-Since FreeNAS® |version| is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
->>>>>>> e5e17e6... Add beginnings of what's new in 10.
 <http://www.freebsd.org/releases/10.2R/hardware.html>`__. Supported processors are listed in section
 `2.1 amd64 <https://www.freebsd.org/releases/10.2R/hardware.html#proc>`_. FreeNAS® is only available for 64-bit (also known as amd64) processors.
 
