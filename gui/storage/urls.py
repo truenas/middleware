@@ -27,10 +27,6 @@
 
 from django.conf.urls import patterns, url
 
-from freenasUI.storage.forms import (
-    AutoImportWizard, VolumeAutoImportForm, AutoImportChoiceForm,
-    AutoImportDecryptForm, show_descrypt_condition
-)
 
 urlpatterns = patterns('freenasUI.storage.views',
     url(r'^home/$', 'home', name="storage_home"),
@@ -62,7 +58,7 @@ urlpatterns = patterns('freenasUI.storage.views',
     url(r'^import/$', 'volimport', name="storage_import"),
     url(r'^import/progress$', 'volimport_progress', name='storage_volimport_progress'),
     url(r'^import/abort$', 'volimport_abort', name='storage_volimport_abort'),
-    url(r'^auto-import/$', AutoImportWizard.as_view([AutoImportChoiceForm, AutoImportDecryptForm, VolumeAutoImportForm], condition_dict={'1': show_descrypt_condition}), name="storage_autoimport"),
+    url(r'^auto-import/$', 'volimport_auto', name="storage_autoimport"),
     url(r'^volume/(?P<object_id>\w+)/upgrade/$', 'volume_upgrade', name="storage_volume_upgrade"),
     url(r'^volume/(?P<object_id>\w+)/create_passphrase/$', 'volume_create_passphrase', name="storage_volume_create_passphrase"),
     url(r'^volume/(?P<object_id>\w+)/change_passphrase/$', 'volume_change_passphrase', name="storage_volume_change_passphrase"),

@@ -157,30 +157,6 @@ class Volume(NewModel):
                     e)
                 return _(u"Error")
 
-    def get_geli_keyfile(self):
-        from freenasUI.middleware.notifier import GELI_KEYPATH
-        if not os.path.exists(GELI_KEYPATH):
-            os.mkdir(GELI_KEYPATH)
-        return "%s/%s.key" % (GELI_KEYPATH, self.vol_encryptkey, )
-
-    def is_decrypted(self):
-        __is_decrypted = getattr(self, '__is_decrypted', None)
-        if __is_decrypted is not None:
-            return __is_decrypted
-
-        self.__is_decrypted = True
-        # If the status is not UNKNOWN means the pool is already imported
-        status = notifier().get_volume_status(self.vol_name, self.vol_fstype)
-        if status != 'UNKNOWN':
-            return self.__is_decrypted
-        if self.vol_encrypt > 0:
-            _notifier = notifier()
-            for ed in self.encrypteddisk_set.all():
-                if not _notifier.geli_is_decrypted(ed.encrypted_provider):
-                    self.__is_decrypted = False
-                    break
-        return self.__is_decrypted
-
     def has_attachments(self):
         """
         This is mainly used by the VolumeDelete form.

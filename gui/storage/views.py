@@ -373,6 +373,24 @@ def volimport_abort(request):
       )
 
 
+def volimport_auto(request):
+    if request.method == 'POST':
+        form = forms.VolumeAutoImportForm(request.POST)
+        if form.is_valid():
+            volume = form.cleaned_data['volume']
+            result = dispatcher.call_task_sync('volume.import', volume['id'], volume['name'])
+            if result['state'] == 'FINISHED':
+                return JsonResp(request, message=_("Volume imported successfully"))
+            else:
+                raise MiddlewareError(result['error']['message'])
+    else:
+        form = forms.VolumeAutoImportForm()
+
+    return render(request, 'freeadmin/generic_form.html', {
+        'form': form
+    })
+
+
 def dataset_create(request, fs):
     defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
     if request.method == 'POST':
@@ -999,10 +1017,14 @@ def disk_wipe(request, devname):
                     )
                 ])
             else:
+                devname = os.path.join('/dev', devname)
                 result = dispatcher.call_task_sync('disks.erase', devname, form.cleaned_data['method'])
-                return JsonResp(
-                    request,
-                    message=_("Disk successfully wiped"))
+                if result['state'] == 'FINISHED':
+                    return JsonResp(
+                        request,
+                        message=_("Disk successfully wiped"))
+                else:
+                    raise MiddlewareError('Cannot wipe disk: {0}'.format(result['error']['message']))
 
         return JsonResp(request, form=form)
 
