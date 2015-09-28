@@ -96,7 +96,10 @@ What's New in |version|
 -----------------------
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> e5e17e6... Add beginnings of what's new in 10.
 FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces a significant number of new technologies, including:
 
 * The system base has been updated to FreeBSD 10.2 which is described in the `FreeBSD 10.2 Release Notes <https://www.freebsd.org/releases/10.2R/relnotes.html>`_. 
@@ -114,6 +117,9 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 * The `Stanchion <https://github.com/basho/stanchion>`_ service enforce the serialization of requests for Riak CS. 
 
 * The `Swift <http://docs.openstack.org/developer/swift/>`_ service provides object storage for `OpenStack <https://www.openstack.org/>`_.
+<<<<<<< HEAD
+>>>>>>> e5e17e6... Add beginnings of what's new in 10.
+=======
 >>>>>>> e5e17e6... Add beginnings of what's new in 10.
 
 .. index:: Hardware Recommendations
@@ -123,7 +129,11 @@ Hardware Recommendations
 ------------------------
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Since FreeNAS® 10 is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
+=======
+Since FreeNAS® |version| is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
+>>>>>>> e5e17e6... Add beginnings of what's new in 10.
 =======
 Since FreeNAS® |version| is based on FreeBSD 10.2, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
 >>>>>>> e5e17e6... Add beginnings of what's new in 10.
