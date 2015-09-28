@@ -228,7 +228,6 @@ class notifier:
 
     __service2daemon = {
         'ssh': ('sshd', '/var/run/sshd.pid'),
-        'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
         'tftp': ('inetd', '/var/run/inetd.pid'),
         'ctld': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
@@ -746,21 +745,6 @@ class notifier:
 
     def _stop_system(self):
         self._system("/sbin/shutdown -p now")
-
-    def _start_snmp(self):
-        self._system("/usr/sbin/service ix-snmpd quietstart")
-        self._system("/usr/sbin/service snmpd quietstart")
-
-    def _stop_snmp(self):
-        self._system("/usr/sbin/service snmpd quietstop")
-        # The following is required in addition to just `snmpd`
-        # to kill the `freenas-snmpd.py` daemon
-        self._system("/usr/sbin/service ix-snmpd quietstop")
-
-    def _restart_snmp(self):
-        self._system("/usr/sbin/service ix-snmpd quietstart")
-        self._system("/usr/sbin/service snmpd forcestop")
-        self._system("/usr/sbin/service snmpd quietstart")
 
     def _restart_http(self):
         self._system("/usr/sbin/service ix_register reload")
