@@ -232,7 +232,7 @@ Setting a password is mandatory and the password can not be blank. Since this pa
 password. Input the password, press the down arrow key, and confirm the password. Then press :kbd:`Enter` to start the installation.
 
 .. note:: for security reasons, the SSH service and *root* SSH logins are disabled by default. Unless these are set, the only way to access a shell as
-   *root* is to gain physical access to the console menu or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
+   *root* is to gain physical access to the CLI or to access the web shell within the administrative GUI. This means that the FreeNAS® system should
    be kept physically secure and that the administrative GUI should be behind a properly configured firewall and protected by a secure password.
 
 Once the installation is complete, you should see a message similar to Figure 2.3g.
@@ -243,7 +243,7 @@ Once the installation is complete, you should see a message similar to Figure 2.
 
 Press :kbd:`Enter` to return to the first menu, seen in Figure 2.3a. Highlight "3 Reboot System" and press :kbd:`Enter`. If booting from CD, remove the CDROM.
 As the system reboots, make sure that the device you installed to is listed as the first boot entry in the BIOS so that the system will boot from it.
-FreeNAS® should boot into the "Console Setup" menu described in :ref:`Initial Configuration Wizard`.
+FreeNAS® should boot into the CLI as described in :ref:`Initial Configuration Wizard`.
 
 .. _Installation Troubleshooting:
 
