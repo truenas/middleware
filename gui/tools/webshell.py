@@ -88,7 +88,7 @@ def main_loop():
     server = SocketServer.UnixStreamServer(SOCKFILE, XMLRPCHandler)
     os.chmod(SOCKFILE, 0o700)
     dispatcher.register_instance(
-        Multiplex("/usr/local/bin/bash", "xterm-color"))
+        Multiplex("/usr/local/bin/cli", "xterm-color"))
     server.dispatcher = dispatcher
     server.serve_forever()
 
