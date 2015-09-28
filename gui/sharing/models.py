@@ -143,6 +143,7 @@ class CIFS_Share(NewModel):
         )
         extra_fields = (
             ('type', 'cifs'),
+            ('enabled', True)
         )
 
 
@@ -277,6 +278,7 @@ class AFP_Share(NewModel):
         )
         extra_fields = (
             ('type', 'afp'),
+            ('enabled', True)
         )
 
 
@@ -395,6 +397,7 @@ class NFS_Share(NewModel):
         )
         extra_fields = (
             ('type', 'nfs'),
+            ('enabled', True)
         )
 
 
