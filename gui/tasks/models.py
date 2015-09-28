@@ -43,7 +43,11 @@ from freenasUI.storage.models import Disk
 log = logging.getLogger('tasks.models')
 
 
-class CronJob(Model):
+class CronJob(NewModel):
+    id = models.CharField(
+        max_length=200,
+        primary_key=True
+    )
     cron_user = UserField(
         max_length=60,
         verbose_name=_("User"),
@@ -85,22 +89,6 @@ class CronJob(Model):
         default="*",
         verbose_name=_("Day of week"),
     )
-    cron_stdout = models.BooleanField(
-        default=True,
-        verbose_name=_("Redirect Stdout"),
-        help_text=_(
-            "Redirect the standard output to /dev/null. In other "
-            "words, disable output."
-        ),
-    )
-    cron_stderr = models.BooleanField(
-        default=False,
-        verbose_name=_("Redirect Stderr"),
-        help_text=_(
-            "Redirect the standard error output to /dev/null. In "
-            "other words, disable error output."
-        ),
-    )
     cron_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
@@ -110,6 +98,27 @@ class CronJob(Model):
         verbose_name = _("Cron Job")
         verbose_name_plural = _("Cron Jobs")
         ordering = ["cron_description", "cron_user"]
+
+    class Middleware:
+        provider_name = 'calendar_tasks'
+        default_filters = [
+            ('name', '=', 'calendar_tasks.command')
+        ]
+        field_mapping = (
+            ('id', 'id'),
+            ('cron_user', 'args.0'),
+            ('cron_command', 'args.1'),
+            ('cron_description', 'description'),
+            ('cron_enabled', 'enabled'),
+            ('cron_minute', 'schedule.minute'),
+            ('cron_hour', 'schedule.hour'),
+            ('cron_daymonth', 'schedule.day'),
+            ('cron_month', 'schedule.month'),
+            ('cron_dayweek', 'schedule.day_of_week')
+        )
+        extra_fields = (
+            ('name', 'calendar_tasks.command'),
+        )
 
     def __unicode__(self):
         if self.cron_description:
@@ -182,13 +191,8 @@ class CronJob(Model):
         return line
 
     def run(self):
-        proc = subprocess.Popen([
-            "/usr/local/bin/python2",
-            "/usr/local/www/freenasUI/tools/runnow.py",
-            "-t", "cronjob",
-            "-i", str(self.id),
-        ])
-        proc.communicate()
+        from freenasUI.middleware.connector import connection as dispatcher
+        dispatcher.submit_task('calendar_tasks.run', self.id)
 
     def delete(self):
         super(CronJob, self).delete()
