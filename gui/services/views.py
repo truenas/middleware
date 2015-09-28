@@ -193,7 +193,7 @@ def servicesToggleView(request, formname):
         'httpd_toggle': 'httpd',
         'ftp_toggle': 'ftp',
         'tftp_toggle': 'tftp',
-        'ssh_toggle': 'ssh',
+        'ssh_toggle': 'sshd',
         'ldap_toggle': 'ldap',
         'rsync_toggle': 'rsyncd',
         'smartd_toggle': 'smartd',
@@ -213,7 +213,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'nfs', 'rsyncd', 'smartd', 'snmp'):
+    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],

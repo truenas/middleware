@@ -180,10 +180,10 @@
            <strong>{% trans "SSH" %}</strong>
        </td>
        <td>
-       <img id="ssh_toggle" name="ssh_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ssh" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="ssh_toggle" name="ssh_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.sshd == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="ssh_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SSH Settings"|force_escape|force_escape %}', '{{ ssh.get_edit_url }}');" title="{% trans "SSH Settings" %}">
+           <img id="ssh_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SSH Settings"|escapejs %}', '{{ ssh.get_edit_url }}');" title="{% trans "SSH Settings" %}">
        </td>
    </tr>
    <tr>
