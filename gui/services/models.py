@@ -1266,7 +1266,7 @@ class DynamicDNS(NewModel):
         return True
 
 
-class SNMP(Model):
+class SNMP(NewModel):
     snmp_location = models.CharField(
         max_length=255,
         verbose_name=_("Location"),
@@ -1281,12 +1281,6 @@ class SNMP(Model):
         help_text=_("Contact information, e.g. name or email of the "
                     "person responsible for this system: "
                     "'admin@email.address'."),
-    )
-    # FIXME: Implement trap
-    snmp_traps = models.BooleanField(
-        verbose_name=_("Send SNMP Traps"),
-        editable=False,
-        default=False,
     )
     snmp_v3 = models.BooleanField(
         verbose_name=_('SNMP v3 Support'),
@@ -1341,6 +1335,8 @@ class SNMP(Model):
         help_text=_("These parameters will be added to /etc/snmpd.config."),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("SNMP")
         verbose_name_plural = _("SNMP")
@@ -1348,7 +1344,56 @@ class SNMP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"SNMPIcon"
-        # advanced_fields = ('snmp_traps',)
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('snmp_location', 'location'),
+            ('snmp_contact', 'contact'),
+            ('snmp_v3', 'v3'),
+            ('snmp_community', 'community'),
+            ('snmp_v3_username', 'v3_username'),
+            ('snmp_v3_authtype', 'v3_auth_type'),
+            ('snmp_v3_password', 'v3_password'),
+            ('snmp_v3_privproto', 'v3_privacy_protocol'),
+            ('snmp_v3_privpassphrase', 'v3_privacy_passphrase'),
+            ('snmp_options', 'auxiliary'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.snmp.get_config')
+        return cls(**dict(
+            snmp_location=config['location'],
+            snmp_contact=config['contact'],
+            snmp_v3=config['v3'],
+            snmp_community=config['community'],
+            snmp_v3_username=config['v3_username'],
+            snmp_v3_authtype=config['v3_auth_type'],
+            snmp_v3_password=config['v3_password'],
+            snmp_v3_privproto=config['v3_privacy_protocol'],
+            snmp_v3_privpassphrase=config['v3_privacy_passphrase'],
+            snmp_options=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'location': self.snmp_location or None,
+            'contact': self.snmp_contact or None,
+            'v3': self.snmp_v3,
+            'community': self.snmp_community or None,
+            'v3_auth_type': self.snmp_v3_authtype or 'SHA',
+            'v3_privacy_protocol': self.snmp_v3_privproto or 'AES',
+            'v3_privacy_passphrase': self.snmp_v3_privpassphrase or None,
+            'auxiliary': self.snmp_options or None,
+        }
+        if self.snmp_v3_username:
+            data['v3_username'] = self.snmp_v3_username
+        if self.snmp_v3_password:
+            data['v3_password'] = self.snmp_v3_password
+        self._save_task_call('service.snmp.configure', data)
+        return True
 
 
 class UPS(Model):
