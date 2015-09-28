@@ -227,7 +227,6 @@ class notifier:
         f()
 
     __service2daemon = {
-        'ssh': ('sshd', '/var/run/sshd.pid'),
         'tftp': ('inetd', '/var/run/inetd.pid'),
         'ctld': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
@@ -477,29 +476,6 @@ class notifier:
         timezone = Settings.objects.all()[0].stg_timezone
         os.environ['TZ'] = timezone
         time.tzset()
-
-    def _reload_ssh(self):
-        self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service sshd reload")
-        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
-
-    def _start_ssh(self):
-        self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service sshd start")
-        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
-
-    def _stop_ssh(self):
-        self._system("/usr/sbin/service sshd forcestop")
-        self._system("/usr/sbin/service ix_register reload")
-
-    def _restart_ssh(self):
-        self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service sshd forcestop")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service sshd restart")
-        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
 
     def _started_nis(self):
         res = False
