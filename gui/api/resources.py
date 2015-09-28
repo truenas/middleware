@@ -842,9 +842,6 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle.data['is_upgraded'] = bundle.obj.is_upgraded
 
-        is_decrypted = bundle.obj.is_decrypted()
-        bundle.data['is_decrypted'] = is_decrypted
-
         if self.is_webclient(bundle.request):
             bundle.data['_status_url'] = "%s?id=%s" % (
                 reverse('freeadmin_storage_volumestatus_datagrid'),
@@ -893,17 +890,14 @@ class VolumeResourceMixin(NestedMixin):
                     'storage_volume_lock',
                     kwargs={'object_id': bundle.obj.vol_guid})
 
-        if is_decrypted:
-            if self.is_webclient(bundle.request):
-                if isinstance(bundle.data['used'], int):
-                    bundle.data['used'] = "%s (%s%%)" % (
-                        humanize_size(bundle.data['used']),
-                        bundle.data['used_pct'],
-                    )
-                if isinstance(bundle.data['avail'], int):
-                    bundle.data['avail'] = humanize_size(bundle.data['avail'])
-        else:
-            bundle.data['used'] = _("Locked")
+        if self.is_webclient(bundle.request):
+            if isinstance(bundle.data['used'], int):
+                bundle.data['used'] = "%s (%s%%)" % (
+                    humanize_size(bundle.data['used']),
+                    bundle.data['used_pct'],
+                )
+            if isinstance(bundle.data['avail'], int):
+                bundle.data['avail'] = humanize_size(bundle.data['avail'])
 
         try:
             uid = self._uid
