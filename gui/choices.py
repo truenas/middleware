@@ -258,8 +258,8 @@ SNMP_CHOICES = (
 )
 
 UPS_CHOICES = (
-    ('lowbatt', _('UPS reaches low battery')),
-    ('batt', _('UPS goes on battery')),
+    ('LOWBATT', _('UPS reaches low battery')),
+    ('BATT', _('UPS goes on battery')),
 )
 
 BTENCRYPT_CHOICES = (

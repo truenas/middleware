@@ -1396,13 +1396,13 @@ class SNMP(NewModel):
         return True
 
 
-class UPS(Model):
+class UPS(NewModel):
     ups_mode = models.CharField(
         default='master',
         max_length=6,
         choices=(
-            ('master', _("Master")),
-            ('slave', _("Slave")),
+            ('MASTER', _("Master")),
+            ('SLAVE', _("Slave")),
         ),
         verbose_name=_("UPS Mode"),
     )
@@ -1517,6 +1517,8 @@ class UPS(Model):
             self._ups_monpwd_encrypted = True
         return super(UPS, self).save(*args, **kwargs)
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("UPS")
         verbose_name_plural = _("UPS")
@@ -1524,6 +1526,78 @@ class UPS(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"UPSIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('ups_mode', 'mode'),
+            ('ups_identifier', 'identifier'),
+            ('ups_remotehost', 'remote_host'),
+            ('ups_remoteport', 'remote_port'),
+            ('ups_driver', 'driver'),
+            ('ups_port', 'driver_port'),
+            ('ups_options', 'auxiliary'),
+            ('ups_description', 'description'),
+            ('ups_shutdown', 'shutdown_mode'),
+            ('ups_shutdowntimer', 'shutdown_timer'),
+            ('ups_monuser', 'monitor_user'),
+            ('ups_monpwd', 'monitor_password'),
+            ('ups_extrausers', 'auxiliary_users'),
+            ('ups_rmonitor', 'monitor_remote'),
+            ('ups_emailnotify', 'email_notify'),
+            ('ups_toemail', 'email_recipients'),
+            ('ups_subject', 'email_subject'),
+            ('ups_powerdown', 'powerdown'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.ups.get_config')
+        return cls(**dict(
+            ups_mode=config['mode']
+            ups_identifier=config['identifier']
+            ups_remotehost=config['remote_host']
+            ups_remoteport=config['remote_port']
+            ups_driver=config['driver']
+            ups_port=config['driver_port']
+            ups_options=config['auxiliary']
+            ups_description=config['description']
+            ups_shutdown=config['shutdown_mode']
+            ups_shutdowntimer=config['shutdown_timer']
+            ups_monuser=config['monitor_user']
+            ups_monpwd=config['monitor_password']
+            ups_extrausers=config['auxiliary_users']
+            ups_rmonitor=config['monitor_remote']
+            ups_emailnotify=config['email_notify']
+            ups_toemail=config['email_recipients']
+            ups_subject=config['email_subject']
+            ups_powerdown=config['powerdown']
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'mode': self.ups_mode,
+            'identifier': self.ups_identifier,
+            'remote_host': self.ups_remotehost,
+            'remote_port': self.ups_remoteport,
+            'driver': self.ups_driver,
+            'driver_port': self.ups_port,
+            'auxiliary': self.ups_options,
+            'description': self.ups_description,
+            'shutdown_mode': self.ups_shutdown,
+            'shutdown_timer': self.ups_shutdowntimer,
+            'monitor_user': self.ups_monuser,
+            'monitor_password': self.ups_monpwd,
+            'auxiliary_users': self.ups_extrausers,
+            'monitor_remote': self.ups_rmonitor,
+            'email_notify': self.ups_emailnotify,
+            'email_recipients': self.ups_toemail,
+            'email_subject': self.ups_subject,
+            'powerdown': self.ups_powerdown,
+        }
+        self._save_task_call('service.ups.configure', data)
+        return True
 
 
 class FTP(NewModel):
