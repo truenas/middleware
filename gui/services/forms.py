@@ -406,18 +406,6 @@ class TFTPForm(ModelForm):
             'tftp_port': forms.widgets.TextInput(),
         }
 
-    def save(self):
-        super(TFTPForm, self).save()
-        started = notifier().reload("tftp")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='tftp').srv_enable
-        ):
-            raise ServiceFailed(
-                "tftp", _("The tftp service failed to reload.")
-            )
-
 
 class SSHForm(ModelForm):
 
