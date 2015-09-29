@@ -471,6 +471,10 @@ define([
                 domClass.add(pane.domNode,["objrefresh", "data_directoryservice_directoryservice"]);
             }
         },
+        openNewUI: function() {
+          var newurl = 'http://' + window.location.host + ':8888/'
+          window.location = newurl;
+        }
 
     });
 
