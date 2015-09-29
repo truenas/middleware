@@ -1938,7 +1938,7 @@ class FTP(NewModel):
         return True
 
 
-class TFTP(Model):
+class TFTP(NewModel):
     tftp_directory = PathField(
         verbose_name=_("Directory"),
         help_text=_("The directory containing the files you want to "
@@ -1978,6 +1978,8 @@ class TFTP(Model):
         help_text=_("Extra command line options (usually empty)."),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("TFTP")
         verbose_name_plural = _("TFTP")
@@ -1985,6 +1987,42 @@ class TFTP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "TFTPIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('tftp_directory', 'path'),
+            ('tftp_newfiles', 'allow_new_files'),
+            ('tftp_port', 'port'),
+            ('tftp_username', 'username'),
+            ('tftp_umask', 'umask'),
+            ('tftp_options', 'auxiliary'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.tftp.get_config')
+        return cls(**dict(
+            tftp_directory=config['path'],
+            tftp_newfiles=config['allow_new_files'],
+            tftp_port=config['port'],
+            tftp_username=config['username'],
+            tftp_umask=config['umask'],
+            tftp_options=config['auxiliary'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'path': self.tftp_directory,
+            'allow_new_files': self.tftp_newfiles,
+            'port': self.tftp_port,
+            'username': self.tftp_username,
+            'umask': self.tftp_umask,
+            'auxiliary': self.tftp_options,
+        }
+        self._save_task_call('service.tftp.configure', data)
+        return True
 
 
 class SSH(NewModel):
