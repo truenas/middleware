@@ -115,7 +115,6 @@ _sssd_config()
 _gen_conf()
 {
 	## Daemons
-	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
