@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-09-25 17:42+0000\n"
+"PO-Revision-Date: 2015-09-28 12:41+0000\n"
 "Last-Translator: jmsbellez <jmsbellez@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1443202968.0\n"
+"X-POOTLE-MTIME: 1443444112.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10180,6 +10180,8 @@ msgid ""
 "Defines the realm to use in the user and group names. This is only required "
 "when using cn_realm together with a stand-alone ldap server."
 msgstr ""
+"Defina o domínio para usar em nomes de usuários e grupos. Isso é requisitado "
+"quando se usa o cn_realm junto com um servidor ldap stand-alone."
 
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
