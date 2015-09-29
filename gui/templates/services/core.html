@@ -191,10 +191,10 @@
            <strong>{% trans "TFTP" %}</strong>
        </td>
        <td>
-       <img id="tftp_toggle" name="tftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "tftp" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+       <img id="tftp_toggle" name="tftp_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.tftpd == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="tftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "TFTP Settings"|force_escape|force_escape %}', '{{ tftp.get_edit_url }}');" title="{% trans "TFTP Settings" %}">
+           <img id="tftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "TFTP Settings"|escapejs %}', '{{ tftp.get_edit_url }}');" title="{% trans "TFTP Settings" %}">
        </td>
   </tr>
   <tr>
