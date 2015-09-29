@@ -29,7 +29,8 @@ import requests
 import ssl
 import datetime
 import utils
-
+import ConfigParser
+import os
 from django.conf import settings
 from pyVmomi import vim
 from ConfigParser import SafeConfigParser
@@ -39,6 +40,30 @@ from pyVim.connect import SmartConnect
 class PluginManager:
 
     property_file_path = settings.HERE + '/vcp/Extensionconfig.ini.dist'
+    resurce_folder_path = settings.HERE + '/vcp/vcp_locales'
+
+    def create_event_keyvalue_pairs(self):
+        try:
+            eri_list = []
+            for file in os.listdir(self.resurce_folder_path):
+                file = open(self.resurce_folder_path + '/' + file)
+                eri = vim.Extension.ResourceInfo()
+                eri.module = 'task'
+                for line in file:
+                    if len(line) > 2 and '=' in line:
+                        if 'locale' in line:
+                            eri.locale = line.split('=')[1].lstrip().rstrip()
+                        else:
+                            prop = line.split('=')
+                            key_val = vim.KeyValue()
+                            key_val.key = prop[0].lstrip().rstrip()
+                            key_val.value = prop[1].lstrip().rstrip()
+                            eri.data.append(key_val)
+                file.close()
+                eri_list.append(eri)
+            return eri_list
+        except Exception as ex:
+            return 'can not read locales :' + str(ex)
 
     def get_extensionKey(self):
         cp = SafeConfigParser()
@@ -47,49 +72,71 @@ class PluginManager:
         return key
 
     def get_extension(self, manage_ip, sys_guiprotocol):
-        cp = SafeConfigParser()
-        cp.read(self.property_file_path)
-        company = cp.get('RegisterParam', 'company')
-        descr = cp.get('RegisterParam', 'description')
-        key = cp.get('RegisterParam', 'key')
-        version = utils.get_plugin_version()
-        if 'Not available' in version:
-            return version
-        label = cp.get('RegisterParam', 'label')
-        file_address = 'static/' + utils.get_plugin_file_name()
-        final_url = sys_guiprotocol + "://" + manage_ip + "/" + file_address
-        description = vim.Description()
-        description.label = label
-        description.summary = descr
-        ext = vim.Extension()
-        ext.company = company
-        ext.version = version
-        ext.key = key
-        ext.description = description
-        ext.lastHeartbeatTime = datetime.datetime.now()
+        try:
+            cp = SafeConfigParser()
+            cp.read(self.property_file_path)
+            company = cp.get('RegisterParam', 'company')
+            descr = cp.get('RegisterParam', 'description')
+            key = cp.get('RegisterParam', 'key')
+            events = cp.get('RegisterParam', 'events').split(",")
+            tasks = cp.get('RegisterParam', 'tasks').split(",")
+            version = utils.get_plugin_version()
+            if 'Not available' in version:
+                return version
+            label = cp.get('RegisterParam', 'label')
+            file_address = 'static/' + utils.get_plugin_file_name()
+            final_url = sys_guiprotocol + "://" + manage_ip + "/" + file_address
+            description = vim.Description()
+            description.label = label
+            description.summary = descr
+            ext = vim.Extension()
+            ext.company = company
+            ext.version = version
+            ext.key = key
+            ext.description = description
+            ext.lastHeartbeatTime = datetime.datetime.now()
 
-        server_info = [1]
-        server_info[0] = vim.Extension.ServerInfo()
-        server_info[0].serverThumbprint = ''
-        server_info[0].type = sys_guiprotocol.upper()
-        server_info[0].url = final_url
-        server_info[0].description = description
-        server_info[0].company = company
-        admin_emails = [1]
-        admin_emails[0] = 'none'
-        server_info[0].adminEmail = admin_emails
-        ext.server = server_info
+            server_info = vim.Extension.ServerInfo()
+            server_info.serverThumbprint = ''
+            server_info.type = sys_guiprotocol.upper()
+            server_info.url = final_url
+            server_info.description = description
+            server_info.company = company
+            server_info.adminEmail = ['ADMIN EMAIL']
+            ext.server = [server_info]
 
-        client = [1]
-        client[0] = vim.Extension.ClientInfo()
-        client[0].url = final_url
-        client[0].company = company
-        client[0].version = version
-        client[0].description = description
-        client[0].type = "vsphere-client-serenity"
+            client = vim.Extension.ClientInfo()
+            client.url = final_url
+            client.company = company
+            client.version = version
+            client.description = description
+            client.type = "vsphere-client-serenity"
+            ext.client = [client]
 
-        ext.client = client
-        return ext
+            event_info = []
+            for e in events:
+                ext_event_type_info = vim.Extension.EventTypeInfo()
+                ext_event_type_info.eventID = e
+                event_info.append(ext_event_type_info)
+
+            task_info = []
+            for t in tasks:
+                ext_type_info = vim.Extension.TaskTypeInfo()
+                ext_type_info.taskID = t
+                task_info.append(ext_type_info)
+
+            ext.taskList = task_info
+            ext.eventList = event_info
+            resource_list = self.create_event_keyvalue_pairs()
+            if isinstance(resource_list, str):
+                return resource_list
+            ext.resourceList = resource_list
+
+            return ext
+        except ConfigParser.NoOptionError as ex:
+            return 'Property Missing : ' + str(ex)
+        except Exception as ex:
+            return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
     def install_vCenter_plugin(
             self,
@@ -107,8 +154,11 @@ class PluginManager:
                 print 'Error ssl'
             si = SmartConnect("https", vc_ip, int(port), usernName, password)
             ext = self.get_extension(manage_ip, sys_guiprotocol)
-            si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
-            return True
+            if isinstance(ext, vim.Extension):
+                si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
+                return True
+            else:
+                return ext
 
         except vim.fault.NoPermission as ex:
             return 'vCenter user has no permission to install the plugin.'
@@ -146,8 +196,11 @@ class PluginManager:
                 print 'Error ssl'
             si = SmartConnect("https", vc_ip, int(port), usernName, password)
             ext = self.get_extension(manage_ip, sys_guiprotocol)
-            si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
-            return True
+            if isinstance(ext, vim.Extension):
+                si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
+                return True
+            else:
+                return ext
 
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
