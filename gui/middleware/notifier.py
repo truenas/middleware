@@ -227,7 +227,6 @@ class notifier:
         f()
 
     __service2daemon = {
-        'tftp': ('inetd', '/var/run/inetd.pid'),
         'ctld': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
         'ups': ('upsd', '/var/db/nut/upsd.pid'),
@@ -652,20 +651,6 @@ class notifier:
     def _reload_syslogd(self):
         self._system("/usr/sbin/service ix-syslogd quietstart")
         self._system("/etc/local/rc.d/syslog-ng reload")
-
-    def _start_tftp(self):
-        self._system("/usr/sbin/service ix-inetd quietstart")
-        self._system("/usr/sbin/service inetd start")
-
-    def _reload_tftp(self):
-        self._system("/usr/sbin/service ix-inetd quietstart")
-        self._system("/usr/sbin/service inetd forcestop")
-        self._system("/usr/sbin/service inetd restart")
-
-    def _restart_tftp(self):
-        self._system("/usr/sbin/service ix-inetd quietstart")
-        self._system("/usr/sbin/service inetd forcestop")
-        self._system("/usr/sbin/service inetd restart")
 
     def _restart_cron(self):
         self._system("/usr/sbin/service ix-crontab quietstart")
