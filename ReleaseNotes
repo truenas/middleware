@@ -141,6 +141,13 @@ used as "stable resurrection points" in that snapshot.
 These "coordinated snapshots" can be found (and are specifically marked
 as such) in the snapshot UI.
 
+* FreeNAS can be completely backed up (including both pool and non-pool data)
+any number of times to any system supporting ssh access for Disaster Recovery
+purposes.  Recovery mode will allow the appropriate backup to be selected and
+the FreeNAS system then recreated from scratch (or at least as much as the
+amount of data chosen to be backed up allows).  This feature is available via
+the Console UI menu.
+
 * FreeNAS now supports automatic drive replacement on failure, if spare
 drives are available.
 le.
