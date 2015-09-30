@@ -1579,7 +1579,7 @@ class UPS(NewModel):
             'auxiliary_users': self.ups_extrausers or None,
             'monitor_remote': self.ups_rmonitor,
             'email_notify': self.ups_emailnotify,
-            'email_recipients': [i.strip() for i in self.ups_toemail.split(';')],
+            'email_recipients': [i.strip() for i in self.ups_toemail.split(';') if self.ups_toemail],
             'email_subject': self.ups_subject,
             'powerdown': self.ups_powerdown,
         }

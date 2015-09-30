@@ -669,7 +669,7 @@ class UPSForm(ModelForm):
 
     def clean_ups_port(self):
         port = self.cleaned_data.get("ups_port")
-        if self.cleaned_data.get("ups_mode") == 'master' and not port:
+        if self.cleaned_data.get("ups_mode") == 'MASTER' and not port:
             raise forms.ValidationError(
                 _("This field is required")
             )
@@ -677,7 +677,7 @@ class UPSForm(ModelForm):
 
     def clean_ups_remotehost(self):
         rhost = self.cleaned_data.get("ups_remotehost")
-        if self.cleaned_data.get("ups_mode") != 'master':
+        if self.cleaned_data.get("ups_mode") != 'MASTER':
             if not rhost:
                 raise forms.ValidationError(
                     _("This field is required")
