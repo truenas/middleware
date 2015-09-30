@@ -1504,18 +1504,6 @@ class UPS(NewModel):
         default=True,
     )
 
-    def __init__(self, *args, **kwargs):
-        super(UPS, self).__init__(*args, **kwargs)
-        if self.ups_monpwd:
-            self.ups_monpwd = notifier().pwenc_decrypt(self.ups_monpwd)
-        self._ups_monpwd_encrypted = False
-
-    def save(self, *args, **kwargs):
-        if self.ups_monpwd and not self._ups_monpwd_encrypted:
-            self.ups_monpwd = notifier().pwenc_encrypt(self.ups_monpwd)
-            self._ups_monpwd_encrypted = True
-        return super(UPS, self).save(*args, **kwargs)
-
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:

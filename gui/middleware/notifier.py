@@ -2047,12 +2047,11 @@ class notifier:
 
         if reset_passwords:
             from freenasUI.directoryservice.models import ActiveDirectory, LDAP, NT4
-            from freenasUI.services.models import WebDAV, UPS
+            from freenasUI.services.models import WebDAV
             self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
             self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
             self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')
             self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
-            self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
 
     def pwenc_check(self):
         from freenasUI.system.models import Settings
