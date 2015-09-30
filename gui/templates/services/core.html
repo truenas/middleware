@@ -202,7 +202,7 @@
            <strong>{% trans "UPS" %}</strong>
        </td>
        <td>
-            <img id="ups_toggle" name="ups_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "ups" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+            <img id="ups_toggle" name="ups_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.ups == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
            <img id="ups_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "UPS Settings"|force_escape|force_escape %}', '{{ ups.get_edit_url }}');" title="{% trans "UPS Settings" %}">

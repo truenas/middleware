@@ -727,16 +727,6 @@ class UPSForm(ModelForm):
                     })
         return email
 
-    def save(self):
-        super(UPSForm, self).save()
-        started = notifier().restart("ups")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='ups').srv_enable
-        ):
-            raise ServiceFailed("ups", _("The UPS service failed to reload."))
-
 
 class LLDPForm(ModelForm):
 
