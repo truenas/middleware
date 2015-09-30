@@ -24,7 +24,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import base64
 import hashlib
 import hmac
 import logging
@@ -1555,24 +1554,24 @@ class UPS(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.ups.get_config')
         return cls(**dict(
-            ups_mode=config['mode']
-            ups_identifier=config['identifier']
-            ups_remotehost=config['remote_host']
-            ups_remoteport=config['remote_port']
-            ups_driver=config['driver']
-            ups_port=config['driver_port']
-            ups_options=config['auxiliary']
-            ups_description=config['description']
-            ups_shutdown=config['shutdown_mode']
-            ups_shutdowntimer=config['shutdown_timer']
-            ups_monuser=config['monitor_user']
-            ups_monpwd=config['monitor_password']
-            ups_extrausers=config['auxiliary_users']
-            ups_rmonitor=config['monitor_remote']
-            ups_emailnotify=config['email_notify']
-            ups_toemail=config['email_recipients']
-            ups_subject=config['email_subject']
-            ups_powerdown=config['powerdown']
+            ups_mode=config['mode'],
+            ups_identifier=config['identifier'],
+            ups_remotehost=config['remote_host'],
+            ups_remoteport=config['remote_port'],
+            ups_driver=config['driver'],
+            ups_port=config['driver_port'],
+            ups_options=config['auxiliary'],
+            ups_description=config['description'],
+            ups_shutdown=config['shutdown_mode'],
+            ups_shutdowntimer=config['shutdown_timer'],
+            ups_monuser=config['monitor_user'],
+            ups_monpwd=config['monitor_password'],
+            ups_extrausers=config['auxiliary_users'],
+            ups_rmonitor=config['monitor_remote'],
+            ups_emailnotify=config['email_notify'],
+            ups_toemail=config['email_recipients'],
+            ups_subject=config['email_subject'],
+            ups_powerdown=config['powerdown'],
         ))
 
     def _save(self, *args, **kwargs):
