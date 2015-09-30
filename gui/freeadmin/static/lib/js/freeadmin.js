@@ -926,7 +926,7 @@ require([
         var te = e.domNode.parentNode.parentNode;
         var tm = m.domNode.parentNode.parentNode;
         var to = o.domNode.parentNode.parentNode;
-        if(select.get('value') == 'master') {
+        if(select.get('value') == 'MASTER') {
             domStyle.set(trh, "display", "none");
             domStyle.set(trp, "display", "none");
             domStyle.set(td, "display", "table-row");

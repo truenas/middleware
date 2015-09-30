@@ -643,10 +643,10 @@ class UPSForm(ModelForm):
         super(UPSForm, self).__init__(*args, **kwargs)
         self.fields['ups_shutdown'].widget.attrs['onChange'] = mark_safe(
             "disableGeneric('id_ups_shutdown', ['id_ups_shutdowntimer'], "
-            "function(box) { if(box.get('value') == 'lowbatt') { return true; "
+            "function(box) { if(box.get('value') == 'LOWBATT') { return true; "
             "} else { return false; } });")
         self.fields['ups_mode'].widget.attrs['onChange'] = "upsModeToggle();"
-        if self.instance.id and self.instance.ups_shutdown == 'lowbatt':
+        if self.instance.id and self.instance.ups_shutdown == 'LOWBATT':
             self.fields['ups_shutdowntimer'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
