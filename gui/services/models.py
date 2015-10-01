@@ -2589,7 +2589,7 @@ class DomainController(Model):
         icon_model = u"DomainControllerIcon"
 
 
-class WebDAV(Model):
+class WebDAV(NewModel):
     webdav_protocol = models.CharField(
         max_length=120,
         choices=choices.PROTOCOL_CHOICES,
@@ -2642,6 +2642,8 @@ class WebDAV(Model):
         null=True,
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _(u"WebDAV")
         verbose_name_plural = _(u"WebDAV")
@@ -2649,6 +2651,65 @@ class WebDAV(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"WebDAVShareIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('webdav_protocol', 'protocol'),
+            ('webdav_tcpport', 'http_port'),
+            ('webdav_tcpportssl', 'https_port'),
+            ('webdav_password', 'password'),
+            ('webdav_htauth', 'authentication'),
+            ('webdav_certssl', 'certificate'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.webdav.get_config')
+
+        certificate = config['certificate']
+        if certificate:
+            try:
+                certificate = Certificate.objects.get(pk=config['certificate'])
+            except Certificate.DoesNotExist:
+                certificate = None
+
+        protocol = config.get('procotol', [])
+        if 'HTTP' in protocol and 'HTTPS' in protocol:
+            protocol = 'httphttps'
+        elif 'HTTP' in protocol:
+            protocol = 'http'
+        elif 'HTTPS' in protocol:
+            protocol = 'https'
+        return cls(**dict(
+            id=1,
+            webdav_protocol=protocol,
+            webdav_tcpport=config['http_port'],
+            webdav_tcpportssl=config['https_port'],
+            webdav_password=config['password'],
+            webdav_htauth=config['authentication'],
+            webdav_certssl=certificate,
+        ))
+
+    def _save(self, *args, **kwargs):
+        if self.webdav_protocol == 'httphttps':
+            protocol = ['HTTP', 'HTTPS']
+        elif self.webdav_protocol == 'https':
+            protocol = ['HTTPS']
+        else:
+            protocol = ['HTTP']
+
+        data = {
+            'protocol': protocol,
+            'http_port': self.webdav_tcpport,
+            'https_port': self.webdav_tcpportssl,
+            'password': self.webdav_password,
+            'authentication': self.webdav_htauth,
+            'certificate': self.webdav_certssl.id if self.webdav_certssl else None,
+        }
+        self._save_task_call('service.webdav.configure', data)
+        return True
 
 
 class IPFS(NewModel):
