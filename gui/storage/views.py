@@ -1084,6 +1084,15 @@ def volume_lock(request, object_id):
 
     if request.method == "POST":
         notifier().volume_detach(volume)
+        if hasattr(notifier, 'failover_status'):
+            if notifier().failover_status() == 'MASTER':
+                from freenasUI.failover.enc_helper import LocalEscrowCtl
+                escrowctl = LocalEscrowCtl()
+                escrowctl.clear()
+                try:
+                    os.unlink('/tmp/.failover_master')
+                except:
+                    pass
         notifier().restart("system_datasets")
         return JsonResp(request, message=_("Volume locked"))
     return render(request, "storage/lock.html")
