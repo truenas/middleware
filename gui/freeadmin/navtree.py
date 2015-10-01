@@ -266,16 +266,6 @@ class NavTree(object):
         )
         tree_roots.register(nav)
 
-        if fstatus in ('MASTER', 'SINGLE'):
-            nav = TreeRoot(
-                'initialwizard',
-                name=_('Wizard'),
-                icon='WizardIcon',
-                action='wizard',
-                order=980,
-            )
-            tree_roots.register(nav)
-
         nav = TreeRoot(
             'shell',
             name=_('Shell'),

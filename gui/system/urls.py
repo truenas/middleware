@@ -30,35 +30,10 @@ from freenasUI.system.forms import (
     ManualUpdateWizard,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
-    InitialWizard,
-    InitialWizardConfirmForm,
-    InitialWizardDSForm,
-    InitialWizardSettingsForm,
-    InitialWizardShareFormSet,
-    InitialWizardSystemForm,
-    InitialWizardVolumeForm,
-    InitialWizardVolumeImportForm
 )
 
 urlpatterns = patterns('freenasUI.system.views',
     url(r'^$', 'home', name="system_home"),
-    url(r'^wizard/$', InitialWizard.as_view(
-        [
-            ('settings', InitialWizardSettingsForm),
-            ('import', InitialWizardVolumeImportForm),
-            ('volume', InitialWizardVolumeForm),
-            ('ds', InitialWizardDSForm),
-            ('shares', InitialWizardShareFormSet),
-            ('system', InitialWizardSystemForm),
-            ('confirm', InitialWizardConfirmForm),
-        ],
-        condition_dict={
-            'ds': InitialWizardDSForm.show_condition,
-            'import': InitialWizardVolumeImportForm.show_condition,
-            'volume': InitialWizardVolumeForm.show_condition,
-        },
-    ), name='system_initialwizard'),
-    url(r'^wizard/progress/$', 'initialwizard_progress', name="system_initialwizard_progress"),
     url(r'^reboot/$', 'reboot', name="system_reboot"),
     url(r'^reboot/dialog/$', 'reboot_dialog', name="system_reboot_dialog"),
     url(r'^reboot/run/$', 'reboot_run', name="system_reboot_run"),

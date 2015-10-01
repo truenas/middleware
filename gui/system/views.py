@@ -623,28 +623,16 @@ def testmail(request):
     except IndexError:
         kwargs = {}
 
-    fromwizard = False
     data = request.POST.copy()
-    for key, value in data.items():
-        if key.startswith('system-'):
-            fromwizard = True
-            data[key.replace('system-', '')] = value
 
     form = forms.EmailForm(data, **kwargs)
     if not form.is_valid():
         return JsonResp(request, form=form)
 
-    if fromwizard:
-        allfield = 'system-__all__'
-    else:
-        allfield = '__all__'
+    allfield = '__all__'
 
-    if fromwizard:
-        email = request.POST.get('system-sys_email')
-        errmsg = _('You must provide a Root E-mail')
-    else:
-        email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
-        errmsg = _('You must configure the root email (Accounts->Users->root)')
+    email = bsdUsers.objects.get(bsdusr_username='root').bsdusr_email
+    errmsg = _('You must configure the root email (Accounts->Users->root)')
     if not email:
         form.errors[allfield] = form.error_class([errmsg])
 
@@ -824,19 +812,6 @@ def manualupdate_progress(request):
             'indeterminate': True,
         }
 
-    content = json.dumps(data)
-    return HttpResponse(content, content_type='application/json')
-
-
-def initialwizard_progress(request):
-    data = {}
-    if os.path.exists(forms.WIZARD_PROGRESSFILE):
-        with open(forms.WIZARD_PROGRESSFILE, 'rb') as f:
-            data = f.read()
-        try:
-            data = pickle.loads(data)
-        except:
-            data = {}
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 

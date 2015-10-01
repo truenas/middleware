@@ -1954,8 +1954,6 @@ require([
                 registry.byId("top_dialog").show();
             } else if(item.action == 'shell') {
                 _webshell = new WebShell();
-            } else if(item.action == 'wizard') {
-                editObject(gettext("Wizard"), wizardUrl, []);
             } else if(item.action == 'opensupport') {
                 Menu.openSupport();
             } else if(item.action == 'opendocumentation') {
@@ -2048,7 +2046,6 @@ require([
             }
         });
         registry.byId("menupane").set('content', mytree);
-        if(wizardShow) editObject(gettext("Initial Wizard"), wizardUrl, []);
 
     });
 });

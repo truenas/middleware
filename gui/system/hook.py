@@ -18,17 +18,7 @@ class SystemHook(AppHook):
             notifier().failover_status() == 'BACKUP'
         ):
             return []
-        return [
-            {
-                'name': _('Wizard'),
-                'icon': 'images/ui/menu/wizard.png',
-                'onclick': 'editObject("%s", "%s", [])' % (
-                    escapejs(_('Wizard')),
-                    reverse('system_initialwizard'),
-                ),
-                'weight': 90,
-            },
-        ]
+        return []
 
     def system_info(self, request):
         arr = []

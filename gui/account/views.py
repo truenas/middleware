@@ -137,57 +137,6 @@ def json_users(request, exclude=None):
             })
             idx += 1
 
-    # Show users for the directory service provided in the wizard
-    wizard_ds = request.session.get('wizard_ds')
-    if request.GET.get('wizard') == '1' and wizard_ds:
-        if wizard_ds.get('ds_type') == 'ad':
-            users = FreeNAS_ActiveDirectory_Users(
-                domainname=wizard_ds.get('ds_ad_domainname'),
-                bindname=wizard_ds.get('ds_ad_bindname'),
-                bindpw=wizard_ds.get('ds_ad_bindpw'),
-                flags=FLAGS_DBINIT,
-            )
-        elif wizard_ds.get('ds_type') == 'ldap':
-            users = FreeNAS_LDAP_Users(
-                host=wizard_ds.get('ds_ldap_hostname'),
-                basedn=wizard_ds.get('ds_ldap_basedn'),
-                binddn=wizard_ds.get('ds_ldap_binddn'),
-                bindpw=wizard_ds.get('ds_ldap_bindpw'),
-                flags=FLAGS_DBINIT,
-            )
-        elif wizard_ds.get('ds_type') == 'nis':
-            users = FreeNAS_NIS_Users(
-                domain=wizard_ds.get('ds_nis_domain'),
-                servers=wizard_ds.get('ds_nis_servers'),
-                secure_mode=wizard_ds.get('ds_nis_secure_mode'),
-                manycast=wizard_ds.get('ds_nis_manycast'),
-                flags=FLAGS_DBINIT,
-            )
-        else:
-            users = None
-
-        if users is not None:
-            idx = 1
-            # FIXME: code duplication withe the block above
-            for user in users._get_uncached_usernames():
-                if idx > 50:
-                    break
-                if (
-                    (query is None or user.startswith(query)) and
-                    user not in exclude
-                ):
-                    json_user['items'].append({
-                        'id': '%s_%s' % (
-                            wizard_ds.get('ds_type'),
-                            user,
-                        ),
-                        'name': user,
-                        'label': user,
-                    })
-                    idx += 1
-
-            del users
-
     return HttpResponse(
         json.dumps(json_user, indent=3),
         content_type='application/json',
@@ -217,54 +166,6 @@ def json_groups(request):
                 'label': grp.gr_name,
             })
             idx += 1
-
-    # Show groups for the directory service provided in the wizard
-    wizard_ds = request.session.get('wizard_ds')
-    if request.GET.get('wizard') == '1' and wizard_ds:
-        if wizard_ds.get('ds_type') == 'ad':
-            groups = FreeNAS_ActiveDirectory_Groups(
-                domainname=wizard_ds.get('ds_ad_domainname'),
-                bindname=wizard_ds.get('ds_ad_bindname'),
-                bindpw=wizard_ds.get('ds_ad_bindpw'),
-                flags=FLAGS_DBINIT,
-            )
-        elif wizard_ds.get('ds_type') == 'ldap':
-            groups = FreeNAS_LDAP_Groups(
-                host=wizard_ds.get('ds_ldap_hostname'),
-                basedn=wizard_ds.get('ds_ldap_basedn'),
-                binddn=wizard_ds.get('ds_ldap_binddn'),
-                bindpw=wizard_ds.get('ds_ldap_bindpw'),
-                flags=FLAGS_DBINIT,
-            )
-        elif wizard_ds.get('ds_type') == 'nis':
-            groups = FreeNAS_NIS_Groups(
-                domain=wizard_ds.get('ds_nis_domain'),
-                servers=wizard_ds.get('ds_nis_servers'),
-                secure_mode=wizard_ds.get('ds_nis_secure_mode'),
-                manycast=wizard_ds.get('ds_nis_manycast'),
-                flags=FLAGS_DBINIT,
-            )
-        else:
-            groups = None
-
-        if groups is not None:
-            idx = 1
-            # FIXME: code duplication withe the block above
-            for group in groups._get_uncached_groupnames():
-                if idx > 50:
-                    break
-                if query is None or group.startswith(query):
-                    json_group['items'].append({
-                        'id': '%s_%s' % (
-                            wizard_ds.get('ds_type'),
-                            group,
-                        ),
-                        'name': group,
-                        'label': group,
-                    })
-                    idx += 1
-
-            del groups
 
     return HttpResponse(
         json.dumps(json_group, indent=3),
