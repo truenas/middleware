@@ -325,7 +325,7 @@ class NTPServer(NewModel):
 
 class Advanced(NewModel):
     adv_consolemenu = models.BooleanField(
-        verbose_name=_("Enable Console Menu"),
+        verbose_name=_("Enable Console CLI"),
         default=False,
     )
     adv_serialconsole = models.BooleanField(
