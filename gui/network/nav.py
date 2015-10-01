@@ -48,14 +48,6 @@ class IPMI_B(TreeNode):
             self.name = _('IPMI (Node A)')
 
 
-class NetSummary(TreeNode):
-
-    gname = 'NetworkSummary'
-    name = _(u'Network Summary')
-    type = 'opennetwork'
-    icon = u'SettingsIcon'
-
-
 class GlobalConf(TreeNode):
 
     gname = 'GlobalConfiguration'
