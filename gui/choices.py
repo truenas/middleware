@@ -324,6 +324,18 @@ class whoChoices:
         return iter((i, i) for i in self._wholist)
 
 
+class PoolChoices:
+    def __init__(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        self.volumes = map(
+            lambda v: (v['name'], v['name']),
+            dispatcher.call_sync('zfs.pool.query', [])
+        )
+
+    def __iter__(self):
+        return iter(self.volumes)
+
+
 class VolumeChoices:
     def __init__(self):
         from freenasUI.middleware.connector import connection as dispatcher

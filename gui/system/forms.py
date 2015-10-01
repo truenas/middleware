@@ -493,6 +493,11 @@ class AdvancedForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Advanced
+        widgets = {
+            'adv_system_dataset_pool': forms.Select(
+                choices=choices.PoolChoices()
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         from freenasUI.middleware.connector import connection as dispatcher

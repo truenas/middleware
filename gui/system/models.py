@@ -403,6 +403,10 @@ class Advanced(NewModel):
         verbose_name=_("MOTD banner"),
         default='Welcome',
     )
+    adv_system_dataset_pool = models.CharField(
+        verbose_name=_("System Dataset Pool"),
+        max_length=200,
+    )
     adv_boot_scrub = models.IntegerField(
         default=35,
         editable=False,
@@ -436,6 +440,7 @@ class Advanced(NewModel):
             [('id', '=', 0)],
             {'single': True}
         ).get('attributes')
+        sysdataset = dispatcher.call_sync('system_dataset.status')
         try:
             user = bsdUsers.objects.get(id=adv['periodic_notify_user'])
         except bsdUsers.DoesNotExist:
@@ -455,6 +460,7 @@ class Advanced(NewModel):
             adv_debugkernel=adv['debugkernel'],
             adv_uploadcrash=adv['uploadcrash'],
             adv_motd=adv['motd'],
+            adv_system_dataset_pool=sysdataset['pool'],
             adv_boot_scrub=adv['boot_scrub_internal'],
             adv_periodic_notifyuser=user,
         ))
@@ -494,6 +500,7 @@ class Advanced(NewModel):
             'periodic_notify_user': userid,
         }
         self._save_task_call('system.advanced.configure', data)
+        self._save_task_call('system_dataset.configure', self.adv_system_dataset_pool)
         return True
 
 
