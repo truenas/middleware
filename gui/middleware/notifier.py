@@ -229,8 +229,6 @@ class notifier:
     __service2daemon = {
         'ctld': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
-        'ups': ('upsd', '/var/db/nut/upsd.pid'),
-        'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
         'webdav': ('httpd', '/var/run/httpd.pid'),
         'backup': (None, '/var/run/backup.pid')
@@ -658,36 +656,6 @@ class notifier:
     def _start_motd(self):
         self._system("/usr/sbin/service ix-motd quietstart")
         self._system("/usr/sbin/service motd quietstart")
-
-    def _start_ups(self):
-        self._system("/usr/sbin/service ix-ups quietstart")
-        self._system("/usr/sbin/service nut start")
-        self._system("/usr/sbin/service nut_upsmon start")
-        self._system("/usr/sbin/service nut_upslog start")
-
-    def _stop_ups(self):
-        self._system("/usr/sbin/service nut_upslog forcestop")
-        self._system("/usr/sbin/service nut_upsmon forcestop")
-        self._system("/usr/sbin/service nut forcestop")
-
-    def _restart_ups(self):
-        self._system("/usr/sbin/service ix-ups quietstart")
-        self._system("/usr/sbin/service nut forcestop")
-        self._system("/usr/sbin/service nut_upsmon forcestop")
-        self._system("/usr/sbin/service nut_upslog forcestop")
-        self._system("/usr/sbin/service nut restart")
-        self._system("/usr/sbin/service nut_upsmon restart")
-        self._system("/usr/sbin/service nut_upslog restart")
-
-    def _started_ups(self):
-        from freenasUI.services.models import UPS
-        mode = UPS.objects.order_by('-id')[0].ups_mode
-        if mode == "master":
-            svc = "ups"
-        else:
-            svc = "upsmon"
-        sn = self._started_notify("start", "upsmon")
-        return self._started(svc, sn)
 
     def start_ataidle(self, what=None):
         if what is not None:
