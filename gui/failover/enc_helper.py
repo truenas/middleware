@@ -81,7 +81,9 @@ class LocalEscrowCtl:
         command = "CLEAR"
         self.sock.sendall(command)
         data = self.sock.recv(BUFSIZE)
-        return (data == "200 clear succeeded.\n")
+        succeeded = (data == "200 clear succeeded.\n")
+        file = open('/tmp/.failover_needop', 'w')
+        return (succeeded)
 
     # Shutdown local escrow daemon.
     def shutdown(self):
