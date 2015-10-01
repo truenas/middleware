@@ -99,6 +99,20 @@ class CIFS_Share(NewModel):
         choices=list(choices.CIFS_VFS_OBJECTS())
     )
 
+    cifs_hostsallow = RawCharField(
+        verbose_name=_("Hosts Allow"),
+        max_length = 255,
+        help_text=_("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings."),
+        blank=True
+    )
+
+    cifs_hostsdeny = RawCharField(
+        verbose_name=_("Hosts Deny"),
+        max_length=255,
+        help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings."),
+        blank=True
+    )
+
     #cifs_storage_task = models.ForeignKey(
     #    Task,
     #    verbose_name=_("Periodic Snapshot Task"),
@@ -139,7 +153,9 @@ class CIFS_Share(NewModel):
             ('cifs_showhiddenfiles', 'properties.show_hidden_files'),
             ('cifs_guestok', 'properties.guest_ok'),
             ('cifs_guestonly', 'properties.guest_only'),
-            ('cifs_vfsobjects', 'properties.vfs_objects')
+            ('cifs_vfsobjects', 'properties.vfs_objects'),
+            ('cifs_hostsallow', 'properties.hosts_allow'),
+            ('cifs_hostsdeny', 'properties.hosts_deny'),
         )
         extra_fields = (
             ('type', 'cifs'),
@@ -303,10 +319,11 @@ class NFS_Share(NewModel):
         verbose_name=_("Comment"),
         blank=True,
     )
-    nfs_hosts = models.TextField(
+    nfs_hosts = RawCharField(
         verbose_name=_("Authorized IP addresses or hosts"),
         help_text=_("IP addresses or hostnames that are authorized to "
             "access the NFS share."),
+        max_length=255,
         blank=True,
         )
     nfs_alldirs = models.BooleanField(

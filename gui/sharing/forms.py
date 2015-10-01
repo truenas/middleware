@@ -51,18 +51,6 @@ log = logging.getLogger('sharing.forms')
 
 
 class CIFS_ShareForm(ModelForm):
-    cifs_hostsallow = forms.CharField(
-        label=_("Hosts Allow"),
-        help_text=_("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings."),
-        required=False
-    )
-
-    cifs_hostsdeny = forms.CharField(
-        label=_("Hosts Deny"),
-        help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings."),
-        required=False
-    )
-
     """
     def _get_storage_tasks(self, cifs_path=None, cifs_home=False):
         p = pipeopen("zfs list -H -o mountpoint,name")
@@ -107,6 +95,9 @@ class CIFS_ShareForm(ModelForm):
         self.fields['cifs_home'].widget.attrs['onChange'] = (
             "cifs_storage_task_toggle();"
         )
+
+        self.initial['cifs_hostsallow'] = ' '.join(self.instance.cifs_hostsallow)
+        self.initial['cifs_hostsdeny'] = ' '.join(self.instance.cifs_hostsdeny)
 
         """
         if self.instance:
@@ -158,7 +149,7 @@ class CIFS_ShareForm(ModelForm):
 
     def clean_cifs_hostsdeny(self):
         net = self.cleaned_data.get("cifs_hostsdeny")
-        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
+        net = net.split()
         return net
 
     def clean(self):
@@ -226,6 +217,9 @@ class AFP_ShareForm(ModelForm):
         self.fields['afp_name'].required = False
         self.initial['afp_allow'] = ' '.join(self.instance.afp_allow)
         self.initial['afp_deny'] = ' '.join(self.instance.afp_deny)
+        self.initial['afp_hostsallow'] = ' '.join(self.instance.afp_hostsallow)
+        self.initial['afp_hostsdeny'] = ' '.join(self.instance.afp_hostsdeny)
+
 
     def clean_afp_allow(self):
         return self.cleaned_data['afp_allow'].split()
