@@ -1673,23 +1673,6 @@ class WebDAVForm(ModelForm):
                 "Webdav SSL protocol specified without choosing a certificate")
         return cdata
 
-    def save(self):
-        obj = super(WebDAVForm,self).save(commit=False)
-        obj.webdav_password = notifier().pwenc_encrypt(
-            self.cleaned_data.get('webdav_password')
-        )
-        obj.save()
-        if self.__original_changed():
-            started = notifier().reload("webdav")
-            if (started is False
-                and
-                models.services.objects.get(srv_service='webdav').srv_enable):
-                    raise ServiceFailed( "webdav", _("The WebDAV service failed to reload."))
-
-    def done(self, *args, **kwargs):
-        if self._has_changed('webdav_certssl'):
-            notifier().start_ssl("webdav")
-
 
 class IPFSForm(ModelForm):
 

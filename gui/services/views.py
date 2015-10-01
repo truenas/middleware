@@ -145,7 +145,7 @@ def core(request):
     try:
         webdav = models.WebDAV.objects.order_by("-id")[0]
     except IndexError:
-	webdav = models.WebDAV.objects.create()
+        webdav = models.WebDAV.objects.create()
 
     srv_mw = {k['name']: k['state'] for k in dispatcher.call_sync('services.query')}
 
@@ -213,7 +213,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd', 'tftpd', 'ups'):
+    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd', 'tftpd', 'ups', 'webdav'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],

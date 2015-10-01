@@ -214,10 +214,10 @@
            <strong>{% trans "WebDAV" %}</strong>
        </td>
        <td>
-            <img id="webdav_toggle" name="webdav_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "webdav" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
+            <img id="webdav_toggle" name="webdav_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.webdav == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="webdav_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "WebDAV Settings"|force_escape|force_escape %}', '{{ webdav.get_edit_url }}');" title="{% trans "WebDAV Settings" %}">
+           <img id="webdav_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "WebDAV Settings"|escapejs %}', '{{ webdav.get_edit_url }}');" title="{% trans "WebDAV Settings" %}">
        </td>
   </tr>
 </table>
