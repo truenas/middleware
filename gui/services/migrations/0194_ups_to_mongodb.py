@@ -30,7 +30,7 @@ class Migration(DataMigration):
         cs.set('service.ups.identifier', ups.ups_identifier)
         cs.set('service.ups.remote_host', ups.ups_remotehost)
         cs.set('service.ups.remote_port', ups.ups_remoteport)
-        cs.set('service.ups.driver', ups.ups_driver)
+        cs.set('service.ups.driver', ups.ups_driver.split('$')[0])
         cs.set('service.ups.driver_port', ups.ups_port)
         cs.set('service.ups.auxiliary', ups.ups_options or None)
         cs.set('service.ups.description', ups.ups_description or None)
