@@ -667,47 +667,6 @@ class UPSForm(ModelForm):
                 0, (self.instance.ups_port, self.instance.ups_port)
             )
 
-    def clean_ups_port(self):
-        port = self.cleaned_data.get("ups_port")
-        if self.cleaned_data.get("ups_mode") == 'MASTER' and not port:
-            raise forms.ValidationError(
-                _("This field is required")
-            )
-        return port
-
-    def clean_ups_remotehost(self):
-        rhost = self.cleaned_data.get("ups_remotehost")
-        if self.cleaned_data.get("ups_mode") != 'MASTER':
-            if not rhost:
-                raise forms.ValidationError(
-                    _("This field is required")
-                )
-        return rhost
-
-    def clean_ups_identifier(self):
-        ident = self.cleaned_data.get("ups_identifier")
-        if not re.search(r'^[a-z0-9\.\-_]+$', ident, re.I):
-            raise forms.ValidationError(
-                _("Use alphanumeric characters, \".\", \"-\" and \"_\".")
-            )
-        return ident
-
-    def clean_ups_monuser(self):
-        user = self.cleaned_data.get("ups_monuser")
-        if re.search(r'[ #]', user, re.I):
-            raise forms.ValidationError(
-                _("Spaces or number signs are not allowed.")
-            )
-        return user
-
-    def clean_ups_monpwd(self):
-        pwd = self.cleaned_data.get("ups_monpwd")
-        if re.search(r'[ #]', pwd, re.I):
-            raise forms.ValidationError(
-                _("Spaces or number signs are not allowed.")
-            )
-        return pwd
-
     def clean_ups_toemail(self):
         email = self.cleaned_data.get("ups_toemail")
         if email:
