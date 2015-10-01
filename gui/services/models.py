@@ -2675,7 +2675,7 @@ class WebDAV(NewModel):
             except Certificate.DoesNotExist:
                 certificate = None
 
-        protocol = config.get('procotol', [])
+        protocol = config.get('protocol', [])
         if 'HTTP' in protocol and 'HTTPS' in protocol:
             protocol = 'httphttps'
         elif 'HTTP' in protocol:
