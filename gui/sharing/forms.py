@@ -153,7 +153,7 @@ class CIFS_ShareForm(ModelForm):
 
     def clean_cifs_hostsallow(self):
         net = self.cleaned_data.get("cifs_hostsallow")
-        net = re.sub(r'\s{2,}|\n', ' ', net).strip()
+        net = net.split()
         return net
 
     def clean_cifs_hostsdeny(self):
@@ -224,6 +224,14 @@ class AFP_ShareForm(ModelForm):
                 self.fields['afp_dperm'].widget.attrs['disabled'] = 'false'
                 self.fields['afp_umask'].widget.attrs['disabled'] = 'false'
         self.fields['afp_name'].required = False
+        self.initial['afp_allow'] = ' '.join(self.instance.afp_allow)
+        self.initial['afp_deny'] = ' '.join(self.instance.afp_deny)
+
+    def clean_afp_allow(self):
+        return self.cleaned_data['afp_allow'].split()
+
+    def clean_afp_deny(self):
+        return self.cleaned_data['afp_deny'].split()
 
     def clean_afp_hostsallow(self):
         res = self.cleaned_data['afp_hostsallow']
@@ -247,7 +255,7 @@ class AFP_ShareForm(ModelForm):
                 raise forms.ValidationError(
                     _("Invalid IP or Network.")
                 )
-        return res
+        return res.split()
 
     def clean_afp_hostsdeny(self):
         res = self.cleaned_data['afp_hostsdeny']
@@ -271,7 +279,7 @@ class AFP_ShareForm(ModelForm):
                 raise forms.ValidationError(
                     _("Invalid IP or Network.")
                 )
-        return res
+        return res.split()
 
     def clean_afp_name(self):
         name = self.cleaned_data.get('afp_name')

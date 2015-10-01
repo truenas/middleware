@@ -30,7 +30,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, NewModel, UserField, GroupField, PathField
-from freenasUI.freeadmin.models.fields import MultiSelectField
+from freenasUI.freeadmin.models.fields import MultiSelectField, RawCharField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Task
 
@@ -165,16 +165,16 @@ class AFP_Share(NewModel):
             verbose_name=_("Share Comment"),
             blank=True
             )
-    afp_allow = models.CharField(
-            max_length=120,
+    afp_allow = RawCharField(
             verbose_name=_("Allow List"),
             blank=True,
+            max_length=255,
             help_text=_("This option allows the users and groups that access a share to be specified. Users and groups are specified, delimited by commas. Groups are designated by a @ prefix.")
             )
-    afp_deny = models.CharField(
-            max_length=120,
+    afp_deny = RawCharField(
             verbose_name=_("Deny List"),
             blank=True,
+            max_length=255,
             help_text=_("The deny option specifies users and groups who are not allowed access to the share. It follows the same format as the allow option.")
             )
     afp_ro = models.CharField(
@@ -233,15 +233,15 @@ class AFP_Share(NewModel):
         blank=True,
         verbose_name=_("Default umask"),
         )
-    afp_hostsallow = models.CharField(
+    afp_hostsallow = RawCharField(
         blank=True,
-        max_length=120,
+        max_length=255,
         help_text=_("Allow only listed hosts and/or networks access to this volume"),
         verbose_name=_("Hosts Allow")
         )
-    afp_hostsdeny = models.CharField(
+    afp_hostsdeny = RawCharField(
         blank=True,
-        max_length=120,
+        max_length=255,
         help_text=_("Deny listed hosts and/or networks access to this volume"),
         verbose_name=_("Hosts Deny")
         )
@@ -274,7 +274,11 @@ class AFP_Share(NewModel):
             ('afp_upriv', 'properties.afp3_privileges'),
             ('afp_fperm', 'properties.default_file_perms'),
             ('afp_dperm', 'properties.default_directory_perms'),
-            ('afp_umask', 'properties.default_umask')
+            ('afp_umask', 'properties.default_umask'),
+            ('afp_hostsallow', 'properties.hosts_allow'),
+            ('afp_hostsdeny', 'properties.hosts_deny'),
+            ('afp_allow', 'properties.users_allow'),
+            ('afp_deny', 'properties.users_deny')
         )
         extra_fields = (
             ('type', 'afp'),

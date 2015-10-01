@@ -246,3 +246,17 @@ class ListField(MultiSelectField):
         if value in ('', None):
             return []
         return value.split(',')
+
+
+class RawCharField(models.CharField):
+    empty_strings_allowed = True
+    __metaclass__ = models.SubfieldBase
+
+    def get_internal_type(self):
+        return "RawCharField"
+
+    def to_python(self, value):
+        return value
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        return value
