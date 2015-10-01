@@ -25,76 +25,31 @@
 #
 #####################################################################
 
-from collections import defaultdict, OrderedDict
-from datetime import datetime
-import cPickle as pickle
 import json
 import logging
-import math
 import os
 import re
 import stat
-import string
-import subprocess
 
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
-from django.db import transaction
 from django.db.models import Q
 from django.forms import FileField
-from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
-from django.utils.html import escapejs
 from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ugettext as __
 
 from dojango import forms
 from freenasUI import choices
-from freenasUI.account.forms import bsdUsersForm
-from freenasUI.account.models import bsdGroups, bsdUsers
-from freenasUI.common import humanize_size, humanize_number_si
+from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FreeNAS_LDAP
-)
 
-from freenasUI.directoryservice.forms import (
-    ActiveDirectoryForm,
-    LDAPForm,
-    NISForm,
-    NT4Form,
-)
-from freenasUI.directoryservice.models import (
-    ActiveDirectory,
-    LDAP,
-    NIS,
-    NT4,
-)
-from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.connector import connection as dispatcher
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.models import (
-    services,
-    iSCSITarget,
-    iSCSITargetAuthorizedInitiator,
-    iSCSITargetExtent,
-    iSCSITargetPortal,
-    iSCSITargetPortalIP,
-    iSCSITargetToExtent,
-)
-from freenasUI.sharing.models import (
-    AFP_Share,
-    CIFS_Share,
-    NFS_Share
-)
-from freenasUI.storage.forms import VolumeAutoImportForm
-from freenasUI.storage.models import Disk, Volume, Scrub
+from freenasUI.storage.models import Volume
 from freenasUI.system import models
-from freenasUI.tasks.models import SMARTTest
 
 log = logging.getLogger('system.forms')
 

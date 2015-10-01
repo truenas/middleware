@@ -27,7 +27,6 @@
 import dateutil
 import logging
 import os
-import uuid
 import signal
 
 from dateutil import parser as dtparser
@@ -40,7 +39,6 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.freeadmin.models import ConfigQuerySet, NewManager, NewModel, Model, UserField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Volume
 
 log = logging.getLogger('system.models')
 
@@ -1158,4 +1156,3 @@ class Backup(Model):
 
     class Meta:
         verbose_name = _("System Backup")
-
