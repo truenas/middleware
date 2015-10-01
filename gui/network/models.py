@@ -203,6 +203,11 @@ class Interfaces(NewModel):
         blank=True
     )
 
+    int_enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=False
+    )
+
     int_dhcp = models.BooleanField(
         verbose_name=_("DHCP"),
         default=False,
@@ -248,6 +253,7 @@ class Interfaces(NewModel):
         field_mapping = (
             ('id', 'id'),
             ('int_name', 'name'),
+            ('int_enabled', 'enabled'),
             ('int_dhcp', 'dhcp'),
             ('int_ipv6auto', 'rtadv'),
             ('int_disableipv6', 'noipv6'),
