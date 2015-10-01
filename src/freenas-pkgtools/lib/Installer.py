@@ -6,6 +6,7 @@ import json
 import tarfile
 import hashlib
 import logging
+import tempfile
 
 # And now freenas modules
 import Configuration
@@ -415,14 +416,28 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         # Is this a problem?  Keeping the file in memory?
         # Note that we write the file out later, so this allows
         # us to not worry about the buffer.
-        buffer = fileData.read()
-        hash = hashlib.sha256(buffer).hexdigest()
+        try:
+            temp_entry = tempfile.TemporaryFile(dir = os.path.dirname(full_path))
+        except:
+            s = "Cannot crate temporary file in %s" % os.path.dirname(full_path)
+            log.error(s)
+            raise
+        hash = hashlib.sha256()
+        while True:
+            d = fileData.read(1024 * 1024)
+            if d:
+                hash.update(d)
+                temp_entry.write(d)
+            else:
+                break
+        hash = hash.hexdigest()
+        temp_entry.seek(0)
         # PKGNG sets hash to "-" if it's not computed.
         if mFileHash != "-":
             if hash != mFileHash:
                 log.error("%s hash does not match manifest" % entry.name)
         type = "file"
-        # First we try to create teh file.
+        # First we try to create the file.
         # If that doesn't work, we try to create a
         # new file (how would this get cleaned up?),
         # and then rename it in place.
@@ -439,8 +454,14 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         except:
             newfile = full_path + ".new"
             f = open(newfile, "w")
-        f.write(buffer)
+        while True:
+            d = temp_entry.read(1024 * 1024)
+            if d:
+                f.write(d)
+            else:
+                break
         f.close()
+        temp_entry.close()
         if newfile is not None:
             try:
                 os.rename(newfile, full_path)
