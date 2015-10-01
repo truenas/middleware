@@ -38,7 +38,6 @@ class SystemHook(AppHook):
             models.Settings,
             models.Advanced,
             models.Email,
-            models.SystemDataset,
             models.Tunable,
             models.CertificateAuthority,
             models.Certificate,

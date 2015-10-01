@@ -1111,11 +1111,6 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.SystemDatasetIcon {
-    background-image:url('/static/images/ui/tree/system_dataset.png');
-    width:16px;
-    height:16px;
-}
 .WizardIcon {
     background-image:url('/static/images/ui/tree/wizard.png');
     width:16px;

@@ -716,28 +716,6 @@ class RegistrationForm(ModelForm):
         f.close()
 
 
-class SystemDatasetForm(ModelForm):
-    sys_pool = forms.ChoiceField(
-        label=_("System dataset pool"),
-        required=False
-    )
-
-    class Meta:
-        fields = '__all__'
-        model = models.SystemDataset
-
-    def __init__(self, *args, **kwargs):
-        super(SystemDatasetForm, self).__init__(*args, **kwargs)
-        pool_choices = [('', ''), ('freenas-boot', 'freenas-boot')]
-        for v in Volume.objects.filter(vol_fstype='ZFS'):
-            pool_choices.append((v.vol_name, v.vol_name))
-
-        self.fields['sys_pool'].choices = pool_choices
-        self.instance._original_sys_pool = self.instance.sys_pool
-        self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
-        self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
-
-
 class UpdateForm(ModelForm):
 
     curtrain = forms.CharField(

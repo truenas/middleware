@@ -722,69 +722,6 @@ class Registration(Model):
         deletable = False
 
 
-class SystemDataset(Model):
-    sys_pool = models.CharField(
-        max_length=1024,
-        blank=True,
-        verbose_name=_("Pool"),
-        choices=()
-    )
-    sys_syslog_usedataset = models.BooleanField(
-        default=False,
-        verbose_name=_("Syslog")
-    )
-    sys_rrd_usedataset = models.BooleanField(
-        default=False,
-        verbose_name=_("Reporting Database"),
-        help_text=_(
-            'Save the Round-Robin Database (RRD) used by system statistics '
-            'collection daemon into the system dataset'
-        )
-    )
-    sys_uuid = models.CharField(
-        editable=False,
-        max_length=32,
-    )
-    sys_uuid_b = models.CharField(
-        editable=False,
-        max_length=32,
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        verbose_name = _("System Dataset")
-
-    class FreeAdmin:
-        deletable = False
-        icon_model = u"SystemDatasetIcon"
-        icon_object = u"SystemDatasetIcon"
-        icon_view = u"SystemDatasetIcon"
-        icon_add = u"SystemDatasetIcon"
-
-    def __init__(self, *args, **kwargs):
-        super(SystemDataset, self).__init__(*args, **kwargs)
-        self.__sys_uuid_field = None
-
-    @property
-    def usedataset(self):
-        return self.sys_syslog_usedataset
-
-    def get_sys_uuid(self):
-        if not self.__sys_uuid_field:
-            if (
-                not notifier().is_freenas() and
-                notifier().failover_node() == 'B'
-            ):
-                self.__sys_uuid_field = 'sys_uuid_b'
-            else:
-                self.__sys_uuid_field = 'sys_uuid'
-        return getattr(self, self.__sys_uuid_field)
-
-    def new_uuid(self):
-        setattr(self, self.__sys_uuid_field, uuid.uuid4().hex)
-
-
 class Update(NewModel):
     upd_autocheck = models.BooleanField(
         verbose_name=_('Check Automatically For Updates'),

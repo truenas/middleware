@@ -76,17 +76,6 @@ class Info(TreeNode):
     order = -100
 
 
-class SystemDataset(BackupMixin, TreeNode):
-
-    gname = 'SystemDataset'
-    name = _(u'System Dataset')
-    icon = u"SysDatasetIcon"
-    type = 'opensystem'
-    order = -80
-    replace_only = True
-    append_to = 'system'
-
-
 class TunableView(TreeNode):
 
     gname = 'View'
