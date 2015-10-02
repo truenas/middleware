@@ -1617,28 +1617,8 @@ class WebDAVForm(ModelForm):
         widgets = {
             'webdav_tcpport' : forms.widgets.TextInput(),
             'webdav_tcpportssl' : forms.widgets.TextInput(),
-            'webdav_password' : forms.widgets.PasswordInput(render_value=False), 
+            'webdav_password' : forms.widgets.PasswordInput(render_value=False),
         }
-
-    def __original_save(self):
-        for name in ('webdav_password', 'webdav_tcpport','webdav_tcpportssl','webdav_protocol','webdav_htauth','webdav_certssl'):
-            setattr(
-                self.instance, "_original_%s" % name,
-                getattr(self.instance, name)
-            )
-
-    def _has_changed(self,name):
-        if getattr(self.instance, "_original_%s" % name) != getattr(self.instance, name):
-            return True
-        return False
-
-    def __original_changed(self):
-        for name in ('webdav_password', 'webdav_tcpport', 'webdav_protocol','webdav_tcpportssl','webdav_htauth','webdav_certssl'):
-            original_value = getattr(self.instance, "_original_%s" % name)
-            instance_value = getattr(self.instance, name)
-            if original_value != instance_value:
-                return True
-        return False
 
     def __init__(self, *args, **kwargs):
         super(WebDAVForm, self).__init__(*args, **kwargs)
@@ -1649,7 +1629,6 @@ class WebDAVForm(ModelForm):
         self.fields['webdav_protocol'].widget.attrs['onChange'] = (
             "webdavprotocolToggle();"
         )
-        self.__original_save()
 
     def clean_webdav_password2(self):
         password1 = self.cleaned_data.get("webdav_password")
