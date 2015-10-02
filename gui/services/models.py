@@ -305,6 +305,7 @@ class CIFS(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.cifs.get_config')
         return cls(**dict(
+            id=1,
             cifs_srv_netbiosname=config['netbiosname'],
             cifs_srv_workgroup=config['workgroup'],
             cifs_srv_description=config['description'],
@@ -460,6 +461,7 @@ class AFP(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.afp.get_config')
         return cls(**dict(
+            id=1,
             afp_srv_guest=config['guest_enable'],
             afp_srv_guest_user=config['guest_user'],
             afp_srv_bindip=config['bind_addresses'],
@@ -1240,6 +1242,7 @@ class DynamicDNS(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.dyndns.get_config')
         return cls(**dict(
+            id=1,
             ddns_provider=config['provider'],
             ddns_ipserver=config['ipserver'],
             ddns_domain=','.join(config['domains'] or []),
@@ -1364,6 +1367,7 @@ class SNMP(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.snmp.get_config')
         return cls(**dict(
+            id=1,
             snmp_location=config['location'],
             snmp_contact=config['contact'],
             snmp_v3=config['v3'],
@@ -1542,6 +1546,7 @@ class UPS(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.ups.get_config')
         return cls(**dict(
+            id=1,
             ups_mode=config['mode'],
             ups_identifier=config['identifier'],
             ups_remotehost=config['remote_host'],
@@ -1896,6 +1901,7 @@ class FTP(NewModel):
                 ftp_tls_opt_ip_address_required = True
 
         return cls(**dict(
+            id=1,
             ftp_port=config['port'],
             ftp_clients=config['max_clients'],
             ftp_ipconnections=config['ip_connections'],
@@ -2065,6 +2071,7 @@ class TFTP(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.tftp.get_config')
         return cls(**dict(
+            id=1,
             tftp_directory=config['path'],
             tftp_newfiles=config['allow_new_files'],
             tftp_port=config['port'],
@@ -2180,6 +2187,7 @@ class SSH(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.ssh.get_config')
         return cls(**dict(
+            id=1,
             ssh_tcpport=config['port'],
             ssh_rootlogin=config['permit_root_login'],
             ssh_passwordauth=config['allow_password_auth'],
@@ -2739,6 +2747,7 @@ class IPFS(NewModel):
         from freenasUI.middleware.connector import connection as dispatcher
         config = dispatcher.call_sync('service.ipfs.get_config')
         return cls(**dict(
+            id=1,
             ipfs_path=config['path'],
         ))
 
