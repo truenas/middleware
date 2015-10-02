@@ -1725,8 +1725,8 @@ class SnapshotResource(DojoResource):
             'filesystem': bundle.obj['dataset'],
             'fullname': bundle.obj['name'],
             'name': bundle.obj['name'],
-            'used': bundle.obj['properties.used.value'],
-            'refer': bundle.obj['properties.refer.value'],
+            'used': bundle.obj['properties.used.rawvalue'],
+            'refer': bundle.obj['properties.referenced.rawvalue'],
             'mostrecent': most_recent == bundle.obj['id']
         }
 
