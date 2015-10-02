@@ -347,8 +347,12 @@ class InterfacesForm(ModelForm):
     def done(self, *args, **kwargs):
         # TODO: new IP address should be added in a side-by-side manner
         # or the interface wouldn't appear once IP was changed.
-        notifier().start("network")
-        notifier().reload("networkgeneral")
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed():
+            s = _n.failover_rpc()
+            s.notifier('sync_carp_ips', None, None)
+        _n.start("network")
+        _n.reload("networkgeneral")
         super(InterfacesForm, self).done(*args, **kwargs)
 
 
