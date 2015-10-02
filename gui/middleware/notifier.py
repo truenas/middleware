@@ -230,7 +230,6 @@ class notifier:
         'ctld': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
-        'webdav': ('httpd', '/var/run/httpd.pid'),
         'backup': (None, '/var/run/backup.pid')
     }
 
@@ -362,22 +361,6 @@ class notifier:
             self.reload(what)
         except:
             self.start(what)
-
-    def _start_webdav(self):
-        self._system("/usr/sbin/service ix-apache onestart")
-        self._system("/usr/sbin/service apache24 start")
-
-    def _stop_webdav(self):
-        self._system("/usr/sbin/service apache24 stop")
-
-    def _restart_webdav(self):
-        self._system("/usr/sbin/service apache24 forcestop")
-        self._system("/usr/sbin/service ix-apache onestart")
-        self._system("/usr/sbin/service apache24 restart")
-
-    def _reload_webdav(self):
-        self._system("/usr/sbin/service ix-apache onestart")
-        self._system("/usr/sbin/service apache24 reload")
 
     def _restart_django(self):
         self._system("/usr/sbin/service django restart")
