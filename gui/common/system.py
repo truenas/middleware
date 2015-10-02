@@ -58,7 +58,7 @@ def get_sw_version(strip_build_num=False):
             conf = Configuration.Configuration()
             sys_mani = conf.SystemManifest()
             if sys_mani:
-                _VERSION = sys_mani.Sequence()
+                _VERSION = sys_mani.Version()
         if _VERSION is None:
             with open(VERSION_FILE) as fd:
                 _VERSION = fd.read().strip()
