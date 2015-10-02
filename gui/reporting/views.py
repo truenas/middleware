@@ -33,7 +33,7 @@ from django.shortcuts import render
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.reporting import rrd
 
-RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
+RRD_BASE_PATH = "/var/db/system/rrd/localhost"
 
 log = logging.getLogger('reporting.views')
 
