@@ -557,10 +557,6 @@ def top(request):
 
 def reboot_dialog(request):
     if request.method == "POST":
-        if notifier().zpool_scrubbing():
-            if 'scrub_asked' not in request.session:
-                request.session['scrub_asked'] = True
-                return render(request, 'system/reboot_dialog2.html')
         request.session['allow_reboot'] = True
         return JsonResp(
             request,
@@ -582,7 +578,8 @@ def reboot(request):
 
 
 def reboot_run(request):
-    notifier().restart("system")
+    from freenasUI.middleware.connector import connection as dispatcher
+    dispatcher.submit_task('system.reboot')
     return HttpResponse('OK')
 
 
@@ -612,7 +609,8 @@ def shutdown(request):
 
 
 def shutdown_run(request):
-    notifier().stop("system")
+    from freenasUI.middleware.connector import connection as dispatcher
+    dispatcher.submit_task('system.shutdown')
     return HttpResponse('OK')
 
 
