@@ -31,4 +31,5 @@ urlpatterns = patterns('freenasUI.vcp.views',
                        url(r'^home/$', 'vcp_home', name='vcp_home'),
                        url(r'^uninstall/$', 'vcp_uninstall', name='vcp_uninstall'),
                        url(r'^upgrade/$', 'vcp_upgrade', name='vcp_upgrade'),
+                       url(r'^repair/$', 'vcp_repair', name='vcp_repair'),
                        )
