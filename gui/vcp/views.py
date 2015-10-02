@@ -76,6 +76,11 @@ def vcp_upgrade(request):
     if request.method == 'POST':
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
+            form.is_update_needed()
+            if form.vcp_is_update_available is False:
+                return JsonResp(
+                    request, error=True, message=_(
+                        "Upgrade is not required"))
             if form.upgrade_plugin():
                 return HttpResponseRedirect("/vcp/home")
             else:
@@ -97,6 +102,28 @@ def vcp_uninstall(request):
         if form.is_valid():
             if form.uninstall_plugin():
                 return HttpResponseRedirect("/vcp/home")
+            else:
+                return JsonResp(
+                    request, error=True, message=_(
+                        form.vcp_status))
+        else:
+            form.is_update_needed()
+            form.fields['vc_ip'].widget.attrs['readonly'] = True
+            form.fields['vc_username'].widget.attrs['readonly'] = True
+            form.fields['vc_port'].widget.attrs['readonly'] = True
+            form.fields['vc_management_ip'].widget.attrs['readonly'] = True
+    return render(request, "vcp/index.html", {'form': form})
+
+
+def vcp_repair(request):
+    if request.method == 'POST':
+        form = VcenterConfigurationForm(request.POST)
+        if form.is_valid():
+            if form.repair_plugin():
+                # return HttpResponseRedirect("/vcp/home")
+                return JsonResp(
+                    request, error=False, message=_(
+                        'vCenter plugin is repaired successfully'))
             else:
                 return JsonResp(
                     request, error=True, message=_(
