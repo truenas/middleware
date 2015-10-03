@@ -191,11 +191,11 @@ UNIXCHARSET_CHOICES = (
 )
 
 LOGLEVEL_CHOICES = (
-    ('0',  _('None')),
-    ('1',  _('Minimum')),
-    ('2',  _('Normal')),
-    ('3',  _('Full')),
-    ('10', _('Debug')),
+    ('NONE',  _('None')),
+    ('MINIMUM',  _('Minimum')),
+    ('NORMAL',  _('Normal')),
+    ('FULL',  _('Full')),
+    ('DEBUG', _('Debug')),
 )
 
 CASEFOLDING_CHOICES = (

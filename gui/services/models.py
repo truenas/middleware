@@ -306,7 +306,7 @@ class CIFS(NewModel):
         config = dispatcher.call_sync('service.cifs.get_config')
         return cls(**dict(
             id=1,
-            cifs_srv_netbiosname=config['netbiosname'],
+            cifs_srv_netbiosname=' '.join(config['netbiosname']),
             cifs_srv_workgroup=config['workgroup'],
             cifs_srv_description=config['description'],
             cifs_srv_doscharset=config['dos_charset'],
@@ -334,7 +334,7 @@ class CIFS(NewModel):
 
     def _save(self, *args, **kwargs):
         data = {
-            'netbiosname': self.cifs_srv_netbiosname,
+            'netbiosname': self.cifs_srv_netbiosname.split(),
             'workgroup': self.cifs_srv_workgroup,
             'description': self.cifs_srv_description,
             'dos_charset': self.cifs_srv_doscharset,
