@@ -1367,9 +1367,8 @@ class MountPointAccessForm(Form):
     mp_acl = forms.ChoiceField(
         label=_('Permission Type'),
         choices=(
-            ('PERMS', 'Unix'),
-            ('PERMS', 'Mac'),
-            ('ACL', 'Windows'),
+            ('PERMS', 'UNIX permissions (UNIX/MAC)'),
+            ('ACL', 'ACLs (Windows)'),
         ),
         initial='unix',
         widget=forms.widgets.RadioSelect(),
@@ -1426,7 +1425,7 @@ class MountPointAccessForm(Form):
             stat = dispatcher.call_sync('filesystem.stat', path)
 
             self.fields['mp_acl'].initial = ds['permissions_type']
-            if self.fields['mp_acl'].initial == 'WINDOWS':
+            if self.fields['mp_acl'].initial == 'ACL':
                 self.fields['mp_mode'].widget.attrs['disabled'] = 'disabled'
 
             # 8917: This needs to be handled by an upper layer but for now
@@ -1466,11 +1465,11 @@ class MountPointAccessForm(Form):
         if self.cleaned_data.get('mp_group_en'):
             kwargs['group'] = self.cleaned_data['mp_group']
 
-        if self.cleaned_data.get('mp_mode_en'):
-            kwargs['modes'] = self.cleaned_data['mp_mode']
-
         if self.cleaned_data.get('mp_user_en'):
             kwargs['user'] = self.cleaned_data['mp_user']
+
+        if self.cleaned_data.get('mp_mode_en'):
+            kwargs['modes'] = {'value': self.cleaned_data['mp_mode']}
 
         pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
         dispatcher.call_task_sync('file.set_permissions', path, kwargs, True)

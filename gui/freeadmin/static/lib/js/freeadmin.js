@@ -809,9 +809,9 @@ require([
       var mode = registry.byId("id_mp_mode");
       if(acl.get('value') === false) {
         // do noting
-      } else if(acl.get('value') == 'unix') {
+      } else if(acl.get('value') == 'PERMS') {
         mode.set('disabled', false);
-      } else if(acl.get('value') == 'mac') {
+      } else if(acl.get('value') == 'ACL') {
         mode.set('disabled', false);
       } else {
         mode.set('disabled', true);
