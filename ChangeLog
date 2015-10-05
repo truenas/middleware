@@ -1,0 +1,21 @@
+o Add support for HA interface aliases.
+
+o Fix a bug that was preventing the correct replication status
+  from showing in the GUI.
+
+o Add several small improvements to the replication system
+  to improve error recovery and expired snapshot handling.
+
+o Fix a bug that would detect non-HA SuperMicro systems as HA
+  and attempt to automatically configure igb1, rendering it
+  unusable for storage networking.
+
+o Fix a bug that would cause HA pairs to failover when they
+  were configured for LACP and a subinterface was disconnected
+  on the active node.
+
+o Fix a bug that would prevent Active Directory integration
+  from starting.
+
+o Fix a bug in TrueNAS that would result in improper detection
+  of the SuperMicro Storage Bridge Bay hardware.
