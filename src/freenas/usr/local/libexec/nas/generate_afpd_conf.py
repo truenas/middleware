@@ -31,10 +31,10 @@ def main():
 
     if afp.afp_srv_guest:
         cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so"
-                           " uams_guest.so\n")
+                           " uams_guest.so uams_gss.so\n")
         cf_contents.append('\tguest account = %s\n' % afp.afp_srv_guest_user)
     else:
-        cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so\n")
+        cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so uams_gss.so\n")
 
     if afp.afp_srv_bindip:
         cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
