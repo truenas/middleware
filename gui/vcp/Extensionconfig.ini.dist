@@ -4,3 +4,5 @@ company=iXsystem
 label="Test extension"
 description=Plugin for iXsystem
 key=com.vmware.truenas
+events=truenas-alert
+tasks=TrueNASCreateDatastoreTask

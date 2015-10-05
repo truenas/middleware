@@ -164,6 +164,43 @@ class VcenterConfigurationForm(ModelForm):
             self.vcp_status = 'Upgrade failed. Please contact support.'
             return False
 
+    def repair_plugin(self):
+        try:
+            obj = models.VcenterConfiguration.objects.latest('id')
+            ip = str(obj.vc_ip)
+            username = str(obj.vc_username)
+            password = str(self.cleaned_data['vc_password'])
+            port = str(obj.vc_port)
+            manage_ip = str(obj.vc_management_ip)
+            status_flag = self.validate_vcp_param(
+                ip, port, username, password, False)
+
+            if status_flag is True:
+                status_flag = utils.update_plugin_zipfile(
+                    ip, username, password, port, 'NEW', utils.get_plugin_version())
+                if status_flag is True:
+                    sys_guiprotocol = self.get_sys_protocol()
+                    plug = plugin.PluginManager()
+                    status_flag = plug.install_vCenter_plugin(
+                        ip, username, password, port, manage_ip, sys_guiprotocol)
+                    if status_flag is True:
+                        return True
+                    else:
+                        self.vcp_status = 'repair failed. Please contact support.'
+                        return False
+                else:
+                    self.vcp_status = 'repair failed. Please contact support.'
+                    return False
+            elif 'already' in status_flag:
+                self.vcp_status = 'Plugin repaire is not required.'
+                return False
+            else:
+                self.vcp_status = status_flag
+                return False
+        except Exception:
+            self.vcp_status = 'repair failed. Please contact support.'
+            return False
+
     def is_update_needed(self):
         version_new = utils.get_plugin_version()
         self.vcp_available_version = version_new
