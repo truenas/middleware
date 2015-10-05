@@ -3650,11 +3650,8 @@ class notifier:
             systemdataset, basename = self.system_dataset_settings()
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
-        zvols = filter(lambda y: y != '', zfsproc.communicate()[0].split('\n'))
-
-        volnames = [
-            o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')
-        ]
+        zvols = set(filter(lambda y: y != '', zfsproc.communicate()[0].split('\n')))
+        volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
@@ -3662,6 +3659,10 @@ class notifier:
         else:
             zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation %s" % (fieldsflag))
         lines = zfsproc.communicate()[0].split('\n')
+        repldict = {}
+        if replications:
+            for repltask in replications:
+                repldict[repltask.repl_filesystem] = repltask
         for line in lines:
             if line != '':
                 _list = line.split('\t')
@@ -3685,18 +3686,13 @@ class notifier:
                     snaplist = []
                     mostrecent = True
                 replication = None
-                if replications:
-                    for repl, snaps in replications.iteritems():
-                        if fs != repl.repl_filesystem:
-                            break
-                        remotename = '%s@%s' % (
-                            repl.repl_zfs,
-                            name,
-                        )
-                        if remotename in snaps:
-                            replication = 'OK'
-                            # TODO: Multiple replication tasks
-                            break
+                if fs in repldict:
+                    repl = repldict[fs]
+                    snaps = replications[repl]
+                    remotename = '%s@%s' % (repl.repl_zfs, name)
+                    if remotename in snaps:
+                        replication = 'OK'
+                        # TODO: Multiple replication tasks
 
                 snaplist.insert(0,
                     zfs.Snapshot(
