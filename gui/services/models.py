@@ -2213,7 +2213,7 @@ class SSH(NewModel):
         return True
 
 
-class LLDP(Model):
+class LLDP(NewModel):
     lldp_intdesc = models.BooleanField(
         verbose_name=_('Interface Description'),
         default=True,
@@ -2234,6 +2234,8 @@ class LLDP(Model):
         blank=True,
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _("LLDP")
         verbose_name_plural = _("LLDP")
@@ -2241,6 +2243,34 @@ class LLDP(Model):
     class FreeAdmin:
         deletable = False
         icon_model = "LLDPIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('lldp_intdesc', 'save_description'),
+            ('lldp_country', 'country_code'),
+            ('lldp_location', 'location'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.lldp.get_config')
+        return cls(**dict(
+            id=1,
+            lldp_intdesc=config['save_description'],
+            lldp_country=config['country_code'],
+            lldp_location=config['location'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'save_description': self.lldp_intdesc,
+            'country_code': self.lldp_country or None,
+            'location': self.lldp_location or None,
+        }
+        self._save_task_call('service.lldp.configure', data)
+        return True
 
 
 class Rsyncd(NewModel):
