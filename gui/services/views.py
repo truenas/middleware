@@ -213,7 +213,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd', 'tftpd', 'ups', 'webdav'):
+    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'lldp', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd', 'tftpd', 'ups', 'webdav'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],

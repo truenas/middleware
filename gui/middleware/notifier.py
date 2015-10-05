@@ -228,7 +228,6 @@ class notifier:
 
     __service2daemon = {
         'ctld': ('ctld', '/var/run/ctld.pid'),
-        'lldp': ('ladvd', '/var/run/ladvd.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
         'backup': (None, '/var/run/backup.pid')
     }
@@ -517,16 +516,6 @@ class notifier:
         if not self._system_nolog("/etc/directoryservice/LDAP/ctl restart"):
             res = True
         return res
-
-    def _start_lldp(self):
-        self._system("/usr/sbin/service ladvd start")
-
-    def _stop_lldp(self):
-        self._system("/usr/sbin/service ladvd forcestop")
-
-    def _restart_lldp(self):
-        self._system("/usr/sbin/service ladvd forcestop")
-        self._system("/usr/sbin/service ladvd restart")
 
     def _clear_activedirectory_config(self):
         self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")

@@ -693,10 +693,6 @@ class LLDPForm(ModelForm):
         fields = '__all__'
         model = models.LLDP
 
-    def save(self):
-        super(LLDPForm, self).save()
-        notifier().restart("lldp")
-
 
 class iSCSITargetAuthCredentialForm(ModelForm):
     iscsi_target_auth_secret2 = forms.CharField(
