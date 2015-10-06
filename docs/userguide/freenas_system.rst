@@ -196,8 +196,7 @@ system to go back to that system state.
 
 As seen in Figure 5.3a, two boot environments are created when FreeNAS® is installed. The system will boot into the *default* boot environment and users can
 make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
-a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
-created indicating the date and time the wizard was run.
+a pristine, non-configured version of the installation.
 
 **Figure 5.3a: Viewing Boot Environments**
 
@@ -243,7 +242,7 @@ The buttons above the boot entries can be used to:
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
 
-Figure 5.3c shows a sample boot menu containing entries for the default, initial, and wizard generated boot environments.
+Figure 5.3c shows a sample boot menu containing entries for the default and initial boot environments.
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 

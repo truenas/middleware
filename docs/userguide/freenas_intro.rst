@@ -101,7 +101,10 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 
 * A completely new middleware server that mediates all access to FreeNAS® and allows multi-user, multi-role configuration access to the system.
 
-* A new command line interface with tab-completion, inline help, and high-level access to all FreeNAS® functions and event information. This new CLI has replaced the Console Setup Menu.
+* A new command line interface with tab-completion, inline help, and high-level access to all FreeNAS® functions and event information. This new CLI has replaced the Console Setup Menu
+  and is the default shell for :ref:`Shell`.
+  
+* The "Wizard" has been removed as making shares using the "New UI" has been simplified.
 
 * The `GlusterFS <http://www.gluster.org>`_ service provides a scalable, network file system.
 
@@ -169,9 +172,6 @@ Depending upon your use case, your system may require more RAM. Here are some ge
 * If you plan to use ZFS deduplication, ensure you have at least 5 GB RAM per TB of storage to be deduplicated.
 
 * If you plan to use Active Directory with a lot of users, add an additional 2 GB of RAM for winbind's internal cache.
-
-* If you plan on :ref:`Using the phpVirtualBox Template`, increase the minimum RAM size by the amount of virtual memory you configure for the virtual machines. For example, if you
-  plan to install two virtual machines, each with 4GB of virtual memory, the system will need at least 16GB of RAM.
 
 * If you plan to use iSCSI, install at least 16GB of RAM, if performance is not critical, or at least 32GB of RAM if performance is a requirement.
 

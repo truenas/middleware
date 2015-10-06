@@ -6,11 +6,6 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
-FreeNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
-type of dataset and permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is
-recommended to use the Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune
-the default permissions from the client operating system to meet the requirements of the network.
-
 .. note:: shares are created to provide and control access to an area of storage. Before creating your shares, it is recommended to make a list of the users
    that will need access to storage data, which operating systems these users are using, whether or not all users should have the same permissions to the
    stored data, and whether or not these users should authenticate before accessing the data. This information can help you determine which type of share(s)
@@ -63,13 +58,10 @@ Apple (AFP) Shares
 
 FreeNAS® uses the
 `Netatalk <http://netatalk.sourceforge.net/>`_
-AFP server to share data with Apple systems. This section describes the configuration screen for fine-tuning AFP shares created using the
-:ref:`Initial Configuration Wizard`. It then provides configuration examples for using the Wizard to create a guest share, configuring Time Machine to backup
-to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
+AFP server to share data with Apple systems. This section describes the configuration screen for creating AFP shares. It then provides configuration examples for creating a guest share,
+configuring Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
-To view the AFP share created by the Wizard, click :menuselection:`Sharing --> Apple (AFP)` and highlight the name of the share. Click its "Edit" button to see
-the configuration options shown in Figure 10.1a. The values showing for these options will vary, depending upon the information given when the share was
-created.
+Figure 10.1a shows the :menuselection:`Sharing --> Apple (AFP)` screen.
 
 **Figure 10.1a: Creating an AFP Share**
 
@@ -163,25 +155,19 @@ imported into the FreeNAS® system.
 
 Before creating a guest share, go to :menuselection:`Services --> AFP` and make sure that the "Guest Access" box is checked.
 
-Then, to create the AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following
-fields in this screen:
+To create the AFP guest share, input the following information:
 
 #. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
    is named *afp_guest*.
 
-#. Click the button for "Mac OS X (AFP)".
-
 #. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
-
-#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
-   the name that you typed into "Share name".
 
 **Figure 10.1b: Creating a Guest AFP Share**
 
-.. image:: images/afp6.png
+.. image:: images/afp6a.png
 
-Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
-correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
+Once you click "OK", a dataset will be created for the share that contains the
+correct default permissions and the AFP service will be started for you, so that the share is immediately available. The new share will also be added as an entry to
 :menuselection:`Sharing --> Apple (AFP)`.
 
 Mac OS X users can connect to the guest AFP share by clicking :menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1c, the user has
@@ -207,36 +193,32 @@ configured to backup to an AFP share on a FreeNAS® system. It is recommended to
 Machine to backup their Mac OS X system to FreeNAS®. The process for creating an authenticated share for a user is the same as creating a Time Machine share
 for that user.
 
-To use the Wizard to create an authenticated or Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
+To create an authenticated or Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
 
 #. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
    is named *backup_user1*.
 
-#. Click the button for "Mac OS X (AFP)" and check the box for "Time Machine". If the user will not be using Time Machine, leave the box unchecked.
+#. If needed, check the box for "Time Machine". If the user will not be using Time Machine, leave the box unchecked.
 
-#. Click the "Ownership" button. If the user already exists on the FreeNAS® system, click the drop-down "User" menu to select their user account.  If the user
-   does not yet exist on the FreeNAS® system, type their name into the "User" field and check the "Create User" checkbox. If you want the user to be a member
+#. If the user already exists on the FreeNAS® system, click the drop-down "User" menu to select their user account.  If the user
+   does not yet exist on the FreeNAS® system, type their name into the "User" field. If you want the user to be a member
    of a group that already exists on the FreeNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
-   used by Time Machine users, input the name into the "Group" field and check the "Create Group" checkbox. Otherwise, input the same name as the user. In the
+   used by Time Machine users, input the name into the "Group" field. Otherwise, input the same name as the user. In the
    example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
    *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
-   opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in Figure 10.1d.
+   opportunity to change the default permissions on the share. When finished, click "OK".
 
-#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
-   the name that you typed into "Share name".
-
-If you wish to configure multiple authenticated or Time Machine shares, repeat for each user, giving each user their own "Share name" and "Ownership". When
-finished, click the "Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that
+Repeat, if you wish to configure multiple authenticated or Time Machine shares. When you click "OK", FreeNAS® will automatically create a dataset for each share that
 contains the correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as
 entries to :menuselection:`Sharing --> Apple (AFP)`.
 
 **Figure 10.1d: Creating a Time Machine Share**
 
-.. image:: images/afp7.png
+.. image:: images/afp7a.png
 
 **Figure 10.1e: Creating an Authenticated User**
 
-.. image:: images/afp8.png
+.. image:: images/afp8a.png
 
 At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
 FreeNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
@@ -284,25 +266,15 @@ Windows systems, enable Services for NFS in the Ultimate or Enterprise editions 
    read through the performance analysis at
    `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_.
 
-To create an NFS share using the Wizard, click the "Next" button twice to display the screen shown in Figure 10.2a. Input a "Share name" that makes sense to
-you, but which does not contain a space. Click the button for "Generic Unix (NFS)", then click "Add" so that the share's name appears in the "Name" frame.
-When finished, click the "Next" button twice, then the "Confirm" button to create the share. Creating an NFS share using the wizard will automatically create
+To create an NFS share, input a "Share name" that makes sense to you, but which does not contain a space. Depending upon your requirements, you may wish to fine-tune the NFS share to
+control which IP addresses are allowed to access the NFS share and to restrict the permissions of the mounted share. Once you click "OK", FreeNAS® will automatically create
 a new dataset for the share, start the services required by NFS, and add an entry for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
-Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
-the permissions of the mounted share.
 
-**Figure 10.2a: NFS Share Wizard**
+**Figure 10.2a: Creating an NFS Share**
 
-.. image:: images/nfs6.png
+.. image:: images/nfs6a.png
 
-To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
-Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
-
-**Figure 10.2b: NFS Share Settings**
-
-.. image:: images/nfs2.png
-
-Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
+Table 10.2a summarizes the available configuration options for NFS shares. Some settings are only available by clicking the "Advanced Mode" button.
 
 **Table 10.2a: NFS Share Options**
 
@@ -867,23 +839,19 @@ least secure as anyone on the network can access the contents of the share. Addi
 username or password, there is no way to differentiate which users accessed or modified the data on the share. This type of configuration is best suited for
 small networks where quick and easy access to the share is more important than the security of the data on the share.
 
-To configure an unauthenticated CIFS share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.4b. Complete the
-following fields in this screen:
+To configure an unauthenticated CIFS share, input the following information:
 
 #. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
 
-#. Click the button for "Windows (CIFS)" and check the box for "Allow Guest".
+#. Check the box for "Allow Guest".
 
-#. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
-
-#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
-   the name that you typed into "Share name".
+#. Click the drop-down "User" menu and select "nobody".
 
 **Figure 10.4b: Creating an Unauthenticated CIFS Share**
 
 .. image:: images/cifs7.png
 
-Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
+Once you click "OK", FreeNAS® will automatically create a dataset for the share and start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
 
 Users can now access the share from any CIFS client and should not be prompted for their username or password. For example, to access the share from a Windows
@@ -906,33 +874,27 @@ the username and password that will be created on the FreeNAS® system matches t
 their own share to store their own data or if several users will be using the same share. The simpler configuration is to make one share per user as it does
 not require the creation of groups, adding the correct users to the groups, and ensuring that group permissions are set correctly.
 
-To use the Wizard to create an authenticated CIFS share, enter the following information, as seen in the example in Figure 10.4c.
+To create an authenticated CIFS share, enter the following information, as seen in the example in Figure 10.4c.
 
 #. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_user1*.
 
-#. Click the button for "Windows (CIFS)".
+#. To create the user account on the FreeNAS® system, type their name into the "User" field and type in and confirm the user's password. 
+   **If the user will not be sharing this share with other users**, type their name
+   into the "Group" field. **If, however, the share will be used by several users**, instead type in a group name.
+   In the example shown in Figure 10.4d, *user1* has been used for both the user and group name, meaning that this share will only be
+   used by *user1*.
 
-#. Click the "Ownership" button. To create the user account on the FreeNAS® system, type their name into the "User" field and check the "Create User"
-   checkbox. This will prompt you to type in and confirm the user's password. **If the user will not be sharing this share with other users**, type their name
-   into the "Group" field and click the box "Create Group". **If, however, the share will be used by several users**, instead type in a group name and check
-   the "Create Group" box. In the example shown in Figure 10.4d, *user1* has been used for both the user and group name, meaning that this share will only be
-   used by *user1*. When finished, click "Return" to return to the screen shown in Figure 10.1d.
-
-#. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
-   the name that you typed into "Share name".
-
-If you wish to configure multiple authenticated shares, repeat for each user, giving each user their own "Share name" and "Ownership". When finished, click
-the "Next" button twice, then the "Confirm" button to create the share(s). The Wizard will automatically create a dataset for each share that contains the
-correct ownership and start the CIFS service for you, so that the share(s) are immediately available. The new share(s) will also be added as entries to
-:menuselection:`Sharing --> Windows (CIFS)`.
+When finished, click "OK" and FreeNAS® will automatically create a dataset for the share that contains the correct ownership and start the CIFS service for you, so that the share is
+immediately available. If you wish to configure multiple authenticated shares, repeat for each user, giving each user their own "Share name" and "Ownership".  The new share(s) will also
+be added as entries to :menuselection:`Sharing --> Windows (CIFS)`.
 
 **Figure 10.4c: Creating an Authenticated CIFS Share**
 
-.. image:: images/cifs3.png
+.. image:: images/cifs3a.png
 
 **Figure 10.4d: Creating the User and Group**
 
-.. image:: images/cifs8.png
+.. image:: images/cifs8a.png
 
 You should now be able to test an authenticated share from any CIFS client. For example, to test an authenticated share from a Windows system, open Explorer
 and click on "Network". For this configuration example, a system named *FREENAS* should appear with a share named "cifs_user1". If you click on
