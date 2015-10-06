@@ -2846,8 +2846,8 @@ class Riak_CS(NewModel):
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
-        verbose_name = _("Riak_CS")
-        verbose_name_plural = _("Riak_CS")
+        verbose_name = _("Riak-CS")
+        verbose_name_plural = _("Riak-CS")
 
     class FreeAdmin:
         deletable = False
