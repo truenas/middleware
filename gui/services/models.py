@@ -2801,6 +2801,10 @@ class Riak(NewModel):
         verbose_name=_("Listener HTTP Internal"),
         max_length=200,
     )
+    riak_listener_http_internal_port = models.CharField(
+        verbose_name=_("Listener HTTP Internal Port"),
+        max_length=200,
+    )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -2818,6 +2822,7 @@ class Riak(NewModel):
             ('riak_nodename', 'nodename'),
             ('riak_nodeip', 'node_ip'),
             ('riak_listener_http_internal', 'listener_http_internal'),
+            ('riak_listener_http_internal_port', 'listener_http_internal_port'),
         )
 
     @classmethod
@@ -2829,6 +2834,7 @@ class Riak(NewModel):
             riak_nodename=config['nodename'],
             riak_nodeip=config['node_ip'],
             riak_listener_http_internal=config['listener_http_internal'],
+            riak_listener_http_internal_port=config['listener_http_internal_port'],
         ))
 
     def _save(self, *args, **kwargs):
@@ -2836,6 +2842,7 @@ class Riak(NewModel):
             'nodename': self.riak_nodename,
             'node_ip': self.riak_nodeip,
             'listener_http_internal': self.riak_listener_http_internal,
+            'listener_http_internal_port': self.riak_listener_http_internal_port,
         }
         self._save_task_call('service.riak.configure', data)
         return True
