@@ -1472,7 +1472,7 @@ class MountPointAccessForm(Form):
             kwargs['modes'] = {'value': self.cleaned_data['mp_mode']}
 
         pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
-        dispatcher.call_task_sync('file.set_permissions', path, kwargs, True)
+        dispatcher.call_task_sync('file.set_permissions', path, kwargs, self.cleaned_data['mp_recursive'])
         dispatcher.call_task_sync('volume.dataset.update', pool_name, ds_name, {
             'permissions_type': self.cleaned_data['mp_acl']
         })
