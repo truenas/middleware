@@ -118,6 +118,11 @@ def core(request):
         tftp = models.TFTP.objects.create()
 
     try:
+        riak = models.Riak.objects.order_by("-id")[0]
+    except IndexError:
+        riak = models.Riak.objects.create()
+
+    try:
         rsyncd = models.Rsyncd.objects.order_by("-id")[0]
     except IndexError:
         rsyncd = models.Rsyncd.objects.create()
@@ -158,6 +163,7 @@ def core(request):
         'afp': afp,
         'lldp': lldp,
         'nfs': nfs,
+        'riak': riak,
         'rsyncd': rsyncd,
         'dynamicdns': dynamicdns,
         'snmp': snmp,

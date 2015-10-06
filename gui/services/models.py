@@ -2788,17 +2788,21 @@ class IPFS(NewModel):
         self._save_task_call('service.ipfs.configure', data)
         return True
 
-class RIAK(NewModel):
-    riak_path = PathField(
-        verbose_name=_("Path"),
-        blank=True,
+class Riak(NewModel):
+    riak_nodename = models.CharField(
+        verbose_name=_("Node Name"),
+        max_length=200,
+    )
+    riak_nodeip = models.CharField(
+        verbose_name=_("Node IP"),
+        max_length=200,
     )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
-        verbose_name = _("RIAK")
-        verbose_name_plural = _("RIAK")
+        verbose_name = _("Riak")
+        verbose_name_plural = _("Riak")
 
     class FreeAdmin:
         deletable = False
@@ -2807,7 +2811,8 @@ class RIAK(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
-            ('riak_path', 'path'),
+            ('riak_nodename', 'nodename'),
+            ('riak_nodeip', 'node_ip'),
         )
 
     @classmethod
@@ -2816,15 +2821,18 @@ class RIAK(NewModel):
         config = dispatcher.call_sync('service.riak.get_config')
         return cls(**dict(
             id=1,
-            riak_path=config['path'],
+            riak_nodename=config['nodename'],
+            riak_nodeip=config['node_ip'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
-            'path': self.riak_path or None,
+            'nodename': self.riak_nodename,
+            'node_ip': self.riak_nodeip,
         }
         self._save_task_call('service.riak.configure', data)
         return True
+
 
 class RIAKCS(NewModel):
     riak_cs_path = PathField(

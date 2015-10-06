@@ -1654,3 +1654,10 @@ class IPFSForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.IPFS
+
+
+class RiakForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Riak
