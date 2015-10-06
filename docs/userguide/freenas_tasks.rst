@@ -33,7 +33,7 @@ Figure 6.1a shows the screen that opens when you click :menuselection:`Tasks -->
 
 **Figure 6.1a: Creating a Cron Job**
 
-.. image:: images/cron.png
+.. image:: images/cron1.png
 
 Table 6.1a summarizes the configurable options when creating a cron job.
 
@@ -71,17 +71,11 @@ Table 6.1a summarizes the configurable options when creating a cron job.
 | Day of week       | checkboxes                  | cron job occurs on the selected days                                                                    |
 |                   |                             |                                                                                                         |
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
-| Redirect Stdout   | checkbox                    | disables emailing standard output to the *root* user account                                            |
-|                   |                             |                                                                                                         |
-+-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
-| Redirect Stderr   | checkbox                    | disables emailing errors to the *root* user account                                                     |
-|                   |                             |                                                                                                         |
-+-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
 | Enabled           | checkbox                    | uncheck if you would like to disable the cron job without deleting it                                   |
 |                   |                             |                                                                                                         |
 +-------------------+-----------------------------+---------------------------------------------------------------------------------------------------------+
 
-Created cron jobs will be listed in "View Cron Jobs". If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
+Created cron jobs will be listed in "Cron Jobs". If you highlight the entry for a cron job, buttons will be displayed to "Edit", "Delete", or "Run Now".
 
 .. _Init/Shutdown Scripts:
 
@@ -163,7 +157,7 @@ can be configured when creating an rsync task.
 
 **Figure 6.3a: Adding an Rsync Task**
 
-.. image:: images/rsync1a.png
+.. image:: images/rsync1b.png
 
 **Table 6.3a: Rsync Configuration Options**
 
@@ -203,7 +197,8 @@ can be configured when creating an rsync task.
 |                                  |                             | host to sync with (e.g. */mnt/volume*); note that maximum path length is 255 characters   |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Validate Remote Path             | checkbox                    | if the "Remote Path" does not yet exist, check this box to have it automatically created  |
+| Validate Remote Path             | checkbox                    | only appears when using *Rsync over SSH* mode; if the "Remote Path" does not yet exist,   |
+|                                  |                             | check this box to have it automatically created                                           |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | Direction                        | drop-down menu              | choices are *Push* or                                                                     |
@@ -455,7 +450,7 @@ created any volumes.
 
 **Figure 6.4a: Adding a S.M.A.R.T. Test**
 
-.. image:: images/smart1.png
+.. image:: images/smart1a.png
 
 Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 

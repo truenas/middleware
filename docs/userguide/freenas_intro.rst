@@ -128,6 +128,8 @@ In addition to the new features, the following options have changed in the GUI:
 
 * :menuselection:`System --> System Dataset` has been removed as it is now the "System Dataset Pool" drop-down menu in :menuselection:`System --> Advanced`.
 
+* The "Redirect Stdout" and "Redirect Stdin" checkboxes have been removed in :menuselection:`Tasks --> Cron Jobs --> Add Cron Job`.
+
 * The functionality provided by :menuselection:`Network --> Global Configuration --> Domain` has been merged into :menuselection:`Network --> Global Configuration --> Hostname`.
 
 * The functionality provided by :menuselection:`Network --> Global Configuration --> Host name database` has moved to :menuselection:`Network --> Hosts`.
