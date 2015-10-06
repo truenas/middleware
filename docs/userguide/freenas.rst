@@ -16,8 +16,6 @@ FreeNAS User Guide |release|
    freenas_directoryservice
    freenas_sharing
    freenas_services
-   freenas_plugins
-   freenas_jails
    freenas_reporting
    freenas_processes
    freenas_shell

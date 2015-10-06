@@ -88,7 +88,7 @@ FreeNAS® is an embedded open source network-attached storage (NAS) operating sy
 system that has been optimized for file storage and sharing.
 
 FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols can be configured to provide storage access to a
-wide range of operating systems. A plugins system is provided for extending the built-in features by installing additional software.
+wide range of operating systems.
 
 .. _What's New in |version|:
 
@@ -113,7 +113,11 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 
 * The `Swift <http://docs.openstack.org/developer/swift/>`_ service provides object storage for `OpenStack <https://www.openstack.org/>`_.
 
+* Jails and Plugins have been temporarily removed as they will be replaced by a new Apps framework based on `iocage <https://github.com/iocage/iocage>`_.
+
 In addition to the new features, the following options have changed in the GUI:
+
+* An icon has been added for accessing the "New UI".
 
 * :menuselection:`Account --> Groups --> Add Group --> Allow Repeated GIDs` has been removed.
 
