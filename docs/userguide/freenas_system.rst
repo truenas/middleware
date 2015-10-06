@@ -15,8 +15,6 @@ The System section of the administrative GUI contains the following entries:
 
 * :ref:`Email`: used to configure the email address to receive notifications
 
-* :ref:`System Dataset`: used to configure the location where logs and reporting graphs are stored
-
 * :ref:`Tunables`: provides a front-end for tuning in real-time and to load additional kernel modules at boot time
 
 * :ref:`Update`: used to perform upgrades and to check for system updates
@@ -347,6 +345,13 @@ Advanced
 | MOTD banner                             | string                           | input the message to be seen when a user logs in via SSH                     |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
+| System Dataset Pool                     | drop-down menu                   | select the pool to store debugging core files, Samba metadata such as the    |
+|                                         |                                  | user/group cache and share level permissions, domain controller              |
+|                                         |                                  | state/users/groups if the FreeNAS® system is configured to be a Domain       |
+|                                         |                                  | Controller, the system log, and :ref:`Reporting` information; note that      |
+|                                         |                                  | encrypted volumes will not be displayed in the drop-down menu                |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
 |                                         |                                  | but only sends an email when the system reboots or encounters an error       |
 |                                         |                                  |                                                                              |
@@ -484,36 +489,6 @@ that can be configured using the Email tab.
 
 Click the "Send Test Mail" button to verify that the configured email settings are working. If the test email fails, double-check the email address to send
 emails to by clicking the "Change E-mail" button for the *root* account in :menuselection:`Account --> Users --> View Users`.
-
-.. _System Dataset:
-
-System Dataset
---------------
-
-:menuselection:`System --> System Dataset`, shown in Figure 5.6a, is used to select the pool which will contain the persistent system dataset. The system
-dataset stores debugging core files and Samba4 metadata such as the user/group cache and share level permissions. If the FreeNAS® system is configured to be
-a Domain Controller, all of the domain controller state is stored there as well, including domain controller users and groups.
-
-**Figure 5.6a: System Dataset Screen**
-
-.. image:: images/system5a.png
-
-.. note:: encrypted volumes will not be displayed in the "System dataset pool" drop-down menu.
-
-The system dataset can optionally be configured to also store the system log and :ref:`Reporting` information. If there are lots of log entries or reporting
-information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
-limited space. 
-
-Use the drop-down menu to select the ZFS volume (pool) to contain the system dataset.
-
-To store the system log on the system dataset, check the "Syslog" box.
-
-To store the reporting information on the system dataset, check the "Reporting Database" box.
-
-If you make any changes, click the "Save" button to save them.
-
-If you change the pool storing the system dataset at a later time, FreeNAS® will automatically migrate the existing data in the system dataset to the new
-location.
 
 .. index:: Tunables
 .. _Tunables:

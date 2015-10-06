@@ -44,9 +44,9 @@ to provide reporting statistics. The following collectd plugins are enabled in :
 *   `zfs <https://collectd.org/wiki/index.php/Plugin:ZFS_ARC>`_
     : shows ARC and L2ARC size and hit rates.
 
-Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to :file:`/data/rrd_dir.tar.bz2` and
-should be preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in
-:menuselection:`System --> System Dataset`.
+Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to :file:`rrd_dir.tar.bz2` in the system dataset and
+should be preserved across system upgrades and at shutdown. To view or change the location of the system dataset, select the desired pool from the 
+:menuselection:`System --> Advanced --> System Dataset Pool` drop-down menu.
 
 Use the magnifier buttons next to each graph to increase or decrease the displayed time increment from 10 minutes, hourly, daily, weekly, or monthly. You can
 also use the "<<" and ">>" buttons to scroll through the output.

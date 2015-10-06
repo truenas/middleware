@@ -126,6 +126,8 @@ In addition to the new features, the following options have changed in the GUI:
 
 * :menuselection:`Account --> Users --> Add User --> Microsoft Account` has been removed.
 
+* :menuselection:`System --> System Dataset` has been removed as it is now the "System Dataset Pool" drop-down menu in :menuselection:`System --> Advanced`.
+
 * The functionality provided by :menuselection:`Network --> Global Configuration --> Domain` has been merged into :menuselection:`Network --> Global Configuration --> Hostname`.
 
 * The functionality provided by :menuselection:`Network --> Global Configuration --> Host name database` has moved to :menuselection:`Network --> Hosts`.
