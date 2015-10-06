@@ -2787,3 +2787,118 @@ class IPFS(NewModel):
         }
         self._save_task_call('service.ipfs.configure', data)
         return True
+
+class RIAK(NewModel):
+    riak_path = PathField(
+        verbose_name=_("Path"),
+        blank=True,
+    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("RIAK")
+        verbose_name_plural = _("RIAK")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"RIAKIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('riak_path', 'path'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.riak.get_config')
+        return cls(**dict(
+            id=1,
+            riak_path=config['path'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'path': self.riak_path or None,
+        }
+        self._save_task_call('service.riak.configure', data)
+        return True
+
+class RIAKCS(NewModel):
+    riak_cs_path = PathField(
+        verbose_name=_("Path"),
+        blank=True,
+    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("RIAKCS")
+        verbose_name_plural = _("RIAKCS")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"RIAKCSIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('riak_cs_path', 'path'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.riak_cs.get_config')
+        return cls(**dict(
+            id=1,
+            riak_cs_path=config['path'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'path': self.riak_cs_path or None,
+        }
+        self._save_task_call('service.riak_cs.configure', data)
+        return True
+
+class STANCHION(NewModel):
+    stanchion_path = PathField(
+        verbose_name=_("Path"),
+        blank=True,
+    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("STANCHION")
+        verbose_name_plural = _("STANCHION")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"STANCHIONIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('stanchion_path', 'path'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.stanchion.get_config')
+        return cls(**dict(
+            id=1,
+            stanchion_path=config['path'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'path': self.stanchion_path or None,
+        }
+        self._save_task_call('service.stanchion.configure', data)
+        return True
+

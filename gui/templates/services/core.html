@@ -109,6 +109,9 @@
        <td colspan="2">
        <img id="riak_toggle" name="riak_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.riak == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
+       <td>
+           <img id="riak_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "RIAK KV Settings"|escapejs %}', '{{ riak.get_edit_url }}');" title="{% trans "RIAK KV Settings" %}">
+       </td>
    </tr>
    <tr>
        <td>
@@ -117,6 +120,9 @@
        <td colspan="2">
        <img id="stanchion_toggle" name="stanchion_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.stanchion == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
+       <td>
+           <img id="stanchion_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Stanchion Settings"|escapejs %}', '{{ stanchion.get_edit_url }}');" title="{% trans "Stanchion Settings" %}">
+       </td>
    </tr>
    <tr>
        <td>
@@ -124,6 +130,9 @@
        </td>
        <td colspan="2">
        <img id="riak_cs_toggle" name="riak_cs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.riak_cs == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
+       </td>
+       <td>
+           <img id="riak_cs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "RIAK CS Settings"|escapejs %}', '{{ riak_cs.get_edit_url }}');" title="{% trans "RIAK CS Settings" %}">
        </td>
    </tr>
    <tr>
