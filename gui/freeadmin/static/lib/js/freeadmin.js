@@ -812,8 +812,6 @@ require([
       } else if(acl.get('value') == 'PERMS') {
         mode.set('disabled', false);
       } else if(acl.get('value') == 'ACL') {
-        mode.set('disabled', false);
-      } else {
         mode.set('disabled', true);
       }
     }
