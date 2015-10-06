@@ -2957,9 +2957,8 @@ class Riak_CS(NewModel):
         verbose_name=_("Admin Secret"),
         max_length=200,
     )
-    riak_cs_max_buckets_per_user = models.CharField(
+    riak_cs_max_buckets_per_user = models.IntegerField(
         verbose_name=_("Max Buckets per User"),
-        max_length=200,
     )
     riak_cs_log_console_level = models.CharField(
         verbose_name=_("Log Level"),
