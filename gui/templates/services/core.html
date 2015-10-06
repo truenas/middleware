@@ -56,6 +56,7 @@
            <img id="ftp_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "FTP Settings"|force_escape|force_escape %}', '{{ ftp.get_edit_url }}');" title="{% trans "FTP Settings" %}">
        </td>
    </tr>
+   {% comment %}
    <tr>
        <td>
            <strong>{% trans "GlusterD" %}</strong>
@@ -64,6 +65,7 @@
        <img id="glusterd_toggle" name="glusterd_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.glusterd == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
    </tr>
+   {% endcomment %}
    <tr>
        <td>
            <strong>{% trans "IPFS" %}</strong>
@@ -187,6 +189,7 @@
            <img id="stanchion_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "Stanchion Settings"|escapejs %}', '{{ stanchion.get_edit_url }}');" title="{% trans "Stanchion Settings" %}">
        </td>
    </tr>
+   {% comment %}
    <tr>
        <td>
            <strong>{% trans "SWIFT" %}</strong>
@@ -195,6 +198,7 @@
        <img id="swift_toggle" name="swift_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.swift == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
    </tr>
+   {% endcomment %}
    <tr>
        <td>
            <strong>{% trans "TFTP" %}</strong>
