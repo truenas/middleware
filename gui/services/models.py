@@ -3035,6 +3035,35 @@ class Stanchion(NewModel):
         verbose_name=_("Node IP"),
         max_length=200,
     )
+    stanchion_listener_ip = models.CharField(
+        verbose_name=_("Listener Internal IP"),
+        max_length=200,
+    )
+    stanchion_listener_ip_port = models.CharField(
+        verbose_name=_("Listener Internal Port"),
+        max_length=200,
+    )
+    stanchion_riak_host_ip = models.CharField(
+        verbose_name=_("RIAK KV Host IP"),
+        max_length=200,
+    )
+    stanchion_riak_host_ip_port = models.CharField(
+        verbose_name=_("RIAK KV Host Port"),
+        max_length=200,
+    )
+    stanchion_admin_key = models.CharField(
+        verbose_name=_("Admin Key"),
+        max_length=200,
+    )
+    stanchion_admin_secret = models.CharField(
+        verbose_name=_("Admin Secret"),
+        max_length=200,
+    )
+    stanchion_log_console_level = models.CharField(
+        verbose_name=_("Log Level"),
+        max_length=200,
+    )
+
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -3051,6 +3080,13 @@ class Stanchion(NewModel):
         field_mapping = (
             ('stanchion_nodename', 'nodename'),
             ('stanchion_nodeip', 'node_ip'),
+            ('stanchion_listener_ip', 'listener_ip'),
+            ('stanchion_listener_ip_port', 'listener_ip_port'),
+            ('stanchion_riak_host_ip', 'riak_host_ip'),
+            ('stanchion_riak_host_ip_port', 'riak_host_ip_port'),
+            ('stanchion_admin_key', 'admin_key'),
+            ('stanchion_admin_secret', 'admin_secret'),
+            ('stanchion_log_console_level', 'log_console_level'),
         )
 
     @classmethod
@@ -3061,12 +3097,26 @@ class Stanchion(NewModel):
             id=1,
             stanchion_nodename=config['nodename'],
             stanchion_nodeip=config['node_ip'],
+            stanchion_listener_ip=config['listener_ip'],
+            stanchion_listener_ip_port=config['listener_ip_port'],
+            stanchion_riak_host_ip=config['riak_host_ip'],
+            stanchion_riak_host_ip_port=config['riak_host_ip_port'],
+            stanchion_admin_key=config['admin_key'],
+            stanchion_admin_secret=config['admin_secret'],
+            stanchion_log_console_level=config['log_console_level'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
             'nodename': self.stanchion_nodename,
             'node_ip': self.stanchion_nodeip,
+            'listener_ip': self.stanchion_listener_ip,
+            'listener_ip_port': self.stanchion_listener_ip_port,
+            'riak_host_ip': self.stanchion_riak_host_ip,
+            'riak_host_ip_port': self.stanchion_riak_host_ip_port,
+            'admin_key': self.stanchion_admin_key,
+            'admin_secret': self.stanchion_admin_secret,
+            'log_console_level': self.stanchion_log_console_level,
         }
         self._save_task_call('service.stanchion.configure', data)
         return True
