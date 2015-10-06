@@ -139,6 +139,10 @@ In addition to the new features, the following options have changed in the GUI:
 * :menuselection:`Network --> Interfaces --> Add Interface` has been removed as :menuselection:`Network --> Interfaces` now displays all detected interfaces. The "Edit" screen for an
   interface has been simplified to make it easier to add multiple IPv4 and/or IPv6 addresses to an interface.
   
+* The "Enabled" checkbox has been added to :menuselection:`Network --> Interfaces --> Add Interface`.
+
+* The "Virtual Interface" field has been removed from :menuselection:`Network --> VLANs --> Add VLAN` as this value is automatically generated.
+  
 * :menuselection:`Network --> Static Routes --> Add Static Route` now supports both IPv4 and IPv6 routes.
 
 .. index:: Hardware Recommendations

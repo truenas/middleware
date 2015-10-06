@@ -106,6 +106,9 @@ system will be interrupted while the changes are applied. Click "Yes" to proceed
 | Interface description | string         | optional description of interface                                                                                   |
 |                       |                |                                                                                                                     |
 +-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
+| Enabled               | checkbox       | uncheck this box to disable the interface                                                                           |
+|                       |                |                                                                                                                     |
++-----------------------+----------------+---------------------------------------------------------------------------------------------------------------------+
 | DHCP                  | checkbox       | if unchecked, click "Add address" to manually configure the address; while checked, any manually configured IPv4    |
 |                       |                | addresses will be ignored, however manually configured IPv6 addresses will work                                     |
 |                       |                |                                                                                                                     |
@@ -287,7 +290,7 @@ Figure 7.4a shows the configuration options when adding a lagg interface using :
 
 **Figure 7.4a: Creating a lagg Interface**
 
-.. image:: images/lagg1.png
+.. image:: images/lagg1a.png
 
 .. note:: if interfaces are installed but do not appear in the "Physical NICs" list, check that a FreeBSD driver for the interface exists
    `here <http://www.freebsd.org/releases/10.2R/hardware.html#ETHERNET>`_.
@@ -305,7 +308,7 @@ interface.
 
 **Figure 7.4b: Editing a lagg**
 
-.. image:: images/lagg2.png
+.. image:: images/lagg2a.png
 
 **Table 7.4a: Configurable Options for a lagg**
 
@@ -353,7 +356,7 @@ The configurable options are summarized in Table 7.4b.
 
 **Figure 7.4c: Editing a Member Interface**
 
-.. image:: images/lagg3.png
+.. image:: images/lagg3a.png
 
 **Table 7.4b: Configuring a Member Interface**
 
@@ -469,7 +472,7 @@ If you click :menuselection:`Network --> VLANs --> Add VLAN`, you will see the s
 
 **Figure 7.7a: Adding a VLAN**
 
-.. image:: images/vlan.png
+.. image:: images/vlan1.png
 
 Table 7.7a summarizes the configurable fields.
 
@@ -479,10 +482,6 @@ Table 7.7a summarizes the configurable fields.
 | **Setting**       | **Value**      | **Description**                                                                                   |
 |                   |                |                                                                                                   |
 +===================+================+===================================================================================================+
-| Virtual Interface | string         | use the format *vlanX* where                                                                      |
-|                   |                | *X* is a number representing the vlan interface                                                   |
-|                   |                |                                                                                                   |
-+-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; note that newly created  |
 |                   |                | :ref:`Link Aggregations` will not appear in the drop-down until the system is rebooted            |
 |                   |                |                                                                                                   |
@@ -495,8 +494,5 @@ Table 7.7a summarizes the configurable fields.
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 
 
-The parent interface of a vlan has to be up, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN
-configuration. This makes it difficult for the GUI to do the right thing without trampling the configuration. To remedy this, after adding the VLAN, go to
-:menuselection:`Network --> Interfaces --> Add Interface`. Select the parent interface from the "NIC" drop-down menu and in the "Options" field, type
-:command:`up`. This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add
-Interface" screen.
+The parent interface of a vlan has to be enabled, but it can have an IP address or it can be unconfigured, depending upon the requirements of the VLAN
+configuration. After adding the VLAN, it can be configured using :menuselection:`Network --> Interfaces`.
