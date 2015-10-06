@@ -2801,8 +2801,8 @@ class Riak(NewModel):
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
-        verbose_name = _("Riak")
-        verbose_name_plural = _("Riak")
+        verbose_name = _("Riak KV")
+        verbose_name_plural = _("Riak KV")
 
     class FreeAdmin:
         deletable = False
@@ -2846,8 +2846,8 @@ class Riak_CS(NewModel):
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
-        verbose_name = _("Riak-CS")
-        verbose_name_plural = _("Riak-CS")
+        verbose_name = _("Riak CS")
+        verbose_name_plural = _("Riak CS")
 
     class FreeAdmin:
         deletable = False
