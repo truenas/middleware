@@ -42,7 +42,7 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-.. image:: images/system1a.png
+.. image:: images/system1b.png
 
 .. _General:
 
@@ -53,7 +53,7 @@ General
 
 **Figure 5.2a: General Screen**
 
-.. image:: images/system2a.png
+.. image:: images/system2b.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -198,7 +198,7 @@ a pristine, non-configured version of the installation.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-.. image:: images/be1e.png
+.. image:: images/be1f.png
 
 Each boot environment entry contains the following information:
 
@@ -212,11 +212,11 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Rename:** used to change the name of the boot environment.
 
+* **Clone:** used to create a copy of the highlighted boot environment.
+
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
   but won't be used on the next boot.
-
-* **Clone:** used to create a copy of the highlighted boot environment.
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
   **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
@@ -244,7 +244,7 @@ Figure 5.3c shows a sample boot menu containing entries for the default and init
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-.. image:: images/be3a.png
+.. image:: images/be3b.png
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
@@ -285,7 +285,7 @@ Advanced
 
 **Figure 5.4a: Advanced Screen**
 
-.. image:: images/system3a.png
+.. image:: images/system3b.png
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -293,7 +293,7 @@ Advanced
 | Setting                                 | Value                            | Description                                                                  |
 |                                         |                                  |                                                                              |
 +=========================================+==================================+==============================================================================+
-| Enable Console Menu                     | checkbox                         | unchecking this box removes the console menu shown in Figure 3a              |
+| Enable Console CLI                      | checkbox                         | unchecking this box removes the console menu shown in Figure 3a              |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Use Serial Console                      | checkbox                         | do **not** check this box if your serial port is disabled                    |
@@ -364,9 +364,9 @@ This tab also contains the following buttons:
 **Backup:** used to backup the FreeNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
 button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
-backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the FreeNAS® console menu shown in Figure 3a.
+backup will be saved as a binary file.
 
-.. warning:: the backup and restore options are meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
+.. warning:: the backup button is meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
              was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
              option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
 
@@ -475,15 +475,14 @@ that can be configured using the Email tab.
 |                      |                      | *TLS*                                                                                           |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Use                  | checkbox             | enables/disables                                                                                |
-| SMTP                 |                      | `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                                 |
+| Use                  | checkbox             | enables/disables `SMTP AUTH <http://en.wikipedia.org/wiki/SMTP_Authentication>`_                |
 | Authentication       |                      | using PLAIN SASL; if checked, input the required "Username" and "Password"                      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Username             | string               | input the username if the SMTP server requires authentication                                   |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Password             | string               | input the password if the SMTP server requires authentication                                   |
+| Password             | string               | input and confirm the password if the SMTP server requires authentication                       |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
@@ -517,15 +516,15 @@ Since sysctl, loader, and rc.conf values are specific to the kernel parameter to
 and suggested values can be found in the man page for the specific driver and in many sections of the
 `FreeBSD Handbook <http://www.freebsd.org/handbook>`_.
 
-To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
+To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.6a.
 
-**Figure 5.7a: Adding a Tunable**
+**Figure 5.6a: Adding a Tunable**
 
 .. image:: images/tunable.png
 
-Table 5.7a summarizes the options when adding a tunable.
+Table 5.6a summarizes the options when adding a tunable.
 
-**Table 5.7a: Adding a Tunable**
+**Table 5.6a: Adding a Tunable**
 
 +-------------+-------------------+-------------------------------------------------------------------------------------+
 | **Setting** | **Value**         | **Description**                                                                     |
@@ -598,6 +597,7 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
  net.inet6.ip6.auto_linklocal="0"
  vfs.zfs.vol.mode=2
  hw.usb.no_shutdown_wait=1
+ kern.cam.boot_delay="30000"
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
@@ -628,7 +628,7 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-.. image:: images/update1a.png
+.. image:: images/update1b.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -691,7 +691,7 @@ Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs
 
 **Figure 5.9a: Initial CA Screen**
 
-.. image:: images/ca1a.png
+.. image:: images/ca1b.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
 Figure 5.9b. The configurable options are summarized in Table 5.9a.
@@ -810,7 +810,7 @@ summarized in Table 5.10a.
 
 **Figure 5.10b: Importing a Certificate**
 
-.. image:: images/cert2a.png
+.. image:: images/cert2b.png
 
 **Table 5.10a: Certificate Import Options**
 
@@ -892,7 +892,7 @@ connections.
 
 **Figure 5.10d: Managing Certificates**
 
-.. image:: images/cert4.png
+.. image:: images/cert4a.png
 
 If you click an entry, it will activate the following configuration buttons:
 
@@ -917,7 +917,7 @@ The FreeNAS® "Support" tab, shown in Figure 5.11a, provides a built-in ticketin
 
 **Figure 5.11a: Support Tab**
 
-.. image:: images/support1a.png
+.. image:: images/support1b.png
 
 This screen provides a built-in interface to the FreeNAS® bug tracker located at `bugs.freenas.org <https://bugs.freenas.org>`_. If you have not yet used the
 FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a
