@@ -2798,13 +2798,46 @@ class Riak(NewModel):
         max_length=200,
     )
     riak_listener_http_internal = models.CharField(
-        verbose_name=_("Listener HTTP Internal"),
+        verbose_name=_("Listener HTTP Internal IP"),
         max_length=200,
     )
     riak_listener_http_internal_port = models.CharField(
         verbose_name=_("Listener HTTP Internal Port"),
         max_length=200,
     )
+    riak_listener_https_internal = models.CharField(
+        verbose_name=_("Listener HTTPS Internal IP"),
+        max_length=200,
+    )
+    riak_listener_https_internal_port = models.CharField(
+        verbose_name=_("Listener HTTPS Internal Port"),
+        max_length=200,
+    )
+    riak_listener_protobuf_internal = models.CharField(
+        verbose_name=_("Listener Protobuf Internal IP"),
+        max_length=200,
+    )
+    riak_listener_protobuf_internal_port = models.CharField(
+        verbose_name=_("Listener Protobuf Internal Port"),
+        max_length=200,
+    )
+    riak_object_size_maximum = models.CharField(
+        verbose_name=_("Object Size Max."),
+        max_length=200,
+    )
+    riak_object_size_warning_threshold = models.CharField(
+        verbose_name=_("Object Size Warning Threshold"),
+        max_length=200,
+    )
+    riak_control = models.CharField(
+        verbose_name=_("RIAK Control"),
+        max_length=200,
+    )
+    riak_log_console_level = models.CharField(
+        verbose_name=_("Log Level"),
+        max_length=200,
+    )
+
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -2823,6 +2856,14 @@ class Riak(NewModel):
             ('riak_nodeip', 'node_ip'),
             ('riak_listener_http_internal', 'listener_http_internal'),
             ('riak_listener_http_internal_port', 'listener_http_internal_port'),
+            ('riak_listener_https_internal', 'listener_https_internal'),
+            ('riak_listener_https_internal_port', 'listener_https_internal_port'),
+            ('riak_listener_protobuf_internal', 'listener_protobuf_internal'),
+            ('riak_listener_protobuf_internal_port', 'listener_protobuf_internal_port'),
+            ('riak_object_size_maximum', 'object_size_maximum'),
+            ('riak_object_size_warning_threshold', 'object_size_warning_threshold'),
+            ('riak_riak_control', 'riak_control'),
+            ('riak_log_console', 'log_console'),
         )
 
     @classmethod
@@ -2835,6 +2876,14 @@ class Riak(NewModel):
             riak_nodeip=config['node_ip'],
             riak_listener_http_internal=config['listener_http_internal'],
             riak_listener_http_internal_port=config['listener_http_internal_port'],
+            riak_listener_https_internal=config['listener_https_internal'],
+            riak_listener_https_internal_port=config['listener_https_internal_port'],
+            riak_listener_protobuf=config['listener_protobuf_internal'],
+            riak_listener_protobuf_internal_port=config['listener_protobuf_internal_port'],
+            riak_object_size_maximum=config['object_size_maximum'],
+            riak_object_size_warning_threshold=config['object_size_warning_threshold'],
+            riak_riak_control=config['riak_control'],
+            riak_log_console=config['log_console'],
         ))
 
     def _save(self, *args, **kwargs):
@@ -2843,6 +2892,14 @@ class Riak(NewModel):
             'node_ip': self.riak_nodeip,
             'listener_http_internal': self.riak_listener_http_internal,
             'listener_http_internal_port': self.riak_listener_http_internal_port,
+            'listener_https_internal': self.riak_listener_https_internal,
+            'listener_https_internal_port': self.riak_listener_https_internal_port,
+            'listener_protobuf_internal': self.riak_listener_protobuf_internal,
+            'listener_protobuf_internal_port': self.riak_listener_protobuf_internal_port,
+            'object_size_maximum': self.riak_object_size_maximum,
+            'object_size_warning_threshold': self.riak_object_size_warning_threshold,
+            'riak_control': self.riak_riak_control,
+            'log_console': self.riak_log_console,
         }
         self._save_task_call('service.riak.configure', data)
         return True
