@@ -2833,18 +2833,21 @@ class Riak(NewModel):
         self._save_task_call('service.riak.configure', data)
         return True
 
-
-class RIAKCS(NewModel):
-    riak_cs_path = PathField(
-        verbose_name=_("Path"),
-        blank=True,
+class Riak_CS(NewModel):
+    riak_cs_nodename = models.CharField(
+        verbose_name=_("Node Name"),
+        max_length=200,
+    )
+    riak_cs_nodeip = models.CharField(
+        verbose_name=_("Node IP"),
+        max_length=200,
     )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
-        verbose_name = _("RIAKCS")
-        verbose_name_plural = _("RIAKCS")
+        verbose_name = _("Riak_CS")
+        verbose_name_plural = _("Riak_CS")
 
     class FreeAdmin:
         deletable = False
@@ -2853,7 +2856,8 @@ class RIAKCS(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
-            ('riak_cs_path', 'path'),
+            ('riak_cs_nodename', 'nodename'),
+            ('riak_cs_nodeip', 'node_ip'),
         )
 
     @classmethod
@@ -2862,27 +2866,33 @@ class RIAKCS(NewModel):
         config = dispatcher.call_sync('service.riak_cs.get_config')
         return cls(**dict(
             id=1,
-            riak_cs_path=config['path'],
+            riak_cs_nodename=config['nodename'],
+            riak_cs_nodeip=config['node_ip'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
-            'path': self.riak_cs_path or None,
+            'nodename': self.riak_cs_nodename,
+            'node_ip': self.riak_cs_nodeip,
         }
         self._save_task_call('service.riak_cs.configure', data)
         return True
 
-class STANCHION(NewModel):
-    stanchion_path = PathField(
-        verbose_name=_("Path"),
-        blank=True,
+class Stanchion(NewModel):
+    stanchion_nodename = models.CharField(
+        verbose_name=_("Node Name"),
+        max_length=200,
+    )
+    stanchion_nodeip = models.CharField(
+        verbose_name=_("Node IP"),
+        max_length=200,
     )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
-        verbose_name = _("STANCHION")
-        verbose_name_plural = _("STANCHION")
+        verbose_name = _("Stanchion")
+        verbose_name_plural = _("Stanchion")
 
     class FreeAdmin:
         deletable = False
@@ -2891,7 +2901,8 @@ class STANCHION(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
-            ('stanchion_path', 'path'),
+            ('stanchion_nodename', 'nodename'),
+            ('stanchion_nodeip', 'node_ip'),
         )
 
     @classmethod
@@ -2900,12 +2911,14 @@ class STANCHION(NewModel):
         config = dispatcher.call_sync('service.stanchion.get_config')
         return cls(**dict(
             id=1,
-            stanchion_path=config['path'],
+            stanchion_nodename=config['nodename'],
+            stanchion_nodeip=config['node_ip'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
-            'path': self.stanchion_path or None,
+            'nodename': self.stanchion_nodename,
+            'node_ip': self.stanchion_nodeip,
         }
         self._save_task_call('service.stanchion.configure', data)
         return True

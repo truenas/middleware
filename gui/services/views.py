@@ -123,6 +123,16 @@ def core(request):
         riak = models.Riak.objects.create()
 
     try:
+        riak_cs = models.Riak_CS.objects.order_by("-id")[0]
+    except IndexError:
+        riak_cs = models.Riak_CS.objects.create()
+
+    try:
+        stanchion = models.Stanchion.objects.order_by("-id")[0]
+    except IndexError:
+        stanchion = models.Stanchion.objects.create()
+
+    try:
         rsyncd = models.Rsyncd.objects.order_by("-id")[0]
     except IndexError:
         rsyncd = models.Rsyncd.objects.create()
@@ -164,6 +174,8 @@ def core(request):
         'lldp': lldp,
         'nfs': nfs,
         'riak': riak,
+        'riak_cs': riak_cs,
+        'stanchion': stanchion,
         'rsyncd': rsyncd,
         'dynamicdns': dynamicdns,
         'snmp': snmp,

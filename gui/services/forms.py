@@ -1661,3 +1661,16 @@ class RiakForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.Riak
+
+class Riak_CSForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Riak_CS
+
+class StanchionForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Stanchion
+
