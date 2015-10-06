@@ -348,8 +348,7 @@ Advanced
 | System Dataset Pool                     | drop-down menu                   | select the pool to store debugging core files, Samba metadata such as the    |
 |                                         |                                  | user/group cache and share level permissions, domain controller              |
 |                                         |                                  | state/users/groups if the FreeNAS® system is configured to be a Domain       |
-|                                         |                                  | Controller, the system log, and :ref:`Reporting` information; note that      |
-|                                         |                                  | encrypted volumes will not be displayed in the drop-down menu                |
+|                                         |                                  | Controller, the system log, and :ref:`Reporting` information                 |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
@@ -369,8 +368,6 @@ backup will be saved as a binary file.
 .. warning:: the backup button is meant for disaster recovery. If you restore a system, it will be returned to the point in time that the backup
              was created. If you select the option to save the data, any data created after the backup was made will be lost. If you do **not** select the
              option to save the data, the system will be recreated with the same ZFS layout, but with **no** data.
-
-.. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 

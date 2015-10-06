@@ -118,6 +118,8 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 
 * Jails and Plugins have been temporarily removed as they will be replaced by a new Apps framework based on `iocage <https://github.com/iocage/iocage>`_.
 
+* Support for volume encryption has been removed. This means that you can not create or import an encrypted volume.
+
 In addition to the new features, the following options have changed in the GUI:
 
 * An icon has been added for accessing the "New UI".
@@ -144,6 +146,8 @@ In addition to the new features, the following options have changed in the GUI:
 * The "Virtual Interface" field has been removed from :menuselection:`Network --> VLANs --> Add VLAN` as this value is automatically generated.
   
 * :menuselection:`Network --> Static Routes --> Add Static Route` now supports both IPv4 and IPv6 routes.
+
+* The "File System type" field has been removed from :menuselection:`Storage --> Import Volume` as the supported file system types are automatically detected.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:

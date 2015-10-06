@@ -46,7 +46,7 @@ If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you wil
 
 **Figure 8.1a: Creating a ZFS Pool Using Volume Manager**
 
-.. image:: images/zfs1a.png
+.. image:: images/zfs1b.png
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -63,9 +63,6 @@ Table 8.1a summarizes the configuration options of this screen.
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Volume to extend | drop-down menu | used to extend an existing ZFS pool; see :ref:`Extending a ZFS Volume` for instructions    |
-|                  |                |                                                                                            |
-+------------------+----------------+--------------------------------------------------------------------------------------------+
-| Encryption       | checkbox       | read the section on :ref:`Encryption` before choosing to use encryption                    |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
 | Available disks  | display        | displays the number and size of available disks; hover over "show" to list the available   |
@@ -116,68 +113,9 @@ The "Add Volume" button warns that **existing data will be cleared**. In other w
 format is supported. If so, perform that supported action instead. If the current storage format is not supported, you will need to backup the data to an
 external media, format the disks, then restore the data to the new volume.
 
-Depending upon the size and number of disks, the type of controller, and whether or not encryption is selected, creating the volume may take some time. Once
+Depending upon the size and number of disks and the type of controller, creating the volume may take some time. Once
 the volume is created, the screen will refresh and the new volume will be listed in the tree under :menuselection:`Storage --> Volumes`. Click the *+* next to
 the volume name to access its :ref:`Change Permissions`, :ref:`Create Dataset`, and :ref:`Create zvol` options.
-
-.. index:: Encryption
-.. _Encryption:
-
-Encryption
-^^^^^^^^^^
-
-Beginning with 8.3.1, FreeNAS® supports
-`GELI <http://www.freebsd.org/cgi/man.cgi?query=geli>`_
-full disk encryption when creating ZFS volumes. It is important to understand the following when considering whether or not encryption is right for your
-FreeNAS® system:
-
-* This is **not** the encryption method used by Oracle's version of ZFS as that version is not open source and is the property of Oracle.
-
-* This is full disk encryption and **not** per-filesystem encryption. The underlying drives are first encrypted, then the pool is created on top of the
-  encrypted devices.
-
-* This type of encryption is primarily targeted at users who store sensitive data and want to retain the ability to remove disks from the pool without
-  having to first wipe the disk's contents.
-
-* This design is only suitable for safe disposal of disks independent of the encryption key. As long as the key and the disks are intact, the system is
-  vulnerable to being decrypted. The key should be protected by a strong passphrase and any backups of the key should be securely stored.
-
-* On the other hand, if the key is lost, the data on the disks is inaccessible. Always backup the key!
-
-.. warning:: the per-drive GELI master keys are not backed up along with the user keys. If a bit error occurs in the last sector of an encrypted disk, this
-   may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
-   `this forum post <https://forums.freenas.org/index.php?threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`_
-   which explains how to back up your master keys manually.
-   `This forum post <https://forums.freenas.org/index.php?threads/recover-encryption-key.16593/#post-85497>`_
-   gives an in-depth explanation of how the various key types are used by GELI.
-   To track future progress on this issue, refer to `this bug report <https://bugs.freenas.org/issues/2375>`_.
-
-* The encryption key is per ZFS volume (pool). If you create multiple pools, each pool has its own encryption key.
-
-* If the system has a lot of disks, there will be a performance hit if the CPU does not support
-  `AES-NI <https://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
-  or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
-  will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
-  processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
-  `forum post <https://forums.freenas.org/index.php?threads/encryption-performance-benchmarks.12157/>`_
-  compares the performance of various CPUs.
-
-* Data in the ARC cache and the contents of RAM are unencrypted.
-
-* Swap is always encrypted, even on unencrypted volumes.
-
-* There is no way to convert an existing, unencrypted volume. Instead, the data must be backed up, the existing pool must be destroyed, a new encrypted
-  volume must be created, and the backup restored to the new volume.
-
-* Hybrid pools are not supported. In other words, newly created vdevs must match the existing encryption scheme. When extending a volume, Volume Manager
-  will automatically encrypt the new vdev being added to the existing encrypted pool.
-
-.. note:: the encryption facility used by FreeNAS® is designed to protect against physical theft of the disks. It is not designed to protect against
-   unauthorized software access. Ensure that only authorized users have access to the administrative GUI and that proper permissions are set on shares if
-   sensitive data is stored on the system.
-
-To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. A pop-up message will remind you that
-**it is extremely important** to make a backup of the key as without it the data on the disks is inaccessible. Refer to :ref:`Managing Encrypted Volumes` for instructions.
 
 .. _Manual Setup:
 
@@ -194,7 +132,7 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 
 **Figure 8.1b: Creating a Non-Optimal ZFS Volume**
 
-.. image:: images/manual.png
+.. image:: images/manual1a.png
 
 **Table 8.1b: Manual Setup Options**
 
@@ -207,9 +145,6 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 |               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_ ;        |
 |               |                  | it is recommended to choose a name that will stick out in the logs (e.g.                       |
 |               |                  | **not** :file:`data` or :file:`freenas`)                                                       |
-|               |                  |                                                                                                |
-+---------------+------------------+------------------------------------------------------------------------------------------------+
-| Encryption    | checkbox         | read the section on `Encryption`_ before choosing to use encryption                            |
 |               |                  |                                                                                                |
 +---------------+------------------+------------------------------------------------------------------------------------------------+
 | Member disks  | list             | highlight desired number of disks from list of available disks                                 |
@@ -231,9 +166,6 @@ Extending a ZFS Volume
 
 The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> Volume Manager`, shown in Figure 8.1a, can be used to add additional
 disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
-
-.. note:: if the existing volume is encrypted, a warning message will remind you that the operation of extending a volume will reset the passphrase and
-   recovery key. After extending the volume, you should immediately recreate both using the instructions in :ref:`Managing Encrypted Volumes`.
 
 Once an existing volume has been selected from the drop-down menu, drag and drop the desired disk(s) and select the desired volume layout. For example you
 can:
@@ -355,7 +287,7 @@ If you select an existing ZFS volume in the tree then click "Create Dataset", yo
 
 **Figure 8.1d: Creating a ZFS Dataset**
 
-.. image:: images/dataset.png
+.. image:: images/dataset1.png
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -535,9 +467,9 @@ be imported at a time.
 
 **Figure 8.1f: Importing a Disk**
 
-.. image:: images/import1.png
+.. image:: images/import1a.png
 
-Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
+Use the drop-down menu to select the disk to import, then browse to the ZFS dataset that will hold the copied data.
 When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
 automatically unmount once the copy operation completes.
 
@@ -550,49 +482,22 @@ If you click :menuselection:`Storage --> Volumes --> Import Volume`, you can con
 **existing** ZFS pool. This action is typically performed when an existing FreeNAS® system is re-installed. Since the operating system is separate from the
 storage disks, a new installation does not affect the data on the disks. However, the new operating system needs to be configured to use the existing volume.
 
-Figure 8.1g shows the initial pop-up window that appears when you select to import a volume.
+Figure 8.1g shows the pop-up window that appears when you select to import a volume.
 
-**Figure 8.1g: Initial Import Volume Screen**
+**Figure 8.1g: Import Volume Screen**
 
-.. image:: images/auto1.png
-
-If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
-
-**Figure 8.1h: Importing a Non-Encrypted Volume**
-
-.. image:: images/auto2.png
+.. image:: images/auto1a.png
 
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
 
-If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
+If an existing unencrypted ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
 
 If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an "in use by another
 machine" error during the import.
 
 If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from :ref:`Shell`. If the disk does not appear in the output, check
 to see if the controller driver is supported or if it needs to be loaded using :ref:`Tunables`.
-
-.. _Importing an Encrypted Pool:
-
-Importing an Encrypted Pool
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1g, select "Yes: Decrypt disks" to
-access the screen shown in Figure 8.1i.
-
-**Figure 8.1i: Decrypting the Disks Before Importing the ZFS Pool**
-
-.. image:: images/decrypt.png
-
-Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
-decrypt the disks.
-
-.. note:: the encryption key is required to decrypt the pool. If the pool can not be decrypted, it can not be re-imported after a failed upgrade or lost
-   configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. Refer to
-   :ref:`Managing Encrypted Volumes` for instructions on how to manage the keys for encrypted volumes.
-
-Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1h. Click the "OK" button to finish the volume import.
 
 .. _View Disks:
 
@@ -733,51 +638,6 @@ action.
 If you click a zvol in :menuselection:`Storage --> Volumes --> View Volumes`, three icons will appear at the bottom of the screen: "Create Snapshot", "Edit
 zvol", and "Destroy zvol". Similar to datasets, you can not edit a zvol's name and you will need to confirm that you wish to destroy the zvol.
 
-.. _Managing Encrypted Volumes:
-
-Managing Encrypted Volumes
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you check the "Encryption" box during the creation of a pool, five additional buttons will be added to the entry for the pool in
-:menuselection:`Storage --> Volumes --> View Volumes`. An example is seen in Figure 8.1o.
-
-**Figure 8.1o: Encryption Icons Associated with an Encrypted Pool**
-
-.. image:: images/encrypt1.png
-
-In order from left to right, these additional encryption buttons are used to:
-
-**Create/Change Passphrase:** click this button to set and confirm the passphrase associated with the GELI encryption key. You will be prompted to input and
-repeat the desired passphrase and a red warning reminds you to "Remember to add a new recovery key as this action invalidates the previous recovery key".
-Unlike a password, a passphrase can contain spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece
-of literature) but hard to guess (people who know you should not be able to guess the passphrase).
-**Remember this passphrase as you can not re-import an encrypted volume without it.** In other words, if you forget the passphrase, the data on the volume can
-become inaccessible if you need to re-import the pool. Protect this passphrase as anyone who knows it could re-import your encrypted volume, thwarting the
-reason for encrypting the disks in the first place.
-
-Once the passphrase is set, the name of this button will change to "Change Passphrase". After setting or changing the passphrase, it is important to
-immediately create a new recovery key by clicking the "Add recovery key" button. This way, if the passphrase is forgotten, the associated recovery key can be
-used instead.
-
-**Download Key:** click this icon to download a backup copy of the GELI encryption key. The encryption key is saved to the client system, not on the FreeNAS®
-system. You will be prompted to input the password used to access the FreeNAS® administrative GUI before the selecting the directory in which to store the
-key. Since the GELI encryption key is separate from the FreeNAS® configuration database,
-**it is highly recommended to make a backup of the key. If the key is every lost or destroyed and there is no backup key, the data on the disks is inaccessible.**
-
-**Encryption Re-key:** generates a new GELI encryption key. Typically this is only performed when the administrator suspects that the current key may be
-compromised. This action also removes the current passphrase.
-
-**Add recovery key:** generates a new recovery key. This screen will prompt you to input the password used to access the FreeNAS® administrative GUI and then
-to select the directory in which to save the key. Note that the recovery key is saved to the client system, not on the FreeNAS® system. This recovery key can
-be used if the passphrase is forgotten. **Always immediately** add a recovery key whenever the passphrase is changed.
-
-**Remove recover key:** Typically this is only performed when the administrator suspects that the current recovery key may be compromised.
-**Immediately** create a new passphrase and recovery key.
-
-.. note:: the passphrase, recovery key, and encryption key need to be protected. Do not reveal the passphrase to others. On the system containing the
-   downloaded keys, take care that that system and its backups are protected. Anyone who has the keys has the ability to re-import the disks should they be
-   discarded or stolen.
-
 .. _View Multipaths:
 
 View Multipaths
@@ -804,8 +664,6 @@ the capability of your hardware, you may or may not need to reboot in order to r
 
 .. note:: striping (RAID0) does not provide redundancy. If you lose a disk in a stripe, the volume will be destroyed and you will need to recreate the volume and restore the data from
    backup.
-   
-.. note:: if your pool is encrypted with GELI, refer to :ref:`Replacing an Encrypted Drive` before proceeding.
 
 Before physically removing the failed device, go to :menuselection:`Storage --> Volumes --> View Volumes`. Next, select your volume's name. At the bottom of
 the interface you will see several icons, one of which is "Volume Status". Click the "Volume Status" icon and locate the failed disk. Once you have located
@@ -824,8 +682,7 @@ the failed device in the GUI, perform the following steps:
     disk.
 
 #.  Once the disk has been replaced and is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
-    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, the menu will also prompt you to input and confirm the passphrase for the pool.
-    Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
+    and click the "Replace Disk" button. Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
 In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
@@ -839,32 +696,6 @@ disk replacement was successful for this example.
 **Figure 8.1q: Disk Replacement is Complete**
 
 .. image:: images/replace2.png
-    
-.. _Replacing an Encrypted Drive:
-
-Replacing an Encrypted Drive
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If the ZFS pool is encrypted, additional steps are needed when replacing a failed drive.
-
-First, make sure that a passphrase has been set using the instructions in :ref:`Encryption` **before** attempting to replace the failed drive. Then, follow
-the steps 1 and 2 as described above. During step 3, you will be prompted to input and confirm the passphrase for the pool. Enter this information then click the "Replace Disk" button.
-Wait until the resilvering is complete.
-
-Next, restore the encryption keys to the pool.
-**If the following additional steps are not performed before the next reboot, you may lose access to the pool permanently.**
-
-#.  Highlight the pool that contains the disk you just replaced and click the "Encryption Re-key" button in the GUI. You will need to enter the
-    *root* password.
-
-#.  Highlight the pool that contains the disk you just replaced and click the "Create Passphrase" button and enter the new passphrase. You can reuse the
-    old passphrase if desired.
-
-#.  Highlight the pool that contains the disk you just replaced and click the "Download Key" button in order to save the new encryption key. Since the 
-    old key will no longer function, any old keys can be safely discarded.
-
-#.  Highlight the pool that contains the disk you just replaced and click the "Add Recovery Key" button in order to save the new recovery key. The old
-    recovery key will no longer function, so it can be safely discarded.
 
 .. _Removing a Log or Cache Device:
 
@@ -1215,9 +1046,9 @@ Configure PUSH
 ~~~~~~~~~~~~~~
 
 On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots`.
+:menuselection:`Storage --> Snapshots`.
 
-To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication Task` which will open the screen shown in Figure 8.3b.
+To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication` which will open the screen shown in Figure 8.3b.
 For this example, the required configuration is as follows:
 
 * the Volume/Dataset is :file:`local/data`
@@ -1233,9 +1064,9 @@ For this example, the required configuration is as follows:
 
 **Figure 8.3b: Adding a Replication Task**
 
-.. image:: images/replication2a.png
+.. image:: images/replication2b.png
 
-Table 8.3a summarizes the available options in the "Add Replication Task" screen.
+Table 8.3a summarizes the available options in the "Add Replication" screen.
 
 **Table 8.3a: Adding a Replication Task**
 
@@ -1252,8 +1083,12 @@ Table 8.3a summarizes the available options in the "Add Replication Task" screen
 |                           |                | :file:`/mnt/` is assumed and should not be included in the path                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Recursively replicate     | checkbox       | if checked will replicate child datasets and replace previous snapshot stored on *PULL*                      |
+| Recursively replicate     | checkbox       | if checked will also replicate child datasets                                                                |
 |                           |                |                                                                                                              |
+|                           |                |                                                                                                              |
++---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
+| Delete snapshots          | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
+|                           |                | *PUSH*                                                                                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on *PULL* before reverting to normal         |
@@ -1314,12 +1149,10 @@ The "Begin" and "End" times can be used to create a window of time where replica
 day a snapshot occurs. Change these times if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For
 the "End" time, consider how long replication will take so that it finishes before the next day's office hours begin.
 
-Once the replication task is created, it will appear in the "View Replication Tasks" of *PUSH.*
-
-*PUSH* will immediately attempt to replicate its latest snapshot to
-*PULL*. If the replication is successful, the snapshot will appear in the
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` tab of *PULL*. If the snapshot is not replicated, refer to
-:ref:`Troubleshooting Replication` for troubleshooting tips.
+Once the replication task is saved, *PUSH* will immediately attempt to replicate its latest snapshot to
+*PULL*. If the replication is successful, the snapshot will appear in the :menuselection:`Storage --> Snapshots` tab of 
+*PULL*. Also, the "Last snapshot sent to remote side" and "Status" fields of :menuselection:`Storage --> Snapshots` on *PUSH* will indicate when the last snapshot was successfully sent
+to that "Remote Hostname". If the snapshot is not replicated, refer to :ref:`Troubleshooting Replication` for troubleshooting tips.
 
 .. _Troubleshooting Replication:
 
@@ -1336,14 +1169,14 @@ If you have followed all of the steps above and have *PUSH* snapshots that are n
  ssh -vv -i /data/ssh/replication hostname_or_ip
 
 This command should not ask for a password. If it asks for a password, SSH authentication is not working. Go to 
-:menuselection:`Storage --> Replication Tasks --> View Replication Tasks` and click the "View Public Key" button. Make sure that it matches one of the values
+:menuselection:`Storage --> Replication Tasks` and click the "View Public Key" button. Make sure that it matches one of the values
 in :file:`/~/.ssh/authorized_keys` on *PULL*, where :file:`~` represents the home directory of the replication user.
 
 Also check :file:`/var/log/auth.log` on *PULL* and :file:`/var/log/messages` on
 *PUSH* to see if either log gives an indication of the error.
 
 If the key is correct and replication is still not working, try deleting all snapshots on *PULL* except for the most recent one. In
-:menuselection:`Storage --> Periodic Snapshot Tasks --> View Periodic Snapshot Tasks --> Snapshots` check the box next to every snapshot except for the
+:menuselection:`Storage --> Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
 Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the *local/data*

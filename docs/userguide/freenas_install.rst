@@ -315,7 +315,7 @@ Be aware of the following caveats **before** attempting an upgrade to |version|:
   backup. If your data currently resides on a UFS RAID of disks, you will not be able to import that UFS volume. Instead, you will need to backup that data
   before the upgrade, create a ZFS volume after the upgrade, then restore the data from backup.
 
-* If your ZFS pool is GELI-encrypted, use the instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume.
+* GELI-encrypted ZFS volumes are not supported.
 
 * **DO NOT upgrade the ZFS pool unless you are absolutely sure that you will never want to go back to the previous version.** For this reason, the update
   process will not automatically upgrade the ZFS pool, though the :ref:`Alert` system will tell you if newer feature flags are available for the pool. Unless
@@ -335,9 +335,6 @@ Initial Preparation
 Before upgrading the operating system, perform the following steps:
 
 #.  **Backup the FreeNAS® configuration** in :menuselection:`System --> General --> Save Config`.
-
-#.  If any volumes are encrypted, **make sure** that you have set the passphrase and have a copy of the encryption key and the latest recovery key. Once the
-    upgrade is complete, use the instructions in :ref:`Importing an Encrypted Pool` to import the encrypted volume.
 
 #.  Warn users that the FreeNAS® shares will be unavailable during the upgrade; you should schedule the upgrade for a time that will least impact users.
 
