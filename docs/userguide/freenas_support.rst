@@ -17,8 +17,6 @@ The rest of this section discusses the following resources which are available t
 
 * :ref:`Mailing Lists`
 
-* :ref:`Videos`
-
 * :ref:`Professional Support`
 
 * :ref:`Training`
@@ -219,31 +217,6 @@ The following mailing lists are available:
 
 .. note:: the mailing lists were migrated from SourceForge to Mailman in December, 2013. Archives of the SourceForge mailing lists are available at
    `Gmane <http://dir.gmane.org/index.php?prefix=gmane.os.freenas>`_.
-
-.. _Videos:
-
-Videos
-------
-
-A series of instructional videos are available for FreeNAS® 9.3. They include:
-
-* `Changes in FreeNAS® 9.3 <https://www.youtube.com/watch?v=weKWqmbWdR4>`_
-
-* `FreeNAS 9.3 Updates <https://www.youtube.com/watch?v=lC7af_ahwSE>`_
-
-* `How to Upgrade FreeNAS 9.3 <https://www.youtube.com/watch?v=L61IJF98eP8>`_
-
-* `How to Install FreeNAS 9.3 <https://www.youtube.com/watch?v=k-mRgeDS8rk>`_
-
-* `FreeNAS® 9.3 Shares Overview (AFP, NFS, CIFS, + New WebDAV) <https://www.youtube.com/watch?v=GVJQ0Vx_6i4>`_
-
-* `How to Replace HDD in FreeNAS® 9.3 <https://www.youtube.com/watch?v=c8bvtj-LQ_A>`_
-
-* `TrueNAS 9.3 Snapshots Setup <https://www.youtube.com/watch?v=R92wb_xN9k4>`_
-
-* `Install Murmur (Mumble server) on FreeNAS/FreeBSD <https://www.youtube.com/watch?v=aAeZRNfarJc>`_
-
-* `FreeNAS 9.3 - First Time Setup Wizard <https://www.youtube.com/watch?v=isvHJ51YRBk>`_
 
 .. index:: Professional Support
 .. _Professional Support:
