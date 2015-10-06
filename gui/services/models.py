@@ -2913,6 +2913,50 @@ class Riak_CS(NewModel):
         verbose_name=_("Node IP"),
         max_length=200,
     )
+    riak_cs_listener_ip = models.CharField(
+        verbose_name=_("Listener Internal IP"),
+        max_length=200,
+    )
+    riak_cs_listener_ip_port = models.CharField(
+        verbose_name=_("Listener Internal Port"),
+        max_length=200,
+    )
+    riak_cs_riak_host_ip = models.CharField(
+        verbose_name=_("RIAK KV Host IP"),
+        max_length=200,
+    )
+    riak_cs_riak_host_ip_port = models.CharField(
+        verbose_name=_("RIAK KV Host Port"),
+        max_length=200,
+    )
+    riak_cs_stanchion_host_ip = models.CharField(
+        verbose_name=_("Stanchion Host IP"),
+        max_length=200,
+    )
+    riak_cs_stanchion_host_ip_port = models.CharField(
+        verbose_name=_("Stanchion Host Port"),
+        max_length=200,
+    )
+    riak_cs_anonymous_user_creation = models.CharField(
+        verbose_name=_("Anonymous User Creation"),
+        max_length=200,
+    )
+    riak_cs_admin_key = models.CharField(
+        verbose_name=_("Admin Key"),
+        max_length=200,
+    )
+    riak_cs_admin_secret = models.CharField(
+        verbose_name=_("Admin Secret"),
+        max_length=200,
+    )
+    riak_cs_max_buckets_per_user = models.CharField(
+        verbose_name=_("Max Buckets per User"),
+        max_length=200,
+    )
+    riak_cs_log_console_level = models.CharField(
+        verbose_name=_("Log Level"),
+        max_length=200,
+    )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -2929,6 +2973,17 @@ class Riak_CS(NewModel):
         field_mapping = (
             ('riak_cs_nodename', 'nodename'),
             ('riak_cs_nodeip', 'node_ip'),
+            ('riak_cs_listener_ip', 'listener_ip'),
+            ('riak_cs_listener_ip_port', 'listener_ip_port'),
+            ('riak_cs_riak_host_ip', 'riak_host_ip'),
+            ('riak_cs_riak_host_ip_port', 'riak_host_ip_port'),
+            ('riak_cs_stanchion_host_ip', 'stanchion_host_ip'),
+            ('riak_cs_stanchion_host_ip_port', 'stanchion_host_ip_port'),
+            ('riak_cs_anonymous_user_creation', 'anonymous_user_creation'),
+            ('riak_cs_admin_key', 'admin_key'),
+            ('riak_cs_admin_secret', 'admin_secret'),
+            ('riak_cs_max_buckets_per_user', 'max_buckets_per_user'),
+            ('riak_cs_log_console_level', 'log_console_level'),
         )
 
     @classmethod
@@ -2939,12 +2994,34 @@ class Riak_CS(NewModel):
             id=1,
             riak_cs_nodename=config['nodename'],
             riak_cs_nodeip=config['node_ip'],
+            riak_cs_listener_ip=config['listener_ip'],
+            riak_cs_listener_ip_port=config['listener_ip_port'],
+            riak_cs_riak_host_ip=config['riak_host_ip'],
+            riak_cs_riak_host_ip_port=config['riak_host_ip_port'],
+            riak_cs_stanchion_host_ip=config['stanchion_host_ip'],
+            riak_cs_stanchion_host_ip_port=config['stanchion_host_ip_port'],
+            riak_cs_anonymous_user_creation=config['anonymous_user_creation'],
+            riak_cs_admin_key=config['admin_key'],
+            riak_cs_admin_secret=config['admin_secret'],
+            riak_cs_max_buckets_per_user=config['max_buckets_per_user'],
+            riak_cs_log_console_level=config['log_console_level'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
             'nodename': self.riak_cs_nodename,
             'node_ip': self.riak_cs_nodeip,
+            'listener_ip': self.riak_cs_listener_ip,
+            'listener_ip_port': self.riak_cs_listener_ip_port,
+            'riak_host_ip': self.riak_cs_riak_host_ip,
+            'riak_host_ip_port': self.riak_cs_riak_host_ip_port,
+            'stanchion_host_ip': self.riak_cs_stanchion_host_ip,
+            'stanchion_host_ip_port': self.riak_cs_stanchion_host_ip_port,
+            'anonymous_user_creation': self.riak_cs_anonymous_user_creation,
+            'admin_key': self.riak_cs_admin_key,
+            'admin_secret': self.riak_cs_admin_secret,
+            'max_buckets_per_user': self.riak_cs_max_buckets_per_user,
+            'log_console_level': self.riak_cs_log_console_level,
         }
         self._save_task_call('service.riak_cs.configure', data)
         return True
