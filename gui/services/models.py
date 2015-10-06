@@ -2928,29 +2928,26 @@ class Riak_CS(NewModel):
         verbose_name=_("Listener Internal IP"),
         max_length=200,
     )
-    riak_cs_listener_ip_port = models.CharField(
+    riak_cs_listener_port = models.IntegerField(
         verbose_name=_("Listener Internal Port"),
-        max_length=200,
     )
     riak_cs_riak_host_ip = models.CharField(
         verbose_name=_("RIAK KV Host IP"),
         max_length=200,
     )
-    riak_cs_riak_host_ip_port = models.CharField(
+    riak_cs_riak_host_port = models.IntegerField(
         verbose_name=_("RIAK KV Host Port"),
-        max_length=200,
     )
     riak_cs_stanchion_host_ip = models.CharField(
         verbose_name=_("Stanchion Host IP"),
         max_length=200,
     )
-    riak_cs_stanchion_host_ip_port = models.CharField(
+    riak_cs_stanchion_host_port = models.IntegerField(
         verbose_name=_("Stanchion Host Port"),
-        max_length=200,
     )
-    riak_cs_anonymous_user_creation = models.CharField(
+    riak_cs_anonymous_user_creation = models.BooleanField(
         verbose_name=_("Anonymous User Creation"),
-        max_length=200,
+        default=False,
     )
     riak_cs_admin_key = models.CharField(
         verbose_name=_("Admin Key"),
@@ -2967,6 +2964,16 @@ class Riak_CS(NewModel):
     riak_cs_log_console_level = models.CharField(
         verbose_name=_("Log Level"),
         max_length=200,
+        choices=(
+            ('NONE', _('None')),
+            ('DEBUG', _('Debug')),
+            ('INFO', _('Info')),
+            ('WARNING', _('Warning')),
+            ('CRITICAL', _('Critical')),
+            ('ALERT', _('Alert')),
+            ('EMERGENCY', _('Emergency')),
+            ('ERROR', _('Error')),
+        ),
     )
 
     objects = NewManager(qs_class=ConfigQuerySet)
@@ -2985,11 +2992,11 @@ class Riak_CS(NewModel):
             ('riak_cs_nodename', 'nodename'),
             ('riak_cs_nodeip', 'node_ip'),
             ('riak_cs_listener_ip', 'listener_ip'),
-            ('riak_cs_listener_ip_port', 'listener_ip_port'),
+            ('riak_cs_listener_port', 'listener_port'),
             ('riak_cs_riak_host_ip', 'riak_host_ip'),
-            ('riak_cs_riak_host_ip_port', 'riak_host_ip_port'),
+            ('riak_cs_riak_host_port', 'riak_host_port'),
             ('riak_cs_stanchion_host_ip', 'stanchion_host_ip'),
-            ('riak_cs_stanchion_host_ip_port', 'stanchion_host_ip_port'),
+            ('riak_cs_stanchion_host_port', 'stanchion_host_port'),
             ('riak_cs_anonymous_user_creation', 'anonymous_user_creation'),
             ('riak_cs_admin_key', 'admin_key'),
             ('riak_cs_admin_secret', 'admin_secret'),
@@ -3006,11 +3013,11 @@ class Riak_CS(NewModel):
             riak_cs_nodename=config['nodename'],
             riak_cs_nodeip=config['node_ip'],
             riak_cs_listener_ip=config['listener_ip'],
-            riak_cs_listener_ip_port=config['listener_ip_port'],
+            riak_cs_listener_port=config['listener_port'],
             riak_cs_riak_host_ip=config['riak_host_ip'],
-            riak_cs_riak_host_ip_port=config['riak_host_ip_port'],
+            riak_cs_riak_host_port=config['riak_host_port'],
             riak_cs_stanchion_host_ip=config['stanchion_host_ip'],
-            riak_cs_stanchion_host_ip_port=config['stanchion_host_ip_port'],
+            riak_cs_stanchion_host_port=config['stanchion_host_port'],
             riak_cs_anonymous_user_creation=config['anonymous_user_creation'],
             riak_cs_admin_key=config['admin_key'],
             riak_cs_admin_secret=config['admin_secret'],
@@ -3023,11 +3030,11 @@ class Riak_CS(NewModel):
             'nodename': self.riak_cs_nodename,
             'node_ip': self.riak_cs_nodeip,
             'listener_ip': self.riak_cs_listener_ip,
-            'listener_ip_port': self.riak_cs_listener_ip_port,
+            'listener_port': self.riak_cs_listener_port,
             'riak_host_ip': self.riak_cs_riak_host_ip,
-            'riak_host_ip_port': self.riak_cs_riak_host_ip_port,
+            'riak_host_port': self.riak_cs_riak_host_port,
             'stanchion_host_ip': self.riak_cs_stanchion_host_ip,
-            'stanchion_host_ip_port': self.riak_cs_stanchion_host_ip_port,
+            'stanchion_host_port': self.riak_cs_stanchion_host_port,
             'anonymous_user_creation': self.riak_cs_anonymous_user_creation,
             'admin_key': self.riak_cs_admin_key,
             'admin_secret': self.riak_cs_admin_secret,
@@ -3053,7 +3060,6 @@ class Stanchion(NewModel):
     )
     stanchion_listener_port = models.IntegerField(
         verbose_name=_("Listener Internal Port"),
-        max_length=200,
     )
     stanchion_riak_host_ip = models.CharField(
         verbose_name=_("RIAK KV Host IP"),
@@ -3061,7 +3067,6 @@ class Stanchion(NewModel):
     )
     stanchion_riak_host_port = models.IntegerField(
         verbose_name=_("RIAK KV Host Port"),
-        max_length=200,
     )
     stanchion_admin_key = models.CharField(
         verbose_name=_("Admin Key"),
