@@ -2836,6 +2836,16 @@ class Riak(NewModel):
     riak_log_console_level = models.CharField(
         verbose_name=_("Log Level"),
         max_length=200,
+        choices=(
+            ('NONE', _('None')),
+            ('DEBUG', _('Debug')),
+            ('INFO', _('Info')),
+            ('WARNING', _('Warning')),
+            ('CRITICAL', _('Critical')),
+            ('ALERT', _('Alert')),
+            ('EMERGENCY', _('Emergency')),
+            ('ERROR', _('Error')),
+        ),
     )
 
 
@@ -2878,12 +2888,12 @@ class Riak(NewModel):
             riak_listener_http_internal_port=config['listener_http_internal_port'],
             riak_listener_https_internal=config['listener_https_internal'],
             riak_listener_https_internal_port=config['listener_https_internal_port'],
-            riak_listener_protobuf=config['listener_protobuf_internal'],
+            riak_listener_protobuf_internal=config['listener_protobuf_internal'],
             riak_listener_protobuf_internal_port=config['listener_protobuf_internal_port'],
             riak_object_size_maximum=config['object_size_maximum'],
             riak_object_size_warning_threshold=config['object_size_warning_threshold'],
-            riak_riak_control=config['riak_control'],
-            riak_log_console=config['log_console'],
+            riak_control=config['riak_control'],
+            riak_log_console_level=config['log_console_level'],
         ))
 
     def _save(self, *args, **kwargs):
@@ -2899,7 +2909,7 @@ class Riak(NewModel):
             'object_size_maximum': self.riak_object_size_maximum,
             'object_size_warning_threshold': self.riak_object_size_warning_threshold,
             'riak_control': self.riak_riak_control,
-            'log_console': self.riak_log_console,
+            'log_console_level': self.riak_log_console_level,
         }
         self._save_task_call('service.riak.configure', data)
         return True
