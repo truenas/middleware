@@ -396,14 +396,6 @@ class notifier:
         self._system("/usr/sbin/service ix-ctld quietstart")
         self._system("/usr/sbin/service ctld reload")
 
-    def _start_collectd(self):
-        self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd restart")
-
-    def _restart_collectd(self):
-        self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd restart")
-
     def _start_sysctl(self):
         self._system("/usr/sbin/service sysctl start")
         self._system("/usr/sbin/service ix-sysctl quietstart")
@@ -437,18 +429,6 @@ class notifier:
 
     def _reload_named(self):
         self._system("/usr/sbin/service named reload")
-
-    def _reload_hostname(self):
-        self._system('/bin/hostname ""')
-        self._system("/usr/sbin/service ix-hostname quietstart")
-        self._system("/usr/sbin/service hostname quietstart")
-
-    def _reload_networkgeneral(self):
-        self._system('/bin/hostname ""')
-        self._system("/usr/sbin/service ix-hostname quietstart")
-        self._system("/usr/sbin/service ix-resolv quietstart")
-        self._system("/usr/sbin/service hostname quietstart")
-        self._system("/usr/sbin/service routing restart")
 
     def _reload_timeservices(self):
         from freenasUI.sysyem.models import Settings
@@ -607,27 +587,8 @@ class notifier:
             res = True
         return res
 
-    def _restart_syslogd(self):
-        self._system("/usr/sbin/service ix-syslogd quietstart")
-        self._system("/etc/local/rc.d/syslog-ng restart")
-
-    def _start_syslogd(self):
-        self._system("/usr/sbin/service ix-syslogd quietstart")
-        self._system("/etc/local/rc.d/syslog-ng start")
-
-    def _stop_syslogd(self):
-        self._system("/etc/local/rc.d/syslog-ng stop")
-
-    def _reload_syslogd(self):
-        self._system("/usr/sbin/service ix-syslogd quietstart")
-        self._system("/etc/local/rc.d/syslog-ng reload")
-
     def _restart_cron(self):
         self._system("/usr/sbin/service ix-crontab quietstart")
-
-    def _start_motd(self):
-        self._system("/usr/sbin/service ix-motd quietstart")
-        self._system("/usr/sbin/service motd quietstart")
 
     def start_ataidle(self, what=None):
         if what is not None:
