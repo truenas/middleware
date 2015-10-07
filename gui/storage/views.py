@@ -202,34 +202,10 @@ def volumemanager(request):
     qs = models.Volume.objects.filter(vol_fstype='zfs')
     swap = Advanced.objects.latest('id').adv_swapondrive
 
-    encwarn = (
-        u'<span style="color: red; font-size:110%%;">%s</span>'
-        u'<p>%s</p>'
-        u'<p>%s</p>'
-        u'<p>%s</p>'
-    ) % (
-        _('WARNING!'),
-        _(
-            'Always backup the key! If the key is lost, the data on the disks '
-            'will also be lost with no hope of recovery.'
-        ),
-        _(
-            'This type of encryption is primarily targeted at users who are '
-            'storing sensitive data and want the ability to remove disks from '
-            'the pool and dispose of/re-use them without concern for erasure.'
-        ),
-        _(
-            'iXsystems, Inc. can not be held responsible for any lost '
-            'or unrecoverable data as a consequence of using this feature.'
-        ),
-    )
-
     return render(request, "storage/volumemanager.html", {
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
-        'encryption_warning': encwarn,
         'swap_size': swap * 1024 * 1024 * 1024,
-        'manual_url': reverse('storage_volumemanager_zfs'),
         'extend': json.dumps(
             [{'value': '', 'label': '-----'}] +
             [{
@@ -250,44 +226,6 @@ def volumemanager_progress(request):
             ))
     else:
         return HttpResponse('new Object({state: "starting"})')
-
-
-def volumemanager_zfs(request):
-
-    if request.method == "POST":
-
-        form = forms.ZFSVolumeWizardForm(request.POST)
-        if form.is_valid():
-            events = []
-            form.done(request, events)
-            return JsonResp(
-                request,
-                message=_("Volume successfully added."),
-                events=events,
-            )
-        else:
-            if 'volume_disks' in request.POST:
-                disks = request.POST.getlist('volume_disks')
-            else:
-                disks = None
-            zpoolfields = re.compile(r'zpool_(.+)')
-            zfsextra = [
-                (zpoolfields.search(i).group(1), i, request.POST.get(i))
-                for i in request.POST.keys() if zpoolfields.match(i)
-            ]
-
-    else:
-        form = forms.ZFSVolumeWizardForm()
-        disks = []
-        zfsextra = None
-    #dedup = forms._dedup_enabled()
-    dedup = True
-    return render(request, 'storage/zfswizard.html', {
-        'form': form,
-        'disks': disks,
-        'zfsextra': zfsextra,
-        'dedup': dedup,
-    })
 
 
 SOCKIMP = '/var/run/importcopy/importsock'
