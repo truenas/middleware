@@ -17,11 +17,17 @@ following built-in services:
 
 * :ref:`FTP`
 
+* :ref:`IPFS`
+
 * :ref:`iSCSI`
 
 * :ref:`LLDP`
 
 * :ref:`NFS`
+
+* :ref:`Riak CS`
+
+* :ref:`Riak KV`
 
 * :ref:`Rsync`
 
@@ -30,6 +36,8 @@ following built-in services:
 * :ref:`SNMP`
 
 * :ref:`SSH`
+
+* :ref:`Stanchion`
 
 * :ref:`TFTP`
 
@@ -809,6 +817,12 @@ Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To sta
 .. note:: a warning message will occur if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of
           the connected initiators.
 
+.. index:: IPFS
+.. _IPFS:
+
+IPFS
+----          
+
 .. index:: LLDP, Link Layer Discovery Protocol
 .. _LLDP:
 
@@ -992,6 +1006,18 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 | Auxiliary parameters | string         | additional parameters from rsyncd.conf(5)                                     |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
+
+.. index:: Riak CS
+.. _Riak CS:
+
+Riak CS
+-------
+
+.. index:: Riak KV
+.. _Riak KV:
+
+Riak KV
+-------
 
 .. index:: S.M.A.R.T.
 .. _S.M.A.R.T.:
@@ -1240,6 +1266,12 @@ to what the problem is. Type the following command within :ref:`Shell` to read t
  tail -f /var/log/messages
 
 Additional messages regarding authentication errors may be found in :file:`/var/log/auth.log`.
+
+.. index:: Stanchion
+.. _Stanchion:
+
+Stanchion
+---------
 
 .. index:: TFTP, Trivial File Transfer Protocol
 .. _TFTP:
