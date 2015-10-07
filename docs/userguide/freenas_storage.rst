@@ -509,7 +509,7 @@ View Disks
 
 **Figure 8.1j: Viewing Disks**
 
-.. image:: images/view.png
+.. image:: images/view1.png
 
 The current configuration of each device is displayed. Click a disk's entry and then its "Edit" button to change its configuration. The configurable options
 are described in Table 8.1f.
@@ -545,10 +545,6 @@ are described in Table 8.1f.
 |                                                        |                | :ref:`S.M.A.R.T. Tests` for the disk                                                                                     |
 |                                                        |                |                                                                                                                          |
 +--------------------------------------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------+
-| S.M.A.R.T. extra options                               | string         | additional `smartctl(8) <http://linux.die.net/man/8/smartctl>`_  options                                                 |
-|                                                        |                |                                                                                                                          |
-+--------------------------------------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------+
-
 
 Clicking a disk's entry will also display its "Wipe" button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
 option before discarding a disk.
@@ -612,10 +608,7 @@ configurable options.
 
 **Figure 8.1n: Editing a Disk**
 
-.. image:: images/disk.png
-
-.. note:: versions of FreeNAS® prior to 8.3.1 required a reboot in order to apply changes to the "HDD Standby", "Advanced Power Management", and "Acoustic
-   Level" settings. As of 8.3.1, changes to these settings are applied immediately.
+.. image:: images/disk1.png
 
 If you click a dataset in :menuselection:`Storage --> Volumes --> View Volumes`, six buttons will appear at the bottom of the screen. In order from left to
 right, these buttons allow you to:
@@ -929,8 +922,7 @@ Before you can create a snapshot, you need to have an existing ZFS volume. How t
 To create a periodic snapshot task, click :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot` which will open the screen shown in
 Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
-.. note:: if you just need a one-time snapshot, instead use :menuselection:`Storage --> Volumes --> View Volumes` and click the "Create Snapshot" button for
-   the volume or dataset that you wish to snapshot.
+.. note:: if you just need a one-time snapshot, instead use :menuselection:`Storage --> Volumes` and click the "Create Snapshot" button for the dataset that you wish to snapshot.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
@@ -1218,7 +1210,7 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 
 **Figure 8.4a: Viewing a Volume's Default Scrub Settings**
 
-.. image:: images/scrub1.png
+.. image:: images/scrub1a.png
 
 **Table 8.4a: ZFS Scrub Options**
 
@@ -1228,11 +1220,6 @@ display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 |                |                             |                                                                                                             |
 +================+=============================+=============================================================================================================+
 | Volume         | drop-down menu              | select ZFS volume to scrub                                                                                  |
-|                |                             |                                                                                                             |
-+----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
-| Threshold days | integer                     | number of days since the last scrub completed before the next scrub can occur, regardless of the calendar   |
-|                |                             | schedule; the default is a multiple of 7 which should ensure that the scrub always occurs on the same day   |
-|                |                             | of the week                                                                                                 |
 |                |                             |                                                                                                             |
 +----------------+-----------------------------+-------------------------------------------------------------------------------------------------------------+
 | Description    | string                      | optional                                                                                                    |

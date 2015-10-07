@@ -149,6 +149,10 @@ In addition to the new features, the following options have changed in the GUI:
 
 * The "File System type" field has been removed from :menuselection:`Storage --> Import Volume` as the supported file system types are automatically detected.
 
+* The "S.M.A.R.T. extra options" field has been removed from :menuselection:`Storage --> View Disks --> Edit` and from :menuselection:`Storage --> Volume Status --> Edit Disk`.
+
+* The "Threshold days" field has been removed from :menuselection:`Storage --> Scrubs --> Add Scrub`.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
