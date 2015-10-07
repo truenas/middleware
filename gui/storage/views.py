@@ -161,7 +161,7 @@ def volumemanager(request):
 
     # Grab disk list
     # Root device already ruled out
-    result = dispatcher.call_sync('disks.query', [('path', 'in', dispatcher.call_sync('volumes.get_available_disks'))])
+    result = dispatcher.call_sync('disks.query', [('path', 'in', dispatcher.call_sync('volumes.get_available_disks')), ('online', '=', True)])
 
     for d in result:
         disks.append(forms.Disk(
