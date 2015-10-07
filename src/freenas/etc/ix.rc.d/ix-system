@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-system
-# BEFORE: samba_server ix-syslogd
+# BEFORE: samba_server
 
 . /etc/rc.freenas
 
