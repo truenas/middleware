@@ -297,7 +297,7 @@ def bootenv_scrub_interval(request):
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
-        result = dispatcher.call_task_sync('boot.environments.delete', name)
+        result = dispatcher.call_task_sync('boot.environments.delete', [name])
         if result['state'] == 'FINISHED':
             return JsonResp(
                 request,
