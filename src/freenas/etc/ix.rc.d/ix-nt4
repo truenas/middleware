@@ -4,7 +4,6 @@
 #
 
 # PROVIDE: ix-nt4
-# REQUIRE: ix-pre-samba
 # BEFORE: samba_server
 
 . /etc/rc.freenas
