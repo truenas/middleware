@@ -177,14 +177,6 @@ class VolumeManagerForm(VolumeMixin, Form):
     volume_add = forms.CharField(
         max_length=30,
         required=False)
-    encryption = forms.BooleanField(
-        required=False,
-        initial=False,
-    )
-    encryption_inirand = forms.BooleanField(
-        initial=False,
-        required=False,
-    )
     dedup = forms.ChoiceField(
         choices=choices.ZFS_DEDUP,
         initial="off",

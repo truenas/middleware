@@ -1013,9 +1013,6 @@ define([
 
         this.dapVolNameLabel.innerHTML = gettext('Volume Name');
         this.dapVolExtendLabel.innerHTML = gettext('Volume to extend');
-        this.dapExtendEnc.innerHTML = gettext('Extending an encrypted volume will reset the passphrase and recovery key!');
-        this.dapDiskEncLabel.innerHTML = gettext('Encryption');
-        //this.dapDiskEncIniLabel.innerHTML = gettext('Initialize Safely');
         this.dapAvailLabel.innerHTML = gettext('Available disks');
         this.dapLayoutLabel.innerHTML = gettext('Volume layout');
         this.dapLayoutEstimatedLabel.innerHTML = gettext('Estimated capacity');
@@ -1052,17 +1049,11 @@ define([
               //encini.set('disabled', true);
               okbtn.set('label', me.extend_label);
               var opt = this.getOptions(val);
-              if(opt.enc) {
-                domStyle.set(me.dapExtendEnc, "display", "");
-              } else {
-                domStyle.set(me.dapExtendEnc, "display", "none");
-              }
             } else {
               volume_name.set('disabled', false);
               enc.set('disabled', false);
               //encini.set('disabled', false);
               okbtn.set('label', me.add_label);
-              domStyle.set(me.dapExtendEnc, "display", "none");
             }
           }
         }, this.dapExtend);
@@ -1075,40 +1066,6 @@ define([
           ],
           value: "off"
         }, this.dapDedup);
-
-        enc = new CheckBox({
-          name: "encryption"
-        }, this.dapDiskEnc);
-
-        on(enc, "click", function() {
-          if(this.get("value") == "on") {
-            tpDialog = new TooltipDialog({
-              content: me.encryption_warning,
-              onMouseLeave: function() {
-                popup.close(tpDialog);
-                tpDialog.destroyRecursive();
-              }
-            });
-            popup.open({
-              popup: tpDialog,
-              around: enc.domNode,
-              orient: ["above", "after", "below-alt"]
-            });
-          }
-        });
-
-        //encini = new CheckBox({
-        //  name: "encryption_inirand",
-        //  disabled: true
-        //}, this.dapDiskEncIni);
-
-        //on(enc, "click", function() {
-        //  if(this.get("value") == "on") {
-        //    encini.set('disabled', false);
-        //  } else {
-        //    encini.set('disabled', true);
-        //  }
-        //});
 
         /*
          * Sort disks by bytes DESC
