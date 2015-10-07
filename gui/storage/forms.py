@@ -1106,40 +1106,6 @@ class MountPointAccessForm(Form):
         label=_('Set permission recursively')
     )
 
-    def modes_to_oct(self, modes):
-        import stat
-        modes = wrap(modes)
-        result = 0
-
-        if modes['user.read']:
-            result &= stat.S_IRUSR
-
-        if modes['user.write']:
-            result &= stat.S_IWUSR
-
-        if modes['user.execute']:
-            result &= stat.S_IXUSR
-
-        if modes['group.read']:
-            result &= stat.S_IRGRP
-
-        if modes['group.write']:
-            result &= stat.S_IWGRP
-
-        if modes['group.execute']:
-            result &= stat.S_IXGRP
-
-        if modes['others.read']:
-            result &= stat.S_IROTH
-
-        if modes['others.write']:
-            result &= stat.S_IWOTH
-
-        if modes['others.execute']:
-            result &= stat.S_IXOTH
-
-        return result
-
     def __init__(self, *args, **kwargs):
         super(MountPointAccessForm, self).__init__(*args, **kwargs)
         from freenasUI.middleware.connector import connection as dispatcher
@@ -1158,9 +1124,7 @@ class MountPointAccessForm(Form):
             # 8917: This needs to be handled by an upper layer but for now
             # just prevent a backtrace.
             try:
-                self.fields['mp_mode'].initial = "%.3o" % (
-                    self.modes_to_oct(stat['permissions']['modes'])
-                )
+                self.fields['mp_mode'].initial = "%.3o" % stat['permissions']['modes']['value']
                 self.fields['mp_user'].initial = stat['user']
                 self.fields['mp_group'].initial = stat['group']
             except:
@@ -1196,7 +1160,7 @@ class MountPointAccessForm(Form):
             kwargs['user'] = self.cleaned_data['mp_user']
 
         if self.cleaned_data.get('mp_mode_en'):
-            kwargs['modes'] = {'value': self.cleaned_data['mp_mode']}
+            kwargs['modes'] = {'value': int(self.cleaned_data['mp_mode'], 8)}
 
         pool_name, ds_name, rest = dispatcher.call_sync('volumes.decode_path', path)
         dispatcher.call_task_sync('file.set_permissions', path, kwargs, self.cleaned_data['mp_recursive'])
