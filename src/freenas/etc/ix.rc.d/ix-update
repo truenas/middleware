@@ -4,7 +4,6 @@
 #
 
 # PROVIDE: ix-update
-# BEFORE: ix-fstab
 
 . /etc/rc.freenas
 
