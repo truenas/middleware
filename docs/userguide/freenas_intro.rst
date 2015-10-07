@@ -147,7 +147,9 @@ In addition to the new features, the following options have changed in the GUI:
   
 * :menuselection:`Network --> Static Routes --> Add Static Route` now supports both IPv4 and IPv6 routes.
 
-* The "File System type" field has been removed from :menuselection:`Storage --> Import Volume` as the supported file system types are automatically detected.
+* The "Manual Setup" button has been removed from :menuselection:`Storage --> Volumes --> Volume Manager`.
+
+* The "File System type" field has been removed from :menuselection:`Storage --> Volumes --> Import Volume` as the supported file system types are automatically detected.
 
 * The "S.M.A.R.T. extra options" field has been removed from :menuselection:`Storage --> View Disks --> Edit` and from :menuselection:`Storage --> Volume Status --> Edit Disk`.
 

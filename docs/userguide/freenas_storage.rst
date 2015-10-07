@@ -77,16 +77,12 @@ Table 8.1a summarizes the configuration options of this screen.
 | Add Extra Device | button         | used to configure multiple vdevs or to add log or cache devices during pool creation       |
 |                  |                |                                                                                            |
 +------------------+----------------+--------------------------------------------------------------------------------------------+
-| Manual setup     | button         | used to make a non-optimal pool (not recommended); see :ref:`Manual Setup` for details     |
-|                  |                |                                                                                            |
-+------------------+----------------+--------------------------------------------------------------------------------------------+
 
 To configure the pool, drag the slider to select the desired number of disks. "Volume Manager" will display the resulting storage capacity, which takes
 swap into account. If you wish to change the layout or the number of disks, use the mouse to drag the slider to the desired volume layout. The "Volume layout"
 drop-down menu can also be clicked if a different level of redundancy is required.
 
-.. note:: for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes. While it is not recommended,
-   it is possible to create a volume in this situation by using the "Manual setup" button and following the instructions in :ref:`Manual Setup`.
+.. note:: for performance and capacity reasons, this screen will not allow you to create a volume from disks of differing sizes.
 
 "Volume Manager" will not allow you to select a configuration if the number of disks selected is not enough to create that configuration. The following layouts
 are supported:
@@ -116,48 +112,6 @@ external media, format the disks, then restore the data to the new volume.
 Depending upon the size and number of disks and the type of controller, creating the volume may take some time. Once
 the volume is created, the screen will refresh and the new volume will be listed in the tree under :menuselection:`Storage --> Volumes`. Click the *+* next to
 the volume name to access its :ref:`Change Permissions`, :ref:`Create Dataset`, and :ref:`Create zvol` options.
-
-.. _Manual Setup:
-
-Manual Setup
-^^^^^^^^^^^^
-
-The "Manual Setup" button shown in Figure 8.1a can be used to create a non-optimal ZFS volume. While this is **not** recommended, it can, for example, be used
-to create a volume containing disks of different sizes.
-
-.. note:: when using disks of differing sizes, the volume is limited by the size of the smallest disk. For this reason, it is recommended to instead use
-   "Volume Manager" with same-size disks.
-
-Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the available options.
-
-**Figure 8.1b: Creating a Non-Optimal ZFS Volume**
-
-.. image:: images/manual1a.png
-
-**Table 8.1b: Manual Setup Options**
-
-+---------------+------------------+------------------------------------------------------------------------------------------------+
-| **Setting**   | **Value**        | **Description**                                                                                |
-|               |                  |                                                                                                |
-|               |                  |                                                                                                |
-+===============+==================+================================================================================================+
-| Volume name   | string           | ZFS volumes must conform to these                                                              |
-|               |                  | `naming conventions <http://docs.oracle.com/cd/E19082-01/817-2271/gbcpt/index.html>`_ ;        |
-|               |                  | it is recommended to choose a name that will stick out in the logs (e.g.                       |
-|               |                  | **not** :file:`data` or :file:`freenas`)                                                       |
-|               |                  |                                                                                                |
-+---------------+------------------+------------------------------------------------------------------------------------------------+
-| Member disks  | list             | highlight desired number of disks from list of available disks                                 |
-|               |                  |                                                                                                |
-+---------------+------------------+------------------------------------------------------------------------------------------------+
-| Deduplication | drop-down menu   | choices are *Off*,                                                                             |
-|               |                  | *Verify*, and                                                                                  |
-|               |                  | *On*; carefully consider the section on `Deduplication`_ before changing this setting          |
-|               |                  |                                                                                                |
-+---------------+------------------+------------------------------------------------------------------------------------------------+
-| ZFS Extra     | bullet selection | used to specify if disk is used for storage (*None*), a log device, a cache device, or a spare |
-|               |                  |                                                                                                |
-+---------------+------------------+------------------------------------------------------------------------------------------------+
 
 .. _Extending a ZFS Volume:
 
