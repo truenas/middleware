@@ -232,21 +232,6 @@ al.230400:\
 3wire.230400|230400-3wire:\
 	:np:nc:sp#230400:
 
-#
-# FreeNAS menu system entry
-#
-FreeNAS|freenas|FreeNAS Menu:\
-	:ht:np:sp#15200:lo=/etc/netcli.sh:al=root:
-freenas_serial9600:\
-	:ht:np:sp#9600:lo=/etc/netcli.sh:al=root:
-freenas_serial19200:\
-	:ht:np:sp#19200:lo=/etc/netcli.sh:al=root:
-freenas_serial38400:\
-	:ht:np:sp#38400:lo=/etc/netcli.sh:al=root:
-freenas_serial57600:\
-	:ht:np:sp#57600:lo=/etc/netcli.sh:al=root:
-freenas_serial115200:\
-	:ht:np:sp#115200:lo=/etc/netcli.sh:al=root:
 
 #
 # FreeNAS CLI entry
