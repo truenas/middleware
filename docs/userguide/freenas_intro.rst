@@ -164,6 +164,8 @@ In addition to the new features, the following options have changed in the GUI:
   
 * The "dfs_samba4", "fake_acls", "shadow_copy_test", "skel_opaque", "skel_transparent", and "zfs_space" VFS objects have been added to
   :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share --> Advanced Mode`. The "streams_xattr" VFS object has been removed.
+  
+* The "Idmap Range Low" and "Idmap Range High" fields have been removed from :menuselection:`Services -> CIFS`.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:

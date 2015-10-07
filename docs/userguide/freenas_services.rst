@@ -54,11 +54,11 @@ Control Services
 ----------------
 
 :menuselection:`Services --> Control Services`, shown in Figure 11.1a, allows you to quickly determine which services are currently running, to start and stop
-services, and to configure services. By default, all services, except for the S.M.A.R.T. service, are off until you start them.
+services, and to configure services. By default, all services, except for the SSH service, are off until you start them.
 
 **Figure 11.1a: Control Services**
 
-.. image:: images/services.png
+.. image:: images/services1.png
 
 A service is stopped if its icon is a red "OFF". A service is running if its icon is a blue "ON". To start or stop a service, click its ON/OFF icon.
 
@@ -260,14 +260,6 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | Bind IP Addresses                | checkboxes     | check the IP address(es) that CIFS should listen on                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Idmap Range Low                  | integer        | defines the beginning UID/GID this system is authoritative for; any UID/GID lower than this value is  |
-|                                  |                | ignored, providing a way to avoid accidental UID/GID overlaps between local and remotely defined IDs  |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Idmap Range High                 | integer        | defines the ending UID/GID this system is authoritative for; any UID/GID higher than this value is    |
-|                                  |                | ignored, providing a way to avoid accidental UID/GID overlaps between local and remotely defined IDs  |
-|                                  |                |                                                                                                       |
-+----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 **Table 11.3b: Description of SMB Protocol Versions**
 
@@ -314,8 +306,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 
 .. note:: Windows 8.1 and Windows Server 2012 R2 use SMB3.02 which is not yet supported by Samba. 
 
-Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares take effect immediately. For previous versions, changes will not take effect
-until you manually stop and start the CIFS service.
+Changes to CIFS settings and CIFS shares take effect immediately, meaning you do not need to manually stop and start the CIFS service.
 
 .. note:: do not set the
    *directory name cache size* as an "Auxiliary parameter". Due to differences in how Linux and BSD handle file descriptors, directory name caching is
@@ -807,6 +798,12 @@ for errors.
 If the error refers to DNS, either create an entry in your local DNS server with the FreeNAS® system's hostname and IP address or add an entry for the IP
 address of the FreeNAS® system in the "Host name database" field of :menuselection:`Network --> Global Configuration`.
 
+.. index:: IPFS
+.. _IPFS:
+
+IPFS
+----  
+
 .. _iSCSI:
 
 iSCSI
@@ -815,13 +812,7 @@ iSCSI
 Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in "Services".
 
 .. note:: a warning message will occur if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of
-          the connected initiators.
-
-.. index:: IPFS
-.. _IPFS:
-
-IPFS
-----          
+          the connected initiators.        
 
 .. index:: LLDP, Link Layer Discovery Protocol
 .. _LLDP:
@@ -911,6 +902,18 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            | to bind to                                                                                                          |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+
+.. index:: Riak CS
+.. _Riak CS:
+
+Riak CS
+-------
+
+.. index:: Riak KV
+.. _Riak KV:
+
+Riak KV
+-------
 
 .. index:: Rsync
 .. _Rsync:
@@ -1006,18 +1009,6 @@ Table 11.10b summarizes the options that can be configured when creating a rsync
 | Auxiliary parameters | string         | additional parameters from rsyncd.conf(5)                                     |
 |                      |                |                                                                               |
 +----------------------+----------------+-------------------------------------------------------------------------------+
-
-.. index:: Riak CS
-.. _Riak CS:
-
-Riak CS
--------
-
-.. index:: Riak KV
-.. _Riak KV:
-
-Riak KV
--------
 
 .. index:: S.M.A.R.T.
 .. _S.M.A.R.T.:
@@ -1256,8 +1247,7 @@ If you add any "Extra Options", be aware that the keywords listed in
 `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_
 are case sensitive. This means that your configuration will fail to do what you intended if you do not match the upper and lowercase letters of the keyword.
 
-If your clients are receiving "reverse DNS" or timeout errors, add an entry for the IP address of the FreeNAS® system in the "Host name database" field
-of :menuselection:`Network --> Global Configuration`.
+If your clients are receiving "reverse DNS" or timeout errors, add an entry for the IP address of the FreeNAS® system using :menuselection:`Network --> Hosts --> Add Host`.
 
 When configuring SSH, always test your configuration as an SSH user account to ensure that the user is limited to what you have configured and that they have
 permission to transfer files within the intended directories. If the user account is experiencing problems, the SSH error messages are usually pretty specific
@@ -1284,8 +1274,6 @@ in a local environment. TFTP provides an extremely limited set of commands and p
 
 If the FreeNAS® system will be used to store images and configuration files for the network's devices, configure and start the TFTP service. Starting the
 TFTP service will open UDP port 69.
-
-.. note:: in versions of FreeNAS® prior to 8.3.0, TFTP is limited to a maximum file size of 32MB.
 
 Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes the available options:
 
@@ -1391,7 +1379,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                | for examples                                                                                          |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Remote monitor            | checkbox       | if enabled, be aware that the default is to listen on all interfaces and to use the known values user |
+| Remote Monitor            | checkbox       | if enabled, be aware that the default is to listen on all interfaces and to use the known values user |
 |                           |                | *upsmon* and password                                                                                 |
 |                           |                | *fixmepass*                                                                                           |
 |                           |                |                                                                                                       |
