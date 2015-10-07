@@ -67,7 +67,7 @@ dedicated log device, or slog, using :ref:`Volume Manager`.  More detailed expla
 `forum post <https://forums.freenas.org/index.php?threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/>`_ and in this
 `blog post <http://nex7.blogspot.com/2013/04/zfs-intent-log.html>`_. A dedicated log device will have no effect on CIFS, AFP, or iSCSI as these protocols
 rarely use synchronous writes. When creating a dedicated log device, it is recommended to use a fast SSD with a supercapacitor or a bank of capacitors that
-can handle writing the contents of the SSD's RAM to the SSD. The :command:`zilstat` utility can be run from Shell to help determine if the system would
+can handle writing the contents of the SSD's RAM to the SSD. The :command:`zilstat` command line utility can be run to help determine if the system would
 benefit from a dedicated ZIL device. See
 `this website <http://www.richardelling.com/Home/scripts-and-programs-1/zilstat>`_
 for usage information. If you decide to create a dedicated log device to speed up NFS writes, the SSD can be half the size of system RAM as anything larger
@@ -134,7 +134,7 @@ While ZFS provides many benefits, there are some caveats to be aware of:
   disk will fail before the resilvering process completes. If the number of failed disks exceeds the number allowed per vdev for the type of RAIDZ, the data
   in the pool will be lost. For this reason, RAIDZ1 is not recommended for drives over 1 TB in size.
   
-* It is recommended to use drives of equal sizes. While ZFS can create a pool using disks of differing sizes, the capacity will be limited by the size of the
+* It is recommended to use drives of equal sizes when creating a vdev. While ZFS can create a vdev using disks of differing sizes, its capacity will be limited by the size of the
   smallest disk.
 
 If you are new to ZFS, the

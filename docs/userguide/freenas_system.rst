@@ -556,7 +556,7 @@ Any tunables that you add will be listed in :menuselection:`System --> Tunables`
 remove a tunable, click its "Delete" button.
 
 Some sysctls are read-only, meaning that they require a reboot in order to enable their setting. You can determine if a sysctl is read-only by first
-attempting to change it from :ref:`Shell`. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command
+attempting to change it from the command line. For example, to change the value of *net.inet.tcp.delay_ack* to *1*, use the command
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 

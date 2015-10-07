@@ -21,7 +21,7 @@ The following utilities are specific to RAID controllers:
 
 * :ref:`tw_cli`:_used to monitor and maintain 3ware RAID controllers
 
-* :ref:`MegaCli`: used to configure and manage LSI MegaRAID SAS family of RAID controllers
+* :ref:`MegaCli`: used to configure and manage Avago MegaRAID SAS family of RAID controllers
 
 This section also describes the following utilities:
 
@@ -57,7 +57,7 @@ To start xjperf on Windows: unzip the downloaded file, start Command Prompt in R
 To start xjperf on Mac OS X, Linux, or BSD, unzip the downloaded file, :command:`cd` to the unzipped directory, type :command:`chmod u+x jperf.sh`, and run
 :command:`./jperf.sh`.
 
-Once the client is ready, you need to start the Iperf server on FreeNAS®. To see the available server options, open Shell and type::
+Once the client is ready, you need to start the Iperf server on FreeNAS®. To see the available server options, type the following from the command line::
 
  iperf --help | more
  Usage: iperf [-s|-c host] [options]
@@ -122,7 +122,7 @@ For example, to perform a TCP test and start the server in daemon mode (so that 
  The Iperf daemon process ID: 4842
 
 
-.. note:: if you close Shell, the daemon process will stop. Have your environment setup (e.g. shares configured and started)
+.. note:: if you close your shell, the daemon process will stop. Have your environment setup (e.g. shares configured and started)
    **before** starting the iperf process.
 
 From your desktop, open the client. Input the IP of address of the FreeNAS® system, specify the running time for the test under
@@ -161,7 +161,7 @@ are not sure if the traffic that you wish to test is UDP or TCP, run this comman
  root	syslogd	1089	6  udp4		127.0.0.1:514	*:*
 
 
-When you are finished testing, either type :command:`killall iperf` or close Shell to terminate the iperf server process.
+When you are finished testing, either type :command:`killall iperf` or logout of your shell to terminate the iperf server process.
 
 .. index:: Netperf
 .. _Netperf:
@@ -237,7 +237,7 @@ IOzone
 IOzone is a disk and filesystem benchmarking tool. It can be used to test file I/O performance for the following operations: read, write, re-read, re-write,
 read backwards, read strided, fread, fwrite, random read, pread, mmap, aio_read, and aio_write.
 
-FreeNAS® ships with IOzone, meaning that it can be run from Shell. When using IOzone on FreeNAS®, :command:`cd` to a directory in a volume that you have
+FreeNAS® ships with IOzone, meaning that it can be run from the command line. When using IOzone on FreeNAS®, :command:`cd` to a directory in a volume that you have
 permission to write to, otherwise you will get an error about being unable to write the temporary file.
 
 Before using IOzone, read through the
@@ -400,7 +400,7 @@ In particular, the value of pre-fetching depends upon the amount of memory and t
 
 * `ZFS prefetch algorithm can cause performance drawbacks <http://southbrain.com/south/2008/04/the-nightmare-comes-slowly-zfs.html>`_
 
-FreeNAS® provides two command line scripts which an be manually run from Shell:
+FreeNAS® provides two command line scripts which an be manually run from the command line:
 
 * :command:`arc_summary.py`: provides a summary of the statistics
 
@@ -837,7 +837,7 @@ Before using this command, read its
 `man page <http://www.cyberciti.biz/files/tw_cli.8.html>`_
 as it describes the terminology and provides some usage examples.
 
-If you type :command:`tw_cli` in Shell, the prompt will change, indicating that you have entered interactive mode where you can run all sorts of maintenance
+If you type :command:`tw_cli` from the command line, the prompt will change, indicating that you have entered interactive mode where you can run all sorts of maintenance
 commands on the controller and its arrays.
 
 Alternately, you can specify one command to run. For example, to view the disks in the array::
@@ -918,7 +918,7 @@ contains a handy wrapper script that will notify you of errors.
 MegaCli
 -------
 
-:command:`MegaCli` is the command line interface for the LSI MegaRAID SAS family of RAID controllers. FreeNAS® also includes the
+:command:`MegaCli` is the command line interface for the Avago MegaRAID SAS family of RAID controllers. FreeNAS® also includes the
 `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
 utility which can be used to configure and manage connected storage devices.
 
@@ -935,7 +935,7 @@ The FreeNAS® GUI provides an option to save debugging information to a text fil
 :menuselection:`System --> Advanced --> Save Debug`. This debugging information is created by the :command:`freenas-debug` command line utility and a copy of
 the information is saved to :file:`/var/tmp/fndebug`.
 
-Using Shell, you can run this command manually to gather the specific debugging information that you need. To see the available options, type::
+You can run this command manually from the command line to gather the specific debugging information that you need. To see the available options, type::
 
  freenas-debug
  usage: /usr/local/bin/freenas-debug <options>

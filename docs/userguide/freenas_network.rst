@@ -389,7 +389,7 @@ The configurable options are summarized in Table 7.4b.
    the interface. For instance, since the MTU of a lagg is inherited from the interface, in order to set an MTU on a lagg you must set all the interfaces to
    the same MTU **before** creating the lagg.
 
-To see if the link aggregation is load balancing properly, run the following command from Shell::
+To see if the link aggregation is load balancing properly, run the following command from the command line::
 
  systat -ifstat
 

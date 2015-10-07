@@ -35,7 +35,7 @@ Many changes and improvements have been made to Active Directory support within 
 strongly recommended that you update the system before attempting Active Directory integration.
 
 **Before configuring the Active Directory service**, ensure name resolution is properly configured by
-:command:`ping` ing the domain name of the Active Directory domain controller from Shell on the FreeNAS® system. If the
+:command:`ping` ing the domain name of the Active Directory domain controller from the command line of the FreeNAS® system. If the
 :command:`ping` fails, check the DNS server and default gateway settings in
 :menuselection:`Network --> Global Configuration` on the FreeNAS® system.
 
@@ -214,7 +214,7 @@ Once you have configured the Active Directory service, it may take a few minutes
 Once populated, the AD users and groups will be available in the drop-down menus of the "Permissions" screen of a volume/dataset. For performance reasons,
 every available user may not show in the listing. However, it will autocomplete all applicable users if you start typing in a username.
 
-You can verify which Active Directory users and groups have been imported to the FreeNAS® system by using these commands within the FreeNAS® Shell. To view
+You can verify which Active Directory users and groups have been imported to the FreeNAS® system by running these commands from the command line of the FreeNAS® system. To view
 users::
 
  wbinfo -u
@@ -430,11 +430,11 @@ a day as a cron job.
    password, and machine suffixes.
 
 After configuring the LDAP service, the LDAP users and groups should appear in the drop-down menus of the "Permissions" screen of a volume/dataset. To verify
-that the users have been imported, type :command:`getent passwd` from Shell. To verify that the groups have been imported, type :command:`getent group`.
+that the users have been imported, type :command:`getent passwd` from the command line. To verify that the groups have been imported, type :command:`getent group`.
 
 If the users and groups are not listed, refer to the
 `Common errors encountered when using OpenLDAP Software <http://www.openldap.org/doc/admin24/appendix-common-errors.html>`_
-for common errors and how to fix them. When troubleshooting LDAP, open Shell and look for error messages in :file:`/var/log/auth.log`.
+for common errors and how to fix them. When troubleshooting LDAP, look for error messages in :file:`/var/log/auth.log`.
 
 .. _NIS:
 

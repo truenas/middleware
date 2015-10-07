@@ -1506,7 +1506,7 @@ File Extent Based LUN
 ^^^^^^^^^^^^^^^^^^^^^
 
 To grow a file extent based LUN, go to :menuselection:`Services --> iSCSI --> File Extents --> View File Extents` to determine the path of the file extent to
-grow. Open Shell to grow the extent. This example grows :file:`/mnt/volume1/data` by 2G::
+grow. This command, run from the command line, grows :file:`/mnt/volume1/data` by 2G::
 
  truncate -s +2g /mnt/volume1/data
 

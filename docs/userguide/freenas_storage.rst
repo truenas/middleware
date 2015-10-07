@@ -330,7 +330,7 @@ If deduplication is changed to *On*, duplicate data blocks are removed synchrono
 shared among files. If deduplication is changed to *Verify*, ZFS will do a byte-to-byte comparison when two blocks have the same signature to make sure that
 the block contents are identical. Since hash collisions are extremely rare, *Verify* is usually not worth the performance hit.
 
-.. note:: once deduplication is enabled, the only way to disable it is to use the :command:`zfs set dedup=off dataset_name` command from :ref:`Shell`.
+.. note:: once deduplication is enabled, the only way to disable it is to use the :command:`zfs set dedup=off dataset_name` command from the command line.
    However, any data that is already stored as deduplicated will not be un-deduplicated as only newly stored data after the property change will not be
    deduplicated. The only way to remove existing deduplicated data is to copy all of the data off of the dataset, set the property to off, then copy the data
    back in again. Alternately, create a new dataset with "ZFS Deduplication" left as disabled, copy the data to the new dataset, and destroy the original
@@ -445,12 +445,12 @@ Figure 8.1g shows the pop-up window that appears when you select to import a vol
 Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the FreeNAS® system has an existing,
 unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
 
-If an existing unencrypted ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
+If an existing unencrypted ZFS pool does not show in the drop-down menu, run :command:`zpool import` from the command line to import the pool.
 
 If you plan to physically install ZFS formatted disks from another system, be sure to export the drives on that system to prevent an "in use by another
 machine" error during the import.
 
-If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from :ref:`Shell`. If the disk does not appear in the output, check
+If you suspect that your hardware is not being detected, run :command:`camcontrol devlist` from the command line. If the disk does not appear in the output, check
 to see if the controller driver is supported or if it needs to be loaded using :ref:`Tunables`.
 
 .. _View Disks:
@@ -503,7 +503,7 @@ are described in Table 8.1f.
 Clicking a disk's entry will also display its "Wipe" button which can be used to blank a disk while providing a progress bar of the wipe's status. Use this
 option before discarding a disk.
 
-.. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command within :ref:`Shell`. For example, to determine
+.. note:: should a disk's serial number not be displayed in this screen, use the :command:`smartctl` command from the command line. For example, to determine
    the serial number of disk *ada0*, type :command:`smartctl -a /dev/ada0 | grep Serial`.
 
 .. _View Volumes:
@@ -652,7 +652,7 @@ Removing a Log or Cache Device
 If you have added any log or cache devices, these devices will also appear in :menuselection:`Storage --> Volumes --> View Volumes --> Volume Status`. If you
 click the device, you can either use its "Replace" button to replace the device as described above, or click its "Remove" button to remove the device.
 
-Before performing either of these operations, verify the version of ZFS running on the system by running :command:`zpool upgrade -v|more` from Shell.
+Before performing either of these operations, verify the version of ZFS running on the system by running :command:`zpool upgrade -v|more` from the command line.
 
 If the pool is running ZFSv15, and a non-mirrored log device fails, is replaced, or removed, the pool is unrecoverable and the pool must be recreated and the
 data restored from a backup. For other ZFS versions, removing or replacing the log device will lose any data in the device which had not yet been written.
@@ -694,7 +694,7 @@ should see the added space in the pool.
 .. note:: either method requires the ZFS property "autoexpand".  Check and verify that the autoexpand property is enabled **before** attempting to grow the pool. If it is not,
    the pool will not recognize that the disk capacity has increased. By default, this property is enabled in FreeNAS® versions 8.3.1 and higher. 
 
-To verify the autoexpand property, run this command from :ref:`Shell`, replacing *Vol1* with the name of the volume to expand::
+To verify the autoexpand property, run this command from the command line, replacing *Vol1* with the name of the volume to expand::
 
  zpool get autoexpand Vol1
  NAME	PROPERTY	VALUE			SOURCE
@@ -1107,7 +1107,7 @@ Troubleshooting Replication
 
 If you have followed all of the steps above and have *PUSH* snapshots that are not replicating to
 *PULL*, check to see if SSH is working properly. On
-*PUSH*, open Shell and try to :command:`ssh` into
+*PUSH*, try to :command:`ssh` from the command line into
 *PULL*. Replace
 **hostname_or_ip** with the value for
 *PULL*::
@@ -1125,15 +1125,15 @@ If the key is correct and replication is still not working, try deleting all sna
 :menuselection:`Storage --> Snapshots` check the box next to every snapshot except for the
 last one (the one with 3 icons instead of 2), then click the global "Destroy" button at the bottom of the screen.
 
-Once you have only one snapshot, open Shell on *PUSH* and use the :command:`zfs send` command. To continue our example, the ZFS snapshot on the *local/data*
+Once you have only one snapshot, from the command line on *PUSH* run :command:`zfs send`. To continue our example, the ZFS snapshot on the *local/data*
 dataset of *PUSH* is named :file:`auto-20110922.1753-2h`, the IP address of *PULL* is *192.168.2.6*, and the ZFS volume on *PULL* is :file:`remote`. Note that
 the **@** is used to separate the volume/dataset name from the snapshot name::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
 .. note:: if this command fails with the error "cannot receive new filesystem stream: destination has snapshots", check the box "initialize remote side
-   for once" in the replication task and try again. If the :command:`zfs send` command still fails, you will need to open Shell on
-   *PULL* and use the :command:`zfs destroy -R volume_name@snapshot_name` command to delete the stuck snapshot. You can then use the
+   for once" in the replication task and try again. If the :command:`zfs send` command still fails, from the command line on
+   *PULL* use the :command:`zfs destroy -R volume_name@snapshot_name` command to delete the stuck snapshot. You can then use the
    :command:`zfs list -t snapshot` on *PULL* to confirm if the snapshot successfully replicated.
 
 After successfully transmitting the snapshot, recheck again after the time period between snapshots lapses to see if the next snapshot successfully
@@ -1217,8 +1217,7 @@ Snapshots
 The "Snapshots" tab can be used to review the listing of available snapshots. An example is shown in Figure 8.5a.
 
 .. note:: if snapshots do not appear, check that the current time configured in :ref:`Periodic Snapshot Tasks` does not conflict with the "Begin", "End", and
-   "Interval" settings. If the snapshot was attempted but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed in
-   :ref:`Shell`.
+   "Interval" settings. If the snapshot was attempted but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed from the command line.
 
 **Figure 8.5a: Viewing Available Snapshots**
 

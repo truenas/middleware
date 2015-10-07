@@ -12,7 +12,7 @@ that you have selected an option that will negatively impact users of the FreeNA
 .. image:: images/reboot.png
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
-is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from Shell until it is verified that the scrub or resilver
+is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from the command line until it is verified that the scrub or resilver
 process is complete. Once complete, the reboot request can be re-issued.
 
 Click the "Cancel" button if you wish to cancel the reboot request. Otherwise, click the "Reboot" button to reboot the system. Rebooting the system will

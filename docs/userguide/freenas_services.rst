@@ -68,7 +68,7 @@ If a service does not start, go to :menuselection:`System --> Advanced` and chec
 show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy
 messages. Watch these messages for errors when you stop and start the problematic service.
 
-If you would like to read the system logs to get more information about a service failure, open :ref:`Shell` and type :command:`more /var/log/messages`.
+If you would like to read the system logs to get more information about a service failure, type :command:`more /var/log/messages` from the command line.
 
 .. index:: AFP, Apple Filing Protocol
 .. _AFP:
@@ -134,7 +134,7 @@ Troubleshooting AFP
 
 You can determine which users are connected to an AFP share by typing :command:`afpusers`.
 
-If you receive a "Something wrong with the volume's CNID DB" error message, run the following command from :ref:`Shell`, replacing the path to the problematic
+If you receive a "Something wrong with the volume's CNID DB" error message, run the following command at the command line, replacing the path to the problematic
 AFP share::
 
  dbd -rf /path/to/share
@@ -344,7 +344,7 @@ their password and try again.
 
 If permissions work for Windows users but not for OS X users, try disabling "Unix Extensions" and restarting the CIFS service.
 
-If the CIFS service will not start, run this command from :ref:`Shell` to see if there is an error in the configuration::
+If the CIFS service will not start, run this command at the command line to see if there is an error in the configuration::
 
  testparm /usr/local/etc/smb4.conf
 
@@ -355,7 +355,7 @@ It is recommended to use a dataset for CIFS sharing. When creating the dataset, 
 **Do not** use :command:`chmod` to attempt to fix the permissions on a CIFS share as it destroys the Windows ACLs. The correct way to manage permissions on a
 CIFS share is to manage the share security from a Windows system as either the owner of the share or a member of the group the share is owned by. To do so,
 right-click on the share, click "Properties" and navigate to the "Security" tab. If you already destroyed the ACLs using :command:`chmod`,
-:command:`winacl` can be used to fix them. Type :command:`winacl` from :ref:`Shell` for usage instructions. 
+:command:`winacl` can be used to fix them. Type :command:`winacl` at the command line for usage instructions. 
 
 The
 `Common Errors <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/domain-member.html#id2573692>`_
@@ -785,8 +785,8 @@ To configure any FTP scenario to use encrypted connections:
 Troubleshooting FTP
 ~~~~~~~~~~~~~~~~~~~
 
-The FTP service will not start if it can not resolve the system's hostname to an IP address using DNS. To see if the FTP service is running, open :ref:`Shell`
-and issue the command::
+The FTP service will not start if it can not resolve the system's hostname to an IP address using DNS. To see if the FTP service is running, run
+this command from the command line::
 
  sockstat -4p 21
 
@@ -867,8 +867,8 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | **Setting**            | **Value**  | **Description**                                                                                                     |
 |                        |            |                                                                                                                     |
 +========================+============+=====================================================================================================================+
-| Number of servers      | integer    | run :command:`sysctl -n kern.smp.cpus` from Shell to determine the number; do not exceed the number listed in the   |
-|                        |            | output of that command                                                                                              |
+| Number of servers      | integer    | type :command:`sysctl -n kern.smp.cpus` at the command line to determine the number; do not exceed the number       |
+|                        |            | listed in the output of that command                                                                                |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Serve UDP NFS clients  | checkbox   | check if NFS client needs to use UDP                                                                                |
@@ -1251,7 +1251,7 @@ If your clients are receiving "reverse DNS" or timeout errors, add an entry for 
 
 When configuring SSH, always test your configuration as an SSH user account to ensure that the user is limited to what you have configured and that they have
 permission to transfer files within the intended directories. If the user account is experiencing problems, the SSH error messages are usually pretty specific
-to what the problem is. Type the following command within :ref:`Shell` to read these messages as they occur::
+to what the problem is. Type the following command from the command line to read these messages as they occur::
 
  tail -f /var/log/messages
 
@@ -1402,7 +1402,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
    the numbers that show on the console.
 
 `upsc(8) <http://www.networkupstools.org/docs/man/upsc.html>`_
-can be used to get status variables from the UPS daemon such as the current charge and input voltage. It can be run from Shell using the following syntax. The
+can be used to get status variables from the UPS daemon such as the current charge and input voltage. It can be run from the command line using the following syntax. The
 man page gives some other usage examples.
 ::
 

@@ -339,6 +339,7 @@ configured before creating the rsync task:
 To create the public/private key pair for the rsync user account, open Shell on *PUSH*. The following example generates an RSA type public/private key pair
 for the *root* user. When creating the key pair, do not enter the passphrase as the key is meant to be used for an automated task.::
 
+ shell
  ssh-keygen -t rsa
  Generating public/private rsa key pair.
  Enter file in which to save the key (/root/.ssh/id_rsa):
@@ -399,6 +400,7 @@ Next, copy the host key of *PULL* using Shell on
 *PULL* server used in our previous example. Be sure to include the double bracket
 *>>* to prevent overwriting any existing entries in the :file:`known_hosts` file::
 
+ shell
  ssh-keyscan -t rsa 192.168.2.6 >> /root/.ssh/known_hosts
 
 .. note:: if *PUSH* is a Linux system, use the following command to copy the RSA key to the Linux system:
@@ -425,7 +427,7 @@ follows:
 * the "Preserve Permissions" checkbox is checked so that the original permissions are not overwritten by the *root* user
 
 Once you save the rsync task, the rsync will automatically occur according to your schedule. In this example, the contents of :file:`/mnt/local/images/` will
-automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the content does not appear, use Shell on *PULL* to read :file:`/var/log/messages`.
+automatically appear in :file:`/mnt/remote/images/` after 15 minutes. If the content does not appear, use the command line on *PULL* to read :file:`/var/log/messages`.
 If the message indicates a *\n* (newline character) in the key, remove the space in your pasted key--it will be after the character that appears just before the
 *\n* in the error message.
 
@@ -491,9 +493,9 @@ as the disks prioritize normal I/O over the tests. If a disk fails a test, even 
 
 .. warning:: take care when creating your test schedule as performance issues can occur when S.M.A.R.T. tests are run at the same time as scrub or resilver operations.
 
-You can verify which tests will run and when by typing :command:`smartd -q showtests` within :ref:`Shell`.
+You can verify which tests will run and when by typing :command:`smartd -q showtests` at the command line.
 
-You can check the results of a test from :ref:`Shell` by specifying the name of the drive. For example, to see the results for disk *ada0*,
+You can check the results of a test from the command line by specifying the name of the drive. For example, to see the results for disk *ada0*,
 type::
 
  smartctl -l selftest /dev/ada0
