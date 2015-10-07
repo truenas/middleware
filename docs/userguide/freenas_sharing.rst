@@ -61,13 +61,13 @@ FreeNAS® uses the
 AFP server to share data with Apple systems. This section describes the configuration screen for creating AFP shares. It then provides configuration examples for creating a guest share,
 configuring Time Machine to backup to a dataset on the FreeNAS® system, and for connecting to the share from a Mac OS X client.
 
-Figure 10.1a shows the :menuselection:`Sharing --> Apple (AFP)` screen.
+Figure 10.1a shows the :menuselection:`Sharing --> Apple (AFP) --> Add Apple (AFP) Share` screen.
 
 **Figure 10.1a: Creating an AFP Share**
 
-.. image:: images/afp2.png
+.. image:: images/afp2a.png
 
-.. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
+.. note:: you typically should not change the default settings of an AFP
           share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
           advanced option unless you fully understand the function of that option. Refer to
           `Setting up Netatalk <http://netatalk.sourceforge.net/2.2/htmldocs/configuration.html>`_ for a more detailed explanation of the available options.
@@ -157,10 +157,10 @@ Before creating a guest share, go to :menuselection:`Services --> AFP` and make 
 
 To create the AFP guest share, input the following information:
 
-#. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
-   is named *afp_guest*.
+#. **Path:** browse to the dataset to share.
 
-#. Click the "Ownership" button. Click the drop-down "User" menu and select "nobody". Click the "Return" button to return to the previous screen.
+#. **Name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+   is named *afp_guest*.
 
 **Figure 10.1b: Creating a Guest AFP Share**
 
@@ -195,21 +195,15 @@ for that user.
 
 To create an authenticated or Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
 
-#. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
+#. **Path:** browse to the dataset to share.
+
+#. **Name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
    is named *backup_user1*.
 
 #. If needed, check the box for "Time Machine". If the user will not be using Time Machine, leave the box unchecked.
 
-#. If the user already exists on the FreeNAS® system, click the drop-down "User" menu to select their user account.  If the user
-   does not yet exist on the FreeNAS® system, type their name into the "User" field. If you want the user to be a member
-   of a group that already exists on the FreeNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
-   used by Time Machine users, input the name into the "Group" field. Otherwise, input the same name as the user. In the
-   example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
-   *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
-   opportunity to change the default permissions on the share. When finished, click "OK".
-
-Repeat, if you wish to configure multiple authenticated or Time Machine shares. When you click "OK", FreeNAS® will automatically create a dataset for each share that
-contains the correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as
+Repeat, if you wish to configure multiple authenticated or Time Machine shares. When you click "OK", FreeNAS® will automatically start the AFP service for you, so that the share is
+immediately available. The new share will also be added as
 entries to :menuselection:`Sharing --> Apple (AFP)`.
 
 **Figure 10.1d: Creating a Time Machine Share**
@@ -267,8 +261,8 @@ Windows systems, enable Services for NFS in the Ultimate or Enterprise editions 
    `Running ZFS over NFS as a VMware Store <http://blog.laspina.ca/ubiquitous/running-zfs-over-nfs-as-a-vmware-store>`_.
 
 To create an NFS share, input a "Share name" that makes sense to you, but which does not contain a space. Depending upon your requirements, you may wish to fine-tune the NFS share to
-control which IP addresses are allowed to access the NFS share and to restrict the permissions of the mounted share. Once you click "OK", FreeNAS® will automatically create
-a new dataset for the share, start the services required by NFS, and add an entry for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
+control which IP addresses are allowed to access the NFS share and to restrict the permissions of the mounted share. Once you click "OK", FreeNAS® will automatically start the services
+required by NFS, and add an entry for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
 
 **Figure 10.2a: Creating an NFS Share**
 
@@ -282,14 +276,13 @@ Table 10.2a summarizes the available configuration options for NFS shares. Some 
 | **Setting**         | **Value**      | **Description**                                                                                                    |
 |                     |                |                                                                                                                    |
 +=====================+================+====================================================================================================================+
-| Path                | browse button  | the path that clients will use when mounting the share; click "Add extra path" to select multiple paths            |
+| Share name          | string         | input a name for the share                                                                                         |
+|                     |                |                                                                                                                    |
++---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
+| Path                | browse button  | the path that clients will use when mounting the share                                                             |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Comment             | string         | used to set the share name; if left empty, share name will be the list of selected "Path"s                         |
-|                     |                |                                                                                                                    |
-+---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Authorized networks | string         | only available in "Advanced Mode"; space delimited list of allowed network addresses in the form *1.2.3.0/24*      |
-|                     |                | where the number after the slash is a CIDR mask                                                                    |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Authorized  IP      | string         | only available in "Advanced Mode"; space delimited list of allowed IP addresses or hostnames                       |
@@ -300,12 +293,6 @@ Table 10.2a summarizes the available configuration options for NFS shares. Some 
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Read only           | checkbox       | prohibits writing to the share                                                                                     |
-|                     |                |                                                                                                                    |
-+---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Quiet               | checkbox       | only available in "Advanced Mode"; inhibits some syslog diagnostics which can be useful to avoid some annoying     |
-|                     |                | error messages; see                                                                                                |
-|                     |                | `exports(5) <http://www.freebsd.org/cgi/man.cgi?query=exports>`_                                                   |
-|                     |                | for examples                                                                                                       |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
 | Maproot User        | drop-down menu | only available in "Advanced Mode"; if a user is selected, the *root* user is limited to that user's permissions    |
@@ -338,7 +325,7 @@ When creating the NFS share, keep the following points in mind:
 
 #.  Each volume or dataset is considered to be its own filesystem and NFS is not able to cross filesystem boundaries.
 
-#.  The network or host must be unique per share and per filesystem or directory.
+#.  The "Authorized IP addresses or hosts" must be unique per share and per filesystem or directory.
 
 #.  The "All directories" option can only be used once per share per filesystem.
 
@@ -616,7 +603,7 @@ Figure 10.4a shows the configuration screen that appears when you click :menusel
 
 **Figure 10.4a: Adding a CIFS Share**
 
-.. image:: images/cifs2.png
+.. image:: images/cifs2a.png
 
 Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
 scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
@@ -638,10 +625,6 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Comment                      | string        | only available in "Advanced Mode";  optional description                                                    |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Apply Default Permissions    | checkbox      | sets the ACLs to allow read/write for owner/group and read-only for others; should only be unchecked when   |
-|                              |               | creating a share on a system that already has custom ACLs set                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Export Read Only             | checkbox      | only available in "Advanced Mode"; prohibits write access to the share                                      |
@@ -667,6 +650,10 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               | for all connections                                                                                         |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
+| VFS Objects                  | selection     | only available in "Advanced Mode" and adds virtual file system modules to enhance functionality; Table      |
+|                              |               | 10.4b summarizes the available modules                                                                      |
+|                              |               |                                                                                                             |
++------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
 |                              |               | see NOTE below                                                                                              |
 |                              |               |                                                                                                             |
@@ -674,18 +661,6 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 | Hosts Deny                   | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of denied hostnames or IP addresses; |
 |                              |               | allowed hosts take precedence so can use *ALL* in this field and specify allowed hosts in                   |
 |                              |               | "Hosts Allow"; see NOTE below                                                                               |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| VFS Objects                  | selection     | only available in "Advanced Mode" and adds virtual file system modules to enhance functionality; Table      |
-|                              |               | 10.4b summarizes the available modules                                                                      |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Periodic Snapshot Task       | drop-down     | used to configure home directory shadow copies on a per-share basis; select the pre-configured periodic     |
-|                              | menu          | snapshot task to use for the share's shadow copies                                                          |
-|                              |               |                                                                                                             |
-+------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Auxiliary Parameters         | string        | only available in "Advanced Mode"; additional :file:`smb4.conf` parameters not covered by other option      |
-|                              |               | fields                                                                                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 
@@ -700,15 +675,6 @@ Note the following regarding some of the "Advanced Mode" settings:
 
 * If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
   the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
-  
-To configure support for OS/2 clients, add this line to "Auxiliary Parameters"::
-
- lanman auth = yes
- 
-To configure lanman authentication for pre-NT authentication, add these lines instead::
-
- client lanman auth = yes
-  client plaintext auth = yes
 
 Table 10.4b provides an overview of the available VFS modules. Be sure to research each module **before** adding or deleting it from the "Selected" column of
 the "VFS Objects" field for the share. Some modules will need additional configuration after they are added. Refer to
@@ -758,6 +724,9 @@ for more details.
 | default_quota       | stores the default quotas that are reported to a windows client in the quota record of a user                                              |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| dfs_samba4          |                                                                                                                                            |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | dirsort             | sorts directory entries alphabetically before sending them to the client                                                                   |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -765,6 +734,9 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | extd_audit          | sends "audit" logs to both syslog and the Samba log files                                                                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| fake_acls           |                                                                                                                                            |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
@@ -809,13 +781,19 @@ for more details.
 | shadow_copy2        | a more recent implementation of "shadow_copy" with some additonal features                                                                 |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| shadow_copy_test    |                                                                                                                                            |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| skel_opaque         |                                                                                                                                            |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| skel_transparent    |                                                                                                                                            |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | smb_traffic_analyzer| logs Samba read and write operations through a socket to a helper application                                                              |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | streams_depot       | **experimental** module to store alternate data streams in a central directory                                                             |
-|                     |                                                                                                                                            |
-+---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| streams_xattr       | enables storing of NTFS alternate data streams in the file system                                                                          |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | syncops             | ensures metadata operations are performed synchronously                                                                                    |
@@ -825,6 +803,9 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| zfs_space           |                                                                                                                                            |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
@@ -841,17 +822,17 @@ small networks where quick and easy access to the share is more important than t
 
 To configure an unauthenticated CIFS share, input the following information:
 
-#. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
+#. **Path:** browse to the dataset to share.
 
-#. Check the box for "Allow Guest".
+#. **Name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
 
-#. Click the drop-down "User" menu and select "nobody".
+#. Check the "Allow Guest Access" box.
 
 **Figure 10.4b: Creating an Unauthenticated CIFS Share**
 
-.. image:: images/cifs7.png
+.. image:: images/cifs7a.png
 
-Once you click "OK", FreeNAS® will automatically create a dataset for the share and start the CIFS
+Once you click "OK", FreeNAS® will start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
 
 Users can now access the share from any CIFS client and should not be prompted for their username or password. For example, to access the share from a Windows
@@ -876,7 +857,9 @@ not require the creation of groups, adding the correct users to the groups, and 
 
 To create an authenticated CIFS share, enter the following information, as seen in the example in Figure 10.4c.
 
-#. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_user1*.
+#. **Path:** browse to the dataset to share.
+
+#. **Name:** input a name for the share that is useful to you. In this example, the share is named *cifs_user1*.
 
 #. To create the user account on the FreeNAS® system, type their name into the "User" field and type in and confirm the user's password. 
    **If the user will not be sharing this share with other users**, type their name
@@ -884,7 +867,7 @@ To create an authenticated CIFS share, enter the following information, as seen 
    In the example shown in Figure 10.4d, *user1* has been used for both the user and group name, meaning that this share will only be
    used by *user1*.
 
-When finished, click "OK" and FreeNAS® will automatically create a dataset for the share that contains the correct ownership and start the CIFS service for you, so that the share is
+When finished, click "OK" and FreeNAS® will automatically start the CIFS service for you, so that the share is
 immediately available. If you wish to configure multiple authenticated shares, repeat for each user, giving each user their own "Share name" and "Ownership".  The new share(s) will also
 be added as entries to :menuselection:`Sharing --> Windows (CIFS)`.
 
@@ -984,12 +967,6 @@ shares. In this configuration example, a Windows 7 computer has two users: *user
    **Before continuing to the next step,** confirm that at least one snapshot for each defined task is displayed in the :menuselection:`Storage --> Snapshots`
    tab. When creating the schedule for the periodic snapshot tasks, keep in mind how often your users need to access modified files and during which days and
    time of day they are likely to make changes.
-
-#. Go to :menuselection:`Sharing --> Windows (CIFS) Shares`. Highlight a share and click its "Edit" button then its "Advanced Mode" button. Click the 
-   "Periodic Snapshot Task" drop-down menu and select the periodic snapshot task to use for that share. Repeat for each share being configured as a shadow
-   copy. For this example, the share named "/mnt/volume1/user1" is configured to use a periodic snapshot task that was configured to take snapshots of the
-   "/mnt/volume1/user1" dataset and the share named "/mnt/volume1/user2" is configured to use a periodic snapshot task that was configured to take snapshots
-   of the "/mnt/volume1/user2" dataset.
 
 #. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
 

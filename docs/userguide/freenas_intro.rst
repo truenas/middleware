@@ -155,6 +155,15 @@ In addition to the new features, the following options have changed in the GUI:
 
 * The "Kerberos keytab" drop-down menu in :menuselection:`Directory Service --> Active Directory --> Advanced Mode` and
   :menuselection:`Directory Service --> LDAP --> Advanced Mode` has been renamed to "Kerberos Principal".
+  
+* The "Share name" field has been added to :menuselection:`Sharing --> Unix (NFS) --> Add Unix (NFS) Share`. The "Add extra path" link, "Authorized networks" field, and "Quiet" checkbox
+  have been removed from this screen.
+  
+* The "Apply Default Permissions" checkbox, "Periodic Snapshot Task" drop-down menu, and "Auxiliary Parameters" field have been removed from
+  :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
+  
+* The "dfs_samba4", "fake_acls", "shadow_copy_test", "skel_opaque", "skel_transparent", and "zfs_space" VFS objects have been added to
+  :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share --> Advanced Mode`. The "streams_xattr" VFS object has been removed.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
