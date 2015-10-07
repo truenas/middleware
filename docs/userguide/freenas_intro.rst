@@ -153,6 +153,9 @@ In addition to the new features, the following options have changed in the GUI:
 
 * The "Threshold days" field has been removed from :menuselection:`Storage --> Scrubs --> Add Scrub`.
 
+* The "Kerberos keytab" drop-down menu in :menuselection:`Directory Service --> Active Directory --> Advanced Mode` and
+  :menuselection:`Directory Service --> LDAP --> Advanced Mode` has been renamed to "Kerberos Principal".
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 

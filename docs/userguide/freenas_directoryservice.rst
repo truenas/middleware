@@ -124,10 +124,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Kerberos Realm           | drop-down     | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`                                         |
 |                          | menu          |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Kerberos keytab          | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`                     |
+| Kerberos Principal       | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`                     |
 |                          | menu          |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-|AD timeout                | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                                      |
+| AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                                      |
 |                          |               | domain                                                                                                                                                |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -154,7 +154,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 
 Table 9.1b summarizes the backends which are available in the "Idmap backend" drop-down menu. Each backend has its own
 `man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details. Since selecting the
-wrong backend will break Active Directory integration, a pop-up menu will appear whenever you attempt to change this setting.
+wrong backend will break Active Directory integration, a pop-up menu will appear whenever you attempt to change this setting. Click the "Edit" hyperlink next to the setting to change
+its available settings.
 
 **Table 9.1b: Available ID Mapping Backends**
 
@@ -379,7 +380,7 @@ If you are new to LDAP terminology, skim through the
 | Kerberos Realm          | drop-down menu | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`  |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
-| Kerberos Keytab         | drop-down menu | only available in "Advanced Mode";  browse to the location of the keytab created using the instructions in     |
+| Kerberos Principal      | drop-down menu | only available in "Advanced Mode";  browse to the location of the keytab created using the instructions in     |
 |                         |                | :ref:`Kerberos Keytabs`                                                                                        |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
