@@ -104,6 +104,8 @@ The following categories are available under **How-To Guides:**
 
 * `Hardware <https://forums.freenas.org/index.php?forums/hardware.17/>`_: instructions for setting up specific hardware.
 
+* `Jails <https://forums.freenas.org/index.php?forums/jails.46/>`_: configuration scenarios within jails or undocumented uses for using jails on FreeNAS.
+
 * `Useful Scripts <https://forums.freenas.org/index.php?forums/useful-scripts.47/>`_: user-contributed scripts.
 
 If you are looking for tips on how to test and increase the performance of your system, check out the
@@ -132,6 +134,8 @@ language:
 * `Italian - Italiano <http://forums.freenas.org/forumdisplay.php?30-Italian-Italiano>`_
 
 * `Portuguese - Português <http://forums.freenas.org/forums/portuguese-português.44/>`_
+
+* `Romanian - Română <https://forums.freenas.org/index.php?forums/romanian-rom%C3%A2n%C4%83.53/>`_
 
 * `Russian - Русский <http://forums.freenas.org/forumdisplay.php?38-Russian-Русский>`_
 
