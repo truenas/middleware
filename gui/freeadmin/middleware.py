@@ -26,7 +26,6 @@
 #####################################################################
 from cStringIO import StringIO
 
-import json
 import logging
 import re
 import sys
@@ -35,17 +34,14 @@ import cProfile
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db.utils import OperationalError
-from django.http import HttpResponse
 from django.utils import translation
 from django.utils.cache import patch_vary_headers
 from django.utils.translation import ugettext as _
-import oauth2 as oauth
 
 from freenasUI import settings as mysettings
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
 
 log = logging.getLogger('freeadmin.middleware')
