@@ -85,7 +85,7 @@
        <img id="haproxy_toggle" name="haproxy_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.haproxy == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="haproxy_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "HA Proxy Settings"|escapejs %}', '{{ riak_cs.get_edit_url }}');" title= "{% trans "HA Proxy Settings" %}">
+           <img id="haproxy_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "HA Proxy Settings"|escapejs %}', '{{ haproxy.get_edit_url }}');" title= "{% trans "HA Proxy Settings" %}">
        </td>
    </tr>
   <tr>
