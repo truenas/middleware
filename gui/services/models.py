@@ -3165,6 +3165,18 @@ class HAProxy(NewModel):
     haproxy_frontend_mode = models.CharField(
         verbose_name=_("Frontend Mode"),
         max_length=200,
+        choices=(
+            ('HTTP', _('HTTP')),
+            ('TCP', _('TCP')),
+        ),
+    )
+    stanchion_log_console_level = models.CharField(
+        verbose_name=_("Log Level"),
+        max_length=200,
+        choices=(
+            ('HTTP', _('HTTP')),
+            ('TCP', _('TCP')),
+        ),
     )
     haproxy_backend_mode = models.CharField(
         verbose_name=_("Backend Mode"),
