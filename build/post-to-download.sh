@@ -29,4 +29,5 @@ if [ "${NANO_LABEL}" = "FreeNAS" ]; then
 	exit 3
 fi
 
-scp -pr $STAGE/$VERSION-$DATE/x64/*.{GUI,iso}* ${ID}@download.freenas.org:/tank/truenas/downloads
+# /bin/sh doesn't do {} expansion!
+scp -pr $STAGE/$VERSION-$DATE/x64/*.GUI* $STAGE/$VERSION-$DATE/x64/*.iso* ${ID}@download.freenas.org:/tank/truenas/downloads
