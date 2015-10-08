@@ -3152,9 +3152,8 @@ class HAProxy(NewModel):
         verbose_name=_("Bind IP Address"),
         max_length=200,
     )
-    haproxy_http_port = models.CharField(
+    haproxy_http_port = models.IntegerField(
         verbose_name=_("HTTP port"),
-        max_length=200,
     )
     haproxy_https_ip = models.CharField(
         verbose_name=_("HTTPS IP"),
@@ -3167,8 +3166,9 @@ class HAProxy(NewModel):
         verbose_name=_("Frontend Mode"),
         max_length=200,
     )
-    haproxy_backend_mode = models.IntegerField(
+    haproxy_backend_mode = models.CharField(
         verbose_name=_("Backend Mode"),
+        max_length=200,
     )
 
 
