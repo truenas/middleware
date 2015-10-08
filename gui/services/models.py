@@ -3147,6 +3147,7 @@ class Stanchion(NewModel):
         self._save_task_call('service.stanchion.configure', data)
         return True
 
+
 class HAProxy(NewModel):
     haproxy_http_ip = models.CharField(
         verbose_name=_("Bind IP Address"),
@@ -3179,7 +3180,6 @@ class HAProxy(NewModel):
         ),
     )
 
-
     objects = NewManager(qs_class=ConfigQuerySet)
 
     class Meta:
@@ -3204,7 +3204,7 @@ class HAProxy(NewModel):
     @classmethod
     def _load(cls):
         from freenasUI.middleware.connector import connection as dispatcher
-        config = dispatcher.call_sync('service.stanchion.get_config')
+        config = dispatcher.call_sync('service.haproxy.get_config')
         return cls(**dict(
             id=1,
             haproxy_http_ip=config['http_ip'],
