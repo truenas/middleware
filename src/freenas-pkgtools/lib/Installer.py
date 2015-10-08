@@ -419,7 +419,7 @@ def ExtractEntry(tf, entry, root, prefix = None, mFileHash = None):
         try:
             temp_entry = tempfile.TemporaryFile(dir = os.path.dirname(full_path))
         except:
-            s = "Cannot crate temporary file in %s" % os.path.dirname(full_path)
+            s = "Cannot create temporary file in %s" % os.path.dirname(full_path)
             log.error(s)
             raise
         hash = hashlib.sha256()
