@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-09-15 17:36+0000\n"
-"Last-Translator: yakumo <regaddrcap@gmail.com>\n"
+"PO-Revision-Date: 2015-10-07 07:54+0000\n"
+"Last-Translator: tiack <tiackstar@yahoo.com.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1442338598.0\n"
+"X-POOTLE-MTIME: 1444204496.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6822,17 +6822,14 @@ msgid "autostart"
 msgstr ""
 
 #: jails/forms.py:906
-#, fuzzy
 msgid "The path could not be mounted %(source)s: %(error)s"
 msgstr "該路徑無法掛載 %(source)s: %(error)s"
 
 #: jails/models.py:103
-#, fuzzy
 msgid "IPv4 bridge address"
 msgstr "IPv4 橋接位址"
 
 #: jails/models.py:110
-#, fuzzy
 msgid "IPv4 bridge netmask"
 msgstr "IPv4 橋接網路遮罩"
 
@@ -6870,9 +6867,8 @@ msgid "IPv6 Network"
 msgstr "IPv6 網路遮罩"
 
 #: jails/models.py:362
-#, fuzzy
 msgid "IPv6 Network End Address"
-msgstr "IPv6 位址"
+msgstr "IPv6 網路結束位址"
 
 #: jails/models.py:363
 msgid "IPv6 network end address for jails and plugins"
@@ -7840,9 +7836,8 @@ msgid "IPv4 Network"
 msgstr "IPv4 網路遮罩"
 
 #: jails/models.py:357
-#, fuzzy
 msgid "IPv6 Network Start Address"
-msgstr "IPv6 位址"
+msgstr "IPv6 網路起始位址"
 
 #: jails/models.py:377
 #: jails/models.py:378
@@ -8826,7 +8821,6 @@ msgid "IPv4 bridge aliases"
 msgstr "IPv4 橋接別名"
 
 #: jails/models.py:122
-#, fuzzy
 msgid "IPv4 default gateway"
 msgstr "IPv4 預設閘道"
 
@@ -8847,19 +8841,17 @@ msgstr "IPv6前導碼長度"
 
 #: jails/models.py:160
 msgid "IPv6 bridge aliases"
-msgstr ""
+msgstr "IPv6 橋接別名"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
 msgstr ""
 
 #: jails/models.py:342
-#, fuzzy
 msgid "IPv4 Network Start Address"
 msgstr "IPv4 網路起始位址"
 
 #: jails/models.py:347
-#, fuzzy
 msgid "IPv4 Network End Address"
 msgstr "IPv4 網路結束位址"
 
@@ -9604,12 +9596,10 @@ msgid "Would you like to run this rsync job now?"
 msgstr "您要啟動該服務嗎？"
 
 #: jails/models.py:147
-#, fuzzy
 msgid "IPv6 bridge address"
-msgstr "IPv6 位址"
+msgstr "IPv6 橋接位址"
 
 #: jails/models.py:167
-#, fuzzy
 msgid "IPv6 default gateway"
 msgstr "IPv6 預設閘道"
 
@@ -12725,7 +12715,6 @@ msgstr "同儕密鑰不可與使用者密鑰相同。"
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
 msgstr "NetBIOS 名稱不能與工作群組名稱相同"
 
@@ -12967,3 +12956,12 @@ msgstr ""
 #, fuzzy
 msgid "Delete stale snapshots on remote system"
 msgstr "將最新的快照傳送到遠端 (欄位空白為全部複製)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "本欄位必填"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

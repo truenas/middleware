@@ -12901,3 +12901,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Ultimul punct de restaurare trimis părţii remote (lăsaţi cîmpul necompletat "
 "pentru o replicare completă)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Este nevoie de un fișier"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

@@ -13385,3 +13385,12 @@ msgstr ""
 #, fuzzy
 msgid "Delete stale snapshots on remote system"
 msgstr "最後に転送したスナップショット（完全なレプリケーションのためには空白を指定します。）"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "この項目は必須です。"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

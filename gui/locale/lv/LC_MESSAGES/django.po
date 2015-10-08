@@ -12951,3 +12951,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Pēdējais uzņēmums, kurš sūtīts uz attālināto pusi (atstāt tukšu pilnai "
 "reprodukcijai)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Šis lauks ir obligāts"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

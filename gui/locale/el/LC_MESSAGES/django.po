@@ -13236,3 +13236,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Τελευταίο στιγμιότυπο του αποστάλθηκε στην απομακρυσμένη πλευρά (αφήστε κενό "
 "για πλήρη αντιγραφή)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Ένα αρχείο απαιτείται"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

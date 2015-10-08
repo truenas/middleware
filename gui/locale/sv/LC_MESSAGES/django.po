@@ -12734,3 +12734,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Senaste ögonblicksbild skickad till fjärr värd (lämna tom för full "
 "replikering)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Detta fält är obligatoriskt"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

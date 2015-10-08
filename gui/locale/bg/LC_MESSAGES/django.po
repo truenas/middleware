@@ -12710,3 +12710,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Рекурсивно възпроижвеждане и премахване на остарелите моментни снимки на "
 "отдалечената страна"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Попълването на това поле е задължително."
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

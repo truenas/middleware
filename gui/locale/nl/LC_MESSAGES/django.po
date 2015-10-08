@@ -12957,3 +12957,13 @@ msgstr ""
 #, fuzzy
 msgid "Delete stale snapshots on remote system"
 msgstr "Laatste momentopname verzonden naar extern systeem"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Een bestand is vereist"
+
+#: vcp/views.py:126
+#, fuzzy
+msgid "vCenter plugin is repaired successfully"
+msgstr "vCenter-plug-in met succes geïnstalleerd."
