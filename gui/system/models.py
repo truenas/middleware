@@ -452,7 +452,7 @@ class Advanced(NewModel):
             adv_powerdaemon=adv['powerd'],
             adv_swapondrive=adv['swapondrive'],
             adv_consolemsg=user_attrs.get('gui_messages_footer', False),
-            adv_traceback=user_attrs.get('gui_traceback', False),
+            adv_traceback=user_attrs.get('gui_traceback', True),
             adv_advancedmode=user_attrs.get('gui_advancedmode', False),
             adv_autotune=adv['autotune'],
             adv_debugkernel=adv['debugkernel'],
