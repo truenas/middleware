@@ -61,75 +61,6 @@ def public(f):
     return f
 
 
-def http_oauth(func):
-
-    def view(request, *args, **kwargs):
-        authorized = False
-        json_params = {}
-        oauth_params = {}
-
-        try:
-            for key in request.REQUEST:
-                if key.startswith("oauth"):
-                    oauth_params[key] = request.REQUEST.get(key)
-                else:
-                    json_params = json.loads(key)
-
-            key = oauth_params.get("oauth_consumer_key", None)
-            host = "%s://%s" % (
-                'https' if request.is_secure() else 'http',
-                request.get_host(),
-                )
-            uurl = host + request.path
-
-            oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
-            server = oauth.Server()
-
-            secret = None
-            rpctoken = RPCToken.objects.get(key=key)
-            if rpctoken:
-                secret = rpctoken.secret
-
-            if not key or not secret:
-                raise Exception
-
-            try:
-                cons = oauth.Consumer(key, secret)
-                server.add_signature_method(oauth.SignatureMethod_HMAC_SHA1())
-                server.verify_request(oreq, cons, None)
-                authorized = True
-
-            except Exception, e:
-                log.debug("auth error = %s" % e)
-                authorized = False
-
-            if request.method == "POST":
-                method = json_params.get("method")
-
-                if method in (
-                    'plugins.is_authenticated',
-                ):
-                    authorized = True
-
-            if authorized:
-                return func(request, *args, **kwargs)
-
-        except Exception, e:
-            pass
-
-        # FIXME: better error handling
-        return HttpResponse(json.dumps({
-            'jsonrpc': json_params.get("jsonrpc", "2.0"),
-            'error': {
-                'code': '500',
-                'message': 'Not authenticated',
-                },
-            'id': json_params.get("id", "1"),
-        }))
-
-    return view
-
-
 class RequireLoginMiddleware(object):
     """
     Middleware component that makes every view be login_required
@@ -149,10 +80,6 @@ class RequireLoginMiddleware(object):
             return None
         if hasattr(view_func, '__is_public'):
             return None
-
-        # JSON-RPC calls are authenticated through HTTP Basic
-        if request.path.startswith('/plugins/json-rpc/'):
-            return http_oauth(view_func)(request, *view_args, **view_kwargs)
 
         return login_required(view_func)(request, *view_args, **view_kwargs)
 
