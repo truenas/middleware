@@ -27,7 +27,6 @@ FreeNAS User Guide |release|
    freenas_support
    freenas_cli
    freenas_contribute
-   freenas_api
 
 .. only:: html
 
