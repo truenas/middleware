@@ -74,7 +74,19 @@
        <img id="ipfs_toggle" name="ipfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.ipfs == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="ipfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "IPFS Settings"|escapejs %}', '{{ ipfs.get_edit_url }}');" title="{% trans "IPFS Settings" %}">
+           <img id="ipfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "IPFS Settings"|escapejs %}', '{{ ipfs.get_edit_url }}');" title="{% tran
+s "IPFS Settings" %}">
+       </td>
+   </tr>
+   <tr>
+       <td>
+           <strong>{% trans "HAProxy" %}</strong>
+       </td>
+       <td>
+       <img id="haproxy_toggle" name="haproxy_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.haproxy == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
+       </td>
+       <td>
+           <img id="haproxy_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "HAProxy Settings"|escapejs %}', '{{ haproxy.get_edit_url }}');" title="{% trans "HAProxy Settings" %}">
        </td>
    </tr>
   <tr>

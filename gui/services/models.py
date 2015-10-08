@@ -3147,3 +3147,75 @@ class Stanchion(NewModel):
         self._save_task_call('service.stanchion.configure', data)
         return True
 
+class HAProxy(NewModel):
+    haproxy_http_ip = models.CharField(
+        verbose_name=_("Bind IP Address"),
+        max_length=200,
+    )
+    haproxy_http_port = models.CharField(
+        verbose_name=_("HTTP port"),
+        max_length=200,
+    )
+    haproxy_https_ip = models.CharField(
+        verbose_name=_("HTTPS IP"),
+        max_length=200,
+    )
+    haproxy_https_port = models.IntegerField(
+        verbose_name=_("HTTPS Port"),
+    )
+    haproxy_frontend_mode = models.CharField(
+        verbose_name=_("Frontend Mode"),
+        max_length=200,
+    )
+    haproxy_backend_mode = models.IntegerField(
+        verbose_name=_("Backend Mode"),
+    )
+
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("HAProxy")
+        verbose_name_plural = _("HAProxy")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"HAPROXYIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('haproxy_http_ip', 'http_ip'),
+            ('haproxy_http_port', 'http_port'),
+            ('haproxy_https_ip', 'https_ip'),
+            ('haproxy_https_port', 'https_port'),
+            ('haproxy_frontend_mode', 'frontend_mode'),
+            ('haproxy_backend_mode', 'backend_mode'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.stanchion.get_config')
+        return cls(**dict(
+            id=1,
+            haproxy_http_ip=config['http_ip'],
+            haproxy_http_port=config['http_port'],
+            haproxy_https_ip=config['https_ip'],
+            haproxy_https_port=config['https_port'],
+            haproxy_frontend_mode=config['frontend_mode'],
+            haproxy_backend_mode=config['backend_mode'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'http_ip': self.haproxy_http_ip,
+            'http_port': self.haproxy_http_port,
+            'https_ip': self.haproxy_https_ip,
+            'https_port': self.haproxy_https_port,
+            'frontend_mode': self.haproxy_frontend_mode,
+            'backend_mode': self.haproxy_backend_mode,
+        }
+        self._save_task_call('service.haproxy.configure', data)
+        return True
+

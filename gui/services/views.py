@@ -133,6 +133,11 @@ def core(request):
         stanchion = models.Stanchion.objects.create()
 
     try:
+        haproxy = models.HAProxy.objects.order_by("-id")[0]
+    except IndexError:
+        haproxy = models.HAProxy.objects.create()
+
+    try:
         rsyncd = models.Rsyncd.objects.order_by("-id")[0]
     except IndexError:
         rsyncd = models.Rsyncd.objects.create()
@@ -176,6 +181,7 @@ def core(request):
         'riak': riak,
         'riak_cs': riak_cs,
         'stanchion': stanchion,
+        'haproxy': haproxy,
         'rsyncd': rsyncd,
         'dynamicdns': dynamicdns,
         'snmp': snmp,
@@ -221,6 +227,7 @@ def servicesToggleView(request, formname):
         'riak_toggle': 'riak',
         'stanchion_toggle': 'stanchion',
         'riak_cs_toggle': 'riak_cs',
+        'haproxy_toggle': 'haproxy',
         'swift_toggle': 'swift',
         'glusterd_toggle': 'glusterd',
         'ipfs_toggle': 'ipfs',
@@ -231,7 +238,7 @@ def servicesToggleView(request, formname):
 
 
     # Temporary hack for new middleware
-    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'swift', 'glusterd', 'ipfs', 'lldp', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd', 'tftpd', 'ups', 'webdav'):
+    if changing_service in ('afp', 'cifs', 'dyndns', 'ftp', 'riak', 'stanchion', 'riak_cs', 'haproxy', 'swift', 'glusterd', 'ipfs', 'lldp', 'nfs', 'rsyncd', 'smartd', 'snmp', 'sshd', 'tftpd', 'ups', 'webdav'):
         svc = dispatcher.call_sync(
             'services.query',
             [('name', '=', changing_service)],
