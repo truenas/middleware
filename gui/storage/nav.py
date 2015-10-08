@@ -170,7 +170,7 @@ class Volumes(TreeNode):
         subnav.name = _(u'Change Permissions')
         subnav.type = 'editobject'
         subnav.view = 'storage_mp_permission'
-        subnav.kwargs = {'path': dataset['properties.mountpoint.value']}
+        subnav.kwargs = {'path': dataset['mountpoint']}
         subnav.model = 'Volumes'
         subnav.icon = u'ChangePasswordIcon'
         subnav.app_name = 'storage'
