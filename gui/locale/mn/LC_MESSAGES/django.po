@@ -12173,3 +12173,12 @@ msgstr ""
 #: storage/models.py:910
 msgid "Delete stale snapshots on remote system"
 msgstr ""
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Файл шаардлагатай"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

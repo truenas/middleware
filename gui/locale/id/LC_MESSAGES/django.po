@@ -13154,3 +13154,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Snapshot terakhir dikirim ke sisi jarak jauh (tinggalkan kosong untuk "
 "replikasi penuh)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Kolom ini diperlukan"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

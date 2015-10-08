@@ -12764,3 +12764,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "Poslednji snimak poslat na udaljenu stranu (ostaviti prazno za punu "
 "replikaciju)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Ovo polje je neophodno"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

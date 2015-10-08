@@ -13239,3 +13239,12 @@ msgstr ""
 #, fuzzy
 msgid "Delete stale snapshots on remote system"
 msgstr "Dernier instantané envoyé du côté distant"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Un fichier est requis"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

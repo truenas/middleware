@@ -13187,3 +13187,12 @@ msgid "Delete stale snapshots on remote system"
 msgstr ""
 "ÚItim snapshot enviat al costat remot (deixar en blanc per una replicació "
 "completa)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "El camp és obligatori"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""

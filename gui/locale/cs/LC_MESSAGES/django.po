@@ -12637,3 +12637,13 @@ msgstr ""
 #, fuzzy
 msgid "Delete stale snapshots on remote system"
 msgstr "Nejnovější zachycený stav, který byl odeslán na protistranu"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Je vyžadován soubor"
+
+#: vcp/views.py:126
+#, fuzzy
+msgid "vCenter plugin is repaired successfully"
+msgstr "Zásuvný modul vCenter byl úspěšně nainstalován."

@@ -13135,3 +13135,12 @@ msgstr ""
 #, fuzzy
 msgid "Delete stale snapshots on remote system"
 msgstr "תצלום אחרון שנשלח לצד המרוחק (השאר ריק לשיכפול מלא)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "שדה זה נחוץ"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""
