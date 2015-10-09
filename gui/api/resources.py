@@ -351,7 +351,7 @@ class ZVolResource(DojoResource):
     volsize = fields.IntegerField(attribute='volsize')
 
     class Meta:
-        allowed_methods = ['get', 'post', 'delete']
+        allowed_methods = ['get', 'post', 'delete', 'put']
         object_class = zfs.ZFSVol
         resource_name = 'storage/zvol'
 
@@ -370,6 +370,38 @@ class ZVolResource(DojoResource):
             )
         # FIXME: authorization
         bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
+        return bundle
+
+    def obj_update(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+        name = "%s/%s" % (kwargs.get('parent').vol_name, kwargs.get('pk'))
+        deserialized = self.deserialize(
+            bundle.request,
+            bundle.request.body,
+            format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        _n = notifier()
+        error, errors = False, {}
+        for attr in (
+            'compression',
+            'dedup',
+            'volsize',
+        ):
+            value = deserialized.get(attr)
+            if value is None:
+                continue
+            if value == "inherit":
+                success, err = _n.zfs_inherit_option(name, attr)
+            else:
+                success, err = _n.zfs_set_option(name, attr, value)
+            if not success:
+                error = True
+                errors[attr] = err
+        if error:
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, errors)
+            )
+        bundle.obj = self.obj_get(bundle, **kwargs)
         return bundle
 
     def obj_get_list(self, request=None, **kwargs):
