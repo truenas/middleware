@@ -929,7 +929,6 @@ List resource
                 "repl_remote_cipher": "standard",
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": true,
-                "repl_resetonce": false,
                 "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
@@ -987,7 +986,6 @@ Create resource
                 "repl_remote_cipher": "standard",
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": true,
-                "repl_resetonce": false,
                 "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
@@ -1006,7 +1004,6 @@ Create resource
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
-   :json boolean repl_resetonce: initialize remote side for once
    :json string repl_compression: replication stream compression
    :json string repl_status: current status of the replication
    :json integer repl_limit: limit the replication speed in KB/s
@@ -1055,7 +1052,6 @@ Update resource
                 "repl_remote_cipher": "standard",
                 "repl_remote_hostkey": "AAAA",
                 "repl_enabled": false,
-                "repl_resetonce": false,
                 "repl_compression": "lz4",
                 "repl_remote_hostname": "testhost",
                 "repl_lastsnapshot": "",
@@ -1074,7 +1070,6 @@ Update resource
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
-   :json boolean repl_resetonce: initialize remote side for once
    :json string repl_compression: replication stream compression
    :json string repl_status: current status of the replication
    :json integer repl_limit: limit the replication speed in KB/s

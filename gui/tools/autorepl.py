@@ -236,7 +236,6 @@ for replication in replication_tasks:
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
-    resetonce = replication.repl_resetonce
     compression = replication.repl_compression.__str__()
 
     if replication.repl_limit != 0:
