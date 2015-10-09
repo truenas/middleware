@@ -909,12 +909,6 @@ class Replication(Model):
         verbose_name=_(
             "Delete stale snapshots on remote system"),
     )
-    repl_resetonce = models.BooleanField(
-        default=False,
-        verbose_name=_(
-            "Initialize remote side for once. (May cause data"
-            " loss on remote side!)"),
-    )
     repl_compression = models.CharField(
         max_length=5,
         choices=choices.Repl_CompressionChoices,

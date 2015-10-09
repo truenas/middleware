@@ -651,7 +651,6 @@ class ReplicationFAdmin(BaseFreeAdmin):
         'id',
         'repl_remote',
         'repl_userepl',
-        'repl_resetonce',
     )
     refresh_time = 12000
 
