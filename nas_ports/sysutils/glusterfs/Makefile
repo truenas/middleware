@@ -2,7 +2,7 @@
 
 PORTNAME=	glusterfs
 PORTVERSION=	3.7.2
-CATEGORIES=	net
+CATEGORIES=	sysutils
 MASTER_SITES=	http://bits.gluster.org/pub/gluster/glusterfs/src/
 DISTNAME=	${PORTNAME}-3.7.2
 
