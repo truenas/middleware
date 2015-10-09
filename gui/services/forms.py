@@ -1674,3 +1674,9 @@ class StanchionForm(ModelForm):
         fields = '__all__'
         model = models.Stanchion
 
+class HAProxyForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.HAProxy
+
