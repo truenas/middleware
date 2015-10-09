@@ -345,6 +345,71 @@ class DatasetResource(DojoResource):
         return {}
 
 
+class ZVolResource(DojoResource):
+
+    name = fields.CharField(attribute='name')
+    volsize = fields.IntegerField(attribute='volsize')
+
+    class Meta:
+        allowed_methods = ['get', 'post', 'delete']
+        object_class = zfs.ZFSVol
+        resource_name = 'storage/zvol'
+
+    def obj_create(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+        err, msg = notifier().create_zfs_vol(
+            '%s/%s' % (kwargs.get('parent').vol_name, bundle.data.get('name')),
+            bundle.data.get('volsize'),
+            bundle.data.get('props', None),
+            bundle.data.get('sparse', True),
+        )
+        if err:
+            bundle.errors['__all__'] = msg
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, bundle.errors)
+            )
+        # FIXME: authorization
+        bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
+        return bundle
+
+    def obj_get_list(self, request=None, **kwargs):
+        dsargs = {
+            'recursive': True,
+            'types': ["volume"],
+        }
+        if 'parent' in kwargs:
+            dsargs['path'] = kwargs.get('parent').vol_name
+        zfslist = zfs.zfs_list(**dsargs)
+        return zfslist
+
+    def obj_get(self, bundle, **kwargs):
+        zfslist = zfs.zfs_list(path="%s/%s" % (
+            kwargs.get('parent').vol_name,
+            kwargs.get('pk'),
+        ), types=["volume"])
+        try:
+            return zfslist['%s/%s' % (
+                kwargs.get('parent').vol_name,
+                kwargs.get('pk')
+            )]
+        except KeyError:
+            raise NotFound("Dataset not found.")
+
+    def obj_delete(self, bundle, **kwargs):
+        retval = notifier().destroy_zfs_vol("%s/%s" % (
+            kwargs.get('parent').vol_name,
+            kwargs.get('pk'),
+        ))
+        if retval:
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, retval)
+            )
+        return HttpResponse(status=204)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {}
+
+
 class VolumeResourceMixin(NestedMixin):
 
     class Meta:
@@ -371,6 +436,13 @@ class VolumeResourceMixin(NestedMixin):
                 ),
                 self.wrap_view('datasets_detail'),
                 name="api_volume_datasets_detail"
+            ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols%s$" %(
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('zvols_list'),
+                name="api_volume_zvols"
             ),
             url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/replace%s$" % (
@@ -751,6 +823,12 @@ class VolumeResourceMixin(NestedMixin):
 
         child_resource = DatasetResource()
         return child_resource.dispatch_detail(request, pk=pk, parent=obj)
+
+    def zvols_list(self, request, **kwargs):
+        bundle, obj = self._get_parent(request, kwargs)
+
+        child_resource = ZVolResource()
+        return child_resource.dispatch_list(request, parent=obj)
 
     def _get_children(self, bundle, vol, children, uid):
         rv = []
