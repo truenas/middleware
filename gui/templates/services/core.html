@@ -77,6 +77,7 @@
            <img id="ipfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "IPFS Settings"|escapejs %}', '{{ ipfs.get_edit_url }}');" title="{% trans "IPFS Settings" %}">
        </td>
    </tr>
+   {% comment %}
    <tr>
        <td>
            <strong>{% trans "HAProxy" %}</strong>
@@ -88,6 +89,7 @@
            <img id="haproxy_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "HA Proxy Settings"|escapejs %}', '{{ haproxy.get_edit_url }}');" title= "{% trans "HA Proxy Settings" %}">
        </td>
    </tr>
+   {% endcomment %}
   <tr>
        <td>
            <strong>{% trans "iSCSI" %}</strong>
