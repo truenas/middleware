@@ -15,6 +15,7 @@ BLACKLIST = [
     'iSCSITargetGroups',
     'RPCToken',
     'CIFS',
+    'HAProxy',
 ]
 ORDER = 40
 
