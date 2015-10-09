@@ -1680,3 +1680,15 @@ class HAProxyForm(ModelForm):
         fields = '__all__'
         model = models.HAProxy
 
+class GlusterfsForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.HAProxy
+
+class SWIFTForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.HAProxy
+
