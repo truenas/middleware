@@ -262,17 +262,7 @@ for replication in replication_tasks:
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-
-    if replication.repl_userepl:
-        Rflag = '-R '
-    else:
-        Rflag = ''
-
     followdelete = not not replication.repl_followdelete
-
-    wanted_list = []
-    known_latest_snapshot = ''
-    expected_local_snapshot = ''
 
     remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1],localfs.partition('/')[2])
 
@@ -291,7 +281,6 @@ for replication in replication_tasks:
             localfs,
             error,
             ))
-        MNTLOCK.unlock()
         continue
     if output != '':
         snaplist = output.split('\n')
