@@ -507,6 +507,11 @@ class NewModel(Model):
                 # Do not send id
                 if f.name == 'id':
                     continue
+
+                # Dirty hack to not send bsdusr_builtin and bsdgrp_builtin
+                if f.name in ('bsdusr_builtin', 'bsdgrp_builtin'):
+                    continue
+
                 field = fmm.get_field_to_middleware(f.name)
                 if not field:
                     continue
