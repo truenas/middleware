@@ -501,15 +501,16 @@ class NewModel(Model):
         else:
             # Transform model fields into data to be submitted
             for f in self._meta.fields:
+
+                # Do not send fields not considered editable
+                if f.editable is False:
+                    continue
+
                 if not fmm:
                     data[f.name] = getattr(self, f.name)
                     continue
                 # Do not send id
                 if f.name == 'id':
-                    continue
-
-                # Dirty hack to not send bsdusr_builtin and bsdgrp_builtin
-                if f.name in ('bsdusr_builtin', 'bsdgrp_builtin'):
                     continue
 
                 field = fmm.get_field_to_middleware(f.name)
