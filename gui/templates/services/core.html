@@ -74,7 +74,7 @@
        <img id="ipfs_toggle" name="ipfs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.ipfs == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="ipfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "IPFS Settings"|escapejs %}', '{{ ipfs.get_edit_url }}');" title="{% tran s "IPFS Settings" %}">
+           <img id="ipfs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "IPFS Settings"|escapejs %}', '{{ ipfs.get_edit_url }}');" title="{% trans "IPFS Settings" %}">
        </td>
    </tr>
    <tr>
