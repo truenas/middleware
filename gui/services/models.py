@@ -3149,6 +3149,13 @@ class Stanchion(NewModel):
 
 
 class HAProxy(NewModel):
+    haproxy_global_maxconn = models.IntegerField(
+        verbose_name=_("Global Max Connections"),
+        max_length=200,
+    )
+    haproxy_defaults_maxconn = models.IntegerField(
+        verbose_name=_("Default Max Connnections"),
+    )
     haproxy_http_ip = models.CharField(
         verbose_name=_("Bind IP Address"),
         max_length=200,
@@ -3179,6 +3186,76 @@ class HAProxy(NewModel):
             ('TCP', _('TCP')),
         ),
     )
+    haproxy_backend_server_one_name = models.CharField(
+        verbose_name=_("Server Name"),
+        max_length=200,
+    )
+    haproxy_backend_server_one_host = models.CharField(
+        verbose_name=_("Server Host Name"),
+    )
+    haproxy_backend_server_one_port = models.IntegerField(
+        verbose_name=_("Server Host Port"),
+        max_length=200,
+    )
+    haproxy_backend_server_one_weight = models.IntegerField(
+        verbose_name=_("Server Weight"),
+    )
+    haproxy_backend_server_two_name = models.CharField(
+        verbose_name=_("Server Name"),
+        max_length=200,
+    )
+    haproxy_backend_server_two_host = models.CharField(
+        verbose_name=_("Server Host Name"),
+    )
+    haproxy_backend_server_two_port = models.IntegerField(
+        verbose_name=_("Server Host Port"),
+        max_length=200,
+    )
+    haproxy_backend_server_two_weight = models.IntegerField(
+        verbose_name=_("Server Weight"),
+    )
+    haproxy_backend_server_three_name = models.CharField(
+        verbose_name=_("Server Name"),
+        max_length=200,
+    )
+    haproxy_backend_server_three_host = models.CharField(
+        verbose_name=_("Server Host Name"),
+    )
+    haproxy_backend_server_three_port = models.IntegerField(
+        verbose_name=_("Server Host Port"),
+        max_length=200,
+    )
+    haproxy_backend_server_three_weight = models.IntegerField(
+        verbose_name=_("Server Weight"),
+    )
+    haproxy_backend_server_four_name = models.CharField(
+        verbose_name=_("Server Name"),
+        max_length=200,
+    )
+    haproxy_backend_server_four_host = models.CharField(
+        verbose_name=_("Server Host Name"),
+    )
+    haproxy_backend_server_four_port = models.IntegerField(
+        verbose_name=_("Server Host Port"),
+        max_length=200,
+    )
+    haproxy_backend_server_four_weight = models.IntegerField(
+        verbose_name=_("Server Weight"),
+    )
+    haproxy_backend_server_five_name = models.CharField(
+        verbose_name=_("Server Name"),
+        max_length=200,
+    )
+    haproxy_backend_server_five_host = models.CharField(
+        verbose_name=_("Server Host Name"),
+    )
+    haproxy_backend_server_five_port = models.IntegerField(
+        verbose_name=_("Server Host Port"),
+        max_length=200,
+    )
+    haproxy_backend_server_five_weight = models.IntegerField(
+        verbose_name=_("Server Weight"),
+    )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -3193,12 +3270,34 @@ class HAProxy(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
+            ('haproxy_global_maxconn', 'global_maxconn'),
+            ('haproxy_defaults_maxconn', 'defaults_maxconn'),
             ('haproxy_http_ip', 'http_ip'),
             ('haproxy_http_port', 'http_port'),
             ('haproxy_https_ip', 'https_ip'),
             ('haproxy_https_port', 'https_port'),
             ('haproxy_frontend_mode', 'frontend_mode'),
             ('haproxy_backend_mode', 'backend_mode'),
+            ('haproxy_backend_server_one_name', 'backend_server_one_name'),
+            ('haproxy_backend_server_one_host', 'backend_server_one_host'),
+            ('haproxy_backend_server_one_port', 'backend_server_one_port'),
+            ('haproxy_backend_server_one_weight', 'backend_server_one_weight'),
+            ('haproxy_backend_server_two_name', 'backend_server_two_name'),
+            ('haproxy_backend_server_two_host', 'backend_server_two_host'),
+            ('haproxy_backend_server_two_port', 'backend_server_two_port'),
+            ('haproxy_backend_server_two_weight', 'backend_server_two_weight'),
+            ('haproxy_backend_server_three_name', 'backend_server_three_name'),
+            ('haproxy_backend_server_three_host', 'backend_server_three_host'),
+            ('haproxy_backend_server_three_port', 'backend_server_three_port'),
+            ('haproxy_backend_server_three_weight', 'backend_server_three_weight'),
+            ('haproxy_backend_server_four_name', 'backend_server_four_name'),
+            ('haproxy_backend_server_four_host', 'backend_server_four_host'),
+            ('haproxy_backend_server_four_port', 'backend_server_four_port'),
+            ('haproxy_backend_server_four_weight', 'backend_server_four_weight'),
+            ('haproxy_backend_server_five_name', 'backend_server_five_name'),
+            ('haproxy_backend_server_five_host', 'backend_server_five_host'),
+            ('haproxy_backend_server_five_port', 'backend_server_five_port'),
+            ('haproxy_backend_server_five_weight', 'backend_server_five_weight'),
         )
 
     @classmethod
@@ -3207,22 +3306,67 @@ class HAProxy(NewModel):
         config = dispatcher.call_sync('service.haproxy.get_config')
         return cls(**dict(
             id=1,
+            haproxy_global_maxconn=config['global_maxconn'],
+            haproxy_defaults_maxconn=config['defaults_maxconn'],
             haproxy_http_ip=config['http_ip'],
             haproxy_http_port=config['http_port'],
             haproxy_https_ip=config['https_ip'],
             haproxy_https_port=config['https_port'],
             haproxy_frontend_mode=config['frontend_mode'],
             haproxy_backend_mode=config['backend_mode'],
+            haproxy_backend_server_one_name=config['backend_server_one_name'],
+            haproxy_backend_server_one_host=config['backend_server_one_host'],
+            haproxy_backend_server_one_port=config['backend_server_one_port'],
+            haproxy_backend_server_one_weight=config['backend_server_one_weight'],
+            haproxy_backend_server_two_name=config['backend_server_two_name'],
+            haproxy_backend_server_two_host=config['backend_server_two_host'],
+            haproxy_backend_server_two_port=config['backend_server_two_port'],
+            haproxy_backend_server_two_weight=config['backend_server_two_weight'],
+            haproxy_backend_server_three_name=config['backend_server_three_name'],
+            haproxy_backend_server_three_host=config['backend_server_three_host'],
+            haproxy_backend_server_three_port=config['backend_server_three_port'],
+            haproxy_backend_server_three_weight=config['backend_server_three_weight'],
+            haproxy_backend_server_four_name=config['backend_server_four_name'],
+            haproxy_backend_server_four_host=config['backend_server_four_host'],
+            haproxy_backend_server_four_port=config['backend_server_four_port'],
+            haproxy_backend_server_four_weight=config['backend_server_four_weight'],
+            haproxy_backend_server_five_name=config['backend_server_five_name'],
+            haproxy_backend_server_five_host=config['backend_server_five_host'],
+            haproxy_backend_server_five_port=config['backend_server_five_port'],
+            haproxy_backend_server_five_weight=config['backend_server_five_weight'],
+
         ))
 
     def _save(self, *args, **kwargs):
         data = {
+            'global_maxconn': self.haproxy_global_maxconn,
+            'defaults_maxconn': self.haproxy_defaults_maxconn,
             'http_ip': self.haproxy_http_ip,
             'http_port': self.haproxy_http_port,
             'https_ip': self.haproxy_https_ip,
             'https_port': self.haproxy_https_port,
             'frontend_mode': self.haproxy_frontend_mode,
             'backend_mode': self.haproxy_backend_mode,
+            'backend_server_one_name': self.haproxy_backend_server_one_name,
+            'backend_server_one_host': self.haproxy_backend_server_one_host,
+            'backend_server_one_port': self.haproxy_backend_server_one_port,
+            'backend_server_one_weight': self.haproxy_backend_server_one_weight,
+            'backend_server_two_name': self.haproxy_backend_server_two_name,
+            'backend_server_two_host': self.haproxy_backend_server_two_host,
+            'backend_server_two_port': self.haproxy_backend_server_two_port,
+            'backend_server_two_weight': self.haproxy_backend_server_two_weight,
+            'backend_server_three_name': self.haproxy_backend_server_three_name,
+            'backend_server_three_host': self.haproxy_backend_server_three_host,
+            'backend_server_three_port': self.haproxy_backend_server_three_port,
+            'backend_server_three_weight': self.haproxy_backend_server_three_weight,
+            'backend_server_four_name': self.haproxy_backend_server_four_name,
+            'backend_server_four_host': self.haproxy_backend_server_four_host,
+            'backend_server_four_port': self.haproxy_backend_server_four_port,
+            'backend_server_four_weight': self.haproxy_backend_server_four_weight,
+            'backend_server_five_name': self.haproxy_backend_server_five_name,
+            'backend_server_five_host': self.haproxy_backend_server_five_host,
+            'backend_server_five_port': self.haproxy_backend_server_five_port,
+            'backend_server_five_weight': self.haproxy_backend_server_five_weight,
         }
         self._save_task_call('service.haproxy.configure', data)
         return True
