@@ -100,7 +100,7 @@ def rcro():
 #
 # Attempt to send a snapshot or increamental stream to remote.
 #
-def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication, reached_last):
+def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last):
     global results
     global templog
 
@@ -125,7 +125,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, replication,
             f2.write(str(zproc_pid))
         os.close(writefd)
 
-    compress, decompress = compress_pipecmds(replication.repl_compression.__str__())
+    compress, decompress = compress_pipecmds(compression)
     replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s "%s/sbin/zfs receive -F -d %s\'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, rcro(), remotefs)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'r', 0)
@@ -237,6 +237,8 @@ for replication in replication_tasks:
     localfs = replication.repl_filesystem.__str__()
     last_snapshot = replication.repl_lastsnapshot.__str__()
     compression = replication.repl_compression.__str__()
+    followdelete = not not replication.repl_followdelete
+    recursive = not not replication.repl_userepl
 
     if replication.repl_limit != 0:
         throttle = '/usr/local/bin/throttle -K %d | ' % replication.repl_limit
@@ -269,15 +271,13 @@ for replication in replication_tasks:
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-    followdelete = not not replication.repl_followdelete
-
     remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1],localfs.partition('/')[2])
 
     # Examine local list of snapshots, then remote snapshots, and determine if there is any work to do.
     log.debug("Checking dataset %s" % (localfs))
 
     # Grab map from local system.
-    if replication.repl_userepl:
+    if recursive:
         zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r "%s"' % (localfs), debug)
     else:
         zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 "%s"' % (localfs), debug)
@@ -330,7 +330,7 @@ Hello,
             continue
 
     # Grab map from remote system
-    if replication.repl_userepl:
+    if recursive:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
     else:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
@@ -446,10 +446,10 @@ Hello,
                     results[replication.id] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
                     ### rzfs destroy %s
             psnap = tasklist[1]
-            success = sendzfs(None, psnap, dataset, localfs, remotefs, throttle, replication, reached_last)
+            success = sendzfs(None, psnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last)
             if success:
                 for nsnap in tasklist[2:]:
-                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication, reached_last)
+                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last)
                     if not success:
                         # Report the situation
                         error, errmsg = send_mail(
@@ -477,7 +477,7 @@ Hello,
             psnap = tasklist[0]
             allsucceeded = True
             for nsnap in tasklist[1:]:
-                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, replication, reached_last)
+                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last)
                 allsucceeded = allsucceeded and success
                 if not success:
                     # Report the situation
