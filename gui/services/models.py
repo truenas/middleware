@@ -3149,6 +3149,14 @@ class Stanchion(NewModel):
 
 
 class HAProxy(NewModel):
+    haproxy_global_maxconn = models.IntegerField(
+        verbose_name=_("Global Max Connections"),
+        max_length=200,
+    )
+    haproxy_defaults_maxconn = models.IntegerField(
+        verbose_name=_("Default MAx Connections"),
+        max_length=200,
+    )
     haproxy_http_ip = models.CharField(
         verbose_name=_("Bind IP Address"),
         max_length=200,
@@ -3193,6 +3201,8 @@ class HAProxy(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
+            ('haproxy_global_maxconn', 'global_maxconn'),
+            ('haproxy_defaults_maxconn', 'defaults_maxconn'),
             ('haproxy_http_ip', 'http_ip'),
             ('haproxy_http_port', 'http_port'),
             ('haproxy_https_ip', 'https_ip'),
@@ -3207,6 +3217,8 @@ class HAProxy(NewModel):
         config = dispatcher.call_sync('service.haproxy.get_config')
         return cls(**dict(
             id=1,
+            haproxy_global_maxconn=config['global_maxconn'],
+            haproxy_defaults_maxconn=config['defaults_maxconn'],
             haproxy_http_ip=config['http_ip'],
             haproxy_http_port=config['http_port'],
             haproxy_https_ip=config['https_ip'],
@@ -3217,6 +3229,8 @@ class HAProxy(NewModel):
 
     def _save(self, *args, **kwargs):
         data = {
+            'global_maxconn': self.haproxy_global_maxconn,
+            'defaults_maxconn': self.haproxy_defaults_maxconn,
             'http_ip': self.haproxy_http_ip,
             'http_port': self.haproxy_http_port,
             'https_ip': self.haproxy_https_ip,
