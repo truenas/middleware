@@ -170,6 +170,9 @@ that have occurred since 9.3-RELEASE.
 
 * The "Recursively replicate and remove stale snapshot on remote side" option in :menuselection:`Storage --> Replication Tasks --> Add Replication` has been divided into two options:
   "Recursively replicate child dataset's snapshots" and "Delete snapshots that are no longer available locally after successful replication of new snapshots".
+  
+* The "Initialize remote side for once" option has been removed from :menuselection:`Storage --> Replication Tasks --> Add Replication` as the new replication backend handles this
+  automatically when needed.
 
 * The :file:`/usr/local/bin/test_ssh.py` script has been added for testing the SSH connection for a defined replication task.
 
