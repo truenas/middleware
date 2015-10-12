@@ -108,6 +108,8 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 
 * The `GlusterFS <http://www.gluster.org>`_ service provides a scalable, network file system which can export the file system as a local FUSE mount.
 
+* The `HAProxy <http://www.haproxy.org/>`_ service provides a fast and reliable open source solution for load balancing and proxying of HTTP- and TCP-based application traffic. 
+
 * The `IPFS <https://ipfs.io>`_ (Inter-Planetary Filesystem) service provides a global namespace and torrent-style file distribution method for sharing content.
 
 * The `Riak CS (Cloud Storage) <http://docs.basho.com/riakcs/latest/>`_ service adds a distributed, clustering database offering an Amazon S3-compatible cloud storage API.
@@ -129,6 +131,8 @@ In addition to the new features, the following options have changed in the GUI:
 * :menuselection:`Account --> Groups --> Add Group --> Allow Repeated GIDs` has been removed.
 
 * :menuselection:`Account --> Users --> Add User --> Microsoft Account` has been removed.
+
+* The "Enable Console Menu" field in :menuselection:`System --> Advanced` has been renamed to "Enable Console CLI".
 
 * :menuselection:`System --> System Dataset` has been removed as it is now the "System Dataset Pool" drop-down menu in :menuselection:`System --> Advanced`.
 
