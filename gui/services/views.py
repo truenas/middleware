@@ -138,6 +138,11 @@ def core(request):
         haproxy = models.HAProxy.objects.create()
 
     try:
+        glusterd = models.Glusterd.objects.order_by("-id")[0]
+    except IndexError:
+        glusterd = models.Glusterd.objects.create()
+    
+    try:
         rsyncd = models.Rsyncd.objects.order_by("-id")[0]
     except IndexError:
         rsyncd = models.Rsyncd.objects.create()
@@ -182,6 +187,8 @@ def core(request):
         'riak_cs': riak_cs,
         'stanchion': stanchion,
         'haproxy': haproxy,
+        'glusterd': glusterd,
+        'swift': swift,
         'rsyncd': rsyncd,
         'dynamicdns': dynamicdns,
         'snmp': snmp,
@@ -228,7 +235,6 @@ def servicesToggleView(request, formname):
         'stanchion_toggle': 'stanchion',
         'riak_cs_toggle': 'riak_cs',
         'haproxy_toggle': 'haproxy',
-        'swift_toggle': 'swift',
         'glusterd_toggle': 'glusterd',
         'ipfs_toggle': 'ipfs',
     }

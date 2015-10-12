@@ -3241,3 +3241,42 @@ class HAProxy(NewModel):
         self._save_task_call('service.haproxy.configure', data)
         return True
 
+
+class Glusterd(NewModel):
+    glusterd_working_directory = models.CharField(
+        verbose_name=_("Database Directory"),
+        max_length=200,
+    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("Glusterd")
+        verbose_name_plural = _("Glusterd")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"GLUSTERDIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('glusterd_working_directory', 'working_directory'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.glusterd.get_config')
+        return cls(**dict(
+            id=1,
+            glusterd_working_directory=config['working_directory'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'working_directory': self.glusterd_working_directory,
+        }
+        self._save_task_call('service.glusterd.configure', data)
+        return True
+
