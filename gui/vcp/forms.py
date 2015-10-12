@@ -58,22 +58,25 @@ class VcenterConfigurationForm(ModelForm):
 
     def install_plugin(self):
         try:
+            if self.is_in_db() is True:
+                self.vcp_status = 'Plugin is already installed.'
+                return False
             ip = str(self.cleaned_data['vc_ip'])
             port = str(self.cleaned_data['vc_port'])
             manage_ip = str(self.cleaned_data['vc_management_ip'])
             password = str(self.cleaned_data['vc_password'])
             username = str(self.cleaned_data['vc_username'])
+            sys_guiprotocol = self.get_sys_protocol()
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, False)
-
             if status_flag is True:
                 status_flag = utils.update_plugin_zipfile(
-                    ip, username, password, port, 'NEW', utils.get_plugin_version())
+                    ip, username, password, port, 'NEW', 'null', utils.get_plugin_version())
                 if status_flag is True:
-                    sys_guiprotocol = self.get_sys_protocol()
+                    vcp_url = self.get_vcp_url(manage_ip, sys_guiprotocol)
                     plug = plugin.PluginManager()
                     status_flag = plug.install_vCenter_plugin(
-                        ip, username, password, port, manage_ip, sys_guiprotocol)
+                        ip, username, password, port, vcp_url, '')
                     if status_flag is True:
                         self.vcp_is_installed = True
                         self.vcp_is_update_available = False
@@ -99,15 +102,17 @@ class VcenterConfigurationForm(ModelForm):
 
     def uninstall_plugin(self):
         try:
+            if self.is_in_db() is False:
+                self.vcp_status = 'Plugin is not installed.'
+                return False
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
-            username = str(obj.vc_username)
+            username = str(self.cleaned_data['vc_username'])
             password = str(self.cleaned_data['vc_password'])
-            port = str(obj.vc_port)
-            status_flag = self.validate_vcp_param(
-                ip, port, username, password, True
-            )
+            port = str(self.cleaned_data['vc_port'])
 
+            status_flag = self.validate_vcp_param(
+                ip, port, username, password, True)
             if status_flag is True:
                 plug = plugin.PluginManager()
                 status_flag = plug.uninstall_vCenter_plugin(
@@ -119,11 +124,15 @@ class VcenterConfigurationForm(ModelForm):
                 else:
                     self.vcp_status = 'Uninstall failed. Please contact support.'
                     return False
+            elif 'does not exist' in status_flag:
+                models.VcenterConfiguration.objects.all().delete()
+                self.vcp_is_installed = False
+                return True
             else:
                 self.vcp_status = status_flag
                 return False
 
-        except Exception:
+        except Exception as e:
             self.vcp_status = 'Uninstall failed. Please contact support.'
             return False
 
@@ -131,24 +140,30 @@ class VcenterConfigurationForm(ModelForm):
         try:
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
-            username = str(obj.vc_username)
+            version_old = str(obj.vc_version)
+            username = str(self.cleaned_data['vc_username'])
             password = str(self.cleaned_data['vc_password'])
-            port = str(obj.vc_port)
-            manage_ip = str(obj.vc_management_ip)
+            port = str(self.cleaned_data['vc_port'])
+            manage_ip = str(self.cleaned_data['vc_management_ip'])
+
+            sys_guiprotocol = self.get_sys_protocol()
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, True)
 
             if status_flag is True:
                 status_flag = utils.update_plugin_zipfile(
-                    ip, username, password, port, 'UPGRADE', utils.get_plugin_version())
+                    ip, username, password, port, 'UPGRADE', version_old, utils.get_plugin_version())
                 if status_flag is True:
-                    sys_guiprotocol = self.get_sys_protocol()
+                    vcp_url = self.get_vcp_url(manage_ip, sys_guiprotocol)
                     plug = plugin.PluginManager()
                     status_flag = plug.upgrade_vCenter_plugin(
-                        ip, username, password, port, manage_ip, sys_guiprotocol)
+                        ip, username, password, port, vcp_url, '')
                     if status_flag is True:
                         self.vcp_is_update_available = False
                         obj.vc_version = utils.get_plugin_version()
+                        obj.vc_username = username
+                        obj.vc_port = port
+                        obj.vc_management_ip = manage_ip
                         obj.save()
                         return True
                     else:
@@ -166,30 +181,38 @@ class VcenterConfigurationForm(ModelForm):
 
     def repair_plugin(self):
         try:
+            if self.is_in_db() is False:
+                self.vcp_status = 'Plugin is not installed.'
+                return False
             obj = models.VcenterConfiguration.objects.latest('id')
             ip = str(obj.vc_ip)
-            username = str(obj.vc_username)
+            username = str(self.cleaned_data['vc_username'])
             password = str(self.cleaned_data['vc_password'])
-            port = str(obj.vc_port)
-            manage_ip = str(obj.vc_management_ip)
+            port = str(self.cleaned_data['vc_port'])
+            manage_ip = str(self.cleaned_data['vc_management_ip'])
+            sys_guiprotocol = self.get_sys_protocol()
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, False)
 
             if status_flag is True:
                 status_flag = utils.update_plugin_zipfile(
-                    ip, username, password, port, 'NEW', utils.get_plugin_version())
+                    ip, username, password, port, 'REPAIR', 'null', utils.get_plugin_version())
                 if status_flag is True:
-                    sys_guiprotocol = self.get_sys_protocol()
+                    vcp_url = self.get_vcp_url(manage_ip, sys_guiprotocol)
                     plug = plugin.PluginManager()
                     status_flag = plug.install_vCenter_plugin(
-                        ip, username, password, port, manage_ip, sys_guiprotocol)
+                        ip, username, password, port, vcp_url, '')
                     if status_flag is True:
+                        obj.vc_username = username
+                        obj.vc_port = port
+                        obj.vc_management_ip = manage_ip
+                        obj.save()
                         return True
                     else:
-                        self.vcp_status = 'repair failed. Please contact support.'
+                        self.vcp_status = 'Repair failed. Please contact support.'
                         return False
                 else:
-                    self.vcp_status = 'repair failed. Please contact support.'
+                    self.vcp_status = 'Repair failed. Please contact support.'
                     return False
             elif 'already' in status_flag:
                 self.vcp_status = 'Plugin repaire is not required.'
@@ -198,7 +221,7 @@ class VcenterConfigurationForm(ModelForm):
                 self.vcp_status = status_flag
                 return False
         except Exception:
-            self.vcp_status = 'repair failed. Please contact support.'
+            self.vcp_status = 'Repair failed. Please contact support.'
             return False
 
     def is_update_needed(self):
@@ -239,6 +262,37 @@ class VcenterConfigurationForm(ModelForm):
         except:
             return 'http'
 
+    def get_sys_port(self):
+        try:
+            sys_guiport = '80'
+            obj = Settings.objects.latest('id')
+            sys_guiprotocol = obj.stg_guiprotocol
+            if sys_guiprotocol == 'https':
+                sys_guiport = obj.stg_guihttpsport
+            else:
+                sys_guiport = obj.stg_guiport
+            return str(sys_guiport)
+        except:
+            return '80'
+
+    def get_vcp_url(self, manage_ip, sys_guiprotocol):
+        sys_guiport = self.get_sys_port()
+        file_address = 'static/' + utils.get_plugin_file_name()
+        vcp_url = sys_guiprotocol + '://' + manage_ip + \
+            ':' + sys_guiport + '/' + file_address
+        return vcp_url
+
+    def is_in_db(self):
+        try:
+            obj = models.VcenterConfiguration.objects.latest('id')
+            ip = str(obj.vc_ip)
+            if ip != '':
+                return True
+            else:
+                return False
+        except Exception:
+            return False
+
     def validate_vcp_param(self, ip, port, username, password, is_installed):
         try:
             plug = plugin.PluginManager()
@@ -266,3 +320,9 @@ class VcenterConfigurationForm(ModelForm):
         widgets = {
             'vc_password': forms.PasswordInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super(VcenterConfigurationForm, self).__init__(*args, **kwargs)
+        ip_choices = utils.get_management_ips()
+        self.fields['vc_management_ip'] = forms.ChoiceField(
+            choices=zip(ip_choices, ip_choices),)
