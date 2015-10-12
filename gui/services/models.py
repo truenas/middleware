@@ -3280,3 +3280,40 @@ class Glusterd(NewModel):
         self._save_task_call('service.glusterd.configure', data)
         return True
 
+class SWIFT(NewModel):
+    swift_working_directory = models.CharField(
+        verbose_name=_("Database Directory"),
+        max_length=200,
+    )
+
+    objects = NewManager(qs_class=ConfigQuerySet)
+
+    class Meta:
+        verbose_name = _("SWIFT")
+        verbose_name_plural = _("SWIFT")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"SWIFTIcon"
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('swift_working_directory', 'working_directory'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.swift.get_config')
+        return cls(**dict(
+            id=1,
+            swift_working_directory=config['working_directory'],
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'working_directory': self.swift_working_directory,
+        }
+        self._save_task_call('service.swift.configure', data)
+        return True

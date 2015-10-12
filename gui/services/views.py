@@ -141,6 +141,11 @@ def core(request):
         glusterd = models.Glusterd.objects.order_by("-id")[0]
     except IndexError:
         glusterd = models.Glusterd.objects.create()
+
+    try:
+        swift = models.SWIFT.objects.order_by("-id")[0]
+    except IndexError:
+        swift = models.SWIFT.objects.create()
     
     try:
         rsyncd = models.Rsyncd.objects.order_by("-id")[0]
@@ -236,6 +241,7 @@ def servicesToggleView(request, formname):
         'riak_cs_toggle': 'riak_cs',
         'haproxy_toggle': 'haproxy',
         'glusterd_toggle': 'glusterd',
+        'swift_toggle': 'swift',
         'ipfs_toggle': 'ipfs',
     }
     changing_service = form2namemap[formname]
