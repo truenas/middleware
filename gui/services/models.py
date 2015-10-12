@@ -3281,7 +3281,7 @@ class Glusterd(NewModel):
         return True
 
 class SWIFT(NewModel):
-    swift_working_directory = models.CharField(
+    swift_hash_path_suffix = models.CharField(
         verbose_name=_("Database Directory"),
         max_length=200,
     )
@@ -3299,7 +3299,7 @@ class SWIFT(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
-            ('swift_working_directory', 'working_directory'),
+            ('swift_hash_path_suffix', 'hash_path_suffix'),
         )
 
     @classmethod
@@ -3308,12 +3308,12 @@ class SWIFT(NewModel):
         config = dispatcher.call_sync('service.swift.get_config')
         return cls(**dict(
             id=1,
-            swift_working_directory=config['working_directory'],
+            swift_hash_path_suffix=config['hash_path_suffix'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
-            'working_directory': self.swift_working_directory,
+            'hash_path_suffix': self.swift_hash_path_suffix,
         }
         self._save_task_call('service.swift.configure', data)
         return True
