@@ -166,7 +166,9 @@ define([
                             }
                         }
                     } else {
-                        c[i].refresh();
+                         p.removeChild(c[i]);
+                         c[i].destroy();
+                         opened=false;
                     }
 
                 } else {
