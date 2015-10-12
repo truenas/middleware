@@ -168,12 +168,12 @@ class AlertResource(DojoResource):
                     continue
 
                 gte = request.GET.get('timestamp__gte')
-                if gte and int(gte) < res.getTimestamp():
+                if gte and int(gte) > res.getTimestamp():
                     results.remove(res)
                     continue
 
                 lte = request.GET.get('timestamp__lte')
-                if lte and int(lte) > res.getTimestamp():
+                if lte and int(lte) < res.getTimestamp():
                     results.remove(res)
                     continue
 
