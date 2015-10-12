@@ -183,7 +183,7 @@ def update_plugin_zipfile(
         password,
         port,
         install_mode,
-        plugin_vesion):
+        plugin_vesion_old, plugin_vesion_new):
     try:
         fname = get_plugin_file_name()
         if fname is None:
@@ -198,7 +198,8 @@ def update_plugin_zipfile(
             pat +
             '/plugin/plugins/ixsystems-vcp-service/META-INF/config/install.properties',
             install_mode,
-            plugin_vesion,
+            plugin_vesion_old,
+            plugin_vesion_new,
             ip,
             username,
             password,
@@ -237,33 +238,22 @@ def decrypt_string(str_ciph, key):
 def create_propertyFile(
         fpath,
         install_mode,
-        plugin_vesion,
+        plugin_vesion_old,
+        plugin_vesion_new,
         host_ip,
         username,
         password,
         port,
         enc_key):
     try:
-        plugin_vesion_old = plugin_vesion
-        plugin_vesion_new = plugin_vesion
-        if 'UPGRADE' in install_mode:
-            cp = SafeConfigParser()
-            cp.read(fpath)
-            plugin_vesion_old = cp.get(
-                'installation_parameter', 'plugin_version_new')
-
         Config = ConfigParser.ConfigParser()
         cfgfile = open(fpath, 'w')
         Config.add_section('installation_parameter')
         Config.set('installation_parameter', 'ip', host_ip)
         Config.set('installation_parameter', 'username', username)
         Config.set('installation_parameter', 'port', port)
-        Config.set(
-            'installation_parameter',
-            'password',
-            encrypt_string(
-                password,
-                enc_key))
+        Config.set('installation_parameter', 'password', encrypt_string(
+            password, enc_key))
         Config.set('installation_parameter', 'install_mode', install_mode)
         Config.set(
             'installation_parameter',
