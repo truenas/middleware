@@ -106,6 +106,8 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
   
 * The "Wizard" has been removed as making shares using the "New UI" has been simplified.
 
+* The `GlusterFS <http://www.gluster.org>`_ service provides a scalable, network file system which can export the file system as a local FUSE mount.
+
 * The `IPFS <https://ipfs.io>`_ (Inter-Planetary Filesystem) service provides a global namespace and torrent-style file distribution method for sharing content.
 
 * The `Riak CS (Cloud Storage) <http://docs.basho.com/riakcs/latest/>`_ service adds a distributed, clustering database offering an Amazon S3-compatible cloud storage API.
@@ -113,6 +115,8 @@ FreeNAS® |version| represents a major upgrade from FreeNAS® 9.3 and introduces
 * The `Riak KV (Key Value) <http://basho.com/products/riak-kv/>`_ service guarantees reads and writes even in the event of hardware failures or network partitions.
 
 * The `Stanchion <https://github.com/basho/stanchion>`_ service enforce the serialization of requests for Riak CS. 
+
+* The `Swift <http://docs.openstack.org/developer/swift/>`_ service provides object storage for `OpenStack <https://www.openstack.org/>`_.
 
 * Jails and Plugins have been temporarily removed as they will be replaced by a new Apps framework based on `iocage <https://github.com/iocage/iocage>`_.
 

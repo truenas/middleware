@@ -17,7 +17,11 @@ following built-in services:
 
 * :ref:`FTP`
 
+* :ref:`Glusterfs`
+
 * :ref:`IPFS`
+
+* :ref:`HAProxy`
 
 * :ref:`iSCSI`
 
@@ -38,6 +42,8 @@ following built-in services:
 * :ref:`SSH`
 
 * :ref:`Stanchion`
+
+* :ref:`SWIFT`
 
 * :ref:`TFTP`
 
@@ -798,6 +804,18 @@ for errors.
 If the error refers to DNS, either create an entry in your local DNS server with the FreeNAS® system's hostname and IP address or add an entry for the IP
 address of the FreeNAS® system in the "Host name database" field of :menuselection:`Network --> Global Configuration`.
 
+.. index:: Glusterfs
+.. _Glusterfs:
+
+Glusterfs
+---------
+
+.. index:: HAProxy
+.. _HAProxy:
+
+HAProxy
+-------
+
 .. index:: IPFS
 .. _IPFS:
 
@@ -1262,6 +1280,12 @@ Additional messages regarding authentication errors may be found in :file:`/var/
 
 Stanchion
 ---------
+
+.. index:: SWIFT
+.. _SWIFT:
+
+SWIFT
+-----
 
 .. index:: TFTP, Trivial File Transfer Protocol
 .. _TFTP:
