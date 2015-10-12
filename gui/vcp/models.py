@@ -30,45 +30,50 @@ from django.db import models
 from freenasUI.freeadmin.models import Model
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.contrib.IPAddressField import IP4AddressField
+from django.core.validators import RegexValidator
 
 
 class VcenterConfiguration(Model):
 
-    ip_choices = utils.get_management_ips()
+    port_regex = RegexValidator(
+        regex=r'^\+?1?\d{1,5}$',
+        message="Port must be numeric. only 5 digits allowed.")
 
     vc_management_ip = models.CharField(
         max_length=120,
-        verbose_name=_("TrueNAS Management IP Address"),
-        choices=zip(ip_choices, ip_choices),
+        verbose_name=_(" TrueNAS Management IP Address"),
         default='1',
         help_text=_(
             'Please select the TrueNAS interface that vCenter Web client can '
             'route to.'
         ),
     )
-    vc_ip = IP4AddressField(
+    vc_ip = models.CharField(
         blank=False,
         default='',
-        verbose_name=_("vCenter Hostname/IP Address"),
+        max_length=120,
+        verbose_name=_(" vCenter Hostname/IP Address"),
     )
     vc_port = models.CharField(
-        max_length=120,
+        max_length=5,
         default='443',
-        verbose_name=_("vCenter Port"),
+        validators=[port_regex],
+        help_text=_("An integer from 1 - 65535, generally will be 443"),
+        verbose_name=_(" vCenter Port"),
     )
     vc_username = models.CharField(
         max_length=120,
-        verbose_name=_("vCenter User name"),
+        verbose_name=_(" vCenter Username"),
     )
     vc_password = models.CharField(
         max_length=120,
-        verbose_name=_("vCenter Password"),
+        verbose_name=_(" vCenter Password"),
     )
     vc_version = models.CharField(
         blank=True,
         null=True,
         max_length=120,
-        verbose_name=_("version"),
+        verbose_name=_(" version"),
     )
 
     class Meta:

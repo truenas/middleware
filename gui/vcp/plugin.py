@@ -71,7 +71,7 @@ class PluginManager:
         key = cp.get('RegisterParam', 'key')
         return key
 
-    def get_extension(self, manage_ip, sys_guiprotocol):
+    def get_extension(self, vcp_url, thumb_print):
         try:
             cp = SafeConfigParser()
             cp.read(self.property_file_path)
@@ -84,8 +84,8 @@ class PluginManager:
             if 'Not available' in version:
                 return version
             label = cp.get('RegisterParam', 'label')
-            file_address = 'static/' + utils.get_plugin_file_name()
-            final_url = sys_guiprotocol + "://" + manage_ip + "/" + file_address
+            sys_guiprotocol = vcp_url.split(':')[0]
+
             description = vim.Description()
             description.label = label
             description.summary = descr
@@ -97,16 +97,16 @@ class PluginManager:
             ext.lastHeartbeatTime = datetime.datetime.now()
 
             server_info = vim.Extension.ServerInfo()
-            server_info.serverThumbprint = ''
+            server_info.serverThumbprint = thumb_print
             server_info.type = sys_guiprotocol.upper()
-            server_info.url = final_url
+            server_info.url = vcp_url
             server_info.description = description
             server_info.company = company
             server_info.adminEmail = ['ADMIN EMAIL']
             ext.server = [server_info]
 
             client = vim.Extension.ClientInfo()
-            client.url = final_url
+            client.url = vcp_url
             client.company = company
             client.version = version
             client.description = description
@@ -144,16 +144,15 @@ class PluginManager:
             usernName,
             password,
             port,
-            manage_ip,
-            sys_guiprotocol):
+            vcp_url,
+            thumb_print):
         try:
-
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
             si = SmartConnect("https", vc_ip, int(port), usernName, password)
-            ext = self.get_extension(manage_ip, sys_guiprotocol)
+            ext = self.get_extension(vcp_url, thumb_print)
             if isinstance(ext, vim.Extension):
                 si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
                 return True
@@ -186,16 +185,15 @@ class PluginManager:
             usernName,
             password,
             port,
-            manage_ip,
-            sys_guiprotocol):
+            vcp_url,
+            thumb_print):
         try:
-
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
             si = SmartConnect("https", vc_ip, int(port), usernName, password)
-            ext = self.get_extension(manage_ip, sys_guiprotocol)
+            ext = self.get_extension(vcp_url, thumb_print)
             if isinstance(ext, vim.Extension):
                 si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
                 return True
@@ -207,7 +205,6 @@ class PluginManager:
 
     def find_plugin(self, vc_ip, usernName, password, port):
         try:
-
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
