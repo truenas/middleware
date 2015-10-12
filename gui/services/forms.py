@@ -1686,7 +1686,7 @@ class GlusterdForm(ModelForm):
         fields = '__all__'
         model = models.Glusterd
 
-class GlusterdForm(ModelForm):
+class SWIFTForm(ModelForm):
 
     class Meta:
         fields = '__all__'
