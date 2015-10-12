@@ -3285,6 +3285,10 @@ class SWIFT(NewModel):
         verbose_name=_("Database Directory"),
         max_length=200,
     )
+    swift_hash_path_prefix = models.CharField(
+        verbose_name=_("Database Directory"),
+        max_length=200,
+    )
 
     objects = NewManager(qs_class=ConfigQuerySet)
 
@@ -3299,6 +3303,7 @@ class SWIFT(NewModel):
     class Middleware:
         configstore = True
         field_mapping = (
+            ('swift_hash_path_prefix', 'hash_path_prefix'),
             ('swift_hash_path_suffix', 'hash_path_suffix'),
         )
 
@@ -3308,11 +3313,13 @@ class SWIFT(NewModel):
         config = dispatcher.call_sync('service.swift.get_config')
         return cls(**dict(
             id=1,
+            swift_hash_path_prefix=config['hash_path_prefix'],
             swift_hash_path_suffix=config['hash_path_suffix'],
         ))
 
     def _save(self, *args, **kwargs):
         data = {
+            'hash_path_prefix': self.swift_hash_path_prefix,
             'hash_path_suffix': self.swift_hash_path_suffix,
         }
         self._save_task_call('service.swift.configure', data)
