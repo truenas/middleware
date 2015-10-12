@@ -62,9 +62,6 @@ def vcp_home(request):
         obj = models.VcenterConfiguration.objects.latest('id')
         form = VcenterConfigurationForm(instance=obj)
         form.fields['vc_ip'].widget.attrs['readonly'] = True
-        form.fields['vc_username'].widget.attrs['readonly'] = True
-        form.fields['vc_port'].widget.attrs['readonly'] = True
-        form.fields['vc_management_ip'].widget.attrs['readonly'] = True
         form.is_update_needed()
     except:
         form = VcenterConfigurationForm()
@@ -80,7 +77,7 @@ def vcp_upgrade(request):
             if form.vcp_is_update_available is False:
                 return JsonResp(
                     request, error=True, message=_(
-                        "Upgrade is not required"))
+                        "There are No updates available at this time."))
             if form.upgrade_plugin():
                 return HttpResponseRedirect("/vcp/home")
             else:
@@ -90,9 +87,6 @@ def vcp_upgrade(request):
         else:
             form.is_update_needed()
             form.fields['vc_ip'].widget.attrs['readonly'] = True
-            form.fields['vc_username'].widget.attrs['readonly'] = True
-            form.fields['vc_port'].widget.attrs['readonly'] = True
-            form.fields['vc_management_ip'].widget.attrs['readonly'] = True
     return render(request, "vcp/index.html", {'form': form})
 
 
@@ -109,9 +103,6 @@ def vcp_uninstall(request):
         else:
             form.is_update_needed()
             form.fields['vc_ip'].widget.attrs['readonly'] = True
-            form.fields['vc_username'].widget.attrs['readonly'] = True
-            form.fields['vc_port'].widget.attrs['readonly'] = True
-            form.fields['vc_management_ip'].widget.attrs['readonly'] = True
     return render(request, "vcp/index.html", {'form': form})
 
 
@@ -120,10 +111,7 @@ def vcp_repair(request):
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
             if form.repair_plugin():
-                # return HttpResponseRedirect("/vcp/home")
-                return JsonResp(
-                    request, error=False, message=_(
-                        'vCenter plugin is repaired successfully'))
+                return HttpResponseRedirect("/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(
@@ -131,7 +119,4 @@ def vcp_repair(request):
         else:
             form.is_update_needed()
             form.fields['vc_ip'].widget.attrs['readonly'] = True
-            form.fields['vc_username'].widget.attrs['readonly'] = True
-            form.fields['vc_port'].widget.attrs['readonly'] = True
-            form.fields['vc_management_ip'].widget.attrs['readonly'] = True
     return render(request, "vcp/index.html", {'form': form})
