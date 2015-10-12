@@ -25,11 +25,15 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinxcontrib.httpdomain']
+extensions = [
+    'sphinx.ext.ifconfig',
+    'sphinxcontrib.httpdomain',
+    'sphinx.ext.numfig'
+]
 
 # -- Options for automatic Figure numbering
-#numfig = True
-#numfig_secnum_depth = (2)
+numfig = True
+numfig_secnum_depth = (2)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -74,8 +78,8 @@ else:
     project = u'FreeNAS User Guide'
     master_doc = 'freenas'
     exclude_patterns = ['_build', 'truenas*', 'errata']
-    version = '10.2-ALPHA'
-    release = '10.2-ALPHA'
+    version = '10.2-BETA'
+    release = '10.2-BETA'
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
