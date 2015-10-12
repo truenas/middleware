@@ -209,7 +209,7 @@
        <img id="swift_toggle" name="swift_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% if srv_mw.swift == 'RUNNING' %}on{% else %}off{% endif %}.png" onClick="toggle_service(this)">
        </td>
        <td>
-           <img id="swift_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SWIFT Settings"|escapejs %}', '{{ tftp.get_edit_url }}');" title="{% trans "SWIFT Settings" %}">
+           <img id="swift_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SWIFT Settings"|escapejs %}', '{{ swift.get_edit_url }}');" title="{% trans "SWIFT Settings" %}">
        </td>
   </tr>
    <tr>
