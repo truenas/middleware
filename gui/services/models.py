@@ -3281,11 +3281,11 @@ class Glusterd(NewModel):
         return True
 
 class SWIFT(NewModel):
-    swift_hash_path_prefix = models.CharField(
+    swift_hash_path_suffix = models.CharField(
         verbose_name=_("Database Directory"),
         max_length=200,
     )
-    swift_hash_path_suffix = models.CharField(
+    swift_hash_path_prefix = models.CharField(
         verbose_name=_("Database Directory"),
         max_length=200,
     )
