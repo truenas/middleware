@@ -166,8 +166,6 @@ that have occurred since 9.3-RELEASE.
 
 * A reboot is no longer required when creating :ref:`Link Aggregations`.
 
-* The "Exclude System Dataset" checkbox has been added to :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot`.
-
 * The "Recursively replicate and remove stale snapshot on remote side" option in :menuselection:`Storage --> Replication Tasks --> Add Replication` has been divided into two options:
   "Recursively replicate child dataset's snapshots" and "Delete snapshots that are no longer available locally after successful replication of new snapshots".
   
