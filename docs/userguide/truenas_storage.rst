@@ -1037,7 +1037,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
-.. image:: images/periodic1b.png
+.. image:: images/periodic1a.png
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1050,10 +1050,6 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
 |                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
-|                |                            |                                                                                                              |
-+----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another TrueNAS system              |
-| Dataset        |                            |                                                                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the      |
@@ -1167,7 +1163,7 @@ For this example, the required configuration is as follows:
 
 **Figure 8.3b: Adding a Replication Task**
 
-.. image:: images/replication2b.png
+.. image:: images/replication2c.png
 
 Table 8.3a summarizes the available options in the "Add Replication" screen.
 
@@ -1190,12 +1186,8 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Delete snapshots          | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
+| Delete stale snapshots    | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
 |                           |                | *PUSH*                                                                                                       |
-|                           |                |                                                                                                              |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on *PULL* before reverting to normal         |
-|                           |                | operation; use this option if replication gets stuck                                                         |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Replication Stream        | drop-down menu | choices are *lz4 (fastest)*,                                                                                 |
@@ -1288,8 +1280,7 @@ the **@** is used to separate the volume/dataset name from the snapshot name::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
-.. note:: if this command fails with the error "cannot receive new filesystem stream: destination has snapshots", check the box "initialize remote side
-   for once" in the replication task and try again. If the :command:`zfs send` command still fails, you will need to open Shell on
+.. note:: if the :command:`zfs send` command fails, open :ref:`Shell` on
    *PULL* and use the :command:`zfs destroy -R volume_name@snapshot_name` command to delete the stuck snapshot. You can then use the
    :command:`zfs list -t snapshot` on *PULL* to confirm if the snapshot successfully replicated.
 
