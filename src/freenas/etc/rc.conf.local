@@ -95,9 +95,6 @@ _sssd_config()
 
 _gen_conf()
 {
-	## Daemons
-	_bool_svcconfig ctld_enable iscsitarget
-
 	if dirsrv_enabled nis; then
 		_nis_config
 	fi
