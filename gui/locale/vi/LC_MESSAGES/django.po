@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2013-07-03 07:26+0000\n"
-"Last-Translator: zadd3l <vzadd3l@gmail.com>\n"
+"PO-Revision-Date: 2015-10-10 11:52+0000\n"
+"Last-Translator: zuzi <hainl82@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1372836410.0\n"
+"X-POOTLE-MTIME: 1444477976.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9946,9 +9946,8 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Xác thực"
+msgstr "Xác thực căn bản"
 
 #: choices.py:44
 #, fuzzy
