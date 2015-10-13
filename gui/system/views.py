@@ -585,10 +585,6 @@ def reboot_run(request):
 
 def shutdown_dialog(request):
     if request.method == "POST":
-        if notifier().zpool_scrubbing():
-            if 'scrub_asked' not in request.session:
-                request.session['scrub_asked'] = True
-                return render(request, 'system/shutdown_dialog2.html')
         request.session['allow_shutdown'] = True
         return JsonResp(
             request,
