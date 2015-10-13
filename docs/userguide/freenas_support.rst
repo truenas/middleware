@@ -253,11 +253,8 @@ A series of instructional videos are available for FreeNAS®. They include:
 Professional Support
 --------------------
 
-In addition to the freely available community resources, iXsystems offers professional support packages. iXsystems' development team works hard to improve new
-and current versions of FreeNAS®, providing them with the insight to provide expert FreeNAS® support and consultation services. Their Professional Services
-team can also configure your FreeNAS® hardware and software to deliver the highest levels of performance, stability, and security. See the
-`iXsystems support page <http://www.ixsystems.com/solutions/support/>`_
-to request a quote.
+In addition to the freely available community resources, professional support may be available through iXsystem's network of third-party consultants. Submit a support inquiry using the form at
+`<https://www.ixsystems.com/freenas-commercial-support/>`_.
 
 .. index:: Training
 .. _Training:
