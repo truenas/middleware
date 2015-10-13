@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-09-17 08:05+0000\n"
+"PO-Revision-Date: 2015-10-10 18:01+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1442477119.0\n"
+"X-POOTLE-MTIME: 1444500077.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12634,16 +12634,13 @@ msgstr ""
 "dispozici místně."
 
 #: storage/models.py:910
-#, fuzzy
 msgid "Delete stale snapshots on remote system"
-msgstr "Nejnovější zachycený stav, který byl odeslán na protistranu"
+msgstr "Smazat zaseknuté zachycené stavy na protistraně"
 
 #: vcp/views.py:83
-#, fuzzy
 msgid "Upgrade is not required"
-msgstr "Je vyžadován soubor"
+msgstr "Přechod na novější verzi není nutný"
 
 #: vcp/views.py:126
-#, fuzzy
 msgid "vCenter plugin is repaired successfully"
-msgstr "Zásuvný modul vCenter byl úspěšně nainstalován."
+msgstr "Zásuvný modul vCenter byl úspěšně opraven"
