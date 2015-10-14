@@ -175,7 +175,8 @@ class PluginManager:
             extkey = self.get_extensionKey()
             si.RetrieveServiceContent().extensionManager.UnregisterExtension(extkey)
             return True
-
+        except vim.fault.NoPermission as ex:
+            return 'vCenter user has no permission to uninstall the plugin.'
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
@@ -199,7 +200,8 @@ class PluginManager:
                 return True
             else:
                 return ext
-
+        except vim.fault.NoPermission as ex:
+            return 'vCenter user has no permission to upgrade the plugin.'
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
@@ -219,7 +221,8 @@ class PluginManager:
                     return 'TruNAS System : ' + ext.client[0].url.split('/')[2]
                 except:
                     return 'TruNAS System :'
-
+        except vim.fault.NoPermission as ex:
+            return 'vCenter user does not have permission to perform this operation.'
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
@@ -240,5 +243,7 @@ class PluginManager:
             return 'Provided vCenter Hostname/IP and port are not valid. '
         except vim.fault.InvalidLogin:
             return 'Provided vCenter credentials are not valid.'
+        except vim.fault.NoPermission as ex:
+            return 'vCenter user does not have permission to perform this operation.'
         except Exception:
             return 'Internal Error. Please contact support.'

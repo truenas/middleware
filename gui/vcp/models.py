@@ -37,7 +37,7 @@ class VcenterConfiguration(Model):
 
     port_regex = RegexValidator(
         regex=r'^\+?1?\d{1,5}$',
-        message="Port must be numeric. only 5 digits allowed.")
+        message="Please Enter a whole number.")
 
     vc_management_ip = models.CharField(
         max_length=120,
@@ -58,7 +58,6 @@ class VcenterConfiguration(Model):
         max_length=5,
         default='443',
         validators=[port_regex],
-        help_text=_("An integer from 1 - 65535, generally will be 443"),
         verbose_name=_(" vCenter Port"),
     )
     vc_username = models.CharField(
