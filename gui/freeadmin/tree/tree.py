@@ -86,7 +86,9 @@ class TreeType(object):
         order2 = 0 if other.order is None else other.order
 
         if order1 == order2:
-            return self.name.lower() < other.name.lower()
+            if self.name and other.name:
+                return self.name.lower() < other.name.lower()
+            return self.gname.lower() < other.gname.lower()
         return order1 < order2
 
     def __iter__(self):
