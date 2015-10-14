@@ -299,7 +299,7 @@ __EOF__
     }
 __EOF__
 
-	if [ ${proto} = "https" -a ${working_ssl} = true -a ${httpsredirect} = "1" ]; then
+	if [ "${proto}" = "https" -a "${working_ssl}" = true -a "${httpsredirect}" = "1" ]; then
 		cat << __EOF__
     server {
 	listen ${addr}:80;
