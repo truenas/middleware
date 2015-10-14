@@ -167,18 +167,18 @@ _interface_config()
 		local carp1_skew carp2_skew
 		local internal_ip internal_iface
 
-		if [ $(ha_mode) = "MANUAL" ]; then
+		if [ "$(ha_mode)" = "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
 		else
 			node=$(ha_node)
 		fi
 
-		if [ ${node} = "A" ]; then
+		if [ "${node}" = "A" ]; then
 			carp1_skew="20"
 			carp2_skew="80"
 			internal_ip="169.254.10.1"
 			/sbin/sysctl kern.cam.ctl.ha_peer="listen 169.254.10.1" >/dev/null
-		elif [ ${node} = "B" ]; then
+		elif [ "${node}" = "B" ]; then
 			carp1_skew="80"
 			carp2_skew="20"
 			internal_ip="169.254.10.2"
@@ -189,11 +189,11 @@ _interface_config()
 
 		if [ -n "${carp1_skew}" ]; then
 
-			if [ $(ha_hardware) = "ECHOSTREAM" ]; then
+			if [ "$(ha_hardware)" = "ECHOSTREAM" ]; then
 				internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
-			elif [ $(ha_hardware) = "SBB" ]; then
+			elif [ "$(ha_hardware)" = "SBB" ]; then
 				internal_iface="ix0"
-			elif [ $(ha_hardware) = "ULTIMATE" ]; then
+			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
 			fi
 			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
@@ -557,7 +557,7 @@ _gen_conf()
 	local numservers nfsudp
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_servers, nfs_srv_udp FROM services_nfs ORDER BY id DESC LIMIT 1" | \
 	while read numservers nfsudp; do
-		if [ ${nfsudp} = 0 ]; then
+		if [ "${nfsudp}" = 0 ]; then
 			echo "nfs_server_flags=\"-t -n ${numservers} ${nfsips}\""
 		else
 			echo "nfs_server_flags=\"-t -u -n ${numservers} ${nfsips}\""
@@ -615,7 +615,7 @@ _gen_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lldp_intdesc, lldp_country, lldp_location FROM services_lldp ORDER BY -id LIMIT 1" | \
 	while read -r lldp_intdesc lldp_country lldp_location; do
 		echo -n "ladvd_flags=\"-a"
-		[ ${lldp_intdesc} = 1 ] && echo -n " -z"
+		[ "${lldp_intdesc}" = 1 ] && echo -n " -z"
 		[ -n "${lldp_country}" ] && echo -n " -c ${lldp_country}"
 		[ -n "${lldp_location}" ] && echo -n " -l \\\"${lldp_location}\\\""
 		echo "\""
