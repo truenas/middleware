@@ -96,7 +96,7 @@ class VcenterConfigurationForm(ModelForm):
                 self.vcp_status = status_flag
                 return False
 
-        except Exception:
+        except Exception as ex:
             self.vcp_status = 'Installation failed. Please contact support.'
             return False
 
@@ -121,6 +121,9 @@ class VcenterConfigurationForm(ModelForm):
                     models.VcenterConfiguration.objects.all().delete()
                     self.vcp_is_installed = False
                     return True
+                elif 'permission' in status_flag:
+                    self.vcp_status = status_flag
+                    return False
                 else:
                     self.vcp_status = 'Uninstall failed. Please contact support.'
                     return False
@@ -166,6 +169,9 @@ class VcenterConfigurationForm(ModelForm):
                         obj.vc_management_ip = manage_ip
                         obj.save()
                         return True
+                    elif 'permission' in status_flag:
+                        self.vcp_status = status_flag
+                        return False
                     else:
                         self.vcp_status = 'Upgrade failed. Please contact support.'
                         return False
@@ -208,6 +214,9 @@ class VcenterConfigurationForm(ModelForm):
                         obj.vc_management_ip = manage_ip
                         obj.save()
                         return True
+                    elif 'permission' in status_flag:
+                        self.vcp_status = 'vCenter user has no permission to repair the plugin.'
+                        return False
                     else:
                         self.vcp_status = 'Repair failed. Please contact support.'
                         return False
@@ -215,7 +224,7 @@ class VcenterConfigurationForm(ModelForm):
                     self.vcp_status = 'Repair failed. Please contact support.'
                     return False
             elif 'already' in status_flag:
-                self.vcp_status = 'Plugin repaire is not required.'
+                self.vcp_status = 'Plugin repair is not required.'
                 return False
             else:
                 self.vcp_status = status_flag
@@ -309,6 +318,12 @@ class VcenterConfigurationForm(ModelForm):
                         return True
                     else:
                         return 'vCenter plugin is already installed from another %s' % status_flag
+                elif 'FindExtension' in status_flag:
+                    return 'Please provide a valid vCenter server IP address.'
+                elif 'no permission' in status_flag:
+                    return status_flag
+                else:
+                    return 'Operation failed. Please contact support.'
             else:
                 return status_flag
         except Exception:
@@ -324,5 +339,5 @@ class VcenterConfigurationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(VcenterConfigurationForm, self).__init__(*args, **kwargs)
         ip_choices = utils.get_management_ips()
-        self.fields['vc_management_ip'] = forms.ChoiceField(
-            choices=zip(ip_choices, ip_choices),)
+        self.fields['vc_management_ip'] = forms.ChoiceField(choices=zip(
+            ip_choices, ip_choices), label='TrueNAS Management IP Address',)
