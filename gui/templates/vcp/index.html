@@ -59,7 +59,18 @@
              
                 </script>
         </button>
- 
+	<button id="btn_vcenterconfiguration_Repair" data-dojo-type="dijit.form.Button">Repair
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e">
+               
+              form = getForm(this);
+                doSubmit({
+                    form: form,
+                    event: e,
+                    url: '{% url "vcp_repair" %}',
+                    });               
+             
+                </script>
+        </button>
 
     {% endblock %}       
          
