@@ -13245,3 +13245,23 @@ msgstr "Ένα αρχείο απαιτείται"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Ένας ακέραιος 1 - 65535, γενικά θα είναι 25, 465, ή 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Όνομα Χρήστη"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Έκδοση"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Δεν υπάρχουν διαθέσιμες αναπαραγωγές  ZFS"

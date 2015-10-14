@@ -13144,3 +13144,23 @@ msgstr "שדה זה נחוץ"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "מספר שלם מ1-65535, בדרך כל 25, 465, 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "שם משתמש"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "גרסת מערכת ההפעלה"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "שום העתק ZFS זמין"

@@ -12967,3 +12967,23 @@ msgstr "Een bestand is vereist"
 #, fuzzy
 msgid "vCenter plugin is repaired successfully"
 msgstr "vCenter-plug-in met succes geïnstalleerd."
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Een geheel getal van 1-65535, over het algemeen 25, 465 of 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Gebruikersnaam"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "versie"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Geen updates beschikbaar"

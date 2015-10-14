@@ -11953,3 +11953,20 @@ msgstr ""
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "İstifadəçi adı"
+
+#: vcp/models.py:76
+msgid " version"
+msgstr ""
+
+#: vcp/views.py:80
+msgid "There are No updates available at this time."
+msgstr ""

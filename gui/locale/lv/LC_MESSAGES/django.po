@@ -12960,3 +12960,23 @@ msgstr "Šis lauks ir obligāts"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Skaitlisno 1 - 65535, parasti 25, 465 vai 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Lietotājvārds"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Versija"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Nav pieejama ZFS reprodukcija"

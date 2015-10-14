@@ -13394,3 +13394,23 @@ msgstr "この項目は必須です。"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "1-65535 の間の数値を入力してください。一般的には 25, 465, 587 のいずれかです。"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "ユーザ名"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "OSのバージョン"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "ZFS レプリケーションはありません。"
