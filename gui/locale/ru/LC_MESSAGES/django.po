@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-10-07 15:19+0000\n"
+"PO-Revision-Date: 2015-10-13 09:20+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1444231143.0\n"
+"X-POOTLE-MTIME: 1444728048.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -12865,3 +12865,19 @@ msgstr "Обновление не требуется"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr "Плагин vCenter успешно восстановлен"
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Целое число от 1 до 65535, по умолчанию 443"
+
+#: vcp/models.py:66
+msgid " vCenter Username"
+msgstr "Имя пользователя vCenter"
+
+#: vcp/models.py:76
+msgid " version"
+msgstr "Версия"
+
+#: vcp/views.py:80
+msgid "There are No updates available at this time."
+msgstr "В данный момент нет доступных обновлений."

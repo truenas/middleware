@@ -12965,3 +12965,23 @@ msgstr "本欄位必填"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "整數，輸入從1-65535之間，一般為 25，465或587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "帳號"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "OS 版本"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "ZFS 複寫無法使用"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2015-10-07 14:11+0000\n"
+"PO-Revision-Date: 2015-10-13 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tg\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1444227092.0\n"
+"X-POOTLE-MTIME: 1444727782.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11877,4 +11877,20 @@ msgstr ""
 
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
+msgstr ""
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+
+#: vcp/models.py:66
+msgid " vCenter Username"
+msgstr ""
+
+#: vcp/models.py:76
+msgid " version"
+msgstr ""
+
+#: vcp/views.py:80
+msgid "There are No updates available at this time."
 msgstr ""

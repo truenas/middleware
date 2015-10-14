@@ -13479,3 +13479,25 @@ msgstr "Dieses Feld wird benötigt"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+"Eine Anschlussnummer zwischen 1 und 65535. Für gewöhnlich wird 25, 465 oder "
+"587 verwendet."
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Benutzername"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Version"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Keine ZFS-Replikation verfügbar"

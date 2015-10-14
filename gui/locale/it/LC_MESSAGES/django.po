@@ -13305,3 +13305,23 @@ msgstr "È necessario un file                "
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Un numero intero tra 1 e 65535, di solito 25, 465 oppure 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Nome utente"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Versione SO"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Nessuna replicazione ZFS disponibile"

@@ -12541,3 +12541,21 @@ msgstr "En fil er påkrævet"
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Brugernavn"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Version"
+
+#: vcp/views.py:80
+msgid "There are No updates available at this time."
+msgstr ""

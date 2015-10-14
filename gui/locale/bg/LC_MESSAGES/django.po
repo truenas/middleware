@@ -12719,3 +12719,24 @@ msgstr "Попълването на това поле е задължителн�
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+"Цяло число в диапазона от 1 до 65535, по принцип ще бъде 25, 465 или 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Потребителско име"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Версия на операционната система"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Репликацията на ZFS не е достъпна"

@@ -12601,3 +12601,22 @@ msgstr "이곳은 필수 입력란입니다."
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
 msgstr ""
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "사용자명"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "버전"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "사용가능한 ZFS 복제 없음"
