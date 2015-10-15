@@ -188,12 +188,12 @@ if len(mp_to_task_map) > 0:
     # Grab all existing snapshot and filter out the expiring ones
     snapshots = {}
     snapshots_pending_delete = set()
-    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H", debug, logger=log)
+    previous_prefix = '/'
+    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name", debug, logger=log)
     lines = zfsproc.communicate()[0].split('\n')
     reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)(?P<retunit>[hdwmy])$')
-    for line in lines:
-        if line != '':
-            snapshot_name = line.split('\t')[0]
+    for snapshot_name in lines:
+        if snapshot_name != '':
             fs, snapname = snapshot_name.split('@')
             snapname_match = reg_autosnap.match(snapname)
             if snapname_match != None:
@@ -203,6 +203,13 @@ if len(mp_to_task_map) > 0:
                     # Only delete the snapshot if there's a snapshot task enabled that created it.
                     if re_path:
                         if re_path.match(snapshot_name):
+                            # Destroy of expired snapshots is recursive, so only request so on the
+                            # toplevel.
+                            if fs.startswith(previous_prefix):
+                                if ('%s@%s' % (previous_prefix[:-1], snapname)) in snapshots_pending_delete:
+                                    continue
+                            else:
+                                previous_prefix = '%s/' % (fs)
                             snapshots_pending_delete.add(snapshot_name)
                 else:
                     if mp_to_task_map.has_key((fs, snap_ret_policy)):
