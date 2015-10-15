@@ -199,6 +199,7 @@ class FreeAdminSite(object):
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
         from freenasUI.system.models import Advanced, Settings
+        from freenasUI.middleware.connector import connection as dispatcher
 
         view = appPool.hook_app_index('freeadmin', request)
         view = filter(None, view)
@@ -235,6 +236,7 @@ class FreeAdminSite(object):
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
             'wizard': wizard,
+            'ws_token': dispatcher.call_sync('sessions.create_token'),
         })
 
     @never_cache

@@ -1893,7 +1893,7 @@ require([
     _ws.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
 
     _ws.on("error", function(err) {
-        alert("Error: " + err.message);
+        console.log("WebSocket Error: " + err.message);
     });
 
     _ws.on("connected", function() {
@@ -1901,7 +1901,6 @@ require([
     });
 
     _ws.on("login", function() {
-      alert("LOL!")
     });
 
     ready(function() {
