@@ -26,6 +26,8 @@
  */
 
 var _webshell;
+var _ws;
+var _wsToken;
 
 require([
     "dojo",
@@ -1886,6 +1888,21 @@ require([
         return text;
       }
     })(dojo._contentHandlers.text);
+
+    _ws = new Middleware();
+    _ws.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
+
+    _ws.on("error", function(err) {
+        alert("Error: " + err.message);
+    });
+
+    _ws.on("connected", function() {
+        _ws.login(_wsToken);
+    });
+
+    _ws.on("login", function() {
+      alert("LOL!")
+    });
 
     ready(function() {
 
