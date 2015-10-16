@@ -181,18 +181,32 @@ class InterfacePlugin(RRDBase):
         return 'Interface Traffic (%s)' % self.identifier
 
     def get_identifiers(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        sources = dispatcher.call_sync('statd.output.get_data_sources')
         ids = []
-        proc = pipeopen("/sbin/ifconfig -l", important=False, logger=log)
-        ifaces = proc.communicate()[0].strip('\n').split(' ')
-        for entry in glob.glob('%s/interface-*' % self._base_path):
-            ident = entry.rsplit('-', 1)[-1]
-            if ident not in ifaces:
+        for source in sources:
+            name = source.split('.')
+            if len(name) < 3:
                 continue
-            if re.match(r'(usbus|pfsync|pflog|carp)', ident):
+            if not name[1].startswith('interface'):
                 continue
-            if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
-                ids.append(ident)
+            ident = name[1].split('-', 1)[-1]
+            if ident in ids:
+                continue
+            ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_identifiers)
         return ids
+
+    def get_sources(self):
+        return {
+            'localhost.interface-%s.if_octets.rx' % self.identifier: {
+                'verbose_name': 'Download',
+            },
+            'localhost.interface-%s.if_octets.tx' % self.identifier: {
+                'verbose_name': 'Upload',
+            },
+        }
 
     def graph(self):
         path = os.path.join(
