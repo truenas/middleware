@@ -1,4 +1,3 @@
-#+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -26,30 +25,20 @@
 #####################################################################
 import json
 import logging
-import os
 
-from django.http import HttpResponse
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.reporting import rrd
 
-RRD_BASE_PATH = "/var/db/system/rrd/localhost"
-
 log = logging.getLogger('reporting.views')
-
-
-def _get_rrd_path():
-    # /var/db/collectd/rrd will be a symlink if using system dataset
-    return RRD_BASE_PATH
 
 
 def plugin2graphs(name):
 
-    rrdpath = _get_rrd_path()
     graphs = []
     if name in rrd.name2plugin:
-        ins = rrd.name2plugin[name](rrdpath)
+        ins = rrd.name2plugin[name]()
         ids = ins.get_identifiers()
         if ids is not None:
             if len(ids) > 0:
@@ -95,35 +84,3 @@ def generic_graphs(request, names=None):
     return render(request, 'reporting/graphs.html', {
         'graphs': graphs,
     })
-
-
-def generate(request):
-
-    try:
-        plugin = request.GET.get("plugin")
-        plugin = rrd.name2plugin.get(plugin)
-        unit = request.GET.get("unit", "hourly")
-        step = request.GET.get("step", "0")
-        identifier = request.GET.get("identifier")
-
-        plugin = plugin(
-            base_path=_get_rrd_path(),
-            unit=unit,
-            step=step,
-            identifier=identifier
-        )
-        fd, path = plugin.generate()
-        with open(path, 'rb') as f:
-            data = f.read()
-
-        try:
-            os.unlink(path)
-            os.close(fd)
-        except OSError, e:
-            log.warn("Failed to remove reporting temp file: %s", e)
-
-        response = HttpResponse(data)
-        response['Content-type'] = 'image/png'
-        return response
-    except Exception, e:
-        log.debug("Failed to generate rrd graph: %s", e)
