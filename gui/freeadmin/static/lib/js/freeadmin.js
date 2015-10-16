@@ -1893,6 +1893,13 @@ require([
     _ws = new Middleware();
     _ws.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
 
+    _ws_keep_alive = function() {
+      _ws.call("management.ping", [], function(response) {
+        console.log("ping response", response);
+      });
+      setTimeout(_ws_keep_alive, 500 * 1000);
+    }
+
     _ws.on("error", function(err) {
         console.log("WebSocket Error: " + err.message);
     });
@@ -1902,6 +1909,7 @@ require([
     });
 
     _ws.on("login", function() {
+      _ws_keep_alive();
     });
 
     _ws.on("event", function(data) {
