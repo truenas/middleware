@@ -253,91 +253,29 @@ class ProcessesPlugin(RRDBase):
 
     title = "Processes"
     vertical_label = "Processes"
-
-    def graph(self):
-
-        blocked = os.path.join(self.base_path, "ps_state-blocked.rrd")
-        zombies = os.path.join(self.base_path, "ps_state-zombies.rrd")
-        stopped = os.path.join(self.base_path, "ps_state-stopped.rrd")
-        running = os.path.join(self.base_path, "ps_state-running.rrd")
-        sleeping = os.path.join(self.base_path, "ps_state-sleeping.rrd")
-        idle = os.path.join(self.base_path, "ps_state-idle.rrd")
-        wait = os.path.join(self.base_path, "ps_state-wait.rrd")
-
-        args = [
-            'DEF:min0=%s:value:MIN' % blocked,
-            'DEF:avg0=%s:value:AVERAGE' % blocked,
-            'DEF:max0=%s:value:MAX' % blocked,
-            'DEF:min1=%s:value:MIN' % zombies,
-            'DEF:avg1=%s:value:AVERAGE' % zombies,
-            'DEF:max1=%s:value:MAX' % zombies,
-            'DEF:min2=%s:value:MIN' % stopped,
-            'DEF:avg2=%s:value:AVERAGE' % stopped,
-            'DEF:max2=%s:value:MAX' % stopped,
-            'DEF:min3=%s:value:MIN' % running,
-            'DEF:avg3=%s:value:AVERAGE' % running,
-            'DEF:max3=%s:value:MAX' % running,
-            'DEF:min4=%s:value:MIN' % sleeping,
-            'DEF:avg4=%s:value:AVERAGE' % sleeping,
-            'DEF:max4=%s:value:MAX' % sleeping,
-            'DEF:min5=%s:value:MIN' % idle,
-            'DEF:avg5=%s:value:AVERAGE' % idle,
-            'DEF:max5=%s:value:MAX' % idle,
-            'DEF:min6=%s:value:MIN' % wait,
-            'DEF:avg6=%s:value:AVERAGE' % wait,
-            'DEF:max6=%s:value:MAX' % wait,
-            'CDEF:cdef6=avg6,UN,0,avg6,IF',
-            'CDEF:cdef5=avg5,UN,0,avg5,IF,cdef6,+',
-            'CDEF:cdef4=avg4,UN,0,avg4,IF,cdef5,+',
-            'CDEF:cdef3=avg3,UN,0,avg3,IF,cdef4,+',
-            'CDEF:cdef2=avg2,UN,0,avg2,IF,cdef3,+',
-            'CDEF:cdef1=avg1,UN,0,avg1,IF,cdef2,+',
-            'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
-            'AREA:cdef0#ffbfff',
-            'AREA:cdef1#ffbfbf',
-            'AREA:cdef2#e7bfe7',
-            'AREA:cdef3#bff7bf',
-            'AREA:cdef4#bfbfff',
-            'AREA:cdef5#bfbfbf',
-            'AREA:cdef6#bfbfbf',
-            'LINE1:cdef0#ff00ff:Blocked ',
-            'GPRINT:min0:MIN:%5.1lf Min,',
-            'GPRINT:avg0:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max0:MAX:%5.1lf Max,',
-            'GPRINT:avg0:LAST:%5.1lf Last\l',
-            'LINE1:cdef1#ff0000:Zombies ',
-            'GPRINT:min1:MIN:%5.1lf Min,',
-            'GPRINT:avg1:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max1:MAX:%5.1lf Max,',
-            'GPRINT:avg1:LAST:%5.1lf Last\l',
-            'LINE1:cdef2#a000a0:Stopped ',
-            'GPRINT:min2:MIN:%5.1lf Min,',
-            'GPRINT:avg2:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max2:MAX:%5.1lf Max,',
-            'GPRINT:avg2:LAST:%5.1lf Last\l',
-            'LINE1:cdef3#00e000:Running ',
-            'GPRINT:min3:MIN:%5.1lf Min,',
-            'GPRINT:avg3:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max3:MAX:%5.1lf Max,',
-            'GPRINT:avg3:LAST:%5.1lf Last\l',
-            'LINE1:cdef4#0000ff:Sleeping',
-            'GPRINT:min4:MIN:%5.1lf Min,',
-            'GPRINT:avg4:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max4:MAX:%5.1lf Max,',
-            'GPRINT:avg4:LAST:%5.1lf Last\l',
-            'LINE1:cdef5#000000:idle  ',
-            'GPRINT:min5:MIN:%5.1lf Min,',
-            'GPRINT:avg5:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max5:MAX:%5.1lf Max,',
-            'GPRINT:avg5:LAST:%5.1lf Last\l',
-            'LINE1:cdef6#000000:wait  ',
-            'GPRINT:min6:MIN:%5.1lf Min,',
-            'GPRINT:avg6:AVERAGE:%5.1lf Avg,',
-            'GPRINT:max6:MAX:%5.1lf Max,',
-            'GPRINT:avg6:LAST:%5.1lf Last\l'
-        ]
-
-        return args
+    sources = {
+        'localhost.processes.ps_state-blocked.value': {
+            'verbose_name': 'Blocked',
+        },
+        'localhost.processes.ps_state-idle.value': {
+            'verbose_name': 'Idle',
+        },
+        'localhost.processes.ps_state-running.value': {
+            'verbose_name': 'Running',
+        },
+        'localhost.processes.ps_state-sleeping.value': {
+            'verbose_name': 'Sleeping',
+        },
+        'localhost.processes.ps_state-stopped.value': {
+            'verbose_name': 'Stopped',
+        },
+        'localhost.processes.ps_state-wait.value': {
+            'verbose_name': 'Wait',
+        },
+        'localhost.processes.ps_state-zombies.value': {
+            'verbose_name': 'Zombies',
+        },
+    }
 
 
 class SwapPlugin(RRDBase):

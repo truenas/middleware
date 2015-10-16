@@ -97,7 +97,7 @@ define([
                 end: stamp.toISOString(end),
                 frequency: "60S"
               }], function(response) {
-                var seriesName
+                var seriesName;
                 if(source && source.verbose_name) {
                   seriesName = source.verbose_name;
                 } else {
