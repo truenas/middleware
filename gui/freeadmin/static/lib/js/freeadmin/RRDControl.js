@@ -17,6 +17,7 @@ define([
     "dojox/charting/plot2d/Grid",
     "dojox/charting/plot2d/Lines",
     "dojox/charting/action2d/MouseIndicator",
+    "dojox/charting/widget/SelectableLegend",
     "dojox/timing",
     "dojo/text!freeadmin/templates/rrdcontrol.html"
     ], function(declare,
@@ -31,6 +32,7 @@ define([
     chartingGrid,
     chartingLines,
     MouseIndicator,
+    SelectableLegend,
     timing, template) {
 
     var RRDControl = declare("freeadmin.RRDControl", [ _Widget, _Templated ], {
@@ -80,6 +82,7 @@ define([
               title: me.verticalLabel
             });
             me.chart.addPlot("default", {type: chartingLines});
+            var clusteredBarsLegend = new SelectableLegend({chart: me.chart, horizontal: false}, me.legendNode);
             //var i = MouseIndicator(me.chart, "default", { series: "Series 1", labels: true, mouseOver: true });
             //on(i, "Change", function(evt) {
             //});
@@ -94,13 +97,19 @@ define([
                 end: stamp.toISOString(end),
                 frequency: "60S"
               }], function(response) {
-                var seriesName = "Series " + x;
+                var seriesName
+                if(source && source.verbose_name) {
+                  seriesName = source.verbose_name;
+                } else {
+                  seriesName = key;
+                }
                 me.series[seriesName] = [];
                 for(var k in response.data) {
                   me.series[seriesName].push({x: response.data[k][0], y: parseFloat(response.data[k][1])});
                 }
                 me.chart.addSeries(seriesName, me.series[seriesName]);
                 me.chart.render();
+                clusteredBarsLegend.refresh();
                 var eventName = "statd." + key + ".pulse";
                 _ws.subscribe([eventName]);
                 _chartMapping[eventName] = [me, seriesName];
