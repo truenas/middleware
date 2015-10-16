@@ -155,11 +155,21 @@ class CPUPlugin(RRDBase):
     title = "CPU Usage"
     vertical_label = "%CPU"
     sources = {
-        'localhost.aggregation-cpu-sum.cpu-interrupt.value': None,
-        'localhost.aggregation-cpu-sum.cpu-user.value': None,
-        'localhost.aggregation-cpu-sum.cpu-idle.value': None,
-        'localhost.aggregation-cpu-sum.cpu-system.value': None,
-        'localhost.aggregation-cpu-sum.cpu-nice.value': None,
+        'localhost.aggregation-cpu-sum.cpu-interrupt.value': {
+            'verbose_name': 'Interrupt',
+        },
+        'localhost.aggregation-cpu-sum.cpu-user.value': {
+            'verbose_name': 'User',
+        },
+        'localhost.aggregation-cpu-sum.cpu-idle.value': {
+            'verbose_name': 'Idle',
+        },
+        'localhost.aggregation-cpu-sum.cpu-system.value': {
+            'verbose_name': 'System',
+        },
+        'localhost.aggregation-cpu-sum.cpu-nice.value': {
+            'verbose_name': 'Nice',
+        },
     }
 
 
@@ -305,9 +315,15 @@ class LoadPlugin(RRDBase):
     title = "System Load"
     vertical_label = "System Load"
     sources = {
-        'localhost.load.load.shortterm': None,
-        'localhost.load.load.midterm': None,
-        'localhost.load.load.longterm': None,
+        'localhost.load.load.shortterm': {
+            'verbose_name': 'Short Term',
+        },
+        'localhost.load.load.midterm': {
+            'verbose_name': 'Mid Term',
+        },
+        'localhost.load.load.longterm': {
+            'verbose_name': 'Long Term',
+        },
     }
 
 
