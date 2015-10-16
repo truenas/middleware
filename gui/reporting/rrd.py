@@ -296,60 +296,39 @@ class DFPlugin(RRDBase):
 
     vertical_label = "Bytes"
 
-    def _get_mountpoints(self):
-        mps = []
-        proc = pipeopen("/bin/df -l", important=False, logger=log)
-        for line in proc.communicate()[0].strip().split('\n'):
-            mps.append(re.split(r'\s{2,}', line)[-1].replace('/', '-'))
-        return mps
-
     def get_title(self):
         title = self.identifier.replace("mnt-", "")
         return 'Diskspace (%s)' % title
 
     def get_identifiers(self):
-
-        mps = self._get_mountpoints()
+        from freenasUI.middleware.connector import connection as dispatcher
+        sources = dispatcher.call_sync('statd.output.get_data_sources')
         ids = []
-        for entry in glob.glob('%s/df-*' % self._base_path):
-            ident = entry.split('-', 1)[-1]
-            if '-%s' % ident not in mps:
+        for source in sources:
+            name = source.split('.')
+            if len(name) < 3:
                 continue
-            if not ident.startswith("mnt"):
+            if not name[1].startswith('df-'):
                 continue
-            if os.path.exists(os.path.join(entry, 'df_complex-free.rrd')):
-                ids.append(ident)
+            ident = name[1].split('-', 1)[-1]
+            if not ident.startswith('mnt') or ident == 'mnt':
+                continue
+            if ident in ids:
+                continue
+            ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_identifiers)
         return ids
 
-    def graph(self):
-
-        path = os.path.join(self._base_path, "df-%s" % self.identifier)
-        free = os.path.join(path, "df_complex-free.rrd")
-        used = os.path.join(path, "df_complex-used.rrd")
-
-        args = [
-            'DEF:free_min=%s:value:MIN' % free,
-            'DEF:free_avg=%s:value:AVERAGE' % free,
-            'DEF:free_max=%s:value:MAX' % free,
-            'DEF:used_min=%s:value:MIN' % used,
-            'DEF:used_avg=%s:value:AVERAGE' % used,
-            'DEF:used_max=%s:value:MAX' % used,
-            'CDEF:both_avg=free_avg,used_avg,+',
-            'AREA:both_avg#bfffbf',
-            'AREA:used_avg#ffbfbf',
-            'LINE1:both_avg#00ff00:Free',
-            'GPRINT:free_min:MIN:%5.1lf%sB Min,',
-            'GPRINT:free_avg:AVERAGE:%5.1lf%sB Avg,',
-            'GPRINT:free_max:MAX:%5.1lf%sB Max,',
-            'GPRINT:free_avg:LAST:%5.1lf%sB Last\l',
-            'LINE1:used_avg#ff0000:Used',
-            'GPRINT:used_min:MIN:%5.1lf%sB Min,',
-            'GPRINT:used_avg:AVERAGE:%5.1lf%sB Avg,',
-            'GPRINT:used_max:MAX:%5.1lf%sB Max,',
-            'GPRINT:used_avg:LAST:%5.1lf%sB Last\l'
-        ]
-
-        return args
+    def get_sources(self):
+        return {
+            'localhost.df-%s.df_complex-free.value' % self.identifier: {
+                'verbose_name': 'Free',
+            },
+            'localhost.df-%s.df_complex-used.value' % self.identifier: {
+                'verbose_name': 'Used',
+            },
+        }
 
 
 class UptimePlugin(RRDBase):
