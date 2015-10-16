@@ -208,52 +208,6 @@ class InterfacePlugin(RRDBase):
             },
         }
 
-    def graph(self):
-        path = os.path.join(
-            "%s/interface-%s" % (self._base_path, self.identifier),
-            "if_octets.rrd"
-        )
-
-        args = [
-            'DEF:min_rx_raw=%s:rx:MIN' % path,
-            'DEF:avg_rx_raw=%s:rx:AVERAGE' % path,
-            'DEF:max_rx_raw=%s:rx:MAX' % path,
-            'DEF:min_tx_raw=%s:tx:MIN' % path,
-            'DEF:avg_tx_raw=%s:tx:AVERAGE' % path,
-            'DEF:max_tx_raw=%s:tx:MAX' % path,
-            'CDEF:min_rx=min_rx_raw,8,*',
-            'CDEF:avg_rx=avg_rx_raw,8,*',
-            'CDEF:max_rx=max_rx_raw,8,*',
-            'CDEF:min_tx=min_tx_raw,8,*',
-            'CDEF:avg_tx=avg_tx_raw,8,*',
-            'CDEF:max_tx=max_tx_raw,8,*',
-            'CDEF:avg_rx_bytes=avg_rx,8,/',
-            'VDEF:global_min_rx=min_rx,MINIMUM',
-            'VDEF:global_avg_rx=avg_rx,AVERAGE',
-            'VDEF:global_max_rx=max_rx,MAXIMUM',
-            'VDEF:global_tot_rx=avg_rx_bytes,TOTAL',
-            'CDEF:avg_tx_bytes=avg_tx,8,/',
-            'VDEF:global_min_tx=min_tx,MINIMUM',
-            'VDEF:global_avg_tx=avg_tx,AVERAGE',
-            'VDEF:global_max_tx=max_tx,MAXIMUM',
-            'VDEF:global_tot_tx=avg_tx_bytes,TOTAL',
-            'CDEF:overlap=avg_rx,avg_tx,LT,avg_rx,avg_tx,IF',
-            'AREA:avg_rx#bfbfff',
-            'AREA:avg_tx#bfe0cf',
-            'LINE1:avg_rx#0000ff:RX',
-            'GPRINT:global_min_rx:%5.1lf%s Min.',
-            'GPRINT:global_avg_rx:%5.1lf%s Avg.',
-            'GPRINT:global_max_rx:%5.1lf%s Max.',
-            'GPRINT:global_tot_rx:ca. %5.1lf%s Total\l',
-            'LINE1:avg_tx#00b000:TX',
-            'GPRINT:global_min_tx:%5.1lf%s Min.',
-            'GPRINT:global_avg_tx:%5.1lf%s Avg.',
-            'GPRINT:global_max_tx:%5.1lf%s Max.',
-            'GPRINT:global_tot_tx:ca. %5.1lf%s Total\l'
-        ]
-
-        return args
-
 
 class MemoryPlugin(RRDBase):
 
