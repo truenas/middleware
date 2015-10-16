@@ -1,8 +1,9 @@
 define([
     "dojo/_base/declare",
+    "dojo/date/stamp",
     "dojo/dom-attr",
     "dojo/io-query",
-    "dojo/date/stamp",
+    "dojo/on",
     "dijit/_Widget",
     "dijit/_TemplatedMixin",
     "dijit/form/TextBox",
@@ -18,8 +19,10 @@ define([
     "dojox/charting/action2d/MouseIndicator",
     "dojox/timing",
     "dojo/text!freeadmin/templates/rrdcontrol.html"
-    ], function(declare, domAttr, ioQuery,
+    ], function(declare,
     stamp,
+    domAttr, ioQuery,
+    on,
     _Widget, _Templated, TextBox, Button, TabContainer, ContentPane,
     Chart,
     Claro,
@@ -42,6 +45,7 @@ define([
         identifier: "",
         verticalLabel: "",
         title: "",
+        series: "",
         postCreate: function() {
 
             var me, zoomIn, zoomOut, left, right, t;
@@ -50,11 +54,12 @@ define([
             this.name = this.plugin + "_" + this.identifier;
 
             me.sources = JSON.parse(me.sources);
+            me.series = {};
 
-            var chart = new Chart(this.chartNode, {title: me.title});
-            chart.setTheme(Claro);
+            me.chart = new Chart(this.chartNode, {title: me.title});
+            me.chart.setTheme(Claro);
 
-            chart.addAxis("x", {
+            me.chart.addAxis("x", {
               labelFunc: function(index) {
                 return index;
               }
@@ -64,7 +69,7 @@ define([
               //majorTick: {stroke: "black", length: 4},
               //minorTick: {stroke: "gray", length: 2}
             });
-            chart.addAxis("y", {
+            me.chart.addAxis("y", {
               vertical: true,
               fixLower: "major",
               fixUpper: "major",
@@ -74,9 +79,12 @@ define([
               //majorTick: {stroke: "black", length: 4}, minorTick: {stroke: "gray", length: 2}
               title: me.verticalLabel
             });
-            chart.addPlot("default", {type: chartingLines, animate: {duration: 1800}});
+            me.chart.addPlot("default", {type: chartingLines});
+            //var i = MouseIndicator(me.chart, "default", { series: "Series 1", labels: true, mouseOver: true });
+            //on(i, "Change", function(evt) {
+            //});
 
-            var query = function(source, x) {
+            var query = function(key, source, x) {
               var start, end;
               end = new Date();
               start = new Date(end.getTime() - (60 * 60 * 1000));
@@ -86,12 +94,16 @@ define([
                 end: stamp.toISOString(end),
                 frequency: "60S"
               }], function(response) {
-                var series = [];
+                var seriesName = "Series " + x;
+                me.series[seriesName] = [];
                 for(var k in response.data) {
-                  series.push({x: response.data[k][0], y: parseFloat(response.data[k][1])});
+                  me.series[seriesName].push({x: response.data[k][0], y: parseFloat(response.data[k][1])});
                 }
-                chart.addSeries("Series " + x, series);
-                chart.render();
+                me.chart.addSeries(seriesName, me.series[seriesName]);
+                me.chart.render();
+                var eventName = "statd." + key + ".pulse";
+                _ws.subscribe([eventName]);
+                _chartMapping[eventName] = [me, seriesName];
               });
 
             }
@@ -99,7 +111,7 @@ define([
             var i = 1;
             for(var key in me.sources) {
               var source = me.sources[key];
-              query(source, i);
+              query(key, source, i);
               i++;
             }
 
@@ -206,6 +218,12 @@ define([
                 return 'yearly';
             }
             return unit;
+        },
+        updateSeries: function(name, data) {
+          this.series[name].shift();
+          this.series[name].push(data);
+          this.chart.updateSeries(name, this.series[name]);
+          this.chart.render();
         },
         query: function() {
 

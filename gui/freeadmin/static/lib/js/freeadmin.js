@@ -28,6 +28,7 @@
 var _webshell;
 var _ws;
 var _wsToken;
+var _chartMapping = {};
 
 require([
     "dojo",
@@ -1901,6 +1902,14 @@ require([
     });
 
     _ws.on("login", function() {
+    });
+
+    _ws.on("event", function(data) {
+      if(data.name in _chartMapping) {
+        var chart = _chartMapping[data.name][0];
+        var series = _chartMapping[data.name][1];
+        chart.updateSeries(series, {x: data.args.timestamp, y: data.args.value});
+      }
     });
 
     ready(function() {
