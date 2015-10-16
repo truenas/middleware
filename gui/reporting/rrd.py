@@ -653,49 +653,36 @@ class DiskPlugin(RRDBase):
         return 'Disk I/O (%s)' % title
 
     def get_identifiers(self):
+        from freenasUI.middleware.connector import connection as dispatcher
+        sources = dispatcher.call_sync('statd.output.get_data_sources')
         ids = []
-        for entry in glob.glob('%s/disk-*' % self._base_path):
-            ident = entry.split('-', 1)[-1]
+        for source in sources:
+            name = source.split('.')
+            if len(name) < 3:
+                continue
+            if not name[1].startswith('disk'):
+                continue
+            ident = name[1].split('-', 1)[-1]
+            if ident in ids:
+                continue
             if not os.path.exists('/dev/%s' % ident):
                 continue
-            if ident.startswith('pass'):
+            if ident.startswith('pass') or ident.startswith('cd'):
                 continue
-            if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
-                ids.append(ident)
+            ids.append(ident)
 
         ids.sort(key=RRDBase._sort_identifiers)
         return ids
 
-    def graph(self):
-
-        path = os.path.join(self._base_path, "disk-%s" % self.identifier, "disk_octets.rrd")
-
-        args = [
-            'DEF:min_rd=%s:read:MIN' % path,
-            'DEF:avg_rd=%s:read:AVERAGE' % path,
-            'DEF:max_rd=%s:read:MAX' % path,
-            'DEF:min_wr=%s:write:MIN' % path,
-            'DEF:avg_wr=%s:write:AVERAGE' % path,
-            'DEF:max_wr=%s:write:MAX' % path,
-            'VDEF:tot_rd=avg_rd,TOTAL',
-            'VDEF:tot_wr=avg_wr,TOTAL',
-            'AREA:avg_rd#bfbfff',
-            'AREA:avg_wr#bfe0cf',
-            'LINE1:avg_rd#0000ff:Read ',
-            'GPRINT:min_rd:MIN:%5.1lf%s Min\g',
-            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\g',
-            'GPRINT:max_rd:MAX: %5.1lf%s Max\g',
-            'GPRINT:avg_rd:LAST: %5.1lf%s Last\g',
-            'GPRINT:tot_rd: %3.0lf%s Total\l',
-            'LINE1:avg_wr#00b000:Write',
-            'GPRINT:min_wr:MIN:%5.1lf%s Min\g',
-            'GPRINT:avg_wr:AVERAGE: %5.1lf%s Avg\g',
-            'GPRINT:max_wr:MAX: %5.1lf%s Max\g',
-            'GPRINT:avg_wr:LAST: %5.1lf%s Last\g',
-            'GPRINT:tot_wr: %3.0lf%s Total\l',
-        ]
-
-        return args
+    def get_sources(self):
+        return {
+            'localhost.disk-%s.disk_octets.read' % self.identifier: {
+                'verbose_name': 'Read',
+            },
+            'localhost.disk-%s.disk_octets.write' % self.identifier: {
+                'verbose_name': 'Write',
+            },
+        }
 
 
 class ARCSizePlugin(RRDBase):

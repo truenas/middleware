@@ -54,6 +54,7 @@ def plugin2graphs(name):
         if ids is not None:
             if len(ids) > 0:
                 for ident in ids:
+                    ins.identifier = ident
                     graphs.append({
                         'plugin': ins.name,
                         'identifier': ident,
