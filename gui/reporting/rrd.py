@@ -69,6 +69,7 @@ class RRDBase(object):
     imgformat = 'PNG'
     unit = 'hourly'
     step = 0
+    sources = {}
 
     def __init__(self, base_path, identifier=None, unit=None, step=None):
         if identifier is not None:
@@ -102,6 +103,9 @@ class RRDBase(object):
 
     def get_identifiers(self):
         return None
+
+    def get_sources(self):
+        return self.sources
 
     def generate(self):
         """
@@ -150,86 +154,13 @@ class CPUPlugin(RRDBase):
     plugin = "aggregation-cpu-sum"
     title = "CPU Usage"
     vertical_label = "%CPU"
-
-    def graph(self):
-        cpu_idle = os.path.join(self.base_path, "cpu-idle.rrd")
-        cpu_nice = os.path.join(self.base_path, "cpu-nice.rrd")
-        cpu_user = os.path.join(self.base_path, "cpu-user.rrd")
-        cpu_system = os.path.join(self.base_path, "cpu-system.rrd")
-        cpu_interrupt = os.path.join(self.base_path, "cpu-interrupt.rrd")
-
-        args = [
-            'DEF:min0_raw=%s:value:MIN' % cpu_idle,
-            'DEF:avg0_raw=%s:value:AVERAGE' % cpu_idle,
-            'DEF:max0_raw=%s:value:MAX' % cpu_idle,
-            'DEF:min1_raw=%s:value:MIN' % cpu_nice,
-            'DEF:avg1_raw=%s:value:AVERAGE' % cpu_nice,
-            'DEF:max1_raw=%s:value:MAX' % cpu_nice,
-            'DEF:min2_raw=%s:value:MIN' % cpu_user,
-            'DEF:avg2_raw=%s:value:AVERAGE' % cpu_user,
-            'DEF:max2_raw=%s:value:MAX' % cpu_user,
-            'DEF:min3_raw=%s:value:MIN' % cpu_system,
-            'DEF:avg3_raw=%s:value:AVERAGE' % cpu_system,
-            'DEF:max3_raw=%s:value:MAX' % cpu_system,
-            'DEF:min4_raw=%s:value:MIN' % cpu_interrupt,
-            'DEF:avg4_raw=%s:value:AVERAGE' % cpu_interrupt,
-            'DEF:max4_raw=%s:value:MAX' % cpu_interrupt,
-            'CDEF:min_total=min0_raw,min1_raw,min2_raw,min3_raw,min4_raw,+,+,+,+',
-            'CDEF:avg_total=avg0_raw,avg1_raw,avg2_raw,avg3_raw,avg4_raw,+,+,+,+',
-            'CDEF:max_total=max0_raw,max1_raw,max2_raw,max3_raw,max4_raw,+,+,+,+',
-            'CDEF:min0=min0_raw,min_total,/,100,*',
-            'CDEF:avg0=avg0_raw,avg_total,/,100,*',
-            'CDEF:max0=max0_raw,max_total,/,100,*',
-            'CDEF:min1=min1_raw,min_total,/,100,*',
-            'CDEF:avg1=avg1_raw,avg_total,/,100,*',
-            'CDEF:max1=max1_raw,max_total,/,100,*',
-            'CDEF:min2=min2_raw,min_total,/,100,*',
-            'CDEF:avg2=avg2_raw,avg_total,/,100,*',
-            'CDEF:max2=max2_raw,max_total,/,100,*',
-            'CDEF:min3=min3_raw,min_total,/,100,*',
-            'CDEF:avg3=avg3_raw,avg_total,/,100,*',
-            'CDEF:max3=max3_raw,max_total,/,100,*',
-            'CDEF:min4=min4_raw,min_total,/,100,*',
-            'CDEF:avg4=avg4_raw,avg_total,/,100,*',
-            'CDEF:max4=max4_raw,max_total,/,100,*',
-            'CDEF:cdef4=avg4,UN,0,avg4,IF',
-            'CDEF:cdef3=avg3,UN,0,avg3,IF,cdef4,+',
-            'CDEF:cdef2=avg2,UN,0,avg2,IF,cdef3,+',
-            'CDEF:cdef1=avg1,UN,0,avg1,IF,cdef2,+',
-            'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
-            'AREA:cdef0#f9f9f9',
-            'AREA:cdef1#bff7bf',
-            'AREA:cdef2#bfbfff',
-            'AREA:cdef3#ffbfbf',
-            'AREA:cdef4#e7bfe7',
-            'LINE1:cdef0#e8e8e8:Idle  ',
-            'GPRINT:min0:MIN:%5.2lf%% Min,',
-            'GPRINT:avg0:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max0:MAX:%5.2lf%% Max,',
-            'GPRINT:avg0:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef1#00e000:Nice  ',
-            'GPRINT:min1:MIN:%5.2lf%% Min,',
-            'GPRINT:avg1:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max1:MAX:%5.2lf%% Max,',
-            'GPRINT:avg1:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef2#0000ff:User  ',
-            'GPRINT:min2:MIN:%5.2lf%% Min,',
-            'GPRINT:avg2:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max2:MAX:%5.2lf%% Max,',
-            'GPRINT:avg2:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef3#ff0000:System',
-            'GPRINT:min3:MIN:%5.2lf%% Min,',
-            'GPRINT:avg3:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max3:MAX:%5.2lf%% Max,',
-            'GPRINT:avg3:LAST:%5.2lf%% Last\l',
-            'LINE1:cdef4#a000a0:IRQ   ',
-            'GPRINT:min4:MIN:%5.2lf%% Min,',
-            'GPRINT:avg4:AVERAGE:%5.2lf%% Avg,',
-            'GPRINT:max4:MAX:%5.2lf%% Max,',
-            'GPRINT:avg4:LAST:%5.2lf%% Last\l',
-        ]
-
-        return args
+    sources = {
+        'localhost.aggregation-cpu-sum.cpu-interrupt.value': None,
+        'localhost.aggregation-cpu-sum.cpu-user.value': None,
+        'localhost.aggregation-cpu-sum.cpu-idle.value': None,
+        'localhost.aggregation-cpu-sum.cpu-system.value': None,
+        'localhost.aggregation-cpu-sum.cpu-nice.value': None,
+    }
 
 
 class InterfacePlugin(RRDBase):
@@ -373,41 +304,11 @@ class LoadPlugin(RRDBase):
 
     title = "System Load"
     vertical_label = "System Load"
-
-    def graph(self):
-
-        load = os.path.join(self.base_path, "load.rrd")
-
-        args = [
-            'DEF:s_min=%s:shortterm:MIN' % load,
-            'DEF:s_avg=%s:shortterm:AVERAGE' % load,
-            'DEF:s_max=%s:shortterm:MAX' % load,
-            'DEF:m_min=%s:midterm:MIN' % load,
-            'DEF:m_avg=%s:midterm:AVERAGE' % load,
-            'DEF:m_max=%s:midterm:MAX' % load,
-            'DEF:l_min=%s:longterm:MIN' % load,
-            'DEF:l_avg=%s:longterm:AVERAGE' % load,
-            'DEF:l_max=%s:longterm:MAX' % load,
-            'AREA:s_max#bfffbf',
-            'AREA:s_min#FFFFFF',
-            'LINE1:s_avg#00ff00: 1 min',
-            'GPRINT:s_min:MIN:%.2lf Min,',
-            'GPRINT:s_avg:AVERAGE:%.2lf Avg,',
-            'GPRINT:s_max:MAX:%.2lf Max,',
-            'GPRINT:s_avg:LAST:%.2lf Last\l',
-            'LINE1:m_avg#0000ff: 5 min',
-            'GPRINT:m_min:MIN:%.2lf Min,',
-            'GPRINT:m_avg:AVERAGE:%.2lf Avg,',
-            'GPRINT:m_max:MAX:%.2lf Max,',
-            'GPRINT:m_avg:LAST:%.2lf Last\l',
-            'LINE1:l_avg#ff0000:15 min',
-            'GPRINT:l_min:MIN:%.2lf Min,',
-            'GPRINT:l_avg:AVERAGE:%.2lf Avg,',
-            'GPRINT:l_max:MAX:%.2lf Max,',
-            'GPRINT:l_avg:LAST:%.2lf Last\l'
-        ]
-
-        return args
+    sources = {
+        'localhost.load.load.shortterm': None,
+        'localhost.load.load.midterm': None,
+        'localhost.load.load.longterm': None,
+    }
 
 
 class ProcessesPlugin(RRDBase):
