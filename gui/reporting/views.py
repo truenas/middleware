@@ -29,22 +29,22 @@ import logging
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.reporting import rrd
+from freenasUI.reporting import graphs
 
 log = logging.getLogger('reporting.views')
 
 
 def plugin2graphs(name):
 
-    graphs = []
-    if name in rrd.name2plugin:
-        ins = rrd.name2plugin[name]()
+    rv = []
+    if name in graphs.name2plugin:
+        ins = graphs.name2plugin[name]()
         ids = ins.get_identifiers()
         if ids is not None:
             if len(ids) > 0:
                 for ident in ids:
                     ins.identifier = ident
-                    graphs.append({
+                    rv.append({
                         'plugin': ins.name,
                         'identifier': ident,
                         'sources': json.dumps(ins.get_sources()),
@@ -52,14 +52,14 @@ def plugin2graphs(name):
                         'title': ins.get_title(),
                     })
         else:
-            graphs.append({
+            rv.append({
                 'plugin': ins.name,
                 'sources': json.dumps(ins.get_sources()),
                 'vertical_label': ins.vertical_label,
                 'title': ins.get_title(),
             })
 
-    return graphs
+    return rv
 
 
 def index(request):

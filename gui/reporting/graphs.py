@@ -28,19 +28,19 @@ import os
 import re
 
 
-log = logging.getLogger('reporting.rrd')
+log = logging.getLogger('reporting.graphs')
 
 name2plugin = dict()
 
 
-class RRDMeta(type):
+class GraphMeta(type):
 
     def __new__(cls, name, bases, dct):
         klass = type.__new__(cls, name, bases, dct)
         reg = re.search(r'^(?P<name>.+)Plugin$', name)
         if reg and not hasattr(klass, 'plugin'):
             klass.plugin = reg.group("name").lower()
-        elif name != 'RRDBase' and not hasattr(klass, 'plugin'):
+        elif name != 'GraphBase' and not hasattr(klass, 'plugin'):
             raise ValueError("Could not determine plugin name %s" % str(name))
 
         if reg and not hasattr(klass, 'name'):
@@ -48,14 +48,14 @@ class RRDMeta(type):
             name2plugin[klass.name] = klass
         elif hasattr(klass, 'name'):
             name2plugin[klass.name] = klass
-        elif name != 'RRDBase':
+        elif name != 'GraphBase':
             raise ValueError("Could not determine plugin name %s" % str(name))
         return klass
 
 
-class RRDBase(object):
+class GraphBase(object):
 
-    __metaclass__ = RRDMeta
+    __metaclass__ = GraphMeta
 
     identifier = None
     title = None
@@ -73,7 +73,7 @@ class RRDBase(object):
             self.step = int(step)
 
     def __repr__(self):
-        return '<RRD:%s>' % self.plugin
+        return '<Graph:%s>' % self.plugin
 
     def get_title(self):
         return self.title
@@ -96,7 +96,7 @@ class RRDBase(object):
         return self.sources
 
 
-class CPUPlugin(RRDBase):
+class CPUPlugin(GraphBase):
 
     plugin = "aggregation-cpu-sum"
     title = "CPU Usage"
@@ -120,7 +120,7 @@ class CPUPlugin(RRDBase):
     }
 
 
-class InterfacePlugin(RRDBase):
+class InterfacePlugin(GraphBase):
 
     vertical_label = "Bits per second"
 
@@ -142,7 +142,7 @@ class InterfacePlugin(RRDBase):
                 continue
             ids.append(ident)
 
-        ids.sort(key=RRDBase._sort_identifiers)
+        ids.sort(key=GraphBase._sort_identifiers)
         return ids
 
     def get_sources(self):
@@ -156,7 +156,7 @@ class InterfacePlugin(RRDBase):
         }
 
 
-class MemoryPlugin(RRDBase):
+class MemoryPlugin(GraphBase):
 
     title = "Physical memory utilization"
     vertical_label = "Bytes"
@@ -179,7 +179,7 @@ class MemoryPlugin(RRDBase):
     }
 
 
-class LoadPlugin(RRDBase):
+class LoadPlugin(GraphBase):
 
     title = "System Load"
     vertical_label = "System Load"
@@ -196,7 +196,7 @@ class LoadPlugin(RRDBase):
     }
 
 
-class ProcessesPlugin(RRDBase):
+class ProcessesPlugin(GraphBase):
 
     title = "Processes"
     vertical_label = "Processes"
@@ -225,7 +225,7 @@ class ProcessesPlugin(RRDBase):
     }
 
 
-class SwapPlugin(RRDBase):
+class SwapPlugin(GraphBase):
 
     title = "Swap Utilization"
     vertical_label = "Bytes"
@@ -239,7 +239,7 @@ class SwapPlugin(RRDBase):
     }
 
 
-class DFPlugin(RRDBase):
+class DFPlugin(GraphBase):
 
     vertical_label = "Bytes"
 
@@ -264,7 +264,7 @@ class DFPlugin(RRDBase):
                 continue
             ids.append(ident)
 
-        ids.sort(key=RRDBase._sort_identifiers)
+        ids.sort(key=GraphBase._sort_identifiers)
         return ids
 
     def get_sources(self):
@@ -278,7 +278,7 @@ class DFPlugin(RRDBase):
         }
 
 
-class UptimePlugin(RRDBase):
+class UptimePlugin(GraphBase):
 
     title = "Uptime"
     vertical_label = "Time"
@@ -289,7 +289,7 @@ class UptimePlugin(RRDBase):
     }
 
 
-class DiskPlugin(RRDBase):
+class DiskPlugin(GraphBase):
 
     vertical_label = "Bytes/s"
 
@@ -316,7 +316,7 @@ class DiskPlugin(RRDBase):
                 continue
             ids.append(ident)
 
-        ids.sort(key=RRDBase._sort_identifiers)
+        ids.sort(key=GraphBase._sort_identifiers)
         return ids
 
     def get_sources(self):
@@ -330,7 +330,7 @@ class DiskPlugin(RRDBase):
         }
 
 
-class ARCSizePlugin(RRDBase):
+class ARCSizePlugin(GraphBase):
 
     title = 'ARC Size'
     plugin = 'zfs_arc'
@@ -345,7 +345,7 @@ class ARCSizePlugin(RRDBase):
     }
 
 
-class ARCRatioPlugin(RRDBase):
+class ARCRatioPlugin(GraphBase):
 
     title = 'ARC Hit Ratio'
     plugin = 'zfs_arc'
