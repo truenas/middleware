@@ -1,4 +1,3 @@
-#+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -24,14 +23,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import glob
 import logging
 import os
 import re
-import tempfile
-import subprocess
 
-from freenasUI.common.pipesubr import pipeopen
 
 log = logging.getLogger('reporting.rrd')
 
@@ -62,30 +57,23 @@ class RRDBase(object):
 
     __metaclass__ = RRDMeta
 
-    base_path = None
     identifier = None
     title = None
     vertical_label = None
-    imgformat = 'PNG'
     unit = 'hourly'
     step = 0
     sources = {}
 
-    def __init__(self, base_path, identifier=None, unit=None, step=None):
+    def __init__(self, identifier=None, unit=None, step=None):
         if identifier is not None:
             self.identifier = str(identifier)
         if unit is not None:
             self.unit = str(unit)
         if step is not None:
             self.step = int(step)
-        self._base_path = base_path
-        self.base_path = os.path.join(base_path, self.plugin)
 
     def __repr__(self):
         return '<RRD:%s>' % self.plugin
-
-    def graph(self):
-        raise NotImplementedError
 
     def get_title(self):
         return self.title
@@ -106,47 +94,6 @@ class RRDBase(object):
 
     def get_sources(self):
         return self.sources
-
-    def generate(self):
-        """
-        Call rrdgraph to generate the graph on a temp file
-
-        Returns:
-            str - path to the image
-        """
-
-        starttime = '1%s' % (self.unit[0], )
-        if self.step == 0:
-            endtime = 'now'
-        else:
-            endtime = 'now-%d%s' % (self.step, self.unit[0], )
-
-        fh, path = tempfile.mkstemp()
-        args = [
-            "/usr/local/bin/rrdtool",
-            "graph",
-            path,
-            '--imgformat', self.imgformat,
-            '--vertical-label', str(self.get_vertical_label()),
-            '--title', str(self.get_title()),
-            '--lower-limit', '0',
-            '--end', endtime,
-            '--start', 'end-%s' % starttime, '-b', '1024',
-        ]
-        args.extend(self.graph())
-        # rrdtool python is suffering from some sort of threading locking issue
-        # See #3478
-        # rrdtool.graph(*args)
-        proc = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            log.error("Failed to generate graph: %s", err)
-        return fh, path
 
 
 class CPUPlugin(RRDBase):
