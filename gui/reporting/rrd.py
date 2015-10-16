@@ -245,69 +245,23 @@ class MemoryPlugin(RRDBase):
 
     title = "Physical memory utilization"
     vertical_label = "Bytes"
-
-    def graph(self):
-
-        memory_free = os.path.join(self.base_path, "memory-free.rrd")
-        memory_active = os.path.join(self.base_path, "memory-active.rrd")
-        memory_cache = os.path.join(self.base_path, "memory-cache.rrd")
-        memory_inactive = os.path.join(self.base_path, "memory-inactive.rrd")
-        memory_wired = os.path.join(self.base_path, "memory-wired.rrd")
-
-        args = [
-            'DEF:min0=%s:value:MIN' % memory_free,
-            'DEF:avg0=%s:value:AVERAGE' % memory_free,
-            'DEF:max0=%s:value:MAX' % memory_free,
-            'DEF:min1=%s:value:MIN' % memory_active,
-            'DEF:avg1=%s:value:AVERAGE' % memory_active,
-            'DEF:max1=%s:value:MAX' % memory_active,
-            'DEF:min2=%s:value:MIN' % memory_cache,
-            'DEF:avg2=%s:value:AVERAGE' % memory_cache,
-            'DEF:max2=%s:value:MAX' % memory_cache,
-            'DEF:min3=%s:value:MIN' % memory_inactive,
-            'DEF:avg3=%s:value:AVERAGE' % memory_inactive,
-            'DEF:max3=%s:value:MAX' % memory_inactive,
-            'DEF:min4=%s:value:MIN' % memory_wired,
-            'DEF:avg4=%s:value:AVERAGE' % memory_wired,
-            'DEF:max4=%s:value:MAX' % memory_wired,
-            'CDEF:cdef4=avg4,UN,0,avg4,IF',
-            'CDEF:cdef3=avg3,UN,0,avg3,IF,cdef4,+',
-            'CDEF:cdef2=avg2,UN,0,avg2,IF,cdef3,+',
-            'CDEF:cdef1=avg1,UN,0,avg1,IF,cdef2,+',
-            'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
-            'AREA:cdef0#bfe0bfff',
-            'AREA:cdef1#e0bfbf50',
-            'AREA:cdef2#bfbfe040',
-            'AREA:cdef3#bfe0e030',
-            'AREA:cdef4#e0bfe020',
-            'LINE1:cdef0#00a000:Free  ',
-            'GPRINT:min0:MIN:%5.1lf%s Min,',
-            'GPRINT:avg0:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max0:MAX:%5.1lf%s Max,',
-            'GPRINT:avg0:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef1#a00000:Active  ',
-            'GPRINT:min1:MIN:%5.1lf%s Min,',
-            'GPRINT:avg1:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max1:MAX:%5.1lf%s Max,',
-            'GPRINT:avg1:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef2#0000a0:Cache   ',
-            'GPRINT:min2:MIN:%5.1lf%s Min,',
-            'GPRINT:avg2:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max2:MAX:%5.1lf%s Max,',
-            'GPRINT:avg2:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef3#00a0a0:Inactive',
-            'GPRINT:min3:MIN:%5.1lf%s Min,',
-            'GPRINT:avg3:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max3:MAX:%5.1lf%s Max,',
-            'GPRINT:avg3:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef4#a000a0:Wired   ',
-            'GPRINT:min4:MIN:%5.1lf%s Min,',
-            'GPRINT:avg4:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max4:MAX:%5.1lf%s Max,',
-            'GPRINT:avg4:LAST:%5.1lf%s Last\l'
-        ]
-
-        return args
+    sources = {
+        'localhost.memory.memory-active.value': {
+            'verbose_name': 'Active',
+        },
+        'localhost.memory.memory-cache.value': {
+            'verbose_name': 'Cache',
+        },
+        'localhost.memory.memory-free.value': {
+            'verbose_name': 'Free',
+        },
+        'localhost.memory.memory-inactive.value': {
+            'verbose_name': 'Inactive',
+        },
+        'localhost.memory.memory-wired.value': {
+            'verbose_name': 'Wired',
+        },
+    }
 
 
 class LoadPlugin(RRDBase):
@@ -422,36 +376,14 @@ class SwapPlugin(RRDBase):
 
     title = "Swap Utilization"
     vertical_label = "Bytes"
-
-    def graph(self):
-
-        free = os.path.join(self.base_path, "swap-free.rrd")
-        used = os.path.join(self.base_path, "swap-used.rrd")
-
-        args = [
-            'DEF:min0=%s:value:MIN' % free,
-            'DEF:avg0=%s:value:AVERAGE' % free,
-            'DEF:max0=%s:value:MAX' % free,
-            'DEF:min1=%s:value:MIN' % used,
-            'DEF:avg1=%s:value:AVERAGE' % used,
-            'DEF:max1=%s:value:MAX' % used,
-            'CDEF:cdef1=avg1,UN,0,avg1,IF',
-            'CDEF:cdef0=avg0,UN,0,avg0,IF,cdef1,+',
-            'AREA:cdef0#bff7bf',
-            'AREA:cdef1#ffbfbf',
-            'LINE1:cdef0#00e000:Free  ',
-            'GPRINT:min0:MIN:%5.1lf%s Min,',
-            'GPRINT:avg0:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max0:MAX:%5.1lf%s Max,',
-            'GPRINT:avg0:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef1#ff0000:Used  ',
-            'GPRINT:min1:MIN:%5.1lf%s Min,',
-            'GPRINT:avg1:AVERAGE:%5.1lf%s Avg,',
-            'GPRINT:max1:MAX:%5.1lf%s Max,',
-            'GPRINT:avg1:LAST:%5.1lf%s Last\l'
-        ]
-
-        return args
+    sources = {
+        'localhost.swap.swap-free.value': {
+            'verbose_name': 'Free',
+        },
+        'localhost.swap.swap-used.value': {
+            'verbose_name': 'Used',
+        },
+    }
 
 
 class DFPlugin(RRDBase):
