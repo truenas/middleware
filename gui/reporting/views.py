@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 import os
 
@@ -53,13 +54,20 @@ def plugin2graphs(name):
         if ids is not None:
             if len(ids) > 0:
                 for ident in ids:
+                    ins.identifier = ident
                     graphs.append({
                         'plugin': ins.name,
                         'identifier': ident,
+                        'sources': json.dumps(ins.get_sources()),
+                        'vertical_label': ins.vertical_label,
+                        'title': ins.get_title(),
                     })
         else:
             graphs.append({
                 'plugin': ins.name,
+                'sources': json.dumps(ins.get_sources()),
+                'vertical_label': ins.vertical_label,
+                'title': ins.get_title(),
             })
 
     return graphs

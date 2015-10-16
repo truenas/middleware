@@ -26,6 +26,9 @@
  */
 
 var _webshell;
+var _ws;
+var _wsToken;
+var _chartMapping = {};
 
 require([
     "dojo",
@@ -1886,6 +1889,28 @@ require([
         return text;
       }
     })(dojo._contentHandlers.text);
+
+    _ws = new Middleware();
+    _ws.connect(window.location.protocol == 'https:' ? "wss://" : "ws://" + document.domain + ":5000/socket");
+
+    _ws.on("error", function(err) {
+        console.log("WebSocket Error: " + err.message);
+    });
+
+    _ws.on("connected", function() {
+        _ws.login(_wsToken);
+    });
+
+    _ws.on("login", function() {
+    });
+
+    _ws.on("event", function(data) {
+      if(data.name in _chartMapping) {
+        var chart = _chartMapping[data.name][0];
+        var series = _chartMapping[data.name][1];
+        chart.updateSeries(series, {x: data.args.timestamp, y: data.args.value});
+      }
+    });
 
     ready(function() {
 
