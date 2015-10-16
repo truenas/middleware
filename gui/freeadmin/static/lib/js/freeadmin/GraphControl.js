@@ -19,7 +19,7 @@ define([
     "dojox/charting/action2d/MouseIndicator",
     "dojox/charting/widget/SelectableLegend",
     "dojox/timing",
-    "dojo/text!freeadmin/templates/rrdcontrol.html"
+    "dojo/text!freeadmin/templates/graphcontrol.html"
     ], function(declare,
     stamp,
     domAttr, ioQuery,
@@ -35,7 +35,7 @@ define([
     SelectableLegend,
     timing, template) {
 
-    var RRDControl = declare("freeadmin.RRDControl", [ _Widget, _Templated ], {
+    var GraphControl = declare("freeadmin.GraphControl", [ _Widget, _Templated ], {
         templateString : template,
         name : "",
         value: "",
@@ -125,7 +125,7 @@ define([
             }
 
             zoomIn = new Button({
-                id: "rrd_" + me.name + "_zoomIn",
+                id: "graph_" + me.name + "_zoomIn",
                 label: this.zoomInButton.innerHTML,
                 onClick: function(e) {
                     var newunit = me.zoomInUnit(me.unit)
@@ -141,7 +141,7 @@ define([
             }, this.zoomInButton);
 
             zoomOut = new Button({
-                id: "rrd_" + me.name + "_zoomOut",
+                id: "graph_" + me.name + "_zoomOut",
                 label: this.zoomOutButton.innerHTML,
                 onClick: function(e) {
                     var newunit = me.zoomOutUnit(me.unit)
@@ -156,7 +156,7 @@ define([
             }, this.zoomOutButton);
 
             right = new Button({
-                id: "rrd_" + me.name + "_right",
+                id: "graph_" + me.name + "_right",
                 label: '>>',
                 onClick: function(e) {
                     var newstep = me.step - 1;
@@ -172,7 +172,7 @@ define([
             }, this.rightButton);
 
             left = new Button({
-                id: "rrd_" + me.name + "_left",
+                id: "graph_" + me.name + "_left",
                 label: '<<',
                 onClick: function(e) {
                     var newstep = me.step + 1;
@@ -252,5 +252,5 @@ define([
             this.inherited(arguments);
         }
     });
-    return RRDControl;
+    return GraphControl;
 });
