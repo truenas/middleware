@@ -82,7 +82,7 @@ define([
               title: me.verticalLabel
             });
             me.chart.addPlot("default", {type: chartingLines});
-            var clusteredBarsLegend = new SelectableLegend({chart: me.chart, horizontal: false}, me.legendNode);
+            var clusteredBarsLegend = new SelectableLegend({chart: me.chart, horizontal: false, style: "margin: 10px;"}, me.legendNode);
             //var i = MouseIndicator(me.chart, "default", { series: "Series 1", labels: true, mouseOver: true });
             //on(i, "Change", function(evt) {
             //});
