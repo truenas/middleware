@@ -341,3 +341,41 @@ class VcenterConfigurationForm(ModelForm):
         ip_choices = utils.get_management_ips()
         self.fields['vc_management_ip'] = forms.ChoiceField(choices=zip(
             ip_choices, ip_choices), label='TrueNAS Management IP Address',)
+
+
+class VcenterAuxSettingsForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.VcenterAuxSettings
+
+    def __init__(self, *args, **kwargs):
+        super(VcenterAuxSettingsForm, self).__init__(*args, **kwargs)
+        self.instance._original_vc_enable_https = self.instance.vc_enable_https
+        self.fields["vc_enable_https"].widget.attrs["onChange"] = (
+            "vcenter_https_enable_check();"
+        )
+
+    def get_sys_url(self, request_address):
+        obj = Settings.objects.latest('id')
+        proto = obj.stg_guiprotocol
+        if proto == 'httphttps':
+            proto = 'http'
+        if obj.stg_guiaddress == '0.0.0.0':
+            address = request_address
+        else:
+            address = obj.stg_guiaddress
+        newurl = '{0}://{1}'.format(proto, address)
+        if obj.stg_guiport and proto == 'http':
+            newurl += ':{0}'.format(obj.stg_guiport)
+        elif obj.stg_guihttpsport and proto == 'https':
+            newurl += ':{0}'.format(obj.stg_guihttpsport)
+        return newurl
+
+    def done(self, request, events):
+        if (self.instance._original_vc_enable_https != self.instance.vc_enable_https):
+            events.append(
+                "restartHttpd('{0}')".format(
+                    self.get_sys_url(request.META['HTTP_HOST'].split(':')[0])
+                )
+            )

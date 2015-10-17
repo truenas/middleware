@@ -80,7 +80,23 @@ class VcenterConfiguration(Model):
         verbose_name_plural = _("vCenter Configurations")
 
     class FreeAdmin:
-        icon_model = 'VsphereIcon'
-        icon_object = 'VsphereIcon'
-        icon_view = 'VsphereIcon'
-        icon_add = 'VsphereIcon'
+        icon_model = u'VsphereIcon'
+        icon_object = u'VsphereIcon'
+        icon_view = u'VsphereIcon'
+        icon_add = u'VsphereIcon'
+
+
+class VcenterAuxSettings(Model):
+
+    vc_enable_https = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable Vcenter Plugin over https"),
+    )
+
+    class Meta:
+        verbose_name = _("vCenter Auxiliary Settings")
+        verbose_name_plural = _("vCenter Auxiliary Settings")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"SettingsIcon"
