@@ -31,7 +31,7 @@ import utils
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.vcp.forms import VcenterConfigurationForm
+from freenasUI.vcp.forms import VcenterConfigurationForm, VcenterAuxSettingsForm
 from freenasUI.vcp import models
 from django.http import HttpResponse, HttpResponseRedirect
 
@@ -41,6 +41,7 @@ from freenasUI.system.models import (
 
 
 def vcp_home(request):
+    aux_enable_https = models.VcenterAuxSettings.objects.latest('id').vc_enable_https
     if request.method == 'POST':
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
@@ -57,7 +58,14 @@ def vcp_home(request):
                         form.vcp_status))
         else:
             form.is_update_needed()
-            return render(request, "vcp/index.html", {'form': form})
+            return render(
+                request,
+                "vcp/index.html",
+                {
+                    'form': form,
+                    'aux_enable_https': aux_enable_https,
+                }
+            )
     try:
         obj = models.VcenterConfiguration.objects.latest('id')
         form = VcenterConfigurationForm(instance=obj)
@@ -66,7 +74,35 @@ def vcp_home(request):
     except:
         form = VcenterConfigurationForm()
         form.is_update_needed()
-    return render(request, "vcp/index.html", {'form': form})
+    return render(
+        request,
+        "vcp/index.html",
+        {
+            'form': form,
+            'aux_enable_https': aux_enable_https,
+        }
+    )
+
+
+def vcp_vcenterauxsettings(request):
+    vcpaux = models.VcenterAuxSettings.objects.latest('id')
+
+    if request.method == "POST":
+        form = VcenterAuxSettingsForm(request.POST, instance=vcpaux)
+        if form.is_valid():
+            form.save()
+            events = []
+            form.done(request, events)
+            return JsonResp(
+                request,
+                message=_("vCenter Auxiliary Settings successfully edited."),
+                events=events,
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = VcenterAuxSettingsForm(instance=vcpaux)
+    return render(request, 'vcp/aux_settings.html', {'form': form})
 
 
 def vcp_upgrade(request):
