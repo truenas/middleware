@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -33,10 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system.models import (
-    CertificateAuthority,
-    Certificate
-)
+from freenasUI.system.models import CertificateAuthority
 
 log = logging.getLogger("directoryservice.models")
 
@@ -372,7 +369,7 @@ class idmap_ldap(idmap_base):
         default='off'
     )
     idmap_ldap_certificate = models.ForeignKey(
-        CertificateAuthority, 
+        CertificateAuthority,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
@@ -542,7 +539,7 @@ class idmap_rfc2307(idmap_base):
         default='off'
     )
     idmap_rfc2307_certificate = models.ForeignKey(
-        CertificateAuthority, 
+        CertificateAuthority,
         verbose_name=_("Certificate"),
         on_delete=models.SET_NULL,
         blank=True,
@@ -573,10 +570,10 @@ class idmap_rfc2307(idmap_base):
 
     def save(self, *args, **kwargs):
         if self.idmap_rfc2307_ldap_user_dn_password and \
-            not self._idmap_rfc2307_ldap_user_dn_password_encrypted:
+                not self._idmap_rfc2307_ldap_user_dn_password_encrypted:
             self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_encrypt(
                 self.idmap_rfc2307_ldap_user_dn_password
-            )   
+            )
             self._idmap_rfc2307_ldap_user_dn_password_encrypted = True
         super(idmap_rfc2307, self).save(*args, **kwargs)
 
@@ -982,30 +979,29 @@ class ActiveDirectory(DirectoryServiceBase):
         default=enum_to_idmap(IDMAP_TYPE_RID)
     )
     ad_nss_info = models.CharField(
-        max_length=120,  
+        max_length=120,
         blank=True,
         null=True,
         choices=choices.NSS_INFO_CHOICES,
         verbose_name=_("Winbind NSS Info"),
         help_text=_("This parameter is designed to control how Winbind "
-            "retrieves Name Service Information to construct a user's "
-            "home directory and login"
-        )
+                    "retrieves Name Service Information to construct a user's "
+                    "home directory and login")
     )
     ad_ldap_sasl_wrapping = models.CharField(
         verbose_name=_("SASL wrapping"),
         choices=choices.LDAP_SASL_WRAPPING_CHOICES,
         max_length=120,
         help_text=_("The client ldap sasl wrapping defines whether ldap "
-            "traffic will be signed or signed and encrypted (sealed)."
-            "This option is needed in the case of Domain Controllers "
-            "enforcing the usage of signed LDAP connections (e.g. "
-            "Windows 2000 SP3 or higher). LDAP sign and seal can be "
-            "controlled with the registry key \"HKLM\System\\"
-            "CurrentControlSet\Services\NTDS\Parameters\\"
-            "LDAPServerIntegrity\" on the Windows server side."
-        ),
-        default='plain' 
+                    "traffic will be signed or signed and encrypted (sealed)."
+                    "This option is needed in the case of Domain Controllers "
+                    "enforcing the usage of signed LDAP connections (e.g. "
+                    "Windows 2000 SP3 or higher). LDAP sign and seal can be "
+                    "controlled with the registry key \"HKLM\System\\"
+                    "CurrentControlSet\Services\NTDS\Parameters\\"
+                    "LDAPServerIntegrity\" on the Windows server side."
+                    ),
+        default='plain'
     )
     ad_enable = models.BooleanField(
         verbose_name=_("Enable"),
@@ -1031,6 +1027,16 @@ class ActiveDirectory(DirectoryServiceBase):
                 m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
                 if m:
                     self.ad_netbiosname = m.group(0).upper().strip()
+
+    def get_netbiosname(self):
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_node() == 'B':
+                return self.ad_netbiosname_b
+            else:
+                return self.ad_netbiosname
+        else:
+            return self.ad_netbiosname
 
     def save(self, **kwargs):
         if self.ad_bindpw and not self._ad_bindpw_encrypted:
