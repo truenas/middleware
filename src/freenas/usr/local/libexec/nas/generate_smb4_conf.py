@@ -985,7 +985,12 @@ def generate_smb4_conf(smb4_conf, role):
     if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
         confset2(smb4_conf, "log level = %s", cifs.cifs_srv_loglevel)
 
-    for line in cifs.cifs_srv_smb_options.split('\n'):
+    smb_options = cifs.cifs_srv_smb_options.encode('utf-8')
+    smb_options = smb_options.strip()
+    for line in smb_options.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
         confset1(smb4_conf, line)
 
 
@@ -1094,6 +1099,10 @@ def generate_smb4_shares(smb4_shares):
         confset1(smb4_shares, "zfsacl:acesort = dontcare")
 
         for line in share.cifs_auxsmbconf.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            line = line.encode('utf-8')  
             confset1(smb4_shares, line)
 
 
