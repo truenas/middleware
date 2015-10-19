@@ -1570,8 +1570,10 @@ def CA_export_certificate(request, id):
 
 def CA_export_privatekey(request, id):
     ca = models.CertificateAuthority.objects.get(pk=id)
+    if not ca.cert_privatekey:
+        return HttpResponse('No private key')
+   
     key = export_privatekey(ca.cert_privatekey)
-
     response = StreamingHttpResponse(
         buf_generator(key), content_type='application/octet-stream'
     )
@@ -1695,6 +1697,8 @@ def certificate_export_certificate(request, id):
 
 def certificate_export_privatekey(request, id):
     c = models.Certificate.objects.get(pk=id)
+    if not c.cert_privatekey:
+        return HttpResponse('No private key')
     key = export_privatekey(c.cert_privatekey)
 
     response = StreamingHttpResponse(
