@@ -232,6 +232,18 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
                     location.href=data._export_privatekey_url;
                 }
             }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (!row.data.cert_privatekey) {
+                        if (actionName == 'export_privatekey') {
+                            query(".grid" + actionName).forEach(function(item, idx) {
+                                domStyle.set(item, "display", "none");
+                            });
+                        }
+                    }
+                }
+            }"""
         }
 
         actions['delete'] = {

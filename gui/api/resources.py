@@ -2521,6 +2521,7 @@ class CertificateAuthorityResourceMixin(object):
             bundle.data['cert_DN'] = bundle.obj.cert_DN
             bundle.data['cert_from'] = bundle.obj.cert_from
             bundle.data['cert_until'] = bundle.obj.cert_until
+            bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
             bundle.data['CA_type_existing'] = bundle.obj.CA_type_existing
             bundle.data['CA_type_internal'] = bundle.obj.CA_type_internal
@@ -2576,6 +2577,7 @@ class CertificateResourceMixin(object):
             bundle.data['cert_CSR'] = bundle.obj.cert_CSR
             bundle.data['cert_from'] = bundle.obj.cert_from
             bundle.data['cert_until'] = bundle.obj.cert_until
+            bundle.data['cert_privatekey'] = bundle.obj.cert_privatekey
 
             bundle.data['cert_type_existing'] = bundle.obj.cert_type_existing
             bundle.data['cert_type_internal'] = bundle.obj.cert_type_internal
