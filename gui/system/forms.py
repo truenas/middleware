@@ -2842,7 +2842,11 @@ class CertificateCreateInternalForm(ModelForm):
                                  subject=cert),
         ])
 
-        cert.set_serial_number(signing_cert.cert_serial)
+        cert_serial = signing_cert.cert_serial
+        if not cert_serial:
+            cert_serial = 1
+
+        cert.set_serial_number(cert_serial)
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
         self.instance.cert_certificate = \
@@ -2852,7 +2856,13 @@ class CertificateCreateInternalForm(ModelForm):
 
         super(CertificateCreateInternalForm, self).save()
         ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial +1
+
+        ca_cert_serial = ca.cert_serial
+        if not ca_cert_serial:
+            ca_cert_serial = cert_serial
+
+        ca_cert_serial += 1
+        ca.cert_serial = ca_cert_serial
         ca.save()
 
         notifier().start("ix-ssl")
