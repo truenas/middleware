@@ -262,15 +262,21 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_status(self, request):
-        return HttpResponse('OK')
+        from freenasUI.middleware.connector import connection as dispatcher
+        rv = 'OK'
+        for alert in dispatcher.call_sync('alerts.query'):
+            if alert['severity'] == 'WARNING':
+                rv = 'WARN'
+            elif alert['severity'] == 'CRITICAL':
+                rv = 'CRIT'
+                break
+        return HttpResponse(rv)
 
     @never_cache
     def alert_detail(self, request):
-        dismisseds = []
-        alerts = []
+        from freenasUI.middleware.connector import connection as dispatcher
         return render(request, "freeadmin/alert_status.html", {
-            'alerts': alerts,
-            'dismisseds': dismisseds,
+            'alerts': dispatcher.call_sync('alerts.query'),
         })
 
     @never_cache

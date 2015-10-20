@@ -1,12 +1,12 @@
 <ul>
 {% for alert in alerts %}
 <li>
-    <input id="cbox_Alert_{{ alert.getId }}" data-dojo-type="dijit.form.CheckBox" type="checkbox" value="{{ alert.getId }}" onClick="alertDismiss" {% if alert.getId not in dismisseds %} checked{% endif %} />
-    {% if alert.getLevel == 'OK'%}
+    <input id="cbox_Alert_{{ alert.id }}" data-dojo-type="dijit.form.CheckBox" type="checkbox" value="{{ alert.id }}" onClick="alertDismiss" />
+    {% if alert.severity == 'INFO' %}
         <span style="color:green;font-weight:bold;">
-        {% trans "OK" %}:
+        {% trans "INFO" %}:
     {% else %}
-        {% if alert.getLevel == 'WARN'%}
+        {% if alert.severity == 'WARNING'%}
             <span style="color:goldenrod;font-weight:bold;">
             {% trans "WARNING" %}:
         {% else %}
@@ -15,7 +15,7 @@
         {% endif %}
     {% endif %}
     </span>
-    {{ alert.getMessage }}</li>
+    {{ alert.description }}</li>
 {% empty %}
   <li>The system has no alerts</li>
 {% endfor %}
