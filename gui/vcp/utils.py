@@ -31,7 +31,8 @@ import shutil
 import os
 import base64
 import ConfigParser
-
+import subprocess
+import time
 from contextlib import closing
 from subprocess import Popen, PIPE
 from django.conf import settings
@@ -127,6 +128,31 @@ def get_management_ips():
         output = p3.communicate()[0]
         default = output.split('\n')
     return str_IP
+
+
+def get_thumb_print(ip, port):
+    thumb_print = ''
+    try:
+        subprocess.Popen(
+            [
+                "openssl s_client -showcerts -connect " +
+                ip +
+                ":" +
+                port +
+                " < /dev/null | openssl x509 -outform PEM > servercert.pem"],
+            stdout=subprocess.PIPE,
+            shell=True)
+        time.sleep(2)
+        proc = subprocess.Popen(
+            ["openssl x509 -noout -in servercert.pem -fingerprint -sha1"],
+            stdout=subprocess.PIPE,
+            shell=True)
+        (out, err) = proc.communicate()
+        thumb_print = out.split('=')[1].lstrip().rstrip()
+        os.remove('servercert.pem')
+        return thumb_print
+    except Exception:
+        return None
 
 
 def get_plugin_file_name():

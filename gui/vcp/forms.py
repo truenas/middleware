@@ -47,6 +47,7 @@ class VcenterConfigurationForm(ModelForm):
     vcp_is_installed = False
     vcp_status = ''
     vcp_available_version = ''
+    is_https = False
 
     def clean_vc_management_ip(self):
         manage_ip = str(self.cleaned_data['vc_management_ip'])
@@ -70,13 +71,17 @@ class VcenterConfigurationForm(ModelForm):
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, False)
             if status_flag is True:
+                thumb_print = self.get_thumb_print(manage_ip, sys_guiprotocol)
+                if thumb_print is None:
+                    return False
+
                 status_flag = utils.update_plugin_zipfile(
                     ip, username, password, port, 'NEW', 'null', utils.get_plugin_version())
                 if status_flag is True:
                     vcp_url = self.get_vcp_url(manage_ip, sys_guiprotocol)
                     plug = plugin.PluginManager()
                     status_flag = plug.install_vCenter_plugin(
-                        ip, username, password, port, vcp_url, '')
+                        ip, username, password, port, vcp_url, thumb_print)
                     if status_flag is True:
                         self.vcp_is_installed = True
                         self.vcp_is_update_available = False
@@ -96,7 +101,7 @@ class VcenterConfigurationForm(ModelForm):
                 self.vcp_status = status_flag
                 return False
 
-        except Exception as ex:
+        except Exception:
             self.vcp_status = 'Installation failed. Please contact support.'
             return False
 
@@ -135,7 +140,7 @@ class VcenterConfigurationForm(ModelForm):
                 self.vcp_status = status_flag
                 return False
 
-        except Exception as e:
+        except Exception:
             self.vcp_status = 'Uninstall failed. Please contact support.'
             return False
 
@@ -154,13 +159,17 @@ class VcenterConfigurationForm(ModelForm):
                 ip, port, username, password, True)
 
             if status_flag is True:
+                thumb_print = self.get_thumb_print(manage_ip, sys_guiprotocol)
+                if thumb_print is None:
+                    return False
+
                 status_flag = utils.update_plugin_zipfile(
                     ip, username, password, port, 'UPGRADE', version_old, utils.get_plugin_version())
                 if status_flag is True:
                     vcp_url = self.get_vcp_url(manage_ip, sys_guiprotocol)
                     plug = plugin.PluginManager()
                     status_flag = plug.upgrade_vCenter_plugin(
-                        ip, username, password, port, vcp_url, '')
+                        ip, username, password, port, vcp_url, thumb_print)
                     if status_flag is True:
                         self.vcp_is_update_available = False
                         obj.vc_version = utils.get_plugin_version()
@@ -199,15 +208,18 @@ class VcenterConfigurationForm(ModelForm):
             sys_guiprotocol = self.get_sys_protocol()
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, False)
-
             if status_flag is True:
+                thumb_print = self.get_thumb_print(manage_ip, sys_guiprotocol)
+                if thumb_print is None:
+                    return False
+
                 status_flag = utils.update_plugin_zipfile(
                     ip, username, password, port, 'REPAIR', 'null', utils.get_plugin_version())
                 if status_flag is True:
                     vcp_url = self.get_vcp_url(manage_ip, sys_guiprotocol)
                     plug = plugin.PluginManager()
                     status_flag = plug.install_vCenter_plugin(
-                        ip, username, password, port, vcp_url, '')
+                        ip, username, password, port, vcp_url, thumb_print)
                     if status_flag is True:
                         obj.vc_username = username
                         obj.vc_port = port
@@ -302,6 +314,15 @@ class VcenterConfigurationForm(ModelForm):
         except Exception:
             return False
 
+    def get_thumb_print(self, manage_ip, sys_guiprotocol):
+        thumb_print = ''
+        if sys_guiprotocol.upper() == "HTTPS":
+            port = self.get_sys_port()
+            thumb_print = utils.get_thumb_print(manage_ip, port)
+            if thumb_print is None:
+                self.vcp_status = 'Could not retrieve SHA1 fingure print. Please try after some time.'
+        return thumb_print
+
     def validate_vcp_param(self, ip, port, username, password, is_installed):
         try:
             plug = plugin.PluginManager()
@@ -338,6 +359,11 @@ class VcenterConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(VcenterConfigurationForm, self).__init__(*args, **kwargs)
+        sys_guiprotocol = self.get_sys_protocol()
+        if sys_guiprotocol.upper() == "HTTPS":
+            self.is_https = True
+        else:
+            self.is_https = False
         ip_choices = utils.get_management_ips()
         self.fields['vc_management_ip'] = forms.ChoiceField(choices=zip(
             ip_choices, ip_choices), label='TrueNAS Management IP Address',)
