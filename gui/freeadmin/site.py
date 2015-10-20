@@ -281,6 +281,9 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_dismiss(self, request):
+        from freenasUI.middleware.connector import connection as dispatcher
+        msgid = request.POST.get('msgid')
+        dispatcher.call_sync('alerts.dismiss', msgid)
         from freenasUI.freeadmin.views import JsonResp
         return JsonResp(request, message="OK")
 

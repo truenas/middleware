@@ -397,6 +397,7 @@ require([
                 dismiss: dismiss
             }
         }).then(function(data) {
+            registry.byId("alert_dialog").refresh();
             loadalert();
         });
     }
