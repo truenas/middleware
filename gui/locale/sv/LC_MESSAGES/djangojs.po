@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-08-27 13:46+0000\n"
-"Last-Translator: pkvar <peter@3dgrafiker.se>\n"
+"PO-Revision-Date: 2015-10-14 13:44+0000\n"
+"Last-Translator: Luna <bittin@reimu.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1440683206.0\n"
+"X-POOTLE-MTIME: 1444830288.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapportering"
@@ -119,7 +119,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
 msgid "Jails"
-msgstr ""
+msgstr "Jails"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:252
 msgid "Plugins"
@@ -150,9 +150,8 @@ msgid "no more drives"
 msgstr "inga mer diskar "
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
-#, fuzzy
 msgid "Disk size mismatch"
-msgstr "Koppla ifrån hårddisk"
+msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:520
 msgid ""
@@ -182,7 +181,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Add Volume"
-msgstr ""
+msgstr "Lägg till volym"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Existing data will be cleared"
@@ -325,7 +324,7 @@ msgstr "Denna gruppen finns inte."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Tillbaka"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 msgid "Wizard"
@@ -367,7 +366,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Användarnamn kan inte vara blankt"
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
@@ -381,7 +380,7 @@ msgstr "Manuell uppdatering"
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Kontrollera nu"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
@@ -410,7 +409,7 @@ msgstr "Lösenorden stämmer inte överens."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "Startar om WebGUI"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
@@ -419,7 +418,7 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:1162
 msgid ""
 "<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
-msgstr ""
+msgstr "<font color='red'>STOP</font>: Vet du vad du håller på med?<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1163
 msgid ""
@@ -471,15 +470,15 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentation"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Användarnamn"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "Om du inte har ett konto, snälla"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"
@@ -491,11 +490,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Skicka in"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Fältet är nödvändigt"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
@@ -541,4 +540,14 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
+msgstr "vCenter Tilläggskonfiguration"
+
+#: freeadmin/static/lib/js/freeadmin.js:1343
+msgid "Decreasing WebGUI https security!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1348
+msgid ""
+"<font color='red'>Warning: Selecting this reduces your https security.<br /><"
+"br />"
 msgstr ""
