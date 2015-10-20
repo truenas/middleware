@@ -90,7 +90,7 @@ class VcenterAuxSettings(Model):
 
     vc_enable_https = models.BooleanField(
         default=False,
-        verbose_name=_("Enable Vcenter Plugin over https"),
+        verbose_name=_(" Enable vCenter Plugin over https"),
     )
 
     class Meta:
