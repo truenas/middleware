@@ -20,31 +20,32 @@
         <th>{% trans "Installed Plugin Version:" %}</th>
         <td>{{ form.vcp_version }}</td>
   </tr>
-    
-    
-  {% admin_form form %}
 
-  <tr>
-        <th>{% trans "Enable Vcenter Plugin over https:" %}</th>
-        <td>
-          {{ aux_enable_https }}
-          &nbsp&nbsp
-          <button 
-            id="btn_vcenterauxsettings"
-            data-dojo-type="dijit.form.Button"
-            type="button">
-              {% trans "Edit" %}
-              <script
-                type="dojo/method"
-                data-dojo-event="onClick"
-                data-dojo-args="evt">
-                  editObject('{% trans "Edit vCenter Auxiliary Settings"|force_escape|force_escape %}',
-                    '{% url "vcp_vcenterauxsettings" %}', [this,]);
-              </script>
-          </button>
-        </td>
-  </tr>
+{% admin_form form %}
+    {% if  form.is_https %}
+      <tr>
+            <th>{% trans "Enable vCenter Plugin over https:" %}</th>
+            <td>
+              {{ aux_enable_https }}
+              &nbsp&nbsp
+              <button 
+                id="btn_vcenterauxsettings"
+                data-dojo-type="dijit.form.Button"
+                type="button">
+                  {% trans "Edit" %}
+                  <script
+                    type="dojo/method"
+                    data-dojo-event="onClick"
+                    data-dojo-args="evt">
+                      editObject('{% trans "Edit vCenter Auxiliary Settings"|force_escape|force_escape %}',
+                        '{% url "vcp_vcenterauxsettings" %}', [this,]);
+                  </script>
+              </button>
+            </td>
+      </tr>
+      {% endif %}
 {% endblock %}
+  
 {% block buttons %}
 <button id="btn_vcenterconfiguration_Ok" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'"  class="submitform">
     {% block oklabel %}{% trans "Install" %}{% endblock %}
