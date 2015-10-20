@@ -309,7 +309,7 @@ class NT4Form(ModelForm):
 class ActiveDirectoryForm(ModelForm):
 
     advanced_fields = [
-        'ad_netbiosname',
+        'ad_netbiosname_a',
         'ad_netbiosname_b',
         'ad_ssl',
         'ad_certificate',
@@ -340,7 +340,7 @@ class ActiveDirectoryForm(ModelForm):
     def __original_save(self):
         for name in (
             'ad_domainname',
-            'ad_netbiosname',
+            'ad_netbiosname_a',
             'ad_netbiosname_b',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
@@ -358,7 +358,7 @@ class ActiveDirectoryForm(ModelForm):
     def __original_changed(self):
         if self.instance._original_ad_domainname != self.instance.ad_domainname:
             return True
-        if self.instance._original_ad_netbiosname != self.instance.ad_netbiosname:
+        if self.instance._original_ad_netbiosname_a != self.instance.ad_netbiosname_a:
             return True
         if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
             return True
@@ -391,7 +391,7 @@ class ActiveDirectoryForm(ModelForm):
             from freenasUI.failover.utils import node_label_field
             node_label_field(
                 notifier().failover_node(),
-                self.fields['ad_netbiosname'],
+                self.fields['ad_netbiosname_a'],
                 self.fields['ad_netbiosname_b'],
             )
 
@@ -459,8 +459,8 @@ class ActiveDirectoryForm(ModelForm):
 
         return self.cleaned_data.get('ad_gcname')
 
-    def clean_ad_netbiosname(self):
-        netbiosname = self.cleaned_data.get("ad_netbiosname")
+    def clean_ad_netbiosname_a(self):
+        netbiosname = self.cleaned_data.get("ad_netbiosname_a")
         try:
             validate_netbios_names(netbiosname)
         except Exception as e:
@@ -468,7 +468,7 @@ class ActiveDirectoryForm(ModelForm):
         return netbiosname
 
     def clean_ad_netbiosname_b(self):
-        netbiosname_a = self.cleaned_data.get("ad_netbiosname")
+        netbiosname_a = self.cleaned_data.get("ad_netbiosname_a")
         netbiosname = self.cleaned_data.get("ad_netbiosname_b")
         if not netbiosname:
             return netbiosname
@@ -488,7 +488,7 @@ class ActiveDirectoryForm(ModelForm):
         bindname = cdata.get("ad_bindname")
         bindpw = cdata.get("ad_bindpw")
         site = cdata.get("ad_site")
-        netbiosname = cdata.get("ad_netbiosname")
+        netbiosname = cdata.get("ad_netbiosname_a")
         netbiosname_b = cdata.get("ad_netbiosname_b")
         ssl = cdata.get("ad_ssl")
         certificate = cdata["ad_certificate"]
