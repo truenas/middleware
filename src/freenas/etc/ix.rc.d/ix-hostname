@@ -43,7 +43,7 @@ generate_hostname()
 		if [ "$(ha_node)" = "B" ]; then
 			netbiosname_field="ad_netbiosname_b"
 		else
-			netbiosname_field="ad_netbiosname"
+			netbiosname_field="ad_netbiosname_a"
 		fi
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
