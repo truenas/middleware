@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-09-16 08:50+0000\n"
+"PO-Revision-Date: 2015-10-19 14:24+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1442393456.0\n"
+"X-POOTLE-MTIME: 1445264643.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12827,14 +12827,12 @@ msgid "iSCSI Group"
 msgstr "iSCSI-groep"
 
 #: templates/vcp/index.html:6
-#, fuzzy
 msgid "Plugin Name:"
-msgstr "Naam van plug-in"
+msgstr "Naam van plug-in:"
 
 #: templates/vcp/index.html:10
-#, fuzzy
 msgid "Available Plugin Version:"
-msgstr "Beschikbare plug-ins"
+msgstr "Versie van beschikbare plug-in:"
 
 #: templates/vcp/index.html:20
 msgid "Installed Plugin Version:"
@@ -12855,7 +12853,7 @@ msgstr "vCenter"
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
-msgstr ""
+msgstr " IP-adres voor TrueNAS-beheer"
 
 #: vcp/models.py:49
 #, fuzzy
@@ -12926,14 +12924,12 @@ msgid "vCenter Port"
 msgstr "vCenter-poort"
 
 #: vcp/models.py:61
-#, fuzzy
 msgid "vCenter User name"
-msgstr "Gebruikersnaam"
+msgstr "vCenter-gebruikersnaam"
 
 #: vcp/models.py:67
-#, fuzzy
 msgid "vCenter Password"
-msgstr "Wachtwoord Wijzigen"
+msgstr "vCenter-wachtwoord"
 
 #: vcp/models.py:77
 msgid "vCenter Configuration"
@@ -12954,36 +12950,58 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:910
-#, fuzzy
 msgid "Delete stale snapshots on remote system"
-msgstr "Laatste momentopname verzonden naar extern systeem"
+msgstr "Verouderde momentopnamen op extern systeem verwijderen"
 
 #: vcp/views.py:83
-#, fuzzy
 msgid "Upgrade is not required"
-msgstr "Een bestand is vereist"
+msgstr "Upgrade is niet vereist"
 
 #: vcp/views.py:126
-#, fuzzy
 msgid "vCenter plugin is repaired successfully"
-msgstr "vCenter-plug-in met succes geïnstalleerd."
+msgstr "vCenter-plug-in is met succes gerepareerd"
 
 #: vcp/models.py:61
-#, fuzzy
 msgid "An integer from 1 - 65535, generally will be 443"
-msgstr "Een geheel getal van 1-65535, over het algemeen 25, 465 of 587"
+msgstr "Een geheel getal van 1-65535, over het algemeen 443"
 
 #: vcp/models.py:66
-#, fuzzy
 msgid " vCenter Username"
-msgstr "Gebruikersnaam"
+msgstr " vCenter-gebruikersnaam"
 
 #: vcp/models.py:76
-#, fuzzy
 msgid " version"
-msgstr "versie"
+msgstr " versie"
 
 #: vcp/views.py:80
-#, fuzzy
 msgid "There are No updates available at this time."
-msgstr "Geen updates beschikbaar"
+msgstr "Er zijn op dit moment geen updates beschikbaar."
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+"Noot: bewerken van dit veld zal automatisch uw WebGUI herstarten om de "
+"nodige wijzigingen van kracht te laten worden."
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr "vCenter-plug-in over https inschakelen:"
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr "vCenter-hulpinstellingen bewerken"
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr "vCenter-plug-in over https inschakelen"
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr "vCenter-hulpinstellingen"
+
+#: vcp/views.py:98
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "vCenter-hulpinstellingen met succes bewerkt."

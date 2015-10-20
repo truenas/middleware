@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-08-27 13:46+0000\n"
-"Last-Translator: pkvar <peter@3dgrafiker.se>\n"
+"PO-Revision-Date: 2015-10-14 13:44+0000\n"
+"Last-Translator: Luna <bittin@reimu.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1440683206.0\n"
+"X-POOTLE-MTIME: 1444830288.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -814,7 +814,7 @@ msgstr "Den här servicen kunde inte starta om."
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s har tagits bort."
+msgstr "LDAP-tjänsten kunde inte startas om."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -6484,11 +6484,11 @@ msgstr "SMB_02"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (bäst komprimering)                "
 
 #: choices.py:675
 msgid "Verbose"
-msgstr ""
+msgstr "Detaljerad"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -6509,11 +6509,11 @@ msgstr ""
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "ctrl+!data                                "
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "auth+!data"
 
 #: account/forms.py:58
 #, fuzzy
@@ -7460,7 +7460,7 @@ msgstr ""
 
 #: choices.py:672
 msgid "Fatal"
-msgstr ""
+msgstr "Allvarligt                "
 
 #: choices.py:677
 #, fuzzy
@@ -7474,15 +7474,13 @@ msgstr "Felsök"
 
 #: choices.py:685
 msgid "Auth"
-msgstr ""
+msgstr "Behörighet                "
 
 #: choices.py:688
-#, fuzzy
 msgid "Local 2"
 msgstr "Lokal användare"
 
 #: choices.py:691
-#, fuzzy
 msgid "Local 5"
 msgstr "Lokal användare"
 
@@ -7493,7 +7491,7 @@ msgstr "Nätverkskort"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "ctrl+data                "
 
 #: account/forms.py:53
 #, fuzzy
@@ -7501,9 +7499,8 @@ msgid "New Password"
 msgstr "Nytt lösenord"
 
 #: account/forms.py:66
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "Hemlighet matchar inte"
+msgstr "Lösenorden matchar inte"
 
 #: account/forms.py:398
 #, fuzzy
@@ -7532,21 +7529,18 @@ msgid "Mount failed (%(retcode)s) -> %(output)s"
 msgstr ""
 
 #: freeadmin/forms.py:220
-#, fuzzy
 msgid "A file is required"
 msgstr "Detta fält är obligatoriskt"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
-#, fuzzy
 msgid "Invalid address: %s"
-msgstr "Ogiltig firmware"
+msgstr "Ogiltig adress: %s"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "Ogiltig kontrollsumma"
+msgstr "Ogiltigt nätverk: %s"
 
 #: freeadmin/navtree.py:576
 #, fuzzy
@@ -8466,37 +8460,30 @@ msgid "SMB3_00"
 msgstr ""
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (snabbast)"
+msgstr "lz4 (snabbast)                "
 
 #: choices.py:686
-#, fuzzy
 msgid "Local 0"
 msgstr "Lokal användare"
 
 #: choices.py:687
-#, fuzzy
 msgid "Local 1"
 msgstr "Lokal användare"
 
 #: choices.py:689
-#, fuzzy
 msgid "Local 3"
 msgstr "Lokal användare"
 
 #: choices.py:690
-#, fuzzy
 msgid "Local 4"
 msgstr "Lokal användare"
 
 #: choices.py:692
-#, fuzzy
 msgid "Local 6"
 msgstr "Lokal användare"
 
 #: choices.py:693
-#, fuzzy
 msgid "Local 7"
 msgstr "Lokal användare"
 
@@ -8510,11 +8497,11 @@ msgstr ""
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "autentisering+data                "
 
 #: account/forms.py:534
 #, fuzzy
@@ -9452,7 +9439,6 @@ msgid "NT4 failed to reload."
 msgstr "AFP-tjänsten kunde inte startas om."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
 msgstr "Active Directory-tjänsten kunde inte startas om."
 
@@ -9598,7 +9584,7 @@ msgstr ""
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "checksumma"
 
 #: choices.py:790
 msgid "ldap"
@@ -10175,14 +10161,12 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
 msgstr "Grundläggande behörighetskontroll"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Autentisering"
+msgstr "Sammanfattad behörighetskontroll                "
 
 #: choices.py:799
 msgid "adex"
@@ -10190,11 +10174,11 @@ msgstr ""
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Importera befintligt auktoritets certifikat (CA)                "
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Skapa ett internt auktoritets certifikat (CA)                "
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
@@ -10202,7 +10186,7 @@ msgstr ""
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Importera ett befintligt certifikat"
 
 #: choices.py:818
 #, fuzzy
@@ -10240,15 +10224,15 @@ msgstr ""
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -11513,7 +11497,6 @@ msgstr "Systemtid"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
 msgstr "%(vecka)s vecka"
 
@@ -11561,7 +11544,7 @@ msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "Känslig"
 
 #: choices.py:812
 msgid "Insensitive"
@@ -11569,7 +11552,7 @@ msgstr ""
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Blandat"
 
 #: account/models.py:160
 #, fuzzy
@@ -12763,3 +12746,31 @@ msgstr "Version"
 #, fuzzy
 msgid "There are No updates available at this time."
 msgstr "Ingen ZFS replikering tillgänglig"
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "Dataset har redigerats korrekt."

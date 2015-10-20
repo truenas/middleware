@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-09-09 09:13+0000\n"
+"PO-Revision-Date: 2015-10-19 08:48+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441790019.0\n"
+"X-POOTLE-MTIME: 1445244488.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -560,3 +560,15 @@ msgstr "Ожидающие обновления"
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
 msgstr "Настройка плагина vCenter"
+
+#: freeadmin/static/lib/js/freeadmin.js:1343
+msgid "Decreasing WebGUI https security!"
+msgstr "Уменьшение безопасности WebGUI HTTPS!"
+
+#: freeadmin/static/lib/js/freeadmin.js:1348
+msgid ""
+"<font color='red'>Warning: Selecting this reduces your https security.<br /><"
+"br />"
+msgstr ""
+"<font color='red'>Внимание: Выбор этого снижает безопасность HTTPS.<br /><br "
+"/>"

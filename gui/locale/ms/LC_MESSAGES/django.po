@@ -12375,3 +12375,31 @@ msgstr "Kebenaran Fail"
 #: vcp/views.py:80
 msgid "There are No updates available at this time."
 msgstr ""
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "% berjaya dinaiktaraf"
