@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import update_wrapper
 
 import hashlib
@@ -275,8 +276,11 @@ class FreeAdminSite(object):
     @never_cache
     def alert_detail(self, request):
         from freenasUI.middleware.connector import connection as dispatcher
+        alerts = dispatcher.call_sync('alerts.query')
+        for alert in alerts:
+            alert['when'] = datetime.strptime(alert['when'], "%Y-%m-%dT%H:%M:%S.%f")
         return render(request, "freeadmin/alert_status.html", {
-            'alerts': dispatcher.call_sync('alerts.query'),
+            'alerts': alerts,
         })
 
     @never_cache
