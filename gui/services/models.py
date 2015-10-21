@@ -935,42 +935,32 @@ class iSCSITargetPortalIP(NewModel):
         )
 
 
-class iSCSITargetAuthorizedInitiator(NewModel):
+class iSCSITargetAuthGroup(NewModel):
     id = models.CharField(
         max_length=120,
-        primary_key=True
+        primary_key=True,
+        editable=False,
     )
-
-    iscsi_target_initiator_name = models.CharField(
+    iscsi_target_authgroup_descr = models.CharField(
         max_length=120,
         unique=True,
-        verbose_name=_("Group name"),
+        verbose_name=_("Description"),
     )
-
-    iscsi_target_initiator_initiators = models.TextField(
-        max_length=2048,
-        verbose_name=_("Initiators"),
-        default="ALL",
-        help_text=_("Initiator authorized to access to the iSCSI target. "
-                    "It takes a name or 'ALL' for any initiators."),
-    )
-    iscsi_target_initiator_auth_network = models.TextField(
-        max_length=2048,
-        verbose_name=_("Authorized network"),
-        default="ALL",
-        help_text=_("Network authorized to access to the iSCSI target. "
-                    "It takes IP or CIDR addresses or 'ALL' for any IPs."),
-    )
-    iscsi_target_initiator_comment = models.CharField(
+    iscsi_target_authgroup_type = models.CharField(
         max_length=120,
-        blank=True,
-        verbose_name=_("Comment"),
-        help_text=_("You may enter a description here for your reference."),
+        unique=True,
+        verbose_name=_("Type"),
+        choices=(
+            ('NONE', _('None')),
+            ('DENY', _('Deny')),
+            ('CHAP', _('CHAP')),
+            ('CHAP_MUTUAL', _('CHAP Mutual')),
+        ),
     )
 
     class Meta:
-        verbose_name = _("Initiator")
-        verbose_name_plural = _("Initiators")
+        verbose_name = _("Auth Group")
+        verbose_name_plural = _("Auth Group")
 
     class Middleware:
         middleware_methods = {
@@ -1000,16 +990,6 @@ class iSCSITargetAuthorizedInitiator(NewModel):
                 )
         else:
             return unicode(self.iscsi_target_initiator_tag)
-
-    def delete(self):
-        super(iSCSITargetAuthorizedInitiator, self).delete()
-        portals = iSCSITargetAuthorizedInitiator.objects.all().order_by(
-            'iscsi_target_initiator_tag')
-        idx = 1
-        for portal in portals:
-            portal.iscsi_target_initiator_tag = idx
-            portal.save()
-            idx += 1
 
 
 class iSCSITargetAuthCredential(NewModel):
@@ -1160,34 +1140,13 @@ class iSCSITargetGroups(NewModel):
         iSCSITargetPortal,
         verbose_name=_("Portal Group ID"),
     )
-    iscsi_target_initiatorgroup = models.ForeignKey(
-        iSCSITargetAuthorizedInitiator,
+    iscsi_target_authgroup = models.ForeignKey(
+        iSCSITargetAuthGroup,
         verbose_name=_("Initiator Group ID"),
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
     )
-    iscsi_target_authtype = models.CharField(
-        max_length=120,
-        choices=choices.AUTHMETHOD_CHOICES,
-        default="None",
-        verbose_name=_("Auth Method"),
-        help_text=_("The authentication method accepted by the target."),
-    )
-    iscsi_target_authgroup = models.IntegerField(
-        max_length=120,
-        verbose_name=_("Authentication Group ID"),
-        null=True,
-        blank=True,
-    )
-    iscsi_target_initialdigest = models.CharField(
-        max_length=120,
-        default="Auto",
-        verbose_name=_("Auth Method"),
-        help_text=_("The method can be accepted by the target. Auto means "
-                    "both none and authentication."),
-    )
-
     def __unicode__(self):
         return 'iSCSI Target Group (%s,%d)' % (
             self.iscsi_target,

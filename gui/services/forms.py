@@ -1307,14 +1307,11 @@ class iSCSITargetPortalIPForm(ModelForm):
         return self.cleaned_data
 
 
-class iSCSITargetAuthorizedInitiatorForm(ModelForm):
+class iSCSITargetAuthGroupForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        model = models.iSCSITargetAuthorizedInitiator
-        exclude = (
-            'iscsi_target_initiator_tag',
-        )
+        model = models.iSCSITargetAuthGroup
 
     def clean_iscsi_target_initiator_auth_network(self):
         field = self.cleaned_data.get(
@@ -1340,24 +1337,8 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
         return '\n'.join(nets)
 
     def save(self):
-        o = super(iSCSITargetAuthorizedInitiatorForm, self).save(commit=False)
-        i = models.iSCSITargetAuthorizedInitiator.objects.all().count() + 1
-        while True:
-            qs = models.iSCSITargetAuthorizedInitiator.objects.filter(
-                iscsi_target_initiator_tag=i
-            )
-            if not qs.exists():
-                break
-            i += 1
-        o.iscsi_target_initiator_tag = i
-        o.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(
-            srv_service='iscsitarget'
-        ).srv_enable:
-            raise ServiceFailed(
-                "iscsitarget", _("The iSCSI service failed to reload.")
-            )
+        o = super(iSCSITargetAuthGroupForm, self).save(commit=False)
+        #o.save()
 
 
 class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):

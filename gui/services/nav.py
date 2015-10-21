@@ -46,30 +46,17 @@ class CIFSView(TreeNode):
     icon = u'CIFSIcon'
 
 
-class ISCSITargetAuthorizedInitiator(TreeNode, ISCSINameMixin):
+class ISCSITargetAuthGroup(TreeNode, ISCSINameMixin):
 
-    gname = 'iSCSITargetAuthorizedInitiator'
+    gname = 'iSCSITargetAuthGroup'
     append_to = 'sharing.ISCSI'
 
 
-class ISCSITargetAuthorizedInitiatorView(TreeNode):
+class ISCSITargetAuthGroupView(TreeNode):
 
     gname = 'View'
     type = u'iscsi'
-    append_to = 'sharing.ISCSI.iSCSITargetAuthorizedInitiator'
-
-
-class ISCSITargetAuthCredential(TreeNode, ISCSINameMixin):
-
-    gname = 'iSCSITargetAuthCredential'
-    append_to = 'sharing.ISCSI'
-
-
-class ISCSITargetAuthCredentialView(TreeNode):
-
-    gname = 'View'
-    type = u'iscsi'
-    append_to = 'sharing.ISCSI.iSCSITargetAuthCredential'
+    append_to = 'sharing.ISCSI.iSCSITargetAuthGroup'
 
 
 class ISCSITargetPortal(TreeNode, ISCSINameMixin):
