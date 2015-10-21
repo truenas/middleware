@@ -1002,13 +1002,7 @@ class iSCSITargetAuthGroup(NewModel):
             )
 
     def __unicode__(self):
-        if self.iscsi_target_initiator_comment != "":
-            return u"%s (%s)" % (
-                self.iscsi_target_initiator_tag,
-                self.iscsi_target_initiator_comment,
-                )
-        else:
-            return unicode(self.iscsi_target_initiator_tag)
+        return self.iscsi_target_authgroup_name
 
 
 class iSCSITarget(NewModel):
