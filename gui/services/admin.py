@@ -278,24 +278,6 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
         return render(request, 'services/iscsitargetauthgroup.html', context)
 
 
-class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
-
-    menu_child_of = "sharing.ISCSI"
-    icon_object = u"AuthorizedAccessIcon"
-    icon_model = u"AuthorizedAccessIcon"
-    icon_add = u"AddAuthorizedAccessIcon"
-    icon_view = u"ViewAllAuthorizedAccessIcon"
-
-    exclude_fields = (
-        'id',
-        'iscsi_target_auth_secret',
-        'iscsi_target_auth_peersecret',
-    )
-    nav_extra = {'order': 5}
-
-    resource_name = 'services/iscsi/authcredential'
-
-
 class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
 
     menu_child_of = "sharing.ISCSI"
@@ -341,7 +323,6 @@ site.register(models.iSCSITarget, ISCSITargetFAdmin)
 site.register(models.iSCSITargetGroups, ISCSITargetGroupsFAdmin)
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
 site.register(models.iSCSITargetAuthGroup, ISCSIAuthGroupFAdmin)
-site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
 site.register(models.iSCSITargetToExtent, ISCSITargetToExtentFAdmin)
 site.register(models.iSCSITargetExtent, ISCSITargetExtentFAdmin)
 site.register(models.NFS, NFSFAdmin)
