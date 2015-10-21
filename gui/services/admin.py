@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, render
 from django.utils.translation import ugettext as _
 
 from dojango.forms.formsets import formset_factory
@@ -12,6 +13,8 @@ from freenasUI.api.resources import (
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
+from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.forms import iSCSITargetAuthGroupUserForm
 from freenasUI.services import models
 
@@ -141,11 +144,13 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
 
     def empty_formset_user(self, request):
         UserFormset = formset_factory(iSCSITargetAuthGroupUserForm)
-        return HttpResponse(UserFormset().empty_form.as_table())
+        return HttpResponse('''<div data-dojo-type="dijit.layout.ContentPane" id="formset-form-__prefix__">
+    <td colspan="2">
+        <table>''' + UserFormset().empty_form.as_table() + '''</table>
+    </td>
+</tr>''')
 
     def add(self, request, mf=None):
-        from django.shortcuts import render
-        from freenasUI.freeadmin.views import JsonResp
         from freenasUI.middleware.connector import connection as dispatcher
         m = self._model
         app = self._model._meta.app_label
@@ -166,11 +171,21 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
             if mf.is_valid() and formset_user.is_valid():
                 authg = mf.save()
 
-                #result = dispatcher.call_task_sync('share.iscsi.auth.update', authg.id, {
-                #})
+                def convert_user(user):
+                    return {
+                        'name': user['iscsi_target_auth_user'],
+                        'secret': user['iscsi_target_auth_secret'],
+                        'peer_name': user['iscsi_target_auth_peeruser'] if user.get('iscsi_target_auth_peeruser') else None,
+                        'peer_secret': user['iscsi_target_auth_peersecret'] if user.get('iscsi_target_auth_peersecret') else None,
+                    }
 
-                #if result['state'] != 'FINISHED':
-                #    raise MiddlewareError(result['error']['message'])
+                users = map(convert_user, formset_user.cleaned_data)
+                result = dispatcher.call_task_sync('share.iscsi.auth.update', authg.id, {
+                    'users': users,
+                })
+
+                if result['state'] != 'FINISHED':
+                    raise MiddlewareError(result['error']['message'])
 
                 return JsonResp(
                     request,
@@ -179,7 +194,9 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
                 )
             else:
                 return JsonResp(request, form=mf, formsets={
-                    'formset_user': formset_user,
+                    'formset_user': {
+                        'instance': formset_user,
+                    },
                 })
         else:
             mf = mf()
@@ -189,7 +206,76 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
             'form': mf,
             'formset_user': formset_user,
         })
-        return render(request, 'services/iscsitargetauthgroup_add.html', context)
+        return render(request, 'services/iscsitargetauthgroup.html', context)
+
+    def edit(self, request, oid, mf=None):
+        from freenasUI.middleware.connector import connection as dispatcher
+        m = self._model
+        app = self._model._meta.app_label
+        context = {
+            'app': app,
+            'model': m,
+            'modeladmin': m._admin,
+            'mf': mf,
+            'verbose_name': m._meta.verbose_name,
+            'extra_js': m._admin.extra_js,
+        }
+        mf = self._get_modelform('edit')
+        instance = get_object_or_404(m, pk=oid)
+        UserFormset = formset_factory(iSCSITargetAuthGroupUserForm, extra=0)
+
+        if request.method == "POST":
+            mf = mf(request.POST, instance=instance)
+            formset_user = UserFormset(request.POST)
+            if mf.is_valid() and formset_user.is_valid():
+                authg = mf.save()
+
+                def convert_user(user):
+                    return {
+                        'name': user['iscsi_target_auth_user'],
+                        'secret': user['iscsi_target_auth_secret'],
+                        'peer_name': user['iscsi_target_auth_peeruser'] if user.get('iscsi_target_auth_peeruser') else None,
+                        'peer_secret': user['iscsi_target_auth_peersecret'] if user.get('iscsi_target_auth_peersecret') else None,
+                    }
+
+                users = map(convert_user, formset_user.cleaned_data)
+                result = dispatcher.call_task_sync('share.iscsi.auth.update', authg.id, {
+                    'users': users,
+                })
+
+                if result['state'] != 'FINISHED':
+                    raise MiddlewareError(result['error']['message'])
+
+                return JsonResp(
+                    request,
+                    form=mf,
+                    message=_('Auth Group successfully added'),
+                )
+            else:
+                return JsonResp(request, form=mf, formsets={
+                    'formset_user': {
+                        'instance': formset_user,
+                    },
+                })
+        else:
+            def user_convert(user):
+                return {
+                    'iscsi_target_auth_user': user['name'],
+                    'iscsi_target_auth_secret': user['secret'],
+                    'iscsi_target_auth_peeruser': user.get('peer_name'),
+                    'iscsi_target_auth_peersecret': user.get('peer_secret'),
+                }
+
+            user_initial = map(user_convert, instance._object.get('users') or [])
+
+            mf = mf(instance=instance)
+            formset_user = UserFormset(initial=user_initial)
+
+        context.update({
+            'form': mf,
+            'formset_user': formset_user,
+        })
+        return render(request, 'services/iscsitargetauthgroup.html', context)
 
 
 class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
