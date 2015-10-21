@@ -10,7 +10,7 @@
 
 generate_krb5_conf()
 {
-	/usr/local/libexec/nas/generate_krb5_conf.py
+	/usr/local/libexec/nas/generate_krb5_conf.py $*
 }
 
 generate_krb5_keytab()
@@ -38,13 +38,13 @@ generate_kerberos_files()
 {
 	rm -f /etc/krb5.keytab
 
-	generate_krb5_conf
+	generate_krb5_conf $*
 	generate_krb5_keytab
 }
 
 name="ix-kerberos"
 start_cmd='generate_kerberos_files'
 stop_cmd=':'
-        
+
 load_rc_config $name
-run_rc_command "$1"
+run_rc_command $*
