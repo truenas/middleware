@@ -334,7 +334,7 @@ Hello,
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
     else:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
-    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
     output, error = sshproc.communicate()
     if output != '':
         snaplist = output.split('\n')
