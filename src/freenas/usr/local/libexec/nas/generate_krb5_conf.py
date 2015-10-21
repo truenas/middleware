@@ -257,6 +257,13 @@ class KerberosConfig(object):
            ) 
        )
 
+       if self.default_realm:
+           libdefaults_bindings.append(
+               KerberosConfigBinding(
+                   name='default_realm', value=self.default_realm
+               ) 
+           )
+
        self.parse(libdefaults_bindings, self.libdefaults_aux)
 
        sections.append(
@@ -312,6 +319,7 @@ class KerberosConfig(object):
 
         self.appdefaults_aux = None
         self.libdefaults_aux = None
+        self.default_realm = None
 
         if 'settings' in kwargs:
             settings = kwargs['settings']
@@ -319,7 +327,9 @@ class KerberosConfig(object):
                 self.appdefaults_aux = settings.ks_appdefaults_aux 
             if settings and settings.ks_libdefaults_aux:
                 self.libdefaults_aux = settings.ks_libdefaults_aux
-            
+
+        if 'default_realm' in kwargs:
+            self.default_realm = kwargs['default_realm']
 
     def get_section(self, section_name):
         if not section_name:
@@ -462,7 +472,11 @@ def main():
     except:
         settings = None
 
-    kc = KerberosConfig(settings=settings)
+    default_realm = None
+    if len(sys.argv) == 3 and sys.argv[1].lower() == 'default':
+        default_realm = sys.argv[2].upper()
+
+    kc = KerberosConfig(settings=settings, default_realm=default_realm)
     kc.create_default_config()
 
     ad = ldap = None
