@@ -251,6 +251,24 @@ class BaseFreeAdmin(object):
     def get_extra_context(self, action):
         return {}
 
+    def _get_modelform(self, action):
+        from freenasUI.freeadmin.navtree import navtree
+        m = self._model
+        if not isinstance(navtree._modelforms[m], dict):
+            mf = navtree._modelforms[m]
+        else:
+            if mf is None:
+                try:
+                    mf = navtree._modelforms[m][getattr(m._admin, action + '_modelform')]
+                except:
+                    try:
+                        mf = navtree._modelforms[m][m._admin.edit_modelform]
+                    except:
+                        mf = navtree._modelforms[m].values()[-1]
+            else:
+                mf = navtree._modelforms[m][mf]
+        return mf
+
     def add(self, request, mf=None):
         """
         Magic happens here
@@ -261,7 +279,6 @@ class BaseFreeAdmin(object):
         From there we retrieve the ModelForm associated (which was discovered
         previously on the auto_generate process)
         """
-        from freenasUI.freeadmin.navtree import navtree
         from freenasUI.freeadmin.views import JsonResp
 
         m = self._model
@@ -275,19 +292,7 @@ class BaseFreeAdmin(object):
             'extra_js': m._admin.extra_js,
         }
 
-        if not isinstance(navtree._modelforms[m], dict):
-            mf = navtree._modelforms[m]
-        else:
-            if mf is None:
-                try:
-                    mf = navtree._modelforms[m][m._admin.create_modelform]
-                except:
-                    try:
-                        mf = navtree._modelforms[m][m._admin.edit_modelform]
-                    except:
-                        mf = navtree._modelforms[m].values()[-1]
-            else:
-                mf = navtree._modelforms[m][mf]
+        mf = self._get_modelform('create')
 
         instance = m()
         formsets = {}
@@ -465,8 +470,6 @@ class BaseFreeAdmin(object):
         return render(request, template, context)
 
     def edit(self, request, oid, mf=None):
-
-        from freenasUI.freeadmin.navtree import navtree
         from freenasUI.freeadmin.views import JsonResp
         m = self._model
 
@@ -491,16 +494,7 @@ class BaseFreeAdmin(object):
             context.update({'deletable': False})
 
         instance = get_object_or_404(m, pk=oid)
-        if not isinstance(navtree._modelforms[m], dict):
-            mf = navtree._modelforms[m]
-        else:
-            if mf is None:
-                try:
-                    mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
-                except:
-                    mf = navtree._modelforms[m].values()[-1]
-            else:
-                mf = navtree._modelforms[m][mf]
+        mf = self._get_modelform('edit')
 
         formsets = {}
         if request.method == "POST":
