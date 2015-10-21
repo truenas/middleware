@@ -966,42 +966,24 @@ class iSCSITargetExtentForm(ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        from freenasUI.middleware.connector import connection as dispatcher
+
         super(iSCSITargetExtentForm, self).__init__(*args, **kwargs)
         self.fields.keyOrder.remove('iscsi_target_extent_type')
         self.fields.keyOrder.insert(1, 'iscsi_target_extent_type')
 
         if self.instance.id:
 
-            if self.instance.iscsi_target_extent_type == 'File':
-                self.fields['iscsi_target_extent_type'].initial = 'File'
-            else:
+            if self.instance.iscsi_target_extent_path.startswith('/dev'):
                 self.fields['iscsi_target_extent_type'].initial = 'Disk'
-            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
-            if self.instance.iscsi_target_extent_type in ('ZVOL', 'HAST'):
-                self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
             else:
-                self.fields['iscsi_target_extent_disk'].initial = self.instance.get_device()[5:]
+                self.fields['iscsi_target_extent_type'].initial = 'File'
+            self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices(exclude=self.instance)
+            self.fields['iscsi_target_extent_disk'].initial = self.instance.iscsi_target_extent_path
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         else:
-
-            try:
-                nic = list(choices.NICChoices(nolagg=True,
-                                              novlan=True,
-                                              exclude_configured=False))[0][0]
-                mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                                       "awk '{print $2}'|tr -d :" % (nic, ),
-                                       shell=True,
-                                       stdout=subprocess.PIPE).communicate()[0]
-                ltg = models.iSCSITargetExtent.objects.order_by('-id')
-                if ltg.count() > 0:
-                    lid = ltg[0].id
-                else:
-                    lid = 0
-                self.fields['iscsi_target_extent_serial'].initial = mac.strip() + "%.2d" % lid
-            except:
-                self.fields['iscsi_target_extent_serial'].initial = "10000001"
-
+            self.fields['iscsi_target_extent_serial'].initial = dispatcher.call_sync('shares.iscsi.generate_serial')
             self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
         self.fields['iscsi_target_extent_path'].required = False

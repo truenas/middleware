@@ -612,7 +612,7 @@ class NFS(NewModel):
         return True
 
 
-class iSCSITargetGlobalConfiguration(Model):
+class iSCSITargetGlobalConfiguration(NewModel):
     iscsi_basename = models.CharField(
         max_length=120,
         verbose_name=_("Base Name"),
@@ -637,9 +637,40 @@ class iSCSITargetGlobalConfiguration(Model):
         ),
     )
 
+    objects = NewManager(qs_class=ConfigQuerySet)
+
     class Meta:
         verbose_name = _(u"Target Global Configuration")
         verbose_name_plural = _(u"Target Global Configuration")
+
+    class Middleware:
+        configstore = True
+        field_mapping = (
+            ('iscsi_basename', 'base_name'),
+            ('iscsi_isns_servers', 'isns_servers'),
+            ('iscsi_pool_avail_threshold', 'pool_space_threshold'),
+        )
+
+    @classmethod
+    def _load(cls):
+        from freenasUI.middleware.connector import connection as dispatcher
+        config = dispatcher.call_sync('service.iscsi.get_config')
+        return cls(**dict(
+            id=1,
+            iscsi_basename=config['base_name'],
+            iscsi_isns_servers=' '.join(config['isns_servers']),
+            iscsi_pool_avail_threshold=config['pool_space_threshold']
+        ))
+
+    def _save(self, *args, **kwargs):
+        data = {
+            'base_name': self.iscsi_basename,
+            'isns_servers': self.iscsi_isns_servers.split(),
+            'pool_space_threshold': self.iscsi_pool_avail_threshold
+        }
+        self._save_task_call('service.nfs.configure', data)
+        return True
+
 
     class FreeAdmin:
         deletable = False
@@ -649,7 +680,13 @@ class iSCSITargetGlobalConfiguration(Model):
         resource_name = 'services/iscsi/globalconfiguration'
 
 
-class iSCSITargetExtent(Model):
+class iSCSITargetExtent(NewModel):
+    id = models.CharField(
+        max_length=120,
+        unique=True,
+        primary_key=True
+    )
+
     iscsi_target_extent_name = models.CharField(
         max_length=120,
         unique=True,
@@ -661,11 +698,6 @@ class iSCSITargetExtent(Model):
         max_length=16,
         default="10000001",
         help_text=_("Serial number for the logical unit")
-    )
-    iscsi_target_extent_type = models.CharField(
-        max_length=120,
-        verbose_name=_("Extent Type"),
-        help_text=_("Type used as extent."),
     )
     iscsi_target_extent_path = models.CharField(
         max_length=120,
@@ -752,6 +784,28 @@ class iSCSITargetExtent(Model):
         verbose_name_plural = _("Extents")
         ordering = ["iscsi_target_extent_name"]
 
+    class Middleware:
+        middleware_methods = {
+            'query': 'shares.query',
+            'add': 'share.create',
+            'update': 'share.update',
+            'delete': 'share.delete'
+        }
+        default_filters = [
+            ('type', '=', 'iscsi')
+        ]
+        field_mapping = (
+            (('iscsi_target_extent_name', 'id'), 'id'),
+            ('iscsi_target_extent_path', 'target'),
+            ('iscsi_target_extent_serial', 'properties.serial'),
+            ('iscsi_target_extent_filesize', 'properties.size'),
+            ('iscsi_target_extent_blocksize', 'properties.block_size'),
+            ('iscsi_target_extent_pblocksize', 'properties.physical_block_size'),
+            ('iscsi_target_extent_naa', 'properties.naa'),
+            ('iscsi_target_extent_insecure_tpc', 'properties.tpc'),
+            ('iscsi_target_extent_rpm', 'properties.rpm')
+        )
+
     def __unicode__(self):
         return unicode(self.iscsi_target_extent_name)
 
@@ -794,7 +848,7 @@ class iSCSITargetExtent(Model):
         return super(iSCSITargetExtent, self).save(*args, **kwargs)
 
 
-class iSCSITargetPortal(Model):
+class iSCSITargetPortal(NewModel):
     iscsi_target_portal_tag = models.IntegerField(
         max_length=120,
         default=1,
@@ -823,6 +877,13 @@ class iSCSITargetPortal(Model):
         verbose_name = _("Portal")
         verbose_name_plural = _("Portals")
 
+    class Middleware:
+        field_mapping = (
+            ('iscsi_target_portal_tag', 'tag'),
+            ('iscsi_target_portal_discoveryauthmethod', 'discovery_auth_method'),
+            ('iscsi_target_portal_discoveryauthgroup', 'discovery_auth_group')
+        )
+
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
             return u"%s (%s)" % (
@@ -846,7 +907,7 @@ class iSCSITargetPortal(Model):
                                 _("The iSCSI service failed to reload."))
 
 
-class iSCSITargetPortalIP(Model):
+class iSCSITargetPortalIP(NewModel):
     iscsi_target_portalip_portal = models.ForeignKey(
         iSCSITargetPortal,
         verbose_name=_("Portal"),
@@ -874,12 +935,18 @@ class iSCSITargetPortalIP(Model):
         )
 
 
-class iSCSITargetAuthorizedInitiator(Model):
-    iscsi_target_initiator_tag = models.IntegerField(
-        default=1,
-        unique=True,
-        verbose_name=_("Group ID"),
+class iSCSITargetAuthorizedInitiator(NewModel):
+    id = models.CharField(
+        max_length=120,
+        primary_key=True
     )
+
+    iscsi_target_initiator_name = models.CharField(
+        max_length=120,
+        unique=True,
+        verbose_name=_("Group name"),
+    )
+
     iscsi_target_initiator_initiators = models.TextField(
         max_length=2048,
         verbose_name=_("Initiators"),
@@ -904,6 +971,17 @@ class iSCSITargetAuthorizedInitiator(Model):
     class Meta:
         verbose_name = _("Initiator")
         verbose_name_plural = _("Initiators")
+
+    class Middleware:
+        middleware_methods = {
+            'query': 'shares.iscsi.auth.query',
+            'add': 'share.iscsi.auth.create',
+            'update': 'share.iscsi.auth.update',
+            'delete': 'share.iscsi.auth.delete'
+        }
+        field_mapping = (
+            (('iscsi_target_initiator_name', 'id'), 'id'),
+        )
 
     class FreeAdmin:
         menu_child_of = "sharing.ISCSI"
@@ -934,7 +1012,7 @@ class iSCSITargetAuthorizedInitiator(Model):
             idx += 1
 
 
-class iSCSITargetAuthCredential(Model):
+class iSCSITargetAuthCredential(NewModel):
     iscsi_target_auth_tag = models.IntegerField(
         default=1,
         verbose_name=_("Group ID"),
@@ -966,6 +1044,9 @@ class iSCSITargetAuthCredential(Model):
     class Meta:
         verbose_name = _("Authorized Access")
         verbose_name_plural = _("Authorized Accesses")
+
+    class Middleware:
+        pass
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthCredential, self).__init__(*args, **kwargs)
@@ -1003,7 +1084,13 @@ class iSCSITargetAuthCredential(Model):
         return unicode(self.iscsi_target_auth_tag)
 
 
-class iSCSITarget(Model):
+class iSCSITarget(NewModel):
+    id = models.CharField(
+        unique=True,
+        max_length=120,
+        primary_key=True
+    )
+
     iscsi_target_name = models.CharField(
         unique=True,
         max_length=120,
@@ -1035,6 +1122,18 @@ class iSCSITarget(Model):
         verbose_name_plural = _("Targets")
         ordering = ['iscsi_target_name']
 
+    class Middleware:
+        middleware_methods = {
+            'query': 'shares.iscsi.target.query',
+            'add': 'share.iscsi.target.create',
+            'update': 'share.iscsi.target.update',
+            'delete': 'share.iscsi.target.delete'
+        }
+        field_mapping = (
+            (('iscsi_target_name', 'id'), 'id'),
+            ('iscsi_target_alias', 'description'),
+        )
+
     def __unicode__(self):
         return self.iscsi_target_name
 
@@ -1051,7 +1150,7 @@ class iSCSITarget(Model):
             )
 
 
-class iSCSITargetGroups(Model):
+class iSCSITargetGroups(NewModel):
     iscsi_target = models.ForeignKey(
         iSCSITarget,
         verbose_name=_("Target"),
@@ -1102,8 +1201,11 @@ class iSCSITargetGroups(Model):
             ('iscsi_target', 'iscsi_target_portalgroup'),
         )
 
+    class Middleware:
+        pass
 
-class iSCSITargetToExtent(Model):
+
+class iSCSITargetToExtent(NewModel):
     iscsi_target = models.ForeignKey(
         iSCSITarget,
         verbose_name=_("Target"),
@@ -1126,6 +1228,9 @@ class iSCSITargetToExtent(Model):
             'iscsi_target',
             'iscsi_extent',
         )
+
+    class Middleware:
+        pass
 
     def __unicode__(self):
         return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
