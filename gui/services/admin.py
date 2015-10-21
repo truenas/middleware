@@ -146,6 +146,7 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
     def add(self, request, mf=None):
         from django.shortcuts import render
         from freenasUI.freeadmin.views import JsonResp
+        from freenasUI.middleware.connector import connection as dispatcher
         m = self._model
         app = self._model._meta.app_label
         context = {
@@ -161,12 +162,25 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
 
         if request.method == "POST":
             mf = mf(request.POST)
-            if mf.is_valid():
+            formset_user = UserFormset(request.POST)
+            if mf.is_valid() and formset_user.is_valid():
+                authg = mf.save()
+
+                #result = dispatcher.call_task_sync('share.iscsi.auth.update', authg.id, {
+                #})
+
+                #if result['state'] != 'FINISHED':
+                #    raise MiddlewareError(result['error']['message'])
+
                 return JsonResp(
                     request,
                     form=mf,
                     message=_('Auth Group successfully added'),
                 )
+            else:
+                return JsonResp(request, form=mf, formsets={
+                    'formset_user': formset_user,
+                })
         else:
             mf = mf()
             formset_user = UserFormset()

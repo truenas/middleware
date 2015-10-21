@@ -1338,7 +1338,8 @@ class iSCSITargetAuthGroupForm(ModelForm):
 
     def save(self):
         o = super(iSCSITargetAuthGroupForm, self).save(commit=False)
-        #o.save()
+        o.save()
+        return o
 
 
 class iSCSITargetAuthGroupUserForm(Form):
