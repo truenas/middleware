@@ -1341,6 +1341,32 @@ class iSCSITargetAuthGroupForm(ModelForm):
         #o.save()
 
 
+class iSCSITargetAuthGroupUserForm(Form):
+    iscsi_target_auth_user = forms.CharField(
+        max_length=120,
+        label=_("User"),
+        help_text=_("Target side user name. It is usually the initiator "
+                    "name by default."),
+    )
+    iscsi_target_auth_secret = forms.CharField(
+        max_length=120,
+        label=_("Secret"),
+        help_text=_("Target side secret."),
+    )
+    iscsi_target_auth_peeruser = forms.CharField(
+        max_length=120,
+        required=False,
+        label=_("Peer User"),
+        help_text=_("Initiator side user name."),
+    )
+    iscsi_target_auth_peersecret = forms.CharField(
+        max_length=120,
+        label=_("Peer Secret"),
+        required=False,
+        help_text=_("Initiator side secret. (for mutual CHAP authentication)"),
+    )
+
+
 class iSCSITargetGroupsInlineFormSet(FreeBaseInlineFormSet):
 
     def clean(self):

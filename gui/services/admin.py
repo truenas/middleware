@@ -1,5 +1,8 @@
+from django.conf.urls import patterns, url
+from django.http import HttpResponse
 from django.utils.translation import ugettext as _
 
+from dojango.forms.formsets import formset_factory
 from freenasUI.api.resources import (
     FiberChannelToTargetResourceMixin,
     FTPResourceMixin, ISCSIPortalResourceMixin, ISCSITargetResourceMixin,
@@ -9,6 +12,7 @@ from freenasUI.api.resources import (
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
+from freenasUI.services.forms import iSCSITargetAuthGroupUserForm
 from freenasUI.services import models
 
 
@@ -123,6 +127,56 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
     nav_extra = {'order': 0}
     resource_name = 'services/iscsi/authgroup'
 
+    def get_urls(self):
+        urls = super(ISCSIAuthGroupFAdmin, self).get_urls()
+        urls += patterns(
+            '',
+            url(
+                r'^empty-formset/user/$',
+                self.empty_formset_user,
+                name='freeadmin_services_iscsitargetauthgroup_empty_formset_user',
+            ),
+        )
+        return urls
+
+    def empty_formset_user(self, request):
+        UserFormset = formset_factory(iSCSITargetAuthGroupUserForm)
+        return HttpResponse(UserFormset().empty_form.as_table())
+
+    def add(self, request, mf=None):
+        from django.shortcuts import render
+        from freenasUI.freeadmin.views import JsonResp
+        m = self._model
+        app = self._model._meta.app_label
+        context = {
+            'app': app,
+            'model': m,
+            'modeladmin': m._admin,
+            'mf': mf,
+            'verbose_name': m._meta.verbose_name,
+            'extra_js': m._admin.extra_js,
+        }
+        mf = self._get_modelform('create')
+        UserFormset = formset_factory(iSCSITargetAuthGroupUserForm, extra=1)
+
+        if request.method == "POST":
+            mf = mf(request.POST)
+            if mf.is_valid():
+                return JsonResp(
+                    request,
+                    form=mf,
+                    message=_('Auth Group successfully added'),
+                )
+        else:
+            mf = mf()
+            formset_user = UserFormset()
+
+        context.update({
+            'form': mf,
+            'formset_user': formset_user,
+        })
+        return render(request, 'services/iscsitargetauthgroup_add.html', context)
+
 
 class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
 
@@ -136,7 +190,7 @@ class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
         'id',
         'iscsi_target_auth_secret',
         'iscsi_target_auth_peersecret',
-        )
+    )
     nav_extra = {'order': 5}
 
     resource_name = 'services/iscsi/authcredential'
