@@ -1313,15 +1313,13 @@ class iSCSITargetAuthGroupForm(ModelForm):
         fields = '__all__'
         model = models.iSCSITargetAuthGroup
 
-    def clean_iscsi_target_initiator_auth_network(self):
+    def clean_iscsi_target_authgroup_networks(self):
         field = self.cleaned_data.get(
-            'iscsi_target_initiator_auth_network',
+            'iscsi_target_authgroup_networks',
             '').strip().upper()
         nets = re.findall(r'\S+', field)
 
         for auth_network in nets:
-            if auth_network == 'ALL':
-                continue
             try:
                 IPNetwork(auth_network.encode('utf-8'))
             except (NetmaskValueError, ValueError):
@@ -1329,10 +1327,7 @@ class iSCSITargetAuthGroupForm(ModelForm):
                     IPAddress(auth_network.encode('utf-8'))
                 except (AddressValueError, ValueError):
                     raise forms.ValidationError(
-                        _(
-                            "The field is a not a valid IP address or network."
-                            " The keyword \"ALL\" can be used to allow "
-                            "everything.")
+                        _("The field does not contain only valid IP addresses or networks: %s") % auth_network
                     )
         return '\n'.join(nets)
 
@@ -1344,6 +1339,11 @@ class iSCSITargetAuthGroupForm(ModelForm):
             ini = ini.strip(' ').strip('\n').replace('\n', ' ')
             ini = re.sub(r'\s+', ' ', ini)
             data['iscsi_target_authgroup_initiators'] = ini.split(' ') or None
+        if 'iscsi_target_authgroup_networks' in data:
+            ini = data['iscsi_target_authgroup_networks']
+            ini = ini.strip(' ').strip('\n').replace('\n', ' ')
+            ini = re.sub(r'\s+', ' ', ini)
+            data['iscsi_target_authgroup_networks'] = ini.split(' ') or None
         o.save(data=data)
         return o
 

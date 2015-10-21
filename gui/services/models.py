@@ -966,6 +966,11 @@ class iSCSITargetAuthGroup(NewModel):
         blank=True,
         null=True,
     )
+    iscsi_target_authgroup_networks = models.TextField(
+        verbose_name=_("Authorized Networks"),
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = _("Auth Group")
@@ -983,12 +988,17 @@ class iSCSITargetAuthGroup(NewModel):
             ('iscsi_target_authgroup_descr', 'description'),
             ('iscsi_target_authgroup_type', 'type'),
             ('iscsi_target_authgroup_initiators', 'initiators'),
+            ('iscsi_target_authgroup_networks', 'networks'),
         )
 
     def _load(self):
         if self._object.get('initiators'):
             self.iscsi_target_authgroup_initiators = '\n'.join(
                 self._object.get('initiators')
+            )
+        if self._object.get('networks'):
+            self.iscsi_target_authgroup_networks = '\n'.join(
+                self._object.get('networks')
             )
 
     def __unicode__(self):
