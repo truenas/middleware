@@ -1338,7 +1338,13 @@ class iSCSITargetAuthGroupForm(ModelForm):
 
     def save(self):
         o = super(iSCSITargetAuthGroupForm, self).save(commit=False)
-        o.save()
+        data = self.cleaned_data
+        if 'iscsi_target_authgroup_initiators' in data:
+            ini = data['iscsi_target_authgroup_initiators']
+            ini = ini.strip(' ').strip('\n').replace('\n', ' ')
+            ini = re.sub(r'\s+', ' ', ini)
+            data['iscsi_target_authgroup_initiators'] = ini.split(' ') or None
+        o.save(data=data)
         return o
 
 

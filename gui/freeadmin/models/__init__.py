@@ -334,6 +334,8 @@ class NewQuerySet(object):
 
             obj = self.model(**data)
             obj._object = i
+            if hasattr(obj, '_load'):
+                obj._load()
             yield obj
 
     def _transform_order(self, *args):
