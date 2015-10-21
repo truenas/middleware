@@ -973,15 +973,6 @@ class iSCSITargetAuthGroup(NewModel):
             (('iscsi_target_initiator_name', 'id'), 'id'),
         )
 
-    class FreeAdmin:
-        menu_child_of = "sharing.ISCSI"
-        icon_object = u"InitiatorIcon"
-        icon_model = u"InitiatorIcon"
-        icon_add = u"AddInitiatorIcon"
-        icon_view = u"ViewAllInitiatorsIcon"
-        nav_extra = {'order': 0}
-        resource_name = 'services/iscsi/authorizedinitiator'
-
     def __unicode__(self):
         if self.iscsi_target_initiator_comment != "":
             return u"%s (%s)" % (

@@ -113,6 +113,17 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
         return columns
 
 
+class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
+
+    menu_child_of = "sharing.ISCSI"
+    icon_object = u"InitiatorIcon"
+    icon_model = u"InitiatorIcon"
+    icon_add = u"AddInitiatorIcon"
+    icon_view = u"ViewAllInitiatorsIcon"
+    nav_extra = {'order': 0}
+    resource_name = 'services/iscsi/authgroup'
+
+
 class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
 
     menu_child_of = "sharing.ISCSI"
@@ -175,6 +186,7 @@ site.register(models.FTP, FTPFAdmin)
 site.register(models.iSCSITarget, ISCSITargetFAdmin)
 site.register(models.iSCSITargetGroups, ISCSITargetGroupsFAdmin)
 site.register(models.iSCSITargetPortal, ISCSIPortalFAdmin)
+site.register(models.iSCSITargetAuthGroup, ISCSIAuthGroupFAdmin)
 site.register(models.iSCSITargetAuthCredential, ISCSIAuthCredentialFAdmin)
 site.register(models.iSCSITargetToExtent, ISCSITargetToExtentFAdmin)
 site.register(models.iSCSITargetExtent, ISCSITargetExtentFAdmin)
