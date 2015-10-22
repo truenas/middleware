@@ -24,11 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import glob
 import logging
 import os
 import re
-import shutil
 import sqlite3
 import subprocess
 from datetime import datetime, timedelta
@@ -519,21 +517,30 @@ def exclude_path(path, exclude):
 
 
 def get_dc_hostname():
-    from freenasUI.network.models import GlobalConfiguration
     from freenasUI.common.pipesubr import pipeopen
 
     gc_hostname = gc_domain = hostname = None
     try:
-        gc = GlobalConfiguration.objects.all()[0]
-        gc_hostname = gc.get_hostname()
-        gc_domain = gc.gc_domain
+        h = sqlite3.connect(FREENAS_DATABASE)
+        c = h.cursor()
+
+        enabled = False
+        sql = "select gc_hostname, gc_domain from network_globalconfiguration"
+        c.execute(sql)
+        row = c.fetchone()
+        if row:
+            gc_hostname = row[0]
+            gc_domain = row[1]
+
+        c.close()
+        h.close()
 
     except:
         pass
 
     if gc_hostname and gc_domain:
         hostname = "%s.%s" % (gc_hostname, gc_domain)
-    elif gc_hostname: 
+    elif gc_hostname:
         hostname = gc_hostname
     else:
         p = pipeopen("/bin/hostname", allowfork=True)
@@ -545,13 +552,22 @@ def get_dc_hostname():
 
 
 def get_hostname():
-    from freenasUI.network.models import GlobalConfiguration
     from freenasUI.common.pipesubr import pipeopen
 
     hostname = None
     try:
-        gc = GlobalConfiguration.objects.all()[0]
-        hostname = gc.get_hostname()
+        h = sqlite3.connect(FREENAS_DATABASE)
+        c = h.cursor()
+
+        enabled = False
+        sql = "select gc_hostname from network_globalconfiguration"
+        c.execute(sql)
+        row = c.fetchone()
+        if row:
+            hostname = row[0]
+
+        c.close()
+        h.close()
 
     except:
         pass
