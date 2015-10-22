@@ -56,7 +56,7 @@ SOUTH_DATABASE_ADAPTERS = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
+        'ENGINE': 'django.db.backends.sqlite3',
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
     }
