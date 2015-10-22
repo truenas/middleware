@@ -195,7 +195,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'south',
     'dojango',
-    'freenasUI.api',
     'freenasUI.freeadmin',
 ) + tuple(APP_MODULES)
 
