@@ -100,24 +100,9 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
     icon_model = u"PortalIcon"
     icon_add = u"AddPortalIcon"
     icon_view = u"ViewAllPortalsIcon"
-    inlines = [
-        {
-            'form': 'iSCSITargetPortalIPForm',
-            'prefix': 'portalip_set',
-        },
-    ]
     nav_extra = {'order': -5}
 
     resource_mixin = ISCSIPortalResourceMixin
-
-    def get_datagrid_columns(self):
-        columns = super(ISCSIPortalFAdmin, self).get_datagrid_columns()
-        columns.insert(1, {
-            'name': 'iscsi_target_portal_ips',
-            'label': _('Listen'),
-            'sortable': False,
-        })
-        return columns
 
 
 class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
