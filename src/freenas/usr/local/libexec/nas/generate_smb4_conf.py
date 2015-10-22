@@ -72,7 +72,7 @@ from freenasUI.sharing.models import CIFS_Share
 def debug_SID(str):
     if str:
         print >> sys.stderr, "XXX: %s" % str
-    p = pipeopen("/usr/local/bin/net getlocalsid")
+    p = pipeopen("/usr/local/bin/net -d 0 getlocalsid")
     out = p.communicate()
     if out and out[0]:
         time.sleep(1)
@@ -82,7 +82,7 @@ def debug_SID(str):
 def smb4_get_system_SID():
     SID = None
 
-    p = pipeopen("/usr/local/bin/net getlocalsid")
+    p = pipeopen("/usr/local/bin/net -d 0 getlocalsid")
     net_out = p.communicate()
     if p.returncode != 0:
         return None
@@ -117,7 +117,7 @@ def smb4_set_system_SID(SID):
     if not SID:
         return False
 
-    p = pipeopen("/usr/local/bin/net setlocalsid %s" % SID)
+    p = pipeopen("/usr/local/bin/net -d 0 setlocalsid %s" % SID)
     net_out = p.communicate()
     if p.returncode != 0:
         return False
@@ -466,6 +466,7 @@ def set_idmap_rfc2307_secret():
 
     args = [
         "/usr/local/bin/net",
+        "-d 0",
         "idmap",
         "secret"
     ]
@@ -1339,6 +1340,7 @@ def smb4_import_users(smb_conf_path, smb4_tdb, exportfile=None):
 def smb4_grant_user_rights(user):
     args = [
         "/usr/local/bin/net",
+        "-d 0",
         "sam",
         "rights",
         "grant"
@@ -1373,6 +1375,7 @@ def smb4_grant_user_rights(user):
 def smb4_grant_rights():
     args = [
         "/usr/local/bin/pdbedit",
+        "-d 0",
         "-L"
     ]
 
