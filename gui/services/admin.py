@@ -307,7 +307,7 @@ class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
                         'peer_secret': user['iscsi_target_auth_peersecret'] if user.get('iscsi_target_auth_peersecret') else None,
                     }
 
-                users = map(convert_user, formset_user.cleaned_data)
+                users = map(convert_user, filter(lambda y: bool(y), formset_user.cleaned_data))
                 result = dispatcher.call_task_sync('share.iscsi.auth.update', authg.id, {
                     'users': users,
                 })
