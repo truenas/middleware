@@ -98,7 +98,6 @@ from freenasUI.common.system import (
     get_sw_name,
     domaincontroller_enabled
 )
-from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -144,8 +143,6 @@ class StartNotify(threading.Thread):
 
 
 class notifier:
-
-    __metaclass__ = HookMetaclass
 
     from os import system as __system
     from pwd import getpwnam as ___getpwnam
