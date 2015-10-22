@@ -43,7 +43,6 @@ from freenasUI.api.resources import (
     SnapshotResource,
     VersionResource,
 )
-from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
 from freenasUI.freeadmin.navtree import navtree
 
@@ -64,14 +63,9 @@ navtree.prepare_modelforms()
 add_to_builtins('django.templatetags.i18n')
 
 urlpatterns = patterns('',
-    url('^$', site.adminInterface, name="index"),
-    (r'^static/(?P<path>.*)',
-        public(serve),
-        {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
     (r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
-    (r'^admin/', include(site.urls)),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
 )
 

@@ -103,15 +103,12 @@ class Middleware(object):
 
 class FreeModelBase(ModelBase):
     def __new__(cls, name, bases, attrs):
-        from freenasUI.freeadmin.site import site
 
         bases = list(bases)
         appPool.hook_model_new(name, bases, attrs)
         new_class = ModelBase.__new__(cls, name, tuple(bases), attrs)
         if new_class._meta.abstract:
             pass
-        elif hasattr(new_class, 'FreeAdmin'):
-            site.register(new_class, freeadmin=new_class.FreeAdmin)
 
         if hasattr(new_class, 'Middleware'):
             new_class.add_to_class(
