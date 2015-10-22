@@ -223,9 +223,9 @@ EXTENT_RPM_CHOICES = (
 )
 
 AUTHMETHOD_CHOICES = (
-    ('None',  _('None')),
+    ('NONE',  _('None')),
     ('CHAP',  _('CHAP')),
-    ('CHAP Mutual', _('Mutual CHAP')),
+    ('CHAP_MUTUAL', _('Mutual CHAP')),
 )
 
 AUTHGROUP_CHOICES = (

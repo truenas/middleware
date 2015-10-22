@@ -1090,9 +1090,6 @@ iSCSITargetExtentForm.base_fields.keyOrder.insert(2, 'iscsi_target_extent_disk')
 
 
 class iSCSITargetPortalForm(ModelForm):
-    iscsi_target_portal_discoveryauthgroup = forms.ChoiceField(
-        label=_("Discovery Auth Group")
-    )
 
     class Meta:
         fields = '__all__'
@@ -1103,7 +1100,7 @@ class iSCSITargetPortalForm(ModelForm):
         discoverygroup = self.cleaned_data['iscsi_target_portal_discoveryauthgroup']
         if discoverygroup in ('', None):
             return None
-        if discoverymethod in ('CHAP', 'CHAP Mutual'):
+        if discoverymethod in ('CHAP', 'CHAP_MUTUAL'):
             if int(discoverygroup) == -1:
                 raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
         elif int(discoverygroup) == -1:

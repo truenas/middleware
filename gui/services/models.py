@@ -866,8 +866,8 @@ class iSCSITargetPortal(NewModel):
         default='None',
         verbose_name=_("Discovery Auth Method")
     )
-    iscsi_target_portal_discoveryauthgroup = models.IntegerField(
-        max_length=120,
+    iscsi_target_portal_discoveryauthgroup = models.ForeignKey(
+        'iSCSITargetAuthGroup',
         verbose_name=_("Discovery Auth Group"),
         blank=True,
         null=True,
@@ -884,7 +884,7 @@ class iSCSITargetPortal(NewModel):
             ('iscsi_target_portal_discoveryauthmethod', 'discovery_auth_method'),
             ('iscsi_target_portal_discoveryauthgroup', 'discovery_auth_group')
         )
-        provider_name = 'shares.iscsi.portal'
+        provider_name = 'share.iscsi.portal'
 
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
