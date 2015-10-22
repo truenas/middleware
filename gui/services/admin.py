@@ -249,6 +249,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
 
 class ISCSIAuthGroupFAdmin(BaseFreeAdmin):
 
+    exclude_fields = ()
     menu_child_of = "sharing.ISCSI"
     icon_object = u"InitiatorIcon"
     icon_model = u"InitiatorIcon"
