@@ -864,7 +864,7 @@ class iSCSITargetPortal(NewModel):
     iscsi_target_portal_discoveryauthmethod = models.CharField(
         max_length=120,
         choices=choices.AUTHMETHOD_CHOICES,
-        default='None',
+        default='NONE',
         verbose_name=_("Discovery Auth Method")
     )
     iscsi_target_portal_discoveryauthgroup = models.ForeignKey(
@@ -915,7 +915,6 @@ class iSCSITargetAuthGroup(NewModel):
     )
     iscsi_target_authgroup_type = models.CharField(
         max_length=120,
-        unique=True,
         verbose_name=_("Type"),
         choices=(
             ('NONE', _('None')),
@@ -923,6 +922,7 @@ class iSCSITargetAuthGroup(NewModel):
             ('CHAP', _('CHAP')),
             ('CHAP_MUTUAL', _('CHAP Mutual')),
         ),
+        default='NONE',
     )
     iscsi_target_authgroup_initiators = models.TextField(
         verbose_name=_("Authorized Initiators"),
