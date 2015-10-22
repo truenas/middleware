@@ -1102,9 +1102,9 @@ class iSCSITargetPortalForm(ModelForm):
         if discoverygroup in ('', None):
             return None
         if discoverymethod in ('CHAP', 'CHAP_MUTUAL'):
-            if int(discoverygroup) == -1:
+            if discoverygroup is None:
                 raise forms.ValidationError(_("This field is required if discovery method is set to CHAP or CHAP Mutual."))
-        elif int(discoverygroup) == -1:
+        elif discoverygroup is None:
             return None
         return discoverygroup
 
