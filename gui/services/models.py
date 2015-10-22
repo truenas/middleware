@@ -896,34 +896,6 @@ class iSCSITargetPortal(NewModel):
             return unicode(self.id)
 
 
-class iSCSITargetPortalIP(NewModel):
-    iscsi_target_portalip_portal = models.ForeignKey(
-        iSCSITargetPortal,
-        verbose_name=_("Portal"),
-        related_name='ips',
-    )
-    iscsi_target_portalip_ip = models.IPAddressField(
-        verbose_name=_("IP Address"),
-    )
-    iscsi_target_portalip_port = models.SmallIntegerField(
-        verbose_name=_("Port"),
-        default=3260,
-        validators=[MinValueValidator(1), MaxValueValidator(65535)],
-    )
-
-    class Meta:
-        unique_together = (
-            ('iscsi_target_portalip_ip', 'iscsi_target_portalip_port'),
-            )
-        verbose_name = _("Portal IP")
-
-    def __unicode__(self):
-        return "%s:%d" % (
-            self.iscsi_target_portalip_ip,
-            self.iscsi_target_portalip_port,
-        )
-
-
 class iSCSITargetAuthGroup(NewModel):
     id = models.CharField(
         max_length=120,

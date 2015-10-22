@@ -1108,46 +1108,6 @@ class iSCSITargetPortalForm(ModelForm):
         return discoverygroup
 
 
-class iSCSITargetPortalIPForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.iSCSITargetPortalIP
-        widgets = {
-            'iscsi_target_portalip_port': forms.widgets.TextInput(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetPortalIPForm, self).__init__(*args, **kwargs)
-        self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
-            label=self.fields['iscsi_target_portalip_ip'].label,
-        )
-        ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        ips.extend(list(choices.IPChoices()))
-        self.fields['iscsi_target_portalip_ip'].choices = ips
-        if not self.instance.id and not self.data:
-            if not(
-                self.parent and self.parent.instance.id and
-                self.parent.instance.ips.all().count() > 0
-            ) or (self.parent and not self.parent.instance.id):
-                self.fields['iscsi_target_portalip_ip'].initial = '0.0.0.0'
-
-    def clean(self):
-        ip = self.cleaned_data.get('iscsi_target_portalip_ip')
-        port = self.cleaned_data.get('iscsi_target_portalip_port')
-        qs = models.iSCSITargetPortalIP.objects.filter(
-            iscsi_target_portalip_ip=ip,
-            iscsi_target_portalip_port=port,
-        )
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
-        if qs.exists():
-            self._errors['__all__'] = self.error_class([
-                _('This IP and port are already in use.'),
-            ])
-        return self.cleaned_data
-
-
 class iSCSITargetAuthGroupForm(ModelForm):
 
     class Meta:
