@@ -3,7 +3,6 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
-from freenasUI.choices import *
 from freenasUI.contrib.IPAddressField import *
 
 class Migration(DataMigration):

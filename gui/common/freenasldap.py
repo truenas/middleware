@@ -25,6 +25,7 @@
 #
 #####################################################################
 import asyncore
+import copy
 import grp
 import ldap
 import ldap.sasl
@@ -33,12 +34,14 @@ import os
 import pwd
 import socket
 import string
+import sqlite3
 import tempfile
 import time
 import types
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
+from os import popen
 
 from freenasUI.common.pipesubr import (
     pipeopen,
@@ -64,6 +67,7 @@ from freenasUI.common.freenascache import (
     FLAGS_CACHE_WRITE_USER,
     FLAGS_CACHE_WRITE_GROUP
 )
+import freenasUI.settings
 
 log = logging.getLogger('common.freenasldap')
 
@@ -94,6 +98,136 @@ FLAGS_AD_ENABLED	= 0x00100000
 FLAGS_LDAP_ENABLED	= 0x00200000
 FLAGS_PREFER_IPv6	= 0x00400000
 FLAGS_SASL_GSSAPI	= 0x00800000
+
+
+class NICChoices(object):
+    """Populate a list of NIC choices"""
+    def __init__(self, nocarp=False, nolagg=False, novlan=False,
+                 exclude_configured=True, include_vlan_parent=False,
+                 with_alias=False, nobridge=True, noepair=True):
+        pipe = popen("/sbin/ifconfig -l")
+        self._NIClist = pipe.read().strip().split(' ')
+        # Remove lo0 from choices
+        self._NIClist = filter(
+            lambda y: y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0'),
+            self._NIClist)
+
+        from freenasUI.middleware.notifier import notifier
+        # Remove internal interfaces for failover
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_licensed()
+        ):
+            for iface in notifier().failover_internal_interfaces():
+                if iface in self._NIClist:
+                    self._NIClist.remove(iface)
+
+        conn = sqlite3.connect(freenasUI.settings.DATABASES['default']['NAME'])
+        c = conn.cursor()
+        # Remove interfaces that are parent devices of a lagg
+        # Database queries are wrapped in try/except as this is run
+        # before the database is created during syncdb and the queries
+        # will fail
+        try:
+            c.execute("SELECT lagg_physnic FROM network_lagginterfacemembers")
+        except sqlite3.OperationalError:
+            pass
+        else:
+            for interface in c:
+                if interface[0] in self._NIClist:
+                    self._NIClist.remove(interface[0])
+
+        if nocarp:
+            for nic in list(self._NIClist):
+                if nic.startswith('carp'):
+                    self._NIClist.remove(nic)
+        if nolagg:
+            # vlan devices are not valid parents of laggs
+            for nic in self._NIClist:
+                if nic.startswith('lagg'):
+                    self._NIClist.remove(nic)
+            for nic in self._NIClist:
+                if nic.startswith('vlan'):
+                    self._NIClist.remove(nic)
+        if novlan:
+            for nic in self._NIClist:
+                if nic.startswith('vlan'):
+                    self._NIClist.remove(nic)
+        else:
+            # This removes devices that are parents of vlans.  We don't
+            # remove these devices if we are adding a vlan since multiple
+            # vlan devices may share the same parent.
+            # The exception to this case is when we are getting the NIC
+            # list for the GUI, in which case we want the vlan parents
+            # as they may have a valid config on them.
+            if not include_vlan_parent:
+                try:
+                    c.execute("SELECT vlan_pint FROM network_vlan")
+                except sqlite3.OperationalError:
+                    pass
+                else:
+                    for interface in c:
+                        if interface[0] in self._NIClist:
+                            self._NIClist.remove(interface[0])
+
+        if with_alias:
+            try:
+                sql = """
+                    SELECT
+                        int_interface
+
+                    FROM
+                        network_interfaces as ni
+
+                    INNER JOIN
+                        network_alias as na
+                    ON
+                        na.alias_interface_id = ni.id
+                """
+                c.execute(sql)
+
+            except sqlite3.OperationalError:
+                pass
+
+            else:
+                aliased_nics = [x[0] for x in c]
+                niclist = copy.deepcopy(self._NIClist)
+                for interface in niclist:
+                    if interface not in aliased_nics:
+                        self._NIClist.remove(interface)
+
+        if exclude_configured:
+            try:
+                # Exclude any configured interfaces
+                c.execute("SELECT int_interface FROM network_interfaces "
+                          "WHERE int_ipv4address != '' OR int_dhcp != '0' "
+                          "OR int_ipv6auto != '0' OR int_ipv6address != ''")
+            except sqlite3.OperationalError:
+                pass
+            else:
+                for interface in c:
+                    if interface[0] in self._NIClist:
+                        self._NIClist.remove(interface[0])
+
+        if nobridge:
+            for nic in self._NIClist:
+                if nic.startswith('bridge'):
+                    self._NIClist.remove(nic)
+
+        if noepair:
+            niclist = copy.deepcopy(self._NIClist)
+            for nic in niclist:
+                if nic.startswith('epair'):
+                    self._NIClist.remove(nic)
+
+        self.max_choices = len(self._NIClist)
+
+    def remove(self, nic):
+        return self._NIClist.remove(nic)
+
+    def __iter__(self):
+        return iter((i, i) for i in self._NIClist)
+
 
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
@@ -1660,7 +1794,6 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.dchandle = self.gchandle = None
 
     def locate_site(self):
-        from freenasUI.choices import NICChoices
         from freenasUI.middleware.notifier import notifier
         from freenasUI.common.sipcalc import sipcalc_type
 
