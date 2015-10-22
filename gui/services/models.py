@@ -853,6 +853,7 @@ class iSCSITargetPortal(NewModel):
         max_length=120,
         primary_key=True,
         editable=False,
+        default=None,
     )
     iscsi_target_portal_comment = models.CharField(
         max_length=120,
@@ -906,11 +907,7 @@ class iSCSITargetAuthGroup(NewModel):
         max_length=120,
         primary_key=True,
         editable=False,
-    )
-    iscsi_target_authgroup_name = models.CharField(
-        max_length=120,
-        unique=True,
-        verbose_name=_("Name"),
+        default=None,
     )
     iscsi_target_authgroup_descr = models.CharField(
         max_length=120,
@@ -950,7 +947,7 @@ class iSCSITargetAuthGroup(NewModel):
             'delete': 'share.iscsi.auth.delete'
         }
         field_mapping = (
-            (('iscsi_target_authgroup_name', 'id'), 'id'),
+            ('id', 'id'),
             ('iscsi_target_authgroup_descr', 'description'),
             ('iscsi_target_authgroup_type', 'type'),
             ('iscsi_target_authgroup_initiators', 'initiators'),
@@ -968,7 +965,7 @@ class iSCSITargetAuthGroup(NewModel):
             )
 
     def __unicode__(self):
-        return self.iscsi_target_authgroup_name
+        return self.id
 
 
 class iSCSITarget(NewModel):
