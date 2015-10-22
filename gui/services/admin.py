@@ -95,6 +95,7 @@ class ISCSITargetGroupsFAdmin(BaseFreeAdmin):
 
 class ISCSIPortalFAdmin(BaseFreeAdmin):
 
+    exclude_fields = ()
     menu_child_of = "sharing.ISCSI"
     icon_object = u"PortalIcon"
     icon_model = u"PortalIcon"
