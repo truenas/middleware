@@ -32,7 +32,6 @@ from django.views.static import serve
 from django.conf import settings
 from django.template.loader import add_to_builtins
 
-from freenasUI import freeadmin
 from freenasUI.api import v1_api
 from freenasUI.api.resources import (
     AlertResource,
@@ -61,7 +60,6 @@ v1_api.register(SnapshotResource())
 v1_api.register(VersionResource())
 
 navtree.prepare_modelforms()
-freeadmin.autodiscover()
 
 add_to_builtins('django.templatetags.i18n')
 
