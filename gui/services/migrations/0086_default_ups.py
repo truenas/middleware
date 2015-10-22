@@ -4,7 +4,32 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
-from freenasUI import choices
+
+class UPSDRIVER_CHOICES(object):
+    "Populate choices from /usr/local/libexec/nut/driver.list"
+    def __iter__(self):
+        if os.path.exists("/usr/local/libexec/nut/driver.list"):
+            with open('/usr/local/libexec/nut/driver.list', 'rb') as f:
+                d = f.read()
+            r = cStringIO.StringIO()
+            for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
+                r.write(line.strip() + '\n')
+            r.seek(0)
+            reader = csv.reader(r, delimiter=' ', quotechar='"')
+            for row in reader:
+                if len(row) == 0 or row[0].startswith('#'):
+                    continue
+                if row[-2] == '#':
+                    last = -3
+                else:
+                    last = -1
+                if row[last].find(' (experimental)') != -1:
+                    row[last] = row[last].replace(' (experimental)', '').strip()
+                for i, field in enumerate(list(row)):
+                    row[i] = field.decode('utf8')
+                yield (u"$".join([row[last], row[3]]), u"%s (%s)" %
+                       (u" ".join(row[0:last]), row[last]))
+
 
 class Migration(DataMigration):
 
@@ -15,7 +40,7 @@ class Migration(DataMigration):
             ups = orm['services.UPS'].objects.order_by('-id')[0]
             if not ups.ups_driver:
                 return
-            for choice, name in choices.UPSDRIVER_CHOICES():
+            for choice, name in UPSDRIVER_CHOICES():
                 if choice.split("$")[0] == ups.ups_driver:
                     ups.ups_driver = choice
                     ups.save()
