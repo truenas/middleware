@@ -15,7 +15,7 @@ from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.services.forms import iSCSITargetAuthGroupUserForm
+from freenasUI.services.forms import iSCSITargetAuthGroupUserForm, iSCSITargetPortalIPForm
 from freenasUI.services import models
 
 
@@ -103,6 +103,147 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
     nav_extra = {'order': -5}
 
     resource_mixin = ISCSIPortalResourceMixin
+
+    def get_urls(self):
+        urls = super(ISCSIPortalFAdmin, self).get_urls()
+        urls += patterns(
+            '',
+            url(
+                r'^empty-formset/portal/$',
+                self.empty_formset_portal,
+                name='freeadmin_services_iscsitargetportal_empty_formset_portal',
+            ),
+        )
+        return urls
+
+    def empty_formset_portal(self, request):
+        PortalFormset = formset_factory(iSCSITargetPortalIPForm)
+        return HttpResponse('''<div data-dojo-type="dijit.layout.ContentPane" id="formset-form-__prefix__">
+    <td colspan="2">
+        <table>''' + PortalFormset().empty_form.as_table() + '''</table>
+    </td>
+</tr>''')
+
+    def add(self, request, mf=None):
+        from freenasUI.middleware.connector import connection as dispatcher
+        m = self._model
+        app = self._model._meta.app_label
+        context = {
+            'app': app,
+            'model': m,
+            'modeladmin': m._admin,
+            'mf': mf,
+            'verbose_name': m._meta.verbose_name,
+            'extra_js': m._admin.extra_js,
+        }
+        mf = self._get_modelform('create')
+        PortalFormset = formset_factory(iSCSITargetPortalIPForm, extra=1)
+
+        if request.method == "POST":
+            mf = mf(request.POST)
+            formset_portal = PortalFormset(request.POST)
+            if mf.is_valid() and formset_portal.is_valid():
+                authg = mf.save()
+
+                def convert_portal(portal):
+                    return {
+                        'address': portal['iscsi_target_portalip_ip'],
+                        'port': portal['iscsi_target_portalip_port'],
+                    }
+
+                portals = map(convert_portal, formset_portal.cleaned_data)
+                result = dispatcher.call_task_sync('share.iscsi.portal.update', authg.id, {
+                    'portals': portals,
+                })
+
+                if result['state'] != 'FINISHED':
+                    raise MiddlewareError(result['error']['message'])
+
+                return JsonResp(
+                    request,
+                    form=mf,
+                    message=_('Portal successfully added'),
+                )
+            else:
+                return JsonResp(request, form=mf, formsets={
+                    'formset_portal': {
+                        'instance': formset_portal,
+                    },
+                })
+        else:
+            mf = mf()
+            formset_portal = PortalFormset()
+
+        context.update({
+            'form': mf,
+            'formset_portal': formset_portal,
+        })
+        return render(request, 'services/iscsitargetportal.html', context)
+
+    def edit(self, request, oid, mf=None):
+        from freenasUI.middleware.connector import connection as dispatcher
+        m = self._model
+        app = self._model._meta.app_label
+        context = {
+            'app': app,
+            'model': m,
+            'modeladmin': m._admin,
+            'mf': mf,
+            'verbose_name': m._meta.verbose_name,
+            'extra_js': m._admin.extra_js,
+        }
+        mf = self._get_modelform('edit')
+        instance = get_object_or_404(m, pk=oid)
+        PortalFormset = formset_factory(iSCSITargetPortalIPForm, extra=0)
+
+        if request.method == "POST":
+            mf = mf(request.POST, instance=instance)
+            formset_portal = PortalFormset(request.POST)
+            if mf.is_valid() and formset_portal.is_valid():
+                portal = mf.save()
+
+                def convert_portal(portal):
+                    return {
+                        'address': portal['iscsi_target_portalip_ip'],
+                        'port': portal['iscsi_target_portalip_port'],
+                    }
+
+                portals = map(convert_portal, formset_portal.cleaned_data)
+                result = dispatcher.call_task_sync('share.iscsi.portal.update', portal.id, {
+                    'portals': portals,
+                })
+
+                if result['state'] != 'FINISHED':
+                    raise MiddlewareError(result['error']['message'])
+
+                return JsonResp(
+                    request,
+                    form=mf,
+                    message=_('Portal successfully updated'),
+                )
+            else:
+                return JsonResp(request, form=mf, formsets={
+                    'formset_portal': {
+                        'instance': formset_portal,
+                    },
+                })
+        else:
+            def portal_convert(portal):
+                return {
+                    'iscsi_target_portalip_ip': portal['address'],
+                    'iscsi_target_portalip_port': portal['port'],
+                }
+
+            portal_initial = map(portal_convert, instance._object.get('portals') or [])
+
+            mf = mf(instance=instance)
+            formset_portal = PortalFormset(initial=portal_initial)
+
+        context.update({
+            'form': mf,
+            'formset_portal': formset_portal,
+        })
+        return render(request, 'services/iscsitargetportal.html', context)
 
 
 class ISCSIAuthGroupFAdmin(BaseFreeAdmin):

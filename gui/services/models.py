@@ -884,7 +884,12 @@ class iSCSITargetPortal(NewModel):
             ('iscsi_target_portal_discoveryauthmethod', 'discovery_auth_method'),
             ('iscsi_target_portal_discoveryauthgroup', 'discovery_auth_group')
         )
-        provider_name = 'share.iscsi.portal'
+        middleware_methods = {
+            'query': 'shares.iscsi.portal.query',
+            'add': 'share.iscsi.portal.create',
+            'update': 'share.iscsi.portal.update',
+            'delete': 'share.iscsi.portal.delete'
+        }
 
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":

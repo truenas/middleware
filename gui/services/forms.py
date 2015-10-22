@@ -49,6 +49,7 @@ from freenasUI.common.system import (
     nt4_enabled,
     ldap_enabled
 )
+from freenasUI.contrib.IPAddressField import IPAddressFormField
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -1106,6 +1107,16 @@ class iSCSITargetPortalForm(ModelForm):
         elif int(discoverygroup) == -1:
             return None
         return discoverygroup
+
+
+class iSCSITargetPortalIPForm(Form):
+    iscsi_target_portalip_ip = IPAddressFormField(
+        label=_("IP Address"),
+    )
+    iscsi_target_portalip_port = forms.IntegerField(
+        label=_("Port"),
+        initial=3260,
+    )
 
 
 class iSCSITargetAuthGroupForm(ModelForm):
