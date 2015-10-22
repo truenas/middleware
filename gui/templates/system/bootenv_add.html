@@ -1,6 +1,0 @@
-{% extends "freeadmin/generic_form.html" %}
-
-{% block form %}
-{% if source %}<tr><td colspan="2">{% blocktrans with source=source %}Create boot environment from {{ source }}{% endblocktrans %}</td></tr>{% endif %}
-{{ form }}
-{% endblock %}
