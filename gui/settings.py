@@ -132,13 +132,9 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    #'freenasUI.freeadmin.middleware.ProfileMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'freenasUI.freeadmin.middleware.LocaleMiddleware',
-    'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
 )
 
 DOJANGO_DOJO_PROFILE = 'local_release'
@@ -239,22 +235,12 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler',
             'filters': [],
         },
-        'syslog': {
-            'level': 'DEBUG',
-            'class': 'freenasUI.freeadmin.handlers.SysLogHandler',
-            'formatter': 'simple',
-        }
     },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': False,
-        },
-        '': {
-            'handlers': ['syslog'],
-            'level': 'DEBUG',
-            'propagate': True,
         },
     }
 }
