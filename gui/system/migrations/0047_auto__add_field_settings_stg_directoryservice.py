@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
                       keep_default=False)
 
         if not db.dry_run:
-            srv = models.services.objects.create(srv_service='directoryservice', srv_enable=False)
+            srv = orm['services.services'].objects.create(srv_service='directoryservice', srv_enable=False)
             srv.save()
 
     def backwards(self, orm):
@@ -193,6 +193,12 @@ class Migration(SchemaMigration):
             'tun_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'tun_value': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
             'tun_var': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
+        },
+        u'services.services': {
+            'Meta': {'object_name': 'services'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'srv_enable': ('django.db.models.fields.BooleanField', [], {}),
+            'srv_service': ('django.db.models.fields.CharField', [], {'max_length': '120'})
         }
     }
 
