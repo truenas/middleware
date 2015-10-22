@@ -137,7 +137,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
             'extra_js': m._admin.extra_js,
         }
         mf = self._get_modelform('create')
-        PortalFormset = formset_factory(iSCSITargetPortalIPForm, extra=1)
+        PortalFormset = formset_factory(iSCSITargetPortalIPForm, extra=0)
 
         if request.method == "POST":
             mf = mf(request.POST)
@@ -172,7 +172,7 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
                 })
         else:
             mf = mf()
-            formset_portal = PortalFormset()
+            formset_portal = PortalFormset(initial=[{'iscsi_target_portalip_ip': '0.0.0.0'}])
 
         context.update({
             'form': mf,
