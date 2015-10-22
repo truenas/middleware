@@ -8,16 +8,16 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory, 
-    FLAGS_DBINIT
-)
 
 class Migration(DataMigration):
     no_dry_run = True
 
     def forwards(self, orm):
         try:
+            from freenasUI.common.freenasldap import (
+                FreeNAS_ActiveDirectory,
+                FLAGS_DBINIT
+            )
             ad = orm.ActiveDirectory.objects.all()[0]
             fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
 
