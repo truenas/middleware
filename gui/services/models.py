@@ -849,10 +849,10 @@ class iSCSITargetExtent(NewModel):
 
 
 class iSCSITargetPortal(NewModel):
-    iscsi_target_portal_tag = models.IntegerField(
+    id = models.CharField(
         max_length=120,
-        default=1,
-        verbose_name=_("Portal Group ID"),
+        primary_key=True,
+        editable=False,
     )
     iscsi_target_portal_comment = models.CharField(
         max_length=120,
@@ -879,32 +879,21 @@ class iSCSITargetPortal(NewModel):
 
     class Middleware:
         field_mapping = (
-            ('iscsi_target_portal_tag', 'tag'),
+            ('id', 'id'),
+            ('iscsi_target_portal_comment', 'description'),
             ('iscsi_target_portal_discoveryauthmethod', 'discovery_auth_method'),
             ('iscsi_target_portal_discoveryauthgroup', 'discovery_auth_group')
         )
+        provider_name = 'shares.iscsi.portal'
 
     def __unicode__(self):
         if self.iscsi_target_portal_comment != "":
             return u"%s (%s)" % (
-                self.iscsi_target_portal_tag,
+                self.id,
                 self.iscsi_target_portal_comment,
                 )
         else:
-            return unicode(self.iscsi_target_portal_tag)
-
-    def delete(self):
-        super(iSCSITargetPortal, self).delete()
-        portals = iSCSITargetPortal.objects.all().order_by(
-            'iscsi_target_portal_tag')
-        for portal, idx in zip(portals, xrange(1, len(portals) + 1)):
-            portal.iscsi_target_portal_tag = idx
-            portal.save()
-        started = notifier().reload("iscsitarget")
-        if started is False and services.objects.get(
-                srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget",
-                                _("The iSCSI service failed to reload."))
+            return unicode(self.id)
 
 
 class iSCSITargetPortalIP(NewModel):

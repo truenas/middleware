@@ -1097,16 +1097,6 @@ class iSCSITargetPortalForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.iSCSITargetPortal
-        widgets = {
-            'iscsi_target_portal_tag': forms.widgets.HiddenInput(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(iSCSITargetPortalForm, self).__init__(*args, **kwargs)
-        self.fields["iscsi_target_portal_tag"].initial = (
-            models.iSCSITargetPortal.objects.all().count() + 1)
-        self.fields['iscsi_target_portal_discoveryauthgroup'].required = False
-        self.fields['iscsi_target_portal_discoveryauthgroup'].choices = [('-1', _('None'))] + [(i['iscsi_target_auth_tag'], i['iscsi_target_auth_tag']) for i in models.iSCSITargetAuthCredential.objects.all().values('iscsi_target_auth_tag').distinct()]
 
     def clean_iscsi_target_portal_discoveryauthgroup(self):
         discoverymethod = self.cleaned_data['iscsi_target_portal_discoveryauthmethod']
@@ -1119,21 +1109,6 @@ class iSCSITargetPortalForm(ModelForm):
         elif int(discoverygroup) == -1:
             return None
         return discoverygroup
-
-
-    def clean_iscsi_target_portal_tag(self):
-        tag = self.cleaned_data["iscsi_target_portal_tag"]
-        higher = models.iSCSITargetPortal.objects.all().count() + 1
-        if tag > higher:
-            raise forms.ValidationError(_("Your Portal Group ID cannot be higher than %d") % higher)
-        return tag
-
-    def done(self, *args, **kwargs):
-        super(iSCSITargetPortalForm, self).done(*args, **kwargs)
-        # This must be done here and not on save() because it saves foreign keys
-        started = notifier().reload("iscsitarget")
-        if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
-            raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
 
 
 class iSCSITargetPortalIPForm(ModelForm):
