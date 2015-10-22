@@ -86,24 +86,6 @@ cache.get_apps()
 
 from django.utils.translation import ugettext as _
 
-from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
-                                  ACL_MAC_FILE)
-from freenasUI.common.freenasacl import ACL
-from freenasUI.common.locks import mntlock
-from freenasUI.common.system import (
-    FREENAS_DATABASE,
-    exclude_path,
-    get_mounted_filesystems,
-    umount,
-    get_sw_name,
-    domaincontroller_enabled
-)
-from freenasUI.middleware import zfs
-from freenasUI.middleware.encryption import random_wipe
-from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.multipath import Multipath
-from bsd import sysctl
-
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
@@ -844,119 +826,6 @@ class notifier:
     def _reload_user(self):
         self.reload("cifs")
 
-    def winacl_reset(self, path, owner=None, group=None, exclude=None):
-        if exclude is None:
-            exclude = []
-
-        if isinstance(owner, types.UnicodeType):
-            owner = owner.encode('utf-8')
-
-        if isinstance(group, types.UnicodeType):
-            group = group.encode('utf-8')
-
-        if isinstance(path, types.UnicodeType):
-            path = path.encode('utf-8')
-
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
-        winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
-        if not winexists:
-            open(winacl, 'a').close()
-
-        script = "/usr/local/bin/winacl"
-        args = "-a reset"
-        if owner is not None:
-            args = "%s -O '%s'" % (args, owner)
-        if group is not None:
-            args = "%s -G '%s'" % (args, group)
-        apply_paths = exclude_path(path, exclude)
-        apply_paths = map(lambda y: (y, ' -r '), apply_paths)
-        if len(apply_paths) > 1:
-            apply_paths.insert(0, (path, ''))
-        for apath, flags in apply_paths:
-            fargs = args + "%s -p '%s' -x" % (flags, apath)
-            cmd = "%s %s" % (script, fargs)
-            log.debug("XXX: CMD = %s", cmd)
-            self._system(cmd)
-
-    def mp_change_permission(self, path='/mnt', user=None, group=None,
-                             mode=None, recursive=False, acl='unix',
-                             exclude=None):
-
-        if exclude is None:
-            exclude = []
-
-        if isinstance(group, types.UnicodeType):
-            group = group.encode('utf-8')
-
-        if isinstance(user, types.UnicodeType):
-            user = user.encode('utf-8')
-
-        if isinstance(mode, types.UnicodeType):
-            mode = mode.encode('utf-8')
-
-        if isinstance(path, types.UnicodeType):
-            path = path.encode('utf-8')
-
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
-        macacl = os.path.join(path, ACL_MAC_FILE)
-        winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
-        if acl == 'windows':
-            if not winexists:
-                open(winacl, 'a').close()
-                winexists = True
-            if os.path.isfile(macacl):
-                os.unlink(macacl)
-        elif acl == 'mac':
-            if winexists:
-                os.unlink(winacl)
-            if not os.path.isfile(macacl):
-                open(macacl, 'a').close()
-        elif acl == 'unix':
-            if winexists:
-                os.unlink(winacl)
-                winexists = False
-            if os.path.isfile(macacl):
-                os.unlink(macacl)
-
-        if winexists:
-            script = "/usr/local/bin/winacl"
-            args = ''
-            if user is not None:
-                args += " -O '%s'" % user
-            if group is not None:
-                args += " -G '%s'" % group
-            args += " -a reset "
-            if recursive:
-                apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
-                if len(apply_paths) > 1:
-                    apply_paths.insert(0, (path, ''))
-            else:
-                apply_paths = [(path, '')]
-            for apath, flags in apply_paths:
-                fargs = args + "%s -p '%s'" % (flags, apath)
-                cmd = "%s %s" % (script, fargs)
-                log.debug("XXX: CMD = %s", cmd)
-                self._system(cmd)
-
-        else:
-            if recursive:
-                apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, '-R'), apply_paths)
-                if len(apply_paths) > 1:
-                    apply_paths.insert(0, (path, ''))
-            else:
-                apply_paths = [(path, '')]
-            for apath, flags in apply_paths:
-                if user is not None and group is not None:
-                    self._system("/usr/sbin/chown %s '%s':'%s' '%s'" % (flags, user, group, apath))
-                elif user is not None:
-                    self._system("/usr/sbin/chown %s '%s' '%s'" % (flags, user, apath))
-                elif group is not None:
-                    self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
-                if mode is not None:
-                    self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
-
     def mp_get_permission(self, path):
         if os.path.isdir(path):
             return stat.S_IMODE(os.stat(path)[stat.ST_MODE])
@@ -1390,28 +1259,6 @@ class notifier:
         if zfsproc.returncode == 0:
             return True, None
         return False, err
-
-    def zfs_dataset_release_snapshots(self, name, recursive=False):
-        name = str(name)
-        retval = None
-        if recursive:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r '%s'" % (name)
-        else:
-            zfscmd = "/sbin/zfs list -Ht snapshot -o name,freenas:state -r -d 1 '%s'" % (name)
-        try:
-            with mntlock(blocking=False):
-                zfsproc = self._pipeopen(zfscmd)
-                output = zfsproc.communicate()[0]
-                if output != '':
-                    snapshots_list = output.splitlines()
-                for snapshot_item in filter(None, snapshots_list):
-                    snapshot, state = snapshot_item.split('\t')
-                    if state != '-':
-                        self.zfs_inherit_option(snapshot, 'freenas:state')
-                        self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
-        except IOError:
-            retval = 'Try again later.'
-        return retval
 
     def __init__(self):
         self.__confxml = None

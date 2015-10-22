@@ -49,7 +49,7 @@ class Migration(DataMigration):
                 )
                 kt.save()
 
-		os.rename(ad.ad_keytab, kt.keytab_file)
+                os.rename(ad.ad_keytab, kt.keytab_file)
                 os.chmod(kt.keytab_file, 0400)
 
                 ad.ad_kerberos_keytab = kt
