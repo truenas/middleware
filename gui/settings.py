@@ -34,13 +34,8 @@ sys.path.append('/usr/local/lib')
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-DEBUG = False
-#DEBUG = True
-#TASTYPIE_FULL_DEBUG = True
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
-LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/account/login/'
-LOGOUT_URL = '/account/logout/'
 
 ADMINS = (
      ('iXsystems, Inc.', 'freenas@ixsystems.com'),
@@ -61,20 +56,6 @@ DATABASES = {
         'TEST_NAME': ':memory:',
     }
 }
-
-"""
-Make sure the database is never world readable
-"""
-if os.path.exists(DATABASE_PATH):
-    stat = os.stat(DATABASE_PATH)
-    #TODO use pwd.getpwnam/grp.getgrnam?
-    #0 - root
-    #5 - operator
-    if stat.st_uid != 0 or stat.st_gid != 5:
-        os.chown(DATABASE_PATH, 0, 5)
-    mode = stat.st_mode & 0xfff
-    if mode != 0o640:
-        os.chmod(DATABASE_PATH, 0o640)
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -112,77 +93,9 @@ STATIC_ROOT = os.path.join(HERE, "static")
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = (
-    os.path.join(HERE, "fnstatic"),
-)
-
-# List of finder classes that know how to find static files in
-# various locations.
-STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
-)
-
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
-
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-)
-
-DOJANGO_DOJO_PROFILE = 'local_release'
-DOJANGO_DOJO_VERSION = '1.10.1'
-#DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
-DOJANGO_DOJO_DEBUG = True
-
 ROOT_URLCONF = 'freenasUI.urls'
 
-TEMPLATE_DIRS = (
-    os.path.join(HERE, 'templates'),
-)
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-        'django.core.context_processors.request',
-        'django.contrib.auth.context_processors.auth',
-        "django.core.context_processors.i18n",
-        "django.core.context_processors.media",
-        "django.core.context_processors.static",
-        'dojango.context_processors.config',
-        )
-
-LOCALE_PATHS = (
-    os.path.join(HERE, "locale"),
-)
-
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
-
-DIR_BLACKLIST = [
-    'templates',
-    'fnstatic',
-    'middleware',
-    'contrib',
-    'common',
-    'locale',
-    'dojango',
-    'tools',
-    'api',
-    'freeadmin',
-    'static',
-]
-APP_MODULES = []
-
-for entry in os.listdir(HERE):
-    if entry in DIR_BLACKLIST:
-        continue
-    if os.path.isdir(os.path.join(HERE, entry)):
-        APP_MODULES.append('freenasUI.%s' % entry)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -190,24 +103,19 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.staticfiles',
     'south',
-    'dojango',
     'freenasUI.freeadmin',
-) + tuple(APP_MODULES)
-
-BLACKLIST_NAV = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.staticfiles',
-    'south',
-    'dojango',
-    'freeadmin',
+    'freenasUI.account',
+    'freenasUI.directoryservice',
+    'freenasUI.network',
+    'freenasUI.services',
+    'freenasUI.sharing',
+    'freenasUI.storage',
+    'freenasUI.system',
+    'freenasUI.tasks',
 )
 
 FORCE_SCRIPT_NAME = ''
 
-#TODO: Revisit me against cache posion attacks
-#      Maybe offer as an option in the GUI
 ALLOWED_HOSTS = ['*']
 
 SOUTH_TESTS_MIGRATE = False
