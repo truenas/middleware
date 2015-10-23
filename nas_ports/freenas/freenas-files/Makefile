@@ -39,18 +39,14 @@ MAKE_JOBS_UNSAFE=yes
 do-build:
 	${MAKE} -C ${WRKSRC}/extract-tarball obj
 	${MAKE} -C ${WRKSRC}/extract-tarball all
-	${MAKE} -C ${WRKSRC}/winacl obj
-	${MAKE} -C ${WRKSRC}/winacl all
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
-	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	cp -a ${WRKSRC}/freenas/ ${STAGEDIR}${PREFIX}/
 
 post-install:
 	@${ECHO_CMD} usr/local/bin/extract-tarball >> ${TMPPLIST}
-	@${ECHO_CMD} usr/local/bin/winacl >> ${TMPPLIST}
 	cd ${WRKSRC}/freenas && ${FIND} . -type f | \
 		${SED} -e 's|^\./||' | ${SORT} >> ${TMPPLIST}
 
