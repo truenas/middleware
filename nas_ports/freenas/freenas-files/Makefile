@@ -37,16 +37,13 @@ ALL_TARGET=obj all
 MAKE_JOBS_UNSAFE=yes
 
 do-build:
-	${MAKE} -C ${WRKSRC}/extract-tarball obj
-	${MAKE} -C ${WRKSRC}/extract-tarball all
+	:
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
-	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	cp -a ${WRKSRC}/freenas/ ${STAGEDIR}${PREFIX}/
 
 post-install:
-	@${ECHO_CMD} usr/local/bin/extract-tarball >> ${TMPPLIST}
 	cd ${WRKSRC}/freenas && ${FIND} . -type f | \
 		${SED} -e 's|^\./||' | ${SORT} >> ${TMPPLIST}
 
