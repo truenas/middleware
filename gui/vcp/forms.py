@@ -68,6 +68,10 @@ class VcenterConfigurationForm(ModelForm):
             password = str(self.cleaned_data['vc_password'])
             username = str(self.cleaned_data['vc_username'])
             sys_guiprotocol = self.get_sys_protocol()
+            if self.get_aux_enable_https() == False and sys_guiprotocol.upper() == 'HTTPS':
+                self.vcp_status = 'Please enable vCenter Plugin over https.'
+                return False
+
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, False)
             if status_flag is True:
@@ -155,6 +159,10 @@ class VcenterConfigurationForm(ModelForm):
             manage_ip = str(self.cleaned_data['vc_management_ip'])
 
             sys_guiprotocol = self.get_sys_protocol()
+            if self.get_aux_enable_https() == False and sys_guiprotocol.upper() == 'HTTPS':
+                self.vcp_status = 'Please enable vCenter Plugin over https.'
+                return False
+
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, True)
 
@@ -205,7 +213,12 @@ class VcenterConfigurationForm(ModelForm):
             password = str(self.cleaned_data['vc_password'])
             port = str(self.cleaned_data['vc_port'])
             manage_ip = str(self.cleaned_data['vc_management_ip'])
+
             sys_guiprotocol = self.get_sys_protocol()
+            if self.get_aux_enable_https() == False and sys_guiprotocol.upper() == 'HTTPS':
+                self.vcp_status = 'Please first enable vCenter Plugin over https.'
+                return False
+
             status_flag = self.validate_vcp_param(
                 ip, port, username, password, False)
             if status_flag is True:
@@ -322,6 +335,15 @@ class VcenterConfigurationForm(ModelForm):
             if thumb_print is None:
                 self.vcp_status = 'Could not retrieve SHA1 fingure print. Please try after some time.'
         return thumb_print
+
+    def get_aux_enable_https(self):
+        aux_enable_https = False
+        try:
+            aux_enable_https = models.VcenterAuxSettings.objects.latest(
+                'id').vc_enable_https
+            return aux_enable_https
+        except Exception:
+            return False
 
     def validate_vcp_param(self, ip, port, username, password, is_installed):
         try:
