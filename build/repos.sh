@@ -11,10 +11,12 @@ SRCS_MANIFEST="${AVATAR_ROOT}/FreeBSD/repo-manifest"
 
 if is_truenas ; then
     # Additional repos to checkout for build
-    ADDL_REPOS="$ADDL_REPOS TRUENAS_COMPONENTS"
+    ADDL_REPOS="$ADDL_REPOS TRUENAS_COMPONENTS TRUENAS_VCENTER_COMPONENTS"
 
     : ${GIT_TRUENAS_COMPONENTS_REPO=ssh://git@github.com/iXsystems/truenas.git}
     : ${GIT_TRUENAS_COMPONENTS_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/truenas-components"}
+    : ${GIT_TRUENAS_VCENTER_COMPONENTS_REPO=git@github.com:iXsystems/vcenter_plugin.git}
+    : ${GIT_TRUENAS_VCENTER_COMPONENTS_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/truenas-vcenter-components"}
 
     export NAS_PORTS_DIRECT=1
 fi

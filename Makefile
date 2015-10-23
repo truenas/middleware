@@ -2,9 +2,9 @@
 .include "build/hooks/Makefile"
 .endif
 
-NANO_LABEL?=FreeNAS
-VERSION?=9.3.1-MASTER
-TRAIN?=${NANO_LABEL}-9.3-Nightlies
+NANO_LABEL?=TrueNAS
+VERSION?=9.3.1-STABLE
+TRAIN?=${NANO_LABEL}-9.3-STABLE
 
 .if defined(PRODUCTION) && ${PRODUCTION} == "yes"
 FREENAS_KEYFILE?=Keys/ix-freenas-key.key
@@ -39,7 +39,7 @@ POST_TO_DOWNLOAD=no
 .else
 UPDATE_USER?=sef
 UPDATE_HOST?=update.freenas.org
-POST_TO_DOWNLOAD=yes
+POST_TO_DOWNLOAD=no
 .endif
 
 ENV_SETUP=env _KEY=set
@@ -72,7 +72,11 @@ build: builder-verify
 	@[ `id -u` -eq 0 ] || ( echo "Sorry, you must be running as root to build this."; exit 1 )
 	@${ENV_SETUP} ${MAKE} portsjail
 	@${ENV_SETUP} ${MAKE} ports
+	@${ENV_SETUP} ${MAKE} build-vcenter-plugin
 	${ENV_SETUP} /bin/sh build/do_build.sh
+
+build-vcenter-plugin:
+	if	[ ${NANO_LABEL} = "TrueNAS" ]; then ${ENV_SETUP} /bin/sh build/do_build_vcenter_plugin.sh; fi
 
 checkout: builder-verify
 	${ENV_SETUP} /bin/sh build/do_checkout.sh
