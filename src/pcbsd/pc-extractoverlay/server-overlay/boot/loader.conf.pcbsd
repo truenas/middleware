@@ -1,2 +1,0 @@
-# Placeholder for future ZFS TRIM support in 9.2/10
-# vfs.zfs.trim_disable=0

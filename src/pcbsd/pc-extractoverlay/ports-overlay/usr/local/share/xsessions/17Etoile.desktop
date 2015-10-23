@@ -1,7 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=/usr/local/GNUstep/System/Tools/etoile_system
-Exec=/usr/local/GNUstep/System/Tools/etoile_system
-Icon=/usr/local/share/pixmaps/etoile.png
-Name=Etoile
-Comment=Etoile is open-source (MIT/BSD licensed) and built on GNUstep

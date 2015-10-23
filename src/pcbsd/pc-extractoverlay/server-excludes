@@ -1,5 +1,0 @@
-# List of files to exclude from extracting server-overlay during upgrades
-./etc/make.conf
-./etc/motd
-./usr/local/etc
-./boot/loader.conf

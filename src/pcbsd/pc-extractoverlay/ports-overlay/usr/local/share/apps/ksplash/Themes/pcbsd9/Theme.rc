@@ -1,8 +1,0 @@
-[KSplash Theme: Hubble]
-Name = PC-BSD Isotope
-Description = PC-BSD Isotope Splash Screen
-Version = 1.1
-Author = Isotope
-
-# Theme behaviour settings.
-Engine = KSplashX

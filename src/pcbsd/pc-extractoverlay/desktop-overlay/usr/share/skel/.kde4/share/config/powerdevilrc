@@ -1,9 +1,0 @@
-[BatteryManagement]
-BatteryCriticalAction=8
-BatteryCriticalLevel=3
-
-[Profiles]
-ACProfile=Performance
-BatteryProfile=Powersave
-LowProfile=Aggressive powersave
-WarningProfile=Aggressive powersave

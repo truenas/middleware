@@ -1,7 +1,0 @@
-table Icon
- Caption: HandBook
- Command: /usr/local/share/pcbsd/scripts/openhandbook.sh 
- Icon: /usr/local/share/pcbsd/icons/pcbsd-handbook.png
- X: 16
- Y: 64 
-end

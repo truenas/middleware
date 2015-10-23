@@ -1,5 +1,0 @@
-# who is allowed to suspend the machine to RAM
-
-[Policy]
-Allow=uid:__all__
-Deny=

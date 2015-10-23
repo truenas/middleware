@@ -1,5 +1,0 @@
-# who is allowed to power off the machine
-
-[Policy]
-Allow=uid:__all__
-Deny=

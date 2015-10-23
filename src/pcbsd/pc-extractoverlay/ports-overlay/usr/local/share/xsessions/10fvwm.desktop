@@ -1,6 +1,0 @@
-[Desktop Entry] 
-Encoding=UTF-8
-TryExec=fvwm
-Exec=fvwm
-Name=FVWM
-Icon=/usr/local/share/pixmaps/fvwm.png
