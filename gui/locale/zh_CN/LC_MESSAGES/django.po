@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-07-12 14:36+0000\n"
+"PO-Revision-Date: 2015-09-05 14:06+0000\n"
 "Last-Translator: Herald <yuhr123@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1436711800.0\n"
+"X-POOTLE-MTIME: 1441462004.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "简单"
+msgstr "明文"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -2113,7 +2113,6 @@ msgid "Peer User"
 msgstr "对端用户"
 
 #: services/models.py:609
-#, fuzzy
 msgid "Peer Secret"
 msgstr "对端密码"
 
@@ -3003,9 +3002,8 @@ msgstr "控制服务"
 #~ msgstr "添加文件范围"
 
 #: services/nav.py:118
-#, fuzzy
 msgid "View File Extents"
-msgstr "查看文件 Extent"
+msgstr "查看文件 Extents"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -8543,7 +8541,6 @@ msgid "Perform Reverse DNS Lookups"
 msgstr "执行 DNS 反向解析"
 
 #: services/models.py:1292
-#, fuzzy
 msgid "TLS allow dot login"
 msgstr "TLS 允许点登录"
 
@@ -10892,9 +10889,8 @@ msgstr "下载后应用更新"
 
 #: templates/system/vmwareplugin_add.html:5
 #: templates/system/vmwareplugin_edit.html:6
-#, fuzzy
 msgid "Fetch Datastores"
-msgstr "获取数据存储"
+msgstr "获取 Datastores"
 
 #: templates/vmware/index.html:3
 #: vmware/models.py:67
@@ -11138,66 +11134,58 @@ msgstr "配置文件上传失败，版本高于当前系统。"
 
 #: services/forms.py:89
 msgid "You have %d pending active iSCSI connection(s)."
-msgstr ""
+msgstr "现有 %d 个待激活的 iSCSI 连接。"
 
 #: services/forms.py:654
 #: services/forms.py:662
 msgid "Incorrect usage of the # delimiter."
-msgstr ""
+msgstr "分隔符 # 使用错误。"
 
 #: services/forms.py:666
 #: services/forms.py:676
-#, fuzzy
 msgid "Invalid domain name."
-msgstr "NIS 域名称"
+msgstr "无效的域名。"
 
 #: services/forms.py:672
 msgid "Invalid domain name or incorrect hash delimiter."
-msgstr ""
+msgstr "无效域名或哈希分隔符错误。"
 
 #: services/forms.py:716
-#, fuzzy
 msgid "Confirm Privacy Passphrase"
-msgstr "确认密码短语"
+msgstr "确认隐私密码短语"
 
 #: services/forms.py:762
-#, fuzzy
 msgid "Password must contain at least 8 characters"
-msgstr "名字中包含无效字符 (%s)。"
+msgstr "密码长度不许少于8个字符"
 
 #: services/forms.py:820
-#, fuzzy
 msgid "Passphrase must contain at least 8 characters"
-msgstr "名字中包含无效字符 (%s)。"
+msgstr "密码短语长度不许少于8个字符"
 
 #: services/forms.py:976
-#, fuzzy
 msgid "Secret must be between 12 and 16 characters."
-msgstr "这个值必须在 0 到(包括) 1000 之间。"
+msgstr "密码长度必须在12~16个字符之间。"
 
 #: services/forms.py:983
 msgid "Peer secret must be between 12 and 16 characters."
-msgstr ""
+msgstr "对端密码长度必须在12~16个字符之间。"
 
 #: services/forms.py:1082
-#, fuzzy
 msgid "LUN ID is already being used for this target."
-msgstr "Target 中已存在相同的 LUN。"
+msgstr "LUN ID 以在当前 target 上使用。"
 
 #: services/forms.py:1633
-#, fuzzy
 msgid "Double quotes are not allowed."
-msgstr "不允许使用引号"
+msgstr "不允许使用双引号。"
 
 #: services/forms.py:1640
-#, fuzzy
 msgid "Alias name must be unique."
-msgstr "Extent 名称必须唯一。"
+msgstr "别名必须唯一。"
 
 #: services/forms.py:1644
 msgid ""
 "target is a reserved word, please choose a different name for this alias."
-msgstr ""
+msgstr "target 是保留字，请选择其他别名。"
 
 #: services/models.py:322
 #, fuzzy
@@ -11340,67 +11328,60 @@ msgstr "EA 支持"
 
 #: services/models.py:1075
 msgid "MD5"
-msgstr ""
+msgstr "MD5"
 
 #: services/models.py:1076
-#, fuzzy
 msgid "SHA"
-msgstr "SHA1"
+msgstr "SHA"
 
 #: services/models.py:1080
-#, fuzzy
 msgid "Authentication Type"
-msgstr "认证"
+msgstr "认证类型"
 
 #: services/models.py:1090
 msgid "AES"
-msgstr ""
+msgstr "AES"
 
 #: services/models.py:1091
 msgid "DES"
-msgstr ""
+msgstr "DES"
 
 #: services/models.py:1095
-#, fuzzy
 msgid "Privacy Protocol"
-msgstr "协议"
+msgstr "隐私协议"
 
 #: services/models.py:1101
-#, fuzzy
 msgid "Privacy Passphrase"
-msgstr "私有密钥的密码短语"
+msgstr "隐私密码短语"
 
 #: services/models.py:1195
 msgid "Power Off UPS"
-msgstr ""
+msgstr "关闭 UPS"
 
 #: services/models.py:1196
 msgid "Signal the UPS to power off after FreeNAS shuts down."
-msgstr ""
+msgstr "FreeNAS 关机时向 UPS 发送关闭信号。"
 
 #: services/models.py:2027
-#, fuzzy
 msgid ""
 "Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
 "the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: Hash "
 "of the password is sent over the network (more secure)"
 msgstr ""
-"WebDAV服务的身份认证类型<br>基础身份认证：密码通过明文传输(若未启用HTTPS请勿使用)<br>摘要身份认证：密码经过哈希后再行传送(更安全)"
+"WebDAV 服务的 HTTP 身份认证类型<br>基础身份认证: 密码通过明文传输(若未启用 HTTPS 请勿使用)<br>摘要身份认证: "
+"密码经过哈希后再行传送(更安全)"
 
 #: services/views.py:334
-#, fuzzy
 msgid "Fiber Channel Ports have been successfully changed."
-msgstr "变更成功!"
+msgstr "光纤通道端口修改成功。"
 
 #: sharing/forms.py:291
-#, fuzzy
 msgid "A share with this name already exists."
-msgstr "Target 名称已经存在。"
+msgstr "共享名已存在。"
 
 #: sharing/forms.py:527
-#, fuzzy
 msgid "Whitespace is not a valid character for NFS shares."
-msgstr "这不是一个有效的域名服务器地址"
+msgstr "空白不是 NFS 共享的有效字符。"
 
 #: storage/admin.py:510
 msgid "Online"
@@ -11417,25 +11398,26 @@ msgid ""
 "copied over to the path specified in the 'Destination' field below and then "
 "unmounted. Importing non-zfs disks permanently as a Volume is deprecated"
 msgstr ""
+"这是一个非ZFS文件系统的磁盘，系统仍会挂载，磁盘中的数据将被拷贝到 'Destination' "
+"项所设置的路径中，拷贝完成请卸载该磁盘。请勿长期使用非ZFS文件系统的卷。"
 
 #: storage/forms.py:746
 msgid "This must be a dataset/folder in an existing Volume"
-msgstr ""
+msgstr "必须是某个卷中的 数据集/文件夹"
 
 #: storage/forms.py:797
 msgid ""
 "The path %s does not exist.                    This must be a dataset/folder "
 "in an existing Volume"
-msgstr ""
+msgstr "路径  %s 不存在。它必须是某个卷中的 数据集/文件夹"
 
 #: storage/forms.py:1439
-#, fuzzy
 msgid "The path %s already exists."
-msgstr "路径 %s 已存在"
+msgstr "路径 %s 已存在。"
 
 #: storage/forms.py:1553
 msgid "Allow the zvol to consume more then 80% of available space"
-msgstr ""
+msgstr "允许 zvol 消耗超过 80% 的可用空间"
 
 #: storage/forms.py:2132
 msgid "This field will be empty if you have not setup a periodic snapshot task"
@@ -11590,28 +11572,26 @@ msgstr "启用自动上传内核崩溃记录"
 msgid ""
 "Attempt to automatically tune the network and ZFS system control variables "
 "based on memory available."
-msgstr ""
+msgstr "基于可用内存自动调节网络和 ZFS 系统控制变量。"
 
 #: system/models.py:292
-#, fuzzy
 msgid "Periodic Notification User"
-msgstr "保留修改次数"
+msgstr "定期通知用户"
 
 #: system/models.py:277
 msgid "The kernel built with debug symbols will be booted instead."
-msgstr ""
+msgstr "基于调试符号构建的内核将在重启时被替换。"
 
 #: system/models.py:293
 msgid ""
 "If you wish periodic emails to be sent to a different email address than the "
 "alert emails are set to (root) set an email address for a user and select "
 "that user in the dropdown."
-msgstr ""
+msgstr "请在下拉列表中选择希望接收系统定期报告邮件的其他用户。"
 
 #: system/models.py:923
-#, fuzzy
 msgid "CA"
-msgstr "CA机构"
+msgstr "CA"
 
 #: system/models.py:952
 msgid "Finished"
@@ -11631,48 +11611,43 @@ msgid "Backup worker PID"
 msgstr "备份器 PID"
 
 #: system/models.py:971
-#, fuzzy
 msgid "Started at"
-msgstr "启动 "
+msgstr "启动于"
 
 #: system/models.py:975
-#, fuzzy
 msgid "Finished at"
-msgstr "可辨别名称"
+msgstr "完成于"
 
 #: system/models.py:995
-#, fuzzy
 msgid "System Backup"
-msgstr "系统"
+msgstr "系统备份"
 
 #: system/views.py:303
 msgid "Interval must be an integer."
-msgstr ""
+msgstr "间隔必须为整数。"
 
 #: system/views.py:318
-#, fuzzy
 msgid "Scrub interval successfully changed."
-msgstr "存储已添加。"
+msgstr "Scrub 时间间隔修改成功。"
 
 #: system/views.py:1212
 #: system/views.py:1314
-#, fuzzy
 msgid "Update has been applied"
-msgstr "更新进程错误！"
+msgstr "更新已被应用"
 
 #: system/alertmods/http_ssl.py:28
 msgid ""
 "The Certificate: %(cert_name)s is either malformed or invalid and cannot be "
 "used for any services. This Alert will remain here until the certificate is "
 "deleted"
-msgstr ""
+msgstr "证书: %(cert_name)s 损坏或无效，无法用于任何服务。在删除该证书之前，此通知将始终显示。"
 
 #: system/alertmods/http_ssl.py:38
 msgid ""
 "The Certificate Authority(CA): %(CA_name)s is either malformed or invalid "
 "and cannot be used for any services. This Alert will remain here until the "
 "CA is deleted"
-msgstr ""
+msgstr "CA: %(cert_name)s 损坏或无效，无法用于任何服务。在删除该 CA 之前，此通知将始终显示。"
 
 #: system/alertmods/license_expired.py:24
 msgid "Unable to decode %s license"
@@ -11735,9 +11710,8 @@ msgid "Fiber Channel Ports"
 msgstr "光纤通道端口"
 
 #: templates/sharing/index.html:27
-#, fuzzy
 msgid "Block"
-msgstr "解锁"
+msgstr "阻止"
 
 #: templates/sharing/index.html:27
 msgid "FC"
@@ -11771,7 +11745,7 @@ msgstr "联系人"
 
 #: templates/support/home.html:34
 msgid "Bronze"
-msgstr ""
+msgstr "古铜"
 
 #: templates/support/home.html:35
 #, fuzzy
@@ -11780,7 +11754,7 @@ msgstr "阵列重建"
 
 #: templates/support/home.html:36
 msgid "Gold"
-msgstr ""
+msgstr "土豪金"
 
 #: templates/support/home.html:37
 #: templates/support/home.html.py:38
@@ -11790,7 +11764,7 @@ msgstr "EA 支持"
 
 #: templates/support/home.html:38
 msgid "Maximum of 6 incidents per year"
-msgstr ""
+msgstr "每年最多 6 个事件"
 
 #: templates/support/home.html:40
 #, fuzzy
@@ -11809,23 +11783,23 @@ msgstr "通用名"
 
 #: templates/support/home.html:46
 msgid "Features"
-msgstr ""
+msgstr "特征"
 
 #: templates/support/home.html:55
 msgid "Additional Hardware"
-msgstr ""
+msgstr "附加硬件"
 
 #: templates/support/home.html:58
 msgid "E16 Enclosure"
-msgstr ""
+msgstr "E16 附件"
 
 #: templates/support/home.html:59
 msgid "E24 Enclosure"
-msgstr ""
+msgstr "E24 附件"
 
 #: templates/support/home.html:60
 msgid "E60 Enclosure"
-msgstr ""
+msgstr "E60 附件"
 
 #: templates/support/home.html:69
 msgid "License is not valid! Contact iXsystems support."
@@ -11843,25 +11817,25 @@ msgstr "提交Bug或功能建议前，请先搜索"
 msgid ""
 "to ensure the issue has not already been reported. If it has, add a comment "
 "to the existing issue instead of creating a new one."
-msgstr ""
+msgstr "请确认此问题未曾被报告。若已存在，请在相应问题中评论。"
 
 #: templates/support/home.html:82
 msgid "For enterprise-grade storage solutions and support, please visit"
-msgstr ""
+msgstr "企业级存储解决方案与技术支持，请访问"
 
 #: templates/support/license_update.html:6
 msgid "Your license has expired, please place a new one."
-msgstr ""
+msgstr "你得证书已过期，请输入新证书。"
 
 #: templates/system/backup.html:3
 msgid ""
 "Backup of encrypted volumes is not supported. If your system have any, they "
 "will be skipped during the backup."
-msgstr ""
+msgstr "不支持备份加密卷。备份过程将忽略系统中的加密卷。"
 
 #: templates/system/bootenv_datagrid.html:86
 msgid "Automatic scrub interval (in days)"
-msgstr ""
+msgstr "自动 scrub 周期（天）"
 
 #: templates/system/config_upload.html:5
 msgid "The system will reboot to perform this operation!"
@@ -11897,6 +11871,10 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+"有可用更新 %(train)s 。\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"
 
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
@@ -11907,105 +11885,318 @@ msgid "VLAN ID"
 msgstr "VLAN ID"
 
 #: sharing/forms.py:465
-#, fuzzy
 msgid "A mountpoint with this path is already in use by another share."
-msgstr "网络 %s 已被另一个网卡使用。"
+msgstr "其他共享已挂载此路径。"
 
 #: storage/forms.py:441
-#, fuzzy
 msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr "您试图向已存在 %(addnum)s 个驱动器的存储池中添加虚拟驱动器，该存储池已存在 %(vdevnum)s 个虚拟驱动器"
 
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "确认新密码"
+msgstr "确认LDAP用户DN密码"
 
 #: directoryservice/models.py:519
-#, fuzzy
 msgid "LDAP User DN Password"
-msgstr "LDAP 用户 DN"
+msgstr "LDAP 用户 DN 密码"
 
 #: directoryservice/models.py:521
-#, fuzzy
 msgid "Password for LDAP User DN"
-msgstr "LDAP 用户 DN"
+msgstr "LDAP 用户 DN 的密码"
 
 #: directoryservice/forms.py:476
-#, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr "对端密码不能与用户密码相同。"
+msgstr "NetBIOS 不能与第一个相同。"
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr "对端密码不能与用户密码相同。"
+msgstr "NetBIOS 不能与 WORKGROUP 同名！"
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "版本"
+msgstr "版本号"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "加密密码"
+msgstr "加密算法"
 
 #: directoryservice/models.py:747
-#, fuzzy
 msgid "Principal name"
-msgstr "Principal"
+msgstr ""
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
 #, fuzzy
 msgid "Kerberos Principal"
-msgstr "Kerberos realm."
+msgstr "Kerberos Principal"
 
 #: network/forms.py:254
-#, fuzzy
 msgid "The following VHIDs are already in use: %s"
-msgstr "下列地址不正确: %s"
+msgstr "下列 VHIDs 以被使用: %s"
 
 #: network/forms.py:282
-#, fuzzy
 msgid "The IP must be within the same network"
-msgstr "只能在同一卷上进行克隆"
+msgstr "IP 必须在同一网段"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
-msgstr ""
+msgstr "虚拟IP 不在相同网段"
 
 #: network/hook.py:72
 msgid "IPMI (Node %s)"
-msgstr ""
+msgstr "IPMI (节点 %s)"
 
 #: network/models.py:228
-#, fuzzy
 msgid "Virtual IP"
-msgstr "Portal IP"
+msgstr "虚拟 IP"
 
 #: network/models.py:233
 msgid "Virtual Host ID"
-msgstr ""
+msgstr "虚拟主机ID"
 
 #: network/models.py:245
-#, fuzzy
 msgid "Critical for Failover"
-msgstr "危险警报"
+msgstr "Failover 风险"
 
 #: network/models.py:359
-#, fuzzy
 msgid "Virtual IPv4"
-msgstr "Portal IP"
+msgstr "虚拟 IPv4"
 
 #: network/nav.py:45
 msgid "IPMI (Node B)"
-msgstr ""
+msgstr "IPMI (节点 B)"
 
 #: network/nav.py:47
 msgid "IPMI (Node A)"
+msgstr "IPMI (节点 A)"
+
+#: system/alertmods/mpr_firmware.py:34
+#, fuzzy
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr "/dev/mps%(mps)s 中固件版本 %(fwversion)s 与驱动器版本 %(drversion)s 不匹配"
+
+#: network/forms.py:320
+#: network/forms.py:324
+msgid "This field is required for failover"
+msgstr "配置 failover 则必填此项"
+
+#: services/forms.py:1151
+msgid "Extent is already in this target."
+msgstr "Extent 已在 target 中。"
+
+#: jails/models.py:647
+msgid "Jail Template"
+msgstr "Jail 模板"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "iSCSI 组"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "插件名称"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "可用插件"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "安装插件"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "安装"
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
 msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "主机名或 IP 地址"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "远程端口"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "用户名"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "更改密码"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "版本"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "配置"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Target 全局配置"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+#, fuzzy
+msgid "TrueNAS Management IP Address"
+msgstr "DNS 代理IP地址"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+#, fuzzy
+msgid "vCenter Hostname/IP Address"
+msgstr "主机名或 IP 地址"
+
+#: vcp/models.py:57
+#, fuzzy
+msgid "vCenter Port"
+msgstr "远程端口"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "vCenter User name"
+msgstr "用户名"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid "vCenter Password"
+msgstr "更改密码"
+
+#: vcp/models.py:77
+#, fuzzy
+msgid "vCenter Configuration"
+msgstr "配置"
+
+#: vcp/models.py:78
+#, fuzzy
+msgid "vCenter Configurations"
+msgstr "配置"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr "递归复制和删除远程端上的陈旧快照"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
+
+#: storage/models.py:910
+#, fuzzy
+msgid "Delete stale snapshots on remote system"
+msgstr "最近一次向远程发送快照"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "必须提供一个文件"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "输入整数从1-65535，通常是：25、465或587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "用户名"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "版本"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "没有可用更新"
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "内部证书已编辑。"

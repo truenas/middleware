@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-06-30 20:34+0000\n"
-"Last-Translator: bleuse <raphael@bleuse.net>\n"
+"PO-Revision-Date: 2015-09-09 09:20+0000\n"
+"Last-Translator: Fraz <francis.heche@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1435696449.0\n"
+"X-POOTLE-MTIME: 1441790458.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -25,10 +25,12 @@ msgstr "Entier"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
+#, fuzzy
 msgid "SSL"
 msgstr "SSL"
 
 #: choices.py:42 choices.py:558
+#, fuzzy
 msgid "TLS"
 msgstr "TLS"
 
@@ -41,8 +43,9 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
+#, fuzzy
 msgid "Auto"
-msgstr "Auto"
+msgstr "Automatique"
 
 #: choices.py:54
 msgid "PIO0"
@@ -105,12 +108,14 @@ msgid "SATA 3.0Gbit/s"
 msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
+#, fuzzy
 msgid "Always On"
-msgstr "Toujours Actif"
+msgstr "Toujours actif"
 
 #: choices.py:86 choices.py:95
+#, fuzzy
 msgid "Disabled"
-msgstr "Désactivé"
+msgstr "Désactivé(e)"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
@@ -135,6 +140,7 @@ msgid "Level 192 - Intermediate power usage without Standby"
 msgstr "Niveau 192 - Consommation intermédiaire sans mise en veille"
 
 #: choices.py:92
+#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
 msgstr "Niveau 254 - Performance maximale, consommation maximale"
 
@@ -143,8 +149,9 @@ msgid "Minimum"
 msgstr "Minimum"
 
 #: choices.py:97
+#, fuzzy
 msgid "Medium"
-msgstr "Moyen"
+msgstr "Moyen(ne)"
 
 #: choices.py:98
 msgid "Maximum"
@@ -227,18 +234,21 @@ msgid "Sunday"
 msgstr "Dimanche"
 
 #: choices.py:163
+#, fuzzy
 msgid "Anonymous"
 msgstr "Anonyme"
 
 #: choices.py:164
 msgid "Local User"
-msgstr "Utilisateur Local"
+msgstr "Utilisateur local"
 
 #: choices.py:189
+#, fuzzy
 msgid "Normal"
-msgstr "Normal"
+msgstr "Normal(e)"
 
 #: choices.py:190
+#, fuzzy
 msgid "Full"
 msgstr "Complet"
 
@@ -12013,9 +12023,8 @@ msgid "Changelog"
 msgstr "Changer"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
@@ -12023,32 +12032,31 @@ msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "Sensible"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "Insensible"
 
 #: choices.py:813
 msgid "Mixed"
 msgstr ""
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Compte invité"
+msgstr "Compte Microsoft"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -13054,3 +13062,237 @@ msgstr ""
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+#, fuzzy
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr ""
+"La version du firmware %(fwversion)s ne correspond pas à la version du "
+"driver %(drversion)s pour /dev/mps%(mps)s"
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "Ce champ est nécessaire pour les connexions anonymes"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "Le LUN existe déjà sur la cible."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Modèles de Prisons"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portail IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Groupes"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "Nom du module"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "Modules disponibles"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "Installer un module"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "Installer"
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "Adresse IP du contrôleur"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Port distant"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "Nom d'utilisateur"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Modifier le mot de passe"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "Version"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Configuration"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Configuration générale de la cible"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+#, fuzzy
+msgid "TrueNAS Management IP Address"
+msgstr "Adresse IP du DNS de translation"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+#, fuzzy
+msgid "vCenter Hostname/IP Address"
+msgstr "Adresse IP du contrôleur"
+
+#: vcp/models.py:57
+#, fuzzy
+msgid "vCenter Port"
+msgstr "Port distant"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "vCenter User name"
+msgstr "Nom d'utilisateur"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid "vCenter Password"
+msgstr "Modifier le mot de passe"
+
+#: vcp/models.py:77
+#, fuzzy
+msgid "vCenter Configuration"
+msgstr "Configuration"
+
+#: vcp/models.py:78
+#, fuzzy
+msgid "vCenter Configurations"
+msgstr "Configuration"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+"Répliquer récursivement et supprimer les anciens instantanés du côté distant"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
+
+#: storage/models.py:910
+#, fuzzy
+msgid "Delete stale snapshots on remote system"
+msgstr "Dernier instantané envoyé du côté distant"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Un fichier est requis"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Un entier compris entre 1 et 65535, généralement 25, 465 ou 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Nom d'utilisateur"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Version"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Aucune réplication ZFS n'est disponible"
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "Modèle de prison modifié avec succès."

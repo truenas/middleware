@@ -12416,3 +12416,227 @@ msgstr ""
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "如欲使用「匿名登入」功能則須填寫此欄位"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "LUN 已存在於同一目標"
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "IPv4 Netmask"
+
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "埠"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "群組"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "IPv4 地址"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "可用的"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "IPv4 地址"
+
+#: templates/vcp/index.html:33
+msgid "Uninstall"
+msgstr ""
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "IPv4 地址"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "遠端監視器"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "帳戶名稱"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "改變密碼"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "操作系統版本"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Global Configuration"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "目標全局設定"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+msgid "TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+#, fuzzy
+msgid "vCenter Hostname/IP Address"
+msgstr "IPv4 地址"
+
+#: vcp/models.py:57
+#, fuzzy
+msgid "vCenter Port"
+msgstr "遠端監視器"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "vCenter User name"
+msgstr "帳戶名稱"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid "vCenter Password"
+msgstr "改變密碼"
+
+#: vcp/models.py:77
+#, fuzzy
+msgid "vCenter Configuration"
+msgstr "Global Configuration"
+
+#: vcp/models.py:78
+#, fuzzy
+msgid "vCenter Configurations"
+msgstr "Global Configuration"
+
+#: storage/models.py:905
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
+
+#: storage/models.py:910
+msgid "Delete stale snapshots on remote system"
+msgstr ""
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "必填項目"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "帳戶名稱"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "操作系統版本"
+
+#: vcp/views.py:80
+msgid "There are No updates available at this time."
+msgstr ""
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "%s 已成功刪除."

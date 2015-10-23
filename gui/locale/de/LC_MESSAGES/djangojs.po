@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-02-07 15:59+0000\n"
-"Last-Translator: jawo1998 <jawo1998@gmail.com>\n"
+"PO-Revision-Date: 2015-09-08 05:35+0000\n"
+"Last-Translator: matsimon <ms.registration@simweb.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1423324779.0\n"
+"X-POOTLE-MTIME: 1441690510.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Berichte"
@@ -549,4 +549,18 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:185
+msgid "vCenter Plugin Configuration"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1343
+msgid "Decreasing WebGUI https security!"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:1348
+msgid ""
+"<font color='red'>Warning: Selecting this reduces your https security.<br /><"
+"br />"
 msgstr ""
