@@ -1897,7 +1897,7 @@ class DomainControllerForm(ModelForm):
         super(DomainControllerForm, self).save()
 
         if self.__original_changed():
-            Samba4().sentinel_file_remove()
+            Samba4().domain_sentinel_file_remove()
 
         notifier().restart("domaincontroller")
 

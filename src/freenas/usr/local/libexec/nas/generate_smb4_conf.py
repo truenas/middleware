@@ -1487,11 +1487,13 @@ def main():
     if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
 
-    if role != 'dc':
+    if role != 'dc' and not Samba4().users_imported():
         smb4_import_users(smb_conf_path, smb4_tdb,
                           "/var/db/samba4/private/passdb.tdb")
         smb4_map_groups()
         smb4_grant_rights()
+
+        Samba4().user_import_sentinel_file_create()
 
     if role == 'member' and activedirectory_enabled() and idmap_backend_rfc2307():
         set_idmap_rfc2307_secret()
