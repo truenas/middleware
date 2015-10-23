@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-12-17 16:07+0000\n"
+"PO-Revision-Date: 2015-10-19 08:51+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1418832441.0\n"
+"X-POOTLE-MTIME: 1445244708.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Звіти"
@@ -29,7 +29,7 @@ msgstr "Налаштування"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
-msgstr "Системна інформація"
+msgstr "Інформація про систему"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
@@ -111,7 +111,7 @@ msgstr "Увімкнути службу"
 
 #: freeadmin/static/lib/js/freeadmin.js:994
 msgid "The cache is being rebuilt."
-msgstr "Кеш было перебудовано."
+msgstr "Кеш було перебудовано."
 
 #: freeadmin/static/lib/js/freeadmin.js:996
 msgid "The cache could not be rebuilt: "
@@ -164,7 +164,7 @@ msgstr ""
 "Ваша конфігурація оптимальна!<br /><br />Ви отримаєте найкращу можливу "
 "продуктивність для цієї кількості дисків і типу групи.<br /><br />За "
 "додатковою інформацією звертайтеся до <a "
-"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target ="
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target="
 "'_blank '>документації</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
@@ -178,7 +178,7 @@ msgstr ""
 "Ваша конфігурація не оптимальна!<br /><br />Ця кількість дисків не надасть "
 "найкращу можливу продуктивність для цього типу групи.<br /><br />За "
 "додатковою інформацією звертайтеся до <a "
-"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target ="
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' target="
 "'_blank '>документації</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
@@ -263,93 +263,86 @@ msgstr "Закрити"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Ручне налаштування"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Назва тому"
+msgstr "Менеджер томів ZFS"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Підтвердити"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
-#, fuzzy
 msgid "System"
-msgstr "Система попереджень"
+msgstr "Система"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Завдання"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Налаштування мережі"
+msgstr "Мережа"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
-#, fuzzy
 msgid "Sharing"
-msgstr "Спільні ресурси"
+msgstr "Спільний доступ"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Служба каталогів"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Ініціалізувати безпечно"
+msgstr "Майстер початкової настройки"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
-#, fuzzy
 msgid "Share name"
-msgstr "Спільні ресурси"
+msgstr "Назва ресурсу"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
-msgstr ""
+msgstr "Це поле може містити тільки букви, цифри та \"_\", \"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Вкажіть розмір використовуючи суфікси B, K, M, G, T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Додати"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Вилучити"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Оновити"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Власник"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Цей користувач не існує."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Ця група не існує."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Повернення"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
-#, fuzzy
 msgid "Wizard"
-msgstr "Ініціалізувати безпечно"
+msgstr "Майстер"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
@@ -357,21 +350,23 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Увага!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Цей параметр відключає шифрування для задач реплікації і його слід "
+"використовувати ТІЛЬКИ на захищеній локальній мережі!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Ви впевнені, що хочете це зробити?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Ручне налаштування"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
@@ -379,58 +374,58 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Застосувати поновлення що очікують"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Ім'я хоста не може бути порожнім."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Ім'я користувача не може бути порожнім."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "Пароль не може бути порожнім."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Ручне оновлення"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Перевірити тепер"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Так"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Ні"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Завантаження…"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Немає чекаючих оновлень."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Перевірити установку"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr ""
+msgstr "Паролі не збігаються."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "Перезапуск WebGUI"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
@@ -439,120 +434,138 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:1162
 msgid ""
 "<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
-msgstr ""
+msgstr "<font color='red'>СТОП</font>: Ви знаєте що ви робите?<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1163
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
-msgstr ""
+msgstr "Плагін idmap_ad дає Winbind можливість читати перетворення з<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1164
 msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
-msgstr ""
+msgstr "сервера AD, що використовує розширення RFC2307/SFU. Цей модуль<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1165
 msgid ""
 "implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
 msgstr ""
+"реалізує тільки \"idmap\" API ПО ЧИТАННЮ. Перетворення повинні бути<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1166
 msgid "provided in advance by the administrator by adding the uidNumber<br />"
-msgstr ""
+msgstr "надані адміністратором заздалегідь додаванням uidNumber<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1167
 msgid ""
 "attributes for users and gidNumber attributes for groups in the AD.<br />"
-msgstr ""
+msgstr "атрибутів для користувачів і gidNumber для груп а AD.<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1168
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
 msgstr ""
+"Winbind перетворює тільки користувачів що мають uidNumber і чия перша<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
 msgid ""
 "group have a gidNumber attribute set. It is however recommended that<br />"
-msgstr ""
+msgstr "група має встановлений gidNumber. Проте рекомендується щоб<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1170
 msgid ""
 "all groups in use have gidNumber attributes assigned, otherwise they<br />"
-msgstr ""
+msgstr "всі групи мали встановлений атрибут gidNumber, інакше вони<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1171
 msgid "are not working.<br /><br />"
-msgstr ""
+msgstr "не працюватимуть.<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1172
 msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
+"<font color = 'red'> СТОП </ font>: Якщо ваша Active Directory не "
+"налаштована для цього, це не буде працювати.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Документація"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Ім'я користувача"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "Якщо у вас немає облікового запису, будь ласка"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"
-msgstr ""
+msgstr "реєстрація"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr ""
+msgstr "Прикріпити налагоджувальну інформацію"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Надіслати"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Це поле є обов`язковим."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr ""
+msgstr "Вивантаження долученнь"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
-msgstr ""
+msgstr "Генерується налагоджувальна інформація"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
-msgstr ""
+msgstr "Відправка відгука"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr ""
+msgstr "Відправка додатків до відгуку"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Train Descriptions"
-msgstr ""
+msgstr "Опис поїзда"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 msgid "Loading"
-msgstr ""
+msgstr "Завантаження"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"
-msgstr ""
+msgstr "Автоматично виконувати пошук оновлень"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
-msgstr ""
+msgstr "Поточний поїзд"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
 msgid "Update Server"
-msgstr ""
+msgstr "Сервер оновлень"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
-msgstr ""
+msgstr "Оновлення що очікують"
+
+#: freeadmin/static/lib/js/freeadmin/Menu.js:185
+msgid "vCenter Plugin Configuration"
+msgstr "Налаштування плагіна vCenter"
+
+#: freeadmin/static/lib/js/freeadmin.js:1343
+msgid "Decreasing WebGUI https security!"
+msgstr "Зменшення безпеки WebGUI HTTPS!"
+
+#: freeadmin/static/lib/js/freeadmin.js:1348
+msgid ""
+"<font color='red'>Warning: Selecting this reduces your https security.<br /><"
+"br />"
+msgstr "<font color='red'>Увага: Вибір цього знижує безпеку HTTPS.<br /><br />"

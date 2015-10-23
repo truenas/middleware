@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-02-07 15:59+0000\n"
-"Last-Translator: jawo1998 <jawo1998@gmail.com>\n"
+"PO-Revision-Date: 2015-09-08 05:35+0000\n"
+"Last-Translator: matsimon <ms.registration@simweb.ch>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1423324779.0\n"
+"X-POOTLE-MTIME: 1441690510.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7151,16 +7151,16 @@ msgstr "Das System wird heruntergefahren ..."
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1                "
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2 "
 
 #: choices.py:175
 #, fuzzy
 msgid "NT1"
-msgstr "NT4"
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
@@ -7169,7 +7169,7 @@ msgstr ""
 #: choices.py:312
 #, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (empfohlen)"
+msgstr "lzjb (veraltet, nicht empfohlen)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -7177,7 +7177,7 @@ msgstr ""
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (beste Kompression)"
 
 # Übersetzung laut Wikipedia Artikel
 #: choices.py:698
@@ -8158,23 +8158,23 @@ msgstr ""
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:677
 #, fuzzy
 msgid "Debug2"
-msgstr "Debug"
+msgstr "Debug2"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:678
 #, fuzzy
 msgid "Debug3"
-msgstr "Debug"
+msgstr "Debug3"
 
 #: choices.py:685
 msgid "Auth"
@@ -9184,25 +9184,24 @@ msgstr ""
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 # je nach Kontext auch "Schnellster"
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
-msgstr "gzip (schnellste)"
+msgstr "lz4 (am schnellsten)"
 
 #: choices.py:686
 #, fuzzy
@@ -10884,12 +10883,11 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr "                  Grund-Authentifizierung                "
+msgstr "Grund-Authentifizierung                "
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Authentifizierung"
+msgstr "Digest-Authentifizierung"
 
 #: choices.py:799
 msgid "adex"
@@ -12259,23 +12257,23 @@ msgstr "Ändern"
 #: choices.py:237
 #, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
@@ -13294,3 +13292,240 @@ msgstr ""
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+#, fuzzy
+msgid "This field is required for failover"
+msgstr "Dieses Feld ist für die anonyme Anmeldung notwendig"
+
+#: services/forms.py:1151
+#, fuzzy
+msgid "Extent is already in this target."
+msgstr "LUN existiert bereits im gleichen Ziel."
+
+#: jails/models.py:647
+#, fuzzy
+msgid "Jail Template"
+msgstr "Jail-Vorlagen hinzufügen"
+
+# Übersetzen oder nicht?
+#: services/models.py:679
+#, fuzzy
+msgid "Portal IPs"
+msgstr "Portal IP"
+
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "Gruppen"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "Plugin-Name"
+
+#: templates/vcp/index.html:10
+#, fuzzy
+msgid "Available Plugin Version:"
+msgstr "Verfügbare Aktionen"
+
+#: templates/vcp/index.html:20
+#, fuzzy
+msgid "Installed Plugin Version:"
+msgstr "Installiere Plugin"
+
+#: templates/vcp/index.html:33
+#, fuzzy
+msgid "Uninstall"
+msgstr "Installiert..."
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "IP-Adresse des Controllers"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Remote Port"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "Benutzername"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Passwort ändern"
+
+#: vcp/models.py:74
+#, fuzzy
+msgid "version"
+msgstr "Version"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Allgemeine Konfiguration"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Allgemeine Target Einstellungen"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+#, fuzzy
+msgid "TrueNAS Management IP Address"
+msgstr "IP-Adresse des Controllers"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+#, fuzzy
+msgid "vCenter Hostname/IP Address"
+msgstr "IP-Adresse des Controllers"
+
+#: vcp/models.py:57
+#, fuzzy
+msgid "vCenter Port"
+msgstr "Remote Port"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "vCenter User name"
+msgstr "Benutzername"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid "vCenter Password"
+msgstr "Passwort ändern"
+
+#: vcp/models.py:77
+#, fuzzy
+msgid "vCenter Configuration"
+msgstr "Allgemeine Konfiguration"
+
+#: vcp/models.py:78
+#, fuzzy
+msgid "vCenter Configurations"
+msgstr "Allgemeine Konfiguration"
+
+#: storage/models.py:905
+#, fuzzy
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+"Rekursives Reproduzieren und Entfernen der veralteten Momentaufnahme auf der "
+"Gegenseite"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
+
+#: storage/models.py:910
+#, fuzzy
+msgid "Delete stale snapshots on remote system"
+msgstr ""
+"Von der Gegenstelle zuletzt empfangener Snapshot (frei lassen für "
+"vollständige Replizierung)"
+
+#: vcp/views.py:83
+#, fuzzy
+msgid "Upgrade is not required"
+msgstr "Dieses Feld wird benötigt"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+"Eine Anschlussnummer zwischen 1 und 65535. Für gewöhnlich wird 25, 465 oder "
+"587 verwendet."
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Benutzername"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "Version"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Keine ZFS-Replikation verfügbar"
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "Dataset erfolgreich editiert."

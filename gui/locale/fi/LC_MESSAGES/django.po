@@ -11873,3 +11873,215 @@ msgstr ""
 #: network/nav.py:47
 msgid "IPMI (Node A)"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
+msgstr ""
+
+#: network/forms.py:320
+#: network/forms.py:324
+msgid "This field is required for failover"
+msgstr ""
+
+#: services/forms.py:1151
+msgid "Extent is already in this target."
+msgstr ""
+
+#: jails/models.py:647
+msgid "Jail Template"
+msgstr ""
+
+#: services/models.py:679
+msgid "Portal IPs"
+msgstr ""
+
+# Global term so do not need to be translated
+#: services/models.py:910
+#, fuzzy
+msgid "iSCSI Group"
+msgstr "iSCSI"
+
+#: templates/vcp/index.html:6
+#, fuzzy
+msgid "Plugin Name:"
+msgstr "Levy"
+
+#: templates/vcp/index.html:10
+msgid "Available Plugin Version:"
+msgstr ""
+
+#: templates/vcp/index.html:20
+msgid "Installed Plugin Version:"
+msgstr ""
+
+#: templates/vcp/index.html:33
+msgid "Uninstall"
+msgstr ""
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr ""
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+msgid " vCenter Hostname/IP Address"
+msgstr ""
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Poista"
+
+#: vcp/models.py:60
+msgid " vCenter User name"
+msgstr ""
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Salasana"
+
+#: vcp/models.py:74
+msgid "version"
+msgstr ""
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Salasanan vahvistus"
+
+#: vcp/nav.py:44
+#, fuzzy
+msgid "vCenter Plugin Configuration"
+msgstr "Salasanan vahvistus"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr ""
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr ""
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr ""
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+
+#: vcp/models.py:41
+msgid "TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+
+#: vcp/models.py:52
+msgid "vCenter Hostname/IP Address"
+msgstr ""
+
+#: vcp/models.py:57
+#, fuzzy
+msgid "vCenter Port"
+msgstr "Poista"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "vCenter User name"
+msgstr "Poista"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid "vCenter Password"
+msgstr "Salasana"
+
+#: vcp/models.py:77
+#, fuzzy
+msgid "vCenter Configuration"
+msgstr "Salasanan vahvistus"
+
+#: vcp/models.py:78
+#, fuzzy
+msgid "vCenter Configurations"
+msgstr "Salasanan vahvistus"
+
+#: storage/models.py:905
+msgid "Recursively replicate child dataset's snapshots"
+msgstr ""
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
+
+#: storage/models.py:910
+msgid "Delete stale snapshots on remote system"
+msgstr ""
+
+#: vcp/views.py:83
+msgid "Upgrade is not required"
+msgstr ""
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr ""
+
+#: vcp/models.py:61
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr ""
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Poista"
+
+#: vcp/models.py:76
+msgid " version"
+msgstr ""
+
+#: vcp/views.py:80
+msgid "There are No updates available at this time."
+msgstr ""
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr ""

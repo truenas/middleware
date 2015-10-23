@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-07-12 16:44+0000\n"
+"PO-Revision-Date: 2015-10-10 18:01+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1436719465.0\n"
+"X-POOTLE-MTIME: 1444500077.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12399,93 +12399,296 @@ msgstr ""
 "zařízení"
 
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Potvrzení nového hesla"
+msgstr "Potvrzení hesla rozlišeného názvu LDAP uživatele"
 
 #: directoryservice/models.py:519
-#, fuzzy
 msgid "LDAP User DN Password"
-msgstr "Rozlišené jméno (DN) uživatele LDAP"
+msgstr "Heslo rozlišeného názvu LDAP uživatele"
 
 #: directoryservice/models.py:521
-#, fuzzy
 msgid "Password for LDAP User DN"
-msgstr "Rozlišené jméno (DN) uživatele LDAP"
+msgstr "Heslo rozlišeného názvu LDAP uživatele"
 
 #: directoryservice/forms.py:476
-#, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr "Heslo pro protějšek nesmí být stejné, jako uživatelské heslo."
+msgstr "NetBIOS nemůže být stejný, jako první."
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr "Heslo pro protějšek nesmí být stejné, jako uživatelské heslo."
+msgstr "NetBIOS název nemůže být stejný jako název pracovní skupiny!"
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "Verze"
+msgstr "Číslo verze"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "Metoda šifrování"
+msgstr "Šifrovací algoritmus"
 
 #: directoryservice/models.py:747
-#, fuzzy
 msgid "Principal name"
-msgstr "Protějšek"
+msgstr "Název identity"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
-#, fuzzy
 msgid "Kerberos Principal"
-msgstr "Kerberos oblast."
+msgstr "Kerberos identita (principal)"
 
 #: network/forms.py:254
-#, fuzzy
 msgid "The following VHIDs are already in use: %s"
-msgstr "Následující adresy jsou neplatné: %s"
+msgstr "Následující VHID jsou již používány: %s"
 
 #: network/forms.py:282
-#, fuzzy
 msgid "The IP must be within the same network"
-msgstr "Je třeba, aby se klon nacházel na stejném svazku"
+msgstr "Je třeba, aby IP adresa spadala do stejné sítě"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
-msgstr ""
+msgstr "Virtuální IP adresa se nenachází ve stejné síti"
 
 #: network/hook.py:72
 msgid "IPMI (Node %s)"
-msgstr ""
+msgstr "IPMI (uzel %s)"
 
 #: network/models.py:228
-#, fuzzy
 msgid "Virtual IP"
-msgstr "IP adresa portálu"
+msgstr "Virtuální IP adresa"
 
 #: network/models.py:233
 msgid "Virtual Host ID"
-msgstr ""
+msgstr "Identifikátor virtuálního hostitele"
 
 #: network/models.py:245
-#, fuzzy
 msgid "Critical for Failover"
-msgstr "Kritické výstrahy"
+msgstr "Kritické pro převzetí služby v případě selhání"
 
 #: network/models.py:359
-#, fuzzy
 msgid "Virtual IPv4"
-msgstr "IP adresa portálu"
+msgstr "Virtuální IPv4 adresa"
 
 #: network/nav.py:45
 msgid "IPMI (Node B)"
-msgstr ""
+msgstr "IPMI (uzel B)"
 
 #: network/nav.py:47
 msgid "IPMI (Node A)"
+msgstr "IPMI (uzel A)"
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s"
 msgstr ""
+"Verze firmware %(fwversion)s neodpovídá verzi ovladače %(drversion)s pro "
+"zařízení /dev/mpr%(mpr)s"
+
+#: network/forms.py:320
+#: network/forms.py:324
+msgid "This field is required for failover"
+msgstr ""
+"Vyplnění této kolonky je vyžadováno pro převzetí služby v případě selhání"
+
+#: services/forms.py:1151
+msgid "Extent is already in this target."
+msgstr "Úložná jednotka se již nachází v tomto cíli."
+
+#: jails/models.py:647
+msgid "Jail Template"
+msgstr "Šablona vyhrazeného prostředí"
+
+#: services/models.py:679
+msgid "Portal IPs"
+msgstr "IP adresy portálu"
+
+#: services/models.py:910
+msgid "iSCSI Group"
+msgstr "iSCSI skupina"
+
+#: templates/vcp/index.html:6
+msgid "Plugin Name:"
+msgstr "Název zásuvného modulu:"
+
+#: templates/vcp/index.html:10
+msgid "Available Plugin Version:"
+msgstr "Verze zásuvného modulu k dispozici:"
+
+#: templates/vcp/index.html:20
+msgid "Installed Plugin Version:"
+msgstr "Nainstalovaná verze zásuvného modulu:"
+
+#: templates/vcp/index.html:33
+msgid "Uninstall"
+msgstr "Odinstalovat"
+
+#: vcp/forms.py:56
+msgid "Please select the TrueNAS management interface."
+msgstr "Vyberte správní rozhraní TrueNAS."
+
+#: vcp/hook.py:45
+#: vcp/nav.py:35
+msgid "vCenter"
+msgstr ""
+
+#: vcp/models.py:41
+msgid " TrueNAS Management IP Address"
+msgstr ""
+
+#: vcp/models.py:49
+#, fuzzy
+msgid " vCenter Hostname/IP Address"
+msgstr "Název stroje nebo jeho IP adresa"
+
+#: vcp/models.py:55
+#, fuzzy
+msgid " vCenter Port"
+msgstr "Port na protistraně"
+
+#: vcp/models.py:60
+#, fuzzy
+msgid " vCenter User name"
+msgstr "Uživatelské jméno"
+
+#: vcp/models.py:67
+#, fuzzy
+msgid " vCenter Password"
+msgstr "Změnit heslo"
+
+#: vcp/models.py:74
+msgid "version"
+msgstr "verze"
+
+#: vcp/models.py:78
+#: vcp/models.py:79
+#, fuzzy
+msgid "VCenter Configuration"
+msgstr "Nastavení"
+
+#: vcp/nav.py:44
+msgid "vCenter Plugin Configuration"
+msgstr "Nastavení zásuvného modulu vCenter"
+
+#: vcp/views.py:53
+msgid "vCenter plugin installed successfully."
+msgstr "Zásuvný modul vCenter byl úspěšně nainstalován."
+
+#: vcp/views.py:75
+msgid "vCenter plugin upgraded successfully."
+msgstr "Zásuvný modul vCenter byl úspěšně zaktualizován."
+
+#: vcp/views.py:84
+msgid "vCenter plugin uninstalled successfully."
+msgstr "Zásuvný modul vCenter byl úspěšně odinstalován."
+
+#: network/forms.py:280
+msgid "One interface must be marked critical for failover."
+msgstr ""
+"Pro převzetí služby v případě výpadku je třeba, aby jedno rozhraní bylo "
+"označeno jako kritické."
+
+#: vcp/models.py:41
+msgid "TrueNAS Management IP Address"
+msgstr "IP adresa správního rozhraní TrueNAS"
+
+#: vcp/models.py:45
+msgid ""
+"Please select the TrueNAS interface that vCenter Web client can route to."
+msgstr ""
+"Vyberte rozhraní TrueNAS, na které bude odkazovat webový klient vCenter."
+
+#: vcp/models.py:52
+msgid "vCenter Hostname/IP Address"
+msgstr "Název stroje s vCenter nebo jeho IP adresa"
+
+#: vcp/models.py:57
+msgid "vCenter Port"
+msgstr "Port na kterém vCenter očekává spojení"
+
+#: vcp/models.py:61
+msgid "vCenter User name"
+msgstr "Uživatelské jméno pro vCenter"
+
+#: vcp/models.py:67
+msgid "vCenter Password"
+msgstr "Heslo pro vCenter"
+
+#: vcp/models.py:77
+msgid "vCenter Configuration"
+msgstr "Nastavení vCenter"
+
+#: vcp/models.py:78
+msgid "vCenter Configurations"
+msgstr "Nastavení vCenter"
+
+#: storage/models.py:905
+msgid "Recursively replicate child dataset's snapshots"
+msgstr "Rekurzivně replikovat zachycené stavy podřízených datových sad"
+
+#: storage/models.py:910
+msgid ""
+"Delete snapshots that are no longer available locally after successful "
+"replication of new snapshots"
+msgstr ""
+"Po úspěšné replikaci nových zachycených stavů smazat ty, které již nejsou k "
+"dispozici místně."
+
+#: storage/models.py:910
+msgid "Delete stale snapshots on remote system"
+msgstr "Smazat zaseknuté zachycené stavy na protistraně"
+
+#: vcp/views.py:83
+msgid "Upgrade is not required"
+msgstr "Přechod na novější verzi není nutný"
+
+#: vcp/views.py:126
+msgid "vCenter plugin is repaired successfully"
+msgstr "Zásuvný modul vCenter byl úspěšně opraven"
+
+#: vcp/models.py:61
+#, fuzzy
+msgid "An integer from 1 - 65535, generally will be 443"
+msgstr "Celé číslo z rozsahu 1 až 65535, typicky 25, 465 nebo 587"
+
+#: vcp/models.py:66
+#, fuzzy
+msgid " vCenter Username"
+msgstr "Uživatelské jméno"
+
+#: vcp/models.py:76
+#, fuzzy
+msgid " version"
+msgstr "verze"
+
+#: vcp/views.py:80
+#, fuzzy
+msgid "There are No updates available at this time."
+msgstr "Nejsou k dispozici žádné aktualizace"
+
+#: templates/vcp/aux_settings.html:4
+msgid ""
+"Note: Editing this field will automatically restart your WebGUI for the "
+"necessary changes to take effect."
+msgstr ""
+
+#: templates/vcp/index.html:28
+msgid "Enable Vcenter Plugin over https:"
+msgstr ""
+
+#: templates/vcp/index.html:41
+msgid "Edit vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/models.py:93
+msgid "Enable Vcenter Plugin over https"
+msgstr ""
+
+#: vcp/models.py:97
+#: vcp/models.py:98
+msgid "vCenter Auxiliary Settings"
+msgstr ""
+
+#: vcp/views.py:98
+#, fuzzy
+msgid "vCenter Auxiliary Settings successfully edited."
+msgstr "Vnitřní certifikát byl úspěšně upraven."
