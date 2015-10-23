@@ -46,13 +46,11 @@ do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
-	${INSTALL_SCRIPT} ${WRKSRC}/afpusers/files/afpusers.py ${STAGEDIR}${PREFIX}/usr/local/bin/afpusers
 	cp -a ${WRKSRC}/freenas/ ${STAGEDIR}${PREFIX}/
 
 post-install:
 	@${ECHO_CMD} usr/local/bin/extract-tarball >> ${TMPPLIST}
 	@${ECHO_CMD} usr/local/bin/winacl >> ${TMPPLIST}
-	@${ECHO_CMD} usr/local/bin/afpusers >> ${TMPPLIST}
 	cd ${WRKSRC}/freenas && ${FIND} . -type f | \
 		${SED} -e 's|^\./||' | ${SORT} >> ${TMPPLIST}
 
