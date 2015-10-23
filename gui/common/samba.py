@@ -33,6 +33,7 @@ from freenasUI.services.models import DomainController
 
 SAMBA_DB_PATH = "/var/db/samba4"
 SAMBA_PROVISIONED_FILE = os.path.join(SAMBA_DB_PATH, ".provisioned")
+SAMBA_USER_IMPORT_FILE = os.path.join(SAMBA_DB_PATH, ".usersimported")
 SAMBA_TOOL = "/usr/local/bin/samba-tool"
 
 
@@ -43,7 +44,6 @@ class SambaConf(object):
 class Samba4(object):
     def __init__(self, *args, **kwargs):
         self.samba_tool_path = SAMBA_TOOL
-        self.provisioned_file = SAMBA_PROVISIONED_FILE
 
     def samba_tool(self, cmd, args, nonargs=None, quiet=False, buf=None):
         samba_tool_args = cmd
@@ -70,7 +70,13 @@ class Samba4(object):
         return True
 
     def domain_provisioned(self):
-        return self.sentinel_file_exists()
+        return self.sentinel_file_exists(SAMBA_PROVISIONED_FILE)
+
+    def domain_sentinel_file_create(self):
+        return self.sentinel_file_create(SAMBA_PROVISIONED_FILE)
+
+    def domain_sentinel_file_remove(self):
+        return self.sentinel_file_remove(SAMBA_PROVISIONED_FILE)
 
     def domain_provision(self):
         try:
@@ -209,35 +215,43 @@ class Samba4(object):
         return self.samba_tool("group removemembers", None,
             [group, string.join(members,  ',')])
 
-    def sentinel_file_exists(self):
-        return (os.path.exists(self.provisioned_file) and \
-            os.path.isfile(self.provisioned_file))
+    def sentinel_file_exists(self, sentinel_file):
+        return (os.path.exists(sentinel_file) and \
+            os.path.isfile(sentinel_file))
 
-    def sentinel_file_create(self):
+    def sentinel_file_create(self, sentinel_file):
         ret = False
         try:
-            with open(self.provisioned_file, 'w') as f:
+            with open(sentinel_file, 'w') as f:
                 f.close()
-            os.chmod(self.provisioned_file, 0400)
+            os.chmod(sentinel_file, 0400)
             ret = True
 
         except Exception as e:
-            print >> sys.stderr, "Unable to create %s: %s" % (self.provisioned_file, e)
+            print >> sys.stderr, "Unable to create %s: %s" % (sentinel_file, e)
             ret = False
 
         return ret
 
-    def sentinel_file_remove(self):
+    def sentinel_file_remove(self, sentinel_file):
         ret = True
 
-        if os.path.exists(self.provisioned_file):
+        if os.path.exists(sentinel_file):
             try:
-                os.unlink(self.provisioned_file)
+                os.unlink(sentinel_file)
                 ret = True  
 
             except Exception as e:
-                print >> sys.stderr, "Unable to remove %s: %s" % (self.provisioned_file, e)
+                print >> sys.stderr, "Unable to remove %s: %s" % (sentinel_file, e)
                 ret = False
 
         return ret
 
+    def users_imported(self):
+        return self.sentinel_file_exists(SAMBA_USER_IMPORT_FILE)
+
+    def user_import_sentinel_file_create(self):
+        return self.sentinel_file_create(SAMBA_USER_IMPORT_FILE)
+
+    def user_import_sentinel_file_remove(self):
+        return self.sentinel_file_remove(SAMBA_USER_IMPORT_FILE)
