@@ -1085,7 +1085,7 @@ class JailMountPointForm(ModelForm):
 
         pjlist = []
         try:
-            wlist = Warden().list()
+            wlist = Warden().cached_list()
         except:
             wlist = []
 

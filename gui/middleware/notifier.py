@@ -937,7 +937,7 @@ class notifier:
         running = False
 
         try:
-            wlist = Warden().list()
+            wlist = Warden().cached_list()
             for wj in wlist:
                 wj = WardenJail(**wj)
                 if pjail and wj.host == pjail:
@@ -2790,7 +2790,7 @@ class notifier:
             return False
 
         wjail = None
-        wlist = Warden().list()
+        wlist = Warden().cached_list()
         for wj in wlist:
             wj = WardenJail(**wj)
             if wj.host == pjail:
