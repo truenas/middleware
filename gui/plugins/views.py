@@ -534,7 +534,7 @@ def plugin_available_icon(request, oid):
 def plugin_installed_icon(request, plugin_name, oid):
     icon = None
     plugin = models.Plugins.objects.get(pk=oid)
-    for wo in Warden().list():
+    for wo in Warden().cached_list():
         wj = WardenJail(**wo)
         if wj.host == plugin.plugin_jail and wj.status == WARDEN_STATUS_STOPPED:
             icon = default_icon()
