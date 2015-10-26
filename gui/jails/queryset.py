@@ -47,9 +47,10 @@ class JailsQuerySet(QuerySet):
     def __wlist(self):
         if self.__wlist_cache is None:
             try:
-                wlist = Warden().list()
+                wlist = Warden().cached_list()
             except:
                 wlist = []
+
             if not wlist:
                 wlist = []
             self.__wcount_cache = len(wlist)
