@@ -3076,9 +3076,10 @@ class UpdateResourceMixin(NestedMixin):
 
 class FCPort(object):
 
-    def __init__(self, port=None, name=None, mode=None, target=None, state=None, speed=None, initiators=None):
+    def __init__(self, port=None, name=None, wwpn=None, mode=None, target=None, state=None, speed=None, initiators=None):
         self.port = port
         self.name = name
+        self.wwpn = wwpn
         self.mode = mode
         self.target = target
         self.state = state
@@ -3091,6 +3092,7 @@ class FCPortsResource(DojoResource):
     id = fields.CharField(attribute='port')
     port = fields.CharField(attribute='port')
     name = fields.CharField(attribute='name')
+    wwpn = fields.CharField(attribute='wwpn')
     mode = fields.CharField(attribute='mode')
     state = fields.CharField(attribute='state')
     target = fields.IntegerField(attribute='target', null=True)
@@ -3128,6 +3130,7 @@ class FCPortsResource(DojoResource):
                 port = '0'
             state = 'NO_LINK'
             speed = None
+            wwpn = None
             mib = 'dev.isp.%s.loopstate' % port
             loopstate = sysctl.filter(mib)
             if loopstate:
@@ -3140,6 +3143,10 @@ class FCPortsResource(DojoResource):
                     speedres = sysctl.filter('dev.isp.%s.speed' % port)
                     if speedres:
                         speed = speedres[0].value
+            mib = 'dev.isp.%s.wwpn' % port
+            _filter = sysctl.filter(mib)
+            if _filter:
+                wwpn = 'naa.%x' % _filter[0].value
             if name in fcportmap:
                 targetobj = fcportmap[name]
                 if targetobj is not None:
@@ -3157,6 +3164,7 @@ class FCPortsResource(DojoResource):
             results.append(FCPort(
                 port=port,
                 name=name,
+                wwpn=wwpn,
                 mode=mode,
                 target=target,
                 state=state,

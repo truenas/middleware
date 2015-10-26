@@ -43,11 +43,13 @@ define([
       speed: null,
       state: null,
       initiators: null,
+      wwpn: null,
       postCreate: function() {
 
         var me = this;
 
         this.dapFCName.innerHTML = this.name + " (#" + this.port + ")";
+        this.dapFCWWPN.innerHTML = this.wwpn;
 
         if(this.state == 'NO_LINK') {
           this.dapFCState.innerHTML = 'No Link';
@@ -176,6 +178,7 @@ define([
             var fcport = FCPort({
               name: entry.name,
               port: entry.port,
+              wwpn: entry.wwpn,
               mode: entry.mode,
               target: entry.target,
               speed: entry.speed,
