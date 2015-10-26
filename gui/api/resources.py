@@ -1613,6 +1613,8 @@ class ISCSIPortalResourceMixin(object):
         bundle.data['iscsi_target_portal_ips'] = newips
         bundle.data['portalip_set-INITIAL_FORMS'] = initial
         bundle.data['portalip_set-TOTAL_FORMS'] = i + 1
+        if bundle.obj.id is None:
+            bundle.data['iscsi_target_portal_tag'] = iSCSITargetPortal.objects.all().count() + 1
         return bundle
 
     def is_form_valid(self, bundle, form):
