@@ -568,11 +568,16 @@ require([
       var q = query('input[name=iscsi_target_mode]:checked');
       if(q.length == 0) return false;
       var mode = q[0];
+      var tf = registry.byId('id_targetgroups_set-TOTAL_FORMS')
+      var oldvalue = tf.get('oldvalue');
+      tf.set('oldvalue', tf.get('value'));
 
       if(mode.value == 'fc') {
         domStyle.set('inline_Target_formset_iscsitargetgroups', 'display', 'none');
+        tf.set('value', '0');
       } else {
         domStyle.set('inline_Target_formset_iscsitargetgroups', 'display', '');
+        if(oldvalue) tf.set('value', oldvalue);
       }
 
     }
