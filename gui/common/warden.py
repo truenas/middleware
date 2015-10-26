@@ -29,6 +29,8 @@ import logging
 import os
 import string
 
+from django.core.cache import cache
+
 log = logging.getLogger('common.warden')
 
 #
@@ -1076,6 +1078,18 @@ class Warden(warden_base):
 
     def list(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_list(flags, **kwargs))
+
+    def cached_list(self, flags=WARDEN_FLAGS_NONE, **kwargs):
+        wlistcached = cache.get('wardenList')
+
+        if wlistcached is None:
+                wlistcached = self.__call(warden_list(flags, **kwargs))
+                cache.set('wardenList', wlistcached, 1)
+        else:
+                # Reset cache timeout
+                cache.set('wardenList', wlistcached, 1)
+
+        return wlistcached
 
     def pkgs(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_pkgs(flags, **kwargs))
