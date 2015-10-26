@@ -40,11 +40,26 @@ define([
       mode: null,
       target: null,
       targets: null,
+      speed: null,
+      state: null,
+      initiators: null,
       postCreate: function() {
 
         var me = this;
 
         this.dapFCName.innerHTML = this.name + " (#" + this.port + ")";
+
+        if(this.state == 'NO_LINK') {
+          this.dapFCState.innerHTML = 'No Link';
+        } else if(this.state == 'SCANNING') {
+          this.dapFCState.innerHTML = 'Scanning';
+        } else {
+          this.dapFCState.innerHTML = 'Ready (' + this.speed + ' Gbps)';
+        }
+
+        for(var i=0;i<me.initiators.length;i++) {
+          me.dapFCInitiators.innerHTML += '- '+ me.initiators[i] + '<br />';
+        }
 
         me._mini = new RadioButton({
           name: "mode-" + me.name,
@@ -90,11 +105,14 @@ define([
         if(me._mtgt.get('checked') == true) {
           domStyle.set(me._target.domNode, "display", "");
           me.target = me._target.get('value');
+          domStyle.set(me.dapFCConnected, "display", "");
         } else if(me._mdis.get('checked') == true) {
           domStyle.set(me._target.domNode, "display", "none");
+          domStyle.set(me.dapFCConnected, "display", "none");
           me.target = null;
         } else {
           domStyle.set(me._target.domNode, "display", "none");
+          domStyle.set(me.dapFCConnected, "display", "none");
           me.target = false;
         }
       },
@@ -160,6 +178,9 @@ define([
               port: entry.port,
               mode: entry.mode,
               target: entry.target,
+              speed: entry.speed,
+              state: entry.state,
+              initiators: entry.initiators,
               targets: targets,
             })
             me.ports.push(fcport);

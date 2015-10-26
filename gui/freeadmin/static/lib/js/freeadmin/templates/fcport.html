@@ -1,7 +1,7 @@
 <tr>
-  <td style="width: 200px;">
-   <div style="border: 1px solid #ddd; margin:2px; padding:2px;">
-    <span data-dojo-attach-point="dapFCName"></span>
+  <td style="width: 200px; border: 1px solid #ddd; margin:2px; padding:2px; vertical-align: top;">
+   <div>
+    <span data-dojo-attach-point="dapFCName"></span> - <span data-dojo-attach-point="dapFCState"></span>
     <div data-dojo-attach-point="dapFCMode">
       <p style="padding: 4px;"><span data-dojo-attach-point="dapFCModeIni"></span> Initiator</p>
       <p style="padding: 4px;"><span data-dojo-attach-point="dapFCModeTgt"></span> Target &nbsp; 
@@ -10,6 +10,10 @@
     </div>
    </div>
   </td>
-  <td data-dojo-attach-point="dapFCConnected">
+  <td data-dojo-attach-point="dapFCConnected" style="border: 1px solid #ddd; margin:2px; padding:2px; vertical-align: top;">
+   <div>
+    Connected Initiators<br />
+    <div data-dojo-attach-point="dapFCInitiators"></div>
+   </div>
   </td>
 </tr>

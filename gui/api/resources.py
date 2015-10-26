@@ -32,6 +32,7 @@ import re
 import subprocess
 import urllib
 import signal
+import sysctl
 
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -3075,11 +3076,14 @@ class UpdateResourceMixin(NestedMixin):
 
 class FCPort(object):
 
-    def __init__(self, port=None, name=None, mode=None, target=None):
+    def __init__(self, port=None, name=None, mode=None, target=None, state=None, speed=None, initiators=None):
         self.port = port
         self.name = name
         self.mode = mode
         self.target = target
+        self.state = state
+        self.speed = speed
+        self.initiators = initiators
 
 
 class FCPortsResource(DojoResource):
@@ -3088,7 +3092,10 @@ class FCPortsResource(DojoResource):
     port = fields.CharField(attribute='port')
     name = fields.CharField(attribute='name')
     mode = fields.CharField(attribute='mode')
+    state = fields.CharField(attribute='state')
     target = fields.IntegerField(attribute='target', null=True)
+    speed = fields.IntegerField(attribute='speed', null=True)
+    initiators = fields.ListField(attribute='initiators', null=True)
 
     class Meta:
         allowed_methods = ['get', 'put']
@@ -3118,7 +3125,21 @@ class FCPortsResource(DojoResource):
             if reg:
                 port = reg.group(0)
             else:
-                port = 0
+                port = '0'
+            state = 'NO_LINK'
+            speed = None
+            mib = 'dev.isp.%s.loopstate' % port
+            loopstate = sysctl.filter(mib)
+            if loopstate:
+                loopstate = loopstate[0].value
+                if loopstate > 0 and loopstate < 8:
+                    state = 'SCANNING'
+                elif loopstate == 8:
+                    state = 'READY'
+                if loopstate > 0:
+                    speedres = sysctl.filter('dev.isp.%s.speed' % port)
+                    if speedres:
+                        speed = speedres[0].value
             if name in fcportmap:
                 targetobj = fcportmap[name]
                 if targetobj is not None:
@@ -3130,11 +3151,17 @@ class FCPortsResource(DojoResource):
             else:
                 mode = 'DISABLED'
                 target = None
+            initiators = []
+            for i in tag_port.xpath('./initiator'):
+                initiators.append(i.text)
             results.append(FCPort(
                 port=port,
                 name=name,
                 mode=mode,
                 target=target,
+                state=state,
+                speed=speed,
+                initiators=initiators,
             ))
 
         limit = self._meta.limit
