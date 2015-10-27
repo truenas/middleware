@@ -98,7 +98,7 @@ def get_ipv4_exclude_dict():
     ipv4_exclude_dict = {}
 
     w = warden.Warden()
-    jails = w.cached_list()
+    jails = w.list()
     if not jails:
         return ipv4_exclude_dict
 
@@ -164,7 +164,7 @@ def get_ipv6_exclude_dict():
     ipv6_exclude_dict = {}
 
     w = warden.Warden()
-    jails = w.cached_list()
+    jails = w.list()
     if not jails:
         return ipv6_exclude_dict
 
