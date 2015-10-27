@@ -74,7 +74,7 @@ def ha_mode():
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         board = proc.communicate()[0].strip()
         # Check for SBB
-        # Everything else is called ULTIMATE since we can't realiably determine it
+        # Everything else is called ULTIMATE since we can't reliably determine it
         hardware = 'SBB' if board == 'X8DTS' else 'ULTIMATE'
 
         mode = '%s:%s' % (hardware, node)
@@ -86,7 +86,6 @@ def ha_mode():
         with open(HA_MODE_FILE, 'w') as f:
             f.write(mode)
         return mode
-
 
 
 def ha_node():
