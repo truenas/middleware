@@ -31,13 +31,39 @@ def ha_mode():
         else:
             node = 'B'
     else:
-        proc = subprocess.Popen([
-            '/usr/sbin/getencstat',
-            '-v', '/dev/ses0',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        encstat = proc.communicate()[0].strip()
-        reg = re.search(r"3U20D-Encl-([AB])'", encstat, re.M)
-        node = reg.group(1) if reg else None
+        enclosures = ["/dev/" + enc for enc in os.listdir("/dev") if enc.startswith("ses")]
+        # The echostream E16 JBOD and the echostream Z-series chassis are the same piece of hardware
+        # One of the only ways to differentiate them is to look at the enclosure elements in detail
+        # The Z-series chassis identifies element 0x26 as SD_9GV12P1J_12R6K4.  The E16 does not.
+        # The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5
+        # We use this fact to ensure we are looking at the internal enclosure, not a shelf.
+        # If we used a shelf to determine which node was A or B you could cause the nodes to switch
+        # identities by switching the cables for the shelf.
+        ECHOSTREAM_MAGIC = "SD_9GV12P1J_12R6K4"
+        for enclosure in enclosures:
+            proc = subprocess.Popen([
+                '/usr/sbin/getencstat',
+                '-v', enclosure,
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            encstat = proc.communicate()[0].strip()
+            echostream = re.search(ECHOSTREAM_MAGIC, encstat, re.M)
+            if echostream:
+                reg = re.search(r"3U20D-Encl-([AB])'", encstat, re.M)
+                # In theory this should only be reached if we are dealing with
+                # an echostream, which renders the "if reg else None" irrelevent
+                node = reg.group(1) if reg else None
+                # We should never be able to find more than one of these
+                # but just in case we ever have a situation where there are
+                # multiple internal enclosures, we'll just stop at the first one
+                # we find.
+                if node:
+                    break
+            else:
+                # No echostream enclosures were detected
+                node = None
+        else:
+            # No enclosures were detected at all
+            node = None
 
     if node:
         mode = 'ECHOSTREAM:%s' % node
