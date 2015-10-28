@@ -261,8 +261,8 @@ class FreeAdminSite(object):
     @never_cache
     def alert_status(self, request):
         from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
+        from freenasUI.system.alert import alert_node, alertPlugins
+        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
         alerts = alertPlugins.run()
         current = 'OK'
         for alert in alerts:
@@ -281,8 +281,8 @@ class FreeAdminSite(object):
     @never_cache
     def alert_detail(self, request):
         from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(dismiss=True)]
+        from freenasUI.system.alert import alert_node, alertPlugins
+        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
         alerts = alertPlugins.run()
         return render(request, "freeadmin/alert_status.html", {
             'alerts': alerts,
@@ -293,16 +293,22 @@ class FreeAdminSite(object):
     def alert_dismiss(self, request):
         from freenasUI.freeadmin.views import JsonResp
         from freenasUI.system.models import Alert
+        from freenasUI.system.alert import alert_node
         msgid = request.POST.get("msgid", None)
         dismiss = request.POST.get("dismiss", None)
         assert msgid is not None  # FIX ME
         try:
-            alert = Alert.objects.get(message_id=msgid)
+            alert = Alert.objects.get(node=alert_node(), message_id=msgid)
             if dismiss == "0":
-                alert.delete()
+                alert.dismiss = False
+                alert.save()
+            elif dismiss == "1":
+                alert.dismiss = True
+                alert.save()
         except Alert.DoesNotExist:
             if dismiss == "1":
                 alert = Alert.objects.create(
+                    node=alert_node(),
                     message_id=msgid,
                     dismiss=True,
                 )
