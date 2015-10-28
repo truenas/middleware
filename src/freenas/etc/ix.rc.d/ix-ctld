@@ -8,16 +8,42 @@
 # BEFORE: ctld
 
 . /etc/rc.subr
+. /etc/rc.freenas
 
 generate_ctl()
 {
 	/usr/local/libexec/nas/generate_ctl_conf.py
+	if ! is_freenas; then
+		if [ "$(ha_mode)" = "MANUAL" ]; then
+			# TODO: get from database if we are not echostream
+		else
+			node=$(ha_node)
+		fi
+		ret=$(LD_LIBRARY_PATH=/usr/local/lib python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed)
+		if [ "${ret}" = "True" ]; then
+			if [ "${node}" = "A" ]; then
+				/sbin/sysctl kern.cam.ctl.ha_peer="listen 169.254.10.1" >/dev/null
+			elif [ "${node}" = "B" ]; then
+				/sbin/sysctl kern.cam.ctl.ha_peer="connect 169.254.10.1" >/dev/null
+			fi
+		fi
+	fi
+
 }
 
+stop_ctl()
+{
+	if ! is_freenas; then
+		sys=$(/sbin/sysctl -n kern.cam.ctl.ha_peer)
+		if [ -n "${sys}" ]; then
+			/sbin/sysctl kern.cam.ctl.ha_peer=""
+		fi
+	fi
+		
 name="ix-ctld"
 rcvar="ctld_enable"
 start_cmd='generate_ctl'
-stop_cmd=':'
+stop_cmd='stop_ctl'
 
 load_rc_config $name
 run_rc_command "$1"

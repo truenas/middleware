@@ -427,8 +427,9 @@ class notifier:
         self._system_nolog("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_iscsitarget(self):
-        self._system("/usr/sbin/service ix-ctld quietstart")
+        self._system("/usr/sbin/service ix-ctld forcestart")
         self._system("/usr/sbin/service ctld forcestop")
+        self._system("/usr/sbin/service ix-ctld quietstart")
         self._system("/usr/sbin/service ctld restart")
 
     def _start_iscsitarget(self):
@@ -436,6 +437,7 @@ class notifier:
         self._system("/usr/sbin/service ctld start")
 
     def _stop_iscsitarget(self):
+        self._system("/usr/sbin/service ix-ctld forcestop")
         self._system("/usr/sbin/service ctld forcestop")
 
     def _reload_iscsitarget(self):
