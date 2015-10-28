@@ -39,6 +39,7 @@ stop_ctl()
 			/sbin/sysctl kern.cam.ctl.ha_peer=""
 		fi
 	fi
+}
 		
 name="ix-ctld"
 rcvar="ctld_enable"
