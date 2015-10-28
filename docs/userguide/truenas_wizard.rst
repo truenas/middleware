@@ -6,9 +6,9 @@ Wizard
 TrueNAS® provides a wizard which walks you through the steps needed to quickly configure TrueNAS® to start serving data over a network. This section
 describes the configuration steps which are available from the wizard.
 
-Figure 13a shows the first wizard configuration screen.
+Figure 16a shows the first wizard configuration screen.
 
-**Figure 13a: Configuration Wizard**
+**Figure 16a: Configuration Wizard**
 
 .. image:: images/wizard.png
 
@@ -16,12 +16,12 @@ Note that you can exit the wizard at any time by clicking the "Exit" button. How
 
 This first screen can be used to change the default language, keyboard map, and timezone. After making your selections, click "Next".
 
-.. note:: typically, a TrueNAS® system ships with pre-configured volumes. The screens shown in Figures 13b and 13c will only appear if unformatted disks
+.. note:: typically, a TrueNAS® system ships with pre-configured volumes. The screens shown in Figures 16b and 16c will only appear if unformatted disks
           are available or the system has been reinstalled.
 
-Figure 13b shows the configuration screen that appears when unformatted disks are available.
+Figure 16b shows the configuration screen that appears when unformatted disks are available.
 
-**Figure 13b: Volume Creation Wizard**
+**Figure 16b: Volume Creation Wizard**
 
 .. image:: images/wizard1.png
 
@@ -52,17 +52,17 @@ The following redundancy types are available:
 Once you have made your selection, click "Next" to continue.
 
 If the system has been reinstalled and the disks are formatted as an unencrypted ZFS pool, a screen to import the volume will appear. This screen is shown in
-Figure 13c.
+Figure 16c.
 
-**Figure 13c: Volume Import Screen**
+**Figure 16c: Volume Import Screen**
 
 .. image:: images/wizard2.png
 
 Select the existing volume from the drop-down menu and click "Next" to continue.
 
-The next screen in the wizard is shown in Figure 13d.
+The next screen in the wizard is shown in Figure 16d.
 
-**Figure 13d: Directory Service Selection**
+**Figure 16d: Directory Service Selection**
 
 .. image:: images/wizard3.png
 
@@ -70,12 +70,12 @@ If the TrueNAS® system is on a network that does not contain an Active Director
 
 However, if the TrueNAS® system is on a network containing an Active Directory, LDAP, NIS, or NT4 server and you wish to import the users and groups from
 that server, select the type of directory service in the "Directory Service" drop-down menu. The rest of the fields in this screen will vary, depending upon
-which directory service is selected. Tables 13a to 13d summarize the available configuration options for each directory service.
+which directory service is selected. Tables 16a to 16d summarize the available configuration options for each directory service.
 
 .. note:: additional configuration options are available for each directory service. The wizard can be used to set the initial values required to connect to
    that directory service. You can then review the other available options in :ref:`Directory Service` to determine if additional configuration is required.
 
-**Table 13a: Active Directory Options**
+**Table 16a: Active Directory Options**
 
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**              | **Value**     | **Description**                                                                                       |
@@ -92,7 +92,7 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 |                          |               |                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------+
 
-**Table 13b: LDAP Options**
+**Table 16b: LDAP Options**
 
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**             | **Value**      | **Description**                                                                                       |
@@ -113,7 +113,7 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 
-**Table 13c: NIS Options**
+**Table 16c: NIS Options**
 
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**             | **Value**      | **Description**                                                                                       |
@@ -136,7 +136,7 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 
-**Table 13d: NT4 Options**
+**Table 16d: NT4 Options**
 
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | **Setting**             | **Value**      | **Description**                                                                                       |
@@ -158,9 +158,9 @@ which directory service is selected. Tables 13a to 13d summarize the available c
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
-The next configuration screen, shown in Figure 13e, can be used to create the network shares.
+The next configuration screen, shown in Figure 16e, can be used to create the network shares.
 
-**Figure 13e: Share Creation**
+**Figure 16e: Share Creation**
 
 .. image:: images/wizard4.png
 
@@ -182,9 +182,9 @@ To create a share using the wizard, input a name, then select the "Purpose" of t
 * **Block Storage (iSCSI):** this type of share can be accessed by any operating system using iSCSI initiator software. Input the size of the block storage to
   create in the format *20G* (for 20 GB). If you make any iSCSI shares using the wizard, you can fine-tune them afterwards using :ref:`iSCSI`.
 
-After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 13f.
+After selecting the "Purpose", click the "Ownership" button to see the screen shown in Figure 16f.
 
-**Figure 13f: Share Permissions**
+**Figure 16f: Share Permissions**
 
 .. image:: images/wizard5.png
 
@@ -196,9 +196,9 @@ appear in the "Name" frame.
 You can use the "Delete" button to remove the highlighted share in the "Name" frame. If you need to edit a share, highlight it, make the change, then press
 the "Update" button.
 
-When you are finished making shares, click the "Next" button to advance to the screen shown in Figure 13g.
+When you are finished making shares, click the "Next" button to advance to the screen shown in Figure 16g.
 
-**Figure 13g: Miscellaneous Settings**
+**Figure 16g: Miscellaneous Settings**
 
 .. image:: images/wizard6.png
 

@@ -5,9 +5,9 @@
 Reporting
 =========
 
-Reporting displays several graphs, as seen in the example in Figure 12a. Click the tab for a device type to see its graphs.
+Reporting displays several graphs, as seen in the example in Figure 15a. Click the tab for a device type to see its graphs.
 
-**Figure 12a: Reporting Graphs**
+**Figure 15a: Reporting Graphs**
 
 .. image:: images/reporting.png
 
