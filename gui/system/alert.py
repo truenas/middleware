@@ -15,6 +15,19 @@ from freenasUI.system.models import Alert as mAlert
 log = logging.getLogger('system.alert')
 
 
+def alert_node():
+    from freenasUI.middleware.notifier import notifier
+    _n = notifier()
+    if _n.is_freenas():
+        return 'A'
+    if not _n.failover_licensed():
+        return 'A'
+    node = _n.failover_node()
+    if not node or node == 'MANUAL':
+        return 'A'
+    return node
+
+
 class BaseAlertMetaclass(type):
 
     def __new__(cls, name, *args, **kwargs):
@@ -56,12 +69,13 @@ class Alert(object):
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
             self._id = id
-        qs = mAlert.objects.filter(message_id=self.getId())
+        node = alert_node()
+        qs = mAlert.objects.filter(message_id=self.getId(), node=node)
         if qs.exists():
             self._timestamp = qs[0].timestamp
         else:
             self._timestamp = int(time.time())
-            mAlert.objects.create(message_id=self.getId(), timestamp=self._timestamp)
+            mAlert.objects.create(node=node, message_id=self.getId(), timestamp=self._timestamp, dismiss=False)
 
     def __repr__(self):
         return '<Alert: %s>' % self._id
@@ -142,8 +156,9 @@ class AlertPlugins:
         self.mods.append(instance)
 
     def email(self, alerts):
+        node = alert_node()
         dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(dismiss=True)]
+                      for a in mAlert.objects.filter(dismiss=True, node=node)]
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
@@ -175,8 +190,9 @@ class AlertPlugins:
         else:
             results = obj['results']
         rvs = []
+        node = alert_node()
         dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(dismiss=True)]
+                      for a in mAlert.objects.filter(node=node, dismiss=True)]
         for instance in self.mods:
             try:
                 if instance.name in results:

@@ -55,12 +55,17 @@ log = logging.getLogger('system.models')
 
 
 class Alert(Model):
+    node = models.CharField(default='A', max_length=100)
     message_id = models.CharField(
-        unique=True,
         max_length=100,
     )
     dismiss = models.BooleanField(default=True)
     timestamp = models.IntegerField(default=lambda: int(time.time()))
+
+    class Meta:
+        unique_together = (
+            ('node', 'message_id'),
+        )
 
 
 class Settings(Model):
