@@ -812,7 +812,7 @@ If you click the entry for a CA, the following buttons become available:
   X.509 certificate.
 
 * **Export Private Key:** will prompt to browse to the location, on the system being used to access the FreeNAS® system, to save a copy of the CA's private
-  key.
+  key. Note that this option only appears if the CA has a private key.
 
 * **Delete:** will prompt to confirm before deleting the CA.
 
