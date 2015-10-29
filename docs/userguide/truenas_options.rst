@@ -173,6 +173,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a Certificate Authority or certificate is invalid or malformed
 
+* HA is configured but the connection is not established
+
 * 30 days before the license expires and when the license expires
 
 * the status of an Avago MegaRAID SAS controller has changed;
