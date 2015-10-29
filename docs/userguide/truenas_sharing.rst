@@ -1523,7 +1523,7 @@ An example of the "Fiber Channel Ports" screen is shown in Figure 10.5m.
 
 **Figure 10.5m: Configuring a Fiber Channel Port**
 
-.. image:: images/tn_fiber4.png
+.. image:: images/tn_fiber4a.png
 
 This screen shows the status of each attached fiber channel port, where:
 
