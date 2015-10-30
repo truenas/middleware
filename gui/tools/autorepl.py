@@ -226,7 +226,7 @@ for replication in replication_tasks:
         continue
 
     if not replication.repl_enabled:
-        log.warn("%s replication not enabled" % replication)
+        log.debug("%s replication not enabled" % replication)
         continue
 
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
