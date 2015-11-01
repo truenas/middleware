@@ -13152,3 +13152,11 @@ msgstr ""
 #, fuzzy
 msgid "vCenter Auxiliary Settings successfully edited."
 msgstr "Jail template editado com sucesso."
+
+#: templates/vcp/index.html:27
+msgid "Enable vCenter Plugin over https:"
+msgstr ""
+
+#: vcp/models.py:93
+msgid " Enable vCenter Plugin over https"
+msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-10-10 18:01+0000\n"
+"PO-Revision-Date: 2015-10-31 19:51+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1444500077.0\n"
+"X-POOTLE-MTIME: 1446321105.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12533,7 +12533,7 @@ msgstr ""
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
-msgstr ""
+msgstr " IP adresa správního rozhraní TrueNAS"
 
 #: vcp/models.py:49
 #, fuzzy
@@ -12646,30 +12646,28 @@ msgid "vCenter plugin is repaired successfully"
 msgstr "Zásuvný modul vCenter byl úspěšně opraven"
 
 #: vcp/models.py:61
-#, fuzzy
 msgid "An integer from 1 - 65535, generally will be 443"
-msgstr "Celé číslo z rozsahu 1 až 65535, typicky 25, 465 nebo 587"
+msgstr "Celé číslo z rozsahu 1 až 65535, typicky bývá 443"
 
 #: vcp/models.py:66
-#, fuzzy
 msgid " vCenter Username"
-msgstr "Uživatelské jméno"
+msgstr " Uživatelské jméno ve vCenter"
 
 #: vcp/models.py:76
-#, fuzzy
 msgid " version"
-msgstr "verze"
+msgstr " verze"
 
 #: vcp/views.py:80
-#, fuzzy
 msgid "There are No updates available at this time."
-msgstr "Nejsou k dispozici žádné aktualizace"
+msgstr "V tuto chvíli nejsou k dispozici žádné aktualizace."
 
 #: templates/vcp/aux_settings.html:4
 msgid ""
 "Note: Editing this field will automatically restart your WebGUI for the "
 "necessary changes to take effect."
 msgstr ""
+"Upozornění: provedení změn v této kolonce povede k restartu webového "
+"správního rozhraní, aby se změny projevily."
 
 #: templates/vcp/index.html:28
 msgid "Enable Vcenter Plugin over https:"
@@ -12677,7 +12675,7 @@ msgstr ""
 
 #: templates/vcp/index.html:41
 msgid "Edit vCenter Auxiliary Settings"
-msgstr ""
+msgstr "Upravit pomocná nastavení pro vCenter"
 
 #: vcp/models.py:93
 msgid "Enable Vcenter Plugin over https"
@@ -12686,9 +12684,16 @@ msgstr ""
 #: vcp/models.py:97
 #: vcp/models.py:98
 msgid "vCenter Auxiliary Settings"
-msgstr ""
+msgstr "Pomocná nastavení pro vCenter"
 
 #: vcp/views.py:98
-#, fuzzy
 msgid "vCenter Auxiliary Settings successfully edited."
-msgstr "Vnitřní certifikát byl úspěšně upraven."
+msgstr "Pomocná nastavení pro vCenter byla úspěšně upravena."
+
+#: templates/vcp/index.html:27
+msgid "Enable vCenter Plugin over https:"
+msgstr "Zapnout zásuvný modul vCenter přes https:"
+
+#: vcp/models.py:93
+msgid " Enable vCenter Plugin over https"
+msgstr " Zapnout zásuvný modul vCenter přes https"
