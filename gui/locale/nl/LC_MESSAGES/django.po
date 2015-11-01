@@ -13005,3 +13005,13 @@ msgstr "vCenter-hulpinstellingen"
 #: vcp/views.py:98
 msgid "vCenter Auxiliary Settings successfully edited."
 msgstr "vCenter-hulpinstellingen met succes bewerkt."
+
+#: templates/vcp/index.html:27
+#, fuzzy
+msgid "Enable vCenter Plugin over https:"
+msgstr "vCenter-plug-in over https inschakelen:"
+
+#: vcp/models.py:93
+#, fuzzy
+msgid " Enable vCenter Plugin over https"
+msgstr "vCenter-plug-in over https inschakelen"
