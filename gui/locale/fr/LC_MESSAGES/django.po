@@ -13296,3 +13296,11 @@ msgstr ""
 #, fuzzy
 msgid "vCenter Auxiliary Settings successfully edited."
 msgstr "Modèle de prison modifié avec succès."
+
+#: templates/vcp/index.html:27
+msgid "Enable vCenter Plugin over https:"
+msgstr ""
+
+#: vcp/models.py:93
+msgid " Enable vCenter Plugin over https"
+msgstr ""

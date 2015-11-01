@@ -11997,3 +11997,11 @@ msgstr ""
 #: vcp/views.py:98
 msgid "vCenter Auxiliary Settings successfully edited."
 msgstr ""
+
+#: templates/vcp/index.html:27
+msgid "Enable vCenter Plugin over https:"
+msgstr ""
+
+#: vcp/models.py:93
+msgid " Enable vCenter Plugin over https"
+msgstr ""

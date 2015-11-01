@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2015-10-18 09:15+0000\n"
+"PO-Revision-Date: 2015-10-27 09:15+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: eu\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1445159755.0\n"
+"X-POOTLE-MTIME: 1445937355.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11923,4 +11923,12 @@ msgstr ""
 
 #: vcp/views.py:98
 msgid "vCenter Auxiliary Settings successfully edited."
+msgstr ""
+
+#: templates/vcp/index.html:27
+msgid "Enable vCenter Plugin over https:"
+msgstr ""
+
+#: vcp/models.py:93
+msgid " Enable vCenter Plugin over https"
 msgstr ""

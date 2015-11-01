@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-09-08 05:35+0000\n"
-"Last-Translator: matsimon <ms.registration@simweb.ch>\n"
+"PO-Revision-Date: 2015-10-31 20:52+0000\n"
+"Last-Translator: Tobias <arndttobi@hotmail.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,11 +17,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441690510.0\n"
+"X-POOTLE-MTIME: 1446324745.0\n"
 
 #: choices.py:40
+#, fuzzy
 msgid "Plain"
-msgstr "Klartext"
+msgstr "einfach"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -2929,7 +2930,9 @@ msgstr "Passwort des Domänen Administratorkontos."
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr "Active Directory"
+msgstr ""
+"                                    Debug3 (Fehler beheben 3)"
+"                                "
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -7174,6 +7177,8 @@ msgstr "lzjb (veraltet, nicht empfohlen)"
 #: choices.py:318
 msgid "pigz (all rounder)"
 msgstr ""
+"                                                      pigz (Alleskönner)"
+"                                                "
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -7191,11 +7196,11 @@ msgstr "Name des Domänencontrollers"
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "Daten"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "                  Authentifizierung                "
 
 #: choices.py:714
 msgid "ctrl+!data"
@@ -8154,7 +8159,7 @@ msgstr "Möchten Sie diesen Dienst aktivieren?"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "                  Erweiterter Kern                "
 
 #: choices.py:179
 msgid "SMB2_22"
@@ -8166,7 +8171,6 @@ msgstr "SMB2_24"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:677
-#, fuzzy
 msgid "Debug2"
 msgstr "Debug2"
 
@@ -8178,7 +8182,7 @@ msgstr "Debug3"
 
 #: choices.py:685
 msgid "Auth"
-msgstr ""
+msgstr "Authentifizierung"
 
 #: choices.py:688
 #, fuzzy
@@ -9181,6 +9185,7 @@ msgstr ""
 #: choices.py:171
 msgid "CORE"
 msgstr ""
+"                                    Kernel                                "
 
 #: choices.py:176
 msgid "SMB2"
@@ -9245,7 +9250,7 @@ msgstr "Aus"
 
 #: choices.py:710
 msgid "!data"
-msgstr ""
+msgstr "!Datei"
 
 #: choices.py:712
 msgid "ctrl"
@@ -10883,7 +10888,8 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr "Grund-Authentifizierung                "
+msgstr ""
+"                  Einfache Authentifizierung                                "
 
 #: choices.py:44
 msgid "Digest Authentication"
@@ -13529,3 +13535,11 @@ msgstr ""
 #, fuzzy
 msgid "vCenter Auxiliary Settings successfully edited."
 msgstr "Dataset erfolgreich editiert."
+
+#: templates/vcp/index.html:27
+msgid "Enable vCenter Plugin over https:"
+msgstr ""
+
+#: vcp/models.py:93
+msgid " Enable vCenter Plugin over https"
+msgstr ""
