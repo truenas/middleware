@@ -255,7 +255,7 @@ class Base(object):
         storage_node_view = TreeNode()
 
         storage_node_view.name = nmp.destination
-        storage_node_view.gname = nmp.id
+        storage_node_view.gname = str(nmp.id)
         storage_node_view.type = 'editobject'
         storage_node_view.view = 'freeadmin_jails_jailmountpoint_edit'
         storage_node_view.kwargs = {'oid': nmp.id}
