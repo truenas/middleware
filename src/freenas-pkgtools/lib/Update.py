@@ -737,7 +737,9 @@ def CheckForUpdates(handler = None, train = None, cache_dir = None, diff_handler
         except UpdateBusyCacheException:
             log.debug("Cache directory %s is busy, so no update available" % cache_dir)
             return None
-        except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+        except UpdateIncompleteCacheException:
+            log.debug("Incomplete cache directory, will try continuing")
+        except UpdateInvalidCacheException as e:
             log.error("CheckForUpdate(train = %s, cache_dir = %s):  Got exception %s, removing cache" % (train, cache_dir, str(e)))
             RemoveUpdate(cache_dir)
             return None
@@ -807,6 +809,9 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None, p
             VerifyUpdate(directory)
             log.debug("Possibly with no network, cached update looks good")
             return True
+        except UpdateIncompleteCacheException:
+            log.debug("Possibly with no network, cached update is incomplete")
+            return False
         except:
             log.debug("Possibly with no network, either no cached update or it is bad")
             return False
@@ -827,32 +832,64 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None, p
     except UpdateBusyCacheException:
         log.debug("Cache directory %s is busy, so no update available" % directory)
         return False
-    except (UpdateIncompleteCacheException, UpdateInvalidCacheException, ManifestInvalidSignature) as e:
+    except UpdateIncompleteCacheException:
+        log.debug("Incomplete cache directory, will try continuing")
+        # Hm, this is wrong.  I need to load the manifest file someh
+    except (UpdateInvalidCacheException, ManifestInvalidSignature) as e:
         # It's incomplete, so we need to remove it
         log.error("DownloadUpdate(%s, %s):  Got exception %s; removing cache" % (train, directory, str(e)))
+        RemoveUpdate(directory)
     except BaseException as e:
         log.error("Got exception %s while trying to prepare update cache" % str(e))
         raise e
-    # If we're here, then we don't have a (valid) cached update.
-    log.debug("Removing invalid or incomplete cached update")
-    RemoveUpdate(directory)
-    try:
-        os.makedirs(directory)
-    except BaseException as e:
-        log.error("Unable to create directory %s: %s" % (directory, str(e)))
-        return False
 
+    # If we're dealing with an interrupted download, then the directory will
+    # exist, and there may be a MANIFEST file.  So let's try seeing if it
+    # does exist, and then compare.
+    log.debug("Going to try checking cached manifest %s" % os.path.join(directory, "MANIFEST"))
     try:
-        mani_file = open(directory + "/MANIFEST", "wxb")
-    except (IOError, Exception) as e:
-        log.error("Unale to create manifest file in directory %s" % (directory, str(e)))
-        return False
-    try:
-        fcntl.lockf(mani_file, fcntl.LOCK_EX | fcntl.LOCK_NB, 0, 0)
-    except (IOError, Exception) as e:
-        log.debug("Unable to lock manifest file: %s" % str(e))
-        mani_file.close()
-        return False
+        mani_file = open(os.path.join(directory, "MANIFEST"), "r+b")
+        try:
+            fcntl.lockf(mani_file, fcntl.LOCK_EX | fcntl.LOCK_NB, 0, 0)
+        except (IOError, Exception) as e:
+            log.debug("Unable to lock manifest file: %s" % str(e))
+            mani_file.close()
+            return False
+
+        temporary_manifest = Manifest.Manifest(require_signature = True)
+        log.debug("Going to try loading manifest file now")
+        temporary_manifest.LoadFile(mani_file)
+        log.debug("Loaded manifest file")
+        log.debug("Cached manifest file has sequence %s, latest_manfest has sequence %s" % (temporary_manifest.Sequence(), latest_mani.Sequence()))
+        if temporary_manifest.Sequence() != latest_mani.Sequence():
+            log.debug("Cached sequence is not the latest, so removing")
+            RemoveUpdate(directory)
+            mani_file = None
+    except BaseException as e:
+        log.debug("Got this exception: %s" % str(e))
+    
+    if mani_file is None:
+        try:
+            os.makedirs(directory)
+        except BaseException as e:
+            log.debug("Unable to create directory %s: %s" % (directory, str(e)))
+            log.debug("Hopefully the current cache is okay")
+
+        try:
+            mani_file = open(directory + "/MANIFEST", "w+b")
+        except (IOError, Exception) as e:
+            log.error("Unale to create manifest file in directory %s" % (directory, str(e)))
+            return False
+
+        try:
+            fcntl.lockf(mani_file, fcntl.LOCK_EX | fcntl.LOCK_NB, 0, 0)
+        except (IOError, Exception) as e:
+            log.debug("Unable to lock manifest file: %s" % str(e))
+            mani_file.close()
+            return False
+        # Store the latest manifest.
+        latest_mani.StoreFile(mani_file)
+        mani_file.flush()
 
     # Find out what differences there are
     diffs = Manifest.DiffManifests(mani, latest_mani)
@@ -893,7 +930,6 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None, p
     # If we can't get it, we don't care.
     conf.GetChangeLog(train, save_dir = directory, handler = get_handler)
     # Then save the manifest file.
-    latest_mani.StoreFile(mani_file)
     # Create the SEQUENCE file.
     with open(directory + "/SEQUENCE", "w") as f:
         f.write("%s" % conf.SystemManifest().Sequence())
@@ -937,7 +973,9 @@ def PendingUpdatesChanges(directory):
     except UpdateBusyCacheException:
         log.debug("Cache directory %s is busy, so no update available" % directory)
         raise
-    except (UpdateIncompleteCacheException, UpdateInvalidCacheException) as e:
+    except UpdateIncompleteCacheException as e:
+        log.error(str(e))
+    except UpdateInvalidCacheException as e:
         log.error(str(e))
         RemoveUpdate(directory)
         raise
@@ -1320,7 +1358,7 @@ def VerifyUpdate(directory):
     try:
         cached_sequence = open(directory + "/SEQUENCE", "r").read().rstrip()
     except (IOError, Exception) as e:
-        log.error("Could not sequence file in cache directory %s: %s" % (directory, str(e)))
+        log.error("Could not open sequence file in cache directory %s: %s" % (directory, str(e)))
         raise UpdateIncompleteCacheException("Cache directory %s does not have a sequence file" % directory)
 
         

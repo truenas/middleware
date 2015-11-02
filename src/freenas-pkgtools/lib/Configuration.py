@@ -513,7 +513,7 @@ class Configuration(object):
     def UpdateServerSigned(self):
         return self._update_server.signature_required
 
-    def TryGetNetworkFile(self, file=None, url=None, handler=None, pathname = None, reason = None):
+    def TryGetNetworkFile(self, file=None, url=None, handler=None, pathname = None, reason = None, intr_ok = False):
         from . import DEFAULT_CA_FILE
 
         AVATAR_VERSION = "X-%s-Manifest-Version" % Avatar()
@@ -547,6 +547,23 @@ class Configuration(object):
         except:
             pass
 
+        read = 0
+        retval = None
+        if pathname:
+            if intr_ok:
+                try:
+                    retval = open(pathname, "r+b")
+                    read = os.fstat(retval.fileno()).st_size
+                    retval.seek(read)
+                except:
+                    pass
+            if retval is None:
+                retval = open(pathname, "w+b")
+        else:
+            retval = tempfile.TemporaryFile(dir = self._temp)
+            
+        if read > 0:  log.debug("File already exists, using a starting size of %d" % read)
+        
         try:
             https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
             opener = urllib2.build_opener(https_handler)
@@ -562,7 +579,19 @@ class Configuration(object):
 
             # Hack for debugging
             req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
+            # Allow restarting
+            if intr_ok:
+                req.add_header("Range", "bytes=%d-" % read)
+            
             furl = opener.open(req, timeout=30)
+        except urllib2.HTTPError as error:
+            if error.code == httplib.REQUESTED_RANGE_NOT_SATISFIABLE:
+                # We've reached the end of the file already
+                # Do I need to do something different for the progress handler?
+                retval.seek(0)
+                return retval
+            log.error("Got http error %s" % str(error))
+            raise error
         except BaseException as e:
             log.error("Unable to load %s: %s", file_url, str(e))
             return None
@@ -570,13 +599,9 @@ class Configuration(object):
             totalsize = int(furl.info().getheader('Content-Length').strip())
         except:
             totalsize = None
+
         chunk_size = 64 * 1024
         mbyte = 1024 * 1024
-        if pathname:
-            retval = open(pathname, "w+b")
-        else:
-            retval = tempfile.TemporaryFile(dir = self._temp)
-        read = 0
         lastpercent = percent = 0
         lasttime = time.time()
         try:
@@ -609,7 +634,7 @@ class Configuration(object):
                 retval.write(data)
         except Exception as e:
             log.debug("Got exception %s" % str(e))
-            if pathname:
+            if intr_ok == False and pathname:
                 os.unlink(pathname)
             raise e
         retval.seek(0)
@@ -1026,6 +1051,7 @@ class Configuration(object):
                 handler = handler,
                 pathname = save_name,
                 reason = "DownloadPackageFile",
+                intr_ok = True
                 )
             if file:
                 if search_attempt["Checksum"]:
@@ -1033,6 +1059,9 @@ class Configuration(object):
                     if h == search_attempt["Checksum"]:
                         return file
                     else:
+                        # For an interrupted download of a package file,
+                        # this won't be reached due to an exception.
+                        log.debug("Checksum doesn't match, removing file")
                         if save_name: os.unlink(save_name)
                 else:
                     # No checksum for the file, so we just go with it
