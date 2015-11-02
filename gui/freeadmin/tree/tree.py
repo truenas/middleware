@@ -25,8 +25,11 @@
 #
 #####################################################################
 import bisect
+import logging
 
 from django.core.urlresolvers import reverse
+
+log = logging.getLogger('freeadmin.tree.tree')
 
 
 class TreeType(object):
@@ -85,11 +88,15 @@ class TreeType(object):
         order1 = 0 if self.order is None else self.order
         order2 = 0 if other.order is None else other.order
 
-        if order1 == order2:
-            if self.name and other.name:
-                return self.name.lower() < other.name.lower()
-            return self.gname.lower() < other.gname.lower()
-        return order1 < order2
+        try:
+            if order1 == order2:
+                if self.name and other.name:
+                    return self.name.lower() < other.name.lower()
+                return self.gname.lower() < other.gname.lower()
+            return order1 < order2
+        except (AttributeError, ValueError):
+            log.warn("Failed to get item order", exc_info=True)
+            return False
 
     def __iter__(self):
         for c in list(self._children):
