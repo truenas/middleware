@@ -32,33 +32,33 @@ A plugin is a self-contained application installer which has been designed to in
 
 * if the plugin has configuration options, a screen will be added to the TrueNAS® GUI so that these options can be configured from the GUI
 
-To install a plugin, click "Plugins". As seen in Figure 12.1a, the list of available plugins will be displayed.
+To install a plugin, click "Plugins". As seen in :numref:`Figure %s: Viewing the List of Available Plugins <plugins1>`, the list of available plugins will be displayed.
 
-**Figure 12.1a: Viewing the List of Available Plugins**
+.. _plugins1:
 
-.. image:: images/plugins1.png
+.. figure:: images/plugins1.png
 
 .. note:: if the list of available plugins is not displayed, open :ref:`Shell` and verify that the TrueNAS® system can :command:`ping` an address on the
    Internet. If it cannot, you may have to add a default gateway address and/or DNS server address in :menuselection:`Network --> Global Configuration`.
 
-Highlight the plugin you would like to install, click its "Install" button, then click "OK". In the example shown in Figure 12.1b, SABnzbd is selected for
-installation.
+Highlight the plugin you would like to install, click its "Install" button, then click "OK". In the example shown in :numref:`Figure %s: Installing a Plugin <plugins2>`, SABnzbd is selected
+for installation.
 
-**Figure 12.1b: Installing a Plugin**
+.. _plugins2:
 
-.. image:: images/plugins2.png
+.. figure:: images/plugins2.png
 
 The installation will take a few minutes as the system will first download and configure a jail to contain the installed software. It will then install the
-plugin and add it to the "Installed" tab as shown in Figure 12.1c.
+plugin and add it to the "Installed" tab as shown in :numref:`Figure %s: Viewing Installed PBIs <plugins3>`.
 
 .. warning:: be patient and wait for the installation to finish. Navigating away from the installation before it is finished will cause problems with the
    installation.
 
-**Figure 12.1c: Viewing Installed PBIs**
+.. _plugins3:
 
-.. image:: images/plugins3.png
+.. figure:: images/plugins3.png
 
-As seen in the example shown in Figure 12.1c, entries for the installed PBI will appear in the following locations:
+As seen in the example shown in :numref:`Figure %s: Viewing Installed PBIs <plugins3>`, entries for the installed PBI will appear in the following locations:
 
 * the "Installed" tab of "Plugins"
 
@@ -94,11 +94,11 @@ Updating Plugins
 ----------------
 
 When a newer version of a plugin becomes available in the official repository, an "Update" button is added to the entry for the plugin in the "Installed" tab.
-In the example shown in Figure 12.2a, a newer version of Transmission is available.
+In the example shown in :numref:`Figure %s: Updating an Installed Plugin <plugins4>`, a newer version of Transmission is available.
 
-**Figure 12.2a: Updating an Installed Plugin**
+.. _plugins4:
 
-.. image:: images/plugins4.png
+.. figure:: images/plugins4.png
 
 Click the "OK" button to start the download and installation of the latest version of the plugin. Once the update is complete, the entry for the plugin will
 be refreshed to show the new version number and the "Update" button will disappear.
@@ -112,12 +112,12 @@ The "Available" tab of "Plugins" contains an "Upload" button. This button allows
 or which are still being tested. These plugins must be manually downloaded and should end in a :file:`.pbi` extension. When downloading a plugin, make sure
 that it is 64-bit and that it was developed for 9.x. as 8.x and 10.x applications will not work on a 9.x TrueNAS® system.
 
-Once you have downloaded the plugin, click the "Upload" button. As seen in the example in Figure 12.3a, this will prompt you to browse to the location of the
-downloaded file. Once selected, click the "Upload" button to begin the installation.
+Once you have downloaded the plugin, click the "Upload" button. As seen in the example in :numref:`Figure %s: Installing a Previously Downloaded *.pbi File <plugins5>`, this will prompt you
+to browse to the location of the downloaded file. Once selected, click the "Upload" button to begin the installation.
 
-**Figure 12.3a: Installing a Previously Downloaded *.pbi File**
+.. _plugins5:
 
-.. image:: images/plugins5.png
+.. figure:: images/plugins5.png
 
 When the installation is complete, an entry for the plugin will be added to the "Installed" tab and its associated jail will be listed under "Jails". However,
 if it is not a TrueNAS® plugin, it will not be added to "Plugins" in the tree. In this case, if the application requires any configuration, you will have to
@@ -132,12 +132,12 @@ When you install a plugin, an associated jail is created. If you decide to delet
 **Before deleting a plugin,** make sure that you do not have any data or configuration in the jail that you need to save. If you do, back up that data first,
 **before** deleting the plugin.
 
-In the example shown in Figure 12.4a, Sabnzbd has been installed and the user has clicked its "Delete" button. A pop-up message asks the user if they are sure
-that they want to delete. **This is the one and only warning.** If the user clicks "Yes", the plugin and the associated jail will be permanently deleted.
+In the example shown in :numref:`Figure %s: Deleting an Installed Plugin <plugins6>`, Sabnzbd has been installed and the user has clicked its "Delete" button. A pop-up message asks the user
+if they are sure that they want to delete. **This is the one and only warning.** If the user clicks "Yes", the plugin and the associated jail will be permanently deleted.
 
-**Figure 12.4a: Deleting an Installed Plugin**
+.. _plugins6:
 
-.. image:: images/plugins6.png
+.. figure:: images/plugins6.png
 
 .. _Available Plugins:
 

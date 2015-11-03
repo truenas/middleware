@@ -13,11 +13,11 @@ Display System Processes
 ------------------------
 
 If you click Display System Processes, a screen will open showing the output of
-`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in Figure 17.1a.
+`top(1) <http://www.freebsd.org/cgi/man.cgi?query=top>`_. An example is shown in :numref:`Figure %s: System Processes Running on TrueNAS® <process>`.
 
-**Figure 17.1a: System Processes Running on TrueNAS®**
+.. _process:
 
-.. image:: images/process.png
+.. figure:: images/process.png
 
 The display will automatically refresh itself. Simply click the X in the upper right corner to close the display when you are finished. Note that the display
 is read-only, meaning that you won't be able to issue a :command:`kill` command within it.
@@ -30,11 +30,11 @@ Shell
 -----
 
 The TrueNAS® GUI provides a web shell, making it convenient to run command line tools from the web browser as the *root* user. The link to Shell is the
-fourth entry from the bottom of the menu tree. In Figure 17.2a, the link has been clicked and Shell is open.
+fourth entry from the bottom of the menu tree. In :numref:`Figure %s: Web Shell <shell1>`, the link has been clicked and Shell is open.
 
-**Figure 17.2a: Web Shell**
+.. _shell1:
 
-.. image:: images/shell.png
+.. figure:: images/shell.png
 
 The prompt indicates that the current user is *root*, the hostname is
 *truenas*, and the current working directory is :file:`~`
@@ -72,12 +72,12 @@ you are logged out and will provide a hyperlink which you can click on to log ba
 Reboot
 ------
 
-If you click "Reboot", you will receive the warning message shown in Figure 17.4a and your browser color will change to red to indicate that you have selected
-an option that will negatively impact users of the TrueNAS® system.
+If you click "Reboot", you will receive the warning message shown in :numref:`Figure %s: Reboot Warning Message <reboot1>` and your browser color will change to red to indicate that you
+have selected an option that will negatively impact users of the TrueNAS® system.
 
-**Figure 17.4a: Reboot Warning Message**
+.. _reboot1:
 
-.. image:: images/reboot.png
+.. figure:: images/reboot.png
 
 If a scrub or resilver is in progress when a reboot is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the reboot request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -96,12 +96,12 @@ from resuming normal operation.
 Shutdown
 --------
 
-If you click "Shutdown", you will receive the warning message shown in Figure 17.5a and your browser color will change to red to indicate that you have
-selected an option that will negatively impact users of the TrueNAS® system.
+If you click "Shutdown", you will receive the warning message shown in :numref:`Figure %s: Shutdown Warning Message <shutdown1>` and your browser color will change to red to indicate that
+you have selected an option that will negatively impact users of the TrueNAS® system.
 
-**Figure 17.5a: Shutdown Warning Message**
+.. _shutdown1:
 
-.. image:: images/shutdown.png
+.. figure:: images/shutdown.png
 
 If a scrub or resilver is in progress when a shutdown is requested, an additional warning will ask you to make sure that you wish to proceed. In this case, it
 is recommended to "Cancel" the shutdown request and to periodically run :command:`zpool status` from `Shell`_ until it is verified that the scrub or resilver
@@ -137,13 +137,12 @@ documentation).
 Alert
 -----
 
-TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 17.8a. one of the disks in a ZFS pool is offline which has
-degraded the state of the pool.
+TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right corner will flash red when there is
+an outstanding alert. In the example alert shown in :numref:`Figure %s: Example Alert Message <alert1>`. one of the disks in a ZFS pool is offline which has degraded the state of the pool.
 
-**Figure 17.8a: Example Alert Message**
+.. _alert1:
 
-.. image:: images/alert1.png
+.. figure:: images/alert1.png
 
 Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
 the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that

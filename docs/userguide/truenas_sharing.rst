@@ -69,11 +69,11 @@ then provides configuration examples for using the Wizard to create a guest shar
 and for connecting to the share from a Mac OS X client.
 
 To view the AFP share created by the Wizard, click :menuselection:`Sharing --> Apple (AFP)` and highlight the name of the share. Click its "Edit" button to see
-the configuration options shown in Figure 10.1a.
+the configuration options shown in :numref:`Figure %s: Creating an AFP Share <afp2>`.
 
-**Figure 10.1a: Creating an AFP Share**
+.. _afp2:
 
-.. image:: images/afp2.png
+.. figure:: images/afp2.png
 
 .. note:: while Table 10.1a summarizes the available options for fine-tuning an AFP share, you typically should not change the default settings of an AFP
           share as doing so may cause the share to not work as expected. Most settings are only available when you click "Advanced Mode". Do **not** change an
@@ -163,8 +163,8 @@ imported into the TrueNAS® system.
 
 Before creating a guest share, go to :menuselection:`Services --> AFP` and make sure that the "Guest Access" box is checked.
 
-Then, to create the AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.1b. Complete the following
-fields in this screen:
+Then, to create the AFP guest share, click "Wizard", then click the "Next" button twice to display the screen shown in :numref:`Figure %s: Creating a Guest AFP Share <afp6>`. Complete the
+following fields in this screen:
 
 #. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
    is named *afp_guest*.
@@ -176,23 +176,23 @@ fields in this screen:
 #. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
    the name that you typed into "Share name".
 
-**Figure 10.1b: Creating a Guest AFP Share**
+.. _afp6:
 
-.. image:: images/afp6.png
+.. figure:: images/afp6.png
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share that contains the
 correct default permissions and start the AFP service for you, so that the share is immediately available. The new share will also be added as an entry to
 :menuselection:`Sharing --> Apple (AFP)`.
 
-Mac OS X users can connect to the guest AFP share by clicking :menuselection:`Go --> Connect to Server`. In the example shown in Figure 10.1c, the user has
-input *afp://* followed by the IP address of the TrueNAS® system.
+Mac OS X users can connect to the guest AFP share by clicking :menuselection:`Go --> Connect to Server`. In the example shown in :numref:`Figure %s: Connect to Server Dialogue <afp3>`, the
+user has input *afp://* followed by the IP address of the TrueNAS® system.
 
 Click the "Connect" button. Once connected, Finder will automatically open. The name of the AFP share will be displayed in the SHARED section in the left
 frame and the contents of any data that has been saved in the share will be displayed in the right frame.
 
-**Figure 10.1c: Connect to Server Dialogue**
+.. _afp3:
 
-.. image:: images/afp3.png
+.. figure:: images/afp3.png
 
 To disconnect from the volume, click the "eject" button in the "Shared" sidebar.
 
@@ -207,7 +207,7 @@ configured to backup to an AFP share on a TrueNAS® system. It is recommended to
 Machine to backup their Mac OS X system to TrueNAS®. The process for creating an authenticated share for a user is the same as creating a Time Machine share
 for that user.
 
-To use the Wizard to create an authenticated or Time Machine share, enter the following information, as seen in the example in Figure 10.1d.
+To use the Wizard to create an authenticated or Time Machine share, enter the following information, as seen in the example in :numref:`Figure %s: Creating a Time Machine Share <afp7>`.
 
 #. **Share name:** input a name for the share that is useful to you but which is under 27 characters and does not contain a period. In this example, the share
    is named *backup_user1*.
@@ -218,9 +218,9 @@ To use the Wizard to create an authenticated or Time Machine share, enter the fo
    does not yet exist on the TrueNAS® system, type their name into the "User" field and check the "Create User" checkbox. If you want the user to be a member
    of a group that already exists on the TrueNAS® system, click the drop-down "Group" menu to select the group name. If you wish to create a new group to be
    used by Time Machine users, input the name into the "Group" field and check the "Create Group" checkbox. Otherwise, input the same name as the user. In the
-   example shown in Figure 10.1e, a new user named *user1* will be created, as well as a new group named
+   example shown in :numref:`Figure %s: Creating an Authenticated User <afp8>`, a new user named *user1* will be created, as well as a new group named
    *tm_backups*. Since a new user is being created, this screen prompts for the password for the user to use when accessing the share. It also provides an
-   opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in Figure 10.1d.
+   opportunity to change the default permissions on the share. When finished, click "Return" to return to the screen shown in :numref:`Figure %s: Creating a Time Machine Share <afp7>`.
 
 #. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
    the name that you typed into "Share name".
@@ -230,13 +230,13 @@ finished, click the "Next" button twice, then the "Confirm" button to create the
 contains the correct ownership and start the AFP service for you, so that the share(s) are immediately available. The new share(s) will also be added as
 entries to :menuselection:`Sharing --> Apple (AFP)`.
 
-**Figure 10.1d: Creating a Time Machine Share**
+.. _afp7:
 
-.. image:: images/afp7.png
+.. figure:: images/afp7.png
 
-**Figure 10.1e: Creating an Authenticated User**
+.. _afp8:
 
-.. image:: images/afp8.png
+.. figure:: images/afp8.png
 
 At this point, it may be desirable to configure a quota for each Time Machine share, to restrict backups from using all of the available space on the
 TrueNAS® system. The first time Time Machine makes a backup, it will create a full backup after waiting two minutes. It will then create a one hour
@@ -244,22 +244,22 @@ incremental backup for the next 24 hours, and then one backup each day, each wee
 **Since the oldest backups are deleted when a Time Machine share becomes full, make sure that the quota size you set is sufficient to hold the desired number of backups.**
 Note that a default installation of Mac OS X is ~21 GB in size.
 
-To configure a quota, go to :menuselection:`Storage --> Volumes` and highlight the entry for the share. In the example shown in Figure 10.1f, the Time
+To configure a quota, go to :menuselection:`Storage --> Volumes` and highlight the entry for the share. In the example shown in :numref:`Figure %s: Setting a Quota <afp9>`, the Time
 Machine share name is *backup_user1*. Click the "Edit Options" button for the share, then "Advanced Mode". Input a value in the "Quota for this dataset"
 field then click "Edit Dataset" to save the change. In this example, the Time Machine share is restricted to 200GB.
 
-**Figure 10.1f: Setting a Quota**
+.. _afp9:
 
-.. image:: images/afp9.png
+.. figure:: images/afp9.png
 
-To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
-Click "ON" and a pop-up menu should show the TrueNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
-entry representing the TrueNAS® system and click the "Use Backup Disk" button. A connection bar will open and will prompt for the user account's password--in
-this example, the password that was set for the *user1* account.
+To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in
+:numref:`Figure %s: Configuring Time Machine on Mac OS X Lion <afp5>`. Click "ON" and a pop-up menu should show the TrueNAS® system as a backup option. In our example, it is listed as
+*backup_user1 on "freenas"*. Highlight the entry representing the TrueNAS® system and click the "Use Backup Disk" button. A connection bar will open and will prompt for the user account's
+password--in this example, the password that was set for the *user1* account.
 
-**Figure 10.1g: Configuring Time Machine on Mac OS X Lion**
+.. _afp5:
 
-.. image:: images/afp5.png
+.. figure:: images/afp5.png
 
 If you receive a "Time Machine could not complete the backup. The backup disk image could not be created (error 45)" error when backing up to the TrueNAS®
 system, you will need to create a sparsebundle image using
@@ -280,23 +280,23 @@ TrueNAS® supports sharing over the Network File System (NFS). Clients use the :
 appears as just another directory on the client system. Some Linux distros require the installation of additional software in order to mount an NFS share. On
 Windows systems, enable Services for NFS in the Ultimate or Enterprise editions or install an NFS client application.
 
-To create an NFS share using the Wizard, click the "Next" button twice to display the screen shown in Figure 10.2a. Input a "Share name" that makes sense to
+To create an NFS share using the Wizard, click the "Next" button twice to display the screen shown in :numref:`Figure %s: NFS Share Wizard <nfs6>`. Input a "Share name" that makes sense to
 you, but which does not contain a space. Click the button for "Generic Unix (NFS)", then click "Add" so that the share's name appears in the "Name" frame.
 When finished, click the "Next" button twice, then the "Confirm" button to create the share. Creating an NFS share using the wizard will automatically create
 a new dataset for the share, start the services required by NFS, and add an entry for the share in :menuselection:`Sharing --> Unix (NFS) Shares`.
 Depending upon your requirements, you may wish to fine-tune the NFS share to control which IP addresses are allowed to access the NFS share and to restrict
 the permissions of the mounted share.
 
-**Figure 10.2a: NFS Share Wizard**
+.. _nfs6:
 
-.. image:: images/nfs6.png
+.. figure:: images/nfs6.png
 
 To edit the NFS share, click :menuselection:`Sharing --> Unix (NFS)`, highlight the entry for the share, and click its "Edit" button. In the example shown in
-Figure 10.2b, the configuration screen is open for the *nfs_share1* share.
+:numref:`Figure %s: NFS Share Settings <nfs2>`, the configuration screen is open for the *nfs_share1* share.
 
-**Figure 10.2b: NFS Share Settings**
+.. _nfs2:
 
-.. image:: images/nfs2.png
+.. figure:: images/nfs2.png
 
 Table 10.2a summarizes the available configuration options in this screen. Some settings are only available by clicking the "Advanced Mode" button.
 
@@ -492,17 +492,17 @@ provides an open source graphical NFS client. To use this client, you will need 
 
 * `.NET Framework 4.0 <http://www.microsoft.com/en-us/download/details.aspx?id=17851>`_
 
-Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in Figure 10.2c, the user has connected to the
-example :file:`/mnt/data` share of the TrueNAS® system at
+Once everything is installed, run the NFSClient executable to start the GUI client. In the example shown in
+:numref:`Figure %s: Using the Nekodrive NFSClient from Windows 7 Home Edition <nfs5>`, the user has connected to the example :file:`/mnt/data` share of the TrueNAS® system at
 *192.168.2.2*.
 
 .. note:: Nekodrive does not support Explorer drive mapping via NFS. If you need this functionality,
    `try this utility <http://www.citi.umich.edu/projects/nfsv4/windows/readme.html>`_
    instead.
 
-**Figure 10.2c: Using the Nekodrive NFSClient from Windows 7 Home Edition**
+.. _nfs5:
 
-.. image:: images/nfs5.jpg
+.. figure:: images/nfs5.jpg
 
 .. _From Mac OS X:
 
@@ -510,20 +510,20 @@ From Mac OS X
 ^^^^^^^^^^^^^
 
 To mount the NFS volume from a Mac OS X client, click on :menuselection:`Go --> Connect to Server`. In the "Server Address" field, input *nfs://* followed by
-the IP address of the TrueNAS® system and the name of the volume/dataset being shared by NFS. The example shown in Figure 10.2d continues with our example of
-*192.168.2.2:/mnt/data*.
+the IP address of the TrueNAS® system and the name of the volume/dataset being shared by NFS. The example shown in :numref:`Figure %s: Mounting the NFS Share from Mac OS X <nfs3>` continues
+with our example of *192.168.2.2:/mnt/data*.
 
 Once connected, Finder will automatically open. The IP address of the TrueNAS® system will be displayed in the SHARED section in the left frame and the
-contents of the share will be displayed in the right frame. In the example shown in Figure 10.2e, :file:`/mnt/data` has one folder named :file:`images`. The
-user can now copy files to and from the share.
+contents of the share will be displayed in the right frame. In the example shown in :numref:`Figure %s: Viewing the NFS Share in Finder <nfs4>`, :file:`/mnt/data` has one folder named
+:file:`images`. The user can now copy files to and from the share.
 
-**Figure 10.2d: Mounting the NFS Share from Mac OS X**
+.. _nfs3:
 
-.. image:: images/nfs3.png
+.. figure:: images/nfs3.png
 
-**Figure 10.2e: Viewing the NFS Share in Finder**
+.. _nfs4:
 
-.. image:: images/nfs4.png
+.. figure:: images/nfs4.png
 
 .. _Troubleshooting NFS:
 
@@ -584,11 +584,11 @@ Inputting the URL into a web browser will bring up an authentication pop-up mess
 .. warning:: at this time, only the *webdav* user is supported. For this reason, it is important to set a good password for this account and to only give the password to
    users which should have access to the WebDAV share.
 
-To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in Figure 10.3a.
+To create a WebDAV share, click :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share` which will open the screen shown in :numref:`Figure %s: Adding a WebDAV Share <webdav1>`.
 
-**Figure 10.3a: Adding a WebDAV Share**
+.. _webdav1:
 
-.. image:: images/webdav.png
+.. figure:: images/webdav.png
 
 Table 10.3a summarizes the available options.
 
@@ -636,11 +636,11 @@ This chapter starts by summarizing the available configuration options. It will 
 troubleshooting tips. It is recommended to first read through this entire chapter before creating any CIFS shares so that you have a good idea of the best
 configuration scenario to meet your network's needs.
 
-Figure 10.4a shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
+:numref:`Figure %s: Adding a CIFS Share <cifs2>` shows the configuration screen that appears when you click :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share`.
 
-**Figure 10.4a: Adding a CIFS Share**
+.. _cifs2:
 
-.. image:: images/cifs2.png
+.. figure:: images/cifs2.png
 
 Table 10.4a summarizes the options when creating a CIFS share. Some settings are only available when you click the "Advanced Mode" button. For simple sharing
 scenarios, you will not need any "Advanced Mode" options. For more complex sharing scenarios, only change an "Advanced Mode" option if you understand the
@@ -865,8 +865,8 @@ least secure as anyone on the network can access the contents of the share. Addi
 username or password, there is no way to differentiate which users accessed or modified the data on the share. This type of configuration is best suited for
 small networks where quick and easy access to the share is more important than the security of the data on the share.
 
-To configure an unauthenticated CIFS share, click "Wizard", then click the "Next" button twice to display the screen shown in Figure 10.4b. Complete the
-following fields in this screen:
+To configure an unauthenticated CIFS share, click "Wizard", then click the "Next" button twice to display the screen shown in
+:numref:`Figure %s: Creating an Unauthenticated CIFS Share <cifs7>`. Complete the following fields in this screen:
 
 #. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_insecure*.
 
@@ -877,9 +877,9 @@ following fields in this screen:
 #. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
    the name that you typed into "Share name".
 
-**Figure 10.4b: Creating an Unauthenticated CIFS Share**
+.. _cifs7:
 
-.. image:: images/cifs7.png
+.. figure:: images/cifs7.png
 
 Click the "Next" button twice, then the "Confirm" button to create the share. The Wizard will automatically create a dataset for the share and start the CIFS
 service for you, so that the share is immediately available. The new share will also be added as an entry to :menuselection:`Sharing --> Windows (CIFS)`.
@@ -904,7 +904,7 @@ the username and password that will be created on the TrueNAS® system matches t
 their own share to store their own data or if several users will be using the same share. The simpler configuration is to make one share per user as it does
 not require the creation of groups, adding the correct users to the groups, and ensuring that group permissions are set correctly.
 
-To use the Wizard to create an authenticated CIFS share, enter the following information, as seen in the example in Figure 10.4c.
+To use the Wizard to create an authenticated CIFS share, enter the following information:
 
 #. **Share name:** input a name for the share that is useful to you. In this example, the share is named *cifs_user1*.
 
@@ -913,8 +913,8 @@ To use the Wizard to create an authenticated CIFS share, enter the following inf
 #. Click the "Ownership" button. To create the user account on the TrueNAS® system, type their name into the "User" field and check the "Create User"
    checkbox. This will prompt you to type in and confirm the user's password. **If the user will not be sharing this share with other users**, type their name
    into the "Group" field and click the box "Create Group". **If, however, the share will be used by several users**, instead type in a group name and check
-   the "Create Group" box. In the example shown in Figure 10.4d, *user1* has been used for both the user and group name, meaning that this share will only be
-   used by *user1*. When finished, click "Return" to return to the screen shown in Figure 10.1d.
+   the "Create Group" box. For example, if *user1* has been used for both the user and group name, this share will only be
+   used by *user1*. When finished, click "Return".
 
 #. Click the "Add" button. **If you forget to do this, the share will not be created**. Clicking the "Add" button will add an entry to the "Name" frame with
    the name that you typed into "Share name".
@@ -1021,14 +1021,14 @@ shares. In this configuration example, a Windows 7 computer has two users: *user
 
 #. Verify that the CIFS service is set to "ON" in :menuselection:`Services --> Control Services`.
 
-Figure 10.4e provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
+:numref:`Figure %s: Viewing Previous Versions within Explorer <cifs6>` provides an example of using shadow copies while logged in as *user1*. In this example, the user right-clicked
 *modified file* and selected "Restore previous versions" from the menu. This particular file has three versions: the current version, plus two previous
 versions stored on the TrueNAS® system. The user can choose to open one of the previous versions, copy a previous version to the current folder, or restore
 one of the previous versions, which will overwrite the existing file on the Windows system.
 
-**Figure 10.4e: Viewing Previous Versions within Explorer**
+.. _cifs6:
 
-.. image:: images/cifs6.png
+.. figure:: images/cifs6.png
 
 .. index:: iSCSI, Internet Small Computer System Interface
 .. _Block (iSCSI):
@@ -1122,12 +1122,12 @@ The rest of this section describes these steps in more detail.
 Target Global Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`, shown in Figures 10.5a, contains settings that apply to all iSCSI shares. Table
-10.5a summarizes the settings that can be configured in the Target Global Configuration screen.
+:menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`, shown in :numref:`Figure %s:  iSCSI Target Global Configuration Variables <global1a>`, contains settings that
+apply to all iSCSI shares. Table 10.5a summarizes the settings that can be configured in the Target Global Configuration screen.
 
-**Figure 10.5a: iSCSI Target Global Configuration Variables**
+.. _global1a:
 
-.. image:: images/global1a.png
+.. figure:: images/global1a.png
 
 **Table 10.5a: Target Global Configuration Settings**
 
@@ -1155,14 +1155,14 @@ Portals
 ~~~~~~~
 
 A portal specifies the IP address and port number to be used for iSCSI connections. :menuselection:`Sharing --> Block (iSCSI) --> Portals --> Add Portal` will
-bring up the screen shown in Figure 10.5b.
+bring up the screen shown in :numref:`Figure %s: Adding an iSCSI Portal <portal1>`.
 
 Table 10.5b summarizes the settings that can be configured when adding a portal. If you need to assign additional IP addresses to the portal, click the link
 "Add extra Portal IP".
 
-**Figure 10.5b: Adding an iSCSI Portal**
+.. _portal1:
 
-.. image:: images/portal1.png
+.. figure:: images/portal1.png
 
 **Table 10.5b: Portal Configuration Settings**
 
@@ -1220,11 +1220,11 @@ Initiators
 ~~~~~~~~~~
 
 The next step is to configure authorized initiators, or the systems which are allowed to connect to the iSCSI targets on the TrueNAS® system. To configure
-which systems can connect, use :menuselection:`Sharing --> Block (iSCSI) --> Initiators --> Add Initiator`, shown in Figure 10.5c.
+which systems can connect, use :menuselection:`Sharing --> Block (iSCSI) --> Initiators --> Add Initiator`, shown in :numref:`Figure %s: Adding an iSCSI Initiator <initiator1>`.
 
-**Figure 10.5c: Adding an iSCSI Initiator**
+.. _initiator1:
 
-.. image:: images/initiator1.png
+.. figure:: images/initiator1.png
 
 Table 10.5c summarizes the settings that can be configured when adding an initiator.
 
@@ -1246,15 +1246,15 @@ Table 10.5c summarizes the settings that can be configured when adding an initia
 +--------------------+-----------+--------------------------------------------------------------------------------------+
 
 
-In the example shown in Figure 10.5d, two groups have been created. Group 1 allows connections from any initiator on any network; Group 2 allows connections
-from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
+In the example shown in :numref:`Figure %s: Sample iSCSI Initiator Configuration <initiator2>`, two groups have been created. Group 1 allows connections from any initiator on any network
+and Group 2 allows connections from any initiator on the *10.10.1.0/24* network. Click an initiator's entry to display its "Edit" and "Delete" buttons.
 
 .. note:: if you delete an initiator, a warning will indicate if any targets or target/extent mappings depend upon the initiator. If you confirm the delete,
    these will be deleted as well.
 
-**Figure 10.5d: Sample iSCSI Initiator Configuration**
+.. _initiator2:
 
-.. image:: images/initiator2.png
+.. figure:: images/initiator2.png
 
 .. _Authorized Accesses:
 
@@ -1262,13 +1262,13 @@ Authorized Accesses
 ~~~~~~~~~~~~~~~~~~~
 
 If you will be using CHAP or mutual CHAP to provide authentication, you must create an authorized access in
-:menuselection:`Sharing --> Block (iSCSI) --> Authorized Accesses --> Add Authorized Access`. This screen is shown in Figure 10.5e.
+:menuselection:`Sharing --> Block (iSCSI) --> Authorized Accesses --> Add Authorized Access`. This screen is shown in :numref:`Figure %s: Adding an iSCSI Authorized Access <authorized1>`.
 
 .. note:: this screen sets login authentication. This is different from discovery authentication which is set in `Target Global Configuration`_.
 
-**Figure 10.5e: Adding an iSCSI Authorized Access**
+.. _authorized1:
 
-.. image:: images/authorized1.png
+.. figure:: images/authorized1.png
 
 Table 10.5d summarizes the settings that can be configured when adding an authorized access:
 
@@ -1299,24 +1299,25 @@ Table 10.5d summarizes the settings that can be configured when adding an author
 
 .. note:: CHAP does not work with GlobalSAN initiators on Mac OS X.
 
-As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in Figure 10.5f, three users (*test1*,
+As authorized accesses are added, they will be listed under View Authorized Accesses. In the example shown in :numref:`Figure %s: Viewing Authorized Accesses <authorized2>`, three users
+(*test1*,
 *test2*, and
 *test3*) and two groups (
 *1* and
 *2*) have been created, with group 1 consisting of one CHAP user and group 2 consisting of one mutual CHAP user and one CHAP user. Click an authorized access
 entry to display its "Edit" and "Delete" buttons.
 
-**Figure 10.5f: Viewing Authorized Accesses**
+.. _authorized2:
 
-.. image:: images/authorized2.png
+.. figure:: images/authorized2.png
 
 .. _Targets:
 
 Targets
 ~~~~~~~
 
-Next, create a Target using :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target`, as shown in Figure 10.5g. A target combines a portal ID,
-allowed initiator ID, and an authentication method. Table 10.5e summarizes the settings that can be configured when creating a Target.
+Next, create a Target using :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target`, as shown in :numref:`Figure %s: Adding an iSCSI Target <target1a>`. A target combines a
+portal ID, allowed initiator ID, and an authentication method. Table 10.5e summarizes the settings that can be configured when creating a Target.
 
 .. note:: an iSCSI target creates a block device that may be accessible to multiple initiators. A clustered filesystem is required on the block device, such
    as VMFS used by VMware ESX/ESXi, in order for multiple initiators to mount the block device read/write. If a traditional filesystem such as EXT, XFS, FAT,
@@ -1324,9 +1325,9 @@ allowed initiator ID, and an authentication method. Table 10.5e summarizes the s
    filesystem corruption. If you need to support multiple clients to the same data on a non-clustered filesystem, use CIFS or NFS instead of iSCSI or create
    multiple iSCSI targets (one per client).
 
-**Figure 10.5g: Adding an iSCSI Target**
+.. _target1a:
 
-.. image:: images/target1a.png
+.. figure:: images/target1a.png
 
 **Table 10.5e: Target Settings**
 
@@ -1383,15 +1384,15 @@ primitive is supported by zvols and raw SSDs. The threshold warnings primitive i
 .. warning::  for performance reasons and to avoid excessive fragmentation, it is recommended to keep the used space of the pool below 50% when using iSCSI.
    As required, you can increase the capacity of an existing extent using the instructions in :ref:`Growing LUNs`.
 
-To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in Figure 10.5h, the device extent is using the
-:file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
+To add an extent, go to :menuselection:`Services --> ISCSI --> Extents --> Add Extent`. In the example shown in :numref:`Figure %s: Adding an iSCSI Extent <extent2b>`, the device extent is
+using the :file:`export` zvol that was previously created from the :file:`/mnt/volume1` volume.
 
 Table 10.5f summarizes the settings that can be configured when creating an extent. Note that
 **file extent creation will fail if you do not append the name of the file to be created to the volume/dataset name.**
 
-**Figure 10.5h: Adding an iSCSI Extent**
+.. _extent2b:
 
-.. image:: images/extent2b.png
+.. figure:: images/extent2b.png
 
 **Table 10.5f: Extent Configuration Settings**
 
@@ -1457,11 +1458,11 @@ Targets/Extents
 ~~~~~~~~~~~~~~~
 
 The last step is associating an extent to a target within :menuselection:`Sharing --> Block (iSCSI) --> Target/Extents --> Add Target/Extent`. This screen is
-shown in Figure 10.5i. Use the drop-down menus to select the existing target and extent.
+shown in :numref:`Figure %s: Associating a Target With an Extent <target2a>`. Use the drop-down menus to select the existing target and extent.
 
-**Figure 10.5i: Associating a Target With an Extent**
+.. _target2a:
 
-.. image:: images/target2a.png
+.. figure:: images/target2a.png
 
 Table 10.5g summarizes the settings that can be configured when associating targets and extents.
 
@@ -1494,36 +1495,37 @@ Fiber Channel Ports
 ~~~~~~~~~~~~~~~~~~~
 
 If the TrueNAS® system has Fiber Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
-:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fiber Channel Ports' tab will be added. An example is seen in Figure 10.5j.
+:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fiber Channel Ports' tab will be added. An example is seen in :numref:`Figure %s: Block (iSCSI) Screen <tn_fiber1>`.
 
-**Figure 10.5j: Block (iSCSI) Screen**
+.. _tn_fiber1:
 
-.. image:: images/tn_fiber1.png
+.. figure:: images/tn_fiber1.png
 
 Otherwise, the "Target Global Configuration" screen is the same as described in :ref:`Target Global Configuration`.
 
 Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fiber Channel.
 
-As seen in Figure 10.5k, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to create is iSCSI, Fiber Channel, or both.
+As seen in :numref:`Figure %s: Add Target Screen <tn_fiber2>`, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to
+create is iSCSI, Fiber Channel, or both.
 
-**Figure 10.5k: Add Target Screen**
+.. _tn_fiber2:
 
-.. image:: images/tn_fiber2.png
+.. figure:: images/tn_fiber2.png
 
 If you select "Fiber Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fiber Channel
-connection. An example is seen in Figure 10.5l.
+connection. An example is seen in :numref:`Figure %s: Configuring a Fiber Channel Target <tn_fiber3>`.
 
-**Figure 10.5l: Configuring a Fiber Channel Target**
+.. _tn_fiber3:
 
-.. image:: images/tn_fiber3.png
+.. figure:: images/tn_fiber3.png
 
 The screens for adding an extent and associating a target are the same as described in :ref:`Extents` and :ref:`Targets/Extents`.
 
-An example of the "Fiber Channel Ports" screen is shown in Figure 10.5m.
+An example of the "Fiber Channel Ports" screen is shown in :numref:`Figure %s: Configuring a Fiber Channel Port <tn_fiber4a>`.
 
-**Figure 10.5m: Configuring a Fiber Channel Port**
+.. _tn_fiber4a:
 
-.. image:: images/tn_fiber4a.png
+.. figure:: images/tn_fiber4a.png
 
 This screen shows the status of each attached fiber channel port, where:
 
@@ -1588,11 +1590,11 @@ Zvol Based LUN
 ^^^^^^^^^^^^^^
 
 To grow a zvol based LUN, go to :menuselection:`Storage --> Volumes --> View Volumes`, highlight the zvol to be grown, and click its "Edit zvol" button. In
-the example shown in Figure 10.5n, the current size of the zvol named *zvol1* is 4GB.
+the example shown in :numref:`Figure %s: Editing an Existing Zvol <tn_grow>`, the current size of the zvol named *zvol1* is 4GB.
 
-**Figure 10.5n: Editing an Existing Zvol**
+.. _tn_grow:
 
-.. image:: images/tn_grow.png
+.. figure:: images/tn_grow.png
 
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.
@@ -1603,7 +1605,7 @@ File Extent Based LUN
 ^^^^^^^^^^^^^^^^^^^^^
 
 To grow a file extent based LUN, go to :menuselection:`Services --> iSCSI --> File Extents --> View File Extents` to determine the path of the file extent to
-grow. Open Shell to grow the extent. This example grows :file:`/mnt/volume1/data` by 2G::
+grow. Open :ref:`Shell` to grow the extent. This example grows :file:`/mnt/volume1/data` by 2G::
 
  truncate -s +2g /mnt/volume1/data
 

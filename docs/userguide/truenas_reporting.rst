@@ -5,11 +5,11 @@
 Reporting
 =========
 
-Reporting displays several graphs, as seen in the example in Figure 15a. Click the tab for a device type to see its graphs.
+Reporting displays several graphs, as seen in the example in :numref:`Figure %s: Reporting Graphs <reporting1>`. Click the tab for a device type to see its graphs.
 
-**Figure 15a: Reporting Graphs**
+.. _reporting1:
 
-.. image:: images/reporting.png
+.. figure:: images/reporting.png
 
 TrueNAS® uses
 `collectd <https://collectd.org/>`_

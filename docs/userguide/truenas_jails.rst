@@ -49,14 +49,14 @@ Jails Configuration
 -------------------
 
 Before you can create any jails, you must first configure which volume or dataset will be used to hold the jails. To do so, click
-:menuselection:`Jails --> Configuration` to access the screen shown in Figure 13.1a. 
+:menuselection:`Jails --> Configuration` to access the screen shown in :numref:`Figure %s: Global Jail Configuration <jails1>`. 
 **It is recommended to create a dataset to use for the "Jail Root"**. As jails are created, they will automatically be installed into their own dataset under
 the specified path. For example, if you configure a "Jail Root" of :file:`/mnt/volume1/dataset1` and create a jail
 named *jail1*, it will be installed into its own dataset named :file:`/mnt/volume1/dataset1/jail1`.
 
-**Figure 13.1a: Global Jail Configuration**
+.. _jails1:
 
-.. image:: images/jails1.png
+.. figure:: images/jails1.png
 
 .. warning:: if you have already installed any :ref:`Plugins`, the "Jail Root", "IPv4 Network", "IPv4 Network Start Address", and "IPv4 Network End Address"
    will automatically be filled in. You should double-check that the pre-configured IP addressing values are appropriate for your jails and will not conflict
@@ -143,13 +143,13 @@ Once you click the "Save" button to save the configuration, you are now ready to
 Adding Jails
 ------------
 
-To create a jail, click :menuselection:`Jails --> Add Jail` to access the screen shown in Figure 13.2a.
+To create a jail, click :menuselection:`Jails --> Add Jail` to access the screen shown in :numref:`Figure %s: Creating a Jail <jails3a>`.
 
 .. note:: the "Add Jail" menu item will not appear until after you configure :menuselection:`Jails --> Configuration`.
 
-**Figure 13.2a: Creating a Jail**
+.. _jails3a:
 
-.. image:: images/jails3a.png
+.. figure:: images/jails3a.png
 
 By default, the only required value to create a jail is to give it a name. The default is to create a FreeBSD jail.
 
@@ -276,14 +276,14 @@ saved to the "Jail Root".
 Managing Jails
 ~~~~~~~~~~~~~~
 
-To view and configure the added jails, click "Jails". In the example shown in Figure 13.2b, the list entry for the jail named *xdm_1* has been clicked in
-order to enable that jail's configuration options. The entry indicates the name of the jail, its IP address, whether or not it will start automatically at
+To view and configure the added jails, click "Jails". In the example shown in :numref:`Figure %s: Viewing Added Jails <jails4a>`, the list entry for the jail named *xdm_1* has been clicked
+in order to enable that jail's configuration options. The entry indicates the name of the jail, its IP address, whether or not it will start automatically at
 system boot, whether or not it is currently running, and the type of jail (e.g. *standard* indicates that it is a FreeBSD jail whereas
 *pluginjail* would indicate that it was installed using :ref:`Plugins`).
 
-**Figure 13.2b: Viewing Added Jails**
+.. _jails4a:
 
-.. image:: images/jails4a.png
+.. figure:: images/jails4a.png
 
 In order, from left to right, the following configuration icons are available:
 
@@ -359,12 +359,12 @@ torrents. The storage is added using the
 `mount_nullfs(8) <http://www.freebsd.org/cgi/man.cgi?query=mount_nullfs>`_
 mechanism which links data that resides outside of the jail as a storage area within the jail.
 
-To add storage, click the "Add Storage" button for a highlighted jail's entry to open the screen shown in Figure 13.2c. This screen can also be accessed by
-expanding the jail's name in the tree view and clicking :menuselection:`Storage --> Add Storage`.
+To add storage, click the "Add Storage" button for a highlighted jail's entry to open the screen shown in :numref:`Figure %s: Adding Storage to a Jail <jails5>`. This screen can also be
+accessed by expanding the jail's name in the tree view and clicking :menuselection:`Storage --> Add Storage`.
 
-**Figure 13.2c: Adding Storage to a Jail**
+.. _jails5:
 
-.. image:: images/jails5.png
+.. figure:: images/jails5.png
 
 Browse to the "Source" and "Destination", where:
 
@@ -408,15 +408,15 @@ If you wish to prevent writes to the storage, check the box "Read-Only".
 By default, the "Create directory" box is checked. This means that the directory will automatically be created for you under the specified "Destination" path
 if the directory does not already exist.
 
-Once a storage has been added, it will be added to the tree under the specified jail. In the example shown in Figure 13.2d, a dataset named 
+Once a storage has been added, it will be added to the tree under the specified jail. In the example shown in :numref:`Figure %s: Example Storage <jails6>`, a dataset named 
 :file:`volume1/data` has been chosen as the "Source" as it contains the files stored on the TrueNAS® system. When the storage was created, the user browsed
 to :file:`volume1/jails/freebsd1/usr/local` in the "Destination" field, then typed in *test* as the directory. Since this directory did not already exist,
 it was created as the "Create directory" box was left as checked. The resulting storage was added to the *freenas1* entry in the tree as
 :file:`/usr/local/test`. The user has clicked this :file:`/usr/local/test` entry in order to access its "Edit" screen.
 
-**Figure 13.2d: Example Storage**
+.. _jails6:
 
-.. image:: images/jails6.png
+.. figure:: images/jails6.png
 
 By default, the storage is mounted as it is created. To unmount the storage, uncheck its "Mounted?" box.
 
@@ -520,12 +520,12 @@ Compiling the port yourself has the following dis-advantages:
 .. note:: if the port doesn't provide any compile options, you are better off saving your time and the TrueNAS® system's resources by using the
    :command:`pkg install` command instead.
 
-You can determine if the port has any configurable compile options by clicking its FreshPorts listing. Figure 13.2e shows the "Configuration Options"
-for audiotag.
+You can determine if the port has any configurable compile options by clicking its FreshPorts listing. :numref:`Figure %s: Configuration Options for Audiotag <ports1>` shows the
+"Configuration Options" for audiotag.
 
-**Figure 13.2e: Configuration Options for Audiotag**
+.. _ports1:
 
-.. image:: images/ports1.png
+.. figure:: images/ports1.png
 
 In FreeBSD, a :file:`Makefile` is used to provide the compiling instructions to the :command:`make` command. The :file:`Makefile` is in ascii text, fairly
 easy to understand, and documented in
@@ -551,11 +551,12 @@ To compile a port, you will :command:`cd` into a subdirectory of :file:`/usr/por
  cd /usr/ports/audio/audiotag
  make install clean
 
-Since this port has configurable options, the first time this command is run the configure screen shown in Figure 13.2f will be displayed:
+Since this port has configurable options, the first time this command is run the configure screen shown in :numref:`Figure %s: Configuration Options for Audiotag Port <ports2>` will be
+displayed:
 
-**Figure 13.2f: Configuration Options for Audiotag Port**
+.. _ports2:
 
-.. image:: images/ports2.png
+.. figure:: images/ports2.png
 
 To change an option's setting, use the arrow keys to highlight the option, then press the :kbd:`spacebar` to toggle the selection. Once you are finished, tab
 over to OK and press :kbd:`Enter`. The port will begin to compile and install.
@@ -653,20 +654,20 @@ Using the phpVirtualBox Template
 --------------------------------
 
 If the software you need requires a different operating system or you wish to use a non-FreeBSD operating system to manage software, use the VirtualBox
-template to create an instance of phpVirtualBox. In the "Add Jail" screen, click the "Advanced Mode" button. As seen in the example in Figure 13.3a, input a
-"Jail Name", verify that the "IPv4 address" is valid and not in use by another host or jail, and select *VirtualBox* from the "Template" drop-down menu. Press
-the "OK" button to begin the installation.
+template to create an instance of phpVirtualBox. In the "Add Jail" screen, click the "Advanced Mode" button. As seen in the example in
+:numref:`Figure %s: Creating a phpVirtualBox Instance <jails7>`, input a "Jail Name", verify that the "IPv4 address" is valid and not in use by another host or jail, and select
+*VirtualBox* from the "Template" drop-down menu. Press the "OK" button to begin the installation.
 
-**Figure 13.3a: Creating a phpVirtualBox Instance**
+.. _jails7:
 
-.. image:: images/jails7.png
+.. figure:: images/jails7.png
 
 Once installed, input the IP address of the VirtualBox jail into a web browser and enter the username and password of *admin* into the login screen. Once
-authenticated, the screen shown in Figure 13.3b will appear in the web browser.
+authenticated, the screen shown in :numref:`Figure %s: The phpVirtualBox Interface <jails8>` will appear in the web browser.
 
-**Figure 13.3b: The phpVirtualBox Interface**
+.. _jails8:
 
-.. image:: images/jails8.png
+.. figure:: images/jails8.png
 
 Click the "New" button to create virtual machines. You can then install the desired operating systems and software into the created virtual machines.
 
@@ -681,11 +682,11 @@ Managing Jail Templates
 TrueNAS® supports the ability to add custom templates to the "Templates" drop-down menu described in Table 13.2a.
 
 By default, TrueNAS® provides the *VirtualBox* template. To view the default and any customized templates, click :menuselection:`Jails --> Templates`. A
-listing showing the default template is seen in Figure 13.4a.
+listing showing the default template is seen in :numref:`Figure %s: Listing of Default Jail Templates <jails9>`.
 
-**Figure 13.4a: Listing of Default Jail Templates**
+.. _jails9:
 
-.. image:: images/jails9.png
+.. figure:: images/jails9.png
 
 The listing contains the following columns:
 
@@ -712,11 +713,11 @@ the tarball. The exact :command:`tar` command to use will vary, depending upon t
 Once you have generated the :file:`.mtree` and :file:`.tgz` files, save them to either an FTP share or an HTTP server. You will need the associated FTP or HTTP URL
 in order to add the template to the list of available templates.
 
-To add the template, click :menuselection:`Jails --> Templates --> Add Jail Templates` which will open the screen seen in Figure 13.4b.
+To add the template, click :menuselection:`Jails --> Templates --> Add Jail Templates` which will open the screen seen in :numref:`Figure %s: Adding A Custom Jail Template <jails11a>`.
 
-**Figure 13.4b: Adding A Custom Jail Template**
+.. _jails11a:
 
-.. image:: images/jails11a.png
+.. figure:: images/jails11a.png
 
 Table 13.4a summarizes the fields in this screen.
 
@@ -750,13 +751,13 @@ Table 13.4a summarizes the fields in this screen.
 +--------------+----------------+-----------------------------------------------------------------------------------------------+
 
 Once a template has been added, you can click the entry for the template to access its "Edit" and "Delete" buttons. If you click a template's "Edit" button,
-it will open the configuration screen shown in the Figure 13.4c.
+it will open the configuration screen shown in the :numref:`Figure %s: Editing a Template's Options <jails10a>`.
 
 .. note:: the "Delete" button is not available for the built-in *VirtualBox* template and its "Edit" button opens as read-only.
 
-**Figure 13.4c: Editing a Template's Options**
+.. _jails10a:
 
-.. image:: images/jails10a.png
+.. figure:: images/jails10a.png
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
