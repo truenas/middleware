@@ -52,6 +52,10 @@ def vcp_enabled():
 
 
 def get_management_ips():
+    from django.db.models import Q
+    from freenasUI.network.models import Interfaces
+    qs = Interfaces.objects.all().exclude(Q(int_vip=None)|Q(int_vip=''))
+    vips = [str(i.int_vip) for i in qs]
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
     p1.wait()
     int_list = p1.communicate()[0].split('\n')[0].split(' ')
@@ -86,6 +90,8 @@ def get_management_ips():
                     netmask = count
                 except:
                     pass
+                if vips and line[1] not in vips:
+                    continue
                 str_IP.append(line[1])
                 ifaces[iface]['v4'].append({
                     'inet': line[1],
