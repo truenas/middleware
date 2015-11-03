@@ -478,7 +478,7 @@ class notifier:
         interfaces = self._pipeopen("ifconfig -l").communicate()[0]
         interface_list = interfaces.split(" ")
         for interface in interface_list:
-            if interface.startswith("vlan"):
+            if interface.startswith("vlan") or interface.startswith("carp") or interface.startswith("lagg"):
                 self._system("ifconfig %s destroy" % interface)
         self._system("/etc/netstart")
         self._system("/usr/sbin/service rtsold start")
