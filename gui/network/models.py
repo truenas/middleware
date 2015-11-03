@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import os
 import random
 import re
 import string
@@ -271,7 +272,7 @@ class Interfaces(Model):
                 lagg.delete()
             if self.id:
                 super(Interfaces, self).delete()
-        notifier().stop("netif")
+        os.system("sleep 2")
         notifier().start("network")
 
     def save(self, *args, **kwargs):
