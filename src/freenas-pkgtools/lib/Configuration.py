@@ -591,7 +591,8 @@ class Configuration(object):
                 retval.seek(0)
                 return retval
             log.error("Got http error %s" % str(error))
-            raise error
+            retval.close()
+            return None
         except BaseException as e:
             log.error("Unable to load %s: %s", file_url, str(e))
             return None
