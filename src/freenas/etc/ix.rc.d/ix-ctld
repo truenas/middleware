@@ -21,10 +21,13 @@ generate_ctl()
 		fi
 		ret=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed)
 		if [ "${ret}" = "True" ]; then
-			if [ "${node}" = "A" ]; then
-				/sbin/sysctl kern.cam.ctl.ha_peer="listen 169.254.10.1" >/dev/null
-			elif [ "${node}" = "B" ]; then
-				/sbin/sysctl kern.cam.ctl.ha_peer="connect 169.254.10.1" >/dev/null
+			fc=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py fc_enabled)
+			if [ "${fc}" = "True" ]; then
+				if [ "${node}" = "A" ]; then
+					/sbin/sysctl kern.cam.ctl.ha_peer="listen 169.254.10.1" >/dev/null
+				elif [ "${node}" = "B" ]; then
+					/sbin/sysctl kern.cam.ctl.ha_peer="connect 169.254.10.1" >/dev/null
+				fi
 			fi
 		fi
 	fi
