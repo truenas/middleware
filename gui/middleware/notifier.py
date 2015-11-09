@@ -5865,6 +5865,10 @@ class notifier:
         from freenasUI.common.system import backup_database
         backup_database()
 
+    def fc_enabled(self):
+        from freenasUI.support.utils import fc_enabled
+        return fc_enabled()
+
 
 def usage():
     usage_str = """usage: %s action command
