@@ -311,7 +311,7 @@ block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
         run('/sbin/zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
 
     p.terminate()
-    os.system("pkill -9 dtrace")
+    os.system("pkill -9 -f 'dtrace -qn'")
     if not os.path.exists(FAILOVER_NEEDOP):
         open(FAILOVER_ASSUMED_MASTER, 'w').close()
 
