@@ -156,6 +156,7 @@ def main():
             else:
                 address = obj.iscsi_target_portalip_ip
             addline("\tlisten %s:%s\n" % (address, obj.iscsi_target_portalip_port))
+        addline("\toption ha_shared on\n")
         addline("}\n\n")
 
     # Cache zpool threshold
