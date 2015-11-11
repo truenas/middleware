@@ -114,12 +114,12 @@ class ISCSI(TreeNode):
     icon = u'iSCSIIcon'
 
 
-class FiberChannelPorts(TreeNode):
+class FibreChannelPorts(TreeNode):
 
     gname = 'FCPorts'
-    name = _('Fiber Channel Ports')
+    name = _('Fibre Channel Ports')
     type = u'iscsi'
-    icon = u'FiberIcon'
+    icon = u'FibreIcon'
     append_to = 'sharing.ISCSI'
     order = 100
 

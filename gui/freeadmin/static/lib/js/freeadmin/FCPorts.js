@@ -236,7 +236,7 @@ define([
         me._submit.set('disabled', true);
 
         doSubmit({
-          url: '/services/fiberchanneltotarget/',
+          url: '/services/fibrechanneltotarget/',
           form: me._form,
           onComplete: function(data) {
             me._submit.set('disabled', false);

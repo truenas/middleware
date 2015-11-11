@@ -71,7 +71,7 @@ from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
-    iSCSITargetPortal, iSCSITargetPortalIP, FiberChannelToTarget
+    iSCSITargetPortal, iSCSITargetPortalIP, FibreChannelToTarget
 )
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
 from freenasUI.sharing.forms import NFS_SharePathForm
@@ -3111,7 +3111,7 @@ class FCPortsResource(DojoResource):
         from lxml import etree
 
         fcportmap = {}
-        for fbtt in FiberChannelToTarget.objects.all():
+        for fbtt in FibreChannelToTarget.objects.all():
             fcportmap[fbtt.fc_port] = fbtt.fc_target
 
         proc = subprocess.Popen([
@@ -3212,5 +3212,5 @@ class FCPortsResource(DojoResource):
         return response
 
 
-class FiberChannelToTargetResourceMixin:
+class FibreChannelToTargetResourceMixin:
     pass
