@@ -185,19 +185,21 @@ class ExceptionReporter(debug.ExceptionReporter):
 
 
 def server_error(request, *args, **kwargs):
+    # Save exc info before next exception occurs
+    exc_info = sys.exc_info()
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:
         tb = True
     try:
         if tb:
-            reporter = ExceptionReporter(request, *sys.exc_info())
+            reporter = ExceptionReporter(request, *exc_info)
             html = reporter.get_traceback_html()
             return HttpResponse(html, content_type='text/html')
         else:
             raise
     except Exception:
-        return debug.technical_500_response(request, *sys.exc_info())
+        return debug.technical_500_response(request, *exc_info)
 
 
 def page_not_found(request, *args, **kwargs):
