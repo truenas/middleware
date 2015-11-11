@@ -834,7 +834,7 @@ class iSCSITarget(Model):
     iscsi_target_mode = models.CharField(
         choices=(
             ('iscsi', _('iSCSI')),
-            ('fc', _('Fiber Channel')),
+            ('fc', _('Fibre Channel')),
             ('both', _('Both')),
         ),
         default='iscsi',
@@ -951,7 +951,7 @@ class iSCSITargetToExtent(Model):
                                 _("The iSCSI service failed to reload."))
 
 
-class FiberChannelToTarget(Model):
+class FibreChannelToTarget(Model):
     fc_port = models.CharField(
         verbose_name=_('Port'),
         max_length=10,
@@ -964,8 +964,8 @@ class FiberChannelToTarget(Model):
     )
 
     class Meta:
-        verbose_name = _('Fiber Channel Target')
-        verbose_name_plural = _('Fiber Channel Targets')
+        verbose_name = _('Fibre Channel Target')
+        verbose_name_plural = _('Fibre Channel Targets')
 
 
 class DynamicDNS(Model):

@@ -1107,7 +1107,7 @@ In order to configure iSCSI:
 The rest of this section describes these steps in more detail.
 
 .. note:: if the system has been licensed for Fibre Channel, the screens will vary slightly than those found in the rest of this section. Refer to the section on
-   :ref:`Fiber Channel Ports` for details.
+   :ref:`Fibre Channel Ports` for details.
 
 .. _Target Global Configuration:
 
@@ -1482,42 +1482,50 @@ target.
 Once iSCSI has been configured, don't forget to start it in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to iSCSI. After a
 second or so, it will change to a blue ON, indicating that the service has started.
 
-.. _Fiber Channel Ports:
+.. _Fibre Channel Ports:
 
-Fiber Channel Ports
+Fibre Channel Ports
 ~~~~~~~~~~~~~~~~~~~
 
-If the TrueNAS® system has Fiber Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
-:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fiber Channel Ports' tab will be added. An example is seen in Figure 10.5j.
+If the TrueNAS® system has Fibre Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
+:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fibre Channel Ports' tab will be added. An example is seen in Figure 10.5j.
 
 **Figure 10.5j: Block (iSCSI) Screen**
 
-.. image:: images/tn_fiber1.png
+.. image:: images/tn_fibre1.png
 
 Otherwise, the "Target Global Configuration" screen is the same as described in :ref:`Target Global Configuration`.
 
-Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fiber Channel.
+Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fibre Channel.
 
-As seen in Figure 10.5k, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to create is iSCSI, Fiber Channel, or both.
+As seen in Figure 10.5k, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to create is iSCSI, Fibre Channel, or both.
 
 **Figure 10.5k: Add Target Screen**
 
-.. image:: images/tn_fiber2.png
+.. image:: images/tn_fibre2.png
 
-If you select "Fiber Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fiber Channel
+If you select "Fibre Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fibre Channel
 connection. An example is seen in Figure 10.5l.
 
-**Figure 10.5l: Configuring a Fiber Channel Target**
+**Figure 10.5l: Configuring a Fibre Channel Target**
 
-.. image:: images/tn_fiber3.png
+.. image:: images/tn_fibre3.png
 
 The screens for adding an extent and associating a target are the same as described in :ref:`Extents` and :ref:`Targets/Extents`.
 
-An example of the "Fiber Channel Ports" screen is shown in Figure 10.5m.
+An example of the "Fibre Channel Ports" screen is shown in Figure 10.5m.
 
-**Figure 10.5m: Configuring a Fiber Channel Port**
+**Figure 10.5m: Configuring a Fibre Channel Port**
 
-.. image:: images/tn_fiber4.png
+.. image:: images/tn_fibre4.png
+
+This screen shows the status of each attached fibre channel port, where:
+
+* **Initiator:** indicates that the port is acting as a client and has access to any physically attached storage.
+
+* **Target:** indicates that clients are connecting to the specified target through this port.
+
+* **Disabled:** indicates that this fibre channel port is not in use.
 
 .. _Connecting to iSCSI:
 

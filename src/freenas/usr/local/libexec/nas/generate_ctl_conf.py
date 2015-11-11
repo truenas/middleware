@@ -264,7 +264,7 @@ def main():
         elif target.iscsi_target_name:
             addline("\talias \"%s\"\n" % target.iscsi_target_name)
 
-        for fctt in target.fiberchanneltotarget_set.all():
+        for fctt in target.fibrechanneltotarget_set.all():
             addline("\tport %s\n" % fctt.fc_port)
 
         for grp in target.iscsitargetgroups_set.all():
