@@ -49,9 +49,13 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_PATH = '/data/freenas-v1.db'
+# Workaround bug in south database name
+if '--database=factory' in sys.argv:
+    DATABASE_PATH = '.factory'
 
 SOUTH_DATABASE_ADAPTERS = {
     'default': 'south.db.sqlite3',
+    'factory': 'south.db.sqlite3',
 }
 
 DATABASES = {
@@ -59,6 +63,10 @@ DATABASES = {
         'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
+    },
+    'factory': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': DATABASE_PATH,
     }
 }
 
