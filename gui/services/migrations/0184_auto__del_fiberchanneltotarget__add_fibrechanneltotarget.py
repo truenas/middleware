@@ -8,29 +8,10 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'FiberChannelToTarget'
-        db.delete_table(u'services_fiberchanneltotarget')
-
-        # Adding model 'FibreChannelToTarget'
-        db.create_table(u'services_fibrechanneltotarget', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('fc_port', self.gf('django.db.models.fields.CharField')(max_length=10)),
-            ('fc_target', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['services.iSCSITarget'], null=True)),
-        ))
-        db.send_create_signal(u'services', ['FibreChannelToTarget'])
-
+        db.rename_table(u'services_fiberchanneltotarget', u'services_fibrechanneltotarget')
 
     def backwards(self, orm):
-        # Adding model 'FiberChannelToTarget'
-        db.create_table(u'services_fiberchanneltotarget', (
-            ('fc_port', self.gf('django.db.models.fields.CharField')(max_length=10)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('fc_target', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['services.iSCSITarget'], null=True)),
-        ))
-        db.send_create_signal(u'services', ['FiberChannelToTarget'])
-
-        # Deleting model 'FibreChannelToTarget'
-        db.delete_table(u'services_fibrechanneltotarget')
+        db.rename_table(u'services_fibrechanneltotarget', u'services_fiberchanneltotarget')
 
 
     models = {
