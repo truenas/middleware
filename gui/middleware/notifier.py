@@ -3735,11 +3735,14 @@ class notifier:
         return retval
 
     def config_restore(self):
-        os.unlink("/data/freenas-v1.db")
+        if os.path.exists("/data/freenas-v1.db.factory"):
+            os.unlink("/data/freenas-v1.db.factory")
         save_path = os.getcwd()
         os.chdir(FREENAS_PATH)
-        self._system("/usr/local/bin/python manage.py syncdb --noinput --migrate")
-        self._system("/usr/local/bin/python manage.py createadmin")
+        rv = self._system("/usr/local/bin/python manage.py syncdb --noinput --migrate --database=factory")
+        if rv != 0:
+            raise MiddlewareError("Factory reset has failed, check /var/log/messages")
+        self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
         os.chdir(save_path)
 
     def config_upload(self, uploaded_file_fd):
