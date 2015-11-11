@@ -302,7 +302,7 @@ def services_cifs(request):
     })
 
 
-def fiberchanneltotarget(request):
+def fibrechanneltotarget(request):
 
     i = 0
     sysctl_set = {}
@@ -321,11 +321,11 @@ def fiberchanneltotarget(request):
             role = role[0]
         tun_var = 'hint.isp.%d.role' % port_number
 
-        qs = models.FiberChannelToTarget.objects.filter(fc_port=fc_port)
+        qs = models.FibreChannelToTarget.objects.filter(fc_port=fc_port)
         if qs.exists():
             fctt = qs[0]
         else:
-            fctt = models.FiberChannelToTarget()
+            fctt = models.FibreChannelToTarget()
             fctt.fc_port = fc_port
         # Initiator mode
         if fc_target in ('false', False):
@@ -392,5 +392,5 @@ def fiberchanneltotarget(request):
 
     return JsonResp(
         request,
-        message=_('Fiber Channel Ports have been successfully changed.'),
+        message=_('Fibre Channel Ports have been successfully changed.'),
     )

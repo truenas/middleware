@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
-    FiberChannelToTargetResourceMixin,
+    FibreChannelToTargetResourceMixin,
     FTPResourceMixin, ISCSIPortalResourceMixin, ISCSITargetResourceMixin,
     ISCSITargetGroupsResourceMixin,
     ISCSITargetExtentResourceMixin, ISCSITargetToExtentResourceMixin,
@@ -17,9 +17,9 @@ class ServicesFAdmin(BaseFreeAdmin):
     resource_mixin = ServicesResourceMixin
 
 
-class FiberChannelToTargetFAdmin(BaseFreeAdmin):
+class FibreChannelToTargetFAdmin(BaseFreeAdmin):
 
-    resource_mixin = FiberChannelToTargetResourceMixin
+    resource_mixin = FibreChannelToTargetResourceMixin
 
 
 class FTPFAdmin(BaseFreeAdmin):
@@ -170,7 +170,7 @@ class NFSFAdmin(BaseFreeAdmin):
     icon_model = 'NFSIcon'
 
 
-site.register(models.FiberChannelToTarget, FiberChannelToTargetFAdmin)
+site.register(models.FibreChannelToTarget, FibreChannelToTargetFAdmin)
 site.register(models.FTP, FTPFAdmin)
 site.register(models.iSCSITarget, ISCSITargetFAdmin)
 site.register(models.iSCSITargetGroups, ISCSITargetGroupsFAdmin)

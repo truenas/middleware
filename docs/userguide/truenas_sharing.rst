@@ -1133,7 +1133,7 @@ In order to configure iSCSI:
 The rest of this section describes these steps in more detail.
 
 .. note:: if the system has been licensed for Fibre Channel, the screens will vary slightly than those found in the rest of this section. Refer to the section on
-   :ref:`Fiber Channel Ports` for details.
+   :ref:`Fibre Channel Ports` for details.
 
 .. _Target Global Configuration:
 
@@ -1507,51 +1507,51 @@ target.
 Once iSCSI has been configured, don't forget to start it in :menuselection:`Services --> Control Services`. Click the red "OFF" button next to iSCSI. After a
 second or so, it will change to a blue ON, indicating that the service has started.
 
-.. _Fiber Channel Ports:
+.. _Fibxaeer Channel Ports:
 
-Fiber Channel Ports
+Fibre Channel Ports
 ~~~~~~~~~~~~~~~~~~~
 
-If the TrueNAS® system has Fiber Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
-:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fiber Channel Ports' tab will be added. An example is seen in :numref:`Figure %s: Block (iSCSI) Screen <tn_fiber1>`.
+If the TrueNAS® system has Fibre Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
+:menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fibre Channel Ports' tab will be added. An example is seen in :numref:`Figure %s: Block (iSCSI) Screen <tn_fibre1>`.
 
-.. _tn_fiber1:
+.. _tn_fibre1:
 
-.. figure:: images/tn_fiber1.png
+.. figure:: images/tn_fibre1.png
 
 Otherwise, the "Target Global Configuration" screen is the same as described in :ref:`Target Global Configuration`.
 
-Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fiber Channel.
+Since the "Portals", "Initiators", and "Authorized Access" screens only apply to iSCSI, they are marked as such and can be ignored when configuring Fibre Channel.
 
-As seen in :numref:`Figure %s: Add Target Screen <tn_fiber2>`, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to
-create is iSCSI, Fiber Channel, or both.
+As seen in :numref:`Figure %s: Add Target Screen <tn_fibre2>`, the :menuselection:`Targets --> Add Target` screen has an extra "Target Mode" option for indicating whether the target to
+create is iSCSI, Fibre Channel, or both.
 
-.. _tn_fiber2:
+.. _tn_fibre2:
 
-.. figure:: images/tn_fiber2.png
+.. figure:: images/tn_fibre2.png
 
-If you select "Fiber Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fiber Channel
-connection. An example is seen in :numref:`Figure %s: Configuring a Fiber Channel Target <tn_fiber3>`.
+If you select "Fibre Channel", this screen will change so that only the "Target Name" and "Target Alias" fields remain as those are the only applicable fields for a Fibre Channel
+connection. An example is seen in :numref:`Figure %s: Configuring a Fibre Channel Target <tn_fibre3>`.
 
-.. _tn_fiber3:
+.. _tn_fibre3:
 
-.. figure:: images/tn_fiber3.png
+.. figure:: images/tn_fibre3.png
 
 The screens for adding an extent and associating a target are the same as described in :ref:`Extents` and :ref:`Targets/Extents`.
 
-An example of the "Fiber Channel Ports" screen is shown in :numref:`Figure %s: Configuring a Fiber Channel Port <tn_fiber4a>`.
+An example of the "Fibre Channel Ports" screen is shown in :numref:`Figure %s: Configuring a Fibre Channel Port <tn_fibre4a>`.
 
-.. _tn_fiber4a:
+.. _tn_fibre4a:
 
-.. figure:: images/tn_fiber4a.png
+.. figure:: images/tn_fibre4a.png
 
-This screen shows the status of each attached fiber channel port, where:
+This screen shows the status of each attached fibre channel port, where:
 
 * **Initiator:** indicates that the port is acting as a client and has access to any physically attached storage.
 
 * **Target:** indicates that clients are connecting to the specified target through this port.
 
-* **Disabled:** indicates that this fiber channel port is not in use.
+* **Disabled:** indicates that this fibre channel port is not in use.
 
 .. _Connecting to iSCSI:
 
