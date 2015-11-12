@@ -12745,3 +12745,29 @@ msgstr "Включити vCenter Plugin через HTTPS:"
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
 msgstr "Включити vCenter Plugin через HTTPS"
+
+#: services/models.py:837
+#, fuzzy
+msgid "Fibre Channel"
+msgstr "Fiber Channel"
+
+#: services/models.py:967
+#, fuzzy
+msgid "Fibre Channel Target"
+msgstr "Ціль Fiber Channel"
+
+#: services/models.py:968
+#, fuzzy
+msgid "Fibre Channel Targets"
+msgstr "Цілі Fiber Channel"
+
+#: services/nav.py:120
+#: templates/services/iscsi.html:45
+#, fuzzy
+msgid "Fibre Channel Ports"
+msgstr "Порти Fiber Channel"
+
+#: services/views.py:395
+#, fuzzy
+msgid "Fibre Channel Ports have been successfully changed."
+msgstr "Порти Fiber Channel були успішно змінені."

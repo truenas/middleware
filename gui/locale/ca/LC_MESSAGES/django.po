@@ -13252,3 +13252,29 @@ msgstr ""
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
 msgstr ""
+
+#: services/models.py:837
+#, fuzzy
+msgid "Fibre Channel"
+msgstr "Canviar"
+
+#: services/models.py:967
+#, fuzzy
+msgid "Fibre Channel Target"
+msgstr "Canviar"
+
+#: services/models.py:968
+#, fuzzy
+msgid "Fibre Channel Targets"
+msgstr "Canviar"
+
+#: services/nav.py:120
+#: templates/services/iscsi.html:45
+#, fuzzy
+msgid "Fibre Channel Ports"
+msgstr "Canviar"
+
+#: services/views.py:395
+#, fuzzy
+msgid "Fibre Channel Ports have been successfully changed."
+msgstr "Els teus canvis han estat actualitzats correctament!"
