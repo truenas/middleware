@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-09-09 09:20+0000\n"
-"Last-Translator: Fraz <francis.heche@gmail.com>\n"
+"PO-Revision-Date: 2015-11-01 19:54+0000\n"
+"Last-Translator: franckleroy <pootle@franckleroy.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1441790458.0\n"
+"X-POOTLE-MTIME: 1446407656.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -25,12 +25,10 @@ msgstr "Entier"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
-#, fuzzy
 msgid "SSL"
 msgstr "SSL"
 
 #: choices.py:42 choices.py:558
-#, fuzzy
 msgid "TLS"
 msgstr "TLS"
 
@@ -43,7 +41,6 @@ msgid "HTTPS"
 msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
-#, fuzzy
 msgid "Auto"
 msgstr "Automatique"
 
@@ -108,12 +105,10 @@ msgid "SATA 3.0Gbit/s"
 msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
-#, fuzzy
 msgid "Always On"
 msgstr "Toujours actif"
 
 #: choices.py:86 choices.py:95
-#, fuzzy
 msgid "Disabled"
 msgstr "Désactivé(e)"
 
@@ -140,7 +135,6 @@ msgid "Level 192 - Intermediate power usage without Standby"
 msgstr "Niveau 192 - Consommation intermédiaire sans mise en veille"
 
 #: choices.py:92
-#, fuzzy
 msgid "Level 254 - Maximum performance, maximum power usage"
 msgstr "Niveau 254 - Performance maximale, consommation maximale"
 
@@ -266,7 +260,7 @@ msgstr "Time Machine"
 # voir : http://php.net/manual/fr/xml.case-folding.php
 #: choices.py:199
 msgid "No case folding"
-msgstr "Pas de changement de casse"
+msgstr "Pas de mise en majuscule"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -429,12 +423,12 @@ msgstr "%(hours)s heures"
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(jour)s jour                "
+msgstr "%(day)s jour"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(semaine)s semaine                "
+msgstr "%(week)s semaine                "
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
@@ -7497,7 +7491,7 @@ msgstr "La confirmation ne correspond pas à la phrase de passe"
 
 #: storage/forms.py:1606
 msgid "Passphrase is not valid"
-msgstr "La phrase de passe %s est invalide."
+msgstr "Le mot de passe n'est pas correct."
 
 #: storage/forms.py:1665
 msgid "Dedicated User Enabled"
@@ -7668,8 +7662,8 @@ msgstr "Êtes-vous sûr de vouloir supprimer ?"
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
 msgstr ""
-"Des pools de stockage sont en cours de resynchronisation/nettoyage, êtes-"
-"vous certain de vouloir <strong>ÉTEINDRE</strong>?"
+"Vous devez configurer la route par défaut (Réseau->Passerelle par défaut "
+"IPv4)"
 
 #: templates/jails/stop.html:3
 msgid "Stop "
@@ -7681,7 +7675,7 @@ msgstr "Actualiser"
 
 #: templates/plugins/available_install.html:3
 msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
-msgstr "Êtes-vous sûr de vouloir installé le module \"%(name)s\" ?"
+msgstr "Êtes-vous sûr de vouloir installer le module \"%(plugin)s\" ?"
 
 #: templates/plugins/index.html:12
 msgid "Installed"
@@ -8366,7 +8360,7 @@ msgstr "Démarrage..."
 
 #: templates/plugins/plugin_update.html:3
 msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
-msgstr "Êtes-vous sûr de vouloir mettre à jour le module \"%(name)s\" ?"
+msgstr "Êtes-vous sûr de vouloir mettre à jour le module \"%(plugin)s\" ?"
 
 #: templates/plugins/plugins_datagrid.html:4
 #: templates/plugins/plugins_datagrid.html:6
@@ -8415,7 +8409,7 @@ msgstr "Analyse"
 
 #: templates/storage/volumestatus_datagrid.html:9
 msgid "%(scanned)s out of %(total)s"
-msgstr "% analyé(s) sur % total(aux)"
+msgstr "%(scanned)s sur un total de %(total)s"
 
 #: templates/storage/volumestatus_datagrid.html:14
 msgid "Errors"
@@ -9197,9 +9191,8 @@ msgid "Recovery has been removed"
 msgstr "Le disque a été supprimé."
 
 #: storage/views.py:1151
-#, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "L'export du volume a echoué"
+msgstr "La mise a jour du volume a échoué : %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
@@ -9233,9 +9226,8 @@ msgid "Run Now"
 msgstr "Exécuter maintenant"
 
 #: system/forms.py:86
-#, fuzzy
 msgid "The volume %s is locked by encryption"
-msgstr "L'export du volume a echoué"
+msgstr "Le volume %s est verrouillé par du chiffrement"
 
 #: system/forms.py:754
 #, fuzzy
@@ -10377,22 +10369,19 @@ msgstr "Initialiser prudemment"
 #: middleware/notifier.py:2222
 #, fuzzy
 msgid "Failed to create group %s"
-msgstr "Échec de mise à jour du module."
+msgstr "Échec de création du groupe %s"
 
 #: system/forms.py:256
-#, fuzzy
 msgid "Group does not exist: %s"
-msgstr "La jail n'existe pas"
+msgstr "Le groupe n'existe pas: %s"
 
 #: system/forms.py:270
-#, fuzzy
 msgid "User does not exist: %s"
-msgstr "La jail n'existe pas"
+msgstr "L'utilisateur n'existe pas: %s"
 
 #: system/forms.py:306
-#, fuzzy
 msgid "Failed to create ZFS: %s"
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "La création du ZFS a échoué: %s"
 
 #: system/forms.py:1136
 #, fuzzy
@@ -10590,9 +10579,8 @@ msgid "Kerberos Realm"
 msgstr "Fichier Keytab pour Kerberos"
 
 #: services/views.py:269
-#, fuzzy
 msgid "CIFS successfully updated."
-msgstr "%s mis(e) à jour avec succès."
+msgstr "CIFS a été mis à jour avec succès."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -10659,13 +10647,11 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr "Authentification de base"
+msgstr "Authentification simple"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr ""
-"                  Authentification en mode \"Digest\" (identifiant + mot de "
-"passe)                "
+msgstr "Authentification en mode \"Empreinte\""
 
 #: choices.py:799
 msgid "adex"
@@ -11210,9 +11196,8 @@ msgid "CSR successfully edited."
 msgstr "modifié(e) avec succès"
 
 #: templates/freeadmin/generic_model_delete.html:31
-#, fuzzy
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
-msgstr "Êtes-vous sûr de vouloir supprimer \"%(name)s\" ?"
+msgstr "Êtes-vous sûr de vouloir supprimer %(verbose_name)s %(object)s?"
 
 #: templates/services/core.html:170
 #, fuzzy
@@ -11453,9 +11438,8 @@ msgid "rc.conf"
 msgstr "rc.conf"
 
 #: sharing/forms.py:94
-#, fuzzy
 msgid "Failed to create %(path)s: %(error)s"
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "Impossible de créer %(path)s : %(error)s"
 
 #: sharing/forms.py:389
 #, fuzzy
@@ -11586,9 +11570,8 @@ msgid "NOTICE"
 msgstr ""
 
 #: templates/system/update.html:30
-#, fuzzy
 msgid "The following packages will be changed:"
-msgstr "Échec du rattachement des disques suivants : %s"
+msgstr "Les packages suivant vont être changés :"
 
 #: templates/system/update_select.html:13
 msgid "Choose which train you would like to check for updates"
@@ -11666,9 +11649,8 @@ msgstr "Certificat SSL"
 
 #: sharing/forms.py:188
 #: sharing/forms.py:212
-#, fuzzy
 msgid "Invalid IP or Network."
-msgstr "Réseau incorrect : %s"
+msgstr "IP ou réseau invalid."
 
 #: sharing/models.py:223
 msgid "Allow only listed hosts and/or networks access to this volume"
@@ -11811,19 +11793,16 @@ msgid "Boot Environments successfully deleted."
 msgstr "Instantané supprimé avec succès."
 
 #: system/alertmods/boot_volume_status.py:28
-#, fuzzy
 msgid "The boot volume status is %(status)s"
-msgstr "Le status du volume %(volume)s est %(status)s"
+msgstr "Le statut du volume de boot est %(status)s"
 
 #: system/views.py:322
-#, fuzzy
 msgid "Failed to delete Boot Environments."
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "La suppression de l'environnement de boot a échoué."
 
 #: system/alertmods/boot_volume_status.py:44
-#, fuzzy
 msgid "The boot volume status is DEGRADED"
-msgstr "Le status du volume %s est DÉGRADÉ"
+msgstr "Le volume de boot a le statut DÉGRADÉ"
 
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
@@ -11853,14 +11832,12 @@ msgid "Last Scrub Run on"
 msgstr ""
 
 #: templates/system/bootenv_deletebulk.html:6
-#, fuzzy
 msgid "Are you sure you want to delete the following boot environments?"
-msgstr "Êtes-vous sûr de vouloir supprimer \"%(name)s\" ?"
+msgstr "Êtes-vous sûr de vouloir supprimer ces environnements de démarrage ?"
 
 #: templates/system/update_check.html:29
-#, fuzzy
 msgid "The following packages will be downloaded:"
-msgstr "Échec du rattachement des disques suivants : %s"
+msgstr "Les packages suivant vont être téléchargés :"
 
 #: templates/system/update_check.html:31
 #, fuzzy
@@ -11997,9 +11974,8 @@ msgstr "Le système est en train de redémarrer."
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(semaine)s semaine                "
+msgstr "%(weeks)s semaine"
 
 #: system/views.py:419
 #, fuzzy
@@ -12007,14 +11983,12 @@ msgid "Disk has been successfully detached."
 msgstr "Le volume a été détaché avec succès"
 
 #: system/alertmods/boot_volume_status.py:15
-#, fuzzy
 msgid "The boot volume state is %(state)s: %(status)s"
-msgstr "Le status du volume %(volume)s est %(status)s : %(message)s"
+msgstr "Le status du volume de boot est %(state)s : %(status)s"
 
 #: system/alertmods/volume_status.py:17
-#, fuzzy
 msgid "The volume %(volume)s state is %(state)s: %(status)s"
-msgstr "Le status du volume %(volume)s est %(status)s : %(message)s"
+msgstr "Le status du volume %(volume)s est %(state)s : %(status)s"
 
 #: templates/system/update.html:31
 #: templates/system/update_check.html:32
@@ -12067,7 +12041,7 @@ msgstr ""
 #: services/forms.py:229
 #, fuzzy
 msgid "workgroup: %s"
-msgstr "Groupe de travail"
+msgstr "groupe de travail: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
@@ -12176,12 +12150,12 @@ msgstr "Confirmer la phrase de passe"
 #: services/forms.py:762
 #, fuzzy
 msgid "Password must contain at least 8 characters"
-msgstr "Votre nom contient des caractères invalides (%s)."
+msgstr "Le mot de passe doit contenir au moins 8 caractères"
 
 #: services/forms.py:820
 #, fuzzy
 msgid "Passphrase must contain at least 8 characters"
-msgstr "Votre nom contient des caractères invalides (%s)."
+msgstr "Le mot de passe doit contenir au moins 8 caractères"
 
 #: services/forms.py:976
 #, fuzzy
@@ -12468,17 +12442,15 @@ msgstr ""
 #: storage/models.py:413
 #: tasks/models.py:122
 #: tasks/models.py:450
-#, fuzzy
 msgid "Every {0} minute(s)"
-msgstr "Toutes les %s minutes"
+msgstr "Chaque {0} minute(s)"
 
 #: storage/models.py:421
 #: tasks/models.py:131
 #: tasks/models.py:459
 #: tasks/models.py:649
-#, fuzzy
 msgid "Every {0} hour(s)"
-msgstr "Toutes les %s heures"
+msgstr "Chaque {0} heure(s)"
 
 #: storage/models.py:429
 #: tasks/models.py:140
@@ -12708,9 +12680,8 @@ msgid ""
 msgstr ""
 
 #: system/alertmods/license_expired.py:24
-#, fuzzy
 msgid "Unable to decode %s license"
-msgstr "Impossible de supprimer le module."
+msgstr "Incapable de décoder la license %s"
 
 #: system/alertmods/license_expired.py:31
 msgid "Your %s license has expired"
@@ -12957,9 +12928,10 @@ msgid "VLAN ID"
 msgstr "VLAN"
 
 #: sharing/forms.py:465
-#, fuzzy
 msgid "A mountpoint with this path is already in use by another share."
-msgstr "Le réseau %s est déjà utilisé par une autre interface réseau."
+msgstr ""
+"Le point de montage de ce chemin est déjà en utilisation pour un autre "
+"partage."
 
 #: storage/forms.py:441
 #, fuzzy
@@ -13064,13 +13036,12 @@ msgid "IPMI (Node A)"
 msgstr ""
 
 #: system/alertmods/mpr_firmware.py:34
-#, fuzzy
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
 "La version du firmware %(fwversion)s ne correspond pas à la version du "
-"driver %(drversion)s pour /dev/mps%(mps)s"
+"driver %(drversion)s pour /dev/mpr%(mpr)s"
 
 #: network/forms.py:320
 #: network/forms.py:324
@@ -13304,3 +13275,29 @@ msgstr ""
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
 msgstr ""
+
+#: services/models.py:837
+#, fuzzy
+msgid "Fibre Channel"
+msgstr "Canal"
+
+#: services/models.py:967
+#, fuzzy
+msgid "Fibre Channel Target"
+msgstr "Canal"
+
+#: services/models.py:968
+#, fuzzy
+msgid "Fibre Channel Targets"
+msgstr "Canal"
+
+#: services/nav.py:120
+#: templates/services/iscsi.html:45
+#, fuzzy
+msgid "Fibre Channel Ports"
+msgstr "Canal"
+
+#: services/views.py:395
+#, fuzzy
+msgid "Fibre Channel Ports have been successfully changed."
+msgstr "Les modifications ont été appliquées avec succès !"

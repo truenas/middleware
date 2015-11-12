@@ -13015,3 +13015,29 @@ msgstr "vCenter-plug-in over https inschakelen:"
 #, fuzzy
 msgid " Enable vCenter Plugin over https"
 msgstr "vCenter-plug-in over https inschakelen"
+
+#: services/models.py:837
+#, fuzzy
+msgid "Fibre Channel"
+msgstr "Fiber Channel"
+
+#: services/models.py:967
+#, fuzzy
+msgid "Fibre Channel Target"
+msgstr "Doel van Fiber Channel"
+
+#: services/models.py:968
+#, fuzzy
+msgid "Fibre Channel Targets"
+msgstr "Doelen van Fiber Channel"
+
+#: services/nav.py:120
+#: templates/services/iscsi.html:45
+#, fuzzy
+msgid "Fibre Channel Ports"
+msgstr "Fiber Channel-poorten"
+
+#: services/views.py:395
+#, fuzzy
+msgid "Fibre Channel Ports have been successfully changed."
+msgstr "Fiber Channel-poorten zijn met succes gewijzigd."
