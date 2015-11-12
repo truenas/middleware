@@ -656,9 +656,7 @@ Create resource
       Content-Type: application/json
 
         {
-                "iscsi_target_name": "target",
-                "iscsi_target_portalgroup": 1,
-                "iscsi_target_initiatorgroup": 1
+                "iscsi_target_name": "target"
         }
 
    **Example response**:
