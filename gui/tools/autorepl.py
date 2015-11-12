@@ -143,7 +143,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, compression,
         f.seek(0)
         msg = f.read().strip('\n').strip('\r')
     os.remove(templog)
-    msg = msg.replace('WARNING: enabled NONE cipher\n', '')
+    msg = msg.replace('WARNING: enabled NONE cipher', '')
     log.debug("Replication result: %s" % (msg))
     results[replication.id] = msg
     if reached_last and msg == "Succeeded":
