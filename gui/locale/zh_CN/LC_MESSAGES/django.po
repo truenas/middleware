@@ -12208,3 +12208,29 @@ msgstr ""
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
 msgstr ""
+
+#: services/models.py:837
+#, fuzzy
+msgid "Fibre Channel"
+msgstr "频道"
+
+#: services/models.py:967
+#, fuzzy
+msgid "Fibre Channel Target"
+msgstr "光纤通道端口"
+
+#: services/models.py:968
+#, fuzzy
+msgid "Fibre Channel Targets"
+msgstr "光纤通道端口"
+
+#: services/nav.py:120
+#: templates/services/iscsi.html:45
+#, fuzzy
+msgid "Fibre Channel Ports"
+msgstr "光纤通道端口"
+
+#: services/views.py:395
+#, fuzzy
+msgid "Fibre Channel Ports have been successfully changed."
+msgstr "光纤通道端口修改成功。"

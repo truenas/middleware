@@ -12236,3 +12236,29 @@ msgstr ""
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
 msgstr ""
+
+#: services/models.py:837
+#, fuzzy
+msgid "Fibre Channel"
+msgstr "E-mail - ийг өөрчлөх"
+
+#: services/models.py:967
+#, fuzzy
+msgid "Fibre Channel Target"
+msgstr "E-mail - ийг өөрчлөх"
+
+#: services/models.py:968
+#, fuzzy
+msgid "Fibre Channel Targets"
+msgstr "E-mail - ийг өөрчлөх"
+
+#: services/nav.py:120
+#: templates/services/iscsi.html:45
+#, fuzzy
+msgid "Fibre Channel Ports"
+msgstr "E-mail - ийг өөрчлөх"
+
+#: services/views.py:395
+#, fuzzy
+msgid "Fibre Channel Ports have been successfully changed."
+msgstr "%s амжилттай шинэчлэгдлээ"
