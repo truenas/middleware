@@ -1756,7 +1756,7 @@ class iSCSITargetGroupsForm(ModelForm):
         elif group != '' and int(group) == -1:
             return None
         if method == 'CHAP Mutual' and group:
-            auth = models.iSCSITargetAuthCredential.objects.get(id=group)
+            auth = models.iSCSITargetAuthCredential.objects.get(iscsi_target_auth_tag=group)
             if not auth.iscsi_target_auth_peeruser:
                 raise forms.ValidationError(_(
                     'This authentication group does not support CHAP MUTUAL'
