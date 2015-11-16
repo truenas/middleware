@@ -1,17 +1,24 @@
-o Add FibreChannel support.
+o Add a vCenter plugin.  This functionality allows you to install
+  the TrueNAS 1.0 vCenter plugin in to vCenter, which will then
+  allow you to create iSCSI and NFS datastores directly from vCenter.
 
-o Fix a bug that was preventing proper operation of AD integration in HA
-  units.
+o Fix a bug that prevented ZFS replication from working when
+  ssh encryption is disabled.
 
-o Fix a GUI traceback that could occur when editing various network
-  interfaces that contained a VIP (Virtual IP)
+o Fix two bugs with hardware detection on the Z-series platform.
+  The first issue was caused by using a hardwired path to the
+  internal enclosure, The second issue was caused by hard wiring
+  the device name of the failover link.  Both issues were resolved
+  by switching to dynamic runtime detection of the components.
 
-o Fix an alert that would occur on single node Z-series heads that
-  stated "The enclosure is critical"
+o Improve the workflow for reconfiguring the network configuration
+  of TrueNAS HA.  Disable failover, then make changes.  Verify the
+  changes have propagated to the STANDBY node, then re-enable failover.
+  (Ignore the warning that changing the network will cause a failover,
+  with failover disabled it won't.  This warning is a bug that will be
+  resolved in a future update)
 
-o Fix a spurious alert that would show bad voltages on the Z-series
-  chassis enclosure.  This alert is purely a cosmetic bug, no voltage
-  irregularities have been detected on any units exhibiting this alert.
 
-o Fix a bug that could cause python core dumps to be logged when
-  LDAP SSL or TLS support was enabled.
+o Fix a bug that would prevent iSCSI initiators from failing over
+  properly on TrueNAS HA.  This regression was introduced when the
+  previous update added ALUA support.
