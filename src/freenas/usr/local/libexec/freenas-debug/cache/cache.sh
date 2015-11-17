@@ -50,28 +50,28 @@ cache_func()
 	if [ -f "${directory_local_users}" ]
 	then
 		section_header "${directory_local_users}"
-		/usr/local/bin/db_stat-4.6 -d "${directory_local_users}"
+		/usr/local/bin/db_stat-4.8 -d "${directory_local_users}"
 		section_footer
 	fi
 
 	if [ -f "${directory_local_groups}" ]
 	then
 		section_header "${directory_local_groups}"
-		/usr/local/bin/db_stat-4.6 -d "${directory_local_groups}"
+		/usr/local/bin/db_stat-4.8 -d "${directory_local_groups}"
 		section_footer
 	fi
 
 	if [ -f "${directory_users}" ]
 	then
 		section_header "${directory_users}"
-		/usr/local/bin/db_stat-4.6 -d "${directory_users}"
+		/usr/local/bin/db_stat-4.8 -d "${directory_users}"
 		section_footer
 	fi
 
 	if [ -f "${directory_groups}" ]
 	then
 		section_header "${directory_groups}"
-		/usr/local/bin/db_stat-4.6 -d "${directory_groups}"
+		/usr/local/bin/db_stat-4.8 -d "${directory_groups}"
 		section_footer
 	fi
 
