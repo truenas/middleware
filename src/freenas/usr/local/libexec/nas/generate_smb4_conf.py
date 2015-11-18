@@ -1162,7 +1162,7 @@ def provision_smb4():
         print >> sys.stderr, "Failed to set administrator password"
         return False
 
-    if not Samba4().sentinel_file_create():
+    if not Samba4().domain_sentinel_file_create():
         return False
 
     return True
