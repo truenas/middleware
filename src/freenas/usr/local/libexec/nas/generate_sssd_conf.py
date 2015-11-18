@@ -710,7 +710,8 @@ def add_ldap_section(sc):
             ldap_section.ldap_tls_cacert = certpath
 
     elif ldap.ldap_ssl == 'start_tls':
-        ldap_section.tls_reqcert = 'demand'
+        ldap_section.tls_reqcert = 'never'
+        ldap_section.ldap_tls_reqcert = 'never'
         certpath = get_certificateauthority_path(ldap.ldap_certificate)
         if certpath:
             ldap_section.ldap_tls_cacert = certpath
