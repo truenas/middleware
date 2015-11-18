@@ -45,7 +45,7 @@ def ldap_conf_ldap(ldap_conf):
         capath = get_certificateauthority_path(ldap.ldap_certificate)
         if capath:
             f.write("TLS_CACERT %s\n" % capath)
-        f.write("TLS_REQCERT never\n")
+        f.write("TLS_REQCERT allow\n")
 
     f.close()
     os.chmod(ldap_conf, 0644)
@@ -63,7 +63,7 @@ def ldap_conf_activedirectory(ldap_conf):
     if ad.ssl in ("start_tls", "on"):
         if ad.certfile: 
             config["TLS_CACERT"] = ad.certfile
-        config["TLS_REQCERT"] = "never"
+        config["TLS_REQCERT"] = "allow"
 
     #
     # So what if the AD server is configured to use SSL or TLS,
@@ -84,7 +84,7 @@ def ldap_conf_activedirectory(ldap_conf):
             capath = get_certificateauthority_path(idmap.get_certificate())
             if capath:
                 config["TLS_CACERT"] = capath
-            config["TLS_REQCERT"] = "never"
+            config["TLS_REQCERT"] = "allow"
 
     keys = ["URI", "BASE", "TLS_CACERT", "TLS_REQCERT"]
     with open(ldap_conf, "w") as f:
