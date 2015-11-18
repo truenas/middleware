@@ -274,9 +274,9 @@ class FreeNAS_LDAP_Directory(object):
                     self._handle.set_option(ldap.OPT_X_TLS_CACERTFILE,
                         self.certfile)
                 self._handle.set_option(ldap.OPT_X_TLS_REQUIRE_CERT,
-                    ldap.OPT_X_TLS_NEVER)
+                    ldap.OPT_X_TLS_DEMAND)
                 self._handle.set_option(ldap.OPT_X_TLS_NEWCTX,
-                    ldap.OPT_X_TLS_NEVER)
+                    ldap.OPT_X_TLS_DEMAND)
 
             if self.ssl == FREENAS_LDAP_USETLS:
                 try:
