@@ -46,7 +46,7 @@ def ldap_conf_ldap(ldap_conf):
         capath = get_certificateauthority_path(ldap.ldap_certificate)
         if capath:
             f.write("tls_cacert %s\n" % capath)
-        f.write("tls_reqcert allow\n")
+        f.write("tls_reqcert never\n")
 
     f.write("scope sub\n")
     f.write("timelimit 30\n")
