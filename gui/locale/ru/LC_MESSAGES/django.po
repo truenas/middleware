@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-10-27 17:03+0000\n"
+"PO-Revision-Date: 2015-11-13 21:55+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1445965405.0\n"
+"X-POOTLE-MTIME: 1447451712.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -12920,27 +12920,22 @@ msgid " Enable vCenter Plugin over https"
 msgstr "Включить vCenter Plugin через HTTPS"
 
 #: services/models.py:837
-#, fuzzy
 msgid "Fibre Channel"
-msgstr "Fiber Channel"
+msgstr "Fibre Channel"
 
 #: services/models.py:967
-#, fuzzy
 msgid "Fibre Channel Target"
-msgstr "Цель Fiber Channel"
+msgstr "Цель Fibre Channel"
 
 #: services/models.py:968
-#, fuzzy
 msgid "Fibre Channel Targets"
-msgstr "Цели Fiber Channel"
+msgstr "Цели Fibre Channel"
 
 #: services/nav.py:120
 #: templates/services/iscsi.html:45
-#, fuzzy
 msgid "Fibre Channel Ports"
-msgstr "Порты Fiber Channel"
+msgstr "Порты Fibre Channel"
 
 #: services/views.py:395
-#, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
-msgstr "Порты Fiber Channel были успешно изменены."
+msgstr "Порты Fibre Channel были успешно изменены."
