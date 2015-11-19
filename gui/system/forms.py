@@ -91,6 +91,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
     services,
     iSCSITarget,
+    iSCSITargetGroups,
     iSCSITargetAuthorizedInitiator,
     iSCSITargetExtent,
     iSCSITargetPortal,
@@ -618,6 +619,10 @@ class InitialWizard(CommonWizard):
                         serial = "10000001"
                     target = iSCSITarget.objects.create(
                         iscsi_target_name='%sTarget' % share_name,
+                    )
+
+                    iSCSITargetGroups.objects.create(
+                        iscsi_target=target,
                         iscsi_target_portalgroup=portal,
                         iscsi_target_initiatorgroup=authini,
                     )
