@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-10-31 19:53+0000\n"
+"PO-Revision-Date: 2015-11-17 22:38+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1446321187.0\n"
+"X-POOTLE-MTIME: 1447799899.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -10386,7 +10386,7 @@ msgid ""
 "br />add the 'webdav' user & group to the share."
 msgstr ""
 "Změní vlastníka a skupinu sdílené složky (včetně všech podsložek) na webdav:"
-"webdav <br />Je-li vypnuto, bude třeba to udělat ručně."
+"webdav <br />Je-li vypnuto, bude třeba to udělat ručně.<br />"
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
@@ -12699,27 +12699,22 @@ msgid " Enable vCenter Plugin over https"
 msgstr " Zapnout zásuvný modul vCenter přes https"
 
 #: services/models.py:837
-#, fuzzy
 msgid "Fibre Channel"
-msgstr "Porty Fibre Channel"
+msgstr ""
 
 #: services/models.py:967
-#, fuzzy
 msgid "Fibre Channel Target"
-msgstr "Fiber Channel cíl"
+msgstr "Fibre Channel cíl"
 
 #: services/models.py:968
-#, fuzzy
 msgid "Fibre Channel Targets"
-msgstr "Fiber Channel cíle"
+msgstr "Fibre Channel cíle"
 
 #: services/nav.py:120
 #: templates/services/iscsi.html:45
-#, fuzzy
 msgid "Fibre Channel Ports"
-msgstr "Porty Fibre Channel"
+msgstr "Fibre Channel porty"
 
 #: services/views.py:395
-#, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
-msgstr "Fiber Channel porty byly úspěšně změněny."
+msgstr "Fibre Channel porty byly úspěšně změněny."

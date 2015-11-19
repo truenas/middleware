@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2015-06-28 17:48+0000\n"
+"PO-Revision-Date: 2015-11-17 14:48+0000\n"
 "Last-Translator: laurb <laurfb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ro\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2);;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1435513729.0\n"
+"X-POOTLE-MTIME: 1447771727.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -3212,7 +3212,7 @@ msgstr "Nume"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
-msgstr "Export doar în citire"
+msgstr "Doar în citire"
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
@@ -9914,7 +9914,7 @@ msgid ""
 ". If absent, the ldap credentials from the ldap passdb configuration are "
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
-msgstr ""
+msgstr "Definește DN-ul utilizatorului pentru autentificare. "
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
