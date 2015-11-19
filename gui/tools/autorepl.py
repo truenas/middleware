@@ -272,8 +272,8 @@ for replication in replication_tasks:
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-    remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1],localfs.partition('/')[2])
-
+    #remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1],localfs.partition('/')[2])
+    remotefs_final = "%s" % (remotefs)
     # Examine local list of snapshots, then remote snapshots, and determine if there is any work to do.
     log.debug("Checking dataset %s" % (localfs))
 
