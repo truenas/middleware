@@ -1085,7 +1085,7 @@ Create resource
    :json string repl_remote_hostname: remote hostname
    :json integer repl_remote_port: remote ssh port
    :json string repl_remote_hostkey: remote ssh public key
-   :json boolean repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
+   :json string repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
@@ -1151,7 +1151,7 @@ Update resource
    :json string repl_remote_hostname: remote hostname
    :json integer repl_remote_port: remote ssh port
    :json string repl_remote_hostkey: remote ssh public key
-   :json boolean repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
+   :json string repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
    :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
