@@ -198,6 +198,51 @@ Create resource
    :statuscode 201: no error
 
 
+Create extent using zvol.
+
+.. http:post:: /api/v1.0/services/iscsi/extent/
+
+   Creates a new extent using zvol and returns the new extent object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/services/iscsi/extent/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "iscsi_target_extent_type": "Disk",
+                "iscsi_target_extent_name": "zvolextent",
+                "iscsi_target_extent_disk": "/dev/zvol/tank/zvolextent"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "iscsi_target_extent_comment": "",
+                "iscsi_target_extent_type": "ZVOL",
+                "iscsi_target_extent_name": "zvolextent",
+                "iscsi_target_extent_filesize": "0",
+                "iscsi_target_extent_insecure_tpc": true,
+                "iscsi_target_extent_naa": "0x3822690834aae6c5",
+                "id": 1,
+                "iscsi_target_extent_path": "/dev/zvol/tank/zvolextent"
+                "iscsi_target_extent_xen": false,
+                "iscsi_target_extent_avail_threshold": null,
+                "iscsi_target_extent_blocksize": 512,
+                "iscsi_target_extent_pblocksize": false,
+                "iscsi_target_extent_rpm": "SSD",
+                "iscsi_target_extent_serial": "08002724ab5601"
+        }
+
+
 Update resource
 +++++++++++++++
 
