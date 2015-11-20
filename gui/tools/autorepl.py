@@ -331,6 +331,17 @@ Hello,
             results[replication.id] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
             continue
 
+    # Remote filesystem is the root dataset
+    # Make sure it has no .system dataset over there because zfs receive will try to
+    # remove it and fail (because its mounted and being used)
+    if '/' not in remotefs_final:
+        rzfscmd = '"mount | grep ^%s/.system"' % (remotefs_final)
+        sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
+        output = sshproc.communicate()[0].strip()
+        if output != '':
+            results[replication.id] = 'Please move system dataset of remote side to another pool'
+            continue
+
     # Grab map from remote system
     if recursive:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
