@@ -138,9 +138,15 @@ class MultiSelectField(models.Field):
             'choices': self.get_choices(include_blank=False),
         }
         if self.has_default():
-            defaults['initial'] = self.default or []
+            if isinstance(self.default, list):
+                defaults['initial'] = self.default or []
+            else:
+                defaults['initial'] = self.default.split(',') or []
         defaults.update(kwargs)
         return SelectMultipleField(**defaults)
+
+    def get_prep_value(self, value):
+        return '' if value is None else ",".join(value)
 
     def get_db_prep_value(self, value, connection, prepared=False):
         if isinstance(value, basestring):
