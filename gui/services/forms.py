@@ -1409,20 +1409,14 @@ class iSCSITargetExtentForm(ModelForm):
         cdata = self.cleaned_data
         _type = cdata.get('iscsi_target_extent_type')
         path = cdata.get("iscsi_target_extent_path")
+        size = cdata.get("iscsi_target_extent_filesize")
+        blocksize = cdata.get("iscsi_target_extent_blocksize")
         if (
-            cdata.get("iscsi_target_extent_filesize") == "0"
-            and
-            path
-            and
-            (
-                not os.path.exists(path)
-                or
-                (
-                    os.path.exists(path)
-                    and
-                    not os.path.isfile(path)
-                )
-            )
+            size == "0" and path and (not os.path.exists(path) or (
+                os.path.exists(path)
+                and
+                not os.path.isfile(path)
+            ))
         ):
             self._errors['iscsi_target_extent_path'] = self.error_class([
                 _("The file must exist if the extent size is set to auto (0)")
@@ -1432,6 +1426,18 @@ class iSCSITargetExtentForm(ModelForm):
             self._errors['iscsi_target_extent_path'] = self.error_class([
                 _("This field is required")
             ])
+
+        if size and size != "0" and blocksize:
+            try:
+                size = float(size)
+                if (size / blocksize) % 1 != 0:
+                    self._errors['iscsi_target_extent_filesize'] = (
+                        self.error_class([
+                            _("File size must be a multiple of block size")
+                        ])
+                    )
+            except ValueError:
+                pass
         return cdata
 
     def save(self, commit=True):
