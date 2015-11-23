@@ -231,9 +231,10 @@ class DiskResourceMixin(object):
                 'devname': bundle.obj.disk_name,
             })
             bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
-            bundle.data['disk_size'] = humanize_number_si(
-                bundle.data['disk_size']
-            )
+            if bundle.data['disk_size']:
+                bundle.data['disk_size'] = humanize_number_si(
+                    bundle.data['disk_size']
+                )
         if 'disk_number' in bundle.data:
             del bundle.data['disk_number']
         if 'disk_subsystem' in bundle.data:
