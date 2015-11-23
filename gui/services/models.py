@@ -28,6 +28,7 @@ import base64
 import hashlib
 import hmac
 import logging
+import subprocess
 import uuid
 
 from django.db import models
@@ -459,6 +460,25 @@ class iSCSITargetGlobalConfiguration(Model):
         resource_name = 'services/iscsi/globalconfiguration'
 
 
+def extent_serial():
+    try:
+        nic = list(choices.NICChoices(nolagg=True,
+                                      novlan=True,
+                                      exclude_configured=False))[0][0]
+        mac = subprocess.Popen("ifconfig %s ether| grep ether | "
+                               "awk '{print $2}'|tr -d :" % (nic, ),
+                               shell=True,
+                               stdout=subprocess.PIPE).communicate()[0]
+        ltg = iSCSITargetExtent.objects.order_by('-id')
+        if ltg.count() > 0:
+            lid = ltg[0].id
+        else:
+            lid = 0
+        return mac.strip() + "%.2d" % lid
+    except:
+        return "10000001"
+
+
 class iSCSITargetExtent(Model):
     iscsi_target_extent_name = models.CharField(
         max_length=120,
@@ -469,7 +489,7 @@ class iSCSITargetExtent(Model):
     iscsi_target_extent_serial = models.CharField(
         verbose_name=_("Serial"),
         max_length=16,
-        default="10000001",
+        default=extent_serial,
         help_text=_("Serial number for the logical unit")
     )
     iscsi_target_extent_type = models.CharField(

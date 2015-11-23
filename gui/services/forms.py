@@ -1268,24 +1268,6 @@ class iSCSITargetExtentForm(ModelForm):
             self._path = self.instance.iscsi_target_extent_path
             self._name = self.instance.iscsi_target_extent_name
         else:
-
-            try:
-                nic = list(choices.NICChoices(nolagg=True,
-                                              novlan=True,
-                                              exclude_configured=False))[0][0]
-                mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                                       "awk '{print $2}'|tr -d :" % (nic, ),
-                                       shell=True,
-                                       stdout=subprocess.PIPE).communicate()[0]
-                ltg = models.iSCSITargetExtent.objects.order_by('-id')
-                if ltg.count() > 0:
-                    lid = ltg[0].id
-                else:
-                    lid = 0
-                self.fields['iscsi_target_extent_serial'].initial = mac.strip() + "%.2d" % lid
-            except:
-                self.fields['iscsi_target_extent_serial'].initial = "10000001"
-
             self.fields['iscsi_target_extent_disk'].choices = self._populate_disk_choices()
         self.fields['iscsi_target_extent_type'].widget.attrs['onChange'] = "iscsiExtentToggle();extentZvolToggle();"
         self.fields['iscsi_target_extent_path'].required = False
