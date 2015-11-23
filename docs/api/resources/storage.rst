@@ -756,7 +756,7 @@ Delete resource
 Clone snapshot
 ++++++++++++++
 
-.. http:post:: /api/v1.0/storage/snapshot/tank%2Ftest/clone/
+.. http:post:: /api/v1.0/storage/snapshot/tank%40test/clone/
 
    Creates a clone from a snapshot.
 
@@ -764,7 +764,7 @@ Clone snapshot
 
    .. sourcecode:: http
 
-      POST /api/v1.0/storage/snapshot/tank%2Ftest/clone/ HTTP/1.1
+      POST /api/v1.0/storage/snapshot/tank%40test/clone/ HTTP/1.1
       Content-Type: application/json
 
         {
