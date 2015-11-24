@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-10-07 07:54+0000\n"
+"PO-Revision-Date: 2015-11-24 01:53+0000\n"
 "Last-Translator: tiack <tiackstar@yahoo.com.tw>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_TW\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1444204496.0\n"
+"X-POOTLE-MTIME: 1448330025.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4807,12 +4807,12 @@ msgstr "S.M.A.R.T. 測試"
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
 msgid "Variable"
-msgstr "可變"
+msgstr "變數"
 
 #: system/models.py:775 system/models.py:814 templates/system/sysctl.html:6
 #: templates/system/tunable.html:6
 msgid "Value"
-msgstr "磁區"
+msgstr "數值"
 
 #: system/models.py:795
 msgid "Sysctl"
@@ -4823,14 +4823,12 @@ msgid "Sysctls"
 msgstr "Sysctls"
 
 #: system/models.py:834
-#, fuzzy
 msgid "Tunable"
-msgstr "啟用 "
+msgstr "參數"
 
 #: system/models.py:835
-#, fuzzy
 msgid "Tunables"
-msgstr "啟用 "
+msgstr "參數調整"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
@@ -6149,7 +6147,7 @@ msgstr "未知"
 
 #: templates/system/system_info.html:9
 msgid "Build"
-msgstr "Build"
+msgstr "版本"
 
 #: templates/system/system_info.html:13
 msgid "Platform"

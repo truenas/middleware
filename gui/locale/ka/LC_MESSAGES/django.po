@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-11-11 10:17+0000\n"
-"Last-Translator: Anonymous Pootle User\n"
+"PO-Revision-Date: 2015-11-21 14:31+0000\n"
+"Last-Translator: devius <david.machakhelidze@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
@@ -17,16 +17,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1447237045.0\n"
+"X-POOTLE-MTIME: 1448116298.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr ""
+msgstr "მარტივი"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:42 choices.py:558
 msgid "TLS"
@@ -42,7 +42,7 @@ msgstr ""
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr ""
+msgstr "ავტომატური"
 
 #: choices.py:54
 msgid "PIO0"
@@ -106,123 +106,124 @@ msgstr ""
 
 #: choices.py:72
 msgid "Always On"
-msgstr ""
+msgstr "ყოველთვის ჩართული"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr ""
+msgstr "გამორთული"
 
 #: choices.py:87
+#, fuzzy
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr ""
+msgstr "დონე1 - ენერგიის მინიმალური მოხმარება Standby (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "დონე 64 - საშუალო ენერგომოხმარება ძილთან ერთად"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr ""
+msgstr "დონე 127 - საშუალო ენერგომოხმარება ძილთან ერთად"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr ""
+msgstr "დონე 128 - მინიმალური ენერგომოხმარება ძილის გარეშე (no spindown)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr ""
+msgstr "დონე 192 - საშუალო ენერგომოხმარება ძილის გარეშე"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr ""
+msgstr "დონე 254 - მაქსიმალური წარმადობა, მაქსიმალური ენერგომოხმარება"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
-msgstr ""
+msgstr "მინიმუმი"
 
 #: choices.py:97
 msgid "Medium"
-msgstr ""
+msgstr "საშუალო"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr ""
+msgstr "მაქსიმუმი"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
-msgstr ""
+msgstr "იანვარი"
 
 #: choices.py:133 templates/storage/tasks.html:87
 msgid "February"
-msgstr ""
+msgstr "თებერვალი"
 
 #: choices.py:134 templates/storage/tasks.html:90
 msgid "March"
-msgstr ""
+msgstr "მარტი"
 
 #: choices.py:135 templates/storage/tasks.html:93
 msgid "April"
-msgstr ""
+msgstr "აპრილი"
 
 #: choices.py:136 templates/storage/tasks.html:96
 msgid "May"
-msgstr ""
+msgstr "მაისი"
 
 #: choices.py:137 templates/storage/tasks.html:99
 msgid "June"
-msgstr ""
+msgstr "ივნისი"
 
 #: choices.py:138 templates/storage/tasks.html:102
 msgid "July"
-msgstr ""
+msgstr "ივლისი"
 
 #: choices.py:139 templates/storage/tasks.html:105
 msgid "August"
-msgstr ""
+msgstr "აგვისტო"
 
 #: choices.py:140 templates/storage/tasks.html:108
 msgid "September"
-msgstr ""
+msgstr "სექტემბერი"
 
 #: choices.py:141 templates/storage/tasks.html:111
 msgid "October"
-msgstr ""
+msgstr "ოქტომბერი"
 
 #: choices.py:142 templates/storage/tasks.html:114
 msgid "November"
-msgstr ""
+msgstr "ნოემბერი"
 
 #: choices.py:143 templates/storage/tasks.html:117
 msgid "December"
-msgstr ""
+msgstr "დეკემბერი"
 
 #: choices.py:146 templates/storage/tasks.html:55
 msgid "Monday"
-msgstr ""
+msgstr "ორშაბათი"
 
 #: choices.py:147 templates/storage/tasks.html:58
 msgid "Tuesday"
-msgstr ""
+msgstr "სამშაბათი"
 
 #: choices.py:148 templates/storage/tasks.html:61
 msgid "Wednesday"
-msgstr ""
+msgstr "ოთხშაბათი"
 
 #: choices.py:149 templates/storage/tasks.html:64
 msgid "Thursday"
-msgstr ""
+msgstr "ხუთშაბათი"
 
 #: choices.py:150 templates/storage/tasks.html:67
 msgid "Friday"
-msgstr ""
+msgstr "პარასკევი"
 
 #: choices.py:151 templates/storage/tasks.html:70
 msgid "Saturday"
-msgstr ""
+msgstr "შაბათი"
 
 #: choices.py:152 templates/storage/tasks.html:73
 msgid "Sunday"
-msgstr ""
+msgstr "კვირა"
 
 #: choices.py:163
 msgid "Anonymous"
@@ -234,15 +235,15 @@ msgstr ""
 
 #: choices.py:189
 msgid "Normal"
-msgstr ""
+msgstr "ნორმალური"
 
 #: choices.py:190
 msgid "Full"
-msgstr ""
+msgstr "სრული"
 
 #: choices.py:191
 msgid "Debug"
-msgstr ""
+msgstr "გამართვა"
 
 #: choices.py:195
 msgid "Default"
@@ -270,11 +271,11 @@ msgstr ""
 
 #: choices.py:207
 msgid "File"
-msgstr ""
+msgstr "ფაილი"
 
 #: choices.py:208
 msgid "Device"
-msgstr ""
+msgstr "მოწყობილობა"
 
 #: choices.py:209
 msgid "ZFS Volume"
@@ -283,7 +284,7 @@ msgstr ""
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
-msgstr ""
+msgstr "დისკი"
 
 #: choices.py:221
 msgid "read-write"
@@ -297,7 +298,7 @@ msgstr ""
 #: services/forms.py:1058 templates/storage/scrub.html:24
 #: templates/storage/wizard.html:115 templates/system/rsync.html:30
 msgid "None"
-msgstr ""
+msgstr "არცერთი"
 
 #: choices.py:228
 msgid "CHAP"
@@ -308,12 +309,13 @@ msgid "Mutual CHAP"
 msgstr ""
 
 #: choices.py:251
+#, fuzzy
 msgid "UPS reaches low battery"
-msgstr ""
+msgstr "UPS უახლოვდება დაბალ მუხტს"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr ""
+msgstr "UPS მუშაობს ბატარეაზე"
 
 #: choices.py:255
 msgid "Preferred"
@@ -325,77 +327,80 @@ msgstr ""
 
 #: choices.py:257
 msgid "Required"
-msgstr ""
+msgstr "აუცილებელი"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr ""
+msgstr "მემკვიდრეობით"
 
 #: choices.py:285
 msgid "On"
-msgstr ""
+msgstr "ჩართული"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
-msgstr ""
+msgstr "გამორთვა"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
 msgstr ""
 
 #: choices.py:293
+#, fuzzy
 msgid "gzip (default level, 6)"
-msgstr ""
+msgstr "gzip (ნაგულისხმევი დონე, 6)"
 
 #: choices.py:294
+#, fuzzy
 msgid "gzip (fastest)"
-msgstr ""
+msgstr "gzip (უსწრაფესი)"
 
 #: choices.py:295
+#, fuzzy
 msgid "gzip (maximum, slow)"
-msgstr ""
+msgstr "gzip (მაქსიმუმი, ნელი)"
 
 #: choices.py:489
 msgid "Hour(s)"
-msgstr ""
+msgstr "საათი(ები)"
 
 #: choices.py:490
 msgid "Day(s)"
-msgstr ""
+msgstr "დღე(ები)"
 
 #: choices.py:491
 msgid "Week(s)"
-msgstr ""
+msgstr "კვირა(ები)"
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr ""
+msgstr "თვე(ები)"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr ""
+msgstr "წელი(ები)"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
 #: system/models.py:637 system/models.py:703 system/models.py:724
 msgid "Everyday"
-msgstr ""
+msgstr "ყოველდღე"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr ""
+msgstr "ყოველი შერჩეული კვირის დღე"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr ""
+msgstr "მხოლოდ-კითხვადი"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr ""
+msgstr "მხოლოდ-ჩაწერა"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr ""
+msgstr "კითხვა და ჩაწერა"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -423,16 +428,18 @@ msgid "%(week)s week"
 msgstr ""
 
 #: choices.py:523
+#, fuzzy
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr "არასდროს - მოწყობილობის შემოწმება მიუხედავად ენერგომოხმარების რეჟიმისა"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr "ძილი - მოწყობილობის შემოწმება სანამ დაიძინებს"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
+"მოლოდინი - მოწყობილობის შემოწმება მანამ სანამ დაიძინებს ან გადავა მოლოდინში"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -440,27 +447,30 @@ msgstr ""
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
+msgstr "ხანგრძლივი თვით-შემოწმება"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr ""
+msgstr "მოკლე თვით-შემოწმება"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
 msgstr ""
 
 #: choices.py:533
+#, fuzzy
 msgid "Offline Immediate Test (ATA only)"
-msgstr ""
+msgstr "Offline Immediate Test (მხოლოდ ATA)"
 
 #: choices.py:562
+#, fuzzy
 msgid "Rsync module"
-msgstr ""
+msgstr "Rsync მოდული"
 
 #: choices.py:563
+#, fuzzy
 msgid "Rsync over SSH"
-msgstr ""
+msgstr "Rsync SSH-ით"
 
 #: choices.py:567
 msgid "Push"
@@ -484,16 +494,16 @@ msgid "Your name contains invalid characters (%s)."
 msgstr ""
 
 #: account/forms.py:79
-#, python-format
+#, fuzzy, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "თქვენი სრული სახელი შეიცავს არასწორ სიმბოლოებს (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
 #: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr ""
+msgstr "მომხმარებლის სახელი"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
@@ -507,7 +517,7 @@ msgstr ""
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
 #: templates/account/bsdusers.html.py:88
 msgid "Password"
-msgstr ""
+msgstr "პაროლი"
 
 #: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
@@ -515,13 +525,13 @@ msgstr ""
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr "შეიყვანეთ იგივე რაც ზევით დასასტურებისთვის"
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr ""
+msgstr "შელი"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
@@ -537,7 +547,7 @@ msgstr ""
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr ""
+msgstr "პირველადი ჯგუფი"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -557,13 +567,13 @@ msgstr ""
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr ""
+msgstr "მომხმარებელი იგივე სახელით უკვე არსებობს"
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr ""
+msgstr "ეს ველი აუცილებელია"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -700,7 +710,7 @@ msgstr ""
 #: templates/services/iscsi_auth.html:6 templates/system/cronjob.html:10
 #: templates/system/rsync.html:14
 msgid "User"
-msgstr ""
+msgstr "მომხმარებელი"
 
 #: account/models.py:132 templates/account/index.html:19
 msgid "Users"
@@ -835,7 +845,7 @@ msgstr ""
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "შეცდომა"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -3427,7 +3437,7 @@ msgstr ""
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
-msgstr ""
+msgstr "ჩუმი"
 
 #: sharing/models.py:282
 msgid ""
@@ -4810,7 +4820,7 @@ msgstr ""
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "წევრები"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
@@ -4824,11 +4834,11 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "ჯგუფის შეცვლა"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "ჯგუფის წაშლა"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
@@ -4845,7 +4855,7 @@ msgstr ""
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr ""
+msgstr "მომხმარებლის შეცვლა"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -4854,7 +4864,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr ""
+msgstr "მომხმარებლის წაშლა"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
@@ -5184,8 +5194,9 @@ msgid "Install Plugin"
 msgstr ""
 
 #: templates/plugins/index.html:31
+#, fuzzy
 msgid "Info"
-msgstr ""
+msgstr "ინფო"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
@@ -6178,7 +6189,7 @@ msgstr ""
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "დაშიფრული, პასფრაზის გარეშე"
 
 #: choices.py:173
 msgid "LANMAN1"
@@ -6197,12 +6208,14 @@ msgid "SMB2_02"
 msgstr ""
 
 #: choices.py:312
+#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr ""
+msgstr "lzjb (მოძველებული, არ არის რეკომენდებული)"
 
 #: choices.py:319
+#, fuzzy
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (საუკეთესო კომპრესია)"
 
 #: choices.py:613
 msgid "115200"
@@ -6214,7 +6227,7 @@ msgstr ""
 
 #: choices.py:683
 msgid "Daemon"
-msgstr ""
+msgstr "დემონი"
 
 #: choices.py:698
 #: services/models.py:1531
@@ -6222,11 +6235,11 @@ msgstr ""
 #: services/models.py:2103
 #: services/models.py:2104
 msgid "Domain Controller"
-msgstr ""
+msgstr "დომენის კონტროლერი"
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "მონაცემები"
 
 #: choices.py:711
 msgid "auth"
@@ -6242,7 +6255,7 @@ msgstr ""
 
 #: account/forms.py:58
 msgid "Confirm New Password"
-msgstr ""
+msgstr "დაადასტურეთ ახალი პაროლი"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
@@ -7045,11 +7058,11 @@ msgstr ""
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "დაუშიფრავი"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "დაშიფრული, პასფრაზით"
 
 #: choices.py:179
 msgid "SMB2_22"
@@ -7060,12 +7073,14 @@ msgid "SMB2_24"
 msgstr ""
 
 #: choices.py:307
+#, fuzzy
 msgid "lz4 (recommended)"
-msgstr ""
+msgstr "lz4 (რეკომენდებული)"
 
 #: choices.py:311
+#, fuzzy
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (ნულები)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
@@ -7077,7 +7092,7 @@ msgstr ""
 
 #: choices.py:672
 msgid "Fatal"
-msgstr ""
+msgstr "ფატალური"
 
 #: choices.py:677
 msgid "Debug2"
@@ -7097,7 +7112,7 @@ msgstr ""
 
 #: choices.py:691
 msgid "Local 5"
-msgstr ""
+msgstr "ლოკალური 5"
 
 #: choices.py:701
 msgid "NIS"
@@ -7109,7 +7124,7 @@ msgstr ""
 
 #: account/forms.py:66
 msgid "Passwords do not match"
-msgstr ""
+msgstr "პაროლები არ ემთხვევა"
 
 #: account/forms.py:398
 msgid "Create Home Directory In"
@@ -7961,12 +7976,13 @@ msgid "SMB3_00"
 msgstr ""
 
 #: choices.py:317
+#, fuzzy
 msgid "lz4 (fastest)"
-msgstr ""
+msgstr "lz4 (უსრაფესი)"
 
 #: choices.py:569
 msgid "Verify"
-msgstr ""
+msgstr "შემოწმება"
 
 #: choices.py:611
 msgid "38400"
@@ -7990,15 +8006,15 @@ msgstr ""
 
 #: choices.py:690
 msgid "Local 4"
-msgstr ""
+msgstr "ლოკალური 4"
 
 #: choices.py:692
 msgid "Local 6"
-msgstr ""
+msgstr "ლოკალური 6"
 
 #: choices.py:693
 msgid "Local 7"
-msgstr ""
+msgstr "ლოკალური 7"
 
 #: choices.py:700
 msgid "NT4"
@@ -8026,7 +8042,7 @@ msgstr ""
 
 #: account/forms.py:53
 msgid "New Password"
-msgstr ""
+msgstr "ახალი პაროლი"
 
 #: account/forms.py:534
 msgid "Home directory must end with username"
@@ -9615,11 +9631,11 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr ""
+msgstr "მარტივი აუთენტიფიკაცია"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr ""
+msgstr "დაიჯესტ აუტენტიფიკაცია"
 
 #: choices.py:799
 msgid "adex"
@@ -10792,8 +10808,9 @@ msgstr ""
 
 #: choices.py:587
 #: choices.py:588
+#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr ""
+msgstr "%(weeks)s კვირა"
 
 #: system/views.py:419
 msgid "Disk has been successfully detached."
@@ -10834,11 +10851,11 @@ msgstr ""
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "მგრძნობიარე"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "არასენსიტიური"
 
 #: choices.py:813
 msgid "Mixed"
