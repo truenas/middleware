@@ -985,10 +985,10 @@ def zpool_list(name=None):
         data = line.split('\t')
         attrs = {
             'name': data[0],
-            'size': int(data[1]),
-            'alloc': int(data[2]),
-            'free': int(data[3]),
-            'capacity': int(data[4]),
+            'size': int(data[1]) if data[1].isdigit() else None,
+            'alloc': int(data[2]) if data[2].isdigit() else None,
+            'free': int(data[3]) if data[3].isdigit() else None,
+            'capacity': int(data[4]) if data[4].isdigit() else None,
         }
         rv[attrs['name']] = attrs
 
