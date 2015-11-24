@@ -132,15 +132,15 @@ class CIFS(Model):
         default="nobody",
         exclude=["root"],
         verbose_name=_("Guest account"),
-        help_text=_("Use this option to override the username "
-                    "('nobody' by default) which will be used for "
-                    "access to services which are specified as guest. "
-                    "Whatever privileges this user has will be "
-                    "available to any client connecting to the guest "
-                    "service. This user must exist in the password file, "
-                    "but does not require a valid login. The user root can "
-                    "not be used as guest account."),
-        )
+        help_text=_(
+            "Use this option to override the username ('nobody' by default) "
+            "which will be used for access to services which are specified as "
+            "guest. Whatever privileges this user has will be available to "
+            "any client connecting to the guest service. This user must exist "
+            "in the password file, but does not require a valid login. The "
+            "user root can not be used as guest account."
+        ),
+    )
     cifs_srv_filemask = models.CharField(
         max_length=120,
         verbose_name=_("File mask"),
@@ -318,7 +318,7 @@ class AFP(Model):
     afp_srv_homedir = PathField(
         verbose_name=_("Home directories"),
         blank=True,
-        )
+    )
     afp_srv_homename = models.CharField(
         verbose_name=_("Home share name"),
         blank=True,
@@ -596,7 +596,7 @@ class iSCSITargetExtent(Model):
                 else:
                     return "/dev/%s" % (
                         notifier().identifier_to_device(disk.disk_identifier),
-                        )
+                    )
             except:
                 return self.iscsi_target_extent_path
 
@@ -659,7 +659,7 @@ class iSCSITargetPortal(Model):
             return u"%s (%s)" % (
                 self.iscsi_target_portal_tag,
                 self.iscsi_target_portal_comment,
-                )
+            )
         else:
             return unicode(self.iscsi_target_portal_tag)
 
@@ -695,7 +695,7 @@ class iSCSITargetPortalIP(Model):
     class Meta:
         unique_together = (
             ('iscsi_target_portalip_ip', 'iscsi_target_portalip_port'),
-            )
+        )
         verbose_name = _("Portal IP")
         verbose_name_plural = _("Portal IPs")
 
@@ -751,7 +751,7 @@ class iSCSITargetAuthorizedInitiator(Model):
             return u"%s (%s)" % (
                 self.iscsi_target_initiator_tag,
                 self.iscsi_target_initiator_comment,
-                )
+            )
         else:
             return unicode(self.iscsi_target_initiator_tag)
 
@@ -1938,7 +1938,7 @@ class RPCToken(Model):
         instance = cls.objects.create(
             key=key,
             secret=secret,
-            )
+        )
         return instance
 
 
