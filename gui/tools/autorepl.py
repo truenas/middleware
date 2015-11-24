@@ -429,7 +429,11 @@ Hello,
         results[replication.id] = 'Up to date'
         continue
     current_dataset = 0
-    for dataset in sorted(tasks.keys()):
+    # Go through datasets in reverse order by level in hierarchy
+    # This is because in case datasets being remounted we need to make sure
+    # tank/foo is mounted after tank/foo/bar and the latter does not get hidden.
+    # See #12455
+    for dataset in sorted(tasks.keys(), key=lambda y: len(y.split('/')), reverse=True):
         tasklist = tasks[dataset]
         current_dataset += 1
         reached_last = (current_dataset == total_datasets)
