@@ -375,6 +375,18 @@ class Email(Model):
     class FreeAdmin:
         deletable = False
 
+    def __init__(self, *args, **kwargs):
+        super(Email, self).__init__(*args, **kwargs)
+        if self.em_pass:
+            self.em_pass = notifier().pwenc_decrypt(self.em_pass)
+        self._em_pass_encrypted = False
+
+    def save(self, *args, **kwargs):
+        if self.em_pass and not self._em_pass_encrypted:
+            self.em_pass = notifier().pwenc_encrypt(self.em_pass)
+            self._em_pass_encrypted = True
+        return super(Email, self).save(*args, **kwargs)
+
 
 class Tunable(Model):
     tun_var = models.CharField(
