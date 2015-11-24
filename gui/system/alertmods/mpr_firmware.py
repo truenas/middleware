@@ -32,7 +32,8 @@ class MPRFirmwareAlert(BaseAlert):
                     Alert.WARN,
                     _(
                         'Firmware version %(fwversion)s does not match driver '
-                        'version %(drversion)s for /dev/mpr%(mpr)s'
+                        'version %(drversion)s for /dev/mpr%(mpr)s. Please '
+                        'flash controller to P%(drversion)s IT firmware.'
                     ) % {
                         'fwversion': firmware,
                         'drversion': driver,
