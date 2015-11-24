@@ -728,6 +728,9 @@ def add_activedirectory_conf(smb4_conf):
     confset1(smb4_conf, "domain master = no")
     confset1(smb4_conf, "preferred master = no")
 
+    confset2(smb4_conf, "ads dns update = %s",
+             "yes" if ad.ad_allow_dns_updates else "no")
+
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
     confset1(smb4_conf, "winbind enum users = yes")

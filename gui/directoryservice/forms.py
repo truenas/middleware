@@ -317,6 +317,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_unix_extensions',
         'ad_allow_trusted_doms',
         'ad_use_default_domain',
+        'ad_allow_dns_updates',
         'ad_site',
         'ad_dcname',
         'ad_gcname',

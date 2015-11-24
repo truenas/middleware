@@ -937,6 +937,11 @@ class ActiveDirectory(DirectoryServiceBase):
             "domain for users and groups."),
         default=False
     )
+    ad_allow_dns_updates = models.BooleanField(
+        verbose_name=_("Allow DNS updates"),
+        help_text=_("Set this if you want to allow allow DNS updates."),
+        default=True
+    )
     ad_site = models.CharField(
         verbose_name=_("Site Name"),
         max_length=120,
