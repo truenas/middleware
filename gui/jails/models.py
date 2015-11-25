@@ -48,7 +48,6 @@ from freenasUI.freeadmin.models import Model, Network4Field, Network6Field
 from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import Interfaces
 
 log = logging.getLogger('jails.models')
 
@@ -440,7 +439,7 @@ class JailsConfiguration(Model):
 
     def __configure_ipv4_network(self):
         ipv4_iface = notifier().get_default_ipv4_interface()
-        if ipv4_iface == None:
+        if ipv4_iface is None:
             return
 
         st = sipcalc_type(iface=ipv4_iface)
@@ -467,19 +466,19 @@ class JailsConfiguration(Model):
 
     def __configure_ipv6_network(self):
         ipv6_iface = notifier().get_default_ipv6_interface()
-        if ipv6_iface == None:
+        if ipv6_iface is None:
             return
 
         iface_info = notifier().get_interface_info(ipv6_iface)
-        if iface_info['ipv6'] == None:
+        if iface_info['ipv6'] is None:
             return
 
         ipv6_addr = iface_info['ipv6'][0]['inet6']
-        if ipv6_addr == None:
+        if ipv6_addr is None:
             return
 
         ipv6_prefix = iface_info['ipv6'][0]['prefixlen']
-        if ipv6_prefix == None:
+        if ipv6_prefix is None:
             return
 
         st = sipcalc_type("%s/%s" % (ipv6_addr, ipv6_prefix))
@@ -523,7 +522,6 @@ class JailsConfiguration(Model):
             self.__configure_ipv6_network()
 
 
-
 class JailTemplate(Model):
 
     jt_name = models.CharField(
@@ -559,8 +557,10 @@ class JailTemplate(Model):
     jt_system = models.BooleanField(
         default=False,
         verbose_name=_("System"),
-        help_text=_("If this is a system template, it will not be visible in the UI " \
-            "and will only be used internally.")
+        help_text=_(
+            "If this is a system template, it will not be visible in the UI "
+            "and will only be used internally."
+        ),
     )
 
     jt_readonly = models.BooleanField(
