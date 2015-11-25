@@ -1,4 +1,3 @@
-#+
 # Copyright 2015 iXsystems, Inc.
 # All rights reserved
 #
@@ -28,6 +27,6 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns(
-	'freenasUI.documentation.views',
-	url(r'^index/$', 'documentation_home', name="documentation_home"),
+    'freenasUI.documentation.views',
+    url(r'^index/$', 'documentation_home', name="documentation_home"),
 )

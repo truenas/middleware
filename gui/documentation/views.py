@@ -1,4 +1,3 @@
-#+
 # Copyright 2015 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,20 +26,17 @@
 
 import logging
 
-from django.core.files.base import File
-from django.http import HttpResponse
 from django.shortcuts import render
 
 from freenasUI.common.system import get_sw_name
-from freenasUI.system.utils import debug_get_settings, debug_run
 
 log = logging.getLogger("documentation.views")
 
+
 def documentation_home(request):
 
-	sw_name = get_sw_name().lower()
-	context = {
-		'sw_name': sw_name
-	}
-	return render(request, "documentation/index.html", context)
-	
+    sw_name = get_sw_name().lower()
+    context = {
+        'sw_name': sw_name
+    }
+    return render(request, "documentation/index.html", context)
