@@ -1326,6 +1326,15 @@ class NFSShareResourceMixin(object):
         return m2m_bundle
 
 
+class GlobalConfigurationResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(GlobalConfigurationResourceMixin, self).dehydrate(bundle)
+        if notifier().is_freenas():
+            del bundle.data['gc_hostname_b']
+        return bundle
+
+
 class InterfacesResourceMixin(object):
 
     class Meta:
