@@ -234,6 +234,8 @@ def main():
             addline('\toption rpm 1\n')
         else:
             addline('\toption rpm %s\n' % extent.iscsi_target_extent_rpm)
+        if extent.iscsi_target_extent_ro:
+            addline('\toption readonly on\n')
         addline("}\n")
         addline("\n")
 
