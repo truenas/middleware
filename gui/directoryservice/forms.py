@@ -121,7 +121,7 @@ class idmap_rfc2307_Form(ModelForm):
         label=_("Confirm LDAP User DN Password"),
         widget=forms.widgets.PasswordInput(),
         required=False
-    ) 
+    )
 
     class Meta:
         fields = [
@@ -531,7 +531,7 @@ class ActiveDirectoryForm(ModelForm):
             args['binddn'] = binddn
             args['bindpw'] = bindpw
 
-        else: 
+        else:
             args['keytab_principal'] = ad_kerberos_principal.principal_name
             args['keytab_file'] = '/etc/krb5.keytab'
 
@@ -715,7 +715,7 @@ class LDAPForm(ModelForm):
         cdata = self.cleaned_data
         ssl = cdata.get("ldap_ssl")
         if ssl in ("off", None):
-            #self.check_for_samba_schema()
+            # self.check_for_samba_schema()
             return cdata
 
         certificate = cdata["ldap_certificate"]
@@ -723,7 +723,7 @@ class LDAPForm(ModelForm):
             raise forms.ValidationError(
                 "SSL/TLS specified without certificate")
 
-        #self.check_for_samba_schema()
+        # self.check_for_samba_schema()
         return cdata
 
     def save(self):

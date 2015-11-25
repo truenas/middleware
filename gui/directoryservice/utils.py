@@ -1,4 +1,3 @@
-#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -63,7 +62,7 @@ def get_ds_object_backend_type(obj_type):
 def get_directoryservice_idmap_object(obj_type):
     obj_type = int(obj_type)
 
-    ds_obj = get_ds_object(obj_type)
+    get_ds_object(obj_type)
     dsi = get_ds_object_backend_type(obj_type)
 
     return dsi
