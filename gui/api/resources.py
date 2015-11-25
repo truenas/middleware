@@ -1765,9 +1765,7 @@ class BsdUserResourceMixin(NestedMixin):
             bsdgrp_group__in=deserialized
         )]
 
-        data = QueryDict(urllib.urlencode(dict(
-            map(lambda x, y: (x, y), ['bsduser_to_group'] * len(ids), ids)
-        ), doseq=True))
+        data = QueryDict(urllib.urlencode({'bsduser_to_group': ids}, doseq=True))
 
         form = bsdUserToGroupForm(userid=obj.id, data=data)
         if not form.is_valid():
