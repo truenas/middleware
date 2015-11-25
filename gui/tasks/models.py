@@ -24,10 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import ctypes
 import logging
-import os
-import pwd
 import subprocess
 
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -35,7 +32,6 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.models import Model, UserField, PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
