@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -30,7 +29,8 @@ from freenasUI.freeadmin.apppool import appPool
 from .hook import ReportingHook
 appPool.register(ReportingHook)
 
-urlpatterns = patterns('freenasUI.reporting.views',
+urlpatterns = patterns(
+    'freenasUI.reporting.views',
     url(r'^$', 'index', name="reporting_index"),
     url(r'^cpu/$', 'generic_graphs', {'names': ['cpu', 'load']}, name="reporting_cpu"),
     url(r'^disk/$', 'generic_graphs', {'names': ['disk']}, name="reporting_disk"),

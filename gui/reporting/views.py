@@ -1,4 +1,3 @@
-#+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -31,7 +30,6 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.system.models import SystemDataset
 from freenasUI.reporting import rrd
 
 RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
