@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#-
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -327,7 +326,6 @@ class Vdev(Tnode):
                 self.parent.append(stripe)
             self.parent.children.remove(self)
             stripe.append(self)
-            #stripe.validate(level)
         else:
             self.type = _vdev_type(self.name)
 
@@ -971,10 +969,7 @@ def zpool_list(name=None):
         '-o', 'name,size,alloc,free,cap',
         '-p',
         '-H',
-        ] + ([name] if name else []),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    ] + ([name] if name else []), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     output = zfsproc.communicate()[0].strip('\n')
     if zfsproc.returncode != 0:

@@ -151,8 +151,10 @@ class StartNotify(threading.Thread):
                     # The file might have been created but it may take a
                     # little bit for the daemon to write the PID
                     time.sleep(0.1)
-                if (os.path.exists(self._pidfile)
-                    and os.stat(self._pidfile).st_size > 0):
+                if (
+                    os.path.exists(self._pidfile)
+                    and os.stat(self._pidfile).st_size > 0
+                ):
                     break
             elif self._verb == "stop" and not os.path.exists(self._pidfile):
                 break
@@ -641,7 +643,6 @@ class notifier:
 
     def _started_ldap(self):
         from freenasUI.common.freenasldap import FreeNAS_LDAP, FLAGS_DBINIT
-        from freenasUI.common.system import ldap_enabled
 
         if (self._system_nolog('/usr/sbin/service ix-ldap status') != 0):
             return False
@@ -712,16 +713,14 @@ class notifier:
 
     def _stop_nt4(self):
         res = False
-        ret = self._system_nolog("/etc/directoryservice/NT4/ctl stop")
+        self._system_nolog("/etc/directoryservice/NT4/ctl stop")
         return res
 
     def _started_activedirectory(self):
         from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory, FLAGS_DBINIT)
-        from freenasUI.common.system import activedirectory_enabled
 
         for srv in ('kinit', 'activedirectory', ):
-            if (self._system_nolog('/usr/sbin/service ix-%s status' % (srv, ))
-                != 0):
+            if self._system_nolog('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False
 
         ret = False
@@ -943,13 +942,17 @@ class notifier:
             for wj in wlist:
                 wj = WardenJail(**wj)
                 if pjail and wj.host == pjail:
-                    if wj.type == WARDEN_TYPE_PLUGINJAIL and \
-                        wj.status == WARDEN_STATUS_RUNNING:
+                    if (
+                        wj.type == WARDEN_TYPE_PLUGINJAIL and
+                        wj.status == WARDEN_STATUS_RUNNING
+                    ):
                         running = True
                         break
 
-                elif not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and \
-                    wj.status == WARDEN_STATUS_RUNNING:
+                elif (
+                    not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and
+                    wj.status == WARDEN_STATUS_RUNNING
+                ):
                     running = True
                     break
         except:
@@ -1073,7 +1076,7 @@ class notifier:
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
-        swapsize = ((swapsize+127)/128)*128
+        swapsize = ((swapsize + 127) / 128) * 128
         # To be safe, wipe out the disk, both ends... before we start
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
@@ -1090,7 +1093,7 @@ class notifier:
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 32,
-                ))
+            ))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname, ))
@@ -1288,10 +1291,9 @@ class notifier:
 
         if errors:
             raise MiddlewareError("Unable to set recovery key for %d devices: %s" % (
-                    len(errors),
-                    ', '.join(errors),
-                )
-            )
+                len(errors),
+                ', '.join(errors),
+            ))
         return reckey_file
 
     def geli_delkey(self, volume, slot=GELI_RECOVERY_SLOT, force=True):
@@ -1505,12 +1507,13 @@ class notifier:
         if larger_ashift == 0:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
 
-        p1 = self._pipeopen("zpool create -o cachefile=/data/zfs/zpool.cache "
-                      "-o failmode=continue "
-                      "-o autoexpand=on "
-                      "-O compression=lz4 "
-                      "-O aclmode=passthrough -O aclinherit=passthrough "
-                      "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
+        p1 = self._pipeopen(
+            "zpool create -o cachefile=/data/zfs/zpool.cache "
+            "-o failmode=continue "
+            "-o autoexpand=on "
+            "-O compression=lz4 "
+            "-O aclmode=passthrough -O aclinherit=passthrough "
+            "-f -m %s -o altroot=%s %s %s" % (mountpoint, altroot, z_name, z_vdev))
         if p1.wait() != 0:
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
@@ -1744,8 +1747,10 @@ class notifier:
             for disk in disks:
                 self._system("geom %s clear %s" % (geom_type, disk))
                 self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (disk,))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                      "| awk '{print int($3 / (1024*1024)) - 32;}'`" % (disk, disk))
+                self._system(
+                    "dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
+                    "| awk '{print int($3 / (1024*1024)) - 32;}'`" % (disk, disk)
+                )
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
@@ -1883,8 +1888,6 @@ class notifier:
             ).delete()
 
     def zfs_online_disk(self, volume, label):
-        from freenasUI.storage.models import EncryptedDisk
-
         assert volume.vol_fstype == 'ZFS' and volume.vol_encrypt == 0
 
         p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
@@ -1991,9 +1994,10 @@ class notifier:
             p1 = self._pipeopen('mount -p')
             stdout = p1.communicate()[0]
             if not p1.returncode:
-                flines = filter(lambda x: x and x.split()[0] ==
-                                                '/dev/ufs/' + name,
-                                stdout.splitlines())
+                flines = filter(
+                    lambda x: x and x.split()[0] == '/dev/ufs/' + name,
+                    stdout.splitlines()
+                )
                 if flines:
                     return flines[0].split()[1]
 
@@ -2383,8 +2387,6 @@ class notifier:
         except:
             pass
 
-        #if homedir == '/root':
-        #    self._system("/sbin/mount -uw -o noatime /")
         saved_umask = os.umask(077)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
@@ -2397,8 +2399,6 @@ class notifier:
             fd.write(pubkey)
             fd.close()
             self._system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
-        #if homedir == '/root':
-        #    self._system("/sbin/mount -ur /")
         os.umask(saved_umask)
 
     def delete_pubkey(self, homedir):
@@ -2406,12 +2406,8 @@ class notifier:
         keypath = '%s/.ssh/authorized_keys' % (homedir, )
         if os.path.exists(keypath):
             try:
-                #if homedir == '/root':
-                #    self._system("/sbin/mount -uw -o noatime /")
                 os.unlink(keypath)
             finally:
-                #if homedir == '/root':
-                #    self._system("/sbin/mount -ur /")
                 pass
 
     def _reload_user(self):
@@ -2592,7 +2588,6 @@ class notifier:
             "//class[name = 'LABEL']/geom/"
             "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, )
         )
-        #prov = doc.xpathEval("//provider[@id = '%s']" % pref[0].content)
         if not pref:
             proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
             mddev, err = proc.communicate()
@@ -2703,9 +2698,8 @@ class notifier:
         os.unlink('/tmp/.extract_progress')
         try:
             subprocess.check_output(
-                                    ['bin/install_worker.sh', 'pre-install'],
-                                    stderr=subprocess.STDOUT,
-                                    )
+                ['bin/install_worker.sh', 'pre-install'], stderr=subprocess.STDOUT,
+            )
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The firmware does not meet the '
                                   'pre-install criteria: %s' % (cpe.output, ))
@@ -2720,9 +2714,8 @@ class notifier:
         open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
-                                    ['bin/install_worker.sh', 'install'],
-                                    stderr=subprocess.STDOUT,
-                                    )
+                ['bin/install_worker.sh', 'install'], stderr=subprocess.STDOUT,
+            )
         except subprocess.CalledProcessError, cpe:
             raise MiddlewareError('The update failed %s: %s' % (str(cpe), cpe.output))
         finally:
@@ -2743,7 +2736,7 @@ class notifier:
                 if not umount(mounted['fs_file']):
                     raise MiddlewareError('Unable to umount %s' % (
                         mounted['fs_file'],
-                        ))
+                    ))
 
     def get_plugin_upload_path(self):
         from freenasUI.jails.models import JailsConfiguration
@@ -2800,8 +2793,9 @@ class notifier:
                 break
 
         if wjail is None:
-            raise MiddlewareError("The plugins jail is not running, start "
-                "it before proceeding")
+            raise MiddlewareError(
+                "The plugins jail is not running, start it before proceeding"
+            )
 
         jail = None
         for j in Jls():
@@ -2811,8 +2805,9 @@ class notifier:
 
         # this stuff needs better error checking.. .. ..
         if jail is None:
-            raise MiddlewareError("The plugins jail is not running, start "
-                "it before proceeding")
+            raise MiddlewareError(
+                "The plugins jail is not running, start it before proceeding"
+            )
 
         jc = JailsConfiguration.objects.order_by("-id")[0]
 
@@ -2836,8 +2831,10 @@ class notifier:
                 os.environ['TMPDIR'] = saved_tmpdir
             else:
                 del os.environ['TMPDIR']
-            raise MiddlewareError("This file was not identified as in PBI "
-                "format, it might as well be corrupt.")
+            raise MiddlewareError(
+                "This file was not identified as in PBI "
+                "format, it might as well be corrupt."
+            )
 
         for pair in out:
             (var, val) = pair.split('=', 1)
@@ -2870,8 +2867,10 @@ class notifier:
         if pbifile == "/var/tmp/firmware/pbifile.pbi":
             self._system("/bin/mv /var/tmp/firmware/pbifile.pbi %s/%s" % (plugins_path, pbi))
 
-        p = pbi_add(flags=PBI_ADD_FLAGS_NOCHECKSIG | PBI_ADD_FLAGS_FORCE, pbi="%s/%s" %
-            ("/.plugins", pbi))
+        p = pbi_add(
+            flags=PBI_ADD_FLAGS_NOCHECKSIG | PBI_ADD_FLAGS_FORCE,
+            pbi="%s/%s" % ("/.plugins", pbi)
+        )
         res = p.run(jail=True, jid=jail.jid)
         if res and res[0] == 0:
             qs = Plugins.objects.filter(plugin_name=name)
@@ -2925,8 +2924,11 @@ class notifier:
             plugin_path = "%s/%s" % (pjail_path, plugin.plugin_path)
             oauth_file = "%s/%s" % (plugin_path, ".oauth")
 
-            log.debug("install_pbi: plugin_path = %s, oauth_file = %s",
-                plugin_path, oauth_file)
+            log.debug(
+                "install_pbi: plugin_path = %s, oauth_file = %s",
+                plugin_path,
+                oauth_file
+            )
 
             fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
             os.write(fd, "key = %s\n" % rpctoken.key)
@@ -2947,11 +2949,10 @@ class notifier:
             # pbid seems to return 255 for any kind of error
             # lets use error str output to find out what happenned
             if re.search(r'failed checksum', res[1], re.I | re.S | re.M):
-                raise MiddlewareError("The file %s seems to be "
-                    "corrupt, please try download it again." % (
-                        pbiname,
-                        )
-                    )
+                raise MiddlewareError(
+                    "The file %s seems to be "
+                    "corrupt, please try download it again." % (pbiname, )
+                )
             if saved_tmpdir:
                 os.environ['TMPDIR'] = saved_tmpdir
             raise MiddlewareError(p.error)
@@ -2970,8 +2971,10 @@ class notifier:
         out = p.info(False, -1, 'pbi information for', 'prefix', 'name', 'version', 'arch')
 
         if not out:
-            raise MiddlewareError("This file was not identified as in PBI "
-                "format, it might as well be corrupt.")
+            raise MiddlewareError(
+                "This file was not identified as in PBI format, it might as "
+                "well be corrupt."
+            )
 
         for pair in out:
             (var, val) = pair.split('=', 1)
@@ -3090,8 +3093,9 @@ class notifier:
         out = Jexec(jid=jail.jid, command="/bin/mkdir -p %s" % newpbitemp).run()
         out = Jexec(jid=jail.jid, command="/bin/rm -f %s/*" % pbitemp).run()
         if out[0] != 0:
-            raise MiddlewareError("There was a problem cleaning up the "
-                "PBI temp dirctory")
+            raise MiddlewareError(
+                "There was a problem cleaning up the PBI temp dirctory"
+            )
 
         pbiname = newpbiname
         oldpbiname = "%s.pbi" % plugin.plugin_pbiname
@@ -3103,8 +3107,11 @@ class notifier:
         self.umount_filesystems_within("%s%s" % (jail_path, newprefix))
 
         # Create a PBI from the installed version
-        p = pbi_create(flags=PBI_CREATE_FLAGS_BACKUP | PBI_CREATE_FLAGS_OUTDIR,
-            outdir=oldpbitemp, pbidir=plugin.plugin_pbiname)
+        p = pbi_create(
+            flags=PBI_CREATE_FLAGS_BACKUP | PBI_CREATE_FLAGS_OUTDIR,
+            outdir=oldpbitemp,
+            pbidir=plugin.plugin_pbiname,
+        )
         out = p.run(True, jail.jid)
         if out[0] != 0:
             raise MiddlewareError("There was a problem creating the PBI")
@@ -3128,14 +3135,22 @@ class notifier:
             raise MiddlewareError("Unable to copy new PBI file to plugins directory")
 
         # Now we make the patch for the PBI upgrade
-        p = pbi_makepatch(flags=PBI_MAKEPATCH_FLAGS_OUTDIR | PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
-            outdir=pbitemp, oldpbi=oldpbifile, newpbi=newpbifile)
+        p = pbi_makepatch(
+            flags=PBI_MAKEPATCH_FLAGS_OUTDIR | PBI_MAKEPATCH_FLAGS_NOCHECKSIG,
+            outdir=pbitemp,
+            oldpbi=oldpbifile,
+            newpbi=newpbifile,
+        )
         out = p.run(True, jail.jid)
         if out[0] != 0:
             raise MiddlewareError("Unable to make a PBI patch")
 
-        pbpfile = "%s-%s_to_%s-%s.pbp" % (plugin.plugin_name.lower(),
-            plugin.plugin_version, newversion, plugin.plugin_arch)
+        pbpfile = "%s-%s_to_%s-%s.pbp" % (
+            plugin.plugin_name.lower(),
+            plugin.plugin_version,
+            newversion,
+            plugin.plugin_arch,
+        )
 
         log.debug("XXX: pbpfile = %s", pbpfile)
 
@@ -3146,8 +3161,11 @@ class notifier:
             raise MiddlewareError("Unable to create PBP file")
 
         # Apply the upgrade patch to upgrade the PBI to the new version
-        p = pbi_patch(flags=PBI_PATCH_FLAGS_OUTDIR | PBI_PATCH_FLAGS_NOCHECKSIG,
-            outdir=pbitemp, pbp="%s/%s" % (pbitemp, pbpfile))
+        p = pbi_patch(
+            flags=PBI_PATCH_FLAGS_OUTDIR | PBI_PATCH_FLAGS_NOCHECKSIG,
+            outdir=pbitemp,
+            pbp="%s/%s" % (pbitemp, pbpfile),
+        )
         out = p.run(True, jail.jid)
         if out[0] != 0:
             raise MiddlewareError("Unable to patch the PBI")
@@ -3176,8 +3194,11 @@ class notifier:
         plugin_path = "%s/%s" % (jail_path, plugin.plugin_path)
         oauth_file = "%s/%s" % (plugin_path, ".oauth")
 
-        log.debug("update_pbi: plugin_path = %s, oauth_file = %s",
-            plugin_path, oauth_file)
+        log.debug(
+            "update_pbi: plugin_path = %s, oauth_file = %s",
+            plugin_path,
+            oauth_file,
+        )
 
         fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
         os.write(fd, "key = %s\n" % rpctoken.key)
@@ -3230,7 +3251,7 @@ class notifier:
             jail_name,
             "usr/pbi",
             "%s-%s" % (plugin.plugin_name, platform.machine()),
-            )
+        )
         self.umount_filesystems_within(pbi_path)
 
         p = pbi_delete(pbi=plugin.plugin_pbiname)
@@ -3475,7 +3496,7 @@ class notifier:
                     'log': roots['logs'].dump() if roots['logs'] else None,
                     'spare': roots['spares'].dump() if roots['spares'] else None,
                     'disks': roots['data'].dump(),
-                    })
+                })
 
         return volumes
 
@@ -3496,10 +3517,7 @@ class notifier:
             self.restart("collectd")
             return True
         else:
-            log.error("Importing %s [%s] failed with: %s",
-                name,
-                id,
-                stderr)
+            log.error("Importing %s [%s] failed with: %s", name, id, stderr)
         return False
 
     def _encvolume_detach(self, volume, destroy=False):
@@ -3696,17 +3714,16 @@ class notifier:
                         replication = 'OK'
                         # TODO: Multiple replication tasks
 
-                snaplist.insert(0,
-                    zfs.Snapshot(
-                        name=name,
-                        filesystem=fs,
-                        used=used,
-                        refer=refer,
-                        mostrecent=mostrecent,
-                        parent_type='filesystem' if fs not in zvols else 'volume',
-                        replication=replication,
-                        vmsynced=(vmsynced == 'Y')
-                    ))
+                snaplist.insert(0, zfs.Snapshot(
+                    name=name,
+                    filesystem=fs,
+                    used=used,
+                    refer=refer,
+                    mostrecent=mostrecent,
+                    parent_type='filesystem' if fs not in zvols else 'volume',
+                    replication=replication,
+                    vmsynced=(vmsynced == 'Y')
+                ))
                 fsinfo[fs] = snaplist
         return fsinfo
 
@@ -3973,7 +3990,7 @@ class notifier:
         if not iface:
             return None
 
-        iface_info = { 'ether': None, 'ipv4': None, 'ipv6': None, 'status': None }
+        iface_info = {'ether': None, 'ipv4': None, 'ipv6': None, 'status': None}
         p = self._pipeopen("ifconfig '%s'" % iface)
         out = p.communicate()
         if p.returncode != 0:
@@ -3985,20 +4002,21 @@ class notifier:
             return iface_info
 
         m = re.search('ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})', out, re.MULTILINE)
-        if m != None:
+        if m is not None:
             iface_info['ether'] = m.group(1)
 
         lines = out.splitlines()
         for line in lines:
             line = line.lstrip().rstrip()
-            m = re.search('inet (([0-9]{1,3}\.){3}[0-9]{1,3})' +
-                ' +netmask (0x[0-9a-fA-F]{8})' +
+            m = re.search(
+                'inet (([0-9]{1,3}\.){3}[0-9]{1,3})'
+                ' +netmask (0x[0-9a-fA-F]{8})'
                 '( +broadcast (([0-9]{1,3}\.){3}[0-9]{1,3}))?',
                 line
             )
 
-            if m != None:
-                if iface_info['ipv4'] == None:
+            if m is not None:
+                if iface_info['ipv4'] is None:
                     iface_info['ipv4'] = []
 
                 iface_info['ipv4'].append({
@@ -4008,8 +4026,8 @@ class notifier:
                 })
 
             m = re.search('inet6 ([0-9a-fA-F:]+) +prefixlen ([0-9]+)', line)
-            if m != None:
-                if iface_info['ipv6'] == None:
+            if m is not None:
+                if iface_info['ipv6'] is None:
                     iface_info['ipv6'] = []
 
                 iface_info['ipv6'].append({
@@ -4018,7 +4036,7 @@ class notifier:
                 })
 
         m = re.search('status: (.+)$', out)
-        if m != None:
+        if m is not None:
             iface_info['status'] = m.group(1)
 
         return iface_info
@@ -4064,7 +4082,7 @@ class notifier:
                 ipv4_info = iinfo['ipv4']
                 if ipv4_info:
                     for i in ipv4_info:
-                        if not 'inet' in i:
+                        if 'inet' not in i:
                             continue
                         ipv4_addr = i['inet']
                         if ipv4_addr == addr:
@@ -4074,7 +4092,7 @@ class notifier:
                 ipv6_info = iinfo['ipv6']
                 if ipv6_info:
                     for i in ipv6_info:
-                        if not 'inet6' in i:
+                        if 'inet6' not in i:
                             continue
                         ipv6_addr = i['inet6']
                         if ipv6_addr == addr:
@@ -4109,7 +4127,6 @@ class notifier:
         if not child_ipv4_info and not child_ipv6_info:
             return None
 
-        parent_iface = None
         interfaces = choices.NICChoices(exclude_configured=False)
         for iface in interfaces:
             iface = iface[0]
@@ -4128,7 +4145,7 @@ class notifier:
 
             if ipv4_info:
                 for i in ipv4_info:
-                    if not i or not 'inet' in i or not i['inet']:
+                    if not i or 'inet' not in i or not i['inet']:
                         continue
 
                     st_ipv4 = sipcalc_type(i['inet'], i['netmask'])
@@ -4136,16 +4153,15 @@ class notifier:
                         continue
 
                     for ci in child_ipv4_info:
-                        if not ci or not 'inet' in ci or not ci['inet']:
+                        if not ci or 'inet' not in ci or not ci['inet']:
                             continue
 
                         if st_ipv4.in_network(ci['inet']):
                             return (iface, st_ipv4.host_address, st_ipv4.network_mask_bits)
 
-
             if ipv6_info:
                 for i in ipv6_info:
-                    if not i or not 'inet6 ' in i or not i['inet6']:
+                    if not i or 'inet6 ' not in i or not i['inet6']:
                         continue
 
                     st_ipv6 = sipcalc_type("%s/%s" % (i['inet'], i['prefixlen']))
@@ -4153,7 +4169,7 @@ class notifier:
                         continue
 
                     for ci in child_ipv6_info:
-                        if not ci or not 'inet6' in ci or not ci['inet6']:
+                        if not ci or 'inet6' not in ci or not ci['inet6']:
                             continue
 
                         if st_ipv6.in_network(ci['inet6']):
@@ -4209,35 +4225,35 @@ class notifier:
                     "/dev/%s" % info["drv"],
                     "-d",
                     "hpt,%d/%d" % (info["controller"] + 1, channel)
-                    ]
+                ]
             elif info.get("drv").startswith("arcmsr"):
                 args = [
                     "/dev/%s%d" % (info["drv"], info["controller"]),
                     "-d",
                     "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
-                    ]
+                ]
             elif info.get("drv").startswith("hpt"):
                 args = [
                     "/dev/%s" % info["drv"],
                     "-d",
                     "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
-                    ]
+                ]
             elif info.get("drv") == "ciss":
                 args = [
                     "/dev/%s%d" % (info["drv"], info["controller"]),
                     "-d",
                     "cciss,%d" % (info["channel"], )
-                    ]
+                ]
             elif info.get("drv") == "twa":
                 twcli = self.__get_twcli(info["controller"])
                 args = [
                     "/dev/%s%d" % (info["drv"], info["controller"]),
                     "-d",
                     "3ware,%d" % (twcli.get(info["channel"], -1), )
-                    ]
+                ]
         return args
 
-    def toggle_smart_off(self, devname):    
+    def toggle_smart_off(self, devname):
         args = self.get_smartctl_args(devname)
         Popen(["/usr/local/sbin/smartctl", "--smart=off"] + args, stdout=PIPE)
 
@@ -4249,7 +4265,7 @@ class notifier:
         if devname in self.__diskserial:
             return self.__diskserial.get(devname)
 
-        args = self.get_smartctl_args(devname) 
+        args = self.get_smartctl_args(devname)
 
         p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
         output = p1.communicate()[0]
@@ -4366,7 +4382,7 @@ class notifier:
             return ''
 
     def get_allswapdev(self):
-        from freenasUI.storage.models import Volume, Disk
+        from freenasUI.storage.models import Volume
 
         disks = []
         for v in Volume.objects.all():
@@ -4520,7 +4536,7 @@ class notifier:
                     'controller': int(cid),
                     'channel': int(tgt),
                     'lun': int(lun)
-                    }
+                }
         return self.__camcontrol
 
     def sync_disk(self, devname):
@@ -4719,12 +4735,13 @@ class notifier:
             The string of the multipath name to be created
         """
         RE_NAME = re.compile(r'[a-z]+(\d+)')
-        numbers = sorted([int(RE_NAME.search(mp.name).group(1))
-                        for mp in self.multipath_all() if RE_NAME.match(mp.name)
-                        ])
+        numbers = sorted([
+            int(RE_NAME.search(mp.name).group(1))
+            for mp in self.multipath_all() if RE_NAME.match(mp.name)
+        ])
         if not numbers:
             numbers = [0]
-        for number in xrange(1, numbers[-1]+2):
+        for number in xrange(1, numbers[-1] + 2):
             if number not in numbers:
                 break
         else:
@@ -4814,7 +4831,7 @@ class notifier:
                 _disks.append(disk)
             qs = Disk.objects.filter(
                 Q(disk_name__in=_disks) | Q(disk_multipath_member__in=_disks)
-                )
+            )
             if qs.exists():
                 diskobj = qs[0]
                 mp_ids.append(diskobj.id)
@@ -4894,7 +4911,7 @@ class notifier:
                 consumers.append({
                     'name': name,
                     'status': status,
-                    })
+                })
             return {
                 'name': gname,
                 'status': status,
@@ -4951,15 +4968,17 @@ class notifier:
         if volume.vol_fstype == 'ZFS':
             raise NotImplementedError("No donuts for you!")
 
-        prov = self.get_label_consumer(volume.vol_fstype.lower(),
-            str(volume.vol_name))
+        prov = self.get_label_consumer(
+            volume.vol_fstype.lower(),
+            str(volume.vol_name)
+        )
         if prov is None:
             return False
 
         proc = self._pipeopen("mount /dev/%s/%s" % (
             volume.vol_fstype.lower(),
             volume.vol_name,
-            ))
+        ))
         if proc.wait() != 0:
             return False
         return True
@@ -5039,10 +5058,7 @@ class notifier:
                 "if=/dev/zero" if mode == 'full' else "if=/dev/random",
                 "of=/dev/%s" % (devname, ),
                 "bs=1m",
-                ],
-                stdout=subprocess.PIPE,
-                stderr=stderr,
-                )
+            ], stdout=subprocess.PIPE, stderr=stderr)
             with open('/var/tmp/disk_wipe_%s.pid' % (devname, ), 'w') as f:
                 f.write(str(pipe.pid))
             pipe.communicate()
@@ -5052,7 +5068,7 @@ class notifier:
             if pipe.returncode != 0 and err.find("end of device") == -1:
                 raise MiddlewareError(
                     "Failed to wipe %s: %s" % (devname, err)
-                    )
+                )
         else:
             raise ValueError("Unknown mode %s" % (mode, ))
 
@@ -5614,7 +5630,7 @@ class notifier:
 
         self.nfsv4link()
 
-    def zpool_status(self,pool_name):
+    def zpool_status(self, pool_name):
         """
         Function to find out the status of the zpool
         It takes the name of the zpool (as a string) as the
@@ -5642,12 +5658,12 @@ class notifier:
             # Ignoring the action for now.
             # Deal with it when we can parse it, interpret it and
             # come up a gui link to carry out that specific repair.
-            #action = ""
-            #reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
-                             #zpool_result, re.S | re.M)
-            #if reg2:
-                #msg = reg2.group(1)
-                #action = re.sub(r'\s+', ' ', msg)
+            # action = ""
+            # reg2 = re.search(r'^\s*action: ([^:]+)\n\s*\w+:',
+            #                  zpool_result, re.S | re.M)
+            # if reg2:
+            #    msg = reg2.group(1)
+            #    action = re.sub(r'\s+', ' ', msg)
         return (state, status)
 
     def get_train(self):
@@ -5754,7 +5770,7 @@ class notifier:
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 32,
-                ))
+            ))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname, ))
@@ -5792,7 +5808,7 @@ class notifier:
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
                 size / 1024 - 32,
-                ))
+            ))
 
         commands = []
         commands.append("gpart create -s gpt /dev/%s" % (devname, ))
