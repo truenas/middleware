@@ -354,7 +354,7 @@ def get_pending_updates(path):
                 data.append({
                     'operation': svc,
                     'name': Update.GetServiceDescription(svc),
-                    })
+                })
         for new, op, old in changes['Packages']:
             if op == 'upgrade':
                 name = '%s-%s -> %s-%s' % (

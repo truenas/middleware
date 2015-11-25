@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -562,7 +561,7 @@ def varlogmessages(request, lines):
     msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
     # "\x07 is invalid XML CDATA, do below to escape it, as well as show some
     # indication of the "console bell" in the webconsole ui
-    msg = msg.replace("\x07","^G")
+    msg = msg.replace("\x07", "^G")
     return render(request, 'system/status/msg.xml', {
         'msg': msg,
     }, content_type='text/xml')
@@ -742,7 +741,7 @@ class DojoFileStore(object):
     def children(self, entry):
         _children = []
         for _entry in sorted(os.listdir(entry)):
-            #FIXME: better extendable way to exclude files
+            # FIXME: better extendable way to exclude files
             if _entry.startswith(".") or _entry == 'md_size':
                 continue
             full_path = os.path.join(self.path, _entry)
@@ -790,8 +789,6 @@ class DojoFileStore(object):
 
 def directory_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
-    #if not path.startswith('/'):
-    #    path = '/%s' % path
 
     directories = DojoFileStore(
         path,
@@ -805,8 +802,6 @@ def directory_browser(request, path='/'):
 
 def file_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
-    #if not path.startswith('/'):
-    #    path = '/%s' % path
 
     directories = DojoFileStore(
         path,
@@ -977,6 +972,7 @@ def backup(request):
     else:
         return render(request, 'system/backup_progress.html')
 
+
 def backup_progress(request):
     # Check if any backup is currently running
     backup = models.Backup.objects.all().order_by('-id').first()
@@ -1002,6 +998,7 @@ def backup_progress(request):
 
     return HttpResponse(json.dumps(data), content_type='application/json')
 
+
 def backup_abort(request):
     # Check if any backup is currently running
     backups = models.Backup.objects.all().order_by('-bak_started_at')
@@ -1016,6 +1013,7 @@ def backup_abort(request):
             return redirect('/system/backup')
 
         return redirect('/system/backup')
+
 
 class UnixTransport(xmlrpclib.Transport):
     def make_connection(self, addr):
@@ -1395,7 +1393,7 @@ def update_check(request):
                 sequence = sys_mani.Sequence()
             else:
                 sequence = ''
-            changelog = get_changelog(updateobj.get_train(), start = sequence, end = update.Sequence())
+            changelog = get_changelog(updateobj.get_train(), start=sequence, end=update.Sequence())
         else:
             changelog = None
         return render(request, 'system/update_check.html', {
@@ -1428,7 +1426,7 @@ def update_verify(request):
             log.debug("Starting VerifyUpdate")
             error_flag, ed, warn_flag, wl = Configuration.do_verify(handler.verify_handler)
         except Exception, e:
-            log.debug("VerifyUpdate Exception ApplyUpdate: %s" %e)
+            log.debug("VerifyUpdate Exception ApplyUpdate: %s" % e)
             handler.error = unicode(e)
         handler.finished = True
         handler.dump()
@@ -1471,6 +1469,7 @@ def verify_progress(request):
         json.dumps(handler.load()),
         content_type='application/json',
     )
+
 
 def CA_import(request):
 
@@ -1572,7 +1571,7 @@ def CA_export_privatekey(request, id):
     ca = models.CertificateAuthority.objects.get(pk=id)
     if not ca.cert_privatekey:
         return HttpResponse('No private key')
-   
+
     key = export_privatekey(ca.cert_privatekey)
     response = StreamingHttpResponse(
         buf_generator(key), content_type='application/octet-stream'
@@ -1729,7 +1728,7 @@ def certificate_export_certificate_and_privatekey(request, id):
 def certificate_to_json(certtype):
     try:
         data = {
-            'cert_root_path':  certtype.cert_root_path,
+            'cert_root_path': certtype.cert_root_path,
             'cert_type': certtype.cert_type,
             'cert_certificate': certtype.cert_certificate,
             'cert_privatekey': certtype.cert_privatekey,

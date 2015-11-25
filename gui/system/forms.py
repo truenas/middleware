@@ -309,7 +309,6 @@ class CommonWizard(SessionWizardView):
 
     def done(self, form_list, **kwargs):
         response = render_to_response(self.template_done, {
-            #'form_list': form_list,
             'retval': getattr(self, 'retval', None),
         })
         if not self.request.is_ajax():
@@ -392,7 +391,7 @@ class InitialWizard(CommonWizard):
         volume_form = form_list.get('volume')
         volume_import = form_list.get('import')
         ds_form = form_list.get('ds')
-        sys_form = form_list.get('system')
+        # sys_form = form_list.get('system')
 
         with transaction.atomic():
             _n = notifier()
@@ -1145,7 +1144,7 @@ class AdvancedForm(ModelForm):
             else:
                 events.append("_msg_stop()")
         if self.instance._original_adv_advancedmode != self.instance.adv_advancedmode:
-            #Invalidate cache
+            # Invalidate cache
             request.session.pop("adv_mode", None)
         if (
             self.instance._original_adv_autotune != self.instance.adv_autotune
@@ -2236,7 +2235,7 @@ class CertificateAuthorityImportForm(ModelForm):
                 privatekey,
                 passphrase
             )
-        except Exception as e:
+        except Exception:
             raise forms.ValidationError(_("Incorrect passphrase"))
 
         return passphrase
@@ -2316,7 +2315,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
     cert_country = forms.ChoiceField(
         label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
         required=True,
-        choices=choices.COUNTRY_CHOICES(), 
+        choices=choices.COUNTRY_CHOICES(),
         initial='US',
         help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
     )
@@ -2424,7 +2423,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
     cert_country = forms.ChoiceField(
         label=models.CertificateAuthority._meta.get_field('cert_country').verbose_name,
         required=True,
-        choices=choices.COUNTRY_CHOICES(), 
+        choices=choices.COUNTRY_CHOICES(),
         initial='US',
         help_text=models.CertificateAuthority._meta.get_field('cert_country').help_text
     )
@@ -2458,13 +2457,14 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         super(CertificateAuthorityCreateIntermediateForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_signedby'].required = True
-        self.fields['cert_signedby'].queryset = \
+        self.fields['cert_signedby'].queryset = (
             models.CertificateAuthority.objects.exclude(
                 Q(cert_certificate__isnull=True) |
                 Q(cert_privatekey__isnull=True) |
                 Q(cert_certificate__exact='') |
                 Q(cert_privatekey__exact='')
             )
+        )
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:CA_autopopulate();"
         )
@@ -2503,12 +2503,9 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
         cert.set_issuer(cacert.get_subject())
         cert.add_extensions([
-            crypto.X509Extension("basicConstraints", True,
-                             "CA:TRUE, pathlen:0"),
-            crypto.X509Extension("keyUsage", True,
-                             "keyCertSign, cRLSign"),
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                                 subject=cert),
+            crypto.X509Extension("basicConstraints", True, "CA:TRUE, pathlen:0"),
+            crypto.X509Extension("keyUsage", True, "keyCertSign, cRLSign"),
+            crypto.X509Extension("subjectKeyIdentifier", False, "hash", subject=cert),
         ])
 
         cert.set_serial_number(signing_cert.cert_serial)
@@ -2522,7 +2519,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 
         super(CertificateAuthorityCreateIntermediateForm, self).save()
         ca = models.CertificateAuthority.objects.get(cert_name=self.instance.cert_signedby.cert_name)
-        ca.cert_serial = ca.cert_serial +1
+        ca.cert_serial = ca.cert_serial + 1
         ca.save()
         notifier().start("ix-ssl")
 
@@ -2575,7 +2572,7 @@ class CertificateEditForm(ModelForm):
 
     def save(self):
         super(CertificateEditForm, self).save()
-        notifier().start("ix-ssl") 
+        notifier().start("ix-ssl")
 
     class Meta:
         fields = [
@@ -2665,11 +2662,8 @@ class CertificateImportForm(ModelForm):
             return passphrase
 
         try:
-            pkey = load_privatekey(
-                privatekey,
-                passphrase
-            )
-        except Exception as e:
+            load_privatekey(privatekey, passphrase)
+        except Exception:
             raise forms.ValidationError(_("Incorrect passphrase"))
 
         return passphrase
@@ -2709,7 +2703,7 @@ class CertificateImportForm(ModelForm):
 
         cert_privatekey = self.cleaned_data.get('cert_privatekey')
         cert_passphrase = self.cleaned_data.get('cert_passphrase')
- 
+
         if cert_passphrase and cert_privatekey:
             privatekey = export_privatekey(
                 cert_privatekey,
@@ -2757,7 +2751,7 @@ class CertificateCreateInternalForm(ModelForm):
     cert_country = forms.ChoiceField(
         label=models.Certificate._meta.get_field('cert_country').verbose_name,
         required=True,
-        choices=choices.COUNTRY_CHOICES(), 
+        choices=choices.COUNTRY_CHOICES(),
         initial='US',
         help_text=models.Certificate._meta.get_field('cert_country').help_text
     )
@@ -2791,13 +2785,14 @@ class CertificateCreateInternalForm(ModelForm):
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
 
         self.fields['cert_signedby'].required = True
-        self.fields['cert_signedby'].queryset = \
+        self.fields['cert_signedby'].queryset = (
             models.CertificateAuthority.objects.exclude(
                 Q(cert_certificate__isnull=True) |
                 Q(cert_privatekey__isnull=True) |
                 Q(cert_certificate__exact='') |
                 Q(cert_privatekey__exact='')
             )
+        )
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
             "javascript:certificate_autopopulate();"
         )
@@ -2910,7 +2905,7 @@ class CertificateCreateCSRForm(ModelForm):
     cert_country = forms.ChoiceField(
         label=models.Certificate._meta.get_field('cert_country').verbose_name,
         required=True,
-        choices=choices.COUNTRY_CHOICES(), 
+        choices=choices.COUNTRY_CHOICES(),
         initial='US',
         help_text=models.Certificate._meta.get_field('cert_country').help_text
     )

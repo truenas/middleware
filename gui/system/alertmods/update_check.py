@@ -13,9 +13,9 @@ class UpdateCheckAlert(BaseAlert):
     def run(self):
         alerts = []
         try:
-            update = Update.objects.order_by('-id')[0]
+            Update.objects.order_by('-id')[0]
         except IndexError:
-            update = Update.objects.create()
+            Update.objects.create()
 
         path = notifier().get_update_location()
         if not path:
