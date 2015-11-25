@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
+    GlobalConfigurationResourceMixin,
     InterfacesResourceMixin, LAGGInterfaceResourceMixin,
     LAGGInterfaceMembersResourceMixin
 )
@@ -16,6 +17,7 @@ SW_NAME = get_sw_name()
 class GlobalConfigurationFAdmin(BaseFreeAdmin):
 
     deletable = False
+    resource_mixin = GlobalConfigurationResourceMixin
 
 
 class InterfacesFAdmin(BaseFreeAdmin):
