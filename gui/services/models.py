@@ -576,6 +576,10 @@ class iSCSITargetExtent(Model):
                     "picking a non-SSD RPM if your " "extent is indeed not "
                     "SSDs and the initiator will be VMWare."),
     )
+    iscsi_target_extent_ro = models.BooleanField(
+        default=False,
+        verbose_name=_("Read-only"),
+    )
 
     class Meta:
         verbose_name = _("Extent")
