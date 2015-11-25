@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -32,7 +31,8 @@ from freenasUI.storage.forms import (
     AutoImportDecryptForm, show_descrypt_condition
 )
 
-urlpatterns = patterns('freenasUI.storage.views',
+urlpatterns = patterns(
+    'freenasUI.storage.views',
     url(r'^home/$', 'home', name="storage_home"),
     url(r'^tasks/$', 'tasks', name="storage_tasks"),
     url(r'^replications/$', 'replications', name="storage_replications"),
@@ -85,4 +85,4 @@ urlpatterns = patterns('freenasUI.storage.views',
     url(r'^tasks/json/(?P<dataset>.+)/$', 'tasks_dataset_json', name="tasks_dataset_json"),
     url(r'^tasks/json/$', 'tasks_all_json', name="tasks_all_json"),
     url(r'^tasks/recursive/json/$', 'tasks_recursive_json', name="tasks_recursive_json"),
-    )
+ )

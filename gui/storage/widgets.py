@@ -1,4 +1,3 @@
-#+
 # Copyright 2010, 2012 iXsystems, Inc.
 # All rights reserved
 #
