@@ -1350,6 +1350,7 @@ class InterfacesResourceMixin(object):
             del bundle.data['int_pass']
             del bundle.data['int_critical']
             del bundle.data['int_group']
+            del bundle.data['int_ipv4address_b']
 
         return bundle
 
