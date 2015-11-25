@@ -111,8 +111,9 @@ class Linkss(TreeNode):
                 subnav._children = []
                 nav.append_child(subnav)
 
-                laggm = models.LAGGInterfaceMembers.objects.filter(\
-                        lagg_interfacegroup__exact=lagg.id).order_by('lagg_ordernum')
+                laggm = models.LAGGInterfaceMembers.objects.filter(
+                    lagg_interfacegroup__exact=lagg.id
+                ).order_by('lagg_ordernum')
                 for member in laggm:
                     subsubnav = TreeNode()
                     subsubnav.name = member.lagg_physnic
@@ -120,11 +121,12 @@ class Linkss(TreeNode):
                     subsubnav.icon = u'LAGGIcon'
                     subsubnav.view = 'freeadmin_network_lagginterfacemembers_edit'
                     subsubnav.app_name = 'network'
-                    subsubnav.model = 'LAGGInterfaceMembers'+lagg.lagg_interface.int_name
+                    subsubnav.model = 'LAGGInterfaceMembers' + lagg.lagg_interface.int_name
                     subsubnav.kwargs = {'oid': member.id}
                     subsubnav.append_url = '?deletable=false'
                     subsubnav._children = []
                     subnav.append_child(subsubnav)
+
 
 class ViewInterfaces(TreeNode):
 

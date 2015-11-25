@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -70,7 +69,7 @@ def ipmi(request):
         try:
             ipmi = notifier().ipmi_get_lan()
 
-            #TODO: There might be a better way to convert netmask to CIDR
+            # TODO: There might be a better way to convert netmask to CIDR
             mask = ipmi.get("SubnetMask")
             num, cidr = struct.unpack('>I', socket.inet_aton(mask))[0], 0
             while num > 0:
@@ -114,7 +113,7 @@ def summary(request):
         'lo0',
         'pfsync0',
         'pflog0',
-        ), int_list)
+    ), int_list)
 
     ifaces = {}
     for iface in int_list:

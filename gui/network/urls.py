@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,7 +26,8 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('freenasUI.network.views',
+urlpatterns = patterns(
+    'freenasUI.network.views',
     url(r'^home/$', 'network', name='network_home'),
     url(r'^ipmi/$', 'ipmi', name='network_ipmi'),
     url(r'^summary/$', 'summary', name='network_summary'),
