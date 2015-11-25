@@ -37,7 +37,7 @@ from freenasUI.freeadmin.forms import SelectMultipleWidget
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.services.models import services
+from freenasUI.services.models import services, NFS
 from freenasUI.sharing import models
 from freenasUI.storage.models import Task
 from freenasUI.storage.widgets import UnixPermissionField
@@ -341,6 +341,15 @@ class NFS_ShareForm(ModelForm):
             'nfs_security': SelectMultipleWidget(sorter=True),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(NFS_ShareForm, self).__init__(*args, **kwargs)
+        try:
+            nfs = NFS.objects.order_by('-id')[0]
+        except IndexError:
+            nfs = NFS.objects.create()
+        if not nfs.nfs_srv_v4:
+            del self.fields['nfs_security']
+
     def clean_nfs_network(self):
         net = self.cleaned_data['nfs_network']
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
@@ -511,9 +520,6 @@ class NFS_ShareForm(ModelForm):
             ])
             return valid
         return super(NFS_ShareForm, self).is_valid(formsets)
-
-    def save(self, *args, **kwargs):
-        super(NFS_ShareForm, self).save(*args, **kwargs)
 
     def done(self, request, events):
         notifier().reload("nfs")
