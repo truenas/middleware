@@ -18,6 +18,7 @@ generate_snmpconf()
 	eval local $f
 	local sf=$(var_to_sf $f)
 
+	umask 077
 	hw_machine=`/sbin/sysctl -n hw.machine`
 	hw_model=`/sbin/sysctl -n hw.model`
 	hw_clockrate=`/sbin/sysctl -n hw.clockrate`
