@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -74,7 +73,7 @@ def core(request):
     domaincontroller.onclick_enable = 'enable'
     ds_status = get_directoryservice_status()
     for key in ds_status:
-        if ds_status[key] == True and key != 'dc_enable':
+        if ds_status[key] is True and key != 'dc_enable':
             domaincontroller.onclick_enable = 'disable'
             break
 
@@ -141,7 +140,7 @@ def core(request):
     try:
         webdav = models.WebDAV.objects.order_by("-id")[0]
     except IndexError:
-	webdav = models.WebDAV.objects.create()
+        webdav = models.WebDAV.objects.create()
 
     srv = models.services.objects.all()
     return render(request, 'services/core.html', {
@@ -257,6 +256,7 @@ def enable(request, svc):
         'svc': svc,
     })
 
+
 def services_cifs(request):
     try:
         cifs = models.CIFS.objects.all()[0]
@@ -269,7 +269,7 @@ def services_cifs(request):
             idmap_ds_id=cifs.id
         )
 
-    except Exception as e:
+    except Exception:
         it = idmap_tdb()
 
     if request.method == "POST":
@@ -385,7 +385,7 @@ def fibrechanneltotarget(request):
         role = sysctl.filter('dev.isp.%d.role' % int(port))
         if role:
             role = role[0]
-            role.value = val 
+            role.value = val
 
     if loader:
         notifier().reload('loader')
