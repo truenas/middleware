@@ -220,7 +220,7 @@ class ResourceMixin(object):
         )
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
-            paginator.offset, paginator.offset+length-1, len(sorted_objects)
+            paginator.offset, paginator.offset + length - 1, len(sorted_objects)
         )
         return response
 

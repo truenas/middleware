@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -153,7 +152,6 @@ class AlertResource(DojoResource):
         object_class = Alert
         resource_name = 'system/alert'
 
-
     def get_list(self, request, **kwargs):
         results = alertPlugins.run()
 
@@ -203,7 +201,7 @@ class AlertResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -472,7 +470,7 @@ class VolumeResourceMixin(NestedMixin):
                 name="api_volume_datasets_detail"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols%s$" %(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('zvols_list'),
@@ -1248,7 +1246,6 @@ class NFSShareResourceMixin(object):
         bundle = super(NFSShareResourceMixin, self).hydrate(bundle)
         if 'nfs_paths' not in bundle.data and bundle.obj.id:
             qs = bundle.obj.paths.all()
-            initial = qs.count()
             nfs_paths = []
             for i, item in enumerate(qs):
                 bundle.data['path_set-%d-path' % i] = item.path
@@ -1286,8 +1283,6 @@ class NFSShareResourceMixin(object):
         valid &= formset.is_valid()
         errors = {}
         if not valid:
-            #if formset._errors:
-            #    errors.update(formset._errors)
             for frm in formset:
                 errors.update(frm._errors)
         valid &= form.is_valid(formsets={
@@ -1927,7 +1922,7 @@ class JailsResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        #TODO: Duplicated code - jails.views.jail_start
+        # TODO: Duplicated code - jails.views.jail_start
         notifier().reload("http")
         try:
             Warden().start(jail=obj.jail_host)
@@ -1945,7 +1940,7 @@ class JailsResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        #TODO: Duplicated code - jails.views.jail_stop
+        # TODO: Duplicated code - jails.views.jail_stop
         notifier().reload("http")
         try:
             Warden().stop(jail=obj.jail_host)
@@ -2035,10 +2030,9 @@ class JailTemplateResourceMixin(object):
         bundle.data['jt_instances'] = bundle.obj.jt_instances
 
         if self.is_webclient(bundle.request):
-            bundle.data['_edit_url'] = reverse('jail_template_edit',
-                 kwargs={
-                    'id': bundle.obj.id
-                }
+            bundle.data['_edit_url'] = reverse(
+                'jail_template_edit',
+                kwargs={'id': bundle.obj.id},
             )
 
         return bundle
@@ -2167,10 +2161,10 @@ class SnapshotResource(DojoResource):
             """
             found = False
             for _repl, snaps in repli.items():
-                if _repl.repl_remote.ssh_remote_hostname == \
-                    repl.repl_remote.ssh_remote_hostname and \
-                    _repl.repl_remote.ssh_remote_port == \
-                    repl.repl_remote.ssh_remote_port:
+                if (
+                    _repl.repl_remote.ssh_remote_hostname == repl.repl_remote.ssh_remote_hostname and
+                    _repl.repl_remote.ssh_remote_port == repl.repl_remote.ssh_remote_port
+                ):
                     found = True
                     repli[repl] = snaps
                     break
@@ -2229,7 +2223,7 @@ class SnapshotResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -2371,7 +2365,7 @@ class AvailablePluginsResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -2535,20 +2529,20 @@ class CertificateAuthorityResourceMixin(object):
                 bundle.data['_edit_url'] = reverse(
                     'CA_edit',
                     kwargs={
-                       'id': bundle.obj.id
+                        'id': bundle.obj.id
                     }
                 )
                 bundle.data['_export_certificate_url'] = reverse(
                     'CA_export_certificate',
                     kwargs={
-                       'id': bundle.obj.id
+                        'id': bundle.obj.id
                     }
                 )
                 bundle.data['_export_privatekey_url'] = reverse(
-                     'CA_export_privatekey',
-                     kwargs={
+                    'CA_export_privatekey',
+                    kwargs={
                         'id': bundle.obj.id
-                     }
+                    }
                 )
         except Exception as err:
             bundle.data['cert_DN'] = "ERROR: " + str(err)
@@ -2599,13 +2593,13 @@ class CertificateResourceMixin(object):
                 bundle.data['_edit_url'] = reverse(
                     'certificate_edit',
                     kwargs={
-                       'id': bundle.obj.id
+                        'id': bundle.obj.id
                     }
                 )
                 bundle.data['_export_certificate_url'] = reverse(
                     'certificate_export_certificate',
                     kwargs={
-                       'id': bundle.obj.id
+                        'id': bundle.obj.id
                     }
                 )
                 bundle.data['_export_privatekey_url'] = reverse(
@@ -2617,7 +2611,7 @@ class CertificateResourceMixin(object):
                 bundle.data['_export_certificate_and_privatekey_url'] = reverse(
                     'certificate_export_certificate_and_privatekey',
                     kwargs={
-                       'id': bundle.obj.id
+                        'id': bundle.obj.id
                     }
                 )
         except:
@@ -2876,7 +2870,7 @@ class BootEnvResource(NestedMixin, DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
@@ -3207,7 +3201,7 @@ class FCPortsResource(DojoResource):
         response = self.create_response(request, to_be_serialized)
         response['Content-Range'] = 'items %d-%d/%d' % (
             paginator.offset,
-            paginator.offset+length-1,
+            paginator.offset + length - 1,
             len(results)
         )
         return response
