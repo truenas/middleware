@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#-
 # Copyright (c) 2013 iXsystems, Inc.
 # All rights reserved.
 #
@@ -116,7 +115,7 @@ def random_wipe(devs):
     """
     Concurrently wipe devs using /dev/random
     """
-    #FIXME: yuck, global, not thread-safe, etc.
+    # FIXME: yuck, global, not thread-safe, etc.
     global PROGRESS
     PROGRESS = 0.0
 
