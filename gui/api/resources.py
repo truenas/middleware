@@ -1165,6 +1165,18 @@ class ReplicationResourceMixin(object):
             del bundle.data['repl_remote']
         return bundle
 
+    def hydrate(self, bundle):
+        bundle = super(ReplicationResourceMixin, self).hydrate(bundle)
+        if bundle.obj.id:
+            bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
+            bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
+            bundle.data['repl_remote_dedicateduser_enabled'] = bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
+            bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
+            bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
+            bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
+
+        return bundle
+
 
 class TaskResourceMixin(object):
 
