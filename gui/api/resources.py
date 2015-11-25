@@ -1342,6 +1342,15 @@ class InterfacesResourceMixin(object):
         for key in bundle.data.keys():
             if key.startswith('alias_set'):
                 del bundle.data[key]
+
+        if notifier().is_freenas():
+            del bundle.data['int_carp']
+            del bundle.data['int_vhid']
+            del bundle.data['int_vip']
+            del bundle.data['int_pass']
+            del bundle.data['int_critical']
+            del bundle.data['int_group']
+
         return bundle
 
     def hydrate(self, bundle):
