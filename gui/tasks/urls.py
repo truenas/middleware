@@ -33,4 +33,3 @@ urlpatterns = patterns(
     url(r'^cron/(?P<oid>\d+)/run/$', 'cron_run', name="cron_run"),
     url(r'^rsync/(?P<oid>\d+)/run/$', 'rsync_run', name="rsync_run"),
 )
-
