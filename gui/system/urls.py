@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -40,7 +39,8 @@ from freenasUI.system.forms import (
     InitialWizardVolumeImportForm
 )
 
-urlpatterns = patterns('freenasUI.system.views',
+urlpatterns = patterns(
+    'freenasUI.system.views',
     url(r'^$', 'home', name="system_home"),
     url(r'^wizard/$', InitialWizard.as_view(
         [

@@ -12,15 +12,13 @@ class VolumeStatusAlert(BaseAlert):
     name = 'VolumeStatus'
 
     def on_volume_status_not_healthy(self, vol, state, status):
-        return Alert(
-            Alert.CRIT,
-            _('The volume %(volume)s state is %(state)s:'
-              ' %(status)s') % {
-                'volume': vol,
-                'state': state,
-                'status': status,
-                }
-            )
+        return Alert(Alert.CRIT, _(
+            'The volume %(volume)s state is %(state)s: %(status)s'
+        ) % {
+            'volume': vol,
+            'state': state,
+            'status': status,
+        })
 
     def volumes_status_enabled(self):
         return True
@@ -34,9 +32,6 @@ class VolumeStatusAlert(BaseAlert):
                 continue
             state, status = notifier().zpool_status(vol.vol_name)
             if state == 'HEALTHY':
-                #alerts.append(Alert(
-                #    Alert.OK, _('The volume %s status is HEALTHY') % (vol, )
-                #))
                 pass
             else:
                 alerts.append(
