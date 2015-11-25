@@ -1,4 +1,3 @@
-#+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -83,7 +82,7 @@ def get_plugin_status(args):
                 request.COOKIES.get("sessionid", ''),
             ))
         ]
-        #TODO: Increase timeout based on number of plugins
+        # TODO: Increase timeout based on number of plugins
         response = opener.open(url, None).read()
         data = json.loads(response)
     except Exception, e:
@@ -118,7 +117,7 @@ def get_plugin_start(args):
                 request.COOKIES.get("sessionid", ''),
             ))
         ]
-        #TODO: Increase timeout based on number of plugins
+        # TODO: Increase timeout based on number of plugins
         response = opener.open(url, None).read()
         data = json.loads(response)
     except Exception, e:
@@ -153,7 +152,7 @@ def get_plugin_stop(args):
                 request.COOKIES.get("sessionid", ''),
             ))
         ]
-        #TODO: Increase timeout based on number of plugins
+        # TODO: Increase timeout based on number of plugins
         response = opener.open(url, None).read()
         data = json.loads(response)
     except Exception, e:

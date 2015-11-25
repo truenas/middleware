@@ -11,8 +11,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.common import pbi
 from freenasUI.middleware.exceptions import MiddlewareError
 
-import platform as p
-if p.machine() == 'amd64':
+if platform.machine() == 'amd64':
     __arch = 'x64'
 else:
     __arch = 'x32'
@@ -114,7 +113,7 @@ class Plugin(object):
                     type(e).__class__,
                     e,
                 )
-                #FIXME: try to download from multiple urls
+                # FIXME: try to download from multiple urls
                 raise MiddlewareError(
                     _("Failed to download %(url)s: %(error)s" % {
                         'url': url,
@@ -273,7 +272,6 @@ class Available(object):
                 return None
 
         for repo in repos:
-            #repoid = repo[0]
             description = repo[1]
             if re.match('Official FreeNAS Repository', description, re.I):
                 return repo
@@ -353,14 +351,14 @@ class Available(object):
     # get_icon_count()
     #
     # This will get the count of the number of icons pbid has in it's
-    # database at this point. This method is for determinging the 
-    # the number of available icons prior to pbi_browser being 
+    # database at this point. This method is for determinging the
+    # the number of available icons prior to pbi_browser being
     # available (A newly installed machine on which pbid is first run).
     #
     def get_icon_count(self):
         icon_count = 0
 
-        repo_hashes = [] 
+        repo_hashes = []
         for f in os.listdir(pbi.PBID_REPOSDIR):
             parts = f.split('.')
             repo_hashes.append(parts[-1])
@@ -379,14 +377,14 @@ class Available(object):
                 lines = []
                 for l in f.readlines():
                     lines.append(l.strip())
-                total_count += len(lines)  
+                total_count += len(lines)
                 meta[h] = lines
                 f.close()
 
         for h in meta:
             m = meta[h]
             for line in m:
-                parts = line.split(';')  
+                parts = line.split(';')
                 app = parts[0].replace("App=", "")
                 ext = parts[2].split('.')[-1]
                 icon_path = "%s/%s-%s.%s" % (pbi.PBID_ICONSDIR, h, app, ext)
@@ -405,7 +403,7 @@ class Available(object):
     def get_total_icon_count(self):
         total_count = 0
 
-        repo_hashes = [] 
+        repo_hashes = []
         for f in os.listdir(pbi.PBID_REPOSDIR):
             parts = f.split('.')
             repo_hashes.append(parts[-1])
@@ -423,7 +421,7 @@ class Available(object):
                 lines = []
                 for l in f.readlines():
                     lines.append(l.strip())
-                total_count += len(lines)  
+                total_count += len(lines)
                 meta[h] = lines
                 f.close()
 
@@ -483,7 +481,7 @@ class Available(object):
             repo_id = self._def_repo_id()
             log.debug(
                 "get_remote: repo_id not specified, repo_id = %s",
-                 repo_id
+                repo_id
             )
 
         if cache and repo_id in self.__cache:
@@ -506,7 +504,7 @@ class Available(object):
             return results
 
         plugins = []
-	results.sort(key=lambda x: x['Application'].lower())
+        results.sort(key=lambda x: x['Application'].lower())
 
         for p in results:
             log.debug("get_remote: p = %s", p)
@@ -526,7 +524,6 @@ class Available(object):
                         p['Application']
                     )
                     continue
-
 
                 urls = self.get_mirror_urls(repo_id)
                 log.debug("get_remote: urls = %s", urls)
@@ -574,7 +571,7 @@ class Available(object):
             file=ie[5],
             hash=ie[3],
             urls=urls,
-            size=(long(ie[9])*1024)
+            size=(long(ie[9]) * 1024)
         )
 
     def all(self):

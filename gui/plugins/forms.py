@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -137,7 +136,7 @@ class PBIUploadForm(Form):
         pjail = self.cleaned_data.get('pjail')
         jail = None
         if not pjail:
-            #FIXME: Better base name, using pbi_info
+            # FIXME: Better base name, using pbi_info
             try:
                 jail = new_default_plugin_jail("customplugin")
             except MiddlewareError, e:
@@ -184,11 +183,11 @@ class PluginUpdateForm(Form):
     jails = MultipleChoiceField(required=True)
 
     def __init__(self, *args, **kwargs):
-        oid = kwargs.pop('oid')
+        kwargs.pop('oid')
         super(PluginUpdateForm, self).__init__(*args, **kwargs)
 
-        plugins = get_installed_plugins_by_remote_oid(oid)
-        self.fields['jails'].choices = [(p.plugin_jail, p.plugin_jail) for p in plugins]
+        # plugins = get_installed_plugins_by_remote_oid(oid)
+        # self.fields['jails'].choices = [(p.plugin_jail, p.plugin_jail) for p in plugins]
 
 
 class ConfigurationForm(ModelForm):
