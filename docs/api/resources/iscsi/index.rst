@@ -124,6 +124,7 @@ List resource
                 "iscsi_target_extent_blocksize": 512,
                 "iscsi_target_extent_pblocksize": false,
                 "iscsi_target_extent_rpm": "SSD",
+                "iscsi_target_extent_ro": false,
                 "iscsi_target_extent_serial": "08002724ab5601"
         }
       ]
@@ -177,6 +178,7 @@ Create resource
                 "iscsi_target_extent_blocksize": 512,
                 "iscsi_target_extent_pblocksize": false,
                 "iscsi_target_extent_rpm": "SSD",
+                "iscsi_target_extent_ro": false,
                 "iscsi_target_extent_serial": "08002724ab5601"
         }
 
@@ -193,6 +195,7 @@ Create resource
    :json boolean iscsi_target_extent_pblocksize: Disable Physical Block Size Reporting
    :json string iscsi_target_extent_rpm: Unknown, SSD, 5400, 7200, 10000, 15000
    :json string iscsi_target_extent_serial: Serial number for the logical unit
+   :json boolean iscsi_target_extent_ro: Read-only extent
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -239,6 +242,7 @@ Create extent using zvol.
                 "iscsi_target_extent_blocksize": 512,
                 "iscsi_target_extent_pblocksize": false,
                 "iscsi_target_extent_rpm": "SSD",
+                "iscsi_target_extent_ro": false,
                 "iscsi_target_extent_serial": "08002724ab5601"
         }
 
@@ -299,6 +303,7 @@ Update resource
    :json boolean iscsi_target_extent_pblocksize: Disable Physical Block Size Reporting
    :json string iscsi_target_extent_rpm: Unknown, SSD, 5400, 7200, 10000, 15000
    :json string iscsi_target_extent_serial: Serial number for the logical unit
+   :json boolean iscsi_target_extent_ro: Read-only extent
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 202: no error
