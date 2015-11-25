@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -276,7 +275,7 @@ def volumemanager_zfs(request):
         form = forms.ZFSVolumeWizardForm()
         disks = []
         zfsextra = None
-    #dedup = forms._dedup_enabled()
+    # dedup = forms._dedup_enabled()
     dedup = True
     return render(request, 'storage/zfswizard.html', {
         'form': form,
@@ -287,6 +286,8 @@ def volumemanager_zfs(request):
 
 
 SOCKIMP = '/var/run/importcopy/importsock'
+
+
 def volimport(request):
     if os.path.exists(SOCKIMP):
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -301,23 +302,22 @@ def volimport(request):
         if data["status"] == "error":
             return render(request, 'storage/import_stats.html', {
                 'vol': data["volume"],
-                'error': data["error"],}
-            )
+                'error': data["error"],
+            })
         return render(request, 'storage/import_progress.html')
     if request.method == "POST":
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
             # usage for command below
-            #Usage: sockscopy vol_to_import fs_type dest_path socket_path
-            msg = "/usr/local/bin/sockscopy /dev/%s %s %s %s &" %(form.cleaned_data.get('volume_disks'),
-                      form.cleaned_data.get('volume_fstype').lower(),
-                      form.cleaned_data.get('volume_dest_path'),
-                      SOCKIMP,
-                  )
-            subprocess.Popen(msg,
-                shell=True,
+            # Usage: sockscopy vol_to_import fs_type dest_path socket_path
+            msg = "/usr/local/bin/sockscopy /dev/%s %s %s %s &" % (
+                form.cleaned_data.get('volume_disks'),
+                form.cleaned_data.get('volume_fstype').lower(),
+                form.cleaned_data.get('volume_dest_path'),
+                SOCKIMP,
             )
+            subprocess.Popen(msg, shell=True)
             # give the background disk import code time to create a socket
             sleep(2)
             return render(request, 'storage/import_progress.html')
@@ -335,36 +335,40 @@ def volimport(request):
         'disks': disks
     })
 
+
 def volimport_progress(request):
-      s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-      s.connect(SOCKIMP)
-      s.send("get_progress")
-      data = s.recv(1024)
-      s.close()
-      return HttpResponse(data, content_type='application/json')
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(SOCKIMP)
+    s.send("get_progress")
+    data = s.recv(1024)
+    s.close()
+    return HttpResponse(data, content_type='application/json')
+
 
 def volimport_abort(request):
     if request.method == 'POST':
-      s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-      s.connect(SOCKIMP)
-      s.send("get_progress")
-      data = json.loads(s.recv(1024))
-      if data["status"] == "finished":
-          s.send("done")
-          s.close()
-          return JsonResp(request,
-                     message=_("Volume successfully Imported."))
-      if data["status"] == "error":
-          s.send("stop")
-          s.close()
-          return JsonResp(request,
-                     message=_("Error Importing Volume"))
-      s.send("stop")
-      s.close()
-      return render(request, 'storage/import_stats.html', {
-          'abort': True,
-          'vol': data["volume"],}
-      )
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(SOCKIMP)
+        s.send("get_progress")
+        data = json.loads(s.recv(1024))
+        if data["status"] == "finished":
+            s.send("done")
+            s.close()
+            return JsonResp(
+                request, message=_("Volume successfully Imported.")
+            )
+        if data["status"] == "error":
+            s.send("stop")
+            s.close()
+            return JsonResp(
+                request, message=_("Error Importing Volume")
+            )
+        s.send("stop")
+        s.close()
+        return render(request, 'storage/import_stats.html', {
+            'abort': True,
+            'vol': data["volume"],
+        })
 
 
 def dataset_create(request, fs):
@@ -1019,7 +1023,7 @@ def disk_wipe_progress(request, devname):
                     progress = 100
                 else:
                     try:
-                        progress = int(float(received)/float(size) * 100)
+                        progress = int(float(received) / float(size) * 100)
                     except:
                         pass
 
@@ -1028,14 +1032,14 @@ def disk_wipe_progress(request, devname):
         indeterminate = True
 
     data = {
-            'error': error,
-            'finished': finished,
-            'indeterminate': indeterminate,
-            'percent': progress,
-            'step': step,
-            'mode': "single",
-            'details': details
-        }
+        'error': error,
+        'finished': finished,
+        'indeterminate': indeterminate,
+        'percent': progress,
+        'step': step,
+        'mode': "single",
+        'details': details
+    }
     return HttpResponse(
         json.dumps(data),
         content_type='application/json',
@@ -1256,7 +1260,7 @@ def volume_recoverykey_remove(request, object_id):
 def volume_upgrade(request, object_id):
     volume = models.Volume.objects.get(pk=object_id)
     try:
-        version = notifier().zpool_version(volume.vol_name)
+        notifier().zpool_version(volume.vol_name)
     except:
         raise MiddlewareError(
             _('Pool output could not be parsed. Is the pool imported?')
@@ -1333,6 +1337,7 @@ def vmwareplugin_datastores(request):
         content_type='application/json',
     )
 
+
 def tasks_json(request, dataset=None):
     tasks = []
 
@@ -1344,9 +1349,9 @@ def tasks_json(request, dataset=None):
     mp = '/mnt/' + dataset
 
     task_list = []
-    if dataset: 
+    if dataset:
         for line in zfsout:
-            if not line: 
+            if not line:
                 continue
 
             try:
@@ -1357,14 +1362,14 @@ def tasks_json(request, dataset=None):
                             task_filesystem=zfs_ds
                         )
                     else:
-                        task_list= Task.objects.filter(
+                        task_list = models.Task.objects.filter(
                             Q(task_filesystem=zfs_ds) &
                             Q(task_recursive=True)
                         )
-                    break 
+                    break
             except:
                 pass
-      
+
     else:
         task_list = models.Task.objects.order_by("task_filesystem").all()
 
@@ -1374,7 +1379,7 @@ def tasks_json(request, dataset=None):
         for f in fields:
             try:
                 t[f] = str(getattr(task, f))
-            except: 
+            except:
                 pass
         t['str'] = str(task)
         tasks.append(t)
@@ -1384,22 +1389,23 @@ def tasks_json(request, dataset=None):
         content_type='application/json'
     )
 
+
 def tasks_dataset_json(request, dataset):
     return tasks_json(request, dataset)
+
 
 def tasks_all_json(request):
     return tasks_json(request)
 
+
 def tasks_recursive_json(request, dataset=None):
     tasks = []
 
-    if dataset: 
-        mp = "/mnt/" + dataset
+    if dataset:
         task_list = models.Task.objects.order_by("task_filesystem").filter(
             Q(task_filesystem=dataset) &
             Q(task_recursive=True)
         )
-      
     else:
         task_list = models.Task.objects.order_by("task_filesystem").filter(
             task_recursive=True
@@ -1411,7 +1417,7 @@ def tasks_recursive_json(request, dataset=None):
         for f in fields:
             try:
                 t[f] = str(getattr(task, f))
-            except: 
+            except:
                 pass
         t['str'] = str(task)
         tasks.append(t)
@@ -1420,6 +1426,7 @@ def tasks_recursive_json(request, dataset=None):
         json.dumps(tasks),
         content_type='application/json'
     )
+
 
 def tasks_all_recursive_json(request):
     return tasks_recursive_json(request)
