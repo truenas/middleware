@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -126,7 +125,7 @@ class JailsQuerySet(QuerySet):
     def latest(self, field_name=None):
         if field_name is not None:
             field_name = "-%s" % field_name
-        #FIXME: not efficient
+        # FIXME: not efficient
         models = self.order_by(field_name)
         if len(models) == 0:
             raise self.model.DoesNotExist

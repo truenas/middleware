@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,7 +26,8 @@
 
 from django.conf.urls import patterns, url
 
-urlpatterns = patterns('freenasUI.jails.views',
+urlpatterns = patterns(
+    'freenasUI.jails.views',
     url(r'^home/$', 'jails_home', name="jails_home"),
     url(r'^configuration/$', 'jailsconfiguration', name="jailsconfiguration"),
     url(r'^edit/(?P<id>\d+)$', 'jail_edit', name="jail_edit"),
@@ -46,5 +46,4 @@ urlpatterns = patterns('freenasUI.jails.views',
     url(r'^template/edit/(?P<id>.+)/$', 'jail_template_edit', name="jail_template_edit"),
     url(r'^jailsconfiguration/info/$', 'jailsconfiguration_info', name="jailsconfiguration_info"),
     url(r'^jailsconfiguration/network/info/$', 'jailsconfiguration_network_info', name="jailsconfiguration_network_info"),
-    )
-
+)

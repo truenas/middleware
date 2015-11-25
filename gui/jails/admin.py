@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -219,12 +218,6 @@ class JailsFAdmin(BaseFreeAdmin):
         actions['plugins'] = self._action_builder(
             'upload', icon='plugin_install', label=_("Upload Plugin")
         )
-        #actions['export'] = self._action_builder(
-        #    'jail_export', label=_("Export Jail")
-        #)
-        #actions['import'] = self._action_builder(
-        #    'jail_import', label=_("Import Jail")
-        #)
         actions['start'] = self._action_builder('jail_start', label=_("Start"))
         actions['stop'] = self._action_builder('jail_stop', label=_("Stop"))
         actions['restart'] = self._action_builder(
