@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -126,20 +125,19 @@ class InterfacesForm(ModelForm):
                 self.fields['int_group'].widget.attrs['disabled'] = (
                     'disabled'
                 )
-            self.fields['int_interface'] = \
-                forms.CharField(
-                    label=self.fields['int_interface'].label,
-                    initial=self.instance.int_interface,
-                    widget=forms.TextInput(
-                        attrs={
-                            'readonly': True,
-                            'class': (
-                                'dijitDisabled dijitTextBoxDisabled'
-                                ' dijitValidationTextBoxDisabled'
-                            ),
-                        },
-                    )
+            self.fields['int_interface'] = forms.CharField(
+                label=self.fields['int_interface'].label,
+                initial=self.instance.int_interface,
+                widget=forms.TextInput(
+                    attrs={
+                        'readonly': True,
+                        'class': (
+                            'dijitDisabled dijitTextBoxDisabled'
+                            ' dijitValidationTextBoxDisabled'
+                        ),
+                    },
                 )
+            )
 
     def clean_int_interface(self):
         if self.instance.id:
@@ -279,7 +277,6 @@ class InterfacesForm(ModelForm):
         if not CRIT:
             raise forms.ValidationError(_('One interface must be marked critical for failover.'))
         return crit
-
 
     def clean(self):
         cdata = self.cleaned_data
