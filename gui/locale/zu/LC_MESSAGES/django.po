@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-11-11 10:17+0000\n"
+"PO-Revision-Date: 2015-11-24 10:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1447237079.0\n"
+"X-POOTLE-MTIME: 1448360233.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11949,4 +11949,16 @@ msgstr ""
 
 #: services/views.py:395
 msgid "Fibre Channel Ports have been successfully changed."
+msgstr ""
+
+#: directoryservice/models.py:941
+msgid "Allow DNS updates"
+msgstr ""
+
+#: directoryservice/models.py:942
+msgid "Set this if you want to allow allow DNS updates."
+msgstr ""
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
 msgstr ""

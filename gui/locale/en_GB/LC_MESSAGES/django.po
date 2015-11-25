@@ -12622,3 +12622,16 @@ msgstr "Banner"
 #, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "Disks successfully edited"
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "Allow List"
+
+#: directoryservice/models.py:942
+msgid "Set this if you want to allow allow DNS updates."
+msgstr ""
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""

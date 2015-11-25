@@ -12682,3 +12682,16 @@ msgstr "변경"
 #, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "변경 사항이 반영되었습니다. "
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "방문자 접속 허용"
+
+#: directoryservice/models.py:942
+msgid "Set this if you want to allow allow DNS updates."
+msgstr ""
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""
