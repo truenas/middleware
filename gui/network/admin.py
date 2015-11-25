@@ -13,6 +13,11 @@ from freenasUI.network import models
 SW_NAME = get_sw_name()
 
 
+class GlobalConfigurationFAdmin(BaseFreeAdmin):
+
+    deletable = False
+
+
 class InterfacesFAdmin(BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
@@ -152,6 +157,7 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
             "lagg_interfacegroup__id": request.GET.get("id"),
         }
 
+site.register(models.GlobalConfiguration, GlobalConfigurationFAdmin)
 site.register(models.Interfaces, InterfacesFAdmin)
 site.register(models.LAGGInterface, LAGGInterfaceFAdmin)
 site.register(models.LAGGInterfaceMembers, LAGGInterfaceMembersFAdmin)

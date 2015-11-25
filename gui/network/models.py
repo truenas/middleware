@@ -166,9 +166,6 @@ class GlobalConfiguration(Model):
         verbose_name = _("Global Configuration")
         verbose_name_plural = _("Global Configuration")
 
-    class FreeAdmin:
-        deletable = False
-
 
 class Interfaces(Model):
     int_interface = models.CharField(
