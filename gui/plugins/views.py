@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -70,9 +69,11 @@ import freenasUI.plugins.api_calls
 
 log = logging.getLogger('plugins.views')
 
+
 def safe_unlink(path):
     if os.path.exists(path):
         os.unlink(path)
+
 
 def reset_plugin_progress():
 
@@ -123,7 +124,7 @@ def plugins(request):
     ])
 
     host = get_base_url(request)
- 
+
     plugins = []
     temp = models.Plugins.objects.filter(plugin_enabled=True)
     if jc_path:
@@ -244,10 +245,9 @@ def plugin_update(request, oid):
 
 
 def install_available(request, oid):
- 
+
     try:
         jc = JailsConfiguration.objects.all()[0]
-    
     except IndexError:
         jc = JailsConfiguration.objects.create()
 
@@ -402,12 +402,12 @@ def update_progress(request):
 
 
 def upload(request, jail_id=-1):
-    try:  
+    try:
         jc = JailsConfiguration.objects.all()[0]
     except:
         jc = None
 
-    #FIXME: duplicated code with available_install
+    # FIXME: duplicated code with available_install
     try:
         if not jail_path_configured():
             jail_auto_configure()

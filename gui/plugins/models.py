@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -32,7 +31,6 @@ import requests
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.common.jail import Jls
 from freenasUI.common.pbi import pbi_delete
 from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.models import Model
@@ -48,74 +46,74 @@ class Plugins(Model):
         max_length=120,
         verbose_name=_("Plugin name"),
         help_text=_("Name of the plugin")
-        )
+    )
 
     plugin_pbiname = models.CharField(
         max_length=120,
         verbose_name=_("Plugin info name"),
         help_text=_("Info name of the plugin")
-        )
+    )
 
     plugin_version = models.CharField(
         max_length=120,
         verbose_name=_("Plugin version"),
         help_text=_("Version of the plugin")
-        )
+    )
 
     plugin_api_version = models.CharField(
         max_length=20,
         default="1",
         verbose_name=_("Plugin API version"),
-        )
+    )
 
     plugin_arch = models.CharField(
         max_length=120,
         verbose_name=_("Plugin architecture"),
         help_text=_("Plugin architecture")
-        )
+    )
 
     plugin_enabled = models.BooleanField(
         verbose_name=_("Plugin enabled"),
         help_text=_("Plugin enabled"),
         default=False
-        )
+    )
 
     plugin_ip = models.IPAddressField(
         max_length=120,
         verbose_name=_("Plugin IP address"),
         help_text=_("Plugin IP address")
-        )
+    )
 
     plugin_port = models.IntegerField(
         max_length=120,
         verbose_name=_("Plugin TCP port"),
         help_text=_("Plugin TCP port"),
-        )
+    )
 
     plugin_path = models.CharField(
         max_length=1024,
         verbose_name=_("Plugin archive path"),
         help_text=_("Path where the plugins are saved after installation")
-        )
+    )
 
     plugin_jail = models.CharField(
         max_length=120,
         verbose_name=_("Plugin jail name"),
         help_text=_("Jail where the plugin is installed")
-        )
+    )
 
     plugin_secret = models.ForeignKey(
         'services.RPCToken',
         on_delete=models.PROTECT,  # Do not allow foreign key to be deleted
-        )
+    )
 
     class Meta:
         verbose_name = _(u"Plugin")
         verbose_name_plural = _(u"Plugins")
-    
+
     def __unicode__(self):
         return self.plugin_name
-    
+
     def _service_control(self, request, action):
         addr = request.META.get("SERVER_ADDR")
         # IPv6

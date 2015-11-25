@@ -1,4 +1,3 @@
-#i+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -50,9 +49,9 @@ PLUGINS_API_VERSION = "2"
 #    API utility functions
 #
 def __popen(cmd):
-    return Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        shell=True,
-        close_fds=True)
+    return Popen(
+        cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True
+    )
 
 
 def __get_jailsconfiguration():
@@ -66,7 +65,7 @@ def __get_jails(jail_name=None):
 
     if jail_name:
         jail = Jails.objects.get(jail_host=jail_name)
-        jails.append(jail) 
+        jails.append(jail)
 
     else:
         jails = Jails.objects.all()
@@ -84,8 +83,8 @@ def __get_plugins_jail_info(plugin_id):
 
         #
         # XXX Hackety hack hack! XXX
-        # 
-        # jail_ipv4|jail_ipv6, if using DHCP or AUTOCONF, will be 
+        #
+        # jail_ipv4|jail_ipv6, if using DHCP or AUTOCONF, will be
         # prefixed with "DHCP:"  and "AUTOCONF:". Current plugins aren't
         # aware of this (nor do they really need to be), so we just pass
         # it the property that only has the IP address.
@@ -102,7 +101,7 @@ def __get_plugins_jail_path(plugin_id):
     jail_info = __get_plugins_jail_info(plugin_id)
     if jail_info:
         jc = __get_jailsconfiguration()
-        if jc: 
+        if jc:
             jail_path = "%s/%s" % (jc.jc_path, jail_info.jail_host)
 
     return jail_path
@@ -123,8 +122,9 @@ def __api_call_not_implemented(request):
 def __api_call_api_version(request):
     return PLUGINS_API_VERSION
 
+
 #
-#	Jail methods
+#    Jail methods
 #
 @jsonrpc_method("jails.jailsconfiguration.get")
 def __jails_jailsconfiguration_get(request):
@@ -245,13 +245,17 @@ def __fs_mounted_get(request, path=None):
 def __fs_mount_filesystem(request, plugin_id, src, dst):
     jail_path = __get_plugins_jail_path(plugin_id)
     if not jail_path:
-        data = {"error": True,
-            "message": "source or destination not specified"}
+        data = {
+            "error": True,
+            "message": "source or destination not specified",
+        }
         return data
 
     if not src or not dst:
-        data = {"error": True,
-            "message": "source or destination not specified"}
+        data = {
+            "error": True,
+            "message": "source or destination not specified",
+        }
         return data
 
     full_dst = "%s/%s" % (jail_path, dst)
@@ -261,7 +265,7 @@ def __fs_mount_filesystem(request, plugin_id, src, dst):
     return {
         'error': False if p.returncode == 0 else True,
         'message': stderr,
-        }
+    }
 
 
 @jsonrpc_method("fs.umount")
@@ -302,16 +306,20 @@ def __fs_get_file(request, path=None):
 
 
 @jsonrpc_method("fs.linprocfs")
-def __fs_mount_filesystem(request, plugin_id, dst):
+def __fs_mount_filesystem_linprocfs(request, plugin_id, dst):
     jail_path = __get_plugins_jail_path(plugin_id)
     if not jail_path:
-        data = {"error": True,
-            "message": "source or destination not specified"}
+        data = {
+            "error": True,
+            "message": "source or destination not specified",
+        }
         return data
 
     if not dst:
-        data = {"error": True,
-            "message": "destination not specified"}
+        data = {
+            "error": True,
+            "message": "destination not specified",
+        }
         return data
 
     full_dst = "%s/%s" % (jail_path, dst)
@@ -321,14 +329,14 @@ def __fs_mount_filesystem(request, plugin_id, dst):
     return {
         'error': False if p.returncode == 0 else True,
         'message': stderr,
-        }
+    }
 
 
 #
 #    OS methods
 #
 @jsonrpc_method("os.query")
-def  __os_query_system(request):
+def __os_query_system(request):
     return __api_call_not_implemented(request)
 
 
@@ -340,8 +348,14 @@ def os_arch(request):
     Returns:
         str - ['amd64', 'i386']
     """
-    pipe = Popen("/usr/bin/uname -m", stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        shell=True, close_fds=True)
+    pipe = Popen(
+        "/usr/bin/uname -m",
+        stdin=PIPE,
+        stdout=PIPE,
+        stderr=PIPE,
+        shell=True,
+        close_fds=True,
+    )
     arch = pipe.communicate()[0]
     if pipe.returncode == 0:
         return arch

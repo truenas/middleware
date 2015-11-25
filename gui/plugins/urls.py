@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -30,7 +29,8 @@ from django.conf.urls import patterns, url
 from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
-urlpatterns = patterns('freenasUI.plugins.views',
+urlpatterns = patterns(
+    'freenasUI.plugins.views',
     url(r'^plugin/home/$', 'home', name="plugins_home"),
     url(r'^plugin/plugins/$', 'plugins', name="plugins_plugins"),
     url(r'^plugin/install/(?P<oid>[0-9a-f]{1,64})/$', 'install_available', name="plugins_install_available"),
