@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -82,7 +81,7 @@ class JsonResp(HttpResponse):
             data.update({
                 'type': 'form',
                 'formid': request.POST.get("__form_id"),
-                })
+            })
             error = False
             errors = {}
             if self.form.errors:
@@ -112,7 +111,7 @@ class JsonResp(HttpResponse):
                                 errors["%s-%s" % (
                                     form.prefix,
                                     key,
-                                    )] = [unicode(v) for v in val]
+                                )] = [unicode(v) for v in val]
             data.update({
                 'error': error,
                 'errors': errors,
@@ -140,9 +139,11 @@ class JsonResp(HttpResponse):
             kwargs['content'] = json.dumps(data)
             kwargs['content_type'] = 'application/json'
         else:
-            kwargs['content'] = ("<html><body><textarea>"
+            kwargs['content'] = (
+                "<html><body><textarea>"
                 + json.dumps(data) +
-                "</textarea></boby></html>")
+                "</textarea></boby></html>"
+            )
         super(JsonResp, self).__init__(*args, **kwargs)
 
     @staticmethod
@@ -175,7 +176,6 @@ class ExceptionReporter(debug.ExceptionReporter):
         """
 
         t = get_template("500_freenas.html")
-        #t = Template(TECHNICAL_500_TEMPLATE, name='Technical 500 template')
         data = self.get_traceback_data()
         data.update({
             'sw_version': get_sw_version(),

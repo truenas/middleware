@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -41,8 +40,7 @@ from dojango.forms.widgets import DojoWidgetMixin
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common.freenasldap import FLAGS_DBINIT
 from freenasUI.common.freenascache import (
-    FLAGS_CACHE_READ_USER, FLAGS_CACHE_WRITE_USER, FLAGS_CACHE_READ_GROUP,
-    FLAGS_CACHE_WRITE_GROUP
+    FLAGS_CACHE_READ_USER, FLAGS_CACHE_READ_GROUP,
 )
 from freenasUI.common.freenasusers import (
     FreeNAS_Users, FreeNAS_User, FreeNAS_Groups, FreeNAS_Group
@@ -104,7 +102,7 @@ class UserField(forms.ChoiceField):
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
         try:
-            users = FreeNAS_Users(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_USER)
+            users = FreeNAS_Users(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER)
         except:
             users = []
         if len(users) > 500:
@@ -173,7 +171,7 @@ class GroupField(forms.ChoiceField):
     def _reroll(self):
         from freenasUI.account.forms import FilteredSelectJSON
         try:
-            groups = FreeNAS_Groups(flags=FLAGS_DBINIT|FLAGS_CACHE_READ_GROUP)
+            groups = FreeNAS_Groups(flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP)
         except:
             groups = []
         if len(groups) > 500:

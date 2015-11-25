@@ -1,4 +1,3 @@
-#+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,7 +26,6 @@
 import logging
 import math
 import syslog
-import types
 
 from django.utils import translation
 
@@ -35,18 +33,18 @@ from django.utils import translation
 class SysLogHandler(logging.Handler):
 
     priority_names = {
-        "alert":    syslog.LOG_ALERT,
-        "crit":     syslog.LOG_CRIT,
+        "alert": syslog.LOG_ALERT,
+        "crit": syslog.LOG_CRIT,
         "critical": syslog.LOG_CRIT,
-        "debug":    syslog.LOG_DEBUG,
-        "emerg":    syslog.LOG_EMERG,
-        "err":      syslog.LOG_ERR,
-        "error":    syslog.LOG_ERR,        # DEPRECATED
-        "info":     syslog.LOG_INFO,
-        "notice":   syslog.LOG_NOTICE,
-        "panic":    syslog.LOG_EMERG,      # DEPRECATED
-        "warn":     syslog.LOG_WARNING,    # DEPRECATED
-        "warning":  syslog.LOG_WARNING,
+        "debug": syslog.LOG_DEBUG,
+        "emerg": syslog.LOG_EMERG,
+        "err": syslog.LOG_ERR,
+        "error": syslog.LOG_ERR,  # DEPRECATED
+        "info": syslog.LOG_INFO,
+        "notice": syslog.LOG_NOTICE,
+        "panic": syslog.LOG_EMERG,  # DEPRECATED
+        "warn": syslog.LOG_WARNING,  # DEPRECATED
+        "warning": syslog.LOG_WARNING,
     }
 
     def __init__(self, facility=syslog.LOG_USER):
@@ -60,7 +58,7 @@ class SysLogHandler(logging.Handler):
             if hasattr(record.msg, '_proxy____kw'):
                 record.msg = unicode(record.msg)
             msg = self.format(record)
-        if type(msg) is types.UnicodeType:
+        if isinstance(msg, unicode):
             msg = msg.encode('utf-8')
         """
         syslog has a character limit per message
@@ -72,9 +70,9 @@ class SysLogHandler(logging.Handler):
         num_msgs = int(math.ceil(len(msg) / 950.0))
         for i in xrange(num_msgs):
             if num_msgs == i - 1:
-                _msg = msg[950*i:]
+                _msg = msg[950 * i:]
             else:
-                _msg = msg[950*i:950*(i+1)]
+                _msg = msg[950 * i:950 * (i + 1)]
             syslog.syslog(
                 self.priority_names.get(record.levelname.lower(), "debug"),
                 _msg)
