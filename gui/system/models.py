@@ -413,7 +413,7 @@ class Tunable(Model):
         verbose_name=_("Variable"),
     )
     tun_value = models.CharField(
-        max_length=50,
+        max_length=512,
         verbose_name=_("Value"),
     )
     tun_type = models.CharField(
