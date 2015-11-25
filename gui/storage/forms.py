@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -27,7 +26,6 @@
 from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
-from os import popen, access, stat, mkdir, rmdir
 import logging
 import os
 import re
@@ -51,7 +49,6 @@ from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.common.system import mount, umount
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect,
@@ -255,7 +252,7 @@ class VolumeManagerForm(VolumeMixin, Form):
             self.volume = volume
 
             grouped = OrderedDict()
-            #FIXME: Make log as log mirror
+            # FIXME: Make log as log mirror
             for i, form in enumerate(formset):
                 if not form.cleaned_data.get('vdevtype'):
                     continue
@@ -285,7 +282,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                     models.Scrub.objects.create(scrub_volume=volume)
 
         if volume.vol_encrypt >= 2 and add:
-            #FIXME: ask current passphrase to the user
+            # FIXME: ask current passphrase to the user
             notifier().geli_passphrase(volume, None)
             volume.vol_encrypt = 1
             volume.save()
@@ -320,7 +317,7 @@ class VolumeVdevForm(Form):
 
     def clean_disks(self):
         vdev = self.cleaned_data.get("vdevtype")
-        #TODO: Safe?
+        # TODO: Safe?
         disks = eval(self.cleaned_data.get("disks"))
         errmsg = _("You need at least %d disks")
         if vdev == "mirror" and len(disks) < 2:
@@ -430,22 +427,21 @@ class VdevFormSet(BaseFormSet):
                         errors.append(_(
                             "You are trying to add a virtual device of type "
                             "'%(addtype)s' in a pool that has a virtual "
-                            "device of type '%(vdevtype)s'") % {
+                            "device of type '%(vdevtype)s'"
+                        ) % {
                             'addtype': vdevtype,
                             'vdevtype': vdev.type,
-                            }
-                        )
+                        })
 
                     if len(disks) != len(list(iter(vdev))):
                         errors.append(_(
                             "You are trying to add a virtual device consisting"
                             " of %(addnum)s device(s) in a pool that has a "
                             "virtual device consisting of %(vdevnum)s device(s)"
-                            ) % {
+                        ) % {
                             'addnum': len(disks),
                             'vdevnum': len(list(iter(vdev))),
-                            }
-                        )
+                        })
                     if errors:
                         raise forms.ValidationError(errors[0])
 
@@ -498,7 +494,7 @@ class ZFSVolumeWizardForm(forms.Form):
         grouptype_choices = (
             ('mirror', 'mirror'),
             ('stripe', 'stripe'),
-            )
+        )
         if "volume_disks" in self.data:
             disks = self.data.getlist("volume_disks")
         else:
@@ -511,7 +507,7 @@ class ZFSVolumeWizardForm(forms.Form):
             grouptype_choices += (('raidz3', 'RAID-Z3'), )
         self.fields['group_type'].choices = grouptype_choices
 
-        #dedup = _dedup_enabled()
+        # dedup = _dedup_enabled()
         dedup = True
         if not dedup:
             self.fields['dedup'].widget.attrs['readonly'] = True
@@ -589,13 +585,13 @@ class ZFSVolumeWizardForm(forms.Form):
         if volume_name and cleaned_data.get("volume_add"):
             self._errors['__all__'] = self.error_class([
                 _("You cannot select an existing ZFS volume and specify a new "
-                    "volume name"),
-                ])
+                  "volume name"),
+            ])
         elif not(volume_name or cleaned_data.get("volume_add")):
             self._errors['__all__'] = self.error_class([
                 _("You must specify a new volume name or select an existing "
                     "ZFS volume to append a virtual device"),
-                ])
+            ])
         elif not volume_name:
             volume_name = cleaned_data.get("volume_add")
 
@@ -629,8 +625,10 @@ class ZFSVolumeWizardForm(forms.Form):
 
     def done(self, request, events):
         # Construct and fill forms into database.
-        volume_name = self.cleaned_data.get("volume_name") or \
-                            self.cleaned_data.get("volume_add")
+        volume_name = (
+            self.cleaned_data.get("volume_name") or
+            self.cleaned_data.get("volume_add")
+        )
         volume_fstype = 'ZFS'
         disk_list = self.cleaned_data['volume_disks']
         dedup = self.cleaned_data.get("dedup", False)
@@ -797,9 +795,6 @@ class VolumeImportForm(Form):
                 [_(u"The path %s does not exist.\
                     This must be a dataset/folder in an existing Volume" % path)])
         return cleaned_data
-
-    def done(self, request):
-        volume_fstype = self.cleaned_data['volume_fstype']
 
 
 def show_descrypt_condition(wizard):
@@ -1997,7 +1992,7 @@ class ZFSDiskReplacementForm(Form):
             if pool.spares:
                 for vdev in pool.spares:
                     for dev in vdev:
-                        if dev.status != 'INUSE' and  dev.disk in used_disks:
+                        if dev.status != 'INUSE' and dev.disk in used_disks:
                             used_disks.remove(dev.disk)
         except Exception as e:
             log.debug("Failed to get spares: %s", e)
@@ -2567,6 +2562,7 @@ class UnlockPassphraseForm(Form):
         _notifier.start("ix-warden")
         _notifier.restart("system_datasets")
         _notifier.reload("disk")
+
 
 class KeyForm(Form):
 

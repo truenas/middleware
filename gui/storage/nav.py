@@ -1,4 +1,3 @@
-from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
 import models

@@ -9,7 +9,6 @@ from freenasUI.api.resources import (
     DiskResourceMixin, ReplicationResourceMixin, ScrubResourceMixin,
     TaskResourceMixin, VolumeResourceMixin
 )
-from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.middleware.notifier import notifier
@@ -26,7 +25,7 @@ class DiskFAdmin(BaseFreeAdmin):
         'disk_multipath_name',
         'disk_multipath_member',
         'disk_enabled',
-        )
+    )
     resource_mixin = DiskResourceMixin
 
     def get_actions(self):
@@ -212,7 +211,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'hide_hasenc': hide_hasenc,
             'hide_unknown': hide_unknown,
             'hide_url': 'row.data.%s' % url,
-            }
+        }
 
         on_click = """function() {
   var mybtn = this;
@@ -252,7 +251,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             fstype="ALL",
             decrypted=None,
             hide_unknown=False,
-            )
+        )
         actions['Scrub'] = self._action_builder(
             'scrub', label=_('Scrub Volume')
         )
@@ -274,7 +273,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             label=_('Change Permissions'),
             show="+DATASET",
             fstype="ALL",
-            )
+        )
         actions['ManualSnapshot'] = self._action_builder(
             "manual_snapshot",
             label=_('Create Snapshot'),
@@ -530,7 +529,7 @@ class ScrubFAdmin(BaseFreeAdmin):
     resource_mixin = ScrubResourceMixin
     exclude_fields = (
         'id',
-        )
+    )
 
     def get_datagrid_columns(self):
 
@@ -598,7 +597,7 @@ class TaskFAdmin(BaseFreeAdmin):
     extra_js = u"taskrepeat_checkings();"
     composed_fields = (
         ('Lifetime', ('task_ret_count', 'task_ret_unit')),
-        )
+    )
     resource_mixin = TaskResourceMixin
     exclude_fields = (
         'id',
@@ -609,7 +608,7 @@ class TaskFAdmin(BaseFreeAdmin):
         'task_interval',
         'task_repeat_unit',
         'task_byweekday',
-        )
+    )
 
     def get_datagrid_columns(self):
         columns = super(TaskFAdmin, self).get_datagrid_columns()
@@ -678,7 +677,6 @@ class VMWarePluginFAdmin(BaseFreeAdmin):
     icon_object = 'VMSnapshotIcon'
     icon_add = 'VMSnapshotIcon'
     icon_view = 'VMSnapshotIcon'
-
 
 
 site.register(models.Disk, DiskFAdmin)

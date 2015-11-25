@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -82,11 +81,11 @@ class Volume(Model):
             return True
         if version == '-':
             proc = subprocess.Popen([
-                       "zpool",
-                       "get",
-                       "-H", "-o", "property,value",
-                       "all",
-                       str(self.vol_name),
+                "zpool",
+                "get",
+                "-H", "-o", "property,value",
+                "all",
+                str(self.vol_name),
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             data = proc.communicate()[0].strip('\n')
             for line in data.split('\n'):
@@ -217,7 +216,7 @@ class Volume(Model):
 
         # TODO: This is ugly.
         svcs = ('cifs', 'afp', 'nfs', 'iscsitarget', 'jails', 'collectd')
-        reloads = (False, False, False,  False, False, reload_collectd)
+        reloads = (False, False, False, False, False, reload_collectd)
 
         n = notifier()
         if cascade:
