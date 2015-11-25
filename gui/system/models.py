@@ -70,30 +70,30 @@ class Alert(Model):
 
 class Settings(Model):
     stg_guiprotocol = models.CharField(
-            max_length=120,
-            choices=choices.PROTOCOL_CHOICES,
-            default="http",
-            verbose_name=_("Protocol")
-            )
+        max_length=120,
+        choices=choices.PROTOCOL_CHOICES,
+        default="http",
+        verbose_name=_("Protocol")
+    )
     stg_guicertificate = models.ForeignKey(
-            "Certificate",
-            verbose_name=_("Certificate"),
-            on_delete=models.SET_NULL,
-            blank=True,
-            null=True
-            )
+        "Certificate",
+        verbose_name=_("Certificate"),
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
+    )
     stg_guiaddress = models.CharField(
-            max_length=120,
-            blank=True,
-            default='0.0.0.0',
-            verbose_name=_("WebGUI IPv4 Address")
-            )
+        max_length=120,
+        blank=True,
+        default='0.0.0.0',
+        verbose_name=_("WebGUI IPv4 Address")
+    )
     stg_guiv6address = models.CharField(
-            max_length=120,
-            blank=True,
-            default='::',
-            verbose_name=_("WebGUI IPv6 Address")
-            )
+        max_length=120,
+        blank=True,
+        default='::',
+        verbose_name=_("WebGUI IPv6 Address")
+    )
     stg_guiport = models.IntegerField(
         verbose_name=_("WebGUI HTTP Port"),
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
@@ -113,29 +113,29 @@ class Settings(Model):
         ),
     )
     stg_language = models.CharField(
-            max_length=120,
-            choices=settings.LANGUAGES,
-            default="en",
-            verbose_name=_("Language")
-            )
+        max_length=120,
+        choices=settings.LANGUAGES,
+        default="en",
+        verbose_name=_("Language")
+    )
     stg_kbdmap = models.CharField(
-            max_length=120,
-            choices=choices.KBDMAP_CHOICES(),
-            verbose_name=_("Console Keyboard Map"),
-            blank=True,
-            )
+        max_length=120,
+        choices=choices.KBDMAP_CHOICES(),
+        verbose_name=_("Console Keyboard Map"),
+        blank=True,
+    )
     stg_timezone = models.CharField(
-            max_length=120,
-            choices=choices.TimeZoneChoices(),
-            default="America/Los_Angeles",
-            verbose_name=_("Timezone")
-            )
+        max_length=120,
+        choices=choices.TimeZoneChoices(),
+        default="America/Los_Angeles",
+        verbose_name=_("Timezone")
+    )
     stg_syslogserver = models.CharField(
-            default='',
-            blank=True,
-            max_length=120,
-            verbose_name=_("Syslog server")
-            )
+        default='',
+        blank=True,
+        max_length=120,
+        verbose_name=_("Syslog server")
+    )
     stg_wizardshown = models.BooleanField(
         editable=False,
         default=False,
@@ -151,48 +151,57 @@ class Settings(Model):
 
 class NTPServer(Model):
     ntp_address = models.CharField(
-            verbose_name=_("Address"),
-            max_length=120,
-            )
+        verbose_name=_("Address"),
+        max_length=120,
+    )
     ntp_burst = models.BooleanField(
-            verbose_name=_("Burst"),
-            default=False,
-            help_text=_("When the server is reachable, send a burst of eight "
-                "packets instead of the usual one. This is designed to improve"
-                " timekeeping quality with the server command and s addresses."
-                ),
-            )
+        verbose_name=_("Burst"),
+        default=False,
+        help_text=_(
+            "When the server is reachable, send a burst of eight "
+            "packets instead of the usual one. This is designed to improve"
+            " timekeeping quality with the server command and s addresses."
+        ),
+    )
     ntp_iburst = models.BooleanField(
-            verbose_name=_("IBurst"),
-            default=True,
-            help_text=_("When the server is unreachable, send a burst of eight"
-                " packets instead of the usual one. This is designed to speed "
-                "the initial synchronization acquisition with the server "
-                "command and s addresses."),
-            )
+        verbose_name=_("IBurst"),
+        default=True,
+        help_text=_(
+            "When the server is unreachable, send a burst of eight"
+            " packets instead of the usual one. This is designed to speed "
+            "the initial synchronization acquisition with the server "
+            "command and s addresses."
+        ),
+    )
     ntp_prefer = models.BooleanField(
-            verbose_name=_("Prefer"),
-            default=False,
-            help_text=_("Marks the server as preferred. All other things being"
-                " equal, this host will be chosen for synchronization among a "
-                "set of correctly operating hosts."),
-            )
+        verbose_name=_("Prefer"),
+        default=False,
+        help_text=_(
+            "Marks the server as preferred. All other things being"
+            " equal, this host will be chosen for synchronization among a "
+            "set of correctly operating hosts."
+        ),
+    )
     ntp_minpoll = models.IntegerField(
-            verbose_name=_("Min. Poll"),
-            default=6,
-            validators=[MinValueValidator(4)],
-            help_text=_("The minimum poll interval for NTP messages, as a "
-                "power of 2 in seconds. Defaults to 6 (64 s), but can be "
-                "decreased to a lower limit of 4 (16 s)"),
-            )
+        verbose_name=_("Min. Poll"),
+        default=6,
+        validators=[MinValueValidator(4)],
+        help_text=_(
+            "The minimum poll interval for NTP messages, as a "
+            "power of 2 in seconds. Defaults to 6 (64 s), but can be "
+            "decreased to a lower limit of 4 (16 s)"
+        ),
+    )
     ntp_maxpoll = models.IntegerField(
-            verbose_name=_("Max. Poll"),
-            default=10,
-            validators=[MaxValueValidator(17)],
-            help_text=_("The maximum poll interval for NTP messages, as a "
-                "power of 2 in seconds. Defaults to 10 (1,024 s), but can be "
-                "increased to an upper limit of 17 (36.4 h)"),
-            )
+        verbose_name=_("Max. Poll"),
+        default=10,
+        validators=[MaxValueValidator(17)],
+        help_text=_(
+            "The maximum poll interval for NTP messages, as a "
+            "power of 2 in seconds. Defaults to 10 (1,024 s), but can be "
+            "increased to an upper limit of 17 (36.4 h)"
+        ),
+    )
 
     def __unicode__(self):
         return self.ntp_address
@@ -233,12 +242,12 @@ class Advanced(Model):
         choices=choices.SERIAL_CHOICES(),
     )
     adv_serialspeed = models.CharField(
-            max_length=120,
-            choices=choices.SERIAL_SPEED,
-            default="9600",
-            help_text=_("Set this to match your serial port speed"),
-            verbose_name=_("Serial Port Speed")
-            )
+        max_length=120,
+        choices=choices.SERIAL_SPEED,
+        default="9600",
+        help_text=_("Set this to match your serial port speed"),
+        verbose_name=_("Serial Port Speed")
+    )
     adv_consolescreensaver = models.BooleanField(
         verbose_name=_("Enable screen saver"),
         default=False,
@@ -248,17 +257,22 @@ class Advanced(Model):
         default=False,
     )
     adv_swapondrive = models.IntegerField(
-            validators=[MinValueValidator(0)],
-            verbose_name=_("Swap size on each drive in GiB, affects new disks "
-                "only. Setting this to 0 disables swap creation completely "
-                "(STRONGLY DISCOURAGED)."),
-            default=2)
+        validators=[MinValueValidator(0)],
+        verbose_name=_(
+            "Swap size on each drive in GiB, affects new disks "
+            "only. Setting this to 0 disables swap creation completely "
+            "(STRONGLY DISCOURAGED)."
+        ),
+        default=2,
+    )
     adv_consolemsg = models.BooleanField(
-            verbose_name=_("Show console messages in the footer"),
-            default=True)
+        verbose_name=_("Show console messages in the footer"),
+        default=True,
+    )
     adv_traceback = models.BooleanField(
-            verbose_name=_("Show tracebacks in case of fatal errors"),
-            default=True)
+        verbose_name=_("Show tracebacks in case of fatal errors"),
+        default=True,
+    )
     adv_advancedmode = models.BooleanField(
         verbose_name=_("Show advanced fields by default"),
         default=False,
@@ -287,16 +301,14 @@ class Advanced(Model):
         default=True,
     )
     adv_anonstats = models.BooleanField(
-            verbose_name=_("Enable report anonymous statistics"),
-            default=True,
-            editable=False)
+        verbose_name=_("Enable report anonymous statistics"),
+        default=True,
+        editable=False,
+    )
     adv_anonstats_token = models.TextField(
-            blank=True,
-            editable=False)
-    # TODO: need geom_eli in kernel
-    #adv_encswap = models.BooleanField(
-    #        verbose_name = _("Encrypt swap space"),
-    #        default=False)
+        blank=True,
+        editable=False,
+    )
     adv_motd = models.TextField(
         max_length=1024,
         verbose_name=_("MOTD banner"),
@@ -323,51 +335,57 @@ class Advanced(Model):
 
 class Email(Model):
     em_fromemail = models.CharField(
-            max_length=120,
-            verbose_name=_("From email"),
-            help_text=_("An email address that the system will use for the "
-                "sending address for mail it sends, eg: freenas@example.com"),
-            default='',
-            )
+        max_length=120,
+        verbose_name=_("From email"),
+        help_text=_(
+            "An email address that the system will use for the "
+            "sending address for mail it sends, eg: freenas@example.com"
+        ),
+        default='',
+    )
     em_outgoingserver = models.CharField(
-            max_length=120,
-            verbose_name=_("Outgoing mail server"),
-            help_text=_("A hostname or ip that will accept our mail, for "
-                "instance mail.example.org, or 192.168.1.1"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Outgoing mail server"),
+        help_text=_(
+            "A hostname or ip that will accept our mail, for "
+            "instance mail.example.org, or 192.168.1.1"
+        ),
+        blank=True,
+    )
     em_port = models.IntegerField(
-            default=25,
-            validators=[MinValueValidator(1), MaxValueValidator(65535)],
-            help_text=_("An integer from 1 - 65535, generally will be 25, "
-                "465, or 587"),
-            verbose_name=_("Port to connect to")
-            )
+        default=25,
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        help_text=_(
+            "An integer from 1 - 65535, generally will be 25, "
+            "465, or 587"
+        ),
+        verbose_name=_("Port to connect to"),
+    )
     em_security = models.CharField(
-            max_length=120,
-            choices=choices.SMTPAUTH_CHOICES,
-            default="plain",
-            help_text=_("encryption of the connection"),
-            verbose_name=_("TLS/SSL")
-            )
+        max_length=120,
+        choices=choices.SMTPAUTH_CHOICES,
+        default="plain",
+        help_text=_("encryption of the connection"),
+        verbose_name=_("TLS/SSL")
+    )
     em_smtp = models.BooleanField(
-            verbose_name=_("Use SMTP Authentication"),
-            default=False
-            )
+        verbose_name=_("Use SMTP Authentication"),
+        default=False
+    )
     em_user = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Username"),
-            help_text=_("A username to authenticate to the remote server"),
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Username"),
+        help_text=_("A username to authenticate to the remote server"),
+    )
     em_pass = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Password"),
-            help_text=_("A password to authenticate to the remote server"),
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Password"),
+        help_text=_("A password to authenticate to the remote server"),
+    )
 
     class Meta:
         verbose_name = _("Email")
@@ -390,14 +408,14 @@ class Email(Model):
 
 class Tunable(Model):
     tun_var = models.CharField(
-            max_length=50,
-            unique=True,
-            verbose_name=_("Variable"),
-            )
+        max_length=50,
+        unique=True,
+        verbose_name=_("Variable"),
+    )
     tun_value = models.CharField(
-            max_length=50,
-            verbose_name=_("Value"),
-            )
+        max_length=50,
+        verbose_name=_("Value"),
+    )
     tun_type = models.CharField(
         verbose_name=_('Type'),
         max_length=20,
@@ -405,14 +423,14 @@ class Tunable(Model):
         default='loader',
     )
     tun_comment = models.CharField(
-            max_length=100,
-            verbose_name=_("Comment"),
-            blank=True,
-            )
+        max_length=100,
+        verbose_name=_("Comment"),
+        blank=True,
+    )
     tun_enabled = models.BooleanField(
-            default=True,
-            verbose_name=_("Enabled"),
-            )
+        default=True,
+        verbose_name=_("Enabled"),
+    )
 
     def __unicode__(self):
         return unicode(self.tun_var)
@@ -438,65 +456,65 @@ class Tunable(Model):
 
 class Registration(Model):
     reg_firstname = models.CharField(
-            max_length=120,
-            verbose_name=_("First Name")
-            )
+        max_length=120,
+        verbose_name=_("First Name")
+    )
     reg_lastname = models.CharField(
-            max_length=120,
-            verbose_name=_("Last Name")
-            )
+        max_length=120,
+        verbose_name=_("Last Name")
+    )
     reg_company = models.CharField(
-            max_length=120,
-            verbose_name=_("Company"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("Company"),
+        blank=True,
+        null=True,
+    )
     reg_address = models.CharField(
-            max_length=120,
-            verbose_name=_("Address"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("Address"),
+        blank=True,
+        null=True,
+    )
     reg_city = models.CharField(
-            max_length=120,
-            verbose_name=_("City"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("City"),
+        blank=True,
+        null=True,
+    )
     reg_state = models.CharField(
-            max_length=120,
-            verbose_name=_("State"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("State"),
+        blank=True,
+        null=True,
+    )
     reg_zip = models.CharField(
-            max_length=120,
-            verbose_name=_("Zip"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("Zip"),
+        blank=True,
+        null=True,
+    )
     reg_email = models.CharField(
-            max_length=120,
-            verbose_name=_("Email")
-            )
+        max_length=120,
+        verbose_name=_("Email"),
+    )
     reg_homephone = models.CharField(
-            max_length=120,
-            verbose_name=_("Home Phone"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("Home Phone"),
+        blank=True,
+        null=True,
+    )
     reg_cellphone = models.CharField(
-            max_length=120,
-            verbose_name=_("Cell Phone"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("Cell Phone"),
+        blank=True,
+        null=True,
+    )
     reg_workphone = models.CharField(
-            max_length=120,
-            verbose_name=_("Work Phone"),
-            blank=True,
-            null=True
-            )
+        max_length=120,
+        verbose_name=_("Work Phone"),
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = _("Registration")
@@ -590,7 +608,7 @@ class Update(Model):
         verbose_name = _('Update')
 
     def get_train(self):
-        #FIXME: lazy import, why?
+        # FIXME: lazy import, why?
         from freenasOS import Configuration
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
@@ -602,115 +620,116 @@ class Update(Model):
         return self.upd_train
 
 
-CA_TYPE_EXISTING        = 0x00000001
-CA_TYPE_INTERNAL        = 0x00000002
-CA_TYPE_INTERMEDIATE    = 0x00000004
-CERT_TYPE_EXISTING      = 0x00000008
-CERT_TYPE_INTERNAL      = 0x00000010
-CERT_TYPE_CSR           = 0x00000020
+CA_TYPE_EXISTING = 0x00000001
+CA_TYPE_INTERNAL = 0x00000002
+CA_TYPE_INTERMEDIATE = 0x00000004
+CERT_TYPE_EXISTING = 0x00000008
+CERT_TYPE_INTERNAL = 0x00000010
+CERT_TYPE_CSR = 0x00000020
+
 
 class CertificateBase(Model):
     cert_root_path = "/etc/certificates"
 
     cert_type = models.IntegerField()
     cert_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Name"),
-            help_text=_("Descriptive Name"),
-            unique=True
-            )
+        max_length=120,
+        verbose_name=_("Name"),
+        help_text=_("Descriptive Name"),
+        unique=True,
+    )
     cert_certificate = models.TextField(
-            blank=True,
-            null=True,
-            verbose_name=_("Certificate"),
-            help_text=_("Cut and paste the contents of your certificate here")
-            )
+        blank=True,
+        null=True,
+        verbose_name=_("Certificate"),
+        help_text=_("Cut and paste the contents of your certificate here"),
+    )
     cert_privatekey = models.TextField(
-            blank=True,
-            null=True,
-            verbose_name=_("Private Key"),
-            help_text=_("Cut and paste the contents of your private key here")
-            )
+        blank=True,
+        null=True,
+        verbose_name=_("Private Key"),
+        help_text=_("Cut and paste the contents of your private key here"),
+    )
     cert_CSR = models.TextField(
-            blank=True,
-            null=True,
-            verbose_name=_("Signing Request"),
-            help_text=_("Cut and paste the contents of your CSR here")
-            )
+        blank=True,
+        null=True,
+        verbose_name=_("Signing Request"),
+        help_text=_("Cut and paste the contents of your CSR here"),
+    )
     cert_key_length = models.IntegerField(
-            blank=True,
-            null=True,
-            verbose_name=_("Key length"),
-            default=2048
-            )
+        blank=True,
+        null=True,
+        verbose_name=_("Key length"),
+        default=2048,
+    )
     cert_digest_algorithm = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Digest Algorithm"),
-            default='SHA256'
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Digest Algorithm"),
+        default='SHA256',
+    )
     cert_lifetime = models.IntegerField(
-            blank=True,
-            null=True,
-            verbose_name=_("Lifetime"),
-            default=3650
-            )
+        blank=True,
+        null=True,
+        verbose_name=_("Lifetime"),
+        default=3650,
+    )
     cert_country = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Country"),
-            help_text=_("Country Name (2 letter code)")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Country"),
+        help_text=_("Country Name (2 letter code)"),
+    )
     cert_state = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("State"),
-            help_text=_("State or Province Name (full name)")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("State"),
+        help_text=_("State or Province Name (full name)"),
+    )
     cert_city = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Locality"),
-            help_text=_("Locality Name (eg, city)")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Locality"),
+        help_text=_("Locality Name (eg, city)"),
+    )
     cert_organization = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Organization"),
-            help_text=_("Organization Name (eg, company)")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Organization"),
+        help_text=_("Organization Name (eg, company)"),
+    )
     cert_email = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Email Address"),
-            help_text=_("Email Address")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Email Address"),
+        help_text=_("Email Address"),
+    )
     cert_common = models.CharField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Common Name"),
-            help_text=_("Common Name (eg, FQDN of FreeNAS server or service)")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Common Name"),
+        help_text=_("Common Name (eg, FQDN of FreeNAS server or service)"),
+    )
     cert_serial = models.IntegerField(
-            blank=True,
-            null=True,
-            max_length=120,
-            verbose_name=_("Serial"),
-            help_text=_("Serial for next certificate")
-            )
+        blank=True,
+        null=True,
+        max_length=120,
+        verbose_name=_("Serial"),
+        help_text=_("Serial for next certificate"),
+    )
     cert_signedby = models.ForeignKey(
-            "CertificateAuthority",
-            blank=True,
-            null=True,
-            verbose_name=_("Signing Certificate Authority")
-            )
+        "CertificateAuthority",
+        blank=True,
+        null=True,
+        verbose_name=_("Signing Certificate Authority"),
+    )
 
     def get_certificate(self):
         certificate = None
@@ -734,7 +753,7 @@ class CertificateBase(Model):
         return privatekey
 
     def get_CSR(self):
-        CSR = None 
+        CSR = None
         if self.cert_CSR:
             CSR = crypto.load_certificate_request(
                 crypto.FILETYPE_PEM,
@@ -767,24 +786,24 @@ class CertificateBase(Model):
         write_certificate_signing_request(self.get_CSR(), path)
 
     def __load_certificate(self):
-        if self.cert_certificate != None and self.__certificate == None:
+        if self.cert_certificate is not None and self.__certificate is None:
             self.__certificate = self.get_certificate()
 
     def __load_CSR(self):
-        if self.cert_CSR != None and self.__CSR == None:
+        if self.cert_CSR is not None and self.__CSR is None:
             self.__CSR = self.get_CSR()
 
     def __load_thingy(self):
         if self.cert_type == CERT_TYPE_CSR:
-            self.__load_CSR() 
+            self.__load_CSR()
         else:
-            self.__load_certificate() 
+            self.__load_certificate()
 
     def __get_thingy(self):
         thingy = self.__certificate
         if self.cert_type == CERT_TYPE_CSR:
             thingy = self.__CSR
- 
+
         return thingy
 
     def __init__(self, *args, **kwargs):
@@ -792,7 +811,7 @@ class CertificateBase(Model):
 
         self.__certificate = None
         self.__CSR = None
-        self.__load_thingy() 
+        self.__load_thingy()
 
         if not os.path.exists(self.cert_root_path):
             os.mkdir(self.cert_root_path, 0755)
@@ -800,15 +819,15 @@ class CertificateBase(Model):
     def __unicode__(self):
         return self.cert_name
 
-    @property 
+    @property
     def cert_certificate_path(self):
         return "%s/%s.crt" % (self.cert_root_path, self.cert_name)
 
-    @property 
+    @property
     def cert_privatekey_path(self):
         return "%s/%s.key" % (self.cert_root_path, self.cert_name)
 
-    @property 
+    @property
     def cert_CSR_path(self):
         return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
 
@@ -817,9 +836,9 @@ class CertificateBase(Model):
         internal = "YES"
 
         if self.cert_type == CA_TYPE_EXISTING:
-            internal = "NO" 
-        elif self.cert_type == CERT_TYPE_EXISTING: 
-            internal = "NO" 
+            internal = "NO"
+        elif self.cert_type == CERT_TYPE_EXISTING:
+            internal = "NO"
 
         return internal
 
@@ -827,8 +846,7 @@ class CertificateBase(Model):
     def cert_issuer(self):
         issuer = None
 
-        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE,
-            CERT_TYPE_EXISTING):
+        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING):
             issuer = "external"
         elif self.cert_type == CA_TYPE_INTERNAL:
             issuer = "self-signed"
@@ -871,11 +889,10 @@ class CertificateBase(Model):
         thingy = self.__get_thingy()
         try:
             before = thingy.get_notBefore()
-            t1 = dtparser.parse(before) 
+            t1 = dtparser.parse(before)
             t2 = t1.astimezone(dateutil.tz.tzutc())
-            before = t2.ctime() 
-
-        except Exception as e:
+            before = t2.ctime()
+        except Exception:
             before = None
 
         return before
@@ -890,11 +907,10 @@ class CertificateBase(Model):
         thingy = self.__get_thingy()
         try:
             after = thingy.get_notAfter()
-            t1 = dtparser.parse(after) 
+            t1 = dtparser.parse(after)
             t2 = t1.astimezone(dateutil.tz.tzutc())
-            after = t2.ctime() 
-
-        except Exception as e:
+            after = t2.ctime()
+        except Exception:
             after = None
 
         return after
@@ -1047,4 +1063,3 @@ class Backup(Model):
 
     class Meta:
         verbose_name = _("System Backup")
-
