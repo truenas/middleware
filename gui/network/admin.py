@@ -121,8 +121,8 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
 
               }
             }""" % {
-            'lagg_members': _('LAGG Members'),
-        }}
+                'lagg_members': _('LAGG Members'),
+            }}
         return actions
 
     def get_confirm_message(self, action, **kwargs):
@@ -150,7 +150,7 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
     def get_datagrid_filters(self, request):
         return {
             "lagg_interfacegroup__id": request.GET.get("id"),
-            }
+        }
 
 site.register(models.Interfaces, InterfacesFAdmin)
 site.register(models.LAGGInterface, LAGGInterfaceFAdmin)
