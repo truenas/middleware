@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -45,14 +44,14 @@ class CIFS_Share(Model):
         default=False,
     )
     cifs_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Name")
-            )
+        max_length=120,
+        verbose_name=_("Name")
+    )
     cifs_comment = models.CharField(
-            max_length=120,
-            verbose_name=_("Comment"),
-            blank=True,
-            )
+        max_length=120,
+        verbose_name=_("Comment"),
+        blank=True,
+    )
     cifs_default_permissions = models.BooleanField(
         verbose_name=_('Apply Default Permissions'),
         help_text=_('Recursively set sane default windows permissions on share'),
@@ -92,15 +91,28 @@ class CIFS_Share(Model):
         default=False,
     )
     cifs_hostsallow = models.TextField(
-            blank=True,
-            verbose_name=_("Hosts Allow"),
-            help_text=_("This option is a comma, space, or tab delimited set of hosts which are permitted to access this share. You can specify the hosts by name or IP number. Leave this field empty to use default settings.")
-            )
+        blank=True,
+        verbose_name=_("Hosts Allow"),
+        help_text=_(
+            "This option is a comma, space, or tab delimited set of hosts "
+            "which are permitted to access this share. You can specify the "
+            "hosts by name or IP number. Leave this field empty to use "
+            "default settings."
+        ),
+    )
     cifs_hostsdeny = models.TextField(
-            blank=True,
-            verbose_name=_("Hosts Deny"),
-            help_text=_("This option is a comma, space, or tab delimited set of host which are NOT permitted to access this share. Where the lists conflict, the allow list takes precedence. In the event that it is necessary to deny all by default, use the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify to the hosts allow parameter those hosts that should be permitted access. Leave this field empty to use default settings.")
-            )
+        blank=True,
+        verbose_name=_("Hosts Deny"),
+        help_text=_(
+            "This option is a comma, space, or tab delimited set of host "
+            "which are NOT permitted to access this share. Where the lists "
+            "conflict, the allow list takes precedence. In the event that it "
+            "is necessary to deny all by default, use the keyword ALL (or the "
+            "netmask 0.0.0.0/0) and then explicitly specify to the hosts "
+            "allow parameter those hosts that should be permitted access. "
+            "Leave this field empty to use default settings."
+        ),
+    )
     cifs_vfsobjects = MultiSelectField(
         verbose_name=_('VFS Objects'),
         max_length=255,
@@ -116,11 +128,11 @@ class CIFS_Share(Model):
         null=True
     )
     cifs_auxsmbconf = models.TextField(
-            max_length=120,
-            verbose_name=_("Auxiliary Parameters"),
-            blank=True,
-            help_text=_("These parameters are added to [Share] section of smb.conf")
-            )
+        max_length=120,
+        verbose_name=_("Auxiliary Parameters"),
+        blank=True,
+        help_text=_("These parameters are added to [Share] section of smb.conf")
+    )
 
     def __unicode__(self):
         return self.cifs_name
@@ -140,39 +152,62 @@ class AFP_Share(Model):
         verbose_name=_("Path"),
     )
     afp_name = models.CharField(
-            max_length=120,
-            verbose_name=_("Name"),
-            help_text=_("The volume name is the name that appears in the Chooser of the 'connect to server' dialog on Macintoshes to represent the appropriate share. If volumename is unspecified, the last component of pathname is used. No two volumes may have the same name. The volume name cannot contain the ':' character. The volume name is mangled if it is very long. Mac codepage volume name is limited to 27 characters. UTF8-MAC volume name is limited to 'Volume Name Length' parameter in Services:Apple Share")
-            )
+        max_length=120,
+        verbose_name=_("Name"),
+        help_text=_(
+            "The volume name is the name that appears in the Chooser of the "
+            "'connect to server' dialog on Macintoshes to represent the "
+            "appropriate share. If volumename is unspecified, the last "
+            "component of pathname is used. No two volumes may have the same "
+            "name. The volume name cannot contain the ':' character. The "
+            "volume name is mangled if it is very long. Mac codepage volume "
+            "name is limited to 27 characters. UTF8-MAC volume name is limited"
+            " to 'Volume Name Length' parameter in Services:Apple Share"
+        ),
+    )
     afp_comment = models.CharField(
-            max_length=120,
-            verbose_name=_("Share Comment"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Share Comment"),
+        blank=True
+    )
     afp_allow = models.CharField(
-            max_length=120,
-            verbose_name=_("Allow List"),
-            blank=True,
-            help_text=_("This option allows the users and groups that access a share to be specified. Users and groups are specified, delimited by commas. Groups are designated by a @ prefix.")
-            )
+        max_length=120,
+        verbose_name=_("Allow List"),
+        blank=True,
+        help_text=_(
+            "This option allows the users and groups that access a share to "
+            "be specified. Users and groups are specified, delimited by "
+            "commas. Groups are designated by a @ prefix."
+        ),
+    )
     afp_deny = models.CharField(
-            max_length=120,
-            verbose_name=_("Deny List"),
-            blank=True,
-            help_text=_("The deny option specifies users and groups who are not allowed access to the share. It follows the same format as the allow option.")
-            )
+        max_length=120,
+        verbose_name=_("Deny List"),
+        blank=True,
+        help_text=_(
+            "The deny option specifies users and groups who are not allowed "
+            "access to the share. It follows the same format as the allow "
+            "option."
+        ),
+    )
     afp_ro = models.CharField(
-            max_length=120,
-            verbose_name=_("Read-only Access"),
-            blank=True,
-            help_text=_("Allows certain users and groups to have read-only access to a share. This follows the allow option format.")
-        )
+        max_length=120,
+        verbose_name=_("Read-only Access"),
+        blank=True,
+        help_text=_(
+            "Allows certain users and groups to have read-only access to a "
+            "share. This follows the allow option format."
+        ),
+    )
     afp_rw = models.CharField(
-            max_length=120,
-            verbose_name=_("Read-write Access"),
-            blank=True,
-            help_text=_("Allows certain users and groups to have read/write access to a share. This follows the allow option format.")
-            )
+        max_length=120,
+        verbose_name=_("Read-write Access"),
+        blank=True,
+        help_text=_(
+            "Allows certain users and groups to have read/write access to a "
+            "share. This follows the allow option format."
+        ),
+    )
     afp_timemachine = models.BooleanField(
         verbose_name=_('Time Machine'),
         help_text=_(
@@ -202,33 +237,35 @@ class AFP_Share(Model):
         default=True,
     )
     afp_fperm = models.CharField(
-            max_length=3,
-            default="644",
-            verbose_name=_("Default file permission"),
-            )
+        max_length=3,
+        default="644",
+        verbose_name=_("Default file permission"),
+    )
     afp_dperm = models.CharField(
-            max_length=3,
-            default="755",
-            verbose_name=_("Default directory permission"),
-            )
+        max_length=3,
+        default="755",
+        verbose_name=_("Default directory permission"),
+    )
     afp_umask = models.CharField(
         max_length=3,
         default="000",
         blank=True,
         verbose_name=_("Default umask"),
-        )
+    )
     afp_hostsallow = models.CharField(
         blank=True,
         max_length=120,
-        help_text=_("Allow only listed hosts and/or networks access to this volume"),
+        help_text=_(
+            "Allow only listed hosts and/or networks access to this volume"
+        ),
         verbose_name=_("Hosts Allow")
-        )
+    )
     afp_hostsdeny = models.CharField(
         blank=True,
         max_length=120,
         help_text=_("Deny listed hosts and/or networks access to this volume"),
         verbose_name=_("Hosts Deny")
-        )
+    )
 
     def __unicode__(self):
         return unicode(self.afp_name)
@@ -245,23 +282,27 @@ class AFP_Share(Model):
 
 class NFS_Share(Model):
     nfs_comment = models.CharField(
-            max_length=120,
-            verbose_name=_("Comment"),
-            blank=True,
-            )
+        max_length=120,
+        verbose_name=_("Comment"),
+        blank=True,
+    )
     nfs_network = models.TextField(
-            verbose_name=_("Authorized networks"),
-            help_text=_("Networks that are authorized to access the NFS share."
-                " Specify network numbers of the form 1.2.3.4/xx where xx is "
-                "the number of bits of netmask."),
-            blank=True,
-            )
+        verbose_name=_("Authorized networks"),
+        help_text=_(
+            "Networks that are authorized to access the NFS share."
+            " Specify network numbers of the form 1.2.3.4/xx where xx is "
+            "the number of bits of netmask."
+        ),
+        blank=True,
+    )
     nfs_hosts = models.TextField(
-            verbose_name=_("Authorized IP addresses or hosts"),
-            help_text=_("IP addresses or hostnames that are authorized to "
-                "access the NFS share."),
-            blank=True,
-            )
+        verbose_name=_("Authorized IP addresses or hosts"),
+        help_text=_(
+            "IP addresses or hostnames that are authorized to "
+            "access the NFS share."
+        ),
+        blank=True,
+    )
     nfs_alldirs = models.BooleanField(
         verbose_name=_('All Directories'),
         help_text=_(
@@ -284,41 +325,47 @@ class NFS_Share(Model):
         default=False,
     )
     nfs_maproot_user = UserField(
-            verbose_name=_("Maproot User"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("If a user is selected, the root user is limited to "
-                "that user's permissions")
-            )
+        verbose_name=_("Maproot User"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_(
+            "If a user is selected, the root user is limited to "
+            "that user's permissions"
+        ),
+    )
     nfs_maproot_group = GroupField(
-            verbose_name=_("Maproot Group"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("If a group is selected, the root user will also be "
-                "limited to that group's permissions")
-            )
+        verbose_name=_("Maproot Group"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_(
+            "If a group is selected, the root user will also be "
+            "limited to that group's permissions"
+        ),
+    )
     nfs_mapall_user = UserField(
-            verbose_name=_("Mapall User"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("The specified user's permissions are used by all "
-                "clients")
-            )
+        verbose_name=_("Mapall User"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_(
+            "The specified user's permissions are used by all clients"
+        ),
+    )
     nfs_mapall_group = GroupField(
-            verbose_name=_("Mapall Group"),
-            max_length=120,
-            blank=True,
-            null=True,
-            default='',
-            help_text=_("The specified group's permission are used by all "
-                "clients")
-            )
+        verbose_name=_("Mapall Group"),
+        max_length=120,
+        blank=True,
+        null=True,
+        default='',
+        help_text=_(
+            "The specified group's permission are used by all clients"
+        ),
+    )
     nfs_security = MultiSelectField(
         verbose_name=_('Security'),
         max_length=200,
@@ -351,8 +398,7 @@ class NFS_Share(Model):
 
 class NFS_Share_Path(Model):
     share = models.ForeignKey(NFS_Share, related_name="paths")
-    path = PathField(
-            verbose_name=_("Path"))
+    path = PathField(verbose_name=_("Path"))
 
     def __unicode__(self):
         return self.path
@@ -361,6 +407,7 @@ class NFS_Share_Path(Model):
         verbose_name = _("Path")
         verbose_name_plural = _("Paths")
         ordering = ["path"]
+
 
 class WebDAV_Share(Model):
     webdav_name = models.CharField(
@@ -396,7 +443,7 @@ class WebDAV_Share(Model):
     )
 
     def __unicode__(self):
-      return self.webdav_name
+        return self.webdav_name
 
     def delete(self, *args, **kwargs):
         super(WebDAV_Share, self).delete(*args, **kwargs)
