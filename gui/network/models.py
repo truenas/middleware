@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -34,8 +33,9 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.contrib.IPAddressField import (IPAddressField, IP4AddressField,
-    IP6AddressField)
+from freenasUI.contrib.IPAddressField import (
+    IPAddressField, IP4AddressField, IP6AddressField
+)
 from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -72,22 +72,22 @@ class GlobalConfiguration(Model):
         blank=True,
         default='',
         verbose_name=_("IPv4 Default Gateway"),
-        )
+    )
     gc_ipv6gateway = IP6AddressField(
         blank=True,
         default='',
         verbose_name=_("IPv6 Default Gateway"),
-        )
+    )
     gc_nameserver1 = IPAddressField(
         blank=True,
         default='',
         verbose_name=_("Nameserver 1")
-        )
+    )
     gc_nameserver2 = IPAddressField(
         default='',
         blank=True,
         verbose_name=_("Nameserver 2")
-        )
+    )
     gc_nameserver3 = IPAddressField(
         default='',
         blank=True,
@@ -100,31 +100,37 @@ class GlobalConfiguration(Model):
     )
     gc_netwait_enabled = models.BooleanField(
         verbose_name=_("Enable netwait feature"),
-        help_text=_("If enabled, delays the start of network-reliant services "
+        help_text=_(
+            "If enabled, delays the start of network-reliant services "
             "until interface is up and ICMP packets to a destination defined "
             "in netwait ip list are flowing.  Link state is examined first, "
             "followed by \"pinging\" an IP address to verify network "
             "usability.  If no destination can be reached or timeouts are "
             "exceeded, network services are started anyway with no guarantee "
-            "that the network is usable."),
+            "that the network is usable."
+        ),
         default=False,
-        )
+    )
     gc_netwait_ip = models.CharField(
         verbose_name=_("Netwait IP list"),
-        help_text=_("Space-delimited list of IP addresses to ping(8). If "
+        help_text=_(
+            "Space-delimited list of IP addresses to ping(8). If "
             "multiple IP addresses are specified, each will be tried until "
             "one is successful or the list is exhausted. If it is empty the "
-            "default gateway will be used."),
+            "default gateway will be used."
+        ),
         blank=True,
         max_length=300,
-        )
+    )
     gc_hosts = models.TextField(
         verbose_name=_("Host name data base"),
-        help_text=_("This field is appended to /etc/hosts which contains "
-            "information regarding known hosts on the network. hosts(5)"),
+        help_text=_(
+            "This field is appended to /etc/hosts which contains "
+            "information regarding known hosts on the network. hosts(5)"
+        ),
         default='',
         blank=True,
-        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfiguration, self).__init__(*args, **kwargs)
@@ -163,21 +169,23 @@ class GlobalConfiguration(Model):
 
 class Interfaces(Model):
     int_interface = models.CharField(
-            max_length=300,
-            blank=False,
-            verbose_name=_("NIC"),
-            help_text=_("Pick your NIC")
-            )
+        max_length=300,
+        blank=False,
+        verbose_name=_("NIC"),
+        help_text=_("Pick your NIC")
+    )
     int_name = models.CharField(
-            max_length="120",
-            verbose_name=_("Interface Name"),
-            help_text=_("Name your NIC.")
-            )
+        max_length="120",
+        verbose_name=_("Interface Name"),
+        help_text=_("Name your NIC.")
+    )
     int_dhcp = models.BooleanField(
         verbose_name=_("DHCP"),
         default=False,
-        help_text=_("When enabled, use DHCP to obtain IPv4 address as well"
-            " as default router, etc.")
+        help_text=_(
+            "When enabled, use DHCP to obtain IPv4 address as well"
+            " as default router, etc."
+        ),
     )
     int_ipv4address = IPAddressField(
         verbose_name=_("IPv4 Address"),
@@ -190,13 +198,13 @@ class Interfaces(Model):
         default='',
     )
     int_v4netmaskbit = models.CharField(
-            max_length=3,
-            choices=choices.v4NetmaskBitList,
-            blank=True,
-            default='',
-            verbose_name=_("IPv4 Netmask"),
-            help_text=""
-            )
+        max_length=3,
+        choices=choices.v4NetmaskBitList,
+        blank=True,
+        default='',
+        verbose_name=_("IPv4 Netmask"),
+        help_text=""
+    )
     int_ipv6auto = models.BooleanField(
         verbose_name=_("Auto configure IPv6"),
         default=False,
@@ -206,18 +214,18 @@ class Interfaces(Model):
         ),
     )
     int_ipv6address = IPAddressField(
-            verbose_name=_("IPv6 Address"),
-            blank=True,
-            default='',
-            )
+        verbose_name=_("IPv6 Address"),
+        blank=True,
+        default='',
+    )
     int_v6netmaskbit = models.CharField(
-            max_length=4,
-            choices=choices.v6NetmaskBitList,
-            blank=True,
-            default='',
-            verbose_name=_("IPv6 Prefix Length"),
-            help_text=""
-            )
+        max_length=4,
+        choices=choices.v6NetmaskBitList,
+        blank=True,
+        default='',
+        verbose_name=_("IPv6 Prefix Length"),
+        help_text=""
+    )
     int_carp = models.IntegerField(
         editable=False,
         null=True,
@@ -249,10 +257,10 @@ class Interfaces(Model):
         blank=True,
     )
     int_options = models.CharField(
-            max_length=120,
-            verbose_name=_("Options"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Options"),
+        blank=True
+    )
 
     def __unicode__(self):
         if not self.int_name:
@@ -314,7 +322,7 @@ class Interfaces(Model):
             ips.append("%s/%s" % (
                 str(self.int_ipv4address),
                 str(self.int_v4netmaskbit),
-                ))
+            ))
         if self.int_ipv4address_b:
             ips.append("%s/%s" % (
                 str(self.int_ipv4address_b),
@@ -324,7 +332,7 @@ class Interfaces(Model):
             ips.append("%s/%s" % (
                 str(alias.alias_v4address),
                 str(alias.alias_v4netmaskbit),
-                ))
+            ))
         return ips
 
     def get_ipv6_addresses(self):
@@ -336,12 +344,12 @@ class Interfaces(Model):
             ips.append("%s/%s" % (
                 str(self.int_ipv6address),
                 str(self.int_v6netmaskbit),
-                ))
+            ))
         for alias in self.alias_set.exclude(alias_v6address=''):
             ips.append("%s/%s" % (
                 str(alias.alias_v6address),
                 str(alias.alias_v6netmaskbit),
-                ))
+            ))
         return ips
 
     def get_media_status(self):
@@ -423,30 +431,30 @@ class Alias(Model):
 
     class FreeAdmin:
         pass
-        #create_modelform = "InterfacesForm"
-        #edit_modelform = "InterfacesEditForm"
 
 
 class VLAN(Model):
     vlan_vint = models.CharField(
-            max_length=120,
-            verbose_name=_("Virtual Interface"),
-            help_text=_("Interface names must be vlanX where X is a number. "
-                "Example: vlan0.")
-            )
+        max_length=120,
+        verbose_name=_("Virtual Interface"),
+        help_text=_(
+            "Interface names must be vlanX where X is a number. "
+            "Example: vlan0."
+        ),
+    )
     vlan_pint = models.CharField(
-            max_length=300,
-            blank=False,
-            verbose_name=_("Physical Interface")
-            )
+        max_length=300,
+        blank=False,
+        verbose_name=_("Physical Interface")
+    )
     vlan_tag = models.PositiveIntegerField(
-            verbose_name=_("VLAN Tag")
-            )
+        verbose_name=_("VLAN Tag")
+    )
     vlan_description = models.CharField(
-            max_length=120,
-            verbose_name=_("Description"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Description"),
+        blank=True
+    )
 
     def __unicode__(self):
         return self.vlan_vint
@@ -475,15 +483,15 @@ class LAGGInterface(Model):
     # interface.
     # A corresponding interface is created as "laggX"
     lagg_interface = models.ForeignKey(
-            Interfaces,
-            unique=True,
-            verbose_name=_("Interface")
-            )
+        Interfaces,
+        unique=True,
+        verbose_name=_("Interface")
+    )
     lagg_protocol = models.CharField(
-            max_length=120,
-            verbose_name=_("Protocol Type"),
-            choices=choices.LAGGType,
-            )
+        max_length=120,
+        verbose_name=_("Protocol Type"),
+        choices=choices.LAGGType,
+    )
 
     class Meta:
         verbose_name = _("Link Aggregation")
@@ -493,10 +501,10 @@ class LAGGInterface(Model):
     def __unicode__(self):
         interface_list = LAGGInterfaceMembers.objects.filter(
             lagg_interfacegroup=self.id)
-        if interface_list != None:
+        if interface_list is not None:
             interfaces = ', '.join(
                 [int.lagg_physnic for int in interface_list]
-                )
+            )
         else:
             interfaces = 'None'
         return "%s (%s: %s)" % (
@@ -508,7 +516,7 @@ class LAGGInterface(Model):
         super(LAGGInterface, self).delete()
         VLAN.objects.filter(
             vlan_pint=self.lagg_interface.int_interface
-            ).delete()
+        ).delete()
         self.lagg_interface.delete()
         notifier().iface_destroy(self.lagg_interface.int_interface)
 
@@ -516,21 +524,21 @@ class LAGGInterface(Model):
 class LAGGInterfaceMembers(Model):
     # Physical interfaces list inside one LAGG group
     lagg_interfacegroup = models.ForeignKey(
-            LAGGInterface,
-            verbose_name=_("LAGG Interface Group")
-            )
+        LAGGInterface,
+        verbose_name=_("LAGG Interface Group")
+    )
     lagg_ordernum = models.IntegerField(
-            verbose_name=_("LAGG Priority Number"),
-            )
+        verbose_name=_("LAGG Priority Number"),
+    )
     lagg_physnic = models.CharField(
-            max_length=120,
-            unique=True,
-            verbose_name=_("Physical NIC")
-            )
+        max_length=120,
+        unique=True,
+        verbose_name=_("Physical NIC")
+    )
     lagg_deviceoptions = models.CharField(
-            max_length=120,
-            verbose_name=_("Options")
-            )
+        max_length=120,
+        verbose_name=_("Options")
+    )
 
     def __unicode__(self):
         return self.lagg_physnic
@@ -539,7 +547,7 @@ class LAGGInterfaceMembers(Model):
         notifier().lagg_remove_port(
             self.lagg_interfacegroup.lagg_interface.int_interface,
             self.lagg_physnic,
-            )
+        )
         super(LAGGInterfaceMembers, self).delete()
 
     class Meta:
@@ -550,18 +558,18 @@ class LAGGInterfaceMembers(Model):
 
 class StaticRoute(Model):
     sr_destination = models.CharField(
-            max_length=120,
-            verbose_name=_("Destination network")
-            )
+        max_length=120,
+        verbose_name=_("Destination network")
+    )
     sr_gateway = IP4AddressField(
-            max_length=120,
-            verbose_name=_("Gateway")
-            )
+        max_length=120,
+        verbose_name=_("Gateway")
+    )
     sr_description = models.CharField(
-            max_length=120,
-            verbose_name=_("Description"),
-            blank=True
-            )
+        max_length=120,
+        verbose_name=_("Description"),
+        blank=True
+    )
 
     class Meta:
         verbose_name = _("Static Route")
