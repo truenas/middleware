@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -236,7 +235,7 @@ def jail_export(request, id):
     )
 
     freenas_build = "UNKNOWN"
-    #FIXME
+    # FIXME
     """
     try:
         with open(VERSION_FILE) as d:
@@ -308,7 +307,7 @@ def jail_progress(request):
 
         if percent > 0 and jail_progress_percent != percent:
             p = float(percent) / 100
-            #t = float(p) * jail_progress_estimated_time
+            # t = float(p) * jail_progress_estimated_time
 
             estimated_time = elapsed / p
             eta = estimated_time - elapsed
@@ -339,6 +338,7 @@ def jail_progress(request):
 linux_jail_progress_estimated_time = 600
 linux_jail_progress_start_time = 0
 linux_jail_progress_percent = 0
+
 
 #
 # XXX HACK XXX
@@ -394,7 +394,7 @@ def jail_linuxprogress(request):
 
         if percent > 0 and linux_jail_progress_percent != percent:
             p = float(percent) / 100
-            #t = float(p) * linux_jail_progress_estimated_time
+            # t = float(p) * linux_jail_progress_estimated_time
 
             estimated_time = elapsed / p
             eta = estimated_time - elapsed
@@ -506,9 +506,9 @@ def jail_info(request, id):
         data[f] = None
 
     try:
-        jail = models.Jails.objects.get(pk=id) 
-        for k in data.keys(): 
-            data[k] = getattr(jail, k) 
+        jail = models.Jails.objects.get(pk=id)
+        for k in data.keys():
+            data[k] = getattr(jail, k)
 
     except:
         pass
@@ -528,7 +528,7 @@ def jail_template_info(request, name):
         jt = models.JailTemplate.objects.get(jt_name=name)
         if jt:
             for k in data.keys():
-                data[k] = getattr(jt, k) 
+                data[k] = getattr(jt, k)
             data['jt_instances'] = jt.jt_instances
 
     content = json.dumps(data)
@@ -572,6 +572,7 @@ def jail_template_edit(request, id):
         'form': form
     })
 
+
 def jailsconfiguration_info(request):
     data = {}
 
@@ -613,20 +614,20 @@ def jailsconfiguration_network_info(request):
             data['jc_ipv4_network_start'] = str(
                 ipv4_st.usable_range[0]).split('/')[0]
             data['jc_ipv4_network_end'] = str(
-                ipv4_st.usable_range[1]).split('/')[0] 
+                ipv4_st.usable_range[1]).split('/')[0]
 
     ipv6_iface = notifier().get_default_ipv6_interface()
-    try: 
+    try:
         iface_info = notifier().get_interface_info(ipv6_iface)
-        if iface_info['ipv6'] == None:
+        if iface_info['ipv6'] is None:
             raise Exception
 
         ipv6_addr = iface_info['ipv6'][0]['inet6']
-        if ipv6_addr == None:
+        if ipv6_addr is None:
             raise Exception
 
         ipv6_prefix = iface_info['ipv6'][0]['prefixlen']
-        if ipv6_prefix == None:
+        if ipv6_prefix is None:
             raise Exception
 
         ipv6_st = sipcalc_type("%s/%s" % (ipv6_addr, ipv6_prefix))

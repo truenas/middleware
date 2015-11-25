@@ -974,7 +974,7 @@ class JailTemplateEditForm(ModelForm):
             if self.instance.jt_os == 'Linux':
                 self.__ro('jt_arch')
 
-            if self.instance.jt_readonly == True:
+            if self.instance.jt_readonly is True:
                 self.__ro('jt_name')
                 self.__ro('jt_arch')
                 self.__ro('jt_os')

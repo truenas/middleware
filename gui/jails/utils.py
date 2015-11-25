@@ -1,8 +1,6 @@
-import glob
 import logging
 import os
 import platform
-import re
 import time
 
 from django.utils.translation import ugettext as _
@@ -239,7 +237,7 @@ def get_available_ipv4(ipv4_start, ipv4_end=None, ipv4_exclude_dict=None):
         except:
             mask = 24
 
-        naddrs = 2**mask
+        naddrs = 2 ** mask
 
     else:
         naddrs = int(ipv4_end) - int(ipv4_start)
@@ -289,7 +287,7 @@ def get_available_ipv6(ipv6_start, ipv6_end=None, ipv6_exclude_dict=None):
         except:
             prefix = 64
 
-        naddrs = 2**prefix
+        naddrs = 2 ** prefix
 
     else:
         naddrs = int(ipv6_end) - int(ipv6_start)
@@ -437,7 +435,8 @@ def get_ipv4_address():
                 st_ipv4_network.network_mask_bits
             ))
 
-        ipv4_addr = get_available_ipv4(st_ipv4_network_start,
+        ipv4_addr = get_available_ipv4(
+            st_ipv4_network_start,
             st_ipv4_network_end,
             get_ipv4_exclude_dict()
         )
@@ -468,9 +467,10 @@ def get_ipv6_address():
             st_ipv6_network_end = sipcalc_type("%s/%d" % (
                 st_ipv6_network.network_range[1],
                 st_ipv6_network.prefix_length
-            ))  
+            ))
 
-        ipv6_addr = get_available_ipv6(st_ipv6_network_start,
+        ipv6_addr = get_available_ipv6(
+            st_ipv6_network_start,
             st_ipv6_network_end,
             get_ipv6_exclude_dict()
         )
@@ -482,7 +482,7 @@ def get_ipv6_address():
 # get_host_ipv4_network()
 #
 # Attempt to determine the primary interface network. This is done so that we
-# don't set a bridge address (we leave it blank, in which case the Warden 
+# don't set a bridge address (we leave it blank, in which case the Warden
 # will figure out the default gateway and set tha tup inside the jail if
 # on the same network as the host).
 #
@@ -508,7 +508,7 @@ def get_host_ipv4_network():
 # get_host_ipv6_network()
 #
 # Attempt to determine the primary interface network. This is done so that we
-# don't set a bridge address (we leave it blank, in which case the Warden 
+# don't set a bridge address (we leave it blank, in which case the Warden
 # will figure out the default gateway and set tha tup inside the jail if
 # on the same network as the host).
 #
@@ -551,7 +551,7 @@ def guess_ipv4_addresses():
             ))
         except Exception as e:
             log.debug("guess_addresses: %s", e)
-            return addresses  
+            return addresses
 
     return addresses
 
@@ -576,7 +576,7 @@ def guess_ipv6_addresses():
             ))
         except Exception as e:
             log.debug("guess_addresses: %s", e)
-            return addresses  
+            return addresses
 
     return addresses
 
@@ -584,7 +584,7 @@ def guess_ipv6_addresses():
 #
 # guess_addresses()
 #
-# Figure out the next IPv4 and IPv6 addresses available (if any). 
+# Figure out the next IPv4 and IPv6 addresses available (if any).
 # If a bridge address is necessary, figure that as well
 #
 def guess_addresses():
@@ -742,7 +742,6 @@ def jail_auto_configure():
     append "_N" where N 2..100 until a dataset is not found.
     """
 
-    vol_fstype = 'ZFS'
     volume = Volume.objects.filter(vol_fstype='ZFS')
     if not volume.exists():
         raise MiddlewareError(_("You need to create a ZFS volume to proceed!"))
