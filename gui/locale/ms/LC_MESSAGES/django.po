@@ -12437,3 +12437,16 @@ msgstr "E-mail"
 #, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "%s data berjaya dinaiktaraf."
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "Benarkan GID berulang"
+
+#: directoryservice/models.py:942
+msgid "Set this if you want to allow allow DNS updates."
+msgstr ""
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""

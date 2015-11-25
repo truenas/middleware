@@ -13041,3 +13041,17 @@ msgstr "Fiber Channel-poorten"
 #, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "Fiber Channel-poorten zijn met succes gewijzigd."
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "Gast toestaan"
+
+#: directoryservice/models.py:942
+#, fuzzy
+msgid "Set this if you want to allow allow DNS updates."
+msgstr "Stel dit in als u vertrouwde domeinen wilt toestaan."
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""
