@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -52,8 +51,8 @@ log = logging.getLogger('freeadmin.middleware')
 
 COMMENT_SYNTAX = (
     (re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),
-    (re.compile(r'^application/j(avascript|son)$',     re.I), '/*',   '*/'),
-    )
+    (re.compile(r'^application/j(avascript|son)$', re.I), '/*', '*/'),
+)
 
 
 def public(f):
@@ -79,7 +78,7 @@ def http_oauth(func):
             host = "%s://%s" % (
                 'https' if request.is_secure() else 'http',
                 request.get_host(),
-                )
+            )
             uurl = host + request.path
 
             oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
@@ -123,7 +122,7 @@ def http_oauth(func):
             'error': {
                 'code': '500',
                 'message': 'Not authenticated',
-                },
+            },
             'id': json_params.get("id", "1"),
         }))
 
@@ -177,7 +176,7 @@ class LocaleMiddleware(object):
                     break
 
         if not language:
-            #FIXME we could avoid this db hit using a cache,
+            # FIXME: we could avoid this db hit using a cache,
             # invalidated when settings are edited
             language = Settings.objects.order_by('-id')[0].stg_language
 
@@ -205,7 +204,7 @@ class CatchError(object):
                     if sys.exc_type is not OperationalError
                     else unicode(excp.message)
                 ),
-                }
+            }
             return JsonResp(request, **kwargs)
         return response
 

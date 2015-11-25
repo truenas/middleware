@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -256,13 +255,6 @@ class NavTree(object):
         )
         tree_roots.register(nav)
 
-        #nav = TreeRoot(
-        #    'support',
-        #    name=_('Request Support'),
-        #    action='opensupport',
-        #    icon='SupportIcon')
-        #tree_roots.register(nav)
-
         nav = TreeRoot(
             'display',
             name=_('Display System Processes'),
@@ -336,10 +328,12 @@ class NavTree(object):
         self.replace_navs(tree_roots)
 
         jails = []
-        #FIXME: use .filter
+        # FIXME: use .filter
         for j in Jails.objects.all():
-            if j.jail_type == WARDEN_TYPE_PLUGINJAIL and \
-                j.jail_status == WARDEN_STATUS_RUNNING:
+            if (
+                j.jail_type == WARDEN_TYPE_PLUGINJAIL and
+                j.jail_status == WARDEN_STATUS_RUNNING
+            ):
                 jails.append(j)
         self._get_plugins_nodes(request, jails)
 
@@ -561,7 +555,7 @@ class NavTree(object):
                     request.COOKIES.get("sessionid", ''),
                 )
             )]
-            #TODO: Increase timeout based on number of plugins
+            # TODO: Increase timeout based on number of plugins
             # Have done above ^ but still sucky, try to use caching if possible
             response = opener.open(url, None, timeout)
             data = response.read()
@@ -597,7 +591,7 @@ class NavTree(object):
 
                 nodes = unserialize_tree(data)
                 for node in nodes:
-                    #We have our TreeNode's, find out where to place them
+                    # We have our TreeNode's, find out where to place them
 
                     found = False
                     if node.append_to:
@@ -627,10 +621,11 @@ class NavTree(object):
                     "%(url)s: %(error)s") % {'url': url, 'error': e})
                 log.debug(_(
                     "Error unserializing %(url)s (%(error)s), data "
-                    "retrieved:") % {
-                        'url': url,
-                        'error': e,
-                    })
+                    "retrieved:"
+                ) % {
+                    'url': url,
+                    'error': e,
+                })
                 continue
 
     def _build_nav(self, user):
@@ -662,10 +657,11 @@ class NavTree(object):
                 except NoReverseMatch, e:
                     log.warn(_(
                         "Could not reverse url, skipping node %(node)s: "
-                        "%(error)s") % {
-                            'node': repr(option),
-                            'error': repr(e),
-                        })
+                        "%(error)s"
+                    ) % {
+                        'node': repr(option),
+                        'error': repr(e),
+                    })
                     continue
                 try:
                     view, args, kwargs = resolve(url)

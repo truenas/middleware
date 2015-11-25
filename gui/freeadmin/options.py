@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -107,7 +106,7 @@ class BaseFreeAdmin(object):
     def __init__(self, c=None, model=None, admin=None):
 
         self._model = model
-        #FIXME: duplicated code
+        # FIXME: duplicated code
         if self.module_name is None:
             if self._model:
                 self.module_name = self._model._meta.model_name
