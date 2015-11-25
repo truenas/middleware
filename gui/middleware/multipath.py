@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#-
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -25,6 +24,7 @@
 # SUCH DAMAGE.
 #
 
+
 class Multipath(object):
     """
     Class representing a GEOM_MULTIPATH
@@ -48,7 +48,7 @@ class Multipath(object):
     def __init__(self, doc, xmlnode):
         self.name = xmlnode.xpath("./name")[0].text
         self.devname = "multipath/%s" % self.name
-        self._status =  xmlnode.xpath("./config/State")[0].text
+        self._status = xmlnode.xpath("./config/State")[0].text
         self.consumers = []
         for consumer in xmlnode.xpath("./consumer"):
             status = consumer.xpath("./config/State")[0].text
