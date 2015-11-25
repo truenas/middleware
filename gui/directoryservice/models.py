@@ -888,6 +888,7 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True,
     )
+
     @property
     def ad_netbiosname(self):
         _n = notifier()
@@ -1059,7 +1060,7 @@ class ActiveDirectory(DirectoryServiceBase):
             )
 
             try:
-                fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+                FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
 
                 kr = KerberosRealm.objects.filter(
                     krb_realm=self.ad_domainname.upper()

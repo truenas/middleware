@@ -1,4 +1,3 @@
-#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -24,16 +23,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
-
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.directoryservice.models import (
-    ActiveDirectory,
-    LDAP,
-    NIS,
-    NT4
-)
 from freenasUI.freeadmin.tree import TreeNode
 
 
@@ -59,6 +50,7 @@ BLACKLIST = [
     'KerberosRealm'
 ]
 ORDER = 25
+
 
 class ActiveDirectoryView(TreeNode):
 
@@ -124,6 +116,7 @@ class KerberosKeytabView(TreeNode):
     icon = u'KerberosKeytabIcon'
     append_to = 'directoryservice'
     order = 25
+
 
 class KerberosSettingsView(TreeNode):
 
