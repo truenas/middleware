@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-11-20 04:35+0000\n"
+"PO-Revision-Date: 2015-11-20 04:36+0000\n"
 "Last-Translator: zy2688 <zy2688@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1447994139.0\n"
+"X-POOTLE-MTIME: 1447994162.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12232,3 +12232,17 @@ msgstr "光纤通道端口"
 #, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "光纤通道端口修改成功。"
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "允许访客"
+
+#: directoryservice/models.py:942
+#, fuzzy
+msgid "Set this if you want to allow allow DNS updates."
+msgstr "若允许信任域，则设置此项。"
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""

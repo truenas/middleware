@@ -13186,3 +13186,17 @@ msgstr "Canal"
 #, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "As alterações foram atualizadas com sucesso!"
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "Lista Permitida"
+
+#: directoryservice/models.py:942
+#, fuzzy
+msgid "Set this if you want to allow allow DNS updates."
+msgstr "Selecione isto se você quer permitir Domínios de Confiança."
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""

@@ -12718,3 +12718,17 @@ msgstr "Fibre Channel porty"
 #: services/views.py:395
 msgid "Fibre Channel Ports have been successfully changed."
 msgstr "Fibre Channel porty byly úspěšně změněny."
+
+#: directoryservice/models.py:941
+#, fuzzy
+msgid "Allow DNS updates"
+msgstr "Umožnit přístup neověřeným uživatelům (hostům)"
+
+#: directoryservice/models.py:942
+#, fuzzy
+msgid "Set this if you want to allow allow DNS updates."
+msgstr "Toto nastavte, pokud chcete uznávat účty z jiných domén."
+
+#: services/forms.py:1436
+msgid "File size must be a multiple of block size"
+msgstr ""
