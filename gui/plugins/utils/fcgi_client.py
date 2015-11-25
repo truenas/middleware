@@ -56,6 +56,7 @@ FCGI_BeginRequestBody_LEN = struct.calcsize(FCGI_BeginRequestBody)
 FCGI_EndRequestBody_LEN = struct.calcsize(FCGI_EndRequestBody)
 FCGI_UnknownTypeBody_LEN = struct.calcsize(FCGI_UnknownTypeBody)
 
+
 def decode_pair(s, pos=0):
     """
     Decodes a name/value pair.
@@ -65,24 +66,25 @@ def decode_pair(s, pos=0):
     """
     nameLength = ord(s[pos])
     if nameLength & 128:
-        nameLength = struct.unpack('!L', s[pos:pos+4])[0] & 0x7fffffff
+        nameLength = struct.unpack('!L', s[pos:pos + 4])[0] & 0x7fffffff
         pos += 4
     else:
         pos += 1
 
     valueLength = ord(s[pos])
     if valueLength & 128:
-        valueLength = struct.unpack('!L', s[pos:pos+4])[0] & 0x7fffffff
+        valueLength = struct.unpack('!L', s[pos:pos + 4])[0] & 0x7fffffff
         pos += 4
     else:
         pos += 1
 
-    name = s[pos:pos+nameLength]
+    name = s[pos:pos + nameLength]
     pos += nameLength
-    value = s[pos:pos+valueLength]
+    value = s[pos:pos + valueLength]
     pos += valueLength
 
     return (pos, (name, value))
+
 
 def encode_pair(name, value):
     """
@@ -103,6 +105,7 @@ def encode_pair(name, value):
         s += struct.pack('!L', valueLength | 0x80000000L)
 
     return s + bytearray(name.encode('ascii')) + bytearray(value.encode('ascii'))
+
 
 class Record(object):
     """
@@ -134,7 +137,7 @@ class Record(object):
                     continue
                 else:
                     raise
-            if not data: # EOF
+            if not data:  # EOF
                 break
             dataList.append(data)
             dataLen = len(data)
@@ -153,8 +156,7 @@ class Record(object):
         if length < FCGI_HEADER_LEN:
             raise EOFError
 
-        self.version, self.type, self.requestId, self.contentLength, \
-                      self.paddingLength = struct.unpack(FCGI_Header, header)
+        self.version, self.type, self.requestId, self.contentLength, self.paddingLength = struct.unpack(FCGI_Header, header)
 
         if self.contentLength:
             try:
@@ -201,14 +203,15 @@ class Record(object):
         if self.contentLength:
             self._sendall(sock, self.contentData)
         if self.paddingLength:
-            self._sendall(sock, '\x00'*self.paddingLength)
+            self._sendall(sock, '\x00' * self.paddingLength)
+
 
 class FCGIApp(object):
 
     def __init__(self, connect=None, host=None, port=None, filterEnviron=True):
         if host is not None:
             assert port is not None
-            connect=(host, port)
+            connect = (host, port)
 
         self._connect = connect
         self._filterEnviron = filterEnviron
@@ -256,7 +259,6 @@ class FCGIApp(object):
                 rec.write(sock)
                 break
 
-
         # Empty FCGI_DATA stream
         rec = Record(FCGI_DATA, requestId)
         rec.write(sock)
@@ -278,7 +280,7 @@ class FCGIApp(object):
             elif inrec.type == FCGI_STDERR:
                 # Simply forward to wsgi.errors
                 err += inrec.contentData
-                #environ['wsgi.errors'].write(inrec.contentData)
+                # environ['wsgi.errors'].write(inrec.contentData)
             elif inrec.type == FCGI_END_REQUEST:
                 # TODO: Process appStatus/protocolStatus fields?
                 break
@@ -296,8 +298,9 @@ class FCGIApp(object):
         pos = 0
         while True:
             eolpos = result.find('\n', pos)
-            if eolpos < 0: break
-            line = result[pos:eolpos-1]
+            if eolpos < 0:
+                break
+            line = result[pos:eolpos - 1]
             pos = eolpos + 1
 
             # strip in case of CR. NB: This will also strip other
@@ -305,7 +308,8 @@ class FCGIApp(object):
             line = line.strip()
 
             # Empty line signifies end of headers
-            if not line: break
+            if not line:
+                break
 
             # TODO: Better error handling
             header, value = line.split(':', 1)
@@ -324,8 +328,8 @@ class FCGIApp(object):
         result = result[pos:]
 
         # Set WSGI status, headers, and return result.
-        #start_response(status, headers)
-        #return [result]
+        # start_response(status, headers)
+        # return [result]
 
         return status, headers, result, err
 
@@ -344,7 +348,7 @@ class FCGIApp(object):
             return sock
 
         # To be done when I have more time...
-        raise NotImplementedError, 'Launching and managing FastCGI programs not yet implemented'
+        raise NotImplementedError('Launching and managing FastCGI programs not yet implemented')
 
     def _fcgiGetValues(self, sock, vars):
         # Construct FCGI_GET_VALUES record
@@ -369,10 +373,9 @@ class FCGIApp(object):
         return result
 
     def _fcgiParams(self, sock, requestId, params):
-        #print params
         rec = Record(FCGI_PARAMS, requestId)
         data = []
-        for name,value in params.items():
+        for name, value in params.items():
             data.append(encode_pair(name, value))
         data = bytearray('').join(data)
         rec.contentData = data
@@ -381,7 +384,7 @@ class FCGIApp(object):
 
     _environPrefixes = ['SERVER_', 'HTTP_', 'REQUEST_', 'REMOTE_', 'PATH_',
                         'CONTENT_', 'DOCUMENT_', 'SCRIPT_']
-    _environCopies = ['SCRIPT_NAME', 'QUERY_STRING', 'AUTH_TYPE','HTTPS']
+    _environCopies = ['SCRIPT_NAME', 'QUERY_STRING', 'AUTH_TYPE', 'HTTPS']
     _environRenames = {}
 
     def _defaultFilterEnviron(self, environ):
