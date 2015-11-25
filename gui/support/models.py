@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -29,10 +28,10 @@ import logging
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI import choices
 from freenasUI.freeadmin.models import Model
 
 log = logging.getLogger("support.models")
+
 
 class Support(Model):
     support_email = models.CharField(
@@ -40,16 +39,16 @@ class Support(Model):
         verbose_name=_("From Email"),
         help_text=_("The email address that the system will use to create this ticket"),
         default='',
-        )
+    )
     support_subject = models.CharField(
         max_length=50,
         verbose_name=_("Subject"),
         help_text=_("Support subject.")
-        )
+    )
     support_description = models.TextField(
         verbose_name=_("Description"),
         help_text=_("A description of the issue.")
-        )
+    )
 
     class Meta:
         verbose_name = _("Support")
