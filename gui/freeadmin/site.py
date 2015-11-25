@@ -54,9 +54,9 @@ class FreeAdminSite(object):
             self._registry[admin_obj] = admin_obj
         else:
             for model in model_or_iterable:
-                #FIXME: Do not allow abstract models expect for the ones
+                # FIXME: Do not allow abstract models expect for the ones
                 #       In a whitelist
-                #if model._meta.abstract:
+                # if model._meta.abstract:
                 #    log.warn(
                 #        "Model %r is abstract and thus cannot be registered",
                 #        model)
@@ -185,8 +185,7 @@ class FreeAdminSite(object):
                 url(r'^%s/%s/' % (
                     model_admin.app_label,
                     model_admin.module_name,
-                    ),
-                    include(model_admin.urls))
+                ), include(model_admin.urls)),
             )
 
         return urlpatterns
