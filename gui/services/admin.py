@@ -125,7 +125,7 @@ class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
         'id',
         'iscsi_target_auth_secret',
         'iscsi_target_auth_peersecret',
-        )
+    )
     nav_extra = {'order': 5}
 
     resource_name = 'services/iscsi/authcredential'

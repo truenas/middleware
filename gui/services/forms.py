@@ -40,10 +40,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
-from freenasUI.common.samba import (
-    SAMBA_PROVISIONED_FILE,
-    Samba4
-)
+from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     validate_netbios_name,
     validate_netbios_names,
@@ -942,9 +939,10 @@ class UPSForm(ModelForm):
                 raise forms.ValidationError(ungettext_lazy(
                     'The email %(email)s is not valid',
                     'The following emails are not valid: %(email)s',
-                    len(invalids)) % {
-                        'email': ", ".join(invalids),
-                    })
+                    len(invalids)
+                ) % {
+                    'email': ", ".join(invalids),
+                })
         return email
 
     def save(self):
@@ -1145,7 +1143,7 @@ class iSCSITargetToExtentForm(ModelForm):
         qs = models.iSCSITargetToExtent.objects.filter(
             iscsi_target__id=target.id,
             iscsi_extent__id=extent.id
-            )
+        )
         if qs.exists():
             raise forms.ValidationError(
                 _("Extent is already in this target.")
@@ -1171,13 +1169,13 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
     def _clean_number_range(self, field, start, end):
         f = self.cleaned_data[field]
         if f < start or f > end:
-            raise forms.ValidationError(
-                _("This value must be between %(start)d and %(end)d, "
-                    "inclusive.") % {
-                        'start': start,
-                        'end': end,
-                    }
-            )
+            raise forms.ValidationError(_(
+                "This value must be between %(start)d and %(end)d, "
+                "inclusive."
+            ) % {
+                'start': start,
+                'end': end,
+            })
         return f
 
     def clean_iscsi_isns_servers(self):
@@ -1221,6 +1219,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
+        return obj
 
 
 class iSCSITargetExtentForm(ModelForm):
@@ -1541,7 +1540,6 @@ class iSCSITargetPortalForm(ModelForm):
             return None
         return discoverygroup
 
-
     def clean_iscsi_target_portal_tag(self):
         tag = self.cleaned_data["iscsi_target_portal_tag"]
         higher = models.iSCSITargetPortal.objects.all().count() + 1
@@ -1795,9 +1793,10 @@ class SMARTForm(ModelForm):
                 raise forms.ValidationError(ungettext_lazy(
                     'The email %(email)s is not valid',
                     'The following emails are not valid: %(email)s',
-                    len(invalids)) % {
-                        'email': ", ".join(invalids),
-                    })
+                    len(invalids)
+                ) % {
+                    'email': ", ".join(invalids),
+                })
             else:
                 email = email.replace(' ', '')
         return email
@@ -1826,7 +1825,7 @@ class DomainControllerForm(ModelForm):
             'dc_forest_level',
             'dc_passwd',
             'dc_passwd2',
-            'dc_kerberos_realm' 
+            'dc_kerberos_realm'
         ]
         model = models.DomainController
         widgets = {
@@ -1835,7 +1834,9 @@ class DomainControllerForm(ModelForm):
 
     def __original_save(self):
         for name in ('dc_realm', 'dc_domain', 'dc_role', 'dc_passwd', 'dc_forest_level'):
-            setattr(self.instance, "_original_%s" % name,
+            setattr(
+                self.instance,
+                "_original_%s" % name,
                 getattr(self.instance, name)
             )
 
@@ -1907,30 +1908,45 @@ class WebDAVForm(ModelForm):
 
     class Meta:
         fields = (
-            'webdav_protocol', 'webdav_tcpport','webdav_tcpportssl',
-            'webdav_certssl','webdav_htauth','webdav_password'
+            'webdav_protocol', 'webdav_tcpport', 'webdav_tcpportssl',
+            'webdav_certssl', 'webdav_htauth', 'webdav_password'
         )
         model = models.WebDAV
         widgets = {
-            'webdav_tcpport' : forms.widgets.TextInput(),
-            'webdav_tcpportssl' : forms.widgets.TextInput(),
-            'webdav_password' : forms.widgets.PasswordInput(render_value=False), 
+            'webdav_tcpport': forms.widgets.TextInput(),
+            'webdav_tcpportssl': forms.widgets.TextInput(),
+            'webdav_password': forms.widgets.PasswordInput(render_value=False),
         }
 
     def __original_save(self):
-        for name in ('webdav_password', 'webdav_tcpport','webdav_tcpportssl','webdav_protocol','webdav_htauth','webdav_certssl'):
+        for name in (
+            'webdav_password',
+            'webdav_tcpport',
+            'webdav_tcpportssl',
+            'webdav_protocol',
+            'webdav_htauth',
+            'webdav_certssl'
+        ):
             setattr(
-                self.instance, "_original_%s" % name,
+                self.instance,
+                "_original_%s" % name,
                 getattr(self.instance, name)
             )
 
-    def _has_changed(self,name):
+    def _has_changed(self, name):
         if getattr(self.instance, "_original_%s" % name) != getattr(self.instance, name):
             return True
         return False
 
     def __original_changed(self):
-        for name in ('webdav_password', 'webdav_tcpport', 'webdav_protocol','webdav_tcpportssl','webdav_htauth','webdav_certssl'):
+        for name in (
+            'webdav_password',
+            'webdav_tcpport',
+            'webdav_protocol',
+            'webdav_tcpportssl',
+            'webdav_htauth',
+            'webdav_certssl'
+        ):
             original_value = getattr(self.instance, "_original_%s" % name)
             instance_value = getattr(self.instance, name)
             if original_value != instance_value:
@@ -1971,17 +1987,19 @@ class WebDAVForm(ModelForm):
         return cdata
 
     def save(self):
-        obj = super(WebDAVForm,self).save(commit=False)
+        obj = super(WebDAVForm, self).save(commit=False)
         obj.webdav_password = notifier().pwenc_encrypt(
             self.cleaned_data.get('webdav_password')
         )
         obj.save()
         if self.__original_changed():
             started = notifier().reload("webdav")
-            if (started is False
-                and
-                models.services.objects.get(srv_service='webdav').srv_enable):
-                    raise ServiceFailed( "webdav", _("The WebDAV service failed to reload."))
+            if (
+                started is False and
+                models.services.objects.get(srv_service='webdav').srv_enable
+            ):
+                raise ServiceFailed("webdav", _("The WebDAV service failed to reload."))
+        return obj
 
     def done(self, *args, **kwargs):
         if self._has_changed('webdav_certssl'):
