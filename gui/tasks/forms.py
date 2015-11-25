@@ -266,7 +266,7 @@ class RsyncForm(ModelForm):
                 search = os.path.join(home, ".ssh", "id_[edr]*.*")
                 if not glob.glob(search):
                     raise ValueError
-            except (KeyError, ValueError, AttributeError, TypeError) as e:
+            except (KeyError, ValueError, AttributeError, TypeError):
                 self._errors['rsync_user'] = self.error_class([
                     _("In order to use rsync over SSH you need a user<br />"
                       "with a public key (DSA/ECDSA/RSA) set up in home dir."),
