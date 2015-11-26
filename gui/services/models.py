@@ -1708,6 +1708,7 @@ class SSH(Model):
         deletable = False
         icon_model = "OpenSSHIcon"
         advanced_fields = (
+            'ssh_kerberosauth',
             'ssh_sftp_log_level',
             'ssh_sftp_log_facility',
             'ssh_privatekey',
