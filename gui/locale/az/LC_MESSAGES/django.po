@@ -12038,3 +12038,15 @@ msgstr ""
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr ""
+
+#: system/alertmods/mps_firmware.py:35
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr ""
