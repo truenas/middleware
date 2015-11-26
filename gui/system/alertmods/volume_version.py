@@ -1,3 +1,5 @@
+import subprocess
+
 from django.utils.translation import ugettext as _
 
 from freenasUI.storage.models import Volume
@@ -19,6 +21,19 @@ class VolumeVersionAlert(BaseAlert):
                         'Guide for instructions.'
                     ) % vol.vol_name,
                 ))
+
+        proc = subprocess.Popen(
+            "zfs upgrade | grep FILESYSTEM",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        output = proc.communicate()[0].strip(' ').strip('\n')
+        if output:
+            alerts.append(Alert(Alert.WARN, _(
+                'ZFS filesystem version is out of date. Consider upgrading'
+                ' using "zfs upgrade" command line.'
+            )))
 
         return alerts
 
