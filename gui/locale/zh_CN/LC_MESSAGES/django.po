@@ -12246,3 +12246,17 @@ msgstr "若允许信任域，则设置此项。"
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+#, fuzzy
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr "/dev/mps%(mps)s 中固件版本 %(fwversion)s 与驱动器版本 %(drversion)s 不匹配"
+
+#: system/alertmods/mps_firmware.py:35
+#, fuzzy
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr "/dev/mps%(mps)s 中固件版本 %(fwversion)s 与驱动器版本 %(drversion)s 不匹配"
