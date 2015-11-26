@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-11-13 21:55+0000\n"
+"PO-Revision-Date: 2015-11-25 20:08+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1447451712.0\n"
+"X-POOTLE-MTIME: 1448482126.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -12953,3 +12953,19 @@ msgstr "Установите если вы хотите разрешить До�
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
 msgstr ""
+
+#: system/alertmods/mpr_firmware.py:34
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mpr%(mpr)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr ""
+"Версия firmware %(fwversion)s не соответствует версии драйвера %(drversion)s "
+"для /dev/mpr%(mpr)s. Пожалуйста прошейте контроллер P%(drversion)s IT."
+
+#: system/alertmods/mps_firmware.py:35
+msgid ""
+"Firmware version %(fwversion)s does not match driver version %(drversion)s "
+"for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr ""
+"Версия firmware %(fwversion)s не соответствует версии драйвера %(drversion)s "
+"для /dev/mps%(mps)s. Пожалуйста прошейте контроллер P%(drversion)s IT."
