@@ -1566,6 +1566,10 @@ class SSH(Model):
         verbose_name=_("Allow Password Authentication"),
         default=False,
     )
+    ssh_kerberosauth = models.BooleanField(
+        verbose_name=_("Allow Kerberos Authentication"),
+        default=False,
+    )
     ssh_tcpfwd = models.BooleanField(
         verbose_name=_("Allow TCP Port Forwarding"),
         default=False,
