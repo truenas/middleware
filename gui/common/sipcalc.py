@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -65,19 +64,21 @@ class sipcalc_base_type(object):
     def is_ipv4(self):
         res = False
         if self.sipcalc_out[0].startswith("-[ipv4") or (
-            self.iface != None and self.sipcalc_out[0].startswith("-[int-ipv4")):
+            self.iface is not None and self.sipcalc_out[0].startswith("-[int-ipv4")
+        ):
             res = True
         return res
 
     def is_ipv6(self):
         res = False
         if self.sipcalc_out[0].startswith("-[ipv6") or (
-            self.iface != None and self.sipcalc_out[0].startswith("-[int-ipv6")):
+            self.iface is not None and self.sipcalc_out[0].startswith("-[int-ipv6")
+        ):
             res = True
         return res
 
     def __str__(self):
-        self_str = None 
+        self_str = None
         if self.is_ipv4():
             self_str = "%s/%d" % (self.host_address, self.network_mask_bits)
         elif self.is_ipv6():
@@ -107,63 +108,62 @@ class sipcalc_base_type(object):
 
     def __add__(self, other):
         num = self.to_decimal() + other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __sub__(self, other):
         num = self.to_decimal() - other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __mul__(self, other):
         num = self.to_decimal() * other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __floordiv__(self, other):
         num = self.to_decimal() // other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __mod__(self, other):
         num = self.to_decimal() % other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __divmod__(self, other):
-        num = (self.to_decimal()// other, \
-            self.to_decimal() % other)
-        addr = self.to_ip(num) 
+        num = (self.to_decimal() // other, self.to_decimal() % other)
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __pow__(self, other):
         num = self.to_decimal() ** other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __lshift__(self, other):
         num = self.to_decimal() << other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rshift__(self, other):
         num = self.to_decimal() >> other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __and__(self, other):
         num = self.to_decimal() & other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __xor__(self, other):
         num = self.to_decimal() ^ other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __or__(self, other):
         num = self.to_decimal() | other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __div__(self, other):
@@ -174,151 +174,151 @@ class sipcalc_base_type(object):
 
     def __radd__(self, other):
         num = self.to_decimal() + other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rsub__(self, other):
         num = self.to_decimal() - other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rmul__(self, other):
         num = self.to_decimal() * other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rdiv__(self, other):
         num = self.to_decimal() / other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rtruediv__(self, other):
         num = self.to_decimal() // other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rfloordiv__(self, other):
         num = self.to_decimal() // other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rmod__(self, other):
         num = self.to_decimal() % other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rdivmod__(self, other):
-        num = (self.to_decimal() // other, \
-            self.to_decimal() % other)
-        addr = self.to_ip(num) 
+        num = (self.to_decimal() // other, self.to_decimal() % other)
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rpow__(self, other):
         num = self.to_decimal() ** other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rlshift__(self, other):
         num = self.to_decimal() << other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rrshift__(self, other):
         num = self.to_decimal() << other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rand__(self, other):
         num = self.to_decimal() & other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __rxor__(self, other):
         num = self.to_decimal() ^ other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __ror__(self, other):
         num = self.to_decimal() | other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __iadd__(self, other):
         num = self.to_decimal() + other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __isub__(self, other):
         num = self.to_decimal() - other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __imul__(self, other):
         num = self.to_decimal() * other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __idiv__(self, other):
         num = self.to_decimal() / other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __itruediv__(self, other):
         num = self.to_decimal() // other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __ifloordiv__(self, other):
         num = self.to_decimal() // other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __imod__(self, other):
         num = self.to_decimal() % other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
-    def __invert__(self): 
+    def __invert__(self):
         num = ~self.to_decimal()
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __ipow__(self, other):
         num = self.to_decimal() ** other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __ilshift__(self, other):
         num = self.to_decimal() << other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __irshift__(self, other):
         num = self.to_decimal() >> other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __iand__(self, other):
         num = self.to_decimal() & other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __ixor__(self, other):
         num = self.to_decimal() ^ other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
 
     def __ior__(self, other):
         num = self.to_decimal() | other
-        addr = self.to_ip(num) 
+        addr = self.to_ip(num)
         return sipcalc_type(addr)
+
 
 class sipcalc_ipv4_type(sipcalc_base_type):
     def __init__(self, *args, **kwargs):
         super(sipcalc_ipv4_type, self).__init__(*args, **kwargs)
 
         for line in self.sipcalc_out:
-            parts = line.split("-") 
+            parts = line.split("-")
 
             i = 0
             plen = len(parts)
@@ -336,7 +336,7 @@ class sipcalc_ipv4_type(sipcalc_base_type):
                 self.host_address_hex = parts[1]
 
             elif parts[0] == "Network address":
-                self.network_address  = parts[1]
+                self.network_address = parts[1]
 
             elif parts[0] == "Network mask":
                 self.network_mask = parts[1]
@@ -386,13 +386,17 @@ class sipcalc_ipv4_type(sipcalc_base_type):
         res = False
 
         st_addr = sipcalc_type(addr).host_address_dec
-        st_start = sipcalc_type("%s/%d" % (self.network_range[0],
-            self.network_mask_bits)).host_address_dec
-        st_end = sipcalc_type("%s/%d" % (self.network_range[1],
-            self.network_mask_bits)).host_address_dec
+        st_start = sipcalc_type("%s/%d" % (
+            self.network_range[0],
+            self.network_mask_bits
+        )).host_address_dec
+        st_end = sipcalc_type("%s/%d" % (
+            self.network_range[1],
+            self.network_mask_bits
+        )).host_address_dec
 
         if st_addr >= st_start and st_addr <= st_end:
-            res = True 
+            res = True
 
         return res
 
@@ -414,13 +418,14 @@ class sipcalc_ipv4_type(sipcalc_base_type):
         naddr = "%d.%d.%d.%d" % (oct1, oct2, oct3, oct4)
         return naddr
 
+
 class sipcalc_ipv6_type(sipcalc_base_type):
     def __init__(self, *args, **kwargs):
         super(sipcalc_ipv6_type, self).__init__(*args, **kwargs)
 
         network_range = 0
         for line in self.sipcalc_out:
-            parts = line.split("-") 
+            parts = line.split("-")
 
             i = 0
             plen = len(parts)
@@ -459,10 +464,12 @@ class sipcalc_ipv6_type(sipcalc_base_type):
                 self.network_range[1] = parts[0]
 
     def to_binary(self, addr=None):
-        numbers = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
+        numbers = {
+            '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
             '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'a': 10,
-            'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15 }
-   
+            'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15
+        }
+
         if addr is not None:
             addr = sipcalc_type(addr).expanded_address
         else:
@@ -497,9 +504,11 @@ class sipcalc_ipv6_type(sipcalc_base_type):
         return bnum
 
     def to_decimal(self, addr=None):
-        numbers = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
+        numbers = {
+            '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
             '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 'a': 10,
-            'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15 }
+            'b': 11, 'c': 12, 'd': 13, 'e': 14, 'f': 15
+        }
         if addr is not None:
             addr = sipcalc_type(addr).expanded_address
         else:
@@ -524,26 +533,26 @@ class sipcalc_ipv6_type(sipcalc_base_type):
 
     def to_ip(self, num=None):
         if num is None:
-           num = self.to_decimal()
+            num = self.to_decimal()
 
-        addr = "" 
+        addr = ""
         haddr = hex(num)
         parts1 = haddr.split('x')
         if len(parts1) > 1:
-            parts2 = parts1[1].split('L') 
+            parts2 = parts1[1].split('L')
             hstr = parts2[0]
 
             i = 0
-            hlen = len(hstr) 
+            hlen = len(hstr)
             while i < hlen:
                 addr += hstr[i]
                 if (i + 1) % 4 == 0 and (i + 1) < hlen:
                     addr += ':'
-                i += 1 
+                i += 1
 
         addr = "%s/%d" % (addr, self.prefix_length)
         return addr
-   
+
     def in_network(self, addr):
         res = False
 
@@ -572,26 +581,27 @@ class sipcalc_ipv6_type(sipcalc_base_type):
         haddr = hex(daddr)
         parts1 = haddr.split('x')
         if len(parts1) > 1:
-            parts2 = parts1[1].split('L') 
+            parts2 = parts1[1].split('L')
             hstr = parts2[0]
 
             i = 0
-            hlen = len(hstr) 
+            hlen = len(hstr)
             while i < hlen:
                 naddr += hstr[i]
                 if (i + 1) % 4 == 0 and (i + 1) < hlen:
                     naddr += ':'
-                i += 1 
+                i += 1
 
         if not naddr:
             naddr = None
 
         return naddr
 
+
 class sipcalc_type(sipcalc_base_type):
-    def __new__(cls, *args, **kwargs):    
+    def __new__(cls, *args, **kwargs):
         obj = None
-        sbt = sipcalc_base_type(*args, **kwargs) 
+        sbt = sipcalc_base_type(*args, **kwargs)
 
         if sbt.is_ipv4():
             obj = sipcalc_ipv4_type(*args, **kwargs)

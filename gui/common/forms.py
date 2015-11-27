@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -100,8 +99,10 @@ class ModelForm(AdvMixin, MF):
         """Returns this form rendered as HTML <tr>s -- excluding the
         <table></table>."""
         return self._html_output(
-            normal_row=(u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
-                '%(errors)s%(field)s</td></tr>'),
+            normal_row=(
+                u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
+                '%(errors)s%(field)s</td></tr>'
+            ),
             error_row=u'<tr><td colspan="2">%s</td></tr>',
             row_ender=u'</td></tr>',
             help_text_html=u'<br />%s',
@@ -170,8 +171,10 @@ class Form(AdvMixin, F):
         """Returns this form rendered as HTML <tr>s -- excluding the
         <table></table>."""
         return self._html_output(
-            normal_row=(u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
-                '%(errors)s%(field)s</td></tr>'),
+            normal_row=(
+                u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
+                '%(errors)s%(field)s</td></tr>'
+            ),
             error_row=u'<tr><td colspan="2">%s</td></tr>',
             row_ender=u'</td></tr>',
             help_text_html=u'<br />%s',

@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -24,13 +23,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from freenasUI.common.acl import (Base_ACL, Base_ACL_Hierarchy,
-    ACL_FLAGS_TYPE_NFSV4)
+from freenasUI.common.acl import (
+    Base_ACL, Base_ACL_Hierarchy, ACL_FLAGS_TYPE_NFSV4
+)
 from freenasUI.common.freenasnfsv4 import NFSv4_ACL, NFSv4_ACL_Hierarchy
 from freenasUI.common.freenasufs import POSIX_ACL, POSIX_ACL_Hierarchy
 
+
 class ACL(Base_ACL):
-    def __new__(cls, path, type = None):
+    def __new__(cls, path, type=None):
 
         obj = None
         if Base_ACL.get_acl_type(path) == ACL_FLAGS_TYPE_NFSV4:

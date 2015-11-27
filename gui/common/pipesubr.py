@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -56,7 +55,7 @@ def unblock_sigchld():
 
 
 def fastclose():
-    #FIXME: Take into account keep_fd and determine which fds from /dev/fd
+    # FIXME: Take into account keep_fd and determine which fds from /dev/fd
     # or fstat. See #10206
     for fd in range(3, 1024):
         try:
@@ -67,16 +66,20 @@ def fastclose():
 
 def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
     if not quiet:
-        logger.log(logging.NOTICE if important else logging.DEBUG,
-            "Popen()ing: " + command)
+        logger.log(
+            logging.NOTICE if important else logging.DEBUG,
+            "Popen()ing: " + command
+        )
     args = shlex_split(str(command))
 
     preexec_fn = fastclose
     if allowfork:
-        preexec_fn = lambda : (fastclose(), unblock_sigchld())
+        preexec_fn = lambda: (fastclose(), unblock_sigchld())
 
-    return Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        close_fds=False, preexec_fn=preexec_fn)
+    return Popen(
+        args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        close_fds=False, preexec_fn=preexec_fn
+    )
 
 
 class Command(object):
@@ -124,9 +127,13 @@ def run(command, important=True, logger=log, allowfork=False, quiet=False, timeo
 
 
 def system(command, important=True, logger=log):
-    logger.log(logging.NOTICE if important else logging.DEBUG,
-        "Executing: " + command)
+    logger.log(
+        logging.NOTICE if important else logging.DEBUG,
+        "Executing: " + command
+    )
     __system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (
         logger.name, ))
-    logger.log(logging.INFO if important else logging.DEBUG,
-        "Executed: " + command)
+    logger.log(
+        logging.INFO if important else logging.DEBUG,
+        "Executed: " + command
+    )

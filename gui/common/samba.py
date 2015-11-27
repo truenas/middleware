@@ -1,4 +1,3 @@
-#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -41,6 +40,7 @@ class SambaConf(object):
     # Stub! Implement later!
     pass
 
+
 class Samba4(object):
     def __init__(self, *args, **kwargs):
         self.samba_tool_path = SAMBA_TOOL
@@ -61,9 +61,9 @@ class Samba4(object):
 
         p = pipeopen("%s %s" % (self.samba_tool_path, samba_tool_args), quiet=quiet)
         out = p.communicate()
-        if buf != None:
-            buf.append(out) 
-  
+        if buf is not None:
+            buf.append(out)
+
         if p.returncode != 0:
             return False
 
@@ -101,16 +101,16 @@ class Samba4(object):
             for line in buf.splitlines():
                 print >> sys.stdout, "%s" % line
 
-        except:  
+        except:
             pass
 
         return res
 
     def disable_password_complexity(self):
-        return self.samba_tool("domain passwordsettings set", { 'complexity': 'off'})
+        return self.samba_tool("domain passwordsettings set", {'complexity': 'off'})
 
     def set_min_pwd_length(self):
-        return self.samba_tool("domain passwordsettings set", { 'min-pwd-length': '1'})
+        return self.samba_tool("domain passwordsettings set", {'min-pwd-length': '1'})
 
     def set_administrator_password(self):
         try:
@@ -121,20 +121,21 @@ class Samba4(object):
         return self.set_user_password('Administrator', dc.dc_passwd)
 
     def change_forest_level(self, level):
-        return self.samba_tool("domain level raise", { 'forest-level': level})
+        return self.samba_tool("domain level raise", {'forest-level': level})
 
     def change_domain_level(self, level):
-        return self.samba_tool("domain level raise", { 'domain-level': level})
+        return self.samba_tool("domain level raise", {'domain-level': level})
 
     def user_add(self):
         pass
+
     def user_create(self):
         pass
 
     def user_delete(self, user):
         return self.samba_tool("user delete", None, [user])
 
-    def user_disable(self, user): 
+    def user_disable(self, user):
         return self.samba_tool("user disable", None, [user])
 
     def user_enable(self, user):
@@ -151,30 +152,33 @@ class Samba4(object):
             buf = buf[0][0]
             users = buf.splitlines()
 
-        except: 
+        except:
             pass
 
         return users
 
     def user_password(self):
         pass
+
     def user_setexpiry(self):
         pass
+
     def user_setpassword(self):
         pass
 
     def set_user_password(self, user, password):
-        return self.samba_tool("user setpassword", {'newpassword': password }, [user], True)
+        return self.samba_tool("user setpassword", {'newpassword': password}, [user], True)
 
-    def group_add(self, group): 
+    def group_add(self, group):
         return self.samba_tool("group add", None, [group])
 
-    def group_create(self, group): 
+    def group_create(self, group):
         return self.samba_tool("group create", None, [group])
 
-    def group_addmembers(self, group, members): 
-        return self.samba_tool("group addmembers", None,
-            [group, string.join(members,  ',')])
+    def group_addmembers(self, group, members):
+        return self.samba_tool(
+            "group addmembers", None, [group, string.join(members, ',')]
+        )
 
     def group_delete(self, group):
         return self.samba_tool("group delete", None, [group])
@@ -184,20 +188,20 @@ class Samba4(object):
         groups = []
 
         if not self.samba_tool("group list", None, buf=buf):
-            return groups 
+            return groups
 
         try:
             buf = buf[0][0]
             groups = buf.splitlines()
 
-        except: 
+        except:
             pass
 
         return groups
 
     def group_listmembers(self, group):
         buf = []
-        members = [] 
+        members = []
 
         if not self.samba_tool("group listmembers", None, [group], buf=buf):
             return members
@@ -206,18 +210,20 @@ class Samba4(object):
             buf = buf[0][0]
             members = buf.splitlines()
 
-        except: 
+        except:
             pass
 
         return members
 
     def group_removemembers(self, group, members):
-        return self.samba_tool("group removemembers", None,
-            [group, string.join(members,  ',')])
+        return self.samba_tool(
+            "group removemembers", None, [group, string.join(members, ',')]
+        )
 
     def sentinel_file_exists(self, sentinel_file):
-        return (os.path.exists(sentinel_file) and \
-            os.path.isfile(sentinel_file))
+        return (
+            os.path.exists(sentinel_file) and os.path.isfile(sentinel_file)
+        )
 
     def sentinel_file_create(self, sentinel_file):
         ret = False
@@ -239,7 +245,7 @@ class Samba4(object):
         if os.path.exists(sentinel_file):
             try:
                 os.unlink(sentinel_file)
-                ret = True  
+                ret = True
 
             except Exception as e:
                 print >> sys.stderr, "Unable to remove %s: %s" % (sentinel_file, e)

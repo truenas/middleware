@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -59,38 +58,38 @@ class warden_exception(Exception):
 #
 # Warden dict keys
 #
-WARDEN_KEY_ID             = "id"
-WARDEN_KEY_HOST           = "host"
-WARDEN_KEY_IP4            = "ipv4"
-WARDEN_KEY_ALIASIP4       = "alias_ipv4"
-WARDEN_KEY_BRIDGEIP4      = "bridge_ipv4"
+WARDEN_KEY_ID = "id"
+WARDEN_KEY_HOST = "host"
+WARDEN_KEY_IP4 = "ipv4"
+WARDEN_KEY_ALIASIP4 = "alias_ipv4"
+WARDEN_KEY_BRIDGEIP4 = "bridge_ipv4"
 WARDEN_KEY_ALIASBRIDGEIP4 = "alias_bridge_ipv4"
 WARDEN_KEY_DEFAULTROUTER4 = "defaultrouter_ipv4"
-WARDEN_KEY_IP6            = "ipv6"
-WARDEN_KEY_ALIASIP6       = "alias_ipv6"
-WARDEN_KEY_BRIDGEIP6      = "bridge_ipv6"
+WARDEN_KEY_IP6 = "ipv6"
+WARDEN_KEY_ALIASIP6 = "alias_ipv6"
+WARDEN_KEY_BRIDGEIP6 = "bridge_ipv6"
 WARDEN_KEY_ALIASBRIDGEIP6 = "alias_bridge_ipv6"
 WARDEN_KEY_DEFAULTROUTER6 = "defaultrouter_ipv6"
-WARDEN_KEY_AUTOSTART      = "autostart"
-WARDEN_KEY_VNET           = "vnet"
-WARDEN_KEY_NAT            = "nat"
-WARDEN_KEY_MAC            = "mac"
-WARDEN_KEY_STATUS         = "status"
-WARDEN_KEY_TYPE           = "type"
-WARDEN_KEY_FLAGS          = "flags"
-WARDEN_KEY_IFACE          = "iface"
+WARDEN_KEY_AUTOSTART = "autostart"
+WARDEN_KEY_VNET = "vnet"
+WARDEN_KEY_NAT = "nat"
+WARDEN_KEY_MAC = "mac"
+WARDEN_KEY_STATUS = "status"
+WARDEN_KEY_TYPE = "type"
+WARDEN_KEY_FLAGS = "flags"
+WARDEN_KEY_IFACE = "iface"
 
 #
 # Warden template dict keys
 #
-WARDEN_TKEY_NICK          = "nick"
-WARDEN_TKEY_TYPE          = "type"
-WARDEN_TKEY_VERSION       = "version"
-WARDEN_TKEY_ARCH          = "arch"
-WARDEN_TKEY_INSTANCES     = "instances"
+WARDEN_TKEY_NICK = "nick"
+WARDEN_TKEY_TYPE = "type"
+WARDEN_TKEY_VERSION = "version"
+WARDEN_TKEY_ARCH = "arch"
+WARDEN_TKEY_INSTANCES = "instances"
 
 #
-# Warden jail status 
+# Warden jail status
 #
 WARDEN_STATUS_RUNNING = "Running"
 WARDEN_STATUS_STOPPED = "Stopped"
@@ -98,32 +97,32 @@ WARDEN_STATUS_STOPPED = "Stopped"
 #
 # Warden jail type
 #
-WARDEN_TYPE_STANDARD   = "standard"
+WARDEN_TYPE_STANDARD = "standard"
 WARDEN_TYPE_PLUGINJAIL = "pluginjail"
-WARDEN_TYPE_PORTJAIL   = "portjail"
-WARDEN_TYPE_LINUXJAIL  = "linuxjail"
+WARDEN_TYPE_PORTJAIL = "portjail"
+WARDEN_TYPE_LINUXJAIL = "linuxjail"
 
 #
-# Warden jail autostart 
+# Warden jail autostart
 #
-WARDEN_AUTOSTART_ENABLED  = "Enabled"
+WARDEN_AUTOSTART_ENABLED = "Enabled"
 WARDEN_AUTOSTART_DISABLED = "Disabled"
 
 #
 # Warden jail vnet
 #
-WARDEN_VNET_ENABLED  = "Enabled"
+WARDEN_VNET_ENABLED = "Enabled"
 WARDEN_VNET_DISABLED = "Disabled"
 
 #
 # Warden jail nat
 #
-WARDEN_NAT_ENABLED  = "Enabled"
+WARDEN_NAT_ENABLED = "Enabled"
 WARDEN_NAT_DISABLED = "Disabled"
 
-# 
+#
 # extract-tarball status file
-# 
+#
 WARDEN_EXTRACT_STATUS_FILE = "/var/tmp/status"
 
 
@@ -145,21 +144,21 @@ WARDEN_CHROOT = "chroot"
 WARDEN_CHROOT_FLAGS = []
 
 WARDEN_CREATE = "create"
-WARDEN_CREATE_FLAGS_32BIT		= warden_arg(0x00000001, "-32")
-WARDEN_CREATE_FLAGS_IPV4		= warden_arg(0x00000002, "--ipv4", True, "ipv4")
-WARDEN_CREATE_FLAGS_IPV6		= warden_arg(0x00000004, "--ipv6", True, "ipv6")
-WARDEN_CREATE_FLAGS_SRC			= warden_arg(0x00000008, "--src")
-WARDEN_CREATE_FLAGS_PORTS		= warden_arg(0x00000010, "--ports")
-WARDEN_CREATE_FLAGS_VANILLA		= warden_arg(0x00000020, "--vanilla")
-WARDEN_CREATE_FLAGS_STARTAUTO		= warden_arg(0x00000040, "--startauto")
-WARDEN_CREATE_FLAGS_JAILTYPE		= warden_arg(0x00000080, "--jailtype", True, "jailtype")
-WARDEN_CREATE_FLAGS_LINUXJAIL		= warden_arg(0x00000100, "--linuxjail", True, "script")
-WARDEN_CREATE_FLAGS_ARCHIVE		= warden_arg(0x00000200, "--archive", True, "archive")
-WARDEN_CREATE_FLAGS_LINUXARCHIVE	= warden_arg(0x00000400, "--linuxarchive", True, "linuxarchive")
-WARDEN_CREATE_FLAGS_VERSION		= warden_arg(0x00000800, "--version", True, "version")
-WARDEN_CREATE_FLAGS_TEMPLATE 		= warden_arg(0x00001000, "--template", True, "template")
-WARDEN_CREATE_FLAGS_SYSLOG		= warden_arg(0x00002000, "--syslog")
-WARDEN_CREATE_FLAGS_LOGFILE		= warden_arg(0x00004000, "--logfile", True, "logfile")
+WARDEN_CREATE_FLAGS_32BIT = warden_arg(0x00000001, "-32")
+WARDEN_CREATE_FLAGS_IPV4 = warden_arg(0x00000002, "--ipv4", True, "ipv4")
+WARDEN_CREATE_FLAGS_IPV6 = warden_arg(0x00000004, "--ipv6", True, "ipv6")
+WARDEN_CREATE_FLAGS_SRC = warden_arg(0x00000008, "--src")
+WARDEN_CREATE_FLAGS_PORTS = warden_arg(0x00000010, "--ports")
+WARDEN_CREATE_FLAGS_VANILLA = warden_arg(0x00000020, "--vanilla")
+WARDEN_CREATE_FLAGS_STARTAUTO = warden_arg(0x00000040, "--startauto")
+WARDEN_CREATE_FLAGS_JAILTYPE = warden_arg(0x00000080, "--jailtype", True, "jailtype")
+WARDEN_CREATE_FLAGS_LINUXJAIL = warden_arg(0x00000100, "--linuxjail", True, "script")
+WARDEN_CREATE_FLAGS_ARCHIVE = warden_arg(0x00000200, "--archive", True, "archive")
+WARDEN_CREATE_FLAGS_LINUXARCHIVE = warden_arg(0x00000400, "--linuxarchive", True, "linuxarchive")
+WARDEN_CREATE_FLAGS_VERSION = warden_arg(0x00000800, "--version", True, "version")
+WARDEN_CREATE_FLAGS_TEMPLATE = warden_arg(0x00001000, "--template", True, "template")
+WARDEN_CREATE_FLAGS_SYSLOG = warden_arg(0x00002000, "--syslog")
+WARDEN_CREATE_FLAGS_LOGFILE = warden_arg(0x00004000, "--logfile", True, "logfile")
 WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_32BIT,
     WARDEN_CREATE_FLAGS_IPV4,
@@ -178,7 +177,7 @@ WARDEN_CREATE_FLAGS = [
     WARDEN_CREATE_FLAGS_LOGFILE
 ]
 
-WARDEN_DETALS = "details"
+WARDEN_DETAILS = "details"
 WARDEN_DETAILS_FLAGS = []
 
 WARDEN_DELETE = "delete"
@@ -194,21 +193,21 @@ WARDEN_EXPORT_FLAGS = [
 ]
 
 WARDEN_GET = "get"
-WARDEN_GET_FLAGS_IPV4			= warden_arg(0x00000001, "ipv4")
-WARDEN_GET_FLAGS_IPV6			= warden_arg(0x00000002, "ipv6")
-WARDEN_GET_FLAGS_ALIAS_IPV4		= warden_arg(0x00000004, "alias-ipv4")
-WARDEN_GET_FLAGS_ALIAS_IPV6		= warden_arg(0x00000008, "alias-ipv6")
-WARDEN_GET_FLAGS_BRIDGE_IPV4		= warden_arg(0x00000010, "bridge-ipv4")
-WARDEN_GET_FLAGS_BRIDGE_IPV6		= warden_arg(0x00000020, "bridge-ipv6")
-WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV4	= warden_arg(0x00000040, "alias-bridge-ipv4")
-WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000080, "alias-bridge-ipv6")
-WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4")
-WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6")
-WARDEN_GET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags")
-WARDEN_GET_FLAGS_VNET			= warden_arg(0x00000800, "vnet")
-WARDEN_GET_FLAGS_NAT			= warden_arg(0x00001000, "nat")
-WARDEN_GET_FLAGS_MAC			= warden_arg(0x00002000, "mac")
-WARDEN_GET_FLAGS_IFACE			= warden_arg(0x00004000, "iface")
+WARDEN_GET_FLAGS_IPV4 = warden_arg(0x00000001, "ipv4")
+WARDEN_GET_FLAGS_IPV6 = warden_arg(0x00000002, "ipv6")
+WARDEN_GET_FLAGS_ALIAS_IPV4 = warden_arg(0x00000004, "alias-ipv4")
+WARDEN_GET_FLAGS_ALIAS_IPV6 = warden_arg(0x00000008, "alias-ipv6")
+WARDEN_GET_FLAGS_BRIDGE_IPV4 = warden_arg(0x00000010, "bridge-ipv4")
+WARDEN_GET_FLAGS_BRIDGE_IPV6 = warden_arg(0x00000020, "bridge-ipv6")
+WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV4 = warden_arg(0x00000040, "alias-bridge-ipv4")
+WARDEN_GET_FLAGS_ALIAS_BRIDGE_IPV6 = warden_arg(0x00000080, "alias-bridge-ipv6")
+WARDEN_GET_FLAGS_DEFAULTROUTER_IPV4 = warden_arg(0x00000100, "defaultrouter-ipv4")
+WARDEN_GET_FLAGS_DEFAULTROUTER_IPV6 = warden_arg(0x00000200, "defaultrouter-ipv6")
+WARDEN_GET_FLAGS_FLAGS = warden_arg(0x00000400, "flags")
+WARDEN_GET_FLAGS_VNET = warden_arg(0x00000800, "vnet")
+WARDEN_GET_FLAGS_NAT = warden_arg(0x00001000, "nat")
+WARDEN_GET_FLAGS_MAC = warden_arg(0x00002000, "mac")
+WARDEN_GET_FLAGS_IFACE = warden_arg(0x00004000, "iface")
 WARDEN_GET_FLAGS = [
     WARDEN_GET_FLAGS_IPV4,
     WARDEN_GET_FLAGS_IPV6,
@@ -228,9 +227,9 @@ WARDEN_GET_FLAGS = [
 ]
 
 WARDEN_IMPORT = "import"
-WARDEN_IMPORT_FLAGS_IPV4	= warden_arg(0x00000001, "--ipv4", True, "ipv4")
-WARDEN_IMPORT_FLAGS_IPV6	= warden_arg(0x00000002, "--ipv6", True, "ipv6")
-WARDEN_IMPORT_FLAGS_HOST	= warden_arg(0x00000004, "--host", True, "host")
+WARDEN_IMPORT_FLAGS_IPV4 = warden_arg(0x00000001, "--ipv4", True, "ipv4")
+WARDEN_IMPORT_FLAGS_IPV6 = warden_arg(0x00000002, "--ipv6", True, "ipv6")
+WARDEN_IMPORT_FLAGS_HOST = warden_arg(0x00000004, "--host", True, "host")
 WARDEN_IMPORT_FLAGS = [
     WARDEN_IMPORT_FLAGS_IPV4,
     WARDEN_IMPORT_FLAGS_IPV6,
@@ -238,7 +237,7 @@ WARDEN_IMPORT_FLAGS = [
 ]
 
 WARDEN_LIST = "list"
-WARDEN_LIST_FLAGS_VERBOSE	= warden_arg(0x00000001, "-v")
+WARDEN_LIST_FLAGS_VERBOSE = warden_arg(0x00000001, "-v")
 WARDEN_LIST_FLAGS = [
     WARDEN_LIST_FLAGS_VERBOSE
 ]
@@ -250,23 +249,23 @@ WARDEN_PBIS = "pbis"
 WARDEN_PBIS_FLAGS = []
 
 WARDEN_SET = "set"
-WARDEN_SET_FLAGS_IPV4			= warden_arg(0x00000001, "ipv4", True, "ipv4")
-WARDEN_SET_FLAGS_IPV6			= warden_arg(0x00000002, "ipv6", True, "ipv6")
-WARDEN_SET_FLAGS_ALIAS_IPV4		= warden_arg(0x00000004, "alias-ipv4", True, "alias-ipv4")
-WARDEN_SET_FLAGS_ALIAS_IPV6		= warden_arg(0x00000008, "alias-ipv6", True, "alias-ipv6")
-WARDEN_SET_FLAGS_BRIDGE_IPV4		= warden_arg(0x00000010, "bridge-ipv4", True, "bridge-ipv4",)
-WARDEN_SET_FLAGS_BRIDGE_IPV6		= warden_arg(0x00000020, "bridge-ipv6", True, "bridge-ipv6")
-WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4	= warden_arg(0x00000040, "alias-bridge-ipv4", True, "alias-bridge-ipv4")
-WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6	= warden_arg(0x00000080, "alias-bridge-ipv6", True, "alias-bridge-ipv6")
-WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4	= warden_arg(0x00000100, "defaultrouter-ipv4", True, "defaultrouter-ipv4")
-WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6	= warden_arg(0x00000200, "defaultrouter-ipv6", True, "defaultrouter-ipv6")
-WARDEN_SET_FLAGS_FLAGS			= warden_arg(0x00000400, "flags", True, "jflags")
-WARDEN_SET_FLAGS_VNET_ENABLE		= warden_arg(0x00000800, "vnet-enable" )
-WARDEN_SET_FLAGS_VNET_DISABLE		= warden_arg(0x00001000, "vnet-disable" )
-WARDEN_SET_FLAGS_NAT_ENABLE		= warden_arg(0x00002000, "nat-enable" )
-WARDEN_SET_FLAGS_NAT_DISABLE		= warden_arg(0x00004000, "nat-disable" )
-WARDEN_SET_FLAGS_MAC			= warden_arg(0x00008000, "mac", True, "mac")
-WARDEN_SET_FLAGS_IFACE			= warden_arg(0x00010000, "iface", True, "iface")
+WARDEN_SET_FLAGS_IPV4 = warden_arg(0x00000001, "ipv4", True, "ipv4")
+WARDEN_SET_FLAGS_IPV6 = warden_arg(0x00000002, "ipv6", True, "ipv6")
+WARDEN_SET_FLAGS_ALIAS_IPV4 = warden_arg(0x00000004, "alias-ipv4", True, "alias-ipv4")
+WARDEN_SET_FLAGS_ALIAS_IPV6 = warden_arg(0x00000008, "alias-ipv6", True, "alias-ipv6")
+WARDEN_SET_FLAGS_BRIDGE_IPV4 = warden_arg(0x00000010, "bridge-ipv4", True, "bridge-ipv4",)
+WARDEN_SET_FLAGS_BRIDGE_IPV6 = warden_arg(0x00000020, "bridge-ipv6", True, "bridge-ipv6")
+WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV4 = warden_arg(0x00000040, "alias-bridge-ipv4", True, "alias-bridge-ipv4")
+WARDEN_SET_FLAGS_ALIAS_BRIDGE_IPV6 = warden_arg(0x00000080, "alias-bridge-ipv6", True, "alias-bridge-ipv6")
+WARDEN_SET_FLAGS_DEFAULTROUTER_IPV4 = warden_arg(0x00000100, "defaultrouter-ipv4", True, "defaultrouter-ipv4")
+WARDEN_SET_FLAGS_DEFAULTROUTER_IPV6 = warden_arg(0x00000200, "defaultrouter-ipv6", True, "defaultrouter-ipv6")
+WARDEN_SET_FLAGS_FLAGS = warden_arg(0x00000400, "flags", True, "jflags")
+WARDEN_SET_FLAGS_VNET_ENABLE = warden_arg(0x00000800, "vnet-enable")
+WARDEN_SET_FLAGS_VNET_DISABLE = warden_arg(0x00001000, "vnet-disable")
+WARDEN_SET_FLAGS_NAT_ENABLE = warden_arg(0x00002000, "nat-enable")
+WARDEN_SET_FLAGS_NAT_DISABLE = warden_arg(0x00004000, "nat-disable")
+WARDEN_SET_FLAGS_MAC = warden_arg(0x00008000, "mac", True, "mac")
+WARDEN_SET_FLAGS_IFACE = warden_arg(0x00010000, "iface", True, "iface")
 WARDEN_SET_FLAGS = [
     WARDEN_SET_FLAGS_IPV4,
     WARDEN_SET_FLAGS_IPV6,
@@ -294,9 +293,9 @@ WARDEN_STOP = "stop"
 WARDEN_STOP_FLAGS = []
 
 WARDEN_TYPE = "type"
-WARDEN_TYPE_FLAGS_PORTJAIL	= warden_arg(0x00000001, WARDEN_TYPE_PORTJAIL)
-WARDEN_TYPE_FLAGS_PLUGINJAIL	= warden_arg(0x00000002, WARDEN_TYPE_PLUGINJAIL)
-WARDEN_TYPE_FLAGS_STANARD	= warden_arg(0x00000004, WARDEN_TYPE_STANDARD)
+WARDEN_TYPE_FLAGS_PORTJAIL = warden_arg(0x00000001, WARDEN_TYPE_PORTJAIL)
+WARDEN_TYPE_FLAGS_PLUGINJAIL = warden_arg(0x00000002, WARDEN_TYPE_PLUGINJAIL)
+WARDEN_TYPE_FLAGS_STANARD = warden_arg(0x00000004, WARDEN_TYPE_STANDARD)
 
 WARDEN_TYPE_FLAGS = [
     WARDEN_TYPE_FLAGS_PORTJAIL,
@@ -305,9 +304,9 @@ WARDEN_TYPE_FLAGS = [
 ]
 
 WARDEN_TEMPLATE = "template"
-WARDEN_TEMPLATE_FLAGS_CREATE	=  warden_arg(0x00000001, "create")
-WARDEN_TEMPLATE_FLAGS_DELETE	=  warden_arg(0x00000002, "delete")
-WARDEN_TEMPLATE_FLAGS_LIST	=  warden_arg(0x00000004, "list")
+WARDEN_TEMPLATE_FLAGS_CREATE = warden_arg(0x00000001, "create")
+WARDEN_TEMPLATE_FLAGS_DELETE = warden_arg(0x00000002, "delete")
+WARDEN_TEMPLATE_FLAGS_LIST = warden_arg(0x00000004, "list")
 WARDEN_TEMPLATE_FLAGS = [
     WARDEN_TEMPLATE_FLAGS_CREATE,
     WARDEN_TEMPLATE_FLAGS_DELETE,
@@ -315,13 +314,13 @@ WARDEN_TEMPLATE_FLAGS = [
 ]
 
 WARDEN_TEMPLATE_CREATE = "create"
-WARDEN_TEMPLATE_CREATE_FLAGS_FBSD	= warden_arg(0x00000010, "-fbsd", True, "fbsd")
-WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS	= warden_arg(0x00000020, "-trueos", True, "trueos")
-WARDEN_TEMPLATE_CREATE_FLAGS_ARCH	= warden_arg(0x00000040, "-arch", True, "arch")
-WARDEN_TEMPLATE_CREATE_FLAGS_TAR	= warden_arg(0x00000080, "-tar", True, "tar")
-WARDEN_TEMPLATE_CREATE_FLAGS_NICK	= warden_arg(0x00000100, "-nick", True, "nick")
-WARDEN_TEMPLATE_CREATE_FLAGS_LINUX	= warden_arg(0x00000200, "-linuxjail", False)
-WARDEN_TEMPLATE_CREATE_FLAGS_MTREE	= warden_arg(0x00000400, "-mtree", True, "mtree")
+WARDEN_TEMPLATE_CREATE_FLAGS_FBSD = warden_arg(0x00000010, "-fbsd", True, "fbsd")
+WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS = warden_arg(0x00000020, "-trueos", True, "trueos")
+WARDEN_TEMPLATE_CREATE_FLAGS_ARCH = warden_arg(0x00000040, "-arch", True, "arch")
+WARDEN_TEMPLATE_CREATE_FLAGS_TAR = warden_arg(0x00000080, "-tar", True, "tar")
+WARDEN_TEMPLATE_CREATE_FLAGS_NICK = warden_arg(0x00000100, "-nick", True, "nick")
+WARDEN_TEMPLATE_CREATE_FLAGS_LINUX = warden_arg(0x00000200, "-linuxjail", False)
+WARDEN_TEMPLATE_CREATE_FLAGS_MTREE = warden_arg(0x00000400, "-mtree", True, "mtree")
 WARDEN_TEMPLATE_CREATE_FLAGS = [
     WARDEN_TEMPLATE_CREATE_FLAGS_FBSD,
     WARDEN_TEMPLATE_CREATE_FLAGS_TRUEOS,
@@ -332,11 +331,11 @@ WARDEN_TEMPLATE_CREATE_FLAGS = [
     WARDEN_TEMPLATE_CREATE_FLAGS_MTREE
 ]
 
-WARDEN_TEMPLATE_DELETE= "delete"
-WARDEN_TEMPLATE_DELETE_FLAGS = [ ]
+WARDEN_TEMPLATE_DELETE = "delete"
+WARDEN_TEMPLATE_DELETE_FLAGS = []
 
 WARDEN_TEMPLATE_LIST = "list"
-WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE      = warden_arg(0x00000001, "-v", False)
+WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE = warden_arg(0x00000001, "-v", False)
 WARDEN_TEMPLATE_LIST_FLAGS = [
     WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE
 ]
@@ -424,17 +423,19 @@ class warden_base(object):
 
         for obj in objflags:
             if self.flags & obj:
-                if obj.arg == True and obj.argname is not None and \
-                    kwargs.has_key(obj.argname) and kwargs[obj.argname] is not None:
+                if (
+                    obj.arg is True and obj.argname is not None and
+                    obj.argname in kwargs and kwargs[obj.argname] is not None
+                ):
                     self.args += " %s" % self.ass(obj, kwargs[obj.argname])
 
-                elif obj.arg == False:
+                elif obj.arg is False:
                     self.args += " %s" % obj
 
         log.debug("warden_base.__init__: args = %s", self.args)
 
         self.pipe_func = None
-        if kwargs.has_key("pipe_func") and kwargs["pipe_func"] is not None:
+        if "pipe_func" in kwargs and kwargs["pipe_func"] is not None:
             self.pipe_func = kwargs["pipe_func"]
 
         log.debug("warden_base.__init__: leave")
@@ -449,14 +450,14 @@ class warden_base(object):
         if self.args is not None:
             cmd += " %s" % self.args
 
-        if jail == True and jid > 0:
+        if jail is True and jid > 0:
             cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
 
         log.debug("warden_base.cmd = %s", cmd)
         pobj = warden_pipe(cmd, self.pipe_func)
         self.error = pobj.error
         if self.error:
-            msg = self.error 
+            msg = self.error
             if pobj.err:
                 msg = pobj.err
             raise warden_exception(msg)
@@ -469,7 +470,6 @@ class warden_base(object):
 
     def readconf(self):
         if not os.path.exists(WARDENCONF):
-            #raise ValueError("Conf does not exist")
             return
         wconf = open(WARDENCONF, "r")
         for line in wconf:
@@ -507,7 +507,7 @@ class warden_base(object):
                 if self.release:
                     line = "FREEBSD_RELEASE: %s" % self.release
 
-            lines.append(line) 
+            lines.append(line)
 
         wconf.close()
 
@@ -516,7 +516,7 @@ class warden_base(object):
         tmp = open(tmpfile, "w")
         for line in lines:
             tmp.write(line + "\n")
-        tmp.close() 
+        tmp.close()
 
         os.rename(tmpfile, WARDENCONF)
 
@@ -526,20 +526,21 @@ class warden_auto(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_auto, self).__init__(WARDEN_AUTO,
-            WARDEN_AUTO_FLAGS, flags, **kwargs)
+        super(warden_auto, self).__init__(
+            WARDEN_AUTO, WARDEN_AUTO_FLAGS, flags, **kwargs
+        )
 
     def parse(self, thestuff):
         lines = thestuff[1].splitlines()
         for line in lines:
             line = line.strip()
-            parts = line.split() 
+            parts = line.split()
             return parts[0]
-        return None 
+        return None
 
 
 class warden_bspkgng(warden_base):
@@ -547,21 +548,23 @@ class warden_bspkgng(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_bspkgng, self).__init__(WARDEN_BSPKGNG,
-            WARDEN_BSPKGNG_FLAGS, flags, **kwargs)
+        super(warden_bspkgng, self).__init__(
+            WARDEN_BSPKGNG, WARDEN_BSPKGNG_FLAGS, flags, **kwargs
+        )
 
 
 class warden_checkup(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        if not (kwargs.has_key("jail") and kwargs["jail"] is not None):
+        if not ("jail" in kwargs and kwargs["jail"] is not None):
             flags |= WARDEN_CHECKUP_FLAGS_ALL
 
-        super(warden_checkup, self).__init__(WARDEN_CHECKUP,
-            WARDEN_CHECKUP_FLAGS, flags, **kwargs)
+        super(warden_checkup, self).__init__(
+            WARDEN_CHECKUP, WARDEN_CHECKUP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_chroot(warden_base):
@@ -569,12 +572,13 @@ class warden_chroot(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_chroot, self).__init__(WARDEN_CHROOT,
-            WARDEN_CHROOT_FLAGS, flags, **kwargs)
+        super(warden_chroot, self).__init__(
+            WARDEN_CHROOT, WARDEN_CHROOT_FLAGS, flags, **kwargs
+        )
 
 
 class warden_create(warden_base):
@@ -583,12 +587,13 @@ class warden_create(warden_base):
         self.ip = None
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_create, self).__init__(WARDEN_CREATE,
-            WARDEN_CREATE_FLAGS, flags, **kwargs)
+        super(warden_create, self).__init__(
+            WARDEN_CREATE, WARDEN_CREATE_FLAGS, flags, **kwargs
+        )
 
     def ass(self, key, val):
         return "%s '%s'" % (key, val)
@@ -599,12 +604,13 @@ class warden_details(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_details, self).__init__(WARDEN_DETAILS,
-            WARDEN_DETAILS_FLAGS, flags, **kwargs)
+        super(warden_details, self).__init__(
+            WARDEN_DETAILS, WARDEN_DETAILS_FLAGS, flags, **kwargs
+        )
 
 
 class warden_delete(warden_base):
@@ -612,12 +618,13 @@ class warden_delete(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_delete, self).__init__(WARDEN_DELETE,
-            WARDEN_DELETE_FLAGS, flags, **kwargs)
+        super(warden_delete, self).__init__(
+            WARDEN_DELETE, WARDEN_DELETE_FLAGS, flags, **kwargs
+        )
 
 
 class warden_export(warden_base):
@@ -625,19 +632,20 @@ class warden_export(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_export, self).__init__(WARDEN_EXPORT,
-            WARDEN_EXPORT_FLAGS, flags, **kwargs)
+        super(warden_export, self).__init__(
+            WARDEN_EXPORT, WARDEN_EXPORT_FLAGS, flags, **kwargs
+        )
 
 
 class warden_get(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         super(warden_get, self).__init__(WARDEN_GET, WARDEN_GET_FLAGS, flags, **kwargs)
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
@@ -646,18 +654,21 @@ class warden_import(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         self.args = ""
 
-        if kwargs.has_key("file") and kwargs["file"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.file = kwargs["file"]
             self.args += " '%s'" % self.file
 
-        super(warden_export, self).__init__(WARDEN_EXPORT,
-            WARDEN_EXPORT_FLAGS, flags, **kwargs)
+        super(warden_export, self).__init__(
+            WARDEN_EXPORT, WARDEN_EXPORT_FLAGS, flags, **kwargs
+        )
 
 
 class warden_list(warden_base):
     def __init__(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        super(warden_list, self).__init__(WARDEN_LIST, WARDEN_LIST_FLAGS,
-            flags | WARDEN_LIST_FLAGS_VERBOSE, **kwargs)
+        super(warden_list, self).__init__(
+            WARDEN_LIST, WARDEN_LIST_FLAGS,
+            flags | WARDEN_LIST_FLAGS_VERBOSE, **kwargs
+        )
 
     def parse(self, thestuff):
         themap = {
@@ -681,7 +692,7 @@ class warden_list(warden_base):
             'type': WARDEN_KEY_TYPE,
             'flags': WARDEN_KEY_FLAGS,
             'iface': WARDEN_KEY_IFACE
-        } 
+        }
 
         lines = thestuff[1].splitlines()
 
@@ -691,10 +702,10 @@ class warden_list(warden_base):
             for k in themap:
                 if line.startswith(k + ':'):
                     parts = line.split(':')
-                    if k == 'id': 
+                    if k == 'id':
                         if jail:
                             jails.append(jail)
-                        jail = { WARDEN_KEY_ID: parts[1].strip() } 
+                        jail = {WARDEN_KEY_ID: parts[1].strip()}
                     else:
                         val = None
                         parts = line.split()
@@ -702,7 +713,7 @@ class warden_list(warden_base):
                             val = string.join(parts[1:], ' ').strip()
                         jail[themap[k]] = val
         if jail:
-            jails.append(jail) 
+            jails.append(jail)
         return jails
 
 
@@ -711,12 +722,13 @@ class warden_pkgs(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_pkgs, self).__init__(WARDEN_PKGS,
-            WARDEN_PKGS_FLAGS, flags, **kwargs)
+        super(warden_pkgs, self).__init__(
+            WARDEN_PKGS, WARDEN_PKGS_FLAGS, flags, **kwargs
+        )
 
 
 class warden_pbis(warden_base):
@@ -724,12 +736,13 @@ class warden_pbis(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_pbis, self).__init__(WARDEN_PBIS,
-            WARDEN_PBIS_FLAGS, flags, **kwargs)
+        super(warden_pbis, self).__init__(
+            WARDEN_PBIS, WARDEN_PBIS_FLAGS, flags, **kwargs
+        )
 
 
 class warden_set(warden_base):
@@ -738,25 +751,29 @@ class warden_set(warden_base):
 
         for wsf in WARDEN_SET_FLAGS:
             if flags & wsf:
-                flags &= ~wsf  
+                flags &= ~wsf
 
-                if wsf in (WARDEN_SET_FLAGS_VNET_ENABLE, WARDEN_SET_FLAGS_VNET_DISABLE,
-                    WARDEN_SET_FLAGS_NAT_ENABLE, WARDEN_SET_FLAGS_NAT_DISABLE): 
+                if wsf in (
+                    WARDEN_SET_FLAGS_VNET_ENABLE,
+                    WARDEN_SET_FLAGS_VNET_DISABLE,
+                    WARDEN_SET_FLAGS_NAT_ENABLE,
+                    WARDEN_SET_FLAGS_NAT_DISABLE
+                ):
                     self.args = wsf.string
                     break
 
-                elif kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
+                elif wsf.argname in kwargs and kwargs[wsf.argname] is not None:
                     self.args = wsf.string
                     break
 
         super(warden_set, self).__init__(WARDEN_SET, WARDEN_SET_FLAGS, flags, **kwargs)
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
         for wsf in WARDEN_SET_FLAGS:
-            if saved_flags & wsf: 
-                if kwargs.has_key(wsf.argname) and kwargs[wsf.argname] is not None:
+            if saved_flags & wsf:
+                if wsf.argname in kwargs and kwargs[wsf.argname] is not None:
                     self.args += " %s" % kwargs[wsf.argname]
                     break
 
@@ -766,12 +783,13 @@ class warden_start(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_start, self).__init__(WARDEN_START,
-            WARDEN_START_FLAGS, flags, **kwargs)
+        super(warden_start, self).__init__(
+            WARDEN_START, WARDEN_START_FLAGS, flags, **kwargs
+        )
 
 
 class warden_stop(warden_base):
@@ -779,12 +797,13 @@ class warden_stop(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_stop, self).__init__(WARDEN_STOP,
-            WARDEN_STOP_FLAGS, flags, **kwargs)
+        super(warden_stop, self).__init__(
+            WARDEN_STOP, WARDEN_STOP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_type(warden_base):
@@ -792,12 +811,13 @@ class warden_type(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_type, self).__init__(WARDEN_TYPE,
-            WARDEN_TYPE_FLAGS, flags, **kwargs)
+        super(warden_type, self).__init__(
+            WARDEN_TYPE, WARDEN_TYPE_FLAGS, flags, **kwargs
+        )
 
 
 class warden_template(warden_base):
@@ -818,12 +838,13 @@ class warden_template(warden_base):
             type = WARDEN_TEMPLATE_LIST
             tflags = WARDEN_TEMPLATE_LIST_FLAGS
 
-        if kwargs.has_key("template") and kwargs["template"] is not None:
+        if "template" in kwargs and kwargs["template"] is not None:
             self.args += " '%s'" % kwargs['template']
 
         cmd = "%s %s" % (WARDEN_TEMPLATE, type)
-        super(warden_template, self).__init__(cmd,
-            tflags, flags | WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE, **kwargs)
+        super(warden_template, self).__init__(
+            cmd, tflags, flags | WARDEN_TEMPLATE_LIST_FLAGS_VERBOSE, **kwargs
+        )
 
     def ass(self, key, val):
         return "%s '%s'" % (key, val)
@@ -835,7 +856,7 @@ class warden_template(warden_base):
             'version': WARDEN_TKEY_VERSION,
             'arch': WARDEN_TKEY_ARCH,
             'instances': WARDEN_TKEY_INSTANCES
-        } 
+        }
 
         lines = thestuff[1].splitlines()
 
@@ -848,7 +869,7 @@ class warden_template(warden_base):
                     if k == 'nick':
                         if template:
                             templates.append(template)
-                        template = { WARDEN_TKEY_NICK: parts[1].strip() }
+                        template = {WARDEN_TKEY_NICK: parts[1].strip()}
                     else:
                         val = None
                         parts = line.split()
@@ -856,7 +877,7 @@ class warden_template(warden_base):
                             val = string.join(parts[1:], ' ').strip()
                         template[themap[k]] = val
         if template:
-            templates.append(template) 
+            templates.append(template)
         return templates
 
 
@@ -865,12 +886,13 @@ class warden_zfsmksnap(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_zfsmksnap, self).__init__(WARDEN_ZFSMKSNAP, 
-            WARDEN_ZFSMKSNAP_FLAGS, flags, **kwargs)
+        super(warden_zfsmksnap, self).__init__(
+            WARDEN_ZFSMKSNAP, WARDEN_ZFSMKSNAP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfslistclone(warden_base):
@@ -878,12 +900,13 @@ class warden_zfslistclone(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_zfslistclone, self).__init__(WARDEN_ZFSLISTCLONE, 
-            WARDEN_ZFSLISTCLONE_FLAGS, flags, **kwargs)
+        super(warden_zfslistclone, self).__init__(
+            WARDEN_ZFSLISTCLONE, WARDEN_ZFSLISTCLONE_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfslistsnap(warden_base):
@@ -891,12 +914,13 @@ class warden_zfslistsnap(warden_base):
         self.args = ""
         self.jail = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        super(warden_zfslistsnap, self).__init__(WARDEN_ZFSLISTSNAP, 
-            WARDEN_ZFSLISTSNAP_FLAGS, flags, **kwargs)
+        super(warden_zfslistsnap, self).__init__(
+            WARDEN_ZFSLISTSNAP, WARDEN_ZFSLISTSNAP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfsclonesnap(warden_base):
@@ -905,16 +929,17 @@ class warden_zfsclonesnap(warden_base):
         self.jail = None
         self.snap = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        if kwargs.has_key("snap") and kwargs["snap"] is not None:
+        if "snap" in kwargs and kwargs["snap"] is not None:
             self.snap = kwargs["snap"]
             self.args += " '%s'" % self.snap
 
-        super(warden_zfsclonesnap, self).__init__(WARDEN_ZFSCLONESNAP, 
-            WARDEN_ZFSCLONESNAP_FLAGS, flags, **kwargs)
+        super(warden_zfsclonesnap, self).__init__(
+            WARDEN_ZFSCLONESNAP, WARDEN_ZFSCLONESNAP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfscronsnap(warden_base):
@@ -925,24 +950,25 @@ class warden_zfscronsnap(warden_base):
         self.freq = None
         self.days = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        if kwargs.has_key("action") and kwargs["action"] is not None:
+        if "action" in kwargs and kwargs["action"] is not None:
             self.action = kwargs["action"]
             self.args += " '%s'" % self.action
 
-        if kwargs.has_key("freq") and kwargs["freq"] is not None:
+        if "freq" in kwargs and kwargs["freq"] is not None:
             self.freq = kwargs["freq"]
             self.args += " '%s'" % self.freq
 
-        if kwargs.has_key("days") and kwargs["days"] is not None:
+        if "days" in kwargs and kwargs["days"] is not None:
             self.days = kwargs["days"]
             self.args += " '%s'" % self.days
 
-        super(warden_zfscronsnap, self).__init__(WARDEN_ZFSCRONSNAP, 
-            WARDEN_ZFSCRONSNAP_FLAGS, flags, **kwargs)
+        super(warden_zfscronsnap, self).__init__(
+            WARDEN_ZFSCRONSNAP, WARDEN_ZFSCRONSNAP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfsrevertsnap(warden_base):
@@ -951,16 +977,17 @@ class warden_zfsrevertsnap(warden_base):
         self.jail = None
         self.snap = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        if kwargs.has_key("snap") and kwargs["snap"] is not None:
+        if "snap" in kwargs and kwargs["snap"] is not None:
             self.snap = kwargs["snap"]
             self.args += " '%s'" % self.snap
 
-        super(warden_zfsrevertsnap, self).__init__(WARDEN_ZFSREVERTSNAP, 
-            WARDEN_ZFSREVERTSNAP_FLAGS, flags, **kwargs)
+        super(warden_zfsrevertsnap, self).__init__(
+            WARDEN_ZFSREVERTSNAP, WARDEN_ZFSREVERTSNAP_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfsrmclone(warden_base):
@@ -969,16 +996,17 @@ class warden_zfsrmclone(warden_base):
         self.jail = None
         self.clone = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        if kwargs.has_key("clone") and kwargs["clone"] is not None:
+        if "clone" in kwargs and kwargs["clone"] is not None:
             self.clone = kwargs["clone"]
             self.args += " '%s'" % self.clone
 
-        super(warden_zfsrmclone, self).__init__(WARDEN_ZFSRMCLONE, 
-            WARDEN_ZFSRMCLONE_FLAGS, flags, **kwargs)
+        super(warden_zfsrmclone, self).__init__(
+            WARDEN_ZFSRMCLONE, WARDEN_ZFSRMCLONE_FLAGS, flags, **kwargs
+        )
 
 
 class warden_zfsrmsnap(warden_base):
@@ -987,16 +1015,17 @@ class warden_zfsrmsnap(warden_base):
         self.jail = None
         self.snap = None
 
-        if kwargs.has_key("jail") and kwargs["jail"] is not None:
+        if "jail" in kwargs and kwargs["jail"] is not None:
             self.jail = kwargs["jail"]
             self.args += " '%s'" % self.jail
 
-        if kwargs.has_key("snap") and kwargs["snap"] is not None:
+        if "snap" in kwargs and kwargs["snap"] is not None:
             self.snap = kwargs["snap"]
             self.args += " '%s'" % self.snap
 
-        super(warden_zfsrmsnap, self).__init__(WARDEN_ZFSRMSNAP, 
-            WARDEN_ZFSRMSNAP, flags, **kwargs)
+        super(warden_zfsrmsnap, self).__init__(
+            WARDEN_ZFSRMSNAP, WARDEN_ZFSRMSNAP, flags, **kwargs
+        )
 
 
 class Warden(warden_base):
@@ -1017,9 +1046,9 @@ class Warden(warden_base):
         if val:
             self._logfile = val
             os.environ["WARDEN_LOGFILE"] = val
-        else: 
+        else:
             del os.environ["WARDEN_LOGFILE"]
-    
+
     @property
     def syslog(self):
         return self._syslog
@@ -1029,7 +1058,7 @@ class Warden(warden_base):
         if val:
             self._syslog = True
             os.environ["WARDEN_USESYSLOG"] = "TRUE"
-        else: 
+        else:
             del os.environ["WARDEN_USESYSLOG"]
 
     def __call(self, obj):
@@ -1145,11 +1174,11 @@ class Warden(warden_base):
         return self.__call(warden_zfsrmsnap(flags, **kwargs))
 
     def getjails(self):
-        jail_objects = [] 
+        jail_objects = []
         jails = self.list()
         for j in jails:
             jail_objects.append(WardenJail(**j))
-        return jail_objects  
+        return jail_objects
 
 
 def get_warden_template_abi_arch(template_path):
