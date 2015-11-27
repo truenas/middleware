@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -29,6 +28,7 @@ import os
 
 MNTPT = '/mnt'
 
+
 class MountLock:
     """A mutex for which is used for serializing tasks that need direct
        access to the mountpoints, for whatever reason."""
@@ -57,7 +57,7 @@ class MountLock:
             IOError - the lock could not be acquired immediately.
         """
         fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            
+
     def lock(self):
         """Try to lock the mountpoint in a blocking manner.
 

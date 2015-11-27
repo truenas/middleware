@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -64,19 +63,19 @@ class FreeNAS_NIS_Base(object):
         self.flags = 0
 
     def set_kwargs(self):
-        kwargs = self.kwargs 
+        kwargs = self.kwargs
 
-        if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
+        if 'flags' in kwargs and (kwargs['flags'] & FLAGS_DBINIT):
             nis = nis_objects()[0]
             for key in nis.__dict__.keys():
-                if not key.startswith("nis_"): 
+                if not key.startswith("nis_"):
                     continue
 
                 newkey = key.replace("nis_", "")
                 if newkey in ('secure_mode', 'manycast'):
                     self.__dict__[newkey] = \
                         False if long(nis.__dict__[key]) == 0 else True
-                else: 
+                else:
                     self.__dict__[newkey] = nis.__dict__[key] \
                         if nis.__dict__[key] else None
 
@@ -92,7 +91,7 @@ class FreeNAS_NIS_Base(object):
 
         super(FreeNAS_NIS_Base, self).__init__()
 
-        self.set_kwargs() 
+        self.set_kwargs()
 
         #
         # Why is this here???
@@ -136,9 +135,9 @@ class FreeNAS_NIS_Base(object):
         log.debug("FreeNAS_NIS_Base.get_domain: enter")
 
         domain = None
-        (res, out) = self.__domainname() 
+        (res, out) = self.__domainname()
         if res == 0:
-            domain = out.strip() 
+            domain = out.strip()
 
         log.debug("FreeNAS_NIS_Base.get_domain: leave")
         return domain
@@ -179,7 +178,7 @@ class FreeNAS_NIS_Base(object):
                     "gecos": parts[4],
                     "homeDirectory": parts[5],
                     "loginShell": parts[6]
-                } 
+                }
                 users.append(user)
 
         log.debug("FreeNAS_NIS_Base.get_users: leave")
@@ -215,7 +214,7 @@ class FreeNAS_NIS_Base(object):
                     "group": parts[0],
                     "gidNumber": parts[2],
                     "members": parts[3]
-                } 
+                }
                 groups.append(group)
 
         log.debug("FreeNAS_NIS_Base.get_groups: leave")
@@ -226,7 +225,7 @@ class FreeNAS_NIS(FreeNAS_NIS_Base):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_NIS.__init__: enter")
 
-        super(FreeNAS_NIS, self).__init__(**kwargs)         
+        super(FreeNAS_NIS, self).__init__(**kwargs)
 
         log.debug("FreeNAS_NIS.__init__: leave")
 
@@ -235,20 +234,22 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_NIS_Users.__init__: enter")
 
-        super(FreeNAS_NIS_Users, self).__init__(**kwargs) 
+        super(FreeNAS_NIS_Users, self).__init__(**kwargs)
 
         self.__users = {}
         self.__usernames = []
         self.__ucache = {}
         self.__ducache = {}
 
-        if kwargs.has_key('domain') and kwargs['domain']:
+        if 'domain' in kwargs and kwargs['domain']:
             self.__domains = self.get_domains(domain=kwargs['domain'])
         else:
             self.__domains = self.get_domains()
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             for d in self.__domains:
                 self.__ucache[d] = FreeNAS_UserCache(dir=d)
                 self.__ducache[d] = FreeNAS_Directory_UserCache(dir=d)
@@ -316,13 +317,18 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
             self.__users[d] = []
 
             if (self.flags & FLAGS_CACHE_READ_USER) and self.__loaded('du', d):
-                log.debug("FreeNAS_NIS_Users.__get_users: "
-                    "NIS [%s] users in cache", d)
+                log.debug(
+                    "FreeNAS_NIS_Users.__get_users: NIS [%s] users in cache",
+                    d
+                )
                 nis_users = self.__ducache[d]
 
             else:
-                log.debug("FreeNAS_NIS_Users.__get_users: "
-                    "NIS [%s] users not in cache", d)
+                log.debug(
+                    "FreeNAS_NIS_Users.__get_users: "
+                    "NIS [%s] users not in cache",
+                    d
+                )
                 nis_users = self.get_users(domain=d)
 
             for u in nis_users:
@@ -337,7 +343,7 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
                     pw = pwd.getpwnam(uid)
 
                 except Exception, e:
-                    log.debug("Error on getpwname: %s",  e)
+                    log.debug("Error on getpwname: %s", e)
                     continue
 
                 self.__users[d].append(pw)
@@ -365,7 +371,6 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
                 yield user
 
 
-
 class FreeNAS_NIS_Groups(FreeNAS_NIS):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_NIS_Groups.__init__: enter")
@@ -377,13 +382,15 @@ class FreeNAS_NIS_Groups(FreeNAS_NIS):
         self.__gcache = {}
         self.__dgcache = {}
 
-        if kwargs.has_key('domain') and kwargs['domain']:
+        if 'doamin' in kwargs and kwargs['domain']:
             self.__domains = self.get_domains(domain=kwargs['domain'])
         else:
             self.__domains = self.get_domains()
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             for d in self.__domains:
                 self.__gcache[d] = FreeNAS_GroupCache(dir=d)
                 self.__dgcache[d] = FreeNAS_Directory_GroupCache(dir=d)
@@ -451,13 +458,19 @@ class FreeNAS_NIS_Groups(FreeNAS_NIS):
             self.__groups[d] = []
 
             if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__loaded('dg', d):
-                log.debug("FreeNAS_NIS_Groups.__get_groups: "
-                    "NIS [%s] groups in cache", d)
+                log.debug(
+                    "FreeNAS_NIS_Groups.__get_groups: "
+                    "NIS [%s] groups in cache",
+                    d
+                )
                 nis_groups = self.__dgcache[d]
 
             else:
-                log.debug("FreeNAS_NIS_Groups.__get_groups: "
-                    "NIS [%s] groups not in cache", d)
+                log.debug(
+                    "FreeNAS_NIS_Groups.__get_groups: "
+                    "NIS [%s] groups not in cache",
+                    d
+                )
                 nis_groups = self.get_groups()
 
             for g in nis_groups:
@@ -512,8 +525,10 @@ class FreeNAS_NIS_User(FreeNAS_NIS):
         kwargs['domain'] = domain
         super(FreeNAS_NIS_User, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             self.__ucache = FreeNAS_UserCache(dir=domain)
             self.__ukey = user
             self.__ducache = FreeNAS_Directory_UserCache(dir=domain)
@@ -540,13 +555,13 @@ class FreeNAS_NIS_User(FreeNAS_NIS):
         else:
             log.debug("FreeNAS_NIS_User.__get_user: NIS user not in cache")
             nis_user = self.get_user(user)
-  
+
         if not nis_user:
             u = user
         else:
             u = nis_user['uid']
-            
-        try:  
+
+        try:
             pw = pwd.getpwnam(u)
 
             if (self.flags & FLAGS_CACHE_WRITE_USER) and pw:
@@ -573,8 +588,10 @@ class FreeNAS_NIS_Group(FreeNAS_NIS):
         kwargs['domain'] = domain
         super(FreeNAS_NIS_Group, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             self.__gcache = FreeNAS_GroupCache(dir=domain)
             self.__gkey = group
             self.__dgcache = FreeNAS_Directory_GroupCache(dir=domain)
@@ -619,4 +636,3 @@ class FreeNAS_NIS_Group(FreeNAS_NIS):
 
         self._gr = gr
         log.debug("FreeNAS_NIS_Group.__get_group: leave")
-

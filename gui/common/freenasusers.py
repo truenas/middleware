@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -71,11 +70,11 @@ from freenasUI.common.freenasdc import (
 log = logging.getLogger("common.freenasusers")
 
 
-U_AD_ENABLED	= 0x00000001
-U_NT4_ENABLED	= 0x00000002
-U_NIS_ENABLED	= 0x00000004
-U_LDAP_ENABLED	= 0x00000008
-U_DC_ENABLED	= 0x00000010
+U_AD_ENABLED = 0x00000001
+U_NT4_ENABLED = 0x00000002
+U_NIS_ENABLED = 0x00000004
+U_LDAP_ENABLED = 0x00000008
+U_DC_ENABLED = 0x00000010
 
 
 def _get_dflags():

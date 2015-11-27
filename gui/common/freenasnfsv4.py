@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -34,32 +33,33 @@ log = logging.getLogger('common.freenasnfsv4')
 #
 # getfacl NFSv4 flags
 #
-GETFACL_FLAGS_SYMLINK_ACL  = 0x0001
-GETFACL_FLAGS_APPEND_IDS   = 0x0002
-GETFACL_FLAGS_NUMERIC_IDS  = 0x0004
-GETFACL_FLAGS_NO_COMMENTS  = 0x0008
-GETFACL_FLAGS_VERBOSE      = 0x0010
+GETFACL_FLAGS_SYMLINK_ACL = 0x0001
+GETFACL_FLAGS_APPEND_IDS = 0x0002
+GETFACL_FLAGS_NUMERIC_IDS = 0x0004
+GETFACL_FLAGS_NO_COMMENTS = 0x0008
+GETFACL_FLAGS_VERBOSE = 0x0010
 
 #
 # setfacl NFSv4 flags
 #
 SETFACL_FLAGS_MODIFY_ENTRY = 0x0001
 SETFACL_FLAGS_SET_DEFAULTS = 0x0002
-SETFACL_FLAGS_SYMLINK_OP   = 0x0004
-SETFACL_FLAGS_MODIFY       = 0x0008
+SETFACL_FLAGS_SYMLINK_OP = 0x0004
+SETFACL_FLAGS_MODIFY = 0x0008
 SETFACL_FLAGS_REMOVE_ENTRY = 0x0010
 
 #
 # NFSv4_ACL entry flags
 #
-ACL_ENTRY_FLAGS_NONE       = 0x0000
-ACL_ENTRY_FLAGS_ADD        = 0x0001
-ACL_ENTRY_FLAGS_UPDATE     = 0x0002
-ACL_ENTRY_FLAGS_REMOVE     = 0x0004
+ACL_ENTRY_FLAGS_NONE = 0x0000
+ACL_ENTRY_FLAGS_ADD = 0x0001
+ACL_ENTRY_FLAGS_UPDATE = 0x0002
+ACL_ENTRY_FLAGS_REMOVE = 0x0004
 
 
 class NFSv4_ACL_Exception(Base_ACL_Exception):
     pass
+
 
 class NFSv4_pipe(Base_ACL_pipe):
     pass
@@ -68,9 +68,11 @@ class NFSv4_pipe(Base_ACL_pipe):
 class NFSv4_getfacl(Base_ACL_getfacl):
     def _build_args(self, path, flags):
         log.debug("NFSv4_getfacl._build_args: enter")
-        log.debug("NFSv4_getfacl._build_args: path = %s, flags = 0x%08x",
+        log.debug(
+            "NFSv4_getfacl._build_args: path = %s, flags = 0x%08x",
             path,
-            flags)
+            flags
+        )
 
         args = ""
         if flags & GETFACL_FLAGS_SYMLINK_ACL:
@@ -91,11 +93,13 @@ class NFSv4_getfacl(Base_ACL_getfacl):
 class NFSv4_setfacl(Base_ACL_setfacl):
     def _build_args(self, path, entry, flags, pos):
         log.debug("NFSv4_setfacl._build_args: enter")
-        log.debug("NFSv4_setfacl._build_args: path = %s, entry = %s, flags = 0x%08x, pos = %d",
+        log.debug(
+            "NFSv4_setfacl._build_args: path = %s, entry = %s, flags = 0x%08x, pos = %d",
             path,
             entry,
             flags,
-            pos)
+            pos
+        )
 
         args = ""
         if flags & SETFACL_FLAGS_MODIFY_ENTRY:
@@ -111,7 +115,7 @@ class NFSv4_setfacl(Base_ACL_setfacl):
             self._entry = None
 
         log.debug("NFSv4_setfacl._build_args: leave")
-        return  args
+        return args
 
 
 class NFSv4_ACL_Entry(Base_ACL_Entry):
@@ -158,7 +162,6 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         #
         self.type = None
 
-
     def __set_access_permission(self, permission, value):
         if permission == 'r':
             self.read_data = value
@@ -189,11 +192,12 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         elif permission == 's':
             self.synchronize = value
 
-
     def set_access_permissions(self, permissions):
         log.debug("NFSv4_ACL_Entry.set_access_permissions: enter")
-        log.debug("NFSv4_ACL_Entry.set_access_permissions: permissions = %s",
-            permissions)
+        log.debug(
+            "NFSv4_ACL_Entry.set_access_permissions: permissions = %s",
+            permissions
+        )
 
         self.clear_access_permissions()
         for p in permissions:
@@ -203,7 +207,6 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
 
     def set_access_permission(self, permission):
         self.__set_access_permission(permission, True)
-
 
     def clear_access_permissions(self):
         self.read_data = False
@@ -221,10 +224,8 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         self.write_owner = False
         self.synchronize = False
 
-
     def clear_access_permission(self, permission):
         self.__set_access_permission(permission, False)
-
 
     def __set_inheritance_flag(self, flag, value):
         if flag == 'f':
@@ -236,11 +237,12 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
         elif flag == 'n':
             self.no_propagate = value
 
-
     def set_inheritance_flags(self, flags):
         log.debug("NFSv4_ACL_Entry.set_inheritance_flags: enter")
-        log.debug("NFSv4_ACL_Entry.set_inheritance_flags: flags = %s",
-            flags)
+        log.debug(
+            "NFSv4_ACL_Entry.set_inheritance_flags: flags = %s",
+            flags
+        )
 
         self.clear_inheritance_flags()
         for f in flags:
@@ -251,17 +253,14 @@ class NFSv4_ACL_Entry(Base_ACL_Entry):
     def set_inheritance_flag(self, flag):
         self.__set_inheritance_flag(flag, True)
 
-
     def clear_inheritance_flags(self):
         self.file_inherit = False
         self.dir_inherit = False
         self.inherit_only = False
         self.no_propagate = False
 
-
     def clear_inheritance_flag(self, flag):
         self.__set_inheritance_flag(flag, False)
-
 
     def get_access_permissions(self):
         str = ""
@@ -314,13 +313,13 @@ class NFSv4_ACL(Base_ACL):
                 for c in comment_parts:
                     c = c.strip()
 
-                    parts = c.split(":") 
+                    parts = c.split(":")
                     if parts[0] == 'file':
                         self.file = parts[1]
                     elif parts[0] == 'owner':
-                        self.owner = parts[1] 
+                        self.owner = parts[1]
                     elif parts[0] == 'group':
-                        self.group = parts[1] 
+                        self.group = parts[1]
 
             else:
                 line = line.strip()
@@ -354,22 +353,22 @@ class NFSv4_ACL(Base_ACL):
                 entry.type = acl_type
                 self.entries.append(entry)
 
-
     def _refresh(self):
         self.entries = []
         self._load()
         self.dirty = False
 
-
     def update(self, tag, qualifier, permissions, inheritance_flags=None, type=None):
         log.debug("NFSv4_ACL.update: enter")
-        log.debug("NFSv4_ACL.update: tag = %s, qualifier = %s, permissions = %s,"
+        log.debug(
+            "NFSv4_ACL.update: tag = %s, qualifier = %s, permissions = %s,"
             "inheritance_flags = %s, type = %s",
             tag,
             qualifier if qualifier else "",
             permissions if permissions else "",
             inheritance_flags if inheritance_flags else "",
-            type if type else "")
+            type if type else ""
+        )
 
         entry = NFSv4_ACL_Entry()
         entry.tag = tag
@@ -391,13 +390,15 @@ class NFSv4_ACL(Base_ACL):
 
     def add(self, tag, qualifier=None, permissions=None, inheritance_flags=None, type=None, pos=0):
         log.debug("NFSv4_ACL.add: enter")
-        log.debug("NFSv4_ACL.add: tag = %s, qualifier = %s, permissions = %s, "
+        log.debug(
+            "NFSv4_ACL.add: tag = %s, qualifier = %s, permissions = %s, "
             "inheritance_flags = %s, type = %s, pos = %s",
             tag,
             qualifier if qualifier else "",
             permissions if permissions else "",
             inheritance_flags if inheritance_flags else "",
-            type if type else "", pos)
+            type if type else "", pos
+        )
 
         entry = NFSv4_ACL_Entry()
         entry.tag = tag
@@ -419,10 +420,12 @@ class NFSv4_ACL(Base_ACL):
 
     def get(self, tag=None, qualifier=None, type=None):
         log.debug("NFSv4_ACL.get: enter")
-        log.debug("NFSv4_ACL.get: tag = %s, qualifier = %s, type = %s",
+        log.debug(
+            "NFSv4_ACL.get: tag = %s, qualifier = %s, type = %s",
             tag if tag else "",
             qualifier if qualifier else "",
-            type if type else "")
+            type if type else ""
+        )
 
         entries = []
         for entry in self.entries:
@@ -438,15 +441,17 @@ class NFSv4_ACL(Base_ACL):
 
     def remove(self, tag, qualifier=None, permissions=None, inheritance_flags=None, type=None, pos=None):
         log.debug("NFSv4_ACL.remove: enter")
-        log.debug("NFSv4_ACL.remove: tag = %s, qualifier = %s, type = %s",
+        log.debug(
+            "NFSv4_ACL.remove: tag = %s, qualifier = %s, type = %s",
             tag if tag else "",
             qualifier if qualifier else "",
-            type if type else "")
+            type if type else ""
+        )
 
         n = 0
         entry = None
         for entry in self.entries:
-            if entry.tag == tag and entry.qualifier == qualifier and pos == None:
+            if entry.tag == tag and entry.qualifier == qualifier and pos is None:
                 if type and entry.type == type:
                     NFSv4_setfacl(self.path, entry, SETFACL_FLAGS_REMOVE_ENTRY, 0)
                     self.dirty = True
@@ -472,7 +477,6 @@ class NFSv4_ACL(Base_ACL):
         NFSv4_setfacl(self.path, None, SETFACL_FLAGS_SET_DEFAULTS)
         self._refresh()
 
-
     def clear(self):
         self.reset()
         self._refresh()
@@ -489,13 +493,13 @@ class NFSv4_ACL(Base_ACL):
         if length == 4:
             mode = mode[1:]
 
-        pos = 0 
+        pos = 0
         acl = ['owner@', 'group@', 'everyone@']
         for c in mode:
             n = int(c)
             tag = acl[pos]
             permissions_allow = permissions_deny = ""
-           
+
             if n & 4:
                 permissions_allow += "+r"
                 permissions_deny += "-r"
@@ -539,14 +543,19 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
 
     def _set_windows_file_defaults(self, acl):
         log.debug("NFSv4_ACL_Hierarchy._set_windows_file_defaults: enter")
-        log.debug("NFSv4_ACL_Hierarchy._set_windows_file_defaults: acl = %s",
-            acl)
+        log.debug(
+            "NFSv4_ACL_Hierarchy._set_windows_file_defaults: acl = %s",
+            acl
+        )
 
         pos = 0
         acl.clear()
-        acl.add('group@', None, 'rxaRcs', None, 'allow', pos); pos += 1
-        acl.add('everyone@', None, 'rxaRcs', None, 'allow', pos); pos += 1
-        acl.add('owner@', None, 'rwxpDdaARWcCos', None, 'allow', pos); pos += 1
+        acl.add('group@', None, 'rxaRcs', None, 'allow', pos)
+        pos += 1
+        acl.add('everyone@', None, 'rxaRcs', None, 'allow', pos)
+        pos += 1
+        acl.add('owner@', None, 'rwxpDdaARWcCos', None, 'allow', pos)
+        pos += 1
         acl.remove('everyone@', None, None, -1)
         acl.chmod('755')
 
@@ -554,14 +563,19 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
 
     def _set_windows_directory_defaults(self, acl):
         log.debug("NFSv4_ACL_Hierarchy._set_windows_directory_defaults: enter")
-        log.debug("NFSv4_ACL_Hierarchy._set_windows_directory_defaults: acl = %s",
-            acl)
+        log.debug(
+            "NFSv4_ACL_Hierarchy._set_windows_directory_defaults: acl = %s",
+            acl
+        )
 
         pos = 0
         acl.clear()
-        acl.add('group@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
-        acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow', pos); pos += 1
-        acl.add('owner@', None, 'rwxpDdaARWcCos', 'fd', 'allow', pos); pos += 1
+        acl.add('group@', None, 'rxaRcs', 'fd', 'allow', pos)
+        pos += 1
+        acl.add('everyone@', None, 'rxaRcs', 'fd', 'allow', pos)
+        pos += 1
+        acl.add('owner@', None, 'rwxpDdaARWcCos', 'fd', 'allow', pos)
+        pos += 1
         acl.remove('everyone@', None, None, -1)
         acl.chmod('755')
 
@@ -569,8 +583,10 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
 
     def _set_unix_file_defaults(self, acl):
         log.debug("NFSv4_ACL_Hierarchy._set_unix_file_defaults: enter")
-        log.debug("NFSv4_ACL_Hierarchy._set_unix_file_defaults: acl = %s",
-            acl)
+        log.debug(
+            "NFSv4_ACL_Hierarchy._set_unix_file_defaults: acl = %s",
+            acl
+        )
 
         acl.reset()
         acl.chmod('644')
@@ -579,8 +595,10 @@ class NFSv4_ACL_Hierarchy(Base_ACL_Hierarchy):
 
     def _set_unix_directory_defaults(self, acl):
         log.debug("NFSv4_ACL_Hierarchy._set_unix_directory_defaults: enter")
-        log.debug("NFSv4_ACL_Hierarchy._set_unix_directory_defaults: acl = %s",
-            acl)
+        log.debug(
+            "NFSv4_ACL_Hierarchy._set_unix_directory_defaults: acl = %s",
+            acl
+        )
 
         acl.reset()
         acl.chmod('755')

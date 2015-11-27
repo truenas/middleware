@@ -1,4 +1,3 @@
-#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -75,8 +74,10 @@ FREENAS_LDAP_PORT = get_freenas_var("FREENAS_LDAP_PORT", 389)
 FREENAS_LDAP_SSL_PORT = get_freenas_var("FREENAS_LDAP_SSL_PORT", 636)
 
 FREENAS_AD_SEPARATOR = get_freenas_var("FREENAS_AD_SEPARATOR", '\\')
-FREENAS_AD_CONFIG_FILE = get_freenas_var("AD_CONFIG_FILE",
-    "/etc/directoryservice/ActiveDirectory/config")
+FREENAS_AD_CONFIG_FILE = get_freenas_var(
+    "AD_CONFIG_FILE",
+    "/etc/directoryservice/ActiveDirectory/config"
+)
 
 FREENAS_LDAP_CACHE_EXPIRE = get_freenas_var("FREENAS_LDAP_CACHE_EXPIRE", 60)
 FREENAS_LDAP_CACHE_ENABLE = get_freenas_var("FREENAS_LDAP_CACHE_ENABLE", 1)
@@ -89,28 +90,37 @@ FREENAS_LDAP_PAGESIZE = get_freenas_var("FREENAS_LDAP_PAGESIZE", 1024)
 ldap.protocol_version = FREENAS_LDAP_VERSION
 ldap.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
 
-FLAGS_DBINIT		= 0x00010000
-FLAGS_AD_ENABLED	= 0x00100000
-FLAGS_LDAP_ENABLED	= 0x00200000
-FLAGS_PREFER_IPv6	= 0x00400000
-FLAGS_SASL_GSSAPI	= 0x00800000
+FLAGS_DBINIT = 0x00010000
+FLAGS_AD_ENABLED = 0x00100000
+FLAGS_LDAP_ENABLED = 0x00200000
+FLAGS_PREFER_IPv6 = 0x00400000
+FLAGS_SASL_GSSAPI = 0x00800000
+
 
 class FreeNAS_LDAP_Directory_Exception(Exception):
     pass
+
+
 class FreeNAS_ActiveDirectory_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
+
+
 class FreeNAS_LDAP_Exception(FreeNAS_LDAP_Directory_Exception):
     pass
 
 
 class FreeNAS_LDAP_Directory(object):
     @staticmethod
-    def validate_credentials(hostname, port=389, basedn=None,
-        binddn=None, bindpw=None, ssl='off', certfile=None, errors=[]):
+    def validate_credentials(
+        hostname, port=389, basedn=None, binddn=None, bindpw=None, ssl='off',
+        certfile=None, errors=[]
+    ):
         ret = None
 
-        f = FreeNAS_LDAP(host=hostname, port=port, binddn=binddn,
-            bindpw=bindpw, basedn=basedn, certfile=certfile, ssl=ssl)
+        f = FreeNAS_LDAP(
+            host=hostname, port=port, binddn=binddn, bindpw=bindpw,
+            basedn=basedn, certfile=certfile, ssl=ssl
+        )
         try:
             f.open()
             ret = True
@@ -128,7 +138,7 @@ class FreeNAS_LDAP_Directory(object):
         self.host = kwargs.get('host', None)
 
         self.port = None
-        if kwargs.has_key('port') and kwargs['port'] is not None:
+        if 'port' in kwargs and kwargs['port'] is not None:
             self.port = long(kwargs['port'])
 
         self.binddn = kwargs.get('binddn', None)
@@ -137,8 +147,8 @@ class FreeNAS_LDAP_Directory(object):
         self.anonbind = kwargs.get('anonbind', False)
 
         self.ssl = FREENAS_LDAP_NOSSL
-        if kwargs.has_key('ssl') and kwargs['ssl'] is not None:
-            self.ssl = kwargs['ssl'] 
+        if 'ssl' in kwargs and kwargs['ssl'] is not None:
+            self.ssl = kwargs['ssl']
             if self.ssl == FREENAS_LDAP_USESSL and self.port is None:
                 self.port = FREENAS_LDAP_SSL_PORT
         self.certfile = kwargs.get('certfile', None)
@@ -147,18 +157,18 @@ class FreeNAS_LDAP_Directory(object):
             self.port = FREENAS_LDAP_PORT
 
         self.scope = ldap.SCOPE_SUBTREE
-        if kwargs.has_key('scope') and kwargs['scope'] is not None:
+        if 'scope' in kwargs and kwargs['scope'] is not None:
             self.scope = kwargs['scope']
 
         self.filter = kwargs.get('filter', None)
         self.attributes = kwargs.get('attributes', None)
 
         self.pagesize = 0
-        if kwargs.has_key('pagesize') and kwargs['pagesize'] is not None:
+        if 'pagesize' in kwargs and kwargs['pagesize'] is not None:
             self.pagesize = kwargs['pagesize']
 
         self.flags = 0
-        if kwargs.has_key('flags') and kwargs['flags'] is not None:
+        if 'flags' in kwargs and kwargs['flags'] is not None:
             self.flags = kwargs['flags']
 
         self._handle = None
@@ -166,9 +176,11 @@ class FreeNAS_LDAP_Directory(object):
         self._cache = FreeNAS_LDAP_QueryCache()
         self._settings = []
 
-        log.debug("FreeNAS_LDAP_Directory.__init__: "
+        log.debug(
+            "FreeNAS_LDAP_Directory.__init__: "
             "host = %s, port = %ld, binddn = %s, basedn = %s, ssl = %s",
-            self.host, self.port, self.binddn, self.basedn, self.ssl)
+            self.host, self.port, self.binddn, self.basedn, self.ssl
+        )
         log.debug("FreeNAS_LDAP_Directory.__init__: leave")
 
     def _save(self):
@@ -185,11 +197,15 @@ class FreeNAS_LDAP_Directory(object):
         log.debug("FreeNAS_LDAP_Directory[ERROR]: An LDAP Exception occured")
         for e in ex:
             if e.has_key('info'):
-                log.debug("FreeNAS_LDAP_Directory[ERROR]: info: '%s'",
-                    e['info'])
+                log.debug(
+                    "FreeNAS_LDAP_Directory[ERROR]: info: '%s'",
+                    e['info']
+                )
             if e.has_key('desc'):
-                log.debug("FreeNAS_LDAP_Directory[ERROR]: desc: '%s'",
-                    e['desc'])
+                log.debug(
+                    "FreeNAS_LDAP_Directory[ERROR]: desc: '%s'",
+                    e['desc']
+                )
 
     def isOpen(self):
         return self._isopen
@@ -212,40 +228,51 @@ class FreeNAS_LDAP_Directory(object):
         return uri
 
     def _do_authenticated_bind(self):
-        log.debug("FreeNAS_LDAP_Directory.open: "
+        log.debug(
+            "FreeNAS_LDAP_Directory.open: "
             "(authenticated bind) trying to bind to %s:%d",
-            self.host, self.port)
+            self.host, self.port
+        )
         return self._handle.simple_bind_s(self.binddn, self.bindpw)
 
     def _do_anonymous_bind(self):
-        log.debug("FreeNAS_LDAP_Directory.open: "
+        log.debug(
+            "FreeNAS_LDAP_Directory.open: "
             "(anonymous bind) trying to bind to %s:%d",
-            self.host, self.port)
+            self.host, self.port
+        )
         return self._handle.simple_bind_s()
 
     def _do_sasl_gssapi_bind(self):
-        log.debug("FreeNAS_LDAP_Directory.open: "
+        log.debug(
+            "FreeNAS_LDAP_Directory.open: "
             "(sasl gssapi bind) trying to bind to %s:%d",
-            self.host, self.port)
+            self.host, self.port
+        )
         auth_tokens = ldap.sasl.gssapi()
 
         res = self._handle.sasl_interactive_bind_s('', auth_tokens)
         if res == 0:
-            log.debug("FreeNAS_LDAP_Directory.open: "
-                "(sasl gssapi bind) successful")
+            log.debug(
+                "FreeNAS_LDAP_Directory.open: (sasl gssapi bind) successful"
+            )
             return True
 
-        log.debug("FreeNAS_LDAP_Directory.open: "
-            "SASL/GSSAPI bind failed, trying simple bind")
+        log.debug(
+            "FreeNAS_LDAP_Directory.open: "
+            "SASL/GSSAPI bind failed, trying simple bind"
+        )
 
         if self.binddn and self.bindpw:
             res = self._do_authenticated_bind()
             if res:
                 return res
 
-            log.debug("FreeNAS_LDAP_Directory.open: "
-                "authenticated bind failed, trying simple bind")
-        
+            log.debug(
+                "FreeNAS_LDAP_Directory.open: "
+                "authenticated bind failed, trying simple bind"
+            )
+
         return self._do_anonymous_bind()
 
     def open(self):
@@ -264,19 +291,24 @@ class FreeNAS_LDAP_Directory(object):
         if self._handle:
             res = None
             self._handle.protocol_version = FREENAS_LDAP_VERSION
-            self._handle.set_option(ldap.OPT_REFERRALS,
-                FREENAS_LDAP_REFERRALS)
+            self._handle.set_option(ldap.OPT_REFERRALS, FREENAS_LDAP_REFERRALS)
             self._handle.set_option(ldap.OPT_NETWORK_TIMEOUT, 10.0)
 
             if self.ssl in (FREENAS_LDAP_USESSL, FREENAS_LDAP_USETLS):
                 self._handle.set_option(ldap.OPT_X_TLS_ALLOW, 1)
                 if self.certfile:
-                    self._handle.set_option(ldap.OPT_X_TLS_CACERTFILE,
-                        self.certfile)
-                self._handle.set_option(ldap.OPT_X_TLS_REQUIRE_CERT,
-                    ldap.OPT_X_TLS_DEMAND)
-                self._handle.set_option(ldap.OPT_X_TLS_NEWCTX,
-                    ldap.OPT_X_TLS_DEMAND)
+                    self._handle.set_option(
+                        ldap.OPT_X_TLS_CACERTFILE,
+                        self.certfile
+                    )
+                self._handle.set_option(
+                    ldap.OPT_X_TLS_REQUIRE_CERT,
+                    ldap.OPT_X_TLS_DEMAND
+                )
+                self._handle.set_option(
+                    ldap.OPT_X_TLS_NEWCTX,
+                    ldap.OPT_X_TLS_DEMAND
+                )
 
             if self.ssl == FREENAS_LDAP_USETLS:
                 try:
@@ -293,19 +325,21 @@ class FreeNAS_LDAP_Directory(object):
             elif self.flags & FLAGS_SASL_GSSAPI:
                 bind_method = self._do_sasl_gssapi_bind
             elif self.binddn and self.bindpw:
-                bind_method = self._do_authenticated_bind 
-            else: 
+                bind_method = self._do_authenticated_bind
+            else:
                 bind_method = self._do_anonymous_bind
-            
+
             try:
                 log.debug("FreeNAS_LDAP_Directory.open: trying to bind")
                 res = bind_method()
                 log.debug("FreeNAS_LDAP_Directory.open: binded")
 
             except ldap.LDAPError as e:
-                log.debug("FreeNAS_LDAP_Directory.open: "
+                log.debug(
+                    "FreeNAS_LDAP_Directory.open: "
                     "could not bind to %s:%d (%s)",
-                    self.host, self.port, e)
+                    self.host, self.port, e
+                )
                 self._logex(e)
                 res = None
                 raise e
@@ -315,7 +349,7 @@ class FreeNAS_LDAP_Directory(object):
                 log.debug("FreeNAS_LDAP_Directory.open: connection open")
 
         log.debug("FreeNAS_LDAP_Directory.open: leave")
-        return (self._isopen == True)
+        return (self._isopen is True)
 
     def unbind(self):
         if self._handle:
@@ -329,12 +363,16 @@ class FreeNAS_LDAP_Directory(object):
             self._isopen = False
             log.debug("FreeNAS_LDAP_Directory.close: connection closed")
 
-    def _search(self, basedn="", scope=ldap.SCOPE_SUBTREE, filter=None,
+    def _search(
+        self, basedn="", scope=ldap.SCOPE_SUBTREE, filter=None,
         attributes=None, attrsonly=0, serverctrls=None, clientctrls=None,
-        timeout=-1, sizelimit=0):
+        timeout=-1, sizelimit=0
+    ):
         log.debug("FreeNAS_LDAP_Directory._search: enter")
-        log.debug("FreeNAS_LDAP_Directory._search: basedn = '%s', " \
-            "filter = '%s'", basedn, filter)
+        log.debug(
+            "FreeNAS_LDAP_Directory._search: basedn = '%s', filter = '%s'",
+            basedn, filter
+        )
         if not self._isopen:
             return None
 
@@ -347,7 +385,7 @@ class FreeNAS_LDAP_Directory(object):
         #
         attributes = None
 
-        if not filter: 
+        if not filter:
             filter = ''
 
         result = []
@@ -363,25 +401,29 @@ class FreeNAS_LDAP_Directory(object):
         }
 
         if self.pagesize > 0:
-            log.debug("FreeNAS_LDAP_Directory._search: pagesize = %d",
-                self.pagesize)
+            log.debug(
+                "FreeNAS_LDAP_Directory._search: pagesize = %d",
+                self.pagesize
+            )
 
             page = 0
             while True:
-                log.debug("FreeNAS_LDAP_Directory._search: getting page %d",
-                    page)
+                log.debug(
+                    "FreeNAS_LDAP_Directory._search: getting page %d",
+                    page
+                )
                 serverctrls = [paged]
 
                 id = self._handle.search_ext(
-                   basedn,
-                   scope,
-                   filterstr=filter,
-                   attrlist=attributes,
-                   attrsonly=attrsonly,
-                   serverctrls=serverctrls,
-                   clientctrls=clientctrls,
-                   timeout=timeout,
-                   sizelimit=sizelimit
+                    basedn,
+                    scope,
+                    filterstr=filter,
+                    attrlist=attributes,
+                    attrsonly=attrsonly,
+                    serverctrls=serverctrls,
+                    clientctrls=clientctrls,
+                    timeout=timeout,
+                    sizelimit=sizelimit
                 )
 
                 (rtype, rdata, rmsgid, serverctrls) = self._handle.result3(
@@ -393,8 +435,7 @@ class FreeNAS_LDAP_Directory(object):
                 paged.size = 0
                 paged.cookie = cookie = None
                 for sc in serverctrls:
-                    if sc.controlType == \
-                        SimplePagedResultsControl.controlType:
+                    if sc.controlType == SimplePagedResultsControl.controlType:
                         cookie = sc.cookie
                         if cookie:
                             paged.cookie = cookie
@@ -445,8 +486,9 @@ class FreeNAS_LDAP_Directory(object):
         isopen = self._isopen
         self.open()
 
-        results = self._search(self.basedn, self.scope,
-            self.filter, self.attributes)
+        results = self._search(
+            self.basedn, self.scope, self.filter, self.attributes
+        )
         if not isopen:
             self.close()
 
@@ -474,7 +516,8 @@ class FreeNAS_LDAP_Directory(object):
             self.close()
 
         log.debug("FreeNAS_LDAP_Directory.modify: leave")
-        return res 
+        return res
+
 
 class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
@@ -509,14 +552,14 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             'dns_timeout'
         ]
 
-    def __set_defaults(self): 
+    def __set_defaults(self):
         log.debug("FreeNAS_LDAP_Base.__set_defaults: enter")
 
         for key in self.__keys():
             if key in ('anonbind', 'use_default_domain'):
                 self.__dict__[key] = False
             elif key in ('timeout', 'dns_timeout'):
-                 self.__dict__[key] = 10
+                self.__dict__[key] = 10
             else:
                 self.__dict__[key] = None
 
@@ -540,7 +583,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         self.kwargs = kwargs
         self.__set_defaults()
 
-        if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
+        if 'flags' in kwargs and (kwargs['flags'] & FLAGS_DBINIT):
             ldap = ldap_objects()[0]
 
             for key in ldap.__dict__.keys():
@@ -550,28 +593,32 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 newkey = key.replace("ldap_", "")
                 if newkey == 'hostname':
                     (host, port) = self.__name_to_host(ldap.__dict__[key])
-                    if not 'host' in kwargs:
+                    if 'host' not in kwargs:
                         kwargs['host'] = host
-                    if not 'port' in kwargs:
+                    if 'port' not in kwargs:
                         kwargs['port'] = port
                     kwargs[newkey] = ldap.__dict__[key]
                     if ldap.__dict__['ldap_ssl'] == FREENAS_LDAP_USESSL:
                         kwargs['port'] = 636
 
-                elif newkey in ('anonbind', 'use_default_domain',
-                    'has_samba_schema'):
-                    if not 'anonbind' in kwargs:
-                        kwargs[newkey] = \
-                             False if long(ldap.__dict__[key]) == 0 else True
-                    elif not 'use_default_domain' in kwargs:
-                        kwargs[newkey] = \
-                             False if long(ldap.__dict__[key]) == 0 else True
-                    elif not 'has_samba_schema' in kwargs:
-                        kwargs[newkey] = \
-                             False if long(ldap.__dict__[key]) == 0 else True
+                elif newkey in (
+                    'anonbind', 'use_default_domain', 'has_samba_schema'
+                ):
+                    if 'anonbind' not in kwargs:
+                        kwargs[newkey] = (
+                            False if long(ldap.__dict__[key]) == 0 else True
+                        )
+                    elif 'use_default_domain' not in kwargs:
+                        kwargs[newkey] = (
+                            False if long(ldap.__dict__[key]) == 0 else True
+                        )
+                    elif 'has_samba_schema' not in kwargs:
+                        kwargs[newkey] = (
+                            False if long(ldap.__dict__[key]) == 0 else True
+                        )
 
                 elif newkey == 'certificate_id':
-                    cert = get_certificateauthority_path(ldap.ldap_certificate) 
+                    cert = get_certificateauthority_path(ldap.ldap_certificate)
                     kwargs['certfile'] = cert
 
                 elif newkey == 'kerberos_realm_id':
@@ -587,16 +634,17 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 elif newkey == 'kerberos_principal_id':
                     kp = ldap.ldap_kerberos_principal
 
-                    if kp: 
+                    if kp:
                         kwargs['kerberos_principal'] = kp
                         kwargs['keytab_principal'] = kp.principal_name
                         kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
 
                 else:
-                    if not newkey in kwargs:
-                        kwargs[newkey] = ldap.__dict__[key] \
-                            if ldap.__dict__[key] else None
-    
+                    if newkey not in kwargs:
+                        kwargs[newkey] = (
+                            ldap.__dict__[key] if ldap.__dict__[key] else None
+                        )
+
         for key in kwargs:
             if key == 'flags':
                 flags = self.flags
@@ -621,7 +669,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         res = False
 
         p = pipeopen("/usr/bin/klist -t")
-        p.communicate() 
+        p.communicate()
         if p.returncode == 0:
             res = True
 
@@ -638,22 +686,24 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         klist_out = klist_out[0]
         lines = klist_out.splitlines()
         for line in lines:
-            line =  line.strip()
+            line = line.strip()
             if line.startswith("Principal"):
                 parts = line.split(':')
-                if len(parts) > 1: 
+                if len(parts) > 1:
                     principal = parts[1].strip()
 
         return principal
 
     def get_kerberos_ticket(self):
-        res = False 
+        res = False
         kinit = False
 
         if self.keytab_principal:
             krb_principal = self.get_kerberos_principal_from_cache()
-            if krb_principal and krb_principal.upper() == \
-                self.keytab_principal.upper():
+            if (
+                krb_principal and
+                krb_principal.upper() == self.keytab_principal.upper()
+            ):
                 return True
 
             args = [
@@ -676,7 +726,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (uid, self.krb_realm)
-            
+
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
@@ -701,10 +751,10 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         if kinit:
             i = 0
-            while i < self.timeout: 
+            while i < self.timeout:
                 if self.kerberos_cache_has_ticket():
                     res = True
-                    break 
+                    break
 
                 time.sleep(1)
                 i += 1
@@ -769,11 +819,12 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 '(objectclass=account))' \
                 '(uidnumber=%s))' % user.encode('utf-8')
         else:
-            filter = '(&(|(objectclass=person)' \
-                '(objectclass=posixaccount)' \
-                '(objectclass=account))' \
-                '(|(uid=%s)(cn=%s)))' % (user.encode('utf-8'),
-                user.encode('utf-8'))
+            filter = (
+                '(&(|(objectclass=person)'
+                '(objectclass=posixaccount)'
+                '(objectclass=account))'
+                '(|(uid=%s)(cn=%s)))'
+            ) % (user.encode('utf-8'), user.encode('utf-8'))
 
         basedn = None
         if self.usersuffix and self.basedn:
@@ -815,7 +866,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             basedn = "%s,%s" % (self.usersuffix, self.basedn)
         else:
             basedn = "%s" % self.basedn
-	
+
         results = self._search(basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -888,7 +939,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             basedn = "%s,%s" % (self.groupsuffix, self.basedn)
         else:
             basedn = "%s" % self.basedn
-	
+
         results = self._search(basedn, scope, filter, self.attributes)
         if results:
             for r in results:
@@ -926,7 +977,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         domain_names = []
         domains = self.get_domains()
         if domains:
-            for d in domains: 
+            for d in domains:
                 domain_names.append(d[1]['sambaDomainName'][0])
 
         log.debug("FreeNAS_LDAP_Base.get_domain_names: enter")
@@ -939,7 +990,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
 
         ret = False
         scope = ldap.SCOPE_SUBTREE
- 
+
         filter = '(objectclass=sambaDomain)'
         results = self._search(self.basedn, scope, filter, self.attributes)
         if results:
@@ -964,24 +1015,26 @@ class FreeNAS_LDAP(FreeNAS_LDAP_Base):
 class FreeNAS_ActiveDirectory_Base(object):
     class AsyncConnect(asyncore.dispatcher):
         def __init__(self, host, port, callback):
-            asyncore.dispatcher.__init__(self)  
+            asyncore.dispatcher.__init__(self)
             self._host = host
             self._port = port
             self._callback = callback
             self._start_time = time.time()
-            self.buffer = ""  
+            self.buffer = ""
 
             self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                self.connect((self._host, self._port))  
+                self.connect((self._host, self._port))
             except socket.gaierror:
                 callback(self._host, self._port, 1000)
                 self.close()
 
         def handle_connect(self):
             pass
+
         def handle_read(self):
             pass
+
         def handle_error(self):
             pass
 
@@ -996,7 +1049,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             return None
 
         if len(srv_hosts) == 1:
-            for s in srv_hosts: 
+            for s in srv_hosts:
                 host = s.target.to_text(True)
                 port = long(s.port)
                 return (host, port)
@@ -1016,8 +1069,10 @@ class FreeNAS_ActiveDirectory_Base(object):
                 FreeNAS_ActiveDirectory_Base.AsyncConnect(
                     host, long(port), callback)
             except:
-                log.debug("get_best_host: Unable to connect to %s:%d",
-                    host, long(port))
+                log.debug(
+                    "get_best_host: Unable to connect to %s:%d",
+                    host, long(port)
+                )
 
         count = len(srv_hosts)
         asyncore.loop(timeout=1, count=count)
@@ -1025,9 +1080,9 @@ class FreeNAS_ActiveDirectory_Base(object):
             asyncore.loop(timeout=60)
 
         asyncore.close_all()
-        latency_list = sorted(latencies.iteritems(), key=lambda (a,b): (b,a))
+        latency_list = sorted(latencies.iteritems(), key=lambda (a, b): (b, a))
         if latency_list:
-            for s in srv_hosts: 
+            for s in srv_hosts:
                 host = s.target.to_text(True)
                 port = long(s.port)
                 if host.lower() == latency_list[0][0].lower():
@@ -1036,40 +1091,52 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         return best_host
 
-    @staticmethod 
+    @staticmethod
     def get_A_records(host):
         A_records = []
 
         if not host:
             return A_records
-  
+
         try:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_A_records: "
-                "looking up A records for %s", host)
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_A_records: "
+                "looking up A records for %s",
+                host
+            )
             A_records = resolver.query(host, 'A')
 
         except:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_A_records: "
-                "no A records for %s found, fail!", host)
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_A_records: "
+                "no A records for %s found, fail!",
+                host
+            )
             A_records = []
 
         return A_records
 
-    @staticmethod 
+    @staticmethod
     def get_AAAA_records(host):
         AAAA_records = []
 
         if not host:
             return AAAA_records
-  
+
         try:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
-                "looking up AAAA records for %s", host)
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
+                "looking up AAAA records for %s",
+                host
+            )
             AAAA_records = resolver.query(host, 'AAAA')
 
         except:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
-                "no AAAA records for %s found, fail!", host)
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_AAAA_records: "
+                "no AAAA records for %s found, fail!",
+                host
+            )
             AAAA_records = []
 
         return AAAA_records
@@ -1080,17 +1147,25 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         if not host:
             return srv_records
-  
+
         try:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_SRV_records: "
-                "looking up SRV records for %s", host)
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_SRV_records: "
+                "looking up SRV records for %s",
+                host
+            )
             answers = resolver.query(host, 'SRV')
-            srv_records = sorted(answers, key=lambda a: (int(a.priority),
-                int(a.weight)))
+            srv_records = sorted(
+                answers,
+                key=lambda a: (int(a.priority), int(a.weight))
+            )
 
         except:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_SRV_records: "
-                "no SRV records for %s found, fail!", host)
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_SRV_records: "
+                "no SRV records for %s found, fail!",
+                host
+            )
             srv_records = []
 
         return srv_records
@@ -1121,7 +1196,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         dcs = FreeNAS_ActiveDirectory_Base.get_SRV_records(host)
         if ssl == FREENAS_LDAP_USESSL:
             for dc in dcs:
-                dc.port = 636  
+                dc.port = 636
 
         return dcs
 
@@ -1204,21 +1279,26 @@ class FreeNAS_ActiveDirectory_Base(object):
         return kpws
 
     @staticmethod
-    def validate_credentials(domain, site=None,
-        binddn=None, bindpw=None, ssl='off', certfile=None, errors=[]):
+    def validate_credentials(
+        domain, site=None, binddn=None, bindpw=None, ssl='off', certfile=None,
+        errors=[]
+    ):
         ret = None
-        best_host = None 
+        best_host = None
 
         dcs = FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site, ssl)
         if not dcs:
             raise FreeNAS_ActiveDirectory_Exception(
-                "Unable to find domain controllers for %s" % domain)
+                "Unable to find domain controllers for %s" % domain
+            )
 
-        best_host = FreeNAS_ActiveDirectory_Base.get_best_host(dcs) 
+        best_host = FreeNAS_ActiveDirectory_Base.get_best_host(dcs)
         if best_host:
             (dchost, dcport) = best_host
-            f = FreeNAS_LDAP(host=dchost, port=dcport,
-                binddn=binddn, bindpw=bindpw, ssl=ssl, certfile=certfile)
+            f = FreeNAS_LDAP(
+                host=dchost, port=dcport, binddn=binddn, bindpw=bindpw,
+                ssl=ssl, certfile=certfile
+            )
             try:
                 f.open()
                 ret = True
@@ -1239,7 +1319,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.connect((host, port)) 
+            s.connect((host, port))
             ret = True
 
         except Exception as e:
@@ -1250,11 +1330,14 @@ class FreeNAS_ActiveDirectory_Base(object):
         return ret
 
     @staticmethod
-    def get_workgroup_name(domain, site=None, binddn=None, bindpw=None,
-        ssl='off', certfile=None, keytab_principal=None, keytab_file=None, errors=[]):
+    def get_workgroup_name(
+        domain, site=None, binddn=None, bindpw=None, ssl='off', certfile=None,
+        keytab_principal=None, keytab_file=None, errors=[]
+    ):
 
-        f = FreeNAS_ActiveDirectory(domainname=domain, site=site, binddn=binddn,
-            bindpw=bindpw, ssl=ssl, certfile=certfile, keytab_principal=keytab_principal,
+        f = FreeNAS_ActiveDirectory(
+            domainname=domain, site=site, binddn=binddn, bindpw=bindpw,
+            ssl=ssl, certfile=certfile, keytab_principal=keytab_principal,
             keytab_file=keytab_file
         )
         return f.get_netbios_name()
@@ -1308,20 +1391,24 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def __set_defaults(self):
         log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: enter")
- 
-        self.__dcname = None 
-        self.__gcname = None 
-        self.__krbname = None 
-        self.__kpwdname = None 
+
+        self.__dcname = None
+        self.__gcname = None
+        self.__krbname = None
+        self.__kpwdname = None
 
         for key in self.__keys():
-            if key in ('verbose_logging', 'unix_extensions',
-                'allow_trusted_doms', 'use_default_domain'):
-                 self.__dict__[key] = False
+            if key in (
+                'verbose_logging',
+                'unix_extensions',
+                'allow_trusted_doms',
+                'use_default_domain',
+            ):
+                self.__dict__[key] = False
             elif key in ('timeout', 'dns_timeout'):
-                 self.__dict__[key] = 10
+                self.__dict__[key] = 10
             else:
-                 self.__dict__[key] = None
+                self.__dict__[key] = None
 
         if self.dcname:
             self.__dcname = self.dcname
@@ -1335,14 +1422,14 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.pagesize = FREENAS_LDAP_PAGESIZE
         self.machine = "%s$" % get_hostname()
 
-        #self.flags = FLAGS_SASL_GSSAPI
+        # self.flags = FLAGS_SASL_GSSAPI
         self.flags = 0
 
         log.debug("FreeNAS_ActiveDirectory_Base.__set_defaults: leave")
 
     def __name_to_host(self, name, default_port=None):
-        host = None  
-        port = None  
+        host = None
+        port = None
         if name:
             parts = name.split(':')
             host = parts[0]
@@ -1356,7 +1443,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         res = False
 
         p = pipeopen("/usr/bin/klist -t")
-        p.communicate() 
+        p.communicate()
         if p.returncode == 0:
             res = True
 
@@ -1373,22 +1460,24 @@ class FreeNAS_ActiveDirectory_Base(object):
         klist_out = klist_out[0]
         lines = klist_out.splitlines()
         for line in lines:
-            line =  line.strip()
+            line = line.strip()
             if line.startswith("Principal"):
                 parts = line.split(':')
-                if len(parts) > 1: 
+                if len(parts) > 1:
                     principal = parts[1].strip()
 
         return principal
 
     def get_kerberos_ticket(self):
-        res = False 
+        res = False
         kinit = False
 
         if self.keytab_principal:
             krb_principal = self.get_kerberos_principal_from_cache()
-            if krb_principal and krb_principal.upper() == \
-                self.keytab_principal.upper():
+            if (
+                krb_principal and
+                krb_principal.upper() == self.keytab_principal.upper()
+            ):
                 return True
 
             args = [
@@ -1402,15 +1491,15 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
             if returncode != 0:
-                res = False 
+                res = False
 
-            if res != False:
-                kinit = True 
+            if res is not False:
+                kinit = True
 
         elif self.krb_realm and self.bindname and self.bindpw:
             krb_principal = self.get_kerberos_principal_from_cache()
             principal = "%s@%s" % (self.bindname, self.krb_realm)
-            
+
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
@@ -1428,19 +1517,19 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
             if returncode != 0:
-                res = False 
+                res = False
 
-            if res != False:
-                kinit = True 
+            if res is not False:
+                kinit = True
 
             os.unlink(tmpfile)
 
         if kinit:
             i = 0
-            while i < self.timeout: 
+            while i < self.timeout:
                 if self.kerberos_cache_has_ticket():
                     res = True
-                    break 
+                    break
 
                 time.sleep(1)
                 i += 1
@@ -1457,9 +1546,11 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         self.set_kwargs()
 
-        if self.bindname and self.domainname:  
-            self.binddn = self.adset(self.binddn,
-                self.bindname + '@' + self.domainname.upper())
+        if self.bindname and self.domainname:
+            self.binddn = self.adset(
+                self.binddn,
+                self.bindname + '@' + self.domainname.upper()
+            )
 
         self.load_config()
 
@@ -1474,7 +1565,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.ucount = 0
         self.gcount = 0
 
-        if not self.site: 
+        if not self.site:
 
             # locate_site() requires an open connection
             self.site = self.locate_site()
@@ -1489,9 +1580,9 @@ class FreeNAS_ActiveDirectory_Base(object):
     def set_kwargs(self):
         from freenasUI.middleware.notifier import notifier
 
-        kwargs = self.kwargs 
+        kwargs = self.kwargs
 
-        if kwargs.has_key('flags') and (kwargs['flags'] & FLAGS_DBINIT):
+        if 'flags' in kwargs and (kwargs['flags'] & FLAGS_DBINIT):
             ad = activedirectory_objects()[0]
             for key in ad.__dict__.keys():
                 if not key.startswith("ad_"):
@@ -1508,11 +1599,15 @@ class FreeNAS_ActiveDirectory_Base(object):
                     elif key == 'ad_netbiosname':
                         continue
 
-                if newkey in ('verbose_logging',
-                    'unix_extensions', 'allow_trusted_doms',
-                    'use_default_domain'):
-                    kwargs[newkey] = \
+                if newkey in (
+                    'verbose_logging',
+                    'unix_extensions',
+                    'allow_trusted_doms',
+                    'use_default_domain',
+                ):
+                    kwargs[newkey] = (
                         False if long(ad.__dict__[key]) == 0 else True
+                    )
 
                 elif newkey == 'netbiosname':
                     netbiosname = ad.ad_netbiosname
@@ -1522,12 +1617,12 @@ class FreeNAS_ActiveDirectory_Base(object):
 
                     if ',' in netbiosname:
                         parts = netbiosname.split(',')
-                        machine = parts[0] 
-                        
+                        machine = parts[0]
+
                     elif ' ' in netbiosname:
                         parts = netbiosname.split()
-                        machine = parts[0] 
-                    
+                        machine = parts[0]
+
                     kwargs['machine'] = "%s$" % machine
 
                 elif newkey == 'certificate_id':
@@ -1540,7 +1635,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                     if kr:
                         kwargs['kerberos_realm'] = kr
                         kwargs['krb_realm'] = kr.krb_realm
-                        #self.flags |= FLAGS_SASL_GSSAPI
+                        # self.flags |= FLAGS_SASL_GSSAPI
 
                 elif newkey == 'kerberos_principal_id':
                     kp = ad.ad_kerberos_principal
@@ -1549,7 +1644,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                         kwargs['kerberos_principal'] = kp
                         kwargs['keytab_principal'] = kp.principal_name
                         kwargs['keytab_file'] = '/etc/kerberos/%s' % kp.principal_keytab.keytab_name
-                        #self.flags |= FLAGS_SASL_GSSAPI
+                        # self.flags |= FLAGS_SASL_GSSAPI
 
                 else:
                     kwargs[newkey] = ad.__dict__[key] \
@@ -1594,21 +1689,22 @@ class FreeNAS_ActiveDirectory_Base(object):
             root = self.get_root_domain()
             if root:
                 gcs = self.get_global_catalog_servers(root, site=self.site, ssl=self.ssl)
-                if not gcs: 
+                if not gcs:
                     raise FreeNAS_ActiveDirectory_Exception(
-                        "Unable to find global catalog servers for %s" % root)
+                        "Unable to find global catalog servers for %s" % root
+                    )
                 (self.gchost, self.gcport) = self.get_best_host(gcs)
                 self.gcname = "%s:%d" % (self.gchost, self.gcport)
-
 
     def set_kerberos_server(self):
         if self.krbname:
             (self.krbhost, self.krbport) = self.__name_to_host(self.krbname, 88)
         if not self.krbhost:
             krbs = self.get_kerberos_servers(self.domainname, site=self.site)
-            if not krbs: 
+            if not krbs:
                 raise FreeNAS_ActiveDirectory_Exception(
-                    "Unable to find kerberos servers for %s" % self.domainname)
+                    "Unable to find kerberos servers for %s" % self.domainname
+                )
             (self.krbhost, self.krbport) = self.get_best_host(krbs)
             self.krbname = "%s:%d" % (self.krbhost, self.krbport)
 
@@ -1618,7 +1714,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 self.kpwdname, 464)
         if not self.kpwdhost:
             kpwds = self.get_kpasswd_servers(self.domainname)
-            if not kpwds: 
+            if not kpwds:
                 raise FreeNAS_ActiveDirectory_Exception(
                     "Unable to find kerberos password servers for %s" % self.domainname)
             (self.kpwdhost, self.kpwdport) = self.get_best_host(kpwds)
@@ -1629,7 +1725,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         self.set_kerberos_server()
         self.set_kpasswd_server()
 
-        flags = self.flags &~ FLAGS_SASL_GSSAPI
+        flags = self.flags & ~ FLAGS_SASL_GSSAPI
         if self.keytab_principal:
             flags |= FLAGS_SASL_GSSAPI
 
@@ -1668,7 +1764,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         ipv4_candidates = {}
         ipv6_candidates = {}
 
-        nics =  NICChoices(exclude_configured=False)
+        nics = NICChoices(exclude_configured=False)
         for n in nics:
             nic = n[0]
             iinfo = notifier().get_interface_info(nic)
@@ -1690,10 +1786,9 @@ class FreeNAS_ActiveDirectory_Base(object):
                         st = sipcalc_type(network)
                         if st.is_ipv4():
                             if st.in_network(nic_ipv4_st):
-                                if not ipv4_candidates.has_key(nic):
+                                if nic not in ipv4_candidates:
                                     ipv4_candidates[nic] = (site_dn, s, iinfo)
 
- 
             if iinfo['ipv6']:
                 for i in iinfo['ipv6']:
                     nic_ipv6_st = sipcalc_type("%s/%s" % (i['inet6'], i['prefixlen']))
@@ -1711,7 +1806,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                         st = sipcalc_type(network)
                         if st.is_ipv6():
                             if st.in_network(nic_ipv6_st):
-                                if not ipv6_candidates.has_key(nic):
+                                if nic not in ipv6_candidates:
                                     ipv6_candidates[nic] = (site_dn, s, iinfo)
 
         ipv4_site = None
@@ -1732,7 +1827,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 break
 
         if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
-            return ipv4_site 
+            return ipv4_site
 
         if not ipv6_site and ipv4_site:
             return ipv4_site
@@ -1743,19 +1838,24 @@ class FreeNAS_ActiveDirectory_Base(object):
         return None
 
     def connected(self):
-        return self.validate_credentials(self.domainname,
-            site=self.site, ssl=self.ssl, certfile=self.certfile,
-            binddn=self.binddn, bindpw=self.bindpw)
+        return self.validate_credentials(
+            self.domainname, site=self.site, ssl=self.ssl,
+            certfile=self.certfile, binddn=self.binddn, bindpw=self.bindpw
+        )
 
     def reload(self, **kwargs):
         self.kwargs.update(kwargs)
         self.__init__(**self.kwargs)
 
-    def _search(self, handle, basedn="", scope=ldap.SCOPE_SUBTREE,
+    def _search(
+        self, handle, basedn="", scope=ldap.SCOPE_SUBTREE,
         filter=None, attributes=None, attrsonly=0, serverctrls=None,
-        clientctrls=None, timeout=-1, sizelimit=0):
-        return handle._search(basedn, scope, filter, attributes, attrsonly,
-            serverctrls, clientctrls, timeout, sizelimit)
+        clientctrls=None, timeout=-1, sizelimit=0
+    ):
+        return handle._search(
+            basedn, scope, filter, attributes, attrsonly, serverctrls,
+            clientctrls, timeout, sizelimit
+        )
 
     def _modify(self, handle, dn, modlist):
         return handle._modify(dn, modlist)
@@ -1763,8 +1863,9 @@ class FreeNAS_ActiveDirectory_Base(object):
     def get_rootDSE(self):
         log.debug("FreeNAS_ActiveDirectory_Base.get_rootDSE: enter")
 
-        results = self._search(self.dchandle, '', ldap.SCOPE_BASE,
-            "(objectclass=*)")
+        results = self._search(
+            self.dchandle, '', ldap.SCOPE_BASE, "(objectclass=*)"
+        )
 
         log.debug("FreeNAS_ActiveDirectory_Base.get_rootDSE: leave")
         return results
@@ -1817,8 +1918,9 @@ class FreeNAS_ActiveDirectory_Base(object):
             basedn.encode('utf-8')
 
         netbios_name = None
-        results = self._search(self.dchandle, config,
-            ldap.SCOPE_SUBTREE, filter)
+        results = self._search(
+            self.dchandle, config, ldap.SCOPE_SUBTREE, filter
+        )
         try:
             netbios_name = results[0][1]['nETBIOSName'][0]
 
@@ -1835,10 +1937,11 @@ class FreeNAS_ActiveDirectory_Base(object):
         basedn = "CN=Partitions,%s" % config
 
         filter = None
-        keys = ['netbiosname', 'name', 'cn', 'dn',
-            'distinguishedname', 'ncname']
+        keys = [
+            'netbiosname', 'name', 'cn', 'dn', 'distinguishedname', 'ncname'
+        ]
         for k in keys:
-            if kwargs.has_key(k):
+            if k in kwargs:
                 filter = "(%s=%s)" % (k, kwargs[k].encode('utf-8'))
                 break
 
@@ -1846,8 +1949,9 @@ class FreeNAS_ActiveDirectory_Base(object):
             filter = "(cn=*)"
 
         partitions = []
-        results = self._search(self.dchandle, basedn,
-            ldap.SCOPE_SUBTREE, filter)
+        results = self._search(
+            self.dchandle, basedn, ldap.SCOPE_SUBTREE, filter
+        )
         if results:
             for r in results:
                 if r[0]:
@@ -1891,11 +1995,15 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.get_domains: enter")
 
         domains = []
-        results = self._search(self.gchandle, "", ldap.SCOPE_SUBTREE,
-            '(objectclass=domain)', ['dn'])
+        results = self._search(
+            self.gchandle, "", ldap.SCOPE_SUBTREE, '(objectclass=domain)',
+            ['dn']
+        )
         if not results:
-            log.debug("FreeNAS_ActiveDirectory_Base.get_domains: " \
-                "no domain objects found")
+            log.debug(
+                "FreeNAS_ActiveDirectory_Base.get_domains: "
+                "no domain objects found"
+            )
             results = []
 
         for r in results:
@@ -1903,7 +2011,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         rootDSE = self.get_rootDSE()
         basedn = rootDSE[0][1]['configurationNamingContext'][0]
-        #config = rootDSE[0][1]['defaultNamingContext'][0]
+        # config = rootDSE[0][1]['defaultNamingContext'][0]
 
         if not self.allow_trusted_doms and self.netbiosname:
             kwargs['netbiosname'] = self.netbiosname
@@ -1914,10 +2022,12 @@ class FreeNAS_ActiveDirectory_Base(object):
             filter = None
             if len(kwargs) > 0:
                 haskey = True
-                keys = ['netbiosname', 'name', 'cn', 'dn',
-                    'distinguishedname', 'ncname']
+                keys = [
+                    'netbiosname', 'name', 'cn', 'dn', 'distinguishedname',
+                    'ncname'
+                ]
                 for k in keys:
-                    if kwargs.has_key(k):
+                    if k in kwargs:
                         filter = "(&(objectcategory=crossref)(%s=%s))" % \
                             (k, kwargs[k].encode('utf-8'))
                         break
@@ -1926,8 +2036,9 @@ class FreeNAS_ActiveDirectory_Base(object):
                 filter = "(&(objectcategory=crossref)(nCName=%s))" % \
                     d.encode('utf-8')
 
-            results = self._search(self.dchandle, basedn,
-                ldap.SCOPE_SUBTREE, filter)
+            results = self._search(
+                self.dchandle, basedn, ldap.SCOPE_SUBTREE, filter
+            )
             if results and results[0][0]:
                 r = {}
                 for k in results[0][1].keys():
@@ -1949,12 +2060,13 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         keys = ['distinguishedname', 'cn', 'name', 'siteobjectbl']
         for k in keys:
-            if kwargs.has_key(k) and kwargs[k]:
+            if k in kwargs and kwargs[k]:
                 filter = "(&%s(%s=%s))" % (filter, k, kwargs[k])
 
         subnets = []
-        results = self._search(self.dchandle, basedn,
-            ldap.SCOPE_SUBTREE, filter)
+        results = self._search(
+            self.dchandle, basedn, ldap.SCOPE_SUBTREE, filter
+        )
         if results:
             for r in results:
                 if r[0]:
@@ -1972,12 +2084,13 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         keys = ['distinguishedname', 'cn', 'name', 'siteobjectbl']
         for k in keys:
-            if kwargs.has_key(k) and kwargs[k]:
+            if k in kwargs and kwargs[k]:
                 filter = "(&%s(%s=%s))" % (filter, k, kwargs[k])
 
         sites = []
-        results = self._search(self.dchandle, basedn,
-            ldap.SCOPE_SUBTREE, filter)
+        results = self._search(
+            self.dchandle, basedn, ldap.SCOPE_SUBTREE, filter
+        )
         if results:
             for r in results:
                 if r[0]:
@@ -1990,14 +2103,15 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: enter")
         log.debug("FreeNAS_ActiveDirectory_Base.get_machine_account: user = %s", machine)
 
-        if machine is None: 
+        if machine is None:
             machine = self.machine
         if not machine:
             raise AssertionError('machine is None')
 
         filter = '(&(objectClass=computer)(sAMAccountName=%s))' % machine
-        results = self._search(self.dchandle, self.basedn,
-            ldap.SCOPE_SUBTREE, filter)
+        results = self._search(
+            self.dchandle, self.basedn, ldap.SCOPE_SUBTREE, filter
+        )
 
         try:
             results = results[0][1]
@@ -2022,8 +2136,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         filter = '(&(|(objectclass=user)(objectclass=person))' \
             '(sAMAccountName=%s))' % user.encode('utf-8')
         attributes = ['distinguishedName']
-        results = self._search(self.dchandle, self.basedn, scope,
-            filter, attributes)
+        results = self._search(
+            self.dchandle, self.basedn, scope, filter, attributes
+        )
         try:
             results = results[0][1][attributes[0]][0]
 
@@ -2044,8 +2159,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=user)(objectclass=person))' \
             '(sAMAccountName=%s))' % user.encode('utf-8')
-        results = self._search(self.dchandle, self.basedn, scope,
-            filter, self.attributes)
+        results = self._search(
+            self.dchandle, self.basedn, scope, filter, self.attributes
+        )
         if results:
             for r in results:
                 if r[0]:
@@ -2065,8 +2181,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.attributes and 'sAMAccountType' not in self.attributes:
             self.attributes.append('sAMAccountType')
 
-        results = self._search(self.dchandle, self.basedn, scope,
-            filter, self.attributes)
+        results = self._search(
+            self.dchandle, self.basedn, scope, filter, self.attributes
+        )
         if results:
             for r in results:
                 if r[0] and r[1] and r[1].has_key('sAMAccountType'):
@@ -2080,8 +2197,10 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def get_groupDN(self, group):
         log.debug("FreeNAS_ActiveDirectory_Base.get_groupDN: enter")
-        log.debug("FreeNAS_ActiveDirectory_Base.get_groupDN: group = %s",
-            group)
+        log.debug(
+            "FreeNAS_ActiveDirectory_Base.get_groupDN: group = %s",
+            group
+        )
 
         if group is None:
             raise AssertionError('group is None')
@@ -2093,8 +2212,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         filter = '(&(objectclass=group)(sAMAccountName=%s))' % \
             group.encode('utf-8')
         attributes = ['distinguishedName']
-        results = self._search(self.dchandle, self.basedn, scope,
-            filter, attributes)
+        results = self._search(
+            self.dchandle, self.basedn, scope, filter, attributes
+        )
         try:
             results = results[0][1][attributes[0]][0]
 
@@ -2115,8 +2235,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=group)(sAMAccountName=%s))' % \
             group.encode('utf-8')
-        results = self._search(self.dchandle, self.basedn, scope,
-            filter, self.attributes)
+        results = self._search(
+            self.dchandle, self.basedn, scope, filter, self.attributes
+        )
         if results:
             for r in results:
                 if r[0]:
@@ -2135,8 +2256,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         if self.attributes and 'groupType' not in self.attributes:
             self.attributes.append('groupType')
 
-        results = self._search(self.dchandle, self.basedn, scope,
-            filter, self.attributes)
+        results = self._search(
+            self.dchandle, self.basedn, scope, filter, self.attributes
+        )
         if results:
             for r in results:
                 if r[0]:
@@ -2184,9 +2306,11 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     def disable_machine_account(self, machine=None):
         log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: enter")
-        log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: machine = %s",
-            machine)
-        
+        log.debug(
+            "FreeNAS_ActiveDirectory_Base.disable_machine_account: machine = %s",
+            machine
+        )
+
         res = False
         results = self.get_machine_account(machine)
         if not results:
@@ -2203,15 +2327,20 @@ class FreeNAS_ActiveDirectory_Base(object):
             userAccountControl = 0
             distinguishedName = None
 
-        if not distinguishedName: 
+        if not distinguishedName:
             return res
 
         if not (userAccountControl & 0x2):
             userAccountControl |= 0x2
             try:
-                ret = self._modify(self.dchandle,
+                ret = self._modify(
+                    self.dchandle,
                     distinguishedName,
-                    [(ldap.MOD_REPLACE, 'userAccountControl', str(userAccountControl))]
+                    [(
+                        ldap.MOD_REPLACE,
+                        'userAccountControl',
+                        str(userAccountControl)
+                    )]
                 )
                 if ret:
                     res = True
@@ -2219,14 +2348,16 @@ class FreeNAS_ActiveDirectory_Base(object):
             except Exception as e:
                 log.debug("ldap modify error: %s", e)
                 res = False
-    
+
         log.debug("FreeNAS_ActiveDirectory_Base.disable_machine_account: leave")
         return res
 
     def enable_machine_account(self, machine=None):
         log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: enter")
-        log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: machine = %s",
-            machine)
+        log.debug(
+            "FreeNAS_ActiveDirectory_Base.enable_machine_account: machine = %s",
+            machine
+        )
 
         res = False
         results = self.get_machine_account(machine)
@@ -2244,14 +2375,14 @@ class FreeNAS_ActiveDirectory_Base(object):
             userAccountControl = 0
             distinguishedName = None
 
-        if not distinguishedName: 
+        if not distinguishedName:
             return res
 
-       
         if userAccountControl & 0x2:
             userAccountControl &= ~0x2
             try:
-                ret = self._modify(self.dchandle,
+                ret = self._modify(
+                    self.dchandle,
                     distinguishedName,
                     [(ldap.MOD_REPLACE, 'userAccountControl', str(userAccountControl))]
                 )
@@ -2261,15 +2392,15 @@ class FreeNAS_ActiveDirectory_Base(object):
             except Exception as e:
                 log.debug("ldap modify error: %s", e)
                 res = False
-    
+
         log.debug("FreeNAS_ActiveDirectory_Base.enable_machine_account: leave")
-        return res 
+        return res
 
     def joined(self):
         log.debug("FreeNAS_ActiveDirectory_Base.joined: enter")
 
         res = False
-        results = self.get_machine_account() 
+        results = self.get_machine_account()
         if not results:
             return res
 
@@ -2281,7 +2412,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         except:
             distinguishedName = None
 
-        if not distinguishedName: 
+        if not distinguishedName:
             return res
 
         args = [
@@ -2290,8 +2421,8 @@ class FreeNAS_ActiveDirectory_Base(object):
             "dn",
             distinguishedName,
             "-P",
-            "-l" 
-        ]  
+            "-l"
+        ]
 
         (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
         if returncode == 0:
@@ -2316,8 +2447,10 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
 
         super(FreeNAS_LDAP_Users, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             self.__ucache = FreeNAS_UserCache()
             self.__ducache = FreeNAS_Directory_UserCache()
 
@@ -2388,19 +2521,19 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
             ldap_users = self.__ducache
 
         else:
-            log.debug("FreeNAS_LDAP_Users.__get_users: " \
-                "LDAP users not in cache")
+            log.debug(
+                "FreeNAS_LDAP_Users.__get_users: LDAP users not in cache"
+            )
             ldap_users = self.get_users()
 
-        parts = self.host.split('.')
-        host = parts[0].upper()
+        # parts = self.host.split('.')
+        # host = parts[0].upper()
         for u in ldap_users:
             CN = str(u[0])
             if self.flags & FLAGS_CACHE_WRITE_USER:
                 self.__ducache[CN] = u
 
             u = u[1]
- 
             if u.has_key('sAMAccountName'):
                 uid = u['sAMAccountName'][0]
             elif u.has_key('uid'):
@@ -2446,8 +2579,10 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
         else:
             self.__domains = self.get_domains()
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             for d in self.__domains:
                 n = d['nETBIOSName']
                 self.__ucache[n] = FreeNAS_UserCache(dir=n)
@@ -2464,9 +2599,9 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
         ucachedir = self.__ucache[netbiosname].cachedir
         paths['u'] = os.path.join(ucachedir, ".ul")
 
-        ducachedir = self.__ducache[netbiosname].cachedir 
+        ducachedir = self.__ducache[netbiosname].cachedir
         paths['du'] = os.path.join(ducachedir, ".dul")
-   
+
         file = None
         try:
             file = paths[index]
@@ -2478,7 +2613,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             try:
                 with open(file, 'w+') as f:
                     f.close()
-                ret = True 
+                ret = True
 
             except:
                 ret = False
@@ -2519,8 +2654,9 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
                     count += 1
 
             if count == dcount:
-                log.debug("FreeNAS_ActiveDirectory_Users.__get_users: " \
-                    "users in cache")
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Users.__get_users: users in cache"
+                )
                 log.debug("FreeNAS_ActiveDirectory_Users.__get_users: leave")
                 return
 
@@ -2529,7 +2665,7 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             self.__users[n] = []
 
             dcs = self.get_domain_controllers(d['dnsRoot'], ssl=self.ssl)
-            if not dcs: 
+            if not dcs:
                 raise FreeNAS_ActiveDirectory_Exception(
                     "Unable to find domain controllers for %s" % d['dnsRoot'])
             (self.host, self.port) = self.get_best_host(dcs)
@@ -2538,15 +2674,23 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
             self.attributes = ['sAMAccountName']
             self.pagesize = FREENAS_LDAP_PAGESIZE
 
-            if (self.flags & FLAGS_CACHE_READ_USER) \
-                and self.__loaded('du', n):
-                log.debug("FreeNAS_ActiveDirectory_Users.__get_users: "
-                    "AD [%s] users in cache" % n)
+            if (
+                (self.flags & FLAGS_CACHE_READ_USER) and
+                self.__loaded('du', n)
+            ):
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Users.__get_users: "
+                    "AD [%s] users in cache",
+                    n
+                )
                 ad_users = self.__ducache[n]
 
             else:
-                log.debug("FreeNAS_ActiveDirectory_Users.__get_users: "
-                    "AD [%s] users not in cache" % n)
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Users.__get_users: "
+                    "AD [%s] users not in cache",
+                    n
+                )
                 ad_users = self.get_users()
 
             for u in ad_users:
@@ -2612,8 +2756,10 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
 
         super(FreeNAS_LDAP_Groups, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             self.__gcache = FreeNAS_GroupCache()
             self.__dgcache = FreeNAS_Directory_GroupCache()
 
@@ -2680,17 +2826,19 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
 
         ldap_groups = None
         if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__loaded('dg'):
-            log.debug("FreeNAS_LDAP_Groups.__get_groups: " \
-                "LDAP groups in cache")
+            log.debug(
+                "FreeNAS_LDAP_Groups.__get_groups: LDAP groups in cache"
+            )
             ldap_groups = self.__dgcache
 
         else:
-            log.debug("FreeNAS_LDAP_Groups.__get_groups: " \
-                "LDAP groups not in cache")
+            log.debug(
+                "FreeNAS_LDAP_Groups.__get_groups: LDAP groups not in cache"
+            )
             ldap_groups = self.get_groups()
 
-        parts = self.host.split('.') 
-        host = parts[0].upper()
+        # parts = self.host.split('.')
+        # host = parts[0].upper()
         for g in ldap_groups:
             CN = str(g[0])
             if self.flags & FLAGS_CACHE_WRITE_GROUP:
@@ -2735,14 +2883,16 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
         self.__gcache = {}
         self.__dgcache = {}
 
-        if kwargs.has_key('netbiosname') and kwargs['netbiosname']:
+        if 'netbiosname' in kwargs and kwargs['netbiosname']:
             self.__domains = self.get_domains(
                 netbiosname=kwargs['netbiosname'])
         else:
             self.__domains = self.get_domains()
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             for d in self.__domains:
                 n = d['nETBIOSName']
                 self.__gcache[n] = FreeNAS_GroupCache(dir=n)
@@ -2759,9 +2909,9 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
         gcachedir = self.__gcache[netbiosname].cachedir
         paths['g'] = os.path.join(gcachedir, ".gl")
 
-        dgcachedir = self.__dgcache[netbiosname].cachedir 
+        dgcachedir = self.__dgcache[netbiosname].cachedir
         paths['dg'] = os.path.join(dgcachedir, ".dgl")
-   
+
         file = None
         try:
             file = paths[index]
@@ -2773,7 +2923,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             try:
                 with open(file, 'w+') as f:
                     f.close()
-                ret = True 
+                ret = True
 
             except:
                 ret = False
@@ -2814,10 +2964,13 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                     count += 1
 
             if count == dcount:
-                log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: " \
-                    "groups in cache")
-                log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: " \
-                    "leave")
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Groups.__get_groups: "
+                    "groups in cache"
+                )
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Groups.__get_groups: leave"
+                )
                 return
 
         for d in self.__domains:
@@ -2825,7 +2978,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             self.__groups[n] = []
 
             dcs = self.get_domain_controllers(d['dnsRoot'], ssl=self.ssl)
-            if not dcs: 
+            if not dcs:
                 raise FreeNAS_ActiveDirectory_Exception(
                     "Unable to find domain controllers for %s" % d['dnsRoot'])
             (self.host, self.port) = self.get_best_host(dcs)
@@ -2834,15 +2987,23 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
             self.attributes = ['sAMAccountName']
             self.pagesize = FREENAS_LDAP_PAGESIZE
 
-            if (self.flags & FLAGS_CACHE_READ_GROUP) \
-                and self.__loaded('dg', n):
-                log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: "
-                    "AD [%s] groups in cache", n)
+            if (
+                (self.flags & FLAGS_CACHE_READ_GROUP) and
+                self.__loaded('dg', n)
+            ):
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Groups.__get_groups: "
+                    "AD [%s] groups in cache",
+                    n
+                )
                 ad_groups = self.__dgcache[n]
 
             else:
-                log.debug("FreeNAS_ActiveDirectory_Groups.__get_groups: "
-                    "AD [%s] groups not in cache", n)
+                log.debug(
+                    "FreeNAS_ActiveDirectory_Groups.__get_groups: "
+                    "AD [%s] groups not in cache",
+                    n
+                )
                 ad_groups = self.get_groups()
 
             for g in ad_groups:
@@ -2850,7 +3011,7 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
 
                 if self.use_default_domain:
                     sAMAccountName = g[1]['sAMAccountName'][0]
-                else:  
+                else:
                     sAMAccountName = "{}{}{}".format(
                         n,
                         FREENAS_AD_SEPARATOR,
@@ -2887,7 +3048,7 @@ class FreeNAS_Directory_Groups(object):
         log.debug("FreeNAS_Directory_Groups.__new__: enter")
 
         dflags = 0
-        if kwargs.has_key('dflags'):
+        if 'dflags' in kwargs:
             dflags = kwargs['dflags']
 
         obj = None
@@ -2908,13 +3069,16 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
 
         super(FreeNAS_LDAP_Group, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             self.__gcache = FreeNAS_GroupCache()
             self.__dgcache = FreeNAS_Directory_GroupCache()
             if self.groupsuffix and self.basedn:
-                self.__key = str("cn=%s,%s,%s" % \
-                    (group, self.groupsuffix, self.basedn))
+                self.__key = str("cn=%s,%s,%s" % (
+                    group, self.groupsuffix, self.basedn
+                ))
             elif self.basedn:
                 self.__key = str("cn=%s,%s" % (group, self.basedn))
 
@@ -2933,24 +3097,29 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
         gr = None
         self.attributes = ['cn']
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) \
-            and self.__gcache.has_key(group):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) and
+            self.__gcache.has_key(group)
+        ):
             log.debug("FreeNAS_LDAP_Group.__get_group: group in cache")
             return self.__gcache[group]
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) \
-            and self.__dgcache.has_key(self.__key):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) and
+            self.__dgcache.has_key(self.__key)
+        ):
             log.debug("FreeNAS_LDAP_Group.__get_group: LDAP group in cache")
             ldap_group = self.__dgcache[self.__key]
 
         else:
-            log.debug("FreeNAS_LDAP_Group.__get_group: " \
-                "LDAP group not in cache")
+            log.debug(
+                "FreeNAS_LDAP_Group.__get_group: LDAP group not in cache"
+            )
             ldap_group = self.get_group(group)
 
         if ldap_group:
-            parts = self.host.split('.')
-            host = parts[0].upper()
+            # parts = self.host.split('.')
+            # host = parts[0].upper()
 
             cn = ldap_group[1]['cn'][0]
             try:
@@ -2960,11 +3129,11 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
                 gr = None
 
         else:
-            if type(group) in (types.IntType, types.LongType) \
-                or group.isdigit():
+            if type(group) in (
+                types.IntType, types.LongType
+            ) or group.isdigit():
                 try:
                     gr = grp.getgrgid(group)
-
                 except:
                     gr = None
 
@@ -3016,8 +3185,10 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         if not netbiosname:
             netbiosname = self.netbiosname
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             self.__gcache = FreeNAS_GroupCache(dir=netbiosname)
             self.__gkey = self.__group.encode('utf-8')
             self.__dgcache = FreeNAS_Directory_GroupCache(dir=netbiosname)
@@ -3029,15 +3200,22 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
 
     def __get_group(self, group, netbiosname):
         log.debug("FreeNAS_ActiveDirectory_Group.__get_group: enter")
-        log.debug("FreeNAS_ActiveDirectory_Group.__get_group: group = %s",
-            group)
-        log.debug("FreeNAS_ActiveDirectory_Group.__get_group: " \
-            "netbiosname = %s", netbiosname)
+        log.debug(
+            "FreeNAS_ActiveDirectory_Group.__get_group: group = %s",
+            group
+        )
+        log.debug(
+            "FreeNAS_ActiveDirectory_Group.__get_group: netbiosname = %s",
+            netbiosname
+        )
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) \
-            and self.__gcache.has_key(self.__gkey):
-            log.debug("FreeNAS_ActiveDirectory_User.__get_group: " \
-                "group in cache")
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) and
+            self.__gcache.has_key(self.__gkey)
+        ):
+            log.debug(
+                "FreeNAS_ActiveDirectory_User.__get_group: group in cache"
+            )
             self._gr = self.__gcache[self.__gkey]
             return self.__gcache[self.__gkey]
 
@@ -3045,22 +3223,29 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         self.basedn = self.get_baseDN()
         self.attributes = ['sAMAccountName']
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) \
-            and self.__dgcache.has_key(self.__dgkey):
-            log.debug("FreeNAS_ActiveDirectory_Group.__get_group: " \
-                "AD group in cache")
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) and
+            self.__dgcache.has_key(self.__dgkey)
+        ):
+            log.debug(
+                "FreeNAS_ActiveDirectory_Group.__get_group: "
+                "AD group in cache"
+            )
             ad_group = self.__dgcache[self.__dgkey]
 
         else:
-            log.debug("FreeNAS_ActiveDirectory_Group.__get_group: " \
-                "AD group not in cache")
+            log.debug(
+                "FreeNAS_ActiveDirectory_Group.__get_group: "
+                "AD group not in cache"
+            )
             ad_group = self.get_group(group)
 
         if not ad_group:
             g = group
         elif self.use_default_domain:
-            g = "{}".format(ad_group[1]['sAMAccountName'][0] \
-                if ad_group else group)
+            g = "{}".format(
+                ad_group[1]['sAMAccountName'][0] if ad_group else group
+            )
         else:
             g = "{}{}{}".format(
                 netbiosname,
@@ -3088,7 +3273,7 @@ class FreeNAS_Directory_Group(object):
         log.debug("FreeNAS_Directory_Group.__new__: group = %s", group)
 
         dflags = 0
-        if kwargs.has_key('dflags'):
+        if 'dflags' in kwargs:
             dflags = kwargs['dflags']
 
         obj = None
@@ -3112,13 +3297,16 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
 
         super(FreeNAS_LDAP_User, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             self.__ucache = FreeNAS_UserCache()
             self.__ducache = FreeNAS_Directory_UserCache()
             if self.usersuffix and self.basedn:
-                self.__key = str("uid=%s,%s,%s" % (user,
-                    self.usersuffix, self.basedn))
+                self.__key = str("uid=%s,%s,%s" % (
+                    user, self.usersuffix, self.basedn
+                ))
             elif self.basedn:
                 self.__key = str("uid=%s,%s" % (user, self.basedn))
 
@@ -3137,13 +3325,17 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
         pw = None
         self.attributes = ['uid']
 
-        if (self.flags & FLAGS_CACHE_READ_USER) \
-            and self.__ucache.has_key(user):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) and
+            self.__ucache.has_key(user)
+        ):
             log.debug("FreeNAS_LDAP_User.__get_user: user in cache")
             return self.__ucache[user]
 
-        if (self.flags & FLAGS_CACHE_READ_USER) \
-            and self.__ducache.has_key(self.__key):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) and
+            self.__ducache.has_key(self.__key)
+        ):
             log.debug("FreeNAS_LDAP_User.__get_user: LDAP user in cache")
             ldap_user = self.__ducache[self.__key]
 
@@ -3154,14 +3346,14 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
         if ldap_user:
             self.__CN = ldap_user[0]
 
-            parts = self.host.split('.')
-            host = parts[0].upper()
+            # parts = self.host.split('.')
+            # host = parts[0].upper()
 
             if ldap_user[1].has_key('sAMAccountName'):
                 uid = ldap_user[1]['sAMAccountName'][0]
             elif ldap_user[1].has_key('uid'):
                 uid = ldap_user[1]['uid'][0]
-            else: 
+            else:
                 uid = ldap_user[1]['cn'][0]
 
             try:
@@ -3171,8 +3363,9 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
                 pw = None
 
         else:
-            if type(user) in (types.IntType, types.LongType) \
-                or user.isdigit():
+            if type(user) in (
+                types.IntType, types.LongType
+            ) or user.isdigit():
                 try:
                     pw = pwd.getpwuid(user)
 
@@ -3227,8 +3420,10 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         if not netbiosname:
             netbiosname = self.netbiosname
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             self.__ucache = FreeNAS_UserCache(dir=netbiosname)
             self.__ukey = self.__user.encode('utf-8')
             self.__ducache = FreeNAS_Directory_UserCache(dir=netbiosname)
@@ -3241,13 +3436,18 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
     def __get_user(self, user, netbiosname):
         log.debug("FreeNAS_ActiveDirectory_User.__get_user: enter")
         log.debug("FreeNAS_ActiveDirectory_User.__get_user: user = %s", user)
-        log.debug("FreeNAS_ActiveDirectory_User.__get_user: " \
-            "netbiosname = %s", netbiosname)
+        log.debug(
+            "FreeNAS_ActiveDirectory_User.__get_user: netbiosname = %s",
+            netbiosname
+        )
 
-        if (self.flags & FLAGS_CACHE_READ_USER) \
-            and self.__ucache.has_key(self.__ukey):
-            log.debug("FreeNAS_ActiveDirectory_User.__get_user: " \
-                "user in cache")
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) and
+            self.__ucache.has_key(self.__ukey)
+        ):
+            log.debug(
+                "FreeNAS_ActiveDirectory_User.__get_user: user in cache"
+            )
             self._pw = self.__ucache[self.__ukey]
             return self.__ucache[self.__ukey]
 
@@ -3255,27 +3455,33 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         self.basedn = self.get_baseDN()
         self.attributes = ['sAMAccountName']
 
-        if (self.flags & FLAGS_CACHE_READ_USER) \
-            and self.__ducache.has_key(self.__dukey):
-            log.debug("FreeNAS_ActiveDirectory_User.__get_user: " \
-                "AD user in cache")
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) and
+            self.__ducache.has_key(self.__dukey)
+        ):
+            log.debug(
+                "FreeNAS_ActiveDirectory_User.__get_user: AD user in cache"
+            )
             ad_user = self.__ducache[self.__dukey]
 
         else:
-            log.debug("FreeNAS_ActiveDirectory_User.__get_user: " \
-                "AD user not in cache")
+            log.debug(
+                "FreeNAS_ActiveDirectory_User.__get_user: "
+                "AD user not in cache"
+            )
             ad_user = self.get_user(user)
 
         if not ad_user:
             u = user
         elif self.use_default_domain:
-            u = "{}".format(ad_user[1]['sAMAccountName'][0] \
-                if ad_user else user)
+            u = "{}".format(
+                ad_user[1]['sAMAccountName'][0] if ad_user else user
+            )
         else:
             u = "{}{}{}".format(
                 netbiosname,
                 FREENAS_AD_SEPARATOR,
-               ad_user[1]['sAMAccountName'][0] if ad_user else user
+                ad_user[1]['sAMAccountName'][0] if ad_user else user
             )
 
         try:

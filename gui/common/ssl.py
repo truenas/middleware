@@ -1,4 +1,3 @@
-#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -52,7 +51,7 @@ def create_certificate(cert_info):
         cert.set_serial_number(serial)
 
     cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(cert_info['lifetime'] * (60*60*24))
+    cert.gmtime_adj_notAfter(cert_info['lifetime'] * (60 * 60 * 24))
 
     cert.set_issuer(cert.get_subject())
     # Setting it to '2' actually results in a v3 cert
