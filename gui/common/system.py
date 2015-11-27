@@ -196,7 +196,7 @@ def send_mail(subject=None,
         # mailserver it tried connecting to via the outgoing server argument
         # was unreachable and it tried to connect to 'localhost' and barfed.
         # This is because FreeNAS doesn't run a full MTA.
-        #else:
+        # else:
         #    server.connect()
         server.sendmail(em.em_fromemail, to, msg)
         server.quit()
@@ -319,7 +319,6 @@ def umount(path, force=False):
                 'output': output,
             }
         ))
-        #return False
     else:
         return True
 
@@ -350,7 +349,7 @@ def ldap_enabled():
         ldap = LDAP.objects.all()[0]
         enabled = ldap.ldap_enable
 
-    except: 
+    except:
         enabled = False
 
     return enabled
@@ -365,7 +364,7 @@ def ldap_sudo_configured():
         if ldap.ldap_sudosuffix:
             enabled = True
 
-    except: 
+    except:
         enabled = False
 
     return enabled
@@ -380,7 +379,7 @@ def ldap_has_samba_schema():
         if ldap.ldap_has_samba_schema:
             has_samba_schema = True
 
-    except: 
+    except:
         has_samba_schema = False
 
     return has_samba_schema
@@ -395,7 +394,7 @@ def ldap_anonymous_bind():
         if ldap.ldap_anonbind:
             anonymous_bind = True
 
-    except: 
+    except:
         anonymous_bind = False
 
     return anonymous_bind
@@ -415,7 +414,7 @@ def activedirectory_enabled():
         ad = ActiveDirectory.objects.all()[0]
         enabled = ad.ad_enable
 
-    except: 
+    except:
         enabled = False
 
     return enabled
@@ -427,7 +426,7 @@ def activedirectory_has_unix_extensions():
     ad_unix_extensions = False
     try:
         ad = ActiveDirectory.objects.all()[0]
-        ad_unix_extensions = ad.ad_unix_extensions 
+        ad_unix_extensions = ad.ad_unix_extensions
 
     except:
         ad_unix_extensions = False
@@ -444,7 +443,7 @@ def activedirectory_has_principal():
         if ad.ad_kerberos_principal:
             ad_has_principal = True
 
-    except Exception as e:
+    except Exception:
         ad_has_principal = False
 
     return ad_has_principal
@@ -524,7 +523,7 @@ def nis_enabled():
         nis = NIS.objects.all()[0]
         enabled = nis.nis_enable
 
-    except: 
+    except:
         enabled = False
 
     return enabled
@@ -653,7 +652,7 @@ def get_dc_hostname():
 
     if gc_hostname and gc_domain:
         hostname = "%s.%s" % (gc_hostname, gc_domain)
-    elif gc_hostname: 
+    elif gc_hostname:
         hostname = gc_hostname
     else:
         p = pipeopen("/bin/hostname", allowfork=True)
@@ -724,7 +723,7 @@ def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_net
     elif ' ' in netbiosname1:
         netbiosname1_parts = netbiosname1.split()
     else:
-        netbiosname1_parts = [netbiosname1] 
+        netbiosname1_parts = [netbiosname1]
 
     netbiosname2_parts = []
     if ',' in netbiosname2:
@@ -732,7 +731,7 @@ def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_net
     elif ' ' in netbiosname1:
         netbiosname2_parts = netbiosname2.split()
     else:
-        netbiosname2_parts = [netbiosname2] 
+        netbiosname2_parts = [netbiosname2]
 
     if not netbiosname1_parts or not netbiosname2_parts:
         return False
@@ -743,7 +742,7 @@ def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_net
 
         for n2 in netbiosname2_parts:
             if validate_func:
-                validate_func(n2) 
+                validate_func(n2)
 
             if n1.lower() == n2.lower():
                 return True

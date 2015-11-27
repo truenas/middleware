@@ -1,4 +1,3 @@
-#+
 # Copyright 2013 iXsystems, Inc.
 # All rights reserved
 #
@@ -47,14 +46,14 @@ class FreeNAS_NT4_Base(object):
         log.debug("FreeNAS_NT4_Base.__init__: enter")
 
         self.flags = 0
-        if kwargs.has_key('flags') and kwargs['flags']:
+        if 'flags' in kwargs and kwargs['flags']:
             self.flags = kwargs['flags']
 
         self.domain = None
-        if kwargs.has_key('domain') and kwargs['domain']:
+        if 'domain' in kwargs and kwargs['domain']:
             self.domain = kwargs['domain']
 
-        self._settings = [] 
+        self._settings = []
         log.debug("FreeNAS_NT4_Base.__init__: leave")
 
     def _save(self):
@@ -64,7 +63,7 @@ class FreeNAS_NT4_Base(object):
 
     def _restore(self):
         if self._settings:
-            _s = self._settings.pop() 
+            _s = self._settings.pop()
             self.__dict__.update(_s)
 
     def _wbinfo(self, args):
@@ -84,7 +83,7 @@ class FreeNAS_NT4_Base(object):
                 if domainname:
                     if domain.lower() == domainname.lower():
                         domains.append(domain)
-                else: 
+                else:
                     domains.append(domain)
 
         log.debug("FreeNAS_NT4_Base.get_domains: leave")
@@ -123,7 +122,7 @@ class FreeNAS_NT4_Base(object):
                     "gecos": parts[4],
                     "homeDirectory": parts[5],
                     "loginShell": parts[6]
-               }
+                }
 
         log.debug("FreeNAS_NT4_Base.get_user: leave")
         return user
@@ -135,7 +134,7 @@ class FreeNAS_NT4_Base(object):
         if domain:
             wbargs += " --domain=%s" % domain
 
-        users = [] 
+        users = []
         (wbres, wbout) = self._wbinfo(wbargs)
         if wbres == 0:
             for line in wbout.splitlines():
@@ -165,7 +164,7 @@ class FreeNAS_NT4_Base(object):
 
         wbargs = "--group-info '%s'" % who
         if domain:
-            wbargs += " --domain=%s" % domain 
+            wbargs += " --domain=%s" % domain
 
         group = None
         (wbres, wbout) = self._wbinfo(wbargs)
@@ -229,13 +228,15 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
         self.__ucache = {}
         self.__ducache = {}
 
-        if kwargs.has_key('domain') and kwargs['domain']:
+        if 'domain' in kwargs and kwargs['domain']:
             self.__domains = self.get_domains(domain=kwargs['domain'])
         else:
             self.__domains = self.get_domains()
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER): 
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             for d in self.__domains:
                 self.__ucache[d] = FreeNAS_UserCache(dir=d)
                 self.__ducache[d] = FreeNAS_NT4_UserCache(dir=d)
@@ -258,7 +259,7 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
         try:
             file = paths[index]
 
-        except: 
+        except:
             file = None
 
         if file and write:
@@ -285,31 +286,36 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
         self.__usernames = []
 
         if self.flags & FLAGS_CACHE_READ_USER:
-            dcount = len(self.__domains) 
+            dcount = len(self.__domains)
             count = 0
 
             for d in self.__domains:
                 if self.__loaded('u', d):
-                    self.__users[d] = self.__ucache[d] 
+                    self.__users[d] = self.__ucache[d]
                     count += 1
 
             if count == dcount:
                 log.debug("FreeNAS_NT4_Users.__get_users: users in cache")
                 log.debug("FreeNAS_NT4_Users.__get_users: leave")
-                return 
+                return
 
         self._save()
         for d in self.__domains:
             self.__users[d] = []
 
             if (self.flags & FLAGS_CACHE_READ_USER) and self.__loaded('du', d):
-                log.debug("FreeNAS_NT4_Users.__get_users: "
-                    "NT4 [%s] users in cache", d)
+                log.debug(
+                    "FreeNAS_NT4_Users.__get_users: NT4 [%s] users in cache",
+                    d
+                )
                 nt4_users = self.__ducache[d]
 
             else:
-                log.debug("FreeNAS_NT4_Users.__get_users: "
-                    "NT4 [%s] users not in cache", d)
+                log.debug(
+                    "FreeNAS_NT4_Users.__get_users: "
+                    "NT4 [%s] users not in cache",
+                    d
+                )
                 nt4_users = self.get_users(domain=d)
 
             for u in nt4_users:
@@ -324,10 +330,10 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
                     pw = pwd.getpwnam(sAMAccountName)
 
                 except Exception, e:
-                    log.debug("Error on getpwname: %s",  e)
+                    log.debug("Error on getpwname: %s", e)
                     continue
 
-                self.__users[d].append(pw) 
+                self.__users[d].append(pw)
                 if self.flags & FLAGS_CACHE_WRITE_USER:
                     self.__ucache[d][sAMAccountName] = pw
 
@@ -363,13 +369,15 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
         self.__gcache = {}
         self.__dgcache = {}
 
-        if kwargs.has_key('domain') and kwargs['domain']:
+        if 'domain' in kwargs and kwargs['domain']:
             self.__domains = self.get_domains(domain=kwargs['domain'])
         else:
             self.__domains = self.get_domains()
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             for d in self.__domains:
                 self.__gcache[d] = FreeNAS_GroupCache(dir=d)
                 self.__dgcache[d] = FreeNAS_NT4_GroupCache(dir=d)
@@ -448,13 +456,19 @@ class FreeNAS_NT4_Groups(FreeNAS_NT4):
             self.__groups[d] = []
 
             if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__loaded('dg', d):
-                log.debug("FreeNAS_NT4_Groups.__get_groups: "
-                    "NT4 [%s] groups in cache", d)
+                log.debug(
+                    "FreeNAS_NT4_Groups.__get_groups: "
+                    "NT4 [%s] groups in cache",
+                    d
+                )
                 nt4_groups = self.__dgcache[d]
 
             else:
-                log.debug("FreeNAS_NT4_Groups.__get_groups: "
-                    "NT4 [%s] groups not in cache", d)
+                log.debug(
+                    "FreeNAS_NT4_Groups.__get_groups: "
+                    "NT4 [%s] groups not in cache",
+                    d
+                )
                 nt4_groups = self.get_groups(domain=d)
 
             for g in nt4_groups:
@@ -492,7 +506,7 @@ class FreeNAS_NT4_User(FreeNAS_NT4):
         obj = None
         if user:
             user = user.encode('utf-8')
-            parts = user.split(FREENAS_NT4_SEPARATOR) 
+            parts = user.split(FREENAS_NT4_SEPARATOR)
             if len(parts) > 1 and parts[1]:
                 obj = super(FreeNAS_NT4_User, cls).__new__(cls, **kwargs)
 
@@ -511,8 +525,10 @@ class FreeNAS_NT4_User(FreeNAS_NT4):
         kwargs['domain'] = domain
         super(FreeNAS_NT4_User, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_USER) or \
-            (self.flags & FLAGS_CACHE_WRITE_USER):
+        if (
+            (self.flags & FLAGS_CACHE_READ_USER) or
+            (self.flags & FLAGS_CACHE_WRITE_USER)
+        ):
             self.__ucache = FreeNAS_UserCache()
             self.__ducache = FreeNAS_NT4_UserCache(dir=domain)
             self.__key = user
@@ -581,8 +597,10 @@ class FreeNAS_NT4_Group(FreeNAS_NT4):
         kwargs['domain'] = domain
         super(FreeNAS_NT4_Group, self).__init__(**kwargs)
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) or \
-            (self.flags & FLAGS_CACHE_WRITE_GROUP):
+        if (
+            (self.flags & FLAGS_CACHE_READ_GROUP) or
+            (self.flags & FLAGS_CACHE_WRITE_GROUP)
+        ):
             self.__gcache = FreeNAS_GroupCache()
             self.__dgcache = FreeNAS_NT4_GroupCache(dir=domain)
             self.__key = group
@@ -622,4 +640,3 @@ class FreeNAS_NT4_Group(FreeNAS_NT4):
 
         self._gr = gr
         log.debug("FreeNAS_NT4_Group.__get_group: leave")
-

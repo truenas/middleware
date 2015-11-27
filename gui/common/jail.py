@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -46,7 +45,7 @@ class jail_exception(Exception):
 JAIL_PATH = "/usr/sbin/jail"
 
 JEXEC_PATH = "/usr/sbin/jexec"
-JEXEC_FLAGS_NONE          = jail_arg(0x00000000, None)
+JEXEC_FLAGS_NONE = jail_arg(0x00000000, None)
 JEXEC_FLAGS_HOST_USERNAME = jail_arg(0x00000001, "-u", True, "host_username")
 JEXEC_FLAGS_JAIL_USERNAME = jail_arg(0x00000002, "-U", True, "jail_username")
 JEXEC_FLAGS = [
@@ -55,14 +54,14 @@ JEXEC_FLAGS = [
 ]
 
 JLS_PATH = "/usr/sbin/jls"
-JLS_FLAGS_NONE             = jail_arg(0x00000000, None)
-JLS_FLAGS_LIST_DYING       = jail_arg(0x00000001, "-j")
-JLS_FLAGS_PRINT_HEADER     = jail_arg(0x00000002, "-h")
+JLS_FLAGS_NONE = jail_arg(0x00000000, None)
+JLS_FLAGS_LIST_DYING = jail_arg(0x00000001, "-j")
+JLS_FLAGS_PRINT_HEADER = jail_arg(0x00000002, "-h")
 JLS_FLAGS_PRINT_PARAMETERS = jail_arg(0x00000004, "-n")
-JLS_FLAGS_QUOTE            = jail_arg(0x00000008, "-q")
-JLS_FLAGS_JAIL_PARAMETERS  = jail_arg(0x00000010, "-s")
-JLS_FLAGS_SUMMARY          = jail_arg(0x00000020, "-v")
-JLS_FLAGS_JID              = jail_arg(0x00000040, "-j", True, "jid")
+JLS_FLAGS_QUOTE = jail_arg(0x00000008, "-q")
+JLS_FLAGS_JAIL_PARAMETERS = jail_arg(0x00000010, "-s")
+JLS_FLAGS_SUMMARY = jail_arg(0x00000020, "-v")
+JLS_FLAGS_JID = jail_arg(0x00000040, "-j", True, "jid")
 JLS_FLAGS = [
     JLS_FLAGS_LIST_DYING,
     JLS_FLAGS_PRINT_HEADER,
@@ -89,11 +88,13 @@ class Jail_bait(object):
 
         for obj in objflags:
             if self.flags & obj:
-                if obj.arg == True and obj.argname is not None and \
-                    obj.argname in kwargs and kwargs[obj.argname] is not None:
+                if (
+                    obj.arg is True and obj.argname is not None and
+                    obj.argname in kwargs and kwargs[obj.argname] is not None
+                ):
                     self.args += " %s %s" % (obj, kwargs[obj.argname])
 
-                elif obj.arg == False:
+                elif obj.arg is False:
                     self.args += " %s" % obj
 
         log.debug("Jail_bait.__init__: args = %s", self.args)
@@ -162,7 +163,7 @@ class Jls(Jail_bait):
             self.args += " %s" % kwargs["parameter"]
         else:
             for i in range(0, 1024):
-                if kwargs.has_key("parameter%d" % i) and kwargs["parameter%d" % i] is not None:
+                if "parameter%d" % i in kwargs and kwargs["parameter%d" % i] is not None:
                     self.args += " %s" % kwargs["parameter%d" % i]
 
         self._load()
@@ -178,8 +179,12 @@ class Jls(Jail_bait):
                 if index > 0:
                     parts = line.split()
                     if len(parts) == 4:
-                        self.__jails.append(JailObject(jid=parts[0],
-                            ip=parts[1], hostname=parts[2], path=parts[3]))
+                        self.__jails.append(JailObject(
+                            jid=parts[0],
+                            ip=parts[1],
+                            hostname=parts[2],
+                            path=parts[3]
+                        ))
                 index += 1
 
     def __len__(self):

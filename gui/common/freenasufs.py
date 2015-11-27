@@ -1,4 +1,3 @@
-#+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -26,9 +25,10 @@
 #####################################################################
 import logging
 
-from freenasUI.common.acl import (Base_ACL_Exception, Base_ACL_pipe,
-    Base_ACL_getfacl, Base_ACL_setfacl, Base_ACL_Hierarchy, Base_ACL_Entry,
-    Base_ACL)
+from freenasUI.common.acl import (
+    Base_ACL_Exception, Base_ACL_pipe, Base_ACL_getfacl, Base_ACL_setfacl,
+    Base_ACL_Hierarchy, Base_ACL_Entry, Base_ACL
+)
 
 log = logging.getLogger('commnon.freenasufs')
 
@@ -36,21 +36,21 @@ log = logging.getLogger('commnon.freenasufs')
 #
 # getfacl POSIX flags
 #
-GETFACL_POSIX_FLAGS_DEFALT           = 0x0001
-GETFACL_POSIX_FLAGS_SYMLINK_ACL      = 0x0002
-SETFACL_POSIX_FLAGS_NO_COMMENTS      = 0x0004
+GETFACL_POSIX_FLAGS_DEFALT = 0x0001
+GETFACL_POSIX_FLAGS_SYMLINK_ACL = 0x0002
+SETFACL_POSIX_FLAGS_NO_COMMENTS = 0x0004
 
 
 #
 # setfacl POSIX flags
 #
-SETFACL_POSIX_FLAGS_SET_DEFAULTS     = 0x0001
-SETFACL_POSIX_FLAGS_APPLY_DEFAULT    = 0x0002
-SETFACL_POSIX_FLAGS_SYMLINK_OP       = 0x0004
-SETFACL_POSIX_FLAGS_DELETE_DEFAULTS  = 0x0008
-SETFACL_POSIX_FLAGS_MODIFY           = 0x0010
-SETFACL_POSIX_FLAGS_NO_RECALCULATE   = 0x0020
-SETFACL_POSIX_FLAGS_REMOVE_ENTRY     = 0x0040
+SETFACL_POSIX_FLAGS_SET_DEFAULTS = 0x0001
+SETFACL_POSIX_FLAGS_APPLY_DEFAULT = 0x0002
+SETFACL_POSIX_FLAGS_SYMLINK_OP = 0x0004
+SETFACL_POSIX_FLAGS_DELETE_DEFAULTS = 0x0008
+SETFACL_POSIX_FLAGS_MODIFY = 0x0010
+SETFACL_POSIX_FLAGS_NO_RECALCULATE = 0x0020
+SETFACL_POSIX_FLAGS_REMOVE_ENTRY = 0x0040
 
 
 class POSIX_ACL_Exception(Base_ACL_Exception):
@@ -64,9 +64,11 @@ class POSIX_pipe(Base_ACL_pipe):
 class POSIX_getfacl(Base_ACL_getfacl):
     def _build_args(self, path, flags):
         log.debug("POSIX_getfacl._build_args: enter")
-        log.debug("POSIX_getfacl._build_args: path = %s, flags = 0x%08x",
+        log.debug(
+            "POSIX_getfacl._build_args: path = %s, flags = 0x%08x",
             path,
-            flags)
+            flags
+        )
 
         args = ""
         if flags & GETFACL_POSIX_FLAGS_DEFALT:
@@ -83,12 +85,14 @@ class POSIX_getfacl(Base_ACL_getfacl):
 class POSIX_setfacl(Base_ACL_setfacl):
     def _build_args(self, path, entry, flags, pos):
         log.debug("POSIX_setfacl._build_args: enter")
-        log.debug("POSIX_setfacl._build_args: path = %s, entry = %s, "
+        log.debug(
+            "POSIX_setfacl._build_args: path = %s, entry = %s, "
             "flags = 0x%08x, pos = %d",
             path,
             entry,
             flags,
-            pos)
+            pos
+        )
 
         args = ""
         if flags & SETFACL_POSIX_FLAGS_SET_DEFAULTS:
@@ -139,8 +143,10 @@ class POSIX_ACL_Entry(Base_ACL_Entry):
 
     def set_access_permissions(self, permissions):
         log.debug("POSIX_ACL_Entry.set_access_permissions: enter")
-        log.debug("POSIX_ACL_Entry.set_access_permissions: permissions = %s",
-            permissions)
+        log.debug(
+            "POSIX_ACL_Entry.set_access_permissions: permissions = %s",
+            permissions
+        )
 
         flag = True
         for p in permissions:
@@ -221,10 +227,12 @@ class POSIX_ACL(Base_ACL):
 
     def update(self, tag, qualifier, permissions):
         log.debug("POSIX_ACL.update: enter")
-        log.debug("POSIX_ACL.update: tag=%s, qualifier=%s, permissions=%s",
+        log.debug(
+            "POSIX_ACL.update: tag=%s, qualifier=%s, permissions=%s",
             tag,
             qualifier if qualifier else "",
-            permissions if permissions else "")
+            permissions if permissions else ""
+        )
 
         for entry in self.entries:
             if entry.tag == tag and entry.qualifier == qualifier:
@@ -241,10 +249,12 @@ class POSIX_ACL(Base_ACL):
 
     def add(self, tag, qualifier=None, permissions=None):
         log.debug("POSIX_ACL.add: enter")
-        log.debug("POSIX_ACL.add: tag = %s, qualifier = %s, permissions = %s",
+        log.debug(
+            "POSIX_ACL.add: tag = %s, qualifier = %s, permissions = %s",
             tag,
             qualifier if qualifier else "",
-            permissions if permissions else "")
+            permissions if permissions else ""
+        )
 
         entry = POSIX_ACL_Entry()
         entry.tag = tag
@@ -264,14 +274,16 @@ class POSIX_ACL(Base_ACL):
 
     def get(self, tag=None, qualifier=None):
         log.debug("POSIX_ACL.get: enter")
-        log.debug("POSIX_ACL.get: tag = %s, qualifier = %s",
+        log.debug(
+            "POSIX_ACL.get: tag = %s, qualifier = %s",
             tag if tag else "",
-            qualifier if qualifier else "")
+            qualifier if qualifier else ""
+        )
 
         entries = []
         for entry in self.entries:
             if tag and entry.tag == tag:
-                if qualifier == None or qualifier == entry.qualifier:
+                if qualifier is None or qualifier == entry.qualifier:
                     entries.append(entry)
             elif not tag:
                 entries.append(entry)
@@ -281,10 +293,12 @@ class POSIX_ACL(Base_ACL):
 
     def remove(self, tag, qualifier=None, pos=None):
         log.debug("POSIX_ACL.remove: enter")
-        log.debug("POSIX_ACL.remove: tag = %s, qualifier = %s, pos = %s",
+        log.debug(
+            "POSIX_ACL.remove: tag = %s, qualifier = %s, pos = %s",
             tag if tag else "",
             qualifier if qualifier else "",
-            str(pos) if pos else "None")
+            str(pos) if pos else "None"
+        )
 
         n = 0
         entry = None
@@ -356,8 +370,10 @@ class POSIX_ACL_Hierarchy(Base_ACL_Hierarchy):
 
     def _set_unix_directory_defaults(self, acl):
         log.debug("POSIX_ACL_Hierarchy._set_unix_directory_defaults: enter")
-        log.debug("POSIX_ACL_Hierarchy._set_unix_directory_defaults: acl = %s",
-            acl)
+        log.debug(
+            "POSIX_ACL_Hierarchy._set_unix_directory_defaults: acl = %s",
+            acl
+        )
 
         acl.reset()
         acl.chmod('755')
