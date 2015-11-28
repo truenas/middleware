@@ -70,7 +70,7 @@ The following categories are available under **Help and Support:**
 * `Bug Reporting <https://forums.freenas.org/index.php?forums/bug-reporting.7/>`_: use this forum if you think you have found a bug in FreeNAS® and want to
   discuss it before creating a support ticket.
 
-* `Hardware <https://forums.freenas.org/index.php?forums/hardware.18/>`_: for the discussion of hardware and tips for getting the most out of your hardware.
+* `Hardware <https://forums.freenas.org/index.php?forums/hardware.18/>`__: for the discussion of hardware and tips for getting the most out of your hardware.
 
 * `User Authentication <https://forums.freenas.org/index.php?forums/user-authentication.19/>`_: LDAP and Active Directory.
 
@@ -81,7 +81,7 @@ The following categories are available under **Help and Support:**
 * `Networking <https://forums.freenas.org/index.php?forums/networking.22/>`_: networking hardware, performance, link aggregation, VLANs, DDNS, FTP, SNMP, SSH,
   and TFTP.
 
-* `Installation <https://forums.freenas.org/index.php?forums/installation.32/>`_: installing help or advice before performing the installation.
+* `Installation <https://forums.freenas.org/index.php?forums/installation.32/>`__: installing help or advice before performing the installation.
 
 * `Plugins <https://forums.freenas.org/index.php?forums/plugins.34/>`_: provides a discussion area for creating and troubleshooting PBIs.
 
@@ -100,11 +100,11 @@ The following categories are available under **How-To Guides:**
 
 * `Hacking <https://forums.freenas.org/index.php?forums/hacking.14/>`_: undocumented tricks for getting the most out of your FreeNAS® system.
 
-* `Installation <https://forums.freenas.org/index.php?forums/installation.15/>`_: specific installation scenarios (hardware and/or software).
+* `Installation <https://forums.freenas.org/index.php?forums/installation.15/>`__: specific installation scenarios (hardware and/or software).
 
 * `Configuration <https://forums.freenas.org/index.php?forums/configuration.16/>`_: specific configuration scenarios (e.g. software or client configuration).
 
-* `Hardware <https://forums.freenas.org/index.php?forums/hardware.17/>`_: instructions for setting up specific hardware.
+* `Hardware <https://forums.freenas.org/index.php?forums/hardware.17/>`__: instructions for setting up specific hardware.
 
 * `Useful Scripts <https://forums.freenas.org/index.php?forums/useful-scripts.47/>`_: user-contributed scripts.
 

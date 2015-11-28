@@ -146,21 +146,19 @@ FreeNAS® system:
 
 .. warning:: the per-drive GELI master keys are not backed up along with the user keys. If a bit error occurs in the last sector of an encrypted disk, this
    may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
-   `this forum post <https://forums.freenas.org/index.php?threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`_
+   `this forum post <https://forums.freenas.org/index.php?threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`__
    which explains how to back up your master keys manually.
-   `This forum post <https://forums.freenas.org/index.php?threads/recover-encryption-key.16593/#post-85497>`_
+   `This forum post <https://forums.freenas.org/index.php?threads/recover-encryption-key.16593/#post-85497>`__
    gives an in-depth explanation of how the various key types are used by GELI.
    To track future progress on this issue, refer to `this bug report <https://bugs.freenas.org/issues/2375>`_.
 
 * The encryption key is per ZFS volume (pool). If you create multiple pools, each pool has its own encryption key.
 
-* If the system has a lot of disks, there will be a performance hit if the CPU does not support
-  `AES-NI <https://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
+* If the system has a lot of disks, there will be a performance hit if the CPU does not support `AES-NI <https://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
   or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
-  will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
-  processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
-  `forum post <https://forums.freenas.org/index.php?threads/encryption-performance-benchmarks.12157/>`_
-  compares the performance of various CPUs.
+  will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the processor
+  does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This `forum post
+  <https://forums.freenas.org/index.php?threads/encryption-performance-benchmarks.12157/>`__ compares the performance of various CPUs.
 
 * Data in the ARC cache and the contents of RAM are unencrypted.
 
@@ -625,7 +623,7 @@ are described in Table 8.1f.
 |                                                        |                |                                                                                                                          |
 +--------------------------------------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------+
 | HDD Standby                                            | drop-down menu | indicates the time of inactivity (in minutes) before the drive enters standby mode in order to conserve energy; this     |
-|                                                        |                | `forum post <https://forums.freenas.org/index.php?threads/how-to-find-out-if-a-drive-is-spinning-down-properly.2068/>`_  |
+|                                                        |                | `forum post <https://forums.freenas.org/index.php?threads/how-to-find-out-if-a-drive-is-spinning-down-properly.2068/>`__ |
 |                                                        |                | demonstrates how to determine if a drive has spun down                                                                   |
 |                                                        |                |                                                                                                                          |
 +--------------------------------------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------+

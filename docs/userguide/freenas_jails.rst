@@ -22,7 +22,7 @@ Beginning with FreeNAS® 9.3, two types of jails are supported:
 
 #. A Virtualbox template is also provided. This template will install an instance of
    `phpVirtualBox <http://sourceforge.net/projects/phpvirtualbox/>`_, which provides a web-based front-end to
-   `VirtualBox <https://www.virtualbox.org/>`_ This can then be used to install any operating system and to use the software management tools provided by
+   `VirtualBox <https://www.virtualbox.org/>`__ This can then be used to install any operating system and to use the software management tools provided by
    that operating system.
 
 It is important to understand that any users, groups, installed software, and configurations within a jail are isolated from both the FreeNAS® operating

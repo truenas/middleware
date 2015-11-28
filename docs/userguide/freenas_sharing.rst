@@ -728,7 +728,7 @@ Note the following regarding some of the "Advanced Mode" settings:
   Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
 
 * If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
+  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`__.
   
 To configure support for OS/2 clients, add this line to "Auxiliary Parameters"::
 
@@ -1504,10 +1504,10 @@ Connecting to iSCSI
 
 In order to access the iSCSI target, clients will need to use iSCSI initiator software.
 
-An iSCSI Initiator client is pre-installed with Windows 7. A detailed how-to for this client can be found
-`here <http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`_. A client for Windows 2000, XP, and 2003 can be found
-`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`_. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`_
-shows how to create an iSCSI target for a Windows 7 system.
+An iSCSI Initiator client is pre-installed with Windows 7. A detailed how-to for this client can be found `here
+<http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`__. A client for Windows 2000, XP, and 2003 can be found
+`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`__. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`_ shows
+how to create an iSCSI target for a Windows 7 system.
 
 Mac OS X does not include an initiator.
 `globalSAN <http://www.studionetworksolutions.com/globalsan-iscsi-initiator/>`_
