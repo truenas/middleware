@@ -72,7 +72,12 @@ def main(argv):
                 entrytext = re.sub('[f|F][r|R][e|E][e|E][n|N][a|A][s|S]\s*[o|O][n|N]|[l|L][y|Y]:?', '', entrytext).strip()
                 if project.lower() == 'freenas': 
                     entrytext = re.sub('\n','\n\t\t\t', entrytext)
-                    print "#" + str(issue.id) + "\t" + str(issue.tracker) + "\t" + str(issue.priority) + "\t" + entrytext
+                    try:
+                        print "#" + str(issue.id) + "\t" + str(issue.tracker) + "\t" + str(issue.priority) + "\t" + entrytext
+                    except UnicodeError:
+                        import unicodedata
+			entrytext = unicodedata.normalize('NFKD', entrytext).encode('ascii','ignore')
+                        print "#" + str(issue.id) + "\t" + str(issue.tracker) + "\t" + str(issue.priority) + "\t" + entrytext
                 else:
                     entrytext = re.sub('\n','\n\t', entrytext)
                     print "#" + str(issue.id) + "\t" + entrytext
