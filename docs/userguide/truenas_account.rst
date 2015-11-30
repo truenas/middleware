@@ -189,7 +189,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
+| Disable password login     | checkbox        | when checked, disables password logins and authentication to CIFS shares; to undo this                                                                |
 |                            |                 | setting, set a password for the user using the "Modify User" button for the user in "View Users";                                                     |
 |                            |                 | checking this box will grey out "Lock user" and "Permit Sudo" which are mutually exclusive                                                            |
 |                            |                 |                                                                                                                                                       |
