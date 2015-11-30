@@ -111,6 +111,9 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | collisions                                                                                                                                 |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Allow DNS updates        | checkbox      | when unchecked, disables Samba from doing DNS updates when joining a domain                                                                |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                  |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
