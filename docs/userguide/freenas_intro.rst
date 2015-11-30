@@ -174,7 +174,7 @@ that have occurred since 9.3-RELEASE.
 
 * The :file:`/usr/local/bin/test_ssh.py` script has been added for testing the SSH connection for a defined replication task.
 
-* The "Encryption Mode" and "Certificate" drop-down menus have been added to :menuselection:`Directory Service --> Active Directory`.
+* The "Encryption Mode" and "Certificate" drop-down menus and the "Allow DNS updates" checkbox have been added to :menuselection:`Directory Service --> Active Directory`.
 
 * A pop-up warning will appear if you go to change :menuselection:`Directory Service --> Active Directory --> Advanced Mode -> Idmap backend` as selecting the wrong
   backend will break Active Directory integration.
