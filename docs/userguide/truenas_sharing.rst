@@ -867,7 +867,7 @@ for more details.
 | xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| zfs_space           |                                                                                                                                            |
+| zfs_space           | correctly calculates ZFS space used by share, including any reservations or quotas                                                         |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
