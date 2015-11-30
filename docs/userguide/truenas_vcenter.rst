@@ -5,7 +5,7 @@ vCenter
 =======
 
 Administrators who use `VMware vCenter Server <https://www.vmware.com/products/vcenter-server>`_ to administer their vSphere environments can use the TrueNAS® vCenter plugin to manage their
-TrueNAS® appliance from vCenter Server.
+TrueNAS® array from vCenter Server.
 
 .. note:: at this time, the vCenter plugin only supports the creation of iSCSI and NFS datastores from vCenter Server.
 

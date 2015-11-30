@@ -23,15 +23,15 @@ This section covers these initial setup steps:
 Packing List
 ------------
 
-The TrueNAS® Storage Appliance supports two expansion shelf models: the :ref:`E16 Expansion Shelf` and the :ref:`E24 Expansion Shelf`. Each is designed to be
+The TrueNAS® Storage Array supports two expansion shelf models: the :ref:`E16 Expansion Shelf` and the :ref:`E24 Expansion Shelf`. Each is designed to be
 straightforward to set up.
 
-The TrueNAS® Storage Appliance comes with a number of necessary accessories. If anything is missing or your TrueNAS® Storage Appliance arrived in less than pristine
+The TrueNAS® Storage Array comes with a number of necessary accessories. If anything is missing or your TrueNAS® Storage Array arrived in less than pristine
 condition, immediately take pictures and contact iXsystems support.
 
 Check that your shipment includes the following items:
 
-* TrueNAS® Storage Appliance
+* TrueNAS® Storage Array
 
 .. image:: images/truenas_appliance.png
 
@@ -59,7 +59,7 @@ Check that your shipment includes the following items:
 
 .. image:: images/tn_serial_to_3.5mm_cable.png
 
-* One bezel
+* One faceplate
 
 .. image:: images/tn_bezel.png
 
@@ -70,13 +70,13 @@ Since network cables are highly configuration-dependent, contact your iXsystems 
 Any unused drive bays will be populated with drive tray blanks to maintain proper airflow.
 
 The layout of the storage controller will vary by configuration. :numref:`Figure %s: Front View <appliance1>` provides an example of the front view of the TrueNAS® Storage
-Appliance.
+Array.
 
 .. _appliance1:
 
 .. figure:: images/tn_appliance_front_view.jpg
 
-Note the two control panels on either side of the front of the appliance. The one on the left controls the primary storage controller, and the one on the
+Note the two control panels on either side of the front of the array. The one on the left controls the primary storage controller, and the one on the
 right controls the secondary storage controller in High Availability models.
 
 :numref:`Figure %s: Front Panel Buttons and Indicators <appliance2>` shows the layout of the front panel buttons and indicators.
@@ -85,7 +85,7 @@ right controls the secondary storage controller in High Availability models.
 
 .. figure:: images/tn_appliance_front_panel.jpg
 
-:numref:`Figure %s: Rear View <appliance3>` shows the rear view of the appliance. If the TrueNAS® Storage Appliance is configured for High Availability, both storage controller
+:numref:`Figure %s: Rear View <appliance3>` shows the rear view of the array. If the TrueNAS® Storage Array is configured for High Availability, both storage controller
 slots will be populated. In a single-controller model, the bottom controller slot will contain a controller slot cover panel.
 
 .. _appliance3:
@@ -105,7 +105,7 @@ slots will be populated. In a single-controller model, the bottom controller slo
 Hardware Setup
 --------------
 
-TrueNAS® Storage Appliance slide rails support racks with both square and circular hole types. Set the mounting brackets into the correct position for your rack type by pressing the button
+TrueNAS® Storage Array slide rails support racks with both square and circular hole types. Set the mounting brackets into the correct position for your rack type by pressing the button
 on the mounting bracket and rotating them in place, as shown in :numref:`Figure %s: Rotate Rackmount Bracket <appliance5>`. The square rack style brackets are the default. The
 circular hole style is the one with a flat surface and screw holes.
 
@@ -115,7 +115,7 @@ circular hole style is the one with a flat surface and screw holes.
 
 .. index:: Install TrueNAS Outer Rail in Rack
 
-Before installing the TrueNAS® Storage Appliance, confirm that the rails included with your TrueNAS® Storage Appliance are long enough for your rack. Examine each rail to
+Before installing the TrueNAS® Storage Array, confirm that the rails included with your TrueNAS® Storage Array are long enough for your rack. Examine each rail to
 find the sides labeled "Front" and "Rear".
 
 For racks with square holes, snap the mounting brackets into the holes at either end of the rail into the mouting holes. Make sure to install the rails with
@@ -132,43 +132,36 @@ the rails with the end labeled "Front" toward the front of the rack. Refer to :n
 
 .. figure:: images/tn_rack_round_holes.png
 
-.. index:: Install Appliance into Rack
+.. index:: Install Array into Rack
 
-You are now ready to install the TrueNAS® Storage Appliance into the rack.
+You are now ready to install the TrueNAS® Storage Array into the rack.
 
-.. warning:: two people are required to lift a TrueNAS® Storage Appliance.
+.. warning:: two people are required to lift a TrueNAS® Storage Array.
 
-Carefully align the TrueNAS® Storage Appliance inner rail with the notches in the outer rail. Once the rails are aligned, slide the appliance toward the rack. When
-the appliance stops moving, move the pin-lock laches to allow the appliance to slide the rest of the way into the rack. Refer to
-:numref:`Figure %s: Push Appliance into Rack and Release pin-lock Latches <appliance8>` for a detailed view.
+Carefully align the TrueNAS® Storage Array inner rail with the notches in the outer rail. Once the rails are aligned, slide the array toward the rack. When
+the array stops moving, move the pin-lock laches to allow the array to slide the rest of the way into the rack. Refer to
+:numref:`Figure %s: Push Array into Rack and Release pin-lock Latches <appliance8>` for a detailed view.
 
 .. _appliance8:
 
 .. figure:: images/tn_rack_and_release_locks.png
 
-.. index:: Install Drive Trays into a TrueNAS Appliance
+.. index:: Install Drive Trays into a TrueNAS Array
 
-Next, install all of the populated drive trays into the front of the appliance. Refer to :numref:`Figure %s: Drive Installation Instructions <appliance9>` for a detailed view.
+Next, install all of the populated drive trays into the front of the array. Refer to :numref:`Figure %s: Drive Installation Instructions <appliance9>` for a detailed view.
 
-.. note:: to avoid personal injury, do not install drives into the TrueNAS® Storage Appliance before racking.
+.. note:: to avoid personal injury, do not install drives into the TrueNAS® Storage Array before racking.
 
 .. _appliance9:
 
 .. figure:: images/tn_install_drive_tray.jpg
 
-TrueNAS® drive bays are numbered as shown in :numref:`Figure %s: Drive Bay Ordering <appliance10>`. If your TrueNAS® Storage Appliance includes ZIL (Write Cache) or L2ARC (Read Cache)
-devices, install all ZIL devices starting from slot 0, followed by all L2ARC devices, followed by any remaining drives.
+Both network and storage cabling should be connected **before** turning on the TrueNAS® Storage Array for the first time.
 
-.. _appliance10:
-
-.. figure:: images/tn_drive_mapping.jpg
-
-Both network and storage cabling should be connected **before** turning on the TrueNAS® Storage Appliance for the first time.
-
-Network cabling is highly dependent on the exact TrueNAS® model and environment. If you need assistance connecting your TrueNAS® Storage Appliance to the network,
+Network cabling is highly dependent on the exact TrueNAS® model and environment. If you need assistance connecting your TrueNAS® Storage Array to the network,
 contact your iXsystems Support Representative. 
 
-In order to configure and use :ref:`Out-of-Band Management`, you must connect the out-of-band management port before turning on the TrueNAS® Storage Appliance.
+In order to configure and use :ref:`Out-of-Band Management`, you must connect the out-of-band management port before turning on the TrueNAS® Storage Array.
 Refer to :numref:`Figure %s: TrueNAS® Back Panel Layout <appliance11>` or the sticker on the storage controller handle for the location of the out-of-band management port.
 
 .. _appliance11:
@@ -178,23 +171,23 @@ Refer to :numref:`Figure %s: TrueNAS® Back Panel Layout <appliance11>` or the s
 For storage cabling instructions, refer to the instructions in :ref:`E16 Expansion Shelf` or :ref:`E24 Expansion Shelf`, depending upon the TrueNAS®
 expansion shelf.
 
-.. index:: Attach the TrueNAS Bezel
+.. index:: Attach the TrueNAS Faceplate
 
-Finally, each TrueNAS® Storage Appliance includes an optional bezel. To attach the bezel to the TrueNAS® Storage Appliance, insert the two tabs on the right side of the
-bezel into the holes in the right side handle section. Push the left side of the bezel down until it clicks into place.
+Finally, each TrueNAS® Storage Array includes an optional faceplate. To attach the faceplate to the TrueNAS® Storage Array, insert the two tabs on the right side of the
+faceplate into the holes in the right side handle section. Push the left side of the faceplate down until it clicks into place.
 
-.. index:: Plug in and Power on your TrueNAS appliance
+.. index:: Plug in and Power on your TrueNAS array
 
-Once all of the other hardware setup steps are complete, plug the power cords into the AC receptacles on the back of the TrueNAS® Storage Appliance and secure them
+Once all of the other hardware setup steps are complete, plug the power cords into the AC receptacles on the back of the TrueNAS® Storage Array and secure them
 in place with the wire locks. 
 
-.. note:: be sure to power on all TrueNAS® storage expansion shelves before powering on the TrueNAS® Storage Appliance.
+.. note:: be sure to power on all TrueNAS® storage expansion shelves before powering on the TrueNAS® Storage Array.
 
-Power on the TrueNAS® Storage Appliance by pressing the top left button on the control panel for each storage controller. Wait thirty seconds after turning on the
+Power on the TrueNAS® Storage Array by pressing the top left button on the control panel for each storage controller. Wait thirty seconds after turning on the
 first storage controller before powering on the second storage controller. This will make it clear which controller will be the active controller in High
 Availability configurations.
 
-Once the TrueNAS® Storage Appliance is fully operational, the TrueNAS® logo will act as a global fault light. By default, it is backlit in white. If there
+Once the TrueNAS® Storage Array is fully operational, the TrueNAS® logo will act as a global fault light. By default, it is backlit in white. If there
 are any issues that need to be addressed, the light will turn red. In this case, refer to the :ref:`Alert` section of the TrueNAS® administrative graphical
 interface for more details about the error condition.
 
@@ -205,8 +198,8 @@ interface for more details about the error condition.
 E16 Expansion Shelf
 ---------------------------
 
-The TrueNAS® E16 expansion shelf is a 3U, 16-bay storage expansion unit designed specifically to work with the TrueNAS® Storage Appliance. This section will
-cover setting up an E16 expansion shelf and connecting it to a TrueNAS® Storage Appliance.
+The TrueNAS® E16 expansion shelf is a 3U, 16-bay storage expansion unit designed specifically to work with the TrueNAS® Storage Array. This section will
+cover setting up an E16 expansion shelf and connecting it to a TrueNAS® Storage Array.
 
 .. index:: E16 Expansion Shelf Contents
 
@@ -314,8 +307,8 @@ You are now ready to install the E16 expansion shelf into the rack.
 
 .. warning:: two people are required to lift a TrueNAS® E16 expansion shelf.
 
-Carefully align the TrueNAS® E16 expansion shelf inner rail with the notches in the outer rail. Once the rails are aligned, slide the appliance toward the
-rack. When the appliance stops moving, move the pin-lock laches to allow the appliance to slide the rest of the way into the rack. Refer to
+Carefully align the TrueNAS® E16 expansion shelf inner rail with the notches in the outer rail. Once the rails are aligned, slide the array toward the
+rack. When the array stops moving, move the pin-lock laches to allow the array to slide the rest of the way into the rack. Refer to
 :numref:`Figure %s: Push Expansion Shelf into Rack and Release pin-lock Latches <appliance21>` for a detailed view.
 
 .. _appliance21:
@@ -330,18 +323,12 @@ Next, install all populated drive trays into the front of the expansion shelf as
 
 .. figure:: images/tn_install_drive_tray.jpg
 
-TrueNAS® drive bays are numbered for your convenience. Intall them in the order indicated in :numref:`Figure %s: Drive Bay Ordering <appliance23>`.
+.. index:: Connect E16 Expansion Shelf to TrueNAS Array
 
-.. _appliance23:
-
-.. figure:: images/tn_drive_mapping.jpg
-
-.. index:: Connect E16 Expansion Shelf to TrueNAS Appliance
-
-Note the labels on the SAS ports on the back of the TrueNAS® Storage Appliance and the letter label on the back of the expansion shelf. Using the included
-SAS cables, connect the "In" SAS port of the top expander on the E16 expansion shelf to the SAS port with the same letter on the TrueNAS® Storage Appliance's
+Note the labels on the SAS ports on the back of the TrueNAS® Storage Array and the letter label on the back of the expansion shelf. Using the included
+SAS cables, connect the "In" SAS port of the top expander on the E16 expansion shelf to the SAS port with the same letter on the TrueNAS® Storage Array's
 primary storage controller (the one in the top slot). If you have a secondary storage controller, connect the "In" SAS port of the bottom expander to the port with the same letter on the
-secondary storage controller. Refer to :numref:`Figure %s: Connecting an E16 Expansion Shelf to a TrueNAS® Storage Appliance <appliance24>` for a detailed view.
+secondary storage controller. Refer to :numref:`Figure %s: Connecting an E16 Expansion Shelf to a TrueNAS® Storage Array <appliance24>` for a detailed view.
 
 .. _appliance24:
 
@@ -352,8 +339,8 @@ secondary storage controller. Refer to :numref:`Figure %s: Connecting an E16 Exp
 Once all the other hardware setup steps are complete, plug the power cords into the AC receptacles on the back of the E16 expansion shelf and secure them in
 place with the wire locks. Power on the E16 expansion shelf by pressing the top left button on the control panel.
 
-If you are setting up a TrueNAS® Storage Appliance for the first time, wait two minutes after powering on all expansion shelves before turning on the
-TrueNAS® Storage Appliance.
+If you are setting up a TrueNAS® Storage Array for the first time, wait two minutes after powering on all expansion shelves before turning on the
+TrueNAS® Storage Array.
 
 .. index:: E24 Expansion Shelf
 
@@ -362,8 +349,8 @@ TrueNAS® Storage Appliance.
 E24 Expansion Shelf
 ---------------------------
 
-The TrueNAS® E24 expansion shelf is a 4U, 24-bay storage expansion unit designed specifically for use with the TrueNAS® Storage Appliance. This section will
-cover setting up an E24 expansion shelf and connecting it to a TrueNAS® Storage Appliance.
+The TrueNAS® E24 expansion shelf is a 4U, 24-bay storage expansion unit designed specifically for use with the TrueNAS® Storage Array. This section will
+cover setting up an E24 expansion shelf and connecting it to a TrueNAS® Storage Array.
 
 .. index:: TrueNAS E24 Expansion Shelf Contents
 
@@ -452,20 +439,15 @@ Secure the expansion shelf to the rack by pushing down and tightening the two bu
 .. index:: Install Drives into the E24 Expansion Shelf
 
 Once the E24 expansion shelf is secured into the rack, insert the included hard drives. To insert a drive, release the handle with the tab on the right side,
-push it into the drive bay until the handle starts to be pulled back, and then push the handle the rest of the way forward to secure the drive in place. The
-drive carriers are numbered for your convenience. Use the layout depicted in :numref:`Figure %s: E24 Expansion Shelf Drive Layout <appliance31>` to insert the drives.
+push it into the drive bay until the handle starts to be pulled back, and then push the handle the rest of the way forward to secure the drive in place. 
 
-.. _appliance31:
+.. index:: Connect E24 Expansion Shelf to TrueNAS Array
 
-.. figure:: images/tn_e24_drive_layout.png
-
-.. index:: Connect E24 Expansion Shelf to TrueNAS Appliance
-
-To connect the E24 expansion shelf to the TrueNAS® Storage Appliance, note the labels on the SAS ports on the back of the TrueNAS® Storage Appliance and the
+To connect the E24 expansion shelf to the TrueNAS® Storage Array, note the labels on the SAS ports on the back of the TrueNAS® Storage Array and the
 letter label on the back of the expansion shelf. Using the included SAS cables, connect the left "In" SAS port of the left side expander on the E24 expansion
-shelf to the SAS port with the same letter on the TrueNAS® Storage Appliance's primary storage controller (the one in the top slot). If you have a secondary
+shelf to the SAS port with the same letter on the TrueNAS® Storage Array's primary storage controller (the one in the top slot). If you have a secondary
 storage controller, connect the left "In" SAS port of the right side expander to the port with the same letter on the secondary storage controller. Refer to
-:numref:`Figure %s:Example connection between E24 Expansion Shelf and TrueNAS® Storage Appliance <appliance32>`  for a detailed view.
+:numref:`Figure %s:Example connection between E24 Expansion Shelf and TrueNAS® Storage Array <appliance32>`  for a detailed view.
 
 .. _appliance32:
 
@@ -487,8 +469,8 @@ locks.
 Once all the power and storage connections are set up, turn on the expansion shelf by moving the power switches on both power supplies to the On (line)
 position.
 
-If you are setting up a TrueNAS® Storage Appliance for the first time, wait two minutes after powering on all expansion shelves before turning on the
-TrueNAS® Storage Appliance. 
+If you are setting up a TrueNAS® Storage Array for the first time, wait two minutes after powering on all expansion shelves before turning on the
+TrueNAS® Storage Array. 
 
 .. index:: Out-of-Band Management
 
@@ -498,15 +480,15 @@ Out-of-Band Management
 ----------------------
 
 Before attempting to configure TrueNAS® for out-of-band management, ensure that the out-of-band management port is connected to an appropriate network. Refer
-to the guide included with your TrueNAS® Storage Appliance for detailed instructions on how to connect to a network.
+to the guide included with your TrueNAS® Storage Array for detailed instructions on how to connect to a network.
 
-Make sure to connect the out-of-band management port **before** powering on the TrueNAS® Storage Appliance. 
+Make sure to connect the out-of-band management port **before** powering on the TrueNAS® Storage Array. 
 
 In most cases, the out-of-band management interface will have been pre-configured by iXsystems. This section contains instructions for configuring it from the
 BIOS if needed. Alternately, if you have already have access to the TrueNAS® administrative graphical interface, the same settings can be configured using
 the instructions in :ref:`IPMI`.
 
-To access the system BIOS, press "F2" at the splash screen when booting the TrueNAS® Storage Appliance. This will open the menu shown in
+To access the system BIOS, press "F2" at the splash screen when booting the TrueNAS® Storage Array. This will open the menu shown in
 :numref:`Figure %s: Initial BIOS Screen <appliance34>`.
 
 .. _appliance34:
@@ -549,8 +531,8 @@ Finally, set the "Default Gateway Address" for the network to which the out-of-b
 
 Save the changes you have made, exit the BIOS, and allow the system to boot.
 
-To connect to the TrueNAS® Storage Appliance using the out-of-band management port, input the configured IP address into a web browser from a computer that is either within the same
-network or which is directly wired to the appliance. As seen in :numref:`Figure %s: Connecting to the IPMI Graphical Interface <appliance40>`, a login prompt will appear.
+To connect to the TrueNAS® Storage Array using the out-of-band management port, input the configured IP address into a web browser from a computer that is either within the same
+network or which is directly wired to the array. As seen in :numref:`Figure %s: Connecting to the IPMI Graphical Interface <appliance40>`, a login prompt will appear.
 
 .. _appliance40:
 
@@ -587,7 +569,7 @@ When prompted that the connection is untrusted, as seen in :numref:`Figure %s: C
 
 .. figure:: images/tn_IPMIcontinue.png
 
-Once the out-of-band console opens, you can control the TrueNAS® Storage Appliance as if you were using a directly-connected keyboard and monitor.
+Once the out-of-band console opens, you can control the TrueNAS® Storage Array as if you were using a directly-connected keyboard and monitor.
 
 .. index:: Console Setup Menu
 .. _Console Setup Menu:
@@ -595,7 +577,7 @@ Once the out-of-band console opens, you can control the TrueNAS® Storage Applia
 Console Setup Menu
 ------------------------------
 
-Once you have completed setting up the hardware for the TrueNAS® Storage Appliance, boot the system. The Console Setup menu, shown in
+Once you have completed setting up the hardware for the TrueNAS® Storage Array, boot the system. The Console Setup menu, shown in
 :numref:`Figure %s: TrueNAS® Console Setup Menu <console1a>`, will appear at the end of the boot process. If you have access to the TrueNAS® system's keyboard and monitor, this Console Setup
 menu can be used to administer the system should the administrative GUI become inaccessible.
 
@@ -708,7 +690,7 @@ Enter the default password of *abcd1234*.
           *root*, click the "Modify User" button, enter the new password in the "Password" and "Password confirmation" fields, and click "OK" to save the new
           password to use on subsequent logins.
 
-The first time you login, the EULA, found in :ref:`Appendix A`, will be displayed along with a box where you can paste the license for the TrueNAS® appliance. Once you have
+The first time you login, the EULA, found in :ref:`Appendix A`, will be displayed along with a box where you can paste the license for the TrueNAS® array. Once you have
 read the EULA and pasted in the license, click "OK". You should then see the administrative GUI as shown in the example in
 :numref:`Figure %s: TrueNAS® Graphical Configuration Menu <tn_initial>`.
           
@@ -743,7 +725,7 @@ the order that they appear within the tree, or the left frame of the graphical i
 .. note:: iXsystems recommends that you contact your iXsystems Support Representative for initial setup and configuration assistance.
 
 Once your system has been configured and you are familiar with the configuration workflow, the rest of this document can be used as a reference guide to the
-features built into the TrueNAS® Storage Appliance.
+features built into the TrueNAS® Storage Array.
 
 .. note:: it is important to use the graphical interface (or the console setup menu) for all non-ZFS configuration changes. TrueNAS® uses a configuration
    database to store its settings. If you make changes at the command line, they will not be written to the configuration database. This means that these

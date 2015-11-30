@@ -11,7 +11,7 @@ The Network section of the administrative GUI contains the following components 
 
 *   :ref:`Interfaces`: used to configure a specified interface's network settings.
 
-*   :ref:`IPMI`: provides side-band management should the appliance become unavailable through the graphical administrative interface.
+*   :ref:`IPMI`: provides side-band management should the array become unavailable through the graphical administrative interface.
 
 *   :ref:`Link Aggregations`: used to configure link aggregation and link failover.
 
@@ -173,7 +173,7 @@ fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of t
 IPMI
 ----
 
-The TrueNAS® Storage Appliance provides a built-in out-of-band management port which can be used to provide side-band management should the system become
+The TrueNAS® Storage Array provides a built-in out-of-band management port which can be used to provide side-band management should the system become
 unavailable through the graphical administrative interface. This allows for a few vital functions, such as checking the log, accessing the BIOS setup, and
 powering on the system without requiring physical access to the system. It can also be used to allow another person remote access to the system in order to
 assist with a configuration or troubleshooting issue.

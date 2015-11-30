@@ -978,14 +978,14 @@ a new login, if you are not already logged into the `iXsystems Support page <htt
 Failovers
 ---------
 
-If the TrueNAS® appliance has been licensed for High Availability (HA), a "Failover" tab will be added to "System". HA-licensed appliances use the Common Address Redundancy Protocol
+If the TrueNAS® array has been licensed for High Availability (HA), a "Failover" tab will be added to "System". HA-licensed arrays use the Common Address Redundancy Protocol
 (`CARP <http://www.openbsd.org/faq/pf/carp.html>`_) to provide high availability and failover. CARP was originally developed by the OpenBSD project and provides an open source, non
 patent-encumbered alternative to the VRRP and HSRP protocols. TrueNAS® uses a two-unit active/standby model and provides an HA synchronization daemon to automatically monitor the status of
 the active node, synchronize any configuration changes between the active and the standby node, and failover to the standby node should the active node become unavailable.
 
 .. warning:: seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted by the failover event. 
 
-To configure HA, turn on both units in the appliance. Use the instructions in the :ref:`Console Setup Menu` to log into the graphical interface for one of the units, it doesn't matter which
+To configure HA, turn on both units in the array. Use the instructions in the :ref:`Console Setup Menu` to log into the graphical interface for one of the units, it doesn't matter which
 one. If this is the first login, it will automatically display the "Upload License" screen. Otherwise, click :menuselection:`System --> Support --> Upload License`. Paste the HA license you
 received from iXsystems and press "OK" to activate it. The license contains the serial numbers for both units in the chassis. Once the license is activated, the "Failovers" tab is added to
 "System" and some fields are modified in "Network" so that the peer IP address, peer hostname, and virtual IP can be configured. An extra "IPMI (Node A/B)" tab will also be added so that
@@ -1008,7 +1008,7 @@ Next, go to :menuselection:`Network --> Interfaces --> Add Interface`. The HA li
 
 * **IPv4 Address (This Node):** if this node will use a static IP address, rather than DHCP, set it here.
 
-* **Virtual IP:** input the IP address to use for administrative access to the appliance.
+* **Virtual IP:** input the IP address to use for administrative access to the array.
 
 * **Virtual Host ID:** the Virtual Host ID (VHID) must be unique on the broadcast segment of the network. It can be any unused number between *1* and
   *255*.
