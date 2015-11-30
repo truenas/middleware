@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2015-11-25 10:17+0000\n"
+"PO-Revision-Date: 2015-11-28 10:18+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==0 || ( n%100>1 && n%100<11) "
 "? 1 : (n%100>10 && n%100<20 ) ? 2 : 3);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1448446625.0\n"
+"X-POOTLE-MTIME: 1448705918.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11981,4 +11981,14 @@ msgstr ""
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr ""
+
+#: services/models.py:1574
+msgid "Allow Kerberos Authentication"
+msgstr ""
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
 msgstr ""

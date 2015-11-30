@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2015-11-25 20:08+0000\n"
+"PO-Revision-Date: 2015-11-27 17:15+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1448482126.0\n"
+"X-POOTLE-MTIME: 1448644547.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -12941,14 +12941,12 @@ msgid "Fibre Channel Ports have been successfully changed."
 msgstr "Порты Fibre Channel были успешно изменены."
 
 #: directoryservice/models.py:941
-#, fuzzy
 msgid "Allow DNS updates"
-msgstr "Разрешить гостевой доступ"
+msgstr "Разрешить обновления DNS"
 
 #: directoryservice/models.py:942
-#, fuzzy
 msgid "Set this if you want to allow allow DNS updates."
-msgstr "Установите если вы хотите разрешить Доверенные Домены."
+msgstr "Установите если вы хотите разрешить обновления DNS."
 
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
@@ -12969,3 +12967,14 @@ msgid ""
 msgstr ""
 "Версия firmware %(fwversion)s не соответствует версии драйвера %(drversion)s "
 "для /dev/mps%(mps)s. Пожалуйста прошейте контроллер P%(drversion)s IT."
+
+#: services/models.py:1574
+#, fuzzy
+msgid "Allow Kerberos Authentication"
+msgstr "Разрешить вход по паролю"
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
+msgstr ""

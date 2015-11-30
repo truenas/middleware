@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-12-25 22:18+0000\n"
-"Last-Translator: Simor <batio3pzt@aol.com>\n"
+"PO-Revision-Date: 2015-11-28 10:24+0000\n"
+"Last-Translator: sistemarjin <sistemarjin@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1419545898.0\n"
+"X-POOTLE-MTIME: 1448706245.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -110,11 +110,11 @@ msgstr "Her Zaman Açık"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Kapalı"
+msgstr "Etkin Değil"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Seviye 1 - Bekleme konumunda en az güç tüketimi (disk dönüşü durur)"
+msgstr "Seviye 1 - Bekleme konumunda en az güç tüketimi (Disk Beklemede)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -126,7 +126,7 @@ msgstr "Seviye 127 - Bekleme konumunda orta seviye güç tüketimi"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Seviye 128 - Beklemede olmadan en az güç tüketimi (disk dönüşü durmaz)"
+msgstr "Seviye 128 - Beklemede olmadan en az güç tüketimi (Disk Aktif)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -138,7 +138,7 @@ msgstr "Seviye 254 - En yüksek güç tüketimi, en yüksek performans"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
-msgstr "En az"
+msgstr "Asgari"
 
 #: choices.py:97
 msgid "Medium"
@@ -146,7 +146,7 @@ msgstr "Orta"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "En çok"
+msgstr "Azami"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
@@ -246,7 +246,7 @@ msgstr "Hata Ayıklama"
 
 #: choices.py:195
 msgid "Default"
-msgstr "Varsayılan"
+msgstr "Öntanımlı"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -258,7 +258,7 @@ msgstr "Hiçbir durumda katlama"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr "Her iki tarafada küçük harf"
+msgstr "Her iki yönde küçük harfli adlar"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
@@ -296,7 +296,7 @@ msgstr "okuma-yazma"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "salt-okunur"
+msgstr "salt okunur"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
@@ -9615,7 +9615,7 @@ msgstr ""
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr ""
+msgstr "Extent ismi benzersiz olmalı."
 
 #: services/models.py:414
 msgid "Enable experimental target"
@@ -9626,6 +9626,8 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Soru işareti (?) içeren parola, CIFS kullanımında problem "
+"oluşturabileceğinden izin verilmez"
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10386,9 +10388,8 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr "Kimlik Doğrulama"
+msgstr "Temel Kimlik Denetimi               "
 
 #: choices.py:44
 #, fuzzy
@@ -10622,7 +10623,7 @@ msgstr ""
 
 #: sharing/models.py:357
 msgid "Change User & Group Ownership"
-msgstr ""
+msgstr "Kullanıcı & Grup sahipliğini değiştir."
 
 #: sharing/models.py:358
 msgid ""
@@ -10654,7 +10655,7 @@ msgstr "ZFS Veri Kümesi Oluştur"
 
 #: storage/forms.py:1439
 msgid "Case Sensitivity"
-msgstr ""
+msgstr "Büyük/Küçük Harf Duyarlı"
 
 #: system/admin.py:49
 #, fuzzy
@@ -12668,6 +12669,7 @@ msgstr ""
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
+"Bu ayar, paylaşım için olanlar dahil her formdaki parolayı etkisiz kılar"
 
 #: network/forms.py:305
 #, fuzzy
@@ -13069,4 +13071,15 @@ msgstr ""
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
+msgstr ""
+
+#: services/models.py:1574
+#, fuzzy
+msgid "Allow Kerberos Authentication"
+msgstr "Parola doğrulamasına izin ver"
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
 msgstr ""

@@ -12746,3 +12746,14 @@ msgid ""
 msgstr ""
 "Verze firmware %(fwversion)s neodpovídá verzi ovladače %(drversion)s pro "
 "zařízení /dev/mpr%(mpr)s. Nahrajte do řadiče firmware verze P%(drversion)s."
+
+#: services/models.py:1574
+#, fuzzy
+msgid "Allow Kerberos Authentication"
+msgstr "Umožnit ověřování heslem"
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
+msgstr ""

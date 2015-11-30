@@ -13333,3 +13333,14 @@ msgid ""
 msgstr ""
 "La version du firmware %(fwversion)s ne correspond pas à la version du "
 "driver %(drversion)s pour /dev/mps%(mps)s"
+
+#: services/models.py:1574
+#, fuzzy
+msgid "Allow Kerberos Authentication"
+msgstr "Autoriser l'authentification par mot de passe"
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
+msgstr ""
