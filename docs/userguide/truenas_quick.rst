@@ -65,6 +65,9 @@ Check that your shipment includes the following items:
 
 * One printed guide
 
+.. image:: images/tn_setupguide.png
+
+
 Since network cables are highly configuration-dependent, contact your iXsystems Sales Representative if you have any questions regarding the included cables.
 
 Any unused drive bays will be populated with drive tray blanks to maintain proper airflow.
