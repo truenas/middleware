@@ -374,6 +374,7 @@ class VdevFormSet(BaseFormSet):
             data vdev (non-log/cache/spare)
             """
             has_datavdev = False
+            datatype = None
             for i in range(0, self.total_form_count()):
                 form = self.forms[i]
                 vdevtype = form.cleaned_data.get('vdevtype')
@@ -381,6 +382,16 @@ class VdevFormSet(BaseFormSet):
                     'mirror', 'stripe', 'raidz', 'raidz2', 'raidz3'
                 ):
                     has_datavdev = True
+                    if datatype is not None and datatype != vdevtype:
+                        raise forms.ValidationError(_(
+                            "You are not allowed to create a volume with "
+                            "different data vdev types (%(vdev1)s and "
+                            "%(vdev2)s)"
+                        ) % {
+                            'vdev1': datatype,
+                            'vdev2': vdevtype,
+                        })
+                    datatype = vdevtype
                     continue
                 self._clean_vdevtype(vdevfound, vdevtype)
             if not has_datavdev:
