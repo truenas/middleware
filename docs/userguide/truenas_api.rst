@@ -241,7 +241,7 @@ THIS EULA, YOU MAY NOT INSTALL OR USE THE SOFTWARE.
 
 "Company" means iXsystems, Inc.
 
-"Product" means iXsystems Storage Appliance software (TrueNAS®).
+"Product" means iXsystems Storage Array software (TrueNAS®).
 
 "EULA" means this End User License Agreement
 
