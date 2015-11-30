@@ -519,7 +519,7 @@ This section demonstrates how to create and access a virtual machine within the 
 VirtualBox
 ~~~~~~~~~~
 
-`VirtualBox <https://www.virtualbox.org/>`_ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
+`VirtualBox <https://www.virtualbox.org/>`__ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
 Linux, Macintosh, and OpenSolaris. It can be configured to use a downloaded FreeNAS® :file:`.iso` file, and makes a good testing environment for practicing
 configurations or learning how to use the features provided by FreeNAS®.
 
