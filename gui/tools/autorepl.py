@@ -219,6 +219,11 @@ try:
 except:
     results = {}
 
+def write_results():
+    global results
+    with open(REPL_RESULTFILE, 'w') as f:
+        f.write(cPickle.dumps(results))
+
 system_re = re.compile('^[^/]+/.system.*')
 
 # Traverse all replication tasks
@@ -429,6 +434,10 @@ Hello,
         results[replication.id] = 'Up to date'
         continue
     current_dataset = 0
+
+    results[replication.id] = 'Running'
+    write_results()
+
     # Go through datasets in reverse order by level in hierarchy
     # This is because in case datasets being remounted we need to make sure
     # tank/foo is mounted after tank/foo/bar and the latter does not get hidden.
@@ -532,7 +541,6 @@ Hello,
                 else:
                     previously_deleted = zfsname
 
-with open(REPL_RESULTFILE, 'w') as f:
-    f.write(cPickle.dumps(results))
+write_results()
 os.remove('/var/run/autorepl.pid')
 log.debug("Autosnap replication finished")
