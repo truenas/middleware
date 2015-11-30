@@ -13157,3 +13157,14 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
 msgstr ""
+
+#: services/models.py:1574
+#, fuzzy
+msgid "Allow Kerberos Authentication"
+msgstr "Permitir a Autenticação da Palavra-chave"
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
+msgstr ""
