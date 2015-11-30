@@ -13073,3 +13073,14 @@ msgid ""
 msgstr ""
 "Firmwareversie %(fwversion)s komt niet overeen met stuurprogrammaversie "
 "%(drversion)s voor /dev/mps%(mps)s"
+
+#: services/models.py:1574
+#, fuzzy
+msgid "Allow Kerberos Authentication"
+msgstr "Wachtwoordauthenticatie toestaan"
+
+#: system/alertmods/volume_version.py:34
+msgid ""
+"ZFS filesystem version is out of date. Consider upgrading using \"zfs "
+"upgrade\" command line."
+msgstr ""
