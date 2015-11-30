@@ -261,13 +261,11 @@ amd64) processors.
           firmware interface or EFI.
 
 Actual hardware requirements will vary depending upon what you are using your FreeNAS® system for. This section provides some guidelines to get you started.
-You can also skim through the
-`FreeNAS® Hardware Forum <https://forums.freenas.org/index.php?forums/hardware.18/>`_ for performance tips from other FreeNAS® users or to post questions
-regarding the hardware best suited to meet your requirements. This
-`forum post <https://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`_
-provides some specific recommendations if you are planning on purchasing hardware. Refer to
-`Building, Burn-In, and Testing your FreeNAS system <https://forums.freenas.org/index.php?threads/building-burn-in-and-testing-your-freenas-system.17750/>`_ for
-detailed instructions on how to test new hardware.
+You can also skim through the `FreeNAS® Hardware Forum <https://forums.freenas.org/index.php?forums/hardware.18/>`_ for performance tips from other FreeNAS®
+users or to post questions regarding the hardware best suited to meet your requirements. This `forum post
+<https://forums.freenas.org/index.php?threads/hardware-recommendations-read-this-first.23069/>`__ provides some specific recommendations if you are planning on
+purchasing hardware. Refer to `Building, Burn-In, and Testing your FreeNAS system
+<https://forums.freenas.org/index.php?threads/building-burn-in-and-testing-your-freenas-system.17750/>`_ for detailed instructions on how to test new hardware.
 
 .. _RAM:
 
@@ -347,7 +345,7 @@ If you need reliable disk alerting and immediate reporting of a failed drive, us
 MegaRAID controller or a 3Ware twa-compatible controller.
 
 Suggestions for testing disks before adding them to a RAID array can be found in this
-`forum post <https://forums.freenas.org/index.php?threads/checking-new-hdds-in-raid.12082/>`_.
+`forum post <https://forums.freenas.org/index.php?threads/checking-new-hdds-in-raid.12082/>`__.
 
 `This article <http://technutz.com/purpose-built-nas-hard-drives/>`_
 provides a good overview of hard drives which are well suited for a NAS.

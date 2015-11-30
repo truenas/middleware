@@ -1,3 +1,5 @@
+:orphan:
+
 .. _ZFS Primer:
 
 ZFS Primer

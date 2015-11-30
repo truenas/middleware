@@ -679,7 +679,7 @@ menu will list any files with checksum mismatches or permission errors.
 
 To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
 be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
-`bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
+`bugs.freenas.org <https://bugs.freenas.org>`__. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
 of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the Release Notes in your web browser.
 
 **Figure 5.8b: Reviewing Updates**
@@ -949,7 +949,7 @@ This screen provides a built-in interface to the FreeNAS® bug tracker located a
 FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a
 username and password which can be used to create bug reports and receive notifications as your reports are actioned.
 
-Before creating a bug report or feature request, ensure that an existing report does not already exist at `bugs.freenas.org <https://bugs.freenas.org>`_. If
+Before creating a bug report or feature request, ensure that an existing report does not already exist at `bugs.freenas.org <https://bugs.freenas.org>`__. If
 you find a similar issue that is not yet marked as "closed" or "resolved", add a comment to that issue if you have new information to provide that can assist
 in resolving the issue. If you find a similar issue that is marked as "closed" or "resolved", you can create a new issue and refer to the earlier issue
 number.
@@ -958,7 +958,7 @@ number.
 
 To generate a report using the built-in "Support" screen, complete the following fields:
 
-* **Username:** input the login name you created when registering at `bugs.freenas.org <https://bugs.freenas.org>`_.
+* **Username:** input the login name you created when registering at `bugs.freenas.org <https://bugs.freenas.org>`__.
 
 * **Password:** input the password associated with the registered login name.
 
@@ -977,6 +977,5 @@ To generate a report using the built-in "Support" screen, complete the following
 
 * **Attachments:** this is the only optional field. It is useful for including configuration files or screenshots of any errors or tracebacks.
 
-Once you have finished completing the fields, click the "Submit" button to automatically generate and upload the report to
-`bugs.freenas.org <https://bugs.freenas.org>`_. A pop-up menu will provide a clickable URL so that you can view the status of or add additional information to
-the report.
+Once you have finished completing the fields, click the "Submit" button to automatically generate and upload the report to `bugs.freenas.org
+<https://bugs.freenas.org>`__. A pop-up menu will provide a clickable URL so that you can view the status of or add additional information to the report.

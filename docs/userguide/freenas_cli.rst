@@ -409,8 +409,8 @@ FreeNAS® provides two command line scripts which an be manually run from Shell:
 The advantage of these scripts is that they can be used to provide real time (right now) information, whereas the current GUI reporting mechanism is designed
 to only provide graphs charted over time.
 
-This `forum post <https://forums.freenas.org/index.php?threads/benchmarking-zfs.7928/>`_
-demonstrates some examples of using these scripts with hints on how to interpret the results.
+This `forum post <https://forums.freenas.org/index.php?threads/benchmarking-zfs.7928/>`__ demonstrates some examples of using these scripts with hints on how to
+interpret the results.
 
 To view the help for arcstat.py::
 
@@ -909,8 +909,7 @@ If you add some disks to the array and they are not showing up in the GUI, try r
 Use the drives to create units and export them to the operating system. When finished, run :command:`camcontrol rescan all` and they should now be available
 in the FreeNAS® GUI.
 
-This `forum post <https://forums.freenas.org/index.php?threads/3ware-drive-monitoring.13835/>`_
-contains a handy wrapper script that will notify you of errors.
+This `forum post <https://forums.freenas.org/index.php?threads/3ware-drive-monitoring.13835/>`__ contains a handy wrapper script that will notify you of errors.
 
 .. index:: MegaCli
 .. _MegaCli:
