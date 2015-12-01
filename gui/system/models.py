@@ -27,6 +27,7 @@
 import dateutil
 import logging
 import os
+import re
 import signal
 import string
 import time
@@ -44,6 +45,7 @@ from OpenSSL import crypto
 from freenasUI import choices
 from freenasUI.common.ssl import (
     write_certificate,
+    write_certificate_chain,
     write_certificate_signing_request,
     write_privatekey
 )
@@ -728,8 +730,11 @@ class CertificateBase(Model):
         "CertificateAuthority",
         blank=True,
         null=True,
-        verbose_name=_("Signing Certificate Authority"),
-    )
+        verbose_name=_("Signing Certificate Authority")
+        )
+    cert_chain = models.BooleanField(
+        default=False,
+        )
 
     def get_certificate(self):
         certificate = None
@@ -742,6 +747,20 @@ class CertificateBase(Model):
         except:
             pass
         return certificate
+
+    def get_certificate_chain(self):
+        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M|re.S)
+
+        certificates = []
+        try:
+            matches = regex.findall(self.cert_certificate)
+            for m in matches:
+                certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
+                certificates.append(certificate)
+        except:
+            pass
+
+        return certificates
 
     def get_privatekey(self):
         privatekey = None
@@ -773,7 +792,10 @@ class CertificateBase(Model):
     def write_certificate(self, path=None):
         if not path:
             path = self.get_certificate_path()
-        write_certificate(self.get_certificate(), path)
+        if self.cert_chain:
+            write_certificate_chain(self.get_certificate_chain(), path)
+        else:
+            write_certificate(self.get_certificate(), path)
 
     def write_privatekey(self, path=None):
         if not path:
