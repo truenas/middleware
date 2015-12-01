@@ -866,8 +866,9 @@ def DownloadUpdate(train, directory, get_handler = None, check_handler = None, p
             RemoveUpdate(directory)
             mani_file = None
     except BaseException as e:
+        mani_file = None
         log.debug("Got this exception: %s" % str(e))
-    
+        
     if mani_file is None:
         try:
             os.makedirs(directory)
