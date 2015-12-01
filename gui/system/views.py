@@ -69,6 +69,7 @@ from freenasUI.common.system import (
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.ssl import (
     export_certificate,
+    export_certificate_chain,
     export_privatekey,
 )
 from freenasUI.freeadmin.apppool import appPool
@@ -1556,7 +1557,10 @@ def buf_generator(buf):
 
 def CA_export_certificate(request, id):
     ca = models.CertificateAuthority.objects.get(pk=id)
-    cert = export_certificate(ca.cert_certificate)
+    if ca.cert_chain:
+        cert = export_certificate_chain(ca.cert_certificate)
+    else:
+        cert = export_certificate(ca.cert_certificate)
 
     response = StreamingHttpResponse(
         buf_generator(cert), content_type='application/octet-stream'

@@ -2211,6 +2211,33 @@ class CertificateAuthorityImportForm(ModelForm):
         help_text=models.CertificateAuthority._meta.get_field('cert_serial').help_text,
     )
 
+    def clean_cert_certificate(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        if not certificate:
+            raise forms.ValidationError(_(
+                "Something is seriously jacked up."
+            ))
+
+        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M|re.S)
+        matches = regex.findall(certificate)
+
+        nmatches = len(matches)
+        if not nmatches:
+            raise forms.ValidationError(_(
+                "Not a valid certificate."
+            ))
+
+        if nmatches > 1:
+            self.instance.cert_chain = True
+
+        #
+        # Should we validate the chain??? Probably
+        # For now, just assume the user knows WTF he is doing
+        #
+
+        return certificate
+
     def clean_cert_name(self):
         cdata = self.cleaned_data
         name = cdata.get('cert_name')

@@ -164,6 +164,19 @@ def load_privatekey(buf, passphrase=None):
         passphrase=lambda x: str(passphrase) if passphrase else ''
     )
 
+def export_certificate_chain(buf):
+    regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M|re.S)
+
+    certificates = [] 
+    try:
+        matches = regex.findall(buf)
+        for m in matches:
+            certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
+            certificates.append(crypto.dump_certificate(crypto.FILETYPE_PEM, certificate))
+    except:
+        pass
+
+    return ''.join(certificates).strip()
 
 def export_certificate(buf):
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
@@ -183,6 +196,12 @@ def export_privatekey(buf, passphrase=None):
         passphrase=str(passphrase) if passphrase else None
     )
 
+def write_certificate_chain(chain, path):
+    with open(path, "w") as f:
+        for certificate in chain:
+            f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, certificate))
+        f.close()
+ 
 
 def write_certificate(certificate, path):
     open(path, "w").write(
