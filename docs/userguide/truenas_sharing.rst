@@ -1469,6 +1469,9 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | where the number of systems using a specific RPM is needed for accurate reporting statistics                         |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Read-only          | checkbox       | check this box to prevent the initiator from initializing this LUN                                                   |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 .. _Targets/Extents:
 
