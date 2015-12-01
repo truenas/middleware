@@ -163,9 +163,14 @@ def get_thumb_print(ip, port):
 
 def get_plugin_file_name():
     try:
-        for file in os.listdir(settings.STATIC_ROOT):
-            if '.zip' in file and 'plugin' in file:
-                return file
+        paths = [os.path.join(
+            settings.STATIC_ROOT, fname) for fname in os.listdir(
+                settings.STATIC_ROOT
+                )]
+        file = sorted(
+                paths, key = os.path.getctime)[-1].split('/')[-1]
+        if '.zip' in file and 'plugin' in file:
+            return file
     except:
         return None
 
@@ -173,12 +178,17 @@ def get_plugin_file_name():
 def get_plugin_version():
     try:
         err_message = 'Not available'
-        for file in os.listdir(settings.STATIC_ROOT):
-            if '.zip' in file and 'plugin' in file:
-                if file.count('_') < 2 or file.count('.') < 3:
-                    return err_message
-                version = file.split('_')[1]
-                return version
+        paths = [os.path.join(
+            settings.STATIC_ROOT, fname) for fname in os.listdir(
+                settings.STATIC_ROOT
+                )]
+        file = sorted(
+                paths, key = os.path.getctime)[-1].split('/')[-1]
+        if '.zip' in file and 'plugin' in file:
+            if file.count('_') < 2 or file.count('.') < 3:
+                return err_message
+            version = file.split('_')[1]
+            return version
     except Exception:
         return err_message
 
