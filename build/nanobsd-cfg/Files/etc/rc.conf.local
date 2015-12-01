@@ -479,7 +479,6 @@ _gen_conf()
 	_bool_svcconfig rpc_statd_enable nfs
 	_bool_svcconfig mountd_enable nfs
 	_bool_svcconfig nfsd_enable nfs
-	_bool_svcconfig nfsuserd_enable nfs
 	_bool_svcconfig gssd_enable nfs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig snmpd_enable snmp
@@ -519,6 +518,7 @@ _gen_conf()
 
 	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 -a "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
 		echo "nfsv4_server_enable=\"YES\""
+		echo "nfsuserd_enable=\"YES\""
         else
 		echo "nfsv4_server_enable=\"NO\""
 	fi
