@@ -203,7 +203,7 @@ that have occurred since 9.3-RELEASE.
 
 * The :menuselection:`Sharing --> Block (iSCSI) --> Targets --> Add Target` screen now supports the creation of multiple iSCSI groups.
 
-* The "Disable Physical Block Size Reporting" checkbox, "Available Space Threshold" field, and "LUN RPM" drop-down menu have been added to
+* The "Disable Physical Block Size Reporting" and the "Read-only" checkboxes, the "Available Space Threshold" field, and the "LUN RPM" drop-down menu have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
 
 * The "Home share name" field  has been added to :menuselection:`Services --> AFP`.
