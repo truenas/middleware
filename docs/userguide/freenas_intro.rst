@@ -185,6 +185,9 @@ that have occurred since 9.3-RELEASE.
 
 * The ability to "Online" a previously offlined disk has been added to :menuselection:`Storage --> Volumes --> Volume Status`.
 
+* The "Security" field of :menuselection:`Sharing --> UNIX (NFS) --> Add Unix (NFS) Share --> Advanced Mode` now only appears when the "Enable NFSv4" checkbox is checked in                                 |
+  :menuselection:`Services --> NFS`.
+
 * The "Periodic Snapshot Task" drop-down menu has been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share`.
 
 * All available VFS objects have been added to :menuselection:`Sharing --> Windows (CIFS) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`
