@@ -170,14 +170,6 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
                 sys.exit(1)
 
     run('pkill -f fenced')
-
-    with open('/etc/pf.conf.block', 'w+') as f:
-        f.write('set block-policy drop\n')
-        for ip in fobj['ips']:
-            f.write('''
-pass in quick proto tcp from any to %(ip)s  port {22, 80, 443}
-block drop in quick proto tcp from any to %(ip)s
-block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/sbin/pfctl -ef /etc/pf.conf.block')
 
     try:
@@ -431,13 +423,6 @@ def link_down(fobj, state_file, ifname, event, forceseal, user_override):
         for interface in fobj['groups'][group]:
             run("ifconfig %s advskew 100" % interface)
 
-    with open('/etc/pf.conf.block', 'w+') as f:
-        f.write('set block-policy drop\n')
-        for ip in fobj['ips']:
-            f.write('''
-pass in quick proto tcp from any to %(ip)s port {22, 80, 443}
-block drop in quick proto tcp from any to %(ip)s
-block drop in quick proto udp from any to %(ip)s''' % {'ip': ip})
     run('/sbin/pfctl -ef /etc/pf.conf.block')
 
     run('/etc/rc.d/statd stop')
