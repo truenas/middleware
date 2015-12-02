@@ -7,6 +7,7 @@
 # without the express permission of iXsystems.
 
 from collections import defaultdict
+from subprocess import Popen, PIPE
 import json
 import os
 import sys
@@ -91,6 +92,9 @@ block drop in quick proto udp from any to %(ip)s''' % {
                 'https': settings.stg_guihttpsport,
                 'ip': ip,
             })
+
+    if notifier().failover_status() == 'BACKUP':
+        Popen(["pfctl", "-ef", "/etc/pf.conf.block"], stderr=PIPE, stdout=PIPE).wait()
 
 
 if __name__ == "__main__":
