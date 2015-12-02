@@ -94,8 +94,7 @@ block drop in quick proto udp from any to $ips''' % {
             'ips': ', '.join(data['ips']),
         })
 
-    if notifier().failover_status() == 'BACKUP':
-        Popen(["pfctl", "-ef", "/etc/pf.conf.block"], stderr=PIPE, stdout=PIPE).wait()
+    Popen(["pfctl", "-f", "/etc/pf.conf.block"], stderr=PIPE, stdout=PIPE).wait()
 
 
 if __name__ == "__main__":
