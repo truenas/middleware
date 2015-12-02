@@ -170,7 +170,6 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
                 sys.exit(1)
 
     run('pkill -f fenced')
-    run('/sbin/pfctl -ef /etc/pf.conf.block')
 
     try:
         os.unlink(FAILED_FILE)
