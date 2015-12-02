@@ -3210,9 +3210,9 @@ class FCPortsResource(DojoResource):
             loopstate = sysctl.filter(mib)
             if loopstate:
                 loopstate = loopstate[0].value
-                if loopstate > 0 and loopstate < 8:
+                if loopstate > 0 and loopstate < 9:
                     state = 'SCANNING'
-                elif loopstate == 8:
+                elif loopstate == 9:
                     state = 'READY'
                 if loopstate > 0:
                     speedres = sysctl.filter('dev.isp.%s.speed' % port)
