@@ -82,16 +82,17 @@ def main():
 
     with open('/etc/pf.conf.block', 'w+') as f:
         f.write('set block-policy drop\n')
-        for ip in data['ips']:
-            f.write('''
-pass in quick proto tcp from any to %(ip)s port {%(ssh)s, %(http)s, %(https)s}
-block drop in quick proto tcp from any to %(ip)s
-block drop in quick proto udp from any to %(ip)s''' % {
-                'ssh': ssh.ssh_tcpport,
-                'http': settings.stg_guiport,
-                'https': settings.stg_guihttpsport,
-                'ip': ip,
-            })
+        f.write('''
+ips = { %(ips)s }
+ports = { %(ssh)s, %(http)s, %(https)s }
+pass in quick proto tcp from any to any port $ports
+block drop in quick proto tcp from any to $ips
+block drop in quick proto udp from any to $ips''' % {
+            'ssh': ssh.ssh_tcpport,
+            'http': settings.stg_guiport,
+            'https': settings.stg_guihttpsport,
+            'ips': ', '.join(data['ips']),
+        })
 
     if notifier().failover_status() == 'BACKUP':
         Popen(["pfctl", "-ef", "/etc/pf.conf.block"], stderr=PIPE, stdout=PIPE).wait()
