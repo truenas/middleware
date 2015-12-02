@@ -83,11 +83,11 @@ def main():
     with open('/etc/pf.conf.block', 'w+') as f:
         f.write('set block-policy drop\n')
         f.write('''
-ips = { %(ips)s }
-ports = { %(ssh)s, %(http)s, %(https)s }
+ips = '{ %(ips)s }'
+ports = '{ %(ssh)s, %(http)s, %(https)s }'
 pass in quick proto tcp from any to any port $ports
 block drop in quick proto tcp from any to $ips
-block drop in quick proto udp from any to $ips''' % {
+block drop in quick proto udp from any to $ips\n''' % {
             'ssh': ssh.ssh_tcpport,
             'http': settings.stg_guiport,
             'https': settings.stg_guihttpsport,
