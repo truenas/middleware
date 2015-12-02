@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-11-25 19:52+0000\n"
+"PO-Revision-Date: 2015-12-02 09:44+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1448481123.0\n"
+"X-POOTLE-MTIME: 1449049478.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -26,19 +26,19 @@ msgstr "Nešifrováno"
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: choices.py:42 choices.py:558
 msgid "TLS"
-msgstr ""
+msgstr "TLS"
 
 #: choices.py:47
 msgid "HTTP"
-msgstr ""
+msgstr "HTTP"
 
 #: choices.py:48
 msgid "HTTPS"
-msgstr ""
+msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
@@ -46,59 +46,59 @@ msgstr "Samočinné"
 
 #: choices.py:54
 msgid "PIO0"
-msgstr ""
+msgstr "PIO0"
 
 #: choices.py:55
 msgid "PIO1"
-msgstr ""
+msgstr "PIO1"
 
 #: choices.py:56
 msgid "PIO2"
-msgstr ""
+msgstr "PIO2"
 
 #: choices.py:57
 msgid "PIO3"
-msgstr ""
+msgstr "PIO3"
 
 #: choices.py:58
 msgid "PIO4"
-msgstr ""
+msgstr "PIO4"
 
 #: choices.py:59
 msgid "WDMA0"
-msgstr ""
+msgstr "WDMA0"
 
 #: choices.py:60
 msgid "WDMA1"
-msgstr ""
+msgstr "WDMA1"
 
 #: choices.py:61
 msgid "WDMA2"
-msgstr ""
+msgstr "WDMA2"
 
 #: choices.py:62
 msgid "UDMA-16"
-msgstr ""
+msgstr "UDMA-16"
 
 #: choices.py:63
 msgid "UDMA-33"
-msgstr ""
+msgstr "UDMA-33"
 
 #: choices.py:64
 msgid "UDMA-66"
-msgstr ""
+msgstr "UDMA-66"
 
 #: choices.py:65
 msgid "UDMA-100"
-msgstr ""
+msgstr "UDMA-100"
 
 #: choices.py:66
 msgid "UDMA-133"
-msgstr ""
+msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr ""
+msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
@@ -288,7 +288,7 @@ msgstr "ZFS svazek"
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
-msgstr ""
+msgstr "Disk"
 
 #: choices.py:221
 msgid "read-write"
@@ -306,7 +306,7 @@ msgstr "Žádné"
 
 #: choices.py:228
 msgid "CHAP"
-msgstr ""
+msgstr "CHAP"
 
 #: choices.py:229
 msgid "Mutual CHAP"
@@ -1007,7 +1007,7 @@ msgstr "Nazvěte síťové rozhraní."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
-msgstr ""
+msgstr "DHCP"
 
 #: network/models.py:96
 msgid ""
@@ -1445,7 +1445,7 @@ msgstr "Znovunačtení služby SNMP se nezdařilo."
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
 msgid "Port"
-msgstr ""
+msgstr "Port"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -1869,7 +1869,7 @@ msgstr ""
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
 msgid "CIFS"
-msgstr ""
+msgstr "CIFS"
 
 #~ msgid "Server Name"
 #~ msgstr "Jméno serveru"
@@ -1905,7 +1905,7 @@ msgstr ""
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
 msgid "AFP"
-msgstr ""
+msgstr "AFP"
 
 #: services/models.py:236
 msgid "Number of servers"
@@ -8153,11 +8153,11 @@ msgstr ""
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:317
 msgid "lz4 (fastest)"
@@ -8283,7 +8283,7 @@ msgstr "Záloha"
 
 #: middleware/notifier.py:3822
 msgid "Init"
-msgstr ""
+msgstr "Init"
 
 #: middleware/notifier.py:3823
 #: services/models.py:1015
@@ -9094,7 +9094,7 @@ msgstr ""
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:715
 msgid "auth+data"
@@ -9590,11 +9590,11 @@ msgstr ""
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -9642,7 +9642,7 @@ msgstr ""
 
 #: directoryservice/models.py:156
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
@@ -9896,7 +9896,7 @@ msgstr ""
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
 msgid "TDB2 Idmap"
-msgstr ""
+msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
 msgid "Domain administrator account name"
@@ -10219,23 +10219,23 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
-msgstr ""
+msgstr "SHA256"
 
 #: choices.py:833
 msgid "SHA384"
-msgstr ""
+msgstr "SHA384"
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
@@ -11453,19 +11453,19 @@ msgstr "Seznam změn"
 
 #: choices.py:237
 msgid "SSD"
-msgstr ""
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
