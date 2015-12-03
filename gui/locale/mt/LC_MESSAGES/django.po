@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2015-11-28 10:18+0000\n"
+"PO-Revision-Date: 2015-12-02 10:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==0 || ( n%100>1 && n%100<11) "
 "? 1 : (n%100>10 && n%100<20 ) ? 2 : 3);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1448705918.0\n"
+"X-POOTLE-MTIME: 1449051434.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11991,4 +11991,18 @@ msgstr ""
 msgid ""
 "ZFS filesystem version is out of date. Consider upgrading using \"zfs "
 "upgrade\" command line."
+msgstr ""
+
+#: storage/forms.py:387
+msgid ""
+"You are not allowed to create a volume with different data vdev types "
+"(%(vdev1)s and %(vdev2)s)"
+msgstr ""
+
+#: system/forms.py:2219
+msgid "Something is seriously jacked up."
+msgstr ""
+
+#: system/forms.py:2228
+msgid "Not a valid certificate."
 msgstr ""
