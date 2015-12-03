@@ -23,6 +23,7 @@ cache.get_apps()
 
 from freenasUI.middleware.notifier import notifier
 from freenasUI.failover.models import Failover
+from freenasUI.failover.utils import failover_disabled_reasons
 _not = notifier()
 
 
@@ -48,7 +49,7 @@ def main(command, quiet):
             print "Node status: Passive (Master mode unreachable)"
 
         if fo_exists:
-            if Failover.objects.all()[0].disabled is True:
+            if failover_disabled_reasons():
                 print "Failover status: Disabled"
             else:
                 print "Failover status: Enabled"
