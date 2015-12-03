@@ -168,7 +168,8 @@ def get_plugin_file_name():
                 settings.STATIC_ROOT
                 )]
         file = sorted(
-                paths, key = os.path.getctime)[-1].split('/')[-1]
+                [ p for p in paths if '.zip'in p and 'plugin' in p ],
+                  key = os.path.getctime)[-1].split('/')[-1]
         if '.zip' in file and 'plugin' in file:
             return file
     except:
@@ -183,12 +184,12 @@ def get_plugin_version():
                 settings.STATIC_ROOT
                 )]
         file = sorted(
-                paths, key = os.path.getctime)[-1].split('/')[-1]
-        if '.zip' in file and 'plugin' in file:
-            if file.count('_') < 2 or file.count('.') < 3:
-                return err_message
-            version = file.split('_')[1]
-            return version
+                [ p for p in paths if '.zip'in p and 'plugin' in p ],
+                  key = os.path.getctime)[-1].split('/')[-1]
+        if file.count('_') < 2 or file.count('.') < 3:
+            return err_message
+        version = file.split('_')[1]
+        return version
     except Exception:
         return err_message
 
