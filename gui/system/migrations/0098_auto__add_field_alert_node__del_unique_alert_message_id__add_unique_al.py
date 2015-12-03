@@ -4,6 +4,8 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+from freenasUI.middleware.notifier import notifier
+
 
 class Migration(SchemaMigration):
 
@@ -15,6 +17,12 @@ class Migration(SchemaMigration):
         db.add_column(u'system_alert', 'node',
                       self.gf('django.db.models.fields.CharField')(default='A', max_length=100),
                       keep_default=False)
+
+        if not db.dry_run:
+            _n = notifier()
+            if not _n.is_freenas() and _n.failover_licensed():
+                if _n.failover_node() == 'B':
+                    orm['system.Alert'].objects.update(node='B')
 
         # Adding unique constraint on 'Alert', fields ['node', 'message_id']
         db.create_unique(u'system_alert', ['node', 'message_id'])
