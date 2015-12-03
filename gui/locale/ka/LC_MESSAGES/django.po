@@ -12003,3 +12003,17 @@ msgid ""
 "ZFS filesystem version is out of date. Consider upgrading using \"zfs "
 "upgrade\" command line."
 msgstr ""
+
+#: storage/forms.py:387
+msgid ""
+"You are not allowed to create a volume with different data vdev types "
+"(%(vdev1)s and %(vdev2)s)"
+msgstr ""
+
+#: system/forms.py:2219
+msgid "Something is seriously jacked up."
+msgstr ""
+
+#: system/forms.py:2228
+msgid "Not a valid certificate."
+msgstr ""
