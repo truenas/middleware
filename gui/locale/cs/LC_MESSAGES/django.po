@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-12-02 09:44+0000\n"
+"PO-Revision-Date: 2015-12-03 17:49+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1449049478.0\n"
+"X-POOTLE-MTIME: 1449164982.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -102,7 +102,7 @@ msgstr "SATA 1.5Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr ""
+msgstr "SATA 3.0Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
@@ -710,7 +710,7 @@ msgstr "Celé jméno"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr ""
+msgstr "E-mail"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -1933,7 +1933,7 @@ msgstr ""
 #: services/models.py:247 services/models.py:248
 #: templates/services/core.html:85
 msgid "NFS"
-msgstr ""
+msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
@@ -2414,7 +2414,7 @@ msgstr "Posílat SNMP hlášení"
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
 msgid "SNMP"
-msgstr ""
+msgstr "SNMP"
 
 #: services/models.py:893 storage/models.py:330
 msgid "Identifier"
@@ -2696,7 +2696,7 @@ msgstr "Tyto parametry budou přidány do proftpd.conf."
 #: services/models.py:1090 services/models.py:1091
 #: templates/services/core.html:50
 msgid "FTP"
-msgstr ""
+msgstr "FTP"
 
 # Adresářová služba
 #: services/models.py:1113
@@ -2729,7 +2729,7 @@ msgstr "Určuje uživatelský účet, pod kterým služba poběží."
 
 #: services/models.py:1131
 msgid "umask"
-msgstr ""
+msgstr "umask"
 
 #: services/models.py:1132
 msgid ""
@@ -2750,7 +2750,7 @@ msgstr "Další možnosti příkazového řádku (obvykle prázdné)."
 #: services/models.py:1142 services/models.py:1143
 #: templates/services/core.html:155
 msgid "TFTP"
-msgstr ""
+msgstr "TFTP"
 
 #: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
@@ -2803,7 +2803,7 @@ msgstr ""
 #: services/models.py:1228 services/models.py:1229
 #: templates/services/core.html:144
 msgid "SSH"
-msgstr ""
+msgstr "SSH"
 
 #~ msgid "Domain Controller Name"
 #~ msgstr "Název doménového řadiče"
@@ -2859,7 +2859,7 @@ msgstr ""
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
+msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -2984,7 +2984,7 @@ msgstr ""
 #: services/models.py:1357 services/models.py:1358
 #: templates/services/core.html:74
 msgid "LDAP"
-msgstr ""
+msgstr "LDAP"
 
 #: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
@@ -3142,7 +3142,7 @@ msgstr ""
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
 msgid "S.M.A.R.T."
-msgstr ""
+msgstr "S.M.A.R.T."
 
 #: services/nav.py:15
 msgid "Control Services"
@@ -3175,11 +3175,11 @@ msgstr "Zobrazit počet úložných jednotek, zabraných souborem"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
-msgstr ""
+msgstr "iSCSI"
 
 #: services/nav.py:142 templates/services/core.html:111
 msgid "Rsync"
-msgstr ""
+msgstr "Rsync"
 
 #: services/nav.py:149 templates/services/rsyncmod.html:40
 #: templates/services/rsyncmod.html:42
@@ -4528,7 +4528,7 @@ msgstr ""
 
 #: system/models.py:104
 msgid "IBurst"
-msgstr ""
+msgstr "IBurst"
 
 #: system/models.py:106
 msgid ""
@@ -4948,7 +4948,7 @@ msgstr "Hodnota"
 
 #: system/models.py:795
 msgid "Sysctl"
-msgstr ""
+msgstr "Sysctl"
 
 #: system/models.py:796
 msgid "Sysctls"
@@ -6495,7 +6495,7 @@ msgstr "Název ZFS svazku"
 
 #: choices.py:52
 msgid "HTTP+HTTPS"
-msgstr ""
+msgstr "HTTP+HTTPS"
 
 #: choices.py:165
 msgid "Unencrypted"
@@ -6519,23 +6519,23 @@ msgstr "Ověřit"
 
 #: choices.py:600
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: choices.py:601
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:602
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:603
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 #: choices.py:604
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:659
 msgid "Fatal"
@@ -6555,11 +6555,11 @@ msgstr "Systémová služba"
 
 #: choices.py:686
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:687
 msgid "NIS"
-msgstr ""
+msgstr "NIS"
 
 #: choices.py:693
 msgid "on"
@@ -7195,19 +7195,19 @@ msgstr "Systém se vypíná…"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
@@ -7331,7 +7331,7 @@ msgstr "Členové seskupení linek"
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: plugins/forms.py:84
 msgid ""
@@ -8137,19 +8137,19 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
@@ -8546,7 +8546,7 @@ msgstr "NIS servery"
 
 #: services/models.py:1726
 msgid "Manycast"
-msgstr ""
+msgstr "Manycast"
 
 # http://mobius.cs.uiuc.edu/system/files/mobicom03.pdf
 #: services/models.py:1727
@@ -8563,7 +8563,7 @@ msgstr "Uložit obdržené informace do popisu rozhraní/alternativy"
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2025
 msgid "Destination email address. Separate email addresses by commas"
@@ -9090,7 +9090,7 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:182
 msgid "SMB3_00"
@@ -9561,7 +9561,7 @@ msgstr "Znovuvytvořit mezipaměť adresářové služby"
 #: choices.py:787
 #: directoryservice/models.py:335
 msgid "ad"
-msgstr ""
+msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
@@ -9573,20 +9573,20 @@ msgstr "otisk"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
 msgid "rid"
-msgstr ""
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
@@ -9646,12 +9646,12 @@ msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Idmap"
 
 #: directoryservice/models.py:182
 msgid "Range Size"
@@ -9693,7 +9693,7 @@ msgstr ""
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
 msgid "AutoRID Idmap"
-msgstr ""
+msgstr "AutoRID Idmap"
 
 #: directoryservice/models.py:229
 msgid "Name Map"
@@ -9749,12 +9749,12 @@ msgstr ""
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr ""
+msgstr "LDAP Idmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
 msgid "LDAP Server"
@@ -9871,7 +9871,7 @@ msgstr ""
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
 msgid "RFC2307 Idmap"
-msgstr ""
+msgstr "RFC2307 Idmap"
 
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
@@ -9881,7 +9881,7 @@ msgstr ""
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
 msgid "TDB Idmap"
-msgstr ""
+msgstr "TDB Idmap"
 
 #: directoryservice/models.py:474
 msgid ""
@@ -9954,7 +9954,7 @@ msgstr "Účel"
 
 #: system/forms.py:1144
 msgid "Unix (NFS)"
-msgstr ""
+msgstr "Unix (NFS)"
 
 #: system/forms.py:1145
 msgid "Block Storage (iSCSI)"
@@ -10175,7 +10175,7 @@ msgstr "Ověřování otiskem hesla"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -10248,7 +10248,7 @@ msgstr "Při restartu"
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
 msgid "ADEX Idmap"
-msgstr ""
+msgstr "ADEX Idmap"
 
 #: api/resources.py:2490
 msgid "Now"
@@ -10363,7 +10363,7 @@ msgstr ""
 #: templates/services/core.html:164
 #: templates/sharing/index.html:21
 msgid "WebDAV"
-msgstr ""
+msgstr "WebDAV"
 
 #: sharing/models.py:335
 msgid "Share Path Name"
@@ -10846,7 +10846,7 @@ msgstr ""
 
 #: jails/models.py:359
 msgid "IPv4 DHCP"
-msgstr ""
+msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
 msgid "IPv6 Autoconfigure"
@@ -10891,7 +10891,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 msgid "Failed to create %(path)s: %(error)s"
@@ -11469,7 +11469,7 @@ msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
@@ -11545,7 +11545,7 @@ msgstr ""
 
 #: jails/models.py:554
 msgid "mtree"
-msgstr ""
+msgstr "mtree"
 
 #: jails/models.py:555
 msgid "The mtree file for the template"
@@ -11793,7 +11793,7 @@ msgstr ""
 
 #: services/models.py:1076
 msgid "SHA"
-msgstr ""
+msgstr "SHA"
 
 #: services/models.py:1080
 msgid "Authentication Type"
@@ -11801,11 +11801,11 @@ msgstr "Typ ověřování"
 
 #: services/models.py:1090
 msgid "AES"
-msgstr ""
+msgstr "AES"
 
 #: services/models.py:1091
 msgid "DES"
-msgstr ""
+msgstr "DES"
 
 #: services/models.py:1095
 msgid "Privacy Protocol"
@@ -12201,7 +12201,7 @@ msgstr "Nechat všechny aktualizované soubory až na konec"
 
 #: templates/reporting/index.html:15
 msgid "ZFS"
-msgstr ""
+msgstr "ZFS"
 
 #: templates/services/iscsi.html:45
 msgid "Fiber Channel Ports"
@@ -12213,7 +12213,7 @@ msgstr "Blokové"
 
 #: templates/sharing/index.html:27
 msgid "FC"
-msgstr ""
+msgstr "FC"
 
 #: templates/storage/disk_online.html:3
 msgid "Are you sure you want to online?"
@@ -12230,7 +12230,7 @@ msgstr "Aktualizovat licenci"
 
 #: templates/support/home.html:16
 msgid "Model"
-msgstr ""
+msgstr "Model"
 
 #: templates/support/home.html:18
 msgid "System Serial"
@@ -12529,7 +12529,7 @@ msgstr "Vyberte správní rozhraní TrueNAS."
 #: vcp/hook.py:45
 #: vcp/nav.py:35
 msgid "vCenter"
-msgstr ""
+msgstr "vCenter"
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
@@ -12700,7 +12700,7 @@ msgstr " Zapnout zásuvný modul vCenter přes https"
 
 #: services/models.py:837
 msgid "Fibre Channel"
-msgstr ""
+msgstr "Fibre Channel"
 
 #: services/models.py:967
 msgid "Fibre Channel Target"
@@ -12757,6 +12757,8 @@ msgid ""
 "ZFS filesystem version is out of date. Consider upgrading using \"zfs "
 "upgrade\" command line."
 msgstr ""
+"Verze souborového systému ZFS, kterou používáte je zastaralá. Zvažte přechod "
+"na novější verzi příkazem „zfs upgrade“."
 
 #: storage/forms.py:387
 msgid ""
@@ -12769,6 +12771,5 @@ msgid "Something is seriously jacked up."
 msgstr ""
 
 #: system/forms.py:2228
-#, fuzzy
 msgid "Not a valid certificate."
-msgstr "Importovat existující certifikát"
+msgstr "Toto není platný certifikát."
