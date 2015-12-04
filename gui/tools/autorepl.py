@@ -150,7 +150,11 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, compression,
     results[replication.id] = msg
     if reached_last and msg == "Succeeded":
         replication.repl_lastsnapshot = tosnap
-        replication.save()
+        # Re-query replication to update field because replication settings
+        # might have been updated while this script was running
+        Replication.objects.filter(id=replication.id).update(
+            repl_lastsnapshot=tosnap
+        )
     return (msg == "Succeeded")
 
 log = logging.getLogger('tools.autorepl')
