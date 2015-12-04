@@ -8,7 +8,13 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        db.rename_table(u'services_fiberchanneltotarget', u'services_fibrechanneltotarget')
+        try:
+            db.rename_table(u'services_fiberchanneltotarget', u'services_fibrechanneltotarget')
+        except:
+            # Allow services_fibrechanneltotarget to already exist
+            # For some reason some people report to already have this table
+            # See #12618
+            db.execute("select * from services_fibrechanneltotarget")
 
     def backwards(self, orm):
         db.rename_table(u'services_fibrechanneltotarget', u'services_fiberchanneltotarget')
