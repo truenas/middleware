@@ -217,6 +217,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "SNMP v3 Support" checkbox, "Username", "Password", and "Privacy Passphrase" fields, and "Authentication Type" and "Privacy Protocol" drop-down menus have been added to
   :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
+  
+* The "Allow Kerberos Authentication" checkbox has been added to :menuselection:`Services --> SSH`.
 
 * The "Power Off UPS" checkbox had been added to :menuselection:`Services --> UPS`.
 
