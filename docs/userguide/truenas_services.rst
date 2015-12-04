@@ -1146,6 +1146,10 @@ Mode" button or configure the system to always display these settings by checkin
 |                               |                | on both the SSH client and server                                                                        |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow Kerberos Authentication | checkbox       | before checking this box, ensure that :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs` have been       |
+|                               |                | configured and that the FreeNAS system can communicate with the KDC                                      |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using SSH's                                                 |
 |                               |                | `port forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                |
 |                               |                |                                                                                                          |
