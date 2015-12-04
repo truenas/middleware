@@ -178,8 +178,7 @@ Create resource
       Content-Type: application/json
 
         {
-          "jail_host": "test",
-          "jail_type": "pluginjail"
+          "jail_host": "test"
         }
 
    **Example response**:
@@ -236,7 +235,7 @@ Create resource
    :json string jail_mac: mac address for the jail interface
    :json boolean jail_nat: enable NAT for the jail
    :json string jail_status: current status of the jail
-   :json string jail_type: type of the jail (pluginjail, standard, portjail, ...)
+   :json string jail_type: template name from /api/v1.0/jails/templates/
    :json boolean jail_vnet: enable VIMAGE for the jail
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
