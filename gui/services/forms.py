@@ -1375,6 +1375,8 @@ class iSCSITargetExtentForm(ModelForm):
             return ''
         path = self.cleaned_data["iscsi_target_extent_path"]
         if not path:
+            if _type == 'File':
+                raise forms.ValidationError(_('This field is required.'))
             return None
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
