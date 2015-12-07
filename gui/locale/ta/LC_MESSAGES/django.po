@@ -12105,3 +12105,11 @@ msgstr ""
 #: system/forms.py:2228
 msgid "Not a valid certificate."
 msgstr ""
+
+#: network/forms.py:278
+msgid "Virtual IP is required to set it as Critical for Failover"
+msgstr ""
+
+#: network/forms.py:295
+msgid "Failover needs to be disabled to perform network changes."
+msgstr ""

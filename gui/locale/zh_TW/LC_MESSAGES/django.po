@@ -13096,3 +13096,11 @@ msgstr ""
 #, fuzzy
 msgid "Not a valid certificate."
 msgstr "自行簽署建立憑證"
+
+#: network/forms.py:278
+msgid "Virtual IP is required to set it as Critical for Failover"
+msgstr ""
+
+#: network/forms.py:295
+msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
