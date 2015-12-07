@@ -3316,7 +3316,7 @@ class notifier:
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
         if fs == 'ZFS':
-            p1 = self._pipeopen('zpool list -H -o health %s' % str(name))
+            p1 = self._pipeopen('zpool list -H -o health %s' % str(name), logger=None)
             if p1.wait() == 0:
                 status = p1.communicate()[0].strip('\n')
         elif fs == 'UFS':
@@ -5638,7 +5638,7 @@ class notifier:
         """
         status = ''
         state = ''
-        p1 = self._pipeopen("/sbin/zpool status -x %s" % pool_name)
+        p1 = self._pipeopen("/sbin/zpool status -x %s" % pool_name, logger=None)
         zpool_result = p1.communicate()[0]
         if zpool_result.find("pool '%s' is healthy" % pool_name) != -1:
             state = 'HEALTHY'
