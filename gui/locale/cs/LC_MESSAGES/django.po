@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-12-03 17:49+0000\n"
+"PO-Revision-Date: 2015-12-04 12:50+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1449164982.0\n"
+"X-POOTLE-MTIME: 1449233419.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -5110,7 +5110,7 @@ msgstr "Pokročilý režim"
 #: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
@@ -5681,7 +5681,7 @@ msgstr "Verze"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
 msgid "Service status"
@@ -5733,15 +5733,15 @@ msgstr ""
 
 #: templates/sharing/index.html:2
 msgid "Apple (AFP)"
-msgstr ""
+msgstr "Apple (AFP)"
 
 #: templates/sharing/index.html:7
 msgid "UNIX (NFS)"
-msgstr ""
+msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
 msgid "Windows (CIFS)"
-msgstr ""
+msgstr "Windows (CIFS)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Žádné sdílení UNIX (NFS) není aktivní."
@@ -6571,11 +6571,11 @@ msgstr "vypnuto"
 
 #: choices.py:695
 msgid "data"
-msgstr ""
+msgstr "data"
 
 #: choices.py:696
 msgid "!data"
-msgstr ""
+msgstr "!data"
 
 #: choices.py:698
 msgid "ctrl"
@@ -6719,12 +6719,12 @@ msgstr "spouštět při startu systému"
 #: jails/forms.py:460
 #: jails/models.py:158
 msgid "VIMAGE"
-msgstr ""
+msgstr "VIMAGE"
 
 #: jails/forms.py:461
 #: jails/models.py:162
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: jails/forms.py:694
 msgid "This shouldn't happen, but the jail could not be found"
@@ -7045,7 +7045,7 @@ msgstr "Upravit disk"
 
 #: storage/admin.py:467
 msgid "Offline"
-msgstr ""
+msgstr "Mimo provoz"
 
 #: storage/admin.py:470
 msgid "Detach"
@@ -7112,7 +7112,7 @@ msgstr "Klíč nebyl z neznámých důvodů získán"
 #: templates/jails/start.html:3
 #: templates/jails/stop.html:3
 msgid "?"
-msgstr ""
+msgstr "?"
 
 #: templates/plugins/available_install.html:3
 msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
@@ -8944,7 +8944,7 @@ msgstr "Fond"
 
 #: system/models.py:1138
 msgid "Syslog"
-msgstr ""
+msgstr "Syslog"
 
 #: system/views.py:341
 msgid "You must configure the root email (Accounts->Users->root)"
@@ -9876,7 +9876,7 @@ msgstr "RFC2307 Idmap"
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr ""
+msgstr "RID Idmap"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
@@ -11789,7 +11789,7 @@ msgstr "Podpora SNMP v3"
 
 #: services/models.py:1075
 msgid "MD5"
-msgstr ""
+msgstr "MD5"
 
 #: services/models.py:1076
 msgid "SHA"
@@ -11849,7 +11849,7 @@ msgstr "Prázdné znaky nejsou v názvech NFS sdílení přípustné."
 
 #: storage/admin.py:510
 msgid "Online"
-msgstr ""
+msgstr "V provozu"
 
 #: storage/admin.py:636
 #: storage/forms.py:1851
@@ -12748,9 +12748,8 @@ msgstr ""
 "zařízení /dev/mpr%(mpr)s. Nahrajte do řadiče firmware verze P%(drversion)s."
 
 #: services/models.py:1574
-#, fuzzy
 msgid "Allow Kerberos Authentication"
-msgstr "Umožnit ověřování heslem"
+msgstr "Umožnit ověřování protokolem Kerberos"
 
 #: system/alertmods/volume_version.py:34
 msgid ""
@@ -12765,11 +12764,25 @@ msgid ""
 "You are not allowed to create a volume with different data vdev types "
 "(%(vdev1)s and %(vdev2)s)"
 msgstr ""
+"Není možné vytvářet svazky s odlišnými typy virt. zařízení (vdev) (%(vdev1)s "
+"a %(vdev2)s)"
 
 #: system/forms.py:2219
 msgid "Something is seriously jacked up."
-msgstr ""
+msgstr "Něco je vážně zpackané."
 
 #: system/forms.py:2228
 msgid "Not a valid certificate."
 msgstr "Toto není platný certifikát."
+
+#: network/forms.py:278
+msgid "Virtual IP is required to set it as Critical for Failover"
+msgstr ""
+"Aby bylo možné označit ji jako kritickou pro převzetí služby v případě "
+"selhání, je třeba, aby IP adresa byla virtuální"
+
+#: network/forms.py:295
+msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+"Aby bylo možné provést změny v nastavení sítě, je třeba dočasně vypnout "
+"přebírání služby v případě selhání."
