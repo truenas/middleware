@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-12-02 10:17+0000\n"
+"PO-Revision-Date: 2015-12-04 10:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sw\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1449051444.0\n"
+"X-POOTLE-MTIME: 1449224246.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11997,4 +11997,12 @@ msgstr ""
 
 #: system/forms.py:2228
 msgid "Not a valid certificate."
+msgstr ""
+
+#: network/forms.py:278
+msgid "Virtual IP is required to set it as Critical for Failover"
+msgstr ""
+
+#: network/forms.py:295
+msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
