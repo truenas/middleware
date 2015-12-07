@@ -44,7 +44,9 @@ from freenasUI.jails.models import (
 )
 from freenasUI.jails.utils import (
     guess_ipv4_addresses,
-    guess_ipv6_addresses
+    guess_ipv6_addresses,
+    jail_path_configured,
+    jail_auto_configure,
 )
 from freenasUI.common.warden import (
     Warden,
@@ -139,10 +141,14 @@ class JailCreateForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(JailCreateForm, self).__init__(*args, **kwargs)
+
+        if not jail_path_configured():
+            jail_auto_configure()
+
         try:
             self.jc = JailsConfiguration.objects.order_by("-id")[0]
         except Exception as e:
-            raise MiddlewareError(e.message)
+            raise MiddlewareError(e)
 
         self.logfile = "/var/tmp/warden.log"
         self.statusfile = "/var/tmp/status"
