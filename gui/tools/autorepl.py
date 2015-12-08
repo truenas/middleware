@@ -112,7 +112,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
 
     # -p switch will send properties for whole dataset, including snapshots
     # which will result in stale snapshots being delete as well
-    if not followdelete:
+    if followdelete:
         cmd.append('-p')
 
     if fromsnap is None:
