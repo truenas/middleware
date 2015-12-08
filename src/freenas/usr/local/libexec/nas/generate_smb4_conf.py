@@ -688,7 +688,7 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldap passwd sync = yes")
     confset1(smb4_conf, "ldapsam:trusted = yes")
 
-    set_netbiosname(smb4_conf, cifs.cifs_srv_netbiosname)
+    set_netbiosname(smb4_conf, ldap.ldap_netbiosname)
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 

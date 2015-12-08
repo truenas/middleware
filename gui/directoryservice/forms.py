@@ -630,6 +630,8 @@ class LDAPForm(ModelForm):
         'ldap_passwordsuffix',
         'ldap_machinesuffix',
         'ldap_sudosuffix',
+        'ldap_netbiosname_a',
+        'ldap_netbiosname_b',
         'ldap_kerberos_realm',
         'ldap_kerberos_principal',
         'ldap_ssl',
@@ -657,6 +659,13 @@ class LDAPForm(ModelForm):
         self.fields["ldap_enable"].widget.attrs["onChange"] = (
             "ldap_mutex_toggle();"
         )
+        if hasattr(notifier, 'failover_node'):
+            from freenasUI.failover.utils import node_label_field
+            node_label_field(
+                notifier().failover_node(),
+                self.fields['ldap_netbiosname_a'],
+                self.fields['ldap_netbiosname_b'],
+            )
 
     def clean_bindpw(self):
         cdata = self.cleaned_data
@@ -710,6 +719,29 @@ class LDAPForm(ModelForm):
             self.instance.ldap_has_samba_schema = True
         else:
             self.instance.ldap_has_samba_schema = False
+
+    def clean_ldap_netbiosname_a(self):
+        netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
+        try:
+            validate_netbios_names(netbiosname)
+        except Exception as e:
+            raise forms.ValidationError(e)
+        return netbiosname
+
+    def clean_ldap_netbiosname_b(self):
+        netbiosname_a = self.cleaned_data.get("ldap_netbiosname_a")
+        netbiosname = self.cleaned_data.get("ldap_netbiosname_b")
+        if not netbiosname:
+            return netbiosname
+        if netbiosname_a and netbiosname_a == netbiosname:
+            raise forms.ValidationError(_(
+                'NetBIOS cannot be the same as the first.'
+            ))
+        try:
+            validate_netbios_names(netbiosname)
+        except Exception as e:
+            raise forms.ValidationError(e)
+        return netbiosname
 
     def clean(self):
         cdata = self.cleaned_data
