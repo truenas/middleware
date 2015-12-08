@@ -100,12 +100,18 @@ def rcro():
 #
 # Attempt to send a snapshot or increamental stream to remote.
 #
-def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last):
+def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle, compression, replication, reached_last):
     global results
     global templog
 
     progressfile = '/tmp/.repl_progress_%d' % replication.id
-    cmd = ['/sbin/zfs', 'send', '-Vp']
+    cmd = ['/sbin/zfs', 'send', '-V']
+
+    # -p switch will send properties for whole dataset, including snapshots
+    # which will result in stale snapshots being delete as well
+    if not followdelete:
+        cmd.append('-p')
+
     if fromsnap is None:
         cmd.append("%s@%s" % (dataset, tosnap))
     else:
@@ -479,10 +485,10 @@ Hello,
                     results[replication.id] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
                     ### rzfs destroy %s
             psnap = tasklist[1]
-            success = sendzfs(None, psnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last)
+            success = sendzfs(None, psnap, dataset, localfs, remotefs, followdelete, throttle, compression, replication, reached_last)
             if success:
                 for nsnap in tasklist[2:]:
-                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last)
+                    success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, followdelete, throttle, compression, replication, reached_last)
                     if not success:
                         # Report the situation
                         error, errmsg = send_mail(
@@ -510,7 +516,7 @@ Hello,
             psnap = tasklist[0]
             allsucceeded = True
             for nsnap in tasklist[1:]:
-                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, throttle, compression, replication, reached_last)
+                success = sendzfs(psnap, nsnap, dataset, localfs, remotefs, followdelete, throttle, compression, replication, reached_last)
                 allsucceeded = allsucceeded and success
                 if not success:
                     # Report the situation
