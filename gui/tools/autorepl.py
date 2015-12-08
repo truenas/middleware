@@ -457,6 +457,7 @@ Hello,
                 list_target = map_target[dataset]
                 snaplist = [ remotefs_final + dataset[l:] + '@' + x[0] for x in list_target ]
                 failed_snapshots = []
+                log.debug('Deleting %d snapshot(s) in pull side because not a single matching snapshot was found', len(snaplist))
                 for snapshot in snaplist:
                     rzfscmd = '"zfs destroy \'%s\'"' % (snapshot)
                     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
@@ -525,6 +526,7 @@ Hello,
                 psnap = nsnap
             if allsucceeded and delete_tasks.has_key(dataset):
                 zfsname = remotefs_final + dataset[l:]
+                log.debug('Deleting %d stale snapshot(s) on pull side', len(delete_tasks[dataset]))
                 for snapshot in delete_tasks[dataset]:
                     rzfscmd = '"zfs destroy -d \'%s@%s\'"' % (zfsname, snapshot)
                     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
