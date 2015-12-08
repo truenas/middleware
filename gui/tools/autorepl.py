@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#-
 # Copyright (c) 2011, 2015 iXsystems, Inc.
 # All rights reserved.
 #
@@ -47,9 +46,10 @@ cache.get_apps()
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.storage.models import Replication, REPL_RESULTFILE
 from freenasUI.common.timesubr import isTimeBetween
-from freenasUI.common.pipesubr import pipeopen, system
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.locks import mntlock
 from freenasUI.common.system import send_mail, get_sw_name
+
 
 #
 # Parse a list of 'zfs list -H -t snapshot -p -o name,creation' output
@@ -63,7 +63,7 @@ def mapfromdata(input):
             continue
         snapname, timestamp = line.split('\t')
         dataset, snapname = snapname.split('@')
-        if m.has_key(dataset):
+        if dataset in m:
             m[dataset].append((snapname, timestamp))
         else:
             m[dataset] = [(snapname, timestamp)]
@@ -81,8 +81,9 @@ map_compression = {
 
 is_truenas = not (get_sw_name().lower() == 'freenas')
 
+
 def compress_pipecmds(compression):
-    if map_compression.has_key(compression):
+    if compression in map_compression:
         compress, decompress = map_compression[compression]
         compress = compress + ' | '
         decompress = decompress + ' | '
@@ -91,11 +92,13 @@ def compress_pipecmds(compression):
         decompress = ''
     return (compress, decompress)
 
+
 def rcro():
     if is_truenas:
         return '-o readonly=on '
     else:
         return ''
+
 
 #
 # Attempt to send a snapshot or increamental stream to remote.
@@ -168,6 +171,7 @@ log = logging.getLogger('tools.autorepl')
 # Set to True if verbose log desired
 debug = False
 
+
 # Detect if another instance is running
 def exit_if_running(pid):
     log.debug("Checking if process %d is still alive" % (pid, ))
@@ -229,6 +233,7 @@ try:
 except:
     results = {}
 
+
 def write_results():
     global results
     with open(REPL_RESULTFILE, 'w') as f:
@@ -263,14 +268,15 @@ for replication in replication_tasks:
         throttle = ''
 
     if cipher == 'fast':
-        sshcmd = ('/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
-                  'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
-                  ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
-                  # There's nothing magical about ConnectTimeout, it's an average
-                  # of wiliam and josh's thoughts on a Wednesday morning.
-                  # It will prevent hunging in the status of "Sending".
-                  ' -o ConnectTimeout=7'
-                 )
+        sshcmd = (
+            '/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
+            'aes128-ctr,aes192-ctr,aes256-ctr -i /data/ssh/replication'
+            ' -o BatchMode=yes -o StrictHostKeyChecking=yes'
+            # There's nothing magical about ConnectTimeout, it's an average
+            # of wiliam and josh's thoughts on a Wednesday morning.
+            # It will prevent hunging in the status of "Sending".
+            ' -o ConnectTimeout=7'
+        )
     elif cipher == 'disabled':
         sshcmd = ('/usr/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'
@@ -281,14 +287,11 @@ for replication in replication_tasks:
                   ' -o ConnectTimeout=7')
 
     if dedicateduser:
-        sshcmd = "%s -l %s" % (
-            sshcmd,
-            dedicateduser.encode('utf-8'),
-            )
+        sshcmd = "%s -l %s" % (sshcmd, dedicateduser.encode('utf-8'))
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-    remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1],localfs.partition('/')[2])
+    remotefs_final = "%s%s%s" % (remotefs, localfs.partition('/')[1], localfs.partition('/')[2])
 
     # Examine local list of snapshots, then remote snapshots, and determine if there is any work to do.
     log.debug("Checking dataset %s" % (localfs))
@@ -304,7 +307,7 @@ for replication in replication_tasks:
         log.warn('Could not determine last available snapshot for dataset %s: %s' % (
             localfs,
             error,
-            ))
+        ))
         continue
     if output != '':
         snaplist = output.split('\n')
@@ -371,7 +374,7 @@ Hello,
         snaplist = [x for x in snaplist if not system_re.match(x) and x != '']
         # Process snaplist so that it matches the desired form of source side
         l = len(remotefs_final)
-        snaplist = [ localfs + x[l:] for x in snaplist ]
+        snaplist = [localfs + x[l:] for x in snaplist]
         map_target = mapfromdata(snaplist)
     elif error != '':
         results[replication.id] = 'Failed: %s' % (error)
@@ -385,7 +388,7 @@ Hello,
     # Now we have map_source and map_target, which would be used to calculate the replication
     # path from source to target.
     for dataset in map_source:
-        if map_target.has_key(dataset):
+        if dataset in map_target:
             # Find out the last common snapshot.
             #
             # We have two ordered lists, list_source and list_target
@@ -404,12 +407,12 @@ Hello,
                 if sourcesnap == targetsnap and sourcetime == targettime:
                     break
                 elif sourcetime > targettime:
-                    i-=1
+                    i -= 1
                     if i < 0:
                         break
                     sourcesnap, sourcetime = list_source[i]
                 else:
-                    j-=1
+                    j -= 1
                     if j < 0:
                         break
                     targetsnap, targettime = list_target[j]
@@ -418,23 +421,23 @@ Hello,
                 # we do not care much if j is pointing to the last snapshot
                 # if source side have new snapshot(s), report it.
                 if i < len(list_source) - 1:
-                    tasks[dataset] = [ m[0] for m in list_source[i:] ]
+                    tasks[dataset] = [m[0] for m in list_source[i:]]
                 if followdelete:
                     # All snapshots that do not exist on the source side should
                     # be deleted when followdelete is requested.
-                    delete_set = set([ m[0] for m in list_target]) - set([ m[0] for m in list_source])
+                    delete_set = set([m[0] for m in list_target]) - set([m[0] for m in list_source])
                     if len(delete_set) > 0:
                         delete_tasks[dataset] = delete_set
             else:
                 # no identical snapshot found, nuke and repave.
-                tasks[dataset] = [None] + [ m[0] for m in list_source[i:] ]
+                tasks[dataset] = [None] + [m[0] for m in list_source[i:]]
         else:
             # New dataset on source side: replicate to the target.
-            tasks[dataset] = [None] + [ m[0] for m in map_source[dataset] ]
+            tasks[dataset] = [None] + [m[0] for m in map_source[dataset]]
 
     # Removed dataset(s)
     for dataset in map_target:
-        if not map_source.has_key(dataset):
+        if dataset not in map_source:
             tasks[dataset] = [map_target[dataset][-1][0], None]
 
     previously_deleted = "/"
@@ -456,12 +459,12 @@ Hello,
         tasklist = tasks[dataset]
         current_dataset += 1
         reached_last = (current_dataset == total_datasets)
-        if tasklist[0] == None:
+        if tasklist[0] is None:
             # No matching snapshot(s) exist.  If there is any snapshots on the
             # target side, destroy all existing snapshots so we can proceed.
-            if map_target.has_key(dataset):
+            if dataset in map_target:
                 list_target = map_target[dataset]
-                snaplist = [ remotefs_final + dataset[l:] + '@' + x[0] for x in list_target ]
+                snaplist = [remotefs_final + dataset[l:] + '@' + x[0] for x in list_target]
                 failed_snapshots = []
                 log.debug('Deleting %d snapshot(s) in pull side because not a single matching snapshot was found', len(snaplist))
                 for snapshot in snaplist:
@@ -483,7 +486,7 @@ Hello,
 %s
                         """ % (localfs, failed_snapshots), interval=datetime.timedelta(hours=2), channel='autorepl')
                     results[replication.id] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
-                    ### rzfs destroy %s
+                    # ## rzfs destroy %s
             psnap = tasklist[1]
             success = sendzfs(None, psnap, dataset, localfs, remotefs, followdelete, throttle, compression, replication, reached_last)
             if success:
@@ -512,7 +515,7 @@ Hello,
                     """ % (dataset, psnap, remote), interval=datetime.timedelta(hours=2), channel='autorepl')
                 results[replication.id] = 'Failed: %s (%s)' % (dataset, psnap)
                 continue
-        elif tasklist[1] != None:
+        elif tasklist[1] is not None:
             psnap = tasklist[0]
             allsucceeded = True
             for nsnap in tasklist[1:]:
@@ -530,7 +533,7 @@ Hello,
                     results[replication.id] = 'Failed: %s (%s->%s)' % (dataset, psnap, nsnap)
                     break
                 psnap = nsnap
-            if allsucceeded and delete_tasks.has_key(dataset):
+            if allsucceeded and dataset in delete_tasks:
                 zfsname = remotefs_final + dataset[l:]
                 log.debug('Deleting %d stale snapshot(s) on pull side', len(delete_tasks[dataset]))
                 for snapshot in delete_tasks[dataset]:
