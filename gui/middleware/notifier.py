@@ -3669,6 +3669,9 @@ class notifier:
         if system is False:
             systemdataset, basename = self.system_dataset_settings()
 
+        if replications is None:
+            replications  = {}
+
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = set(filter(lambda y: y != '', zfsproc.communicate()[0].split('\n')))
         volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
@@ -3679,10 +3682,6 @@ class notifier:
         else:
             zfsproc = self._pipeopen("/sbin/zfs list -p -t snapshot -H -S creation %s" % (fieldsflag))
         lines = zfsproc.communicate()[0].split('\n')
-        repldict = {}
-        if replications:
-            for repltask in replications:
-                repldict[repltask.repl_filesystem] = repltask
         for line in lines:
             if line != '':
                 _list = line.split('\t')
@@ -3706,10 +3705,15 @@ class notifier:
                     snaplist = []
                     mostrecent = True
                 replication = None
-                if fs in repldict:
-                    repl = repldict[fs]
+                for repl in replications:
+                    if not (
+                        fs == repl.repl_filesystem or (
+                            repl.repl_userepl and fs.startswith(repl.repl_filesystem + '/')
+                        )
+                    ):
+                        continue
                     snaps = replications[repl]
-                    remotename = '%s@%s' % (repl.repl_zfs, name)
+                    remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, repl.repl_zfs), name)
                     if remotename in snaps:
                         replication = 'OK'
                         # TODO: Multiple replication tasks
