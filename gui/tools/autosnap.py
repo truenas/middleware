@@ -123,6 +123,21 @@ def exit_if_running(pid):
     except OSError:
         log.debug("Process %d gone", pid)
 
+
+def autorepl_running():
+    if not os.path.exists('/var/run/autorepl.pid'):
+        return False
+    with open('/var/run/autorepl.pid', 'r') as f:
+        pid = f.read().strip('\n')
+    if not pid.isdigit():
+        return False
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except OSError:
+        return False
+
+
 appPool.hook_tool_run('autosnap')
 
 mypid = os.getpid()
@@ -322,12 +337,15 @@ Hello,
                 vm.delete_named_snapshot(vmsnapname)
 
     MNTLOCK.lock()
-    for snapshot in snapshots_pending_delete:
-        snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot) #snapshots with clones will have destruction deferred
-        proc = pipeopen(snapcmd, logger=log)
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            log.error("Failed to destroy snapshot '%s': %s", snapshot, err)
+    if not autorepl_running():
+        for snapshot in snapshots_pending_delete:
+            snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot) #snapshots with clones will have destruction deferred
+            proc = pipeopen(snapcmd, logger=log)
+            err = proc.communicate()[1]
+            if proc.returncode != 0:
+                log.error("Failed to destroy snapshot '%s': %s", snapshot, err)
+    else:
+        log.debug("Autorepl running, skip destroying snapshots")
     MNTLOCK.unlock()
 
 

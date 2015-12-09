@@ -174,6 +174,9 @@ debug = False
 
 # Detect if another instance is running
 def exit_if_running(pid):
+    if 'AUTOREPL_SKIP_RUNNING' in os.environ:
+        log.debug('Skipping check if autorepl is running.')
+        return
     log.debug("Checking if process %d is still alive" % (pid, ))
     try:
         os.kill(pid, 0)
@@ -190,11 +193,11 @@ MNTLOCK = mntlock()
 mypid = os.getpid()
 templog = '/tmp/repl-%d' % (mypid)
 
-now = datetime.datetime.now().replace(microsecond=0)
-if now.second < 30 or now.minute == 59:
-    now = now.replace(second=0)
+start = datetime.datetime.now().replace(microsecond=0)
+if start.second < 30 or start.minute == 59:
+    now = start.replace(second=0)
 else:
-    now = now.replace(minute=now.minute + 1, second=0)
+    now = start.replace(minute=start.minute + 1, second=0)
 now = datetime.time(now.hour, now.minute)
 
 # (mis)use MNTLOCK as PIDFILE lock.
@@ -557,5 +560,21 @@ Hello,
                     previously_deleted = zfsname
 
 write_results()
+
+end = datetime.datetime.now().replace(microsecond=0)
+# In case this script took longer than 5 minutes to run and a successful
+# replication happened, lets re-run it to prevent periodic snapshots to be
+# deleted prior to be replicated (this might happen when its the first snapshot
+# being sent and it takes longer than the snapshots retention time.
+if (end - start).total_seconds() > 300:
+    log.debug('Relaunching autorepl')
+    os.environ['AUTOREPL_SKIP_RUNNING'] = '1'
+    os.execl(
+        '/usr/local/bin/python',
+        'python',
+        '/usr/local/www/freenasUI/tools/autorepl.py'
+    )
+
+
 os.remove('/var/run/autorepl.pid')
 log.debug("Autosnap replication finished")
