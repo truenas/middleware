@@ -367,6 +367,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         # with transaction.atomic():
         """
         form.save()
+        self.post_form_save_hook(bundle, form)
         bundle.obj = form.instance
         bundle.objects_saved.add(self.create_identifier(bundle.obj))
 
@@ -378,6 +379,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
             form.done(request=bundle.request, events=[])
 
         return bundle
+
+    def post_form_save_hook(self, bundle, form):
+        pass
 
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']
