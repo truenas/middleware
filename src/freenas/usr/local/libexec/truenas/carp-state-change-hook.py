@@ -332,6 +332,7 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
     # 0 for Active node
     run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
+    run('/usr/sbin/service ix-ssl quietstart')
     run('/usr/sbin/service ix-system quietstart')
     run('/usr/sbin/service ix-pre-samba quietstart')
     run('/usr/sbin/service samba_server forcestop')
