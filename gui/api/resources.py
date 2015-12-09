@@ -93,7 +93,7 @@ from freenasUI.system.forms import (
 )
 from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import BootEnv, get_pending_updates
-from tastypie import fields
+from tastypie import fields, http
 from tastypie.http import (
     HttpAccepted,
     HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
@@ -1988,6 +1988,14 @@ class JailsResourceMixin(NestedMixin):
         )
         self.__jls = proc.communicate()[0]
         return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
+
+    def post_form_save_hook(self, bundle, form):
+        if form.errors:
+            raise ImmediateHttpResponse(response=self.error_response(
+                bundle.request,
+                form.errors,
+                response_class=http.HttpConflict,
+            ))
 
     def dehydrate(self, bundle):
         bundle = super(JailsResourceMixin, self).dehydrate(bundle)
