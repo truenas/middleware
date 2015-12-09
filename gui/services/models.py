@@ -1586,6 +1586,7 @@ class SSH(Model):
         max_length=1024,
         verbose_name=_("Host Private Key"),
         blank=True,
+        editable=False,
         help_text=_("Paste a RSA PRIVATE KEY in PEM format here."),
     )
     ssh_sftp_log_level = models.CharField(
