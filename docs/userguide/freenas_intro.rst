@@ -220,6 +220,8 @@ that have occurred since 9.3-RELEASE.
   
 * The "Allow Kerberos Authentication" checkbox has been added to :menuselection:`Services --> SSH`.
 
+* The "Host Private Key" has been removed from :menuselection:`Services --> SSH`.
+
 * The "Power Off UPS" checkbox had been added to :menuselection:`Services --> UPS`.
 
 * The MediaBrowser Plugin has been renamed to Emby.
