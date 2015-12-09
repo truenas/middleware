@@ -381,6 +381,9 @@ If you are new to LDAP terminology, skim through the
 | SUDO Suffix             | string         | only available in "Advanced Mode"; use if LDAP-based users need superuser access                               |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name            | checkbox       | in a HA-configuration, ensure that each node has a unique NetBIOS name                                         |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Kerberos Realm          | drop-down menu | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`  |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
