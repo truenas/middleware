@@ -1157,10 +1157,6 @@ Mode" button or configure the system to always display these settings by checkin
 | Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| Host Private Key              | string         | only available in "Advanced Mode"; allows you to paste a specific host key as the default key is changed |
-|                               |                | with every installation                                                                                  |
-|                               |                |                                                                                                          |
-+-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | SFTP Log Level                | drop-down menu | only available in "Advanced Mode"; select the                                                            |
 |                               |                | `syslog(3) <http://www.freebsd.org/cgi/man.cgi?query=syslog>`_                                           |
 |                               |                | level of the SFTP server                                                                                 |
