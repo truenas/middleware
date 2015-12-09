@@ -51,11 +51,11 @@ setup_homedirs()
 
 	if [ -n "${cifs_home}" ]
 	then
-		ln -sfh "$cifs_home" "/var/home"
+		ln -sfh "$cifs_home" "/home"
 
-	elif [ ! -d "/var/home" ]
+	elif [ ! -d "/home" ]
 	then
-		mkdir /var/home
+		mkdir /home
 	fi
 }
 
