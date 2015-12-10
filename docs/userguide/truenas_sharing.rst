@@ -1439,8 +1439,8 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
-|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
-|                    |                | create                                                                                                               |
+|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise, specify the size of the file to   |
+|                    |                | create as a multiple of the *Logical Block Size*                                                                     |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Logical Block Size | drop-down menu | only override the default if the initiator requires a different block size                                           |
