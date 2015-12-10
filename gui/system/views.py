@@ -1247,12 +1247,15 @@ def update_apply(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
-            s = notifier().failover_rpc()
-            return render(
-                request,
-                'system/update.html',
-                s.update_check(),
-            )
+            try:
+                s = notifier().failover_rpc()
+                return render(
+                    request,
+                    'system/update.html',
+                    s.update_check(),
+                )
+            except socket.error:
+                return render(request, 'failover/failover_down.html')
         handler = CheckUpdateHandler()
         update = CheckForUpdates(
             diff_handler=handler.diff_call,
@@ -1369,12 +1372,15 @@ def update_check(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
-            s = notifier().failover_rpc()
-            return render(
-                request,
-                'system/update_check.html',
-                s.update_check(),
-            )
+            try:
+                s = notifier().failover_rpc()
+                return render(
+                    request,
+                    'system/update_check.html',
+                    s.update_check(),
+                )
+            except socket.error:
+                return render(request, 'failover/failover_down.html')
 
         handler = CheckUpdateHandler()
         try:
