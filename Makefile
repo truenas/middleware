@@ -191,6 +191,9 @@ set-template:
 tag:
 	${ENV_SETUP} /bin/sh build/apply_tag.sh
 
+tests: builder-verify
+	${ENV_SETUP} /bin/sh build/do_tests.sh
+
 ports:
 	@[ `id -u` -eq 0 ] || (echo "Sorry, you must be running as root to build this."; exit 1)
 	${ENV_SETUP} /bin/sh build/ports/create-poudriere-conf.sh
