@@ -872,13 +872,19 @@ def reload_httpd(request):
 
 def debug(request):
 
+    _n = notifier()
     if request.method == 'GET':
+        if not _n.is_freenas() and _n.failover_licensed():
+            try:
+                s = _n.failover_rpc()
+                s.ping()
+            except socket.error:
+                return render(request, 'failover/failover_down.html')
         return render(request, 'system/debug.html')
 
     gc = GlobalConfiguration.objects.all().order_by('-id')[0]
     mntpt, direc, dump = debug_get_settings()
 
-    _n = notifier()
     standby_debug = None
     if not _n.is_freenas() and _n.failover_licensed():
         s = _n.failover_rpc()
