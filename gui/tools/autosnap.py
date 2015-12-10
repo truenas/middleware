@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+#
 # Copyright (c) 2011, 2012 iXsystems, Inc.
 # All rights reserved.
 #
@@ -69,6 +69,7 @@ VMWARE_FAILS = '/var/tmp/.vmwaresnap_fails'
 # Set to True if verbose log desired
 debug = False
 
+
 def snapinfodict2datetime(snapinfo):
     year = int(snapinfo['year'])
     month = int(snapinfo['month'])
@@ -77,23 +78,25 @@ def snapinfodict2datetime(snapinfo):
     minute = int(snapinfo['minute'])
     return datetime(year, month, day, hour, minute)
 
+
 def snap_expired(snapinfo, snaptime):
     snapinfo_expirationtime = snapinfodict2datetime(snapinfo)
     snap_ttl_value = int(snapinfo['retcount'])
     snap_ttl_unit = snapinfo['retunit']
 
     if snap_ttl_unit == 'h':
-        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(hours = snap_ttl_value)
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(hours=snap_ttl_value)
     elif snap_ttl_unit == 'd':
-        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = snap_ttl_value)
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days=snap_ttl_value)
     elif snap_ttl_unit == 'w':
-        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = 7*snap_ttl_value)
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days=7 * snap_ttl_value)
     elif snap_ttl_unit == 'm':
-        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = int(30.436875*snap_ttl_value))
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days=int(30.436875 * snap_ttl_value))
     elif snap_ttl_unit == 'y':
-        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days = int(365.2425*snap_ttl_value))
+        snapinfo_expirationtime = snapinfo_expirationtime + timedelta(days=int(365.2425 * snap_ttl_value))
 
     return snapinfo_expirationtime <= snaptime
+
 
 def isMatchingTime(task, snaptime):
     curtime = time(snaptime.hour, snaptime.minute)
@@ -111,6 +114,7 @@ def isMatchingTime(task, snaptime):
             return True
 
     return False
+
 
 # Detect if another instance is running
 def exit_if_running(pid):
@@ -188,7 +192,7 @@ for task in TaskObjects:
         fs = task.task_filesystem
         expire_time = ('%s%s' % (task.task_ret_count, task.task_ret_unit[0])).__str__()
         tasklist = []
-        if mp_to_task_map.has_key((fs, expire_time)):
+        if (fs, expire_time) in mp_to_task_map:
             tasklist = mp_to_task_map[(fs, expire_time)]
             tasklist.append(task)
         else:
@@ -211,7 +215,7 @@ if len(mp_to_task_map) > 0:
         if snapshot_name != '':
             fs, snapname = snapshot_name.split('@')
             snapname_match = reg_autosnap.match(snapname)
-            if snapname_match != None:
+            if snapname_match is not None:
                 snap_infodict = snapname_match.groupdict()
                 snap_ret_policy = '%s%s' % (snap_infodict['retcount'], snap_infodict['retunit'])
                 if snap_expired(snap_infodict, snaptime):
@@ -227,8 +231,8 @@ if len(mp_to_task_map) > 0:
                                 previous_prefix = '%s/' % (fs)
                             snapshots_pending_delete.add(snapshot_name)
                 else:
-                    if mp_to_task_map.has_key((fs, snap_ret_policy)):
-                        if snapshots.has_key((fs, snap_ret_policy)):
+                    if (fs, snap_ret_policy) in mp_to_task_map:
+                        if (fs, snap_ret_policy) in snapshots:
                             last_snapinfo = snapshots[(fs, snap_ret_policy)]
                             if snapinfodict2datetime(last_snapinfo) < snapinfodict2datetime(snap_infodict):
                                 snapshots[(fs, snap_ret_policy)] = snap_infodict
@@ -239,11 +243,11 @@ if len(mp_to_task_map) > 0:
 
     for mpkey in list_mp:
         tasklist = mp_to_task_map[mpkey]
-        if snapshots.has_key(mpkey):
+        if mpkey in snapshots:
             snapshot_time = snapinfodict2datetime(snapshots[mpkey])
-            for taskindex in range(len(tasklist) -1, -1, -1):
+            for taskindex in range(len(tasklist) - 1, -1, -1):
                 task = tasklist[taskindex]
-                if snapshot_time + timedelta(minutes = task.task_interval) > snaptime:
+                if snapshot_time + timedelta(minutes=task.task_interval) > snaptime:
                     del tasklist[taskindex]
             if len(tasklist) == 0:
                 del mp_to_task_map[mpkey]
@@ -254,9 +258,9 @@ if len(mp_to_task_map) > 0:
         fs, expire = mpkey
         recursive = False
         for task in tasklist:
-            if task.task_recursive == True:
+            if task.task_recursive is True:
                 recursive = True
-        if recursive == True:
+        if recursive is True:
             rflag = ' -r'
         else:
             rflag = ''
@@ -308,7 +312,7 @@ Hello,
     The following VM failed to snapshot %s:
 %s
 """ % (snapname, '    \n'.join([str(vm) for vm in snapvmfails])),
-                 channel='snapvmware'
+                channel='snapvmware'
             )
 
         if len(snapvms) > 0 and len(snapvmfails) == 0:
@@ -339,7 +343,7 @@ Hello,
     MNTLOCK.lock()
     if not autorepl_running():
         for snapshot in snapshots_pending_delete:
-            snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot) #snapshots with clones will have destruction deferred
+            snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot)  # snapshots with clones will have destruction deferred
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:
