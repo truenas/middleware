@@ -90,6 +90,7 @@ urlpatterns = patterns(
     url(r'^config/save/$', 'config_save', name='system_configsave'),
     url(r'^config/upload/$', 'config_upload', name='system_configupload'),
     url(r'^debug/$', 'debug', name='system_debug'),
+    url(r'^debug/download/$', 'debug_download', name='system_debug_download'),
     url(r'^backup/$', 'backup', name='system_backup'),
     url(r'^backup/progress$', 'backup_progress', name='system_backup_progress'),
     url(r'^backup/abort$', 'backup_abort', name='system_backup_abort'),
