@@ -333,6 +333,9 @@ class ActiveDirectoryForm(ModelForm):
     class Meta:
         fields = '__all__'
         exclude = ['ad_idmap_backend_type']
+        if not hasattr(notifier, 'failover_node'):
+            exclude.append('ad_netbiosname_b')
+
         model = models.ActiveDirectory
         widgets = {
             'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
@@ -646,9 +649,10 @@ class LDAPForm(ModelForm):
 
     class Meta:
         fields = '__all__'
-        exclude = [
-            'ldap_idmap_backend_type'
-        ]
+        exclude = ['ldap_idmap_backend_type']
+        if not hasattr(notifier, 'failover_node'):
+            exclude.append('ldap_netbiosname_b')
+
         model = models.LDAP
         widgets = {
             'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
