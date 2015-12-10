@@ -1014,7 +1014,8 @@ Next, go to :menuselection:`Network --> Interfaces --> Add Interface`. The HA li
   *255*.
 
 * **Critical for Failover:** check this box if a failover should occur when this interface becomes unavailable. How many seconds it takes for that failover to occur depends upon the
-  value of the "Timeout", as described in Table 5.11a. This checkbox is interface-specific, allowing you to have different settings for a management network and a data network.
+  value of the "Timeout", as described in Table 5.11a. This checkbox is interface-specific, allowing you to have different settings for a management network and a data network. Note that
+  checking this box requires the *Virtual IP* to be set.
 
 * **Group:** this drop-down menu is greyed out unless the "Critical for Failover" checkbox is checked. This box allows you to group multiple, critical for failover interfaces. In this case,
   all of the interfaces in a group must go down before failover occurs. This can be a useful configuration in a multipath scenario.
