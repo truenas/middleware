@@ -144,14 +144,6 @@ FreeNAS® system:
 
 * On the other hand, if the key is lost, the data on the disks is inaccessible. Always backup the key!
 
-.. warning:: the per-drive GELI master keys are not backed up along with the user keys. If a bit error occurs in the last sector of an encrypted disk, this
-   may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
-   `this forum post <https://forums.freenas.org/index.php?threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`__
-   which explains how to back up your master keys manually.
-   `This forum post <https://forums.freenas.org/index.php?threads/recover-encryption-key.16593/#post-85497>`__
-   gives an in-depth explanation of how the various key types are used by GELI.
-   To track future progress on this issue, refer to `this bug report <https://bugs.freenas.org/issues/2375>`__.
-
 * The encryption key is per ZFS volume (pool). If you create multiple pools, each pool has its own encryption key.
 
 * If the system has a lot of disks, there will be a performance hit if the CPU does not support `AES-NI <https://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
