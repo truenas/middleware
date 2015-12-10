@@ -1445,7 +1445,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
-|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
+|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise, specify the size of the file to   |
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
