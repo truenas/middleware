@@ -871,6 +871,10 @@ def reload_httpd(request):
 
 
 def debug(request):
+
+    if request.method == 'GET':
+        return render(request, 'system/debug.html')
+
     gc = GlobalConfiguration.objects.all().order_by('-id')[0]
     mntpt, direc, dump = debug_get_settings()
 
@@ -896,30 +900,40 @@ def debug(request):
             with tarfile.open(debug_file, 'w') as tar:
                 tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_b)
                 tar.add(dump, '%s.txz' % hostname_a)
-            extension = 'tar'
-            hostname = ''
-        else:
-            debug_file = dump
-            extension = '.tgz'
-            hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+        return render(request, 'system/debug_download.html')
 
-        wrapper = FileWrapper(file(debug_file))
-        response = StreamingHttpResponse(
-            wrapper,
-            content_type='application/octet-stream',
-        )
-        response['Content-Length'] = os.path.getsize(debug_file)
-        response['Content-Disposition'] = \
-            'attachment; filename=debug%s-%s.%s' % (
-                hostname,
-                time.strftime('%Y%m%d%H%M%S'),
-                extension)
 
-        opts = ["/bin/rm", "-r", "-f", direc]
-        p1 = pipeopen(' '.join(opts), allowfork=True)
-        p1.wait()
+def debug_download(request):
+    mntpt, direc, dump = debug_get_settings()
+    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
 
-        return response
+    _n = notifier()
+    if not _n.is_freenas() and _n.failover_licensed():
+        debug_file = '%s/debug.tar' % direc
+        extension = 'tar'
+        hostname = ''
+    else:
+        debug_file = dump
+        extension = '.tgz'
+        hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+
+    wrapper = FileWrapper(file(debug_file))
+    response = StreamingHttpResponse(
+        wrapper,
+        content_type='application/octet-stream',
+    )
+    response['Content-Length'] = os.path.getsize(debug_file)
+    response['Content-Disposition'] = \
+        'attachment; filename=debug%s-%s.%s' % (
+            hostname,
+            time.strftime('%Y%m%d%H%M%S'),
+            extension)
+
+    opts = ["/bin/rm", "-r", "-f", direc]
+    p1 = pipeopen(' '.join(opts), allowfork=True)
+    p1.wait()
+
+    return response
 
 
 def backup(request):
