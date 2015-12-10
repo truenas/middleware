@@ -871,10 +871,20 @@ def reload_httpd(request):
 
 
 def debug(request):
+
+    _n = notifier()
+    if request.method == 'GET':
+        if not _n.is_freenas() and _n.failover_licensed():
+            try:
+                s = _n.failover_rpc()
+                s.ping()
+            except socket.error:
+                return render(request, 'failover/failover_down.html')
+        return render(request, 'system/debug.html')
+
     gc = GlobalConfiguration.objects.all().order_by('-id')[0]
     mntpt, direc, dump = debug_get_settings()
 
-    _n = notifier()
     standby_debug = None
     if not _n.is_freenas() and _n.failover_licensed():
         s = _n.failover_rpc()
@@ -896,30 +906,40 @@ def debug(request):
             with tarfile.open(debug_file, 'w') as tar:
                 tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_b)
                 tar.add(dump, '%s.txz' % hostname_a)
-            extension = 'tar'
-            hostname = ''
-        else:
-            debug_file = dump
-            extension = '.tgz'
-            hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+        return render(request, 'system/debug_download.html')
 
-        wrapper = FileWrapper(file(debug_file))
-        response = StreamingHttpResponse(
-            wrapper,
-            content_type='application/octet-stream',
-        )
-        response['Content-Length'] = os.path.getsize(debug_file)
-        response['Content-Disposition'] = \
-            'attachment; filename=debug%s-%s.%s' % (
-                hostname,
-                time.strftime('%Y%m%d%H%M%S'),
-                extension)
 
-        opts = ["/bin/rm", "-r", "-f", direc]
-        p1 = pipeopen(' '.join(opts), allowfork=True)
-        p1.wait()
+def debug_download(request):
+    mntpt, direc, dump = debug_get_settings()
+    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
 
-        return response
+    _n = notifier()
+    if not _n.is_freenas() and _n.failover_licensed():
+        debug_file = '%s/debug.tar' % direc
+        extension = 'tar'
+        hostname = ''
+    else:
+        debug_file = dump
+        extension = '.tgz'
+        hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+
+    wrapper = FileWrapper(file(debug_file))
+    response = StreamingHttpResponse(
+        wrapper,
+        content_type='application/octet-stream',
+    )
+    response['Content-Length'] = os.path.getsize(debug_file)
+    response['Content-Disposition'] = \
+        'attachment; filename=debug%s-%s.%s' % (
+            hostname,
+            time.strftime('%Y%m%d%H%M%S'),
+            extension)
+
+    opts = ["/bin/rm", "-r", "-f", direc]
+    p1 = pipeopen(' '.join(opts), allowfork=True)
+    p1.wait()
+
+    return response
 
 
 def backup(request):
@@ -1247,12 +1267,15 @@ def update_apply(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
-            s = notifier().failover_rpc()
-            return render(
-                request,
-                'system/update.html',
-                s.update_check(),
-            )
+            try:
+                s = notifier().failover_rpc()
+                return render(
+                    request,
+                    'system/update.html',
+                    s.update_check(),
+                )
+            except socket.error:
+                return render(request, 'failover/failover_down.html')
         handler = CheckUpdateHandler()
         update = CheckForUpdates(
             diff_handler=handler.diff_call,
@@ -1369,12 +1392,15 @@ def update_check(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
-            s = notifier().failover_rpc()
-            return render(
-                request,
-                'system/update_check.html',
-                s.update_check(),
-            )
+            try:
+                s = notifier().failover_rpc()
+                return render(
+                    request,
+                    'system/update_check.html',
+                    s.update_check(),
+                )
+            except socket.error:
+                return render(request, 'failover/failover_down.html')
 
         handler = CheckUpdateHandler()
         try:

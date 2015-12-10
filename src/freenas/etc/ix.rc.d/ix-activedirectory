@@ -155,27 +155,27 @@ setup_homedirs()
 
 	if [ -n "${cifs_home}" ]
 	then
-		ln -sfh "$cifs_home" "/var/home"
+		ln -sfh "$cifs_home" "/home"
 
 		if [ "${trusted}" = "1" ]
 		then
 			local partitions="$(AD_query_partitions)"
 			for p in ${partitions}
 			do
-				mkdir -p "/var/home/${p}"
+				mkdir -p "/home/${p}"
 			done
 
 		else
 			local workgroup=$(AD_get ad_netbiosname)
-			local homedir="/var/home/${workgroup}"
+			local homedir="/home/${workgroup}"
 
 			mkdir -p "${homedir}"
 			/usr/local/bin/winacl -a reset -p "${homedir}"
 		fi
 
-	elif [ ! -d "/var/home" ]
+	elif [ ! -d "/home" ]
 	then
-		mkdir /var/home
+		mkdir /home
 	fi
 }
 

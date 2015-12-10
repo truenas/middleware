@@ -93,6 +93,13 @@ def license_update(request):
         else:
             return JsonResp(request, form=form)
     else:
+        _n = notifier()
+        try:
+            if not _n.is_freenas() and _n.failover_licensed():
+                s = _n.failover_rpc()
+                s.ping()
+        except socket.error:
+            return render(request, 'failover/failover_down.html')
         form = forms.LicenseUpdateForm()
 
     eula = None
