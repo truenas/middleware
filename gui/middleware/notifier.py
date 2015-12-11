@@ -5760,7 +5760,7 @@ class notifier:
             AES.MODE_CTR,
             counter=Counter.new(64, prefix=nonce),
         )
-        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING)
+        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
 
     def bootenv_attach_disk(self, label, devname):
         """Attach a new disk to the pool"""
