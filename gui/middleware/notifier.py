@@ -5733,6 +5733,8 @@ class notifier:
         return secret
 
     def pwenc_encrypt(self, text):
+        if isinstance(text, unicode):
+            text = text.encode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
         pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
