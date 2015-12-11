@@ -1869,7 +1869,7 @@ class BsdUserResourceMixin(NestedMixin):
             bundle.obj.id and 'bsdusr_to_group' not in bundle.data
         ):
             bundle.data['bsdusr_to_group'] = [
-                o.id for o in bundle.obj.bsdgroupmembership_set.all()
+                o.bsdgrpmember_group.id for o in bundle.obj.bsdgroupmembership_set.all()
             ]
         bundle = super(BsdUserResourceMixin, self).hydrate(bundle)
         return bundle
