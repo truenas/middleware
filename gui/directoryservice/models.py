@@ -553,9 +553,13 @@ class idmap_rfc2307(idmap_base):
         self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
 
         if self.idmap_rfc2307_ldap_user_dn_password:
-            self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_decrypt(
-                self.idmap_rfc2307_ldap_user_dn_password
-            )
+            try:
+                self.idmap_rfc2307_ldap_user_dn_password = notifier().pwenc_decrypt(
+                    self.idmap_rfc2307_ldap_user_dn_password
+                )
+            except:
+                log.debug('Failed to decrypt idmap password', exc_info=True)
+                self.idmap_rfc2307_ldap_user_dn_password = ''
 
         self._idmap_rfc2307_ldap_user_dn_password_encrypted = False
 
@@ -828,9 +832,11 @@ class NT4(DirectoryServiceBase):
         super(NT4, self).__init__(*args, **kwargs)
 
         if self.nt4_adminpw:
-            self.nt4_adminpw = notifier().pwenc_decrypt(
-                self.nt4_adminpw
-            )
+            try:
+                self.nt4_adminpw = notifier().pwenc_decrypt(self.nt4_adminpw)
+            except:
+                log.debug('Failed to decrypt NT4 admin password', exc_info=True)
+                self.nt4_adminpw = ''
         self._nt4_adminpw_encrypted = False
 
         self.ds_type = DS_TYPE_NT4
@@ -1029,9 +1035,11 @@ class ActiveDirectory(DirectoryServiceBase):
         super(ActiveDirectory, self).__init__(*args, **kwargs)
 
         if self.ad_bindpw:
-            self.ad_bindpw = notifier().pwenc_decrypt(
-                self.ad_bindpw
-            )
+            try:
+                self.ad_bindpw = notifier().pwenc_decrypt(self.ad_bindpw)
+            except:
+                log.debug('Failed to decrypt AD bind password', exc_info=True)
+                self.ad_bindpw = ''
         self._ad_bindpw_encrypted = False
 
         self.ds_type = DS_TYPE_ACTIVEDIRECTORY
@@ -1296,9 +1304,11 @@ class LDAP(DirectoryServiceBase):
         super(LDAP, self).__init__(*args, **kwargs)
 
         if self.ldap_bindpw:
-            self.ldap_bindpw = notifier().pwenc_decrypt(
-                self.ldap_bindpw
-            )
+            try:
+                self.ldap_bindpw = notifier().pwenc_decrypt(self.ldap_bindpw)
+            except:
+                log.debug('Failed to decrypt LDAP bind password', exc_info=True)
+                self.ldap_bindpw = ''
         self._ldap_bindpw_encrypted = False
 
         self.ds_type = DS_TYPE_LDAP
