@@ -806,15 +806,23 @@ class iSCSITargetAuthCredential(Model):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetAuthCredential, self).__init__(*args, **kwargs)
         if self.iscsi_target_auth_secret:
-            self.iscsi_target_auth_secret = notifier().pwenc_decrypt(
-                self.iscsi_target_auth_secret
-            )
+            try:
+                self.iscsi_target_auth_secret = notifier().pwenc_decrypt(
+                    self.iscsi_target_auth_secret
+                )
+            except:
+                log.debug('Failed to decrypt auth access secret', exc_info=True)
+                self.iscsi_target_auth_secret = ''
         self._iscsi_target_auth_secret_encrypted = False
 
         if self.iscsi_target_auth_peersecret:
-            self.iscsi_target_auth_peersecret = notifier().pwenc_decrypt(
-                self.iscsi_target_auth_peersecret
-            )
+            try:
+                self.iscsi_target_auth_peersecret = notifier().pwenc_decrypt(
+                    self.iscsi_target_auth_peersecret
+                )
+            except:
+                log.debug('Failed to decrypt auth access peer secret', exc_info=True)
+                self.iscsi_target_auth_peersecret = ''
         self._iscsi_target_auth_peersecret_encrypted = False
 
     def save(self, *args, **kwargs):
@@ -1258,7 +1266,11 @@ class UPS(Model):
     def __init__(self, *args, **kwargs):
         super(UPS, self).__init__(*args, **kwargs)
         if self.ups_monpwd:
-            self.ups_monpwd = notifier().pwenc_decrypt(self.ups_monpwd)
+            try:
+                self.ups_monpwd = notifier().pwenc_decrypt(self.ups_monpwd)
+            except:
+                log.debug('Failed to decrypt UPS mon password', exc_info=True)
+                self.ups_monpwd = ''
         self._ups_monpwd_encrypted = False
 
     def save(self, *args, **kwargs):
@@ -2007,9 +2019,11 @@ class DomainController(Model):
         self.svc = 'domaincontroller'
 
         if self.dc_passwd:
-            self.dc_passwd = notifier().pwenc_decrypt(
-                self.dc_passwd
-            )
+            try:
+                self.dc_passwd = notifier().pwenc_decrypt(self.dc_passwd)
+            except:
+                log.debug('Failed to decrypt DC password', exc_info=True)
+                self.dc_passwd = ''
         self._dc_passwd_encrypted = False
 
     def save(self, *args, **kwargs):

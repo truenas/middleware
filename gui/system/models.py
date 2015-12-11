@@ -398,7 +398,11 @@ class Email(Model):
     def __init__(self, *args, **kwargs):
         super(Email, self).__init__(*args, **kwargs)
         if self.em_pass:
-            self.em_pass = notifier().pwenc_decrypt(self.em_pass)
+            try:
+                self.em_pass = notifier().pwenc_decrypt(self.em_pass)
+            except:
+                log.debug('Failed to decrypt email password', exc_info=True)
+                self.em_pass = ''
         self._em_pass_encrypted = False
 
     def save(self, *args, **kwargs):
@@ -731,10 +735,10 @@ class CertificateBase(Model):
         blank=True,
         null=True,
         verbose_name=_("Signing Certificate Authority")
-        )
+    )
     cert_chain = models.BooleanField(
         default=False,
-        )
+    )
 
     def get_certificate(self):
         certificate = None
@@ -749,7 +753,7 @@ class CertificateBase(Model):
         return certificate
 
     def get_certificate_chain(self):
-        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M|re.S)
+        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
         certificates = []
         try:
