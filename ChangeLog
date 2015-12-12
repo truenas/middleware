@@ -1,0 +1,28 @@
+#4424	Feature	Nice to have	ZFS version warning
+#6674	Bug	Nice to have	Remove ssh host private key field
+#9732	Bug	Expected	FreeNAS 9.3 and VMWare 6 Snapshots
+#10297	Feature	Nice to have	SSH with Kerberos
+#10673	Bug	Important	On show NFS security field if NFSv4 is enabled
+#10995	Bug	Nice to have	Allow setting multiple aux groups from API
+#11237	Bug	Important	FreeNAS webgui not writing certificate correct to /etc/certificates
+#11387	Bug	Important	Not allow (or warn) when they are using different RAID levels for multiple vdevs except cache and log
+#11561	Feature	Nice to have	Increase length of "value" when adding tunable
+#11827	Feature	Expected	synchronous replication
+#12130	Bug	Nice to have	Times not staying
+#12362	Bug	Expected	New created FreeNAS groups are not being mapped to Windows/Samba groups
+#12454	Bug	Nice to have	Updating Replication Task Through API Clears Hostname & SSH Key
+#12508	Feature	Important	Allow API (and GUI) to create read-on LUNs
+#12543	Bug	Nice to have	Add SSH Key Scan to replication edit dialog
+#12565	Bug	Nice to have	Proper handle replication status to non-freenas/freebsd systems
+#12568	Bug	Important	Replication status not current (shows previous error)
+#12589	Bug	Nice to have	Cant create jail via REST API
+#12591	Bug	Expected	Traceback when creating file extent
+#12593	Bug	Important	nfsuserd is on needed for NFSv4
+#12601	Bug	Expected	Watchdog disabled but causing random reboots
+#12618	Bug	Important	Update failed "no such table: services_fiberchanneltotarget"
+#12688	Bug	Nice to have	Issue creating jails via REST API (errors not reported)
+#12692	Bug	Important	Removing snapshots on "PULL" side
+#12693	Bug	Nice to have	API Snapshot Request Returns "null" for "replication" property
+#12709	Bug	Expected	LDAP NetBIOS name is for TN on
+#12736	Bug	Important	Fatal error encrypting UTF-8 email passwords
+#12737	Bug	Nice to have	Cannot update user thru API when aux groups field is not empty
