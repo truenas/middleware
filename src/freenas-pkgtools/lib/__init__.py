@@ -9,6 +9,7 @@
 # Sef likes this line a lot.
 _os_type = "FreeNAS"
 UPDATE_SERVER = "http://update.freenas.org/" + _os_type
+MASTER_UPDATE_SERVER = "http://update-master.freenas.org/" + _os_type
 
 # For signature verification
 IX_CRL = "https://web.ixsystems.com/updates/ix_crl.pem"
