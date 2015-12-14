@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-12-08 11:54+0000\n"
+"PO-Revision-Date: 2015-12-13 17:56+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1449575640.0\n"
+"X-POOTLE-MTIME: 1450029383.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13007,45 +13007,39 @@ msgid "vCenter Auxiliary Settings successfully edited."
 msgstr "vCenter-hulpinstellingen met succes bewerkt."
 
 #: templates/vcp/index.html:27
-#, fuzzy
 msgid "Enable vCenter Plugin over https:"
 msgstr "vCenter-plug-in over https inschakelen:"
 
 #: vcp/models.py:93
-#, fuzzy
 msgid " Enable vCenter Plugin over https"
-msgstr "vCenter-plug-in over https inschakelen"
+msgstr " vCenter-plug-in over https inschakelen"
 
 #: services/models.py:837
-#, fuzzy
 msgid "Fibre Channel"
-msgstr "Fiber Channel"
+msgstr "Fibre Channel"
 
 #: services/models.py:967
 #, fuzzy
 msgid "Fibre Channel Target"
-msgstr "Doel van Fiber Channel"
+msgstr "Doel van Fibre Channel"
 
 #: services/models.py:968
 #, fuzzy
 msgid "Fibre Channel Targets"
-msgstr "Doelen van Fiber Channel"
+msgstr "Doelen van Fibre Channel"
 
 #: services/nav.py:120
 #: templates/services/iscsi.html:45
-#, fuzzy
 msgid "Fibre Channel Ports"
-msgstr "Fiber Channel-poorten"
+msgstr "Fibre Channel-poorten"
 
 #: services/views.py:395
-#, fuzzy
 msgid "Fibre Channel Ports have been successfully changed."
-msgstr "Fiber Channel-poorten zijn met succes gewijzigd."
+msgstr "Fibre Channel-poorten zijn met succes gewijzigd."
 
 #: directoryservice/models.py:941
-#, fuzzy
 msgid "Allow DNS updates"
-msgstr "Gast toestaan"
+msgstr "DNS-updates toestaan"
 
 #: directoryservice/models.py:942
 msgid "Set this if you want to allow allow DNS updates."
@@ -13053,7 +13047,7 @@ msgstr "Stel dit in als u DNS-updates wilt toestaan."
 
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
-msgstr ""
+msgstr "Bestandsgrootte moet een veelvoud van blokgrootte zijn"
 
 #: system/alertmods/mpr_firmware.py:34
 #, fuzzy
@@ -13062,7 +13056,8 @@ msgid ""
 "for /dev/mpr%(mpr)s. Please flash controller to P%(drversion)s IT firmware."
 msgstr ""
 "Firmwareversie %(fwversion)s komt niet overeen met stuurprogrammaversie "
-"%(drversion)s voor /dev/mpr%(mpr)s"
+"%(drversion)s voor /dev/mpr%(mpr)s. Flash de controller naar IT-firmware "
+"P%(drversion)s."
 
 #: system/alertmods/mps_firmware.py:35
 #, fuzzy
@@ -13071,38 +13066,45 @@ msgid ""
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
 msgstr ""
 "Firmwareversie %(fwversion)s komt niet overeen met stuurprogrammaversie "
-"%(drversion)s voor /dev/mps%(mps)s"
+"%(drversion)s voor /dev/mps%(mps)s. Flash de controller naar IT-firmware "
+"P%(drversion)s."
 
 #: services/models.py:1574
-#, fuzzy
 msgid "Allow Kerberos Authentication"
-msgstr "Wachtwoordauthenticatie toestaan"
+msgstr "Kerberos-authenticatie toestaan"
 
 #: system/alertmods/volume_version.py:34
+#, fuzzy
 msgid ""
 "ZFS filesystem version is out of date. Consider upgrading using \"zfs "
 "upgrade\" command line."
 msgstr ""
+"Versie van ZFS-bestandssysteem is verouderd. Overweeg een upgrade via 'zfs "
+"upgrade' op de opdrachtregel."
 
 #: storage/forms.py:387
+#, fuzzy
 msgid ""
 "You are not allowed to create a volume with different data vdev types "
 "(%(vdev1)s and %(vdev2)s)"
 msgstr ""
+"U mag geen volume aanmaken met verschillende vdev-gegevenstypen (%(vdev1)s "
+"en %(vdev2)s)"
 
 #: system/forms.py:2219
+#, fuzzy
 msgid "Something is seriously jacked up."
-msgstr ""
+msgstr "Er gaat iets helemaal niet goed."
 
 #: system/forms.py:2228
-#, fuzzy
 msgid "Not a valid certificate."
-msgstr "Zelfondertekend certificaat"
+msgstr "Geen geldig certificaat."
 
 #: network/forms.py:278
 msgid "Virtual IP is required to set it as Critical for Failover"
-msgstr ""
+msgstr "Virtueel IP is vereist o dit in te stellen als Kritiek voor Failover"
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
+"Failover dient uitgeschakeld te zijn om netwerkwijzigingen uit te voeren."
