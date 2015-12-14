@@ -10,7 +10,7 @@ import httplib
 import socket
 import ssl
 
-from . import Avatar, UPDATE_SERVER
+from . import Avatar, UPDATE_SERVER, MASTER_UPDATE_SERVER
 import Exceptions
 import Installer
 import Train
@@ -28,6 +28,7 @@ CONFIG_SEARCH = "Search"
 CONFIG_SERVER = "update_server"
 
 UPDATE_SERVER_NAME_KEY = "name"
+UPDATE_SERVER_MASTER_KEY = "master"
 UPDATE_SERVER_URL_KEY = "url"
 UPDATE_SERVER_SIGNED_KEY = "signing"
 
@@ -452,7 +453,7 @@ class PackageDB:
         return
 
 class UpdateServer(object):
-    def __init__(self, name = None, url = None, signing = True):
+    def __init__(self, name = None, url = None, master = None, signing = True):
         if name is None:
             raise ValueError("Cannot initialize UpdateServer with no name")
         else:
@@ -461,7 +462,15 @@ class UpdateServer(object):
             raise ValueError("Cannot initialize UpdateServer with no URL")
         else:
             self._url = url
+        self._master = master
         self._signature_required = signing
+
+    @property
+    def master(self):
+        if self._master:
+            return self._master
+        else:
+            return self.url
 
     @property
     def name(self):
@@ -488,6 +497,7 @@ class UpdateServer(object):
 
 default_update_server = UpdateServer(name = "default",
                                      url = UPDATE_SERVER,
+                                     master = MASTER_UPDATE_SERVER,
                                      signing = True)
 
 class Configuration(object):
@@ -506,6 +516,8 @@ class Configuration(object):
         if os.path.exists(self._system_dataset):
             self._temp = self._system_dataset
 
+    def UpdateServerMaster(self):
+        return self._update_server.master
     def UpdateServerURL(self):
         return self._update_server.url
     def UpdateServerName(self):
@@ -527,9 +539,12 @@ class Configuration(object):
             raise Exception("Bad use of TryGetNetworkFile again")
 
         if file:
-            file_url = "%s/%s" % (self._update_server.url, file)
+            # If we're looking for a file in general, look in the update server and the master.
+            file_url = ["%s/%s" % (self.UpdateServerURL(), file)]
+            if self.UpdateServerURL() != self.UpdateServerMaster():
+                file_url.append("%s/%s" % (self.UpdateServerMaster(), file))
         elif url:
-            file_url = url
+            file_url = [url]
         log.debug("TryGetNetworkFile(%s)" % file_url)
         temp_mani = self.SystemManifest()
         if temp_mani:
@@ -563,39 +578,64 @@ class Configuration(object):
             retval = tempfile.TemporaryFile(dir = self._temp)
             
         if read > 0:  log.debug("File already exists, using a starting size of %d" % read)
-        
-        try:
-            https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
-            opener = urllib2.build_opener(https_handler)
-            req = urllib2.Request(file_url)
-            req.add_header("X-iXSystems-Project", Avatar())
-            req.add_header("X-iXSystems-Version", current_version)
-            if host_id:
-                req.add_header("X-iXSystems-HostID", host_id)
-            if reason:
-                req.add_header("X-iXSystems-Reason", reason)
-            if license_data:
-                req.add_header("X-iXSystems-License", license_data)
 
-            # Hack for debugging
-            req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
-            # Allow restarting
-            if intr_ok:
-                req.add_header("Range", "bytes=%d-" % read)
+        furl = None
+        for url in file_url:
+            url_exc = None
+            try:
+                https_handler = VerifiedHTTPSHandler(ca_certs = DEFAULT_CA_FILE)
+                opener = urllib2.build_opener(https_handler)
+                req = urllib2.Request(url)
+                req.add_header("X-iXSystems-Project", Avatar())
+                req.add_header("X-iXSystems-Version", current_version)
+                if host_id:
+                    req.add_header("X-iXSystems-HostID", host_id)
+                if reason:
+                    req.add_header("X-iXSystems-Reason", reason)
+                if license_data:
+                    req.add_header("X-iXSystems-License", license_data)
+
+                # Hack for debugging
+                req.add_header("User-Agent", "%s=%s" % (AVATAR_VERSION, current_version))
+                # Allow restarting
+                if intr_ok:
+                    req.add_header("Range", "bytes=%d-" % read)
             
-            furl = opener.open(req, timeout=30)
-        except urllib2.HTTPError as error:
-            if error.code == httplib.REQUESTED_RANGE_NOT_SATISFIABLE:
-                # We've reached the end of the file already
-                # Do I need to do something different for the progress handler?
-                retval.seek(0)
-                return retval
-            log.error("Got http error %s" % str(error))
-            retval.close()
+                furl = opener.open(req, timeout=30)
+            except urllib2.HTTPError as error:
+                if error.code == httplib.REQUESTED_RANGE_NOT_SATISFIABLE:
+                    # We've reached the end of the file already
+                    # Can I get this incorrectly from any other server?
+                    # Do I need to do something different for the progress handler?
+                    retval.seek(0)
+                    return retval
+                log.error("Got http error %s" % str(error))
+                url_exc = error
+            except BaseException as e:
+                log.error("Unable to load %s: %s", url, str(e))
+                url_exc = e
+
+            if furl:
+                break
+            
+        # The loop above should leave url_exc set to None if the file was
+        # grabbed.
+        if url_exc:
+            if furl:
+                furl.close()
+                furl = None
+            if retval:
+                retval.close()
+            log.error("Unable to load %s: %s", file_url, str(url_exc))
+            raise url_exc
+
+        # This _shouldn't_ be doable, but I'm checking just in case.
+        if furl is None:
+            log.error("Unable to load %s", file_url)
+            if retval:
+                retval.close()
             return None
-        except BaseException as e:
-            log.error("Unable to load %s: %s", file_url, str(e))
-            return None
+        
         try:
             totalsize = int(furl.info().getheader('Content-Length').strip())
         except:
@@ -748,8 +788,10 @@ class Configuration(object):
                     u = cfp.get(section, UPDATE_SERVER_URL_KEY)
                     s = cfp.getboolean(section, UPDATE_SERVER_SIGNED_KEY) \
                         if cfp.has_option(section, UPDATE_SERVER_SIGNED_KEY) else True
+                    m = cfp.get(section, UPDATE_SERVER_MASTER_KEY) \
+                        if cfp.has_option(section, UPDATE_SERVER_MASTER_KEY) else None
                     try:
-                        update_server = UpdateServer(name = n, url = u, signing = s)
+                        update_server = UpdateServer(name = n, url = u, signing = s, master = m)
                         self._update_server = update_server
                     except:
                         log.error("Cannot set update server to %s, using default", n)
@@ -868,7 +910,7 @@ class Configuration(object):
         if self._package_dir:
             return "%s/%s" % (self._package_dir, pkg.FileName())
         else:
-            return "%s/Packages/%s" % (self._update_server.url, pkg.FileName())
+            return "%s/Packages/%s" % (self.UpdateServerURL(), pkg.FileName())
 
     def PackageUpdatePath(self, pkg, old_version):
         # Do we need this?  If we're given a package directory,
@@ -876,7 +918,7 @@ class Configuration(object):
         if self._package_dir:
             return "%s/%s" % (self._package_dir, pkg.FileName(old_version))
         else:
-            return "%s/Packages/%s" % (self._update_server.url, pkg.FileName(old_version))
+            return "%s/Packages/%s" % (self.UpdateServerURL(), pkg.FileName(old_version))
 
     def GetManifest(self, train = None, sequence = None, handler = None):
         """
@@ -900,7 +942,7 @@ class Configuration(object):
             # This needs to change for TrueNAS, doesn't it?
             ManifestFile = "%s/%s-%s" % (Avatar(), train, sequence)
 
-        file_ref = self.TryGetNetworkFile(file = ManifestFile,
+        file_ref = self.TryGetNetworkFile(url = "%s/%s" % (self.UpdateServerMaster(), ManifestFile),
                                           handler=handler,
                                           reason = "GetManifest",
                                  )
@@ -922,7 +964,7 @@ class Configuration(object):
             else:
                 train = temp_mani.Train()
 
-        file = self.TryGetNetworkFile(file = "%s/LATEST" % train,
+        file = self.TryGetNetworkFile(url = "%s/%s/LATEST" % (self.UpdateServerMaster(), train),
                                       reason = "GetLatestManifest",
                                   )
         if file is None:
@@ -952,13 +994,17 @@ class Configuration(object):
             save_path = "%s/ChangeLog.txt" % save_dir
         else:
             save_path = None
-        file = self.TryGetNetworkFile(
-            file = changelog_url,
-            handler = handler,
-            pathname = save_path,
-            reason = "GetChangeLog",
+        try:
+            file = self.TryGetNetworkFile(
+                file = changelog_url,
+                handler = handler,
+                pathname = save_path,
+                reason = "GetChangeLog",
             )
-        return file
+            return file
+        except:
+            log.debug("Could not get ChangeLog.txt, ignoring")
+            return None
     
     def FindPackageFile(self, package, upgrade_from=None, handler=None, save_dir = None, pkg_type = None):
         from Update import PkgFileDeltaOnly, PkgFileFullOnly
