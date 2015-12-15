@@ -157,14 +157,19 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
     msg = msg.strip('\r').strip('\n')
     log.debug("Replication result: %s" % (msg))
     results[replication.id] = msg
-    if reached_last and "Succeeded" in msg:
+    # When replicating to a target "container" dataset that doesn't exist on the sending
+    # side the target dataset will have to be readonly, however that will preclude
+    # creating mountpoints for the datasets that are sent.
+    # In that case you'll get back a failed to create mountpoint message, which
+    # we'll go ahead and consider a success.
+    if reached_last and ("Succeeded" in msg or "failed to create mountpoint" in msg):
         replication.repl_lastsnapshot = tosnap
         # Re-query replication to update field because replication settings
         # might have been updated while this script was running
         Replication.objects.filter(id=replication.id).update(
             repl_lastsnapshot=tosnap
         )
-    return ("Succeeded" in msg)
+    return ("Succeeded" in msg or "failed to create mountpoint" in msg)
 
 log = logging.getLogger('tools.autorepl')
 
