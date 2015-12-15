@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#+
 # Copyright 2014-2015 iXsystems, Inc.
 # All rights reserved
 #
@@ -47,7 +46,7 @@ import tempfile
 import threading
 import time
 import json
-from paramiko import ssh_exception, sftp_client, transport, pkey, rsakey, dsskey
+from paramiko import ssh_exception, sftp_client, transport, rsakey, dsskey
 
 import daemon
 
@@ -63,7 +62,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.storage.models import Volume, Disk, MountPoint
+from freenasUI.storage.models import Volume, Disk
 from freenasUI.system.models import Backup
 from freenasUI.settings import LOGGING
 from freenasUI.middleware import notifier
@@ -81,6 +80,7 @@ SOCKFILE = '/var/run/backupd.sock'
 VERSIONFILE = '/etc/version'
 BUFSIZE = 1024 * 16
 
+
 def main_loop():
 
     if os.path.exists(SOCKFILE):
@@ -91,6 +91,7 @@ def main_loop():
     server.context.shutdown = server.shutdown
     os.chmod(SOCKFILE, 0o700)
     server.serve_forever()
+
 
 class BackupContext:
     def __init__(self):
@@ -110,6 +111,7 @@ class BackupContext:
         self.failed_msg = None
         self.estimated_size = 0
         self.done_size = 0
+
 
 class CommandHandler(SocketServer.StreamRequestHandler):
     def setup(self):
@@ -135,7 +137,7 @@ class CommandHandler(SocketServer.StreamRequestHandler):
             }
 
             cmdname = args.pop('cmd')
-            if not cmdname in commands.keys():
+            if cmdname not in commands.keys():
                 self.respond(status='ERROR', msg='Unknown command')
                 continue
 
@@ -162,9 +164,9 @@ class CommandHandler(SocketServer.StreamRequestHandler):
 
         self.context.backup_thread = BackupWorker(self.context, backup)
         self.context.backup_thread.start()
-        
+
         self.respond(status='OK', msg='Backup started')
-        
+
     def cmd_progress(self, args):
         """
         Respond with backup progress if any backup is active right now or
@@ -191,7 +193,8 @@ class CommandHandler(SocketServer.StreamRequestHandler):
             return
 
         self.context.backup_thread.stop = True
-   
+
+
 class BackupWorker(threading.Thread):
     def __init__(self, context, backup):
         super(BackupWorker, self).__init__()
@@ -216,7 +219,7 @@ class BackupWorker(threading.Thread):
         return json.dumps(manifest, indent=4) + '\n'
 
     def name_backup(self, time):
-        return 'freenas-backup-{:%Y%m%d-%H%M%S}'.format(time);
+        return 'freenas-backup-{:%Y%m%d-%H%M%S}'.format(time)
 
     def describe_disk(self, diskname):
         disk = Disk.objects.filter(disk_name=diskname).first()
@@ -257,7 +260,6 @@ class BackupWorker(threading.Thread):
                             'disks': [self.describe_disk(d.disk) for d in i]
                         })
 
-
                 vol['datasets'] = []
                 for dname, dset in v.get_datasets(include_root=True).items():
                     opts = nf.zfs_get_options(dname)
@@ -269,7 +271,7 @@ class BackupWorker(threading.Thread):
 
                 vol['zvols'] = []
                 for zname, zvol in v.get_zvols().items():
-                     vol['zvols'].append({
+                    vol['zvols'].append({
                         'name': zname,
                         'size': zvol['volsize'],
                         'compression': zvol['compression'][0]
@@ -430,6 +432,7 @@ class BackupWorker(threading.Thread):
         if self.context.shutdown is not None:
             self.context.shutdown()
 
+
 class RestoreWorker(object):
     class BackupEntry:
         def __init__(self, name, created_at, build, with_data, compressed):
@@ -506,13 +509,13 @@ class RestoreWorker(object):
                 pass
 
         # 2. try to look up for disk with same mediasize
-        disk = Disk.objects.exclude(disk_name__in = self.used_disks).filter(disk_size=diskdata['size']).first()
+        disk = Disk.objects.exclude(disk_name__in=self.used_disks).filter(disk_size=diskdata['size']).first()
         if disk is not None:
             return (disk.disk_name, 'size')
 
         # 3. try to look up for disk with similar size (at most 5% larger but not smaller)
         reqsize = int(diskdata['size'])
-        for i in Disk.objects.exclude(disk_name__in = self.used_disks):
+        for i in Disk.objects.exclude(disk_name__in=self.used_disks):
             actsize = int(i.disk_size)
             if actsize >= reqsize and actsize < (reqsize * 1.05):
                 return (i.disk_name, 'fuzzy')
@@ -628,7 +631,8 @@ class RestoreWorker(object):
             except ValueError:
                 continue
 
-            backups.append(self.BackupEntry(fname,
+            backups.append(self.BackupEntry(
+                fname,
                 data['created-at'],
                 data['build'],
                 data['with-data'],
@@ -743,7 +747,7 @@ class RestoreWorker(object):
                         'migrate',
                         '--merge',
                         '--delete-ghost-migrations'
-                    ], stdout=devnull, stderr=devnull) != 0:
+                ], stdout=devnull, stderr=devnull) != 0:
                     self.fail('Could not restore database')
                     return
 
@@ -797,7 +801,8 @@ class RestoreWorker(object):
             while thread.is_alive():
                 time.sleep(0.5)
                 if self.context.estimated_size != 0:
-                    print_progress(self.context.status_msg,
+                    print_progress(
+                        self.context.status_msg,
                         self.context.done_size,
                         round(self.context.done_size / float(self.context.estimated_size), 4))
 
@@ -843,12 +848,14 @@ class PidFile(object):
         except IOError:
             pass
 
+
 def split_hostport(str):
     if ':' in str:
         parts = str.split(':')
         return (parts[0], int(parts[1]))
     else:
         return (str, 22)
+
 
 def open_ssh_connection(hostport, username, password, use_keys):
         try:
@@ -872,6 +879,7 @@ def open_ssh_connection(hostport, username, password, use_keys):
         except ssh_exception.BadAuthenticationType:
             raise Exception('Cannot authenticate')
 
+
 def try_key_auth(session, username):
     try:
         key = rsakey.RSAKey.from_private_key_file('/root/.ssh/id_rsa')
@@ -888,6 +896,7 @@ def try_key_auth(session, username):
         pass
 
     return False
+
 
 def ask(context, backup=True):
     if backup:
@@ -918,16 +927,22 @@ def ask(context, backup=True):
         if answer == 'q':
             sys.exit(0)
 
+
 def get_terminal_size():
-    import fcntl, termios, struct
-    h, w, hp, wp = struct.unpack('HHHH',
-        fcntl.ioctl(0, termios.TIOCGWINSZ,
-        struct.pack('HHHH', 0, 0, 0, 0)))
+    import fcntl
+    import termios
+    import struct
+    h, w, hp, wp = struct.unpack(
+        'HHHH',
+        fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0))
+    )
     return w, h
+
 
 def sigint_handler(sig, frame):
     print('Aborting...')
     os._exit(1)
+
 
 def print_progress(message, done, percentage):
     global progress_old_done
@@ -939,7 +954,7 @@ def print_progress(message, done, percentage):
     if progress_old_time is None:
         progress_old_time = datetime.datetime.now()
 
-    now = datetime.datetime.now()
+    # now = datetime.datetime.now()
     progress_width = get_terminal_size()[0] - 22
     filled_width = int(percentage * progress_width)
     avg_speed = (done - progress_old_done)
@@ -955,6 +970,7 @@ def print_progress(message, done, percentage):
     sys.stdout.flush()
     progress_old_done = done
     progress_old_time = datetime.datetime.now()
+
 
 def backup(argv):
     context = BackupContext()
@@ -972,7 +988,8 @@ def backup(argv):
     while context.backup_thread.is_alive():
         time.sleep(0.5)
         if context.estimated_size != 0:
-            print_progress(context.status_msg,
+            print_progress(
+                context.status_msg,
                 context.done_size,
                 round(context.done_size / float(context.estimated_size), 4))
 
@@ -981,9 +998,10 @@ def backup(argv):
     context.backup_thread.join()
     if context.failed_msg is not None:
         print(context.failed_msg)
-    
+
     raw_input("Press enter to exit.")
     sys.exit(1)
+
 
 def restore(argv):
     context = BackupContext()
@@ -1002,7 +1020,7 @@ def restore(argv):
 def files_preserve_by_path(*paths):
     from resource import getrlimit, RLIMIT_NOFILE
 
-    wanted=[]
+    wanted = []
     for path in paths:
         fd = os.open(path, os.O_RDONLY)
         try:
@@ -1017,7 +1035,7 @@ def files_preserve_by_path(*paths):
             return False
 
     fd_max = getrlimit(RLIMIT_NOFILE)[1]
-    return [ fd for fd in xrange(fd_max) if fd_wanted(fd) ]
+    return [i for i in xrange(fd_max) if fd_wanted(fd)]
 
 
 def main(argv):

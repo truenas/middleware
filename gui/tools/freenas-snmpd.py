@@ -71,7 +71,7 @@ def cust_terminate(signal_number, stack_frame):
             # Maybe this process has already ended?
             pass
     exception = SystemExit(
-            u"\nfreenas-snmpd Terminating on SIGTERM\n")
+        u"\nfreenas-snmpd Terminating on SIGTERM\n")
     raise exception
 
 
@@ -125,7 +125,7 @@ class SockSelect(asyncore.dispatcher):
         if client is None:
             pass
         else:
-            handler = SockHandler(*client)
+            SockHandler(*client)
 
 
 class SockHandler(asyncore.dispatcher_with_send):
@@ -193,7 +193,7 @@ def zfs_zilstat_ops(interval):
         '/usr/local/bin/zilstat',
         str(interval),
         '1',
-        ],
+    ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid,
@@ -204,16 +204,16 @@ def zfs_zilstat_ops(interval):
     output = zilstatproc.communicate()[0].strip('\n')
     output = output.split('\n')[1].split()
     attrs = {
-         'NBytes': output[0],
-         'NBytespersec': output[1],
-         'NMaxRate': output[2],
-         'BBytes': output[3],
-         'BBytespersec': output[4],
-         'BMaxRate': output[5],
-         'ops': output[6],
-         'lteq4kb': output[7],
-         '4to32kb': output[8],
-         'gteq4kb': output[9],
+        'NBytes': output[0],
+        'NBytespersec': output[1],
+        'NMaxRate': output[2],
+        'BBytes': output[3],
+        'BBytespersec': output[4],
+        'BMaxRate': output[5],
+        'ops': output[6],
+        'lteq4kb': output[7],
+        '4to32kb': output[8],
+        'gteq4kb': output[9],
     }
     with lock:
         try:

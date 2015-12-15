@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+#
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -42,7 +42,6 @@ cache.get_apps()
 
 from freenasUI.common.ssl import (
     load_certificate,
-    load_privatekey,
     export_privatekey,
 )
 from freenasUI.system.models import (
@@ -54,7 +53,7 @@ from freenasUI.system.models import (
 log = logging.getLogger('tools.updatessl')
 
 
-def main(certfile,keyfile):
+def main(certfile, keyfile):
     """ This function reads the certificates that were ported form
     pre-certmanager to 9.3 post-certmanager in the update and
     tries to parse, import and save them into the new Cert UI model db.
@@ -65,46 +64,46 @@ def main(certfile,keyfile):
     # into respective vars, throw appropriate errors if files notice
     # found and then exit with return status 1.
     try:
-        with open (certfile, "r") as f:
+        with open(certfile, "r") as f:
             crt = f.read()
     except IOError:
         print "Cannot read certfile specified at %s" % certfile
         sys.exit(1)
     try:
-        with open (keyfile, "r") as f:
+        with open(keyfile, "r") as f:
             key = f.read()
     except IOError:
         print "Cannot read keyfile specified at %s" % keyfile
         sys.exit(1)
-    
+
     # Now for the actual parsing to meet the new cert ui reqs
     # as well as the creation of the new cert object in the django db
     cert_info = load_certificate(crt)
     created_cert = Certificate.objects.create(
-                       cert_name = "freenas-pre-certui",
-                       cert_type = CERT_TYPE_EXISTING,
-                       cert_certificate = crt,
-                       cert_privatekey = export_privatekey(key), 
-                       cert_country = cert_info['country'],
-                       cert_state = cert_info['state'],
-                       cert_city = cert_info['city'],
-                       cert_organization = cert_info['organization'],
-                       cert_common = cert_info['common'],
-                       cert_email = cert_info['email'],
-                       cert_digest_algorithm = cert_info['digest_algorithm']
-                   )
+        cert_name="freenas-pre-certui",
+        cert_type=CERT_TYPE_EXISTING,
+        cert_certificate=crt,
+        cert_privatekey=export_privatekey(key),
+        cert_country=cert_info['country'],
+        cert_state=cert_info['state'],
+        cert_city=cert_info['city'],
+        cert_organization=cert_info['organization'],
+        cert_common=cert_info['common'],
+        cert_email=cert_info['email'],
+        cert_digest_algorithm=cert_info['digest_algorithm']
+    )
 
     # Now to set this cert as the webui cert in the system settings model
     fnassettings = Settings.objects.all()[0]
     fnassettings.stg_guicertificate = created_cert
     fnassettings.save()
-    
+
     # Note we do not need ot call ix-ssl as this python program is called
     # by ix-update which is higher up in the rcorder than ix-ssl, as a result
     # of which ix-ssl will be called later-on either ways.
     # HOWEVER, if you do run this file as a standalone do call ix-ssl service
     # yourself as well as ix-nginx and the works.
-    
+
 
 def usage():
     usage_str = """usage: %s cert key
@@ -117,4 +116,4 @@ if __name__ == '__main__':
     if len(sys.argv) < 3:
         usage()
     else:
-        main(sys.argv[1],sys.argv[2])
+        main(sys.argv[1], sys.argv[2])

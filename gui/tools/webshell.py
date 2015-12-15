@@ -1294,7 +1294,7 @@ class Multiplex:
         self.thread.join()
 
     def proc_keepalive(self, sid, jid, shell, w, h):
-        if not sid in self.session:
+        if sid not in self.session:
             if not shell:
                 shell = self.cmd
             # Start a new session

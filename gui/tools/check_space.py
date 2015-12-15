@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+#
 # Copyright (c) 2012 iXsystems, Inc.
 # All rights reserved.
 #
@@ -75,7 +75,7 @@ def _size_or_perc(string):
     if last.upper() not in ('T', 'G', 'M', 'K', '%'):
         raise argparse.ArgumentTypeError(
             "This is not a valid size, use a suffix: T, G, M, K or %"
-            )
+        )
     return string
 
 
@@ -86,20 +86,20 @@ def main(argv):
         '--dataset',
         required=True,
         type=str,
-        )
+    )
     parser.add_argument(
         '-t',
         '--threshold',
         required=True,
         type=_size_or_perc,
-        )
+    )
     args = parser.parse_args(argv)
 
     pipe = subprocess.Popen([
         "/sbin/zfs",
         "list",
         "-Hr",
-        ],
+    ],
         stdout=subprocess.PIPE,
         stdin=subprocess.PIPE)
     output = pipe.communicate()[0]
@@ -116,7 +116,6 @@ def main(argv):
 
     used = to_mbytes(o_used)
     avail = to_mbytes(o_avail)
-    #refer = to_mbytes(o_refer)
 
     if args.threshold[-1] == '%':
         threshold = (used + avail) * decimal.Decimal(args.threshold[:-1]) / 100
@@ -125,7 +124,7 @@ def main(argv):
 
     sentinel_file = "/var/tmp/check_space.%s" % (
         args.dataset.replace('/', '_'),
-        )
+    )
 
     if avail < threshold:
         if not os.path.exists(sentinel_file):

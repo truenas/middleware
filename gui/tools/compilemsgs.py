@@ -1,4 +1,3 @@
-#+
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
@@ -35,8 +34,8 @@ LOCALE_DIR = os.path.abspath(
         os.path.dirname(__file__),
         "..",
         "locale",
-        )
     )
+)
 
 RE_FORMAT = re.compile(r'\B%\(\w+\)s\b')
 
@@ -64,7 +63,6 @@ def pocompile(src, dest):
                     entry.flags.append('fuzzy')
                 break
 
-    #po.save()
     po.save_as_mofile(dest)
 
 

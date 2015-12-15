@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-
+#
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
@@ -46,8 +46,9 @@ from freenasUI.middleware.notifier import notifier
 
 def main():
     parser = argparse.ArgumentParser(description='Sync disks.')
-    parser.add_argument('devs', metavar='N', type=str, nargs='*',
-        help='device name(s)')
+    parser.add_argument(
+        'devs', metavar='N', type=str, nargs='*', help='device name(s)'
+    )
     args = parser.parse_args()
     _notifier = notifier()
     if args.devs:
