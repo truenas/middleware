@@ -3110,8 +3110,16 @@ class UpdateResourceMixin(NestedMixin):
 
 class FCPort(object):
 
-    def __init__(self, port=None, name=None, wwpn=None, mode=None, target=None, state=None, speed=None, initiators=None):
+    def __init__(
+        self, port=None, vport=None, name=None, wwpn=None, mode=None,
+        target=None, state=None, speed=None, initiators=None
+    ):
+        if vport == '0':
+            self.id = '%s,%s' % (port, vport)
+        else:
+            self.id = port
         self.port = port
+        self.vport = vport
         self.name = name
         self.wwpn = wwpn
         self.mode = mode
@@ -3123,8 +3131,9 @@ class FCPort(object):
 
 class FCPortsResource(DojoResource):
 
-    id = fields.CharField(attribute='port')
+    id = fields.CharField(attribute='id')
     port = fields.CharField(attribute='port')
+    vport = fields.CharField(attribute='vport')
     name = fields.CharField(attribute='name')
     wwpn = fields.CharField(attribute='wwpn')
     mode = fields.CharField(attribute='mode')
@@ -3162,10 +3171,17 @@ class FCPortsResource(DojoResource):
                 port = reg.group(0)
             else:
                 port = '0'
+            vport = tag_port.xpath('./physical_port')[0].text
+            if vport != '0':
+                name += '/%s' % vport
             state = 'NO_LINK'
             speed = None
             wwpn = None
-            mib = 'dev.isp.%s.loopstate' % port
+            if vport == '0':
+                mibname = port
+            else:
+                mibname = '%s.chan%s' % (port, vport)
+            mib = 'dev.isp.%s.loopstate' % mibname
             loopstate = sysctl.filter(mib)
             if loopstate:
                 loopstate = loopstate[0].value
@@ -3174,10 +3190,10 @@ class FCPortsResource(DojoResource):
                 elif loopstate == 9:
                     state = 'READY'
                 if loopstate > 0:
-                    speedres = sysctl.filter('dev.isp.%s.speed' % port)
+                    speedres = sysctl.filter('dev.isp.%s.speed' % mibname)
                     if speedres:
                         speed = speedres[0].value
-            mib = 'dev.isp.%s.wwpn' % port
+            mib = 'dev.isp.%s.wwpn' % mibname
             _filter = sysctl.filter(mib)
             if _filter:
                 wwpn = 'naa.%x' % _filter[0].value
@@ -3197,6 +3213,7 @@ class FCPortsResource(DojoResource):
                 initiators.append(i.text)
             results.append(FCPort(
                 port=port,
+                vport=vport,
                 name=name,
                 wwpn=wwpn,
                 mode=mode,
