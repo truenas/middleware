@@ -1,24 +1,34 @@
-o Add a vCenter plugin.  This functionality allows you to install
-  the TrueNAS 1.0 vCenter plugin in to vCenter, which will then
-  allow you to create iSCSI and NFS datastores directly from vCenter.
+o Fix an iSCSI kernel panic.
 
-o Fix a bug that prevented ZFS replication from working when
-  ssh encryption is disabled.
+o Fix an error in the HA takeover path that could
+  result in the STANDBY node seeing storage traffic
+  before it has assumed the MASTER role.
 
-o Fix two bugs with hardware detection on the Z-series platform.
-  The first issue was caused by using a hardwired path to the
-  internal enclosure, The second issue was caused by hard wiring
-  the device name of the failover link.  Both issues were resolved
-  by switching to dynamic runtime detection of the components.
+o Fix several replication bugs that could cause a
+  replication task to restart or display the incorrect
+  status in the GUI.
 
-o Improve the workflow for reconfiguring the network configuration
-  of TrueNAS HA.  Disable failover, then make changes.  Verify the
-  changes have propagated to the STANDBY node, then re-enable failover.
-  (Ignore the warning that changing the network will cause a failover,
-  with failover disabled it won't.  This warning is a bug that will be
-  resolved in a future update)
+o Provide a way to disallow an AD join from updating
+  DNS.  This can be useful when TrueNAS systems have
+  multiple interfaces but only one DNS record is
+  desired.
 
+o Provide a means for each node in an HA pair having
+  a unique NETBIOS name when LDAP is enabled.
 
-o Fix a bug that would prevent iSCSI initiators from failing over
-  properly on TrueNAS HA.  This regression was introduced when the
-  previous update added ALUA support.
+o Verify certificate chains for self signed SSL certs
+  when the CA is uploaded into the GUI.  This allows
+  self signed SSL certs to be used for AD authentication.
+
+o Require failover to be disabled on an HA system before
+  allowing any changes to the networking config.  This
+  prevents a failover event from occuring and allows
+  changes to propagate to the STANDBY node.
+
+o Map local groups created on TrueNAS to Windows/Samba
+  groups.
+
+o Add support for ssh authentication via kerberos.
+
+o Hide the NFSv4 security fields when NFSv4 is
+  disabled.
