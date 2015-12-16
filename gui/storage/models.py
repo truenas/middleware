@@ -187,18 +187,105 @@ class Volume(Model):
                     break
         return self.__is_decrypted
 
+    def is_my_path(self, path):
+        mp_path = '/mnt/%s' % self.vol_name
+        if path == mp_path:
+            return True
+        # Using stat.st_dev is not pratical because ZFS datasets are
+        # different filesystem from a OS point of view
+        return os.path.commonprefix([mp_path, path]) == mp_path
+
     def has_attachments(self):
         """
+        Return a dict composed by the name of services and ids of shares
+        dependent of this MountPoint
+
         This is mainly used by the VolumeDelete form.
         Responsible for telling the user whether there is a related
         share, asking for confirmation
         """
-        services = {}
-        for mp in self.mountpoint_set.all():
-            for service, ids in mp.has_attachments().items():
-                if ids:
-                    services[service] = services.get(service, 0) + len(ids)
-        return services
+        from freenasUI.jails.models import Jails, JailsConfiguration
+        from freenasUI.sharing.models import (
+            CIFS_Share, AFP_Share, NFS_Share_Path
+        )
+        from freenasUI.services.models import iSCSITargetExtent
+        mypath = '/mnt/%s' % self.vol_name
+        attachments = {
+            'cifs': [],
+            'afp': [],
+            'nfs': [],
+            'iscsitarget': [],
+            'jails': [],
+            'collectd': [],
+        }
+
+        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
+            if self.is_my_path(cifs.cifs_path):
+                attachments['cifs'].append(cifs.id)
+        for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
+            if self.is_my_path(afp.afp_path):
+                attachments['afp'].append(afp.id)
+        for nfsp in NFS_Share_Path.objects.filter(path__startswith=mypath):
+            if (self.is_my_path(nfsp.path)
+                    and nfsp.share.id not in attachments['nfs']):
+                attachments['nfs'].append(nfsp.share.id)
+        # TODO: Refactor this into something not this ugly.  The problem
+        #       is that iSCSI Extent is not stored in proper relationship
+        #       model.
+        zvols = notifier().list_zfs_vols(self.vol_name)
+        for zvol in zvols:
+            qs = iSCSITargetExtent.objects.filter(
+                iscsi_target_extent_path='zvol/' + zvol,
+                iscsi_target_extent_type='ZVOL')
+            if qs.exists():
+                attachments['iscsitarget'].append(qs[0].id)
+
+        try:
+            jc = JailsConfiguration.objects.latest("id")
+        except:
+            jc = None
+        if jc and jc.jc_path.startswith(mypath):
+            attachments['jails'].extend(
+                [j.id for j in Jails.objects.all()]
+            )
+
+        return attachments
+
+    def delete_attachments(self):
+        """
+        Some places reference a path which will not cascade delete
+        We need to manually find all paths within this volume mount point
+        """
+        from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share
+        from freenasUI.services.models import iSCSITargetExtent
+
+        reload_cifs = False
+        reload_afp = False
+        reload_nfs = False
+        reload_iscsi = False
+        reload_collectd = False
+
+        # Delete attached paths if they are under our tree.
+        # and report if some action needs to be done.
+        attachments = self.has_attachments()
+        if attachments['cifs']:
+            CIFS_Share.objects.filter(id__in=attachments['cifs']).delete()
+            reload_cifs = True
+        if attachments['afp']:
+            AFP_Share.objects.filter(id__in=attachments['afp']).delete()
+            reload_afp = True
+        if attachments['nfs']:
+            NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
+            reload_nfs = True
+        if attachments['iscsitarget']:
+            for target in iSCSITargetExtent.objects.filter(
+                    id__in=attachments['iscsitarget']):
+                target.delete()
+            reload_iscsi = True
+        reload_jails = len(attachments['jails']) > 0
+
+        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
+                reload_jails, reload_collectd)
 
     def _delete(self, destroy=True, cascade=True, systemdataset=None):
         """
@@ -221,8 +308,7 @@ class Volume(Model):
         n = notifier()
         if cascade:
 
-            for mp in self.mountpoint_set.all():
-                reloads = map(sum, zip(reloads, mp.delete_attachments()))
+            reloads = map(sum, zip(reloads, self.delete_attachments()))
 
             zvols = n.list_zfs_vols(self.vol_name)
             for zvol in zvols:
@@ -240,15 +326,14 @@ class Volume(Model):
 
         else:
 
-            for mp in self.mountpoint_set.all():
-                attachments = mp.has_attachments()
-                reloads = map(
-                    sum,
-                    zip(
-                        reloads,
-                        [len(attachments[svc]) for svc in svcs]
-                    )
+            attachments = self.has_attachments()
+            reloads = map(
+                sum,
+                zip(
+                    reloads,
+                    [len(attachments[svc]) for svc in svcs]
                 )
+            )
 
         # Delete scheduled snapshots for this volume
         Task.objects.filter(
@@ -299,9 +384,23 @@ class Volume(Model):
                     systemdataset=systemdataset,
                 )
             finally:
-                for mp in self.mountpoint_set.all():
-                    if not os.path.isdir(mp.mp_path):
-                        mp.delete(do_reload=False)
+                mp_path = '/mnt/%s' % self.vol_name
+                if not os.path.isdir(mp_path):
+                    do_reload = False
+
+                    if do_reload:
+                        reloads = self.delete_attachments()
+
+                    if self.vol_fstype == 'ZFS':
+                        Task.objects.filter(task_filesystem=self.vol_name).delete()
+                        Replication.objects.filter(
+                            repl_filesystem=self.vol_name).delete()
+
+                    if do_reload:
+                        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
+                        for (svc, dirty) in zip(svcs, reloads):
+                            if dirty:
+                                notifier().restart(svc)
 
             n = notifier()
 
@@ -637,118 +736,6 @@ class MountPoint(Model):
         help_text=_("Enter Mount Point options here"),
         null=True,
     )
-
-    def is_my_path(self, path):
-        if path == self.mp_path:
-            return True
-        # Using stat.st_dev is not pratical because ZFS datasets are
-        # different filesystem from a OS point of view
-        return os.path.commonprefix([self.mp_path, path]) == self.mp_path
-
-    def has_attachments(self):
-        """
-        Return a dict composed by the name of services and ids of shares
-        dependent of this MountPoint
-        """
-        from freenasUI.jails.models import Jails, JailsConfiguration
-        from freenasUI.sharing.models import (
-            CIFS_Share, AFP_Share, NFS_Share_Path
-        )
-        from freenasUI.services.models import iSCSITargetExtent
-        mypath = os.path.abspath(self.mp_path)
-        attachments = {
-            'cifs': [],
-            'afp': [],
-            'nfs': [],
-            'iscsitarget': [],
-            'jails': [],
-            'collectd': [],
-        }
-
-        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
-            if self.is_my_path(cifs.cifs_path):
-                attachments['cifs'].append(cifs.id)
-        for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
-            if self.is_my_path(afp.afp_path):
-                attachments['afp'].append(afp.id)
-        for nfsp in NFS_Share_Path.objects.filter(path__startswith=mypath):
-            if (self.is_my_path(nfsp.path)
-                    and nfsp.share.id not in attachments['nfs']):
-                attachments['nfs'].append(nfsp.share.id)
-        # TODO: Refactor this into something not this ugly.  The problem
-        #       is that iSCSI Extent is not stored in proper relationship
-        #       model.
-        zvols = notifier().list_zfs_vols(self.mp_volume.vol_name)
-        for zvol in zvols:
-            qs = iSCSITargetExtent.objects.filter(
-                iscsi_target_extent_path='zvol/' + zvol,
-                iscsi_target_extent_type='ZVOL')
-            if qs.exists():
-                attachments['iscsitarget'].append(qs[0].id)
-
-        try:
-            jc = JailsConfiguration.objects.latest("id")
-        except:
-            jc = None
-        if jc and jc.jc_path.startswith(self.mp_path):
-            attachments['jails'].extend(
-                [j.id for j in Jails.objects.all()]
-            )
-
-        return attachments
-
-    def delete_attachments(self):
-        """
-        Some places reference a path which will not cascade delete
-        We need to manually find all paths within this volume mount point
-        """
-        from freenasUI.sharing.models import CIFS_Share, AFP_Share, NFS_Share
-        from freenasUI.services.models import iSCSITargetExtent
-
-        reload_cifs = False
-        reload_afp = False
-        reload_nfs = False
-        reload_iscsi = False
-        reload_collectd = False
-
-        # Delete attached paths if they are under our tree.
-        # and report if some action needs to be done.
-        attachments = self.has_attachments()
-        if attachments['cifs']:
-            CIFS_Share.objects.filter(id__in=attachments['cifs']).delete()
-            reload_cifs = True
-        if attachments['afp']:
-            AFP_Share.objects.filter(id__in=attachments['afp']).delete()
-            reload_afp = True
-        if attachments['nfs']:
-            NFS_Share.objects.filter(id__in=attachments['nfs']).delete()
-            reload_nfs = True
-        if attachments['iscsitarget']:
-            for target in iSCSITargetExtent.objects.filter(
-                    id__in=attachments['iscsitarget']):
-                target.delete()
-            reload_iscsi = True
-        reload_jails = len(attachments['jails']) > 0
-
-        return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
-                reload_jails, reload_collectd)
-
-    def delete(self, do_reload=True):
-        if do_reload:
-            reloads = self.delete_attachments()
-
-        if self.mp_volume.vol_fstype == 'ZFS':
-            Task.objects.filter(task_filesystem=self.mp_path[5:]).delete()
-            Replication.objects.filter(
-                repl_filesystem=self.mp_path[5:]).delete()
-
-        if do_reload:
-            svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
-            for (svc, dirty) in zip(svcs, reloads):
-                if dirty:
-                    notifier().restart(svc)
-
-        super(MountPoint, self).delete()
 
     def __unicode__(self):
         return self.mp_path

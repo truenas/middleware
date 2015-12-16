@@ -820,7 +820,10 @@ def volume_detach(request, vid):
         [mp._get_used_bytes() for mp in volume.mountpoint_set.all()]
     )
     usedsize = humanize_size(usedbytes)
-    services = volume.has_attachments()
+    services = {
+        key: val
+        for key, val in volume.has_attachments().items() if len(val) > 0
+    }
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
     if request.method == "POST":
