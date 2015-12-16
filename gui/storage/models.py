@@ -198,7 +198,7 @@ class Volume(Model):
     def has_attachments(self):
         """
         Return a dict composed by the name of services and ids of shares
-        dependent of this MountPoint
+        dependent of this Volume
 
         This is mainly used by the VolumeDelete form.
         Responsible for telling the user whether there is a related
@@ -787,26 +787,6 @@ class EncryptedDisk(Model):
         max_length=120,
         verbose_name=_("Underlying provider"),
     )
-
-
-class MountPoint(Model):
-    mp_volume = models.ForeignKey(Volume)
-    mp_path = models.CharField(
-        unique=True,
-        max_length=120,
-        verbose_name=_("Mount Point"),
-        help_text=_("Path to mount point"),
-    )
-    mp_options = models.CharField(
-        max_length=120,
-        verbose_name=_("Mount options"),
-        help_text=_("Enter Mount Point options here"),
-        null=True,
-    )
-
-    def __unicode__(self):
-        return self.mp_path
-
 
 
 # TODO: Refactor replication out from the storage model to its

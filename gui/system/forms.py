@@ -143,7 +143,7 @@ def clean_path_locked(mp):
         if not obj.is_decrypted():
             raise forms.ValidationError(
                 _("The volume %s is locked by encryption") % (
-                    obj.mp_volume.vol_name,
+                    obj.vol_name,
                 )
             )
 
