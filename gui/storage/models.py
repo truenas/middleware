@@ -97,6 +97,10 @@ class Volume(Model):
             return True
         return False
 
+    @property
+    def vol_path(self):
+        return '/mnt/%s' % self.vol_name
+
     class Meta:
         verbose_name = _("Volume")
 
