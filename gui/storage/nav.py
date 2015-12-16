@@ -199,7 +199,7 @@ class Volumes(TreeNode):
         if has_multipath:
             self.append_child(ViewMultipaths())
 
-        for i in models.Volume.order_by('-id'):
+        for i in models.Volume.objects.order_by('-id'):
             nav = TreeNode(i.id)
             nav.name = '/mnt/%s' % i.vol_name
             nav.order = -i.id
@@ -207,7 +207,7 @@ class Volumes(TreeNode):
             nav.kwargs = {'oid': i.id, 'model': 'Volume'}
             nav.icon = u'VolumesIcon'
 
-            if i.mp_volume.vol_fstype == 'ZFS':
+            if i.vol_fstype == 'ZFS':
                 ds = TreeNode('Dataset')
                 ds.name = _(u'Create Dataset')
                 ds.view = 'storage_dataset'
