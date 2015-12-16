@@ -999,7 +999,6 @@ class VolumeResourceMixin(NestedMixin):
 
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
-        mp = bundle.obj.mountpoint_set.all()[0]
 
         for key in bundle.data.keys():
             if key.startswith('layout-'):
@@ -1019,7 +1018,7 @@ class VolumeResourceMixin(NestedMixin):
 
         attr_fields = ('avail', 'used', 'used_pct')
         for attr in attr_fields + ('status', ):
-            bundle.data[attr] = getattr(mp, attr)
+            bundle.data[attr] = getattr(bundle.obj, attr)
 
         if bundle.obj.vol_fstype != 'ZFS':
             return bundle
@@ -1089,7 +1088,7 @@ class VolumeResourceMixin(NestedMixin):
         else:
             bundle.data['used'] = _("Locked")
 
-        bundle.data['mountpoint'] = mp.mp_path
+        bundle.data['mountpoint'] = '/mnt/%s' % bundle.obj.vol_name
 
         try:
             uid = self._uid

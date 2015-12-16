@@ -446,6 +446,73 @@ class Volume(Model):
     def __unicode__(self):
         return "%s (%s)" % (self.vol_name, self.vol_fstype)
 
+    def _get__zplist(self):
+        if not hasattr(self, '__zplist'):
+            try:
+                self.__zplist = zfs.zpool_list().get(self.vol_name)
+            except SystemError:
+                self.__zplist = None
+        return self.__zplist
+
+    def _set__zplist(self, value):
+        self.__zplist = value
+
+    def _get__vfs(self):
+        if not hasattr(self, '__vfs'):
+            try:
+                self.__vfs = os.statvfs('/mnt/%s' % self.vol_name)
+            except:
+                self.__vfs = None
+        return self.__vfs
+
+    def _get_avail(self):
+        try:
+            if self.vol_fstype == 'ZFS':
+                return self._zplist['free']
+            else:
+                return self._vfs.f_bavail * self._vfs.f_frsize
+        except:
+            if self.is_decrypted():
+                return __(u"Error getting available space")
+            else:
+                return __("Locked")
+
+    def _get_used_bytes(self):
+        try:
+            if self.vol_fstype == 'ZFS':
+                return self._zplist['alloc']
+            else:
+                return (self._vfs.f_blocks - self._vfs.f_bfree) * \
+                    self._vfs.f_frsize
+        except:
+            return 0
+
+    def _get_used(self):
+        try:
+            return self._get_used_bytes()
+        except:
+            if self.is_decrypted():
+                return __(u"Error getting used space")
+            else:
+                return __("Locked")
+
+    def _get_used_pct(self):
+        try:
+            if self.vol_fstype == 'ZFS':
+                return "%d%%" % self._zplist['capacity']
+            else:
+                availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
+                    self._vfs.f_blocks
+            return u"%d%%" % availpct
+        except:
+            return __(u"Error")
+
+    _vfs = property(_get__vfs)
+    _zplist = property(_get__zplist, _set__zplist)
+    avail = property(_get_avail)
+    used_pct = property(_get_used_pct)
+    used = property(_get_used)
+
 
 class Scrub(Model):
     scrub_volume = models.OneToOneField(
@@ -740,81 +807,6 @@ class MountPoint(Model):
     def __unicode__(self):
         return self.mp_path
 
-    def _get__zplist(self):
-        if not hasattr(self, '__zplist'):
-            try:
-                self.__zplist = zfs.zpool_list().get(self.mp_volume.vol_name)
-            except SystemError:
-                self.__zplist = None
-        return self.__zplist
-
-    def _set__zplist(self, value):
-        self.__zplist = value
-
-    def _get__vfs(self):
-        if not hasattr(self, '__vfs'):
-            try:
-                self.__vfs = os.statvfs(self.mp_path)
-            except:
-                self.__vfs = None
-        return self.__vfs
-
-    def _get_avail(self):
-        try:
-            if self.mp_volume.vol_fstype == 'ZFS':
-                return self._zplist['free']
-            else:
-                return self._vfs.f_bavail * self._vfs.f_frsize
-        except:
-            if self.mp_volume.is_decrypted():
-                return __(u"Error getting available space")
-            else:
-                return __("Locked")
-
-    def _get_used_bytes(self):
-        try:
-            if self.mp_volume.vol_fstype == 'ZFS':
-                return self._zplist['alloc']
-            else:
-                return (self._vfs.f_blocks - self._vfs.f_bfree) * \
-                    self._vfs.f_frsize
-        except:
-            return 0
-
-    def _get_used(self):
-        try:
-            return self._get_used_bytes()
-        except:
-            if self.mp_volume.is_decrypted():
-                return __(u"Error getting used space")
-            else:
-                return __("Locked")
-
-    def _get_used_pct(self):
-        try:
-            if self.mp_volume.vol_fstype == 'ZFS':
-                return "%d%%" % self._zplist['capacity']
-            else:
-                availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
-                    self._vfs.f_blocks
-            return u"%d%%" % availpct
-        except:
-            return __(u"Error")
-
-    def _get_status(self):
-        try:
-            if not hasattr(self, '_status'):
-                self._status = self.mp_volume.status
-            return self._status
-        except Exception:
-            return __(u"Error")
-
-    _vfs = property(_get__vfs)
-    _zplist = property(_get__zplist, _set__zplist)
-    avail = property(_get_avail)
-    used_pct = property(_get_used_pct)
-    used = property(_get_used)
-    status = property(_get_status)
 
 
 # TODO: Refactor replication out from the storage model to its

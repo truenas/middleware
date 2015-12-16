@@ -816,9 +816,7 @@ def zpool_disk_remove(request, vname, label):
 def volume_detach(request, vid):
 
     volume = models.Volume.objects.get(pk=vid)
-    usedbytes = sum(
-        [mp._get_used_bytes() for mp in volume.mountpoint_set.all()]
-    )
+    usedbytes = volume._get_used_bytes()
     usedsize = humanize_size(usedbytes)
     services = {
         key: val
