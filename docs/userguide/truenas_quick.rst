@@ -57,7 +57,7 @@ Check that your shipment includes the following items:
 
 * One serial to 3.5mm cable
 
-.. image:: images/tn_serial_to_3.5mm_cable.png
+.. image:: images/tn_serialcable.png
 
 * One faceplate
 
