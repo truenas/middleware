@@ -68,11 +68,18 @@ copyright = u'2011-2015, iXsystems'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-project = u'TrueNAS User Guide'
-master_doc = 'truenas'
-exclude_patterns = ['_build', 'freenas*', 'errata', 'zfsprimer*']
-version = '9.3.1'
-release = '9.3.1'
+if tags.has('truenas'):
+    project = u'TrueNAS User Guide'
+    master_doc = 'truenas'
+    exclude_patterns = ['_build', 'freenas*', 'errata', 'zfsprimer*']
+    version = '9.3.1'
+    release = '9.3.1'
+else:
+    project = u'FreeNAS User Guide'
+    master_doc = 'freenas'
+    exclude_patterns = ['_build', 'truenas*', 'errata']
+    version = '10.2-ALPHA'
+    release = '10.2-ALPHA'
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -113,14 +120,20 @@ html_theme_options = {
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'TrueNAS User Guide 9.3.1 Table of Contents'
+if tags.has('truenas'):
+    html_title = 'TrueNAS User Guide 9.3.1 Table of Contents'
+else:
+    html_title = 'FreeNAS User Guide 10.2-ALPHA Table of Contents'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "truenaslogo.png"
+if tags.has('truenas'):
+    html_logo = "truenaslogo.png"
+else:
+    html_logo = "freenaslogo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -262,7 +275,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('truenas', 'TrueNAS.tex', u'TrueNAS Documentation',
+  ('freenas', 'FreeNAS.tex', u'FreeNAS Documentation',
    u'iXsystems', 'manual'),
 ]
 
