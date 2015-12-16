@@ -192,12 +192,11 @@ class Volume(Model):
         return self.__is_decrypted
 
     def is_my_path(self, path):
-        mp_path = '/mnt/%s' % self.vol_name
-        if path == mp_path:
+        if path == self.vol_path:
             return True
         # Using stat.st_dev is not pratical because ZFS datasets are
         # different filesystem from a OS point of view
-        return os.path.commonprefix([mp_path, path]) == mp_path
+        return os.path.commonprefix([self.vol_path, path]) == self.vol_path
 
     def has_attachments(self):
         """
@@ -213,7 +212,6 @@ class Volume(Model):
             CIFS_Share, AFP_Share, NFS_Share_Path
         )
         from freenasUI.services.models import iSCSITargetExtent
-        mypath = '/mnt/%s' % self.vol_name
         attachments = {
             'cifs': [],
             'afp': [],
@@ -223,13 +221,13 @@ class Volume(Model):
             'collectd': [],
         }
 
-        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=mypath):
+        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=self.vol_path):
             if self.is_my_path(cifs.cifs_path):
                 attachments['cifs'].append(cifs.id)
-        for afp in AFP_Share.objects.filter(afp_path__startswith=mypath):
+        for afp in AFP_Share.objects.filter(afp_path__startswith=self.vol_path):
             if self.is_my_path(afp.afp_path):
                 attachments['afp'].append(afp.id)
-        for nfsp in NFS_Share_Path.objects.filter(path__startswith=mypath):
+        for nfsp in NFS_Share_Path.objects.filter(path__startswith=self.vol_path):
             if (self.is_my_path(nfsp.path)
                     and nfsp.share.id not in attachments['nfs']):
                 attachments['nfs'].append(nfsp.share.id)
@@ -248,7 +246,7 @@ class Volume(Model):
             jc = JailsConfiguration.objects.latest("id")
         except:
             jc = None
-        if jc and jc.jc_path.startswith(mypath):
+        if jc and jc.jc_path.startswith(self.vol_path):
             attachments['jails'].extend(
                 [j.id for j in Jails.objects.all()]
             )
@@ -388,8 +386,7 @@ class Volume(Model):
                     systemdataset=systemdataset,
                 )
             finally:
-                mp_path = '/mnt/%s' % self.vol_name
-                if not os.path.isdir(mp_path):
+                if not os.path.isdir(self.vol_path):
                     do_reload = False
 
                     if do_reload:
@@ -464,7 +461,7 @@ class Volume(Model):
     def _get__vfs(self):
         if not hasattr(self, '__vfs'):
             try:
-                self.__vfs = os.statvfs('/mnt/%s' % self.vol_name)
+                self.__vfs = os.statvfs(self.vol_path)
             except:
                 self.__vfs = None
         return self.__vfs

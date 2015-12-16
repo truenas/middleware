@@ -1249,7 +1249,7 @@ class ManualUpdateTemporaryLocationForm(Form):
     def __init__(self, *args, **kwargs):
         super(ManualUpdateTemporaryLocationForm, self).__init__(*args, **kwargs)
         self.fields['mountpoint'].choices = [
-            ('/mnt/%s' % x.vol_name, '/mnt/%s' % x.vol_name)
+            (x.vol_path, x.vol_path)
             for x in Volume.objects.all()
         ]
         self.fields['mountpoint'].choices.append(

@@ -201,7 +201,7 @@ class Volumes(TreeNode):
 
         for i in models.Volume.objects.order_by('-id'):
             nav = TreeNode(i.id)
-            nav.name = '/mnt/%s' % i.vol_name
+            nav.name = i.vol_path
             nav.order = -i.id
             nav.model = 'Volume'
             nav.kwargs = {'oid': i.id, 'model': 'Volume'}
@@ -224,7 +224,7 @@ class Volumes(TreeNode):
             subnav.name = _('Change Permissions')
             subnav.type = 'editobject'
             subnav.view = 'storage_mp_permission'
-            subnav.kwargs = {'path': '/mnt/%s' % i.vol_name}
+            subnav.kwargs = {'path': i.vol_path}
             subnav.model = 'Volume'
             subnav.icon = u'ChangePasswordIcon'
             subnav.app_name = 'storage'
