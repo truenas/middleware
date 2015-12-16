@@ -88,7 +88,7 @@ from freenasUI.common.warden import (
     WARDEN_KEY_HOST,
 )
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.storage.models import MountPoint
+from freenasUI.storage.models import Volume
 from freenasUI.system.forms import clean_path_execbit
 
 log = logging.getLogger('jails.forms')
@@ -579,9 +579,8 @@ class JailsConfigurationForm(ModelForm):
             jc_fpath = jc_fpath + '/'
 
         in_volume = False
-        mountpoints = MountPoint.objects.all()
-        for mp in mountpoints:
-            fp = mp.mp_path + '/'
+        for v in Volume.objects.all():
+            fp = '/mnt/%s/' % v.vol_name
             if jc_fpath.startswith(fp):
                 in_volume = True
                 break

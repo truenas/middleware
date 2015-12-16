@@ -45,7 +45,7 @@ from freenasUI.common.freenascache import (
 from freenasUI.common.freenasusers import (
     FreeNAS_Users, FreeNAS_User, FreeNAS_Groups, FreeNAS_Group
 )
-from freenasUI.storage.models import MountPoint
+from freenasUI.storage.models import Volume
 
 import ipaddr
 
@@ -232,8 +232,9 @@ class PathField(forms.CharField):
             value = value.strip()
             absv = os.path.abspath(value)
             valid = False
-            for mp in MountPoint.objects.all().values_list('mp_path',):
-                if absv.startswith(mp[0] + '/') or absv == mp[0]:
+            for v in Volume.objects.all().values_list('vol_name',):
+                path = '/mnt/%s' % v[0]
+                if absv.startswith(path + '/') or absv == path:
                     valid = True
                     break
             if not valid and absv in self.includes:

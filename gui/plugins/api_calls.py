@@ -34,7 +34,7 @@ from django.contrib import auth
 from django.utils.importlib import import_module
 
 from freenasUI.api.utils import FreeBasicAuthentication
-from freenasUI.storage.models import MountPoint
+from freenasUI.storage.models import Volume
 from freenasUI.plugins.models import Plugins, Kmod
 from freenasUI.jails.models import Jails, JailsConfiguration
 
@@ -200,12 +200,10 @@ def plugins_is_authenticated(request, sessionid):
 @jsonrpc_method("fs.mountpoints.get")
 def __fs_mountpoints_get(request):
     path_list = []
-    mp_list = MountPoint.objects.exclude(
-        mp_volume__vol_fstype__exact='iscsi').select_related().all()
-
-    for mp in mp_list:
-        path_list.append(mp.mp_path)
-        datasets = mp.mp_volume.get_datasets()
+    for v in Volume.objects.all():
+        mp_path = '/mnt/%s' % v.vol_name
+        path_list.append(mp_path)
+        datasets = v.get_datasets()
 
         if datasets:
             for name, dataset in datasets.items():

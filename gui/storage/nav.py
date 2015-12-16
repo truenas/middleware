@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 import models
 
 NAME = _('Storage')
-BLACKLIST = ['Disk', 'ReplRemote', 'Volume', 'MountPoint']
+BLACKLIST = ['Disk', 'ReplRemote', 'Volume']
 ICON = u'StorageIcon'
 ORDER = 20
 
