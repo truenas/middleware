@@ -10,7 +10,7 @@ Check out the source code from git:
 
 % cd /path/to/your-build-directory
 % git clone git://github.com/freenas/freenas.git
-% cd /patch/to/your-build/directory/freenas
+% cd /patch/to/your-build-directory/freenas
 % git checkout 9.3.1-STABLE
 
 NOTE: all of the following commands should be run from /path/to/your-build-directory/freenas/.
