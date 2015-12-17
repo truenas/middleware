@@ -1014,3 +1014,63 @@ List resource
 
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
+
+
+Update
+------
+
+Manage updates.
+
+Check pending updates
++++++++++++++++++++++
+
+.. http:post:: /api/v1.0/system/update/check/
+
+   Return an array of updates downloaded and waiting to be applied.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/update/check/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        []
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+Perform update
+++++++++++++++
+
+.. http:post:: /api/v1.0/system/update/update/
+
+   Download and apply update.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/update/update/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        "Successfully updated."
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
