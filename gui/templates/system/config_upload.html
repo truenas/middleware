@@ -2,7 +2,8 @@
 {% block form %}
 <tr>
   <td colspan="2">
-  {% trans "The system will reboot to perform this operation!" %}
+   <p>{% trans "The system will reboot to perform this operation!" %}<p/>
+   <p style="color: red;">{% trans "All your passwords will be reseted, make sure to set them after reboot." %}</p>
   </td>
 </tr>
 {{ block.super }}
