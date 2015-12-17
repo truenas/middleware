@@ -4,6 +4,7 @@ Install the following (these are the FreeBSD package names):
 
 - devel/git
 - textproc/py-sphinx
+- textproc/py-sphinx_numfig
 
 Check out the source code from git:
 
