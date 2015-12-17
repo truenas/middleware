@@ -51,7 +51,7 @@ MANAGERS = ADMINS
 DATABASE_PATH = '/data/freenas-v1.db'
 # Workaround bug in south database name
 if '--database=factory' in sys.argv:
-    DATABASE_PATH = '.factory'
+    DATABASE_PATH += '.factory'
 
 SOUTH_DATABASE_ADAPTERS = {
     'default': 'south.db.sqlite3',
