@@ -3018,6 +3018,13 @@ class UpdateResourceMixin(NestedMixin):
                 name="api_upgrade_check"
             ),
             url(
+                r"^(?P<resource_name>%s)/update%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('update'),
+                name="api_upgrade_update"
+            ),
+            url(
                 r"^(?P<resource_name>%s)/trains%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -3072,6 +3079,34 @@ class UpdateResourceMixin(NestedMixin):
             request,
             data,
         )
+
+    def update(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        try:
+            updateobj = mUpdate.objects.order_by('-id')[0]
+        except IndexError:
+            updateobj = mUpdate.objects.create()
+
+        train = updateobj.get_train()
+        cache = notifier().get_update_location()
+
+        download = None
+        updated = None
+
+        try:
+            download = Update.DownloadUpdate(train, cache)
+            updated = Update.ApplyUpdate(cache)
+        except Exception as e:
+            return self.error_response(request, str(e))
+
+        if not download:
+            return self.error_response(request, 'No update available.')
+
+        if updated is not None:
+            return self.create_response(request, 'Successfully updated.')
+        else:
+            return self.error_response(request, 'Update failed.')
 
     def trains(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
