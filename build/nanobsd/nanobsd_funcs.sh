@@ -464,7 +464,7 @@ build_documentation() {
 	if [ "${NANO_LABEL}" == "FreeNAS" ]; then
 		(cd docs/userguide && make html)
 	else
-		(cd docs/userguide && make SPHINXOPTS="-t truenas" html)
+		(cd docs/userguide && make html)
 	fi
 	rm -rf ${NANO_OBJ}/_.docs
 	mkdir -p ${NANO_OBJ}/_.docs/usr/local/www/data
