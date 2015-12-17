@@ -5724,7 +5724,7 @@ class notifier:
             settings = Settings.objects.create()
         try:
             return self.pwenc_decrypt(settings.stg_pwenc_check) == PWENC_CHECK
-        except IOError:
+        except (IOError, ValueError):
             return False
 
     def pwenc_get_secret(self):
