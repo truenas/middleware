@@ -5,6 +5,7 @@ Install the following (these are the FreeBSD package names):
 - devel/git
 - textproc/py-sphinx
 - textproc/py-sphinx_numfig
+- textproc/py-sphinxcontrib-httpdomain
 
 Check out the source code from git:
 
