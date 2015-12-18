@@ -53,7 +53,7 @@ def ldap_conf_ldap(ldap_conf):
     f.write("bind_timelimit 30\n")
     f.write("bind_policy soft\n")
 
-    f.write("nss_map_attribute homeDirectory unixHomeDirectory\n")
+#    f.write("nss_map_attribute homeDirectory unixHomeDirectory\n")
     f.write("nss_override_attribute_value loginShell /bin/sh\n")
 
     if ldap.ldap_auxiliary_parameters:
