@@ -135,7 +135,7 @@ language:
 
 * `Portuguese - Português <http://forums.freenas.org/forums/portuguese-português.44/>`_
 
-* `Russian - Русский <http://forums.freenas.org/forumdisplay.php?38-Russian-Русский>`_
+* `Russian <http://goo.gl/sCMUe5>`_
 
 * `Spanish - Espanol <http://forums.freenas.org/forumdisplay.php?33-Spanish-Espanol>`_
 
