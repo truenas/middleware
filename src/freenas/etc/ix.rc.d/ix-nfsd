@@ -54,7 +54,7 @@ generate_exports()
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" -eq 1 ]; then
 			echo "V4: / -sec=krb5:krb5i:krb5p" > /etc/exports
 		else
-			echo "V4: / -sec=sys:krb5:krb5i:krb5p" > /etc/exports
+			echo "V4: / -sec=sys" > /etc/exports
 		fi
 		v4=1
 	fi

@@ -889,6 +889,7 @@ class notifier:
     def _stop_nfs(self):
         self._system("/usr/sbin/service lockd forcestop")
         self._system("/usr/sbin/service statd forcestop")
+        self._system("/usr/sbin/service gssd forcerestart")
         self._system("/usr/sbin/service nfsd forcestop")
         self._system("/usr/sbin/service mountd forcestop")
         self._system("/usr/sbin/service nfsuserd forcestop")
