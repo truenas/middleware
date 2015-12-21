@@ -51,7 +51,9 @@ exclude = /usr/local/www/freenasUI
 	/conf/var/db/pkg
 	/conf/base/var/db/pkg
 	/dev/*
-
+	/etc/resolv.conf
+	/conf/base/etc/resolv.conf
+	
 [Services]
 
 # This is a list of comma-seperated services provided by this package.
