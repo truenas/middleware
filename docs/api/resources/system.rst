@@ -1048,7 +1048,7 @@ Check pending updates
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
-Perform update
+Perform Update
 ++++++++++++++
 
 .. http:post:: /api/v1.0/system/update/update/
@@ -1074,3 +1074,33 @@ Perform update
 
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
+
+
+Manual Update
++++++++++++++
+
+.. http:post:: /api/v1.0/system/update/manual/
+
+   Download and apply update.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/update/manual/ HTTP/1.1
+      Content-Type: multipart/form-data
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        "Manual update finished."
+
+   :form string updatefile: update file content
+   :form string sha256: sha256 hex hash
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
