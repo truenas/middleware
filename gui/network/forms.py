@@ -274,7 +274,7 @@ class InterfacesForm(ModelForm):
         crit = self.cleaned_data.get('int_critical')
         vip = self.cleaned_data.get('int_vip')
         if crit and not vip:
-            raise forms.ValidarionError(_(
+            raise forms.ValidationError(_(
                 'Virtual IP is required to set it as Critical for Failover'
             ))
         if crit:
