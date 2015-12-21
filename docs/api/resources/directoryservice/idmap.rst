@@ -653,7 +653,7 @@ Delete resource
 
 
 NSS Idmap
---------
+---------
 
 NSS Idmap.
 
@@ -809,7 +809,7 @@ Delete resource
 
 
 RFC2307 Idmap
-----------
+-------------
 
 RFC2307 Idmap.
 

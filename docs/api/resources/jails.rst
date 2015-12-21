@@ -49,9 +49,9 @@ List resource
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
-   
+
 Update resource
-+++++++++++++
++++++++++++++++
 
 .. http:put:: /api/v1.0/jails/configuration/
 
