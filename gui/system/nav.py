@@ -4,7 +4,6 @@ from freenasUI.middleware.notifier import notifier
 
 BLACKLIST = [
     'NTPServer',
-    'Registration',
     'CertificateAuthority',
     'Certificate'
 ]

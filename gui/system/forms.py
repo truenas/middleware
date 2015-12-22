@@ -1377,40 +1377,6 @@ class TunableForm(ModelForm):
             notifier().reload("sysctl")
 
 
-class RegistrationForm(ModelForm):
-
-    class Meta:
-        fields = '__all__'
-        model = models.Registration
-
-    def __init__(self, *args, **kwargs):
-        super(RegistrationForm, self).__init__(*args, **kwargs)
-
-    def save(self):
-        super(RegistrationForm, self).save()
-        registration_info = {
-            'reg_firstname': None,
-            'reg_lastname': None,
-            'reg_company': None,
-            'reg_address': None,
-            'reg_city': None,
-            'reg_state': None,
-            'reg_zip': None,
-            'reg_email': None,
-            'reg_homephone': None,
-            'reg_cellphone': None,
-            'reg_workphone': None
-        }
-
-        for key in registration_info:
-            if self.cleaned_data[key]:
-                registration_info[key] = str(self.cleaned_data[key])
-
-        f = open("/usr/local/etc/registration", "w")
-        f.write(json.dumps(registration_info))
-        f.close()
-
-
 class SystemDatasetForm(ModelForm):
     sys_pool = forms.ChoiceField(
         label=_("System dataset pool"),
