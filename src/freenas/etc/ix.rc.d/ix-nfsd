@@ -52,9 +52,18 @@ generate_exports()
 	local sf=$(var_to_sf $f)
 	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 ]; then
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" -eq 1 ]; then
+			# The user has required kerberos for NFSv4 in the GUI.  We aren't going
+			# to check for a keytab, we'll just do what we are told.
 			echo "V4: / -sec=krb5:krb5i:krb5p" > /etc/exports
 		else
-			echo "V4: / -sec=sys" > /etc/exports
+			krb=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT() FROM directoryservice_kerberoskeytab")
+			# The user has not forced kerberized NFSv4 only, so we'll look for
+			# a keytab and if we find one turn on kerberized NFSv4.
+			if [ "${krb}" = "0" ]; then
+				echo "V4: / -sec=sys" > /etc/exports
+			else
+				echo "V4: / -sec=sys:krb5:krb5i:krb5p" > /etc/exports
+			fi
 		fi
 		v4=1
 	fi

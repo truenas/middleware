@@ -515,17 +515,31 @@ _gen_conf()
 		touch /etc/zfs/exports
 	fi
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 -a "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
-		echo "nfsv4_server_enable=\"YES\""
-		echo "nfsuserd_enable=\"YES\""
-        else
-		echo "nfsv4_server_enable=\"NO\""
-	fi
+	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
 
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" = 1 -a "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
-		echo "gssd_enable=\"YES\""
-        else
-		echo "gssd_enable=\"NO\""
+		# NFS service is enabled
+		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 ]; then
+			# NFSv4 is enabled
+			echo "nfsv4_server_enable=\"YES\""
+			echo "nfsuserd_enable=\"YES\""
+		else
+			echo "nfsv4_server_enable=\"NO\""
+		fi
+
+		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" = 1 ]; then
+			# NFSv4 is kerberos only
+			echo "gssd_enable=\"YES\""
+		else
+			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT() FROM directoryservice_kerberoskeytab")" = 0 ]; then
+				# There are no keytabs in the database
+				echo "gssd_enable=\"NO\""
+			else
+				# Keytabs found.  Turn on kerberos support for NFS
+				# Note that in this case kerberos won't be *required* for NFS
+				# but it will work.
+				echo "gssd_enable=\"YES\""
+			fi
+		fi
 	fi
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
