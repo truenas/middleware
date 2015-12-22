@@ -3252,6 +3252,18 @@ class FCPortsResource(DojoResource):
             initiators = []
             for i in tag_port.xpath('./initiator'):
                 initiators.append(i.text)
+
+            for e in doc.xpath("//frontend_type[text()='ha']"):
+                parent = e.getparent()
+                port_name = parent.xpath('./port_name')[0].text
+                if ':' in port_name:
+                    port_name = port_name.split(':', 1)[1]
+                physical_port = parent.xpath('./physical_port')[0].text
+                if not(port_name == name and physical_port == vport):
+                    continue
+                for i in parent.xpath('./initiator'):
+                    initiators.append("%s (Standby node)" % i.text)
+
             results.append(FCPort(
                 port=port,
                 vport=vport,
