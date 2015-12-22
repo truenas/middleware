@@ -34,5 +34,5 @@ urlpatterns = patterns(
     url(r'^iscsi/$', 'iscsi', name="services_iscsi"),
     url(r'toggle/(?P<formname>\w+)/.*$', 'servicesToggleView', name="services_toggle"),
     url(r'enable/(?P<svc>\w+)/.*$', 'enable', name="services_enable"),
-    url(r'^fibrechanneltotarget/$', 'fibrechanneltotarget', name="services_fibrechanneltotarget"),
+    url(r'fibrechanneltotarget/$', 'fibrechanneltotarget', name="services_fibrechanneltotarget"),
 )
