@@ -315,11 +315,19 @@ def fibrechanneltotarget(request):
         if fc_port is None:
             break
 
-        port_number = int(fc_port.replace('isp', ''))
-        role = sysctl.filter('dev.isp.%d.role' % int(port_number))
+        port = fc_port.replace('isp', '').replace('/', ',')
+        if ',' in port:
+            port_number, vport = port.split(',', 1)
+            mibname = '%s.chan%s' % (port_number, vport)
+        else:
+            port_number = port
+            vport = None
+            mibname = port
+
+        role = sysctl.filter('dev.isp.%s.role' % mibname)
         if role:
             role = role[0]
-        tun_var = 'hint.isp.%d.role' % port_number
+        tun_var = 'hint.isp.%s.role' % mibname
 
         qs = models.FibreChannelToTarget.objects.filter(fc_port=fc_port)
         if qs.exists():
@@ -335,7 +343,7 @@ def fibrechanneltotarget(request):
                     role.value = 2
                 # From target to initiator, reload ctld then set to 2
                 elif role.value == 1:
-                    sysctl_set[int(port_number)] = 2
+                    sysctl_set[mibname] = 2
             fctt.fc_target = None
             fctt.save()
             qs = Tunable.objects.filter(tun_var=tun_var)
@@ -381,8 +389,8 @@ def fibrechanneltotarget(request):
     if i > 0:
         notifier().reload("iscsitarget")
 
-    for port, val in sysctl_set.items():
-        role = sysctl.filter('dev.isp.%d.role' % int(port))
+    for mibname, val in sysctl_set.items():
+        role = sysctl.filter('dev.isp.%s.role' % mibname)
         if role:
             role = role[0]
             role.value = val
