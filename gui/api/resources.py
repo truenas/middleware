@@ -3191,6 +3191,11 @@ class FCPortsResource(DojoResource):
     def get_list(self, request, **kwargs):
         from lxml import etree
 
+        _n = notifier()
+        node = None
+        if not _n.is_freenas() and _n.failover_licensed():
+            node = _n.failover_node()
+
         fcportmap = {}
         for fbtt in FibreChannelToTarget.objects.all():
             fcportmap[fbtt.fc_port] = fbtt.fc_target
@@ -3252,16 +3257,17 @@ class FCPortsResource(DojoResource):
             for i in tag_port.xpath('./initiator'):
                 initiators.append(i.text)
 
-            for e in doc.xpath("//frontend_type[text()='ha']"):
-                parent = e.getparent()
-                port_name = parent.xpath('./port_name')[0].text
-                if ':' in port_name:
-                    port_name = port_name.split(':', 1)[1]
-                physical_port = parent.xpath('./physical_port')[0].text
-                if not(port_name == name and physical_port == vport):
-                    continue
-                for i in parent.xpath('./initiator'):
-                    initiators.append("%s (Standby node)" % i.text)
+            if node:
+                for e in doc.xpath("//frontend_type[text()='ha']"):
+                    parent = e.getparent()
+                    port_name = parent.xpath('./port_name')[0].text
+                    if ':' in port_name:
+                        port_name = port_name.split(':', 1)[1]
+                    physical_port = parent.xpath('./physical_port')[0].text
+                    if not(port_name == name and physical_port == vport):
+                        continue
+                    for i in parent.xpath('./initiator'):
+                        initiators.append("%s (Node %s)" % (i.text, node))
 
             results.append(FCPort(
                 port=port,
