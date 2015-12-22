@@ -48,7 +48,7 @@ define([
 
         var me = this;
 
-        this.dapFCName.innerHTML = this.name + " (#" + this.port + ")";
+        this.dapFCName.innerHTML = this.name;
         this.dapFCWWPN.innerHTML = this.wwpn;
 
         if(this.state == 'NO_LINK') {
