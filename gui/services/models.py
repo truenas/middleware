@@ -417,6 +417,13 @@ class NFS(Model):
             "This option forces rpc.lockd the daemon to bind to the specified "
             "port, for both IPv4 and IPv6 address families."),
     )
+    nfs_srv_16 = models.BooleanField(
+        default=False,
+        verbose_name=_("Support >16 groups"),
+        help_text=_(
+            "This option ignores the group membership sent on the wire by the "
+            "NFS client and looks up the group membership on the server."),
+    )
 
     class Meta:
         verbose_name = _("NFS")
