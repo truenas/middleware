@@ -3156,9 +3156,9 @@ class FCPort(object):
         target=None, state=None, speed=None, initiators=None
     ):
         if vport == '0':
-            self.id = '%s,%s' % (port, vport)
-        else:
             self.id = port
+        else:
+            self.id = '%s,%s' % (port, vport)
         self.port = port
         self.vport = vport
         self.name = name
