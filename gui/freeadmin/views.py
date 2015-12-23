@@ -203,4 +203,6 @@ def server_error(request, *args, **kwargs):
 
 
 def page_not_found(request, *args, **kwargs):
+    if request.path.startswith('/api/'):
+        return HttpResponse('Endpoint not found', status=404)
     return HttpResponseRedirect('/')
