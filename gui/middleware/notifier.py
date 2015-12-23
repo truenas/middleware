@@ -4235,7 +4235,7 @@ class notifier:
                 args = [
                     "/dev/%s%d" % (info["drv"], info["controller"]),
                     "-d",
-                    "areca,%d" % (info["lun"] + 1 + info["channel"], )
+                    "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
                 ]
             elif info.get("drv").startswith("hpt"):
                 args = [

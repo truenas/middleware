@@ -47,7 +47,7 @@ parse_devlist()
 		case ${DEVICE}:${DRIVER} in
 		# Areca Controller support(at least the 12xx family, possibly others)
 		${disk}:arcmsr*)
-			DEVID=$(($LUN_ID+1+$CHANNEL_NO))
+			DEVID=$(($LUN_ID+1+($CHANNEL_NO*8)))
 			propdev="/dev/arcmsr${CONTROLLER_ID} -d areca,${DEVID}"
 			break
 			;;
