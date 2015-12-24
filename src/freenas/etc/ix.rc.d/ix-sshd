@@ -15,7 +15,7 @@
 generate_sshd()
 {
     local IFS="|"
-    local f="ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_kerberosauth ssh_tcpfwd ssh_compression ssh_sftp_log_level ssh_sftp_log_facility"
+    local f="ssh_bindip ssh_tcpport ssh_rootlogin ssh_passwordauth ssh_kerberosauth ssh_tcpfwd ssh_compression ssh_sftp_log_level ssh_sftp_log_facility"
     eval local $f
     local sf=$(var_to_sf $f)
     local cmd cfg
@@ -70,6 +70,11 @@ __EOF__
 	    fi
 	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg
+	    fi
+	    if [ -n "$ssh_bindip" ]; then
+	        echo $ssh_bindip|awk -F ',' '{for(i=1; i<=NF; ++i) print $i}' | while read -r bindip; do
+	            echo "ListenAddress ${bindip}" >> $cfg
+	        done
 	    fi
 	    if [ "$ssh_rootlogin" = 1 ]; then
 		echo "PermitRootLogin yes" >> $cfg
