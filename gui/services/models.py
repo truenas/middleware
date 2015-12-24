@@ -1576,14 +1576,12 @@ class SSH(Model):
         verbose_name=_("Bind IP Addresses"),
         help_text=_(
             "IP address(es) to advertise and listens to. If none specified, "
-            "advertise the first IP address of the system, but to listen for "
-            "any incoming request."
+            "listen for in all available addresses."
         ),
         max_length=350,
         blank=True,
         choices=list(choices.IPChoices()),
         default='',
-        editable=False,
     )
     ssh_tcpport = models.PositiveIntegerField(
         verbose_name=_("TCP Port"),
