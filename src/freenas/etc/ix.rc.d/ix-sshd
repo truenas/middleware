@@ -71,7 +71,9 @@ __EOF__
 	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg
 	    fi
+
 	    if [ -n "$ssh_bindip" ]; then
+	        echo "ListenAddress 127.0.0.1" >> $cfg
 	        echo $ssh_bindip|awk -F ',' '{for(i=1; i<=NF; ++i) print $i}' | while read -r bindip; do
 	            echo "ListenAddress ${bindip}" >> $cfg
 	        done
