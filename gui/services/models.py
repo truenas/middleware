@@ -1572,6 +1572,17 @@ class TFTP(Model):
 
 
 class SSH(Model):
+    ssh_bindiface = MultiSelectField(
+        verbose_name=_("Bind IP Addresses"),
+        help_text=_(
+            "Interfaces to advertise and listens to. If none specified, "
+            "listen for in all available addresses."
+        ),
+        max_length=350,
+        blank=True,
+        choices=list(choices.NICChoices(exclude_configured=False)),
+        default='',
+    )
     ssh_tcpport = models.PositiveIntegerField(
         verbose_name=_("TCP Port"),
         default=22,
