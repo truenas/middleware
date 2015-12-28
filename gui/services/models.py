@@ -1573,7 +1573,7 @@ class TFTP(Model):
 
 class SSH(Model):
     ssh_bindiface = MultiSelectField(
-        verbose_name=_("Bind IP Addresses"),
+        verbose_name=_("Bind Interfaces"),
         help_text=_(
             "Interfaces to advertise and listens to. If none specified, "
             "listen for in all available addresses."
@@ -1743,6 +1743,7 @@ class SSH(Model):
         deletable = False
         icon_model = "OpenSSHIcon"
         advanced_fields = (
+            'ssh_bindiface',
             'ssh_kerberosauth',
             'ssh_sftp_log_level',
             'ssh_sftp_log_facility',
