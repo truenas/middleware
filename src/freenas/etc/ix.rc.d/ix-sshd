@@ -74,10 +74,10 @@ __EOF__
 	    if [ -n "$ssh_bindiface" ]; then
 	        echo "ListenAddress 127.0.0.1" >> $cfg
 	        echo $ssh_bindiface|awk -F ',' '{for(i=1; i<=NF; ++i) print $i}' | while read -r iface; do
-                    ifconfig ${iface} inet |  awk '/inet /{print $2}' | while read -r bindip; do
+                    ifconfig ${iface} inet |  awk '/inet /{print $2}' 2> /dev/null | while read -r bindip; do
 		        echo "ListenAddress ${bindip}" >> $cfg
 	            done
-                    ifconfig ${iface} inet6 |  awk '/inet6 /{print $2}' | while read -r bindip; do
+                    ifconfig ${iface} inet6 |  awk '/inet6 /{print $2}' 2> /dev/null | while read -r bindip; do
 		        echo "ListenAddress ${bindip}" >> $cfg
 	            done
 		done
