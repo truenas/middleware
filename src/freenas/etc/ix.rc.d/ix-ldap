@@ -40,15 +40,47 @@ get_cifs_homedir()
 
 setup_homedirs()
 {
+	# Stale symlinks and directories can make us sad.  This can happen
+	# when you update the homedir path, or switch between LDAP and AD.
+
 	local cifs_home="$(get_cifs_homedir)"
 
-	if [ -n "${cifs_home}" ]
-	then
+	# if /home is a dead symlink nuke it
+	find /home -type l -maxdepth 0 -exec test ! -e {} \; -exec rm '{}' \;
+
+	if [ -n "${cifs_home}" ] ; then
+		# If /home is a directory nuke it
+		if [ -d "/home" ]; then
+			rmdir /home 2>/dev/null
+			if  [ $? -ne 0 ]; then
+				# rmdir has failed us, the directory must not be empty
+				# In theory this should never happen, so we won't worry
+				# about name collisions in our random new name.
+				newhome="/home.$(dd if=/dev/random bs=4 count=1 2>/dev/null | base64 | sed -e 's/[\/|=]//g')"
+				mv /home ${newhome}
+			fi
+		fi
+		# It's safe to create/update our symlink now
 		ln -sfh "$cifs_home" "/home" 2>/dev/null
 
-	elif [ ! -d "/home" ]
-	then
-		mkdir /home
+	else
+		if [ -e "/home" ]; then
+			if [ -d "/home" ]; then
+				# Nothing to do here
+			else
+				# The only possibility here is /home is a file
+				# or a valid symlink
+				rm /home
+				mkdir /home
+			fi
+		else
+			# In theory this shouldn't be possible.  Dead symlinks get nuked
+			# and working symlinks wouldn't get to this else clause
+			if [ -L "/home" ]; then
+				rm /home
+			fi
+			mkdir /home
+		fi
 	fi
 }
 
