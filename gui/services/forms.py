@@ -1110,19 +1110,23 @@ class iSCSITargetToExtentForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         choices = tuple(
-            [('', 'Auto')] + [(x, x) for x in xrange(15)]
+            [('', 'Auto')] + [(x, x) for x in xrange(25)]
         )
-        self.fields['iscsi_lunid'] = forms.ChoiceField(
+        self.fields['iscsi_lunid'] = forms.CharField(
             label=self.fields['iscsi_lunid'].label,
             initial=self.fields['iscsi_lunid'].initial,
-            choices=choices,
             required=False,
+            widget=forms.widgets.ComboBox(choices=choices),
         )
 
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
         if not lunid:
             return None
+        if lunid == 'Auto':
+            return None
+        if isinstance(lunid, (str, unicode)) and not lunid.isdigit():
+            raise forms.ValidationError(_("LUN ID must be a positive integer"))
         return lunid
 
     def clean(self):
@@ -1140,14 +1144,17 @@ class iSCSITargetToExtentForm(ModelForm):
                 raise forms.ValidationError(
                     _("LUN ID is already being used for this target.")
                 )
-        qs = models.iSCSITargetToExtent.objects.filter(
-            iscsi_target__id=target.id,
-            iscsi_extent__id=extent.id
-        )
-        if qs.exists():
-            raise forms.ValidationError(
-                _("Extent is already in this target.")
+        if target and extent:
+            qs = models.iSCSITargetToExtent.objects.filter(
+                iscsi_target__id=target.id,
+                iscsi_extent__id=extent.id
             )
+            if self.instance.id:
+                qs = qs.exclude(id=self.instance.id)
+            if qs.exists():
+                raise forms.ValidationError(
+                    _("Extent is already in this target.")
+                )
         return self.cleaned_data
 
     def save(self):
