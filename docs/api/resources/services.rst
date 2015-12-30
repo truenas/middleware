@@ -1379,6 +1379,7 @@ List resource
                 "ssh_host_dsa_key_pub": "c3NoLWRzcyBBQUFBQjNOemFDMWtjM01BQUFDQkFLOG82amlVUzdxamltNERmSDJSSkIzeTVI ekNib21GRFRENjNscjk0ZnltMWlnTHlaQ0dFREN1U3Z1V2M5RW5wWFhWUDNaa3phZlBteTFF OFZ4OGhzUVpTTzV3blh0azJCZUFnNVNPelRYcDluZlBmNy94c0o3c1JYQUEzd0RuSjNUNjJB ZlNDRmF2TTVZS2pHQlgzRVZVYjJlaDVOQTRGUDl3Z1RhcWxjVmpBQUFBRlFDOUFlSE51cXY0 WU04UG1TVnNTQUNrU1NNdlBRQUFBSUFVeDBlUTE4M0g2Nlo3OG1RanFvT0VRNW5ROXUwWkhu WVNQZnRvN04veHRHQ0NDdG9ldVZSRnhIN1lrd0VJVzZmWm9DNTVqOTRVN2JnR1NaZkJEMzJo YklBbXRnVUFMU0lMVlZaVUJ2aWJjQW5vSEpqY3hlMnRsL09YT05zdi8yVkRLWWt1OTBRZDdD YkFsNlVVOStxQ3FjV3JVVlAzZ3pEOGdSWk9qcU1LZWdBQUFJQXhvbnlndVN6VW54WXh4VC9Y MzhIckIvOXRSeXhZNHBKalFsbVFLcmZveXhSL0ZtWWt2Wk9CL05UTjE5SEpJVExuMDBRZTF4 UkIyTUU1SVJGeXJmTGd2UGRJaUozczJONUQyRERmM3dBVmR0M3ZyQXJRR0t0RnRzL29nRStF dkthd25jQzAvallkaGJmSzNidlRVTFZ5dk11cEpKYzdabjhBNE9rNC9IWlVpUT09IHJvb3RA ZnJlZW5hcy5sb2NhbAo=",
                 "ssh_tcpfwd": false,
                 "ssh_sftp_log_facility": "",
+                "ssh_bindiface": [],
                 "ssh_tcpport": 22,
                 "ssh_host_ecdsa_key_pub": "ZWNkc2Etc2hhMi1uaXN0cDI1NiBBQUFBRTJWalpITmhMWE5vWVRJdGJtbHpkSEF5TlRZQUFB QUlibWx6ZEhBeU5UWUFBQUJCQk1kMGQ0Z2MvTXR0Q2U1a3VLTXRMK2h6TmNhNER6N0djUjE2 NDNqQWhkVHp2eHBJL20vSFkrRGdhK3did0N1QWV2dWRYS3BpSU02b2pBRllFTzVZQ3NvPSBy b290QGZyZWVuYXMubG9jYWwK",
                 "id": 1,
@@ -1430,6 +1431,7 @@ Update resource
                 "ssh_host_dsa_key_pub": "c3NoLWRzcyBBQUFBQjNOemFDMWtjM01BQUFDQkFLOG82amlVUzdxamltNERmSDJSSkIzeTVI ekNib21GRFRENjNscjk0ZnltMWlnTHlaQ0dFREN1U3Z1V2M5RW5wWFhWUDNaa3phZlBteTFF OFZ4OGhzUVpTTzV3blh0azJCZUFnNVNPelRYcDluZlBmNy94c0o3c1JYQUEzd0RuSjNUNjJB ZlNDRmF2TTVZS2pHQlgzRVZVYjJlaDVOQTRGUDl3Z1RhcWxjVmpBQUFBRlFDOUFlSE51cXY0 WU04UG1TVnNTQUNrU1NNdlBRQUFBSUFVeDBlUTE4M0g2Nlo3OG1RanFvT0VRNW5ROXUwWkhu WVNQZnRvN04veHRHQ0NDdG9ldVZSRnhIN1lrd0VJVzZmWm9DNTVqOTRVN2JnR1NaZkJEMzJo YklBbXRnVUFMU0lMVlZaVUJ2aWJjQW5vSEpqY3hlMnRsL09YT05zdi8yVkRLWWt1OTBRZDdD YkFsNlVVOStxQ3FjV3JVVlAzZ3pEOGdSWk9qcU1LZWdBQUFJQXhvbnlndVN6VW54WXh4VC9Y MzhIckIvOXRSeXhZNHBKalFsbVFLcmZveXhSL0ZtWWt2Wk9CL05UTjE5SEpJVExuMDBRZTF4 UkIyTUU1SVJGeXJmTGd2UGRJaUozczJONUQyRERmM3dBVmR0M3ZyQXJRR0t0RnRzL29nRStF dkthd25jQzAvallkaGJmSzNidlRVTFZ5dk11cEpKYzdabjhBNE9rNC9IWlVpUT09IHJvb3RA ZnJlZW5hcy5sb2NhbAo=",
                 "ssh_tcpfwd": false,
                 "ssh_sftp_log_facility": "",
+                "ssh_bindiface": [],
                 "ssh_tcpport": 22,
                 "ssh_host_ecdsa_key_pub": "ZWNkc2Etc2hhMi1uaXN0cDI1NiBBQUFBRTJWalpITmhMWE5vWVRJdGJtbHpkSEF5TlRZQUFB QUlibWx6ZEhBeU5UWUFBQUJCQk1kMGQ0Z2MvTXR0Q2U1a3VLTXRMK2h6TmNhNER6N0djUjE2 NDNqQWhkVHp2eHBJL20vSFkrRGdhK3did0N1QWV2dWRYS3BpSU02b2pBRllFTzVZQ3NvPSBy b290QGZyZWVuYXMubG9jYWwK",
                 "id": 1,
@@ -1437,6 +1439,7 @@ Update resource
                 "ssh_rootlogin": true
         }
 
+   :json array ssh_bindiface: list of interfaces to bind to
    :json string ssh_tcpport: alternate TCP port. Default is 22
    :json string ssh_rootlogin: Disabled: Root can only login via public key authentication; Enabled: Root login permitted with password
    :json string ssh_passwordauth: Allow Password Authentication
