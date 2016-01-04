@@ -899,7 +899,7 @@ Update resource
    :json boolean nfs_srv_allow_nonroot: allow non-root mount requests to be served.
    :json boolean nfs_srv_udp: serve UDP requests
    :json boolean nfs_srv_v4: enable NFS v4
-   :json boolean nfs_srv_v4_krb: eequire Kerberos for NFSv4
+   :json boolean nfs_srv_v4_krb: require Kerberos for NFSv4
    :json boolean nfs_srv_16: support >16 groups
    :json string nfs_srv_bindip: IP addresses (separated by commas) to bind to for TCP and UDP requests
    :json integer nfs_srv_mountd_port: force mountd to bind to the specified port
