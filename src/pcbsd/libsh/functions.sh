@@ -446,7 +446,7 @@ getZFSTank() {
         _chkDir="$(realpath "${_chkDir}")"
      fi
 
-     zpath=`zfs list | awk -v path="${_chkDir}" '$5 == path { print $1 }'`
+     zpath=`zfs list | awk -v path="${_chkDir}" '($5 == path && $5 ~ $1) { print $1; exit }'`
      if [ -n "${zpath}" ] ; then
         echo "$zpath" | cut -f1 -d '/'
         return 0
