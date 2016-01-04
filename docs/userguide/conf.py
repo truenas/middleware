@@ -41,7 +41,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # General information about the project.
-copyright = u'2011-2015, iXsystems'
+copyright = u'2011-2016, iXsystems'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -113,7 +113,7 @@ html_theme_options = {
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 if tags.has('truenas'):
-    html_title = 'TrueNAS User Guide 9.3 Table of Contents'
+    html_title = 'TrueNAS User Guide 9.3.1 Table of Contents'
 else:
     html_title = 'FreeNAS User Guide 9.3.1 Table of Contents'
 
@@ -187,7 +187,7 @@ htmlhelp_basename = 'FreeNASdoc'
 epub_title = u'FreeNAS User Guide'
 epub_author = u'iXsystems'
 epub_publisher = u'iXsystems'
-epub_copyright = u'2011-2015, iXsystems'
+epub_copyright = u'2011-2016, iXsystems'
 
 # The basename for the epub file. It defaults to the project name.
 epub_basename = u'freenas_userguide'

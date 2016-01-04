@@ -1,4 +1,4 @@
-.. centered:: FreeNAS® is © 2011-2015 iXsystems
+.. centered:: FreeNAS® is © 2011-2016 iXsystems
 
 .. centered:: FreeNAS® and the FreeNAS® logo are registered trademarks of iXsystems.
    
@@ -8,7 +8,7 @@ Written by users of the FreeNAS® network-attached storage operating system.
 
 Version 9.3.1
 
-Copyright © 2011-2015
+Copyright © 2011-2016
 `iXsystems <http://www.ixsystems.com/>`_
 
 This Guide covers the installation and use of FreeNAS® 9.3.1.
