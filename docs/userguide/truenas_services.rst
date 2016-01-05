@@ -861,7 +861,7 @@ configured NFS Share. In contrast, global settings which apply to all NFS shares
 | Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Require Kerberos for   | checkbox   | check this box when using Kerberos authentication with NFSv4                                                        |
+| Require Kerberos for   | checkbox   | when checked, NFS shares will fail if the Kerberos ticket is unavailable                                            |
 | NFSv4                  |            |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
