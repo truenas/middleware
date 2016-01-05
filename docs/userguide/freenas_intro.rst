@@ -208,17 +208,19 @@ that have occurred since 9.3-RELEASE.
 
 * The "Disable Physical Block Size Reporting" and the "Read-only" checkboxes, the "Available Space Threshold" field, and the "LUN RPM" drop-down menu have been added to
   :menuselection:`Sharing --> Block (iSCSI) --> Extents --> Add Extent`.
+  
+* The "LUN ID" field of :menuselection:`Sharing --> Block (iSCSI) --> Associated Targets` now lets you type in a higher value than those shown in the drop-down menu.
 
 * The "Home share name" field  has been added to :menuselection:`Services --> AFP`.
 
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
-* The "Require Kerberos for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+* The "Require Kerberos for NFSv4" and "Support>16 groups" checkboxes have been added to :menuselection:`Services --> NFS`.
 
 * The "SNMP v3 Support" checkbox, "Username", "Password", and "Privacy Passphrase" fields, and "Authentication Type" and "Privacy Protocol" drop-down menus have been added to
   :menuselection:`Services --> SNMP` so that SNMPv3 can be configured.
   
-* The "Allow Kerberos Authentication" checkbox has been added to :menuselection:`Services --> SSH`.
+* The "Bind Interfaces" selection field and the "Allow Kerberos Authentication" checkbox have been added to :menuselection:`Services --> SSH`.
 
 * The "Host Private Key" has been removed from :menuselection:`Services --> SSH`.
 

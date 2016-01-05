@@ -1503,7 +1503,8 @@ Table 10.5g summarizes the settings that can be configured when associating targ
 | Target      | drop-down menu | select the pre-created target                                                                          |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
-| LUN ID      | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
+| LUN ID      | drop-down menu | the default of *Auto* will use the next available LUN ID; alternately, select the value of the ID or   |
+|             |                | type in the desired value                                                                              |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
 | Extent      | drop-down menu | select the pre-created extent                                                                          |
