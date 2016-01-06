@@ -33,16 +33,8 @@ NOTE: all of the following commands should be run from /path/to/your-build-direc
 To set up the doc build environment for the first time:
 
 ...
-
 % sphinx-quickstart 
-
 ...
-
-If you want to edit the User Guide, make changes to the *.rst file for the chapter to edit, using any ASCII text editor.
-The *.rst files are located in /path/to/your-build-directory/freenas/docs/userguide/.
-Refer to http://docutils.sourceforge.net/docs/user/rst/quickref.html for formatting syntax.
-Refer to http://wiki.typo3.org/Editors_%28reST%29 for a list of reST editors.
-Need help getting started or want to discuss edits? Join the http://lists.freenas.org/mailman/listinfo/freenas-docs mailing list.
 
 To build a local copy of the HTML, run this command in /path/to/your-build-directory/freenas/docs/userguide:
 
