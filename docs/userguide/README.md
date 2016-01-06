@@ -32,9 +32,9 @@ NOTE: all of the following commands should be run from /path/to/your-build-direc
 
 To set up the doc build environment for the first time:
 
-...
+```
 % sphinx-quickstart 
-...
+```
 
 To build a local copy of the HTML, run this command in /path/to/your-build-directory/freenas/docs/userguide:
 
