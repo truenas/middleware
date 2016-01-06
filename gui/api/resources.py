@@ -3265,7 +3265,9 @@ class FCPortsResource(DojoResource):
                     if ':' in port_name:
                         port_name = port_name.split(':', 1)[1]
                     physical_port = parent.xpath('./physical_port')[0].text
-                    if not(port_name == name and physical_port == vport):
+                    if physical_port != '0':
+                        port_name += '/%s' % physical_port
+                    if port_name != name:
                         continue
                     for i in parent.xpath('./initiator'):
                         initiators.append("%s (Node %s)" % (i.text, ('B' if node == 'A' else 'A')))
