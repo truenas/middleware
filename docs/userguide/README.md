@@ -14,7 +14,7 @@ source code from git as your regular user account:
 % cd /path/to/your-build-directory
 % git clone git://github.com/freenas/freenas.git
 % cd freenas
-% git checkout 9.3-STABLE
+% git checkout TN-9.3-STABLE
 
 ```
 
