@@ -6,51 +6,50 @@ assumes that the reader is using these instructions on either a FreeBSD/PC-BSD s
 
 ##Requirements:
 
-At a minimum, the following software needs to be installed as the root/superuser. If this is the first time you have used pkg on the system, it may prompt
-you to fetch and install it. Say yes to the prompts to do so. Once it is finished, you can then finish installing the needed software.
+To build (and/or make changes to) the upcoming version of the User Guide:
 
-Instructions are given for both the port and the package as some software may not have a package. Try the pkg command first as it is faster. If the pkg
-command succeeds, you do not need to run the make command as the software is already installed; however if it fails, use the make command to install the
-software. If the software is already installed, the pkg command will indicate that the most recent version is already installed.
+Install the following (these are the FreeBSD package names):
 
-```
-portsnap fetch extract
-pkg install devel/git (cd /usr/ports/devel/git/ && make install)
-pkg install textproc/py-sphinx (cd /usr/ports/textproc/py-sphinx/ && make install)
-pkg install textproc/py-sphinxcontrib-httpdomain (cd /usr/ports/textproc/py-sphinxcontrib-httpdomain && make install)
-rehash
-```
-
-If you wish to generate a PDF version of the documentation, this software also needs to be installed:
-
-```
-pkg install print/tex-formats (cd /usr/ports/print/tex-formats/ && make install)
-pkg install print/tex-dvipsk (cd /usr/ports/print/tex-dvipsk/ && make install)
-pkg install devel/gmake (/usr/ports/devel/gmake/ && make install)
-```
+- devel/git
+- textproc/py-sphinx
+- textproc/py-sphinx_numfig
+- textproc/py-sphinxcontrib-httpdomain
 
 Next, determine where you want to store the source code and change to that directory (we'll refer to it as /path/to/your-build-directory). Then, check out the
-source code from git:
+source code from git as your regular user account:
 
 ```
-cd /path/to/your-build-directory
-git clone -b 9.3-STABLE git://github.com/freenas/freenas.git
-cd freenas/docs/userguide
+% cd /path/to/your-build-directory
+% git clone git://github.com/freenas/freenas.git
+% cd freenas
+% git checkout 9.3-STABLE
+
 ```
 
 ##Building the Documentation
 
-All of the following commands need to be run from /path/to/your-build-directory/freenas/docs/userguide. These formats are currently available: HTML, single
-HTML, PDF, and EPUB. The output of either HTML can be found in /path/to/your-build-directory/freenas/docs/userguide/_build/ and can be viewed in a web browser. The
-PDF output will be found in /path/to/your-build-directory/freenas/docs/userguide/_build/latex/FreeNAS.pdf. The EPUB output will be found in
-/path/to/your-build-directory/freenas/docs/userguide/_build/freenas_userguide.epub.
+NOTE: all of the following commands should be run from /path/to/your-build-directory/freenas/.
 
-To build a local copy of the HTML, with a separate page for each chapter and that chapter's table of contents in the left frame with navigational links
-to browse between chapters, run the following command. This is the same format that is published at doc.freenas.org/9.3.
+To set up the doc build environment for the first time:
+
+...
+
+% sphinx-quickstart 
+
+...
+
+If you want to edit the User Guide, make changes to the *.rst file for the chapter to edit, using any ASCII text editor.
+The *.rst files are located in /path/to/your-build-directory/freenas/docs/userguide/.
+Refer to http://docutils.sourceforge.net/docs/user/rst/quickref.html for formatting syntax.
+Refer to http://wiki.typo3.org/Editors_%28reST%29 for a list of reST editors.
+Need help getting started or want to discuss edits? Join the http://lists.freenas.org/mailman/listinfo/freenas-docs mailing list.
+
+To build a local copy of the HTML, run this command in /path/to/your-build-directory/freenas/docs/userguide:
 
 ```
 sphinx-build -b html . _build
 ```
+When finished, open _build/freenas.html in a browser to verify the HTML output.
 
 To build a local copy of the HTML as one long page, with the entire table of contents in the left frame, use this command instead:
 
@@ -58,12 +57,17 @@ To build a local copy of the HTML as one long page, with the entire table of con
 sphinx-build -b singlehtml . _build
 ```
 
-To build a local PDF, run this command TWICE and ignore its error messages:
+To build a PDF version of the userguide you will need a few extra packages:
 
+- print/tex-formats (this will pull in a LOT of dependencies)
+- print/tex-dvipsk
+- devel/gmake
+
+Run this command TWICE to build the PDF:
 ```
 yes '' | gmake latexpdf
-yes '' | gmake latexpdf
 ```
+When finished running the second time, you will find the PDF in _build/latex/FreeNAS.pdf.
 
 To build a local EPUB, run this command:
 
