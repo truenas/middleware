@@ -178,6 +178,25 @@ def smb4_ldap_enabled():
     return ret
 
 
+def config_share_for_nfs4(share):
+    confset1(share, "nfs4:mode = special")
+    confset1(share, "nfs4:acedup = merge")
+    confset1(share, "nfs4:chown = true")
+
+def config_share_for_zfs(share):
+    confset1(share, "zfsacl:acesort = dontcare")
+
+def config_share_for_vfs_objects(share, vfs_objects):
+    if vfs_objects:
+        confset2(share, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
+
+def extend_vfs_objects_for_zfs(path, vfs_objects):
+    if is_within_zfs(path):
+        vfs_objects.extend([
+            'zfs_space',
+            'zfsacl',
+        ])
+
 def is_within_zfs(mountpoint):
     try:
         st = os.stat(mountpoint)
@@ -185,17 +204,25 @@ def is_within_zfs(mountpoint):
         return False
 
     share_dev = st.st_dev
-    p = pipeopen("zfs list -H -o mountpoint")
-    zfsout = p.communicate()
+
+    p = pipeopen("mount")
+
+    mount_out = p.communicate()
     if p.returncode != 0:
         return False
-    if zfsout:
-        zfsout = zfsout[0]
+    if mount_out:
+        mount_out = mount_out[0]
 
-    for mp in zfsout.split('\n'):
-        mp = mp.strip()
-        if mp == '-':
+    zfs_regex = re.compile("^(.*) on (/.*) \(zfs, .*\)$")
+
+    # The reversed is important as we would like the code to use
+    # the most specific (and therefore relevant) mount point.
+    for line in reversed(mount_out.split('\n')):
+        match = zfs_regex.match(line.strip())
+        if not match:
             continue
+
+        mp = match.group(2)
 
         try:
             st = os.stat(mp)
@@ -1060,9 +1087,7 @@ def generate_smb4_shares(smb4_shares):
         vfs_objects = []
         if task:
             vfs_objects.append('shadow_copy2')
-        if is_within_zfs(share.cifs_path):
-            vfs_objects.append('zfs_space')
-            vfs_objects.append('zfsacl')
+        extend_vfs_objects_for_zfs(share.cifs_path, vfs_objects)
         vfs_objects.extend(share.cifs_vfsobjects)
 
         if share.cifs_recyclebin:
@@ -1083,9 +1108,7 @@ def generate_smb4_shares(smb4_shares):
                      (task.task_ret_count, task.task_ret_unit[0]))
             confset1(smb4_shares, "shadow:snapdirseverywhere = yes")
 
-        if vfs_objects:
-            confset2(smb4_shares,
-                     "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
+        config_share_for_vfs_objects(smb4_shares, vfs_objects)
 
         confset2(smb4_shares, "hide dot files = %s",
                  "no" if share.cifs_showhiddenfiles else "yes")
@@ -1097,10 +1120,8 @@ def generate_smb4_shares(smb4_shares):
         confset2(smb4_shares, "guest only = %s",
                  "yes" if share.cifs_guestonly else False)
 
-        confset1(smb4_shares, "nfs4:mode = special")
-        confset1(smb4_shares, "nfs4:acedup = merge")
-        confset1(smb4_shares, "nfs4:chown = true")
-        confset1(smb4_shares, "zfsacl:acesort = dontcare")
+        config_share_for_nfs4(smb4_shares)
+        config_share_for_zfs(smb4_shares)
 
         for line in share.cifs_auxsmbconf.split('\n'):
             line = line.strip()
@@ -1116,16 +1137,25 @@ def generate_smb4_system_shares(smb4_shares):
             dc = DomainController.objects.all()[0]
             sysvol_path = "/var/db/samba4/sysvol"
 
-            confset1(smb4_shares, "\n")
-            confset1(smb4_shares, "[sysvol]", space=0)
-            confset1(smb4_shares, "path = %s" % sysvol_path)
-            confset1(smb4_shares, "read only = no")
+            for share in [ "sysvol", "netlogon" ]:
+                confset1(smb4_shares, "\n")
+                confset1(smb4_shares, "[%s]" % (share), space=0)
 
-            confset1(smb4_shares, "\n")
-            confset1(smb4_shares, "[netlogon]", space=0)
-            confset1(smb4_shares, "path = %s/%s/scripts" % (
-                sysvol_path, dc.dc_realm.lower()))
-            confset1(smb4_shares, "read only = no")
+                if share == "sysvol":
+                    path = sysvol_path
+                else:
+                    path = "%s/%s/scripts" % (sysvol_path, dc.dc_realm.lower())
+
+                confset1(smb4_shares, "path = %s" % (path))
+                confset1(smb4_shares, "read only = no")
+
+                vfs_objects = []
+
+                extend_vfs_objects_for_zfs(path, vfs_objects)
+                config_share_for_vfs_objects(smb4_shares, vfs_objects)
+
+                config_share_for_nfs4(smb4_shares)
+                config_share_for_zfs(smb4_shares)
 
         except:
             pass
