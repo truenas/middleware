@@ -152,8 +152,13 @@ release-push: release
 		(cd "${IX_STABLE_DIR}"; rm -f latest; ln -s `echo ${STAGEDIR} | awk -F- '{print $$4}'` latest); \
 		if [ "${UPDATE_INTERNAL}" != "yes" ]; then \
 			echo "Tell Matt to push his web update button again" | mail -s "Update ${STAGEDIR} now on download.freenas.org" web@ixsystems.com; \
-			if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT"; fi; \
+			if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT" -p "freenas"; fi; \
 			${ENV_SETUP} ${MAKE} save-build-env ; \
+		fi \
+	fi
+	if [ "${TRAIN}" = "TrueNAS-9.3-STABLE" ]; then \
+		if [ "${UPDATE_INTERNAL}" != "yes" ]; then \
+			if [ -f /root/redmine-api-key ]; then ./build/create_redmine_version.py -k `cat /root/redmine-api-key` -v "${VERSION}-${BUILD_TIMESTAMP}" -d "9.3 Software Update released on ${PRINTABLE_TIMESTAMP} GMT" -p "truenas"; fi; \
 		fi \
 	fi
 
