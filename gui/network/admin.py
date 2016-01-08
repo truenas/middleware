@@ -107,14 +107,14 @@ class LAGGInterfaceFAdmin(BaseFreeAdmin):
 
                 var c = p.getChildren();
                 for(var i=0; i<c.length; i++){
-                  if(c[i].title == '%(lagg_members)s ' + data.int_interface){
+                  if(c[i].title == '%(lagg_members)s ' + data.lagg_interface){
                     p.selectChild(c[i]);
                     return;
                   }
                 }
 
                 var pane2 = new dijit.layout.ContentPane({
-                  title: '%(lagg_members)s ' + data.int_interface,
+                  title: '%(lagg_members)s ' + data.lagg_interface,
                   refreshOnShow: true,
                   closable: true,
                   href: data._members_url
