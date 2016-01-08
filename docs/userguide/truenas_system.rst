@@ -554,7 +554,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.1 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.2 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -569,7 +569,7 @@ The GUI does not display the sysctls that are pre-set when TrueNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.1 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.2 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="truenas-logo"
@@ -600,7 +600,7 @@ The GUI does not display the loaders that are pre-set when TrueNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3.1 deprecates the following tunables::
+The ZFS version used in 9.3.2 deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
