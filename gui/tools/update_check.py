@@ -45,7 +45,7 @@ cache.get_apps()
 from django.utils.translation import ugettext as _
 
 from freenasOS import Configuration, Update
-from freenasUI.common.system import send_mail
+from freenasUI.common.system import get_sw_name, send_mail
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import get_changelog
@@ -95,6 +95,8 @@ def main():
             hostname,
             _('Update Available'),
         ),
+        extra_headers={'X-Mailer': get_sw_name(),
+                       'X-%s-Host' % get_sw_name(): socket.gethostname()},
         text=_('''A new update is available for the %(train)s train.
 
 Changelog:
