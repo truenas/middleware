@@ -18,6 +18,7 @@ usr/local/bin/adtool
 usr/local/bin/ldaptool
 usr/local/bin/chelsio_adapter_config
 usr/local/bin/t5seeprom
+usr/local/bin/replfix.py
 usr/local/bin/sockscopy
 usr/local/bin/freenas-snmp/__init__.py
 usr/local/bin/freenas-snmp/snmpresponse.py
