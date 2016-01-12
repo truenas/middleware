@@ -99,7 +99,6 @@ def rcro():
     else:
         return ''
 
-
 #
 # Attempt to send a snapshot or increamental stream to remote.
 #
@@ -135,7 +134,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         os.close(writefd)
 
     compress, decompress = compress_pipecmds(compression)
-    replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s "%s/sbin/zfs receive -F -d %s\'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, rcro(), remotefs)
+    replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'r', 0)
@@ -368,6 +367,17 @@ Hello,
         if output != '':
             results[replication.id] = 'Please move system dataset of remote side to another pool'
             continue
+
+    # Attempt to create the remote dataset.  If it fails, we don't care at this point.
+    rzfscmd = "zfs create -o readonly=on %s" % remotefs_final
+    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+    output, error = sshproc.communicate()
+    error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
+    if sshproc.returncode:
+        log.debug("Unable to create remote dataset %s: %s" % (
+            remotefs,
+            error
+        ))
 
     # Grab map from remote system
     if recursive:

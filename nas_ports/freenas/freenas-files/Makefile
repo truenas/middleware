@@ -85,6 +85,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/telemetry-gather.py ${STAGEDIR}/${PREFIX}/usr/local/bin/telemetry-gather.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/telemetryuploader ${STAGEDIR}/${PREFIX}/usr/local/bin/telemetryuploader
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/test_ssh.py ${STAGEDIR}/${PREFIX}/usr/local/bin/test_ssh.py
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/replfix.py ${STAGEDIR}/${PREFIX}/usr/local/bin/replfix.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/zfshold.py ${STAGEDIR}/${PREFIX}/usr/local/bin/zfshold.py
 	mkdir -p ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/etc/avahi/avahi-daemon.conf ${STAGEDIR}/${PREFIX}/usr/local/etc/avahi/avahi-daemon.conf
