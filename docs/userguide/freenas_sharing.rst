@@ -698,12 +698,11 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
-|                              |               | see NOTE below                                                                                              |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Deny                   | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of denied hostnames or IP addresses; |
 |                              |               | allowed hosts take precedence so can use *ALL* in this field and specify allowed hosts in                   |
-|                              |               | "Hosts Allow"; see NOTE below                                                                               |
+|                              |               | "Hosts Allow"                                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | VFS Objects                  | selection     | only available in "Advanced Mode" and adds virtual file system modules to enhance functionality; Table      |
