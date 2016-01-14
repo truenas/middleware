@@ -1,2 +1,3 @@
 ServerAliveCountMax 3
 ServerAliveInterval 15
+UseRoaming no
