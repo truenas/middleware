@@ -124,8 +124,10 @@ This screen also contains the following buttons:
 user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
 wish to return a test system to the original configuration.
 
-**Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
-**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** 
+**Save Config:** used to save a backup copy of the current configuration database in the format *hostname-version-architecture* to the system being used to access the
+administrative interface. It is recommended to always save the configuration after making any configuration changes. Note that while TrueNAS® automatically backs up the configuration
+database to the system dataset every morning at 3:45, this backup will not occur if the system is shutdown at that time and the backup will not be available if the system dataset is
+stored on the boot pool and the boot pool becomes unavailable. You can determine and change the location of the system dataset using :menuselection:`System --> System Dataset`.
 
 **Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
 red as an indication that the system will need to reboot in order to load the restored configuration.
