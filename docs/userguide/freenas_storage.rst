@@ -652,6 +652,9 @@ shown in Figure 8.1k demonstrates one ZFS pool (*volume1*) with two datasets
 *dataset1*) and one zvol
 (*zvol1*).
 
+Note that in this example, there are two datasets named *volume1*. The first represents the ZFS pool and its "Used" and "Available" entries reflect the total size of the pool, including
+disk parity. The second represents the implicit or root dataset and its "Used" and "Available" entries indicate the amount of disk space available for storage.
+
 Buttons are provided for quick access to "Volume Manager", "Import Disk", "Import Volume", and "View Disks". If the system has multipath-capable hardware, an
 extra button will be added to "View Multipaths". The columns indicate the "Name" of the volume/dataset/zvol, how much disk space is "Used", how much disk
 space is "Available", the type of "Compression", the "Compression Ratio", and the "Status" of the pool.
