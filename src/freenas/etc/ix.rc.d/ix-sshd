@@ -42,6 +42,7 @@ ChallengeResponseAuthentication no
 ClientAliveCountMax 3
 ClientAliveInterval 15
 NoneEnabled yes
+UseRoaming no
 __EOF__
 	    else
 		if ! echo $options | grep -q "Protocol"; then
