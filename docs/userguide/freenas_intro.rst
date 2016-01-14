@@ -6,12 +6,12 @@
 
 Written by users of the FreeNAS® network-attached storage operating system.
 
-Version 9.3.2
+Version 9.3-STABLE
 
 Copyright © 2011-2016
 `iXsystems <http://www.ixsystems.com/>`_
 
-This Guide covers the installation and use of FreeNAS® 9.3.2.
+This Guide covers the installation and use of FreeNAS® 9.3-STABLE.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
 read the instructions in the `README <https://github.com/freenas/freenas/blob/master/docs/userguide/README>`_. If you use IRC Freenode, you are welcome to join
@@ -63,7 +63,7 @@ Windows® is a registered trademark of Microsoft Corporation in the United State
 
 **Typographic Conventions**
 
-The FreeNAS® 9.3.2 Users Guide uses the following typographic conventions:
+The FreeNAS® 9.3-STABLE Users Guide uses the following typographic conventions:
 
 * Names of graphical elements such as buttons, icons, fields, columns, and boxes are enclosed within quotes. For example: click the "Import CA" button.
 
@@ -99,7 +99,7 @@ Beginning with version 9.3, FreeNAS® uses a "rolling release" model instead of 
 up-to-date with the latest security fixes, bug fixes, and new features. Some updates affect the user interface so this section lists any functional changes
 that have occurred since 9.3-RELEASE.
 
-.. note:: the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3.2. If a screen on your
+.. note:: the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® 9.3. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
 
 * Samba was updated to `4.1.18 <https://www.samba.org/samba/history/samba-4.1.18.html>`_.
@@ -261,7 +261,7 @@ that have occurred since 9.3-RELEASE.
 Hardware Recommendations
 ------------------------
 
-Since FreeNAS® 9.3.2 is based on FreeBSD 9.3, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
+Since FreeNAS® 9.3 is based on FreeBSD 9.3, it supports the same hardware found in the `FreeBSD Hardware Compatibility List
 <http://www.freebsd.org/releases/9.3R/hardware.html>`__. Supported processors are listed in section
 `2.1 amd64 <https://www.freebsd.org/releases/9.3R/hardware.html#proc>`_. Beginning with version 9.3, FreeNAS® is only available for 64-bit (also known as
 amd64) processors.
