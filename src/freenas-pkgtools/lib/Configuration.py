@@ -666,7 +666,7 @@ class Configuration(object):
                     if percent != lastpercent:
                         handler(
                             'network',
-                            file_url,
+                            url,
                             size=totalsize,
                             progress=percent,
                             download_rate=downrate,
