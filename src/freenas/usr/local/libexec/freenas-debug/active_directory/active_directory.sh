@@ -77,7 +77,7 @@ active_directory_func()
 	SELECT
 		ad_domainname,
 		ad_bindname,
-		ad_netbiosname,
+		ad_netbiosname_a,
 		ad_ssl,
 		ad_unix_extensions,
 		ad_allow_trusted_doms,
