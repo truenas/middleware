@@ -127,4 +127,10 @@ hardware_func()
 		done
 	fi
 	
+	if which getencstat > /dev/null
+	then
+		section_header "getencstat -V /dev/ses*"
+		getencstat -V /dev/ses*
+		section_footer
+	fi
 }
