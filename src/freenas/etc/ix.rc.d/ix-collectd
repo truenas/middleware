@@ -119,6 +119,7 @@ PluginDir "/usr/local/lib/collectd"
 
 LoadPlugin aggregation
 LoadPlugin cpu
+LoadPlugin ctl
 LoadPlugin df
 LoadPlugin disk
 LoadPlugin geom_stat
