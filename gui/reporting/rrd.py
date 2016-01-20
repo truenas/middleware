@@ -93,11 +93,17 @@ class RRDBase(object):
 
     @staticmethod
     def _sort_identifiers(entry):
-        reg = re.search('(.+)(\d+)$', entry)
-        if not reg:
-            return entry
+        reg = re.search('(.+):(.+)$', entry)
         if reg:
-            return (reg.group(1), int(reg.group(2)))
+            pref = reg.group(1)
+            body = reg.group(2)
+        else:
+            pref = ""
+            body = entry
+        reg = re.search('(.+?)(\d+)$', body)
+        if not reg:
+            return (pref, body, -1)
+        return (pref, reg.group(1), int(reg.group(2)))
 
     def get_identifiers(self):
         return None
@@ -698,6 +704,60 @@ class UptimePlugin(RRDBase):
             'PRINT:total_uptime_secs:%lf secs',
             'PRINT:new_average_on:%lf %%',
             'COMMENT:\s'
+        ]
+
+        return args
+
+
+class CTLPlugin(RRDBase):
+
+    vertical_label = "Bytes/s"
+
+    def get_title(self):
+        title = self.identifier.replace("ctl-", "")
+        return 'SCSI target port (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/ctl-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+#            if not os.path.exists('/dev/%s' % ident):
+#                continue
+            if ident.endswith('ioctl'):
+                continue
+            if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
+                ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_identifiers)
+        return ids
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, "ctl-%s" % self.identifier.replace(":", "\:"), "disk_octets.rrd")
+
+        args = [
+            'DEF:min_rd=%s:read:MIN' % path,
+            'DEF:avg_rd=%s:read:AVERAGE' % path,
+            'DEF:max_rd=%s:read:MAX' % path,
+            'DEF:min_wr=%s:write:MIN' % path,
+            'DEF:avg_wr=%s:write:AVERAGE' % path,
+            'DEF:max_wr=%s:write:MAX' % path,
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'VDEF:tot_wr=avg_wr,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'AREA:avg_wr#bfe0cf',
+            'LINE1:avg_rd#0000ff:Read ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\l',
+            'LINE1:avg_wr#00b000:Write',
+            'GPRINT:min_wr:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_wr:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_wr:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_wr:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_wr: %3.0lf%s Total\l',
         ]
 
         return args
