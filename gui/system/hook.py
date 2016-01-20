@@ -36,7 +36,7 @@ class SystemHook(AppHook):
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
             stdout=subprocess.PIPE
         ).communicate()[0].split('\n')[0].upper()
-        if serial.startswith('A1-'):
+        if serial.startswith('A1-') or serial.startswith('R1-'):
             arr.append({'name': _('Serial'), 'value': serial})
         return arr
 
