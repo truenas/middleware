@@ -112,7 +112,7 @@ class CIFS(Model):
         verbose_name=_("Log level"),
     )
     cifs_srv_syslog = models.BooleanField(
-        verbose_name=_("Use syslog"),
+        verbose_name=_("Use syslog only"),
         default=False,
     )
     cifs_srv_localmaster = models.BooleanField(
