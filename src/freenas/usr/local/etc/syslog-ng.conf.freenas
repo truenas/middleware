@@ -25,6 +25,7 @@ source src { unix-dgram("/var/run/log");
 destination messages { file("/var/log/messages"); };
 destination security { file("/var/log/security"); };
 destination authlog { file("/var/log/auth.log"); };
+destination daemon { file("/var/log/daemon.log"); };
 destination maillog { file("/var/log/maillog"); };
 destination lpd-errs { file("/var/log/lpd-errs"); };
 destination xferlog { file("/var/log/xferlog"); };
@@ -132,6 +133,11 @@ log { source(src); filter(f_ftp); destination(xferlog); };
 # cron.*						/var/log/cron
 #
 log { source(src); filter(f_cron); destination(cron); };
+
+#
+# daemon.*						/var/log/daemon.log
+#
+log { source(src); filter(f_daemon); destination(daemon); };
 
 #
 # *.=debug						/var/log/debug.log

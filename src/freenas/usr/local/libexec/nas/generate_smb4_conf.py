@@ -924,7 +924,13 @@ def generate_smb4_conf(smb4_conf, role):
 
     if cifs.cifs_srv_syslog:
         confset1(smb4_conf, "syslog only = yes")
-        confset1(smb4_conf, "syslog = 1")
+    else:
+        confset1(smb4_conf, "syslog only = no")
+
+    if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
+        confset2(smb4_conf, "syslog = %s", cifs.cifs_srv_loglevel)
+    else:
+        confset1(smb4_conf, "syslog = 0")
 
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
