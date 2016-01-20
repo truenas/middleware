@@ -92,18 +92,30 @@ class RRDBase(object):
         return self.vertical_label
 
     @staticmethod
-    def _sort_identifiers(entry):
-        reg = re.search('(.+):(.+)$', entry)
-        if reg:
-            pref = reg.group(1)
-            body = reg.group(2)
-        else:
-            pref = ""
+    def _sort_ports(entry):
+        if entry == "ha":
+            pref = "0"
             body = entry
+        else:
+            reg = re.search('(.+):(.+)$', entry)
+            if reg:
+                pref = reg.group(1)
+                body = reg.group(2)
+            else:
+                pref = ""
+                body = entry
         reg = re.search('(.+?)(\d+)$', body)
         if not reg:
             return (pref, body, -1)
         return (pref, reg.group(1), int(reg.group(2)))
+
+    @staticmethod
+    def _sort_disks(entry):
+        reg = re.search('(.+?)(\d+)$', entry)
+        if not reg:
+            return entry
+        if reg:
+            return (reg.group(1), int(reg.group(2)))
 
     def get_identifiers(self):
         return None
@@ -728,7 +740,7 @@ class CTLPlugin(RRDBase):
             if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
                 ids.append(ident)
 
-        ids.sort(key=RRDBase._sort_identifiers)
+        ids.sort(key=RRDBase._sort_ports)
         return ids
 
     def graph(self):
@@ -782,7 +794,7 @@ class DiskPlugin(RRDBase):
             if os.path.exists(os.path.join(entry, 'disk_octets.rrd')):
                 ids.append(ident)
 
-        ids.sort(key=RRDBase._sort_identifiers)
+        ids.sort(key=RRDBase._sort_disks)
         return ids
 
     def graph(self):
