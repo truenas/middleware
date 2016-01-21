@@ -558,34 +558,31 @@ class DFPlugin(RRDBase):
 
     vertical_label = "Bytes"
 
-    def _get_mountpoints(self):
-        mps = []
-        proc = pipeopen("/bin/df -l", important=False, logger=log)
-        for line in proc.communicate()[0].strip().split('\n'):
-            mps.append(re.split(r'\s{2,}', line)[-1].replace('/', '-'))
-        return mps
-
     def get_title(self):
-        title = self.identifier.replace("mnt-", "")
+        title = self.identifier.replace("/mnt/", "")
         return 'Disk space (%s)' % title
+
+    def encode(self, path):
+        if path == "/":
+            return "root"
+        return path.strip('/').replace('/', '-')
 
     def get_identifiers(self):
 
-        mps = self._get_mountpoints()
         ids = []
-        for entry in glob.glob('%s/df-*' % self._base_path):
-            ident = entry.split('-', 1)[-1]
-            if '-%s' % ident not in mps:
+        proc = pipeopen("/bin/df -t zfs", important=False, logger=log)
+        for line in proc.communicate()[0].strip().split('\n'):
+            entry = re.split(r'\s{2,}', line)[-1];
+            if entry != "/" and not entry.startswith("/mnt"):
                 continue
-            if not ident.startswith("mnt"):
-                continue
-            if os.path.exists(os.path.join(entry, 'df_complex-free.rrd')):
-                ids.append(ident)
+            path = os.path.join(self._base_path, "df-" + self.encode(entry), 'df_complex-free.rrd')
+            if os.path.exists(path):
+                ids.append(entry)
         return ids
 
     def graph(self):
 
-        path = os.path.join(self._base_path, "df-%s" % self.identifier)
+        path = os.path.join(self._base_path, "df-%s" % self.encode(self.identifier))
         free = os.path.join(path, "df_complex-free.rrd")
         used = os.path.join(path, "df_complex-used.rrd")
 
