@@ -53,6 +53,7 @@ exclude = /usr/local/www/freenasUI
 	/dev/*
 	/etc/resolv.conf
 	/conf/base/etc/resolv.conf
+	/home
 	
 [Services]
 
