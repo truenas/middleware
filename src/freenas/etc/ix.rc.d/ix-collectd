@@ -164,6 +164,7 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "interface">
     Interface "lo0"
+    Interface "ipfw0"
     Interface "pflog0"
     Interface "pfsync0"
     Interface "plip0"
