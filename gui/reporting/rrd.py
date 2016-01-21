@@ -251,7 +251,7 @@ class CPUPlugin(RRDBase):
 
 class InterfacePlugin(RRDBase):
 
-    vertical_label = "Bits per second"
+    vertical_label = "Bits/s"
 
     def get_title(self):
         return 'Interface Traffic (%s)' % self.identifier
@@ -389,7 +389,7 @@ class MemoryPlugin(RRDBase):
 class LoadPlugin(RRDBase):
 
     title = "System Load"
-    vertical_label = "System Load"
+    vertical_label = "Processes"
 
     def graph(self):
 
@@ -567,7 +567,7 @@ class DFPlugin(RRDBase):
 
     def get_title(self):
         title = self.identifier.replace("mnt-", "")
-        return 'Diskspace (%s)' % title
+        return 'Disk space (%s)' % title
 
     def get_identifiers(self):
 
@@ -617,7 +617,7 @@ class DFPlugin(RRDBase):
 class UptimePlugin(RRDBase):
 
     title = "Uptime"
-    vertical_label = "Time"
+    vertical_label = "Days"
 
     def graph(self):
 
@@ -832,7 +832,7 @@ class DiskPlugin(RRDBase):
 class ARCSizePlugin(RRDBase):
 
     plugin = 'zfs_arc'
-    vertical_label = "Size"
+    vertical_label = "Bytes"
 
     def get_title(self):
         return 'ARC Size'
@@ -863,7 +863,7 @@ class ARCSizePlugin(RRDBase):
 class ARCRatioPlugin(RRDBase):
 
     plugin = 'zfs_arc'
-    vertical_label = "Hit (%)"
+    vertical_label = "Hits (%)"
 
     def get_title(self):
         return 'ARC Hit Ratio'
