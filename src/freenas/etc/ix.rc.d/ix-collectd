@@ -122,6 +122,7 @@ LoadPlugin cpu
 LoadPlugin ctl
 LoadPlugin df
 LoadPlugin disk
+LoadPlugin exec
 LoadPlugin geom_stat
 LoadPlugin interface
 LoadPlugin load
@@ -132,6 +133,7 @@ LoadPlugin rrdtool
 LoadPlugin swap
 LoadPlugin uptime
 LoadPlugin syslog
+LoadPlugin threshold
 LoadPlugin zfs_arc
 LoadPlugin zfs_arc_v2
 
@@ -149,13 +151,6 @@ LoadPlugin zfs_arc_v2
     </Aggregation>
 </Plugin>
 
-<Plugin "interface">
-    Interface "lo0"
-    Interface "plip0"
-    Interface "/^usbus/"
-    IgnoreSelected true
-</Plugin>
-
 <Plugin "disk">
     Disk "/^gptid/"
     Disk "/^md/"
@@ -163,10 +158,34 @@ LoadPlugin zfs_arc_v2
     IgnoreSelected true
 </Plugin>
 
+<Plugin "exec">
+    NotificationExec "nobody" "/usr/local/www/freenasUI/tools/collectd_alert.py"
+</Plugin>
+
+<Plugin "interface">
+    Interface "lo0"
+    Interface "pflog0"
+    Interface "pfsync0"
+    Interface "plip0"
+    Interface "/^usbus/"
+    IgnoreSelected true
+</Plugin>
+
 <Plugin "rrdtool">
     DataDir "${datadir}"
     CacheTimeout 120
     CacheFlush 900
+</Plugin>
+
+<Plugin "threshold">
+  <Plugin "ctl">
+    Instance "ha"
+    <Type "disk_octets">
+      WarningMax 10000000
+      Persist true
+      Interesting false
+    </Type>
+  </Plugin>
 </Plugin>
 
 <Plugin "zfs_arc">
