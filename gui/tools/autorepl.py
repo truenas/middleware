@@ -370,14 +370,14 @@ Hello,
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
     rzfscmd = "zfs create -o readonly=on %s" % remotefs_final
-    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), quiet=True)
     output, error = sshproc.communicate()
     error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
-    if sshproc.returncode:
-        log.debug("Unable to create remote dataset %s: %s" % (
-            remotefs,
-            error
-        ))
+#    if sshproc.returncode:
+#        log.debug("Unable to create remote dataset %s: %s" % (
+#            remotefs,
+#            error
+#        ))
 
     # Grab map from remote system
     if recursive:
