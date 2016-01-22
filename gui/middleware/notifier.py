@@ -1609,8 +1609,6 @@ class notifier:
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
-        if zfs_error == 0 and _restart_collectd:
-            self.restart("collectd")
         return zfs_error, zfs_err
 
     def list_zfs_vols(self, volname, sort=None):
@@ -3514,7 +3512,6 @@ class notifier:
             # These should probably be options that are configurable from the GUI
             self._system("zfs set aclmode=passthrough '%s'" % name)
             self._system("zfs set aclinherit=passthrough '%s'" % name)
-            self.restart("collectd")
             return True
         else:
             log.error("Importing %s [%s] failed with: %s", name, id, stderr)
