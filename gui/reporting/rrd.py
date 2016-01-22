@@ -888,3 +888,50 @@ class ARCRatioPlugin(RRDBase):
         ]
 
         return args
+
+
+class ARCResultPlugin(RRDBase):
+
+    plugin = 'zfs_arc'
+    vertical_label = "Requests"
+
+    def get_title(self):
+        return 'ARC Requests (%s)' % self.identifier
+
+    def get_identifiers(self):
+        return ("demand_data", "demand_metadata", "prefetch_data", "prefetch_metadata")
+
+    def graph(self):
+
+        hit = os.path.join(self.base_path, "cache_result-%s-hit.rrd" % self.identifier)
+        miss = os.path.join(self.base_path, "cache_result-%s-miss.rrd" % self.identifier)
+
+        args = [
+            'DEF:min_h=%s:value:MIN' % hit,
+            'DEF:avg_h=%s:value:AVERAGE' % hit,
+            'DEF:max_h=%s:value:MAX' % hit,
+            'DEF:min_m=%s:value:MIN' % miss,
+            'DEF:avg_m=%s:value:AVERAGE' % miss,
+            'DEF:max_m=%s:value:MAX' % miss,
+            'CDEF:min_t=min_h,min_m,+',
+            'CDEF:avg_t=avg_h,avg_m,+',
+            'CDEF:max_t=max_h,max_m,+',
+            'VDEF:tot_t=avg_t,TOTAL',
+            'VDEF:tot_h=avg_h,TOTAL',
+            'AREA:avg_t#ffbfbf',
+            'AREA:avg_h#bfbfff',
+            'LINE1:avg_t#ff0000:Total',
+            'GPRINT:min_t:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_t:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_t:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_t:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_t: %3.0lf%s Total\l',
+            'LINE1:avg_h#0000ff:Hit  ',
+            'GPRINT:min_h:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_h:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_h:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_h:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_h: %3.0lf%s Total\l',
+        ]
+
+        return args
