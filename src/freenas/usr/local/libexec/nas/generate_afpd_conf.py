@@ -16,6 +16,7 @@ cache.get_apps()
 
 from freenasUI.sharing.models import AFP_Share
 from freenasUI.services.models import AFP
+from freenasUI.directoryservice.models import KerberosKeytab
 
 def main():
     """Use the django ORM to generate a config file.  We'll build the
@@ -28,13 +29,14 @@ def main():
     afp = AFP.objects.order_by('-id')[0]
 
     cf_contents.append("[Global]\n")
-
+    uam_list = ['uams_dhx.so', 'uams_dhx2.so']
     if afp.afp_srv_guest:
-        cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so"
-                           " uams_guest.so uams_gss.so\n")
+        uam_list.append('uams_guest.so')
         cf_contents.append('\tguest account = %s\n' % afp.afp_srv_guest_user)
-    else:
-        cf_contents.append("\tuam list = uams_dhx.so uams_dhx2.so uams_gss.so\n")
+    # uams_gss.so bails out with an error if kerberos isn't configured
+    if KerberosKeytab.objects.count() > 0:
+        uam_list.append('uams_gss.so')
+    cf_contents.append('\tuam list = %s\n' % (" ").join(uam_list))
 
     if afp.afp_srv_bindip:
         cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
