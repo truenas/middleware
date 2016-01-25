@@ -204,6 +204,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-postinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-postinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-preinit ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-preinit
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-proftpd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-proftpd
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-replfix ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-replfix
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-resolv ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-resolv
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-rsyncd ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-rsyncd
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/etc/ix.rc.d/ix-pre-samba ${STAGEDIR}/${PREFIX}/etc/ix.rc.d/ix-pre-samba
