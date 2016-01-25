@@ -170,7 +170,7 @@ define([
             "Content-Type": "application/json"
           },
           handleAs: "json",
-          query: {"format": "json"}
+          query: {"format": "json", "limit": 0}
         }).then(function(data) {
 
           for(var i=0;i<data.length;i++) {
