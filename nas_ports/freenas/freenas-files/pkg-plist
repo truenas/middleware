@@ -127,6 +127,7 @@ etc/ix.rc.d/ix-plugins
 etc/ix.rc.d/ix-postinit
 etc/ix.rc.d/ix-preinit
 etc/ix.rc.d/ix-proftpd
+etc/ix.rc.d/ix-replfix
 etc/ix.rc.d/ix-resolv
 etc/ix.rc.d/ix-rsyncd
 etc/ix.rc.d/ix-pre-samba
