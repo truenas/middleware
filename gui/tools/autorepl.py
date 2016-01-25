@@ -321,6 +321,17 @@ for replication in replication_tasks:
         snaplist = [x for x in snaplist if not system_re.match(x)]
         map_source = mapfromdata(snaplist)
 
+    # Attempt to create the remote dataset.  If it fails, we don't care at this point.
+    rzfscmd = "zfs create -o readonly=on %s" % remotefs_final
+    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), quiet=True)
+    output, error = sshproc.communicate()
+    error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
+#    if sshproc.returncode:
+#        log.debug("Unable to create remote dataset %s: %s" % (
+#            remotefs,
+#            error
+#        ))
+
     if is_truenas:
         # Bi-directional replication: the remote side indicates that they are
         # willing to receive snapshots by setting readonly to 'on', which prevents
@@ -367,17 +378,6 @@ Hello,
         if output != '':
             results[replication.id] = 'Please move system dataset of remote side to another pool'
             continue
-
-    # Attempt to create the remote dataset.  If it fails, we don't care at this point.
-    rzfscmd = "zfs create -o readonly=on %s" % remotefs_final
-    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), quiet=True)
-    output, error = sshproc.communicate()
-    error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
-#    if sshproc.returncode:
-#        log.debug("Unable to create remote dataset %s: %s" % (
-#            remotefs,
-#            error
-#        ))
 
     # Grab map from remote system
     if recursive:
