@@ -179,6 +179,8 @@ is detected. Some of the conditions that trigger an alert include:
 * the status of an Avago MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
   is included for managing these devices
+  
+* the usage of a HA link goes above 10MB/s
 
 An alert will also be generated when the Avago HBA firmware version does not match the driver version. To resolve this alert, download the IT (integrated
 target) firmware, not the IR (integrated RAID) firmware, from the Avago website. Then, specify the name of the firmware image and bios as well as the
