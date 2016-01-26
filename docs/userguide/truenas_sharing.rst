@@ -1556,6 +1556,8 @@ This screen shows the status of each attached fibre channel port, where:
 
 * **Disabled:** indicates that this fibre channel port is not in use.
 
+.. note:: the "Target" tab of :ref:`Reporting` provides Fibre Channel port bandwidth graphs.
+
 .. _Connecting to iSCSI:
 
 Connecting to iSCSI
