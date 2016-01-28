@@ -322,15 +322,20 @@ for replication in replication_tasks:
         map_source = mapfromdata(snaplist)
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
-    rzfscmd = "zfs create -o readonly=on %s" % remotefs_final
-    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), quiet=True)
-    output, error = sshproc.communicate()
-    error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
-#    if sshproc.returncode:
-#        log.debug("Unable to create remote dataset %s: %s" % (
-#            remotefs,
-#            error
-#        ))
+    rzfscmd = "zfs create -o readonly=on "
+    ds=''
+    for dir in localfs.partition("/")[2].split("/"):
+        ds = os.path.join(ds, dir)
+        log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
+        sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
+        output, error = sshproc.communicate()
+        error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
+# Debugging code
+        if sshproc.returncode:
+            log.debug("Unable to create remote dataset %s: %s" % (
+                remotefs,
+                error
+            ))
 
     if is_truenas:
         # Bi-directional replication: the remote side indicates that they are
