@@ -1570,7 +1570,8 @@ To create the virtual ports on the TrueNAS® system, go to :menuselection:`Syste
 * **Variable:** input
   *hint.isp.X.vports*, replacing X with the number of the physical interface.
 
-* **Value:** input the number of virtual ports to create, up to a maximum of 120.
+* **Value:** input the number of virtual ports to create. Note that there cannot be more then 125 SCSI target ports and that number includes all physical Fibre Channel ports, all virtual
+  ports, and all configured combinations of iSCSI portals and targets.
 
 * **Type:** make sure 
   *loader* is selected.
