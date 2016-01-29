@@ -1515,7 +1515,7 @@ second or so, it will change to a blue ON, indicating that the service has start
 Fibre Channel Ports
 ~~~~~~~~~~~~~~~~~~~
 
-If the TrueNAS® system has Fibre Channel ports and has been licensed for Fibre Channel, :menuselection:`Sharing --> Block (iSCSI)` will appear as
+If the TrueNAS® system has Fibre Channel ports, :menuselection:`Sharing --> Block (iSCSI)` will appear as
 :menuselection:`Sharing --> Block (iSCSI/FC)` and an extra "Fibre Channel Ports' tab will be added. An example is seen in :numref:`Figure %s: Block (iSCSI) Screen <tn_fibre1>`.
 
 .. _tn_fibre1:
@@ -1542,11 +1542,11 @@ connection. An example is seen in :numref:`Figure %s: Configuring a Fibre Channe
 
 The screens for adding an extent and associating a target are the same as described in :ref:`Extents` and :ref:`Targets/Extents`.
 
-An example of the "Fibre Channel Ports" screen is shown in :numref:`Figure %s: Configuring a Fibre Channel Port <tn_fibre4a>`.
+An example of the "Fibre Channel Ports" screen is shown in :numref:`Figure %s: Configuring a Fibre Channel Port <tn_fibre4b>`.
 
-.. _tn_fibre4a:
+.. _tn_fibre4b:
 
-.. figure:: images/tn_fibre4a.png
+.. figure:: images/tn_fibre4b.png
 
 This screen shows the status of each attached fibre channel port, where:
 
@@ -1557,6 +1557,32 @@ This screen shows the status of each attached fibre channel port, where:
 * **Disabled:** indicates that this fibre channel port is not in use.
 
 .. note:: the "Target" tab of :ref:`Reporting` provides Fibre Channel port bandwidth graphs.
+
+This example has also been configured for NPIV (N_Port ID Virtualization). Note that the physical interface *isp0* has two virtual ports (*isp0/1* and
+*isp0/2*) displayed in :numref:`Figure %s: Configuring a Fibre Channel Port <tn_fibre4b>`. NPIV allows the administrator to use switch zoning to configure each
+virtual port as if it was a physical port in order to provide access control. This is important in an environment with a mix of Windows systems and virtual machines
+in order to prevent automatic or accidental reformatting of targets containing unrecognized filesystems. It can also be used to segregate data; for example, to prevent
+the engineering department from accessing data from the human resources department. Refer to your switch documentation for details on how to
+configure zoning of virtual ports.
+
+To create the virtual ports on the TrueNAS® system, go to :menuselection:`System --> Tunables --> Add Tunable` and input the following:
+
+* **Variable:** input
+  *hint.isp.X.vports*, replacing X with the number of the physical interface.
+
+* **Value:** input the number of virtual ports to create, up to a maximum of 120.
+
+* **Type:** make sure 
+  *loader* is selected.
+
+In the example shown in :numref:`Figure %s: Adding Virtual Ports <tn_npiv>`, two physical interfaces were each assigned 4 virtual ports. Note that two tunables were required, one for
+each physical interface. Once the tunables are created, the configured number of virtual ports will appear in the "Fibre Channel Ports" screen so that they can be associated with
+targets. They will also be advertised to the switch so that you can configure zoning on the switch. Once a virtual port has been associated with a target, it will be added to the 
+"Target" tab of :ref:`Reporting` so that you can view its bandwidth usage.
+
+.. _tn_npiv:
+
+.. figure:: images/tn_npiv.png
 
 .. _Connecting to iSCSI:
 
