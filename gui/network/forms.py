@@ -649,7 +649,7 @@ class VLANForm(ModelForm):
 
     def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
-        if tag > 4095:
+        if tag > 4095 or tag < 1:
             raise forms.ValidationError(_("VLAN Tags are 1 - 4095 inclusive"))
         return tag
 
