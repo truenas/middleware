@@ -382,21 +382,13 @@ class NICChoices(object):
                     self._NIClist.remove(interface[0])
 
         if nocarp:
-            for nic in list(self._NIClist):
-                if nic.startswith('carp'):
-                    self._NIClist.remove(nic)
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("carp")]
         if nolagg:
             # vlan devices are not valid parents of laggs
-            for nic in self._NIClist:
-                if nic.startswith('lagg'):
-                    self._NIClist.remove(nic)
-            for nic in self._NIClist:
-                if nic.startswith('vlan'):
-                    self._NIClist.remove(nic)
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("lagg")]
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
         if novlan:
-            for nic in self._NIClist:
-                if nic.startswith('vlan'):
-                    self._NIClist.remove(nic)
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
         else:
             # This removes devices that are parents of vlans.  We don't
             # remove these devices if we are adding a vlan since multiple
@@ -454,9 +446,7 @@ class NICChoices(object):
                         self._NIClist.remove(interface[0])
 
         if nobridge:
-            for nic in self._NIClist:
-                if nic.startswith('bridge'):
-                    self._NIClist.remove(nic)
+            self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bridge")]
 
         if noepair:
             niclist = copy.deepcopy(self._NIClist)
