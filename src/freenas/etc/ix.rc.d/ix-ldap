@@ -56,7 +56,7 @@ setup_homedirs()
 				# rmdir has failed us, the directory must not be empty
 				# In theory this should never happen, so we won't worry
 				# about name collisions in our random new name.
-				newhome="/home.$(dd if=/dev/random bs=4 count=1 2>/dev/null | base64 | sed -e 's/[\/|=]//g')"
+				newhome="/home.$(dd if=/dev/random bs=4 count=1 2>/dev/null | /usr/local/bin/base64 | sed -e 's/[\/|=]//g')"
 				mv /home ${newhome}
 			fi
 		fi
