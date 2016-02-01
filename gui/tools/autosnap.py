@@ -300,7 +300,7 @@ if len(mp_to_task_map) > 0:
                         fails = pickle.load(f)
             except:
                 fails = {}
-            fails[snapname] = [str(vm) for vm in snapvmfails]
+            fails[snapname] = [vm.get_property('path') for vm in snapvmfails]
             with LockFile(VMWARE_FAILS) as lock:
                 with open(VMWARE_FAILS, 'wb') as f:
                     pickle.dump(fails, f)
@@ -311,7 +311,7 @@ if len(mp_to_task_map) > 0:
 Hello,
     The following VM failed to snapshot %s:
 %s
-""" % (snapname, '    \n'.join([str(vm) for vm in snapvmfails])),
+""" % (snapname, '    \n'.join(vm.get_property('path') for vm in snapvmfails])),
                 channel='snapvmware'
             )
 
