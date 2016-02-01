@@ -1,34 +1,24 @@
-o Fix an iSCSI kernel panic.
+o Add Fibre Channel Virtual Port support.
 
-o Fix an error in the HA takeover path that could
-  result in the STANDBY node seeing storage traffic
-  before it has assumed the MASTER role.
+o Add performance reporting for Fibre Channel ports.
 
-o Fix several replication bugs that could cause a
-  replication task to restart or display the incorrect
-  status in the GUI.
+o Update the CA bundle included in TrueNAS.
 
-o Provide a way to disallow an AD join from updating
-  DNS.  This can be useful when TrueNAS systems have
-  multiple interfaces but only one DNS record is
-  desired.
+o Add support for > 16 NFS groups.
 
-o Provide a means for each node in an HA pair having
-  a unique NETBIOS name when LDAP is enabled.
+o Remove a 60 second timeout per lagg when booting or
+  restarting networking.
 
-o Verify certificate chains for self signed SSL certs
-  when the CA is uploaded into the GUI.  This allows
-  self signed SSL certs to be used for AD authentication.
+o Fix a bug in the NFS server that could leave the
+  NFS service non-responsive.
 
-o Require failover to be disabled on an HA system before
-  allowing any changes to the networking config.  This
-  prevents a failover event from occuring and allows
-  changes to propagate to the STANDBY node.
+o Fix a bug that prevented the factory reset CLI option
+  from working.
 
-o Map local groups created on TrueNAS to Windows/Samba
-  groups.
+o Add support for binding the SSH service to specific
+  interfaces.
 
-o Add support for ssh authentication via kerberos.
+o Fix a bug that prevented switching between LDAP and
+  AD directory services.
 
-o Hide the NFSv4 security fields when NFSv4 is
-  disabled.
+o Add X-*NAS-Host into update available emails.
