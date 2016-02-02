@@ -6,7 +6,7 @@ if [ ! -d build ]; then
 fi
 
 if [ $# -lt 1 ]; then
-	echo Usage: $0 FreeNAS\|TrueNAS [PRODUCTION]
+	echo Usage: $0 FreeNAS\|TrueNAS [PRODUCTION] [REBOOT]
 	exit 2
 fi
 
@@ -35,6 +35,13 @@ if [ $# -gt 0 -a "$1" != "no" ]; then
 	PRODUCTION=yes
 fi
 
+shift
+REBOOT=NO
+if [ $# -gt 0 -a "$1" != "no" ] && [ "$1" != "NO" ]; then
+    REBOOT=YES
+fi
+
+
 _N=`make -V NANO_LABEL`
 if [ $_N != $N -a "${PRODUCTION}" = "yes" ]; then
 	echo "Working directory $_N != stated version $N"
@@ -58,4 +65,4 @@ if [ "${PRODUCTION}" = "no" -a ! -f ChangeLog ]; then
 	make-changelog
 fi
 env NANO_LABEL=$N TRAIN=${TRAIN} make checkout
-env NANO_LABEL=$N TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
+env NANO_LABEL=$N REBOOT=${REBOOT} TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
