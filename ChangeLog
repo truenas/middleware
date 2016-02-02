@@ -1,0 +1,4 @@
+#12813	Bug	Critical	Cannot Create additional Vlans
+#13267	Bug	Expected	system verification looks like is broken in latest FreeNAS SU.
+#13273	Bug	Important	Make replication logging less verbose
+#13416	Bug	Critical	replication still not working in TrueNAS internal SU.

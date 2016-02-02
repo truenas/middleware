@@ -34,7 +34,7 @@ RELEASE_LOGFILE?=release.build.log
 
 .if defined(UPDATE_INTERNAL)
 UPDATE_USER?=releng
-UPDATE_HOST?=update-int.ixsystems.com
+UPDATE_HOST?=10.5.126.198
 POST_TO_DOWNLOAD=no
 .else
 UPDATE_USER?=sef
