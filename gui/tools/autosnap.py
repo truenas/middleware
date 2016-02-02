@@ -311,7 +311,7 @@ if len(mp_to_task_map) > 0:
 Hello,
     The following VM failed to snapshot %s:
 %s
-""" % (snapname, '    \n'.join(vm.get_property('path') for vm in snapvmfails])),
+""" % (snapname, '    \n'.join([vm.get_property('path') for vm in snapvmfails])),
                 channel='snapvmware'
             )
 

@@ -468,6 +468,7 @@ Hello,
     total_datasets = len(tasks.keys())
     if total_datasets == 0:
         results[replication.id] = 'Up to date'
+        write_results()
         continue
     current_dataset = 0
 
