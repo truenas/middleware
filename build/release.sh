@@ -36,9 +36,13 @@ if [ $# -gt 0 -a "$1" != "no" ]; then
 fi
 
 shift
-REBOOT=NO
-if [ $# -gt 0 -a "$1" != "no" ] && [ "$1" != "NO" ]; then
-    REBOOT=YES
+if [ $# -gt 0 ]; then
+	# first converting to lower case
+	rval=$(echo "$1" | tr "[:upper:]" "[:lower:]")
+	# lets check if the supplied value is valid or not
+	if [ "$(echo $rval | grep -wE 'yes|no|true|false')" ] ; then
+		REBOOT="$rval"
+	fi
 fi
 
 
@@ -64,5 +68,9 @@ git pull --no-rebase
 if [ "${PRODUCTION}" = "no" -a ! -f ChangeLog ]; then
 	make-changelog
 fi
+
 env NANO_LABEL=$N TRAIN=${TRAIN} make checkout
-env NANO_LABEL=$N REBOOT=${REBOOT} TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
+if [ -n "$REBOOT" ]; then
+	env NANO_LABEL=$N REBOOT=${REBOOT} TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
+else
+	env NANO_LABEL=$N TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
