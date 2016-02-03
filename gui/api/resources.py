@@ -92,7 +92,9 @@ from freenasUI.system.forms import (
     ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import BootEnv, get_pending_updates
+from freenasUI.system.utils import (
+    BootEnv, get_pending_updates, debug_generate
+)
 from tastypie import fields, http
 from tastypie.http import (
     HttpAccepted,
@@ -2508,6 +2510,20 @@ class VersionResource(DojoResource):
             'fullversion': version,
             'version': login_version,
             'name': name,
+        }
+        return self.create_response(request, data)
+
+
+class DebugResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'system/debug'
+
+    def post_list(self, request, **kwargs):
+        debug_generate()
+        data = {
+            'url': reverse('system_debug_download'),
         }
         return self.create_response(request, data)
 

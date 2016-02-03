@@ -34,7 +34,6 @@ import shutil
 import socket
 import subprocess
 import sysctl
-import tarfile
 import time
 import urllib
 import xmlrpclib
@@ -60,7 +59,6 @@ from freenasOS.Update import (
     DeleteClone,
 )
 from freenasUI.account.models import bsdUsers
-from freenasUI.common.locks import mntlock
 from freenasUI.common.system import (
     get_sw_name,
     get_sw_version,
@@ -85,7 +83,7 @@ from freenasUI.system.utils import (
     UpdateHandler,
     VerifyHandler,
     debug_get_settings,
-    debug_run,
+    debug_generate,
     get_changelog,
     parse_changelog,
     run_updated,
@@ -891,32 +889,8 @@ def debug(request):
             except socket.error:
                 return render(request, 'failover/failover_down.html')
         return render(request, 'system/debug.html')
-
-    gc = GlobalConfiguration.objects.all().order_by('-id')[0]
-    mntpt, direc, dump = debug_get_settings()
-
-    standby_debug = None
-    if not _n.is_freenas() and _n.failover_licensed():
-        s = _n.failover_rpc()
-        standby_debug = s.debug()
-
-    with mntlock(mntpt=mntpt):
-
-        debug_run(direc)
-
-        if standby_debug:
-            debug_file = '%s/debug.tar' % direc
-            _n.sync_file_recv(s, standby_debug, '%s/standby.txz' % direc)
-            if _n.failover_node() == 'B':
-                hostname_a = gc.gc_hostname
-                hostname_b = gc.gc_hostname_b
-            else:
-                hostname_a = gc.gc_hostname_b
-                hostname_b = gc.gc_hostname
-            with tarfile.open(debug_file, 'w') as tar:
-                tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_a)
-                tar.add(dump, '%s.txz' % hostname_b)
-        return render(request, 'system/debug_download.html')
+    debug_generate()
+    return render(request, 'system/debug_download.html')
 
 
 def debug_download(request):
@@ -944,10 +918,6 @@ def debug_download(request):
             hostname,
             time.strftime('%Y%m%d%H%M%S'),
             extension)
-
-    opts = ["/bin/rm", "-r", "-f", direc]
-    p1 = pipeopen(' '.join(opts), allowfork=True)
-    p1.wait()
 
     return response
 
