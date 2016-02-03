@@ -62,7 +62,7 @@ else
 	TARGET=release-push
 fi
 
-echo "Building $N, PRODUCTION=$PRODUCTION, TRAIN=${TRAIN}, $TARGET"
+echo "Building $N, PRODUCTION=$PRODUCTION, TRAIN=${TRAIN}, $TARGET, REBOOT=${REBOOT}"
 
 git pull --no-rebase
 if [ "${PRODUCTION}" = "no" -a ! -f ChangeLog ]; then
@@ -74,3 +74,4 @@ if [ -n "$REBOOT" ]; then
 	env NANO_LABEL=$N REBOOT=${REBOOT} TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
 else
 	env NANO_LABEL=$N TRAIN=${TRAIN} make ${TARGET} PRODUCTION=${PRODUCTION}
+fi
