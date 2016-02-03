@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-01-02 12:41+0000\n"
-"Last-Translator: raafat <raafat1991@gmail.com>\n"
+"PO-Revision-Date: 2016-01-17 04:55+0000\n"
+"Last-Translator: Michael <michaeleino@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1420202471.0\n"
+"X-POOTLE-MTIME: 1453006557.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "إبلاغ"
@@ -49,9 +49,8 @@ msgstr "تخزين"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "حادثات بعض الاخطاء!"
+msgstr "حدث نفس الخطأ!"
 
 #~ msgid "Edit"
 #~ msgstr "تحرير"
@@ -64,13 +63,12 @@ msgid "Wipe"
 msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:551
-#, fuzzy
 msgid "Wipe Disk"
-msgstr "تحرير القرص"
+msgstr "مسح القرص"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "انتظر من فضلك..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -105,7 +103,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:258
 msgid "Enable service"
-msgstr ""
+msgstr "تمكين الخدمة"
 
 #: freeadmin/static/lib/js/freeadmin.js:784
 msgid "The cache is being rebuilt."
@@ -121,27 +119,27 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
 msgid "Jails"
-msgstr ""
+msgstr "السجون"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:252
 msgid "Plugins"
-msgstr ""
+msgstr "الملحقات"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:400
 msgid "Support"
-msgstr ""
+msgstr "الدعم"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:124
 msgid "Size"
-msgstr ""
+msgstr "الحجم"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:263
 msgid "drives"
-msgstr ""
+msgstr "المشغلات"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:265
 msgid "drive"
-msgstr ""
+msgstr "المشغّل"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:267
 msgid "show"
@@ -260,7 +258,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "تأكيد"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
 msgid "System"
@@ -277,11 +275,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 msgid "Sharing"
-msgstr ""
+msgstr "المشاركة"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "دليل الخدمة"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
@@ -340,7 +338,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "تحذير!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
@@ -350,7 +348,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد أن تفعل هذا؟"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
@@ -370,11 +368,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "اسم المستخدم لا يمكن أن يكون فارغا."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "لا يمكن أن تكون كلمة السرّ فارغة."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
@@ -413,7 +411,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "إعادة تشغيل واجهة المستخدم WebGUI"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
@@ -464,7 +462,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1171
 msgid "are not working.<br /><br />"
-msgstr ""
+msgstr "لا تعمل. ‭<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1172
 msgid ""

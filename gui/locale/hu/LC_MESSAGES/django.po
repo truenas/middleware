@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2015-02-24 02:50+0000\n"
-"Last-Translator: Sracz <sracz66@gmail.com>\n"
+"PO-Revision-Date: 2016-01-14 23:07+0000\n"
+"Last-Translator: lovace <hunlovace@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1424746229.0\n"
+"X-POOTLE-MTIME: 1452812869.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -385,7 +385,7 @@ msgstr "Minden nap"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Minden kiválasztott napon"
+msgstr "Minden kiválasztott hétköznapon"
 
 #: choices.py:504
 msgid "Read-only"
@@ -426,7 +426,7 @@ msgstr "%(week)s hét"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Soha - Üzemmód független ellenőrzés"
+msgstr "Soha - Ellenőrzés az eszköz üzemmódjától függetlenül"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -441,20 +441,20 @@ msgstr ""
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Üresjárat - Ellenőrizze az eszközt amennyiben az nincs ALVÓ, KÉSZENLÉTIvagy "
-"ÜRESJÁRATI módban"
+"Üresjárat - Ellenőrizze az eszközt amennyiben az nincs ALVÓ, KÉSZENLÉTI, "
+"vagy ÜRESJÁRATI módban"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Hosszú önellenőrzés"
+msgstr "Hosszú önvizsgálat"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Rövid önellenőrzés"
+msgstr "Rövid önvizsgálat"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Adatátviteli Önteszt (Csak ATA)"
+msgstr "Adatátviteli önvizsgálat (Csak ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
@@ -2980,9 +2980,8 @@ msgid "This controls the access a remote host has to this module"
 msgstr ""
 
 #: services/models.py:1410
-#, fuzzy
 msgid "Maximum connections"
-msgstr "Max. kapcsolatok"
+msgstr "Kapcsolatok maximális száma"
 
 #: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
@@ -4980,11 +4979,11 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr "Módosított Csoport"
+msgstr "Csoport módosítása"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr "Törölt Csoport"
+msgstr "Csoport törlése"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
@@ -5010,7 +5009,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:56
 msgid "Remove User"
-msgstr "Eltávolított Felhasználó"
+msgstr "Felhasználó törlése"
 
 #: templates/account/bsdusers.html:58
 msgid "Delete User"
@@ -8199,10 +8198,12 @@ msgstr "Pillanatkép"
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
 msgstr ""
+"Egy börtön gyökérkönyvtára mindenképpen köteten, vagy adathalmazban kell "
+"legyen."
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Biztonsági mentés"
 
 #: middleware/notifier.py:3822
 #, fuzzy
@@ -8235,7 +8236,7 @@ msgstr "Módosítás"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "HTTP-proxy"
 
 #: network/models.py:83
 msgid ""
@@ -9155,7 +9156,7 @@ msgstr "SMB3_00"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
-msgstr ""
+msgstr "sysctl-ek vesszővel elválasztott listája"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
@@ -9247,7 +9248,7 @@ msgstr ""
 #: services/models.py:1619
 #, fuzzy
 msgid "Verbose logging"
-msgstr "Részletes"
+msgstr "Részletes naplózás"
 
 #: services/models.py:1634
 msgid "Set this if you want to use the default domain for users and groups."
@@ -9490,6 +9491,7 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"A CIFS korlátozásai miatt a kérdőjelet(?) tartalmazó jelszavak tiltottak."
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10231,7 +10233,7 @@ msgstr ""
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Létező tanúsítványszolgáltató importálása"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
@@ -10289,7 +10291,7 @@ msgstr ""
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 #, fuzzy
@@ -12466,6 +12468,8 @@ msgstr ""
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
+"Ezzel megtiltasz mindenfajta jelszavas bejelentkezést beleértve a megosztást "
+"is."
 
 #: network/forms.py:305
 #, fuzzy
@@ -12505,7 +12509,7 @@ msgstr ""
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr ""
+msgstr "A NetBIOS-név nem lehet azonos a munkacsoport nevével."
 
 #: directoryservice/models.py:739
 #, fuzzy
@@ -12894,4 +12898,37 @@ msgstr ""
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr ""
+
+#: services/models.py:422
+msgid "Support >16 groups"
+msgstr ""
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Interfészek"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""

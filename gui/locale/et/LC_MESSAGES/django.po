@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2015-12-04 10:17+0000\n"
+"PO-Revision-Date: 2016-01-20 10:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: et\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1449224223.0\n"
+"X-POOTLE-MTIME: 1453285034.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12008,4 +12008,36 @@ msgstr ""
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr ""
+
+#: services/models.py:422
+msgid "Support >16 groups"
+msgstr ""
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+msgid "Bind Interfaces"
+msgstr ""
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""

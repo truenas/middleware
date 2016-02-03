@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-11-01 19:54+0000\n"
-"Last-Translator: franckleroy <pootle@franckleroy.net>\n"
+"PO-Revision-Date: 2016-01-16 08:44+0000\n"
+"Last-Translator: Vincèn <vincen@vincen.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1446407656.0\n"
+"X-POOTLE-MTIME: 1452933849.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Entier"
+msgstr "Brut"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -42,7 +42,7 @@ msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr "Automatique"
+msgstr "Auto"
 
 #: choices.py:54
 msgid "PIO0"
@@ -98,11 +98,11 @@ msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5Gbit/s"
+msgstr "SATA 1,5 Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr "SATA 3.0Gbit/s"
+msgstr "SATA 3,0 Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
@@ -143,7 +143,6 @@ msgid "Minimum"
 msgstr "Minimum"
 
 #: choices.py:97
-#, fuzzy
 msgid "Medium"
 msgstr "Moyen(ne)"
 
@@ -228,7 +227,6 @@ msgid "Sunday"
 msgstr "Dimanche"
 
 #: choices.py:163
-#, fuzzy
 msgid "Anonymous"
 msgstr "Anonyme"
 
@@ -237,12 +235,10 @@ msgid "Local User"
 msgstr "Utilisateur local"
 
 #: choices.py:189
-#, fuzzy
 msgid "Normal"
 msgstr "Normal(e)"
 
 #: choices.py:190
-#, fuzzy
 msgid "Full"
 msgstr "Complet"
 
@@ -260,7 +256,7 @@ msgstr "Time Machine"
 # voir : http://php.net/manual/fr/xml.case-folding.php
 #: choices.py:199
 msgid "No case folding"
-msgstr "Pas de mise en majuscule"
+msgstr "Pas de conversion minuscule/majuscule"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
@@ -311,15 +307,15 @@ msgstr "CHAP"
 
 #: choices.py:229
 msgid "Mutual CHAP"
-msgstr "CHAP mutuel"
+msgstr "CHAP partagé"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "Niveau batterie UPS faible"
+msgstr "Niveau batterie de l'onduleur faible"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "UPS passe sur batterie"
+msgstr "L'onduleur passe sur batterie"
 
 # Chiffrement bittorrent
 #: choices.py:255
@@ -334,7 +330,7 @@ msgstr "Toléré"
 # Chiffrement bittorrent
 #: choices.py:257
 msgid "Required"
-msgstr "Requis"
+msgstr "Obligatoire"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
@@ -391,7 +387,7 @@ msgstr "Tous les jours"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Tous les jours de semaine sélectionnés"
+msgstr "Tous les jours de la semaine sélectionnés"
 
 #: choices.py:504
 msgid "Read-only"
@@ -442,8 +438,8 @@ msgstr "Veille - Contrôler le périphérique à moins qu'il ne soit en veille"
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"En attente - Contrôler le périphérique à moins qu'il ne soit en veille ou en "
-"attente"
+"En veille - Contrôler le périphérique à moins qu'il ne soit en VEILLE ou "
+"ENDORMI"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
@@ -486,7 +482,7 @@ msgstr "Récupérer"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
-msgstr "Votre dénomination ne peut pas commencer par \"-\""
+msgstr "Votre nom ne peut pas commencer par \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
@@ -556,7 +552,7 @@ msgstr "Créer un nouveau groupe primaire pour l'utilisateur"
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr "Groupe primaire"
+msgstr "Groupe principal"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -587,7 +583,7 @@ msgstr "Ce champ est obligatoire"
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "Les deux mots de passe sont différents."
+msgstr "Les deux champs mots de passe ne correspondent pas."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -692,8 +688,7 @@ msgstr "Utilisateur &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr ""
-"                  Mot de passe UNIX crypté                                "
+msgstr "Mot de passe UNIX crypté                                "
 
 #: account/models.py:100
 msgid "Hashed SMB password"
@@ -803,7 +798,7 @@ msgstr "Éteindre"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr "Donnée vide renvoyée depuis %s"
+msgstr "Donnée vide renvoyée par %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
@@ -814,16 +809,16 @@ msgstr "Impossible de récupérer %(url)s : %(error)s"
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
 msgstr ""
-"Une erreur s est produite lors de dé-sérialisation de %(url)s : %(error)s"
+"Une erreur s'est produite lors de la dé-sérialisation de %(url)s : %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr "Il n'était pas possible de récupérer l'état actuel"
+msgstr "Il n'a pas été possible de récupérer l'état actuel"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s mis(e) à jour avec succès."
+msgstr "%s mis(e) à jour faite(s) avec succès."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
@@ -902,7 +897,7 @@ msgstr "Le sous-réseau 169.254/16 n'est pas valide pour les serveurs de noms"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Veuillez compléter le serveur de noms 2 avant le 3"
+msgstr "Veuillez compléter le serveur de noms 2 avant le serveur de noms 3"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
@@ -910,7 +905,7 @@ msgstr "Requis quand vous utilisez le serveur de noms 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Veuillez compléter le serveur de noms 1 avant le 3"
+msgstr "Veuillez compléter le serveur de noms 1 avant le serveur de noms 3"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
@@ -1252,7 +1247,7 @@ msgstr "Nom d usage du greffon"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr "                  Nom du plugin                "
+msgstr "Nom du plugin"
 
 #: plugins/models.py:50
 msgid "Plugin version"
@@ -3716,7 +3711,7 @@ msgstr "Préciser le chemin personnalisé"
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
-"Laisser vide donnera au volume un chemin par défaut de /mnt/${NOM_VOLUME}"
+"Laisser vide donnera au volume un chemin par défaut de /mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:233
 msgid ""
@@ -6938,7 +6933,7 @@ msgstr "Verrouillé"
 
 #: api/resources.py:860
 msgid "on every %(days)s"
-msgstr "Tous les % jours"
+msgstr "tous les %(days)s"
 
 #: api/resources.py:866
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -7662,8 +7657,8 @@ msgstr "Êtes-vous sûr de vouloir supprimer ?"
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
 msgstr ""
-"Vous devez configurer la route par défaut (Réseau->Passerelle par défaut "
-"IPv4)"
+"Des pools de stockage sont en cours de resilver/scrub, êtes-vous bien sûr "
+"que vous voulez faire un <strong>ARRÊT SYSTÈME </strong>?"
 
 #: templates/jails/stop.html:3
 msgid "Stop "
@@ -8431,8 +8426,8 @@ msgid ""
 "Consider downloading your configuration before proceeding, <a "
 "href=\"%(url)s\" target=\"_blank\">click here</a>."
 msgstr ""
-"Prévoir le télécharger votre configuration avant de continuer, <a "
-"href=\"%(url)s\" target=\"_blank\"> cliquez ici </ a>."
+"Penser à télécharger votre configuration avant de continuer, <a "
+"href=\"%(url)s\" target=\"_blank\"> cliquer ici </a>."
 
 #: choices.py:171
 msgid "CORE"
@@ -8521,7 +8516,6 @@ msgid "Backup"
 msgstr "Sauvegarde"
 
 #: middleware/notifier.py:3824
-#, fuzzy
 msgid "No carrier"
 msgstr "Pas de porteuse"
 
@@ -8544,7 +8538,7 @@ msgstr "Activer la fonction netwait"
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr "Interface de Gestion Intelligente du Matériel"
+msgstr "IPMI"
 
 # Utilisé à 2 reprises dans storage/views.py sans nécessiter de féminin ni pluriel
 #: network/views.py:66
@@ -9801,9 +9795,8 @@ msgstr ""
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
-#, fuzzy
 msgid "You need to upgrade the volume %s"
-msgstr "Vous devez au préalable créer un volume ZFS !"
+msgstr "Vous devez mettre à jour le volume %s"
 
 #: templates/freeadmin/generic_model_add.html:38
 #: templates/freeadmin/generic_model_edit.html:42
@@ -9887,9 +9880,8 @@ msgstr ""
 "actuellement pas autorisés à cause de problèmes avec CIFS."
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "le redémarrage de NT4 a échoué."
+msgstr "Le redémarrage de NT4 a échoué."
 
 #: directoryservice/forms.py:222
 msgid "Active Directory failed to reload."
@@ -9903,7 +9895,6 @@ msgstr "le redémarrage de LDAP a échoué."
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
 msgstr "Activé"
 
@@ -10031,7 +10022,6 @@ msgstr "Services d'annuaires"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
 msgstr "pub                          "
 
@@ -10055,7 +10045,7 @@ msgstr "nss"
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr "                  rfc2307                "
+msgstr "rfc2307                "
 
 #: choices.py:793
 #, fuzzy
@@ -10064,11 +10054,11 @@ msgstr "Vendredi"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -10080,7 +10070,7 @@ msgstr ""
 #: directoryservice/models.py:444
 #: directoryservice/models.py:464
 msgid "Range Low"
-msgstr ""
+msgstr "Borne inférieure"
 
 #: directoryservice/models.py:138
 #: directoryservice/models.py:178
@@ -10092,7 +10082,7 @@ msgstr ""
 #: directoryservice/models.py:448
 #: directoryservice/models.py:468
 msgid "Range High"
-msgstr ""
+msgstr "Borne supérieure"
 
 #: directoryservice/models.py:142
 #, fuzzy
@@ -10210,9 +10200,8 @@ msgid "NSS Idmap"
 msgstr ""
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "IP du serveur"
+msgstr "Serveur LDAP"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -10222,7 +10211,7 @@ msgstr ""
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
-msgstr ""
+msgstr "autonome"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
@@ -10274,15 +10263,16 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:383
-#, fuzzy
 msgid "LDAP URL"
-msgstr "LDAP"
+msgstr "URL LDAP"
 
 #: directoryservice/models.py:385
 msgid ""
 "When using a stand-alone LDAP server, this parameter specifies the ldap URL "
 "for accessing the LDAP server."
 msgstr ""
+"Lors de l'utilisation d'un serveur LDAP seul, ce paramètre indique l'URL "
+"ldap pour accéder au serveur LDAP."
 
 #: directoryservice/models.py:391
 #, fuzzy
@@ -10334,18 +10324,15 @@ msgid "TDB2 Idmap"
 msgstr ""
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Domain administrator account name"
-msgstr "Nom du compte administrateur du domaine."
+msgstr "Nom du compte administrateur du domaine"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
-msgstr "Mot de passe du compte administrateur du domaine."
+msgstr "Mot de passe du compte administrateur du domaine"
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
 msgstr "Utiliser le domaine par défaut"
 
@@ -10481,9 +10468,8 @@ msgid "Estimated Total Size"
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
-msgstr "Initialiser prudemment"
+msgstr "Assistant de configuration"
 
 #: services/forms.py:302
 #, fuzzy
@@ -10513,14 +10499,12 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
 msgstr "Fichier Keytab pour Kerberos"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Un fichier est requis"
+msgstr "Un fichier de clé est requis."
 
 #: directoryservice/models.py:549
 #, fuzzy
@@ -10537,9 +10521,8 @@ msgid "KDC for this realm."
 msgstr "Quota pour ce volume"
 
 #: directoryservice/models.py:557
-#, fuzzy
 msgid "Admin Server"
-msgstr "Administrateur"
+msgstr "Serveur d'administration"
 
 #: directoryservice/models.py:560
 msgid ""
@@ -10651,7 +10634,7 @@ msgstr "Authentification simple"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr "Authentification en mode \"Empreinte\""
+msgstr "Authentification en mode \"Digest\" (identifiant + mot de passe)"
 
 #: choices.py:799
 msgid "adex"
@@ -10659,7 +10642,7 @@ msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr "Importer une Autorité de Certification existante"
+msgstr "Importer un Certificat d'une Autorité existante"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
@@ -10671,16 +10654,15 @@ msgstr "Créer une Autorité de Certification intermédiaire"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr "Importer une Certification existante"
+msgstr "Importer un Certificat existant"
 
 #: choices.py:818
 msgid "Create an internal Certificate"
-msgstr "Créer une Certification interne"
+msgstr "Créer un Certificat interne"
 
 #: choices.py:819
-#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "TLS sans requête de certificat"
+msgstr "Créer une demande signée de Certificat"
 
 #: choices.py:823
 msgid "512"
@@ -10719,14 +10701,12 @@ msgid "SHA512"
 msgstr "SHA512"
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "Le rechargement du service AFP a échoué."
+msgstr "Le rechargement du service NIS a échoué."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Redémarrage en cours"
+msgstr "Au redémarrage"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -10734,14 +10714,12 @@ msgid "ADEX Idmap"
 msgstr ""
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "Non"
+msgstr "Maintenant"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Description"
+msgstr "Description."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -10777,9 +10755,8 @@ msgid "Samba Schema"
 msgstr ""
 
 #: jails/forms.py:92
-#, fuzzy
 msgid "Template"
-msgstr "Modèles"
+msgstr "Modèle"
 
 #: jails/views.py:492
 #, fuzzy
@@ -10787,9 +10764,8 @@ msgid "Jail Template successfully created."
 msgstr "Modèle de prison modifié avec succès."
 
 #: jails/views.py:512
-#, fuzzy
 msgid "Jail Template successfully edited."
-msgstr "Modèle de prison modifié avec succès."
+msgstr "Modèle de jail modifié avec succès."
 
 #: services/forms.py:1541
 #, fuzzy
@@ -10936,9 +10912,8 @@ msgid "Distinguished Name"
 msgstr "Nom du jeu de données"
 
 #: system/forms.py:163
-#, fuzzy
 msgid "Failed to create a new Boot."
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "Impossible de créer un nouveau Démarrage."
 
 #: system/admin.py:74
 #: system/admin.py:163
@@ -10946,9 +10921,8 @@ msgid "Until"
 msgstr ""
 
 #: system/forms.py:183
-#, fuzzy
 msgid "Failed to rename Boot Environment."
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "Impossible de renommer l'environnement de démarrage."
 
 #: system/forms.py:1028
 #, fuzzy
@@ -11339,9 +11313,8 @@ msgid "Site Name"
 msgstr "Nom du serveur"
 
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "Name of site to use."
-msgstr "Nom du module"
+msgstr "Nom de site à utiliser."
 
 #: services/models.py:263
 msgid ""
@@ -11394,12 +11367,10 @@ msgid ""
 msgstr ""
 
 #: jails/models.py:359
-#, fuzzy
 msgid "IPv4 DHCP"
-msgstr "DHCP"
+msgstr "DHCP IPv4"
 
 #: jails/models.py:383
-#, fuzzy
 msgid "IPv6 Autoconfigure"
 msgstr "Configuration IPv6 automatique"
 
@@ -11582,9 +11553,8 @@ msgid "Check For Update"
 msgstr ""
 
 #: common/system.py:301
-#, fuzzy
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
-msgstr "Échec du montage (%(retcode)s) -> %(output)s"
+msgstr "Échec du démontage (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 #, fuzzy
@@ -11592,9 +11562,8 @@ msgid "Jail name cannot have '.'"
 msgstr "Les noms d'utilisateurs ne peuvent pas contenir d'espaces"
 
 #: jails/forms.py:1070
-#, fuzzy
 msgid "The path could not be umounted %(source)s: %(error)s"
-msgstr "Le chemin n'a pas pu être monté %(source)s: %(error)s"
+msgstr "Le chemin n'a pas pu être démonté %(source)s: %(error)s"
 
 #: jails/utils.py:609
 #, fuzzy
@@ -11727,9 +11696,8 @@ msgid "Datastore not found in the server."
 msgstr ""
 
 #: system/forms.py:2757
-#, fuzzy
 msgid "Failed to connect: %s"
-msgstr "Impossible de créer le jeu de données %(name)s : %(error)s"
+msgstr "Impossible de se connecter: %s"
 
 #: system/models.py:898
 msgid ""
@@ -12018,15 +11986,15 @@ msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr "Sensible"
+msgstr "Sensible à la casse"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr "Insensible"
+msgstr "Pas de différence minuscule/majuscule"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Mélangé"
 
 #: account/models.py:160
 msgid "Microsoft Account"
@@ -12035,11 +12003,10 @@ msgstr "Compte Microsoft"
 #: directoryservice/forms.py:223
 #: services/forms.py:237
 msgid "netbiosname: %s"
-msgstr ""
+msgstr "nom netbios: %s"
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
 msgstr "groupe de travail: %s"
 
@@ -12057,9 +12024,8 @@ msgstr "Paramètres supplémentaires des répertoires utilisateur"
 #: directoryservice/models.py:667
 #: directoryservice/nav.py:131
 #: templates/directoryservice/index.html:21
-#, fuzzy
 msgid "Kerberos Settings"
-msgstr "Fichier Keytab pour Kerberos"
+msgstr "Réglages Kerberos"
 
 #: directoryservice/models.py:1140
 msgid "LDAP Schema type."
@@ -12072,14 +12038,12 @@ msgstr ""
 
 #: jails/admin.py:231
 #: templates/jails/restart.html:3
-#, fuzzy
 msgid "Restart"
-msgstr "Redémarrage en cours..."
+msgstr "Redémarrage"
 
 #: jails/forms.py:219
-#, fuzzy
 msgid "Jail name cannot have '.' or ' '"
-msgstr "Les noms d'utilisateurs ne peuvent pas contenir d'espaces"
+msgstr "Le nom d'un jail ne peut pas contenir '.' or ' '"
 
 #: jails/forms.py:590
 #, fuzzy
@@ -12312,14 +12276,14 @@ msgid "Fiber Channel Targets"
 msgstr ""
 
 #: services/models.py:978
-#, fuzzy
 msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port /"
 ".'. Leaving this field blank causes the service to use its built in default: "
 "checkip.dyndns.org:80 /."
 msgstr ""
-"L'IP du client est détectée en appelant 'url' depuis ce 'ip_server_name:"
-"port'. Défaut à checkip.dyndns.org.80 /."
+"L'IP du client est détectée en appelant 'url' depuis ce 'ip_server_name:port "
+"/.'. Laisser ce champ vide obligera le service à utiliser le service par "
+"défaut: checkip.dyndns.org:80 /."
 
 #: services/models.py:988
 msgid ""
@@ -12456,9 +12420,8 @@ msgstr "Chaque {0} heure(s)"
 #: tasks/models.py:140
 #: tasks/models.py:468
 #: tasks/models.py:658
-#, fuzzy
 msgid "Every {0} days"
-msgstr "Tous les %s jours"
+msgstr "Tous les {0} jours"
 
 #: storage/models.py:1026
 #, fuzzy
@@ -12514,25 +12477,22 @@ msgstr ""
 #: support/utils.py:57
 #: support/utils.py:102
 #: support/utils.py:127
-#, fuzzy
 msgid "Connection failed: %s"
-msgstr "Connexions"
+msgstr "Échec lors de la connexion : %s"
 
 #: support/utils.py:59
 #: support/utils.py:104
 #: support/utils.py:129
-#, fuzzy
 msgid "Connection timed out: %s"
-msgstr "Connexions"
+msgstr "Expiration du délai de connexion: %s"
 
 #: support/utils.py:107
 msgid "Ticket creation failed, try again later."
 msgstr ""
 
 #: support/views.py:88
-#, fuzzy
 msgid "License updated."
-msgstr "%s mis(e) à jour avec succès."
+msgstr "Licence mise à jour."
 
 #: system/forms.py:1027
 #, fuzzy
@@ -12921,6 +12881,7 @@ msgstr ""
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
+"Cela désactive toute forme d'identification, y compris pour les partages."
 
 #: network/forms.py:305
 #, fuzzy
@@ -12969,14 +12930,12 @@ msgid "The NetBIOS name cannot be the same as the workgroup name!"
 msgstr "Le secret du pair ne peut pas être le même que celui de l'utilisateur."
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "Version"
+msgstr "Numéro de version"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "Type de chiffrement"
+msgstr "Algorithme de cryptage"
 
 # Traduction "officielle" microsoft
 #: directoryservice/models.py:747
@@ -13231,9 +13190,8 @@ msgid " vCenter Username"
 msgstr "Nom d'utilisateur"
 
 #: vcp/models.py:76
-#, fuzzy
 msgid " version"
-msgstr "Version"
+msgstr "  Version"
 
 #: vcp/views.py:80
 #, fuzzy
@@ -13303,9 +13261,8 @@ msgid "Fibre Channel Ports have been successfully changed."
 msgstr "Les modifications ont été appliquées avec succès !"
 
 #: directoryservice/models.py:941
-#, fuzzy
 msgid "Allow DNS updates"
-msgstr "Autoriser"
+msgstr "Autoriser les mises à jour DNS"
 
 #: directoryservice/models.py:942
 #, fuzzy
@@ -13317,22 +13274,22 @@ msgid "File size must be a multiple of block size"
 msgstr ""
 
 #: system/alertmods/mpr_firmware.py:34
-#, fuzzy
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s. Please flash controller to P%(drversion)s IT firmware."
 msgstr ""
 "La version du firmware %(fwversion)s ne correspond pas à la version du "
-"driver %(drversion)s pour /dev/mpr%(mpr)s"
+"driver %(drversion)s pour /dev/mpr%(mpr)s. Merci de flasher le contrôleur "
+"avec le firmware IT P%(drversion)s."
 
 #: system/alertmods/mps_firmware.py:35
-#, fuzzy
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
 msgstr ""
 "La version du firmware %(fwversion)s ne correspond pas à la version du "
-"driver %(drversion)s pour /dev/mps%(mps)s"
+"driver %(drversion)s pour /dev/mps%(mps)s. Merci de flasher le contrôleur "
+"avec le firmware IT P%(drversion)s."
 
 #: services/models.py:1574
 #, fuzzy
@@ -13366,4 +13323,40 @@ msgstr ""
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+# Je ne suis pas pour traduire syslog
+#: services/models.py:115
+#, fuzzy
+msgid "Use syslog only"
+msgstr "Utiliser syslog"
+
+#: services/models.py:422
+#, fuzzy
+msgid "Support >16 groups"
+msgstr "Problèmes de support"
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Interfaces"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""

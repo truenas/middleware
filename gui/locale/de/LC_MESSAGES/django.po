@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-10-31 20:52+0000\n"
-"Last-Translator: Tobias <arndttobi@hotmail.de>\n"
+"PO-Revision-Date: 2016-01-29 21:12+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1446324745.0\n"
+"X-POOTLE-MTIME: 1454101950.0\n"
 
 #: choices.py:40
 #, fuzzy
@@ -8247,15 +8247,13 @@ msgstr "Dieses Feld wird benötigt"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
-#, fuzzy
 msgid "Invalid address: %s"
-msgstr "ungültige Firmware"
+msgstr "Ungültige Adresse: %s"
 
 #: freeadmin/forms.py:259
 #: freeadmin/forms.py:283
-#, fuzzy
 msgid "Invalid network: %s"
-msgstr "Prüfsumme ungültig"
+msgstr "Ungültig Netzwerk: %s"
 
 #: freeadmin/navtree.py:576
 #, fuzzy
@@ -12235,9 +12233,8 @@ msgstr "Das System wird heruntergefahren ..."
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week)s Woche"
+msgstr "%(weeks)s Woche"
 
 #: system/views.py:419
 #, fuzzy
@@ -12305,9 +12302,8 @@ msgstr ""
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
-msgstr "Arbeitsgruppe"
+msgstr "Arbeitsgruppe: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
@@ -13628,4 +13624,39 @@ msgstr ""
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr ""
+
+# die alte Frage: "Support" übersetzen oder nicht?
+#: services/models.py:422
+#, fuzzy
+msgid "Support >16 groups"
+msgstr "Supportanfragen"
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Schnittstellen"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""
