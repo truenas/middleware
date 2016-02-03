@@ -1104,3 +1104,37 @@ Manual Update
    :form string sha256: sha256 hex hash
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
+
+
+Debug
+-----
+
+Generate debug
+++++++++++++++
+
+.. http:post:: /api/v1.0/system/debug/
+
+   Returns url to download the tarball.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/debug/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+                "url": "/system/debug/download/"
+        }
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
