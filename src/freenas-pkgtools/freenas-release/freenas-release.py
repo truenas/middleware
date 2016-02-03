@@ -1926,6 +1926,9 @@ def ProcessRelease(source, archive,
         lock.close()
     # And now let's add it to the database
     manifest.SetPackages(pkg_list)
+
+    manifest.SetReboot(force_reboot)
+        
     # If we're given a key file, let's sign it
     if key_data:
         try:
@@ -1939,8 +1942,6 @@ def ProcessRelease(source, archive,
                 pass
             return
 
-    manifest.SetReboot(force_reboot)
-        
     lock = LockArchive(archive, "Saving manifest file", wait = True)
     manifest.StorePath(mani_file.name)
     mani_file.close()
