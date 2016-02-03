@@ -12294,3 +12294,40 @@ msgstr ""
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
+
+#: services/forms.py:1129
+#, fuzzy
+msgid "LUN ID must be a positive integer"
+msgstr "间隔必须为整数。"
+
+#: services/models.py:115
+#, fuzzy
+msgid "Use syslog only"
+msgstr "使用系统日志"
+
+#: services/models.py:422
+#, fuzzy
+msgid "Support >16 groups"
+msgstr "支持问题"
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "网络接口"
+
+#: services/models.py:1578
+#, fuzzy
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr "IP公告和监听。如果不指定，则公告系统的第一个IP地址，但监听所有入站请求。"
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
+msgstr ""

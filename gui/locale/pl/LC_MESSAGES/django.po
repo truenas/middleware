@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2015-01-21 21:44+0000\n"
-"Last-Translator: mskowronski <mskowronski@gmail.com>\n"
+"PO-Revision-Date: 2016-01-15 13:39+0000\n"
+"Last-Translator: str0k3 <piotr.janczuk@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1421876670.0\n"
+"X-POOTLE-MTIME: 1452865186.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7853,12 +7853,12 @@ msgstr "Ostatnia kopia migawkowa"
 
 #: common/system.py:279
 msgid "Mount failed (%(retcode)s) -> %(output)s"
-msgstr ""
+msgstr "Montowanie nie powiodło się (%(retcode)s) -> %(output)s"
 
 #: freeadmin/forms.py:220
 #, fuzzy
 msgid "A file is required"
-msgstr "To pole jest wymagane"
+msgstr "Plik jest wymagany"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
@@ -11831,25 +11831,24 @@ msgid "Changelog"
 msgstr "Zmień"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
@@ -11866,7 +11865,7 @@ msgstr ""
 #: account/models.py:160
 #, fuzzy
 msgid "Microsoft Account"
-msgstr "Konto gościa"
+msgstr "Konto Microsoft"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -13171,4 +13170,37 @@ msgstr ""
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr ""
+
+#: services/models.py:422
+msgid "Support >16 groups"
+msgstr ""
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Interfejsy"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""

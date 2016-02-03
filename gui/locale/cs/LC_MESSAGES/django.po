@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-12-04 12:50+0000\n"
-"Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
+"PO-Revision-Date: 2016-01-29 21:09+0000\n"
+"Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1449233419.0\n"
+"X-POOTLE-MTIME: 1454101761.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12745,7 +12745,7 @@ msgid ""
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
 msgstr ""
 "Verze firmware %(fwversion)s neodpovídá verzi ovladače %(drversion)s pro "
-"zařízení /dev/mpr%(mpr)s. Nahrajte do řadiče firmware verze P%(drversion)s."
+"zařízení /dev/mps%(mps)s. Nahrajte do řadiče firmware verze P%(drversion)s."
 
 #: services/models.py:1574
 msgid "Allow Kerberos Authentication"
@@ -12786,3 +12786,43 @@ msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
 "Aby bylo možné provést změny v nastavení sítě, je třeba dočasně vypnout "
 "přebírání služby v případě selhání."
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+"Je třeba, aby identifikátor – číslo logické jednotky (LUN) byl celé kladné "
+"číslo."
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr "Použít pouze syslog"
+
+#: services/models.py:422
+msgid "Support >16 groups"
+msgstr "Podpora více než 16 skupin"
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+"Zapnutím této předvolby je ignorováno tvrzení NFS klienta, ohledně členství "
+"ve skupině a namísto toho je tato informace zjišťována na serveru."
+
+#: services/models.py:1576
+msgid "Bind Interfaces"
+msgstr "Rozhraní, na které navázat"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+"Rozhraní na kterých nabízet a očekávat spojení. Pokud není zadáno, bude "
+"spojení očekáváno na všech."
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
+msgstr ""
+"Veškerá vaše hesla budou vrácena na výchozí hodnoty, proto je nezapomeňte po "
+"restartu znovu nastavit."

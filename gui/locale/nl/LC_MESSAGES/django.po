@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-12-13 17:56+0000\n"
+"PO-Revision-Date: 2016-01-31 18:24+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1450029383.0\n"
+"X-POOTLE-MTIME: 1454264689.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13108,3 +13108,47 @@ msgstr "Virtueel IP is vereist o dit in te stellen als Kritiek voor Failover"
 msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
 "Failover dient uitgeschakeld te zijn om netwerkwijzigingen uit te voeren."
+
+#: services/forms.py:1129
+#, fuzzy
+msgid "LUN ID must be a positive integer"
+msgstr "Interval moet een geheel getal zijn."
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr "Alleen syslog gebruiken"
+
+#: services/models.py:422
+#, fuzzy
+msgid "Support >16 groups"
+msgstr "Ondersteuningskwesties"
+
+#: services/models.py:424
+#, fuzzy
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+"Deze optie negeert het groepslidmaatschap dat simultaan door de NFS-client "
+"is verstuurd en zoekt naar het groepslidmaatschap op de server."
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Interfaces"
+
+#: services/models.py:1578
+#, fuzzy
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+"IP-adres(sen) voor aankondigingen en waarop wordt geluisterd. Als niets is "
+"opgegeven, wordt het eerste IP-adres van het systeem aangekondigd, maar naar "
+"alle inkomende aanvragen geluisterd."
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
+msgstr ""
+"Al uw wachtwoorden zullen worden geherinitialiseerd, stel deze in na het "
+"herstarten."

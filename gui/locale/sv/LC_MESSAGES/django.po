@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2015-10-14 13:44+0000\n"
+"PO-Revision-Date: 2016-01-13 03:21+0000\n"
 "Last-Translator: Luna <bittin@reimu.nl>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1444830288.0\n"
+"X-POOTLE-MTIME: 1452655263.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Enkel"
+msgstr "Simpel                "
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -10166,7 +10166,7 @@ msgstr "Grundläggande behörighetskontroll"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr "Sammanfattad behörighetskontroll                "
+msgstr "Sammanfattad behörighetskontroll                                "
 
 #: choices.py:799
 msgid "adex"
@@ -12866,4 +12866,38 @@ msgstr ""
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
+msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr ""
+
+#: services/models.py:422
+#, fuzzy
+msgid "Support >16 groups"
+msgstr "Supportärenden"
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Gränssnitt"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""

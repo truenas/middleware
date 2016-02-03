@@ -13386,3 +13386,37 @@ msgstr ""
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
+
+#: services/forms.py:1129
+msgid "LUN ID must be a positive integer"
+msgstr ""
+
+#: services/models.py:115
+msgid "Use syslog only"
+msgstr ""
+
+#: services/models.py:422
+#, fuzzy
+msgid "Support >16 groups"
+msgstr "Θέματα Υποστήριξης"
+
+#: services/models.py:424
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server."
+msgstr ""
+
+#: services/models.py:1576
+#, fuzzy
+msgid "Bind Interfaces"
+msgstr "Διεπαφές"
+
+#: services/models.py:1578
+msgid ""
+"Interfaces to advertise and listens to. If none specified, listen for in all "
+"available addresses."
+msgstr ""
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reseted, make sure to set them after reboot."
+msgstr ""
