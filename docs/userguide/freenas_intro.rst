@@ -238,6 +238,8 @@ that have occurred since 9.3-RELEASE.
 
 * The **-C**, **-D** and **-j** options have been added to :ref:`freenas-debug`.
 
+* The "Target" tab has been added to :ref:`Reporting` and displays iSCSI bandwidth statistics. ARC request statistics have been added to the "ZFS" tab of :ref:`Reporting`. 
+
 * A :ref:`Support Icon` has been added to the top menubar, providing a convenient method for reporting a bug or requesting a new feature.
 
 * The "Help" icon has been replaced by the :ref:`Guide` icon, providing an offline version of the FreeNAS® User Guide (this documentation).
