@@ -5,11 +5,11 @@
 Reporting
 =========
 
-Reporting displays several graphs, as seen in the example in :numref:`Figure %s: Reporting Graphs <reporting1>`. Click the tab for a device type to see its graphs.
+Reporting displays several graphs, as seen in the example in :numref:`Figure %s: Reporting Graphs <reporting3>`. Click the tab for a device type to see its graphs.
 
-.. _reporting1:
+.. _reporting3:
 
-.. figure:: images/reporting.png
+.. figure:: images/reporting3.png
 
 TrueNAS® uses
 `collectd <https://collectd.org/>`_
@@ -37,14 +37,9 @@ to provide reporting statistics. The following collectd plugins are enabled in :
 
 *   `uptime <https://collectd.org/wiki/index.php/Plugin:Uptime>`_: keeps track of the system uptime, the average running time, and the maximum reached uptime.
 
-*   `zfs <https://collectd.org/wiki/index.php/Plugin:ZFS_ARC>`_: shows ARC and L2ARC size and hit rates.
+*   target: contains bandwidth statistics for iSCSI and Fibre Channel ports.
 
-If the TrueNAS® system has Fibre Channel ports and has been licensed for Fibre Channel, an additional "Target" tab will be added to the Reporting screen which contains bandwidth statistics.
-An example is seen in :numref:`Figure %s: Reporting Graphs <reporting2>`.
-
-.. _reporting2:
-
-.. figure:: images/reporting2.png
+*   `zfs <https://collectd.org/wiki/index.php/Plugin:ZFS_ARC>`_: shows ARC size, hit ratio, and requests.
 
 Reporting data is saved, allowing you to view and monitor usage trends over time. By default, reporting data is saved to :file:`/data/rrd_dir.tar.bz2` and
 should be preserved across system upgrades and at shutdown. To instead save this data to the system dataset, check the "Reporting database" box in `System -->
