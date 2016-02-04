@@ -22,7 +22,6 @@ ELECTING_FILE = '/tmp/.failover_electing'
 IMPORTING_FILE = '/tmp/.failover_importing'
 FAILED_FILE = '/tmp/.failover_failed'
 FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
-FAILOVER_FORCE_SEAL = '/tmp/force_seal'
 FAILOVER_JSON = '/tmp/failover.json'
 FAILOVER_MTX = '/tmp/.failover_mtx'
 FAILOVER_OVERRIDE = '/tmp/failover_override'
@@ -105,22 +104,18 @@ def main(ifname, event):
     os.utime(HEARTBEAT_BARRIER, (now, now))
 
     user_override = True if os.path.exists(FAILOVER_OVERRIDE) else False
-    forceseal = True if (
-        os.path.exists(FAILOVER_FORCE_SEAL) and
-        os.stat(FAILOVER_FORCE_SEAL).st_mtime > now
-    ) else False
 
     if event == 'LINK_UP':
-        link_up(fobj, state_file, ifname, event, forceseal, user_override)
+        link_up(fobj, state_file, ifname, event, user_override)
     elif event == 'LINK_DOWN':
-        link_down(fobj, state_file, ifname, event, forceseal, user_override)
+        link_down(fobj, state_file, ifname, event, user_override)
 
 
-def link_up(fobj, state_file, ifname, event, forceseal, user_override):
+def link_up(fobj, state_file, ifname, event, user_override):
 
     log.warn("Entering UP on %s", ifname)
 
-    if not forceseal and not user_override:
+    if not user_override:
         sleeper = fobj['timeout']
         error, output = run("ifconfig lagg0")
         if not error:
@@ -215,9 +210,6 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
 
         if int(status1) == 2 and int(status2) == 0:
             fasttrack = True
-
-    if forceseal:
-        fasttrack = True
 
     log.warn('Starting fenced')
     run('/sbin/camcontrol rescan all')
@@ -374,10 +366,10 @@ def link_up(fobj, state_file, ifname, event, forceseal, user_override):
     log.warn('Failover event complete.')
 
 
-def link_down(fobj, state_file, ifname, event, forceseal, user_override):
+def link_down(fobj, state_file, ifname, event, user_override):
     log.warn("Entering DOWN on %s", ifname)
 
-    if not event == "shutdown" and not forceseal and not user_override:
+    if not event == "shutdown" and not user_override:
         sleeper = fobj['timeout']
         error, output = run("ifconfig lagg0")
         if not error:
