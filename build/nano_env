@@ -132,11 +132,7 @@ fi
 
 # Local directories to install via buildworld and installworld respectively;
 # see LOCAL_DIRS in Makefile.inc1, e.g. tools/regression/netinet6/ip6_sockets .
-if is_truenas ; then
-	: ${NANO_LOCAL_DIRS=share/examples/ses}
-else
-	: ${NANO_LOCAL_DIRS=""}
-fi
+: ${NANO_LOCAL_DIRS=share/examples/ses}
 
 add_nano_modules()
 {
