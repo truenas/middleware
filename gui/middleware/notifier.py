@@ -557,6 +557,8 @@ class notifier:
         self._system('/bin/hostname ""')
         self._system("/usr/sbin/service ix-hostname quietstart")
         self._system("/usr/sbin/service hostname quietstart")
+        self._system("/usr/sbin/service ix-collectd quietstart")
+        self._system("/usr/sbin/service collectd restart")
 
     def _reload_networkgeneral(self):
         self._system('/bin/hostname ""')

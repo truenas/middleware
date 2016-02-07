@@ -66,6 +66,8 @@ generate_collectd()
 {
     local datadir
     local rrdmnt
+    local hostname
+    local graphite
 
     # If there is a failover table remove the rc.conf cache
     # rc.conf.local will run again using the correct collectd_enable
@@ -74,6 +76,9 @@ generate_collectd()
     if [ -n "${failover}" ] && [ ${failover} -gt 0 ]; then
 	rm ${FREENAS_CONFIG_MD5}
     fi
+
+    local hostname=$(hostname)
+    local graphite="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select adv_graphite from system_advanced")"
 
     rrdfile="/data/rrd_dir.tar.bz2"
     basedir="/var/db/collectd"
@@ -109,9 +114,22 @@ generate_collectd()
         fi
     fi
 
+    cd "${rrdmnt}"
+    # Find and remove any stale symlinks to the localhost directory
+    # This can happen when the hostname is changed.
+    for i in $(find . -maxdepth 1 -type l | sed 's|^\./||')
+    do
+	    if [ "${i}" != "$(hostname)" ]; then
+		    rm "${i}"
+	    fi
+    done
+    # If there isn't a symlink hostname -> localhost make it.
+    if ! [ -L "${hostname}" ]; then
+	    ln -s localhost "${hostname}"
+    fi
     cfg="/usr/local/etc/collectd.conf"
     cat << EOF > $cfg
-Hostname "localhost"
+Hostname "${hostname}"
 FQDNLookup true
 BaseDir "${basedir}"
 PIDFile "/var/run/collectd.pid"
@@ -128,6 +146,7 @@ LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
 LoadPlugin network
+LoadPlugin ntpd
 LoadPlugin processes
 LoadPlugin rrdtool
 LoadPlugin swap
@@ -160,6 +179,7 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "exec">
     NotificationExec "nobody" "/usr/local/www/freenasUI/tools/collectd_alert.py"
+    Exec "nobody:nobody" "/bin/echo" "PUTVAL localhost/collectd/ping N:1"
 </Plugin>
 
 <Plugin "interface">
@@ -201,11 +221,33 @@ LoadPlugin zfs_arc_v2
     Mountpoint "/^\/mnt\//"
     FSType "zfs"
 </Plugin>
+
+<Plugin "ntpd">
+    Host "localhost"
+    Port 123
+    ReverseLookups false
+</Plugin>
+EOF
+
+if [ -n "${graphite}" ]; then
+    cat << EOF >> $cfg
+LoadPlugin write_graphite
+<Plugin "write_graphite">
+  <Node "graphite">
+    Host "${graphite}"
+    Port "2003"
+    Protocol "tcp"
+    LogSendErrors true
+    Prefix "servers."
+    Postfix ""
+    StoreRates true
+    AlwaysAppendDS false
+    EscapeCharacter "_"
+  </Node>
+</Plugin>
 EOF
 
 }
-
-
 
 name="ix-collectd"
 start_cmd='generate_collectd'

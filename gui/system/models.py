@@ -327,6 +327,13 @@ class Advanced(Model):
                     "the alert emails are set to (root) set an email address for a user and "
                     "select that user in the dropdown.")
     )
+    adv_graphite = models.CharField(
+        max_length=120,
+        default="",
+        verbose_name=_("Remote Graphite Server Hostname"),
+        help_text=_("A hostname or IP here will be used as the destination to send collectd "
+                    "data to using the graphite plugin to collectd.")
+    )
 
     class Meta:
         verbose_name = _("Advanced")
