@@ -59,15 +59,7 @@ class BootEnv(object):
 
     @property
     def created(self):
-        offset = time.strftime('%z')
-        hours = int(offset[1:3])
-        minutes = int(offset[3:5])
-        delta = timedelta(hours=hours, minutes=minutes)
-        if offset[0] == '+':
-            date = self._created - delta
-        else:
-            date = self._created + delta
-        return date.strftime('%Y-%m-%d %H:%M:%S GMT')
+        return self._created.strftime('%Y-%m-%d %H:%M:%S')
 
 
 class CheckUpdateHandler(object):
