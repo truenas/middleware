@@ -374,6 +374,15 @@ class NFS(Model):
         default=False,
         verbose_name=_("Enable NFSv4"),
     )
+    nfs_srv_v4_v3owner = models.BooleanField(
+        default=False,
+        verbose_name=_("NFSv3 ownership model for NFSv4"),
+        help_text=_("Use the NFSv3 ownership model for NFSv4.  This "
+                    "circumvents the need to sync users and groups "
+                    "between the client and server. Note that this "
+                    "option is mutually incompatible with the > 16 "
+                    "groups option."),
+    )
     nfs_srv_v4_krb = models.BooleanField(
         default=False,
         verbose_name=_("Require Kerberos for NFSv4"),
@@ -422,7 +431,9 @@ class NFS(Model):
         verbose_name=_("Support >16 groups"),
         help_text=_(
             "This option ignores the group membership sent on the wire by the "
-            "NFS client and looks up the group membership on the server."),
+            "NFS client and looks up the group membership on the server.  Note "
+            "that this option is mutually incompatible with the NFSv3 ownership "
+            "model for NFSv4."),
     )
 
     class Meta:
