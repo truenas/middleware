@@ -521,10 +521,17 @@ _gen_conf()
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 ]; then
 			# NFSv4 is enabled
 			echo "nfsv4_server_enable=\"YES\""
-			echo "nfsuserd_enable=\"YES\""
-			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_16 FROM services_nfs")" = 1 ]; then
-				# >16 group support
-				echo "nfsuserd_flags=\"-manage-gids\""
+			if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_v3owner FROM services_nfs")" = 1 ]; then
+				# NFSv3 ownership style for NFSv4 is selected.  Note this is mutually incompatible
+				# with the >16 group support.
+				echo "nfsuserd_enable=\"NO\""
+				sysctl vfs.nfsd.enable_stringtouid=1
+			else
+				echo "nfsuserd_enable=\"YES\""
+				if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_16 FROM services_nfs")" = 1 ]; then
+					# >16 group support
+					echo "nfsuserd_flags=\"-manage-gids\""
+				fi
 			fi
 		else
 			# NFSv4 is not enabled
