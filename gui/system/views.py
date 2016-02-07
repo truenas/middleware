@@ -187,6 +187,9 @@ def bootenv_datagrid_actions(request):
         },
         _('Delete'): {
             'on_click': onclick % (_('Delete'), '_delete_url'),
+            'on_select_after': onselectafter % (
+                'row.data._delete_url === undefined'
+            ),
             'button_name': _('Delete'),
         },
         _('DeleteBulk'): {
@@ -203,7 +206,14 @@ function() {
 }""",
             'on_select_after': """function(evt, actionName, action) {
     var numrows = 0;
-    for(var i in evt.grid.selection) numrows++;
+    for(var i in evt.grid.selection) {
+        var row = evt.grid.row(i);
+        if (row.data._deletebulk_url === undefined) {
+            numrows = 0;
+            break;
+        }
+        numrows++;
+    }
     if(numrows <= 1) {
         query(".grid" + actionName).forEach(function(item, idx) {
             domStyle.set(item, "display", "none");

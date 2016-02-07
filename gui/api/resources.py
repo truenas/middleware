@@ -2992,10 +2992,6 @@ class BootEnvResource(NestedMixin, DojoResource):
             bundle.data['_add_url'] = reverse('system_bootenv_add', kwargs={
                 'source': bundle.obj.name,
             })
-            bundle.data['_delete_url'] = reverse(
-                'system_bootenv_delete', kwargs={'name': bundle.obj.name},
-            )
-            bundle.data['_deletebulk_url'] = reverse('system_bootenv_deletebulk')
             active_humanize = []
             if 'R' not in bundle.obj.active:
                 bundle.data['_activate_url'] = reverse(
@@ -3008,6 +3004,11 @@ class BootEnvResource(NestedMixin, DojoResource):
             if 'N' in bundle.obj.active:
                 active_humanize.append(_('Now'))
             bundle.data['active'] = ', '.join(active_humanize)
+            if len(active_humanize) == 0:
+                bundle.data['_delete_url'] = reverse(
+                    'system_bootenv_delete', kwargs={'name': bundle.obj.name},
+                )
+                bundle.data['_deletebulk_url'] = reverse('system_bootenv_deletebulk')
             bundle.data['_rename_url'] = reverse(
                 'system_bootenv_rename', kwargs={'name': bundle.obj.name},
             )
