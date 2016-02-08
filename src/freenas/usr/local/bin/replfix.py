@@ -81,6 +81,9 @@ def RemoteFix(testonly = False, debug = False):
         remotefs = replication.repl_zfs.__str__()
         recursive = not not replication.repl_userepl
 
+        if not replication.repl_enabled:
+            continue
+                    
         if cipher == 'fast':
             sshcmd = (
                 '/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
