@@ -246,6 +246,7 @@ LoadPlugin write_graphite
   </Node>
 </Plugin>
 EOF
+fi
 
 }
 
