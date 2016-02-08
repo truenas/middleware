@@ -330,6 +330,7 @@ class Advanced(Model):
     adv_graphite = models.CharField(
         max_length=120,
         default="",
+        blank=True,
         verbose_name=_("Remote Graphite Server Hostname"),
         help_text=_("A hostname or IP here will be used as the destination to send collectd "
                     "data to using the graphite plugin to collectd.")
