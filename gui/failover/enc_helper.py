@@ -134,6 +134,7 @@ Available commands are:
   shutdown            Shuts down escrow daemon
   status              Inquiry escrow daemon status
   attachall           Attach volumes with the escrowed passphrase
+  interactive         Sets passphrase securely from the CLI
         """ % sys.argv[0]
         sys.exit(1)
 
@@ -198,7 +199,6 @@ Available commands are:
         passphrase = getpass.getpass()
         if passphrase:
             rv = escrowctl.setkey(passphrase)
-            os.system("/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py carp0 LINK_UP")
     else:
         if cmd == 'synctopeer':
             passphrase = escrowctl.getkey()
