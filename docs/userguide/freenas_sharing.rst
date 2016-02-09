@@ -267,8 +267,7 @@ system, you will need to create a sparsebundle image using
 
 If you receive the message "Time Machine completed a verification of your backups. To improve reliability, Time Machine must create a new backup for you." and
 you do not want to perform another complete backup or lose past backups, follow the instructions in this
-`post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_. Note that this can occur after performing a
-scrub as Time Machine may mistakenly believe that the sparsebundle backup is corrupt.
+`post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_.
 
 .. index:: NFS, Network File System
 .. _Unix (NFS) Shares:
