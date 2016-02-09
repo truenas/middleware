@@ -160,8 +160,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | **Setting**                      | **Value**      | **Description**                                                                                       |
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the system's hostname; it                   |
-|                                  |                | **must**  be different from the                                                                       |
+| NetBIOS Name                     | string         | automatically populated with the system's original hostname; it **must**  be different from the       |
 |                                  |                | *Workgroup* name                                                                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
