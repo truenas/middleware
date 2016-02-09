@@ -244,13 +244,13 @@ incremental backup for the next 24 hours, and then one backup each day, each wee
 **Since the oldest backups are deleted when a Time Machine share becomes full, make sure that the quota size you set is sufficient to hold the desired number of backups.**
 Note that a default installation of Mac OS X is ~21 GB in size.
 
-To configure a quota, go to :menuselection:`Storage --> Volumes` and highlight the entry for the share. In the example shown in :numref:`Figure %s: Setting a Quota <afp9>`, the Time
+To configure a quota, go to :menuselection:`Storage --> Volumes` and highlight the entry for the share. In the example shown in :numref:`Figure %s: Setting a Quota <afp9a>`, the Time
 Machine share name is *backup_user1*. Click the "Edit Options" button for the share, then "Advanced Mode". Input a value in the "Quota for this dataset"
 field then click "Edit Dataset" to save the change. In this example, the Time Machine share is restricted to 200GB.
 
-.. _afp9:
+.. _afp9a:
 
-.. figure:: images/afp9.png
+.. figure:: images/afp9a.png
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in
 :numref:`Figure %s: Configuring Time Machine on Mac OS X Lion <afp5>`. Click "ON" and a pop-up menu should show the TrueNAS® system as a backup option. In our example, it is listed as
