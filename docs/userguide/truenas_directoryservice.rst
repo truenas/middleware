@@ -78,8 +78,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | not connect to the domain controller using this password                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**     |
-|                          |               | as setting an incorrect value                                                                                                              |
+| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the original hostname of the system;                                       |
+|                          |               | **use caution when changing this setting** as setting an incorrect value                                                                   |
 |                          |               | `can corrupt an AD installation <https://forums.freenas.org/index.php?threads/before-you-setup-ad-authentication-please-read.2447/>`_      |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
