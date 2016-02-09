@@ -914,8 +914,8 @@ def debug(request):
                 hostname_a = gc.gc_hostname_b
                 hostname_b = gc.gc_hostname
             with tarfile.open(debug_file, 'w') as tar:
-                tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_b)
-                tar.add(dump, '%s.txz' % hostname_a)
+                tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_a)
+                tar.add(dump, '%s.txz' % hostname_b)
         return render(request, 'system/debug_download.html')
 
 
