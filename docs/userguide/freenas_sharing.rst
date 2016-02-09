@@ -250,7 +250,7 @@ field then click "Edit Dataset" to save the change. In this example, the Time Ma
 
 **Figure 10.1f: Setting a Quota**
 
-.. image:: images/afp9.png
+.. image:: images/afp9a.png
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
