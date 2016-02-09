@@ -672,8 +672,8 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 | Export Read Only             | checkbox      | only available in "Advanced Mode"; prohibits write access to the share                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Browsable to Network Clients | checkbox      | only available in "Advanced Mode"; enables Windows clients to browse the shared directory using Windows     |
-|                              |               | Explorer                                                                                                    |
+| Browsable to Network Clients | checkbox      | only available in "Advanced Mode"; when checked, users see the contents of */homes* (including other users' |
+|                              |               | home directories) and when unchecked, users see only their own home directory                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Export Recycle Bin           | checkbox      | only available in "Advanced Mode"; deleted files are instead moved to a hidden :file:`.recycle` directory   |
