@@ -46,6 +46,11 @@ def run(cmd):
 
 def main(ifname, event):
 
+    if event == 'forcetakeover':
+        forcetakeover = True
+    else:
+        forcetakeover = False
+
     if ifname in ('carp1', 'carp2'):
         sys.exit(1)
 
@@ -70,33 +75,34 @@ def main(ifname, event):
     with open(FAILOVER_JSON, 'r') as f:
         fobj = json.loads(f.read())
 
-    SENTINEL = False
-    for group in fobj['groups']:
-        for interface in fobj['groups'][group]:
-            if ifname == interface:
-                SENTINEL = True
+    if not forcetakeover:
+        SENTINEL = False
+        for group in fobj['groups']:
+            for interface in fobj['groups'][group]:
+                if ifname == interface:
+                    SENTINEL = True
 
-    if not event == "shutdown" and not SENTINEL:
-        log.warn("Ignoring state change on non-critical interface %s.", ifname)
-        sys.exit()
-
-    if not event == "shutdown" and fobj['disabled']:
-        if not fobj['master']:
-            log.warn("Failover disabled.  Assuming backup.")
+        if not event == "shutdown" and not SENTINEL:
+            log.warn("Ignoring state change on non-critical interface %s.", ifname)
             sys.exit()
-        else:
-            masterret = False
-            for vol in fobj['volumes'] + fobj['phrasedvolumes']:
-                ret = os.system("zpool status %s > /dev/null" % vol)
-                if ret:
-                    masterret = True
-                    for group in fobj['groups']:
-                        for interface in fobj['groups'][group]:
-                            run("ifconfig %s advskew 0" % interface)
-                    log.warn("Failover disabled.  Assuming active.")
-                    run("touch %s" % FAILOVER_OVERRIDE)
-            if masterret is False:
+
+        if not event == "shutdown" and fobj['disabled']:
+            if not fobj['master']:
+                log.warn("Failover disabled.  Assuming backup.")
                 sys.exit()
+            else:
+                masterret = False
+                for vol in fobj['volumes'] + fobj['phrasedvolumes']:
+                    ret = os.system("zpool status %s > /dev/null" % vol)
+                    if ret:
+                        masterret = True
+                        for group in fobj['groups']:
+                            for interface in fobj['groups'][group]:
+                                run("ifconfig %s advskew 0" % interface)
+                        log.warn("Failover disabled.  Assuming active.")
+                        run("touch %s" % FAILOVER_OVERRIDE)
+                if masterret is False:
+                    sys.exit()
 
     open(HEARTBEAT_BARRIER, 'a+').close()
 
@@ -105,17 +111,20 @@ def main(ifname, event):
 
     user_override = True if os.path.exists(FAILOVER_OVERRIDE) else False
 
-    if event == 'LINK_UP':
-        link_up(fobj, state_file, ifname, event, user_override)
+    if event == 'LINK_UP' or event == 'forcetakeover':
+        link_up(fobj, state_file, ifname, event, user_override, forcetakeover)
     elif event == 'LINK_DOWN':
         link_down(fobj, state_file, ifname, event, user_override)
 
 
-def link_up(fobj, state_file, ifname, event, user_override):
+def link_up(fobj, state_file, ifname, event, user_override, forcetakeover):
 
-    log.warn("Entering UP on %s", ifname)
+    if forcetakeover:
+        log.warn("Starting force takeover.")
+    else:
+        log.warn("Entering UP on %s", ifname)
 
-    if not user_override:
+    if not user_override and not forcetakeover:
         sleeper = fobj['timeout']
         error, output = run("ifconfig lagg0")
         if not error:
@@ -141,30 +150,33 @@ def link_up(fobj, state_file, ifname, event, user_override):
                     log.warn("%s became %s. Previous event ignored.", ifname, output)
                     sys.exit(0)
 
-    if os.path.exists(FAILOVER_ASSUMED_MASTER):
+    if os.path.exists(FAILOVER_ASSUMED_MASTER) or forcetakeover:
         error, output = run("ifconfig -l")
         for iface in output.split():
             if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
                 run("ifconfig %s advskew 1" % iface)
-        sys.exit(0)
+        if not forcetakeover:
+            sys.exit(0)
 
-    totoutput = 0
-    for group, carpint in fobj['groups'].items():
-        for i in carpint:
-            error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % i)
-            totoutput += int(output)
+    if not forcetakeover:
+        totoutput = 0
+        for group, carpint in fobj['groups'].items():
+            for i in carpint:
+                error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % i)
+                totoutput += int(output)
 
-            if not error and totoutput > 0:
-                log.warn(
-                    'Ignoring UP state on %s because we still have interfaces that are'
-                    ' BACKUP.', ifname
-                )
-                run('echo "$(date), $(hostname), %s assumed master while other '
-                    'interfaces are still in slave mode." | mail -s "Failover WARNING"'
-                    ' root' % ifname)
-                sys.exit(1)
+                if not error and totoutput > 0:
+                    log.warn(
+                        'Ignoring UP state on %s because we still have interfaces that are'
+                        ' BACKUP.', ifname
+                    )
+                    run('echo "$(date), $(hostname), %s assumed master while other '
+                        'interfaces are still in slave mode." | mail -s "Failover WARNING"'
+                        ' root' % ifname)
+                    sys.exit(1)
 
-    run('pkill -f fenced')
+    if not forcetakeover:
+        run('pkill -f fenced')
 
     try:
         os.unlink(FAILED_FILE)
@@ -176,44 +188,45 @@ def link_up(fobj, state_file, ifname, event, user_override):
         pass
     open(ELECTING_FILE, 'w').close()
 
-    was_connected = True if (
-        os.path.exists(HEARTBEAT_STATE) and
-        os.stat(HEARTBEAT_STATE).st_mtime > os.stat(HEARTBEAT_BARRIER).st_mtime
-    ) else False
     fasttrack = False
+    if not forcetakeover:
+        was_connected = True if (
+            os.path.exists(HEARTBEAT_STATE) and
+            os.stat(HEARTBEAT_STATE).st_mtime > os.stat(HEARTBEAT_BARRIER).st_mtime
+        ) else False
 
-    if was_connected:
-        time.sleep(1)
-        error, status0 = run(
-            "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
-        )
-        error, status1 = run(
-            "(ifconfig carp1 | grep carp: | awk '{print $2;}' ; ifconfig carp2"
-            "| grep carp: | awk '{print $2;}')|grep -E '(MASTER|INIT)' | wc -l"
-        )
-        error, status2 = run(
-            "(ifconfig carp1 | grep carp: | awk '{print $2;}' ; ifconfig carp2"
-            "| grep carp: | awk '{print $2;}')|grep BACKUP | wc -l"
-        )
+        if was_connected:
+            time.sleep(1)
+            error, status0 = run(
+                "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
+            )
+            error, status1 = run(
+                "(ifconfig carp1 | grep carp: | awk '{print $2;}' ; ifconfig carp2"
+                "| grep carp: | awk '{print $2;}')|grep -E '(MASTER|INIT)' | wc -l"
+            )
+            error, status2 = run(
+                "(ifconfig carp1 | grep carp: | awk '{print $2;}' ; ifconfig carp2"
+                "| grep carp: | awk '{print $2;}')|grep BACKUP | wc -l"
+            )
 
-        log.warn('Status: %s:%s:%s', status0, status1, status2)
+            log.warn('Status: %s:%s:%s', status0, status1, status2)
 
-        if status0 != 'MASTER':
-            log.warn('Promoted then demoted, quitting.')
-            # Just in case.  Demote ourselves.
-            run('ifconfig %s advskew 202' % ifname)
-            try:
-                os.unlink(ELECTING_FILE)
-            except:
-                pass
-            sys.exit(0)
+            if status0 != 'MASTER':
+                log.warn('Promoted then demoted, quitting.')
+                # Just in case.  Demote ourselves.
+                run('ifconfig %s advskew 202' % ifname)
+                try:
+                    os.unlink(ELECTING_FILE)
+                except:
+                    pass
+                sys.exit(0)
 
-        if int(status1) == 2 and int(status2) == 0:
-            fasttrack = True
+            if int(status1) == 2 and int(status2) == 0:
+                fasttrack = True
 
     log.warn('Starting fenced')
     run('/sbin/camcontrol rescan all')
-    if not user_override and not fasttrack:
+    if not user_override and not fasttrack and not forcetakeover:
         error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced')
     else:
         error, output = run(
