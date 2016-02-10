@@ -61,17 +61,6 @@ generate_smb_config()
 	/usr/local/libexec/nas/generate_smb4_conf.py
 }
 
-backup_secrets_tdb()
-{
-	cp /var/db/samba4/private/secrets.tdb /root/secrets.tdb
-}
-
-
-restore_secrets_tdb()
-{
-	mv /root/secrets.tdb /var/db/samba4/private/secrets.tdb
-}
-
 samba_pre_init()
 {
 	local sambaSID="$(get_sambaSID)"
@@ -82,9 +71,7 @@ samba_pre_init()
 	fi
 
 	set_sambaSID
-	backup_secrets_tdb
 	generate_smb_config
-	restore_secrets_tdb
 }
 
 name="ix-pre-samba"
