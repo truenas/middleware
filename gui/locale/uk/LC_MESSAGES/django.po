@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2016-01-29 21:06+0000\n"
+"PO-Revision-Date: 2016-02-09 10:34+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454101591.0\n"
+"X-POOTLE-MTIME: 1455014086.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12817,7 +12817,7 @@ msgstr ""
 
 #: system/forms.py:2219
 msgid "Something is seriously jacked up."
-msgstr ""
+msgstr "Щось серйозно не в порядку."
 
 #: system/forms.py:2228
 msgid "Not a valid certificate."
@@ -12866,3 +12866,39 @@ msgstr ""
 #: templates/system/config_upload.html:6
 msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr "Всі паролі будуть скинуті, встановіть їх після перезавантаження."
+
+#: services/models.py:379
+msgid "NFSv3 ownership model for NFSv4"
+msgstr "Модель власності NFSv3 для NFSv4"
+
+#: services/models.py:380
+msgid ""
+"Use the NFSv3 ownership model for NFSv4.  This circumvents the need to sync "
+"users and groups between the client and server. Note that this option is "
+"mutually incompatible with the > 16 groups option."
+msgstr ""
+"Використовувати модель власності NFSv3 для NFSv4. Це дозволяє уникнути "
+"необхідності синхронізації користувачів і груп між клієнтом і сервером. "
+"Зверніть увагу, що ця опція взаємно несумісна з опцією підтримки >16 груп."
+
+#: services/models.py:433
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server.  Note that this option is "
+"mutually incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Ця опція ігнорує членство в групі прислане клієнтом NFS і перевіряє членство "
+"в групі на сервері.  Зверніть увагу, що ця опція взаємно несумісна з "
+"використанням моделі власності NFSv3 для NFSv4."
+
+#: system/models.py:333
+msgid "Remote Graphite Server Hostname"
+msgstr "Ім'я віддаленого хоста Graphite"
+
+#: system/models.py:334
+msgid ""
+"A hostname or IP here will be used as the destination to send collectd data "
+"to using the graphite plugin to collectd."
+msgstr ""
+"Ім'я хоста або IP буде використовуватися в якості місця призначення для "
+"відправки даних плагіном graphite для collectd."
