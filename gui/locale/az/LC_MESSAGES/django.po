@@ -12114,3 +12114,31 @@ msgstr ""
 #: templates/system/config_upload.html:6
 msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""
+
+#: services/models.py:379
+msgid "NFSv3 ownership model for NFSv4"
+msgstr ""
+
+#: services/models.py:380
+msgid ""
+"Use the NFSv3 ownership model for NFSv4.  This circumvents the need to sync "
+"users and groups between the client and server. Note that this option is "
+"mutually incompatible with the > 16 groups option."
+msgstr ""
+
+#: services/models.py:433
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server.  Note that this option is "
+"mutually incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+
+#: system/models.py:333
+msgid "Remote Graphite Server Hostname"
+msgstr ""
+
+#: system/models.py:334
+msgid ""
+"A hostname or IP here will be used as the destination to send collectd data "
+"to using the graphite plugin to collectd."
+msgstr ""

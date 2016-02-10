@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-02-06 10:22+0000\n"
+"PO-Revision-Date: 2016-02-09 10:31+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454754131.0\n"
+"X-POOTLE-MTIME: 1455013900.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -13039,3 +13039,40 @@ msgstr ""
 #: templates/system/config_upload.html:6
 msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr "Все пароли будут сброшены, установите их после перезагрузки."
+
+#: services/models.py:379
+msgid "NFSv3 ownership model for NFSv4"
+msgstr "Модель собственности NFSv3 для NFSv4"
+
+#: services/models.py:380
+msgid ""
+"Use the NFSv3 ownership model for NFSv4.  This circumvents the need to sync "
+"users and groups between the client and server. Note that this option is "
+"mutually incompatible with the > 16 groups option."
+msgstr ""
+"Использовать модель собственности NFSv3 для NFSv4. Это позволяет избежать "
+"необходимости синхронизации пользователей и групп между клиентом и сервером. "
+"Обратите внимание, что эта опция взаимно несовместима с опцией поддержки >16 "
+"групп."
+
+#: services/models.py:433
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server.  Note that this option is "
+"mutually incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Эта опция игнорирует членство в группе присланное клиентом NFS и проверяет "
+"на членство в группе на сервере.  Обратите внимание, что эта опция взаимно "
+"несовместима с использованием модели собственности NFSv3 для NFSv4."
+
+#: system/models.py:333
+msgid "Remote Graphite Server Hostname"
+msgstr "Имя удаленного хоста Graphite"
+
+#: system/models.py:334
+msgid ""
+"A hostname or IP here will be used as the destination to send collectd data "
+"to using the graphite plugin to collectd."
+msgstr ""
+"Имя хоста или IP будет использоваться в качестве места назначения для "
+"отправки данных плагином graphite для collectd."

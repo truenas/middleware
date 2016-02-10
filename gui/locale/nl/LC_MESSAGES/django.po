@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-01-31 18:24+0000\n"
+"PO-Revision-Date: 2016-01-31 18:15+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454264689.0\n"
+"X-POOTLE-MTIME: 1454264108.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13152,3 +13152,35 @@ msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""
 "Al uw wachtwoorden zullen worden geherinitialiseerd, stel deze in na het "
 "herstarten."
+
+#: services/models.py:379
+msgid "NFSv3 ownership model for NFSv4"
+msgstr ""
+
+#: services/models.py:380
+msgid ""
+"Use the NFSv3 ownership model for NFSv4.  This circumvents the need to sync "
+"users and groups between the client and server. Note that this option is "
+"mutually incompatible with the > 16 groups option."
+msgstr ""
+
+#: services/models.py:433
+#, fuzzy
+msgid ""
+"This option ignores the group membership sent on the wire by the NFS client "
+"and looks up the group membership on the server.  Note that this option is "
+"mutually incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Deze optie negeert het groepslidmaatschap dat simultaan door de NFS-client "
+"is verstuurd en zoekt naar het groepslidmaatschap op de server."
+
+#: system/models.py:333
+#, fuzzy
+msgid "Remote Graphite Server Hostname"
+msgstr "Naam van externe host"
+
+#: system/models.py:334
+msgid ""
+"A hostname or IP here will be used as the destination to send collectd data "
+"to using the graphite plugin to collectd."
+msgstr ""
