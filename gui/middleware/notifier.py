@@ -451,8 +451,9 @@ class notifier:
         self._system("/usr/sbin/service collectd restart")
 
     def _restart_collectd(self):
+        self._system("/usr/sbin/service collectd stop")
         self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd restart")
+        self._system("/usr/sbin/service collectd start")
 
     def _start_sysctl(self):
         self._system("/usr/sbin/service sysctl start")
@@ -557,8 +558,9 @@ class notifier:
         self._system('/bin/hostname ""')
         self._system("/usr/sbin/service ix-hostname quietstart")
         self._system("/usr/sbin/service hostname quietstart")
+        self._system("/usr/sbin/service collectd stop")
         self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd restart")
+        self._system("/usr/sbin/service collectd start")
 
     def _reload_networkgeneral(self):
         self._system('/bin/hostname ""')

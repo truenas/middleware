@@ -114,9 +114,19 @@ generate_collectd()
         fi
     fi
 
-    cd "${rrdmnt}"
+    if use_rrd_dataset; then
+        cd "${rrdmnt}"
+    else
+        mkdir -p ${datadir}/localhost
+        cd ${datadir}
+    fi
     # Find and remove any stale symlinks to the localhost directory
     # This can happen when the hostname is changed.
+    # Note: This cannot be done while collectd is running or collectd will
+    # notice it's working directory is missing and create it.
+    # At boot time this script runs before collectd is started.
+    # At run time when this script is run collectd is stopped first.
+    find . -maxdepth 1 -type d \! -name localhost -a \! -name . -a \! -name "$(hostname)" -exec rm -rf '{}' \;
     for i in $(find . -maxdepth 1 -type l | sed 's|^\./||')
     do
 	    if [ "${i}" != "$(hostname)" ]; then
@@ -125,6 +135,9 @@ generate_collectd()
     done
     # If there isn't a symlink hostname -> localhost make it.
     if ! [ -L "${hostname}" ]; then
+            if [ -e "${hostname}" ]; then
+                    rm -rf ${hostname}
+            fi
 	    ln -s localhost "${hostname}"
     fi
     cfg="/usr/local/etc/collectd.conf"
