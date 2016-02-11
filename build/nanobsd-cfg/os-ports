@@ -83,6 +83,7 @@ add_port devel/libpthread-stubs
 add_port devel/cdialog
 add_port dns/inadyn-mt
 add_port devel/pcre
+add_port editors/jed
 add_port editors/nano
 add_port ftp/proftpd
 add_port misc/cpuid
@@ -355,7 +356,6 @@ add_port sysutils/htop
 add_port games/cowsay
 
 if [ "${DEBUG}" = 1 ]; then
-	add_port editors/vim-lite
 	add_port misc/py-pexpect
 	add_port devel/ipython OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=ZMQ
 	add_port devel/ctags
