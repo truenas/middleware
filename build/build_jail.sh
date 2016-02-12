@@ -60,7 +60,4 @@ setup_nanobsd_etc
 install_kernel LOG=_.ikj
 
 mkdir -p ${NANO_WORLDDIR}/wrkdirs
-if freenas_legacy_build
-then
-	update_version_env "${FREEBSD_RELEASE_VERSION}"
-fi
+update_version_env "${FREEBSD_RELEASE_VERSION}"
