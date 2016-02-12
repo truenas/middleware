@@ -134,6 +134,8 @@ fi
 # see LOCAL_DIRS in Makefile.inc1, e.g. tools/regression/netinet6/ip6_sockets .
 : ${NANO_LOCAL_DIRS=share/examples/ses}
 
+NANO_MODULES=""
+
 add_nano_modules()
 {
 
