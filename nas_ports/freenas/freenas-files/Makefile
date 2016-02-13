@@ -45,6 +45,7 @@ do-build:
 	${MAKE} -C ${WRKSRC}/freenas-pkgtools all
 
 do-install:
+	mkdir -p ${STAGEDIR}${PREFIX}/compat/linux/proc
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin/freenas-snmp
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc
