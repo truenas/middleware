@@ -66,7 +66,7 @@ def get_sw_version(strip_build_num=False):
                 _VERSION = sys_mani.Sequence()
         if _VERSION is None:
             with open(VERSION_FILE) as fd:
-                _VERSION = fd.read().strip()
+                _VERSION = fd.readline().strip()
     if strip_build_num:
         return _VERSION.split(' ')[0]
     return _VERSION

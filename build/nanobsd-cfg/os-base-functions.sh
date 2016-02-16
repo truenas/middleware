@@ -45,6 +45,7 @@ write_version_file ( )
 	VERSION_FILE=${NANO_WORLDDIR}/etc/version
 	if [ "${SVNREVISION}" = "${REVISION}" ]; then
 		echo "${NANO_NAME}" > "${VERSION_FILE}"
+		echo "${NANO_LABEL}"-"${RELEASE_IDENTIFIER}"-"${BUILD_TIMESTAMP}" >> "${VERSION_FILE}"
 	else
 		echo "${NANO_NAME} (${SVNREVISION})" > "${VERSION_FILE}"
 	fi
