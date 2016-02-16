@@ -152,7 +152,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 
 **Figure 11.3a: Global CIFS Configuration**
 
-.. image:: images/cifs1.png
+.. image:: images/cifs1a.png
 
 **Table 11.3a: Global CIFS Configuration Options**
 
@@ -183,7 +183,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use syslog                       | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
+| Use syslog only                  | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
 |                                  |                | of :file:`/var/log/samba4/log.smbd`                                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+

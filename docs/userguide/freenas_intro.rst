@@ -217,6 +217,8 @@ that have occurred since 9.3-RELEASE.
 
 * The "Home share name" field  has been added to :menuselection:`Services --> AFP`.
 
+* The "Use syslog" checkbox in :menuselection:`Services --> CIFS` has been renamed to "Use syslog only".
+
 * The "DNS Backend" field has been removed from :menuselection:`Services --> Domain Controller` as BIND is not included in FreeNAS®.
 
 * The "Require Kerberos for NFSv4" and "Support>16 groups" checkboxes have been added to :menuselection:`Services --> NFS`.
