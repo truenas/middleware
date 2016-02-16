@@ -112,6 +112,10 @@ that have occurred since 9.3-RELEASE.
 
 * The driver for the Intel X710 10GbE adapter was added.
 
+* The ixgbe driver has been updated to add support for Intel X550 (X552/X557) interfaces.
+
+* Support for Intel I219-V and I219-LM Gigabit Ethernet chipsets has been added.
+
 * The 6Gbps Avago (LSI) HBA driver, `mps(4) <https://www.freebsd.org/cgi/man.cgi?query=mps&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_, has been updated to version 20 and an
   :ref:`Alert` will be issued if there is a version mismatch.
 

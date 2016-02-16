@@ -490,14 +490,14 @@ Table 7.7a summarizes the configurable fields.
 |                   |                |                                                                                                   |
 +===================+================+===================================================================================================+
 | Virtual Interface | string         | use the format *vlanX* where                                                                      |
-|                   |                | *X* is a number representing the vlan interface                                                   |
+|                   |                | *X* is a number representing a vlan interface not currently being used as a parent                |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; note that newly created  |
 |                   |                | :ref:`Link Aggregations` will not appear in the drop-down until the system is rebooted            |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
-| VLAN Tag          | integer        | should match a numeric tag set up in the switched network                                         |
+| VLAN Tag          | integer        | number between 1 and 4095 which matches a numeric tag set up in the switched network              |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Description       | string         | optional                                                                                          |

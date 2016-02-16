@@ -217,9 +217,9 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
-* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
-  **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
-  entry, which will clear the *On reboot* field of the currently activated entry. 
+* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. Since you can not delete an entry that has been activated, this button will
+  not appear for the active boot environment. If you need to delete an entry that you created and it is currently  activated, first activate another entry, which will clear the
+  *On reboot* field of the currently activated entry. 
 
 The buttons above the boot entries can be used to:
 
