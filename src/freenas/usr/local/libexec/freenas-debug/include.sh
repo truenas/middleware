@@ -127,7 +127,7 @@ section_footer()
 freenas_header()
 {
 	if [ -e "$VERSION_FILE" ] ; then
-		section_header "$(cat $VERSION_FILE)"
+		section_header "$(head -1 $VERSION_FILE)"
 	else
 		section_header "no version file found"
 	fi
