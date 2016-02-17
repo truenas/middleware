@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-01-29 21:09+0000\n"
-"Last-Translator: mav <mav@freebsd.org>\n"
+"PO-Revision-Date: 2016-02-12 10:10+0000\n"
+"Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454101761.0\n"
+"X-POOTLE-MTIME: 1455271837.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12829,7 +12829,7 @@ msgstr ""
 
 #: services/models.py:379
 msgid "NFSv3 ownership model for NFSv4"
-msgstr ""
+msgstr "Používat u NFS verze 4 stejný model vlastnictví jako u verze 3."
 
 #: services/models.py:380
 msgid ""
@@ -12837,24 +12837,30 @@ msgid ""
 "users and groups between the client and server. Note that this option is "
 "mutually incompatible with the > 16 groups option."
 msgstr ""
+"Používat u NFS verze 4 stejný model vlastnictví jako u verze 3.Tím není "
+"třeba mít stejné uživatelské účty na straně klienta i serveru.Tuto volbu "
+"nelze použít současně s volbou „více než 16 skupin“."
 
 #: services/models.py:433
-#, fuzzy
 msgid ""
 "This option ignores the group membership sent on the wire by the NFS client "
 "and looks up the group membership on the server.  Note that this option is "
 "mutually incompatible with the NFSv3 ownership model for NFSv4."
 msgstr ""
 "Zapnutím této předvolby je ignorováno tvrzení NFS klienta, ohledně členství "
-"ve skupině a namísto toho je tato informace zjišťována na serveru."
+"ve skupině a namísto toho je tato informace zjišťována na serveru.Tuto volbu "
+"nelze použít současně s „Používat u NFS verze 4 stejný model vlastnictví "
+"jako u verze 3“."
 
 #: system/models.py:333
-#, fuzzy
 msgid "Remote Graphite Server Hostname"
-msgstr "Název stroje protistrany"
+msgstr "Název stroje, na kterém se nachází Graphite"
 
 #: system/models.py:334
 msgid ""
 "A hostname or IP here will be used as the destination to send collectd data "
 "to using the graphite plugin to collectd."
 msgstr ""
+"Název stroje nebo jeho IP adresa, zadaná zde, bude použita jako cíl pro "
+"odesílání údajů z nástroje collectd, s použitím zásuvného modulu graphite do "
+"něj."
