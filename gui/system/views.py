@@ -536,7 +536,7 @@ def config_save(request):
     freenas_build = "UNKNOWN"
     try:
         with open(VERSION_FILE) as d:
-            freenas_build = d.read().strip()
+            freenas_build = d.readline().strip()
     except:
         pass
 
