@@ -300,6 +300,9 @@ def main():
     for f in files_to_log:
         try:
             fd = open(f, 'rb')
+            if f == "/etc/version":
+                log['filecontents'][f] = fd.readline()
+                continue
             log['filecontents'][f] = fd.read()
             fd.close()
         except:
