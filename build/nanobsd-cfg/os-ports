@@ -55,7 +55,7 @@ add_port dns/mDNSResponder_nss
 add_port net/mDNSResponder
 add_port textproc/libxml2
 add_port devel/libffi
-add_port archivers/lz4
+add_port archivers/liblz4
 add_port archivers/lzo2
 add_port archivers/pigz
 add_port archivers/plzip
@@ -97,7 +97,7 @@ add_port security/libgpg-error
 add_port security/libgcrypt
 add_port databases/db48
 add_port security/cyrus-sasl2-gssapi
-add_port net/openldap24-sasl-client WITH_OPENSSL_PORT=y
+add_port net/openldap24-sasl-client WITH_OPENSSL_PORT=y OPTIONS_FILE_SET+=GSSAPI
 add_port net/nss_ldap OPTIONS_FILE_SET+=KERBEROS OPTIONS_FILE_SET+=LCLASS OPTIONS_FILE_SET+=SASL
 add_port net/smbldap-tools
 add_port net/rsync OPTIONS_FILE_SET+=ACL OPTIONS_FILE_SET+=ICONV OPTIONS_FILE_UNSET+=FLAGS
@@ -139,12 +139,12 @@ add_port databases/py-sqlite3
 add_port databases/py-bsddb3
 add_port devel/py-sysctl
 add_port www/py-flup
-add_port www/py-django OPTIONS_FILE_SET+=FASTCGI
+add_port www/py-django16 OPTIONS_FILE_SET+=FASTCGI
 add_port www/py-dojango
 add_port www/dojo
 add_port databases/py-south
-add_port devel/py-asn1
-add_port devel/py-asn1-modules
+add_port devel/py-pyasn1
+add_port devel/py-pyasn1-modules
 add_port security/openssl
 add_port security/py-openssl
 add_port security/py-pycrypto
@@ -171,7 +171,6 @@ if is_truenas ; then
 	add_port devel/bison
 	add_port devel/libffi
 fi
-add_port misc/gnomehier
 add_port www/py-httplib2
 add_port net/py-oauth2
 add_port sysutils/jailme
@@ -200,7 +199,7 @@ if [ "${REPORTING}" = 1 ]; then
 	add_port x11-fonts/dejavu
 	add_port x11-fonts/xorg-fonts-truetype
 	add_port x11/pixman
-	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB
+	add_port graphics/cairo OPTIONS_FILE_UNSET+=X11 OPTIONS_FILE_UNSET+=XCB OPTIONS_FILE_UNSET+=OPENGL
 	add_port x11-toolkits/pango OPTIONS_FILE_UNSET+=X11
 	add_port devel/icu
 	add_port graphics/graphite2
@@ -228,7 +227,7 @@ if ! is_truenas ; then
 	add_port sysutils/areca-cli
 	add_port sysutils/hptcli
 fi
-add_port net/py-ldap2 OPTIONS_FILE_SET+=SASL
+add_port net/py-ldap OPTIONS_FILE_SET+=SASL
 add_port sysutils/ataidle
 add_port sysutils/gnome_subr
 add_port devel/dbus OPTIONS_FILE_UNSET+=X11
@@ -236,7 +235,6 @@ add_port devel/dbus-glib
 add_port devel/libdaemon
 add_port databases/gdbm
 add_port devel/py-lxml
-add_port textproc/py-xml
 add_port sysutils/dmidecode
 add_port sysutils/graid5
 add_port sysutils/tmux OPTIONS_FILE_SET+=LIBEVENT2
@@ -279,7 +277,7 @@ add_port graphics/jpeg
 add_port www/py-requests
 add_port sysutils/smp_utils
 add_port net/trafshow
-add_port devel/py-parsing
+add_port devel/py-pyparsing
 add_port databases/py-sqlparse
 add_port devel/py-setproctitle
 
@@ -353,7 +351,6 @@ add_port misc/xtail
 add_port security/pam_google_authenticator
 add_port benchmarks/fio
 add_port sysutils/htop
-add_port games/cowsay
 
 if [ "${DEBUG}" = 1 ]; then
 	add_port misc/py-pexpect
