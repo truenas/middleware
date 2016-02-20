@@ -323,6 +323,7 @@ WITHOUT_I4B=true
 WITHOUT_IPFILTER=true
 WITHOUT_IPX=true
 WITHOUT_LIB32=true
+WITH_LIBCPLUSPLUS=true
 WITHOUT_LIBKSE=true
 # Required for proper terminal locale
 #WITHOUT_LOCALES=true
