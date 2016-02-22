@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-01-13 03:21+0000\n"
-"Last-Translator: Luna <bittin@reimu.nl>\n"
+"PO-Revision-Date: 2016-02-21 12:59+0000\n"
+"Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1452655263.0\n"
+"X-POOTLE-MTIME: 1456059544.0\n"
 
 #: choices.py:40
 msgid "Plain"
-msgstr "Simpel                "
+msgstr "Simpel"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -42,7 +42,7 @@ msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr "Automatisk"
+msgstr "Automatiskt"
 
 #: choices.py:54
 msgid "PIO0"
@@ -114,15 +114,15 @@ msgstr "Inaktiverad"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Nivå 1- Minimal strömförbrukning med Standby (spindown)"
+msgstr "Nivå 1 - Minimal strömförbrukning med Standby (spindown)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Nivå 64 - Medel-strömförbrukning med Standby"
+msgstr "Nivå 64 - Medel strömförbrukning med standby"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Nivå 127 - Medel-strömförbrukning med Standby"
+msgstr "Nivå 127 - Medelströmförbrukning med standby"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
@@ -130,7 +130,7 @@ msgstr "Nivå 128 - Minimal strömförbrukning utan Standby (ingen spindown)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Nivå 192 - Medel-strömförbrukning utan Standby"
+msgstr "Nivå 192 - Medel strömförbrukning utan Standby"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
@@ -242,7 +242,7 @@ msgstr "Full"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "Felsök"
+msgstr "Avlusa"
 
 #~ msgid "Default"
 #~ msgstr "Standard"
@@ -290,7 +290,7 @@ msgstr "läs-skriv"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "endast läsning"
+msgstr "skrivskyddad"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
@@ -312,7 +312,7 @@ msgstr "UPS har låg batterinivå"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "UPS körs på batteri"
+msgstr "UPS drivs på batteri"
 
 #: choices.py:255
 msgid "Preferred"
@@ -377,23 +377,23 @@ msgstr "År"
 #: system/models.py:407 system/models.py:432 system/models.py:616
 #: system/models.py:637 system/models.py:703 system/models.py:724
 msgid "Everyday"
-msgstr "Varje dag"
+msgstr "Dagligen"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Varje vald veckodag"
+msgstr "Alla markerade dagar"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr "Endast-läsa"
+msgstr "Skrivskyddad"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Enbart-skrivning"
+msgstr "Lässkyddad"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr "Läs och skriv"
+msgstr "Läs och Skriv"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -422,7 +422,7 @@ msgstr "%(vecka)s vecka"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Aldrig - Kontrollera enheten oavsett vilket strömläge den har"
+msgstr "Aldrig - Kontrollera enheten oavsett vilket strömläge den har."
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
@@ -441,19 +441,19 @@ msgstr ""
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Långt  självtest"
+msgstr "Långt självtest"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Kort Själv-Test"
+msgstr "Kort självtest"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Utökat självtest (enbart  ATA)    "
+msgstr "Utökat självtest (enbart  ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Omedelbart offline-test (enbart ATA)"
+msgstr "Ommedelbart offline-test (enbart ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
@@ -461,7 +461,7 @@ msgstr "Rsync-modul"
 
 #: choices.py:563
 msgid "Rsync over SSH"
-msgstr "Rsynk över SSH"
+msgstr "Rsync över SSH"
 
 #: choices.py:567
 msgid "Push"
@@ -477,7 +477,7 @@ msgstr "Ditt namn kan inte start med \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr "Tecknet $ är ändast tillåten som sista tecken"
+msgstr "Tecknet $ är endast tillåten som sista tecken"
 
 #: account/forms.py:66
 #, python-format
@@ -504,9 +504,7 @@ msgstr ""
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"Detta värde får endast innehålla bokstäver, siffror och följande tecken "
-"@/./+/-/_."
+msgstr "Detta värde får endast innehålla bokstäver, siffror och ./-/_ tecken."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -605,7 +603,7 @@ msgstr "Tillåt repeterande GIDs"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "En grupp med det användarnamnet finns redan."
+msgstr "En grupp med det namnet finns redan."
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
@@ -613,7 +611,7 @@ msgstr "En grupp med detta gid finns redan."
 
 #: account/forms.py:772
 msgid "Member users"
-msgstr "Gruppmedlemmar"
+msgstr "Grupp medlemmar"
 
 #: account/forms.py:852
 msgid "New password"
@@ -621,7 +619,7 @@ msgstr "Nytt lösenord"
 
 #: account/forms.py:856
 msgid "New password confirmation"
-msgstr "Bekräftelse nytt lösenord"
+msgstr "Bekräftelse av nytt lösenord"
 
 #: account/forms.py:887
 msgid "Change root password as well"
@@ -633,7 +631,7 @@ msgstr "Gammalt lösenord"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Ditt gamla lösenord var felaktigt angivet. Ange det igen."
+msgstr "Föregående lösenord var felaktigt inmatat.. Ange det igen."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
@@ -667,7 +665,7 @@ msgstr "Gruppen %s är inbyggd och kan inte tas bort!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr "Användar ID"
+msgstr "Användar-ID"
 
 #: account/models.py:87
 msgid "User &"
@@ -679,7 +677,7 @@ msgstr "Hashat UNIX-lösenord"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Hashad SMB-lösenord"
+msgstr "Hashat SMB-lösenord"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -695,7 +693,7 @@ msgstr "Fullständigt namn"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "E-post"
+msgstr "E-mail"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -753,8 +751,7 @@ msgstr "Gruppen %s är inte giltig."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr ""
-"Sökvägen till extentet måste finnas inuti en volym/dataset-monteringspunkt"
+msgstr "Sökvägen måste finnas inuti en monterbar volym                "
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
@@ -809,7 +806,7 @@ msgstr "%s uppdateringen lyckades."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr "Den här servicen kunde inte starta om."
+msgstr "Tjänsten kunde inte startas om."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
@@ -835,7 +832,7 @@ msgstr "Fel"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "Nätverkskort"
+msgstr "NIC"
 
 #: network/forms.py:87 network/forms.py:100 network/forms.py:394
 #: network/forms.py:410
@@ -917,7 +914,7 @@ msgstr "LAGG Fysiskt nätverkskort"
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Nätverket '%s'  är inte rätt, CIDR förväntas."
+msgstr "Nätverket \"%s\"  är inte rätt, CIDR förväntas."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
@@ -955,11 +952,11 @@ msgstr "Domän"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr "IPv4 Standard-gateway"
+msgstr "IPv4 Standardgateway"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr "IPv6 Standard-gateway"
+msgstr "IPv6 Standardgateway"
 
 #: network/models.py:61
 msgid "Nameserver 1"
@@ -980,7 +977,7 @@ msgstr "Globala inställningar"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Välj ditt nätverkskort"
+msgstr "Välj ditt NIC"
 
 #: network/models.py:91
 msgid "Interface Name"
@@ -988,7 +985,7 @@ msgstr "Gränsnittsnamn"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Namnge ditt nätverkskort."
+msgstr "Namnge ditt NIC."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1008,11 +1005,11 @@ msgstr "IPv4-adress"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
-msgstr "IPv4-nätmask"
+msgstr "IPv4 nätmask"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
-msgstr "Autokonfigurera IPv6"
+msgstr "Auto konfigurera IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
@@ -1021,7 +1018,7 @@ msgstr "När aktiverad, autokonfigurera IPv6 via rtsol(8)."
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr "IPv6-adress"
+msgstr "IPv6-adress                "
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
@@ -1052,7 +1049,7 @@ msgstr "Aliases"
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
 msgid "Virtual Interface"
-msgstr "Virtuella gränssnitt"
+msgstr "Virtuellt gränssnitt"
 
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
@@ -1065,7 +1062,7 @@ msgstr "Fysiskt gränssnitt"
 
 #: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
-msgstr "VLAN-tag"
+msgstr "VLAN Tag"
 
 #: network/models.py:278 network/models.py:392 services/models.py:86
 #: services/models.py:916 storage/models.py:211 storage/models.py:352
@@ -1089,7 +1086,7 @@ msgstr "Protokolltyp"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "Länksammanslagning"
+msgstr "Länk sammanslagning"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
@@ -1108,7 +1105,7 @@ msgstr "Fysiskt nätverkskort"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr "Mål-nät"
+msgstr "Mål-nätverk"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
@@ -1128,11 +1125,11 @@ msgstr "Nätverk"
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
-msgstr "Nätverk sammanställning"
+msgstr "Översikt av nätverk"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr "Skapa Länksammanslagning"
+msgstr "Skapa länksammanslagning"
 
 #: network/nav.py:50
 msgid "View Link Aggregations"
@@ -1325,7 +1322,7 @@ msgstr "Detta fält krävs för \"hemkataloger\"."
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
-msgstr "CIFS tjänsten misslyckades med att starta om."
+msgstr "CIFS tjänsten kunde inte starta om."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1343,7 +1340,7 @@ msgstr "NFS tjänsten kunde inte starta om."
 
 #: services/forms.py:169
 msgid "File Permission"
-msgstr "Filrättigheter"
+msgstr "Filrättighet"
 
 #: services/forms.py:170
 msgid "Directory Permission"
@@ -1434,7 +1431,7 @@ msgstr[1] "Följande emailadresser är inte gilltiga %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
-msgstr "UPS tjänsten misslyckades med att starta om."
+msgstr "UPS tjänsten kunde inte starta om."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
@@ -1469,7 +1466,7 @@ msgstr "För att verifiera, ange samma hemlighet som ovan."
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Källsidans hemlighet. (för ömsesidig CHAP autentisering)"
+msgstr "Källsidans hemlighet (för ömsesidig CHAP autentisering)."
 
 #~ msgid "Initiator Secret (Confirm)"
 #~ msgstr "Käll-hemlighet (verifiera)"
@@ -1496,11 +1493,11 @@ msgstr "Peer användaren är obligatorisk om du har angett en peer hemlighet"
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr "iSCSI-tjänsten kunde inte startas om."
+msgstr "iSCSI-tjänsten kunde inte starta om."
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
-msgstr "LUN finns redan på målet."
+msgstr "LUN finns redan på samma mål."
 
 #: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
@@ -1542,11 +1539,11 @@ msgstr "Detta är inte ett giltigt nätverk"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
-msgstr "Du måste ange en sökväg, inte en katalog."
+msgstr "Du måste specificera en sökväg, inte en katalog."
 
 #: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Du måste ange en fil i ditt volym/dataset."
+msgstr "Du måste specificera en fil i din Volym/dataset."
 
 #: services/forms.py:781
 msgid ""
@@ -1557,7 +1554,7 @@ msgstr ""
 #: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
-msgstr "Detta värde kan vara en storlek i byte eller anges med KB, MB, GB, TB"
+msgstr "Detta värde kan vara storleken i byte eller i Kb, Mb, Gb, Tb"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
@@ -1585,7 +1582,7 @@ msgstr ""
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr "Veriferingsgrupps nummer"
+msgstr "Autentiseringsgrupps nummer"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1605,7 +1602,7 @@ msgstr "Är du säker på att du vill ta bort?"
 
 #: services/forms.py:1147
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "S.M.A.R.T-tjänsten kunde inte starta om."
+msgstr "S.M.A.R.T.-tjänsten kunde inte starta om."
 
 #: services/models.py:51
 msgid "Service"
@@ -1626,13 +1623,13 @@ msgstr "Tjänster"
 
 #: services/models.py:72
 msgid "Authentication Model"
-msgstr "Autentiseringstyp"
+msgstr "Autentiseringsmodell "
 
 #: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Användandet av Active Directory eller LDAP autentisering inaktiverar detta "
+"Användandet av Active Directory eller LDAP autentisering  inaktiverar detta "
 "alternativ"
 
 #: services/models.py:77
@@ -1657,15 +1654,15 @@ msgstr "Server beskrivning. Detta kan oftas lämnas tom."
 
 #: services/models.py:94
 msgid "DOS charset"
-msgstr "DOS teckenuppsättning"
+msgstr "DOS-teckenuppsättning"
 
 #: services/models.py:100
 msgid "UNIX charset"
-msgstr "UNIX teckenuppsättning"
+msgstr "UNIX-teckenuppsättning"
 
 #: services/models.py:106
 msgid "Log level"
-msgstr "Logg nivå"
+msgstr "Logg-nivå"
 
 #: services/models.py:109
 msgid "Local Master"
@@ -1695,7 +1692,7 @@ msgstr ""
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
-msgstr "Filmask"
+msgstr "Fil mask"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
@@ -1705,13 +1702,13 @@ msgstr ""
 
 #: services/models.py:127 services/models.py:1019
 msgid "Directory mask"
-msgstr "Katalog mask"
+msgstr "Katalogmask"
 
 #: services/models.py:129
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
-"Använd detta för att överrida skapande av katalog mask (0777 är standard)."
+"Använd detta för att överrida skapande av katalogmask (0777 är standard)."
 
 #~ msgid "Large RW support"
 #~ msgstr "Stöd för stora RW"
@@ -1725,7 +1722,7 @@ msgstr "Stöd för EA"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr "Stöd för DOS Fil attribut"
+msgstr "Stöd för DOS-filattribut"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
@@ -1746,20 +1743,19 @@ msgstr "Aktivera hemkataloger"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
-msgstr "Detta aktiverar\\inaktiverar hemma kataloger för samba användare."
+msgstr "Aktivera/inaktivera hemkataloger för Samba-användare."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr "Aktivera hemma katalog sökning"
+msgstr "Aktivera visning av hemkataloger"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
-msgstr ""
-"Detta aktiverar\\inaktiverar hemma katalog sökning för samba användare."
+msgstr "Aktivera/inaktivera hemkatalogssökning för Samba-användare."
 
 #: services/models.py:156
 msgid "Home directories"
-msgstr "Hemma kataloger"
+msgstr "Hemkataloger"
 
 #: services/models.py:160
 msgid "Homes auxiliary parameters"
@@ -1787,7 +1783,7 @@ msgstr "Aktivera AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "Detta aktiverar\\inaktiverar stöd för AIO."
+msgstr "Aktivera/inaktivera stöd för AIO."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
@@ -1888,7 +1884,7 @@ msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
-msgstr "Basnamnet"
+msgstr "Basnamn"
 
 #: services/models.py:258
 msgid ""
@@ -1900,7 +1896,7 @@ msgstr ""
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
-msgstr "Upptäckt autentisering metod."
+msgstr "Autentiseringsmetod för Auth"
 
 #: services/models.py:275
 msgid "I/O Timeout"
@@ -1916,7 +1912,7 @@ msgstr "NOPIN-intervall"
 
 #: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr "NOPIN sändningsintervall i sekunder (20 är standard)."
+msgstr "NOPIN-sändningsintervall i sekunder (20 är standard)."
 
 #: services/models.py:287
 msgid "Max. sessions"
@@ -1933,11 +1929,11 @@ msgstr "Max antal anslutningar"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "Maximalt antal anslutningar i varje session (8 är standard)."
+msgstr "Maximalt antal anslutningar i varje session (standard 8)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
-msgstr "Max. förskick R2T."
+msgstr "Maximalt . för-skicka R2T."
 
 #: services/models.py:300
 msgid ""
@@ -1945,11 +1941,11 @@ msgid ""
 "actual number is limited to QueueDepth of the target."
 msgstr ""
 "Maximalt antal för-skickade R2T i varje anslutning (32 som standard). Det "
-"faktiska antalet är begränsad till QueueDepth av målet."
+"faktiska antalet är begränsat till QueueDepth av målet."
 
 #: services/models.py:305
 msgid "MaxOutstandingR2T"
-msgstr "Max utstående R2T"
+msgstr "Max uteblivna R2T."
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
@@ -2062,7 +2058,7 @@ msgstr "Sökväg till omfattning"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr "Sökväg (t.ex. / mnt/sharename/extent/extent0) används som omfattning."
+msgstr "Sökväg (t.ex. /mnt/sharename/extent/extent0) används som omfattning."
 
 #: services/models.py:413
 msgid "Extent size"
@@ -2122,8 +2118,8 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"Initiativtagares rätt till tillträde till iSCSI-målet. Det tar ett namn "
-"eller \"ALL\" för alla initiativtagarna."
+"Initiativtagares rätt till tillträde till iSCSI-målet. Kräver ett namn eller "
+"'ALL' för alla initiativtagarna."
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2134,8 +2130,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"Nätverk behörighet tillträde till iSCSI-mål. Det tar IP eller CIDR-adresser "
-"eller \"alla\" för alla IP-adresser."
+"Nätverksbehörighet till iSCSI-mål. Kräver IP eller CIDR-adresser, eller "
+"'ALL' för alla IP-adresser."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2156,7 +2152,7 @@ msgstr "Peer hemlighet"
 
 #: services/models.py:614
 msgid "Authorized Access"
-msgstr "Godkänd åtkomst"
+msgstr "Behörig åtkomst"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
@@ -2168,7 +2164,7 @@ msgstr "Målnamn"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Bas namnet kommer att bifogas automatiskt när start utan \"iqn.\"."
+msgstr "Basnamn kommer att bifogas automatiskt när start utan 'iqn.'."
 
 #: services/models.py:640
 msgid "Target Alias"
@@ -2352,7 +2348,7 @@ msgstr "Forum"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr "I de flesta fall används \"publik\" här."
+msgstr "I de flesta fall används 'publik' här."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
@@ -2381,7 +2377,7 @@ msgstr "Drivrutinen som används för att kommunicera med din UPS."
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
-msgstr "Seriell- eller USB-port där din UPS är ansluten."
+msgstr "Seriell- eller USB-gränssnittet där din UPS är ansluten."
 
 #: services/models.py:910
 msgid "Auxiliary parameters (ups.conf)"
@@ -2424,7 +2420,7 @@ msgstr "Skicka statusuppdateringar via e-post"
 
 #: services/models.py:945
 msgid "To email"
-msgstr "Till e-post"
+msgstr "Till e-mail"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
@@ -2440,7 +2436,7 @@ msgid ""
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
 "Ärenderad. Du kan använda följande parametrar för substitut: <br /><ul><li>%"
-"d - Date</li><li>%h - Hostname</li></ul>"
+"d - Date</li><li>%h - Hostname</li></ul>                "
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -2457,7 +2453,7 @@ msgstr "Klienter"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
-msgstr "Maximalt antal samtidiga anslutna klienter."
+msgstr "Maximalt antal samtidiga klienter."
 
 #: services/models.py:979
 msgid "Connections"
@@ -2465,7 +2461,8 @@ msgstr "Anslutningar"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "Maximalt antal anslutningar per IP-adress (0 = obegränsat)."
+msgstr ""
+"Maximalt antal anslutningar per IP-adress (0 = obegränsat).                "
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -2485,11 +2482,11 @@ msgstr "Maximal inaktiv tid i sekunder."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr "Tillåt root-inloggning"
+msgstr "Tillåt Root inloggning"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
-msgstr "Tillåt anonym inloggning"
+msgstr "Tillåt Anonym inloggning"
 
 #: services/models.py:1001 services/models.py:1398 sharing/models.py:47
 #: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
@@ -2645,8 +2642,8 @@ msgid ""
 "The directory containing the files you want to publish. The remote host does "
 "not need to pass along the directory as part of the transfer."
 msgstr ""
-"Katalogen som innehåller de filer du vill publicera. Fjärrvärden behöver "
-"inte passera längs katalogen som en del av överföringen."
+"Den katalog som innehåller de filer som du vill publisera. Klienten behöver "
+"inte ange katalogen vid överföring."
 
 #: services/models.py:1117
 msgid "Allow New Files"
@@ -2691,7 +2688,7 @@ msgstr "TFTP"
 
 #: services/models.py:1152 services/models.py:1368
 msgid "TCP Port"
-msgstr "TCP-Port"
+msgstr "TCP-port"
 
 #: services/models.py:1154
 msgid "Alternate TCP port. Default is 22"
@@ -2711,7 +2708,7 @@ msgstr ""
 
 #: services/models.py:1161
 msgid "Allow Password Authentication"
-msgstr "Tillåt lösenords-inloggning"
+msgstr "Tillåt lösenordsautentisering"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
@@ -2907,7 +2904,7 @@ msgstr "Självsignerat certifikat"
 
 #: services/models.py:1347
 msgid "Place the contents of your self signed certificate file here."
-msgstr "Placera innehållet av ditt självsignerade certifikat fil här."
+msgstr "Placera innehållet i ditt självsignerade certifikat här."
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
@@ -4630,7 +4627,7 @@ msgstr "Ett lösenord för att autentisera till fjärrservern"
 
 #: system/models.py:255 templates/system/settings.html:7
 msgid "Email"
-msgstr "E-post"
+msgstr "Email"
 
 #: system/models.py:266
 msgid "Organization"
@@ -4706,7 +4703,7 @@ msgstr "Kommando"
 #: system/models.py:337 system/models.py:489 system/models.py:669
 #: templates/storage/scrub.html:12 templates/system/rsync.html:15
 msgid "Short description"
-msgstr "Kort beskrivning"
+msgstr "Kort Beskrivning"
 
 #: system/models.py:374
 msgid "Cron Job"
@@ -4989,7 +4986,7 @@ msgstr "Ta bort grupp"
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr "Ändra Användare"
+msgstr "Ändra användare"
 
 #~ msgid "Auxiliary Groups"
 #~ msgstr "Hjälpgrupper"
@@ -5361,7 +5358,7 @@ msgstr "Ditt användarnamn och lösenord matchade inte. Försök igen."
 #: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Välkommmen, %(username)s. Tack för att du loggar in."
+msgstr "Välkommmen, %(username)s. Tack för att du loggar in"
 
 #, python-format
 #~ msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
@@ -5376,7 +5373,7 @@ msgstr "Utloggad"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
-msgstr "Du är nu utloggad."
+msgstr "Du är nu utloggad"
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
@@ -5428,7 +5425,7 @@ msgstr "SNMP-inställningar"
 
 #: templates/services/core.html:139
 msgid "S.M.A.R.T. Settings"
-msgstr "S.M.A.R.T-inställningar"
+msgstr "S.M.A.R.T. Inställningar"
 
 #: templates/services/core.html:150
 msgid "SSH Settings"
@@ -5723,7 +5720,7 @@ msgstr "Ändra"
 
 #: templates/storage/permission.html:4
 msgid "Change permission"
-msgstr "Ändra behörigheter"
+msgstr "Ändra rättigheter"
 
 #: templates/storage/permission.html:5
 #, python-format
@@ -5984,7 +5981,7 @@ msgstr "Firmware uppdatering"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr "Startar om..."
+msgstr "Startar om ... "
 
 #: templates/system/config_restore.html:3
 msgid "Are you sure you want to restore to factory config?"
@@ -6367,7 +6364,7 @@ msgstr "Krypterad, ingen lösenfras"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr "Krypterad, med lösenfras"
+msgstr "Krypterad, med lösenord"
 
 #: choices.py:304
 msgid "lz4 (recommended)"
@@ -6375,7 +6372,7 @@ msgstr "lz4 (rekommenderas)"
 
 #: choices.py:309
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (kompabilitetsläge, inte rekommenderat)"
+msgstr "lzjb (gammal, ej rekommenderad)"
 
 #: choices.py:560
 msgid "Verify"
@@ -6387,7 +6384,7 @@ msgstr "9600"
 
 #: choices.py:601
 msgid "19200"
-msgstr "19200"
+msgstr "19200                "
 
 #: choices.py:602
 msgid "38400"
@@ -6468,23 +6465,23 @@ msgstr "WebGUI HTTP Port"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr "SMB_02"
+msgstr "SMB2_02"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr "plzip (bäst komprimering)                "
+msgstr "plzip (bäst komprimering)"
 
 #: choices.py:675
 msgid "Verbose"
@@ -6495,21 +6492,20 @@ msgstr "Detaljerad"
 #: services/models.py:1639
 #: services/models.py:2103
 #: services/models.py:2104
-#, fuzzy
 msgid "Domain Controller"
-msgstr "Namn på domänkontrollanten"
+msgstr "Domänkontrollanten                "
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "data"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "autentisering"
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr "ctrl+!data                                "
+msgstr "ctrl+!data                "
 
 #: choices.py:716
 msgid "auth+!data"
@@ -6532,9 +6528,8 @@ msgstr ""
 #: storage/models.py:745
 #: storage/models.py:755
 #: storage/models.py:772
-#, fuzzy
 msgid "Locked"
-msgstr "Lås användare"
+msgstr "Låst"
 
 # Kan vara: Var 1:a dag, Var 3:e dag osv.
 #: api/resources.py:986
@@ -6549,7 +6544,7 @@ msgstr ""
 #: jails/admin.py:265
 #: jails/models.py:434
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: jails/forms.py:90
 msgid "type"
@@ -6562,7 +6557,7 @@ msgstr ""
 
 #: jails/forms.py:516
 msgid "autostart"
-msgstr ""
+msgstr "starta automatiskt"
 
 #: jails/forms.py:906
 #, fuzzy
@@ -6570,9 +6565,8 @@ msgid "The path could not be mounted %(source)s: %(error)s"
 msgstr "Sökvägen kunde inte monteras"
 
 #: jails/models.py:103
-#, fuzzy
 msgid "IPv4 bridge address"
-msgstr "IPv4 bryggalias"
+msgstr "IPv4 brygg adress"
 
 #: jails/models.py:110
 #, fuzzy
@@ -7444,11 +7438,11 @@ msgstr ""
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
-msgstr ""
+msgstr "SMB2_24"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
@@ -7460,17 +7454,15 @@ msgstr ""
 
 #: choices.py:672
 msgid "Fatal"
-msgstr "Allvarligt                "
+msgstr "Allvarligt"
 
 #: choices.py:677
-#, fuzzy
 msgid "Debug2"
-msgstr "Felsök"
+msgstr "Avlusa2                "
 
 #: choices.py:678
-#, fuzzy
 msgid "Debug3"
-msgstr "Felsök"
+msgstr "Avlusa3                "
 
 #: choices.py:685
 msgid "Auth"
@@ -7485,13 +7477,12 @@ msgid "Local 5"
 msgstr "Lokal användare"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
-msgstr "Nätverkskort"
+msgstr "NIS"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr "ctrl+data                "
+msgstr "ctrl+data"
 
 #: account/forms.py:53
 #, fuzzy
@@ -7503,9 +7494,8 @@ msgid "Passwords do not match"
 msgstr "Lösenorden matchar inte"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Hemkatalog"
+msgstr "Skapa Hemkatalog i"
 
 #: account/models.py:54
 #, fuzzy
@@ -7520,9 +7510,8 @@ msgstr ""
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Sista ögonblicksbild"
+msgstr "Ogiltig ögonblicksbild"
 
 #: common/system.py:279
 msgid "Mount failed (%(retcode)s) -> %(output)s"
@@ -7551,14 +7540,12 @@ msgstr "Ett fel inträffade när unserializing från% (url) s:% (error) s"
 #: jails/forms.py:859
 #: jails/models.py:521
 #: templates/plugins/plugins.html:21
-#, fuzzy
 msgid "Jail"
-msgstr "Fängelse namn"
+msgstr "Jail"
 
 #: jails/admin.py:186
-#, fuzzy
 msgid "Edit Jail"
-msgstr "Redigera Portal"
+msgstr "Redigera Jail"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
@@ -7568,30 +7555,29 @@ msgstr "Uppdatera insticksmodulen"
 
 #: jails/admin.py:200
 msgid "Start"
-msgstr ""
+msgstr "Starta"
 
 #: jails/admin.py:271
 msgid "Instances"
-msgstr ""
+msgstr "Instanser"
 
 #: jails/forms.py:260
 #: jails/utils.py:628
 msgid "Unable to find template!"
-msgstr ""
+msgstr "Kunde inte hitta mallen!"
 
 #: jails/forms.py:518
 #: jails/models.py:196
 msgid "NAT"
-msgstr ""
+msgstr "NAT"
 
 #: jails/forms.py:785
 msgid "Create destination directory if it does not exist"
 msgstr ""
 
 #: jails/models.py:74
-#, fuzzy
 msgid "Jail Name"
-msgstr "Fängelse namn"
+msgstr "Jail namn"
 
 #: jails/models.py:84
 #, fuzzy
@@ -8441,7 +8427,7 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr "KÄRNA"
+msgstr "Kärna                "
 
 #: choices.py:176
 msgid "SMB2"
@@ -8453,15 +8439,15 @@ msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
-msgstr ""
+msgstr "SMB3"
 
 #: choices.py:182
 msgid "SMB3_00"
-msgstr ""
+msgstr "SMB3_00"
 
 #: choices.py:317
 msgid "lz4 (fastest)"
-msgstr "lz4 (snabbast)                "
+msgstr "lz4 (snabbast)"
 
 #: choices.py:686
 msgid "Local 0"
@@ -8489,11 +8475,11 @@ msgstr "Lokal användare"
 
 #: choices.py:700
 msgid "NT4"
-msgstr ""
+msgstr "NT4"
 
 #: choices.py:710
 msgid "!data"
-msgstr ""
+msgstr "!data"
 
 #: choices.py:712
 msgid "ctrl"
@@ -8501,7 +8487,7 @@ msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr "autentisering+data                "
+msgstr "autentisering+data"
 
 #: account/forms.py:534
 #, fuzzy
@@ -8519,14 +8505,12 @@ msgid "Disable password login"
 msgstr "Inaktivera lösenords baserad inloggningar"
 
 #: account/models.py:264
-#, fuzzy
 msgid "Group Membership"
-msgstr "LAGG medlemmar"
+msgstr "Gruppmedlemmar"
 
 #: account/models.py:265
-#, fuzzy
 msgid "Group Memberships"
-msgstr "LAGG medlemmar"
+msgstr "Gruppmedlemmar"
 
 #: freeadmin/navtree.py:611
 #, fuzzy
@@ -8535,28 +8519,25 @@ msgstr "Kunde inte hämta% (url) s:% (error) s"
 
 #: jails/admin.py:89
 #: jails/models.py:183
-#, fuzzy
 msgid "Autostart"
-msgstr "Automatisk"
+msgstr "Starta automatiskt"
 
 #: jails/admin.py:189
 #: jails/nav.py:264
-#, fuzzy
 msgid "Add Storage"
-msgstr "Lagring"
+msgstr "Lägg till Lagring"
 
 #: jails/admin.py:201
 msgid "Stop"
-msgstr ""
+msgstr "Stoppa"
 
 #: jails/forms.py:94
 msgid "vanilla"
 msgstr ""
 
 #: jails/forms.py:486
-#, fuzzy
 msgid "Path does not exist!"
-msgstr "Sökvägen finns inte."
+msgstr "Sökvägen finns inte!"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
@@ -8565,7 +8546,7 @@ msgstr ""
 #: jails/forms.py:517
 #: jails/models.py:192
 msgid "VIMAGE"
-msgstr ""
+msgstr "VIMAGE"
 
 #: jails/forms.py:827
 msgid "This shouldn't happen, but the jail could not be found"
@@ -8577,7 +8558,7 @@ msgstr ""
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr ""
+msgstr "Jails"
 
 #: jails/models.py:91
 #, fuzzy
@@ -9574,9 +9555,8 @@ msgstr "Katalogrättigheter"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Endast-läsa"
+msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
@@ -9584,20 +9564,20 @@ msgstr ""
 
 #: choices.py:789
 msgid "hash"
-msgstr "checksumma"
+msgstr "Checksumma"
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
 #, fuzzy
@@ -9750,9 +9730,8 @@ msgid "NSS Idmap"
 msgstr ""
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "NTP-server"
+msgstr "LDAP-server"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -9762,7 +9741,7 @@ msgstr ""
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
-msgstr ""
+msgstr "fristående"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
@@ -9800,9 +9779,8 @@ msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
 
 #: directoryservice/models.py:369
-#, fuzzy
 msgid "LDAP Domain"
-msgstr "Domän"
+msgstr "LDAP-domän"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -9814,9 +9792,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:383
-#, fuzzy
 msgid "LDAP URL"
-msgstr "LDAP"
+msgstr "LDAP URL"
 
 #: directoryservice/models.py:385
 msgid ""
@@ -10166,7 +10143,7 @@ msgstr "Grundläggande behörighetskontroll"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr "Sammanfattad behörighetskontroll                                "
+msgstr "Sammanfattad behörighetskontroll"
 
 #: choices.py:799
 msgid "adex"
@@ -10174,11 +10151,11 @@ msgstr ""
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr "Importera befintligt auktoritets certifikat (CA)                "
+msgstr "Importera befintligt auktoritets certifikat (CA)"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr "Skapa ett internt auktoritets certifikat (CA)                "
+msgstr "Skapa ett internt auktoritets certifikat (CA)"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
@@ -10216,11 +10193,11 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1"
 
 #: choices.py:831
 msgid "SHA224"
-msgstr ""
+msgstr "SHA224"
 
 #: choices.py:832
 msgid "SHA256"
@@ -10240,9 +10217,8 @@ msgid "NIS failed to reload."
 msgstr "AFP-tjänsten kunde inte startas om."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Starta om"
+msgstr "Vid omstart"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -10250,9 +10226,8 @@ msgid "ADEX Idmap"
 msgstr ""
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "Nej"
+msgstr "Nu"
 
 #: directoryservice/models.py:637
 #, fuzzy
@@ -10958,7 +10933,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 #, fuzzy
@@ -11522,13 +11497,12 @@ msgid "Changelog"
 msgstr "Ändra"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
@@ -11555,20 +11529,18 @@ msgid "Mixed"
 msgstr "Blandat"
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Gästkonto"
+msgstr "Microsoft Konto"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
 msgid "netbiosname: %s"
-msgstr ""
+msgstr "netbiosnamn: %s"
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
-msgstr "Arbetsgrupp"
+msgstr "Arbetsgrupp: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
