@@ -1063,6 +1063,7 @@ Create resource
                 "repl_end": "23:59:00",
                 "repl_remote_dedicateduser": null,
                 "repl_userepl": false,
+                "repl_followdelete": false,
                 "repl_limit": 0,
                 "repl_remote_port": 22,
                 "repl_remote_dedicateduser_enabled": false,
@@ -1088,7 +1089,8 @@ Create resource
    :json string repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
-   :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
+   :json boolean repl_userepl: recursively replicate on remote side
+   :json boolean repl_followdelete: delete stale snapshots on remote system which are no longer stored on host system
    :json string repl_compression: replication stream compression
    :json string repl_status: current status of the replication
    :json integer repl_limit: limit the replication speed in KB/s
@@ -1129,6 +1131,7 @@ Update resource
                 "repl_end": "23:59:00",
                 "repl_remote_dedicateduser": null,
                 "repl_userepl": false,
+                "repl_followdelete": false,
                 "repl_limit": 0,
                 "repl_remote_port": 22,
                 "repl_remote_dedicateduser_enabled": false,
@@ -1154,7 +1157,8 @@ Update resource
    :json string repl_remote_cipher: encryption cipher to use (standard, fast, disabled)
    :json boolean repl_remote_dedicateduser_enabled: use dedicated user to replicate
    :json string repl_remote_dedicateduser: dedicated user to replicate
-   :json boolean repl_userepl: recursively replicate and remove stale snapshot on remote side
+   :json boolean repl_userepl: recursively replicate on remote side
+   :json boolean repl_followdelete: delete stale snapshots on remote system which are no longer stored on host system
    :json string repl_compression: replication stream compression
    :json string repl_status: current status of the replication
    :json integer repl_limit: limit the replication speed in KB/s
