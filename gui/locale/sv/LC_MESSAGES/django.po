@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-02-21 12:59+0000\n"
+"PO-Revision-Date: 2016-02-22 14:23+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1456059544.0\n"
+"X-POOTLE-MTIME: 1456151028.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -316,11 +316,11 @@ msgstr "UPS drivs på batteri"
 
 #: choices.py:255
 msgid "Preferred"
-msgstr "Önskvärd"
+msgstr "Föredras"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr "Tolereras"
+msgstr "Tolererad"
 
 #: choices.py:257
 msgid "Required"
@@ -1610,7 +1610,7 @@ msgstr "Tjänst"
 
 #: services/models.py:52
 msgid "Name of Service, should be auto-generated at build time"
-msgstr "Tjänstnamn, skall autogenereras vid programkompilering"
+msgstr "Tjänstnamn, ska genereras automatiskt vid programkompilering"
 
 #: services/models.py:55
 msgid "Enable Service"
@@ -1650,7 +1650,7 @@ msgstr ""
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
-msgstr "Server beskrivning. Detta kan oftas lämnas tom."
+msgstr "Serverbeskrivning. Detta fält kan oftast lämnas tomt."
 
 #: services/models.py:94
 msgid "DOS charset"
@@ -1688,7 +1688,7 @@ msgstr ""
 "som används för tillgång till tjänster för gästkontot. Alla rättigheter som "
 "användaren har blir tillgängliga för alla som använder gästkontot. Denna "
 "användare måste finnas i lösenordsfilen, men behöver inget giltigt lösenord. "
-"Root användaren kan inte användas som gästkonto."
+"Root-användaren kan inte användas som gästkonto."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
@@ -1863,9 +1863,9 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
-"Ange hur många servrar som ska skapas. det ska finnas tillräckligt för att "
-"hantera maximal nivå av samtidiga föffrågningar från klienter, oftast fyra "
-"till sex stycken."
+"Anger hur många servrar som ska skapas. Det ska finnas tillräckligt för att "
+"kunna hantera maximal nivå av samtidiga förfrågningar från klienter, oftast "
+"fyra till sex stycken."
 
 #~ msgid "Asynchronous mode"
 #~ msgstr "Asynkront läge"
@@ -2436,7 +2436,7 @@ msgid ""
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
 "Ärenderad. Du kan använda följande parametrar för substitut: <br /><ul><li>%"
-"d - Date</li><li>%h - Hostname</li></ul>                "
+"d - Date</li><li>%h - Hostname</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -2461,8 +2461,7 @@ msgstr "Anslutningar"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr ""
-"Maximalt antal anslutningar per IP-adress (0 = obegränsat).                "
+msgstr "Maximalt antal anslutningar per IP-adress (0 = obegränsat)."
 
 #: services/models.py:985
 msgid "Login Attempts"
@@ -3633,8 +3632,7 @@ msgstr "Ange anpassad väg"
 #: storage/forms.py:175
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
-msgstr ""
-"Lämna fältet tomt kommer ge volymen en standard sökväg / mnt/${VOLUME_NAME}"
+msgstr "Tomt fält tomt kommer ge volymen en standardsökväg /mnt/${VOLUME_NAME}"
 
 #: storage/forms.py:233
 msgid ""
@@ -6512,9 +6510,8 @@ msgid "auth+!data"
 msgstr "auth+!data"
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "Bekräfta lösenord"
+msgstr "Bekräfta nytt lösenord"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
@@ -6569,18 +6566,16 @@ msgid "IPv4 bridge address"
 msgstr "IPv4 brygg adress"
 
 #: jails/models.py:110
-#, fuzzy
 msgid "IPv4 bridge netmask"
-msgstr "IPv4 bryggalias"
+msgstr "IPv4 brygg nätmask"
 
 #: jails/models.py:128
-#, fuzzy
 msgid "IPv6 address"
 msgstr "IPv6-adress"
 
 #: jails/models.py:332
 msgid "Jail Root"
-msgstr ""
+msgstr "Jail Root"
 
 #: jails/models.py:333
 msgid "Path where to store jail data"
@@ -6627,18 +6622,16 @@ msgstr ""
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
-msgstr ""
+msgstr "Jail root är inte konfigurerad!"
 
 #: jails/models.py:513
 #: jails/models.py:514
-#, fuzzy
 msgid "Jail Templates"
-msgstr "Fängelse IP-nätmask"
+msgstr "Jail mallar"
 
 #: jails/models.py:533
-#, fuzzy
 msgid "Read-Only"
-msgstr "Endast-läsa"
+msgstr "Skrivskyddad"
 
 #: jails/models.py:537
 #, fuzzy
@@ -6647,7 +6640,7 @@ msgstr "Filsystemstyp"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
-msgstr ""
+msgstr "Lägg till Jail mallar"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
@@ -6664,9 +6657,8 @@ msgid "Failed to create directory %(name)s: %(error)s"
 msgstr "Kunde inte hämta% (url) s:% (error) s"
 
 #: jails/views.py:95
-#, fuzzy
 msgid "Jail successfully edited."
-msgstr "Fängelset har importerats."
+msgstr "Jail har importerats."
 
 #: jails/views.py:135
 #, fuzzy
@@ -6724,7 +6716,6 @@ msgid "Host name data base"
 msgstr ""
 
 #: network/models.py:415
-#, fuzzy
 msgid "LAGG Interface Group"
 msgstr "LAGG gränsnittsgrupp"
 
@@ -7434,7 +7425,7 @@ msgstr ""
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:179
 msgid "SMB2_22"
@@ -7485,7 +7476,6 @@ msgid "ctrl+data"
 msgstr "ctrl+data"
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "Nytt lösenord"
 
@@ -7580,12 +7570,10 @@ msgid "Jail Name"
 msgstr "Jail namn"
 
 #: jails/models.py:84
-#, fuzzy
 msgid "IPv4 address"
-msgstr "IPv4-adress"
+msgstr "IPv4 adress"
 
 #: jails/models.py:141
-#, fuzzy
 msgid "IPv6 aliases"
 msgstr "IPv6 bryggalias"
 
@@ -7611,9 +7599,8 @@ msgstr "IPv6-adress"
 
 #: jails/models.py:377
 #: jails/models.py:378
-#, fuzzy
 msgid "Jails Configuration"
-msgstr "Globala inställningar"
+msgstr "Jails inställningar"
 
 #: jails/models.py:428
 #, fuzzy
@@ -7631,16 +7618,15 @@ msgstr "Fängelset har importerats."
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr ""
+msgstr "Säkerhetskopia"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
 msgstr ""
 
 #: network/admin.py:44
-#, fuzzy
 msgid "IPv4 Addresses"
-msgstr "IPv4-adress"
+msgstr "IPv4-adresser"
 
 #: network/forms.py:138
 msgid "Only one interface can be used for DHCP"
@@ -7653,11 +7639,11 @@ msgstr ""
 #: network/forms.py:189
 #: network/forms.py:698
 msgid "The network %s is already in use by another NIC."
-msgstr ""
+msgstr "Nätverket %s används redan av ett annat NIC."
 
 #: network/forms.py:446
 msgid "You need a domain, e.g. hostname.domain"
-msgstr ""
+msgstr "Du behöver en domän t.e.x värdnamn.domän"
 
 #: network/models.py:83
 msgid ""
@@ -7684,9 +7670,8 @@ msgstr ""
 
 #: plugins/admin.py:59
 #: plugins/admin.py:66
-#, fuzzy
 msgid "Install"
-msgstr "Installerad ..."
+msgstr "Installera"
 
 #: plugins/models.py:102
 #, fuzzy
@@ -7714,9 +7699,8 @@ msgstr "Inga insticksprogram installerad"
 
 #: plugins/views.py:192
 #: plugins/views.py:250
-#, fuzzy
 msgid "Failed to download plugin"
-msgstr "Kan inte radera instickmodul"
+msgstr "Misslyckades med att ladda ner instickmodul"
 
 #: plugins/views.py:224
 #: plugins/views.py:355
@@ -7735,9 +7719,8 @@ msgid "LUN ID already exists."
 msgstr "Denna IP-address används redan"
 
 #: services/forms.py:1561
-#, fuzzy
 msgid "This IP and port are already in use."
-msgstr "Denna IP är redan i bruk"
+msgstr "Denna IP och port är redan i bruk."
 
 #: services/models.py:224
 #, fuzzy
@@ -8561,24 +8544,20 @@ msgid "Jails"
 msgstr "Jails"
 
 #: jails/models.py:91
-#, fuzzy
 msgid "IPv4 netmask"
-msgstr "IPv4-nätmask"
+msgstr "IPv4 nätmask"
 
 #: jails/models.py:97
-#, fuzzy
 msgid "IPv4 aliases"
 msgstr "IPv4 bryggalias"
 
 #: jails/models.py:122
-#, fuzzy
 msgid "IPv4 default gateway"
 msgstr "IPv4 Standard-gateway"
 
 #: jails/models.py:135
-#, fuzzy
 msgid "IPv6 prefix length"
-msgstr "IPv6 Prefix Längd"
+msgstr "IPv6 Prefix längd"
 
 #: jails/models.py:147
 #, fuzzy
@@ -8622,9 +8601,8 @@ msgid "Add Jails"
 msgstr "Lägg till %s"
 
 #: jails/nav.py:100
-#, fuzzy
 msgid "View Jails"
-msgstr "Visa %s"
+msgstr "Visa Jails"
 
 #: jails/nav.py:114
 #, fuzzy
@@ -8635,9 +8613,8 @@ msgstr "Visa fil omfattningar"
 #: plugins/models.py:225
 #: templates/jails/index.html:40
 #: templates/plugins/index.html:20
-#, fuzzy
 msgid "Configuration"
-msgstr "Globala inställningar"
+msgstr "Konfiguration"
 
 #: jails/utils.py:573
 #, fuzzy
@@ -8645,9 +8622,8 @@ msgid "Unable to determine IPv4 for plugin"
 msgstr "Kan inte radera instickmodul"
 
 #: jails/views.py:115
-#, fuzzy
 msgid "Storage successfully added."
-msgstr "Datasetet har lagts till korrekt."
+msgstr "Lagring har lagts till korrekt."
 
 #: jails/views.py:177
 #, fuzzy
@@ -8656,9 +8632,8 @@ msgstr "%s har tagits bort."
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Åtgärd"
+msgstr "Aktiv"
 
 #: middleware/notifier.py:3822
 #, fuzzy
@@ -8682,14 +8657,12 @@ msgid "Media Status"
 msgstr "Status"
 
 #: network/admin.py:49
-#, fuzzy
 msgid "IPv6 Addresses"
-msgstr "IPv6-adress"
+msgstr "IPv6-adresser"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Ändra"
+msgstr "Kanal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
@@ -8705,9 +8678,8 @@ msgid "IPMI failed"
 msgstr ""
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
-msgstr "installera insticksmodul"
+msgstr "Installera insticksmodul"
 
 #: plugins/models.py:103
 #, fuzzy
@@ -8715,9 +8687,8 @@ msgid "Jail where the plugin is installed"
 msgstr "Inga insticksprogram installerad"
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Sidan kunde inte hittas"
+msgstr "jail kunde inte hittas"
 
 #: plugins/views.py:205
 #, fuzzy
@@ -9370,9 +9341,8 @@ msgid "Would you like to run this rsync job now?"
 msgstr "Vill du aktiverar den här tjänsten?"
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Är du säker på att du vill koppla bort?"
+msgstr "Är du säker på att du vill editera detta?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9424,17 +9394,15 @@ msgid "Active Directory failed to reload."
 msgstr "Active Directory-tjänsten kunde inte startas om."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "AFP-tjänsten kunde inte startas om."
+msgstr "LDAP-tjänsten kunde inte startas om."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
-msgstr "Aktiverad"
+msgstr "Aktivera"
 
 #: directoryservice/models.py:295
 #, fuzzy
@@ -9560,7 +9528,7 @@ msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
-msgstr ""
+msgstr "autorid"
 
 #: choices.py:789
 msgid "hash"
@@ -9580,17 +9548,16 @@ msgid "rfc2307"
 msgstr "rfc2307"
 
 #: choices.py:793
-#, fuzzy
 msgid "rid"
-msgstr "Fredag"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -9633,11 +9600,11 @@ msgstr ""
 
 #: directoryservice/models.py:156
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
@@ -9862,9 +9829,8 @@ msgstr "Domänadministratörskontot lösenord."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
-msgstr "Standard"
+msgstr "Använd Standard domän"
 
 #: directoryservice/models.py:563
 #: directoryservice/models.py:702
@@ -9884,9 +9850,8 @@ msgid "Initial Wizard"
 msgstr "Initiator"
 
 #: middleware/notifier.py:2222
-#, fuzzy
 msgid "Failed to create group %s"
-msgstr "Namn på plugin"
+msgstr "Misslyckades med att skapa grupp %s"
 
 #: system/forms.py:256
 #, fuzzy
@@ -10048,7 +10013,7 @@ msgstr "Antal servrar"
 
 #: directoryservice/models.py:552
 msgid "KDC"
-msgstr ""
+msgstr "KDC"
 
 #: directoryservice/models.py:554
 #, fuzzy
@@ -10056,9 +10021,8 @@ msgid "KDC for this realm."
 msgstr "Kvota för denna volym"
 
 #: directoryservice/models.py:557
-#, fuzzy
 msgid "Admin Server"
-msgstr "Admin-användare"
+msgstr "Admin Servrar"
 
 #: directoryservice/models.py:560
 msgid ""
@@ -10067,9 +10031,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Lösenord"
+msgstr "Lösenords Server"
 
 #: directoryservice/models.py:568
 msgid ""
@@ -10147,7 +10110,7 @@ msgstr "Sammanfattad behörighetskontroll"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -10212,9 +10175,8 @@ msgid "SHA512"
 msgstr "SHA512"
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "AFP-tjänsten kunde inte startas om."
+msgstr "NIS-tjänsten kunde inte startas om."
 
 #: api/resources.py:2488
 msgid "On Reboot"
@@ -10230,9 +10192,8 @@ msgid "Now"
 msgstr "Nu"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Beskrivning"
+msgstr "Beskrivande namn."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -10245,9 +10206,8 @@ msgid "FQDN of the global catalog server to use."
 msgstr ""
 
 #: directoryservice/models.py:993
-#, fuzzy
 msgid "SUDO Suffix"
-msgstr "Användare suffix"
+msgstr "SUDO suffix"
 
 #: directoryservice/models.py:996
 #, fuzzy
@@ -10260,16 +10220,15 @@ msgstr ""
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
-msgstr ""
+msgstr "Idmap Backend"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
 msgstr ""
 
 #: jails/forms.py:92
-#, fuzzy
 msgid "Template"
-msgstr "Fängelse IP-nätmask"
+msgstr "Mall"
 
 #: jails/utils.py:706
 msgid "You need to create a ZFS volume to proceed!"
@@ -10892,12 +10851,10 @@ msgid ""
 msgstr ""
 
 #: jails/models.py:359
-#, fuzzy
 msgid "IPv4 DHCP"
-msgstr "DHCP"
+msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
-#, fuzzy
 msgid "IPv6 Autoconfigure"
 msgstr "Autokonfigurera IPv6"
 
@@ -11370,9 +11327,8 @@ msgid "Start the Verification process now?"
 msgstr ""
 
 #: directoryservice/models.py:1099
-#, fuzzy
 msgid "LDAP timeout"
-msgstr "´Timeout"
+msgstr "LDAP timeout"
 
 #: directoryservice/models.py:1100
 msgid "Timeout for LDAP related commands."
@@ -11383,9 +11339,8 @@ msgid "Timeout for LDAP DNS queries."
 msgstr ""
 
 #: directoryservice/models.py:1108
-#, fuzzy
 msgid "These parameters are added to sssd.conf"
-msgstr "Dessa parametrar läggs till ldap.conf."
+msgstr "Dessa parametrar läggs till i sssd.conf"
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
@@ -11567,17 +11522,16 @@ msgstr ""
 #: freeadmin/navtree.py:249
 #: templates/menubar.html:73
 msgid "Guide"
-msgstr ""
+msgstr "Guide"
 
 #: jails/admin.py:231
 #: templates/jails/restart.html:3
-#, fuzzy
 msgid "Restart"
-msgstr "Startar om..."
+msgstr "Omstart"
 
 #: jails/forms.py:219
 msgid "Jail name cannot have '.' or ' '"
-msgstr ""
+msgstr "Jail namn kan inte ha \".\" eller \"'\""
 
 #: jails/forms.py:590
 #, fuzzy
@@ -11595,7 +11549,7 @@ msgstr ""
 
 #: jails/models.py:554
 msgid "mtree"
-msgstr ""
+msgstr "mtree"
 
 #: jails/models.py:555
 msgid "The mtree file for the template"
@@ -11608,9 +11562,8 @@ msgid ""
 msgstr ""
 
 #: jails/nav.py:73
-#, fuzzy
 msgid "Add Jail"
-msgstr "Lägg till %s"
+msgstr "Lägg till Jail"
 
 #: jails/views.py:192
 #, fuzzy
@@ -12449,14 +12402,12 @@ msgid "The NetBIOS name cannot be the same as the workgroup name!"
 msgstr "Jämlikehemligheten kan inte vara densamma som användarhemligheten."
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "Version"
+msgstr "Versionsnummer"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "Krypteringsläge"
+msgstr "Krypteringsalgoritm"
 
 #: directoryservice/models.py:747
 #, fuzzy
@@ -12532,9 +12483,8 @@ msgid "Extent is already in this target."
 msgstr "LUN finns redan på målet."
 
 #: jails/models.py:647
-#, fuzzy
 msgid "Jail Template"
-msgstr "Fängelse IP-nätmask"
+msgstr "Jail Mall"
 
 #: services/models.py:679
 #, fuzzy
