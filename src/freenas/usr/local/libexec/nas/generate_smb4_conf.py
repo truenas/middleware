@@ -5,6 +5,7 @@ import re
 import sys
 import socket
 import string
+import tdb
 import tempfile
 import time
 
@@ -1490,6 +1491,88 @@ def smb4_map_groups():
             notifier().groupmap_add(unixgroup=g, ntgroup=g)
 
 
+def smb4_backup_tdbfile(tdb_src, tdb_dst):
+    try:
+        db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
+
+    except Exception as e:
+        print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
+        return False
+
+    try:
+         db_w = tdb.open(tdb_dst, flags=os.O_RDWR|os.O_CREAT, mode=0600)
+
+    except Exception as e:
+        print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
+        return False
+
+    for key in db_r.iterkeys():
+        try:
+            db_w.transaction_start()
+            db_w[key] = db_r.get(key)
+            db_w.transaction_prepare_commit()
+            db_w.transaction_commit()
+
+        except Exception as e: 
+            print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
+            db_w.transaction_cancel()
+
+    db_r.close()
+    db_w.close()
+
+    return True
+
+
+def smb4_restore_tdbfile(tdb_src, tdb_dst):
+    try:
+        db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
+
+    except Exception as e:
+        print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
+        return False
+
+    try:
+         db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
+
+    except Exception as e:
+        print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
+        return False
+
+    for key in db_r.iterkeys():
+        try:
+            db_w.transaction_start()
+
+            db_w.lock_all()
+            db_w[key] = db_r.get(key)
+            db_w.unlock_all()
+
+            db_w.transaction_prepare_commit()
+            db_w.transaction_commit()
+
+        except Exception as e: 
+            print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
+            db_w.transaction_cancel()
+
+    db_r.close()
+    db_w.close()
+
+    return True
+
+
+def backup_secrets_database():
+    secrets = '/var/db/samba4/private/secrets.tdb'
+    backup = '/root/secrets.tdb'
+
+    smb4_backup_tdbfile(secrets, backup)
+
+
+def restore_secrets_database():
+    secrets = '/var/db/samba4/private/secrets.tdb'
+    backup = '/root/secrets.tdb'
+
+    smb4_restore_tdbfile(backup, secrets)
+
+
 def main():
     smb_conf_path = "/usr/local/etc/smb4.conf"
 
@@ -1497,6 +1580,7 @@ def main():
     smb4_conf = []
     smb4_shares = []
 
+    backup_secrets_database()
     smb4_setup()
 
     old_samba4_datasets = get_old_samba4_datasets()
@@ -1538,6 +1622,7 @@ def main():
     if role == 'member' and activedirectory_enabled() and idmap_backend_rfc2307():
         set_idmap_rfc2307_secret()
 
+    restore_secrets_database()
 
 if __name__ == '__main__':
     main()
