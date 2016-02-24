@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-01-29 21:12+0000\n"
-"Last-Translator: mav <mav@freebsd.org>\n"
+"PO-Revision-Date: 2016-02-23 19:54+0000\n"
+"Last-Translator: Reinhart <mx-6@live.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454101950.0\n"
+"X-POOTLE-MTIME: 1456257275.0\n"
 
 #: choices.py:40
 #, fuzzy
@@ -119,8 +119,9 @@ msgstr "Deaktiviert"
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
 msgstr ""
-"Level 1 - Minimaler Stromverbrauch mit Bereitschaftsmodus (Platten "
-"abschalten)"
+"Level 1 - Minimaler Stromverbrauch mit Bereitschaftsmodus (Platten Drehung "
+"wird abgeschaltet, Leseköpfe gehen in Halteposition, aufwachen aller Platten "
+"benötigt mehr Zeit)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -133,8 +134,8 @@ msgstr "Level 127 - Mittlerer Stromverbrauch mit Bereitschaftsmodus"
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"Level 128 - Minimaler Stromverbrauch ohne Bereitschaftsmodus (Platten nicht "
-"abschalten)"
+"Level 128 - Minimaler Stromverbrauch ohne Bereitschaftsmodus (Platten drehen "
+"weiter)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
@@ -250,12 +251,12 @@ msgstr "Normal"
 # ist in der Kategorie "LOGLEVEL_CHOICES"
 #: choices.py:190
 msgid "Full"
-msgstr "Vollständig"
+msgstr "Voll"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:191
 msgid "Debug"
-msgstr "Debug"
+msgstr "Fehlerbehebung"
 
 #~ msgid "Default"
 #~ msgstr "Standard"
@@ -297,7 +298,7 @@ msgstr "ZFS-Datenträger"
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
 msgid "Disk"
-msgstr "Datenträger"
+msgstr "Laufwerk"
 
 #: choices.py:221
 msgid "read-write"
@@ -370,7 +371,9 @@ msgstr "gzip (schnellste)"
 # die Kompressionsstufe bei ZFS
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr "gzip (beste, langsam)"
+msgstr ""
+"                                    gzip (beste Kompression, langsam)"
+"                                "
 
 #: choices.py:489
 msgid "Hour(s)"
@@ -389,6 +392,7 @@ msgid "Month(s)"
 msgstr "Monat(e)"
 
 #: choices.py:493
+#, fuzzy
 msgid "Year(s)"
 msgstr "Jahr(e)"
 
@@ -404,15 +408,16 @@ msgstr "Jeden ausgewählten Wochentag"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr "nur lesbar"
+msgstr "Nur lesen"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "nur schreibbar"
+msgstr "                  Nur schreiben                "
 
 #: choices.py:506
+#, fuzzy
 msgid "Read and Write"
-msgstr "lesbar und schreibbar"
+msgstr "Lesen und Schreiben"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -441,23 +446,28 @@ msgstr "%(week)s Woche"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Nie - Überprüfe Gerät unabhängig von seinem Leistungsmodus"
+msgstr "Nie - Überprüfe das Laufwerk, unabhängig von seinem Leistungsmodus"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Schlaf - Überprüfe Gerät außer es ist im SCHLAF-Modus"
+msgstr "Schlaf - Überprüfe das Laufwerk, außer es ist im SCHLAF-Modus"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "Standby - Überprüfe Gerät außer es ist im SCHLAF oder STANDBY Modus"
+msgstr ""
+"Standby - Überprüfe das Laufwerk, außer es ist im SCHLAF oder STANDBY Modus"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr "Idle - Überprüfe Gerät außer es ist im SCHLAF, STANDBY oder IDLE Modus"
+msgstr ""
+"Idle - Überprüfe das Laufwerk, außer es ist im SCHLAF, STANDBY oder IDLE "
+"Modus"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Voller Selbsttest"
+msgstr ""
+"                                    Ausführlicher "
+"Selbsttest                                "
 
 #: choices.py:531
 msgid "Short Self-Test"
@@ -469,7 +479,7 @@ msgstr "Übertragungsraten Selbsttest (nur ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "\"Sofort Offline\"-Test (nur ATA)"
+msgstr "                  \"Sofortiger Offline\"-Test (nur ATA)                "
 
 #: choices.py:562
 msgid "Rsync module"
@@ -493,7 +503,7 @@ msgstr "Ihr Name darf nicht mit \"-\" beginnen"
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr "Das Zeichen \"$\" darf nur als das letzte Zeichen verwendet werden"
+msgstr "Das Zeichen $, darf nur am Ende stehen"
 
 #: account/forms.py:66
 #, python-format
@@ -514,8 +524,7 @@ msgstr "Benutzername"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
-"Erforderlich. 16 Zeichen oder weniger. Nur Buchstaben, Zahlen und . / - / _"
+msgstr "Maximal 16 Zeichen, nur Buchstaben, Zahlen und . / - / _"
 
 # Dieser Wert = Dieses Feld?
 #: account/forms.py:226
@@ -590,7 +599,9 @@ msgstr "Dieses Feld wird benötigt"
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
 #: system/forms.py:386
 msgid "The two password fields didn't match."
-msgstr "Die beiden Passwörter stimmen nicht überein."
+msgstr ""
+"                  Erstelle ein beschränktes authorisiertes "
+"Zertifikat                "
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
@@ -952,7 +963,7 @@ msgstr "LAGG physische Netzwerkkarte"
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Kein gültiges Netzwerk: '%s'. Bitte nutzen Sie die CIDR-Notation."
+msgstr "'%s' ist kein gültiges Netzwerk. Bitte nutzen Sie die CIDR-Notation."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
@@ -1753,12 +1764,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Benutzen Sie diese Option, um denjeinigen Benutzernamen (Standard: 'ftp') zu "
-"überschreiben, welcher für den Zugriff auf diejenigen Dienste benutzt wird, "
-"die als Gast bezeichnet sind. Sämtliche Berechtigungen diese Benutzers "
-"werden allen Clients zur Verfügung stehen, die sich mit dem Gast-Dienst "
-"verbinden. Dieser Benutzer muss zwar in der Passwortdatei existieren, "
-"benötigt aber keine gültige Anmeldung."
+"Benutzen Sie diese Option, um den Benutzernamen zu überschreiben   , welcher "
+"für den Zugriff auf den Dienst benutzt wird, der als Gast bezeichnet wird "
+"(Standard: 'ftp'). Sämtliche Berechtigungen dieses Benutzers werden allen "
+"Clients zur Verfügung stehen, die sich mit dem Gast-Dienst anmelden. Dieser "
+"Benutzer muss zwar in der Passwortdatei existieren, benötigt aber kein "
+"Passwort."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
@@ -7019,7 +7030,7 @@ msgstr "Unverschlüsselt"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr "Verschlüsselt, ohne Kennwort                "
+msgstr "Verschlüsselt, ohne Passwort"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
@@ -7031,11 +7042,13 @@ msgstr "lz4 (empfohlen)"
 
 #: choices.py:308
 msgid "zle (runs of zeros)"
-msgstr "zle (Nulldurchläufe komprimieren)"
+msgstr ""
+"                                    zle (Nulldurchläufe)"
+"                                "
 
 #: choices.py:560
 msgid "Verify"
-msgstr "Überprüfen"
+msgstr "                  Überprüfen                "
 
 #: choices.py:600
 msgid "9600"
@@ -7067,7 +7080,7 @@ msgstr "Ausführlich               "
 
 #: choices.py:670
 msgid "Daemon"
-msgstr "Dienst"
+msgstr "                  Dienstprogramm                "
 
 #: choices.py:686
 msgid "NT4"
@@ -7163,14 +7176,13 @@ msgstr "LANMAN2 "
 #: choices.py:175
 #, fuzzy
 msgid "NT1"
-msgstr "NT1"
+msgstr "                                    NT1                                "
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "                  SMB2_02                "
 
 #: choices.py:312
-#, fuzzy
 msgid "lzjb (legacy, not recommended)"
 msgstr "lzjb (veraltet, nicht empfohlen)"
 
@@ -7182,7 +7194,9 @@ msgstr ""
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr "plzip (beste Kompression)"
+msgstr ""
+"                                    plzip (beste Komprimierung)"
+"                                "
 
 # Übersetzung laut Wikipedia Artikel
 #: choices.py:698
@@ -7190,7 +7204,6 @@ msgstr "plzip (beste Kompression)"
 #: services/models.py:1639
 #: services/models.py:2103
 #: services/models.py:2104
-#, fuzzy
 msgid "Domain Controller"
 msgstr "Name des Domänencontrollers"
 
@@ -7204,11 +7217,11 @@ msgstr "                  Authentifizierung                "
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "                  Strg+!Daten                "
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "                  authenfizierung+!Daten                "
 
 #: account/forms.py:58
 #, fuzzy
@@ -8176,23 +8189,22 @@ msgstr "Debug2"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:678
-#, fuzzy
 msgid "Debug3"
-msgstr "Debug3"
+msgstr ""
+"                                    Debug3 (Fehler beheben 3)"
+"                                "
 
 #: choices.py:685
 msgid "Auth"
 msgstr "Authentifizierung"
 
 #: choices.py:688
-#, fuzzy
 msgid "Local 2"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 2"
 
 #: choices.py:691
-#, fuzzy
 msgid "Local 5"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 5"
 
 #: choices.py:701
 #, fuzzy
@@ -8201,7 +8213,7 @@ msgstr "Netzwerkkarte"
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "                  Strg+Daten                "
 
 #: account/forms.py:53
 #, fuzzy
@@ -9182,8 +9194,7 @@ msgstr ""
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
-"                                    Kernel                                "
+msgstr " KERN"
 
 #: choices.py:176
 msgid "SMB2"
@@ -9207,44 +9218,36 @@ msgid "lz4 (fastest)"
 msgstr "lz4 (am schnellsten)"
 
 #: choices.py:686
-#, fuzzy
 msgid "Local 0"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 0"
 
 #: choices.py:687
-#, fuzzy
 msgid "Local 1"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 1"
 
 #: choices.py:689
-#, fuzzy
 msgid "Local 3"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 3"
 
 #: choices.py:690
-#, fuzzy
 msgid "Local 4"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 4"
 
 #: choices.py:692
-#, fuzzy
 msgid "Local 6"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 6"
 
 #: choices.py:693
-#, fuzzy
 msgid "Local 7"
-msgstr "Lokaler Benutzer"
+msgstr "Lokal 7"
 
 #: choices.py:707
-#, fuzzy
 msgid "on"
-msgstr "Keine"
+msgstr "AN"
 
 #: choices.py:708
-#, fuzzy
 msgid "off"
-msgstr "Aus"
+msgstr "AUS"
 
 #: choices.py:710
 msgid "!data"
@@ -9252,11 +9255,11 @@ msgstr "!Datei"
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "Strg"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "                  Authentifizierung+Daten                "
 
 #: account/forms.py:534
 #, fuzzy
@@ -10283,9 +10286,8 @@ msgstr "Verzeichnisberechtigung"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Lesen"
+msgstr "hinzufügen"
 
 #: choices.py:788
 #, fuzzy
@@ -10294,11 +10296,11 @@ msgstr "Automatisch starten"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "                  Prüfsumme                "
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "                  LDAP                "
 
 #: choices.py:791
 msgid "nss"
@@ -10885,13 +10887,17 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
+#, fuzzy
 msgid "Basic Authentication"
 msgstr ""
-"                  Einfache Authentifizierung                                "
+"                                    Einfache "
+"Authentifizierung                                                "
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr "Digest-Authentifizierung"
+msgstr ""
+"                                                      Gesicherte "
+"Authentifizierung                                                "
 
 #: choices.py:799
 msgid "adex"
@@ -10900,10 +10906,14 @@ msgstr ""
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
 msgstr ""
+"                  Importieren Sie ein existierendes authorisiertes "
+"Zertifikat                "
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
 msgstr ""
+"                  Erstellen Sie ein internes authorisiertes "
+"Zertifikat                "
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
@@ -11693,7 +11703,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "                  rc.conf                "
 
 #: sharing/forms.py:94
 #, fuzzy
@@ -12258,7 +12268,6 @@ msgid "Changelog"
 msgstr "Ändern"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
 msgstr "SSD"
 
