@@ -326,26 +326,38 @@ def link_up(fobj, state_file, ifname, event, user_override, forcetakeover):
     log.warn('Volume imports complete.')
     log.warn('Restarting services.')
 
-    run('/usr/sbin/service ix-ldap quietstart')
-    run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
-        ' nfsv4link')
-    run('/usr/sbin/service /etc/rc.d/statd quietstart')
-    run('/usr/sbin/service ix-nfsd quietstart')
-    run('/usr/sbin/service mountd quietrestart')
-    run('/usr/sbin/service nfsd quietrestart')
+    error, output = run('sqlite3 /data/freenas-v1.db'
+                        ' "select ldap_enable from directoryservice_ldap"')
+    if output == "1":
+        run('/usr/sbin/service ix-ldap quietstart')
+    error, output = run("""sqlite3 /data/freenas-v1.db
+                        "select srv_enable from services_services where srv_service = 'nfs'""")
+    if output == "1":
+        run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
+            ' nfsv4link')
+        run('/usr/sbin/service /etc/rc.d/statd quietstart')
+        run('/usr/sbin/service ix-nfsd quietstart')
+        run('/usr/sbin/service mountd quietrestart')
+        run('/usr/sbin/service nfsd quietrestart')
 
     # 0 for Active node
     run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
     run('/usr/sbin/service ix-ssl quietstart')
     run('/usr/sbin/service ix-system quietstart')
-    run('/usr/sbin/service ix-pre-samba quietstart')
-    run('/usr/sbin/service samba_server forcestop')
-    run('/usr/sbin/service samba_server quietstart')
-    run('/usr/sbin/service ix-post-samba quietstart')
-    run('/usr/sbin/service ix-afpd quietstart')
-    run('/usr/sbin/service netatalk forcestop')
-    run('/usr/sbin/service netatalk quietstart')
+    error, output = run("""sqlite3 /data/freenas-v1.db
+                        "select srv_enable from services_services where srv_service = 'cifs'""")
+    if output == "1":
+        run('/usr/sbin/service ix-pre-samba quietstart')
+        run('/usr/sbin/service samba_server forcestop')
+        run('/usr/sbin/service samba_server quietstart')
+        run('/usr/sbin/service ix-post-samba quietstart')
+    error, output = run("""sqlite3 /data/freenas-v1.db
+                        "select srv_enable from services_services where srv_service = 'afp'""")
+    if output == "1":
+        run('/usr/sbin/service ix-afpd quietstart')
+        run('/usr/sbin/service netatalk forcestop')
+        run('/usr/sbin/service netatalk quietstart')
 
     log.warn('Service restarts complete.')
 
