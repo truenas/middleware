@@ -262,6 +262,8 @@ that have occurred since 9.3-RELEASE.
 * The :command:`zfslower.d` DTrace script has been added. This script is useful for determining the cause of latency, where a reasonable latency might be
   10 ms. If you run :command:`dtrace -s zfslower.d 10`, it will display all ZFS operations that take longer than 10ms. If no ZFS operations take longer than 10ms
   but the client is experiencing latency, you know it is not a filesystem issue.
+  
+* The :command:`xdd` command has been removed as it is no longer available as a FreeBSD port.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:

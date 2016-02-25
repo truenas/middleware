@@ -15,8 +15,6 @@ The following utilities can be used for benchmarking and performance testing:
 
 * :ref:`arcstat`: used to gather ZFS ARC statistics
 
-* :ref:`XDD`: a tool for measuring and characterizing disk subsystem I/O
-
 The following utilities are specific to RAID controllers:
 
 * :ref:`tw_cli`:_used to monitor and maintain 3ware RAID controllers
@@ -698,128 +696,6 @@ changes first at the command line using :command:`sysctl`. For example, to disab
 The output will indicate the old value followed by the new value. If the change is not beneficial, change it back to the original value. If the change turns
 out to be beneficial, you can make it permanent by creating a "sysctl" using the instructions in :ref:`Tunables`.
 
-.. index:: XDD
-.. _XDD:
-
-XDD
----
-
-XDD is a utility which provides accurate and detailed measurements of disk I/O performance. This section provides some usage examples.
-
-Type the name of the command without any options to see its usage::
-
- xdd
- Usage: xdd command-line-options
-  -align [target <target#>] <#bytes>
-  -blocksize [target <target#>] <#bytes/block>
-  -combinedout <filename>
-  -createnewfiles [target <target#>]
-  -csvout <filename>
-  -datapattern [target <target#>] <c> |random|sequenced|ascii <asciistring>|hex <hexdigits>|replicate
-  -delay #seconds
-  -deletefile [target <target#>]
-  -deskew
-  -devicefile
-  -dio [target <target#>]
-  -errout <filename>
-  -fullhelp
-  -heartbeat #
-  -id "string" | commandline
-  -kbytes [target <target#>] <#>
-  -lockstep <mastertarget#> <slavetarget#> <time|op|percent|mbytes|kbytes> # <time|op|percent|mbytes|kbytes># <wait|run> <complete|
-					   stop>
-  -lockstepoverlapped
-  -maxall
-  -maxerrors #
-  -maxpri
-  -mbytes [target <target#>] <#>
-  -minall
-  -nobarrier
-  -nomemlock
-  -noproclock
-  -numreqs [target <target#>] <#>
-  -operation [target <target#>] read|write
-  -output <filename>
-  -passes #
-  -passoffset [target <target#>] <#blocks>
-  -preallocate [target <target#>] <#blocks>
-  -processlock
-  -processor target# processor#
-  -queuedepth #cmds
-  -qthreadinfo
-  -randomize [target <target#>]
-  -readafterwrite [target #] trigger <stat|mp> |lag <#> | reader <hostname>|port <#>
-  -reallyverbose
-  -recreatefiles [target <target#>]
-  -reopen [target <target#>]
-  -reportthreshold [target #] <#.#>
-  -reqsize [target <target#>] <#blocks>
-  -roundrobin # or 'all'
-  -runtime #seconds
-  -rwratio [target <target#>] <ratio>
-  -seek [target <target#>] save <filename> |load <filename> |disthist #buckets | seekhist #buckets|sequential|random|range #blocks|
-	stagger|interleave #blocks|seed # | none
-  -setup filename
-  -sgio
-  -sharedmemory [target <target#>]
-  -singleproc #
-  -startdelay [target <target#>]#.#seconds
-  -startoffset [target <target#>] #
-  -starttime #seconds
-  -starttrigger <target#> <target#> <<time|op|percent|mbytes|kbytes> #>
-  -stoptrigger <target#> <target#> <<time|op|percent|mbytes|kbytes> #>
-  -syncio #
-  -syncwrite [target <target#>]
-  -target filename
-  -targetdir [target <target#>] <directory_name>
-  -targetoffset # -targets # filename filename filename... -or- -targets -# filename
-  -targetstartdelay #.#seconds
-  -throttle [target <target#>] <ops|bw|var> <#.#ops | #.#MB/sec | #.#var>
-  -timelimit [target <target#>] <#seconds>
-  -timerinfo
-  -timeserver <host hostname | port # | bounce #>
-  -ts [target <target#>] summary|detailed|wrap|oneshot|size #|append|output <filename>|dump <filename>|triggertime <seconds>|
-      triggerop <op#>
-  -verbose
-  -verify [target <target#>] location|contents
-  -version
-
-Here is an example of a ZFS write test::
-
- xdd –op write –targets 2 /mnt/tank/BIGFILE1 /mnt/tank/BIGFILE2 -blocksize 512 \ -reqsize 128 -mbytes 2048 –verbose –passes 3
- 
-This test will write sequentially from two existing target files, :file:`/mnt/tank/BIGFILE1` and :file:`/mnt/tank/BIGFILE2`. It starts at the beginning of
-each file using a fixed request size of 128 blocks with 512 bytes per block until it has read 2048 MB, at which time it will end the current pass and proceed
-to the next pass. It will do this 3 times and display performance information for each pass. The combined performance of both devices is calculated and
-displayed at the end of the run. Once the test is finished, you can test the read performance by changing the **-op** to
-**read**.
-
-You can also test read or write operations on a specified disk. Replace */dev/ada0* with the device name for the disk you wish to test.
-::
-
- xdd –op read –targets 1 /dev/ada0 –reqsize 128 -mbytes 64 –passes 3 –verbose
-
-If you use the same switches often, create a setup file and refer to it with the **-setup** switch. For example, in a writable location (e.g. volume or
-dataset) create a :file:`xdd.setup` file containing this line::
-
- –reqsize 128 -mbytes 64 –passes 3 –verbose
-
-Now your command would be::
-
- xdd –op read –targets 1 /dev/ada0 -setup xdd.setup
-
-To perform a random I/O test on the specified disk::
-
- xdd –op read –targets 1 /dev/ada0 –reqsize 8 -mbytes 16 –passes 3 –verbose –seek \ random –seek range 4000000
-
-This random I/O test will read from the target device at some random location using a fixed request size of 8 blocks until it has read 16 MB. It will do this
-3 times and display performance information for each pass. Since this is a random I/O pattern, the read requests are distributed over a range of 4,000,000
-blocks. This is useful in constraining the area over which the random locations are chosen from. The same seek locations are used for each pass in order to
-generate reproducible results. In fact, upon each invocation of :command:`xdd` using the same parameters, the same random locations are generated each time.
-This allows the user to change the disk or starting offset and observe the effects. The random locations may be changed from pass to pass within an
-:command:`xdd` run by using the **-randomize** option which generates a new set of locations for each pass. The random locations may be changed from run to
-run using the **-seek seed** option to specify a different random number generation seed value for each invocation of :command:`xdd`.
-
 .. index:: tw_cli
 .. _tw_cli:
 
@@ -980,10 +856,10 @@ an alternative to GNU :command:`screen`. Similar to screen, :command:`tmux` can 
 reattached. Unlike :ref:`Shell`, :command:`tmux` allows you to have access to a command prompt while still providing access to the graphical administration
 screens.
 
-To start a session, simply type :command:`tmux`. As seen in Figure 24.9a, a new session with a single window will open with a status line at the bottom of the
+To start a session, simply type :command:`tmux`. As seen in Figure 24.8a, a new session with a single window will open with a status line at the bottom of the
 screen. This line shows information on the current session and is used to enter interactive commands.
 
-**Figure 24.9a: tmux Session**
+**Figure 24.8a: tmux Session**
 
 .. image:: images/tmux.png
 
