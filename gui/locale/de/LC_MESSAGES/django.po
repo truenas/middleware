@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-02-23 19:54+0000\n"
+"PO-Revision-Date: 2016-02-24 23:18+0000\n"
 "Last-Translator: Reinhart <mx-6@live.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1456257275.0\n"
+"X-POOTLE-MTIME: 1456355922.0\n"
 
 #: choices.py:40
 #, fuzzy
@@ -371,9 +371,7 @@ msgstr "gzip (schnellste)"
 # die Kompressionsstufe bei ZFS
 #: choices.py:295
 msgid "gzip (maximum, slow)"
-msgstr ""
-"                                    gzip (beste Kompression, langsam)"
-"                                "
+msgstr "gzip (beste Kompression, langsam)    "
 
 #: choices.py:489
 msgid "Hour(s)"
@@ -392,7 +390,6 @@ msgid "Month(s)"
 msgstr "Monat(e)"
 
 #: choices.py:493
-#, fuzzy
 msgid "Year(s)"
 msgstr "Jahr(e)"
 
@@ -412,10 +409,9 @@ msgstr "Nur lesen"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "                  Nur schreiben                "
+msgstr "Nur schreiben"
 
 #: choices.py:506
-#, fuzzy
 msgid "Read and Write"
 msgstr "Lesen und Schreiben"
 
@@ -605,8 +601,7 @@ msgstr ""
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr ""
-"Das Home-Verzeichnis muss mit /mnt/ beginnen oder darf nicht existieren."
+msgstr "Erstelle eine Zertifikat Signierungs Anfrage"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
@@ -1725,8 +1720,8 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"Arbeitsgruppe, in der der Server erscheinen soll, wenn von Clients abgefragt "
-"(maximal 15 Zeichen)"
+"Der Server erscheint in dieser Arbeitsgruppe, wenn von Clients abgefragt ("
+"maximal 15 Zeichen)."
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
@@ -1764,9 +1759,9 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Benutzen Sie diese Option, um den Benutzernamen zu überschreiben   , welcher "
-"für den Zugriff auf den Dienst benutzt wird, der als Gast bezeichnet wird "
-"(Standard: 'ftp'). Sämtliche Berechtigungen dieses Benutzers werden allen "
+"Benutzen Sie diese Option, um den Benutzernamen zu überschreiben, welcher "
+"für den Zugriff auf den Dienst benutzt wird, der als Gast bezeichnet wird ("
+"Standard \"nobody\"). Sämtliche Berechtigungen dieses Benutzers werden allen "
 "Clients zur Verfügung stehen, die sich mit dem Gast-Dienst anmelden. Dieser "
 "Benutzer muss zwar in der Passwortdatei existieren, benötigt aber kein "
 "Passwort."
@@ -7042,9 +7037,7 @@ msgstr "lz4 (empfohlen)"
 
 #: choices.py:308
 msgid "zle (runs of zeros)"
-msgstr ""
-"                                    zle (Nulldurchläufe)"
-"                                "
+msgstr "zle (Nulldurchläufe)"
 
 #: choices.py:560
 msgid "Verify"
@@ -7167,20 +7160,19 @@ msgstr "Das System wird heruntergefahren ..."
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr "LANMAN1                "
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
 msgstr "LANMAN2 "
 
 #: choices.py:175
-#, fuzzy
 msgid "NT1"
-msgstr "                                    NT1                                "
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr "                  SMB2_02                "
+msgstr "SMB2_02"
 
 #: choices.py:312
 msgid "lzjb (legacy, not recommended)"
@@ -7188,15 +7180,11 @@ msgstr "lzjb (veraltet, nicht empfohlen)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
-"                                                      pigz (Alleskönner)"
-"                                                "
+msgstr "pigz (Alleskönner)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
-"                                    plzip (beste Komprimierung)"
-"                                "
+msgstr "plzip (beste Komprimierung)"
 
 # Übersetzung laut Wikipedia Artikel
 #: choices.py:698
@@ -7224,9 +7212,8 @@ msgid "auth+!data"
 msgstr "                  authenfizierung+!Daten                "
 
 #: account/forms.py:58
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "Passwort bestätigen"
+msgstr "Neues Passwort bestätigen"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
@@ -7392,9 +7379,8 @@ msgid "None requested"
 msgstr ""
 
 #: network/forms.py:380
-#, fuzzy
 msgid "The IP \"%s\" is not valid"
-msgstr "Die IP '%s' ist ungültig."
+msgstr "Die IP \"%s\" ist ungültig"
 
 #: network/forms.py:477
 #, fuzzy
@@ -8172,7 +8158,7 @@ msgstr "Möchten Sie diesen Dienst aktivieren?"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr "                  Erweiterter Kern                "
+msgstr "COREPLUS                "
 
 #: choices.py:179
 msgid "SMB2_22"
@@ -8207,23 +8193,20 @@ msgid "Local 5"
 msgstr "Lokal 5"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
-msgstr "Netzwerkkarte"
+msgstr "NIS"
 
 #: choices.py:713
 msgid "ctrl+data"
 msgstr "                  Strg+Daten                "
 
 #: account/forms.py:53
-#, fuzzy
 msgid "New Password"
 msgstr "Neues Passwort"
 
 #: account/forms.py:66
-#, fuzzy
 msgid "Passwords do not match"
-msgstr "Geheimnis stimmt nicht überein"
+msgstr "Passwörter stimmen nicht überein"
 
 # vielleicht doch besser "Home Verzeichnis"
 #: account/forms.py:398
@@ -8523,14 +8506,13 @@ msgstr "Initiales Geheimnis"
 
 # bitte um Gegenprüfung
 #: services/models.py:925
-#, fuzzy
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a comma to separate multiple alias names."
 msgstr ""
 "Ein Alias für den Rechnernamen. Diese Option kann für jede Domain verwendet "
-"werden, die die selbe IP-Adresse hat. Verwenden Sie ein Leerzeichen, um "
-"mehrere Aliase voneinander zu trennen."
+"werden, bei der die selbe IP-Adresse benutzt wird. Verwenden Sie ein "
+"Leerzeichen, um mehrere Aliase voneinander zu trennen."
 
 #: services/models.py:952
 #, fuzzy
@@ -10309,7 +10291,7 @@ msgstr ""
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
 #, fuzzy
@@ -10887,17 +10869,12 @@ msgid "Skip"
 msgstr ""
 
 #: choices.py:43
-#, fuzzy
 msgid "Basic Authentication"
-msgstr ""
-"                                    Einfache "
-"Authentifizierung                                                "
+msgstr "Einfache Authentifizierung"
 
 #: choices.py:44
 msgid "Digest Authentication"
-msgstr ""
-"                                                      Gesicherte "
-"Authentifizierung                                                "
+msgstr "Gesicherte Authentifizierung"
 
 #: choices.py:799
 msgid "adex"
@@ -10924,9 +10901,8 @@ msgid "Import an existing Certificate"
 msgstr ""
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr "SSL-Zertifikat"
+msgstr "Erstelle ein internes Zertifikat"
 
 #: choices.py:819
 #, fuzzy
