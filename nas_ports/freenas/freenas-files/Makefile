@@ -52,7 +52,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/afpusers/files/afpusers.py ${STAGEDIR}${PREFIX}/usr/local/bin/afpusers
 	#
 	#
-	cd ${WRKSRC}/freenas && ${CP} -r * ${STAGEDIR}/
+	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
 	(cd ${WRKSRC}/freenas; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
