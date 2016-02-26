@@ -1,19 +1,14 @@
-#
 # $FreeBSD$
-# $Id$
-#
 
-PORTNAME=       freenas-files
+PORTNAME=	freenas-files
 PORTVERSION=	${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
 PORTREVISION=	${REVISION}
 
-CATEGORIES=     freenas
+CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
-MAINTAINER=     dev@ixsystems.com
-COMMENT=        miscellaneous files for FreeNAS
-
-USE_XZ=		yes
+MAINTAINER=	dev@ixsystems.com
+COMMENT=	miscellaneous files for FreeNAS
 
 PREFIX=/
 
@@ -25,7 +20,6 @@ EXTRACT_ONLY=
 WRKSRC=/usr/nas_source2
 
 # no checksum, we just used git!
- #extract:
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
 
@@ -47,10 +41,7 @@ do-build:
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin/freenas-snmp
-	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/etc
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS
-	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/libexec
-	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/sbin
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/freenas-pkgtools BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin LIBDIR=${STAGEDIR}${PREFIX}/usr/local/lib/freenasOS install
