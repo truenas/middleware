@@ -62,7 +62,7 @@ do-install:
 	#
 	#
 	cd ${WRKSRC}/freenas && ${CP} -r * ${STAGEDIR}/
-	(cd ${WRKSRC}/freenas; ${FIND} . -type f \
+	(cd ${WRKSRC}/freenas; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
 		| ${AWK} '{print $$2 }' >> ${TMPPLIST})
