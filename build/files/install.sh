@@ -924,6 +924,9 @@ menu_install()
 	# newly upgraded system completely horks the system
 	cp /data/factory-v1.db /tmp/data/data/
 	chown www:www /tmp/data/data/factory-v1.db
+    else
+	cp -R /data/* /tmp/data/data
+	chown -R www:www /tmp/data/data
     fi
 
     local OS=FreeNAS
