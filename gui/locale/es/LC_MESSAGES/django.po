@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-01-16 18:30+0000\n"
-"Last-Translator: jedial23 <jedial23@gmail.com>\n"
+"PO-Revision-Date: 2016-02-27 17:30+0000\n"
+"Last-Translator: hartel <hartel@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1452969008.0\n"
+"X-POOTLE-MTIME: 1456594208.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6948,9 +6948,8 @@ msgid "IPv4 bridge address"
 msgstr "Dirección IPv4 del puente"
 
 #: jails/models.py:110
-#, fuzzy
 msgid "IPv4 bridge netmask"
-msgstr "Máscara de Red IPv4"
+msgstr "Máscara puente IPv4"
 
 #: jails/models.py:128
 msgid "IPv6 address"
@@ -6982,9 +6981,8 @@ msgstr "Dirección de fin de red IPv4 para jaulas y plugins."
 
 # Esto debería ser el prefijo, al no haber distinción de redes (todas las IPv6 son o de enlace o globales) no existe la máscara de red para declarar la visibilidad de una red.
 #: jails/models.py:352
-#, fuzzy
 msgid "IPv6 Network"
-msgstr "Mascara IPv6"
+msgstr "Red IPv6"
 
 #: jails/models.py:362
 #, fuzzy
@@ -7034,9 +7032,8 @@ msgid "You need to create a volume to proceed!"
 msgstr ""
 
 #: jails/utils.py:714
-#, fuzzy
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "Falló al crear conjunto de datos %(name)s: %(error)s"
+msgstr "Ha ocurrido un error al crear el conjunto de datos %(name)s: %(error)s"
 
 #: jails/utils.py:739
 msgid "Failed to create directory %(name)s: %(error)s"
@@ -8935,14 +8932,12 @@ msgid "IPv6 prefix length"
 msgstr "Longitud del prefijo IPv6"
 
 #: jails/models.py:141
-#, fuzzy
 msgid "IPv6 aliases"
 msgstr "Alias IPv6"
 
 #: jails/models.py:147
-#, fuzzy
 msgid "IPv6 bridge address"
-msgstr "Dirección IPv6"
+msgstr "Dirección puente IPv6"
 
 #: jails/models.py:154
 msgid "IPv6 bridge prefix length"
@@ -8961,9 +8956,8 @@ msgid "Comma delimited list of sysctl's"
 msgstr "Lista delimitada con coma de sysctl's"
 
 #: jails/models.py:342
-#, fuzzy
 msgid "IPv4 Network Start Address"
-msgstr "Dirección IPv4"
+msgstr "Dirección IPv4 de inicio de red"
 
 #: jails/models.py:353
 #, fuzzy
@@ -9758,9 +9752,8 @@ msgid "Bind DN"
 msgstr "enlace DN"
 
 #: directoryservice/models.py:302
-#, fuzzy
 msgid "Bind password"
-msgstr "Contraseña Bind"
+msgstr "Contraseña de enlace"
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -10007,7 +10000,7 @@ msgstr "AutoRID Idmap"
 #: directoryservice/models.py:229
 #, fuzzy
 msgid "Name Map"
-msgstr "Mapa de Nombres"
+msgstr "Mapa de Nombre"
 
 #: directoryservice/models.py:231
 msgid ""
@@ -10215,7 +10208,6 @@ msgid "Domain administrator account name"
 msgstr "Nombre de cuenta del administrador de dominio"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
 msgstr "Contraseña de la cuenta de Administrador de dominio"
 
@@ -10394,7 +10386,7 @@ msgstr "keytab de Kerberos"
 #: directoryservice/forms.py:498
 #, fuzzy
 msgid "A keytab is required."
-msgstr "Es necesario una tabla de claves/un registro de claves."
+msgstr "Se requiere presionar la tecla de tabulación."
 
 #: directoryservice/models.py:549
 msgid "Kerberos realm."
@@ -10421,7 +10413,6 @@ msgstr ""
 "las modificaciones a la base de datos."
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
 msgstr "Contraseña del Servidor"
 
@@ -11865,27 +11856,25 @@ msgid "15000"
 msgstr "15000"
 
 #: choices.py:811
-#, fuzzy
 msgid "Sensitive"
-msgstr "Distinguir mayúsculas"
+msgstr "Sensible"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "No sensible"
 
 #: choices.py:813
 msgid "Mixed"
 msgstr "Mixto"
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Cuenta de Invitado"
+msgstr "Cuenta de Microsoft"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
 msgid "netbiosname: %s"
-msgstr ""
+msgstr "nombrenetbios:%s"
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
@@ -11895,7 +11884,7 @@ msgstr "Grupo de Trabajo: %s"
 #: directoryservice/models.py:657
 #, fuzzy
 msgid "Appdefaults auxiliary parameters"
-msgstr "Parámetros auxiliares"
+msgstr "Parámetros auxiliares de la aplicación"
 
 #: directoryservice/models.py:661
 #, fuzzy
@@ -12770,6 +12759,8 @@ msgstr ""
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
+"Esto deshabilita todos los formularion de autenticación, incluyendo el de "
+"compartir."
 
 #: network/forms.py:305
 #, fuzzy
@@ -12790,7 +12781,7 @@ msgstr ""
 #: directoryservice/forms.py:122
 #, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Confirmar Contraseña"
+msgstr "Confirmar usuario LDAP y contraseña DN"
 
 #: directoryservice/models.py:519
 #, fuzzy
@@ -12805,13 +12796,12 @@ msgstr "DN de usuario LDAP"
 #: directoryservice/forms.py:476
 #, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr "La contraseña del \"peer\" no puede ser la misma que la del usuario"
+msgstr "NetBIOS no puede ser el mismo que el primero."
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr "La contraseña del \"peer\" no puede ser la misma que la del usuario"
+msgstr "El nombre NetBIOS no puede ser igual al del Grupo de Trabajo."
 
 #: directoryservice/models.py:739
 #, fuzzy
