@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2011-09-21 00:41+0000\n"
-"Last-Translator: raymond <raymondv@gmx.de>\n"
+"PO-Revision-Date: 2016-02-26 18:03+0000\n"
+"Last-Translator: Alberto <amtaboada99@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1316565706.0\n"
+"X-POOTLE-MTIME: 1456509824.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -258,15 +258,15 @@ msgstr "Sen caixas despregables"
 
 #: choices.py:200 choices.py:201
 msgid "Lowercase names in both directions"
-msgstr ""
+msgstr "Nomes en minúsculas en ambas direccións"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr ""
+msgstr "Minúsculas no cliente, maiúsculas no servidor"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr ""
+msgstr "Maiúsculas no cliente, minúsculas no servidor"
 
 #: choices.py:207
 msgid "File"
@@ -317,27 +317,29 @@ msgstr ""
 
 #: choices.py:255
 msgid "Preferred"
-msgstr ""
+msgstr "Preferido"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr ""
+msgstr "Tolerate"
 
 #: choices.py:257
+#, fuzzy
 msgid "Required"
-msgstr ""
+msgstr "Esixido"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr ""
+msgstr "Herdar"
 
 #: choices.py:285
+#, fuzzy
 msgid "On"
-msgstr ""
+msgstr "on"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
-msgstr ""
+msgstr "Apagado"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
@@ -369,25 +371,25 @@ msgstr ""
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr ""
+msgstr "Mes(es)"
 
 #: choices.py:493
 msgid "Year(s)"
-msgstr ""
+msgstr "Ano(s)"
 
 #: choices.py:497 storage/models.py:279 storage/models.py:304
 #: system/models.py:407 system/models.py:432 system/models.py:616
 #: system/models.py:637 system/models.py:703 system/models.py:724
 msgid "Everyday"
-msgstr ""
+msgstr "Todos os días"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr ""
+msgstr "Os días hábiles seleccionados"
 
 #: choices.py:504
 msgid "Read-only"
-msgstr ""
+msgstr "Só-lectura"
 
 #: choices.py:505
 msgid "Write-only"
@@ -415,36 +417,40 @@ msgstr ""
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr ""
+msgstr "%(día)s día"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr ""
+msgstr "%(semana)s semana"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr ""
+msgstr " Nunca - Consultar o dispositivo sen importar o seu estado de enerxía"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr ""
+msgstr " Repouso - Consultar dispositivo se non está en modo REPOUSO"
 
 #: choices.py:525
+#, fuzzy
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr ""
+msgstr "Standby - Comprobe o dispositivo a menos que sexa en modo suspensión"
 
 #: choices.py:526
+#, fuzzy
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
+"Idle - Comproba o dispositivo a non ser que se atope en repouso, espera ou "
+"modo IDLE"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
+msgstr "Autotest longo"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr ""
+msgstr "Autotest curto"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
@@ -476,17 +482,17 @@ msgstr ""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr ""
+msgstr "O carácter $ só está permitido como carácter final"
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr ""
+msgstr "O teu nome contén caracteres non válidos (%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr ""
+msgstr "O teu nome completo contén caracteres non válidos (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -515,13 +521,13 @@ msgstr "Confirmar contrasinal"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr ""
+msgstr " Volva a Ingresar o contrasinal para a súa verificación"
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr ""
+msgstr "Terminal"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
@@ -533,11 +539,11 @@ msgstr ""
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Crear un novo grupo primario para o usuario"
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr ""
+msgstr "Grupo primario"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
@@ -572,26 +578,29 @@ msgid "The two password fields didn't match."
 msgstr ""
 
 #: account/forms.py:386
+#, fuzzy
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr ""
+msgstr "Directorio inicial comeza con /mnt/ ousexa /nonexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr ""
+msgstr "Un usuario non pode pertencer a mais de 64 grupos auxiliares"
 
 #: account/forms.py:416 account/forms.py:653
+#, fuzzy
 msgid "Home directory is not writable, leave this blank"
-msgstr ""
+msgstr "O Directorio principal non ten permiso de escritura, déixao en branco"
 
 #: account/forms.py:423
+#, fuzzy
 msgid "Password is disabled, leave this blank"
-msgstr ""
+msgstr "Contrasinal deshabitado, déixao en branco"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr ""
+msgstr "Este campo é obrigatorio"
 
 #: account/forms.py:632
 msgid "Home directory has to start with /mnt or be /nonexistent"
@@ -835,7 +844,7 @@ msgstr ""
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
 msgid "Error"
-msgstr ""
+msgstr "Erro"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
@@ -3430,7 +3439,7 @@ msgstr ""
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
-msgstr ""
+msgstr "Silencioso"
 
 #: sharing/models.py:282
 msgid ""
@@ -4819,7 +4828,7 @@ msgstr ""
 #: templates/account/bsdgroups.html:23 templates/account/bsdgroups.html:71
 #: templates/account/bsdgroups.html:84 templates/account/bsdgroups.html:86
 msgid "Members"
-msgstr ""
+msgstr "Membros"
 
 #: templates/account/bsdgroups.html:7 templates/account/bsdusers.html:10
 #: templates/account/bsdusers.html.py:89 templates/storage/tasks.html:132
@@ -4833,11 +4842,11 @@ msgstr ""
 
 #: templates/account/bsdgroups.html:30 templates/account/bsdgroups.html:32
 msgid "Modify Group"
-msgstr ""
+msgstr "Modificar grupo"
 
 #: templates/account/bsdgroups.html:40 templates/account/bsdgroups.html:42
 msgid "Delete Group"
-msgstr ""
+msgstr "Borrar Grupo"
 
 #: templates/account/bsdgroups.html:51
 msgid "There are no user defined groups."
@@ -4880,7 +4889,7 @@ msgstr ""
 
 #: templates/account/bsdusers.html:134 templates/account/bsdusers.html:136
 msgid "Change E-mail"
-msgstr ""
+msgstr "Cambiar e-mail"
 
 #: templates/account/passform.html:2
 msgid "Change Admin Password"
@@ -5195,7 +5204,7 @@ msgstr ""
 #: templates/plugins/index.html:31
 #, fuzzy
 msgid "Info"
-msgstr "Normal"
+msgstr "Info"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
@@ -6199,27 +6208,28 @@ msgstr "Deshabilitado"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr ""
+msgstr "Cifrada, a frase do contrasinal"
 
 #: choices.py:173
 msgid "LANMAN1"
-msgstr ""
+msgstr "LANMAN1"
 
 #: choices.py:174
 msgid "LANMAN2"
-msgstr ""
+msgstr "LANMAN2"
 
 #: choices.py:175
 msgid "NT1"
-msgstr ""
+msgstr "NT1"
 
 #: choices.py:177
 msgid "SMB2_02"
-msgstr ""
+msgstr "SMB2_02"
 
 #: choices.py:312
+#, fuzzy
 msgid "lzjb (legacy, not recommended)"
-msgstr ""
+msgstr "lzjb (legacy, non recomendado)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -6227,7 +6237,7 @@ msgstr ""
 
 #: choices.py:613
 msgid "115200"
-msgstr ""
+msgstr "115200"
 
 #: choices.py:675
 msgid "Verbose"
@@ -6243,15 +6253,15 @@ msgstr ""
 #: services/models.py:2103
 #: services/models.py:2104
 msgid "Domain Controller"
-msgstr ""
+msgstr "Controlador de dominio"
 
 #: choices.py:709
 msgid "data"
-msgstr ""
+msgstr "datos"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "auth"
 
 #: choices.py:714
 msgid "ctrl+!data"
@@ -6259,7 +6269,7 @@ msgstr ""
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "auth+!data"
 
 #: account/forms.py:58
 #, fuzzy
@@ -7074,15 +7084,16 @@ msgstr ""
 
 #: choices.py:165
 msgid "Unencrypted"
-msgstr ""
+msgstr "Sen cifrar"
 
 #: choices.py:167
+#, fuzzy
 msgid "Encrypted, with passphrase"
-msgstr ""
+msgstr "Cifrada, coa frase do contrasinal"
 
 #: choices.py:179
 msgid "SMB2_22"
-msgstr ""
+msgstr "SMB2_22"
 
 #: choices.py:180
 msgid "SMB2_24"
@@ -7093,16 +7104,17 @@ msgid "lz4 (recommended)"
 msgstr ""
 
 #: choices.py:311
+#, fuzzy
 msgid "zle (runs of zeros)"
-msgstr ""
+msgstr "zle (arranque de ceros)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz(o máis completo)"
 
 #: choices.py:610
 msgid "19200"
-msgstr ""
+msgstr "19200"
 
 #: choices.py:672
 msgid "Fatal"
@@ -7125,12 +7137,12 @@ msgstr ""
 #: choices.py:688
 #, fuzzy
 msgid "Local 2"
-msgstr "Usuario Local"
+msgstr "Local 2"
 
 #: choices.py:691
 #, fuzzy
 msgid "Local 5"
-msgstr "Usuario Local"
+msgstr "Local 5"
 
 #: choices.py:701
 msgid "NIS"
@@ -7138,16 +7150,16 @@ msgstr ""
 
 #: choices.py:713
 msgid "ctrl+data"
-msgstr ""
+msgstr "ctrl+data"
 
 #: account/forms.py:66
 #, fuzzy
 msgid "Passwords do not match"
-msgstr "Confirmar contrasinal"
+msgstr "As contrasinais non coinciden"
 
 #: account/forms.py:398
 msgid "Create Home Directory In"
-msgstr ""
+msgstr "Crear Directorio Persoal aquí"
 
 #: account/models.py:54
 msgid "Built-in Group"
@@ -7973,25 +7985,24 @@ msgid ""
 msgstr ""
 
 #: choices.py:52
-#, fuzzy
 msgid "HTTP+HTTPS"
-msgstr "HTTPS"
+msgstr "HTTP+HTTPS"
 
 #: choices.py:171
 msgid "CORE"
-msgstr ""
+msgstr "CORE"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr ""
+msgstr "COREPLUS"
 
 #: choices.py:176
 msgid "SMB2"
-msgstr ""
+msgstr "SMB2"
 
 #: choices.py:178
 msgid "SMB2_10"
-msgstr ""
+msgstr "SMB2_10"
 
 #: choices.py:181
 msgid "SMB3"
@@ -8003,49 +8014,49 @@ msgstr ""
 
 #: choices.py:317
 msgid "lz4 (fastest)"
-msgstr ""
+msgstr "lz4 (máis rápido)"
 
 #: choices.py:569
 msgid "Verify"
-msgstr ""
+msgstr "Verificar"
 
 #: choices.py:611
 msgid "38400"
-msgstr ""
+msgstr "38400"
 
 #: choices.py:612
 msgid "57600"
-msgstr ""
+msgstr "57600"
 
 #: choices.py:686
 #, fuzzy
 msgid "Local 0"
-msgstr "Usuario Local"
+msgstr "Local 0"
 
 #: choices.py:687
 #, fuzzy
 msgid "Local 1"
-msgstr "Usuario Local"
+msgstr "Local 1"
 
 #: choices.py:689
 #, fuzzy
 msgid "Local 3"
-msgstr "Usuario Local"
+msgstr "Local 3"
 
 #: choices.py:690
 #, fuzzy
 msgid "Local 4"
-msgstr "Usuario Local"
+msgstr "Local 4"
 
 #: choices.py:692
 #, fuzzy
 msgid "Local 6"
-msgstr "Usuario Local"
+msgstr "Local 6"
 
 #: choices.py:693
 #, fuzzy
 msgid "Local 7"
-msgstr "Usuario Local"
+msgstr "Local 7"
 
 #: choices.py:700
 msgid "NT4"
@@ -8061,15 +8072,15 @@ msgstr ""
 
 #: choices.py:710
 msgid "!data"
-msgstr ""
+msgstr "!datos"
 
 #: choices.py:712
 msgid "ctrl"
-msgstr ""
+msgstr "ctrl"
 
 #: choices.py:715
 msgid "auth+data"
-msgstr ""
+msgstr "auth+data"
 
 #: account/forms.py:53
 #, fuzzy
@@ -8866,7 +8877,7 @@ msgstr ""
 
 #: choices.py:609
 msgid "9600"
-msgstr ""
+msgstr "9600"
 
 #: jails/models.py:135
 msgid "IPv6 prefix length"
@@ -8986,7 +8997,7 @@ msgstr ""
 
 #: choices.py:788
 msgid "Loader"
-msgstr ""
+msgstr "Cargador"
 
 #: account/forms.py:500
 msgid ""
@@ -9126,15 +9137,15 @@ msgstr "servizos"
 #: choices.py:787
 #: directoryservice/models.py:335
 msgid "ad"
-msgstr ""
+msgstr "ad"
 
 #: choices.py:788
 msgid "autorid"
-msgstr ""
+msgstr "autoridade"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "hash"
 
 #: choices.py:790
 msgid "ldap"
@@ -9160,7 +9171,7 @@ msgstr ""
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -9687,11 +9698,12 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr ""
+msgstr "Autenticación Básica"
 
 #: choices.py:44
+#, fuzzy
 msgid "Digest Authentication"
-msgstr ""
+msgstr "Autenticación do cliente"
 
 #: choices.py:799
 msgid "adex"
@@ -9711,15 +9723,16 @@ msgstr ""
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Importar un Certificado existente"
 
 #: choices.py:818
 msgid "Create an internal Certificate"
-msgstr ""
+msgstr "Crear un Certificado novo"
 
 #: choices.py:819
+#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr ""
+msgstr "Crear un Certificado para iniciar sesión"
 
 #: choices.py:823
 msgid "512"
@@ -9755,7 +9768,7 @@ msgstr ""
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
@@ -10909,11 +10922,11 @@ msgstr "SSL"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
@@ -10925,15 +10938,15 @@ msgstr ""
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "Sensíbel"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "Insensíbel"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Mesturado"
 
 #: account/models.py:160
 msgid "Microsoft Account"

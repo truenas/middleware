@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-02-24 23:18+0000\n"
+"PO-Revision-Date: 2016-02-28 20:33+0000\n"
 "Last-Translator: Reinhart <mx-6@live.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1456355922.0\n"
+"X-POOTLE-MTIME: 1456691588.0\n"
 
 #: choices.py:40
 #, fuzzy
@@ -7223,14 +7223,12 @@ msgstr ""
 #: storage/models.py:745
 #: storage/models.py:755
 #: storage/models.py:772
-#, fuzzy
 msgid "Locked"
-msgstr "User sperren"
+msgstr "Gesperrt"
 
 #: api/resources.py:986
-#, fuzzy
 msgid "on every %(days)s"
-msgstr "Alle %s Tage"
+msgstr "an jedem %(Tag)en"
 
 #: api/resources.py:992
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -7246,9 +7244,8 @@ msgid "No jail root configured."
 msgstr ""
 
 #: jails/forms.py:906
-#, fuzzy
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "Der Pfad konnte nicht eingebunden werden %s"
+msgstr "Der Pfad konnte nicht eingebunden werden %(source)s: %(error)s"
 
 #: jails/models.py:103
 #, fuzzy
@@ -7261,9 +7258,8 @@ msgid "IPv4 bridge netmask"
 msgstr "Netzmaske (IPv4)"
 
 #: jails/models.py:128
-#, fuzzy
 msgid "IPv6 address"
-msgstr "Adresse (IPv6)"
+msgstr "IPv6 Adresse"
 
 #: jails/models.py:332
 #, fuzzy
@@ -7280,19 +7276,16 @@ msgid "IPv4 network range for jails and plugins"
 msgstr "IPv6 Netzwerk Startadresse für Jails und PlugIns"
 
 #: jails/models.py:343
-#, fuzzy
 msgid "IPv4 network start address for jails and plugins"
-msgstr "IPv6 Netzwerk Startadresse für Jails und PlugIns"
+msgstr "IPv4 Netzwerk Startadresse für Jails und PlugIns"
 
 #: jails/models.py:348
-#, fuzzy
 msgid "IPv4 network end address for jails and plugins"
-msgstr "IPv6 Netzwerk Endadresse für Jails und PlugIns"
+msgstr "IPv4 letzte Netzwerk Adresse für Jails und PlugIns"
 
 #: jails/models.py:352
-#, fuzzy
 msgid "IPv6 Network"
-msgstr "Netzmaske (IPv6)"
+msgstr "IPv6 Netzwerk"
 
 #: jails/models.py:362
 #, fuzzy
@@ -7318,14 +7311,12 @@ msgstr ""
 
 #: jails/models.py:513
 #: jails/models.py:514
-#, fuzzy
 msgid "Jail Templates"
-msgstr "Jail-Vorlagen hinzufügen"
+msgstr "Jail-Vorlagen"
 
 #: jails/models.py:533
-#, fuzzy
 msgid "Read-Only"
-msgstr "nur lesbar"
+msgstr "Schreibgeschützt"
 
 #: jails/models.py:537
 #, fuzzy
@@ -8227,18 +8218,16 @@ msgstr ""
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Letzter Snapshot"
+msgstr "ungültiger Schnappschuss"
 
 #: common/system.py:279
 msgid "Mount failed (%(retcode)s) -> %(output)s"
 msgstr ""
 
 #: freeadmin/forms.py:220
-#, fuzzy
 msgid "A file is required"
-msgstr "Dieses Feld wird benötigt"
+msgstr "Eine Datei wird benötigt"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
@@ -8259,14 +8248,12 @@ msgstr "Während des Deserialisierens von %(url)s trat ein Fehler auf: %(error)s
 #: jails/forms.py:859
 #: jails/models.py:521
 #: templates/plugins/plugins.html:21
-#, fuzzy
 msgid "Jail"
-msgstr "Jail IP"
+msgstr "Jail (gesichertes Dataset)"
 
 #: jails/admin.py:186
-#, fuzzy
 msgid "Edit Jail"
-msgstr "Portal bearbeiten"
+msgstr "Jail (gesichertes Dataset) bearbeiten"
 
 #: jails/admin.py:192
 #: templates/plugins/available_datagrid.html:27
@@ -8289,19 +8276,16 @@ msgstr ""
 
 #: jails/forms.py:518
 #: jails/models.py:196
-#, fuzzy
 msgid "NAT"
-msgstr "nicht zutreffend"
+msgstr "NAT"
 
 #: jails/models.py:74
-#, fuzzy
 msgid "Jail Name"
-msgstr "Jail Name"
+msgstr "Jail (gesichertes Dataset) Name"
 
 #: jails/models.py:84
-#, fuzzy
 msgid "IPv4 address"
-msgstr "Adresse (IPv4)"
+msgstr "IPv4 Adresse"
 
 #: jails/models.py:116
 #, fuzzy
@@ -8319,9 +8303,8 @@ msgid "IPv4 Network"
 msgstr "Netzmaske (IPv4)"
 
 #: jails/models.py:347
-#, fuzzy
 msgid "IPv4 Network End Address"
-msgstr "Adresse (IPv4)"
+msgstr "IPv4 letzte Netzwerk Adresse"
 
 #: jails/models.py:357
 #, fuzzy
@@ -8335,9 +8318,8 @@ msgid "Jails Configuration"
 msgstr "Allgemeine Konfiguration"
 
 #: jails/models.py:428
-#, fuzzy
 msgid "Architecture"
-msgstr "Plugin-Architektur"
+msgstr "Architektur"
 
 #: jails/utils.py:645
 msgid "Failed to install plugin: %s"
@@ -9266,7 +9248,6 @@ msgstr "Konnte %(url)s nicht empfangen: %(error)s"
 
 #: jails/admin.py:89
 #: jails/models.py:183
-#, fuzzy
 msgid "Autostart"
 msgstr "Automatisch starten"
 
@@ -9294,9 +9275,8 @@ msgstr ""
 #: jails/models.py:325
 #: jails/nav.py:47
 #: templates/jails/index.html:17
-#, fuzzy
 msgid "Jails"
-msgstr "Jail IP"
+msgstr "Jails (gesicherte Datasets)"
 
 #: jails/models.py:91
 #, fuzzy
@@ -9309,12 +9289,10 @@ msgid "IPv4 aliases"
 msgstr "IPv6-Bridge Aliase"
 
 #: jails/models.py:122
-#, fuzzy
 msgid "IPv4 default gateway"
 msgstr "IPv4 Standard-Gateway"
 
 #: jails/models.py:135
-#, fuzzy
 msgid "IPv6 prefix length"
 msgstr "IPv6 Präfixlänge"
 
@@ -9329,23 +9307,20 @@ msgid "IPv6 bridge address"
 msgstr "IPv6-Bridge Aliase"
 
 #: jails/models.py:154
-#, fuzzy
 msgid "IPv6 bridge prefix length"
-msgstr "IPv6 Präfixlänge"
+msgstr "IPv6 Bridge Präfixlänge"
 
 #: jails/models.py:167
-#, fuzzy
 msgid "IPv6 default gateway"
-msgstr "IPv6 Standard-Gateway"
+msgstr "IPv6-Standard-Gateway"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
 msgstr ""
 
 #: jails/models.py:342
-#, fuzzy
 msgid "IPv4 Network Start Address"
-msgstr "Adresse (IPv4)"
+msgstr "IPv4 Netzwerk Startadresse"
 
 #: jails/models.py:353
 #, fuzzy
@@ -10085,9 +10060,8 @@ msgstr "Möchten Sie diesen Dienst aktivieren?"
 
 # "detach"... aushängen?
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Möchten Sie den Vorgang wirklich fortsetzen?"
+msgstr "Sind Sie sicher, dass Sie dies ändern möchten?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -10125,19 +10099,16 @@ msgid ""
 msgstr ""
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "Der AFP Dienst konnte nicht wieder geladen werden."
+msgstr "NT4 konnte nicht neu gestartet werden."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Der Active Directory Dienst konnte nicht wieder geladen werden."
+msgstr "Der Active Directory Dienst konnte nicht neu gestartet werden."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "Der AFP Dienst konnte nicht wieder geladen werden."
+msgstr "LDAP konnte nicht neu gestartet werden."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
@@ -10149,9 +10120,8 @@ msgstr "aktiviert"
 
 # Gibt es eine sinnvolle technische Übersetzung?
 #: directoryservice/models.py:295
-#, fuzzy
 msgid "Bind DN"
-msgstr "Root Bind DN"
+msgstr "Bind DN"
 
 #: directoryservice/models.py:302
 #, fuzzy
@@ -10331,7 +10301,6 @@ msgid "Range High"
 msgstr ""
 
 #: directoryservice/models.py:142
-#, fuzzy
 msgid "Schema Mode"
 msgstr "Zugriffsmodus"
 
@@ -10444,9 +10413,8 @@ msgid "NSS Idmap"
 msgstr ""
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "NTP Server"
+msgstr "LDAP-Server"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -10573,15 +10541,13 @@ msgid "Domain administrator account name"
 msgstr "Domänenadministrator Benutzername"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
 msgstr "Passwort des Domänen Administratorkontos."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
-msgstr "Standard"
+msgstr "Benutze Standard Domäne"
 
 #: directoryservice/models.py:563
 #: directoryservice/models.py:702
@@ -10752,14 +10718,12 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
 msgstr "Kerberos Keytab Datei"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Dieses Feld wird benötigt"
+msgstr "Dieses Feld wird benötigt."
 
 # Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
 #: directoryservice/models.py:549
@@ -10789,9 +10753,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Passwort"
+msgstr "Passwort Server"
 
 #: directoryservice/models.py:568
 msgid ""
@@ -10946,9 +10909,8 @@ msgid "SHA512"
 msgstr ""
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "Der AFP Dienst konnte nicht wieder geladen werden."
+msgstr "NIS könnte nicht neu gestartet werden."
 
 #: api/resources.py:2488
 #, fuzzy
@@ -12276,9 +12238,8 @@ msgid "Mixed"
 msgstr ""
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Gastkonto"
+msgstr "Microsoft Konto"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -13201,15 +13162,12 @@ msgstr "Benutzer ID"
 #: directoryservice/forms.py:476
 #, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr ""
-"Das Peer-Geheimnis darf nicht das gleiche, wie das Benutzer-Geheimnis sein."
+msgstr "NetBIOS darf nicht das gleiche sein wie das erste."
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr ""
-"Das Peer-Geheimnis darf nicht das gleiche, wie das Benutzer-Geheimnis sein."
+msgstr "Der NetBIOS Name darf nicht der gleiche sein wie der Workgroup Name!"
 
 #: directoryservice/models.py:739
 #, fuzzy
