@@ -1,7 +1,7 @@
 ## IMPORTANT NOTE:  This is the master branch of freenas, which is used only for the creation and testing of 9.3-Nightlies builds.  If you are building or developing for:
 
-* FreeNAS 10:	https://github.com/freenas/freenas-build
-* 9.3-STABLE:	Use the 9.3-STABLE branch
+* FreeNAS 10 / 9.3.2:	https://github.com/freenas/freenas-build
+* Prior Releases:	Use the 9.3-STABLE branch (and old build system)
 
 # Building FreeNAS
 
@@ -9,7 +9,7 @@ To build the system (experts only):
 
 ## Requirements:
 
-* Your build environment must be FreeBSD 10.3-BETA3.
+* Your build environment must be FreeBSD 10.
 
 * an amd64 capable processor.  8GB of memory, or an equal/greater amount
   of swap space, is also required
