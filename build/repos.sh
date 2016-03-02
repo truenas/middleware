@@ -24,10 +24,10 @@ fi
 : ${GIT_LICENSELIB_REPO=https://github.com/freenas/licenselib.git}
 : ${GIT_PYLIBZFS_REPO=https://github.com/freenas/py-libzfs.git}
 
-: ${GIT_FREEBSD_BRANCH=masters/releng/9.3}
+: ${GIT_FREEBSD_BRANCH=freebsd10}
 : ${GIT_FREEBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/src"}
 
-: ${GIT_PORTS_BRANCH=masters/2014q4}
+: ${GIT_PORTS_BRANCH=freenas9/2016Q1}
 : ${GIT_PORTS_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/ports"}
 
 : ${GIT_LICENSELIB_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/licenselib"}

@@ -1114,10 +1114,10 @@ def ApplyUpdate(directory, install_handler = None, force_reboot = False):
             else:
                 log.error("Unknown package operation %s for %s" % (op, pkg.Name()))
 
-    if new_manifest.Sequence().startswith(Avatar() + "-"):
-        new_boot_name = new_manifest.Sequence()
+    if new_manifest.Version().startswith(Avatar() + "-"):
+        new_boot_name = new_manifest.Version()[len(Avatar() + "-"):]
     else:
-        new_boot_name = "%s-%s" % (Avatar(), new_manifest.Sequence())
+        new_boot_name = "%s-%s" % (Avatar(), new_manifest.Version())
         
     log.debug("new_boot_name = %s, reboot = %s" % (new_boot_name, reboot))
     

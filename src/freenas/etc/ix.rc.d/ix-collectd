@@ -159,7 +159,6 @@ LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
 LoadPlugin network
-LoadPlugin ntpd
 LoadPlugin processes
 LoadPlugin rrdtool
 LoadPlugin swap
@@ -233,12 +232,6 @@ LoadPlugin zfs_arc_v2
     Mountpoint "/"
     Mountpoint "/^\/mnt\//"
     FSType "zfs"
-</Plugin>
-
-<Plugin "ntpd">
-    Host "localhost"
-    Port 123
-    ReverseLookups false
 </Plugin>
 EOF
 

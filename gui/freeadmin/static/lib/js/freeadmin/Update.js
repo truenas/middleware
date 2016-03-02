@@ -45,7 +45,6 @@ define([
     templateString : template,
     applyUrl: "",
     checkUrl: "",
-    manualUrl: "",
     verifyUrl: "",
     updateUrl: "",
     updateServer: "",
@@ -90,13 +89,6 @@ define([
       me.dapCurrentTrainText.innerHTML = gettext('Current Train');
       me.dapUpdateServerText.innerHTML = gettext('Update Server');
       me.dapUpdateGridText.innerHTML = gettext('Pending Updates');
-
-      me._manualUpdate = new Button({
-        label: gettext("Manual Update"),
-        onClick: function() {
-          editObject(gettext("Manual Update"), me.manualUrl, [me.domNode]);
-        }
-      }, me.dapManualUpdate);
 
       me._checkUpdate = new Button({
         label: gettext("Check Now"),

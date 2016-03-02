@@ -143,7 +143,7 @@ add_nano_modules()
 }
 
 add_nano_modules cc/cc_cdg cc/cc_chd cc/cc_cubic cc/cc_hd cc/cc_htcp cc/cc_vegas
-add_nano_modules cxgb cxgbe cyclic
+add_nano_modules cxgb cxgbe
 add_nano_modules dtrace ext2fs fdescfs geom ipmi khelp/h_ertt krpc
 add_nano_modules libiconv libmchain lindev linprocfs linsysfs linux
 add_nano_modules nfs_common nfsclient nfslock
@@ -185,7 +185,7 @@ NANO_LABEL_LOWER=`echo $NANO_LABEL | tr 'A-Z' 'a-z'`
 
 
 # FreeBSD release we are using for this release
-: ${FREEBSD_RELEASE_VERSION:="9.3-RELEASE"}
+: ${FREEBSD_RELEASE_VERSION:="10.3-RELEASE"}
 export FREEBSD_RELEASE_VERSION
 
 : ${FREEBSD_RELEASE_MAJOR_VERSION=${FREEBSD_RELEASE_VERSION%%.*}}
@@ -355,8 +355,6 @@ LOCAL_DIRS=${NANO_LOCAL_DIRS}
 ${DEBUG_BUILD}
 "
 
-CONF_BUILD="$CONF_BUILD WITHOUT_CLANG=true WITHOUT_SSP=true"
-
 if is_truenas ; then
 	CONF_BUILD="$CONF_BUILD
 WITH_OFED=true
@@ -380,7 +378,6 @@ ${DEBUG_INSTALL}
 PKG_ONLY_MAKE_CONF="
 
 WITHOUT_CLANG=true
-WITHOUT_CLANG_IS_CC=true
 WITHOUT_GCC=true
 WITHOUT_INSTALLLIB=true
 WITHOUT_INFO=true

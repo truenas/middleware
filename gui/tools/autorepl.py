@@ -284,10 +284,11 @@ for replication in replication_tasks:
             # It will prevent hunging in the status of "Sending".
             ' -o ConnectTimeout=7'
         )
-    elif cipher == 'disabled':
-        sshcmd = ('/usr/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
-                  ' -o StrictHostKeyChecking=yes'
-                  ' -o ConnectTimeout=7')
+    # FIXME: disabled cipher no longer works because NoneEnabled in sshd no longer exists
+    #elif cipher == 'disabled':
+    #    sshcmd = ('/usr/bin/ssh -ononeenabled=yes -ononeswitch=yes -i /data/ssh/replication -o BatchMode=yes'
+    #              ' -o StrictHostKeyChecking=yes'
+    #              ' -o ConnectTimeout=7')
     else:
         sshcmd = ('/usr/bin/ssh -i /data/ssh/replication -o BatchMode=yes'
                   ' -o StrictHostKeyChecking=yes'

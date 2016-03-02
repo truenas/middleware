@@ -1344,7 +1344,7 @@ init_vars() {
 	#fi
 
 	# Set the FreeBSD Major & Release
-  	FBSDREL=`uname -r`
+	FBSDREL="9"
 	if [ -n "${PBI_OSREL}" ]
 	then
 		FBSDREL="${PBI_OSREL}"
