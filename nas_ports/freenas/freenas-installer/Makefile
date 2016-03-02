@@ -18,7 +18,7 @@ PREFIX=/
 PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
 
 EXTRACT_ONLY=
-WRKSRC=/usr/nas_source
+WRKSRC=/usr/nas_source2
 
 # no checksum, we just used git!
 checksum fetch:
@@ -36,11 +36,11 @@ do-build:
 
 do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/pre-install
-	${INSTALL_SCRIPT} ${WRKSRC}/build/nanobsd-cfg/Installer/bin/install_worker.sh ${STAGEDIR}/${PREFIX}/bin/install_worker.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/build/nanobsd-cfg/Installer/bin/install_worker2.sh ${STAGEDIR}/${PREFIX}/bin/install_worker2.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/build/files/install.sh ${STAGEDIR}/${PREFIX}/etc/install.sh
-	${INSTALL_SCRIPT} ${WRKSRC}/build/files/rc ${STAGEDIR}/${PREFIX}/etc/rc
-	${INSTALL_SCRIPT} ${WRKSRC}/build/nanobsd-cfg/Installer/lib/functions.sh ${STAGEDIR}/${PREFIX}/lib/functions.sh
-	cp -a ${WRKSRC}/build/nanobsd-cfg/Installer/pre-install/ ${STAGEDIR}/${PREFIX}/pre-install/
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/bin/install_worker.sh ${STAGEDIR}/${PREFIX}/bin/install_worker.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/bin/install_worker2.sh ${STAGEDIR}/${PREFIX}/bin/install_worker2.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/etc/install.sh ${STAGEDIR}/${PREFIX}/etc/install.sh
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/etc/rc ${STAGEDIR}/${PREFIX}/etc/rc
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/lib/functions.sh ${STAGEDIR}/${PREFIX}/lib/functions.sh
+	cp -a ${WRKSRC}/freenas-installer/pre-install/ ${STAGEDIR}/${PREFIX}/pre-install/
 
 .include <bsd.port.mk>

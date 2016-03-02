@@ -15,7 +15,7 @@ USE_XZ=		yes
 PREFIX=/
 
 EXTRACT_ONLY=
-WRKSRC=/usr/nas_source
+WRKSRC=/usr/nas_source2
 
 # no checksum, we just used git!
 checksum fetch:
@@ -33,6 +33,6 @@ do-build:
 
 do-install:
 	${MKDIR} -p ${STAGEDIR}/${PREFIX}/rescue
-	make -C ${WRKSRC}/build/pc-sysinstall install DESTDIR=${STAGEDIR}/${PREFIX} NO_MAN=t
+	make -C ${WRKSRC}/pc-sysinstall install DESTDIR=${STAGEDIR}/${PREFIX} NO_MAN=t
 
 .include <bsd.port.mk>
