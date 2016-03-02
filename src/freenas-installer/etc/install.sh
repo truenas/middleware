@@ -717,7 +717,7 @@ menu_install()
 		_items=10
 		_menuheight=20
 	    else
-		_menuheight=8
+		_menuheight=9
 		_menuheight=$((${_menuheight} + ${_items}))
 	    fi
 	    if [ "${_items}" -eq 0 ]; then
