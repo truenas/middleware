@@ -61,6 +61,7 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/afpusers/files/afpusers.py ${STAGEDIR}${PREFIX}/usr/local/bin/afpusers
 	#
 	#
+	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/alertcli.py ${STAGEDIR}/${PREFIX}/usr/local/bin/alertcli.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/arc_summary.py ${STAGEDIR}/${PREFIX}/usr/local/bin/arc_summary.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/arcstat.py ${STAGEDIR}/${PREFIX}/usr/local/bin/arcstat.py
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas/usr/local/bin/crashuploader ${STAGEDIR}/${PREFIX}/usr/local/bin/crashuploader
