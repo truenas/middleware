@@ -75,4 +75,8 @@ system_func()
 	section_header "vmstat -i"
 	vmstat -i
 	section_footer
+
+	section_header "Alert System"
+	/usr/local/bin/alertcli.py
+	section_footer
 }
