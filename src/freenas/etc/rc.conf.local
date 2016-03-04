@@ -569,6 +569,8 @@ _gen_conf()
 		if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
 			echo "failover_enable=\"YES\""
 			echo "pf_enable=\"YES\""
+		else
+			echo "failover_enable=\"NO\""
 		fi
 		local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
 		if [ "${failover}" != "BACKUP" ]; then
@@ -576,6 +578,7 @@ _gen_conf()
 		fi
 	else
 		echo "collectd_enable=\"YES\""
+		echo "failover_enable=\"NO\""
 	fi
 
 
