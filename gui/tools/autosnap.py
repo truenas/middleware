@@ -52,6 +52,9 @@ from freenasUI.storage.models import VMWarePlugin
 
 from lockfile import LockFile
 
+# setup ability to log to syslog
+logging.NOTICE = 60
+logging.addLevelName(logging.NOTICE, "NOTICE")
 log = logging.getLogger('tools.autosnap')
 
 # NOTE
@@ -140,6 +143,49 @@ def autorepl_running():
         return True
     except OSError:
         return False
+
+# Check if a VM is using a certain datastore
+def doesVMDependOnDataStore(vm, dataStore):
+    try:
+        # simple case, VM config data is on a datastore.
+        # not sure how critical it is to snapshot the store that has config data, but best to do so
+        if vm.get_property('path').startswith("[%s]" % dataStore):
+            return True
+        # check if VM has disks on the data store
+        # we check both "diskDescriptor" and "diskExtent" types of files
+        disks=vm.get_property("disks")
+        for disk in disks:
+            for file in disk["files"]:
+                if file["name"].startswith("[%s]" % dataStore):
+                    return True
+    except:
+        log.debug('Exception in doesVMDependOnDataStore')
+    return False
+
+# check if VMware can snapshot a VM
+def canSnapshotVM(vm):
+    try:
+        # check for PCI pass-through devices
+        devs=vm.get_property('devices')
+        for dev in devs:
+            if devs[dev]['type'] == "VirtualPCIPassthrough":
+                return False
+        # consider supporting more cases of VMs that can't be snapshoted
+        # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1006392
+    except:
+        log.debug('Exception in canSnapshotVM')
+    return True
+
+# check if there is already a snapshot by a given name
+def doesVMSnapshotByNameExists(vm, snapshotName):
+    try:
+        snaps=vm.get_snapshots()
+        for snap in snaps:
+            if snap.get_name() == snapshotName:
+                return True
+    except:
+        log.debug('Exception in doesVMSnapshotByNameExists')
+    return False
 
 
 appPool.hook_tool_run('autosnap')
@@ -276,6 +322,7 @@ if len(mp_to_task_map) > 0:
         vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
         snapvmfails = []
+        snapvmskips = []
         for obj in qs:
             try:
                 server.connect(obj.hostname, obj.username, obj.get_password())
@@ -284,12 +331,21 @@ if len(mp_to_task_map) > 0:
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
             for vm in vmlist:
-                if vm.startswith("[%s]" % obj.datastore):
-                    vm1 = server.get_vm_by_path(vm)
+                vm1 = server.get_vm_by_path(vm)
+                if doesVMDependOnDataStore(vm1, obj.datastore):
                     try:
-                        vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
+                        if canSnapshotVM(vm1):
+                            if not doesVMSnapshotByNameExists(vm1, vmsnapname): # have we already created a snapshot of the VM for this volume iteration? can happen if the VM uses two datasets (a and b) where both datasets are mapped to the same ZFS volume in FreeNAS.
+                                vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
+                            else:
+                                log.debug("Not creating snapshot %s for VM %s because it already exists", vmsnapname, vm)
+                        else:
+                            # we can try to shutdown the VM, if the user provided us an ok to do so (might need a new list property in obj to know which VMs are fine to shutdown and a UI to specify such exceptions)
+                            # otherwise can skip VM snap and then make a crash-consistent zfs snapshot for this VM
+                            log.log(logging.NOTICE, "Can't snapshot VM %s that depends on datastore %s and filesystem %s. Possibly using PT devices. Skipping.", vm, obj.datastore, fs) # log to syslog
+                            snapvmskips.append(vm1)
                     except:
-                        log.warn("Snapshot of VM %s failed", vm1)
+                        log.warn("Snapshot of VM %s failed", vm)
                         snapvmfails.append(vm1)
                     snapvms.append(vm1)
 
@@ -337,8 +393,12 @@ Hello,
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
 
         for vm in snapvms:
-            if vm not in snapvmfails:
-                vm.delete_named_snapshot(vmsnapname)
+            if vm not in snapvmfails and vm not in snapvmskips:
+                try:
+                    vm.delete_named_snapshot(vmsnapname)
+                except:
+                    log.debug("Exception delete_named_snapshot %s %s", vm.get_property('path'), vmsnapname)
+
 
     MNTLOCK.lock()
     if not autorepl_running():
