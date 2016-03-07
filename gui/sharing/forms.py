@@ -436,7 +436,7 @@ class NFS_ShareForm(ModelForm):
                 continue
             parent = os.path.join(path, "..")
             try:
-                stat = os.stat(path)
+                stat = os.stat(path.encode("utf8"))
                 if dev is None:
                     dev = stat.st_dev
                 elif dev != stat.st_dev:
@@ -472,7 +472,7 @@ class NFS_ShareForm(ModelForm):
         used_networks = []
         for share in qs:
             try:
-                stdev = os.stat(share.paths.all()[0].path).st_dev
+                stdev = os.stat(share.paths.all()[0].path.encode("utf8")).st_dev
             except:
                 continue
             if share.nfs_network:
