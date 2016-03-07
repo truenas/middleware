@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2015-09-28 12:41+0000\n"
-"Last-Translator: jmsbellez <jmsbellez@gmail.com>\n"
+"PO-Revision-Date: 2016-03-03 16:43+0000\n"
+"Last-Translator: rafaelff1 <rafael.f.f1@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1443444112.0\n"
+"X-POOTLE-MTIME: 1457023413.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -399,17 +399,17 @@ msgstr "Leitura e Escrita"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutos)s minutos"
+msgstr "%(minutes)s minutos"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hora)s hora"
+msgstr "%(hour)s hora"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hora)s horas"
+msgstr "%(hours)s horas"
 
 #: choices.py:518
 #, python-format
@@ -419,7 +419,7 @@ msgstr "%(day)s dia"
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(semana)s semana"
+msgstr "%(week)s semana"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
@@ -7789,7 +7789,7 @@ msgstr "Rede inválida: %s"
 
 #: freeadmin/navtree.py:573
 msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
-msgstr "Erro deserializando %(url)s (%(erro)s), dados recuperados:"
+msgstr "Erro ao desserializar %(url)s (%(error)s), dados recuperados:"
 
 #: jails/admin.py:91
 #: jails/models.py:149
@@ -9112,9 +9112,8 @@ msgid "jail not found"
 msgstr "Página Não Encontrada"
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "O Caminho %s não existe"
+msgstr "O caminho não existe."
 
 #: services/forms.py:222
 #, fuzzy
@@ -9502,7 +9501,7 @@ msgstr "Volume desbloqueado"
 #: storage/views.py:1151
 #, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "O volume falhou na exportação"
+msgstr "O volume falhou na atualização: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
@@ -10246,19 +10245,16 @@ msgid "Initial Wizard"
 msgstr "Iniciador"
 
 #: middleware/notifier.py:2222
-#, fuzzy
 msgid "Failed to create group %s"
-msgstr "Falha ao atualizar plugin"
+msgstr "Falha ao criar grupo %s"
 
 #: system/forms.py:256
-#, fuzzy
 msgid "Group does not exist: %s"
-msgstr "Jail não existe"
+msgstr "O grupo não existe: %s"
 
 #: system/forms.py:270
-#, fuzzy
 msgid "User does not exist: %s"
-msgstr "Jail não existe"
+msgstr "O usuário não existe: %s"
 
 #: system/forms.py:306
 #, fuzzy
@@ -10463,9 +10459,8 @@ msgid "Kerberos Realm"
 msgstr "Arquivo Kerberos Keytab"
 
 #: services/views.py:269
-#, fuzzy
 msgid "CIFS successfully updated."
-msgstr "%s atualizado com sucesso."
+msgstr "CIFS atualizado com sucesso."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -11325,9 +11320,8 @@ msgid "rc.conf"
 msgstr "rc.conf"
 
 #: sharing/forms.py:94
-#, fuzzy
 msgid "Failed to create %(path)s: %(error)s"
-msgstr "Falha ao criar dataset %(name)s: %(error)s"
+msgstr "Falha ao criar %(path)s: %(error)s"
 
 #: sharing/forms.py:389
 #, fuzzy
@@ -11537,9 +11531,8 @@ msgstr "Certificado SSL"
 
 #: sharing/forms.py:188
 #: sharing/forms.py:212
-#, fuzzy
 msgid "Invalid IP or Network."
-msgstr "Rede inválida: %s"
+msgstr "Rede ou IP inválido."
 
 #: sharing/models.py:223
 msgid "Allow only listed hosts and/or networks access to this volume"
@@ -11866,7 +11859,7 @@ msgstr "Sistema está reiniciando"
 #: choices.py:587
 #: choices.py:588
 msgid "%(weeks)s weeks"
-msgstr "%(semana)s semanas"
+msgstr "%(weeks)s semanas"
 
 #: system/views.py:419
 #, fuzzy
@@ -11933,9 +11926,8 @@ msgstr ""
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
-msgstr "Workgroup"
+msgstr "workgroup: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
@@ -12042,14 +12034,12 @@ msgid "Confirm Privacy Passphrase"
 msgstr "Confirmar Frase secreta"
 
 #: services/forms.py:762
-#, fuzzy
 msgid "Password must contain at least 8 characters"
-msgstr "Seu nome contém caracteres inválidos (%s)."
+msgstr "A senha de conter ao menos 8 caracteres"
 
 #: services/forms.py:820
-#, fuzzy
 msgid "Passphrase must contain at least 8 characters"
-msgstr "Seu nome contém caracteres inválidos (%s)."
+msgstr "A senha deve conter ao menos 8 caracteres"
 
 #: services/forms.py:976
 #, fuzzy
@@ -12821,9 +12811,10 @@ msgid "VLAN ID"
 msgstr "VLAN"
 
 #: sharing/forms.py:465
-#, fuzzy
 msgid "A mountpoint with this path is already in use by another share."
-msgstr "A rede %s já está em uso por outro NIC."
+msgstr ""
+"Um ponto de montagem com esse caminho já está em uso por outro "
+"compartilhamento."
 
 #: storage/forms.py:441
 msgid ""
