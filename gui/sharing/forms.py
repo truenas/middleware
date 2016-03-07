@@ -446,7 +446,7 @@ class NFS_ShareForm(ModelForm):
                     ])
                     valid = False
                     break
-                if os.stat(parent).st_dev != stat.st_dev:
+                if os.stat(parent.encode("utf8")).st_dev != stat.st_dev:
                     ismp = True
                 if ismp and len(forms) > 1:
                     self._fserrors = self.error_class([
