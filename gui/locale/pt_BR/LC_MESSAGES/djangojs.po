@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-09-28 12:41+0000\n"
-"Last-Translator: jmsbellez <jmsbellez@gmail.com>\n"
+"PO-Revision-Date: 2016-03-03 16:10+0000\n"
+"Last-Translator: rafaelff1 <rafael.f.f1@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1443444112.0\n"
+"X-POOTLE-MTIME: 1457021414.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Relatório"
@@ -28,7 +28,7 @@ msgstr "Configurações"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
-msgstr "Informação de Sistema"
+msgstr "Informações do Sistema"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
@@ -65,7 +65,7 @@ msgstr "Algum erro ocorreu"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr "Aguarde..."
+msgstr "Por favor, aguarde..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -80,7 +80,7 @@ msgid "Every N"
 msgstr "Todos N"
 
 msgid "Plugins"
-msgstr "Plugins"
+msgstr "Plug-ins"
 
 #~ msgid "CronJobs"
 #~ msgstr "Tarefas do Cron"
@@ -297,9 +297,8 @@ msgstr "Serviços de diretório"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Inicializar com Segurança"
+msgstr "Assistente de início"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
 msgid "Share name"
@@ -339,14 +338,13 @@ msgstr "Esse usuário não existe."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr "Este grupo não existe."
+msgstr "Esse grupo não existe."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr "Voltar"
+msgstr "Retornar"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
-#, fuzzy
 msgid "Wizard"
 msgstr "Assistente"
 
@@ -363,10 +361,12 @@ msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Essa opção DESABILITA CRIPTOGRAFIA para tarefas de replicação e deve ser "
+"usada APENAS em uma LAN segura!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Tem certeza que deseja fazer isso?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
@@ -404,24 +404,24 @@ msgstr "Verificar agora"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Sim"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Não"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Carregando..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Nenhuma atualização pendente foi encontrada."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Verificar Instalação"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
@@ -429,145 +429,160 @@ msgstr "As senhas não coincidem."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "Reiniciando a WEBGUI"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
-msgstr ""
+msgstr "IDMAP de Active Directory alterado!"
 
 #: freeadmin/static/lib/js/freeadmin.js:1162
 msgid ""
 "<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
 msgstr ""
+"<font color='red'>PARE</font>: Você sabe o que você está fazendo?<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1163
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
 msgstr ""
+"O plug-in idmap_ad fornece uma forma para o Winbind ler mapeamentos de id de<"
+"br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1164
 msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
 msgstr ""
+"um servidor AD que usa extensões de esquema RFC2307/SFU. Este módulo<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1165
 msgid ""
 "implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
 msgstr ""
+"implementa apenas a API \"idmap\", e é SOMENTE LEITURA. Mapeamentos devem "
+"ser<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1166
 msgid "provided in advance by the administrator by adding the uidNumber<br />"
-msgstr ""
+msgstr "fornecidos antes pelo administrador, adicionando os atributos de<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1167
 msgid ""
 "attributes for users and gidNumber attributes for groups in the AD.<br />"
 msgstr ""
+"uidNumber para os usuários e os atributos gidNumber para grupos no AD.<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1168
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
-msgstr ""
+msgstr "Winbind mapeará apenas usuários que tem um uidNumber e cujo grupo<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
 msgid ""
 "group have a gidNumber attribute set. It is however recommended that<br />"
 msgstr ""
+"primário tenha um atributo gidNumber definido. Porém, é recomendado que<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1170
 msgid ""
 "all groups in use have gidNumber attributes assigned, otherwise they<br />"
 msgstr ""
+"todos os grupos em uso tenham atributos gidNumber assinados, do contrário "
+"eles<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1171
 msgid "are not working.<br /><br />"
-msgstr ""
+msgstr "não estarão funcionando.<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1172
 msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
+"<font color='red'>PARE</font>: Se seu Active Directory não estiver "
+"configurado para isto, ele não vai funcionar.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Documentação"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Nome de usuário"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "Se não possui uma conta, por favor"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"
-msgstr ""
+msgstr "registre"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr ""
+msgstr "Anexar informação de depuração"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Submeter"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Este campo é necessário."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr ""
+msgstr "Enviando anexos para servidor"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
-msgstr ""
+msgstr "Gerando informação de depuração"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
-msgstr ""
+msgstr "Submetendo tíquete"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr ""
+msgstr "Enviando anexos da máquina para o tíquiete"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
+#, fuzzy
 msgid "Train Descriptions"
-msgstr ""
+msgstr "Descrições do trem"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 msgid "Loading"
-msgstr ""
+msgstr "Carregando"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"
-msgstr ""
+msgstr "Verificar automaticamente por atualizações"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
+#, fuzzy
 msgid "Current Train"
-msgstr ""
+msgstr "Trem atual"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
-#, fuzzy
 msgid "Update Server"
-msgstr "Atualizar"
+msgstr "Atualizar servidor"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
-#, fuzzy
 msgid "Pending Updates"
-msgstr "Aplicar as operações pendentes"
+msgstr "Atualizações pendentes"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
-msgstr ""
+msgstr "Configuração de Plug-in vCenter"
 
 #: freeadmin/static/lib/js/freeadmin.js:1343
 msgid "Decreasing WebGUI https security!"
-msgstr ""
+msgstr "Reduzindo segurança https da WebGUI!"
 
 #: freeadmin/static/lib/js/freeadmin.js:1348
+#, fuzzy
 msgid ""
 "<font color='red'>Warning: Selecting this reduces your https security.<br /><"
 "br />"
 msgstr ""
+"<font color='red'>Aivso: Selecionar isso reduz a sua segurança de https.<br "
+"/><br />"
