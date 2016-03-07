@@ -27,7 +27,9 @@ from collections import OrderedDict
 import json
 import logging
 import os
+import socket
 import subprocess
+import time
 
 from django.core.files.base import File
 from django.http import HttpResponse
@@ -39,8 +41,9 @@ from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import GlobalConfiguration
 from freenasUI.support import forms, utils
-from freenasUI.system.utils import debug_get_settings, debug_run
+from freenasUI.system.utils import debug_get_settings, debug_generate
 
 log = logging.getLogger("support.views")
 TICKET_PROGRESS = '/tmp/.ticketprogress'
@@ -138,8 +141,21 @@ def ticket(request):
         step += 1
 
         mntpt, direc, dump = debug_get_settings()
-        debug_run(direc)
-        files.append(File(open(dump, 'rb'), name=os.path.basename(dump)))
+        debug_generate()
+
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed():
+            debug_file = '%s/debug.tar' % direc
+            debug_name = 'debug-%s.tar' % time.strftime('%Y%m%d%H%M%S')
+        else:
+            gc = GlobalConfiguration.objects.all().order_by('-id')[0]
+            debug_file = dump
+            debug_name = 'debug-%s-%s.txz' % (
+                gc.gc_hostname.encode('utf-8'),
+                time.strftime('%Y%m%d%H%M%S'),
+            )
+
+        files.append(File(open(debug_file, 'rb'), name=debug_name))
     else:
         debug = False
 
