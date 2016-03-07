@@ -29,6 +29,7 @@ import logging
 import os
 import re
 import signal
+import ssl
 import subprocess
 import urllib
 from time import sleep
@@ -1304,6 +1305,7 @@ def disk_editbulk(request):
 
 def vmwareplugin_datastores(request):
     from pysphere import VIServer
+    ssl._create_default_https_context = ssl._create_unverified_context
     data = {
         'error': False,
     }

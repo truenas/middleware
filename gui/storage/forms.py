@@ -29,6 +29,7 @@ from decimal import Decimal
 import logging
 import os
 import re
+import ssl
 import tempfile
 import uuid
 
@@ -1849,6 +1850,7 @@ class ManualSnapshotForm(Form):
         vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
+            ssl._create_default_https_context = ssl._create_unverified_context
             server = VIServer()
             try:
                 server.connect(obj.hostname, obj.username, obj.get_password())
@@ -2633,6 +2635,7 @@ class VMWarePluginForm(ModelForm):
 
     def clean(self):
         from pysphere import VIServer
+        ssl._create_default_https_context = ssl._create_unverified_context
         cdata = self.cleaned_data
         if (
             cdata.get('hostname') and cdata.get('username') and
