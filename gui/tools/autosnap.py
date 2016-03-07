@@ -31,6 +31,11 @@ import os
 import re
 import sys
 import uuid
+import ssl
+
+#Monkey patch ssl checking to get back to Python 2.7.8 behavior
+ssl._create_default_https_context = ssl._create_unverified_context
+
 sys.path.append('/usr/local/www')
 sys.path.append('/usr/local/www/freenasUI')
 
