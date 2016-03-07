@@ -326,8 +326,7 @@ class VolumeVdevForm(Form):
 
     def clean(self):
         if (
-            self.cleaned_data.get("vdevtype") == "log"
-            and
+            self.cleaned_data.get("vdevtype") == "log" and
             len(self.cleaned_data.get("disks")) > 1
         ):
             self.cleaned_data["vdevtype"] = "log mirror"
@@ -831,8 +830,8 @@ class AutoImportWizard(SessionWizardView):
         # This is required for the workaround dojo.io.frame for file upload
         if not self.request.is_ajax():
             return HttpResponse(
-                "<html><body><textarea>"
-                + response.rendered_content +
+                "<html><body><textarea>" +
+                response.rendered_content +
                 "</textarea></boby></html>")
         return response
 
@@ -1169,10 +1168,8 @@ class DiskFormPartial(ModelForm):
         obj = super(DiskFormPartial, self).save(*args, **kwargs)
         # Commit ataidle changes, if any
         if (
-            obj.disk_hddstandby != obj._original_state['disk_hddstandby']
-            or
-            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt']
-            or
+            obj.disk_hddstandby != obj._original_state['disk_hddstandby'] or
+            obj.disk_advpowermgmt != obj._original_state['disk_advpowermgmt'] or
             obj.disk_acousticlevel != obj._original_state['disk_acousticlevel']
         ):
             notifier().start_ataidle(obj.disk_name)
@@ -1187,8 +1184,7 @@ class DiskFormPartial(ModelForm):
                 notifier().toggle_smart_on(obj.disk_name)
             started = notifier().restart("smartd")
             if (
-                started is False
-                and
+                started is False and
                 services.objects.get(srv_service='smartd').srv_enable
             ):
                 raise ServiceFailed(
@@ -1730,9 +1726,8 @@ class MountPointAccessForm(Form):
     def clean(self):
         if (
             (self.cleaned_data.get("mp_acl") == "unix" or
-                self.cleaned_data.get("mp_acl") == "mac")
-            and
-            not self.cleaned_data.get("mp_mode")
+                self.cleaned_data.get("mp_acl") == "mac") and not
+                self.cleaned_data.get("mp_mode")
         ):
             self._errors['mp_mode'] = self.error_class([
                 _("This field is required")
@@ -2512,7 +2507,8 @@ class UnlockPassphraseForm(Form):
                 from freenasUI.failover.enc_helper import LocalEscrowCtl
                 escrowctl = LocalEscrowCtl()
                 escrowctl.setkey(passphrase)
-                os.system("/usr/local/bin/python /usr/local/libexec/truenas/carp-state-change-hook.py carp0 LINK_UP")
+                os.system("/usr/local/bin/python "
+                          "/usr/local/libexec/truenas/carp-state-change-hook.py carp0 LINK_UP")
                 return
         if passphrase:
             passfile = tempfile.mktemp(dir='/tmp/')
