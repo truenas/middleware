@@ -33,7 +33,7 @@ To build the system (experts only):
 
 ```
 % cd /path/to/your-build-filesystem
-% https://github.com/freenas/freenas-build
+% git clone https://github.com/freenas/freenas-build
 % cd freenas-build
 ```
 
