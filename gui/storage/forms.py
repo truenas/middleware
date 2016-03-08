@@ -1560,7 +1560,7 @@ class ZVol_CreateForm(Form):
             'on the number of the disks in the pool for a general use case.'
         ),
         required=False,
-        choices=(('', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
+        choices=(('', _('Inherit')), ) + choices.ZFS_VOLBLOCKSIZE,
     )
 
     advanced_fields = (
@@ -1595,7 +1595,7 @@ class ZVol_CreateForm(Form):
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
         size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
-        if size in map(lambda y: y[0], choices.ZFS_RECORDSIZE):
+        if size in map(lambda y: y[0], choices.ZFS_VOLBLOCKSIZE):
             self.fields['zvol_blocksize'].initial = size
 
     def clean_zvol_name(self):
