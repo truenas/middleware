@@ -373,12 +373,20 @@ Hello,
     as well as its children to 'on' to allow receiving replication.
                     """ % (localfs, remotefs_final, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
             else:
-                error, errmsg = send_mail(
-                        subject="Replication failed! (%s)" % remote,
-                        text="""
+                if len(output) > 0:
+                    error, errmsg = send_mail(
+                            subject="Replication failed! (%s)" % remote,
+                            text="""
 Hello,
     Replication of local ZFS %s to remote ZFS %s failed.""" % (localfs, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
-            results[replication.id] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
+                    results[replication.id] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
+                else:
+                    error, errmsg = send_mail(
+                            subject="Replication failed! (%s)" % remote,
+                            text="""
+Hello,
+    Replication of local ZFS %s to remote ZFS %s failed.  The remote system is not responding.""" % (localfs, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
+                    results[replication.id] = 'Remote system not responding.'
             continue
 
     # Remote filesystem is the root dataset
