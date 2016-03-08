@@ -760,6 +760,18 @@ ZFS_RECORDSIZE = (
     ('1024K', '1024K'),
 )
 
+ZFS_VOLBLOCKSIZE = (
+    ('512', '512'),
+    ('1K', '1K'),
+    ('2K', '2K'),
+    ('4K', '4K'),
+    ('8K', '8K'),
+    ('16K', '16K'),
+    ('32K', '32K'),
+    ('64K', '64K'),
+    ('128K', '128K'),
+)
+
 JAIL_TEMPLATE_OS_CHOICES = (
     ('FreeBSD', 'FreeBSD'),
     ('Linux', 'Linux')
