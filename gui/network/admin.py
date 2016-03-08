@@ -23,6 +23,7 @@ class GlobalConfigurationFAdmin(BaseFreeAdmin):
 class InterfacesFAdmin(BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
+    delete_form = "InterfacesDeleteForm"
     edit_modelform = "InterfacesEditForm"
     icon_object = u"InterfacesIcon"
     icon_model = u"InterfacesIcon"
