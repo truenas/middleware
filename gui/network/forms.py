@@ -370,6 +370,23 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).done(*args, **kwargs)
 
 
+class InterfacesDeleteForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(InterfacesDeleteForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_status() == 'MASTER':
+            from freenasUI.failover.models import Failover
+            if not Failover.objects.all()[0].disabled:
+                self._errors['__all__'] = self.error_class([
+                    _("You are not allowed to delete interfaces while failover is enabled.")
+                ])
+        return self.cleaned_data
+
+
 class IPMIForm(Form):
     # Max password length via IPMI v2.0 is 20 chars. We only support IPMI
     # v2.0+ compliant boards thus far.
