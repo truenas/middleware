@@ -159,7 +159,31 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
             "lagg_interfacegroup__id": request.GET.get("id"),
         }
 
+
+class VLANFAdmin(BaseFreeAdmin):
+
+    icon_object = u"VLANIcon"
+    icon_model = u"VLANIcon"
+    icon_add = u"AddVLANIcon"
+    icon_view = u"ViewAllVLANsIcon"
+
+    def get_confirm_message(self, action, **kwargs):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'MASTER'
+        ):
+            return _(
+                'This change will cause a failover event. '
+                'Do you want to proceed?'
+            )
+        else:
+            return _(
+                'Network connectivity will be interrupted. '
+                'Do you want to proceed?'
+            )
+
 site.register(models.GlobalConfiguration, GlobalConfigurationFAdmin)
 site.register(models.Interfaces, InterfacesFAdmin)
+site.register(models.VLAN, VLANFAdmin)
 site.register(models.LAGGInterface, LAGGInterfaceFAdmin)
 site.register(models.LAGGInterfaceMembers, LAGGInterfaceMembersFAdmin)
