@@ -38,7 +38,13 @@ generate_kerberos_files()
 {
 	rm -f /etc/krb5.keytab
 
-	generate_krb5_conf $*
+	if [ $# -eq 0 ] && activedirectory_enabled
+	then
+		AD_init
+		generate_krb5_conf default "$(AD_get ad_krb_realm)"
+	else
+		generate_krb5_conf $*
+	fi
 	generate_krb5_keytab
 }
 
