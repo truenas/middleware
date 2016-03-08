@@ -360,16 +360,23 @@ for replication in replication_tasks:
                     may_proceed = True
         if not may_proceed:
             # Report the problem and continue
-            error, errmsg = send_mail(
-                subject="Replication denied! (%s)" % remote,
-                text="""
+            if ("on" in output or "off" in output) and len(output) > 0:
+                error, errmsg = send_mail(
+                    subject="Replication denied! (%s)" % remote,
+                    text="""
 Hello,
     The remote system have denied our replication from local ZFS
     %s to remote ZFS %s.  Please change the 'readonly' property
     of:
         %s
     as well as its children to 'on' to allow receiving replication.
-                """ % (localfs, remotefs_final, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
+                    """ % (localfs, remotefs_final, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
+            else:
+                error, errmsg = send_mail(
+                        subject="Replication failed! (%s)" % remote,
+                        text="""
+Hello,
+    Replication of local ZFS %s to remote ZFS %s failed.""" % (localfs, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
             results[replication.id] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
             continue
 
