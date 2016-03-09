@@ -91,6 +91,29 @@ def main(ifname, event):
                 log.warn("Failover disabled.  Assuming backup.")
                 sys.exit()
             else:
+
+                # We need to load django for notifier
+                sys.path.append('/usr/local/www')
+                sys.path.append('/usr/local/www/freenasUI')
+                sys.path.append('/usr/local/lib')
+
+                os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
+
+                # Make sure to load all modules
+                from django.db.models.loading import cache
+                cache.get_apps()
+
+                from freenasUI.middleware.notifier import notifier
+
+                try:
+                    s = notifier().failover_rpc()
+                    status = s.notifier("failover_status", None, None)
+                    if status == 'MASTER':
+                        log.warn("Other node is already up, assuming backup.")
+                        sys.exit()
+                except:
+                    log.info("Failed to contact the other node", exc_info=True)
+
                 masterret = False
                 for vol in fobj['volumes'] + fobj['phrasedvolumes']:
                     ret = os.system("zpool status %s > /dev/null" % vol)
