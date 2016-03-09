@@ -149,11 +149,7 @@ set -x
 set -e
 
 OBJ=objs
-if [ "${UPDATE_INTERNAL}" = "yes" ]; then
-    STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
-else
-    STAGEDIR="${SEQUENCE}"
-fi
+STAGEDIR="${NANO_LABEL}-${VERSION}-${BUILD_TIMESTAMP}"
 TARGET="${TOP}/${OBJ}/${STAGEDIR}/x64"
 mkdir -p "${TARGET}"
 
