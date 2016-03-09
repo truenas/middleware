@@ -1,4 +1,5 @@
-#!/usr/local/bin/python3
+#!/usr/local/bin/python
+from __future__ import print_function
 
 import getopt
 import logging
@@ -37,6 +38,31 @@ def PrintDifferences(diffs):
             print("Reboot is (conditionally) %srequired" % ("" if rr else "not "), file=sys.stderr)
         else:
             print("*** Unknown key %s (value %s)" % (type, str(diffs[type])), file=sys.stderrr)
+
+def DoDownload(train, cache_dir, pkg_type):
+    import freenasOS.Update as Update
+    import freenasOS.Exceptions as Exceptions
+
+    try:
+        rv = Update.DownloadUpdate(train, cache_dir, pkg_type = pkg_type)
+    except Exceptions.ManifestInvalidSignature:
+        log.error("Manifest has invalid signature")
+        print("Manifest has invalid signature", file=sys.stderr)
+        sys.exit(1)
+    except Exceptions.UpdateBusyCacheException as e:
+        log.error(str(e))
+        print("Download cache directory is busy", file=sys.stderr)
+        sys.exit(1)
+    except Exceptions.UpdateIncompleteCacheException:
+        log.error(str(e))
+        print("Incomplete download cache, cannot update", file=sys.stderr)
+        sys.exit(1)
+    except BaseException as e:
+        log.error(str(e))
+        print("Received exception during download phase, cannot update", file=sys.stderr)
+        sys.exit(1)
+
+    return rv
 
 def main():
     global log
@@ -129,25 +155,7 @@ def main():
         # we make a temporary directory and use that.  We
         # have to clean up afterwards in that case.
         
-        try:
-            rv = Update.DownloadUpdate(train, cache_dir, pkg_type = pkg_type)
-        except Exceptions.ManifestInvalidSignature:
-            log.error("Manifest has invalid signature")
-            print("Manifest has invalid signature", file=sys.stderr)
-            sys.exit(1)
-        except Exceptions.UpdateBusyCacheException as e:
-            log.error(str(e))
-            print("Download cache directory is busy", file=sys.stderr)
-            sys.exit(1)
-        except Exceptions.UpdateIncompleteCacheException:
-            log.error(str(e))
-            print("Incomplete download cache, cannot update", file=sys.stderr)
-            sys.exit(1)
-        except BaseException as e:
-            log.error(str(e))
-            print("Received exception during download phase, cannot update", file=sys.stderr)
-            sys.exit(1)
-
+        rv = DoDownload(train, cache_dir, pkg_type)
         if rv is False:
             if verbose:
                 print("No updates available")
@@ -183,6 +191,24 @@ def main():
             else:
                 assert False, "Unhandled option %s" % o
         
+        # See if the cache directory has an update downloaded already
+        do_download = True
+        try:
+            f = Update.VerifyUpdate(cache_dir)
+            if f:
+                f.close()
+                do_download = False
+        except Exceptions.UpdateBusyCacheException:
+            printf("Cache directory busy, cannot update")
+            sys.exit(0)
+        except (Exceptions.UpdateInvalidCacheException, Exceptions.UpdateIncompleteCacheException):
+            pass
+        except:
+            raise
+        
+        if do_download:
+            rv = DoDownload(train, cache_dir, pkg_type)
+            
         diffs = Update.PendingUpdatesChanges(cache_dir)
         if diffs is None or diffs == {}:
             if verbose:
