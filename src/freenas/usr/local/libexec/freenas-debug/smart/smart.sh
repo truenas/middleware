@@ -33,10 +33,19 @@ smart_directory() { echo "SMART"; }
 smart_func()
 {
         section_header "SMART"
+	# SATA DOMs have a habit of dying in such a way that
+	# smartctl -x on them hangs forever.  On TrueNAS a
+	# SATA DOM is always adaX, so we can safely make this
+	# assumption.
         for i in `sysctl -n kern.disks`
         do
             echo /dev/$i
-            smartctl -x /dev/$i
+	    echo ${i} | grep -Eq '^ada'
+	    if [ $? -eq 0 ]; then
+            	smartctl -a /dev/$i
+	    else
+            	smartctl -x /dev/$i
+	    fi
         done
         section_footer
 }
