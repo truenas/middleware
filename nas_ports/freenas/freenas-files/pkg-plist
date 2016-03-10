@@ -1,6 +1,1 @@
-usr/local/bin/extract-tarball
-usr/local/bin/winacl
-usr/local/bin/autotune
-usr/local/bin/afpusers
-etc/netcli
 @shell etc/netcli.sh

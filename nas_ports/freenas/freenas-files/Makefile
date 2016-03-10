@@ -66,7 +66,7 @@ do-install:
 		${STAGEDIR}/etc/ix.rc.d/ix_pf_late \
 		${STAGEDIR}/etc/ix.rc.d/ix-sysctl
 .endif
-	(cd ${WRKSRC}/freenas; ${FIND} . \( -type f -o -type l \) \
+	(cd ${STAGEDIR}; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
 		| ${AWK} '{print $$2 }' >> ${TMPPLIST})
