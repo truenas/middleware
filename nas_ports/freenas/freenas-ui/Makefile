@@ -1,7 +1,4 @@
-#
 # $FreeBSD$
-# $Id$
-#
 
 PORTNAME=       freenas-ui
 PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
@@ -13,6 +10,7 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS UI
 
+PRODUCT?=
 USES=		python
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
@@ -40,7 +38,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
 
-NO_BUILD = yes
+NO_BUILD=yes
 
 PLIST=		${WRKDIR}/plist
 
@@ -54,24 +52,21 @@ SUB_LIST+=	PYTHON_CMD=${PYTHON_CMD}
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
 
-pre-install:
-	${RM} -f ${PLIST}
-	${ECHO_CMD} "@owner www"  >> ${PLIST}
-	${ECHO_CMD} "@group www"  >> ${PLIST}
-	${ECHO_CMD} "@comment files" >> ${PLIST}
-	${FIND} ${WRKSRC} -type f | \
-		${SED} -e 's|^/usr/|/www/|' -e 's|^/||' \
-		| ${SORT} >> ${PLIST}
-	${ECHO_CMD} www/freenasUI/local_settings.py >> ${PLIST}
-	${ECHO_CMD} "@comment directories" >> ${PLIST}
-	${FIND} ${WRKSRC} -type d \
-		| ${SED} -e 's|^/usr/|/www/|' -e 's|^/||' -e 's|^|@dirrm |' \
-		| ${SORT} -r >> ${PLIST}
+.include <bsd.port.pre.mk>
 
 do-install:
-	${RM} -fr ${STAGEDIR}${PREFIX}/www/freenasUI
+	${RM} -f ${PLIST}
+	${ECHO_CMD} "@owner www"  >> ${TMPPLIST}
+	${ECHO_CMD} "@group www"  >> ${TMPPLIST}
 	${MKDIR} ${STAGEDIR}${PREFIX}/www/freenasUI
 	${CP} -a ${WRKSRC}/ ${STAGEDIR}${PREFIX}/www/freenasUI
+.if ${PRODUCT} == "TrueNAS"
+	${CP} -a /usr/truenas/gui/ ${STAGEDIR}${PREFIX}/www/freenasUI
+.endif
 	${LN} -s -f /etc/local_settings.py ${STAGEDIR}${PREFIX}/www/freenasUI/local_settings.py
+	(cd ${STAGEDIR}${PREFIX}; ${FIND} . \( -type f -o -type l \) \
+		| ${SED} -e 's,^\./,,g' \
+		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
+		| ${AWK} '{print "www/freenasUI/"$$2 }' >> ${TMPPLIST})
 
-.include <bsd.port.mk>
+.include <bsd.port.post.mk>
