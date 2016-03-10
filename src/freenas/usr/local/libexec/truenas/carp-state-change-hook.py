@@ -111,8 +111,9 @@ def main(ifname, event):
                     if status == 'MASTER':
                         log.warn("Other node is already up, assuming backup.")
                         sys.exit()
-                except:
+                except Exception as e:
                     log.info("Failed to contact the other node", exc_info=True)
+                    print e, "Failed to contact the other node"
 
                 masterret = False
                 for vol in fobj['volumes'] + fobj['phrasedvolumes']:
