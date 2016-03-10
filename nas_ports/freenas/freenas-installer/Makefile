@@ -34,13 +34,13 @@ ALL_TARGET=obj all
 
 MAKE_JOBS_UNSAFE=yes
 
+.include <bsd.port.pre.mk>
+
 .if ${PRODUCT} == "TrueNAS"
 PLIST_SUB+=	TRUENAS=""
 .else
 PLIST_SUB+=	TRUENAS="@comment "
 .endif
-
-.include <bsd.port.pre.mk>
 
 do-install:
 	mkdir -p ${STAGEDIR}/${PREFIX}/pre-install
