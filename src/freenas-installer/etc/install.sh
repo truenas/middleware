@@ -873,18 +873,12 @@ menu_install()
 		    /etc/avatar.conf \
 		    /tmp/data/conf/base/etc/avatar.conf
 	    fi
-	elif [ "${upgrade_style}" = "new" ]; then
-		zpool import -f -N ${POOL}
-		mount -t zfs -o noatime freenas-boot/ROOT/default /tmp/data
-	else
+	    # This needs to be rewritten.
+            install_worker.sh -D /tmp/data -m / pre-install
+            umount /tmp/data
+	elif [ "${upgrade_style}" != "new" ]; then
 		echo "Unknown upgrade style" 1>&2
 		false
-	fi
-	# This needs to be rewritten.
-        install_worker.sh -D /tmp/data -m / pre-install
-        umount /tmp/data
-	if [ "${upgrade_style}" = "new" ]; then
-	    zpool export freenas-boot
 	fi
         rmdir /tmp/data
     else
@@ -955,7 +949,8 @@ menu_install()
 	if [ -d /tmp/modules ]; then
             for i in `ls /tmp/modules`
             do
-		cp -np /tmp/modules/$i /tmp/data/boot/modules
+		# If it already exists, simply don't copy it.
+		cp -np /tmp/modules/$i /tmp/data/boot/modules || true
             done
 	fi
 	if [ -d /tmp/fusionio ]; then
