@@ -53,6 +53,16 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
+.if ${PRODUCT} == "TrueNAS"
+	${RM} \
+		${STAGEDIR}/etc/sysctl.conf
+		${STAGEDIR}/etc/pf.conf.block
+		${STAGEDIR}/etc/motd
+		${STAGEDIR}/etc/ix.rc.d/ix-fstab
+		${STAGEDIR}/etc/ix.rc.d/ix_pf_early
+		${STAGEDIR}/etc/ix.rc.d/ix_pf_late
+		${STAGEDIR}/etc/ix.rc.d/ix-sysctl
+.endif
 	(cd ${WRKSRC}/freenas; ${FIND} . \( -type f -o -type l \) \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
