@@ -62,6 +62,7 @@ do-install:
 		${STAGEDIR}/etc/pf.conf.block \
 		${STAGEDIR}/etc/motd \
 		${STAGEDIR}/etc/ix.rc.d/ix-fstab \
+		${STAGEDIR}/etc/ix.rc.d/ix-loader \
 		${STAGEDIR}/etc/ix.rc.d/ix_pf_early \
 		${STAGEDIR}/etc/ix.rc.d/ix_pf_late \
 		${STAGEDIR}/etc/ix.rc.d/ix-sysctl
