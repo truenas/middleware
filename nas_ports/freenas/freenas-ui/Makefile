@@ -1,7 +1,4 @@
-#
 # $FreeBSD$
-# $Id$
-#
 
 PORTNAME=       freenas-ui
 PORTVERSION=    ${PRODUCT_VERSION:C/\-.*//:C/\_.*//}
@@ -13,6 +10,7 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=     dev@ixsystems.com
 COMMENT=        FreeNAS UI
 
+PRODUCT?=
 USES=		python
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
@@ -40,7 +38,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
 
-NO_BUILD = yes
+NO_BUILD=yes
 
 PLIST=		${WRKDIR}/plist
 
@@ -53,6 +51,12 @@ SUB_LIST+=	PYTHON_CMD=${PYTHON_CMD}
 
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
+
+.include <bsd.port.pre.mk>
+
+.if ${PRODUCT} == "TrueNAS"
+RUN_DEPENDS+=	truenas-files>0:${PORTSDIR}/truenas/truenas-files
+.endif
 
 pre-install:
 	${RM} -f ${PLIST}
@@ -74,4 +78,4 @@ do-install:
 	${CP} -a ${WRKSRC}/ ${STAGEDIR}${PREFIX}/www/freenasUI
 	${LN} -s -f /etc/local_settings.py ${STAGEDIR}${PREFIX}/www/freenasUI/local_settings.py
 
-.include <bsd.port.mk>
+.include <bsd.port.post.mk>
