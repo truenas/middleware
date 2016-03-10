@@ -10,6 +10,7 @@ VALID_CATEGORIES+=	freenas
 MAINTAINER=	dev@ixsystems.com
 COMMENT=	miscellaneous files for FreeNAS
 
+PRODUCT?=
 PREFIX=/
 
 # explicitly set this for the port build
@@ -29,6 +30,8 @@ pre-clean:
 ALL_TARGET=obj all
 
 MAKE_JOBS_UNSAFE=yes
+
+.include <bsd.port.pre.mk>
 
 do-build:
 	${MAKE} -C ${WRKSRC}/extract-tarball   obj
@@ -53,14 +56,14 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
-.if defined(PRODUCT) && ${PRODUCT} == "TrueNAS"
+.if ${PRODUCT} == "TrueNAS"
 	${RM} \
-		${STAGEDIR}/etc/sysctl.conf
-		${STAGEDIR}/etc/pf.conf.block
-		${STAGEDIR}/etc/motd
-		${STAGEDIR}/etc/ix.rc.d/ix-fstab
-		${STAGEDIR}/etc/ix.rc.d/ix_pf_early
-		${STAGEDIR}/etc/ix.rc.d/ix_pf_late
+		${STAGEDIR}/etc/sysctl.conf \
+		${STAGEDIR}/etc/pf.conf.block \
+		${STAGEDIR}/etc/motd \
+		${STAGEDIR}/etc/ix.rc.d/ix-fstab \
+		${STAGEDIR}/etc/ix.rc.d/ix_pf_early \
+		${STAGEDIR}/etc/ix.rc.d/ix_pf_late \
 		${STAGEDIR}/etc/ix.rc.d/ix-sysctl
 .endif
 	(cd ${WRKSRC}/freenas; ${FIND} . \( -type f -o -type l \) \
@@ -68,4 +71,4 @@ do-install:
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
 		| ${AWK} '{print $$2 }' >> ${TMPPLIST})
 
-.include <bsd.port.mk>
+.include <bsd.port.post.mk>
