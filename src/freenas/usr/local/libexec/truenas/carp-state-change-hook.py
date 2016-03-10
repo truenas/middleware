@@ -237,7 +237,7 @@ def link_up(fobj, state_file, ifname, event, user_override, forcetakeover):
             if status0 != 'MASTER':
                 log.warn('Promoted then demoted, quitting.')
                 # Just in case.  Demote ourselves.
-                run('ifconfig %s advskew 202' % ifname)
+                run('ifconfig %s advskew 206' % ifname)
                 try:
                     os.unlink(ELECTING_FILE)
                 except:
