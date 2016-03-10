@@ -53,7 +53,7 @@ do-install:
 	#
 	#
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
-.if ${PRODUCT} == "TrueNAS"
+.if defined(PRODUCT) && ${PRODUCT} == "TrueNAS"
 	${RM} \
 		${STAGEDIR}/etc/sysctl.conf
 		${STAGEDIR}/etc/pf.conf.block
