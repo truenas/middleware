@@ -58,6 +58,7 @@ do-install:
 	${CP} -a ${WRKSRC}/freenas/ ${STAGEDIR}/
 .if ${PRODUCT} == "TrueNAS"
 	${RM} \
+		${STAGEDIR}/boot/loader.rc.local \
 		${STAGEDIR}/etc/sysctl.conf \
 		${STAGEDIR}/etc/pf.conf.block \
 		${STAGEDIR}/etc/motd \
