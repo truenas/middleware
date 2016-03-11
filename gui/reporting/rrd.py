@@ -268,6 +268,7 @@ class InterfacePlugin(RRDBase):
                 continue
             if os.path.exists(os.path.join(entry, 'if_octets.rrd')):
                 ids.append(ident)
+        ids.sort(key=RRDBase._sort_disks)
         return ids
 
     def graph(self):
