@@ -18,6 +18,7 @@ stop_cmd="ix_textdump_stop"
 ix_textdump_start()
 {
 
+	echo "Setting up system for textdumps."
         if [ -z "${dumpdev}" ] ; then
                 debug "dumpdev not set exiting"
                 return 1

@@ -13,6 +13,7 @@ multipath_sync()
 	SENTINEL="/var/tmp/.multipath"
 	if ! [ -f ${SENTINEL} ]; then
 		touch ${SENTINEL}
+		echo "Starting ${name}."
 		LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python \
 			/usr/local/www/freenasUI/middleware/notifier.py \
 			multipath_sync \
@@ -21,6 +22,7 @@ multipath_sync()
 		ret=$(find /var/tmp -name .multipath -maxdepth 1 -mtime 600s | wc -l | tr -d '[[:space:]]')
 		if [ ${ret} == "0"; then
 			touch ${SENTINEL}
+			echo "Starting ${name}."
 			LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python \
 				/usr/local/www/freenasUI/middleware/notifier.py \
 				multipath_sync \
