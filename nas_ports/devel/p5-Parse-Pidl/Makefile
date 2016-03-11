@@ -33,5 +33,5 @@ post-extract:
 .include "${MASTERDIR}/Makefile"
 
 # Ugly hack
-WRKSRC=			${WRKDIR}/${DISTNAME}/pidl
+WRKSRC=			/usr/samba_src/pidl
 DISTNAME=		${SAMBA4_BASENAME}-4-3-stable
