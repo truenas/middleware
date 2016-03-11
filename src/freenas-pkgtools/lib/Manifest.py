@@ -380,10 +380,15 @@ class Manifest(object):
             if crl_file is None:
                 log.debug("Could not create CRL, ignoring for now")
             else:
-                if not self._config.TryGetNetworkFile(url = IX_CRL,
-                                                  pathname = crl_file.name,
-                                                  reason = "FetchCRL"):
-                    log.error("Could not get CRL file %s" % IX_CRL)
+                try:
+                    if not self._config.TryGetNetworkFile(url = IX_CRL,
+                                                          pathname = crl_file.name,
+                                                          reason = "FetchCRL"):
+                        log.error("Could not get CRL file %s" % IX_CRL)
+                        crl_file.close()
+                        crl_file = None
+                except BaseException as e:
+                    log.debug("Trying to get CRL, got exception %s" % str(e))
                     crl_file.close()
                     crl_file = None
 
