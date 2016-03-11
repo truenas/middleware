@@ -509,11 +509,11 @@ class ActiveDirectoryForm(ModelForm):
             'certfile': certificate
         }
 
-        if not ad_kerberos_principal:
-            if not cdata.get("ad_bindpw"):
-                bindpw = self.instance.ad_bindpw
-                cdata['ad_bindpw'] = bindpw
+        if not cdata.get("ad_bindpw"):
+            bindpw = self.instance.ad_bindpw
+            cdata['ad_bindpw'] = bindpw
 
+        if not ad_kerberos_principal:
             if not bindname:
                 raise forms.ValidationError("No domain account name specified")
             if not bindpw:
