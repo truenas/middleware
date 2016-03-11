@@ -47,11 +47,12 @@ do-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/bin/install_worker.sh ${STAGEDIR}/${PREFIX}/bin/install_worker.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/bin/install_worker2.sh ${STAGEDIR}/${PREFIX}/bin/install_worker2.sh
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/etc/install.sh ${STAGEDIR}/${PREFIX}/etc/install.sh
-.if ${PRODUCT} == "TrueNAS"
-	${INSTALL_SCRIPT} /usr/truenas/src/freenas-installer/etc/install_sata_dom.sh ${STAGEDIR}/${PREFIX}/etc/install_sata_dom.sh
-.endif
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/etc/rc ${STAGEDIR}/${PREFIX}/etc/rc
 	${INSTALL_SCRIPT} ${WRKSRC}/freenas-installer/lib/functions.sh ${STAGEDIR}/${PREFIX}/lib/functions.sh
 	cp -a ${WRKSRC}/freenas-installer/pre-install/ ${STAGEDIR}/${PREFIX}/pre-install/
+.if ${PRODUCT} == "TrueNAS"
+	${INSTALL_SCRIPT} /usr/truenas/src/freenas-installer/etc/install_sata_dom.sh ${STAGEDIR}/${PREFIX}/etc/install_sata_dom.sh
+	cp -a /usr/truenas/src/freenas-installer/pre-install/ ${STAGEDIR}/${PREFIX}/pre-install/
+.endif
 
 .include <bsd.port.post.mk>
