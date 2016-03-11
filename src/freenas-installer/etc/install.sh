@@ -966,9 +966,6 @@ menu_install()
 		-e '/^kernel=.*/d' /tmp/data/boot/loader.conf /tmp/data/boot/loader.conf.local
 	fi
     fi
-    if is_truenas ; then
-        install_worker.sh -D /tmp/data -m / install
-    fi
     
     # To support Xen, we need to disable HPET.
     if [ "$(/tmp/data/usr/local/sbin/dmidecode -s system-product-name)" = "HVM domU" ]; then
