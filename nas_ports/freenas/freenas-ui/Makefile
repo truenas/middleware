@@ -34,7 +34,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
 	${PYTHON_PKGNAMEPREFIX}sqlparse>0:${PORTSDIR}/databases/py-sqlparse \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:${PORTSDIR}/freenas/py-licenselib \
 	${PYTHON_PKGNAMEPREFIX}pysphere-freenas>0:${PORTSDIR}/net/py-pysphere-freenas \
-	${PYTHON_PKGNAMEPREFIX}vmomi>0:${PORTSDIR}/net/py-vmomi \
+	${PYTHON_PKGNAMEPREFIX}pyvmomi>0:${PORTSDIR}/net/py-pyvmomi \
 	dmidecode>0:${PORTSDIR}/sysutils/dmidecode
 
 EXTRACT_ONLY=
