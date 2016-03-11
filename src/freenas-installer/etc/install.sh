@@ -179,7 +179,7 @@ get_media_description()
     VAL=""
     if [ -n "${_media}" ]; then
 	_description=`geom disk list ${_media} 2>/dev/null \
-	    | sed -ne 's/^   descr: *//p`
+	    | sed -ne 's/^   descr: *//p'`
 	if [ -z "$_description" ] ; then
 		_description="Unknown Device"
 	fi
