@@ -1,0 +1,8 @@
+Samba4 is an attempt to implement an Active Directory compatible Domain
+Controller.
+
+In short, you can join a WinNT, Win2000, WinXP or Win2003 member server
+to a Samba4 domain, and it will behave much as it does in AD, including
+Kerberos domain logins where applicable.
+
+WWW: http://www.samba.org/

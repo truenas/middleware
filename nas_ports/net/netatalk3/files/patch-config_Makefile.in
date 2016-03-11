@@ -1,0 +1,42 @@
+--- config/Makefile.in.orig	2013-10-28 11:49:55.000000000 -0400
++++ config/Makefile.in	2013-11-11 11:05:05.000000000 -0500
+@@ -790,8 +790,8 @@ install-data-local: install-config-files
+ 
+ uninstall-local:
+ 	@for f in $(CONFFILES) $(GENFILES); do \
+-		echo rm -f $(DESTDIR)$(pkgconfdir)/$$f; \
+-		rm -f $(DESTDIR)$(pkgconfdir)/$$f; \
++	    echo rm -f $(DESTDIR)$(pkgconfdir)/$$f.dist; \
++	    rm -f $(DESTDIR)$(pkgconfdir)/$$f.dist; \
+ 	done
+ 	rm -f $(DESTDIR)$(pkgconfdir)/dbus-session.conf
+ 	rm -f $(DESTDIR)$(localstatedir)/netatalk/README
+@@ -801,21 +801,16 @@ uninstall-local:
+ install-config-files: $(CONFFILES) $(GENFILES)
+ 	$(mkinstalldirs) $(DESTDIR)$(pkgconfdir)
+ 	@for f in $(CONFFILES) ; do \
+-		if test "x$(OVERWRITE_CONFIG)" = "xyes" -o ! -f $(DESTDIR)$(pkgconfdir)/$$f; then \
+-			echo "$(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir)"; \
+-			$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(pkgconfdir); \
+-		else \
+-			echo "not overwriting $$f"; \
+-		fi; \
++	    echo "$(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir)/$$f.dist"; \
++	    $(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir)/$$f.dist; \
+ 	done
+ 	@for f in $(GENFILES); do \
+-		if test "x$(OVERWRITE_CONFIG)" = "xyes" -o ! -f $(DESTDIR)$(pkgconfdir)/$$f; then \
+-			echo "$(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir)"; \
+-			$(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir); \
+-		else \
+-			echo "not overwriting $$f"; \
+-		fi; \
++	    if [ $$f != "dbus-session.conf" ]; then \
++	    	echo "$(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir)/$$f.dist"; \
++	    	$(INSTALL_DATA) $$f $(DESTDIR)$(pkgconfdir)/$$f.dist; \
++	    fi; \
+ 	done
++	$(INSTALL_DATA) dbus-session.conf $(DESTDIR)$(pkgconfdir)/dbus-session.conf.netatalk
+ 
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.

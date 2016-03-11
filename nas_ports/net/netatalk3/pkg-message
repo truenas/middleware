@@ -1,0 +1,9 @@
+###
+If you compiled WITH_PAM support, you need to edit /etc/pam.conf to add
+support for netatalk.  To do so, add the following three lines to this
+file:
+
+netatalk	auth	required	pam_unix.so	try_first_pass
+netatalk	account	required	pam_unix.so	try_first_pass
+netatalk	session	required	pam_permit.so
+###

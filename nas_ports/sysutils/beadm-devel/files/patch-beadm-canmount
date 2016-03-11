@@ -1,0 +1,10 @@
+--- beadm.orig	2014-11-06 14:27:52.000000000 -0800
++++ beadm	2014-11-06 14:28:15.000000000 -0800
+@@ -529,7 +529,6 @@
+       | grep -E "^${POOL}/${BEDS}/${2}(/|$)" \
+       | while read NAME
+         do
+-          zfs set canmount=on ${NAME}
+           while __be_clone ${NAME}
+           do
+             zfs promote ${NAME}

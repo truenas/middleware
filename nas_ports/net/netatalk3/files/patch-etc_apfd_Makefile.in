@@ -1,0 +1,20 @@
+--- etc/afpd/Makefile.in.orig	2014-08-27 02:22:37.000000000 -0400
++++ etc/afpd/Makefile.in	2014-09-07 11:59:30.000000000 -0400
+@@ -181,7 +181,7 @@ AM_V_at = $(am__v_at_@AM_V@)
+ am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+ am__v_at_0 = @
+ am__v_at_1 = 
+-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
++DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir) -I$(top_builddir)/include
+ depcomp = $(SHELL) $(top_srcdir)/depcomp
+ am__depfiles_maybe = depfiles
+ am__mv = mv -f
+@@ -459,7 +459,7 @@ afpd_SOURCES = afp_config.c afp_dsi.c af
+ 	$(am__append_7)
+ afpd_LDADD = $(top_builddir)/libatalk/libatalk.la @LIBGCRYPT_LIBS@ \
+ 	@QUOTA_LIBS@ @WRAP_LIBS@ @LIBADD_DL@ @ACL_LIBS@ @PTHREAD_LIBS@ \
+-	@GSSAPI_LIBS@ @KRB5_LIBS@ @MYSQL_LIBS@ $(am__append_2) \
++	@GSSAPI_LIBS@ @KRB5_LIBS@ @MYSQL_LIBS@ @PAM_LIBS@ $(am__append_2) \
+ 	$(am__append_10)
+ afpd_LDFLAGS = -export-dynamic $(am__append_9)
+ afpd_CFLAGS = @GSSAPI_CFLAGS@ @KRB5_CFLAGS@ @PTHREAD_CFLAGS@ \

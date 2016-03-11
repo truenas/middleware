@@ -1,0 +1,74 @@
+'\" t
+.\"     Title: oLschema2ldif
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 05/30/2015
+.\"    Manual: System Administration tools
+.\"    Source: Samba 4.0
+.\"  Language: English
+.\"
+.TH "OLSCHEMA2LDIF" "1" "05/30/2015" "Samba 4\&.0" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+oLschema2ldif \- Converts LDAP schema\*(Aqs to LDB\-compatible LDIF
+.SH "SYNOPSIS"
+.HP \w'\fBoLschema2ldif\fR\ 'u
+\fBoLschema2ldif\fR [\-I\ INPUT\-FILE] [\-O\ OUTPUT\-FILE]
+.SH "DESCRIPTION"
+.PP
+oLschema2ldif is a simple tool that converts standard OpenLDAP schema files to a LDIF format that is understood by LDB\&.
+.SH "OPTIONS"
+.PP
+\-I input\-file
+.RS 4
+OpenLDAP schema to read\&. If none are specified, the schema file will be read from standard input\&.
+.RE
+.PP
+\-O output\-file
+.RS 4
+File to write ldif version of schema to\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 4\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+ldb(7), ldbmodify, ldbdel, ldif(5)
+.SH "AUTHOR"
+.PP
+ldb was written by
+\m[blue]\fBAndrew Tridgell\fR\m[]\&\s-2\u[1]\d\s+2\&. oLschema2ldif was written by
+\m[blue]\fBSimo Sorce\fR\m[]\&\s-2\u[2]\d\s+2\&.
+.PP
+If you wish to report a problem or make a suggestion then please see the
+\m[blue]\fB\%http://ldb.samba.org/\fR\m[]
+web site for current contact and maintainer information\&.
+.SH "NOTES"
+.IP " 1." 4
+Andrew Tridgell
+.RS 4
+\%http://samba.org/~tridge/
+.RE
+.IP " 2." 4
+Simo Sorce
+.RS 4
+\%mailto:idra@samba.org
+.RE

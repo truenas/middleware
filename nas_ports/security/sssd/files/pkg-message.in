@@ -1,0 +1,21 @@
+================================================================================
+Copy %%PREFIX%%/etc/sssd/sssd.conf.sample to %%PREFIX%%/etc/sssd/sssd.conf
+and edit %%PREFIX%%/etc/sssd/sssd.conf (see man sssd.conf for details)
+
+To load sssd at startup, add sssd_enable="YES" to /etc/rc.conf
+
+To enable pam integration, add a line similar to the following to
+/etc/pam.d/system:
+
+login   auth    sufficient      %%PREFIX%%/lib/pam_sss.so
+
+To enable NSS integration, update /etc/nsswitch.conf as follows:
+
+group: sss files
+passwd: sss files
+
+For additional details, please see the man pages for pam.conf and nsswitch.conf
+
+An sssd HOWTO is also available:
+https://fedorahosted.org/sssd/wiki/HOWTO_Configure_1_0_2
+================================================================================

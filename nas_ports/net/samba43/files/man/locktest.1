@@ -1,0 +1,137 @@
+'\" t
+.\"     Title: locktest
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/26/2015
+.\"    Manual: Test Suite
+.\"    Source: Samba 4.0
+.\"  Language: English
+.\"
+.TH "LOCKTEST" "1" "03/26/2015" "Samba 4\&.0" "Test Suite"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+locktest \- Find differences in locking between two SMB servers
+.SH "SYNOPSIS"
+.HP \w'\fBlocktest\fR\ 'u
+\fBlocktest\fR {//server1/share1} {//server2/share2} [\-U\ user%pass] [\-U\ user%pass] [\-s\ seed] [\-o\ numops] [\-a] [\-O] [\-E] [\-Z] [\-R\ range] [\-B\ base] [\-M\ min]
+.SH "DESCRIPTION"
+.PP
+locktest
+is a utility for detecting differences in behaviour in locking between SMB servers\&. It will run a random set of locking operations against
+\fI//server1/share1\fR
+and then the same random set against
+\fI//server2/share2\fR
+and display the differences in the responses it gets\&.
+.PP
+This utility is used by the Samba team to find differences in behaviour between Samba and Windows servers\&.
+.SH "OPTIONS"
+.PP
+\-U user%pass
+.RS 4
+Specify the user and password to use when logging on on the shares\&. This parameter can be specified twice (once for the first server, once for the second)\&.
+.RE
+.PP
+\-s seed
+.RS 4
+Seed the random number generator with the specified value\&.
+.RE
+.PP
+\-o numops
+.RS 4
+Set the number of operations to perform\&.
+.RE
+.PP
+\-a
+.RS 4
+Print the operations that are performed\&.
+.RE
+.PP
+\-A
+.RS 4
+Backtrack to find minimal number of operations required to make the response to a certain call differ\&.
+.RE
+.PP
+\-O
+.RS 4
+Enable oplocks\&.
+.RE
+.PP
+\-u
+.RS 4
+Hide unlock fails\&.
+.RE
+.PP
+\-E
+.RS 4
+enable exact error code checking
+.RE
+.PP
+\-Z
+.RS 4
+enable the zero/zero lock
+.RE
+.PP
+\-R range
+.RS 4
+set lock range
+.RE
+.PP
+\-B base
+.RS 4
+set lock base
+.RE
+.PP
+\-M min
+.RS 4
+set min lock length
+.RE
+.PP
+\-k
+.RS 4
+Use kerberos
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 4\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+Samba
+.SH "AUTHOR"
+.PP
+This utility is part of the
+\m[blue]\fBSamba\fR\m[]\&\s-2\u[1]\d\s+2
+suite, which is developed by the global
+\m[blue]\fBSamba Team\fR\m[]\&\s-2\u[2]\d\s+2\&.
+.PP
+locktest was written by Andrew Tridgell\&.
+.PP
+This manpage was written by Jelmer Vernooij\&.
+.SH "NOTES"
+.IP " 1." 4
+Samba
+.RS 4
+\%http://www.samba.org/
+.RE
+.IP " 2." 4
+Samba Team
+.RS 4
+\%http://www.samba.org/samba/team/
+.RE

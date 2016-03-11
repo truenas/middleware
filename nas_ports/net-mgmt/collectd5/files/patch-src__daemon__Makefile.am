@@ -1,0 +1,20 @@
+--- src/daemon/Makefile.am.orig	2015-05-26 19:38:31 UTC
++++ src/daemon/Makefile.am
+@@ -6,7 +6,7 @@
+ AM_CPPFLAGS += -DPREFIX='"${prefix}"'
+ AM_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
+ AM_CPPFLAGS += -DLOCALSTATEDIR='"${localstatedir}"'
+-AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"'
++AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/db/${PACKAGE_NAME}"'
+ if BUILD_FEATURE_DAEMON
+ AM_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
+ endif
+@@ -49,7 +49,7 @@ collectd_CPPFLAGS =  $(AM_CPPFLAGS) $(LT
+ collectd_CFLAGS = $(AM_CFLAGS)
+ collectd_LDFLAGS = -export-dynamic
+ collectd_LDADD = libavltree.la libcommon.la libheap.la -lm
+-collectd_DEPENDENCIES =
++collectd_DEPENDENCIES = libavltree.la libcommon.la libheap.la
+ 
+ # Link to these libraries..
+ if BUILD_WITH_LIBRT

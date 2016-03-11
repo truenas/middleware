@@ -1,0 +1,17 @@
+syslog-ng is an enhanced log daemon, supporting a wide range of input and
+output methods: syslog, unstructured text, message queues, databases (SQL
+and NoSQL alike) and more.
+
+Key features:
+
+  * receive and send RFC3164 and RFC5424 style syslog messages
+  * work with any kind of unstructured data
+  * receive and send JSON formatted messages
+  * classify and structure logs with builtin parsers (csv-parser(),
+    db-parser(), ...)
+  * normalize, crunch and process logs as they flow through the system
+  * hand on messages for further processing using message queues (like
+    AMQP), files or databases (like PostgreSQL or MongoDB).
+
+The official home page of syslog-ng is:
+http://www.balabit.com/network-security/syslog-ng/

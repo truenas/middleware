@@ -1,0 +1,128 @@
+--- src/Makefile.am.orig	2016-02-07 17:59:05.611217011 +0100
++++ src/Makefile.am	2016-02-07 18:01:14.773208616 +0100
+@@ -7,14 +7,14 @@
+ PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
+ 
+ if COMPILER_IS_GCC
+-AM_CFLAGS = -Wall -Werror
++AM_CFLAGS = -Wall 
+ endif
+ 
+ AM_CPPFLAGS = -I$(srcdir)/daemon
+ AM_CPPFLAGS += -DPREFIX='"${prefix}"'
+ AM_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
+ AM_CPPFLAGS += -DLOCALSTATEDIR='"${localstatedir}"'
+-AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"'
++AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/db/${PACKAGE_NAME}"'
+ if BUILD_FEATURE_DAEMON
+ AM_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
+ endif
+@@ -211,6 +211,12 @@
+ endif
+ endif
+ 
++if BUILD_PLUGIN_CPUTEMP
++pkglib_LTLIBRARIES += cputemp.la
++cputemp_la_SOURCES = cputemp.c
++cputemp_la_LDFLAGS = $(PLUGIN_LDFLAGS)
++endif
++
+ if BUILD_PLUGIN_CPU
+ pkglib_LTLIBRARIES += cpu.la
+ cpu_la_SOURCES = cpu.c
+@@ -218,7 +224,7 @@
+ cpu_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ cpu_la_LIBADD =
+ if BUILD_WITH_LIBKSTAT
+-cpu_la_LIBADD += -lkstat
++cpu_la_LIBADD += $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ if BUILD_WITH_LIBDEVINFO
+ cpu_la_LIBADD += -ldevinfo
+@@ -303,7 +309,7 @@
+ disk_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ disk_la_LIBADD =
+ if BUILD_WITH_LIBKSTAT
+-disk_la_LIBADD += -lkstat
++disk_la_LIBADD += $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ if BUILD_WITH_LIBDEVINFO
+ disk_la_LIBADD += -ldevinfo
+@@ -321,6 +327,9 @@
+ if BUILD_WITH_PERFSTAT
+ disk_la_LIBADD += -lperfstat
+ endif
++if BUILD_FREEBSD
++disk_la_LIBADD += -ldevstat -lgeom
++endif
+ endif
+ 
+ if BUILD_PLUGIN_DNS
+@@ -408,7 +417,7 @@
+ interface_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
+ else
+ if BUILD_WITH_LIBKSTAT
+-interface_la_LIBADD += -lkstat
++interface_la_LIBADD += $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ if BUILD_WITH_LIBDEVINFO
+ interface_la_LIBADD += -ldevinfo
+@@ -591,7 +600,7 @@
+ memory_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ memory_la_LIBADD =
+ if BUILD_WITH_LIBKSTAT
+-memory_la_LIBADD += -lkstat
++memory_la_LIBADD += $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ if BUILD_WITH_LIBDEVINFO
+ memory_la_LIBADD += -ldevinfo
+@@ -964,7 +973,7 @@
+ swap_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ swap_la_LIBADD =
+ if BUILD_WITH_LIBKSTAT
+-swap_la_LIBADD += -lkstat
++swap_la_LIBADD += $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ if BUILD_WITH_LIBDEVINFO
+ swap_la_LIBADD += -ldevinfo
+@@ -1010,7 +1019,7 @@
+ pkglib_LTLIBRARIES += tape.la
+ tape_la_SOURCES = tape.c
+ tape_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+-tape_la_LIBADD = -lkstat -ldevinfo
++tape_la_LIBADD = $(BUILD_WITH_LIBKSTAT_LIBS) -ldevinfo
+ endif
+ 
+ if BUILD_PLUGIN_TARGET_NOTIFICATION
+@@ -1116,7 +1125,7 @@
+ uptime_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ uptime_la_LIBADD =
+ if BUILD_WITH_LIBKSTAT
+-uptime_la_LIBADD += -lkstat
++uptime_la_LIBADD += $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ if BUILD_WITH_PERFSTAT
+ uptime_la_LIBADD += -lperfstat
+@@ -1275,7 +1284,7 @@
+ # zfs_arc requires no library on linux
+ else
+ # solaris
+-zfs_arc_la_LIBADD = -lkstat
++zfs_arc_la_LIBADD = $(BUILD_WITH_LIBKSTAT_LIBS)
+ endif
+ endif
+ endif
+@@ -1364,12 +1373,7 @@
+ 
+ install-exec-hook:
+ 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
+-	if test -e $(DESTDIR)$(sysconfdir)/collectd.conf; \
+-	then \
+-		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
+-	else \
+-		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
+-	fi; \
++	$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.sample
+ 	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
+ 	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
+ 	$(INSTALL) -m 0644 $(srcdir)/postgresql_default.conf \

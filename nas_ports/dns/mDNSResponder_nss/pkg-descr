@@ -1,0 +1,5 @@
+This is a nsswitch plugin from Apple's mDNSResponder code, adapted
+for FreeBSD's nsswitch and libc.
+
+WWW: https://developer.apple.com/bonjour/
+WWW: http://opensource.apple.com/tarballs/mDNSResponder/

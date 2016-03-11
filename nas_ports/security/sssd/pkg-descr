@@ -1,0 +1,9 @@
+This project provides a set of daemons to manage access to remote
+directories and authentication mechanisms, it provides an NSS and
+PAM interface toward the system and a pluggable backend system to
+connect to multiple different account sources. It is also the
+basis to provide client auditing and policy services for projects
+like FreeIPA.  sssd also features caching, which can allow for
+offline use to assist laptop users.
+
+WWW: https://fedorahosted.org/sssd/

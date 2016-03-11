@@ -1,0 +1,157 @@
+'\" t
+.\"     Title: nmblookup4
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 05/30/2015
+.\"    Manual: User Commands
+.\"    Source: Samba 3.2
+.\"  Language: English
+.\"
+.TH "NMBLOOKUP4" "1" "05/30/2015" "Samba 3\&.2" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+nmblookup4 \- NetBIOS over TCP/IP client used to lookup NetBIOS names
+.SH "SYNOPSIS"
+.HP \w'\fBnmblookup4\fR\ 'u
+\fBnmblookup4\fR [\-M] [\-R] [\-S] [\-r] [\-A] [\-h] [\-B\ <broadcast\ address>] [\-U\ <unicast\ address>] [\-d\ <debug\ level>] [\-s\ <smb\ config\ file>] [\-i\ <NetBIOS\ scope>] [\-T] [\-f] {name}
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\fBnmblookup4\fR
+is used to query NetBIOS names and map them to IP addresses in a network using NetBIOS over TCP/IP queries\&. The options allow the name queries to be directed at a particular IP broadcast area or to a particular machine\&. All queries are done over UDP\&.
+.SH "OPTIONS"
+.PP
+\-M
+.RS 4
+Searches for a master browser by looking up the NetBIOS
+\fIname\fR
+with a type of
+\fB0x1d\fR\&. If
+\fI name\fR
+is "\-" then it does a lookup on the special name
+\fB__MSBROWSE__\fR\&. Please note that in order to use the name "\-", you need to make sure "\-" isn\*(Aqt parsed as an argument, e\&.g\&. use :
+\fBnmblookup4 \-M \-\- \-\fR\&.
+.RE
+.PP
+\-R
+.RS 4
+Set the recursion desired bit in the packet to do a recursive lookup\&. This is used when sending a name query to a machine running a WINS server and the user wishes to query the names in the WINS server\&. If this bit is unset the normal (broadcast responding) NetBIOS processing code on a machine is used instead\&. See RFC1001, RFC1002 for details\&.
+.RE
+.PP
+\-S
+.RS 4
+Once the name query has returned an IP address then do a node status query as well\&. A node status query returns the NetBIOS names registered by a host\&.
+.RE
+.PP
+\-r
+.RS 4
+Try and bind to UDP port 137 to send and receive UDP datagrams\&. The reason for this option is a bug in Windows 95 where it ignores the source port of the requesting packet and only replies to UDP port 137\&. Unfortunately, on most UNIX systems root privilege is needed to bind to this port, and in addition, if the
+\fBnmbd\fR(8)
+daemon is running on this machine it also binds to this port\&.
+.RE
+.PP
+\-A
+.RS 4
+Interpret
+\fIname\fR
+as an IP Address and do a node status query on this address\&.
+.RE
+.PP
+\-B <broadcast address>
+.RS 4
+Send the query to the given broadcast address\&. Without this option the default behavior of nmblookup4 is to send the query to the broadcast address of the network interfaces as either auto\-detected or defined in the
+\m[blue]\fB\fIinterfaces\fR\fR\m[]\&\s-2\u[1]\d\s+2
+parameter of the
+\fBsmb.conf\fR(5)
+file\&.
+.RE
+.PP
+\-U <unicast address>
+.RS 4
+Do a unicast query to the specified address or host
+\fIunicast address\fR\&. This option (along with the
+\fI\-R\fR
+option) is needed to query a WINS server\&.
+.RE
+.PP
+\-T
+.RS 4
+This causes any IP addresses found in the lookup to be looked up via a reverse DNS lookup into a DNS name, and printed out before each
+.sp
+\fIIP address \&.\&.\&.\&. NetBIOS name\fR
+.sp
+pair that is the normal output\&.
+.RE
+.PP
+\-f
+.RS 4
+Show which flags apply to the name that has been looked up\&. Possible answers are zero or more of: Response, Authoritative, Truncated, Recursion_Desired, Recursion_Available, Broadcast\&.
+.RE
+.PP
+name
+.RS 4
+This is the NetBIOS name being queried\&. Depending upon the previous options this may be a NetBIOS name or IP address\&. If a NetBIOS name then the different name types may be specified by appending \*(Aq#<type>\*(Aq to the name\&. This name may also be \*(Aq*\*(Aq, which will return all registered names within a broadcast area\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\fBnmblookup4\fR
+can be used to query a WINS server (in the same way
+\fBnslookup\fR
+is used to query DNS servers)\&. To query a WINS server,
+\fBnmblookup4\fR
+must be called like this:
+.PP
+\fBnmblookup4 \-U server \-R \*(Aqname\*(Aq\fR
+.PP
+For example, running :
+.PP
+\fBnmblookup4 \-U samba\&.org \-R \*(AqIRIX#1B\*(Aq\fR
+.PP
+would query the WINS server samba\&.org for the domain master browser (1B name type) for the IRIX workgroup\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+\fBnmbd\fR(8),
+\fBsamba\fR(7), and
+\fBsmb.conf\fR(5)\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The original Samba man pages were written by Karl Auer\&. The man page sources were converted to YODL format (another excellent piece of Open Source software, available at
+\m[blue]\fBftp://ftp\&.icce\&.rug\&.nl/pub/unix/\fR\m[]\&\s-2\u[2]\d\s+2) and updated for the Samba 2\&.0 release by Jeremy Allison\&. The conversion to DocBook for Samba 2\&.2 was done by Gerald Carter\&. The conversion to DocBook XML 4\&.2 for Samba 3\&.0 was done by Alexander Bokovoy\&.
+.SH "NOTES"
+.IP " 1." 4
+\fIinterfaces\fR
+		
+.RS 4
+\%[set $man.base.url.for.relative.links]/smb.conf.5.html#INTERFACES
+.RE
+.IP " 2." 4
+ftp://ftp.icce.rug.nl/pub/unix/
+.RS 4
+\%ftp://ftp.icce.rug.nl/pub/unix/
+.RE

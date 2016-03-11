@@ -1,0 +1,367 @@
+'\" t
+.\"     Title: smbtorture
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/26/2015
+.\"    Manual: Test Suite
+.\"    Source: Samba 4.0
+.\"  Language: English
+.\"
+.TH "SMBTORTURE" "1" "03/26/2015" "Samba 4\&.0" "Test Suite"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+smbtorture \- Run a series of tests against a SMB server
+.SH "SYNOPSIS"
+.HP \w'\fBsmbtorture\fR\ 'u
+\fBsmbtorture\fR {//server/share} [\-d\ debuglevel] [\-U\ user%pass] [\-k] [\-N\ numprocs] [\-n\ netbios_name] [\-W\ workgroup] [\-o\ num_operations] [\-e\ num\ files(entries)] [\-O\ socket_options] [\-m\ maximum_protocol] [\-L] [\-c\ CLIENT\&.TXT] [\-t\ timelimit] [\-C\ filename] [\-A] [\-p\ port] [\-s\ seed] [\-f\ max_failures] [\-X] {BINDING\-STRING|UNC} {TEST1} [TEST2] [\&.\&.\&.]
+.SH "DESCRIPTION"
+.PP
+smbtorture is a testsuite that runs several tests against a SMB server\&. All tests are known to succeed against a Windows 2003 server (?)\&. Smbtorture\*(Aqs primary goal is finding differences in implementations of the SMB protocol and testing SMB servers\&.
+.PP
+Any number of tests can be specified on the command\-line\&. If no tests are specified, all tests are run\&.
+.PP
+If no arguments are specified at all, all available options and tests are listed\&.
+.SS "Binding string format"
+.PP
+The binding string format is:
+.PP
+TRANSPORT:host[flags]
+.PP
+Where TRANSPORT is either ncacn_np for SMB, ncacn_ip_tcp for RPC/TCP or ncalrpc for local connections\&.
+.PP
+\*(Aqhost\*(Aq is an IP or hostname or netbios name\&. If the binding string identifies the server side of an endpoint, \*(Aqhost\*(Aq may be an empty string\&.
+.PP
+\*(Aqflags\*(Aq can include a SMB pipe name if using the ncacn_np transport or a TCP port number if using the ncacn_ip_tcp transport, otherwise they will be auto\-determined\&.
+.PP
+other recognised flags are:
+.PP
+sign
+.RS 4
+enable ntlmssp signing
+.RE
+.PP
+seal
+.RS 4
+enable ntlmssp sealing
+.RE
+.PP
+connect
+.RS 4
+enable rpc connect level auth (auth, but no sign or seal)
+.RE
+.PP
+validate
+.RS 4
+enable the NDR validator
+.RE
+.PP
+print
+.RS 4
+enable debugging of the packets
+.RE
+.PP
+bigendian
+.RS 4
+use bigendian RPC
+.RE
+.PP
+padcheck
+.RS 4
+check reply data for non\-zero pad bytes
+.RE
+.PP
+For example, these all connect to the samr pipe:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver[samr]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver[\e\epipe\e\esamr]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver[/pipe/samr]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver[samr,sign,print]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver[\e\epipe\e\esamr,sign,seal,bigendian]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:myserver[/pipe/samr,seal,validate]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_np:[/pipe/samr]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_ip_tcp:myserver
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_ip_tcp:myserver[1024]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncacn_ip_tcp:myserver[1024,sign,seal]
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+ncalrpc:
+.RE
+.SS "UNC Format"
+.PP
+The UNC format is:
+.PP
+//server/share
+.SH "OPTIONS"
+.PP
+\-d debuglevel
+.RS 4
+Use the specified Samba debug level\&. A higher debug level means more output\&.
+.RE
+.PP
+\-U user%pass
+.RS 4
+Use the specified username/password combination when logging in to a remote server\&.
+.RE
+.PP
+\-k
+.RS 4
+Use kerberos when authenticating\&.
+.RE
+.PP
+\-W workgroup
+.RS 4
+Use specified name as our workgroup name\&.
+.RE
+.PP
+\-n netbios_name
+.RS 4
+Use specified name as our NetBIOS name\&.
+.RE
+.PP
+\-O socket_options
+.RS 4
+Use specified socket options, equivalent of the smb\&.conf option
+\(lqsocket options\(rq\&. See the smb\&.conf(5) manpage for details\&.
+.RE
+.PP
+\-m max_protocol
+.RS 4
+Specify the maximum SMB dialect that should be used\&. Possible values are: CORE, COREPLUS, LANMAN1, LANMAN2, NT1
+.RE
+.PP
+\-s seed
+.RS 4
+Initialize the randomizer using
+\fIseed\fR
+as seed\&.
+.RE
+.PP
+\-L
+.RS 4
+Use oplocks\&.
+.RE
+.PP
+\-X
+.RS 4
+Enable dangerous tests\&. Use with care! This might crash your server\&.\&.\&.
+.RE
+.PP
+\-t timelimit
+.RS 4
+Specify the NBENCH time limit in seconds\&. Defaults to 600\&.
+.RE
+.PP
+\-p ports
+.RS 4
+Specify ports to connect to\&.
+.RE
+.PP
+\-c file
+.RS 4
+Read NBENCH commands from
+\fIfile\fR
+instead of from CLIENT\&.TXT\&.
+.RE
+.PP
+\-A
+.RS 4
+Show not just OK or FAILED but more detailed output\&. Used only by DENY test at the moment\&.
+.RE
+.PP
+\-C filename
+.RS 4
+Load a list of UNC names from the specified filename\&. Smbtorture instances will connect to a random host from this list\&.
+.RE
+.PP
+\-N numprocs
+.RS 4
+Specify number of smbtorture processes to launch\&.
+.RE
+.PP
+\-o num_operations
+.RS 4
+Number of times some operations should be tried before assuming they\*(Aqre output is consistent (default:100)\&.
+.RE
+.PP
+\-e num_files
+.RS 4
+Number of entries to use in certain tests (such as creating X files) (default: 1000)\&.
+.RE
+.PP
+\-f max_failures
+.RS 4
+Number of failures before aborting a test (default: 1)\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 4\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+Samba
+.SH "AUTHOR"
+.PP
+This utility is part of the
+\m[blue]\fBSamba\fR\m[]\&\s-2\u[1]\d\s+2
+suite, which is developed by the global
+\m[blue]\fBSamba Team\fR\m[]\&\s-2\u[2]\d\s+2\&.
+.PP
+smbtorture was written by Andrew Tridgell\&.
+.PP
+This manpage was written by Jelmer Vernooij\&.
+.SH "NOTES"
+.IP " 1." 4
+Samba
+.RS 4
+\%http://www.samba.org/
+.RE
+.IP " 2." 4
+Samba Team
+.RS 4
+\%http://www.samba.org/samba/team/
+.RE

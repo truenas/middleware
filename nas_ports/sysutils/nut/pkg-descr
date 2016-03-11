@@ -1,0 +1,7 @@
+This is a developing project to monitor a large assortment of UPS hardware.
+Network communications are used so that multiple systems can monitor a
+single physical UPS and shut down together if necessary without any
+special "sharing hardware" on the UPS itself. CGI scripts are provided
+to monitor UPS status via a WEB browser.
+
+WWW: http://www.networkupstools.org/
