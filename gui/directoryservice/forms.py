@@ -511,7 +511,8 @@ class ActiveDirectoryForm(ModelForm):
 
         if not ad_kerberos_principal:
             if not cdata.get("ad_bindpw"):
-                cdata['ad_bindpw'] = self.instance.ad_bindpw
+                bindpw = self.instance.ad_bindpw
+                cdata['ad_bindpw'] = bindpw
 
             if not bindname:
                 raise forms.ValidationError("No domain account name specified")
