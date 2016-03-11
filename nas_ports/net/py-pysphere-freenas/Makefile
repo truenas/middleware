@@ -1,12 +1,14 @@
 # Created by: olli hauer <ohauer@FreeBSD.org>
 # $FreeBSD$
 
-PORTNAME=	pysphere
+PORTNAME=	pysphere-freenas
+DISTNAME=	pysphere-${PORTVERSION}
 PORTVERSION=	0.1.8
 PORTREVISION=	2
 CATEGORIES=	net python
 MASTER_SITES=	GOOGLE_CODE
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
+PYDISTUTILS_PKGNAME=pysphere
 
 MAINTAINER=	ohauer@FreeBSD.org
 COMMENT=	Python API for interaction with the vSphere Web Services SDK
