@@ -304,7 +304,6 @@ create_partitions() {
     if [ $# -eq 2 ]; then
 	_size="-s $2"
     fi
-    gpart destroy -F ${_disk} || true
     if gpart create -s GPT ${_disk}; then
 	if gpart add -t bios-boot -i 1 -s 512k ${_disk}; then
 	    if is_truenas; then
@@ -362,6 +361,12 @@ partition_disk() {
 	
 	_disks=$*
 
+	# Erase both typical metadata area.
+	for _disk in ${_disks}; do
+	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=2 >/dev/null
+	    dd if=/dev/zero of=/dev/${_disk} bs=1m oskip=$(diskinfo /dev/${_disk} | awk '{print ($3/(1024*1024))-2;}') >/dev/null
+	done
+
 	_minsize=$(get_minimum_size ${_disks})
 	
 	if [ "${_minsize}" = "0k" ]; then
@@ -370,12 +375,6 @@ partition_disk() {
 	fi
 	
 	_disksparts=$(for _disk in ${_disks}; do
-	    gpart destroy -F ${_disk} > /dev/null 2>&1 || true
-	    zpool labelclear -f ${_disk} > /dev/null 2>&1 || true
-	    # Get rid of any MBR.  Shouldn't be necessary,
-	    # but caching seems to have caused problems.
-	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=1 >&2
-
 	    create_partitions ${_disk} ${_minsize} >&2
 	    # Make the disk active
 	    gpart set -a active ${_disk} >&2
