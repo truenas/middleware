@@ -149,7 +149,7 @@ get_raid_present()
 
 get_physical_disks_list()
 {
-    local _boot=$(glabel status | awk ' /INSTALL/ { print $3;}')
+    local _boot=$(glabel status | awk ' /iso9660\/(Free|True)NAS/ { print $3;}')
     local _disk
 
     for _disk in $(sysctl -n kern.disks)
