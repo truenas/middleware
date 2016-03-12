@@ -365,7 +365,7 @@ partition_disk() {
 	for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} >/dev/null 2>&1 || true
 	    dd if=/dev/zero of=/dev/${_disk} bs=1m count=2 >/dev/null
-	    dd if=/dev/zero of=/dev/${_disk} bs=1m oseek=$(diskinfo /dev/${_disk} | awk '{print ($3/(1024*1024))-2;}') >/dev/null
+	    dd if=/dev/zero of=/dev/${_disk} bs=1m oseek=$(diskinfo /dev/${_disk} | awk '{print int($3/(1024*1024))-2;}') >/dev/null
 	done
 
 	_minsize=$(get_minimum_size ${_disks})
