@@ -20,7 +20,7 @@ multipath_sync()
 			>/dev/null
 	else
 		ret=$(find /var/tmp -name .multipath -maxdepth 1 -mtime 600s | wc -l | tr -d '[[:space:]]')
-		if [ ${ret} == "0"; then
+		if [ ${ret} == "0" ] ; then
 			touch ${SENTINEL}
 			echo "Starting ${name}."
 			LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python \
