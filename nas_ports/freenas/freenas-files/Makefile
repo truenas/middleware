@@ -18,7 +18,7 @@ FREEBSD_SRCTOP=/usr/src
 PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
 
 EXTRACT_ONLY=
-WRKSRC=/usr/nas_source2
+WRKSRC=/usr/nas_source
 
 # no checksum, we just used git!
 checksum fetch:
