@@ -559,7 +559,6 @@ class InitialWizard(CommonWizard):
                     CIFS_Share.objects.create(
                         cifs_name=share_name,
                         cifs_path=path,
-                        cifs_vfsobjects=string.join(CIFS_Share._meta.get_field('cifs_vfsobjects').default, ','),
                         **sharekwargs
                     )
 
