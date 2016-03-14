@@ -13,6 +13,9 @@ COMMENT=        Userguide for UI
 BUILD_DEPENDS=	sphinx-build:${PORTSDIR}/textproc/py-sphinx \
 		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:${PORTSDIR}/textproc/py-sphinxcontrib-httpdomain
 
+USES=	python:build
+
+EXTRACT_ONLY=
 WRKSRC=		/usr/nas_source
 
 checksum fetch:
