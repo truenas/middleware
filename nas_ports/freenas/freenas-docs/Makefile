@@ -16,7 +16,7 @@ BUILD_DEPENDS=	sphinx-build:${PORTSDIR}/textproc/py-sphinx \
 USES=	python:build
 
 EXTRACT_ONLY=
-WRKSRC=		/usr/nas_source
+WRKSRC=		/usr/freenas_docs
 
 checksum fetch:
 	echo ${.TARGET} not needed because building direct
@@ -25,14 +25,14 @@ checksum fetch:
 
 do-build:
 .if ${PRODUCT} == "TrueNAS"
-	(cd ${WRKSRC}/docs/userguide && make SPHINXOPTS="-t truenas" html)
+	(cd ${WRKSRC}/userguide && make SPHINXOPTS="-t truenas" html)
 .else
-	(cd ${WRKSRC}/docs/userguide && make html)
+	(cd ${WRKSRC}/userguide && make html)
 .endif
 
 do-install:
 	${MKDIR} -p ${STAGEDIR}${PREFIX}/www/data/
-	${MV} ${WRKSRC}/docs/userguide/_build/html ${STAGEDIR}${PREFIX}/www/data/docs
+	${MV} ${WRKSRC}/userguide/_build/html ${STAGEDIR}${PREFIX}/www/data/docs
 	(cd ${STAGEDIR}${PREFIX}/www/data/docs; ${FIND} . -type f \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
