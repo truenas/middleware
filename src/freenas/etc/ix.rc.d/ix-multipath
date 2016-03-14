@@ -10,6 +10,7 @@
 
 multipath_sync()
 {
+	echo "Starting ${name}."
 	/usr/local/bin/python \
 		/usr/local/www/freenasUI/middleware/notifier.py \
 		multipath_sync \
