@@ -57,6 +57,7 @@ def main():
             _notifier.sync_disk(dev)
     else:
         _notifier.sync_disks()
+    _notifier.multipath_sync()
 
 if __name__ == "__main__":
     main()
