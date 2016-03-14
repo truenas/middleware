@@ -835,8 +835,9 @@ CASE_SENSITIVITY_CHOICES = (
 class SERIAL_CHOICES(object):
 
     def __iter__(self):
-        pipe = popen("/usr/sbin/devinfo -u | grep uart | grep 0x | cut -d- -f 1 | "
-                     "awk '{print $1}'")
+        pipe = popen("/usr/sbin/devinfo -u | "
+            "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
+            "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
         ports = filter(
             lambda y: True if y else False,
             pipe.read().strip().strip('\n').split('\n')
