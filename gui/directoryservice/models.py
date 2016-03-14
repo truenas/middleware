@@ -949,6 +949,11 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Set this if you want to allow allow DNS updates."),
         default=True
     )
+    ad_disable_freenas_cache = models.BooleanField(
+        verbose_name=_("Disable Active Directory user/group cache"),
+        help_text=_("Set this if you want to disable caching Active Directory users and groups. WARNING: Only use this option if you have a large number of users and groups that is preventing the machine from binding to the domain, you will not be able to set permissions using the GUI with this turned on."),
+        default=False
+    )
     ad_site = models.CharField(
         verbose_name=_("Site Name"),
         max_length=120,
