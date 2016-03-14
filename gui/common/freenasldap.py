@@ -1362,6 +1362,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             'unix_extensions',
             'allow_trusted_doms',
             'use_default_domain',
+            'disable_freenas_cache',
             'dcname',
             'gcname',
             'krbname',
@@ -1403,6 +1404,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 'unix_extensions',
                 'allow_trusted_doms',
                 'use_default_domain',
+                'disable_freenas_cache',
             ):
                 self.__dict__[key] = False
             elif key in ('timeout', 'dns_timeout'):
@@ -1604,6 +1606,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                     'unix_extensions',
                     'allow_trusted_doms',
                     'use_default_domain',
+                    'disable_freenas_cache',
                 ):
                     kwargs[newkey] = (
                         False if long(ad.__dict__[key]) == 0 else True
@@ -2175,6 +2178,10 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.get_users: enter")
 
         users = []
+        if self.disable_freenas_cache:
+            self.ucount = 0
+            log.debug("FreeNAS_ActiveDirectory_Base.get_users: leave")
+            return users
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=user)(objectclass=person))' \
             '(sAMAccountName=*))'
@@ -2251,6 +2258,10 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.get_groups: enter")
 
         groups = []
+        if self.disable_freenas_cache:
+            self.gcount = 0
+            log.debug("FreeNAS_ActiveDirectory_Base.get_groups: leave")
+            return groups
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(objectclass=group)(sAMAccountName=*))'
         if self.attributes and 'groupType' not in self.attributes:
@@ -2266,7 +2277,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                     if not (type & 0x1):
                         groups.append(r)
 
-        self.ucount = len(groups)
+        self.gcount = len(groups)
         log.debug("FreeNAS_ActiveDirectory_Base.get_groups: leave")
         return groups
 

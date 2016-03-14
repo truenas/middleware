@@ -318,6 +318,7 @@ class ActiveDirectoryForm(ModelForm):
         'ad_allow_trusted_doms',
         'ad_use_default_domain',
         'ad_allow_dns_updates',
+        'ad_disable_freenas_cache',
         'ad_site',
         'ad_dcname',
         'ad_gcname',
