@@ -4308,6 +4308,10 @@ class notifier:
         name = str(name)
         doc = self._geom_confxml()
 
+        search = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/ident" % name)
+        if len(search) > 0:
+            return "{serial}%s" % search[0].text
+
         serial = self.serial_from_device(name)
         if serial:
             return "{serial}%s" % serial
@@ -4358,6 +4362,12 @@ class notifier:
             return None
 
         elif tp == 'serial':
+            search = doc.xpath("//class[name = 'DISK']/geom/provider/config[ident = '%s']/../../name" % value)
+            if len(search) > 0:
+                return search[0].text
+            search = doc.xpath("//class[name = 'DISK']/geom/provider/config[normalize-space(ident) = normalize-space('%s')]/../../name" % value)
+            if len(search) > 0:
+                return search[0].text
             for devname in self.__get_disks():
                 serial = self.serial_from_device(devname)
                 if serial == value:
@@ -4571,14 +4581,20 @@ class notifier:
             disk.disk_identifier = ident
         disk.disk_name = devname
         disk.disk_enabled = True
-        disk.disk_serial = self.serial_from_device(devname) or ''
+        geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
+        if len(geom) > 0:
+            serial = geom[0].xpath("./provider/config/ident")
+            if len(serial) > 0:
+                disk.disk_serial = serial[0].text
+            mediasize = geom[0].xpath("./provider/mediasize")
+            if len(mediasize) > 0:
+                disk.disk_size = mediasize[0].text
+        if not disk.disk_serial:
+            disk.disk_serial = self.serial_from_device(devname) or ''
         reg = RE_DSKNAME.search(devname)
         if reg:
             disk.disk_subsystem = reg.group(1)
             disk.disk_number = int(reg.group(2))
-        mediasize = doc.xpath("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % devname)
-        if mediasize:
-            disk.disk_size = mediasize[0].text
         disk.save()
 
     def sync_disk_extra(self, disk, add=False):
@@ -4596,19 +4612,19 @@ class notifier:
         serials = []
         for disk in Disk.objects.order_by('-disk_enabled'):
 
-            dskname = self.identifier_to_device(disk.disk_identifier)
-            if not dskname or dskname in in_disks:
+            devname = self.identifier_to_device(disk.disk_identifier)
+            if not devname or devname in in_disks:
                 # If we cant translate the indentifier to a device, give up
-                # If dskname has already been seen once then we are probably
+                # If devname has already been seen once then we are probably
                 # dealing with with multipath here
                 disk.delete()
                 continue
             else:
                 disk.disk_enabled = True
-                if dskname != disk.disk_name:
-                    disk.disk_name = dskname
+                if devname != disk.disk_name:
+                    disk.disk_name = devname
 
-            reg = RE_DSKNAME.search(dskname)
+            reg = RE_DSKNAME.search(devname)
             if reg:
                 disk.disk_subsystem = reg.group(1)
                 disk.disk_number = int(reg.group(2))
@@ -4616,13 +4632,13 @@ class notifier:
             if disk.disk_serial:
                 serials.append(disk.disk_serial)
 
-            mediasize = doc.xpath("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % dskname)
+            mediasize = doc.xpath("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % devname)
             if mediasize:
                 disk.disk_size = mediasize[0].text
 
             self.sync_disk_extra(disk, add=False)
 
-            if dskname not in disks:
+            if devname not in disks:
                 disk.disk_enabled = False
                 if disk._original_state.get("disk_enabled"):
                     disk.save()
@@ -4631,29 +4647,35 @@ class notifier:
                     disk.delete()
             else:
                 disk.save()
-            in_disks[dskname] = disk
+            in_disks[devname] = disk
 
-        for disk in disks:
-            if disk not in in_disks:
-                d = Disk()
-                d.disk_name = disk
-                d.disk_identifier = self.device_to_identifier(disk)
-                d.disk_serial = self.serial_from_device(disk) or ''
-                mediasize = doc.xpath("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % disk)
-                if mediasize:
-                    d.disk_size = mediasize[0].text
-                if d.disk_serial:
-                    if d.disk_serial in serials:
+        for devname in disks:
+            if devname not in in_disks:
+                disk = Disk()
+                disk.disk_name = devname
+                disk.disk_identifier = self.device_to_identifier(devname)
+                geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
+                if len(geom) > 0:
+                    serial = geom[0].xpath("./provider/config/ident")
+                    if len(serial) > 0:
+                        disk.disk_serial = serial[0].text
+                    mediasize = geom[0].xpath("./provider/mediasize")
+                    if len(mediasize) > 0:
+                        disk.disk_size = mediasize[0].text
+                if not disk.disk_serial:
+                    disk.disk_serial = self.serial_from_device(devname) or ''
+                if disk.disk_serial:
+                    if disk.disk_serial in serials:
                         # Probably dealing with multipath here, do not add another
                         continue
                     else:
-                        serials.append(d.disk_serial)
-                reg = RE_DSKNAME.search(disk)
+                        serials.append(disk.disk_serial)
+                reg = RE_DSKNAME.search(devname)
                 if reg:
-                    d.disk_subsystem = reg.group(1)
-                    d.disk_number = int(reg.group(2))
-                self.sync_disk_extra(d, add=True)
-                d.save()
+                    disk.disk_subsystem = reg.group(1)
+                    disk.disk_number = int(reg.group(2))
+                self.sync_disk_extra(disk, add=True)
+                disk.save()
 
     def sync_encrypted(self, volume=None):
         """
@@ -4799,7 +4821,10 @@ class notifier:
                 continue
             if self._multipath_is_active(name, geom):
                 active_active.append(name)
-            serial = self.serial_from_device(name) or ''
+            try:
+                serial = geom.xpath("./provider/config/ident")[0].text
+            except:
+                serial = ''
             try:
                 lunid = geom.xpath("./provider/config/lunid")[0].text
             except:

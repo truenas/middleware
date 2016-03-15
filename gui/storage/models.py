@@ -717,12 +717,6 @@ class Disk(Model):
         editable=False,
     )
 
-    def get_serial(self):
-        n = notifier()
-        return n.serial_from_device(
-            n.identifier_to_device(self.disk_identifier)
-        )
-
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
         self._original_state = dict(self.__dict__)
