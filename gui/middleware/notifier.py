@@ -4821,15 +4821,13 @@ class notifier:
                 continue
             if self._multipath_is_active(name, geom):
                 active_active.append(name)
-            try:
-                serial = geom.xpath("./provider/config/ident")[0].text
-            except:
-                serial = ''
-            try:
-                lunid = geom.xpath("./provider/config/lunid")[0].text
-            except:
-                lunid = ''
-            serial = serial + lunid
+            serial = ''
+            v = geom.xpath("./provider/config/ident")
+            if len(v) > 0:
+                serial = v[0].text
+            v = geom.xpath("./provider/config/lunid")
+            if len(v) > 0:
+                serial += v[0].text
             if not serial:
                 continue
             size = geom.xpath("./provider/mediasize")[0].text
