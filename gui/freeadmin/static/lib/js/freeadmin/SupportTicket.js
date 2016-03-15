@@ -112,9 +112,20 @@ define([
           domStyle.set(this.dapErrorMessageRow, "display", "none");
         }
 
-        this.dapUsernameLabel.innerHTML = gettext('Username');
         this.dapRegisterLabel.innerHTML = gettext('If you do not have an account, please') + ' <a href="https://bugs.freenas.org/account/register" target="_blank">' + gettext('register') + '</a>.';
+        this.dapUsernameLabel.innerHTML = gettext('Username');
+        this.dapPasswordLabel.innerHTML = gettext('Password');
+        this.dapNameLabel.innerHTML = gettext('Name');
+        this.dapEmailLabel.innerHTML = gettext('E-mail');
+        this.dapPhoneLabel.innerHTML = gettext('Phone');
+        this.dapTypeLabel.innerHTML = gettext('Type');
+        this.dapCategoryLabel.innerHTML = gettext('Category');
+        this.dapEnvLabel.innerHTML = gettext('Environment');
+        this.dapCritLabel.innerHTML = gettext('Criticality');
         this.dapDebugLabel.innerHTML = gettext('Attach Debug Info');
+        this.dapSubjectLabel.innerHTML = gettext('Subject');
+        this.dapDescLabel.innerHTML = gettext('Description');
+        this.dapAttachmentsLabel.innerHTML = gettext('Attachments');
 
         new TextBox({
           name: "csrfmiddlewaretoken",
