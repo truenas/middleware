@@ -41,6 +41,15 @@ get_image_name()
     find $(get_product_path) -name "$AVATAR_PROJECT-$AVATAR_ARCH.img.xz" -type f
 }
 
+# Does nothing right now.
+# The old pre-install checks did several things
+# 1:  Don't allow going from FreeNAS to TrueNAS or vice versa
+# 2:  Don't allow downgrading.  (Not sure we can do that now.)
+# 3:  Check memory size and cpu speed.
+pre_install_check()
+{
+    true
+}
 # Convert /etc/version* to /etc/avatar.conf
 #
 # 1 - old /etc/version* file
@@ -836,16 +845,14 @@ menu_install()
     # we can now build a config file for pc-sysinstall
     # build_config  ${_disk} "$(get_image_name)" ${_config_file}
 
-    # For one of the install_worker ISO scripts
-    export INSTALL_MEDIA=${_realdisks}
     if [ ${_do_upgrade} -eq 1 ]
     then
         /etc/rc.d/dmesg start
         mkdir -p /tmp/data
 	if [ "${upgrade_style}" = "old" ]; then
-	    	# For old style, we have two potential
-	    	# partitions to look at:  s1a and s2a.
-		# 
+	    # For old style, we have two potential
+	    # partitions to look at:  s1a and s2a.
+	    # 
 	    slice=$(gpart show ${_disk} | grep -F '[active]' | awk ' { print $3;}')
 	    if [ -z "${slice}" ]; then
 		# We don't have an active slice, so something is wrong.
@@ -865,16 +872,7 @@ menu_install()
 		mount /dev/${_disk}s${slice}a /tmp/data
 		ls /tmp/data > /dev/null
 	    fi
-	    # pre-avatar.conf build. Convert it!
-	    if [ ! -e /tmp/data/conf/base/etc/avatar.conf ]
-	    then
-		upgrade_version_to_avatar_conf \
-		    /tmp/data/conf/base/etc/version* \
-		    /etc/avatar.conf \
-		    /tmp/data/conf/base/etc/avatar.conf
-	    fi
-	    # This needs to be rewritten.
-            install_worker.sh -D /tmp/data -m / pre-install
+	    pre_install_check
             umount /tmp/data
 	elif [ "${upgrade_style}" != "new" ]; then
 		echo "Unknown upgrade style" 1>&2
@@ -885,7 +883,7 @@ menu_install()
         # Run through some sanity checks on new installs ;).. some of the
         # checks won't make sense, but others might (e.g. hardware sanity
         # checks).
-        install_worker.sh -D / -m / pre-install
+	pre_install_check
 
 	# Destroy existing partition table, if there is any but tolerate
 	# failure.
