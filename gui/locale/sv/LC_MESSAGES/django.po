@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-02-22 14:23+0000\n"
+"PO-Revision-Date: 2016-03-14 22:45+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sv\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1456151028.0\n"
+"X-POOTLE-MTIME: 1457995550.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -894,7 +894,7 @@ msgstr "Namnserver 1 måste fyllas i innan namnserver 2"
 
 #: network/forms.py:229
 msgid "Parent Interface"
-msgstr "Överordnat Gränssnitt"
+msgstr "Överordnat gränssnitt"
 
 #~ msgid "The name must be vlanXX where XX is an integer"
 #~ msgstr "Namnet måste vara vlanXX där XX är ett heltal."
@@ -1426,8 +1426,8 @@ msgstr "Använd alfanumeriska tecken, \".\" \"-\" och \"_\"."
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Emailadressen %(email)s är inte gilltig"
-msgstr[1] "Följande emailadresser är inte gilltiga %(email)s"
+msgstr[0] "E-post adressen %(email)s är inte gilltig"
+msgstr[1] "Följande E-post adresser är inte gilltiga: %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
@@ -5654,8 +5654,9 @@ msgid_plural ""
 "\n"
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
-msgstr[0] "Detta kommer att radera alla filer i databasen."
-msgstr[1] "Detta kommer att radera alla filer inom dataset och barn datamängder."
+msgstr[0] "Detta kommer att radera alla filer ur databasen."
+msgstr[1] ""
+"Detta kommer att radera alla filer ur databasen och dess underkategorier."
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
