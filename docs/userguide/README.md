@@ -34,7 +34,7 @@ source code from git:
 
 ```
 cd /path/to/your-build-directory
-git clone -b 9.3.1-STABLE git://github.com/freenas/freenas.git
+git clone git://github.com/freenas/freenas.git
 cd freenas/docs/userguide
 ```
 
