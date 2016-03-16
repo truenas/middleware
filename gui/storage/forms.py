@@ -459,7 +459,7 @@ class ZFSVolumeWizardForm(forms.Form):
     volume_disks = forms.MultipleChoiceField(
         choices=(),
         widget=forms.SelectMultiple(attrs=attrs_dict),
-        label='Member disks',
+        label=_('Member disks'),
         required=False)
     group_type = forms.ChoiceField(
         choices=(),

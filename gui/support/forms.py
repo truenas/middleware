@@ -46,7 +46,7 @@ class SupportForm(ModelForm):
 class LicenseUpdateForm(Form):
 
     license = forms.CharField(
-        label='License',
+        label=_('License'),
         widget=forms.widgets.Textarea,
     )
 

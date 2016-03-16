@@ -388,7 +388,7 @@ class VcenterConfigurationForm(ModelForm):
             self.is_https = False
         ip_choices = utils.get_management_ips()
         self.fields['vc_management_ip'] = forms.ChoiceField(choices=zip(
-            ip_choices, ip_choices), label='TrueNAS Management IP Address',)
+            ip_choices, ip_choices), label=_('TrueNAS Management IP Address'),)
 
 
 class VcenterAuxSettingsForm(ModelForm):

@@ -23,7 +23,7 @@ class BootStatusFAdmin(BaseFreeAdmin):
     app_label = "system"
     double_click = False
     module_name = "bootstatus"
-    verbose_name = "Boot Status"
+    verbose_name = _("Boot Status")
     resource = False
 
     def get_resource_url(self, request):

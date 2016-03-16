@@ -394,7 +394,7 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
     app_label = "storage"
     double_click = False
     module_name = "volumestatus"
-    verbose_name = "Volume Status"
+    verbose_name = _("Volume Status")
     resource = False
 
     def get_resource_url(self, request):

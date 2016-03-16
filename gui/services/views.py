@@ -293,8 +293,8 @@ def services_cifs(request):
         form = CIFSForm(instance=cifs)
         idmap_form = idmap_tdb_Form(instance=it)
 
-    idmap_form.fields['idmap_tdb_range_low'].label = "Idmap Range Low"
-    idmap_form.fields['idmap_tdb_range_high'].label = "Idmap Range High"
+    idmap_form.fields['idmap_tdb_range_low'].label = _("Idmap Range Low")
+    idmap_form.fields['idmap_tdb_range_high'].label = _("Idmap Range High")
 
     return render(request, 'services/cifs.html', {
         'form': form,
