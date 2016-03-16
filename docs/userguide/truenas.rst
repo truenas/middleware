@@ -13,6 +13,9 @@
    Directory Service <truenas_directoryservice>
    Sharing <truenas_sharing>
    Services <truenas_services>
+   Plugins <truenas_plugins>
+   Jails <truenas_jails>
+   vCenter <truenas_vcenter>
    Reporting <truenas_reporting>
    Wizard <truenas_wizard>
    Additional Options <truenas_options>

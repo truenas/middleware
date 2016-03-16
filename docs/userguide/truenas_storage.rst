@@ -45,11 +45,12 @@ Volume Manager
 If you have unformatted disk(s) or wish to overwrite the current filesystem and data on your disk(s), use "Volume Manager" to format the disk(s) into a ZFS
 pool. If you have multiple disks and are new to how ZFS handles redundancy, skim through the :ref:`ZFS Primer` before using "Volume Manager".
 
-If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you will see a screen similar to the example shown in Figure 8.1a.
+If you click on :menuselection:`Storage --> Volumes --> Volume Manager`, you will see a screen similar to the example shown in
+:numref:`Figure %s: Creating a ZFS Pool Using Volume Manager <tn_zfs1a>`.
 
-**Figure 8.1a: Creating a ZFS Pool Using Volume Manager**
+.. _tn_zfs1a:
 
-.. image:: images/tn_zfs1a.png
+.. figure:: images/tn_zfs1a.png
 
 Table 8.1a summarizes the configuration options of this screen.
 
@@ -163,7 +164,7 @@ TrueNAS® system:
    unauthorized software access. Ensure that only authorized users have access to the administrative GUI and that proper permissions are set on shares if
    sensitive data is stored on the system.
 
-To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. A pop-up message will remind you that
+To create an encrypted volume, check the "Encryption" box shown in :numref:`Figure %s: Creating a ZFS Pool Using Volume Manager <tn_zfs1a>`. A pop-up message will remind you that
 **it is extremely important** to make a backup of the key as without it the data on the disks is inaccessible. Refer to :ref:`Managing Encrypted Volumes` for instructions.
 
 .. _Manual Setup:
@@ -171,17 +172,17 @@ To create an encrypted volume, check the "Encryption" box shown in Figure 8.1a. 
 Manual Setup
 ^^^^^^^^^^^^
 
-The "Manual Setup" button shown in Figure 8.1a can be used to create a non-optimal ZFS volume. While this is **not** recommended, it can, for example, be used
-to create a volume containing disks of different sizes.
+The "Manual Setup" button shown in :numref:`Figure %s: Creating a ZFS Pool Using Volume Manager <tn_zfs1a>` can be used to create a non-optimal ZFS volume. While this is **not** recommended,
+it can, for example, be used to create a volume containing disks of different sizes.
 
 .. note:: when using disks of differing sizes, the volume is limited by the size of the smallest disk. For this reason, it is recommended to instead use
    "Volume Manager" with same-size disks.
 
-Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the available options.
+:numref:`Figure %s: Creating a Non-Optimal ZFS Volume <manual>` shows the "Manual Setup" screen and Table 8.1b summarizes the available options.
 
-**Figure 8.1b: Creating a Non-Optimal ZFS Volume**
+.. _manual:
 
-.. image:: images/manual.png
+.. figure:: images/manual.png
 
 **Table 8.1b: Manual Setup Options**
 
@@ -214,8 +215,8 @@ Figure 8.1b shows the "Manual Setup" screen and Table 8.1b summarizes the availa
 Extending a ZFS Volume
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> Volume Manager`, shown in Figure 8.1a, can be used to add additional
-disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
+The "Volume to extend" drop-down menu in :menuselection:`Storage --> Volumes --> Volume Manager`, shown in :numref:`Figure %s: Creating a ZFS Pool Using Volume Manager <tn_zfs1a>`, can be
+used to add additional disks to an existing ZFS volume. This drop-down menu will be empty if no ZFS volume exists.
 
 .. note:: if the existing volume is encrypted, a warning message will remind you that the operation of extending a volume will reset the passphrase and
    recovery key. After extending the volume, you should immediately recreate both using the instructions in :ref:`Managing Encrypted Volumes`.
@@ -259,12 +260,12 @@ permissions of the files and directories that are created by the client.
 The chapter on :ref:`Sharing` contains configuration examples for several types of permission scenarios. This section provides an overview of the screen that
 is used to set permissions.
 
-Once a volume or dataset is created, it will be listed by its mount point name in :menuselection:`Storage --> Volumes --> View Volumes`. If you click the
-"Change Permissions" icon for a specific volume/dataset, you will see the screen shown in Figure 8.1c. Table 8.1c summarizes the options in this screen.
+Once a volume or dataset is created, it will be listed by its mount point name in :menuselection:`Storage --> Volumes --> View Volumes`. If you click the "Change Permissions" icon for a
+specific volume/dataset, you will see the screen shown in :numref:`Figure %s: Changing Permissions on a Volume or Dataset <perms1>`. Table 8.1c summarizes the options in this screen.
 
-**Figure 8.1c: Changing Permissions on a Volume or Dataset**
+.. _perms1:
 
-.. image:: images/perms1.png
+.. figure:: images/perms1.png
 
 **Table 8.1c: Options When Changing Permissions**
 
@@ -336,11 +337,11 @@ you can set properties such as quotas and compression as well as create snapshot
 
 .. note:: ZFS provides thick provisioning using quotas and thin provisioning using reserved space.
 
-If you select an existing ZFS volume in the tree then click "Create Dataset", you will see the screen shown in Figure 8.1d.
+If you select an existing ZFS volume in the tree then click "Create Dataset", you will see the screen shown in :numref:`Figure %s: Creating a ZFS Dataset <tn_dataset1>`.
 
-**Figure 8.1d: Creating a ZFS Dataset**
+.. _tn_dataset1:
 
-.. image:: images/tn_dataset1.png
+.. figure:: images/tn_dataset1.png
 
 Table 8.1d summarizes the options available when creating a ZFS dataset. Some settings are only available in "Advanced Mode". To see these settings, either
 click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -436,11 +437,11 @@ Create zvol
 
 A zvol is a feature of ZFS that creates a raw block device over ZFS. This allows you to use a zvol as an :ref:`iSCSI` device extent.
 
-To create a zvol, select an existing ZFS volume or dataset from the tree then click "Create zvol" to open the screen shown in Figure 8.1e.
+To create a zvol, select an existing ZFS volume or dataset from the tree then click "Create zvol" to open the screen shown in :numref:`Figure %s: Creating a zvol <zvol1>`.
 
-**Figure 8.1e: Creating a zvol**
+.. _zvol1:
 
-.. image:: images/zvol1.png
+.. figure:: images/zvol1.png
 
 The configuration options are described in Table 8.1e. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -482,13 +483,13 @@ Mode" button or configure the system to always display these settings by checkin
 Import Disk
 ~~~~~~~~~~~~~
 
-The :menuselection:`Volume --> Import Disk` screen, shown in Figure 8.1f, is used to import a **single** disk that has been formatted with the UFS, NTFS,
+The :menuselection:`Volume --> Import Disk` screen, shown in :numref:`Figure %s: Importing a Disk <import1>`, is used to import a **single** disk that has been formatted with the UFS, NTFS,
 MSDOS, or EXT2/3 filesystem. The import is meant to be a temporary measure in order to copy the data from a disk to an existing ZFS dataset. Only one disk can
 be imported at a time.
 
-**Figure 8.1f: Importing a Disk**
+.. _import1:
 
-.. image:: images/import1.png
+.. figure:: images/import1.png
 
 Use the drop-down menu to select the disk to import, select the type of filesystem on the disk, and browse to the ZFS dataset that will hold the copied data.
 When you click "Import Volume", the disk will be automatically mounted, its contents will be copied to the specified ZFS dataset, and the disk will
@@ -503,20 +504,20 @@ If you click :menuselection:`Storage --> Volumes --> Import Volume`, you can con
 **existing** ZFS pool. This action is typically performed when an existing TrueNAS® system is re-installed. Since the operating system is separate from the
 storage disks, a new installation does not affect the data on the disks. However, the new operating system needs to be configured to use the existing volume.
 
-Figure 8.1g shows the initial pop-up window that appears when you select to import a volume.
+:numref:`Figure %s: Initial Import Volume Screen <auto1>` shows the initial pop-up window that appears when you select to import a volume.
 
-**Figure 8.1g: Initial Import Volume Screen**
+.. _auto1:
 
-.. image:: images/auto1.png
+.. figure:: images/auto1.png
 
-If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in Figure 8.1h.
+If you are importing an unencrypted ZFS pool, select "No: Skip to import" to open the screen shown in :numref:`Figure %s: Importing a Non-Encrypted Volume <auto2>`.
 
-**Figure 8.1h: Importing a Non-Encrypted Volume**
+.. _auto2:
 
-.. image:: images/auto2.png
+.. figure:: images/auto2.png
 
-Existing volumes should be available for selection from the drop-down menu. In the example shown in Figure 8.1h, the TrueNAS® system has an existing,
-unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
+Existing volumes should be available for selection from the drop-down menu. In the example shown in :numref:`Figure %s: Importing a Non-Encrypted Volume <auto2>`, the TrueNAS® system has an
+existing, unencrypted ZFS pool. Once the volume is selected, click the "OK" button to import the volume.
 
 If an existing ZFS pool does not show in the drop-down menu, run :command:`zpool import` from :ref:`Shell` to import the pool.
 
@@ -531,12 +532,12 @@ to see if the controller driver is supported or if it needs to be loaded using :
 Importing an Encrypted Pool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In Figure 8.1g, select "Yes: Decrypt disks" to
-access the screen shown in Figure 8.1i.
+If you are importing an existing GELI-encrypted ZFS pool, you must decrypt the disks before importing the pool. In :numref:`Figure %s: Initial Import Volume Screen <auto1>`, select "Yes:
+Decrypt disks" to access the screen shown in :numref:`Figure %s: Decrypting the Disks Before Importing the ZFS Pool <decrypt>`.
 
-**Figure 8.1i: Decrypting the Disks Before Importing the ZFS Pool**
+.. _decrypt:
 
-.. image:: images/decrypt.png
+.. figure:: images/decrypt.png
 
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
@@ -545,19 +546,18 @@ decrypt the disks.
    configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. Refer to
    :ref:`Managing Encrypted Volumes` for instructions on how to manage the keys for encrypted volumes.
 
-Once the pool is decrypted, it should appear in the drop-down menu of Figure 8.1h. Click the "OK" button to finish the volume import.
+Once the pool is decrypted, it should appear in the drop-down menu of :numref:`Figure %s: Importing a Non-Encrypted Volume <auto2>`. Click the "OK" button to finish the volume import.
 
 .. _View Disks:
 
 View Disks
 ~~~~~~~~~~
 
-:menuselection:`Storage --> Volumes --> View Disks` allows you to view all of the disks recognized by the TrueNAS® system. An example is shown in Figure
-8.1j.
+:menuselection:`Storage --> Volumes --> View Disks` allows you to view all of the disks recognized by the TrueNAS® system. An example is shown in :numref:`Figure %s: Viewing Disks <tn_view>`.
 
-**Figure 8.1j: Viewing Disks**
+.. _tn_view:
 
-.. image:: images/tn_view.png
+.. figure:: images/tn_view.png
 
 The current configuration of each device is displayed. Click a disk's entry and then its "Edit" button to change its configuration. The configurable options
 are described in Table 8.1f.
@@ -607,57 +607,60 @@ View Volumes
 ~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing ZFS pools, datasets, and zvols. The example
-shown in Figure 8.1k demonstrates one ZFS pool (*volume1*) with two datasets
+shown in :numref:`Figure %s: Viewing Volumes <tn_volume1a>` demonstrates one ZFS pool (*volume1*) with two datasets
 (the one automatically created with the pool, *volume1*, and
 *dataset1*) and one zvol
 (*zvol1*).
+
+Note that in this example, there are two datasets named *volume1*. The first represents the ZFS pool and its "Used" and "Available" entries reflect the total size of the pool, including
+disk parity. The second represents the implicit or root dataset and its "Used" and "Available" entries indicate the amount of disk space available for storage.
 
 Buttons are provided for quick access to "Volume Manager", "Import Disk", "Import Volume", and "View Disks", and "View Enclosure". If the system has
 multipath-capable hardware, an extra button will be added to "View Multipaths". The columns indicate the "Name" of the volume/dataset/zvol, how much disk
 space is "Used", how much disk space is "Available", the type of "Compression", the "Compression Ratio", and the "Status" of the pool.
 
-**Figure 8.1k: Viewing Volumes**
+.. _tn_volume1a:
 
-.. image:: images/tn_volume1a.png
+.. figure:: images/tn_volume1a.png
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
 
 **Detach Volume:** allows you to either export the pool or to delete the contents of the pool, depending upon the choice you make in the screen shown in
-Figure 8.1l. The "Detach Volume" screen displays the current used space and indicates if there are any shares, provides checkboxes to "Mark the disks as new
-(destroy data)" and to "Also delete the share's configuration", asks if you are sure that you want to do this, and the browser will turn red to alert you
+:numref:`Figure %s: Detaching or Deleting a Volume <tn_detach1>`. The "Detach Volume" screen displays the current used space and indicates if there are any shares, provides checkboxes to
+"Mark the disks as new (destroy data)" and to "Also delete the share's configuration", asks if you are sure that you want to do this, and the browser will turn red to alert you
 that you are about to do something that will make the data inaccessible.
 **If you do not check the box to mark the disks as new, the volume will be exported.** This means that the data is not destroyed and the volume can be
 re-imported at a later time. If you will be moving a ZFS pool from one system to another, perform this export action first as it flushes any unwritten data to
 disk, writes data to the disk indicating that the export was done, and removes all knowledge of the pool from the system.
 **If you do check the box to mark the disks as new, the pool and all the data in its datasets, zvols, and shares will be destroyed and the underlying disks will be returned to their raw state.**
 
-**Figure 8.1l: Detaching or Deleting a Volume**
+.. _tn_detach1:
 
-.. image:: images/tn_detach1.png
+.. figure:: images/tn_detach1.png
 
 **Scrub Volume:** scrubs and how to schedule them are described in more detail in :ref:`Scrubs`. This button allows you to manually initiate a scrub. Since a
 scrub is I/O intensive and can negatively impact performance, you should not initiate one while the system is busy. A "Cancel" button is provided should you
 need to cancel a scrub. If you do cancel a scrub, the next scrub will start over from the beginning, not where the cancelled scrub left off. To view the
 current status of a running scrub or the statistics from the last completed scrub, click the "Volume Status" button.
 
-**Volume Status:** as seen in the example in Figure 8.1m, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
+**Volume Status:** as seen in the example in :numref:`Figure %s: Volume Status <tn_volume2>`, this screen shows the device name and status of each disk in the ZFS pool as well as any read,
 write, or checksum errors. It also indicates the status of the latest ZFS scrub. If you click the entry for a device, buttons will appear to edit the device's
-options (shown in Figure 8.1n), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
+options (shown in :numref:`Figure %s: Editing a Disk <disk>`), offline the device, or replace the device (as described in :ref:`Replacing a Failed Drive`).
 
 **Upgrade:** used to upgrade the pool to the latest ZFS features, as described in :ref:`Upgrading a ZFS Pool`. This button will not appear if the pool is
 running the latest versions of feature flags.
 
-**Figure 8.1m: Volume Status**
+.. _tn_volume2:
 
-.. image:: images/tn_volume2.png
+.. figure:: images/tn_volume2.png
 
-If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in Figure 8.1n. Table 8.1f summarizes the
+If you click a disk in "Volume Status" and click its "Edit Disk" button, you will see the screen shown in :numref:`Figure %s: Editing a Disk <disk>`. Table 8.1f summarizes the
 configurable options.
 
-**Figure 8.1n: Editing a Disk**
+.. _disk:
 
-.. image:: images/disk.png
+.. figure:: images/disk.png
 
 If you click a dataset in :menuselection:`Storage --> Volumes --> View Volumes`, six buttons will appear at the bottom of the screen. In order from left to
 right, these buttons allow you to:
@@ -686,11 +689,11 @@ Managing Encrypted Volumes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you check the "Encryption" box during the creation of a pool, five additional buttons will be added to the entry for the pool in
-:menuselection:`Storage --> Volumes --> View Volumes`. An example is seen in Figure 8.1o.
+:menuselection:`Storage --> Volumes --> View Volumes`. An example is seen in :numref:`Figure %s: Encryption Icons Associated with an Encrypted Pool <tn_encrypt1a>`.
 
-**Figure 8.1o: Encryption Icons Associated with an Encrypted Pool**
+.. _tn_encrypt1a:
 
-.. image:: images/tn_encrypt1a.png
+.. figure:: images/tn_encrypt1a.png
 
 In order from left to right, these additional encryption buttons are used to:
 
@@ -768,18 +771,18 @@ you have located the failed device in the GUI, perform the following steps:
     and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, the menu will also prompt you to input and confirm the passphrase for the pool.
     Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
 
-In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
+In the example shown in :numref:`Figure %s: Replacing a Failed Disk <replace>`, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
-**Figure 8.1p: Replacing a Failed Disk**
+.. _replace:
 
-.. image:: images/replace.png
+.. figure:: images/replace.png
 
-Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. Figure 8.1q indicates that the
-disk replacement was successful for this example.
+Once the resilver is complete, "Volume Status" will show a "Completed" resilver status and indicate if there were any errors. :numref:`Figure %s: Disk Replacement is Complete <replace2>`
+indicates that the disk replacement was successful for this example.
 
-**Figure 8.1q: Disk Replacement is Complete**
+.. _replace2:
 
-.. image:: images/replace2.png
+.. figure:: images/replace2.png
     
 .. _Replacing an Encrypted Drive:
 
@@ -1030,14 +1033,14 @@ snapshot can restore the system up to the last snapshot interval.
 Before you can create a snapshot, you need to have an existing ZFS volume. How to create a volume is described in :ref:`Volume Manager`.
 
 To create a periodic snapshot task, click :menuselection:`Storage --> Periodic Snapshot Tasks --> Add Periodic Snapshot` which will open the screen shown in
-Figure 8.2a. Table 8.2a summarizes the fields in this screen.
+:numref:`Figure %s: Creating a Periodic Snapshot <periodic1a>`. Table 8.2a summarizes the fields in this screen.
 
 .. note:: if you just need a one-time snapshot, instead use :menuselection:`Storage --> Volumes --> View Volumes` and click the "Create Snapshot" button for
    the volume or dataset that you wish to snapshot.
 
-**Figure 8.2a: Creating a Periodic Snapshot**
+.. _periodic1a:
 
-.. image:: images/periodic1b.png
+.. figure:: images/periodic1a.png
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1050,10 +1053,6 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
 |                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
-|                |                            |                                                                                                              |
-+----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another TrueNAS system              |
-| Dataset        |                            |                                                                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the      |
@@ -1131,11 +1130,11 @@ A copy of the public key for the replication user on *PUSH* needs to be pasted t
 *PULL* system.
 
 To obtain a copy of the replication key: on *PUSH* go to :menuselection:`Storage --> Replication Tasks --> View Replication Tasks`. Click the "View Public
-Key" button and copy its contents. An example is shown in Figure 8.3a.
+Key" button and copy its contents. An example is shown in :numref:`Figure %s: Copy the Replication Key <tn_replication1>`.
 
-**Figure 8.3a: Copy the Replication Key**
+.. _tn_replication1:
 
-.. image:: images/tn_replication1.png
+.. figure:: images/tn_replication1.png
 
 Go to *PULL* and click :menuselection:`Account --> Users --> View Users`. Click the "Modify User" button for the user account you will be using for
 replication (by default this is the *root* user). Paste the copied key into the "SSH Public Key" field and click "OK". If a key already exists, append the new
@@ -1151,8 +1150,8 @@ Configure PUSH
 On *PUSH*, verify that a periodic snapshot task has been created and that at least one snapshot is listed in
 :menuselection:`Storage --> Snapshots`.
 
-To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication` which will open the screen shown in Figure 8.3b.
-For this example, the required configuration is as follows:
+To create the replication task, click :menuselection:`Storage --> Replication Tasks --> Add Replication` which will open the screen shown in
+:numref:`Figure %s: Adding a Replication Task <replication2c>`. For this example, the required configuration is as follows:
 
 * the Volume/Dataset is :file:`local/data`
 
@@ -1165,9 +1164,9 @@ For this example, the required configuration is as follows:
 * once the Remote hostname is input, click the "SSH Key Scan" button; assuming the address is reachable and the SSH service is running on *PULL*, its key will
   automatically be populated to the "Remote hostkey" box
 
-**Figure 8.3b: Adding a Replication Task**
+.. _replication2c:
 
-.. image:: images/replication2a.png
+.. figure:: images/replication2c.png
 
 Table 8.3a summarizes the available options in the "Add Replication" screen.
 
@@ -1186,12 +1185,12 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 |                           |                | :file:`/mnt/` is assumed and should not be included in the path                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Recursively replicate     | checkbox       | if checked will replicate child datasets and replace previous snapshot stored on *PULL*                      |
+| Recursively replicate     | checkbox       | if checked will also replicate child datasets                                                                |
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on *PULL* before reverting to normal         |
-|                           |                | operation; use this option if replication gets stuck                                                         |
+| Delete stale snapshots    | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
+|                           |                | *PUSH*                                                                                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Replication Stream        | drop-down menu | choices are *lz4 (fastest)*,                                                                                 |
@@ -1284,8 +1283,7 @@ the **@** is used to separate the volume/dataset name from the snapshot name::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
-.. note:: if this command fails with the error "cannot receive new filesystem stream: destination has snapshots", check the box "initialize remote side
-   for once" in the replication task and try again. If the :command:`zfs send` command still fails, you will need to open Shell on
+.. note:: if the :command:`zfs send` command fails, open :ref:`Shell` on
    *PULL* and use the :command:`zfs destroy -R volume_name@snapshot_name` command to delete the stuck snapshot. You can then use the
    :command:`zfs list -t snapshot` on *PULL* to confirm if the snapshot successfully replicated.
 
@@ -1311,13 +1309,13 @@ A ZFS scrub only checks used disk space. To check unused disk space, schedule :r
 month.
 
 When you create a volume that is formatted with ZFS, a ZFS scrub is automatically scheduled for you. An entry of the same volume name is added to
-:menuselection:`Storage --> Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> Scrubs --> View Scrubs`. Figure 8.4a
-displays the default settings for the volume named :file:`volume1`. In this example, the entry has been highlighted and the "Edit" button clicked in order to
-display the "Edit" screen. Table 8.4a summarizes the options in this screen.
+:menuselection:`Storage --> Scrubs` and a summary of this entry can be viewed in :menuselection:`Storage --> Scrubs --> View Scrubs`.
+:numref:`Figure %s: Viewing a Volume's Default Scrub Settings <scrub1>` displays the default settings for the volume named :file:`volume1`. In this example, the entry has been highlighted
+and the "Edit" button clicked in order to display the "Edit" screen. Table 8.4a summarizes the options in this screen.
 
-**Figure 8.4a: Viewing a Volume's Default Scrub Settings**
+.. _scrub1:
 
-.. image:: images/scrub1.png
+.. figure:: images/scrub1.png
 
 **Table 8.4a: ZFS Scrub Options**
 
@@ -1372,15 +1370,15 @@ too intensive for your hardware, consider unchecking the "Enabled" button for th
 Snapshots
 -------------
 
-The "Snapshots" tab can be used to review the listing of available snapshots. An example is shown in Figure 8.5a.
+The "Snapshots" tab can be used to review the listing of available snapshots. An example is shown in :numref:`Figure %s: Viewing Available Snapshots <tn_periodic3a>`.
 
 .. note:: if snapshots do not appear, check that the current time configured in :ref:`Periodic Snapshot Tasks` does not conflict with the "Begin", "End", and
    "Interval" settings. If the snapshot was attempted but failed, an entry will be added to :file:`/var/log/messages`. This log file can be viewed in
    :ref:`Shell`.
 
-**Figure 8.5a: Viewing Available Snapshots**
+.. _tn_periodic3a:
 
-.. image:: images/tn_periodic3a.png
+.. figure:: images/tn_periodic3a.png
 
 The listing will include the name of the volume or dataset, the name of each snapshot, and the amount of used and referenced data, where:
 
@@ -1453,11 +1451,11 @@ TrueNAS® will automatically snapshot any running VMware virtual machines before
 VMware datastore. The temporary VMware snapshots are then deleted on the VMware side but still exist in the ZFS snapshot and can be used as stable
 resurrection points in that snapshot.  These coordinated snapshots will be listed in :ref:`Snapshots`.
 
-Figure 8.6a shows the menu for adding a VMware snapshot and Table 8.6a summarizes the available options.
+:numref:`Figure %s: Adding a VMware Snapshot <vmware1a>` shows the menu for adding a VMware snapshot and Table 8.6a summarizes the available options.
 
-**Figure 8.6a: Adding a VMware Snapshot**
+.. _vmware1a:
 
-.. image:: images/vmware1a.png
+.. figure:: images/vmware1a.png
 
 **Table 8.6a: VMware Snapshot Options**
 

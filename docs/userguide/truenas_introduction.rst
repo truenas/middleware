@@ -1,4 +1,4 @@
-.. centered:: Copyright iXsystems 2011-2015
+.. centered:: Copyright iXsystems 2011-2016
 
 .. centered:: TrueNAS® and the TrueNAS® logo are registered trademarks of iXsystems.
 
@@ -35,8 +35,8 @@ Windows® is a registered trademark of Microsoft Corporation in the United State
 Introduction
 ------------
 
-Welcome to the TrueNAS® Administrator Guide. This Guide provides information about configuring and managing the TrueNAS® Unified Storage Appliance. Your
-iXsystems support engineer will assist with the appliance's initial setup and configuration. Once you are familiar with the configuration workflow, this
+Welcome to the TrueNAS® Administrator Guide. This Guide provides information about configuring and managing the TrueNAS® Unified Storage Array. Your
+iXsystems support engineer will assist with the array's initial setup and configuration. Once you are familiar with the configuration workflow, this
 document can be used as a reference guide to the many features provided by TrueNAS®.
 
 How This Guide is Organized
@@ -46,10 +46,10 @@ The information in the TrueNAS® Administrator Guide has been organized as follo
 
 * Chapter 1: Introduction: describes the organization of the guide and the typographic conventions.
 
-* Chapter 2: ZFS Primer: many of the features in the TrueNAS® Storage Appliance rely on the ZFS file system. An overview is provided to familiarize the
+* Chapter 2: ZFS Primer: many of the features in the TrueNAS® Storage Array rely on the ZFS file system. An overview is provided to familiarize the
   administrator with the terminology and features provided by ZFS.
 
-* Chapter 3: Initial Setup: this chapter describes how to install the TrueNAS® Storage Appliance, how to configure the out-of-band management port, and
+* Chapter 3: Initial Setup: this chapter describes how to install the TrueNAS® Storage Array, how to configure the out-of-band management port, and
   introduces the console and how to access the graphical administrative interface.
 
 * Chapters 4-14: these chapters cover the configuration options which are available in the TrueNAS® graphical administrative interface. The chapter order

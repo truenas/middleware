@@ -29,11 +29,11 @@ using syntax that can be perplexing to new Unix users. The TrueNAS® GUI makes i
 
 .. note:: due to a limitation in FreeBSD, users with account names that contain spaces or exceed 17 characters are unable to create cron jobs.
 
-Figure 6.1a shows the screen that opens when you click :menuselection:`Tasks --> Cron Jobs --> Add Cron Job`.
+:numref:`Figure %s: Creating a Cron Job <cron1>` shows the screen that opens when you click :menuselection:`Tasks --> Cron Jobs --> Add Cron Job`.
 
-**Figure 6.1a: Creating a Cron Job**
+.. _cron1:
 
-.. image:: images/cron.png
+.. figure:: images/cron.png
 
 Table 6.1a summarizes the configurable options when creating a cron job.
 
@@ -90,17 +90,17 @@ Init/Shutdown Scripts
 
 TrueNAS® provides the ability to schedule commands or scripts to run at system startup or shutdown.
 
-Figure 6.2a shows the screen that opens when you click :menuselection:`Tasks --> Init/Shutdown Scripts --> Add Init/Shutdown Script`. Table 6.2a summarizes
-the available options.
+:numref:`Figure %s: Add an Init/Shutdown Script <init1>` shows the screen that opens when you click :menuselection:`Tasks --> Init/Shutdown Scripts --> Add Init/Shutdown Script`. Table 6.2a
+summarizes the available options.
+
+.. _init1:
+
+.. figure:: images/init.png
 
 When scheduling a command, make sure that the command is in your path or give the full path to the command. One way to test the path is to type
 :command:`which command_name`. If the command is not found, it is not in your path.
 
 When scheduling a script, make sure that the script is executable and has been fully tested to ensure that it achieves the desired results.
-
-**Figure 6.2a: Add an Init/Shutdown Script**
-
-.. image:: images/init.png
 
 **Table 6.2a: Options When Adding an Init/Shutdown Script**
 
@@ -157,12 +157,12 @@ operation.
 
 .. note:: if there is a firewall between the two systems or if the other system has a built-in firewall, make sure that TCP port 873 is allowed.
 
-Figure 6.3a shows the screen that appears when you click :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`. Table 6.3a summarizes the options that
-can be configured when creating an rsync task.
+:numref:`Figure %s: Adding an Rsync Task <rsync1a>` shows the screen that appears when you click :menuselection:`Tasks --> Rsync Tasks --> Add Rsync Task`. Table 6.3a summarizes the options
+that can be configured when creating an rsync task.
 
-**Figure 6.3a: Adding an Rsync Task**
+.. _rsync1a:
 
-.. image:: images/rsync1a.png
+.. figure:: images/rsync1a.png
 
 **Table 6.3a: Rsync Configuration Options**
 
@@ -387,14 +387,13 @@ Next, view and copy the contents of the generated public key::
  DmNfwrRSxLjDvUzfywnjFHlKk/+TQIT1gg1QQaj21PJD9pnDVF0AiJrWyWnR root@truenas.local
 
 
-Go to *PULL* and paste (or append) the copied key into the "SSH Public Key" field of
-:menuselection:`Account --> Users --> View Users --> root --> Modify User`, or the username of the specified rsync user account. The paste for the above
-example is shown in Figure 6.3b. When pasting the key, ensure that it is pasted as one long line and, if necessary, remove any extra spaces representing line
-breaks.
+Go to *PULL* and paste (or append) the copied key into the "SSH Public Key" field of :menuselection:`Account --> Users --> View Users --> root --> Modify User`, or the username of the
+specified rsync user account. The paste for the above example is shown in :numref:`Figure %s: Pasting the User's SSH Public Key <rsync2>`. When pasting the key, ensure that it is pasted as
+one long line and, if necessary, remove any extra spaces representing line breaks.
 
-**Figure 6.3b: Pasting the User's SSH Public Key**
+.. _rsync2:
 
-.. image:: images/rsync2.png
+.. figure:: images/rsync2.png
 
 While on *PULL*, verify that the SSH service is running in :menuselection:`Services --> Control Services` and start it if it is not.
 
@@ -444,17 +443,17 @@ S.M.A.R.T. Tests
 reliability. When a failure is anticipated by S.M.A.R.T., the drive should be replaced. Most modern ATA, IDE, and SCSI-3 hard drives support S.M.A.R.T.--refer
 to your drive's documentation if you are unsure.
 
-Figure 6.4a shows the configuration screen that appears when you click :menuselection:`Tasks --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The tests that
-you create will be listed under "View S.M.A.R.T. Tests". After creating your tests, check the configuration in :menuselection:`Services --> S.M.A.R.T.`, then
+:numref:`Figure %s: Adding a S.M.A.R.T. Test <smart1>` shows the configuration screen that appears when you click :menuselection:`Tasks --> S.M.A.R.T. Tests --> Add S.M.A.R.T. Test`. The
+tests that you create will be listed under "View S.M.A.R.T. Tests". After creating your tests, check the configuration in :menuselection:`Services --> S.M.A.R.T.`, then
 click the slider to "ON" for the S.M.A.R.T. service in :menuselection:`Services --> Control Services`. The S.M.A.R.T. service will not start if you have not
 created any volumes.
 
 .. note:: to prevent problems, do not enable the S.M.A.R.T. service if your disks are controlled by a RAID controller as it is the job of the controller to
    monitor S.M.A.R.T. and mark drives as Predictive Failure when they trip.
 
-**Figure 6.4a: Adding a S.M.A.R.T. Test**
+.. _smart1:
 
-.. image:: images/smart1.png
+.. figure:: images/smart1.png
 
 Table 6.4a summarizes the configurable options when creating a S.M.A.R.T. test.
 

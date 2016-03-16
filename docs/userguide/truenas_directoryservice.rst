@@ -51,13 +51,13 @@ systems to:
 
 * be set to either localtime or universal time at the BIOS level
 
-Figure 9.1a shows the screen that appears when you click :menuselection:`Directory Service --> Active Directory`. Table 9.1a describes the configurable
-options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always
+:numref:`Figure %s: Configuring Active Directory <ad1>` shows the screen that appears when you click :menuselection:`Directory Service --> Active Directory`. Table 9.1a describes the
+configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always
 display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
-**Figure 9.1a: Configuring Active Directory**
+.. _ad1:
 
-.. image:: images/ad1.png
+.. figure:: images/ad1.png
 
 **Table 9.1a: Active Directory Configuration Options**
 
@@ -78,8 +78,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | not connect to the domain controller using this password                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**     |
-|                          |               | as setting an incorrect value                                                                                                              |
+| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the original hostname of the system;                                       |
+|                          |               | **use caution when changing this setting** as setting an incorrect value                                                                   |
 |                          |               | `can corrupt an AD installation <https://forums.freenas.org/index.php?threads/before-you-setup-ad-authentication-please-read.2447/>`_      |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -109,6 +109,9 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Use Default Domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                        |
 |                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                           |
 |                          |               | collisions                                                                                                                                 |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Allow DNS updates        | checkbox      | when unchecked, disables Samba from doing DNS updates when joining a domain                                                                |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                  |
@@ -323,11 +326,11 @@ the LDAP server and thus be provided authorized access to the data stored on the
    `The Linux Samba-OpenLDAP Howto <http://download.gna.org/smbldap-tools/docs/samba-ldap-howto/#htoc29>`_. In addition, the LDAP server must support SSL/TLS
    and the certificate for the LDAP server needs to be imported.
 
-Figure 9.2a shows the LDAP Configuration screen that is seen when you click :menuselection:`Directory Service --> LDAP`.
+:numref:`Figure %s: Configuring LDAP <ldap1>` shows the LDAP Configuration screen that is seen when you click :menuselection:`Directory Service --> LDAP`.
 
-**Figure 9.2a: Configuring LDAP**
+.. _ldap1:
 
-.. image:: images/ldap1.png
+.. figure:: images/ldap1.png
 
 Table 9.2a summarizes the available configuration options. Some settings are only available in Advanced Mode. To see these settings, either click the
 "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -376,6 +379,9 @@ If you are new to LDAP terminology, skim through the
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | SUDO Suffix             | string         | only available in "Advanced Mode"; use if LDAP-based users need superuser access                               |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name            | checkbox       | only available in "Advanced Mode" on HA-licensed systems; ensure that each node has a unique NetBIOS name      |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Kerberos Realm          | drop-down menu | only available in "Advanced Mode";  select the realm created using the instructions in :ref:`Kerberos Realms`  |
@@ -448,12 +454,12 @@ Network Information Service (NIS) is a service which maintains and distributes a
 aliases and other text-based tables of information. If a NIS server is running on your network, the TrueNAS® system can be configured to import the users
 and groups from the NIS directory.
 
-Figure 9.3a shows the configuration screen which opens when you click :menuselection:`Directory Service --> NIS`. Table 9.3a summarizes the configuration
+:numref:`Figure %s: NIS Configuration <nis1>` shows the configuration screen which opens when you click :menuselection:`Directory Service --> NIS`. Table 9.3a summarizes the configuration
 options.
 
-**Figure 9.3a: NIS Configuration**
+.. _nis1:
 
-.. image:: images/nis1.png
+.. figure:: images/nis1.png
 
 **Table 9.3a: NIS Configuration Options**
 
@@ -494,13 +500,13 @@ NT4
 This service should only be configured if the Windows network's domain controller is running NT4. If the network's domain controller is running a more recent
 version of Windows, you should configure :ref:`Active Directory` instead.
 
-Figure 9.4a shows the configuration screen that appears when you click :menuselection:`Directory Service --> NT4`. These options are summarized in Table 9.4a.
-Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always display
+:numref:`Figure %s: NT4 Configuration Options <nt1>` shows the configuration screen that appears when you click :menuselection:`Directory Service --> NT4`. These options are summarized in
+Table 9.4a. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode" button or configure the system to always display
 these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
 
-**Figure 9.4a: NT4 Configuration Options**
+.. _nt1:
 
-.. image:: images/nt1.png
+.. figure:: images/nt1.png
 
 **Table 9.4a: NT4 Configuration Options**
 
@@ -548,11 +554,11 @@ Kerberos Realms
 
 TrueNAS® creates a default Kerberos realm is created for the local system.  :menuselection:`Directory Service --> Kerberos Realms` can be used to
 view and add Kerberos realms.  If the network contains a KDC, click the "Add kerberose realm" button to add the Kerberos realm. This configuration screen is
-shown in Figure 9.5a.
+shown in :numref:`Figure %s: Adding a Kerberos Realm <realm1a>`.
 
-**Figure 9.5a: Adding a Kerberos Realm**
+.. _realm1a:
 
-.. image:: images/realm1a.png
+.. figure:: images/realm1a.png
 
 Table 9.5a summarizes the configurable options. Some settings are only available in Advanced Mode. To see these settings, either click the "Advanced Mode"
 button or configure the system to always display these settings by checking the box "Show advanced fields by default" in :menuselection:`System --> Advanced`.
@@ -618,7 +624,8 @@ To instruct LDAP to use the keytab, select the installed keytab using the drop-d
 Kerberos Settings
 -----------------
 
-To configure additional Kerberos parameters, use :menuselection:`Directory Service --> Kerberos Settings`. As seen in Figure 9.7a, two fields are available:
+To configure additional Kerberos parameters, use :menuselection:`Directory Service --> Kerberos Settings`. As seen in :numref:`Figure %s: Additional Kerberos Settings <kerberos1>`, two
+fields are available:
 
 * **Appdefaults auxiliary parameters:** contains settings used by some Kerberos applications. The available settings and their syntax are listed in the 
   `[appdefaults] section of krb.conf(5) <http://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#appdefaults>`_.
@@ -626,6 +633,6 @@ To configure additional Kerberos parameters, use :menuselection:`Directory Servi
 * **Libdefaults auxiliary parameters:** contains settings used by the Kerberos library. The available settings and their syntax are listed in the 
   `[libdefaults] section of krb.conf(5) <http://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#libdefaults>`_.
 
-**Figure 9.7a: Additional Kerberos Settings**
+.. _kerberos1:
 
-.. image:: images/kerberos1.png
+.. figure:: images/kerberos1.png

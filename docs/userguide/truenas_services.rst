@@ -45,12 +45,12 @@ This section demonstrates how to start a TrueNAS® service then describes the av
 Control Services
 ----------------
 
-:menuselection:`Services --> Control Services`, shown in Figure 11.1a, allows you to quickly determine which services are currently running, to start and stop
-services, and to configure services. By default, all services, except for the S.M.A.R.T. service, are off until you start them.
+:menuselection:`Services --> Control Services`, shown in :numref:`Figure %s: Control Services <services1>`, allows you to quickly determine which services are currently running, to start
+and stop services, and to configure services. By default, all services, except for the S.M.A.R.T. service, are off until you start them.
 
-**Figure 11.1a: Control Services**
+.. _services1:
 
-.. image:: images/services.png
+.. figure:: images/services.png
 
 A service is stopped if its icon is a red "OFF". A service is running if its icon is a blue "ON". To start or stop a service, click its ON/OFF icon.
 
@@ -71,11 +71,11 @@ AFP
 The settings that are configured when creating AFP Shares in :menuselection:`Sharing --> Apple (AFP) Shares --> Add Apple (AFP) Share` are specific to each
 configured AFP Share. In contrast, global settings which apply to all AFP shares are configured in :menuselection:`Services --> AFP`.
 
-Figure 11.2a shows the available global AFP configuration options which are described in Table 11.2a.
+:numref:`Figure %s: Global AFP Configuration <afp1a>` shows the available global AFP configuration options which are described in Table 11.2a.
 
-**Figure 11.2a: Global AFP Configuration**
+.. _afp1a:
 
-.. image:: images/afp1a.png
+.. figure:: images/afp1a.png
 
 **Table 11.2a: Global AFP Configuration Options**
 
@@ -147,12 +147,12 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
    `master browser election <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2581357>`_
    to occur and for the TrueNAS® system to become available in Windows Explorer.
 
-Figure 11.3a shows the global CIFS configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
+:numref:`Figure %s: Global CIFS Configuration <cifs1a>` shows the global CIFS configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
 `smb4.conf <http://www.sloop.net/smb.conf.html>`_.
 
-**Figure 11.3a: Global CIFS Configuration**
+.. _cifs1a:
 
-.. image:: images/cifs1.png
+.. figure:: images/cifs1a.png
 
 **Table 11.3a: Global CIFS Configuration Options**
 
@@ -160,8 +160,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | **Setting**                      | **Value**      | **Description**                                                                                       |
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the system's hostname; it                   |
-|                                  |                | **must**  be different from the                                                                       |
+| NetBIOS Name                     | string         | automatically populated with the system's original hostname; it **must**  be different from the       |
 |                                  |                | *Workgroup* name                                                                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -184,7 +183,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use syslog                       | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
+| Use syslog only                  | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
 |                                  |                | of :file:`/var/log/samba4/log.smbd`                                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -365,11 +364,11 @@ understand what those settings should be. Before beginning your configuration, r
 `Samba AD DC HOWTO <https://wiki.samba.org/index.php/Samba_AD_DC_HOWTO>`_. Once TrueNAS® is configured, use the RSAT utility from a Windows system to manage
 the domain controller. The Samba AD DC HOWTO includes instructions for installing and configuring RSAT.
 
-Figure 11.4a shows the configuration screen for creating a domain controller and Table 11.4a summarizes the available options.
+:numref:`Figure %s: Domain Controller Settings <directory1a>` shows the configuration screen for creating a domain controller and Table 11.4a summarizes the available options.
 
-**Figure 11.4a: Domain Controller Settings**
+.. _directory1a:
 
-.. image:: images/directory1a.png
+.. figure:: images/directory1a.png
 
 **Table 11.4a: Domain Controller Configuration Options**
 
@@ -415,12 +414,12 @@ Dynamic DNS (DDNS) is useful if your TrueNAS® system is connected to an ISP tha
 system can automatically associate its current IP address with a domain name, allowing you to access the TrueNAS® system even if the IP address changes. DDNS
 requires you to register with a DDNS service such as `DynDNS <http://dyn.com/dns/>`_.
 
-Figure 11.5a shows the DDNS configuration screen and Table 11.5a summarizes the configuration options. The values you need to input will be given to you by the
-DDNS provider. After configuring DDNS, don't forget to start the DDNS service in :menuselection:`Services --> Control Services`.
+:numref:`Figure %s: Configuring DDNS <ddns1>` shows the DDNS configuration screen and Table 11.5a summarizes the configuration options. The values you need to input will be given to you by
+the DDNS provider. After configuring DDNS, don't forget to start the DDNS service in :menuselection:`Services --> Control Services`.
 
-**Figure 11.5a: Configuring DDNS**
+.. _ddns1:
 
-.. image:: images/ddns.png
+.. figure:: images/ddns.png
 
 **Table 11.5a: DDNS Configuration Options**
 
@@ -470,13 +469,13 @@ about sensitive data, see Encrypting FTP.
 This section provides an overview of the FTP configuration options. It then provides examples for configuring anonymous FTP, specified user access within a
 chroot environment, encrypting FTP connections, and troubleshooting tips.
 
-Figure 11.6a shows the configuration screen for :menuselection:`Services --> FTP`. Some settings are only available in "Advanced Mode". To see these settings,
+:numref:`Figure %s: Configuring FTP <ftp1>` shows the configuration screen for :menuselection:`Services --> FTP`. Some settings are only available in "Advanced Mode". To see these settings,
 either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
 :menuselection:`System --> Advanced`.
 
-**Figure 11.6a: Configuring FTP**
+.. _ftp1:
 
-.. image:: images/ftp1.png
+.. figure:: images/ftp1.png
 
 Table 11.6a summarizes the available options when configuring the FTP server:
 
@@ -685,7 +684,7 @@ To configure anonymous FTP:
 
 #.  Test the connection from a client using a utility such as `Filezilla <https://filezilla-project.org/>`_.
 
-In the example shown in Figure 11.6b, a user has input the following information into the Filezilla client:
+In the example shown in :numref:`Figure %s: Connecting Using Filezilla <filezilla1>`, a user has input the following information into the Filezilla client:
 
 * IP address of the TrueNAS® server: *192.168.1.113*
 
@@ -693,9 +692,9 @@ In the example shown in Figure 11.6b, a user has input the following information
 
 * "Password": the email address of the user
 
-**Figure 11.6b: Connecting Using Filezilla**
+.. _filezilla1:
 
-.. image:: images/filezilla.png
+.. figure:: images/filezilla.png
 
 The messages within the client indicate that the FTP connection is successful. The user can now navigate the contents of the root folder on the remote
 site—this is the volume/dataset that was specified in the FTP service configuration. The user can also transfer files between the local site (their system)
@@ -802,11 +801,11 @@ The Link Layer Discovery Protocol (LLDP) is used by network devices to advertise
 uses the `ladvd <https://github.com/sspans/ladvd>`_ LLDP implementation. If your network contains managed switches, configuring and starting the LLDP
 service will tell the TrueNAS® system to advertise itself on the network.
 
-Figure 11.8a shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
+:numref:`Figure %s: Configuring LLDP <lldp1>` shows the LLDP configuration screen and Table 11.8a summarizes the configuration options for the LLDP service.
 
-**Figure 11.8a: Configuring LLDP**
+.. _lldp1:
 
-.. image:: images/lldp.png
+.. figure:: images/lldp.png
 
 **Table 11.8a: LLDP Configuration Options**
 
@@ -833,11 +832,11 @@ NFS
 The settings that are configured when creating NFS Shares in :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share` are specific to each
 configured NFS Share. In contrast, global settings which apply to all NFS shares are configured in :menuselection:`Services --> NFS`.
 
-Figure 11.9a shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
+:numref:`Figure %s: Configuring NFS <nfs1a>` shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
 
-**Figure 11.9a: Configuring NFS**
+.. _nfs1a:
 
-.. image:: images/nfs1a.png
+.. figure:: images/nfs1a.png
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -861,7 +860,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Require Kerberos for   | checkbox   | check this box when using Kerberos authentication with NFSv4                                                        |
+| Require Kerberos for   | checkbox   | when checked, NFS shares will fail if the Kerberos ticket is unavailable                                            |
 | NFSv4                  |            |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
@@ -897,11 +896,11 @@ This section describes the configurable options for the :command:`rsyncd` servic
 Configure Rsyncd
 ~~~~~~~~~~~~~~~~
 
-Figure 11.10a shows the rsyncd configuration screen which is accessed from :menuselection:`Services --> Rsync --> Configure Rsyncd`.
+:numref:`Figure %s: Rsyncd Configuration <rsyncd1>` shows the rsyncd configuration screen which is accessed from :menuselection:`Services --> Rsync --> Configure Rsyncd`.
 
-**Figure 11.10a: Rsyncd Configuration**
+.. _rsyncd1:
 
-.. image:: images/rsyncd.png
+.. figure:: images/rsyncd.png
 
 Table 11.10a summarizes the options that can be configured for the rsync daemon:
 
@@ -925,13 +924,13 @@ Table 11.10a summarizes the options that can be configured for the rsync daemon:
 Rsync Modules
 ~~~~~~~~~~~~~
 
-Figure 11.10b shows the configuration screen that appears when you click :menuselection:`Services --> Rsync --> Rsync Modules --> Add Rsync Module`.
+:numref:`Figure %s: Adding an Rsync Module <rsync3>` shows the configuration screen that appears when you click :menuselection:`Services --> Rsync --> Rsync Modules --> Add Rsync Module`.
 
 Table 11.10b summarizes the options that can be configured when creating a rsync module.
 
-**Figure 11.10b: Adding an Rsync Module**
+.. _rsync3:
 
-.. image:: images/rsync3.png
+.. figure:: images/rsync3.png
 
 **Table 11.10b: Rsync Module Configuration Options**
 
@@ -994,11 +993,11 @@ service to monitor disk S.M.A.R.T. data for disk health. To fully configure S.M.
 
 #.  Start the S.M.A.R.T. service in :menuselection:`Services --> Control Services`.
 
-Figure 11.11a shows the configuration screen that appears when you click :menuselection:`Services --> S.M.A.R.T.`
+:numref:`Figure %s: S.M.A.R.T Configuration Options <smart2>` shows the configuration screen that appears when you click :menuselection:`Services --> S.M.A.R.T.`
 
-**Figure 11.11a: S.M.A.R.T Configuration Options**
+.. _smart2:
 
-.. image:: images/smart2.png
+.. figure:: images/smart2.png
 
 .. note:: :command:`smartd` will wake up at every configured "Check Interval". It will check the times you configured in
    :menuselection:`Tasks --> S.M.A.R.T. Tests` to see if any tests should be run. Since the smallest time increment for a test is an hour (60 minutes), it
@@ -1053,13 +1052,13 @@ SNMP (Simple Network Management Protocol) is used to monitor network-attached de
 
 Available MIBS are located in :file:`/usr/local/share/snmp/mibs`.
 
-Figure 11.12a shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
+:numref:`Figure %s: SNMP Configuration Options <snmp2>` shows the SNMP configuration screen. Table 11.12a summarizes the configuration options.
 
-**Figure 11.12a: Configuring SNMP**
+.. _snmp2:
 
-.. image:: images/snmp2.png
+.. figure:: images/snmp2.png
 
-**Table 11.12a: SNMP Configuration Options**
+**Table 11.12a: Configuring SNMP**
 
 +----------------------+----------------+--------------------------------------------------------------------------------------------------+
 | **Setting**          | **Value**      | **Description**                                                                                  |
@@ -1117,12 +1116,12 @@ in your network will need to use
 This section shows the TrueNAS® SSH configuration options, demonstrates an example configuration that restricts users to their home directory, and provides
 some troubleshooting tips.
 
-Figure 11.13a shows the :menuselection:`Services --> SSH` configuration screen. Once you have configured SSH, don't forget to start it in
+:numref:`Figure %s: SSH Configuration <ssh1>` shows the :menuselection:`Services --> SSH` configuration screen. Once you have configured SSH, don't forget to start it in
 :menuselection:`Services --> Control Services`.
 
-**Figure 11.13a: SSH Configuration**
+.. _ssh1:
 
-.. image:: images/ssh1.png
+.. figure:: images/ssh1.png
 
 Table 11.13a summarizes the configuration options. Some settings are only available in "Advanced Mode". To see these settings, either click the "Advanced
 Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by default" in
@@ -1146,15 +1145,15 @@ Mode" button or configure the system to always display these settings by checkin
 |                               |                | on both the SSH client and server                                                                        |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow Kerberos Authentication | checkbox       | before checking this box, ensure that :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs` have been       |
+|                               |                | configured and that the FreeNAS system can communicate with the KDC                                      |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using SSH's                                                 |
 |                               |                | `port forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
-|                               |                |                                                                                                          |
-+-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| Host Private Key              | string         | only available in "Advanced Mode"; allows you to paste a specific host key as the default key is changed |
-|                               |                | with every installation                                                                                  |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | SFTP Log Level                | drop-down menu | only available in "Advanced Mode"; select the                                                            |
@@ -1236,11 +1235,11 @@ in a local environment. TFTP provides an extremely limited set of commands and p
 If the TrueNAS® system will be used to store images and configuration files for the network's devices, configure and start the TFTP service. Starting the
 TFTP service will open UDP port 69.
 
-Figure 11.14a shows the TFTP configuration screen and Table 11.14a summarizes the available options:
+:numref:`Figure %s: TFTP Configuration <tftp1>` shows the TFTP configuration screen and Table 11.14a summarizes the available options:
 
-**Figure 11.14a: TFTP Configuration**
+.. _tftp1:
 
-.. image:: images/tftp.png
+.. figure:: images/tftp.png
 
 **Table 11.14a: TFTP Configuration Options**
 
@@ -1284,11 +1283,11 @@ TrueNAS® uses
 (Network UPS Tools) to provide UPS support. If the TrueNAS® system is connected to a UPS device, configure the UPS service then start it in
 :menuselection:`Services --> Control Services`.
 
-Figure 11.15a shows the UPS configuration screen:
+:numref:`Figure %s: UPS Configuration Screen <ups1>` shows the UPS configuration screen:
 
-**Figure 11.15a: UPS Configuration Screen**
+.. _ups1:
 
-.. image:: images/ups.png
+.. figure:: images/ups.png
 
 Table 11.15a summarizes the options in the UPS Configuration screen.
 
@@ -1384,12 +1383,12 @@ In TrueNAS® 9.3, WebDAV can be configured to provide a file browser over a web 
 one WebDAV share using :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share`. Refer to :ref:`WebDAV Shares` for instructions on how to create a
 share and then how to connect to it once the service is configured and started.
 
-The settings in the WebDAV service apply to all WebDAV shares. Figure 11.16a shows the WebDAV configuration screen. Table 11.16a summarizes the available
-options.
+The settings in the WebDAV service apply to all WebDAV shares. :numref:`Figure %s: WebDAV Configuration Screen <webdav2>` shows the WebDAV configuration screen. Table 11.16a summarizes the
+available options.
 
-**Figure 11.16a: WebDAV Configuration Screen**
+.. _webdav2:
 
-.. image:: images/webdav2.png
+.. figure:: images/webdav2.png
 
 **Table 11.16a: WebDAV Configuration Options**
 

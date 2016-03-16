@@ -11,7 +11,7 @@ The Network section of the administrative GUI contains the following components 
 
 *   :ref:`Interfaces`: used to configure a specified interface's network settings.
 
-*   :ref:`IPMI`: provides side-band management should the appliance become unavailable through the graphical administrative interface.
+*   :ref:`IPMI`: provides side-band management should the array become unavailable through the graphical administrative interface.
 
 *   :ref:`Link Aggregations`: used to configure link aggregation and link failover.
 
@@ -30,7 +30,11 @@ Each of these is described in more detail in this section.
 Global Configuration
 --------------------
 
-Network --> Global Configuration, shown in Figure 7.1a, allows you to set non-interface specific network settings.
+Network --> Global Configuration, shown in :numref:`Figure %s: Global Configuration Screen <tn_network1>`, allows you to set non-interface specific network settings.
+
+.. _tn_network1:
+
+.. figure:: images/tn_network1.png
 
 Table 7.1a summarizes the settings that can be configured using the "Global Configuration" tab. The hostname and domain will be pre-filled for you,
 but can be changed to meet the local network's requirements.
@@ -41,10 +45,6 @@ If your network does not have a DNS server or NFS, SSH, or FTP users are receivi
 TrueNAS® system in the "Host name database" field.
 
 .. note:: if you add a gateway to the Internet, make sure that the TrueNAS® system is protected by a properly configured firewall.
-
-**Figure 7.1a: Global Configuration Screen**
-
-.. image:: images/tn_network1.png
 
 **Table 7.1a: Global Configuration Settings**
 
@@ -109,14 +109,14 @@ manual configuration.
 .. note:: typically the interface used to access the TrueNAS® administrative GUI is configured by DHCP. This interface will not appear in this screen, even
    though it is already dynamically configured and in use.
 
-Figure 7.2a shows the screen that opens when you click `Interfaces --> Add Interface`. Table 7.2a summarizes the configuration options when you "Add" an
-interface or Edit an already configured interface. Note that if any changes to this screen require a network restart, the screen will turn red when you
+:numref:`Figure %s: Adding or Editing an Interface <interface>` shows the screen that opens when you click `Interfaces --> Add Interface`. Table 7.2a summarizes the configuration options
+when you "Add" an interface or Edit an already configured interface. Note that if any changes to this screen require a network restart, the screen will turn red when you
 click the "OK" button and a pop-up message will remind you that network connectivity to the TrueNAS® system will be interrupted while the changes are
 applied. Click "Yes" to proceed with the network restart or "No" to cancel the operation.
 
-**Figure 7.2a: Adding or Editing an Interface**
+.. _interface:
 
-.. image:: images/interface.png
+.. figure:: images/interface.png
 
 **Table 7.2a: Interface Configuration Settings**
 
@@ -173,18 +173,18 @@ fill in both the "IPv4 address" and "IPv6 address" fields. Instead, set one of t
 IPMI
 ----
 
-The TrueNAS® Storage Appliance provides a built-in out-of-band management port which can be used to provide side-band management should the system become
+The TrueNAS® Storage Array provides a built-in out-of-band management port which can be used to provide side-band management should the system become
 unavailable through the graphical administrative interface. This allows for a few vital functions, such as checking the log, accessing the BIOS setup, and
 powering on the system without requiring physical access to the system. It can also be used to allow another person remote access to the system in order to
 assist with a configuration or troubleshooting issue.
 
-The IP addressing information for the out-of-band management port can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen,
-shown in Figure 7.3a, provides a shortcut to the most basic IPMI configuration. Table 7.3a summarizes the options when configuring IPMI using the TrueNAS®
+The IP addressing information for the out-of-band management port can be configured from :menuselection:`Network --> IPMI`. This IPMI configuration screen, shown in
+:numref:`Figure %s: IPMI Configuration <tn_ipmi>`, provides a shortcut to the most basic IPMI configuration. Table 7.3a summarizes the options when configuring IPMI using the TrueNAS®
 GUI.
 
-**Figure 7.3a: IPMI Configuration**
+.. _tn_ipmi:
 
-.. image:: images/tn_ipmi.png
+.. figure:: images/tn_ipmi.png
 
 **Table 7.3a: IPMI Options**
 
@@ -217,8 +217,8 @@ Once configured, you can access the IPMI interface using a web browser and the I
 prompt for a username, where the default username is *admin* and the password that you configured. Once you have logged into the management interface, you can
 change the administrative username as well as create additional users.
 
-Refer to Figures 3.5h through 3.5k in :ref:`Out-of-Band Management` for additional instructions on how to configure the Java KVM Client used by the IPMI
-management interface.
+Refer to :numref:`Figure %s: Launching the Java KVM Client <tn_IPMIdownload>` through :numref:`Figure %s: Continue Through this Screen <tn_IPMIcontinue>` in
+:ref:`Out-of-Band Management` for additional instructions on how to configure the Java KVM Client used by the IPMI management interface.
 
 .. index::Link Aggregations
 
@@ -297,11 +297,11 @@ Creating a Link Aggregation
 **Before** creating a link aggregation, double-check that no interfaces have been manually configured in `Network --> Interfaces --> View Interfaces`. If any
 configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
 
-Figure 7.4a shows the configuration options when adding a lagg interface using `Network --> Link Aggregations --> Create Link Aggregation`.
+:numref:`Figure %s: Creating a lagg Interface <lagg4>` shows the configuration options when adding a lagg interface using `Network --> Link Aggregations --> Create Link Aggregation`.
 
-**Figure 7.4a: Creating a lagg Interface**
+.. _lagg4:
 
-.. image:: images/lagg.png
+.. figure:: images/lagg.png
 
 Select the desired "Protocol Type", highlight the interface(s) to associate with the lagg device, and click the "OK" button.
 
@@ -411,11 +411,11 @@ Static Routes
 -------------
 
 By default, no static routes are defined on the TrueNAS® system. Should you need a static route to reach portions of your network, add the route using
-`Network --> Static Routes --> Add Static Route`, shown in Figure 7.6a.
+`Network --> Static Routes --> Add Static Route`, shown in :numref:`Figure %s: Adding a Static Route <static>`.
 
-**Figure 7.6a: Adding a Static Route**
+.. _static:
 
-.. image:: images/static.png
+.. figure:: images/static.png
 
 The available options are summarized in Table 7.6a.
 
@@ -451,13 +451,13 @@ TrueNAS® uses FreeBSD's
 `vlan(4) <http://www.freebsd.org/cgi/man.cgi?query=vlan>`_
 interface to demultiplex frames with IEEE 802.1q tags. This allows nodes on different VLANs to communicate through a layer 3 switch or router. A vlan
 interface must be assigned a parent interface and a numeric VLAN tag. A single parent can be assigned to multiple vlan interfaces provided they have different
-tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen shown in Figure 7.7a.
+tags. If you click `Network --> VLANs --> Add VLAN`, you will see the screen shown in :numref:`Figure %s: Adding a VLAN <vlan1>`.
 
 .. note:: VLAN tagging is the only 802.1q feature that is implemented.
 
-**Figure 7.7a: Adding a VLAN**
+.. _vlan1:
 
-.. image:: images/vlan.png
+.. figure:: images/vlan.png
 
 Table 7.7a summarizes the configurable fields.
 
@@ -468,14 +468,14 @@ Table 7.7a summarizes the configurable fields.
 |                   |                |                                                                                                   |
 +===================+================+===================================================================================================+
 | Virtual Interface | string         | use the format *vlanX* where                                                                      |
-|                   |                | *X* is a number representing the vlan interface                                                   |
+|                   |                | *X* is a number representing a vlan interface not currently being used as a parent                |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Parent Interface  | drop-down menu | usually an Ethernet card connected to a properly configured switch port; if using a newly created |
 |                   |                | lagg device, it will not appear in the drop-down until the system is rebooted                     |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
-| VLAN Tag          | integer        | should match a numeric tag set up in the switched network                                         |
+| VLAN Tag          | integer        | number between 1 and 4095 which matches a numeric tag set up in the switched network              |
 |                   |                |                                                                                                   |
 +-------------------+----------------+---------------------------------------------------------------------------------------------------+
 | Description       | string         | optional                                                                                          |

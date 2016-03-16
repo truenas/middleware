@@ -25,11 +25,11 @@ The Groups interface allows you to manage UNIX-style groups on the TrueNAS® sys
 
 This section describes how to create a group and assign it user accounts. The next section will describe how to create user accounts.
 
-If you click :menuselection:`Groups --> View Groups`, you will see a screen similar to Figure 4.1a.
+If you click :menuselection:`Groups --> View Groups`, you will see a screen similar to :numref:`Figure %s: TrueNAS® Groups Management <group1>`.
 
-**Figure 4.1a: TrueNAS® Groups Management**
+.. _group1:
 
-.. image:: images/group1.png
+.. figure:: images/group1.png
 
 All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
 group which was installed with TrueNAS®, and whether or not the group's members are allowed to use :command:`sudo`. If you click a group entry, a "Members"
@@ -37,11 +37,11 @@ button will appear. Click this button to view and modify that group's membership
 
 .. index:: Add Group, New Group, Create Group
 
-If you click the "Add Group" button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
+If you click the "Add Group" button, you will see the screen shown in :numref:`Figure %s: Creating a New Group <group2>`. Table 4.1a summarizes the available options when creating a group.
 
-**Figure 4.1b: Creating a New Group**
+.. _group2:
 
-.. image:: images/group2.png
+.. figure:: images/group2.png
 
 **Table 4.1a: Options When Creating a Group**
 
@@ -72,15 +72,15 @@ Once the group and users are created, you can assign users as members of a group
 button. Highlight the user in the "Member users" list (which shows all user accounts on the system) and click the ">>" to move that user to the right
 frame. The user accounts which appear in the right frame will be added as members of that group.
 
-In the example shown in Figure 4.1c, the *data1* group has been created and the
+In the example shown in :numref:`Figure %s: Assigning a User as a Member of a Group <group3>`, the *data1* group has been created and the
 *user1* user account has been created with a primary group of
 *user1*. The "Members" button for the
 *data1* group has been selected and
 *user1* has been added as a member of that group.
 
-**Figure 4.1c: Assigning a User as a Member of a Group**
+.. _group3:
 
-.. image:: images/group3.png
+.. figure:: images/group3.png
 
 .. index:: Delete Group, Remove Group
 
@@ -104,11 +104,11 @@ to assign permissions to shares, you will need to do **one of the following**:
 #.  If your network uses a directory service, import the existing account information using the instructions in :ref:`Directory Service`.
 
 :menuselection:`Account --> Users --> View Users` provides a listing of all of the system accounts that were installed with the TrueNAS® operating system, as
-shown in Figure 4.2a.
+shown in :numref:`Figure %s: Managing User Accounts <user1a>`.
 
-**Figure 4.2a: Managing User Accounts**
+.. _user1a:
 
-.. image:: images/user1a.png
+.. figure:: images/user1a.png
 
 Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
 with the TrueNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, whether or not the user
@@ -132,13 +132,13 @@ system accounts.
 
 .. index:: Add User, Create User, New User
 
-To create a user account, click the "Add User" button to open the screen shown in Figure 4.2b. Some settings are only available in "Advanced Mode". To see
-these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by
+To create a user account, click the "Add User" button to open the screen shown in :numref:`Figure %s: Adding or Editing a User Account <user2>`. Some settings are only available in
+"Advanced Mode". To see these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by
 default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
 
-**Figure 4.2b: Adding or Editing a User Account**
+.. _user2:
 
-.. image:: images/user2.png
+.. figure:: images/user2.png
 
 **Table 4.2a: User Account Configuration**
 
@@ -158,8 +158,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Create a new primary group | checkbox        | by default, a primary group with the same name as the user will be created; uncheck this box to select a                                              |
-|                            |                 | different primary group name; in Unix,                                                                                                                |
-|                            |                 | `a primary group is not the same as a secondary/auxiliary group <http://linuxers.org/article/difference-between-primary-and-secondary-groups-linux>`_ |
+|                            |                 | different primary group name                                                                                                                          |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Primary Group              | drop-down menu  | must uncheck "Create a new primary group" in order to access this menu; for security reasons, FreeBSD will                                            |
@@ -189,7 +188,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
+| Disable password login     | checkbox        | when checked, disables password logins and authentication to CIFS shares; to undo this                                                                |
 |                            |                 | setting, set a password for the user using the "Modify User" button for the user in "View Users";                                                     |
 |                            |                 | checking this box will grey out "Lock user" and "Permit Sudo" which are mutually exclusive                                                            |
 |                            |                 |                                                                                                                                                       |
@@ -220,8 +219,8 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | **Shell**    | **Description**                                                                                                      |
 |              |                                                                                                                      |
 +==============+======================================================================================================================+
-| netcli.sh    | user can access the Console Setup menu shown in Figure 3a, even if it is disabled in                                 |
-|              | :menuselection:`System --> Advanced --> Enable Console Menu`                                                         |
+| netcli.sh    | user can access the Console Setup menu shown in :numref:`Figure %s: TrueNAS® Console Setup Menu <console1a>`, even   |
+|              | if it is disabled in :menuselection:`System --> Advanced --> Enable Console Menu`                                    |
 |              |                                                                                                                      |
 +--------------+----------------------------------------------------------------------------------------------------------------------+
 | csh          | `C shell <https://en.wikipedia.org/wiki/C_shell>`_                                                                   |

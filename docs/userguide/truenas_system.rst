@@ -36,7 +36,11 @@ Each of these is described in more detail in this section.
 Information
 -----------
 
-:menuselection:`System --> Information` displays general information about the TrueNAS® system. An example is seen in Figure 5.1a.
+:menuselection:`System --> Information` displays general information about the TrueNAS® system. An example is seen in :numref:`Figure %s: System Information Tab <system1>`.
+
+.. _system1:
+
+.. figure:: images/tn_system1.png
 
 The information includes the hostname, build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, the
 current load average, and the system's serial number.
@@ -44,20 +48,16 @@ current load average, and the system's serial number.
 To change the system's hostname, click its "Edit" button, type in the new hostname, and click "OK". The hostname must include the domain name. If the network
 does not use a domain name add *.local* to the end of the hostname.
 
-**Figure 5.1a: System Information Tab**
-
-.. image:: images/tn_system1.png
-
 .. _General:
 
 General
 -------
 
-:menuselection:`System --> General` is shown in Figure 5.2a.
+:menuselection:`System --> General` is shown in :numref:`Figure %s: General Screen <tn_system2>`.
 
-**Figure 5.2a: General Screen**
+.. _tn_system2:
 
-.. image:: images/tn_system2.png
+.. figure:: images/tn_system2.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -124,8 +124,10 @@ This screen also contains the following buttons:
 user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
 wish to return a test system to the original configuration.
 
-**Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
-**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** 
+**Save Config:** used to save a backup copy of the current configuration database in the format *hostname-version-architecture* to the system being used to access the
+administrative interface. It is recommended to always save the configuration after making any configuration changes. Note that while TrueNAS® automatically backs up the configuration
+database to the system dataset every morning at 3:45, this backup will not occur if the system is shutdown at that time and the backup will not be available if the system dataset is
+stored on the boot pool and the boot pool becomes unavailable. You can determine and change the location of the system dataset using :menuselection:`System --> System Dataset`.
 
 **Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
 red as an indication that the system will need to reboot in order to load the restored configuration.
@@ -134,13 +136,13 @@ red as an indication that the system will need to reboot in order to load the re
 operation of time sensitive applications such as Active Directory or other directory services. By default, TrueNAS® is pre-configured to use three public NTP
 servers. If your network is using a directory service, ensure that the TrueNAS® system and the server running the directory service have been configured to
 use the same NTP servers. To add a NTP server on the TrueNAS® system, click :menuselection:`NTP Servers --> Add NTP Server` to open the screen shown in
-Figure 5.2b. Table 5.2b summarizes the options when adding an NTP server.
+:numref:`Figure %s: Add a NTP Server <ntp1>`. Table 5.2b summarizes the options when adding an NTP server.
 `ntp.conf(5) <http://www.freebsd.org/cgi/man.cgi?query=ntp.conf>`_
 explains these options in more detail.
 
-**Figure 5.2b: Add a NTP Server**
+.. _ntp1:
 
-.. image:: images/ntp1.png
+.. figure:: images/ntp1.png
 
 **Table 5.2b: NTP Servers Configuration Options**
 
@@ -191,14 +193,14 @@ state.
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
-As seen in Figure 5.3a, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment and users can
-make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
+As seen in :numref:`Figure %s: Viewing Boot Environments <tn_be1a>`, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment
+and users can make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
 a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
 created indicating the date and time the wizard was run.
 
-**Figure 5.3a: Viewing Boot Environments**
+.. _tn_be1a:
 
-.. image:: images/tn_be1a.png
+.. figure:: images/tn_be1a.png
 
 Each boot environment entry contains the following information:
 
@@ -218,9 +220,9 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
-* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
-  **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
-  entry, which will clear the *On reboot* field of the currently activated entry.
+* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. Since you can not delete an entry that has been activated, this button will
+  not appear for the active boot environment. If you need to delete an entry that you created and it is currently  activated, first activate another entry, which will clear the
+  *On reboot* field of the currently activated entry.
 
 The buttons above the boot entries can be used to:
 
@@ -231,31 +233,32 @@ The buttons above the boot entries can be used to:
   interval, input a different number in the "Automatic scrub interval (in days)" field.The date and results of the last scrub are listed in this screen. The
   condition of the boot device should be listed as *HEALTHY*.
 
-* **Status:** click this button to see the status of the boot device(s). In the example shown in Figure 5.3b, both devices in the boot mirror are *ONLINE*.
+* **Status:** click this button to see the status of the boot device(s). In the example shown in :numref:`Figure %s: Viewing the Status of the Boot Device <tn_be2>`, both devices in the boot
+  mirror are *ONLINE*.
 
-**Figure 5.3b: Viewing the Status of the Boot Device**
+.. _tn_be2:
 
-.. image:: images/tn_be2.png
+.. figure:: images/tn_be2.png
 
 If one of the boot devices has a "Status" of *OFFLINE*, click the device that needs to be replaced, click its "Replace" button, select the new replacement
 device, and click "Replace Disk" to rebuild the boot mirror.
 
-Figure 5.3c shows a sample boot menu containing entries for the default and initial boot environments.
+:numref:`Figure %s: Boot Environments in Boot Menu <tn_be3>` shows a sample boot menu containing entries for the default and initial boot environments.
 
-**Figure 5.3c: Boot Environments in Boot Menu**
+.. _tn_be3:
 
-.. image:: images/tn_be3.png
+.. figure:: images/tn_be3.png
 
 .. _Advanced:
 
 Advanced
 --------
 
-:menuselection:`System --> Advanced` is shown in Figure 5.4a. The configurable settings are summarized in Table 5.4a.
+:menuselection:`System --> Advanced` is shown in :numref:`Figure %s: Advanced Screen <tn_system3>`. The configurable settings are summarized in Table 5.4a.
 
-**Figure 5.4a: Advanced Screen**
+.. _tn_system3:
 
-.. image:: images/tn_system3.png
+.. figure:: images/tn_system3.png
 
 **Table 5.4a: Advanced Configuration Settings**
 
@@ -319,8 +322,8 @@ If you make any changes, click the "Save" button.
 
 This tab also contains the following buttons:
 
-**Backup:** used to backup the TrueNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this
-button to open the configuration screen shown in Figure 5.4b. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
+**Backup:** used to backup the TrueNAS® configuration and ZFS layout, and, optionally, the data, to a remote system over an encrypted connection. Click this button to open the configuration
+screen shown in :numref:`Figure %s: Backup Configuration Screen <backup1>`. Table 5.4b summarizes the configuration options. The only requirement for the remote system is
 that it has sufficient space to hold the backup and it is running an SSH server on port 22. The remote system does not have to be formatted with ZFS as the
 backup will be saved as a binary file. To restore a saved backup, use the "12) Restore from a backup" option of the TrueNAS® console menu shown in Figure 3a.
 
@@ -332,9 +335,9 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 **Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
 
-**Figure 5.4b: Backup Configuration Screen**
+.. _backup1:
 
-.. image:: images/backup1.png
+.. figure:: images/backup1.png
 
 **Table 5.4b: Backup Configuration Settings**
 
@@ -400,15 +403,15 @@ If you wish to read the script to see which checks are performed, the script is 
 Email
 -----
 
-:menuselection:`System --> Email`, shown in Figure 5.5a, is used to configure the email settings on the TrueNAS® system. Table 5.5a summarizes the settings
+:menuselection:`System --> Email`, shown in :numref:`Figure %s: Email Screen <tn_system4>`, is used to configure the email settings on the TrueNAS® system. Table 5.5a summarizes the settings
 that can be configured using the Email tab.
 
 .. note:: it is important to configure the system so that it can successfully send emails. An automatic script sends a nightly email to the *root* user
    account containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
 
-**Figure 5.5a: Email Screen**
+.. _tn_system4:
 
-.. image:: images/tn_system4.png
+.. figure:: images/tn_system4.png
 
 **Table 5.5a: Email Configuration Settings**
 
@@ -454,13 +457,13 @@ emails to by clicking the "Change E-mail" button for the *root* account in :menu
 System Dataset
 --------------
 
-:menuselection:`System --> System Dataset`, shown in Figure 5.6a, is used to select the pool which will contain the persistent system dataset. The system
+:menuselection:`System --> System Dataset`, shown in :numref:`Figure %s: System Dataset Screen <tn_system5>`, is used to select the pool which will contain the persistent system dataset. The system
 dataset stores debugging core files and Samba4 metadata such as the user/group cache and share level permissions. If the TrueNAS® system is configured to be
 a Domain Controller, all of the domain controller state is stored there as well, including domain controller users and groups.
 
-**Figure 5.6a: System Dataset Screen**
+.. _tn_system5:
 
-.. image:: images/tn_system5.png
+.. figure:: images/tn_system5.png
 
 .. note:: encrypted volumes will not be displayed in the "System dataset pool" drop-down menu.
 
@@ -505,11 +508,12 @@ Since sysctl, loader, and rc.conf values are specific to the kernel parameter to
 and suggested values can be found in the man page for the specific driver and in many sections of the
 `FreeBSD Handbook <http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/>`_.
 
-To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in Figure 5.7a.
+To add a loader, sysctl, or rc.conf option, go to :menuselection:`System --> Tunables --> Add Tunable`, to access the screen shown in seen in
+:numref:`Figure %s: Adding a Tunable <tunable1>`.
 
-**Figure 5.7a: Adding a Tunable**
+.. _tunable1:
 
-.. image:: images/tunable.png
+.. figure:: images/tunable.png
 
 Table 5.7a summarizes the options when adding a tunable.
 
@@ -552,7 +556,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.1 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -567,7 +571,7 @@ The GUI does not display the sysctls that are pre-set when TrueNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3.1 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="truenas-logo"
@@ -598,7 +602,7 @@ The GUI does not display the loaders that are pre-set when TrueNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3.1 deprecates the following tunables::
+The ZFS version used in 9.3 deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -621,11 +625,11 @@ environments, an administrator can try new features or apply system patches with
 system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to manually download the GUI
 upgrade file and its associated checksum in order to perform an upgrade.
 
-Figure 5.8a shows an example of the :menuselection:`System --> Update` screen. 
+:numref:`Figure %s: Update Options <tn_update1>` shows an example of the :menuselection:`System --> Update` screen. 
 
-**Figure 5.8a: Update Options**
+.. _tn_update1:
 
-.. image:: images/tn_update1.png
+.. figure:: images/tn_update1.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -647,7 +651,7 @@ button to download and apply the updates. Note that some updates will automatica
 
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
-in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
+in :numref:`Figure %s: Update Options <tn_update1>`. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
 While the "Manual Update" button can be used to manually upgrade the operating system, this button is only included for backwards compatibility as this method
@@ -701,18 +705,18 @@ TrueNAS® can act as a Certificate Authority (CA). If you plan to use SSL or TLS
 first create a CA, then either create or import the certificate to be used for encrypted connections. Once you do this, the certificate will appear in the
 drop-down menus for all the services that support SSL or TLS.
 
-Figure 5.9a shows the initial screen if you click :menuselection:`System --> CAs`.
+:numref:`Figure %s: Initial CA Screen <tn_ca1>` shows the initial screen if you click :menuselection:`System --> CAs`.
 
-**Figure 5.9a: Initial CA Screen**
+.. _tn_ca1:
 
-.. image:: images/tn_ca1.png
+.. figure:: images/tn_ca1.png
 
 If your organization already has a CA, you can import the CA's certificate and key. Click the "Import CA" button to open the configuration screen shown in
-Figure 5.9b. The configurable options are summarized in Table 5.9a.
+:numref:`Figure %s: Importing a CA <ca2a>`. The configurable options are summarized in Table 5.9a.
 
-**Figure 5.9b: Importing a CA**
+.. _ca2a:
 
-.. image:: images/ca2a.png
+.. figure:: images/ca2a.png
 
 **Table 5.9a: Importing a CA Options**
 
@@ -740,11 +744,11 @@ Figure 5.9b. The configurable options are summarized in Table 5.9a.
 To instead create a new CA, first decide if it will be the only CA which will sign certificates for internal use or if the CA will be part of a
 `certificate chain <https://en.wikipedia.org/wiki/Root_certificate>`_.
 
-To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in Figure 5.9c. 
+To create a CA for internal use only, click the "Create Internal CA" button which will open the screen shown in :numref:`Figure %s: Creating an Internal CA <ca3>`. 
 
-**Figure 5.9c: Creating an Internal CA**
+.. _ca3:
 
-.. image:: images/ca3.png
+.. figure:: images/ca3.png
 
 The configurable options are described in Table 5.9b. When completing the fields for the certificate authority, use the information for your organization.
 
@@ -786,7 +790,7 @@ The configurable options are described in Table 5.9b. When completing the fields
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
 To instead create an intermediate CA which is part of a certificate chain, click the "Create Intermediate CA" button. This screen adds one more option to the
-screen shown in Figure 5.9c:
+screen shown in :numref:`Figure %s: Creating an Internal CA <ca3>`:
 
 * **Signing Certificate Authority:** this drop-down menu is used to specify the root CA in the certificate chain. This CA must first be imported or created.
 
@@ -813,18 +817,18 @@ Certificates
 TrueNAS® can import existing certificates, create new certificates, and issue certificate signing requests so that created certificates can be
 signed by the CA which was previously imported or created in :ref:`CAs`.
 
-Figure 5.10a shows the initial screen if you click :menuselection:`System --> Certificates`.
+:numref:`Figure %s: Initial Certificates Screen <tn_cert>` shows the initial screen if you click :menuselection:`System --> Certificates`.
 
-**Figure 5.10a: Initial Certificates Screen**
+.. _tn_cert:
 
-.. image:: images/tn_cert.png
+.. figure:: images/tn_cert.png
 
-To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in Figure 5.10b. The configurable options are
-summarized in Table 5.10a.
+To import an existing certificate, click the "Import Certificate" button to open the configuration screen shown in :numref:`Figure %s: Importing a Certificate <cert2a>`. The configurable
+options are summarized in Table 5.10a.
 
-**Figure 5.10b: Importing a Certificate**
+.. _cert2a:
 
-.. image:: images/cert2a.png
+.. figure:: images/cert2a.png
 
 **Table 5.10a: Certificate Import Options**
 
@@ -846,13 +850,13 @@ summarized in Table 5.10a.
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-To instead create a new self-signed certificate, click the "Create Internal Certificate" button to see the screen shown in Figure 5.10c. The configurable
-options are summarized in Table 5.10b. When completing the fields for the certificate authority, use the information for your organization. Since this is a
+To instead create a new self-signed certificate, click the "Create Internal Certificate" button to see the screen shown in :numref:`Figure %s: Creating a New Certificate <cert3a>`. The
+configurable options are summarized in Table 5.10b. When completing the fields for the certificate authority, use the information for your organization. Since this is a
 self-signed certificate, use the CA that you imported or created using :ref:`CAs` as the signing authority.
 
-**Figure 5.10c: Creating a New Certificate**
+.. _cert3a:
 
-.. image:: images/cert3a.png
+.. figure:: images/cert3a.png
 
 **Table 5.10b: Certificate Creation Options**
 
@@ -894,19 +898,19 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 
-If you need to use a certificate that is signed by an external CA, such as Verisign, instead create a certificate signing request. To do so, click the
-"Create Certificate Signing Request" button. This will open a screen similar to Figure 5.10c, but without the "Signing Certificate Authority" field.
+If you need to use a certificate that is signed by an external CA, such as Verisign, instead create a certificate signing request. To do so, click the "Create Certificate Signing Request"
+button. This will open a screen similar to :numref:`Figure %s: Creating a New Certificate <cert3a>`, but without the "Signing Certificate Authority" field.
 
 All certificates that you import, self-sign, or make a certificate signing request for will be added as entries to :menuselection:`System --> Certificates`.
-In the example shown in Figure 5.10d, a self-signed certificate and a certificate signing request have been created for the fictional organization
+In the example shown in :numref:`Figure %s: Managing Certificates <cert4>`, a self-signed certificate and a certificate signing request have been created for the fictional organization
 *My Company*. The self-signed certificate was issued by the internal CA named
 *My Company* and the administrator has not yet sent the certificate signing request to Verisign so that it can be signed. Once that certificate is signed and
 returned by the external CA, it should be imported using the "Import Certificate" button so that is available as a configurable option for encrypting
 connections.
 
-**Figure 5.10d: Managing Certificates**
+.. _cert4:
 
-.. image:: images/cert4.png
+.. figure:: images/cert4.png
 
 If you click an entry, it will activate the following configuration buttons:
 
@@ -927,12 +931,12 @@ If you click an entry, it will activate the following configuration buttons:
 Support
 -------
 
-The TrueNAS® "Support" tab, shown in Figure 5.11a, is used to view or update the system's license information. It also provides a built-in ticketing system for generating support
-requests.
+The TrueNAS® "Support" tab, shown in :numref:`Figure %s: Support Tab <tn_support1>`, is used to view or update the system's license information. It also provides a built-in ticketing system
+for generating support requests.
 
-**Figure 5.11a: Support Tab**
+.. _tn_support1:
 
-.. image:: images/tn_support1.png
+.. figure:: images/tn_support1.png
 
 In this example, the system has a valid license which indicates the hardware model, system serial number, support contract type, licensed period, customer name,
 licensed features, and additional supported hardware.
@@ -976,14 +980,14 @@ a new login, if you are not already logged into the `iXsystems Support page <htt
 Failovers
 ---------
 
-If the TrueNAS® appliance has been licensed for High Availability (HA), a "Failover" tab will be added to "System". HA-licensed appliances use the Common Address Redundancy Protocol
+If the TrueNAS® array has been licensed for High Availability (HA), a "Failover" tab will be added to "System". HA-licensed arrays use the Common Address Redundancy Protocol
 (`CARP <http://www.openbsd.org/faq/pf/carp.html>`_) to provide high availability and failover. CARP was originally developed by the OpenBSD project and provides an open source, non
 patent-encumbered alternative to the VRRP and HSRP protocols. TrueNAS® uses a two-unit active/standby model and provides an HA synchronization daemon to automatically monitor the status of
 the active node, synchronize any configuration changes between the active and the standby node, and failover to the standby node should the active node become unavailable.
 
 .. warning:: seamless failover is only available with iSCSI or NFS.  Other protocols will failover, but connections will be disrupted by the failover event. 
 
-To configure HA, turn on both units in the appliance. Use the instructions in the :ref:`Console Setup Menu` to log into the graphical interface for one of the units, it doesn't matter which
+To configure HA, turn on both units in the array. Use the instructions in the :ref:`Console Setup Menu` to log into the graphical interface for one of the units, it doesn't matter which
 one. If this is the first login, it will automatically display the "Upload License" screen. Otherwise, click :menuselection:`System --> Support --> Upload License`. Paste the HA license you
 received from iXsystems and press "OK" to activate it. The license contains the serial numbers for both units in the chassis. Once the license is activated, the "Failovers" tab is added to
 "System" and some fields are modified in "Network" so that the peer IP address, peer hostname, and virtual IP can be configured. An extra "IPMI (Node A/B)" tab will also be added so that
@@ -1006,13 +1010,14 @@ Next, go to :menuselection:`Network --> Interfaces --> Add Interface`. The HA li
 
 * **IPv4 Address (This Node):** if this node will use a static IP address, rather than DHCP, set it here.
 
-* **Virtual IP:** input the IP address to use for administrative access to the appliance.
+* **Virtual IP:** input the IP address to use for administrative access to the array.
 
 * **Virtual Host ID:** the Virtual Host ID (VHID) must be unique on the broadcast segment of the network. It can be any unused number between *1* and
   *255*.
 
 * **Critical for Failover:** check this box if a failover should occur when this interface becomes unavailable. How many seconds it takes for that failover to occur depends upon the
-  value of the "Timeout", as described in Table 5.11a. This checkbox is interface-specific, allowing you to have different settings for a management network and a data network.
+  value of the "Timeout", as described in Table 5.12a. This checkbox is interface-specific, allowing you to have different settings for a management network and a data network. Note that
+  checking this box requires the *Virtual IP* to be set.
 
 * **Group:** this drop-down menu is greyed out unless the "Critical for Failover" checkbox is checked. This box allows you to group multiple, critical for failover interfaces. In this case,
   all of the interfaces in a group must go down before failover occurs. This can be a useful configuration in a multipath scenario.
@@ -1024,13 +1029,13 @@ active node.
 
 .. note:: once the "Virtual IP" address is configured, all subsequent logins should occur using this address.
 
-The options available in :menuselection:`System --> Failovers` are shown in Figure 5.11a and described in Table 5.11a.
+The options available in :menuselection:`System --> Failovers` are shown in :numref:`Figure %s: Example Failovers Screen <failover1b>` and described in Table 5.12a.
 
-**Figure 5.11a: Example Failovers Screen**
+.. _failover1b:
 
-.. image:: images/failover1b.png
+.. figure:: images/failover1b.png
 
-**Table 5.11b: Failover Options**
+**Table 5.12a: Failover Options**
 
 +----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **Setting**    | **Value**      | **Description**                                                                                                                                       |
@@ -1078,9 +1083,9 @@ And this example was run on a system that has not been configured for failover::
  hactl
  Node status: Not an HA node
 
-Table 5.11b summarizes the available options for this command.
+Table 5.12b summarizes the available options for this command.
 
-**Table 5.11b: hactl Options**
+**Table 5.12b: hactl Options**
 
 +--------------------+---------------------------------------------------------------------------------------------+
 | **Option**         | **Description**                                                                             |
