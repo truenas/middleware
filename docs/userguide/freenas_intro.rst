@@ -92,9 +92,12 @@ wide range of operating systems. A plugins system is provided for extending the 
 
 .. _What's New in |release|:
 
-What's New in |release|
+What's New in |version|
 -----------------------
 
+* Based on FreeBSD 10.3 which adds `these features <https://www.freebsd.org/releases/10.3R/relnotes.html>`_.
+
+* USB3 support is now enabled by default.
 
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
@@ -170,11 +173,6 @@ When determining the type and size of device to install the operating system to,
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
 
 - when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
-
-- when using a USB stick, USB 3.0 support is disabled by default as it currently is not compatible with some hardware, including Haswell (Lynx point)
-  chipsets. If you receive a "failed with error 19" message when trying to boot FreeNAS®, make sure that xHCI/USB3 is disabled in the system BIOS. While this
-  will downclock the USB ports to 2.0, the bootup and shutdown times will not be significantly different. To see if USB 3.0 support works with your hardware,
-  follow the instructions in :ref:`Tunables` to create a "Tunable" named *xhci_load*, set its value to *YES*, and reboot the system.
   
 - if a reliable boot disk is required, use two identical devices and select them both during the installation. Doing so will create a mirrored boot device.
 
