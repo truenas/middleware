@@ -573,10 +573,10 @@ require([
       tf.set('oldvalue', tf.get('value'));
 
       if(mode.value == 'fc') {
-        domStyle.set('inline_Target_formset_iscsitargetgroups', 'display', 'none');
+        domStyle.set('inline_iscsitarget_formset_iscsitargetgroups', 'display', 'none');
         tf.set('value', '0');
       } else {
-        domStyle.set('inline_Target_formset_iscsitargetgroups', 'display', '');
+        domStyle.set('inline_iscsitarget_formset_iscsitargetgroups', 'display', '');
         if(oldvalue) tf.set('value', oldvalue);
       }
 
