@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2016-02-08 10:17+0000\n"
+"PO-Revision-Date: 2016-03-15 09:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pa\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454926661.0\n"
+"X-POOTLE-MTIME: 1458033432.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12068,4 +12068,20 @@ msgstr ""
 msgid ""
 "A hostname or IP here will be used as the destination to send collectd data "
 "to using the graphite plugin to collectd."
+msgstr ""
+
+#: directoryservice/models.py:953
+msgid "Disable Active Directory user/group cache"
+msgstr ""
+
+#: directoryservice/models.py:954
+msgid ""
+"Set this if you want to disable caching Active Directory users and groups. "
+"WARNING: Only use this option if you have a large number of users and groups "
+"that is preventing the machine from binding to the domain, you will not be "
+"able to set permissions using the GUI with this turned on."
+msgstr ""
+
+#: network/forms.py:385
+msgid "You are not allowed to delete interfaces while failover is enabled."
 msgstr ""
