@@ -13,7 +13,7 @@ management. Any software installed using "Jails" must be managed from the comman
 While FreeNAS® automatically creates a jail whenever a plugin is installed, it does not let the user install multiple plugins into the same jail. In
 contrast, using "Jails" allows users to create as many jails as needed and to customize the operating system and installed software within each jail.
 
-Beginning with FreeNAS® 9.3, two types of jails are supported:
+In FreeNAS® 9.x, two types of jails are supported:
 
 #. By default, a
    `FreeBSD jail <https://en.wikipedia.org/wiki/Freebsd_jail>`_ is created. This provides a very light-weight, operating system-level virtualization. Consider

@@ -147,7 +147,7 @@ that they want to delete. **This is the one and only warning.** If the user clic
 Available Plugins
 -----------------
 
-The following plugins are available for FreeNAS® 9.3:
+The following plugins are available for FreeNAS® |release|:
 
 * `bacula-sd (storage daemon) <http://bacula.org/>`_
 

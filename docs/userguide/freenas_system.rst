@@ -180,7 +180,7 @@ explains these options in more detail.
 Boot
 ----
 
-Beginning with version 9.3, FreeNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating
+FreeNAS® supports a feature of ZFS known as multiple boot environments. With multiple boot environments, the process of updating
 the operating system becomes a low-risk operation as the updater automatically creates a snapshot of your current boot environment and adds it to the boot
 menu before applying the update. If the update fails, simply reboot the system and select the previous boot environment from the boot menu to instruct the
 system to go back to that system state.
@@ -526,7 +526,7 @@ Tunables
 #. **FreeBSD loaders:** a loader is only loaded when a FreeBSD-based system boots and can be used to pass a parameter to the kernel or to load an additional
    kernel module such as a FreeBSD hardware driver.
 
-#. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_ is used to
+#. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf&apropos=0&sektion=0&manpath=FreeBSD+10.3-RELEASE>`_ is used to
    pass system configuration options to the system startup scripts as the system boots. Since FreeNAS® has been optimized for storage, not all of the
    services mentioned in rc.conf(5) are available for configuration. Note that in FreeNAS®, customized rc.conf options are stored in
    :file:`/tmp/rc.conf.freenas`.
@@ -586,7 +586,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® |release| ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -599,7 +599,7 @@ The GUI does not display the sysctls that are pre-set when FreeNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® |release| ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas"
@@ -623,7 +623,7 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3 deprecates the following tunables::
+The ZFS version used in |release| deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -640,7 +640,7 @@ tunables back.
 Update
 ------
 
-Beginning with version 9.3, FreeNAS® uses signed updates rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
+FreeNAS® uses signed updates rather than point releases. This provides the FreeNAS® administrator more flexibility in deciding
 when to upgrade the system in order to apply system patches or to add new drivers or features. It also allows the administrator to "test drive" an upcoming
 release. Combined with boot environments, an administrator can try new features or apply system patches with the knowledge that they can revert to a previous
 version of the operating system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to
@@ -705,7 +705,7 @@ reboot after the updates are applied.
 CAs
 ---
 
-Beginning with version 9.3, FreeNAS® can act as a Certificate Authority (CA). If you plan to use SSL or TLS to encrypt any of the connections to the
+FreeNAS® can act as a Certificate Authority (CA). If you plan to use SSL or TLS to encrypt any of the connections to the
 FreeNAS® system, you will need to first create a CA, then either create or import the certificate to be used for encrypted connections. Once you do this,
 the certificate will appear in the drop-down menus for all the services that support SSL or TLS.
 
@@ -818,8 +818,8 @@ If you click the entry for a CA, the following buttons become available:
 Certificates
 ------------
 
-Beginning with version 9.3, FreeNAS® can import existing certificates, create new certificates, and issue certificate
-signing requests so that created certificates can be signed by the CA which was previously imported or created in :ref:`CAs`.
+FreeNAS® can import existing certificates, create new certificates, and issue certificate signing requests so that created certificates can be signed by the CA which was previously imported
+or created in :ref:`CAs`.
 
 Figure 5.10a shows the initial screen if you click :menuselection:`System --> Certificates`.
 

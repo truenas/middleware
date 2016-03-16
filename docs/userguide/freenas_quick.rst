@@ -134,7 +134,7 @@ describes some applications which can be used to access the FreeNAS® system fro
 Initial Configuration Wizard
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Beginning with FreeNAS® 9.3, a configuration wizard automatically starts the first time the FreeNAS® GUI is accessed. This wizard walks you through the
+A configuration wizard automatically starts the first time the FreeNAS® GUI is accessed. This wizard walks you through the
 steps needed to quickly configure FreeNAS® to start serving data over a network. This section describes these configuration steps. If you wish to use the
 wizard again after the initial configuration, click the "Wizard" icon.
 

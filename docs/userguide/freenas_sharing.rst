@@ -6,7 +6,7 @@ Sharing
 Once you have a volume, create at least one share so that the storage is accessible by the other computers in your network. The type of share you create
 depends upon the operating system(s) running in your network, your security requirements, and expectations for network transfer speeds.
 
-Beginning with version 9.3, FreeNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
+FreeNAS® provides an :ref:`Initial Configuration Wizard` for creating shares. The Wizard will automatically create the correct
 type of dataset and permissions for the type of share, set the default permissions for the share type, and start the service needed by the share. It is
 recommended to use the Wizard to create shares, fine-tune the share settings using the instructions in the rest of this chapter if needed, then to fine-tune
 the default permissions from the client operating system to meet the requirements of the network.
@@ -560,8 +560,7 @@ Some older versions of NFS clients default to UDP instead of TCP and do not auto
 WebDAV Shares
 ------------------
 
-Beginning with FreeNAS® 9.3, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory
-from a web browser.
+In FreeNAS®, WebDAV shares can be created so that authenticated users can browse the contents of the specified volume, dataset, or directory from a web browser.
 
 Configuring WebDAV shares is a two step process. First, create the WebDAV share(s) to specify which data can be accessed. Then, configure the WebDAV service
 by specifying the port, authentication type, and authentication password. Once the configuration is complete, the share can be accessed using a URL in the
@@ -1093,7 +1092,7 @@ drive; rather than mounting remote directories, initiators format and directly m
 a new target for each LUN. Since iSCSI multiplexes a target with multiple LUNs over the same TCP connection, you will experience contention from TCP if there
 is more than one target per LUN.
 
-Beginning with FreeNAS® 9.3, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
+In FreeNAS®, iSCSI is built into the kernel. This version of iSCSI supports Microsoft Offloaded Data Transfer (ODX), meaning that file copies happen
 locally, rather than over the network. It also supports the following VAAI (vStorage APIs for Array Integration) primitives, where VAAI is VMware's API
 framework that enables certain storage tasks, such as large data moves, to be offloaded from the virtualization hardware to the storage array.
 
