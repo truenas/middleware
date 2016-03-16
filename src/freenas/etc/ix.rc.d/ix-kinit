@@ -6,7 +6,7 @@
 #
 
 # PROVIDE: ix-kinit
-# REQUIRE: kerberos
+# REQUIRE: kdc
 # REQUIRE: ix-pre-samba
 # REQUIRE: ntpd
 
