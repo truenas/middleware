@@ -731,7 +731,7 @@ class VolumeImportForm(Form):
     volume_fstype = forms.ChoiceField(
         choices=((x, x) for x in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')),
         widget=forms.RadioSelect(attrs=attrs_dict),
-        label='File System type',
+        label=_('File System type'),
     )
 
     volume_dest_path = PathField(
