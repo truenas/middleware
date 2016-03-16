@@ -250,7 +250,7 @@ field then click "Edit Dataset" to save the change. In this example, the Time Ma
 
 **Figure 10.1f: Setting a Quota**
 
-.. image:: images/afp9.png
+.. image:: images/afp9a.png
 
 To configure Time Machine on the Mac OS X client, go to :menuselection:`System Preferences --> Time Machine` which will open the screen shown in Figure 10.1g.
 Click "ON" and a pop-up menu should show the FreeNAS® system as a backup option. In our example, it is listed as *backup_user1 on "freenas"*. Highlight the
@@ -267,8 +267,7 @@ system, you will need to create a sparsebundle image using
 
 If you receive the message "Time Machine completed a verification of your backups. To improve reliability, Time Machine must create a new backup for you." and
 you do not want to perform another complete backup or lose past backups, follow the instructions in this
-`post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_. Note that this can occur after performing a
-scrub as Time Machine may mistakenly believe that the sparsebundle backup is corrupt.
+`post <http://www.garth.org/archives/2011,08,27,169,fix-time-machine-sparsebundle-nas-based-backup-errors.html>`_.
 
 .. index:: NFS, Network File System
 .. _Unix (NFS) Shares:
@@ -349,7 +348,8 @@ Table 10.2a summarizes the available configuration options in this screen. Some 
 | Mapall Group        | drop-down menu | only available in "Advanced Mode"; the specified group's permission are used by all clients                        |
 |                     |                |                                                                                                                    |
 +---------------------+----------------+--------------------------------------------------------------------------------------------------------------------+
-| Security            | selection      | only available in "Advanced Mode"; choices are *sys* or the following Kerberos options:                            |
+| Security            | selection      | only available in "Advanced Mode" and only appears if "Enable NFSv4" is checked in                                 |
+|                     |                | :menuselection:`Services --> NFS`; choices are *sys* or the following Kerberos options:                            |
 |                     |                | *krb5* (authentication only),                                                                                      |
 |                     |                | *krb5i* (authentication and integrity), or                                                                         |
 |                     |                | *krb5p* (authentication and privacy); if multiple security mechanisms are added to the "Selected" column using the |
@@ -676,8 +676,8 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 | Export Read Only             | checkbox      | only available in "Advanced Mode"; prohibits write access to the share                                      |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Browsable to Network Clients | checkbox      | only available in "Advanced Mode"; enables Windows clients to browse the shared directory using Windows     |
-|                              |               | Explorer                                                                                                    |
+| Browsable to Network Clients | checkbox      | only available in "Advanced Mode"; when checked, users see the contents of */homes* (including other users' |
+|                              |               | home directories) and when unchecked, users see only their own home directory                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Export Recycle Bin           | checkbox      | only available in "Advanced Mode"; deleted files are instead moved to a hidden :file:`.recycle` directory   |
@@ -697,12 +697,11 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
-|                              |               | see NOTE below                                                                                              |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Deny                   | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of denied hostnames or IP addresses; |
 |                              |               | allowed hosts take precedence so can use *ALL* in this field and specify allowed hosts in                   |
-|                              |               | "Hosts Allow"; see NOTE below                                                                               |
+|                              |               | "Hosts Allow"                                                                                               |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | VFS Objects                  | selection     | only available in "Advanced Mode" and adds virtual file system modules to enhance functionality; Table      |
@@ -728,7 +727,7 @@ Note the following regarding some of the "Advanced Mode" settings:
   Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
 
 * If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
+  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`__.
   
 To configure support for OS/2 clients, add this line to "Auxiliary Parameters"::
 
@@ -787,6 +786,9 @@ for more details.
 | default_quota       | stores the default quotas that are reported to a windows client in the quota record of a user                                              |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| dfs_samba4          | distributed file system for providing an alternative name space, load balancing, and automatic failover                                    |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | dirsort             | sorts directory entries alphabetically before sending them to the client                                                                   |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -794,6 +796,9 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | extd_audit          | sends "audit" logs to both syslog and the Samba log files                                                                                  |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| fake_acls           | stores file ownership and ACLs as extended attributes                                                                                      |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
@@ -838,6 +843,15 @@ for more details.
 | shadow_copy2        | a more recent implementation of "shadow_copy" with some additonal features                                                                 |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| shadow_copy_test    | shadow copy testing                                                                                                                        |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| skel_opaque         | implements dummy versions of all VFS modules (useful to VFS module developers)                                                             |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| skel_transparent    | implements dummy passthrough functions of all VFS modules (useful to VFS module developers)                                                |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | smb_traffic_analyzer| logs Samba read and write operations through a socket to a helper application                                                              |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -856,6 +870,7 @@ for more details.
 | xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+
 
 .. _Configuring Unauthenticated Access:
 
@@ -1428,7 +1443,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent size        | integer        | only appears if *File* is selected; if the size is specified as                                                      |
-|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise specifies the size of the file to  |
+|                    |                | *0*, the file must already exist and the actual file size will be used; otherwise, specify the size of the file to   |
 |                    |                | create                                                                                                               |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
@@ -1459,6 +1474,9 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 |                    |                | where the number of systems using a specific RPM is needed for accurate reporting statistics                         |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
+| Read-only          | checkbox       | check this box to prevent the initiator from initializing this LUN                                                   |
+|                    |                |                                                                                                                      |
++--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 
 .. _Targets/Extents:
 
@@ -1483,7 +1501,8 @@ Table 10.5g summarizes the settings that can be configured when associating targ
 | Target      | drop-down menu | select the pre-created target                                                                          |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
-| LUN ID      | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
+| LUN ID      | drop-down menu | the default of *Auto* will use the next available LUN ID; alternately, select the value of the ID or   |
+|             |                | type in the desired value                                                                              |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
 | Extent      | drop-down menu | select the pre-created extent                                                                          |
@@ -1504,10 +1523,10 @@ Connecting to iSCSI
 
 In order to access the iSCSI target, clients will need to use iSCSI initiator software.
 
-An iSCSI Initiator client is pre-installed with Windows 7. A detailed how-to for this client can be found
-`here <http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`_. A client for Windows 2000, XP, and 2003 can be found
-`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`_. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`_
-shows how to create an iSCSI target for a Windows 7 system.
+An iSCSI Initiator client is pre-installed with Windows 7. A detailed how-to for this client can be found `here
+<http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`__. A client for Windows 2000, XP, and 2003 can be found
+`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`__. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`_ shows
+how to create an iSCSI target for a Windows 7 system.
 
 Mac OS X does not include an initiator.
 `globalSAN <http://www.studionetworksolutions.com/globalsan-iscsi-initiator/>`_

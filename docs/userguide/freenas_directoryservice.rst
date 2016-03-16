@@ -79,7 +79,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 |                          |               | not connect to the domain controller using this password                                                                                              |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the hostname of the system; **use caution when changing this setting**                |
+| NetBIOS Name             | string        | only available in "Advanced Mode"; automatically populated with the original hostname of the system; **use caution when changing this setting**       |
 |                          |               | as setting an                                                                                                                                         |
 |                          |               | `incorrect value can corrupt an AD installation <https://forums.freenas.org/index.php?threads/before-you-setup-ad-authentication-please-read.2447/>`_ |
 |                          |               |                                                                                                                                                       |
@@ -110,6 +110,9 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Use Default Domain       | checkbox      | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username; if                                                   |
 |                          |               | "Allow Trusted Domains" is checked and multiple domains use the same usernames, uncheck this box to prevent name                                      |
 |                          |               | collisions                                                                                                                                            |
+|                          |               |                                                                                                                                                       |
++--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Allow DNS updates        | checkbox      | when unchecked, disables Samba from doing DNS updates when joining a domain                                                                           |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                             |

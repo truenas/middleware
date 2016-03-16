@@ -28,8 +28,8 @@ This section describes the following:
 Getting FreeNAS®
 -----------------
 
-FreeNAS® 9.3.1 can be downloaded from
-`http://download.freenas.org/ <http://download.freenas.org/>`_.
+The latest STABLE version of FreeNAS® 9.3 can be downloaded from
+`http://download.freenas.org/ <http://download.freenas.org/latest/>`_.
 
 .. note:: FreeNAS® will only install to 64-bit hardware and the installer will not work on 32-bit hardware.
 
@@ -293,7 +293,7 @@ Beginning with version 9.3, FreeNAS® provides more flexibility for keeping the 
 #. The updater automatically creates a boot environment, meaning that updates are a low-risk operation. Boot environments provide the option to return to the
    previous version of the operating system by rebooting the system and selecting the previous boot environment from the boot menu.
 
-This section describes how to perform an upgrade from an earlier version of FreeNAS® to 9.3.1. Once 9.3.1 is installed, use the instructions in :ref:`Update` to keep
+This section describes how to perform an upgrade from an earlier version of FreeNAS® to 9.3. Once 9.3 is installed, use the instructions in :ref:`Update` to keep
 the system updated.
 
 .. _Caveats:
@@ -301,7 +301,7 @@ the system updated.
 Caveats:
 ~~~~~~~~
 
-Be aware of the following caveats **before** attempting an upgrade to 9.3.1:
+Be aware of the following caveats **before** attempting an upgrade to 9.3:
 
 * **Upgrades from FreeNAS® 0.7x are not supported.** The system has no way to import configuration settings from 0.7x versions of FreeNAS®, meaning that you
   will have to manually recreate your configuration, and if supported, import the FreeNAS® 0.7x volumes or disks.
@@ -352,7 +352,7 @@ Before upgrading the operating system, perform the following steps:
 Upgrading Using the ISO
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://download.freenas.org/9.3.1/latest/x64/>`_ the :file:`.iso` to the computer that
+To perform an upgrade using this method, `download <http://download.freenas.org/latest/>`_ the :file:`.iso` to the computer that
 will be used to prepare the installation media. Burn the downloaded :file:`.iso` file to a CD or USB thumb drive using the instructions in
 :ref:`Preparing the Media`.
 
@@ -519,7 +519,7 @@ This section demonstrates how to create and access a virtual machine within the 
 VirtualBox
 ~~~~~~~~~~
 
-`VirtualBox <https://www.virtualbox.org/>`_ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
+`VirtualBox <https://www.virtualbox.org/>`__ is an open source virtualization program originally created by Sun Microsystems. VirtualBox runs on Windows, BSD,
 Linux, Macintosh, and OpenSolaris. It can be configured to use a downloaded FreeNAS® :file:`.iso` file, and makes a good testing environment for practicing
 configurations or learning how to use the features provided by FreeNAS®.
 

@@ -158,8 +158,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Create a new primary group | checkbox        | by default, a primary group with the same name as the user will be created; uncheck this box to select a                                              |
-|                            |                 | different primary group name; in Unix,                                                                                                                |
-|                            |                 | `a primary group is not the same as a secondary/auxiliary group <http://linuxers.org/article/difference-between-primary-and-secondary-groups-linux>`_ |
+|                            |                 | different primary group name                                                                                                                          |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Primary Group              | drop-down menu  | must uncheck "Create a new primary group" in order to access this menu; for security reasons, FreeBSD will                                            |
@@ -189,7 +188,7 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 | Password confirmation      | string          | must match the value of "Password"                                                                                                                    |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Disable password login     | checkbox        | when checked, the user can not log into the system or authenticate to a CIFS share; to undo this                                                      |
+| Disable password login     | checkbox        | when checked, disables password logins and authentication to CIFS shares; to undo this                                                                |
 |                            |                 | setting, set a password for the user using the "Modify User" button for the user in "View Users";                                                     |
 |                            |                 | checking this box will grey out "Lock user" and "Permit Sudo" which are mutually exclusive                                                            |
 |                            |                 |                                                                                                                                                       |

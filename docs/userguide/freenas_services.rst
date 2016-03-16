@@ -152,7 +152,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 
 **Figure 11.3a: Global CIFS Configuration**
 
-.. image:: images/cifs1.png
+.. image:: images/cifs1a.png
 
 **Table 11.3a: Global CIFS Configuration Options**
 
@@ -160,8 +160,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | **Setting**                      | **Value**      | **Description**                                                                                       |
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
-| NetBIOS Name                     | string         | must be lowercase and and is automatically populated with the system's hostname; it                   |
-|                                  |                | **must**  be different from the                                                                       |
+| NetBIOS Name                     | string         | automatically populated with the system's original hostname; it **must**  be different from the       |
 |                                  |                | *Workgroup* name                                                                                      |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -184,7 +183,7 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 |                                  |                | *Debug*                                                                                               |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Use syslog                       | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
+| Use syslog only                  | checkbox       | when checked, authentication failures are logged to :file:`/var/log/messages` instead of the default  |
 |                                  |                | of :file:`/var/log/samba4/log.smbd`                                                                   |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
@@ -854,7 +853,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 
 **Figure 11.9a: Configuring NFS**
 
-.. image:: images/nfs1a.png
+.. image:: images/nfs1b.png
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -878,7 +877,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
-| Require Kerberos for   | checkbox   | check this box when using Kerberos authentication with NFSv4                                                        |
+| Require Kerberos for   | checkbox   | when checked, NFS shares will fail if the Kerberos ticket is unavailable                                            |
 | NFSv4                  |            |                                                                                                                     |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
@@ -895,6 +894,10 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 | rpc.lockd(8) bind port | integer    | optional; specify port for                                                                                          |
 |                        |            | `rpc.lockd(8) <http://www.freebsd.org/cgi/man.cgi?query=rpc.lockd>`_                                                |
 |                        |            | to bind to                                                                                                          |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Support>16 groups      |            | check this box if any users are members of more than 16 groups (useful in AD environments); note that this assumes  |
+|                        |            | that group membership has been configured correctly on the NFS server                                               |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
@@ -1151,6 +1154,10 @@ Mode" button or configure the system to always display these settings by checkin
 | **Setting**                   | **Value**      | **Description**                                                                                          |
 |                               |                |                                                                                                          |
 +===============================+================+==========================================================================================================+
+| Bind Interfaces               | selection      | only available in "Advanced Mode"; by default, SSH listens on all interfaces unless you specify which    |
+|                               |                | interfaces by highlighting them in the "Available" field and adding them to the "Selected" field         |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | TCP Port                      | integer        | port to open for SSH connection requests; *22* by default                                                |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
@@ -1163,15 +1170,15 @@ Mode" button or configure the system to always display these settings by checkin
 |                               |                | on both the SSH client and server                                                                        |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
+| Allow Kerberos Authentication | checkbox       | before checking this box, ensure that :ref:`Kerberos Realms` and :ref:`Kerberos Keytabs` have been       |
+|                               |                | configured and that the FreeNAS system can communicate with the KDC                                      |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Allow TCP Port Forwarding     | checkbox       | allows users to bypass firewall restrictions using SSH's                                                 |
 |                               |                | `port forwarding feature <http://www.symantec.com/connect/articles/ssh-port-forwarding>`_                |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | Compress Connections          | checkbox       | may reduce latency over slow networks                                                                    |
-|                               |                |                                                                                                          |
-+-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
-| Host Private Key              | string         | only available in "Advanced Mode"; allows you to paste a specific host key as the default key is changed |
-|                               |                | with every installation                                                                                  |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | SFTP Log Level                | drop-down menu | only available in "Advanced Mode"; select the                                                            |

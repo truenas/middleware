@@ -144,23 +144,13 @@ FreeNAS® system:
 
 * On the other hand, if the key is lost, the data on the disks is inaccessible. Always backup the key!
 
-.. warning:: the per-drive GELI master keys are not backed up along with the user keys. If a bit error occurs in the last sector of an encrypted disk, this
-   may mean the data on that disk is completely lost. Until this issue is resolved, it is important to read
-   `this forum post <https://forums.freenas.org/index.php?threads/please-validate-my-backup-plan-rotating-offsite-backup-disks-from-single-freenas-primary-storage.17316/#post-93073>`_
-   which explains how to back up your master keys manually.
-   `This forum post <https://forums.freenas.org/index.php?threads/recover-encryption-key.16593/#post-85497>`_
-   gives an in-depth explanation of how the various key types are used by GELI.
-   To track future progress on this issue, refer to `this bug report <https://bugs.freenas.org/issues/2375>`_.
-
 * The encryption key is per ZFS volume (pool). If you create multiple pools, each pool has its own encryption key.
 
-* If the system has a lot of disks, there will be a performance hit if the CPU does not support
-  `AES-NI <https://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
+* If the system has a lot of disks, there will be a performance hit if the CPU does not support `AES-NI <https://en.wikipedia.org/wiki/AES-NI#Supporting_CPUs>`_
   or if no crypto hardware is installed. Without hardware acceleration, there will be about a 20% performance hit for a single disk. Performance degradation
-  will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the
-  processor does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This
-  `forum post <https://forums.freenas.org/index.php?threads/encryption-performance-benchmarks.12157/>`_
-  compares the performance of various CPUs.
+  will continue to increase with more disks. As data is written, it is automatically encrypted and as data is read, it is decrypted on the fly. If the processor
+  does support the AES-NI instruction set, there should be very little, if any, degradation in performance when using encryption. This `forum post
+  <https://forums.freenas.org/index.php?threads/encryption-performance-benchmarks.12157/>`__ compares the performance of various CPUs.
 
 * Data in the ARC cache and the contents of RAM are unencrypted.
 
@@ -625,7 +615,7 @@ are described in Table 8.1f.
 |                                                        |                |                                                                                                                          |
 +--------------------------------------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------+
 | HDD Standby                                            | drop-down menu | indicates the time of inactivity (in minutes) before the drive enters standby mode in order to conserve energy; this     |
-|                                                        |                | `forum post <https://forums.freenas.org/index.php?threads/how-to-find-out-if-a-drive-is-spinning-down-properly.2068/>`_  |
+|                                                        |                | `forum post <https://forums.freenas.org/index.php?threads/how-to-find-out-if-a-drive-is-spinning-down-properly.2068/>`__ |
 |                                                        |                | demonstrates how to determine if a drive has spun down                                                                   |
 |                                                        |                |                                                                                                                          |
 +--------------------------------------------------------+----------------+--------------------------------------------------------------------------------------------------------------------------+
@@ -661,6 +651,9 @@ shown in Figure 8.1k demonstrates one ZFS pool (*volume1*) with two datasets
 (the one automatically created with the pool, *volume1*, and
 *dataset1*) and one zvol
 (*zvol1*).
+
+Note that in this example, there are two datasets named *volume1*. The first represents the ZFS pool and its "Used" and "Available" entries reflect the total size of the pool, including
+disk parity. The second represents the implicit or root dataset and its "Used" and "Available" entries indicate the amount of disk space available for storage.
 
 Buttons are provided for quick access to "Volume Manager", "Import Disk", "Import Volume", and "View Disks". If the system has multipath-capable hardware, an
 extra button will be added to "View Multipaths". The columns indicate the "Name" of the volume/dataset/zvol, how much disk space is "Used", how much disk
@@ -1103,7 +1096,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 
 **Figure 8.2a: Creating a Periodic Snapshot**
 
-.. image:: images/periodic1b.png
+.. image:: images/periodic1a.png
 
 **Table 8.2a: Options When Creating a Periodic Snapshot**
 
@@ -1116,10 +1109,6 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Recursive      | checkbox                   | select this box to take separate snapshots of the volume/dataset and each of its child datasets; if          |
 |                |                            | unchecked, only one snapshot is taken of the specified Volume/Dataset                                        |
-|                |                            |                                                                                                              |
-+----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Exclude System | checkbox                   | check this box when replicating a volume recursively to the root pool of another FreeNAS system              |
-| Dataset        |                            |                                                                                                              |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 | Lifetime       | integer and drop-down menu | how long to keep the snapshot on this system; if the snapshot is replicated, it is not removed from the      |
@@ -1233,7 +1222,7 @@ For this example, the required configuration is as follows:
 
 **Figure 8.3b: Adding a Replication Task**
 
-.. image:: images/replication2b.png
+.. image:: images/replication2c.png
 
 Table 8.3a summarizes the available options in the "Add Replication" screen.
 
@@ -1256,12 +1245,8 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Delete snapshots          | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
+| Delete stale snapshots    | checkbox       | if checked, will delete any previous snapshots on *PULL* which are no longer stored on                       |
 |                           |                | *PUSH*                                                                                                       |
-|                           |                |                                                                                                              |
-+---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Initialize remote side    | checkbox       | does a reset once operation which destroys the replication data on *PULL* before reverting to normal         |
-|                           |                | operation; use this option if replication gets stuck                                                         |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Replication Stream        | drop-down menu | choices are *lz4 (fastest)*,                                                                                 |
@@ -1354,8 +1339,7 @@ the **@** is used to separate the volume/dataset name from the snapshot name::
 
  zfs send local/data@auto-20110922.1753-2h | ssh -i /data/ssh/replication 192.168.2.6 zfs receive local/data@auto-20110922.1753-2h
 
-.. note:: if this command fails with the error "cannot receive new filesystem stream: destination has snapshots", check the box "initialize remote side
-   for once" in the replication task and try again. If the :command:`zfs send` command still fails, you will need to open Shell on
+.. note:: if the :command:`zfs send` fails, open :ref:`Shell` on
    *PULL* and use the :command:`zfs destroy -R volume_name@snapshot_name` command to delete the stuck snapshot. You can then use the
    :command:`zfs list -t snapshot` on *PULL* to confirm if the snapshot successfully replicated.
 

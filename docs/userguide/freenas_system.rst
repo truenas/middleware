@@ -122,14 +122,10 @@ This screen also contains the following buttons:
 user's home directory. Since any configuration changes stored in the configuration database will be erased, this option is handy if you mess up your system or
 wish to return a test system to the original configuration.
 
-**Save Config:** used to create a backup copy of the current configuration database in the format *hostname-version-architecture*.
-**Always save the configuration after making changes and verify that you have a saved configuration before performing an upgrade.** This
-`forum post <http://forums.freenas.org/showthread.php?10735-How-to-automate-FreeNAS-configuration-database-backup>`__
-contains a script to backup the configuration which could be customized and added as a cron job. This
-`forum post <http://forums.freenas.org/showthread.php?12333-Backup-config-only-if-changed>`__
-contains an alternate script which only saves a copy of the configuration when it changes. And this
-`forum post <http://forums.freenas.org/threads/backup-config-file-every-night-automatically.8237>`__
-contains a script for backing up the configuration from another system.
+**Save Config:** used to save a backup copy of the current configuration database in the format *hostname-version-architecture* to the system being used to access the
+administrative interface. It is recommended to always save the configuration after making any configuration changes. Note that while FreeNAS® automatically backs up the configuration
+database to the system dataset every morning at 3:45, this backup will not occur if the system is shutdown at that time and the backup will not be available if the system dataset is
+stored on the boot pool and the boot pool becomes unavailable. You can determine and change the location of the system dataset using :menuselection:`System --> System Dataset`.
 
 **Upload Config:** allows you to browse to the location of a previously saved configuration file in order to restore that configuration. The screen will turn
 red as an indication that the system will need to reboot in order to load the restored configuration.
@@ -221,9 +217,9 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Clone:** used to create a copy of the highlighted boot environment.
 
-* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. You
-  **can not** delete an entry that has been activated. If you need to delete an entry that you created and it is currently activated, first activate another
-  entry, which will clear the *On reboot* field of the currently activated entry. 
+* **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. Since you can not delete an entry that has been activated, this button will
+  not appear for the active boot environment. If you need to delete an entry that you created and it is currently  activated, first activate another entry, which will clear the
+  *On reboot* field of the currently activated entry. 
 
 The buttons above the boot entries can be used to:
 
@@ -590,7 +586,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® 9.3.1 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -603,7 +599,7 @@ The GUI does not display the sysctls that are pre-set when FreeNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® 9.3.1 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when FreeNAS® is installed. FreeNAS® 9.3 ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="freenas"
@@ -627,7 +623,7 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3.1 deprecates the following tunables::
+The ZFS version used in 9.3 deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -679,7 +675,7 @@ menu will list any files with checksum mismatches or permission errors.
 
 To see if any updates are available, make sure the desired train is selected and click the "Check Now" button. If there are any updates available, they will
 be listed. In the example shown in Figure 5.8b, the numbers which begin with a *#* represent the bug report number from
-`bugs.freenas.org <http://bugs.freenas.org>`_. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
+`bugs.freenas.org <https://bugs.freenas.org>`__. Numbers which do not begin with a *#* represent a git commit. Click the "ChangeLog" hyperlink to open the log
 of changes in your web browser. Click the "ReleaseNotes" hyperlink to open the Release Notes in your web browser.
 
 **Figure 5.8b: Reviewing Updates**
@@ -812,7 +808,7 @@ If you click the entry for a CA, the following buttons become available:
   X.509 certificate.
 
 * **Export Private Key:** will prompt to browse to the location, on the system being used to access the FreeNAS® system, to save a copy of the CA's private
-  key.
+  key. Note that this option only appears if the CA has a private key.
 
 * **Delete:** will prompt to confirm before deleting the CA.
 
@@ -949,7 +945,7 @@ This screen provides a built-in interface to the FreeNAS® bug tracker located a
 FreeNAS® bug tracker, you must first go to that website, click the "Register" link, fill out the form, and reply to the register email. You will then have a
 username and password which can be used to create bug reports and receive notifications as your reports are actioned.
 
-Before creating a bug report or feature request, ensure that an existing report does not already exist at `bugs.freenas.org <https://bugs.freenas.org>`_. If
+Before creating a bug report or feature request, ensure that an existing report does not already exist at `bugs.freenas.org <https://bugs.freenas.org>`__. If
 you find a similar issue that is not yet marked as "closed" or "resolved", add a comment to that issue if you have new information to provide that can assist
 in resolving the issue. If you find a similar issue that is marked as "closed" or "resolved", you can create a new issue and refer to the earlier issue
 number.
@@ -958,7 +954,7 @@ number.
 
 To generate a report using the built-in "Support" screen, complete the following fields:
 
-* **Username:** input the login name you created when registering at `bugs.freenas.org <https://bugs.freenas.org>`_.
+* **Username:** input the login name you created when registering at `bugs.freenas.org <https://bugs.freenas.org>`__.
 
 * **Password:** input the password associated with the registered login name.
 
@@ -977,6 +973,5 @@ To generate a report using the built-in "Support" screen, complete the following
 
 * **Attachments:** this is the only optional field. It is useful for including configuration files or screenshots of any errors or tracebacks.
 
-Once you have finished completing the fields, click the "Submit" button to automatically generate and upload the report to
-`bugs.freenas.org <https://bugs.freenas.org>`_. A pop-up menu will provide a clickable URL so that you can view the status of or add additional information to
-the report.
+Once you have finished completing the fields, click the "Submit" button to automatically generate and upload the report to `bugs.freenas.org
+<https://bugs.freenas.org>`__. A pop-up menu will provide a clickable URL so that you can view the status of or add additional information to the report.
