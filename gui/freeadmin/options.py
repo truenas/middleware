@@ -270,6 +270,7 @@ class BaseFreeAdmin(object):
             'model': m,
             'modeladmin': m._admin,
             'mf': mf,
+            'model_name': m._meta.model_name,
             'verbose_name': m._meta.verbose_name,
             'extra_js': m._admin.extra_js,
         }
@@ -471,6 +472,7 @@ class BaseFreeAdmin(object):
             'oid': oid,
             'inline': inline,
             'extra_js': m._admin.extra_js,
+            'model_name': m._meta.model_name,
             'verbose_name': m._meta.verbose_name,
             'deletable': m._admin.deletable,
         }
@@ -779,6 +781,7 @@ class BaseFreeAdmin(object):
             'model': m._meta.model_name,
             'oid': oid,
             'object': instance,
+            'model_name': m._meta.model_name,
             'verbose_name': instance._meta.verbose_name,
             'related': related,
             'related_num': related_num,

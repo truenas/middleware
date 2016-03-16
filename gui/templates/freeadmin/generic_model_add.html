@@ -1,5 +1,5 @@
 {% load freeadmin %}
-<form data-dojo-type="dijit.form.Form" id="dialogForm_{{ verbose_name }}">
+<form data-dojo-type="dijit.form.Form" id="dialogForm_{{ model_name }}">
 <script type="dojo/method" data-dojo-event="submitForm" data-dojo-args="form,e,conf">
      doSubmit({
         form: form,
@@ -24,7 +24,7 @@ this.submitForm(this, e);
     {% endblock %}
     {% block buttons %}
     <tr><td colspan="2">
-        <button id="btn_{{ verbose_name}}_Add" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
+        <button id="btn_{{ model_name }}_Add" class="submitform" data-dojo-type="dijit.form.Button" data-dojo-props="type: 'submit'">
             {% if extra_js %}
             <script type="dojo/method">
                 {{ extra_js }}
@@ -32,7 +32,7 @@ this.submitForm(this, e);
             {% endif %}
             {% trans "OK" %}
         </button>
-        <button id="btn_{{ verbose_name}}_Cancel" data-dojo-type="dijit.form.Button" class="cancelform">
+        <button id="btn_{{ model_name }}_Cancel" data-dojo-type="dijit.form.Button" class="cancelform">
             {% trans "Cancel" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
                 cancelDialog(this);
