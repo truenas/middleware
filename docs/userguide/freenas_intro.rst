@@ -101,6 +101,8 @@ What's New in |version|
 
 * The "Firmware Update" button has been removed from :menuselection:`System --> Advanced`. Updates should now be performed using :menuselection:`System --> Update`.
 
+* The "Disabled" option has been removed from :menuselection:`Storage --> Replication Tasks --> Add Replication --> Encryption Cipher`
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
