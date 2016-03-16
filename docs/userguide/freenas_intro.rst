@@ -99,6 +99,8 @@ What's New in |version|
 
 * USB3 support is now enabled by default.
 
+* The "Firmware Update" button has been removed from :menuselection:`System --> Advanced`. Updates should now be performed using :menuselection:`System --> Update`.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 

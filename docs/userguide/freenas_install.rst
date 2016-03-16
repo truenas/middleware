@@ -389,38 +389,10 @@ the "Upload Config" button to upload the configuration that you saved before you
 Upgrading From the GUI
 ~~~~~~~~~~~~~~~~~~~~~~
 
-To perform an upgrade using this method, `download <http://download.freenas.org/9.10/latest/x64/>`_ the :file:`.txz` file and its
-associated SHA256 hash to the computer that you use to access the FreeNAS® system. Then, go to :menuselection:`System --> Settings --> Advanced --> Firmware Update` as
-shown in Figure 2.5c.
+To perform an upgrade using this method, go to :menuselection:`System --> Update`.
 
-**Figure 2.5c: Upgrading FreeNAS® From the GUI**
-
-.. image:: images/upgrade3a.png
-
-Use the drop-down menu to select an existing volume to temporarily place the firmware file during the upgrade. Alternately, select "Memory device" to allow
-the system to create a temporary RAM disk to be used during the upgrade. After making your selection, click the "OK" button to see the screen shown in Figure
-2.5d.
-
-**Figure 2.5d: Step 2 of 2**
-
-.. image:: images/upgrade4a.png
-
-This screen again reminds you to backup your configuration before proceeding. If you have not yet, click the "click here" link.
-
-Browse to the location of the downloaded :file:`.txz` file, then paste its SHA256 sum.
-
-When finished, click the "Apply Update" button to begin the upgrade progress. Behind the scenes, the following steps are occurring:
-
-* The SHA256 hash is confirmed and an error will display if it does not match. If you get this error, double-check that you pasted the correct checksum and
-  try pasting again.
-
-* The new image is uncompressed and written to the operating system drive. This can take a few minutes so be patient.
-
-* Once the new image is written, you will temporarily lose your connection as the FreeNAS® system will reboot into the new version of the operating system.
-  FreeNAS® will actually reboot twice: once the new operating system loads, the upgrade process applies the new database schema and reboots again.
-
-* Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access
-  the system.
+Once the update is complete, you will temporarily lose your connection as the FreeNAS® system will reboot into the new version of the operating system.
+Assuming all went well, the FreeNAS® system will receive the same IP from the DHCP server. Refresh your browser after a moment to see if you can access the system.
 
 .. _If Something Goes Wrong:
 
