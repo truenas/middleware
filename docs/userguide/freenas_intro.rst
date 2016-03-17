@@ -97,6 +97,8 @@ What's New in |version|
 
 * Based on FreeBSD 10.3 which adds `these features <https://www.freebsd.org/releases/10.3R/relnotes.html>`_.
 
+* Samba has been updated to `4.3.4 <https://www.samba.org/samba/history/samba-4.3.4.html>`_.
+
 * USB3 support is now enabled by default.
 
 * The "Firmware Update" button has been removed from :menuselection:`System --> Advanced`. Updates should now be performed using :menuselection:`System --> Update`.
