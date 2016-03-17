@@ -951,7 +951,7 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_disable_freenas_cache = models.BooleanField(
         verbose_name=_("Disable Active Directory user/group cache"),
-        help_text=_("Set this if you want to disable caching Active Directory users and groups. WARNING: Only use this option if you have a large number of users and groups that is preventing the machine from binding to the domain, you will not be able to set permissions using the GUI with this turned on."),
+        help_text=_("Set this if you want to disable caching Active Directory users and groups.  Use this option if you are experiencing slowness or having difficulty binding to the domain with a large number of users and groups."),
         default=False
     )
     ad_site = models.CharField(
