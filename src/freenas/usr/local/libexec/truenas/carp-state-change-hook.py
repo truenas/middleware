@@ -44,14 +44,18 @@ def run(cmd):
     return (proc.returncode, output.strip('\n'))
 
 
-def main(ifname, event):
+def main(subsystem, event):
+
+    if '@' not in subsystem:
+        sys.exit(1)
+    vhid, ifname = subsystem.split('@', 1)
 
     if event == 'forcetakeover':
         forcetakeover = True
     else:
         forcetakeover = False
 
-    if ifname in ('carp1', 'carp2'):
+    if vhid in ('10', '20'):
         sys.exit(1)
 
     if not os.path.exists(FAILOVER_JSON):
@@ -135,13 +139,13 @@ def main(ifname, event):
 
     user_override = True if os.path.exists(FAILOVER_OVERRIDE) else False
 
-    if event == 'LINK_UP' or event == 'forcetakeover':
-        link_up(fobj, state_file, ifname, event, user_override, forcetakeover)
-    elif event == 'LINK_DOWN':
-        link_down(fobj, state_file, ifname, event, user_override)
+    if event == 'MASTER' or event == 'forcetakeover':
+        carp_master(fobj, state_file, ifname, event, user_override, forcetakeover)
+    elif event == 'BACKUP':
+        carp_backup(fobj, state_file, ifname, event, user_override)
 
 
-def link_up(fobj, state_file, ifname, event, user_override, forcetakeover):
+def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
 
     if forcetakeover:
         log.warn("Starting force takeover.")
@@ -415,7 +419,7 @@ def link_up(fobj, state_file, ifname, event, user_override, forcetakeover):
     log.warn('Failover event complete.')
 
 
-def link_down(fobj, state_file, ifname, event, user_override):
+def carp_backup(fobj, state_file, ifname, event, user_override):
     log.warn("Entering DOWN on %s", ifname)
 
     if not event == "shutdown" and not user_override:
