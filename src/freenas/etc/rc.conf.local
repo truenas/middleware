@@ -92,13 +92,54 @@ _interface_config()
 		done
 	fi
 
+	local node
+	local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
+	local carp1_skew carp2_skew
+	local internal_ip internal_iface
+	if ! is_freenas; then
+
+		if [ "$(ha_mode)" = "MANUAL" ]; then
+			# TODO: get from database if we are not echostream
+		else
+			node=$(ha_node)
+		fi
+
+		if [ "${node}" = "A" ]; then
+			carp1_skew="20"
+			carp2_skew="80"
+			internal_ip="169.254.10.1"
+		elif [ "${node}" = "B" ]; then
+			carp1_skew="80"
+			carp2_skew="20"
+			internal_ip="169.254.10.2"
+		else
+			echo "# Could not determine system node"
+		fi
+
+		if [ -n "${carp1_skew}" ]; then
+			if [ "$(ha_hardware)" = "ECHOSTREAM" ]; then
+				internal_iface=$(pciconf -lv | grep 'card=0xa01f8086 chip=0x10d38086' | awk -F@ '{print $1}')
+                                if [ "${internal_iface}" = "" ]; then
+                                        internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
+                                fi
+			elif [ "$(ha_hardware)" = "SBB" ]; then
+				internal_iface="ix0"
+			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
+				internal_iface="igb1"
+			fi
+			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
+			echo "ifconfig_${internal_iface}_alias0=\"vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
+			echo "ifconfig_${internal_iface}_alias1=\"vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
+		fi
+	fi
+
 	local IFS=\|
 	# Note: ipv4/ipv6 are supposed in ip/masklen format.
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_carp, int_vip, int_vhid, int_pass, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_carp int_vip int_vhid int_pass options; do
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
 		fi
@@ -124,22 +165,43 @@ _interface_config()
 		fi
 		echo \"
 
+		if [ "${int_vip}" != "" ]; then
+			if [ -n "${int_pass}" ]; then
+				int_passopt=" pass ${int_pass}"
+			else
+				int_passopt=""
+			fi
+			if [ -f /usr/local/www/freenasUI/failover/notifier.py ]; then
+				if [ $(LD_LIBRARY=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status) = "MASTER" ]; then
+					carp1_skew="1"
+				fi
+			fi
+			echo "ifconfig_${interface}_alias0=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32\""
+			eval counter_${interface}=1
+
+		fi
+
 		local aliases has_ipv6
-		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
-		while read alias_id v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
+		aliases=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, alias_vip, alias_v4address, alias_v4address_b, alias_v4netmaskbit, alias_v6address, alias_v6address_b, alias_v6netmaskbit FROM network_alias WHERE alias_interface_id = ${interface_id} ORDER BY id" | \
+		while read alias_id v4vip v4addr v4addr_b v4netmask v6addr v6addr_b v6netmask; do
 			eval counter=\${counter_${interface}:-0}
 			if [ "$(ha_node)" = "B" ]; then
 				v4addr=${v4addr_b}
 				v6addr=${v6addr_b}
 			fi
+			if [ -n "${int_vhid}" -a -n "${v4vip}" ]; then
+				echo "ifconfig_${interface}_alias${counter}=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${v4vip}/32\""
+				counter=$((counter+1))
+			fi
 			if [ -n "${v4addr}" ]; then
 				echo "ifconfig_${interface}_alias${counter}=\"inet ${v4addr}/${v4netmask}\""
-				eval "counter_${interface}=\$((counter+1))"
+				counter=$((counter+1))
 			fi
 			if [ -n "${v6addr}" ]; then
 				echo "ifconfig_${interface}_alias${counter}=\"inet6 ${v6addr}/${v6netmask}\""
-				eval "counter_${interface}=\$((counter+1))"
+				counter=$((counter+1))
 			fi
+			eval "counter_${interface}=\${counter}"
 		done)
 		echo ${aliases}
 		has_ipv6=$(echo ${aliases}|grep -c inet6)
@@ -160,96 +222,6 @@ _interface_config()
 		fi
 	done
 
-	if ! is_freenas; then
-
-		local node
-		local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
-		local carp1_skew carp2_skew
-		local internal_ip internal_iface
-
-		if [ "$(ha_mode)" = "MANUAL" ]; then
-			# TODO: get from database if we are not echostream
-		else
-			node=$(ha_node)
-		fi
-
-		if [ "${node}" = "A" ]; then
-			carp1_skew="20"
-			carp2_skew="80"
-			internal_ip="169.254.10.1"
-		elif [ "${node}" = "B" ]; then
-			carp1_skew="80"
-			carp2_skew="20"
-			internal_ip="169.254.10.2"
-		else
-			echo "# Could not determine system node"
-		fi
-
-		if [ -n "${carp1_skew}" ]; then
-
-			if [ "$(ha_hardware)" = "ECHOSTREAM" ]; then
-				internal_iface=$(pciconf -lv | grep 'card=0xa01f8086 chip=0x10d38086' | awk -F@ '{print $1}')
-				# Fallback to using latest emX available
-				if [ "${internal_iface}" = "" ]; then
-					internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
-				fi
-			elif [ "$(ha_hardware)" = "SBB" ]; then
-				internal_iface="ix0"
-			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
-				internal_iface="igb1"
-			fi
-			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
-			echo "ifconfig_carp1=\"vhid 10 advskew ${carp1_skew} ${carp1_addr}\""
-			echo "ifconfig_carp2=\"vhid 20 advskew ${carp2_skew} ${carp2_addr}\""
-			echo "cloned_interfaces=\"\${cloned_interfaces} carp1 carp2\""
-		fi
-
-		# Select interfaces that have carp enabled
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_carp, int_vip, int_vhid, int_pass FROM network_interfaces WHERE int_vip IS NOT NULL AND int_vip != '' ORDER BY id" | \
-		while read id int_carp int_vip int_vhid int_pass; do
-			if [ -n "${int_pass}" ]; then
-				int_passopt=" pass ${int_pass}"
-			else
-				int_passopt=""
-			fi
-			if [ -f /usr/local/www/freenasUI/failover/notifier.py ]; then
-				if [ $(LD_LIBRARY=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status) = "MASTER" ]; then
-					carp1_skew="1"
-				fi
-			fi
-			echo "ifconfig_carp${int_carp}=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} ${int_vip}/32\""
-			echo "cloned_interfaces=\"\${cloned_interfaces} carp${int_carp}\""
-			# grab any alias VIP(s) for the interface we are currently working on
-			alias_vip=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT alias_vip FROM network_alias INNER JOIN network_interfaces ON network_interfaces.id=network_alias.alias_interface_id WHERE network_interfaces.id=${id}")
-			if [ -n "${alias_vip}" ]; then
-				# We set IFS to make our SQL driven loops work.  Rather than try to manage resetting it properly
-				# we will just mangle things so loops here will work as well.
-				# This catches the case where the database contains multiple aliases that are separated by newlines.
-				alias_vip_cooked=$(echo ${alias_vip} | tr '\n' '\|')
-				acounter=0
-				for ip in ${alias_vip_cooked}
-				do
-					echo "ifconfig_carp${int_carp}_alias${acounter}=\"inet ${ip}/32\""
-					acounter=$(expr ${acounter} + 1)
-				done
-			fi
-		done
-
-		# OLD code unused for now
-		if false; then
-			# CARP
-			${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT carp_number, carp_vhid, carp_pass, int_ipv4address, carp_skew FROM network_carp a JOIN network_interfaces b ON 'carp' || a.carp_number = b.int_interface ORDER BY a.carp_number" | \
-			while read -r carp_number carp_vhid carp_pass carp_v4address carp_skew; do
-					if [ -n "${carp_pass}" ]; then
-						carp_passopt=" pass ${carp_pass}"
-					else
-						carp_passopt=""
-					fi
-					echo "ifconfig_carp${carp_number}=\"vhid ${carp_vhid} advskew ${carp_skew}${carp_passopt} ${carp_v4address}/32\""
-					echo "cloned_interfaces=\"\${cloned_interfaces} carp${carp_number}\""
-			done
-			fi
-		fi
 
 	#
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT lagg_physnic, lagg_deviceoptions, lagg_interfacegroup_id FROM network_lagginterfacemembers ORDER BY lagg_ordernum" | \
