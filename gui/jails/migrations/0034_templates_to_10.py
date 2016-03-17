@@ -12,6 +12,7 @@ class Migration(DataMigration):
         for jt in orm['jails.JailTemplate'].objects.all():
             url = jt.jt_url
             url = url.replace('download.freenas.org/jails/9.3//', 'download.freenas.org/jails/10/')
+            url = url.replace('9.3-RELEASE', '10.3-RC2')
             if url != jt.jt_url:
                 jt.jt_url = url
                 jt.save()
