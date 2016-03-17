@@ -65,7 +65,7 @@ def main():
     for item in Interfaces.objects.filter(int_critical=True).exclude(
         int_carp=None
     ):
-        data['groups'][item.int_group].append('carp%d' % item.int_carp)
+        data['groups'][item.int_group].append(item.int_interface)
 
     with open(FAILOVER_JSON, "w+") as fh:
         fh.write(json.dumps(data))
