@@ -69,7 +69,7 @@
 {% endwith %}
 
     {% block extra_buttons %}
-         <button id="btn_vcenterconfiguration_Update" data-dojo-type="dijit.form.Button">Upgrade
+         <button id="btn_vcenterconfiguration_Update" data-dojo-type="dijit.form.Button">{% trans "Upgrade" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e">
                
               form = getForm(this);
@@ -81,7 +81,7 @@
              
                 </script>
         </button>
-	<button id="btn_vcenterconfiguration_Repair" data-dojo-type="dijit.form.Button">Repair
+	<button id="btn_vcenterconfiguration_Repair" data-dojo-type="dijit.form.Button">{% trans "Repair" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e">
                
               form = getForm(this);
