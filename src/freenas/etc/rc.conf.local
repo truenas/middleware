@@ -190,7 +190,7 @@ _interface_config()
 			if [ "$(ha_hardware)" = "ECHOSTREAM" ]; then
 				internal_iface=$(pciconf -lv | grep 'card=0xa01f8086 chip=0x10d38086' | awk -F@ '{print $1}')
 				# Fallback to using latest emX available
-				if [ $? -ne 0 ]; then
+				if [ "${internal_iface}" = "" ]; then
 					internal_iface=$(ifconfig -l | tr -s " " "\n" | grep "^em" | sort -r | head -1)
 				fi
 			elif [ "$(ha_hardware)" = "SBB" ]; then
