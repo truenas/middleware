@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-10-31 19:53+0000\n"
+"PO-Revision-Date: 2016-03-16 09:02+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1446321187.0\n"
+"X-POOTLE-MTIME: 1458118943.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -585,3 +585,48 @@ msgid ""
 msgstr ""
 "<font color='red'>Varování: Zvolením tohoto zhoršíte https zabezpečení.<br "
 "/><br />"
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
+msgid "Password"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
+msgid "Name"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:119
+msgid "E-mail"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:120
+msgid "Phone"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:121
+msgid "Type"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:122
+msgid "Category"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:123
+msgid "Environment"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:124
+msgid "Criticality"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:126
+msgid "Subject"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:127
+#, fuzzy
+msgid "Description"
+msgstr "Popis jednotlivých řad"
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
+msgid "Attachments"
+msgstr ""

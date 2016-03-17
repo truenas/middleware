@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2015-10-18 09:15+0000\n"
+"PO-Revision-Date: 2016-01-29 21:17+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: en_GB\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1445159753.0\n"
+"X-POOTLE-MTIME: 1454102268.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reporting"
@@ -577,4 +577,48 @@ msgstr ""
 msgid ""
 "<font color='red'>Warning: Selecting this reduces your https security.<br /><"
 "br />"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
+msgid "Password"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
+msgid "Name"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:119
+msgid "E-mail"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:120
+msgid "Phone"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:121
+msgid "Type"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:122
+msgid "Category"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:123
+msgid "Environment"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:124
+msgid "Criticality"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:126
+msgid "Subject"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:127
+msgid "Description"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
+msgid "Attachments"
 msgstr ""
