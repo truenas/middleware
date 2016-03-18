@@ -43,6 +43,9 @@
 # just iterate over this array and print the values using our pretty printer.
 #
 
+#
+# Copyright (c) 2015 by Delphix. All rights reserved.
+#
 
 import sys
 import time
@@ -83,7 +86,6 @@ cols = {
     "mrug":       [4, 1000, "MRU Ghost List hits per second"],
     "eskip":      [5, 1000, "evict_skip per second"],
     "mtxmis":     [6, 1000, "mutex_miss per second"],
-    "rmis":       [4, 1000, "recycle_miss per second"],
     "dread":      [5, 1000, "Demand data accesses per second"],
     "pread":      [5, 1000, "Prefetch accesses per second"],
     "l2hits":     [6, 1000, "L2ARC hits per second"],
@@ -91,6 +93,7 @@ cols = {
     "l2read":     [6, 1000, "Total L2ARC accesses per second"],
     "l2hit%":     [6, 100, "L2ARC access hit percentage"],
     "l2miss%":    [7, 100, "L2ARC access miss percentage"],
+    "l2asize":    [7, 1024, "Actual (compressed) size of the L2ARC"],
     "l2size":     [6, 1024, "Size of the L2ARC"],
     "l2bytes":    [7, 1024, "bytes read per second from the L2ARC"],
 }
@@ -98,7 +101,7 @@ cols = {
 v = {}
 hdr = ["time", "read", "miss", "miss%", "dmis", "dm%", "pmis", "pm%", "mmis",
     "mm%", "arcsz", "c"]
-xhdr = ["time", "mfu", "mru", "mfug", "mrug", "eskip", "mtxmis", "rmis",
+xhdr = ["time", "mfu", "mru", "mfug", "mrug", "eskip", "mtxmis",
     "dread", "pread", "read"]
 sint = 1               # Default interval is 1 second
 count = 1              # Default count is 1
@@ -399,7 +402,6 @@ def calculate():
     v["mrug"] = d["mru_ghost_hits"] / sint
     v["mfug"] = d["mfu_ghost_hits"] / sint
     v["eskip"] = d["evict_skip"] / sint
-    v["rmis"] = d["recycle_miss"] / sint
     v["mtxmis"] = d["mutex_miss"] / sint
 
     if l2exist:
@@ -410,6 +412,7 @@ def calculate():
 
         v["l2miss%"] = 100 - v["l2hit%"] if v["l2read"] > 0 else 0
         v["l2size"] = cur["l2_size"]
+        v["l2asize"] = cur["l2_asize"]
         v["l2bytes"] = d["l2_read_bytes"] / sint
 
 
