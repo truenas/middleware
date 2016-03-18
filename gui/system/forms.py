@@ -2078,9 +2078,7 @@ class CertificateAuthorityImportForm(ModelForm):
         cdata = self.cleaned_data
         certificate = cdata.get('cert_certificate')
         if not certificate:
-            raise forms.ValidationError(_(
-                "Something is seriously jacked up."
-            ))
+            raise forms.ValidationError(_("Empty Certificate!"))
 
         regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
         matches = regex.findall(certificate)
