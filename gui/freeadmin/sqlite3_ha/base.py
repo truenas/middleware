@@ -366,6 +366,11 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
     def execute(self, query, params=None):
 
+        if params is None:
+            return Database.Cursor.execute(self, query)
+        query = self.convert_query(query)
+        execute = Database.Cursor.execute(self, query, params)
+
         # Allow sync to be bypassed just to be extra safe on things like
         # database migration.
         # Alternatively a south driver could be written bu the effort would be
@@ -380,10 +385,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
         if not skip:
             self.execute_passive(query, params=params)
 
-        if params is None:
-            return Database.Cursor.execute(self, query)
-        query = self.convert_query(query)
-        return Database.Cursor.execute(self, query, params)
+        return execute
 
     def executelocal(self, query, params=None):
         if params is None:
