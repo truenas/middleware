@@ -672,7 +672,7 @@ class LDAPForm(ModelForm):
                 self.fields['ldap_netbiosname_b'],
             )
 
-    def clean_bindpw(self):
+    def clean_ldap_bindpw(self):
         cdata = self.cleaned_data
         if not cdata.get("ldap_bindpw"):
             cdata["ldap_bindpw"] = self.instance.ldap_bindpw
@@ -695,6 +695,8 @@ class LDAPForm(ModelForm):
         )
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])
+
+        return bindpw
 
     def check_for_samba_schema(self):
         self.clean_bindpw()
