@@ -13405,3 +13405,28 @@ msgstr ""
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
 msgstr ""
+
+#: services/views.py:296
+#, fuzzy
+msgid "Idmap Range Low"
+msgstr "Borne inférieure"
+
+#: services/views.py:297
+#, fuzzy
+msgid "Idmap Range High"
+msgstr "Borne supérieure"
+
+#: storage/forms.py:734
+#, fuzzy
+msgid "File System type"
+msgstr "Type de système de fichiers"
+
+#: support/forms.py:49
+#, fuzzy
+msgid "License"
+msgstr "Mettre à jour le module"
+
+#: system/admin.py:26
+#, fuzzy
+msgid "Boot Status"
+msgstr "Statut"

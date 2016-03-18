@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2016-03-15 20:05+0000\n"
+"PO-Revision-Date: 2016-03-17 17:00+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458072311.0\n"
+"X-POOTLE-MTIME: 1458234004.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12923,3 +12923,23 @@ msgstr ""
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
 msgstr "Ви не можете видаляти інтерфейси при включеній відмовостійкості."
+
+#: services/views.py:296
+msgid "Idmap Range Low"
+msgstr "Низ діапазону Idmap"
+
+#: services/views.py:297
+msgid "Idmap Range High"
+msgstr "Верх діапазону Idmap"
+
+#: storage/forms.py:734
+msgid "File System type"
+msgstr "Тип файлової системи"
+
+#: support/forms.py:49
+msgid "License"
+msgstr "Ліцензія"
+
+#: system/admin.py:26
+msgid "Boot Status"
+msgstr "Статус пула завантаження"

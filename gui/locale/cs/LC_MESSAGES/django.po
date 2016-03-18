@@ -12887,3 +12887,28 @@ msgid "You are not allowed to delete interfaces while failover is enabled."
 msgstr ""
 "Když je zapnuté přebírání funkce (failover) v případě výpadku, není možné "
 "mazat síťová rozhraní"
+
+#: services/views.py:296
+#, fuzzy
+msgid "Idmap Range Low"
+msgstr "dolní mez rozsahu"
+
+#: services/views.py:297
+#, fuzzy
+msgid "Idmap Range High"
+msgstr "horní mez rozsahu"
+
+#: storage/forms.py:734
+#, fuzzy
+msgid "File System type"
+msgstr "Typ souborového systému"
+
+#: support/forms.py:49
+#, fuzzy
+msgid "License"
+msgstr "Aktualizovat licenci"
+
+#: system/admin.py:26
+#, fuzzy
+msgid "Boot Status"
+msgstr "Stav"
