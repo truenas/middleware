@@ -303,6 +303,67 @@ ZFS Volumes
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
+.. http:put:: /api/v1.0/storage/volume/(int:id|string:name)/zvols/(string:name)/
+
+   Update zvol `name` for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "volsize": "20M"
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "name": "myzvol",
+        "volsize": 20971520
+      }
+
+   :json string compression: type of compression
+   :json string dedup: on/off
+   :json string volsize: size of the zvol
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+.. http:get:: /api/v1.0/storage/volume/(int:id|string:name)/zvols/
+
+   Get zvols for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      [{
+        "name": "myzvol",
+        "volsize": 10485760
+      }]
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
 .. http:delete:: /api/v1.0/storage/volume/(int:id|string:name)/zvols/(string:name)/
 
    Delete zvol `name` of the volume `id`.
