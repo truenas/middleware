@@ -126,7 +126,9 @@ def main(subsystem, event):
                         masterret = True
                         for group in fobj['groups']:
                             for interface in fobj['groups'][group]:
-                                run("ifconfig %s advskew 0" % interface)
+                                error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
+                                for vhid in output.split():
+                                    run("ifconfig %s vhid %s advskew 0" % (interface, vhid))
                         log.warn("Failover disabled.  Assuming active.")
                         run("touch %s" % FAILOVER_OVERRIDE)
                 if masterret is False:
@@ -140,17 +142,17 @@ def main(subsystem, event):
     user_override = True if os.path.exists(FAILOVER_OVERRIDE) else False
 
     if event == 'MASTER' or event == 'forcetakeover':
-        carp_master(fobj, state_file, ifname, event, user_override, forcetakeover)
+        carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeover)
     elif event == 'BACKUP':
-        carp_backup(fobj, state_file, ifname, event, user_override)
+        carp_backup(fobj, state_file, ifname, vhid, event, user_override)
 
 
-def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
+def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeover):
 
     if forcetakeover:
         log.warn("Starting force takeover.")
     else:
-        log.warn("Entering UP on %s", ifname)
+        log.warn("Entering MASTER on %s", ifname)
 
     if not user_override and not forcetakeover:
         sleeper = fobj['timeout']
@@ -162,7 +164,7 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
             # FIXME
             time.sleep(sleeper)
             error, output = run(
-                "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
+                "ifconfig %s | grep 'carp:' | grep 'vhid %s ' | awk '{print $2}'" % (ifname, vhid)
             )
             if output != 'MASTER':
                 log.warn("%s became %s. Previous event ignored.", ifname, output)
@@ -172,7 +174,7 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
                 log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
                 time.sleep(sleeper)
                 error, output = run(
-                    "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
+                    "ifconfig %s | grep 'carp:' | grep 'vhid %s ' | awk '{print $2}'" % (ifname, vhid)
                 )
                 if output != 'MASTER':
                     log.warn("%s became %s. Previous event ignored.", ifname, output)
@@ -180,9 +182,11 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
 
     if os.path.exists(FAILOVER_ASSUMED_MASTER) or forcetakeover:
         error, output = run("ifconfig -l")
-        for iface in output.split():
-            if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
-                run("ifconfig %s advskew 1" % iface)
+        for iface in list(output.split()):
+            error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
+            for vhid in list(output.split()):
+                if vhid not in ("10", "20"):
+                    run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
         if not forcetakeover:
             sys.exit(0)
 
@@ -229,12 +233,12 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
                 "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
             )
             error, status1 = run(
-                "(ifconfig carp1 | grep carp: | awk '{print $2;}' ; ifconfig carp2"
-                "| grep carp: | awk '{print $2;}')|grep -E '(MASTER|INIT)' | wc -l"
+                "ifconfig | grep carp: | grep -E 'vhid (10|20) ' | awk '{print $2;}' "
+                "|grep -E '(MASTER|INIT)' | wc -l"
             )
             error, status2 = run(
-                "(ifconfig carp1 | grep carp: | awk '{print $2;}' ; ifconfig carp2"
-                "| grep carp: | awk '{print $2;}')|grep BACKUP | wc -l"
+                "ifconfig | grep carp: | grep -E 'vhid (10|20) ' | awk '{print $2;}' "
+                "|grep BACKUP | wc -l"
             )
 
             log.warn('Status: %s:%s:%s', status0, status1, status2)
@@ -242,7 +246,7 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
             if status0 != 'MASTER':
                 log.warn('Promoted then demoted, quitting.')
                 # Just in case.  Demote ourselves.
-                run('ifconfig %s advskew 206' % ifname)
+                run('ifconfig %s vhid %s advskew 206' % (ifname, vhid))
                 try:
                     os.unlink(ELECTING_FILE)
                 except:
@@ -264,19 +268,19 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
     if error:
         if error == 1:
             log.warn('Can not register keys on disks!')
-            run('ifconfig %s advskew 201' % ifname)
+            run('ifconfig %s vhid %s advskew 201' % (ifname, vhid))
         elif error == 2:
             log.warn('Remote fenced is running!')
-            run('ifconfig %s advskew 202' % ifname)
+            run('ifconfig %s vhid %s advskew 202' % (ifname, vhid))
         elif error == 3:
             log.warn('Can not reserve all disks!')
-            run('ifconfig %s advskew 203' % ifname)
+            run('ifconfig %s vhid %s advskew 203' % (ifname, vhid))
         elif error == 5:
             log.warn('Fencing daemon encountered an unexpected fatal error!')
-            run('ifconfig %s advskew 205' % ifname)
+            run('ifconfig %s vhid %s advskew 205' % (ifname, vhid))
         else:
             log.warn('This should never happen: %d', error)
-            run('ifconfig %s advskew 204' % ifname)
+            run('ifconfig %s vhid %s advskew 204' % (ifname, vhid))
         try:
             os.unlink(ELECTING_FILE)
         except:
@@ -287,8 +291,11 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
     # Bring up all carps we own.
     error, output = run("ifconfig -l")
     for iface in output.split():
-        if iface.startswith("carp") and (iface != "carp1" and iface != "carp2"):
-            run("ifconfig %s advskew 1" % iface)
+        for iface in list(output.split()):
+            error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
+            for vhid in list(output.split()):
+                if vhid not in ("10", "20"):
+                    run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
 
     open(IMPORTING_FILE, 'w').close()
     try:
@@ -419,8 +426,8 @@ def carp_master(fobj, state_file, ifname, event, user_override, forcetakeover):
     log.warn('Failover event complete.')
 
 
-def carp_backup(fobj, state_file, ifname, event, user_override):
-    log.warn("Entering DOWN on %s", ifname)
+def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
+    log.warn("Entering BACKUP on %s", ifname)
 
     if not event == "shutdown" and not user_override:
         sleeper = fobj['timeout']
@@ -466,7 +473,9 @@ def carp_backup(fobj, state_file, ifname, event, user_override):
 
     for group in fobj['groups']:
         for interface in fobj['groups'][group]:
-            run("ifconfig %s advskew 100" % interface)
+            error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
+            for vhid in output.split():
+                run("ifconfig %s vhid %s advskew 100" % (interface, vhid))
 
     run('/sbin/pfctl -ef /etc/pf.conf.block')
 
