@@ -218,6 +218,7 @@ Available options:
             "ad_dns_timeout",
             "ad_certfile",
             "ad_ssl",
+            "ad_verbose_logging",
             "ad_unix_extensions"
         ]
 
