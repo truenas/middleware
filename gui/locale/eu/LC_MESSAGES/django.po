@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2016-03-15 09:16+0000\n"
+"PO-Revision-Date: 2016-03-17 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: eu\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458033415.0\n"
+"X-POOTLE-MTIME: 1458206176.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12084,4 +12084,24 @@ msgstr ""
 
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
+msgstr ""
+
+#: services/views.py:296
+msgid "Idmap Range Low"
+msgstr ""
+
+#: services/views.py:297
+msgid "Idmap Range High"
+msgstr ""
+
+#: storage/forms.py:734
+msgid "File System type"
+msgstr ""
+
+#: support/forms.py:49
+msgid "License"
+msgstr ""
+
+#: system/admin.py:26
+msgid "Boot Status"
 msgstr ""
