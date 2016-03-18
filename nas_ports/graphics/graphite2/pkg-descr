@@ -1,0 +1,12 @@
+Graphite is a package that can be used to create "smart fonts" capable of
+displaying writing systems with various complex behaviors, such as:
+
+ * contextual shaping
+ * ligatures
+ * reordering
+ * split glyphs
+ * bidirectionality
+ * stacking diacritics
+ * complex positioning 
+
+WWW: http://graphite.sil.org

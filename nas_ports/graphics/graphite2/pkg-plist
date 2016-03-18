@@ -1,0 +1,11 @@
+bin/gr2fonttest
+include/graphite2/Font.h
+include/graphite2/Log.h
+include/graphite2/Segment.h
+include/graphite2/Types.h
+lib/libgraphite2.so
+lib/libgraphite2.so.3
+lib/libgraphite2.so.3.0.1
+libdata/pkgconfig/graphite2.pc
+%%DATADIR%%/graphite2-%%CMAKE_BUILD_TYPE%%.cmake
+%%DATADIR%%/graphite2.cmake
