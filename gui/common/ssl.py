@@ -82,17 +82,6 @@ def sign_certificate(cert, key, digest_algorithm):
     cert.sign(key, str(digest_algorithm))
 
 
-def create_self_signed_certificate(cert_info):
-    key = generate_key(cert_info['key_length'])
-
-    cert = create_certificate(cert_info)
-    cert.set_pubkey(key)
-
-    sign_certificate(cert, key, cert_info['digest_algorithm'])
-
-    return (cert, key)
-
-
 def create_certificate_signing_request(cert_info):
     key = generate_key(cert_info['key_length'])
 
