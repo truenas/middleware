@@ -811,11 +811,11 @@ class CertificateBase(Model):
     def cert_issuer(self):
         issuer = None
 
-        if self.cert_type in (CA_TYPE_EXISTING, CA_TYPE_INTERMEDIATE, CERT_TYPE_EXISTING):
+        if self.cert_type in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
             issuer = "external"
         elif self.cert_type == CA_TYPE_INTERNAL:
             issuer = "self-signed"
-        elif self.cert_type == CERT_TYPE_INTERNAL:
+        elif self.cert_type in (CERT_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE):
             issuer = self.cert_signedby
         elif self.cert_type == CERT_TYPE_CSR:
             issuer = "external - signature pending"
