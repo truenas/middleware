@@ -185,12 +185,12 @@ def export_privatekey(buf, passphrase=None):
         passphrase=str(passphrase) if passphrase else None
     )
 
+
 def write_certificate_chain(chain, path):
     with open(path, "w") as f:
         for certificate in chain:
             f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, certificate))
-        f.close()
- 
+
 
 def write_certificate(certificate, path):
     open(path, "w").write(
