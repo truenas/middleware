@@ -157,13 +157,10 @@ def load_privatekey(buf, passphrase=None):
 
 def export_certificate_chain(buf):
     certificates = []
-    try:
-        matches = CERT_CHAIN_REGEX.findall(buf)
-        for m in matches:
-            certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
-            certificates.append(crypto.dump_certificate(crypto.FILETYPE_PEM, certificate))
-    except:
-        pass
+    matches = CERT_CHAIN_REGEX.findall(buf)
+    for m in matches:
+        certificate = crypto.load_certificate(crypto.FILETYPE_PEM, m)
+        certificates.append(crypto.dump_certificate(crypto.FILETYPE_PEM, certificate))
 
     return ''.join(certificates).strip()
 

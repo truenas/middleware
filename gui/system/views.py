@@ -1561,10 +1561,13 @@ def buf_generator(buf):
 
 def CA_export_certificate(request, id):
     ca = models.CertificateAuthority.objects.get(pk=id)
-    if ca.cert_chain:
-        cert = export_certificate_chain(ca.cert_certificate)
-    else:
-        cert = export_certificate(ca.cert_certificate)
+    try:
+        if ca.cert_chain:
+            cert = export_certificate_chain(ca.cert_certificate)
+        else:
+            cert = export_certificate(ca.cert_certificate)
+    except Exception as e:
+        raise MiddlewareError(e)
 
     response = StreamingHttpResponse(
         buf_generator(cert), content_type='application/octet-stream'
