@@ -16,6 +16,7 @@ cache.get_apps()
 
 from freenasUI.system import models
 
+
 def write_certificates(certs):
     for cert in certs:
         if not os.path.exists(cert.cert_root_path):
@@ -26,8 +27,8 @@ def write_certificates(certs):
                 cert.write_certificate()
             except Exception as e:
                 print >> sys.stderr, "ERROR: %s" % e
-             
-        if cert.cert_privatekey: 
+
+        if cert.cert_privatekey:
             try:
                 cert.write_privatekey()
                 os.chmod(cert.get_privatekey_path(), 0400)
