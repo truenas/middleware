@@ -112,7 +112,8 @@ def main():
                       "debug",
                       "train=",
                       "verbose",
-                      "no-delta"
+                      "no-delta",
+                      "snl"
                       ]
         opts, args = getopt.getopt(sys.argv[1:], short_opts, long_opts)
     except getopt.GetoptError as err:
@@ -126,6 +127,7 @@ def main():
     cache_dir = "/var/db/system/update"
     train = None
     pkg_type = None
+    snl = False
     
     for o, a in opts:
         if o in ("-v", "--verbose"):
@@ -138,6 +140,8 @@ def main():
             train = a
         elif o in ("--no-delta"):
             pkg_type = Update.PkgFileFullOnly
+        elif o in ("--snl"):
+            snl = True
         else:
             assert False, "unhandled option %s" % o
 
@@ -168,6 +172,8 @@ def main():
                 print("Strangely, DownloadUpdate says there updates, but PendingUpdates says otherwise", file=sys.stderr)
                 sys.exit(1)
             PrintDifferences(diffs)
+            if snl:
+                print("I've got a fever, and the only prescription is applying the pending update.")
             sys.exit(0)
 
     elif args[0] == "update":
@@ -223,6 +229,8 @@ def main():
                 sys.exit(1)
             if rv:
                 print("System should be rebooted now", file=sys.stderr)
+                if snl:
+                    print("Really explore the space.")
             sys.exit(0)
     else:
         usage()
