@@ -482,200 +482,211 @@ Table 24.4a briefly describes the columns in the output.
 +---------------------+-------------------------------------------------------------------------+
 
 
-This command provides more verbose information::
+To receive a summary of statistics, use::
 
- arcstat.py -v
+ arcsummary.py
  System Memory:
-	2.00%	156.36	MiB Active,	1.49%	116.70	MiB Inact
-	39.49%	3.02	GiB Wired,	0.03%	2.53	MiB Cache
-	56.97%	4.35	GiB Free,	0.02%	1.23	MiB Gap
-	Real Installed:				8.00	GiB
-	Real Available:			98.65%	7.89	GiB
-	Real Managed:			96.83%	7.64	GiB
-	Logical Total:				8.00	GiB
-	Logical Used:			44.12%	3.53	GiB
-	Logical Free:			55.88%	4.47	GiB
-	Kernel Memory:				226.69	MiB
-	Data:				90.16%	204.39	MiB
-	Text:				9.84%	22.31	MiB
-	Kernel Memory Map:			7.64	GiB
-	Size:				22.56%	1.72	GiB
-	Free:				77.44%	5.92	GiB
-	ARC Summary: (HEALTHY)
-		Storage pool Version:	5000
-		Filesystem Version:	5
-		Memory Throttle Count:	0
-	ARC Misc:
-		Deleted:		0
-		Recycle Misses:		0
-		Mutex Misses:		0
-		Evict Skips:		0
-	ARC Size:			28.39%	1.89	GiB
-		Target Size: (Adaptive)	100.00%	6.64	GiB
-		Min Size (Hard Limit):	12.50%	850.23	MiB
-		Max Size (High Water):	8:1	6.64	GiB
-	ARC Size Breakdown:
-		Recently Used Cache Size: 50.30% 3.34	GiB
-		Frequently Used Cache Size: 49.70% 3.30	GiB
-	ARC Hash Breakdown:
-		Elements Max:		258.19k
-		Elements Current:	100.00%	258.19k
-		Collisions:			157.63k
-		Chain Max:			8
-		Chains:				79.46k
-	ARC Total accesses:			2.25m
-		Cache Hit Ratio:	99.94%	2.25m
-		Cache Miss Ratio:	0.06%	1.38k
-		Actual Hit Ratio:	99.86%	2.25m
-		Data Demand Efficiency:	100.00%	1.99m
-		Data Prefetch Efficiency: 100.00% 6.11k
-		CACHE HITS BY CACHE LIST:
-		 Anonymously Used:	0.02%	353
-		 Most Recently Used:	2.70%	60.83k
-		 Most Frequently Used:	97.22%	2.19m
-		 Most Recently Used Ghost: 0.06% 1.34k
-		 Most Frequently Used Ghost: 0.00% 13
-		CACHE HITS BY DATA TYPE:
-		 Demand Data:		88.26%	1.99m
-		 Prefetch Data:		0.27%	6.11k
-		 Demand Metadata:	11.47%	258.29k
-		 Prefetch Metadata:	0.00%	0
-		CACHE MISSES BY DATA TYPE:
-		 Demand Data:		0.00%	0
-		 Prefetch Data:		0.00%	0
-		 Demand Metadata:	9.76%	135
-		 Prefetch Metadata:	90.24%	1.25k
-	File-Level Prefetch: (HEALTHY)DMU Efficiency: 10.16m
-		 Hit Ratio:		80.03%	8.13m
-		 Miss Ratio:		19.97%	2.03m
-		 Colinear:			2.03m
-		  Hit Ratio:		0.00%	91
-		  Miss Ratio:		100.00%	2.03m
-		 Stride:			8.06m
-		  Hit Ratio:		100.00%	8.06m
-		  Miss Ratio:		0.00%	0
-	DMU Misc:
-		Reclaim:			2.03m
-		 Successes:		0.08%	1.65k
-		 Failures:		99.92%	2.03m
-		Streams:			72.11k
-		 +Resets:		0.00%	0
-		 -Resets:		100.00%	72.11k
-		Bogus:				0
-	ZFS Tunable (sysctl):
-		kern.maxusers			384
-		vm.kmem_size			8205963264
-		vm.kmem_size_scale		1
-		vm.kmem_size_min		0
-		vm.kmem_size_max		329853485875
-		vfs.zfs.l2c_only_size		0
-		vfs.zfs.mfu_ghost_data_lsize	623119872
-		vfs.zfs.mfu_ghost_metadata_lsize 348672
-		vfs.zfs.mfu_ghost_size		623468544
-		vfs.zfs.mfu_data_lsize		302145536
-		vfs.zfs.mfu_metadata_lsize	8972288
-		vfs.zfs.mfu_size		326883328
-		vfs.zfs.mru_ghost_data_lsize	769186304
-		vfs.zfs.mru_ghost_metadata_lsize 8935424
-		vfs.zfs.mru_ghost_size		778121728
-		vfs.zfs.mru_data_lsize		1127638016
-		vfs.zfs.mru_metadata_lsize	30442496
-		vfs.zfs.mru_size		1274765312
-		vfs.zfs.anon_data_lsize		0
-		vfs.zfs.anon_metadata_lsize	0
-		vfs.zfs.anon_size		279040
-		vfs.zfs.l2arc_norw		1
-		vfs.zfs.l2arc_feed_again	1
-		vfs.zfs.l2arc_noprefetch	1
-		vfs.zfs.l2arc_feed_min_ms	200
-		vfs.zfs.l2arc_feed_secs		1
-		vfs.zfs.l2arc_headroom		2
-		vfs.zfs.l2arc_write_boost	8388608
-		vfs.zfs.l2arc_write_max		8388608
-		vfs.zfs.arc_meta_limit		1783055360
-		vfs.zfs.arc_meta_used		594834472
-		vfs.zfs.arc_min			891527680
-		vfs.zfs.arc_max			7132221440
-		vfs.zfs.dedup.prefetch		1
-		vfs.zfs.mdcomp_disable		0
-		vfs.zfs.nopwrite_enabled	1
-		vfs.zfs.zfetch.array_rd_sz	1048576
-		vfs.zfs.zfetch.block_cap	256
-		vfs.zfs.zfetch.min_sec_reap	2
-		vfs.zfs.zfetch.max_streams	8
-		vfs.zfs.prefetch_disable	0
-		vfs.zfs.no_scrub_prefetch	0
-		vfs.zfs.no_scrub_io		0
-		vfs.zfs.resilver_min_time_ms	3000
-		vfs.zfs.free_min_time_ms	1000
-		vfs.zfs.scan_min_time_ms	1000
-		vfs.zfs.scan_idle		50
-		vfs.zfs.scrub_delay		4
-		vfs.zfs.resilver_delay		2
-		vfs.zfs.top_maxinflight		32
-		vfs.zfs.write_to_degraded	0
-		vfs.zfs.mg_noalloc_threshold	0
-		vfs.zfs.mg_alloc_failures	8
-		vfs.zfs.condense_pct		200
-		vfs.zfs.metaslab.weight_factor_enable 0
-		vfs.zfs.metaslab.preload_enabled 1
-		vfs.zfs.metaslab.preload_limit	3
-		vfs.zfs.metaslab.unload_delay	8
-		vfs.zfs.metaslab.load_pct	50
-		vfs.zfs.metaslab.min_alloc_size	10485760
-		vfs.zfs.metaslab.df_free_pct	4
-		vfs.zfs.metaslab.df_alloc_threshold 131072
-		vfs.zfs.metaslab.debug_unload	0
-		vfs.zfs.metaslab.debug_load	0
-		vfs.zfs.metaslab.gang_bang	131073
-		vfs.zfs.ccw_retry_interval	300
-		vfs.zfs.check_hostid		1
-		vfs.zfs.deadman_enabled		1
-		vfs.zfs.deadman_checktime_ms	5000
-		vfs.zfs.deadman_synctime_ms	1000000
-		vfs.zfs.recover			0
-		vfs.zfs.txg.timeout		5
-		vfs.zfs.max_auto_ashift		13
-		vfs.zfs.vdev.cache.bshift	16
-		vfs.zfs.vdev.cache.size		0
-		vfs.zfs.vdev.cache.max		16384
-		vfs.zfs.vdev.trim_on_init	1
-		vfs.zfs.vdev.write_gap_limit	4096
-		vfs.zfs.vdev.read_gap_limit	32768
-		vfs.zfs.vdev.aggregation_limit	131072
-		vfs.zfs.vdev.scrub_max_active	2
-		vfs.zfs.vdev.scrub_min_active	1
-		vfs.zfs.vdev.async_write_max_active 10
-		vfs.zfs.vdev.async_write_min_active 1
-		vfs.zfs.vdev.async_read_max_active 3
-		vfs.zfs.vdev.async_read_min_active 1
-		vfs.zfs.vdev.sync_write_max_active 10
-		vfs.zfs.vdev.sync_write_min_active 10
-		vfs.zfs.vdev.sync_read_max_active 10
-		vfs.zfs.vdev.sync_read_min_active 10
-		vfs.zfs.vdev.max_active		1000
-		vfs.zfs.vdev.larger_ashift_minimal 1
-		vfs.zfs.vdev.bio_delete_disable 0
-		vfs.zfs.vdev.bio_flush_disable	0
-		vfs.zfs.vdev.trim_max_pending	64
-		vfs.zfs.vdev.trim_max_bytes	2147483648
-		vfs.zfs.cache_flush_disable	0
-		vfs.zfs.zil_replay_disable	0
-		vfs.zfs.sync_pass_rewrite	2
-		vfs.zfs.sync_pass_dont_compress	5
-		vfs.zfs.sync_pass_deferred_free	2
-		vfs.zfs.zio.use_uma		1
-		vfs.zfs.snapshot_list_prefetch	0
-		vfs.zfs.version.ioctl		3
-		vfs.zfs.version.zpl		5
-		vfs.zfs.version.spa		5000
-		vfs.zfs.version.acl		1
-		vfs.zfs.debug			0
-		vfs.zfs.super_owner		0
-		vfs.zfs.trim.enabled		1
-		vfs.zfs.trim.max_interval	1
-		vfs.zfs.trim.timeout		30
-		vfs.zfs.trim.txg_delay		32
+        2.36%   93.40   MiB Active,     8.95%   353.43  MiB Inact
+        8.38%   330.89  MiB Wired,      0.15%   5.90    MiB Cache
+        80.16%  3.09    GiB Free,       0.00%   0       Bytes Gap
+        Real Installed:                         4.00    GiB
+        Real Available:                 99.31%  3.97    GiB
+        Real Managed:                   97.10%  3.86    GiB
+        Logical Total:                          4.00    GiB
+        Logical Used:                   13.93%  570.77  MiB
+        Logical Free:                   86.07%  3.44    GiB
+ Kernel Memory:                                 87.62   MiB
+        Data:                           69.91%  61.25   MiB
+        Text:                           30.09%  26.37   MiB
+ Kernel Memory Map:                             3.86    GiB
+        Size:                           5.11%   201.70  MiB
+        Free:                           94.89%  3.66    GiB
+ ARC Summary: (HEALTHY)
+        Storage pool Version:                   5000
+        Filesystem Version:                     5
+        Memory Throttle Count:                  0
+ ARC Misc:
+        Deleted:                                8
+        Mutex Misses:                           0
+        Evict Skips:                            0
+ ARC Size:                               5.83%   170.45  MiB
+        Target Size: (Adaptive)         100.00% 2.86    GiB
+        Min Size (Hard Limit):          12.50%  365.69  MiB
+        Max Size (High Water):          8:1     2.86    GiB
+ ARC Size Breakdown:
+        Recently Used Cache Size:       50.00%  1.43    GiB
+        Frequently Used Cache Size:     50.00%  1.43    GiB
+ ARC Hash Breakdown:
+        Elements Max:                           5.90k
+        Elements Current:               100.00% 5.90k
+        Collisions:                             72
+        Chain Max:                              1
+        Chains:                                 23
+ ARC Total accesses:                                    954.06k
+        Cache Hit Ratio:                99.18%  946.25k
+        Cache Miss Ratio:               0.82%   7.81k
+        Actual Hit Ratio:               98.84%  943.00k
+        Data Demand Efficiency:         99.20%  458.77k
+        CACHE HITS BY CACHE LIST:
+          Anonymously Used:             0.34%   3.25k
+          Most Recently Used:           3.73%   35.33k
+          Most Frequently Used:         95.92%  907.67k
+          Most Recently Used Ghost:     0.00%   0
+          Most Frequently Used Ghost:   0.00%   0
+        CACHE HITS BY DATA TYPE:
+          Demand Data:                  48.10%  455.10k
+          Prefetch Data:                0.00%   0
+          Demand Metadata:              51.56%  487.90k
+          Prefetch Metadata:            0.34%   3.25k
+        CACHE MISSES BY DATA TYPE:
+          Demand Data:                  46.93%  3.66k
+          Prefetch Data:                0.00%   0
+          Demand Metadata:              49.76%  3.88k
+          Prefetch Metadata:            3.30%   258
+ ZFS Tunable (sysctl):
+        kern.maxusers                           590
+        vm.kmem_size                            4141375488
+        vm.kmem_size_scale                      1
+        vm.kmem_size_min                        0
+        vm.kmem_size_max                        1319413950874
+        vfs.zfs.vol.unmap_enabled               1
+        vfs.zfs.vol.mode                        2
+        vfs.zfs.sync_pass_rewrite               2
+        vfs.zfs.sync_pass_dont_compress         5
+        vfs.zfs.sync_pass_deferred_free         2
+        vfs.zfs.zio.exclude_metadata            0
+        vfs.zfs.zio.use_uma                     1
+        vfs.zfs.cache_flush_disable             0
+        vfs.zfs.zil_replay_disable              0
+        vfs.zfs.version.zpl                     5
+        vfs.zfs.version.spa                     5000
+        vfs.zfs.version.acl                     1
+        vfs.zfs.version.ioctl                   5
+        vfs.zfs.debug                           0
+        vfs.zfs.super_owner                     0
+        vfs.zfs.min_auto_ashift                 9
+        vfs.zfs.max_auto_ashift                 13
+        vfs.zfs.vdev.write_gap_limit            4096
+        vfs.zfs.vdev.read_gap_limit             32768
+        vfs.zfs.vdev.aggregation_limit          131072
+        vfs.zfs.vdev.trim_max_active            64
+        vfs.zfs.vdev.trim_min_active            1
+        vfs.zfs.vdev.scrub_max_active           2
+        vfs.zfs.vdev.scrub_min_active           1
+        vfs.zfs.vdev.async_write_max_active     10
+        vfs.zfs.vdev.async_write_min_active     1
+        vfs.zfs.vdev.async_read_max_active      3
+        vfs.zfs.vdev.async_read_min_active      1
+        vfs.zfs.vdev.sync_write_max_active      10
+        vfs.zfs.vdev.sync_write_min_active      10
+        vfs.zfs.vdev.sync_read_max_active       10
+        vfs.zfs.vdev.sync_read_min_active       10
+        vfs.zfs.vdev.max_active                 1000
+        vfs.zfs.vdev.async_write_active_max_dirty_percent60
+        vfs.zfs.vdev.async_write_active_min_dirty_percent30
+        vfs.zfs.vdev.mirror.non_rotating_seek_inc1
+        vfs.zfs.vdev.mirror.non_rotating_inc    0
+        vfs.zfs.vdev.mirror.rotating_seek_offset1048576
+        vfs.zfs.vdev.mirror.rotating_seek_inc   5
+        vfs.zfs.vdev.mirror.rotating_inc        0
+        vfs.zfs.vdev.trim_on_init               1
+        vfs.zfs.vdev.larger_ashift_minimal      0
+        vfs.zfs.vdev.bio_delete_disable         0
+        vfs.zfs.vdev.bio_flush_disable          0
+        vfs.zfs.vdev.cache.bshift               16
+        vfs.zfs.vdev.cache.size                 0
+        vfs.zfs.vdev.cache.max                  16384
+        vfs.zfs.vdev.metaslabs_per_vdev         200
+        vfs.zfs.vdev.trim_max_pending           10000
+        vfs.zfs.txg.timeout                     5
+        vfs.zfs.trim.enabled                    1
+        vfs.zfs.trim.max_interval               1
+        vfs.zfs.trim.timeout                    30
+        vfs.zfs.trim.txg_delay                  32
+        vfs.zfs.space_map_blksz                 4096
+        vfs.zfs.spa_slop_shift                  5
+        vfs.zfs.spa_asize_inflation             24
+        vfs.zfs.deadman_enabled                 1
+        vfs.zfs.deadman_checktime_ms            5000
+        vfs.zfs.deadman_synctime_ms             1000000
+        vfs.zfs.recover                         0
+        vfs.zfs.spa_load_verify_data            1
+        vfs.zfs.spa_load_verify_metadata        1
+        vfs.zfs.spa_load_verify_maxinflight     10000
+        vfs.zfs.check_hostid                    1
+        vfs.zfs.mg_fragmentation_threshold      85
+        vfs.zfs.mg_noalloc_threshold            0
+        vfs.zfs.condense_pct                    200
+        vfs.zfs.metaslab.bias_enabled           1
+        vfs.zfs.metaslab.lba_weighting_enabled  1
+        vfs.zfs.metaslab.fragmentation_factor_enabled1
+        vfs.zfs.metaslab.preload_enabled        1
+        vfs.zfs.metaslab.preload_limit          3
+        vfs.zfs.metaslab.unload_delay           8
+        vfs.zfs.metaslab.load_pct               50
+        vfs.zfs.metaslab.min_alloc_size         33554432
+        vfs.zfs.metaslab.df_free_pct            4
+        vfs.zfs.metaslab.df_alloc_threshold     131072
+        vfs.zfs.metaslab.debug_unload           0
+        vfs.zfs.metaslab.debug_load             0
+        vfs.zfs.metaslab.fragmentation_threshold70
+        vfs.zfs.metaslab.gang_bang              16777217
+        vfs.zfs.free_bpobj_enabled              1
+        vfs.zfs.free_max_blocks                 18446744073709551615
+        vfs.zfs.no_scrub_prefetch               0
+        vfs.zfs.no_scrub_io                     0
+        vfs.zfs.resilver_min_time_ms            3000
+        vfs.zfs.free_min_time_ms                1000
+        vfs.zfs.scan_min_time_ms                1000
+        vfs.zfs.scan_idle                       50
+        vfs.zfs.scrub_delay                     4
+        vfs.zfs.resilver_delay                  2
+        vfs.zfs.top_maxinflight                 32
+        vfs.zfs.delay_scale                     500000
+        vfs.zfs.delay_min_dirty_percent         60
+        vfs.zfs.dirty_data_sync                 67108864
+        vfs.zfs.dirty_data_max_percent          10
+        vfs.zfs.dirty_data_max_max              4294967296
+        vfs.zfs.dirty_data_max                  426512793
+        vfs.zfs.max_recordsize                  1048576
+        vfs.zfs.zfetch.array_rd_sz              1048576
+        vfs.zfs.zfetch.max_distance             8388608
+        vfs.zfs.zfetch.min_sec_reap             2
+        vfs.zfs.zfetch.max_streams              8
+        vfs.zfs.prefetch_disable                1
+        vfs.zfs.mdcomp_disable                  0
+        vfs.zfs.nopwrite_enabled                1
+        vfs.zfs.dedup.prefetch                  1
+        vfs.zfs.l2c_only_size                   0
+        vfs.zfs.mfu_ghost_data_lsize            0
+        vfs.zfs.mfu_ghost_metadata_lsize        0
+        vfs.zfs.mfu_ghost_size                  0
+        vfs.zfs.mfu_data_lsize                  26300416
+        vfs.zfs.mfu_metadata_lsize              1780736
+        vfs.zfs.mfu_size                        29428736
+        vfs.zfs.mru_ghost_data_lsize            0
+        vfs.zfs.mru_ghost_metadata_lsize        0
+        vfs.zfs.mru_ghost_size                  0
+        vfs.zfs.mru_data_lsize                  122090496
+        vfs.zfs.mru_metadata_lsize              2235904
+        vfs.zfs.mru_size                        139389440
+        vfs.zfs.anon_data_lsize                 0
+        vfs.zfs.anon_metadata_lsize             0
+        vfs.zfs.anon_size                       163840
+        vfs.zfs.l2arc_norw                      1
+        vfs.zfs.l2arc_feed_again                1
+        vfs.zfs.l2arc_noprefetch                1
+        vfs.zfs.l2arc_feed_min_ms               200
+        vfs.zfs.l2arc_feed_secs                 1
+        vfs.zfs.l2arc_headroom                  2
+        vfs.zfs.l2arc_write_boost               8388608
+        vfs.zfs.l2arc_write_max                 8388608
+        vfs.zfs.arc_meta_limit                  766908416
+        vfs.zfs.arc_free_target                 7062
+        vfs.zfs.arc_shrink_shift                7
+        vfs.zfs.arc_average_blocksize           8192
+        vfs.zfs.arc_min                         383454208
+        vfs.zfs.arc_max                         3067633664
 
 When reading the tunable values, 0 means no, 1 typically means yes, and any other number represents a value. To receive a brief description of a "sysctl"
 value, use :command:`sysctl -d`. For example::
