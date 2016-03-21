@@ -101,6 +101,8 @@ What's New in |version|
 
 * USB3 support is now enabled by default.
 
+* The "Remote Graphite Server Hostname" field has been added to :menuselection:`System --> Advanced`.
+
 * The "Firmware Update" button has been removed from :menuselection:`System --> Advanced`. Updates should now be performed using :menuselection:`System --> Update`.
 
 * The "Disabled" option has been removed from :menuselection:`Storage --> Replication Tasks --> Add Replication --> Encryption Cipher`.

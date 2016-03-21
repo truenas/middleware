@@ -44,7 +44,7 @@ does not use a domain name add *.local* to the end of the hostname.
 
 **Figure 5.1a: System Information Tab**
 
-.. image:: images/system1a.png
+.. image:: images/system1b.png
 
 .. _General:
 
@@ -197,7 +197,7 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-.. image:: images/be1e.png
+.. image:: images/be1f.png
 
 Each boot environment entry contains the following information:
 
@@ -209,6 +209,11 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
+* **Delete:** used to delete the highlighted entry, which also removes that entry from the boot menu. Since you can not delete an entry that has been activated, this button will
+  not appear for the active boot environment. If you need to delete an entry that  is currently activated, first activate another entry, which will clear the
+  *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
+  the original installation state.
+
 * **Rename:** used to change the name of the boot environment.
 
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
@@ -216,11 +221,6 @@ Highlight an entry to view its configuration buttons.  The following configurati
   but won't be used on the next boot.
 
 * **Clone:** used to create a copy of the highlighted boot environment.
-
-* **Delete:** used to delete the highlighted entry, which also removes that entry from the boot menu. Since you can not delete an entry that has been activated, this button will
-  not appear for the active boot environment. If you need to delete an entry that  is currently activated, first activate another entry, which will clear the
-  *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
-  the original installation state.
 
 The buttons above the boot entries can be used to:
 
@@ -347,6 +347,10 @@ Advanced
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
 |                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
+| Remote Graphite Server hostname         | string                           | input the IP address or hostname of a remote server that is running          |
+|                                         |                                  | a `Graphite <http://graphite.wikidot.com/>`_ server                          |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
@@ -607,10 +611,10 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
  loader_menu_title="Welcome to FreeNAS"
  loader_brand="freenas-brand"
  loader_version=" "
+ kern.cam.boot_delay="30000"
  debug.debugger_on_panic=1
  debug.ddb.textdump.pending=1
  hw.hptrr.attach_generic=0
- kern.ipc.nmbclusters="262144"
  vfs.mountroot.timeout="30"
  ispfw_load="YES"
  hint.isp.0.role=2
@@ -620,6 +624,10 @@ The GUI does not display the loaders that are pre-set when FreeNAS® is installe
  module_path="/boot/kernel;/boot/modules;/usr/local/modules"
  net.inet6.ip6.auto_linklocal="0"
  vfs.zfs.vol.mode=2
+ kern.geom.label.disk_ident.enable="0"
+ hint.ahciem.0.disabled="1"
+ hint.ahciem.1.disabled="1"
+ kern.msgbufsize="524288"
  hw.usb.no_shutdown_wait=1
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
@@ -651,7 +659,7 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-.. image:: images/update1a.png
+.. image:: images/update1b.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -661,7 +669,7 @@ This screen also shows which software branch, or train, the system is currently 
 * **FreeNAS-10-Nightlies:** this train should
   **not be used in production**. It represents the experimental branch for the future 10 version and is meant only for bleeding edge testers and developers.
 
-* **FreeNAS-9.3-Nightlies:** this train has the latest, but still being tested, fixes and features. Unless you are testing a new feature, you do not want to
+* **FreeNAS-9.10-Nightlies:** this train has the latest, but still being tested, fixes and features. Unless you are testing a new feature, you do not want to
   run this train in production.
 
 * **FreeNAS-9.3-STABLE:** this is the
