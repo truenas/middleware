@@ -62,9 +62,7 @@ def main():
         'internal_interfaces': notifier().failover_internal_interfaces(),
     }
 
-    for item in Interfaces.objects.filter(int_critical=True).exclude(
-        int_carp=None
-    ):
+    for item in Interfaces.objects.filter(int_critical=True):
         data['groups'][item.int_group].append(item.int_interface)
 
     with open(FAILOVER_JSON, "w+") as fh:
