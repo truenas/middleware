@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-01-31 18:15+0000\n"
+"PO-Revision-Date: 2016-03-20 16:56+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454264108.0\n"
+"X-POOTLE-MTIME: 1458492987.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -2763,7 +2763,7 @@ msgstr "Domeinnaam (DNS/Realm-naam)"
 
 #: services/models.py:1245
 msgid "Domain Name, eg example.com"
-msgstr "Domeinnaam, bv. voorbeeld.com"
+msgstr "Domeinnaam, bv. example.com"
 
 #: services/models.py:1249
 msgid "NetBIOS Name"
@@ -4058,7 +4058,11 @@ msgstr "S.M.A.R.T. inschakelen"
 
 #: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
-msgstr "S.M.A.R.T. extra opties"
+msgstr ""
+"Het NFSv3-eigendomsmodel voor NFSv4 gebruiken. Dit omzeilt de noodzaak om "
+"gebruikers en groepen tussen de client en server te synchroniseren. Houd er "
+"rekening mee dat deze optie wederzijds incompatibel is met de optie voor > "
+"16 groepen."
 
 #: storage/models.py:444 system/models.py:660
 msgid "Disks"
@@ -4599,7 +4603,7 @@ msgid ""
 "it sends, eg: freenas@example.com"
 msgstr ""
 "Het e-mailadres dat het systeem als verzendadres voor uitgaande e-mail zal "
-"gebruiken, bv. freenas@voorbeeld.com"
+"gebruiken, bv. freenas@example.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -13110,9 +13114,8 @@ msgstr ""
 "Failover dient uitgeschakeld te zijn om netwerkwijzigingen uit te voeren."
 
 #: services/forms.py:1129
-#, fuzzy
 msgid "LUN ID must be a positive integer"
-msgstr "Interval moet een geheel getal zijn."
+msgstr "LUN-ID moet een positief geheel getal zijn"
 
 #: services/models.py:115
 msgid "Use syslog only"
@@ -13133,9 +13136,8 @@ msgstr ""
 "is verstuurd en zoekt naar het groepslidmaatschap op de server."
 
 #: services/models.py:1576
-#, fuzzy
 msgid "Bind Interfaces"
-msgstr "Interfaces"
+msgstr "Interfaces binden"
 
 #: services/models.py:1578
 #, fuzzy
@@ -13155,7 +13157,7 @@ msgstr ""
 
 #: services/models.py:379
 msgid "NFSv3 ownership model for NFSv4"
-msgstr ""
+msgstr "NFSv3-eigendomsmodel voor NFSv4"
 
 #: services/models.py:380
 msgid ""
@@ -13163,31 +13165,39 @@ msgid ""
 "users and groups between the client and server. Note that this option is "
 "mutually incompatible with the > 16 groups option."
 msgstr ""
+"Het NFSv3-eigendomsmodel voor NFSv4 gebruiken. Dit omzeilt de noodzaak om "
+"gebruikers en groepen tussen de client en server te synchroniseren. Houd er "
+"rekening mee dat deze optie wederzijds incompatibel is met de optie voor > "
+"16 groepen."
 
 #: services/models.py:433
-#, fuzzy
 msgid ""
 "This option ignores the group membership sent on the wire by the NFS client "
 "and looks up the group membership on the server.  Note that this option is "
 "mutually incompatible with the NFSv3 ownership model for NFSv4."
 msgstr ""
 "Deze optie negeert het groepslidmaatschap dat simultaan door de NFS-client "
-"is verstuurd en zoekt naar het groepslidmaatschap op de server."
+"is verstuurd en zoekt naar het groepslidmaatschap op de server. Houd er "
+"rekening mee dat deze optie wederzijds incompatibel is met het NFSv3-"
+"eigendomsmodel voor NFSv4."
 
 #: system/models.py:333
-#, fuzzy
 msgid "Remote Graphite Server Hostname"
-msgstr "Naam van externe host"
+msgstr "Hostnaam van externe Graphite-server"
 
 #: system/models.py:334
+#, fuzzy
 msgid ""
 "A hostname or IP here will be used as the destination to send collectd data "
 "to using the graphite plugin to collectd."
 msgstr ""
+"Een hostnaam of IP-adres hier wordt gebruikt als de bestemming voor het "
+"verzenden van collectd-gegevens voor gebruik van de graphite-plug-in voor "
+"collectd."
 
 #: directoryservice/models.py:953
 msgid "Disable Active Directory user/group cache"
-msgstr ""
+msgstr "Cache voor Active Directory-gebruiker/-groep uitschakelen"
 
 #: directoryservice/models.py:954
 msgid ""
@@ -13199,7 +13209,7 @@ msgstr ""
 
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
-msgstr ""
+msgstr "U mag geen interfaces verwijderen terwijl failover is ingeschakeld."
 
 #: services/views.py:296
 #, fuzzy
@@ -13212,16 +13222,41 @@ msgid "Idmap Range High"
 msgstr "Bereik hoog"
 
 #: storage/forms.py:734
-#, fuzzy
 msgid "File System type"
 msgstr "Type bestandssysteem"
 
 #: support/forms.py:49
-#, fuzzy
 msgid "License"
-msgstr "Licentie bijwerken"
+msgstr "Licentie"
 
 #: system/admin.py:26
-#, fuzzy
 msgid "Boot Status"
-msgstr "Status"
+msgstr "Opstartstatus"
+
+#: directoryservice/models.py:954
+msgid ""
+"Set this if you want to disable caching Active Directory users and groups.  "
+"Use this option if you are experiencing slowness or having difficulty "
+"binding to the domain with a large number of users and groups."
+msgstr ""
+"Stel dit in als u het opslaan in cache van Active Directory-gebruikers en -"
+"groepen wilt uitschakelen. Gebruik deze optie als u traagheid ervaart of "
+"moeite hebt met verbinden aan het domein met een groot aantal gebruikers en "
+"groepen."
+
+#: system/forms.py:2081
+msgid "Empty Certificate!"
+msgstr "Leeg certificaat!"
+
+#: system/forms.py:2112
+#: system/forms.py:2250
+#: system/forms.py:2378
+#: system/forms.py:2592
+#: system/forms.py:2718
+#: system/forms.py:2856
+msgid "{0} is a reserved internal keyword for Certificate Management"
+msgstr "{0} is een gereserveerd intern trefwoord voor certificaatbeheer"
+
+#: templates/vcp/index.html:84
+msgid "Repair"
+msgstr "Repareren"

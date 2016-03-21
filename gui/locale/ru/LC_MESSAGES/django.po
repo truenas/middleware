@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-03-17 16:58+0000\n"
+"PO-Revision-Date: 2016-03-19 09:55+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458233890.0\n"
+"X-POOTLE-MTIME: 1458381301.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -13117,3 +13117,31 @@ msgstr "Лицензия"
 #: system/admin.py:26
 msgid "Boot Status"
 msgstr "Состояние загрузочного пула"
+
+#: directoryservice/models.py:954
+msgid ""
+"Set this if you want to disable caching Active Directory users and groups.  "
+"Use this option if you are experiencing slowness or having difficulty "
+"binding to the domain with a large number of users and groups."
+msgstr ""
+"Установите этот параметр если вы хотите отключить кэширование пользователей "
+"и групп Active Directory.  Используйте эту опцию если вы испытываете "
+"задержки или сложности в привязке к домену с большим числом пользователей и "
+"групп."
+
+#: system/forms.py:2081
+msgid "Empty Certificate!"
+msgstr "Пустой сертификат!"
+
+#: system/forms.py:2112
+#: system/forms.py:2250
+#: system/forms.py:2378
+#: system/forms.py:2592
+#: system/forms.py:2718
+#: system/forms.py:2856
+msgid "{0} is a reserved internal keyword for Certificate Management"
+msgstr ""
+
+#: templates/vcp/index.html:84
+msgid "Repair"
+msgstr "Восстановить"

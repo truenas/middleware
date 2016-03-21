@@ -12912,3 +12912,35 @@ msgstr "Aktualizovat licenci"
 #, fuzzy
 msgid "Boot Status"
 msgstr "Stav"
+
+#: directoryservice/models.py:954
+#, fuzzy
+msgid ""
+"Set this if you want to disable caching Active Directory users and groups.  "
+"Use this option if you are experiencing slowness or having difficulty "
+"binding to the domain with a large number of users and groups."
+msgstr ""
+"Tuto předvolbu nastavte, pokud chcete vypnout ukládání uživatelů a skupin z "
+"adresáře Active Directory do mezipaměti. VAROVÁNÍ: Tuto předvolbu použijte "
+"jen v případě, kdy velké množství uživatelů a skupin brání stroji ve spojení "
+"s doménou, protože pokud tuto předvolbu zapnete, nebude možné nastavovat "
+"přístupová práva prostřednictvím grafického uživatelského rozhraní."
+
+#: system/forms.py:2081
+#, fuzzy
+msgid "Empty Certificate!"
+msgstr "Importovat certifikát"
+
+#: system/forms.py:2112
+#: system/forms.py:2250
+#: system/forms.py:2378
+#: system/forms.py:2592
+#: system/forms.py:2718
+#: system/forms.py:2856
+msgid "{0} is a reserved internal keyword for Certificate Management"
+msgstr ""
+
+#: templates/vcp/index.html:84
+#, fuzzy
+msgid "Repair"
+msgstr "Opraveno"

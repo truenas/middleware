@@ -12401,3 +12401,29 @@ msgstr "更新许可证"
 #, fuzzy
 msgid "Boot Status"
 msgstr "状态"
+
+#: directoryservice/models.py:954
+msgid ""
+"Set this if you want to disable caching Active Directory users and groups.  "
+"Use this option if you are experiencing slowness or having difficulty "
+"binding to the domain with a large number of users and groups."
+msgstr ""
+
+#: system/forms.py:2081
+#, fuzzy
+msgid "Empty Certificate!"
+msgstr "导入证书"
+
+#: system/forms.py:2112
+#: system/forms.py:2250
+#: system/forms.py:2378
+#: system/forms.py:2592
+#: system/forms.py:2718
+#: system/forms.py:2856
+msgid "{0} is a reserved internal keyword for Certificate Management"
+msgstr ""
+
+#: templates/vcp/index.html:84
+#, fuzzy
+msgid "Repair"
+msgstr "已修复"
