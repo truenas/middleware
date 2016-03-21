@@ -277,8 +277,8 @@ def init():
             ]
         )
 
-    except getopt.error, msg:
-        sys.stderr.write(msg)
+    except getopt.GetoptError as msg:
+        sys.stderr.write(str(msg))
         usage()
 
     for opt, arg in opts:
