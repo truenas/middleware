@@ -10,8 +10,9 @@ from redmine import Redmine, exceptions
 def main(argv):
     key = ''
     project = ''
+    target = ''
     try:
-        opts, args = getopt.getopt(argv, "hk:p:", ["key=", "project="])
+        opts, args = getopt.getopt(argv, "hk:p:t:", ["key=", "project=", "target="])
     except getopt.GetoptError:
         print("create_redmine_changelog.py -k <key> -p <project>")
         sys.exit(2)
@@ -23,12 +24,16 @@ def main(argv):
             key = arg
         elif opt in ("-p", "--project"):
             project = arg
+        elif opt in ("-t", "--target"):
+            target = arg
     if key == '':
         print("<key> cannot be blank")
         sys.exit(2)
     if project == '':
         print("<project> cannot be blank")
         sys.exit(2)
+    if target == '':
+        target = "SU Candidate"
 
     bugs = 'https://bugs.freenas.org'
 
@@ -49,12 +54,13 @@ def main(argv):
     entrytext = ''
 
     for issue in reversed(issues):
+        entrytext = issue.subject
         skip = False
         try:
-            if str(issue.fixed_version) != "SU Candidate":
+            if str(issue.fixed_version) != target:
                 sys.stderr.write(
-                    "WARNING: {0}/issues/{1} is set to {2} not to SU Candidate\n".format(
-                        bugs, issue.id, issue.fixed_version)
+                    "WARNING: {0}/issues/{1} is set to {2} not to {3}\n".format(
+                        bugs, issue.id, issue.fixed_version, target)
                 )
                 skip = True
         except exceptions.ResourceAttrError:
@@ -76,10 +82,8 @@ def main(argv):
                                 entrytext = field.value
                         else:
                             skip = True
-                    else:
-                        entrytext = issue.subject
             if not skip:
-                entrytext = re.sub('[f|F][r|R][e|E][e|E][n|N][a|A][s|S]\s*[o|O][n|N]|[l|L][y|Y]:?', '', entrytext).strip()
+                entrytext = re.sub('freenas\s*only:?', '', entrytext, flags=re.IGNORECASE).strip()
                 if project.lower() == 'freenas':
                     entrytext = re.sub('\n', '\n\t\t\t', entrytext)
                     try:
