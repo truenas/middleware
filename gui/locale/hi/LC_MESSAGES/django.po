@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-03-17 09:16+0000\n"
+"PO-Revision-Date: 2016-03-20 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: hi\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458206181.0\n"
+"X-POOTLE-MTIME: 1458465381.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12104,4 +12104,28 @@ msgstr ""
 
 #: system/admin.py:26
 msgid "Boot Status"
+msgstr ""
+
+#: directoryservice/models.py:954
+msgid ""
+"Set this if you want to disable caching Active Directory users and groups.  "
+"Use this option if you are experiencing slowness or having difficulty "
+"binding to the domain with a large number of users and groups."
+msgstr ""
+
+#: system/forms.py:2081
+msgid "Empty Certificate!"
+msgstr ""
+
+#: system/forms.py:2112
+#: system/forms.py:2250
+#: system/forms.py:2378
+#: system/forms.py:2592
+#: system/forms.py:2718
+#: system/forms.py:2856
+msgid "{0} is a reserved internal keyword for Certificate Management"
+msgstr ""
+
+#: templates/vcp/index.html:84
+msgid "Repair"
 msgstr ""
