@@ -243,6 +243,7 @@ class bsdUsers(Model):
             ) == str(self.bsdusr_unixhash)
 
     def delete(self, using=None, reload=True):
+        from freenasUI.services.models import CIFS
         if self.bsdusr_builtin is True:
             raise ValueError(_(
                 "User %s is built-in and can not be deleted!"
@@ -260,6 +261,11 @@ class bsdUsers(Model):
                 gobj.delete(reload=False, pwdelete=False)
         except:
             pass
+        cifs = CIFS.objects.latest('id')
+        if cifs:
+            if cifs.cifs_srv_guest == self.bsdusr_username:
+                cifs.cifs_srv_guest = 'nobody'
+                cifs.save()
         super(bsdUsers, self).delete(using)
         if reload:
             notifier().reload("user")
