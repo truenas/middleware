@@ -153,11 +153,11 @@ The following plugins are available for FreeNAS® |release|:
 
 * `BTSync <https://www.getsync.com/>`_
 
+* `CloneDeploy <https://sourceforge.net/projects/clonedeploy/>`_
+
 * `CouchPotato <https://couchpota.to/>`_
 
 * `crashplan <http://www.code42.com/crashplan/>`_
-
-* `cruciblewds <http://cruciblewds.org/>`_
 
 * `Emby <http://emby.media/>`_
 
@@ -167,6 +167,8 @@ The following plugins are available for FreeNAS® |release|:
 
 * `HTPC-Manager <http://htpc.io/>`_
 
+* `LazyLibrarian <https://github.com/lazylibrarian/LazyLibrarian>`_
+
 * `Maraschino <http://www.maraschinoproject.com/>`_
 
 * `MineOS <http://minecraft.codeemo.com/>`_
@@ -175,7 +177,7 @@ The following plugins are available for FreeNAS® |release|:
 
 * `owncloud <https://owncloud.org/>`_
 
-* `plexmediaserver <https://plex.tv/>`_
+* `PlexMediaServer <https://plex.tv/>`_
 
 * `s3cmd <http://s3tools.org/s3cmd>`_
 
@@ -191,7 +193,7 @@ The following plugins are available for FreeNAS® |release|:
 
 * `Syncthing <https://syncthing.net/>`_
 
-* `transmission <http://www.transmissionbt.com/>`_
+* `Transmission <http://www.transmissionbt.com/>`_
 
 * `XDM <https://github.com/lad1337/XDM>`_
 

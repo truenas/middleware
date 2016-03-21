@@ -53,3 +53,6 @@ should be preserved across system upgrades and at shutdown. To instead save this
 Use the magnifier buttons next to each graph to increase or decrease the displayed time increment from 10 minutes, hourly, daily, weekly, or monthly. You can
 also use the "<<" and ">>" buttons to scroll through the output.
 
+`Update on using Graphite with FreeNAS <http://cmhramblings.blogspot.com/2015/12/update-on-using-graphite-with-freenas.html>`_ contains instructions for sending the collected information to
+a `Graphite <http://graphite.wikidot.com/>`_ server.
+
