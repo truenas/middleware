@@ -1351,7 +1351,6 @@ class InterfacesResourceMixin(object):
                 del bundle.data[key]
 
         if notifier().is_freenas():
-            del bundle.data['int_carp']
             del bundle.data['int_vhid']
             del bundle.data['int_vip']
             del bundle.data['int_pass']
