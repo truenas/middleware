@@ -665,6 +665,11 @@ _gen_conf()
 	while read -r tun_var tun_value; do
 		echo "${tun_var}=\"${tun_value}\""
 	done
+
+	# FreeNAS 9.10 uses zfsd, FreeNAS 10 does not.
+	if cat ${FREENAS_VERSIONFILE} | grep -qi '^freenas-9\.10'; then
+		echo "zfsd_enable=\"YES\""
+	fi
 }
 
 # Regenerate stale caches of rc.conf data.  We run multiple time
