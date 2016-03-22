@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2016-03-19 09:57+0000\n"
+"PO-Revision-Date: 2016-03-21 09:04+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458381428.0\n"
+"X-POOTLE-MTIME: 1458551079.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12966,6 +12966,7 @@ msgstr "Пустий сертифікат!"
 #: system/forms.py:2856
 msgid "{0} is a reserved internal keyword for Certificate Management"
 msgstr ""
+"{0} є зарезервованим внутрішнім ключовим словом для управління сертифікатами"
 
 #: templates/vcp/index.html:84
 msgid "Repair"
