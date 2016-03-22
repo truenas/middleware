@@ -84,9 +84,14 @@ sc()
 
 section_header()
 {
-	local name="${1}"
+	name="${1}" #expose name for use in the profiling footer
 
-	echo "$name" | awk '
+	#freenas debug is starting to take a long time on certain systems
+	#start profiling how long each section takes
+	#also record when the section started
+	fnd_section_start_time=`date +"%s"`  #get epoch time at start of routine
+
+	echo "$name @$fnd_section_start_time" | awk '
 	function makeline(ch, len)
 	{
 		line = "";
@@ -120,6 +125,11 @@ section_header()
 
 section_footer()
 {
+	if [ $fnd_section_start_time ]; then
+		fnd_section_end_time=`date +"%s"`  #get epoch time at end of routine
+		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))  #subtract to find elapsed time
+		echo "debug finished in $fnd_section_elapsed_time seconds for $name"
+	fi
 	echo
 	echo
 }
