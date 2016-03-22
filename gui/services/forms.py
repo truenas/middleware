@@ -370,10 +370,21 @@ class NFSForm(ModelForm):
             self.fields['nfs_srv_rpclockd_port'].label.lower()
         )
         self.instance._original_nfs_srv_v4 = self.instance.nfs_srv_v4
+        self.fields['nfs_srv_v4'].widget.attrs['onChange'] = (
+            'javascript:toggleNFSService();'
+        )
+        self.fields['nfs_srv_v4_v3owner'].widget.attrs['onChange'] = (
+            'javascript:toggleNFSService();'
+        )
+        self.fields['nfs_srv_16'].widget.attrs['onChange'] = (
+            'javascript:toggleNFSService();'
+        )
         if not self.instance.nfs_srv_v4 or (self.instance.nfs_srv_v4 and self.instance.nfs_srv_16):
-            self.fields.keyOrder.remove('nfs_srv_v4_v3owner')
+            self.fields['nfs_srv_v4_v3owner'].widget.attrs['disabled'] = (
+                'disabled'
+            )
         if self.instance.nfs_srv_v4_v3owner:
-            self.fields.keyOrder.remove('nfs_srv_16')
+            self.fields['nfs_srv_16'].widget.attrs['disabled'] = 'disabled'
 
     def clean_nfs_srv_bindip(self):
         ips = self.cleaned_data.get("nfs_srv_bindip")
