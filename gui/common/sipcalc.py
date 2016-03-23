@@ -53,7 +53,7 @@ class sipcalc_base_type(object):
         # For more explanation see the __new__ method of the `sipcalc_type`
         # class.
         self.sipcalc_out = kwargs.get('sipcalc_out', None)
-        if self.sipcalc_out is not None:
+        if self.sipcalc_out is None:
             p1 = pipeopen(
                 string.join(self.sipcalc_args, ' '),
                 allowfork=True,
