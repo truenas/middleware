@@ -27,6 +27,9 @@ load_rc_config $name
 : ${proftpd_enable:="NO"}
 : ${proftpd_config:="%%PREFIX%%/etc/proftpd.conf"}
 
+# proftpd needs UTF-8 enabled in $LANG for its mod_lang settings to work
+: ${proftpd_env:="LANG=en_US.UTF-8"}
+
 command=%%PREFIX%%/sbin/proftpd
 command_args="-c ${proftpd_config}"
 pidfile=$(grep PidFile ${proftpd_config} | awk '{print($2)}')

@@ -5,7 +5,7 @@ PORTNAME?=	proftpd
 .if !defined(DISTVERSION)
 PORTVERSION?=	${PROFTPD_VERSION}
 .endif
-PORTREVISION?=	1
+PORTREVISION?=	2
 CATEGORIES?=	ftp
 MASTER_SITES=	ftp://ftp.proftpd.org/distrib/source/ \
 		https://github.com/downloads/proftpd/proftpd.github.com/ \
