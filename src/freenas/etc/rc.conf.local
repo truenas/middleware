@@ -128,8 +128,8 @@ _interface_config()
 				internal_iface="igb1"
 			fi
 			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
-			echo "ifconfig_${internal_iface}_alias0=\"vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
-			echo "ifconfig_${internal_iface}_alias1=\"vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
+			echo "ifconfig_${internal_iface}_alias0=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
+			echo "ifconfig_${internal_iface}_alias1=\"inet vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
 		fi
 	fi
 
@@ -190,7 +190,7 @@ _interface_config()
 				v6addr=${v6addr_b}
 			fi
 			if [ -n "${int_vhid}" -a -n "${v4vip}" ]; then
-				echo "ifconfig_${interface}_alias${counter}=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${v4vip}/32\""
+				echo "ifconfig_${interface}_alias${counter}=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${v4vip}/32\""
 				counter=$((counter+1))
 			fi
 			if [ -n "${v4addr}" ]; then
