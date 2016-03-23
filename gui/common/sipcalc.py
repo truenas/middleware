@@ -35,7 +35,7 @@ class sipcalc_base_type(object):
     def __init__(self, *args, **kwargs):
         self.sipcalc = SIPCALC_PATH
         self.args = args
-        self.iface = None
+        self.iface = kwargs.get('iface', None)
 
         self.sipcalc_args = [self.sipcalc]
         for arg in args:
@@ -45,21 +45,25 @@ class sipcalc_base_type(object):
         if network:
             self.sipcalc_args.append(str(network))
 
-        iface = kwargs.get('iface', None)
-        if iface:
-            self.sipcalc_args.append(str(iface))
-            self.iface = iface
+        if self.iface:
+            self.sipcalc_args.append(str(self.iface))
 
-        p1 = pipeopen(
-            string.join(self.sipcalc_args, ' '),
-            allowfork=True,
-            important=False,
-        )
-        self.sipcalc_out = p1.communicate()
-        if self.sipcalc_out:
-            self.sipcalc_out = self.sipcalc_out[0]
+        # If we already have the results of the `sipcalc` shell call
+        # then do not do a redudant second call
+        # For more explanation see the __new__ method of the `sipcalc_type`
+        # class.
+        self.sipcalc_out = kwargs.get('sipcalc_out', None)
+        if self.sipcalc_out is not None:
+            p1 = pipeopen(
+                string.join(self.sipcalc_args, ' '),
+                allowfork=True,
+                important=False,
+            )
+            self.sipcalc_out = p1.communicate()
             if self.sipcalc_out:
-                self.sipcalc_out = self.sipcalc_out.split('\n')
+                self.sipcalc_out = self.sipcalc_out[0]
+                if self.sipcalc_out:
+                    self.sipcalc_out = self.sipcalc_out.split('\n')
 
     def is_ipv4(self):
         res = False
@@ -603,10 +607,20 @@ class sipcalc_type(sipcalc_base_type):
         obj = None
         sbt = sipcalc_base_type(*args, **kwargs)
 
+        # Note: `sipcalc_out` is the stdout result of the subprocess that calls
+        # the commandline sipcalc. Now the classes `sipcalc_ipv4_type` as well as
+        # `sipcalc_ipv6_type` both subclass `sipcalc_base_type` whose __init__ method
+        # is actually where the subprocess call is made. Since we need to make said call
+        # before figuring out if its ipv4 or ipv6 we alread have obtained the subprocess
+        # output in that call and the `sipcalc_out` kwargs to the respective inherited classes
+        # prevents another redundant subprocess call from being made
+        # I hope this explanation is good enough.
         if sbt.is_ipv4():
+            kwargs['sipcalc_out'] = sbt.sipcalc_out
             obj = sipcalc_ipv4_type(*args, **kwargs)
 
         elif sbt.is_ipv6():
+            kwargs['sipcalc_out'] = sbt.sipcalc_out
             obj = sipcalc_ipv6_type(*args, **kwargs)
 
         return obj

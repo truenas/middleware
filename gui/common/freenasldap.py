@@ -2073,9 +2073,9 @@ class FreeNAS_ActiveDirectory_Base(object):
         if results:
             for r in results:
                 if r[0]:
-                    subnets .append(r)
+                    subnets.append(r)
 
-        log.debug("FreeNAS_ActiveDirectory_Base.get_subnets: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.get_subnets: leave")
         return subnets
 
     def get_sites(self, **kwargs):
@@ -2099,7 +2099,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 if r[0]:
                     sites.append(r)
 
-        log.debug("FreeNAS_ActiveDirectory_Base.get_sites: enter")
+        log.debug("FreeNAS_ActiveDirectory_Base.get_sites: leave")
         return sites
 
     def get_machine_account(self, machine=None):
