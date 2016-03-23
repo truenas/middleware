@@ -853,7 +853,7 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 
 **Figure 11.9a: Configuring NFS**
 
-.. image:: images/nfs1b.png
+.. image:: images/nfs1c.png
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -875,6 +875,10 @@ Figure 11.9a shows the configuration screen and Table 11.9a summarizes the confi
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| NFSv3 ownership model  | checkbox   | greyed out unless "Enable NFSv4" is checked and, in turn, will grey out "Support>16 groups" which is incompatible;  |
+| for NFSv4              |            | check this box if NFSv4 ACL support is needed without requiring the client and the server to sync users and groups  |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Require Kerberos for   | checkbox   | when checked, NFS shares will fail if the Kerberos ticket is unavailable                                            |

@@ -117,6 +117,19 @@ What's New in |version|
 
 * The `jed <http://www.jedsoft.org/jed/>`_ editor has been added and can be run from :ref:`Shell`.
 
+.. _What's New Since 9.10 was Released:
+
+What's New Since 9.10 was Released
+----------------------------------
+
+FreeNAS® uses a "rolling release" model instead of point releases. The :ref:`Update` mechanism makes it easy to keep up-to-date with the latest security fixes, bug fixes, and new features.
+Some updates affect the user interface so this section lists any functional changes that have occurred since 9.10 was released.
+
+.. note:: the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® |version|. If a screen on your
+   system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
+   
+* The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 

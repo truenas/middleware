@@ -659,7 +659,7 @@ Figure 5.8a shows an example of the :menuselection:`System --> Update` screen.
 
 **Figure 5.8a: Update Options**
 
-.. image:: images/update1b.png
+.. image:: images/update1c.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
@@ -671,10 +671,13 @@ This screen also shows which software branch, or train, the system is currently 
 
 * **FreeNAS-9.10-Nightlies:** this train has the latest, but still being tested, fixes and features. Unless you are testing a new feature, you do not want to
   run this train in production.
-
-* **FreeNAS-9.3-STABLE:** this is the
+  
+* **FreeNAS-9.10-STABLE:**  this is the
   **recommended train for production use**. Once new fixes and features have been tested, they are added to this train. It is recommended to follow this train
-  and to apply any of its pending updates.
+  and to apply any of its pending updates. 
+
+* **FreeNAS-9.3-STABLE:** this is the maintenance-only mode for an older version of FreeNAS®. It is recommended to upgrade to "FreeNAS-9.10-STABLE", by selecting that train, to ensure that
+  the system receives bug fixes and new features.
 
 To change the train, use the drop-down menu to make a different selection. It also lists the URL of the official update server should that information be
 needed in a network with outbound firewall restrictions.
