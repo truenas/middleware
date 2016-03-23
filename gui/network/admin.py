@@ -75,15 +75,16 @@ class InterfacesFAdmin(BaseFreeAdmin):
             hasattr(notifier, 'failover_status') and
             notifier().failover_status() == 'MASTER'
         ):
-            return _(
-                'This change will cause a failover event. '
-                'Do you want to proceed?'
-            )
-        else:
-            return _(
-                'Network connectivity will be interrupted. '
-                'Do you want to proceed?'
-            )
+            from freenasUI.failover.models import Failover
+            if Failover.objects.all()[0].disabled is False:
+                return _(
+                    'This change will cause a failover event. '
+                    'Do you want to proceed?'
+                )
+        return _(
+            'Network connectivity will be interrupted. '
+            'Do you want to proceed?'
+        )
 
 
 class LAGGInterfaceFAdmin(BaseFreeAdmin):
